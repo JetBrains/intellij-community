@@ -560,14 +560,20 @@ public class JavaDocInfoGenerator {
   public @Nls @Nullable String generateDocInfo(List<@NlsSafe String> docURLs) {
     @Nls StringBuilder buffer = new StringBuilder();
 
-    if (!generateDocInfoCore(buffer, true)) {
+    if (!generateDocInfoCore(buffer, false)) {
       return null;
     }
 
     HtmlChunk containerInfo = generateContainerInfo(myElement);
+    StringBuilder builder = new StringBuilder();
+    generatePrologue(builder);
+
     if (containerInfo != null) {
-      containerInfo.appendTo(buffer);
+      containerInfo.appendTo(builder);
     }
+
+    builder.append(buffer);
+    buffer = builder;
 
     if (docURLs != null) {
       if (buffer.length() > 0 && elementHasSourceCode()) {
@@ -1736,8 +1742,8 @@ public class JavaDocInfoGenerator {
                   attributes = manager.getMethodCallAttributes();
                 }
                 else if (resolve instanceof PsiField) {
-                  attributes = externalTarget 
-                               ? manager.getFieldDeclarationAttributes((PsiField)resolve) 
+                  attributes = externalTarget
+                               ? manager.getFieldDeclarationAttributes((PsiField)resolve)
                                : manager.getLocalVariableAttributes();
                 }
                 label = attributes != null ? getStyledSpan(true, attributes, text) : text;
@@ -1781,8 +1787,8 @@ public class JavaDocInfoGenerator {
             else if (tokenType == JavaTokenType.DOT) {
               attributes = manager.getDotAttributes();
             }
-            else if (tokenType == JavaTokenType.NULL_KEYWORD || 
-                     tokenType == JavaTokenType.TRUE_KEYWORD || 
+            else if (tokenType == JavaTokenType.NULL_KEYWORD ||
+                     tokenType == JavaTokenType.TRUE_KEYWORD ||
                      tokenType == JavaTokenType.FALSE_KEYWORD) {
               attributes = manager.getKeywordAttributes();
             }
