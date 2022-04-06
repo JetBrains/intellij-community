@@ -395,8 +395,13 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
   private fun LessonContext.stopTask() {
     highlightButtonById("Stop")
 
-    actionTask("Stop") {
-      LessonsBundle.message("debug.workflow.stop.debug", action(it), icon(AllIcons.Actions.Suspend))
+    task("Stop") {
+      text(LessonsBundle.message("debug.workflow.stop.debug",
+                                 action(it), icon(AllIcons.Actions.Suspend)))
+      stateCheck {
+        XDebuggerManager.getInstance(project).currentSession == null
+      }
+      test { actions(it) }
     }
   }
 

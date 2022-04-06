@@ -38,6 +38,7 @@ import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.Alarm
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.xdebugger.XDebuggerManager
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ift.PythonLessonsBundle
@@ -250,11 +251,15 @@ class PythonOnboardingTourLesson :
     }
 
     highlightButtonById("Stop")
-    actionTask("Stop") {
+    task {
       showBalloonOnHighlightingComponent(
         PythonLessonsBundle.message("python.onboarding.balloon.stop.debugging")) { list -> list.minByOrNull { it.locationOnScreen.y } }
+      text(PythonLessonsBundle.message("python.onboarding.stop.debugging",
+                                       icon(AllIcons.Actions.Suspend)))
       restoreIfModified(sample)
-      PythonLessonsBundle.message("python.onboarding.stop.debugging", icon(AllIcons.Actions.Suspend))
+      stateCheck {
+        XDebuggerManager.getInstance(project).currentSession == null
+      }
     }
 
     prepareRuntimeTask {

@@ -51,6 +51,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.xdebugger.XDebuggerManager
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.IntentionPowerPackBundle
 import kotlinx.serialization.json.JsonObjectBuilder
@@ -343,11 +344,14 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     }
 
     highlightButtonById("Stop")
-    actionTask("Stop") {
+    task {
       showBalloonOnHighlightingComponent(
         JavaLessonsBundle.message("java.onboarding.balloon.stop.debugging")) { list -> list.minByOrNull { it.locationOnScreen.y } }
+      text(JavaLessonsBundle.message("java.onboarding.stop.debugging", icon(AllIcons.Actions.Suspend)))
       restoreIfModified(sample)
-      JavaLessonsBundle.message("java.onboarding.stop.debugging", icon(AllIcons.Actions.Suspend))
+      stateCheck {
+        XDebuggerManager.getInstance(project).currentSession == null
+      }
     }
 
     prepareRuntimeTask {
