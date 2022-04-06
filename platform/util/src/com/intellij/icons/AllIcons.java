@@ -859,6 +859,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon TestGroup = load("nodes/testGroup.svg", -583694017, 0);
     /** 16x16 */ public static final @NotNull Icon TestIgnored = load("nodes/testIgnored.svg", 518410949, 0);
     /** 16x16 */ public static final @NotNull Icon TestSourceFolder = load("nodes/testSourceFolder.svg", -499120325, 0);
+    /** 16x16 */ public static final @NotNull Icon TextArea = load("nodes/textArea.svg", -1234407031, 0);
     /** 16x16 */ public static final @NotNull Icon Toolbox = load("nodes/toolbox.svg", 1675184983, 0);
     /** 16x16 */ public static final @NotNull Icon Type = load("nodes/type.svg", -722164684, 0);
     /** 16x16 */ public static final @NotNull Icon Undeploy = load("nodes/undeploy.svg", 1931602003, 0);
