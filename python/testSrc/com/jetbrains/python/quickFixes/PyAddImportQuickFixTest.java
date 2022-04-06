@@ -61,6 +61,61 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
   }
 
+  // PY-10719
+  public void testBeforeImportAboveNoInspectionComment() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
+  // PY-10719
+  public void testBetweenImportsAboveNoInspectionComment() {
+    doMultiFileAutoImportTest("Import 'b'");
+  }
+
+  // PY-10719
+  public void testBeforeImportBelowFileCommentBlock() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
+  // PY-10719 PY-26016
+  public void testBetweenStatementAndImportAboveBoundComments() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
+  // PY-10719 PY-26016
+  public void testBeforeStatementBelowFileCommentBlock() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
+  // PY-10719 PY-26016
+  public void testBeforeStatementAboveBoundComments() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
+  // PY-10719 PY-26016
+  public void testBeforeImportAboveBoundCommentsBelowFileCommentBlock() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
+  // PY-10719 PY-26016
+  public void testBetweenImportsAboveBoundComments() {
+    doMultiFileAutoImportTest("Import 'b'");
+  }
+
+  // PY-10719 PY-26016
+  public void testBeforeImportBelowFileCommentBlockExceptNoInspectionComment() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
+  // PY-10719 PY-26016
+  public void testBeforeStatementAboveBoundCommentsBelowFileCommentBlock() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
+  // PY-10719 PY-53487
+  public void testBeforeStatementAboveNoInspectionComment() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
   // PY-19773
   public void testReexportedName() {
     doMultiFileAutoImportTest("Import 'flask.request'");
@@ -364,6 +419,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     assertNotNull(djangoViewClass);
     assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(djangoViewClass.getContainingFile()));
   }
+
   private void dumpSdkRootsFileSystemAndIndexResults() {
     dumpSdkRoots();
     VirtualFile skeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();

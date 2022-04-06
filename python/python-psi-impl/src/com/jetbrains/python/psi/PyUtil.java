@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.model.ModelBranch;
@@ -55,6 +56,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
@@ -1716,6 +1718,11 @@ public final class PyUtil {
 
   public static boolean isOrdinaryPackage(@NotNull PsiDirectory directory) {
     return directory.findFile(PyNames.INIT_DOT_PY) != null;
+  }
+
+  public static boolean isNoinspectionComment(@NotNull PsiComment comment) {
+    Pattern suppressPattern = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP);
+    return suppressPattern.matcher(comment.getText()).find();
   }
 
   /**
