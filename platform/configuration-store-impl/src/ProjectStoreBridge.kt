@@ -2,6 +2,8 @@
 package com.intellij.configurationStore
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
@@ -21,6 +23,7 @@ import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
+import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.function.Supplier
@@ -130,6 +133,9 @@ internal class StorageJpsConfigurationReader(private val project: Project,
 
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
+    if (ProjectUtil.isRemotePath(FileUtil.toSystemDependentName(filePath)) && !project.isTrusted()) {
+      throw IOException(ConfigurationStoreBundle.message("error.message.details.configuration.files.from.remote.locations.in.safe.mode"))
+    }
     if (componentName == "") {
       //this is currently used for loading Eclipse project configuration from .classpath file
       val file = VirtualFileManager.getInstance().findFileByUrl(fileUrl)

@@ -1,21 +1,24 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
+import com.intellij.ide.impl.TrustedPaths
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.module.ConfigurationErrorDescription
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.stateStore
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.loadProjectAndCheckResults
+import com.intellij.testFramework.*
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.ClassRule
@@ -104,6 +107,25 @@ class LoadInvalidProjectTest {
           .mergeWith(directoryContentOf(testDataRoot.resolve ("common")))
       val projectDir = project.stateStore.directoryStorePath!!.parent
       projectDir.assertMatches(expected)
+    }
+  }
+
+  @Test
+  fun `remote iml paths must not be loaded in untrusted projects`() {
+    IoTestUtil.assumeWindows()
+    fun createUntrustedProject(targetDir: VirtualFile): Path {
+      val projectDir = VfsUtil.virtualToIoFile(targetDir)
+      FileUtil.copyDir(testDataRoot.resolve("remote-iml-path").toFile(), projectDir)
+      VfsUtil.markDirtyAndRefresh(false, true, true, targetDir)
+      val projectDirPath = projectDir.toPath()
+      TrustedPaths.getInstance().setProjectPathTrusted(projectDirPath, false)
+      return projectDirPath
+    }
+    runBlocking {
+      createOrLoadProject(tempDirectory, ::createUntrustedProject, loadComponentState = true, useDefaultProjectSettings = false) {
+        assertThat(errors).hasSize(1)
+        assertThat(errors.single().description).contains("remote locations")
+      }
     }
   }
 
