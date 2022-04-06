@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.FList;
@@ -124,7 +125,12 @@ class TypeDfaState {
   @Contract(pure = true)
   @NotNull
   public TypeDfaState withoutTopClosureState() {
-    LOG.assertTrue(myPreviousClosureState != null && !myPreviousClosureState.isEmpty(), "Reached closure end without closure start");
+    if (ApplicationManager.getApplication().isInternal() && !(myPreviousClosureState != null && !myPreviousClosureState.isEmpty())) {
+      LOG.error("Reached closure end without closure start");
+    }
+    if (myPreviousClosureState == null || myPreviousClosureState.isEmpty()) {
+      return this;
+    }
     FList<ClosureFrame> tail = myPreviousClosureState.getTail();
     return new TypeDfaState(myVarTypes, myProhibitedCachingVars, tail.isEmpty() ? null : tail);
   }
@@ -177,8 +183,13 @@ class TypeDfaState {
     return result == null ? DFAType.NULL_DFA_TYPE : result;
   }
 
-  @NotNull ClosureFrame getTopClosureFrame() {
-    LOG.assertTrue(myPreviousClosureState != null && !myPreviousClosureState.isEmpty(), "Reached closure end without closure start");
+  @Nullable ClosureFrame getTopClosureFrame() {
+    if (ApplicationManager.getApplication().isInternal()) {
+      LOG.assertTrue(myPreviousClosureState != null && !myPreviousClosureState.isEmpty(), "Reached closure end without closure start");
+    }
+    if (myPreviousClosureState == null || myPreviousClosureState.isEmpty()) {
+      return null;
+    }
     return myPreviousClosureState.getHead();
   }
 
