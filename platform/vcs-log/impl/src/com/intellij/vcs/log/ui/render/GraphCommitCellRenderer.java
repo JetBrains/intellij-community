@@ -184,7 +184,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
       myReferencePainter = new VcsLogLabelPainter(data, table, iconCache);
       myIssueLinkRenderer = new IssueLinkRenderer(data.getProject(), this);
-      setCellState(new BorderlessTableCellState());
+      setCellState(new VcsLogTableCellState());
 
       myFont = getLabelFont();
       GraphicsConfiguration configuration = myGraphTable.getGraphicsConfiguration();
@@ -361,7 +361,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
   }
 
-  public static class BorderlessTableCellState extends TableCellState {
+  public static class VcsLogTableCellState extends TableCellState {
     @Override
     protected @Nullable Border getBorder(boolean isSelected, boolean hasFocus) {
       return null;
