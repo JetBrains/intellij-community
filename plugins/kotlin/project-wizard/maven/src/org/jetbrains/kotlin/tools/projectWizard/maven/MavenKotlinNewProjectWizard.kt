@@ -31,6 +31,8 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
     override val name = "Maven"
 
+    override val ordinal: Int = 200
+
     override fun createStep(parent: KotlinNewProjectWizard.Step): NewProjectWizardStep {
         return Step(parent).chain(::AssetsStep)
     }
