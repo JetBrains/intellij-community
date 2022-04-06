@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,8 +30,6 @@ import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Stream;
 
 import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
 import static com.intellij.ide.impl.DataManagerImpl.validateEditor;
@@ -96,7 +93,7 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
   @Override
   public @Nullable Object getData(@NotNull String dataId) {
     ProgressManager.checkCanceled();
-    boolean cacheable = Registry.is("actionSystem.cache.data") || ourSafeKeys.contains(dataId);
+    boolean cacheable = true;
     if (ApplicationManager.getApplication().isDispatchThread()) {
       int currentEventCount = IdeEventQueue.getInstance().getEventCount();
       if (myEventCount != -1 && myEventCount != currentEventCount) {
@@ -112,7 +109,7 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
     }
 
     answer = doGetData(dataId);
-    if (cacheable && !(answer instanceof Stream)) {
+    if (cacheable) {
       myCachedData.put(dataId, answer == null ? NullResult.INSTANCE : answer);
     }
     return answer;
@@ -174,14 +171,6 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
     return (this instanceof InjectedDataContext ? "injected:" : "") +
            "component=" + SoftReference.dereference(myRef);
   }
-
-  private static final Set<String> ourSafeKeys = ContainerUtil.set(
-    CommonDataKeys.PROJECT.getName(),
-    CommonDataKeys.EDITOR.getName(),
-    PlatformCoreDataKeys.IS_MODAL_CONTEXT.getName(),
-    PlatformCoreDataKeys.CONTEXT_COMPONENT.getName(),
-    PlatformDataKeys.MODALITY_STATE.getName()
-  );
 
   enum NullResult {INSTANCE}
 
