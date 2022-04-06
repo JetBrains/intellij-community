@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -116,11 +116,9 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project) : P
     val moduleFileName = FileUtil.getNameWithoutExtension(moduleFilePath.fileName.toString())
     val externalComponents = externalModuleComponents[moduleFileName]
     if (externalComponents != null) {
-      val providerFactory = StreamProviderFactory.EP_NAME.getExtensions(project).firstOrNull()
-      if (providerFactory != null) {
-        val storageSpec = providerFactory.getOrCreateStorageSpec(StoragePathMacros.MODULE_FILE)
-        commitToStorage(storageSpec, externalComponents)
-      }
+      StreamProviderFactory.EP_NAME.computeSafeIfAny(project) {
+        it.getOrCreateStorageSpec(StoragePathMacros.MODULE_FILE)
+      }?.let { commitToStorage(it, externalComponents) }
     }
   }
 }
@@ -190,7 +188,7 @@ fun getProjectStateStorage(filePath: String,
   return store.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>
 }
 
-private fun getStorageSpec(filePath: String, project: Project): Storage? {
+private fun getStorageSpec(filePath: String, project: Project): Storage {
   val collapsedPath: String
   val splitterClass: Class<out StateSplitterEx>
   val fileName = PathUtil.getFileName(filePath)
@@ -210,18 +208,23 @@ private fun getStorageSpec(filePath: String, project: Project): Storage? {
       collapsedPath = parentFileName
       splitterClass = FakeDirectoryBasedStateSplitter::class.java
       if (PathUtil.getFileName(grandParentPath) != Project.DIRECTORY_STORE_FOLDER) {
-        val providerFactory = StreamProviderFactory.EP_NAME.getExtensions(project).firstOrNull() ?: return null
         if (parentFileName == "project") {
           if (fileName == "libraries.xml" || fileName == "artifacts.xml") {
             val inProjectStorage = FileStorageAnnotation(FileUtil.getNameWithoutExtension(fileName), false, splitterClass)
             val componentName = if (fileName == "libraries.xml") "libraryTable" else "ArtifactManager"
-            return providerFactory.getOrCreateStorageSpec(fileName, StateAnnotation(componentName, inProjectStorage))
+            StreamProviderFactory.EP_NAME.computeSafeIfAny(project) {
+              it.getOrCreateStorageSpec(fileName, StateAnnotation(componentName, inProjectStorage))
+            }?.let { return it }
           }
           if (fileName == "modules.xml") {
-            return providerFactory.getOrCreateStorageSpec(fileName)
+            StreamProviderFactory.EP_NAME.computeSafeIfAny(project) {
+              it.getOrCreateStorageSpec(fileName)
+            }?.let { return it }
           }
         }
-        error("$filePath is not under .idea directory and not under external system cache")
+        if (StreamProviderFactory.EP_NAME.hasAnyExtensions(project)) {
+          error("$filePath is not under .idea directory and not under external system cache")
+        }
       }
     }
   }
