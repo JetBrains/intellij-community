@@ -3308,34 +3308,56 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   public void testTextEditorHighlightingPassRegistrarMustNotAllowCyclesInPassDeclarationsOrCrazyPassIdsOmgMurphyLawStrikesAgain() {
     configureByText(JavaFileType.INSTANCE, "class C{}");
     TextEditorHighlightingPassRegistrarImpl registrar = (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(getProject());
-    int F1 = 254;
-    int F2 = 256;
-    int F3 = 257;
+    int F2 = Pass.EXTERNAL_TOOLS;
+    int forcedId1 = 256;
+    int forcedId2 = 257;
+    int forcedId3 = 258;
     assertThrows(IllegalArgumentException.class, () ->
       // afterCompletionOf and afterStartingOf must not intersect
       registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F2}, new int[]{F2}, false, -1));
     assertThrows(IllegalArgumentException.class, () ->
       // afterCompletionOf and afterStartingOf must not contain forcedId
-      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F1}, new int[]{F2}, false, F1));
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId1}, null, false, forcedId1));
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not contain forcedId
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), null, new int[]{forcedId1}, false, forcedId1));
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not contain crazy ids
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{0}, new int[]{F2}, false, forcedId1));
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not contain crazy ids
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{-1}, new int[]{F2}, false, forcedId1));
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not contain crazy ids
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F2}, new int[]{0}, false, forcedId1));
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not contain crazy ids
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F2}, new int[]{-1}, false, forcedId1));
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not contain crazy ids
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{32134}, new int[]{F2}, false, forcedId1));
+    assertThrows(IllegalArgumentException.class, () ->
+      // afterCompletionOf and afterStartingOf must not contain crazy ids
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F2}, new int[]{982314}, false, forcedId1));
 
-    assertThrows(IllegalStateException.class, () -> {
-      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F2}, null, false, F1);
-      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F1}, null, false, F2);
+    assertThrows(IllegalArgumentException.class, () -> {
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId2}, null, false, forcedId1);
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId1}, null, false, forcedId2);
       assertEmpty(highlightErrors());
     });
     // non-direct cycle
-    assertThrows(IllegalStateException.class, () -> {
+    assertThrows(IllegalArgumentException.class, () -> {
       registrar.reRegisterFactories(); // clear caches from incorrect factories above
-      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F2}, null, false, F1);
-      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F3}, null, false, F2);
-      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F1}, null, false, F3);
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId2}, null, false, forcedId1);
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId3}, null, false, forcedId2);
+      registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId1}, null, false, forcedId3);
       assertEmpty(highlightErrors());
     });
 
     registrar.reRegisterFactories(); // clear caches from incorrect factories above
-    registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), null, null, false, F1);
-    registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F3}, null, false, F2);
-    registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{F1}, null, false, F3);
+    registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), null, null, false, forcedId1);
+    registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId1}, null, false, forcedId3);
+    registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId3}, null, false, forcedId2);
     assertEmpty(highlightErrors());
   }
 }

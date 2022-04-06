@@ -126,6 +126,8 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
       throw new IllegalArgumentException("Neither 'runAfterCompletionOf' nor 'runAfterOfStartingOf' arguments must contain 'forcedPassId'=" + forcedPassId+ " but got " +
                                          Arrays.toString(afterCompletionOf) + " and " + Arrays.toString(afterStartingOf));
     }
+    assertPassIdsAreNotCrazy(afterStartingOf, "afterStartingOf");
+    assertPassIdsAreNotCrazy(afterCompletionOf, "afterCompletionOf");
     PassConfig info = new PassConfig(factory, afterCompletionOf, afterStartingOf);
     int passId = forcedPassId == -1 ? nextAvailableId.incrementAndGet() : forcedPassId;
     PassConfig registered = myRegisteredPassFactories.get(passId);
@@ -136,6 +138,26 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
       myDirtyScopeTrackingFactories.add((DirtyScopeTrackingHighlightingPassFactory) factory);
     }
     return passId;
+  }
+
+  private void assertPassIdsAreNotCrazy(int @NotNull [] ids, @NotNull String name) {
+    for (int id : ids) {
+      if (id == Pass.UPDATE_FOLDING
+          || id == Pass.POPUP_HINTS
+          || id == Pass.UPDATE_ALL
+          || id == Pass.LOCAL_INSPECTIONS
+          || id == Pass.EXTERNAL_TOOLS
+          || id == Pass.WOLF
+          || id == Pass.LINE_MARKERS
+          || id == Pass.WHOLE_FILE_LOCAL_INSPECTIONS
+          ) {
+        continue;
+      }
+      PassConfig config = myRegisteredPassFactories.get(id);
+      if (config == null) {
+        throw new IllegalArgumentException("Argument '"+name+"' must not contain 0 or -1 or other crazy/unknown pass ids, but got " + Arrays.toString(ids));
+      }
+    }
   }
 
   @NotNull
