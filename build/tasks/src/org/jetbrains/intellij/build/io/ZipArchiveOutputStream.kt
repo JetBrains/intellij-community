@@ -334,7 +334,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     // relative offset of the zip64 end of central directory record
     buffer.putLong(eocd64Position)
     // total number of disks
-    buffer.putInt(0)
+    buffer.putInt(1)
 
     // write EOCD (EOCD is required even if we write EOCD64)
     buffer.putInt(0x06054b50)
