@@ -5,10 +5,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.navigation.GotoRelatedItem;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -26,7 +23,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class GotoRelatedSymbolAction extends AnAction {
+public class GotoRelatedSymbolAction extends AnAction implements UpdateInBackground {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
