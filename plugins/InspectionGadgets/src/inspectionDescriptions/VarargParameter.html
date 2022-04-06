@@ -1,8 +1,12 @@
 <html>
 <body>
 Reports methods that accept an arbitrary number of parameters (also known as varargs methods).
-<p>Such methods are not supported under Java 1.4 or earlier JVMs.</p>
 <!-- tooltip end -->
+<p>
+  <i>Varargs method</i> appeared in Java 5.
+  This inspection can help to downgrade for backward compatibility with earlier Java versions.
+</p>
+<!--p>This inspection only reports if the language level of the project or module is 5 or higher.</p-->
 <p><b>Example:</b></p>
 <pre><code>
   enum EnumConstants {
