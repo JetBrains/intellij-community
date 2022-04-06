@@ -21,10 +21,7 @@ import org.opentest4j.MultipleFailuresError;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class JUnit5EventsTest {
@@ -102,7 +99,10 @@ public class JUnit5EventsTest {
     MultipleFailuresError multipleFailuresError = new MultipleFailuresError("2 errors", Arrays.asList
       (new AssertionFailedError("message1", "expected1", "actual1"),
        new AssertionFailedError("message2", "expected2", "actual2")));
-    ReportEntry reportEntry = ReportEntry.from(Map.of("key1", "value1", "stdout", "out1"));
+    Map<String, String> map = new TreeMap<>();
+    map.put("key1", "value1");
+    map.put("stdout", "out1");
+    ReportEntry reportEntry = ReportEntry.from(map);
     myExecutionListener.reportingEntryPublished(identifier, reportEntry);
     myExecutionListener.executionFinished(identifier, TestExecutionResult.failed(multipleFailuresError));
 
