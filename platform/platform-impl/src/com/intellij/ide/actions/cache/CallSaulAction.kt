@@ -13,10 +13,13 @@ internal class CallSaulAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) = service<Saul>().sortThingsOut(RecoveryScope.createInstance(e))
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.project != null
-    val recoveryScope = RecoveryScope.createInstance(e)
-    if (recoveryScope is FilesRecoveryScope) {
-      e.presentation.text = ActionsBundle.message("action.CallSaul.on.file.text", recoveryScope.files.size)
+    val isEnabled = e.project != null
+    e.presentation.isEnabledAndVisible = isEnabled
+    if (isEnabled) {
+      val recoveryScope = RecoveryScope.createInstance(e)
+      if (recoveryScope is FilesRecoveryScope) {
+        e.presentation.text = ActionsBundle.message("action.CallSaul.on.file.text", recoveryScope.files.size)
+      }
     }
   }
 }
