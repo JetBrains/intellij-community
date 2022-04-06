@@ -66,11 +66,6 @@
     <implicitUsageProvider implementation="com.intellij.execution.junit2.inspection.JUnitImplicitUsageProvider"/>
     <predefinedMigrationMapProvider implementation="com.intellij.execution.junit2.refactoring.JUnit5Migration"/>
 
-    <localInspection groupPath="Java" language="JAVA" shortName="JUnit5MalformedRepeated" bundle="messages.JUnitBundle"
-                     key="junit5.malformed.repeated.test.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedRepeatedTestInspection"/>
-
     <runDashboardCustomizer implementation="com.intellij.execution.junit.JUnitRunDashboardCustomizer"
                             order="before commonJavaCustomizer"/>
 

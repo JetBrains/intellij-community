@@ -39,3 +39,5 @@ fun ULambdaExpression.getReturnType(): PsiType? {
                    }
   return LambdaUtil.getFunctionalInterfaceReturnType(lambdaType)
 }
+
+fun UAnnotated.findAnnotations(fqNames: Collection<String>) = uAnnotations.filter { ann -> fqNames.contains(ann.qualifiedName) }

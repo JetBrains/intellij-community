@@ -48,6 +48,11 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit5.converter.display.name"
                      implementationClass="com.intellij.codeInspection.test.junit.JUnit5ConverterInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="JUnit5MalformedRepeated"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.junit5.malformed.repeated.test.display.name"
+                     implementationClass="com.intellij.codeInspection.test.junit.JUnit5MalformedRepeatedTestInspection"/>
 
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UnstableApiUsage"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
