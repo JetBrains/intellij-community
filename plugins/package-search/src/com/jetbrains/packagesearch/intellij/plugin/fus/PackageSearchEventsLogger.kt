@@ -22,8 +22,6 @@ class PackageSearchEventsLogger : CounterUsagesCollector() {
 
     override fun getGroup() = GROUP
 
-    override fun getVersion() = VERSION
-
     companion object {
 
         private const val VERSION = 11
