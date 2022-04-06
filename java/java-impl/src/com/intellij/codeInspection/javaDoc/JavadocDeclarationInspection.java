@@ -23,9 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -405,7 +403,11 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
   private static final TokenSet SEE_TAG_REFS = TokenSet.create(JavaDocElementType.DOC_REFERENCE_HOLDER, JavaDocElementType.DOC_METHOD_OR_FIELD_REF);
 
   private static boolean isValidSeeRef(PsiElement... elements) {
-    if (SEE_TAG_REFS.contains(elements[0].getNode().getElementType())) return true;
+    int referenceNumber = 0;
+    while (referenceNumber < elements.length && elements[referenceNumber].getText().isBlank()) {
+      referenceNumber++;
+    }
+    if (SEE_TAG_REFS.contains(elements[referenceNumber].getNode().getElementType())) return true;
 
     String text = Stream.of(elements).map(e -> e.getText().trim()).collect(Collectors.joining(" ")).trim();
     if (StringUtil.isQuotedString(text) && text.charAt(0) == '"') return true;
