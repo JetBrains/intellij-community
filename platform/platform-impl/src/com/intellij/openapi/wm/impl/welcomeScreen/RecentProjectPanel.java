@@ -584,7 +584,7 @@ public class RecentProjectPanel extends JPanel {
     private final Runnable myCallback;
     private final Collection<String> myPaths;
 
-    FilePathChecker(Runnable callback, Collection<String> paths) {
+    public FilePathChecker(Runnable callback, Collection<String> paths) {
       myCallback = callback;
       myPaths = paths;
       MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
@@ -593,7 +593,7 @@ public class RecentProjectPanel extends JPanel {
       onAppStateChanged();
     }
 
-    boolean isValid(String path) {
+    public boolean isValid(String path) {
       return !myInvalidPaths.contains(path);
     }
 

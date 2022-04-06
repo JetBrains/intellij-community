@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl.welcomeScreen
+package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
@@ -7,20 +7,17 @@ import com.intellij.ide.RecentProjectsManager.RecentProjectsChange
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DefaultProjectFactory
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel.FilePathChecker
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RootItem
-import com.intellij.ui.*
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.SmartExpander
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.tree.ui.Control
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.IconUtil
@@ -28,7 +25,6 @@ import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.tree.TreeUtil
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Point
@@ -88,42 +84,6 @@ internal object RecentProjectPanelComponentFactory {
     val treeUpdater = Runnable { filteringTree.searchModel.updateStructure() }
 
     return FilePathChecker(treeUpdater, recentProjects.map { it.projectPath })
-  }
-
-  class RecentProjectFilteringTree(tree: Tree) : FilteringTree<DefaultMutableTreeNode, RecentProjectTreeItem>(
-    ProjectManager.getInstance().defaultProject,
-    tree,
-    DefaultMutableTreeNode(RootItem)
-  ) {
-    override fun getNodeClass() = DefaultMutableTreeNode::class.java
-
-    override fun getText(item: RecentProjectTreeItem?): String = item?.displayName().orEmpty()
-
-    override fun getChildren(item: RecentProjectTreeItem): Iterable<RecentProjectTreeItem> = item.children()
-
-    override fun createNode(item: RecentProjectTreeItem): DefaultMutableTreeNode = DefaultMutableTreeNode(item)
-
-    override fun createSpeedSearch(searchTextField: SearchTextField): SpeedSearchSupply = object : FilteringSpeedSearch(searchTextField) {}
-
-    override fun installSearchField(): SearchTextField {
-      return super.installSearchField().apply {
-        isOpaque = false
-        border = JBUI.Borders.empty()
-
-        textEditor.apply {
-          isOpaque = false
-          border = JBUI.Borders.empty()
-          emptyText.text = IdeBundle.message("welcome.screen.search.projects.empty.text")
-          accessibleContext.accessibleName = IdeBundle.message("welcome.screen.search.projects.empty.text")
-        }
-      }
-    }
-
-    override fun expandTreeOnSearchUpdateComplete(pattern: String?) {
-      TreeUtil.expandAll(tree)
-    }
-
-    override fun useIdentityHashing(): Boolean = false
   }
 
   private class ProjectActionMouseListener(private val tree: Tree) : PopupHandler() {
