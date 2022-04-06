@@ -7,67 +7,101 @@ import com.intellij.util.ui.CheckBox
 
 
 class NonAsciiCharactersInspectionFormUi(entry: InspectionProfileEntry) {
-
   val panel = panel {
-    buttonsGroup(CodeInsightBundle.message("non.ascii.warn.of")) {
+    row {
+      cell(
+        CheckBox(
+          CodeInsightBundle.message("non.ascii.chars.inspection.option.files.containing.bom.checkbox"),
+          entry,
+          "CHECK_FOR_FILES_CONTAINING_BOM"
+          )
+      )
+    }
+    buttonsGroup(CodeInsightBundle.message("non.ascii.chars.inspection.non.ascii.top.label")) {
       row {
         cell(
           CheckBox(
-            CodeInsightBundle.message("checkbox.non.ascii.option.characters.in.identifiers"),
+            CodeInsightBundle.message("non.ascii.chars.inspection.option.characters.in.identifiers.checkbox"),
             entry,
             "CHECK_FOR_NOT_ASCII_IDENTIFIER_NAME"
           )
-        ).comment(CodeInsightBundle.message("label.non.ascii.chars.example.characters.in.identifiers"))
+        )
+        comment(CodeInsightBundle.message("non.ascii.chars.inspection.example.characters.in.identifiers.label"))
       }
 
       row {
         cell(
           CheckBox(
-            CodeInsightBundle.message("checkbox.non.ascii.option.characters.in.comments"),
+            CodeInsightBundle.message("non.ascii.chars.inspection.option.characters.in.strings.checkbox"),
             entry,
             "CHECK_FOR_NOT_ASCII_STRING_LITERAL"
           )
-        ).comment(CodeInsightBundle.message("label.non.ascii.chars.example.characters.in.comments"))
+        )
+        comment(CodeInsightBundle.message("non.ascii.chars.inspection.example.characters.in.strings.label"))
       }
 
       row {
         cell(
           CheckBox(
-            CodeInsightBundle.message("checkbox.non.ascii.option.characters.in.strings"),
+            CodeInsightBundle.message("non.ascii.chars.inspection.option.characters.in.comments.checkbox"),
             entry,
             "CHECK_FOR_NOT_ASCII_COMMENT"
           )
-        ).comment(CodeInsightBundle.message("label.non.ascii.chars.example.characters.in.strings"))
+        )
+        comment(CodeInsightBundle.message("non.ascii.chars.inspection.example.characters.in.comments.label"))
       }
 
       row {
         cell(
           CheckBox(
-            CodeInsightBundle.message("checkbox.non.ascii.option.different.languages.in.identifiers"),
+            CodeInsightBundle.message("non.ascii.chars.inspection.option.characters.in.any.other.word.checkbox"),
+            entry,
+            "CHECK_FOR_NOT_ASCII_IN_ANY_OTHER_WORD"
+          )
+        )
+        comment(CodeInsightBundle.message("non.ascii.chars.inspection.example.characters.in.any.other.word.label"))
+      }
+    }
+    buttonsGroup(CodeInsightBundle.message("non.ascii.chars.inspection.mixed.chars.top.label")) {
+      row {
+        cell(
+          CheckBox(
+            CodeInsightBundle.message("non.ascii.chars.inspection.option.mixed.languages.in.identifiers.checkbox"),
             entry,
             "CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME"
           )
-        ).comment(CodeInsightBundle.message("label.non.ascii.chars.example.different.languages.in.identifiers"))
+        )
+        comment(CodeInsightBundle.message("non.ascii.chars.inspection.example.mixed.languages.in.identifiers.label"))
       }
-
       row {
         cell(
           CheckBox(
-            CodeInsightBundle.message("checkbox.non.ascii.option.different.languages.in.string"),
+            CodeInsightBundle.message("non.ascii.chars.inspection.option.mixed.languages.in.strings.checkbox"),
             entry,
             "CHECK_FOR_DIFFERENT_LANGUAGES_IN_STRING"
           )
-        ).comment(CodeInsightBundle.message("label.non.ascii.chars.example.different.languages.in.string"))
+        )
+        comment(CodeInsightBundle.message("non.ascii.chars.inspection.example.mixed.languages.in.string.label"))
       }
-
       row {
         cell(
           CheckBox(
-                  CodeInsightBundle.message("checkbox.non.ascii.option.files.containing.bom"),
-                  entry,
-                  "CHECK_FOR_FILES_CONTAINING_BOM"
-                )
-        ).comment(CodeInsightBundle.message("label.non.ascii.chars.example.files.containing.bom"))
+            CodeInsightBundle.message("non.ascii.chars.inspection.option.mixed.languages.in.comments.checkbox"),
+            entry,
+            "CHECK_FOR_DIFFERENT_LANGUAGES_IN_COMMENTS"
+          )
+        )
+        comment(CodeInsightBundle.message("non.ascii.chars.inspection.example.mixed.languages.in.comments.label"))
+      }
+      row {
+        cell(
+          CheckBox(
+            CodeInsightBundle.message("non.ascii.chars.inspection.option.mixed.languages.in.any.other.word.checkbox"),
+            entry,
+            "CHECK_FOR_DIFFERENT_LANGUAGES_IN_ANY_OTHER_WORD"
+          )
+        )
+        comment(CodeInsightBundle.message("non.ascii.chars.inspection.example.mixed.languages.in.any.other.word.label"))
       }
     }
   }
