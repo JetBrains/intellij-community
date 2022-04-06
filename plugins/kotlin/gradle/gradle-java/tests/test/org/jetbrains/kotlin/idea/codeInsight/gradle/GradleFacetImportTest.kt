@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.caches.project.productionSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.testSourceInfo
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
 import org.jetbrains.kotlin.idea.configuration.ModuleSourceRootMap
 import org.jetbrains.kotlin.idea.configuration.allConfigurators
@@ -87,6 +88,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
                 compilerSettings!!.additionalArguments
             )
         }
+
+        assertEquals("1.3.72", KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
 
         assertAllModulesConfigured()
 
@@ -163,6 +166,27 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             ),
             getSourceRootInfos("project.test")
         )
+    }
+
+    @Test
+    @TargetVersions("6.0.1") // Gradle 4.9 isn't able to import 1.4 KGP
+    fun testJpsCompilerMultiModule() {
+        configureByFiles()
+        importProject()
+
+        with(facetSettings("project.module1.main")) {
+            assertEquals("1.3", languageLevel!!.versionString)
+            assertEquals("1.3", apiLevel!!.versionString)
+        }
+
+        with(facetSettings("project.module2.main")) {
+            assertEquals("1.4", languageLevel!!.versionString)
+            assertEquals("1.4", apiLevel!!.versionString)
+        }
+
+        assertEquals("1.4.20", KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
+
+        assertAllModulesConfigured()
     }
 
     @Test
@@ -440,6 +464,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals(JvmPlatforms.jvm6, targetPlatform)
         }
 
+        assertEquals("1.3.72", KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
+
         assertEquals(
             listOf(
                 "file:///src/main/java" to JavaSourceRootType.SOURCE,
@@ -469,6 +495,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("1.3", apiLevel!!.versionString)
             assertTrue(targetPlatform.isJs())
         }
+
+        assertEquals("1.3.50", KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
 
         assertEquals(
             listOf(
@@ -709,6 +737,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("my/test/classpath", (compilerArguments as K2MetadataCompilerArguments).classpath)
             assertEquals("my/test/destination", (compilerArguments as K2MetadataCompilerArguments).destination)
         }
+
+        assertEquals("1.3.72", KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
 
         val rootManager = ModuleRootManager.getInstance(getModule("project.main"))
         val stdlib = rootManager.orderEntries.filterIsInstance<LibraryOrderEntry>().single().library
