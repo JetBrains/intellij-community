@@ -23,6 +23,16 @@ class KotlinDependencyInspectionTest0 : DependencyInspectionTestBase() {
       }
     """.trimIndent())
 
+  fun `test illegal imported dependency skip imports`() = dependencyViolationTest(kotlinFooFile, "ImportClientKotlin.kt", """
+      package pkg.client
+      
+      import pkg.api.KotlinFoo
+      
+      fun main() {
+        <error descr="Dependency rule 'Deny usages of scope 'KotlinFoo' in scope 'ImportClientKotlin'.' is violated">KotlinFoo()</error>
+      }
+    """.trimIndent(), skipImports = true)
+
   fun `test illegal imported dependency Kotlin API in Java`() = dependencyViolationTest(kotlinFooFile, "ImportClientKotlin.java", """
       package pkg.client;
       

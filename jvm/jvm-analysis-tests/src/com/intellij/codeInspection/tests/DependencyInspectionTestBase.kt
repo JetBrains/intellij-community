@@ -27,8 +27,9 @@ abstract class DependencyInspectionTestBase : UastInspectionTestBase() {
     """.trimIndent())
   }
 
-  protected fun dependencyViolationTest(fromFile: String, toFile: String, toFileText: String) {
+  protected fun dependencyViolationTest(fromFile: String, toFile: String, toFileText: String, skipImports: Boolean = false) {
     val dependencyValidationManager = DependencyValidationManager.getInstance(project)
+    dependencyValidationManager.setSkipImportStatements(skipImports)
     myFixture.addFileToProject("pkg/client/$toFile", toFileText)
     val fromScopeId = fromFile.substringBefore(".")
     val fromScope = dependencyValidationManager.getScope(fromScopeId) ?: NamedScope(
