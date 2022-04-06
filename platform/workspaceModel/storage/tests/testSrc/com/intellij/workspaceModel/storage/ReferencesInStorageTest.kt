@@ -3,12 +3,12 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.storage.newentities.addChildChildEntity
-import com.intellij.workspaceModel.storage.newentities.addChildEntity
-import com.intellij.workspaceModel.storage.newentities.addParentEntity
-import com.intellij.workspaceModel.storage.newentities.api.DataClassX
-import com.intellij.workspaceModel.storage.newentities.api.XChildEntity
-import com.intellij.workspaceModel.storage.newentities.api.XParentEntity
+import com.intellij.workspaceModel.storage.entities.addChildChildEntity
+import com.intellij.workspaceModel.storage.entities.addChildEntity
+import com.intellij.workspaceModel.storage.entities.addParentEntity
+import com.intellij.workspaceModel.storage.entities.api.DataClassX
+import com.intellij.workspaceModel.storage.entities.api.XChildEntity
+import com.intellij.workspaceModel.storage.entities.api.XParentEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.deft.IntellijWs.modifyEntity
 import org.junit.Assert.assertEquals

@@ -3,15 +3,18 @@ package com.intellij.workspaceModel.storage.propertyBased
 
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.entities.*
+import com.intellij.workspaceModel.storage.entitiesx.ModifiableSampleEntity
+import com.intellij.workspaceModel.storage.entitiesx.SampleEntity
+import com.intellij.workspaceModel.storage.entitiesx.addSampleEntity
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
 import com.intellij.workspaceModel.storage.impl.toClassId
-import com.intellij.workspaceModel.storage.newentities.addChildEntity
-import com.intellij.workspaceModel.storage.newentities.addChildWithOptionalParentEntity
-import com.intellij.workspaceModel.storage.newentities.addParentEntity
-import com.intellij.workspaceModel.storage.newentities.api.*
+import com.intellij.workspaceModel.storage.entities.addChildEntity
+import com.intellij.workspaceModel.storage.entities.addChildWithOptionalParentEntity
+import com.intellij.workspaceModel.storage.entities.addParentEntity
+import com.intellij.workspaceModel.storage.entities.api.*
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.junit.Assert

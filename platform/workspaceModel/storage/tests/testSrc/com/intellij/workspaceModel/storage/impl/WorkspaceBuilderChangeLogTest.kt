@@ -3,9 +3,9 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.newentities.addChildWithOptionalParentEntity
-import com.intellij.workspaceModel.storage.newentities.addParentEntity
-import com.intellij.workspaceModel.storage.newentities.api.XParentEntityData
+import com.intellij.workspaceModel.storage.entities.addChildWithOptionalParentEntity
+import com.intellij.workspaceModel.storage.entities.addParentEntity
+import com.intellij.workspaceModel.storage.entities.api.XParentEntityData
 import org.jetbrains.deft.IntellijWs.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

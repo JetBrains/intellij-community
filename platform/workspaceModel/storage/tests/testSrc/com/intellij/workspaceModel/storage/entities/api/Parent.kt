@@ -1,4 +1,4 @@
-package com.intellij.workspaceModel.storage.newentities.api
+package com.intellij.workspaceModel.storage.entities.api
 
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.EntitySource

@@ -1,7 +1,7 @@
 package org.jetbrains.deft.IntellijWs
 
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.newentities.api.*
+import com.intellij.workspaceModel.storage.entities.api.*
 import org.jetbrains.deft.impl.ObjModule
                         
 object IntellijWs: ObjModule(ObjModule.Id("org.jetbrains.deft.IntellijWs")) {

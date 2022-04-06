@@ -6,9 +6,9 @@ import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
-import com.intellij.workspaceModel.storage.newentities.addChildEntity
-import com.intellij.workspaceModel.storage.newentities.addParentEntity
-import com.intellij.workspaceModel.storage.newentities.api.XChildEntity
+import com.intellij.workspaceModel.storage.entities.addChildEntity
+import com.intellij.workspaceModel.storage.entities.addParentEntity
+import com.intellij.workspaceModel.storage.entities.api.XChildEntity
 import org.hamcrest.CoreMatchers
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

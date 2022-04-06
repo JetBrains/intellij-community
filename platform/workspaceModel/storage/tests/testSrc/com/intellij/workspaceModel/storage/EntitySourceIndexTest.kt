@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.ModifiableChildSourceEntity
-import com.intellij.workspaceModel.storage.entities.SourceEntity
-import com.intellij.workspaceModel.storage.entities.addSourceEntity
+import com.intellij.workspaceModel.storage.entitiesx.ModifiableChildSourceEntity
+import com.intellij.workspaceModel.storage.entitiesx.SourceEntity
+import com.intellij.workspaceModel.storage.entitiesx.addSourceEntity
 import com.intellij.workspaceModel.storage.impl.ClassToIntConverter
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.createEntityId
