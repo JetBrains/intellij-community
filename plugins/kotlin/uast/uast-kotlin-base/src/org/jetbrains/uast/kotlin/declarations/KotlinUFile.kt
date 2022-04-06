@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -54,6 +54,20 @@ class KotlinUFile(
     override val imports: List<UImportStatement> by lz {
         sourcePsi.importDirectives.mapNotNull { languagePlugin.convertOpt(it, this@KotlinUFile) }
     }
+
+    override val implicitImports: List<String>
+        get() = listOf(
+            "kotlin",
+            "kotlin.annotation",
+            "kotlin.collections",
+            "kotlin.comparisons",
+            "kotlin.io",
+            "kotlin.ranges",
+            "kotlin.sequences",
+            "kotlin.text",
+            "kotlin.math",
+            "kotlin.jvm"
+        )
 
     override val classes: List<UClass> by lz {
         val facadeOrScriptClass = if (sourcePsi.isScript()) sourcePsi.script?.toLightClass() else sourcePsi.findFacadeClass()

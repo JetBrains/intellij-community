@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiComment
@@ -7,7 +7,6 @@ import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
-import java.util.*
 
 @ApiStatus.Internal
 class JavaUFile(
@@ -21,6 +20,9 @@ class JavaUFile(
   override val imports: List<UImportStatement> by lz {
     sourcePsi.importList?.allImportStatements?.map { JavaUImportStatement(it, this) } ?: listOf()
   }
+
+  override val implicitImports: List<String>
+    get() = sourcePsi.implicitlyImportedPackages.toList()
 
   override val uAnnotations: List<UAnnotation>
     get() = sourcePsi.packageStatement?.annotationList?.annotations?.map { JavaUAnnotation(it, this) } ?: emptyList()
