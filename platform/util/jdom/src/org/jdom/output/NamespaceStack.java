@@ -57,25 +57,26 @@ package org.jdom.output;
 
 import org.jdom.Namespace;
 
-import java.util.Stack;
+import java.util.ArrayList;
+import java.util.EmptyStackException;
 
 class NamespaceStack {
   /**
    * The prefixes available
    */
-  private final Stack<String> prefixes;
+  private final ArrayList<String> prefixes;
 
   /**
    * The URIs available
    */
-  private final Stack<String> uris;
+  private final ArrayList<String> uris;
 
   /**
    * This creates the needed storage.
    */
   NamespaceStack() {
-    prefixes = new Stack<>();
-    uris = new Stack<>();
+    prefixes = new ArrayList<>();
+    uris = new ArrayList<>();
   }
 
   /**
@@ -85,8 +86,8 @@ class NamespaceStack {
    * @param ns <code>Namespace</code> to add.
    */
   public void push(Namespace ns) {
-    prefixes.push(ns.getPrefix());
-    uris.push(ns.getURI());
+    prefixes.add(ns.getPrefix());
+    uris.add(ns.getURI());
   }
 
   /**
@@ -96,8 +97,12 @@ class NamespaceStack {
    * @return <code>String</code> - the popped namespace prefix.
    */
   public String pop() {
-    String prefix = prefixes.pop();
-    uris.pop();
+    int lastIndex = prefixes.size() - 1;
+    if (lastIndex < 0) {
+      throw new EmptyStackException();
+    }
+    String prefix = prefixes.remove(lastIndex);
+    uris.remove(lastIndex);
 
     return prefix;
   }
@@ -113,7 +118,7 @@ class NamespaceStack {
 
   /**
    * Given a prefix, this will return the namespace URI most
-   * rencently (topmost) associated with that prefix.
+   * recently (topmost) associated with that prefix.
    *
    * @param prefix <code>String</code> namespace prefix.
    * @return <code>String</code> - the namespace URI for that prefix.
@@ -123,7 +128,7 @@ class NamespaceStack {
     if (index == -1) {
       return null;
     }
-    return uris.elementAt(index);
+    return uris.get(index);
   }
 
   /**
@@ -135,7 +140,7 @@ class NamespaceStack {
     StringBuilder buf = new StringBuilder();
     buf.append("Stack: ").append(prefixes.size()).append('\n');
     for (int i = 0; i < prefixes.size(); i++) {
-      buf.append(prefixes.elementAt(i)).append("&").append(uris.elementAt(i)).append('\n');
+      buf.append(prefixes.get(i)).append("&").append(uris.get(i)).append('\n');
     }
     return buf.toString();
   }
