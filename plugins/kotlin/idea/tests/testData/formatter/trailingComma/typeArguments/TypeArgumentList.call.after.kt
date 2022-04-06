@@ -59,24 +59,24 @@ fun foo() {
             foofoo, foofoo, foofoo, foofoo,
             bar,
             /*
-               */
+    */
             /* */ foo,
             >()
 
     testtest<
             /*
-                */
+    */
             foofoo, foofoo, foofoo,
             /*
 
-               */
+    */
             foofoo, bar,
             >()
 
     testtest<
             foofoo, foofoo, foofoo, foofoo, bar,
             /*
-                */
+    */
             >()
 
     testtest<
@@ -87,7 +87,7 @@ fun foo() {
             foofoo, foofoo, foofoo, foofoo,
             /*
 
-               */
+    */
             bar,
             >()
 
@@ -105,7 +105,7 @@ fun foo() {
     testtest<
             foofoo, foofoo, foofoo, foofoo,
             /*
-                 */
+     */
             /* */ bar,
             >()
 
@@ -123,7 +123,7 @@ fun foo() {
     testtest<
             foofoo,
             /*
-                */
+    */
             >()
 
     testtest<
@@ -133,7 +133,7 @@ fun foo() {
     testtest<
             foofoo, fososos,
             /*
-                */
+    */
             testtest<testtest<foofoo>>,
             >()
 
@@ -144,7 +144,7 @@ fun foo() {
     testtest<
             foofoo, testtest<testtest<foofoo>>,
             /*
-                */
+    */
             testsa,
             >()
 
@@ -153,7 +153,7 @@ fun foo() {
     testtest<
             foofoo, seee, testtest<testtest<foofoo>>,
             /*
-               */
+    */
             testsa,
             >()
 }

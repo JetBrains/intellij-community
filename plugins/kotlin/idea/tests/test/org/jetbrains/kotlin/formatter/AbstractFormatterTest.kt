@@ -2,78 +2,18 @@
 package org.jetbrains.kotlin.formatter
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.testFramework.LightIdeaTestCase
-import com.intellij.util.IncorrectOperationException
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import java.io.File
 
-// Based on from com.intellij.psi.formatter.java.AbstractJavaFormatterTest
-abstract class AbstractFormatterTest : LightIdeaTestCase() {
-    enum class Action {
-        REFORMAT, INDENT
-    }
-
-    private interface TestFormatAction {
-        fun run(psiFile: PsiFile, startOffset: Int, endOffset: Int)
-    }
-
-    companion object {
-        private val ACTIONS: Map<Action, TestFormatAction> = mapOf(
-            Action.REFORMAT to object : TestFormatAction {
-                override fun run(psiFile: PsiFile, startOffset: Int, endOffset: Int) {
-                    CodeStyleManager.getInstance(psiFile.project).reformatText(psiFile, startOffset, endOffset)
-                }
-            },
-
-            Action.INDENT to object : TestFormatAction {
-                override fun run(psiFile: PsiFile, startOffset: Int, endOffset: Int) {
-                    CodeStyleManager.getInstance(psiFile.project).adjustLineIndent(psiFile, startOffset)
-                }
-            },
-        )
-    }
-
-    override fun setUp() {
-        super.setUp()
-        LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.HIGHEST
-    }
-
-    fun doTextTest(@NonNls text: String, fileAfter: File?, extension: String) {
-        doTextTest(Action.REFORMAT, text, fileAfter, extension)
-    }
-
-    fun doTextTest(action: Action, text: String, fileAfter: File?, extension: String) {
-        val file = createFile("A$extension", text)
-        val manager = PsiDocumentManager.getInstance(project)
-        val document = manager.getDocument(file) ?: error("Don't expect the document to be null")
-        project.executeWriteCommand("") {
-            document.replaceString(0, document.textLength, text)
-            manager.commitDocument(document)
-            try {
-                val rangeToUse = file.textRange
-                ACTIONS[action]?.run(file, rangeToUse.startOffset, rangeToUse.endOffset)
-            } catch (e: IncorrectOperationException) {
-                fail(e.localizedMessage)
-            }
-        }
-
-        KotlinTestUtils.assertEqualsToFile(fileAfter!!, document.text)
-        manager.commitDocument(document)
-        KotlinTestUtils.assertEqualsToFile(fileAfter, file.text)
-    }
-
+abstract class AbstractFormatterTest : KotlinLightCodeInsightFixtureTestCase() {
     fun doTestInverted(expectedFileNameWithExtension: String) {
         doTest(expectedFileNameWithExtension, true, false)
     }
@@ -94,6 +34,7 @@ abstract class AbstractFormatterTest : LightIdeaTestCase() {
         val testFileExtension = ".${file.extension}"
         val originalFile = File(file.parent, testFileName + testFileExtension)
         val originalFileText = FileUtil.loadFile(originalFile, true)
+        val psiFile = myFixture.configureByText("A$testFileExtension", originalFileText)
 
         configureCodeStyleAndRun(project) {
             val codeStyleSettings = CodeStyle.getSettings(project)
@@ -116,7 +57,11 @@ abstract class AbstractFormatterTest : LightIdeaTestCase() {
             }
 
             customSettings.ALLOW_TRAILING_COMMA_ON_CALL_SITE = callSite
-            doTextTest(originalFileText, file, testFileExtension)
+            project.executeWriteCommand("reformat") {
+                CodeStyleManager.getInstance(project).reformat(psiFile)
+            }
+
+            KotlinTestUtils.assertEqualsToFile(file, psiFile.text)
         }
     }
 }

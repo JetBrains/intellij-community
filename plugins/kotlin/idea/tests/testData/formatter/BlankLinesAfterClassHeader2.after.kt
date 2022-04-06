@@ -49,7 +49,7 @@ class FooN : IFoo {
 }
 
 class FooC(
-        val x: String
+    val x: String
 ) {
 
 

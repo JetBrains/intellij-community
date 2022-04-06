@@ -1,6 +1,6 @@
 val x = {
-    x: Comparable<Comparable<Number>>,
-    y: String,
+        x: Comparable<Comparable<Number>>,
+        y: String,
     ->
     println("1")
 }
@@ -21,23 +21,23 @@ val x = { x: String,
 }
 
 val x = {
-    x: String,
-    y: Comparable<Comparable<Number>>,
+        x: String,
+        y: Comparable<Comparable<Number>>,
     ->
     println("1")
 }
 
 val x = {
-    x: Comparable<Comparable<Number>>,
-    y: String,
+        x: Comparable<Comparable<Number>>,
+        y: String,
     ->
     println("1")
 }
 
 val x = {
-    x: String,
-    y: Comparable<Comparable<Number>>,
-    z: String,
+        x: String,
+        y: Comparable<Comparable<Number>>,
+        z: String,
     ->
     println("1")
 }
@@ -50,23 +50,23 @@ val x = { x: String,
 }
 
 val x = {
-    x: String,
-    y: String,
-    z: String,
+        x: String,
+        y: String,
+        z: String,
     ->
     println("1")
 }
 
 val x = {
-    x: String,
-    y: String,
-    z: String,
+        x: String,
+        y: String,
+        z: String,
     ->
     println("1")
 }
 
 val x = {
-    x: String,
+        x: String,
     ->
     println("1")
 }
@@ -81,14 +81,14 @@ val x = { x: String ->
 }
 
 val x = {
-    x: String,
+        x: String,
     ->
     println("1")
 }
 
 val x = {
-    x: String,
-    y: String,
+        x: String,
+        y: String,
     ->
     println("1")
 }
@@ -100,23 +100,23 @@ val x = { x: String,
 }
 
 val x = {
-    x: String,
-    y: String,
-    z: String,
+        x: String,
+        y: String,
+        z: String,
     ->
     println("1")
 }
 
 val x = {
-    x: String,
-    z: String,
+        x: String,
+        z: String,
     ->
     println("1")
 }
 
 val x = {
-    x, y: String,
-    z: String,
+        x, y: String,
+        z: String,
     ->
     println("1")
 }
@@ -127,15 +127,15 @@ val x = { x: String, y: String, z: String
 }
 
 val x = {
-    z: String, v: Comparable<Comparable<Number>>,
+        z: String, v: Comparable<Comparable<Number>>,
 
     ->
     println("1")
 }
 
 val x = {
-    x: String,
-    y: Comparable<Comparable<Number>>,
+        x: String,
+        y: Comparable<Comparable<Number>>,
     ->
     println("1")
 }
@@ -157,26 +157,26 @@ val x = { x: String, y: String
 }()
 
 val x = {
-    x: String,
-    /*
-       */
-    y: String,
-    z: String,
+        x: String,
+        /*
+    */
+        y: String,
+        z: String,
     ->
     println("1")
 }
 
 val x = {
-    x: String, y: String, z: String,
-    /*
-        */
+        x: String, y: String, z: String,
+        /*
+     */
     ->
     println("1")
 }
 
 val x = {
-    x: Comparable<Comparable<Number>>, y: String,
-    z: String,
+        x: Comparable<Comparable<Number>>, y: String,
+        z: String,
     ->
     println("1")
 }

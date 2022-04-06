@@ -1,7 +1,7 @@
 fun test() {
     "start ${
         println(
-                "sd"
+            "sd"
         )
     } end"
 }

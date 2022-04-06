@@ -1,14 +1,14 @@
 fun main() {
     val x: (
-            y: Comparable<Comparable<Number>>,
-            z: Iterable<Iterable<Number>> // trailing comma
+        y: Comparable<Comparable<Number>>,
+        z: Iterable<Iterable<Number>> // trailing comma
     ) -> Int = {
         10
     }
 
     val x: (
-            y: Comparable<Comparable<Number>>,
-            z: Iterable<Iterable<Number>>
+        y: Comparable<Comparable<Number>>,
+        z: Iterable<Iterable<Number>>
     ) -> Int = {
         10
     }
@@ -22,7 +22,7 @@ fun main() {
     }
 
     val x: (
-            y: Comparable<Comparable<Number>>, z: Iterable<Iterable<Number>>,
+        y: Comparable<Comparable<Number>>, z: Iterable<Iterable<Number>>,
     ) -> Int = {
         10
     }
@@ -35,36 +35,39 @@ fun main() {
         10
     }
 
-    val x: (y: Comparable<Comparable<Number>>
+    val x: (
+        y: Comparable<Comparable<Number>>
     ) -> Int = {
         10
     }
 
     val x: (
-            y: Comparable<Comparable<Number>>) -> Int = {
-        10
-    }
-
-    val x: (
-            y: Comparable<Comparable<Number>>, //
-            z: Iterable<Iterable<Number>> // /**/
-    ) -> Int = {
-        10
-    }
-
-    val x: (y: Comparable<Comparable<Number>>, z: Iterable<Iterable<Number>>
-            // wd
+        y: Comparable<Comparable<Number>>
     ) -> Int = {
         10
     }
 
     val x: (
-            y: Comparable<Comparable<Number>>,
-            /*
+        y: Comparable<Comparable<Number>>, //
+        z: Iterable<Iterable<Number>> // /**/
+    ) -> Int = {
+        10
+    }
+
+    val x: (
+        y: Comparable<Comparable<Number>>, z: Iterable<Iterable<Number>>
+        // wd
+    ) -> Int = {
+        10
+    }
+
+    val x: (
+        y: Comparable<Comparable<Number>>,
+        /*
     */
-            z: Iterable<Iterable<Number>>,
-            /* //
-               */
+        z: Iterable<Iterable<Number>>,
+        /* //
+    */
     ) -> Int = {
         10
     }
@@ -77,13 +80,15 @@ fun main() {
         10
     }
 
-    val x: (y: Comparable<Comparable<Number>>
+    val x: (
+        y: Comparable<Comparable<Number>>
     ) -> Int = {
         10
     }
 
     val x: ( /*
-        */y: Comparable<Comparable<Number>>) -> Int = {
+        */y: Comparable<Comparable<Number>>
+    ) -> Int = {
         10
     }
 }

@@ -41,7 +41,8 @@ abstract class TemplateGroupBase : TemplateGroup {
 
     companion object {
         private val typeMemberTemplate = MemberTemplate::class.createType()
-        private val typeIterableOfMemberTemplates = Iterable::class.createType(arguments = listOf(KTypeProjection.invariant(typeMemberTemplate)))
+        private val typeIterableOfMemberTemplates =
+            Iterable::class.createType(arguments = listOf(KTypeProjection.invariant(typeMemberTemplate)))
     }
 
 }

@@ -3,33 +3,33 @@
 
 fun foo() {
     testtest(
-            foofoo, foofoo, foofoo,
-            foofoo, bar,
+        foofoo, foofoo, foofoo,
+        foofoo, bar,
     )
 
     testtest(
-            foofoo, foofoo, foofoo, foofoo, bar,
+        foofoo, foofoo, foofoo, foofoo, bar,
     )
 
     testtest(
-            foofoo, foofoo, foofoo, foofoo, bar,
+        foofoo, foofoo, foofoo, foofoo, bar,
     )
 
     testtest(
-            foofoo, foofoo, foofoo, foofoo,
-            bar,
+        foofoo, foofoo, foofoo, foofoo,
+        bar,
     )
 
     testtest(
-            foofoo,
+        foofoo,
     )
 
     testtest(
-            foofoo,
+        foofoo,
     )
 
     testtest(
-            foofoo,
+        foofoo,
     )
 
     testtest(foofoo)
@@ -45,13 +45,13 @@ fun foo() {
     useCallable("A", Callable { println("Hello world") })
 
     useCallable(
-            "B", "C",
-            Callable {
-                println("Hello world")
-            },
-            Callable {
-                println("Hello world")
-            },
+        "B", "C",
+        Callable {
+            println("Hello world")
+        },
+        Callable {
+            println("Hello world")
+        },
     )
 
     useCallable(Callable { println("Hello world") })
@@ -59,7 +59,7 @@ fun foo() {
     useCallable(Callable { println("Hello world") })
 
     useCallable(
-            Callable { println("Hello world") },
+        Callable { println("Hello world") },
     )
 
     useCallable(Callable { println("Hello world") }) {
@@ -67,19 +67,19 @@ fun foo() {
     }
 
     useCallable(
-            Callable { println("Hello world") },
+        Callable { println("Hello world") },
     )
 
     useCallable("A", { println("Hello world") })
 
     useCallable(
-            "B", "C",
-            {
-                println("Hello world")
-            },
-            {
-                println("Hello world")
-            },
+        "B", "C",
+        {
+            println("Hello world")
+        },
+        {
+            println("Hello world")
+        },
     )
 
     useCallable({ println("Hello world") })
@@ -87,7 +87,7 @@ fun foo() {
     useCallable({ println("Hello world") })
 
     useCallable(
-            { println("Hello world") },
+        { println("Hello world") },
     )
 
     useCallable({ println("Hello world") }) {
@@ -95,19 +95,19 @@ fun foo() {
     }
 
     useCallable(
-            { println("Hello world") },
+        { println("Hello world") },
     )
 
     useCallable("A", foo() { println("Hello world") })
 
     useCallable(
-            "B", "C",
-            foo() {
-                println("Hello world")
-            },
-            foo() {
-                println("Hello world")
-            },
+        "B", "C",
+        foo() {
+            println("Hello world")
+        },
+        foo() {
+            println("Hello world")
+        },
     )
 
     useCallable(foo() { println("Hello world") })
@@ -115,7 +115,7 @@ fun foo() {
     useCallable(foo() { println("Hello world") })
 
     useCallable(
-            foo() { println("Hello world") },
+        foo() { println("Hello world") },
     )
 
     useCallable(foo() { println("Hello world") }) {
@@ -123,151 +123,151 @@ fun foo() {
     }
 
     useCallable(
-            foo() { println("Hello world") },
+        foo() { println("Hello world") },
     )
 
     useCallable(
-            "A",
-            object : Callable<Unit> {
-                override fun call() {
-                    println("Hello world")
-                }
-            },
-    )
-
-    useCallable(
-            "A",
-            object : Callable<Unit> {
-                override fun call() {
-                    println("Hello world")
-                }
-            },
-    )
-
-    useCallable(
-            "B", "C",
-            object : Callable<Unit> {
-                override fun call() {
-                    println("Hello world")
-                }
-            },
-            foo() {
+        "A",
+        object : Callable<Unit> {
+            override fun call() {
                 println("Hello world")
-            },
+            }
+        },
     )
 
     useCallable(
-            object : Callable<Unit> {
-                override fun call() {
-                    println("Hello world")
-                }
-            },
+        "A",
+        object : Callable<Unit> {
+            override fun call() {
+                println("Hello world")
+            }
+        },
     )
 
     useCallable(
-            object : Callable<Unit> {
-                override fun call() {
-                    println("Hello world")
-                }
-            },
+        "B", "C",
+        object : Callable<Unit> {
+            override fun call() {
+                println("Hello world")
+            }
+        },
+        foo() {
+            println("Hello world")
+        },
     )
 
     useCallable(
-            object : Callable<Unit> {
-                override fun call() {
-                    println("Hello world")
-                }
-            },
+        object : Callable<Unit> {
+            override fun call() {
+                println("Hello world")
+            }
+        },
     )
 
     useCallable(
-            object : Callable<Unit> {
-                override fun call() {
-                    println("Hello world")
-                }
-            },
+        object : Callable<Unit> {
+            override fun call() {
+                println("Hello world")
+            }
+        },
+    )
+
+    useCallable(
+        object : Callable<Unit> {
+            override fun call() {
+                println("Hello world")
+            }
+        },
+    )
+
+    useCallable(
+        object : Callable<Unit> {
+            override fun call() {
+                println("Hello world")
+            }
+        },
     ) {
 
     }
 
     useCallable(
-            object : Callable<Unit> {
-                override fun call() {
-                    println("Hello world")
-                }
-            },
+        object : Callable<Unit> {
+            override fun call() {
+                println("Hello world")
+            }
+        },
     )
 
     testtest(
-            foofoo, foofoo, foofoo, foofoo,
-            bar,
-            /*
-               */
-            /* */ foo,
+        foofoo, foofoo, foofoo, foofoo,
+        bar,
+        /*
+    */
+        /* */ foo,
     )
 
     testtest(
-            /*
-                */
-            foofoo, foofoo, foofoo,
-            /*
+        /*
+    */
+        foofoo, foofoo, foofoo,
+        /*
 
-               */
-            foofoo, bar,
+    */
+        foofoo, bar,
     )
 
     testtest(
-            foofoo, foofoo, foofoo, foofoo, bar,
-            /*
-                */
+        foofoo, foofoo, foofoo, foofoo, bar,
+        /*
+    */
     )
 
     testtest(
-            foofoo, foofoo, foofoo, foofoo, bar, // awdawda
+        foofoo, foofoo, foofoo, foofoo, bar, // awdawda
     )
 
     testtest(
-            foofoo, foofoo, foofoo, foofoo,
-            /*
+        foofoo, foofoo, foofoo, foofoo,
+        /*
 
-               */
-            bar,
+    */
+        bar,
     )
 
     testtest(
-            foofoo, // fd
+        foofoo, // fd
     )
 
     testtest(
-            /**/
-            foofoo,
-    )
-
-    testtest(foofoo/**/)
-
-    testtest(
-            foofoo, foofoo, foofoo, foofoo,
-            /*
-                 */
-            /* */ bar,
-    )
-
-    testtest(
-            foofoo, // fd
-    )
-
-    testtest(
-            /**/
-            foofoo,
+        /**/
+        foofoo,
     )
 
     testtest(foofoo/**/)
 
     testtest(
-            foofoo, fososos,
-            /*
-                */
-            testtest(testtest(foofoo)),
+        foofoo, foofoo, foofoo, foofoo,
+        /*
+     */
+        /* */ bar,
+    )
+
+    testtest(
+        foofoo, // fd
+    )
+
+    testtest(
+        /**/
+        foofoo,
+    )
+
+    testtest(foofoo/**/)
+
+    testtest(
+        foofoo, fososos,
+        /*
+    */
+        testtest(testtest(foofoo)),
     )
 
     testtest(foofoo, testtest(testtest(foofoo)), /**/testsa)
@@ -275,83 +275,83 @@ fun foo() {
     testtest(foofoo, testtest(testtest(foofoo))/* */, /**/testsa)
 
     testtest(
-            foofoo, testtest(testtest(foofoo)),
-            /*
-                */
-            testsa,
+        foofoo, testtest(testtest(foofoo)),
+        /*
+    */
+        testsa,
     )
 
     testtest(foofoo, seee, testtest(testtest(foofoo)), /**/testsa)
 
     testtest(
-            foofoo, seee, testtest(testtest(foofoo)),
-            /*
-               */
-            testsa,
+        foofoo, seee, testtest(testtest(foofoo)),
+        /*
+    */
+        testsa,
     )
 
     useCallable(
-            "B", "C",
-            Callable {
+        "B", "C",
+        Callable {
+            println("Hello world")
+        },
+        /* */
+        Callable {
+            println("Hello world")
+        },
+    )
+
+    useCallable(
+        Callable { println("Hello world") }, // ffd
+    )
+
+    useCallable(
+        object : Callable<Unit> {
+            override fun call() {
                 println("Hello world")
-            },
-            /* */
-            Callable {
-                println("Hello world")
-            },
+            }
+        },
     )
 
     useCallable(
-            Callable { println("Hello world") }, // ffd
+        foo() {
+            println("Hello world")
+        },
     )
 
     useCallable(
-            object : Callable<Unit> {
-                override fun call() {
-                    println("Hello world")
-                }
-            },
+        {
+            println("Hello world")
+        },
     )
 
     useCallable(
-            foo() {
-                println("Hello world")
-            },
-    )
-
-    useCallable(
-            {
-                println("Hello world")
-            },
-    )
-
-    useCallable(
-            Callable { println("Hello world") },
+        Callable { println("Hello world") },
     )
 
     testtest(
-            foofoo,
+        foofoo,
+        testtest(
             testtest(
-                    testtest(
-                            foofoo,
-                    ),
+                foofoo,
             ),
-            testsa,
+        ),
+        testsa,
     )
 
     testtest(
-            foofoo, fososos, testtest(testtest(foofoo)),
+        foofoo, fososos, testtest(testtest(foofoo)),
     )
 
 }
 
 fun test() {
     baz(
-            f = fun(it: Int): String = "$it",
-            /*dwdwd
+        f = fun(it: Int): String = "$it",
+        /*dwdwd
         */
-            name = "",
-            /*
-                   */
+        name = "",
+        /*
+        */
     )
 }

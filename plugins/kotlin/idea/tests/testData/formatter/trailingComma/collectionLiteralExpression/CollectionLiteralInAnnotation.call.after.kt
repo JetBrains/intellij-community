@@ -7,23 +7,23 @@ fun a() = Unit
 fun a() = Unit
 
 @Anno(
-        [
-            1,
-        ],
+    [
+        1,
+    ],
 )
 fun a() = Unit
 
 @Anno(
-        [
-            1,
-        ],
+    [
+        1,
+    ],
 )
 fun a() = Unit
 
 @Anno(
-        [
-            1,
-        ],
+    [
+        1,
+    ],
 )
 fun a() = Unit
 
@@ -34,23 +34,23 @@ fun a() = Unit
 fun a() = Unit
 
 @Anno(
-        [
-            1, 2,
-        ],
+    [
+        1, 2,
+    ],
 )
 fun a() = Unit
 
 @Anno(
-        [
-            1, 2,
-        ],
+    [
+        1, 2,
+    ],
 )
 fun a() = Unit
 
 @Anno(
-        [
-            1, 2,
-        ],
+    [
+        1, 2,
+    ],
 )
 fun a() = Unit
 
@@ -61,128 +61,128 @@ fun a() = Unit
 fun a() = Unit
 
 @Anno(
-        [
-            "1",
-        ],
+    [
+        "1",
+    ],
 )
 fun a() = Unit
 
 @Anno(
-        [
-            1,
-        ],
+    [
+        1,
+    ],
 )
 fun a() = Unit
 
 @Anno(
-        [
-            1, 2, 2,
-        ],
+    [
+        1, 2, 2,
+    ],
 )
 fun a() = Unit
 
 @Anno(
-        [
-            1,
-            /*
-                */
-        ],
+    [
+        1,
+        /*
+    */
+    ],
 )
 fun a() = Unit
 
 @Anno(
-        [
-            1, //dw
-        ],
+    [
+        1, //dw
+    ],
 )
 fun a() = Unit
 
 @Anno(
-        [
-            1, // ds
-        ],
+    [
+        1, // ds
+    ],
 )
 fun a() = Unit
 
 @Anno(
-        [
-            /*
-                */ // d
-            1,
-            /*
-                */
-            /*
-                */
-        ],
+    [
+        /*
+    */ // d
+        1,
+        /*
+    */
+        /*
+    */
+    ],
 )
 fun a() = Unit
 
 @Anno(
-        [
-            /*
-       */
-            1,
-        ],
+    [
+        /*
+     */
+        1,
+    ],
 )
 fun a() = Unit
 
 @Anno(
-        [
-            1,
-            /*
-                */
-            2,
-        ],
+    [
+        1,
+        /*
+    */
+        2,
+    ],
 )
 fun a() = Unit
 
 @Anno(
-        [
-            1, 2,
-            /*
-                */
-            /*
-                */
-        ],
+    [
+        1, 2,
+        /*
+    */
+        /*
+    */
+    ],
 )
 fun a() = Unit
 
 @Anno(
-        [
-            /*
-                */
-            1, 2,
-        ],
+    [
+        /*
+    */
+        1, 2,
+    ],
 )
 fun a() = Unit
 
 @Anno(
-        [
-            "1",
-        ],
+    [
+        "1",
+    ],
 )
 fun a() = Unit
 
 @Anno(
-        [
-            1,
-        ],
+    [
+        1,
+    ],
 )
 fun a() = Unit
 
 @Anno(
-        [
-            1, 2,
-            /*
-              */
-        ],
+    [
+        1, 2,
+        /*
+    */
+    ],
 )
 fun a() = Unit
 
 @Component(
-        modules = [
-            AppModule::class, DataModule::class,
-            DomainModule::class,
-        ],
+    modules = [
+        AppModule::class, DataModule::class,
+        DomainModule::class,
+    ],
 )
 fun b() = Unit
