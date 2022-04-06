@@ -142,9 +142,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   protected void restoreSelection(@Nullable VirtualFile toSelect) {
-    final VirtualFile lastOpenedFile = FileChooserUtil.getLastOpenedFile(myProject);
-    final VirtualFile file = FileChooserUtil.getFileToSelect(myChooserDescriptor, myProject, toSelect, lastOpenedFile);
-
+    VirtualFile file = FileChooserUtil.getFileToSelect(myChooserDescriptor, myProject, toSelect);
     if (file != null && file.isValid()) {
       myPathTextField.setText(VfsUtil.getReadableUrl(file), true, () ->
         selectInTree(new VirtualFile[]{file}, false, false));

@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Consumer;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +49,7 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
   @SuppressWarnings("SpellCheckingInspection") private static final String ZIP_FS_TYPE = "zipfs";
 
   private final FileChooserDescriptor myDescriptor;
+  private final Project myProject;
   private FileChooserPanelImpl myPanel;
   private final NotNullLazyValue<VirtualFileSystem> myLocalFs =
     lazy(() -> ApplicationManager.getApplication() != null ? StandardFileSystems.local() : new CoreLocalFileSystem());
@@ -60,6 +60,7 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
   NewFileChooserDialogImpl(FileChooserDescriptor descriptor, @Nullable Component parent, @Nullable Project project) {
     super(project, parent, true, IdeModalityType.PROJECT);
     myDescriptor = descriptor;
+    myProject = project;
     setTitle(requireNonNullElseGet(descriptor.getTitle(), () -> UIBundle.message("file.chooser.default.title")));
     init();
   }
@@ -71,14 +72,14 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
 
   @Override
   public VirtualFile @NotNull [] choose(@Nullable Project project, VirtualFile @NotNull ... toSelect) {
-    myPanel.load(initialPath(toSelect.length > 0 ? toSelect[0] : null));
+    myPanel.load(FileChooserUtil.getInitialPath(myDescriptor, myProject, toSelect.length > 0 ? toSelect[0] : null));
     show();
     return myResults != null ? VfsUtilCore.toVirtualFileArray(myResults) : VirtualFile.EMPTY_ARRAY;
   }
 
   @Override
   public void choose(@Nullable VirtualFile toSelect, @NotNull Consumer<? super List<VirtualFile>> callback) {
-    myPanel.load(initialPath(toSelect));
+    myPanel.load(FileChooserUtil.getInitialPath(myDescriptor, myProject, toSelect));
     show();
     if (myResults != null) {
       callback.consume(myResults);
@@ -86,15 +87,6 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
     else if (callback instanceof FileChooser.FileChooserConsumer) {
       ((FileChooser.FileChooserConsumer)callback).cancelled();
     }
-  }
-
-  private static @Nullable Path initialPath(@Nullable VirtualFile provided) {
-    if (provided != null) {
-      var path = provided.getFileSystem().getNioPath(provided);
-      if (path != null) return path;
-    }
-
-    return NioFiles.toPath(recentPaths().findFirst().orElse(SystemProperties.getUserHome()));
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -7,15 +7,17 @@ import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -59,40 +61,36 @@ public final class FileChooserUtil {
     }
   }
 
-  @Nullable
-  public static VirtualFile getFileToSelect(@NotNull FileChooserDescriptor descriptor, @Nullable Project project,
-                                            @Nullable VirtualFile toSelect, @Nullable VirtualFile lastPath) {
-    boolean chooseDir = descriptor instanceof FileSaverDescriptor;
-    VirtualFile result;
+  @ApiStatus.Internal
+  public static @Nullable VirtualFile getFileToSelect(@NotNull FileChooserDescriptor descriptor, @Nullable Project project, @Nullable VirtualFile toSelect) {
+    VirtualFile result = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(pathToSelect(descriptor, project, toSelect)));
+    return result != null && descriptor instanceof FileSaverDescriptor && !result.isDirectory() ? result.getParent() : result;
+  }
 
-    if (toSelect == null && lastPath == null) {
-      result = project == null || project.isDefault() ? null : ProjectUtil.guessProjectDir(project);
-    }
-    else if (toSelect != null && lastPath != null) {
-      if (Boolean.TRUE.equals(descriptor.getUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT))) {
-        result = lastPath;
-      }
-      else {
-        result = toSelect;
-      }
-    }
-    else if (toSelect == null) {
-      result = lastPath;
-    }
-    else {
-      result = toSelect;
+  @ApiStatus.Internal
+  static @Nullable Path getInitialPath(@NotNull FileChooserDescriptor descriptor, @Nullable Project project, @Nullable VirtualFile toSelect) {
+    Path result = NioFiles.toPath(FileUtil.toSystemDependentName(pathToSelect(descriptor, project, toSelect)));
+    return result != null && descriptor instanceof FileSaverDescriptor && !Files.isDirectory(result) ? result.getParent() : result;
+  }
+
+  private static String pathToSelect(FileChooserDescriptor descriptor, @Nullable Project project, @Nullable VirtualFile toSelect) {
+    String last = (project != null ? PropertiesComponent.getInstance(project) : PropertiesComponent.getInstance()).getValue(LAST_OPENED_FILE_PATH);
+    if (last != null && (toSelect == null || descriptor.getUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT) == Boolean.TRUE)) {
+      return last;
     }
 
-    if (result != null) {
-      if (chooseDir && !result.isDirectory()) {
-        result = result.getParent();
-      }
-    }
-    else if (SystemInfo.isUnix) {
-      result = VfsUtil.getUserHomeDir();
+    if (toSelect != null) {
+      return toSelect.getPath();
     }
 
-    return result;
+    if (project != null && !project.isDefault()) {
+      VirtualFile projectDir = ProjectUtil.guessProjectDir(project);
+      if (projectDir != null) {
+        return projectDir.getPath();
+      }
+    }
+
+    return SystemProperties.getUserHome();
   }
 
   @NotNull
