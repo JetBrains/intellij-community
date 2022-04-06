@@ -42,9 +42,6 @@
 
     <colorSettingsPage implementation="org.jetbrains.kotlin.idea.highlighter.KotlinColorSettingsPage"/>
 
-    <additionalTextAttributes scheme="Default" file="colorScheme/Default_Kotlin.xml"/>
-    <additionalTextAttributes scheme="Darcula" file="colorScheme/Darcula_Kotlin.xml"/>
-
     <registryKey
             key="kotlin.resolve.force.full.resolve.on.highlighting"
             description="Force to perform full resolve on highlighting"
