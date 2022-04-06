@@ -185,6 +185,13 @@ public final class FindManagerImpl extends FindManager {
   }
 
   @Override
+  public void closeFindDialog() {
+    if (myHelper != null) {
+      myHelper.closeUI();
+    }
+  }
+
+  @Override
   @NotNull
   public FindModel getFindInFileModel() {
     return myFindInFileModel;

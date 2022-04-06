@@ -396,7 +396,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     }
   }
 
-  private void closeIfPossible() {
+  @Override
+  public void closeIfPossible() {
     if (canBeClosed() && !myIsPinned.get()) {
       myDialog.doCancelAction();
     }
