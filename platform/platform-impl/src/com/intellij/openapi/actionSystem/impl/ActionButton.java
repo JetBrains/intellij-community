@@ -242,6 +242,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       myPresentation.removePropertyChangeListener(myPresentationListener);
       myPresentationListener = null;
     }
+    if (myMouseDown) {
+      ourGlobalMouseDown = false;
+    }
     myRollover = false;
     myMouseDown = false;
     HelpTooltip.dispose(this);
