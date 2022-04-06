@@ -22,7 +22,7 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.FlowModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
-import com.jetbrains.packagesearch.intellij.plugin.lifecycle.ProjectLifecycleHolderService
+import com.jetbrains.packagesearch.intellij.plugin.lifecycle.PackageSearchLifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.UiCommandsService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateModifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateSource
@@ -107,7 +107,7 @@ internal val Project.moduleChangesSignalFlow
     get() = merge(ModuleChangesSignalProvider.listenToModuleChanges(this), FlowModuleChangesSignalProvider.listenToModuleChanges(this))
 
 internal val Project.lifecycleScope: CoroutineScope
-    get() = service<ProjectLifecycleHolderService>()
+    get() = service<PackageSearchLifecycleScope>()
 
 internal val Project.uiStateModifier: UiStateModifier
     get() = service<UiCommandsService>()

@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
@@ -39,11 +38,10 @@ import com.jetbrains.packagesearch.intellij.plugin.util.throttle
 import com.jetbrains.packagesearch.intellij.plugin.util.timer
 import com.jetbrains.packagesearch.intellij.plugin.util.trustedProjectFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.whileLoading
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -52,7 +50,6 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -60,14 +57,12 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.job
 import kotlinx.serialization.json.Json
-import kotlin.math.max
 import kotlin.time.Duration
 import kotlin.time.seconds
 
 @Service(Service.Level.PROJECT)
-internal class PackageSearchProjectService(private val project: Project) : CoroutineScope by project.lifecycleScope {
+internal class PackageSearchProjectService(private val project: Project) {
 
     private val retryFromErrorChannel = Channel<Unit>()
     private val restartChannel = Channel<Unit>()
@@ -101,7 +96,8 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
         installedPackagesStep2LoadingFlow,
         installedPackagesDifferenceLoadingFlow,
         packageUpgradesLoadingFlow
-    ) { booleans -> emit(booleans.any { it }) }.stateIn(this, SharingStarted.Eagerly, false)
+    ) { booleans -> emit(booleans.any { it }) }
+        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, false)
 
     private val projectModulesSharedFlow = project.trustedProjectFlow.flatMapLatest { isProjectTrusted ->
         if (isProjectTrusted) project.nativeModulesChangesFlow else flowOf(emptyList())
@@ -129,9 +125,9 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
             fallbackValue = emptyList(),
             retryChannel = retryFromErrorChannel
         )
-        .shareIn(this, SharingStarted.Eagerly)
+        .shareIn(project.lifecycleScope, SharingStarted.Eagerly)
 
-    val projectModulesStateFlow = projectModulesSharedFlow.stateIn(this, SharingStarted.Eagerly, emptyList())
+    val projectModulesStateFlow = projectModulesSharedFlow.stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyList())
 
     val isAvailable
         get() = projectModulesStateFlow.value.isNotEmpty()
@@ -143,13 +139,13 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
             message = "Error while refreshing known repositories",
             fallbackValue = emptyList()
         )
-        .stateIn(this, SharingStarted.Eagerly, emptyList())
+        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyList())
 
     private val buildFileChangesFlow = combine(
         projectModulesSharedFlow,
         project.filesChangedEventFlow.map { it.mapNotNull { it.file } }
     ) { modules, changedBuildFiles -> modules.filter { it.buildFile in changedBuildFiles } }
-        .shareIn(this, SharingStarted.Eagerly)
+        .shareIn(project.lifecycleScope, SharingStarted.Eagerly)
 
     private val projectModulesChangesFlow = merge(
         buildFileChangesFlow.filter { it.isNotEmpty() },
@@ -162,7 +158,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
             message = "Error while checking Modules changes",
             fallbackValue = emptyList()
         )
-        .shareIn(this, SharingStarted.Eagerly)
+        .shareIn(project.lifecycleScope, SharingStarted.Eagerly)
 
     val moduleModelsStateFlow = projectModulesSharedFlow
         .mapLatestTimedWithLoading(
@@ -181,7 +177,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
             fallbackValue = emptyList(),
             retryChannel = retryFromErrorChannel
         )
-        .stateIn(this, SharingStarted.Eagerly, emptyList())
+        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyList())
 
     val allInstalledKnownRepositoriesFlow =
         combine(moduleModelsStateFlow, knownRepositoriesFlow) { moduleModels, repos -> moduleModels to repos }
@@ -196,16 +192,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
                 message = "Error while evaluating installed repositories",
                 fallbackValue = KnownRepositories.All.EMPTY
             )
-            .stateIn(this, SharingStarted.Eagerly, KnownRepositories.All.EMPTY)
-
-    private inline val pkgsThreadCount
-        get() = max(1, Runtime.getRuntime().availableProcessors() / 4)
-
-    private val installedDependenciesExecutor =
-        AppExecutorUtil.createBoundedApplicationPoolExecutor(
-            /* name = */ "${this::class.java.simpleName}InstalledDependenciesExecutor",
-            /* maxThreads = */ pkgsThreadCount
-        ).asCoroutineDispatcher()
+            .stateIn(project.lifecycleScope, SharingStarted.Eagerly, KnownRepositories.All.EMPTY)
 
     val dependenciesByModuleStateFlow = projectModulesSharedFlow
         .mapLatestTimedWithLoading("installedPackagesStep1LoadingFlow", installedPackagesStep1LoadingFlow) {
@@ -226,8 +213,7 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
             fallbackValue = emptyMap(),
             retryChannel = retryFromErrorChannel
         )
-        .flowOn(installedDependenciesExecutor)
-        .stateIn(this, SharingStarted.Eagerly, emptyMap())
+        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyMap())
 
     val installedPackagesStateFlow = dependenciesByModuleStateFlow
         .mapLatestTimedWithLoading("installedPackagesStep2LoadingFlow", installedPackagesStep2LoadingFlow) {
@@ -244,26 +230,27 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
             fallbackValue = emptyList(),
             retryChannel = retryFromErrorChannel
         )
-        .flowOn(installedDependenciesExecutor)
-        .stateIn(this, SharingStarted.Eagerly, emptyList())
+        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyList())
 
     val packageUpgradesStateFlow = combine(
         installedPackagesStateFlow,
         moduleModelsStateFlow,
         knownRepositoriesFlow
     ) { installedPackages, moduleModels, repos ->
-        availableUpgradesLoadingFlow.whileLoading {
-            val allKnownRepos = allKnownRepositoryModels(moduleModels, repos)
-            val nativeModulesMap = moduleModels.associateBy { it.projectModule }
+        coroutineScope {
+            availableUpgradesLoadingFlow.whileLoading {
+                val allKnownRepos = allKnownRepositoryModels(moduleModels, repos)
+                val nativeModulesMap = moduleModels.associateBy { it.projectModule }
 
-            val getUpgrades: suspend (Boolean) -> PackagesToUpgrade = {
-                computePackageUpgrades(installedPackages, it, packageVersionNormalizer, allKnownRepos, nativeModulesMap)
-            }
+                val getUpgrades: suspend (Boolean) -> PackagesToUpgrade = {
+                    computePackageUpgrades(installedPackages, it, packageVersionNormalizer, allKnownRepos, nativeModulesMap)
+                }
 
-            val stableUpdates = async { getUpgrades(true) }
-            val allUpdates = async { getUpgrades(false) }
-            PackageUpgradeCandidates(stableUpdates.await(), allUpdates.await())
-        }.value
+                val stableUpdates = async { getUpgrades(true) }
+                val allUpdates = async { getUpgrades(false) }
+                PackageUpgradeCandidates(stableUpdates.await(), allUpdates.await())
+            }.value
+        }
     }
         .catchAndLog(
             context = "${this::class.qualifiedName}#packageUpgradesStateFlow",
@@ -271,14 +258,14 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
             fallbackValue = PackageUpgradeCandidates.EMPTY,
             retryChannel = retryFromErrorChannel
         )
-        .stateIn(this, SharingStarted.Eagerly, PackageUpgradeCandidates.EMPTY)
+        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, PackageUpgradeCandidates.EMPTY)
 
     init {
         // allows rerunning PKGS inspections on already opened files
         // when the data is finally available or changes for PackageUpdateInspection
         // or when a build file changes
         packageUpgradesStateFlow.onEach { DaemonCodeAnalyzer.getInstance(project).restart() }
-            .launchIn(this)
+            .launchIn(project.lifecycleScope)
 
         var controller: BackgroundLoadingBarController? = null
 
@@ -292,10 +279,9 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
                         PackageSearchBundle.message("toolwindow.stripe.Dependencies"),
                         PackageSearchBundle.message("packagesearch.ui.loading")
                     )
-                }.launchIn(this)
+                }.launchIn(project.lifecycleScope)
         }
 
-        coroutineContext.job.invokeOnCompletion { installedDependenciesExecutor.close() }
     }
 
     fun notifyOperationExecuted(successes: List<ProjectModule>) {
