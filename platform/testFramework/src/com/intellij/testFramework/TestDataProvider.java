@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.HashSet;
 
 /**
  * @author peter
@@ -85,7 +84,7 @@ public class TestDataProvider implements DataProvider, DataContext {
       }
 
       if (myWithRules) {
-        return ((DataManagerImpl)DataManager.getInstance()).getDataFromProvider(myDelegateWithoutRules, dataId, new HashSet<>());
+        return ((DataManagerImpl)DataManager.getInstance()).getDataSimple(dataId, myDelegateWithoutRules);
       }
       return null;
     }

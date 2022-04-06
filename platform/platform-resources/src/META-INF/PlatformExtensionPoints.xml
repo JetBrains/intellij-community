@@ -74,7 +74,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="getDataRule"
-                    beanClass="com.intellij.ide.impl.DataManagerImpl$GetDataRuleBean"
+                    beanClass="com.intellij.ide.impl.GetDataRuleBean"
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.impl.dataRules.GetDataRule"/>
     </extensionPoint>

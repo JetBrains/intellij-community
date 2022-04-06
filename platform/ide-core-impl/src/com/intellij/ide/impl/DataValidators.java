@@ -1,12 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
+import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
@@ -73,25 +76,22 @@ public abstract class DataValidators {
   private static final Map<String, Validator<?>[]> ourValidators = new ConcurrentHashMap<>();
 
   static {
-    EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
-      @Override
-      public void extensionAdded(@NotNull DataValidators extension,
-                                 @NotNull PluginDescriptor pluginDescriptor) {
-        ourValidators.clear();
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull DataValidators extension,
-                                   @NotNull PluginDescriptor pluginDescriptor) {
-        ourValidators.clear();
-      }
-    }, null);
+    Application app = ApplicationManager.getApplication();
+    ExtensionPoint<KeyedLazyInstance<GetDataRule>> dataRuleEP = app.getExtensionArea()
+      .getExtensionPointIfRegistered(EP_NAME.getName());
+    if (dataRuleEP != null) {
+      dataRuleEP.addChangeListener(() -> ourValidators.clear(), app);
+    }
   }
 
   static Validator<?> @Nullable [] getValidators(@NotNull String dataId) {
     Validator<?>[] result = ourValidators.get(dataId);
     if (result != null || !ourValidators.isEmpty()) {
       return result;
+    }
+    List<DataValidators> extensions = EP_NAME.getExtensionsIfPointIsRegistered();
+    if (extensions.isEmpty()) {
+      return null;
     }
     Map<String, List<Validator<?>>> map = FactoryMap.create(__ -> new ArrayList<>());
     Registry registry = new Registry() {
@@ -101,7 +101,7 @@ public abstract class DataValidators {
         map.get(key.getName()).add(validator);
       }
     };
-    for (DataValidators validators : EP_NAME.getExtensionList()) {
+    for (DataValidators validators : extensions) {
       validators.collectValidators(registry);
     }
     Validator<?>[] emptyArray = new Validator[0];

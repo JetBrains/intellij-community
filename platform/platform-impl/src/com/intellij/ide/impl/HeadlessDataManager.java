@@ -2,7 +2,6 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -35,14 +34,7 @@ public class HeadlessDataManager extends DataManagerImpl {
     @Override
     @Nullable
     public Object getData(@NotNull String dataId) {
-      Object result = getDataFromSelfOrParent(dataId);
-      if (result == null) {
-        GetDataRule rule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(dataId);
-        if (rule != null) {
-          return rule.getData(this::getDataFromSelfOrParent);
-        }
-      }
-      return result;
+      return ((DataManagerImpl)DataManager.getInstance()).getDataSimple(dataId, this::getDataFromSelfOrParent);
     }
 
     @Nullable
