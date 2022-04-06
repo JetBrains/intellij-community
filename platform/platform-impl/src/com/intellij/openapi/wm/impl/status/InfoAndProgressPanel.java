@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -404,11 +404,14 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
                                         @NotNull @PopupContent String htmlBody,
                                         @Nullable Icon icon,
                                         @Nullable HyperlinkListener listener) {
-    Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
-      htmlBody.replace("\n", "<br>"),
-      icon != null ? icon : type.getDefaultIcon(),
-      type.getPopupBackground(),
-      listener).createBalloon();
+    Balloon balloon = JBPopupFactory.getInstance()
+      .createHtmlTextBalloonBuilder(htmlBody.replace("\n", "<br>"),
+                                    icon != null ? icon : type.getDefaultIcon(),
+                                    type.getTitleForeground(),
+                                    type.getPopupBackground(),
+                                    listener)
+      .setBorderColor(type.getBorderColor())
+      .createBalloon();
 
     SwingUtilities.invokeLater(() -> {
       Balloon oldBalloon = SoftReference.dereference(myLastShownBalloon);
