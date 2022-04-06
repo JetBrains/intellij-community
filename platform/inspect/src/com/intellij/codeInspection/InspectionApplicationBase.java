@@ -905,7 +905,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
     @Override
     public void setText(String text) {
-      if (Comparing.equal(text, getText())) {
+      if (Objects.equals(text, getText())) {
         return;
       }
       super.setText(text);

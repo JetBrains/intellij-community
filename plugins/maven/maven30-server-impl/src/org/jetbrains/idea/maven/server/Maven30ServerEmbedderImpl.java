@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ReflectionUtilRt;
@@ -146,7 +145,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       }
     };
 
-    Class cliRequestClass;
+    Class<?> cliRequestClass;
     try {
       cliRequestClass = MavenCli.class.getClassLoader().loadClass("org.apache.maven.cli.MavenCli$CliRequest");
     }
@@ -177,8 +176,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
         myAlwaysUpdateSnapshots = true;
       }
 
-      //noinspection unchecked
-      Constructor constructor = cliRequestClass.getDeclaredConstructor(String[].class, ClassWorld.class);
+      Constructor<?> constructor = cliRequestClass.getDeclaredConstructor(String[].class, ClassWorld.class);
       constructor.setAccessible(true);
       //noinspection SSBasedInspection
       cliRequest = constructor.newInstance(commandLineOptions.toArray(new String[0]), classWorld);
@@ -1058,8 +1056,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       List<MavenArtifact> res = new ArrayList<MavenArtifact>();
 
       for (org.sonatype.aether.artifact.Artifact artifact : nlg.getArtifacts(true)) {
-        if (!Comparing.equal(artifact.getArtifactId(), plugin.getArtifactId()) ||
-            !Comparing.equal(artifact.getGroupId(), plugin.getGroupId())) {
+        if (!Objects.equals(artifact.getArtifactId(), plugin.getArtifactId()) ||
+            !Objects.equals(artifact.getGroupId(), plugin.getGroupId())) {
           res.add(MavenModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifact), getLocalRepositoryFile()));
         }
       }
@@ -1228,38 +1226,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   public interface Computable<T> {
     T compute();
-  }
-
-  private class MyLogger implements org.sonatype.aether.spi.log.Logger {
-    @Override
-    public boolean isDebugEnabled() {
-      return myConsoleWrapper.isDebugEnabled();
-    }
-
-    @Override
-    public void debug(String s) {
-      myConsoleWrapper.debug(s);
-    }
-
-    @Override
-    public void debug(String s, Throwable throwable) {
-      myConsoleWrapper.debug(s, throwable);
-    }
-
-    @Override
-    public boolean isWarnEnabled() {
-      return myConsoleWrapper.isWarnEnabled();
-    }
-
-    @Override
-    public void warn(String s) {
-      myConsoleWrapper.warn(s);
-    }
-
-    @Override
-    public void warn(String s, Throwable throwable) {
-      myConsoleWrapper.debug(s, throwable);
-    }
   }
 }
 
