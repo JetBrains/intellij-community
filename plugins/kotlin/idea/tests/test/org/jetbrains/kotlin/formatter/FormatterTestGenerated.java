@@ -689,6 +689,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/DanglingComments.after.kt");
             }
 
+            @TestMetadata("DefinitelyNonNullTypes.after.kt")
+            public void testDefinitelyNonNullTypes() throws Exception {
+                runTest("testData/formatter/DefinitelyNonNullTypes.after.kt");
+            }
+
             @TestMetadata("DelegationList.after.kt")
             public void testDelegationList() throws Exception {
                 runTest("testData/formatter/DelegationList.after.kt");
