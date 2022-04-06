@@ -16,7 +16,6 @@
 
 package org.jetbrains.idea.maven.model;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -365,17 +364,15 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
 
     MavenArtifact that = (MavenArtifact)o;
 
-    if (myGroupId != null ? !myGroupId.equals(that.myGroupId) : that.myGroupId != null) return false;
-    if (myArtifactId != null ? !myArtifactId.equals(that.myArtifactId) : that.myArtifactId != null) return false;
-    if (myVersion != null ? !myVersion.equals(that.myVersion) : that.myVersion != null) return false;
-    if (myBaseVersion != null ? !myBaseVersion.equals(that.myBaseVersion) : that.myBaseVersion != null) return false;
-    if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
-    if (myClassifier != null ? !myClassifier.equals(that.myClassifier) : that.myClassifier != null) return false;
-    if (myScope != null ? !myScope.equals(that.myScope) : that.myScope != null) return false;
-    if (myExtension != null ? !myExtension.equals(that.myExtension) : that.myExtension != null) return false;
-    if (myFile != null ? !myFile.equals(that.myFile) : that.myFile != null) return false;
-
-    return true;
+    return Objects.equals(myGroupId, that.myGroupId) &&
+           Objects.equals(myArtifactId, that.myArtifactId) &&
+           Objects.equals(myVersion, that.myVersion) &&
+           Objects.equals(myBaseVersion, that.myBaseVersion) &&
+           Objects.equals(myType, that.myType) &&
+           Objects.equals(myClassifier, that.myClassifier) &&
+           Objects.equals(myScope, that.myScope) &&
+           Objects.equals(myExtension, that.myExtension) &&
+           Objects.equals(myFile, that.myFile);
   }
 
   @Override
