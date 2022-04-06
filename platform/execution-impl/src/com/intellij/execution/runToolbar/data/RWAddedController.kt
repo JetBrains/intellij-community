@@ -3,46 +3,70 @@ package com.intellij.execution.runToolbar.data
 
 class RWAddedController : RWListenersController<RWActiveListener>() {
   fun enabled() {
-    listeners.forEach { it.enabled() }
+    doWithListeners { listeners ->
+      listeners.forEach { it.enabled() }
+    }
   }
 
   fun disabled() {
-    listeners.forEach { it.disabled() }
+    doWithListeners { listeners ->
+      listeners.forEach { it.disabled() }
+    }
   }
 }
 
 internal class RWSlotController : RWListenersController<RWSlotListener>() {
   fun rebuildPopup() {
-    listeners.forEach { it.rebuildPopup() }
+    doWithListeners { listeners ->
+      listeners.forEach { it.rebuildPopup() }
+    }
   }
 
   fun slotAdded() {
-    listeners.forEach { it.slotAdded() }
+    doWithListeners { listeners ->
+      listeners.forEach { it.slotAdded() }
+    }
   }
 
   fun slotRemoved(index: Int) {
-    listeners.forEach { it.slotRemoved(index) }
+    doWithListeners { listeners ->
+      listeners.forEach { it.slotRemoved(index) }
+    }
   }
 }
 
 internal class RWStateController : RWListenersController<RWStateListener>() {
   fun stateChanged(value: RWSlotManagerState) {
-    listeners.forEach { it.stateChanged(value) }
+    doWithListeners { listeners ->
+      listeners.forEach { it.stateChanged(value) }
+    }
   }
 }
 
 abstract class RWListenersController<T> {
-  protected val listeners = mutableListOf<T>()
+  private val listenersUnsafe = mutableListOf<T>()
+  private val listenerLock = Object()
+  protected fun doWithListeners(action: (MutableList<T>) -> Unit) {
+    synchronized(listenerLock) {
+      action(listenersUnsafe)
+    }
+  }
 
   fun addListener(listener: T) {
-    listeners.add(listener)
+    doWithListeners { listeners ->
+      listeners.add(listener)
+    }
   }
 
   fun removeListener(listener: T) {
-    listeners.remove(listener)
+    doWithListeners { listeners ->
+      listeners.remove(listener)
+    }
   }
 
   fun clear() {
-    listeners.clear()
+    doWithListeners { listeners ->
+      listeners.clear()
+    }
   }
 }
