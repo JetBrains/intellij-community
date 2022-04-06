@@ -6,6 +6,8 @@ import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.impl.source.PsiImmediateClassType
+import com.intellij.psi.javadoc.PsiDocComment
+import com.intellij.psi.javadoc.PsiDocTag
 import com.intellij.psi.javadoc.PsiSnippetDocTag
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -266,6 +268,31 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
 
+  void "test add tags as range"() {
+    def file = configureFile(
+      """/**
+ * @t1
+ * @t2
+ */
+class A {}
+/**
+ */
+class B {}""")
+    def classes = file.classes
+    PsiDocComment sourceDocComment = classes[0].docComment
+    assertNotNull(sourceDocComment)
+
+    PsiDocComment targetDocComment = classes[1].docComment
+    assertNotNull(targetDocComment)
+    
+    final PsiDocTag[] tags = sourceDocComment.getTags()
+    runCommand { targetDocComment.addRange(tags[0], tags[tags.length - 1]) }
+    assertEquals(targetDocComment.getText(), "/**\n" +
+                                             " * @t1\n" +
+                                             " * @t2\n" +
+                                             " */")
+  }
+  
   private PsiJavaFile configureFile(String text) {
     myFixture.configureByText("a.java", text) as PsiJavaFile
   }
