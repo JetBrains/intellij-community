@@ -38,7 +38,11 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
 
         /**
          * [getInstance] returns always initialized [JpsPluginSettings]. Contrary, [getInstanceUnsafe] returns "bare" [JpsPluginSettings]
-         * value. [getInstanceUnsafe] is needed for cases when it's important to preserve "not initialized" state
+         * value.
+         *
+         * [getInstanceUnsafe] is needed for cases when:
+         * * it's important to preserve "not initialized" state
+         * * it's important not to trigger `.idea/kotlinc.xml` file creation
          */
         fun getInstanceUnsafe(project: Project): KotlinJpsPluginSettings? =
             if (isUnbundledJpsExperimentalFeatureEnabled(project)) project.getServiceSafe() else null

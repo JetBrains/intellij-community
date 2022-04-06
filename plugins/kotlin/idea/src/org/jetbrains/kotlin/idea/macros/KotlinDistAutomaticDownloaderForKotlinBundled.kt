@@ -32,7 +32,7 @@ class KotlinDistAutomaticDownloaderForKotlinBundled : StartupActivity.DumbAware 
     override fun runActivity(project: Project) {
         project.messageBus.connect().subscribe(KotlinCompilerSettingsListener.TOPIC, object : KotlinCompilerSettingsListener {
             override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
-                if (newSettings !is JpsPluginSettings || newSettings.version.isBlank()) {
+                if (newSettings !is JpsPluginSettings) {
                     return
                 }
                 downloadKotlinDistIfNeeded(
@@ -45,10 +45,10 @@ class KotlinDistAutomaticDownloaderForKotlinBundled : StartupActivity.DumbAware 
         val detector = KotlinBundledUsageDetector.getInstance(project)
         detector.coroutineScope.launch {
             detector.isKotlinBundledPotentiallyUsedInLibraries.collect {
-                downloadKotlinDistIfNeeded(it, KotlinJpsPluginSettings.getInstance(project)?.settings?.version ?: return@collect, project)
+                downloadKotlinDistIfNeeded(it, KotlinJpsPluginSettings.getInstanceUnsafe(project)?.settings?.version ?: return@collect, project)
             }
         }
-        KotlinJpsPluginSettings.getInstance(project)?.settings?.let { settings ->
+        KotlinJpsPluginSettings.getInstanceUnsafe(project)?.settings?.let { settings ->
             downloadKotlinDistIfNeeded(
                 KotlinBundledUsageDetector.getInstance(project).isKotlinBundledPotentiallyUsedInLibraries.value,
                 settings.version,
@@ -58,7 +58,7 @@ class KotlinDistAutomaticDownloaderForKotlinBundled : StartupActivity.DumbAware 
     }
 
     private fun downloadKotlinDistIfNeeded(isKotlinBundledPotentiallyUsedInLibraries: Boolean, version: String, project: Project) {
-        if (isKotlinBundledPotentiallyUsedInLibraries && !KotlinArtifactsDownloader.isKotlinDistInitialized(version)) {
+        if (version.isNotBlank() && isKotlinBundledPotentiallyUsedInLibraries && !KotlinArtifactsDownloader.isKotlinDistInitialized(version)) {
             ProgressManager.getInstance()
                 .run(object : Task.Backgroundable(project, KotlinBundle.getMessage("progress.text.downloading.kotlinc.dist"), true) {
                     override fun run(indicator: ProgressIndicator) {
