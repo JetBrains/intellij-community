@@ -1,38 +1,36 @@
 package com.intellij.workspaceModel.storage.entities.api
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.PersistentEntityId
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.entities.api.ListVFUEntity
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import org.jetbrains.deft.*
-import org.jetbrains.deft.bytes.*
-import org.jetbrains.deft.collections.*
-import org.jetbrains.deft.impl.*
-import org.jetbrains.deft.impl.fields.Field
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.impl.ObjType
 
     
 
-open class PersistentIdEntityImpl: PersistentIdEntity, WorkspaceEntityBase() {
+open class ListVFUEntityImpl: ListVFUEntity, WorkspaceEntityBase() {
     
     
     override val factory: ObjType<*, *>
-        get() = PersistentIdEntity
+        get() = ListVFUEntity
         
     @JvmField var _data: String? = null
     override val data: String
         get() = _data!!
+                        
+    @JvmField var _fileProperty: List<VirtualFileUrl>? = null
+    override val fileProperty: List<VirtualFileUrl>
+        get() = _fileProperty!!
 
-    class Builder(val result: PersistentIdEntityData?): ModifiableWorkspaceEntityBase<PersistentIdEntity>(), PersistentIdEntity.Builder {
-        constructor(): this(PersistentIdEntityData())
+    class Builder(val result: ListVFUEntityData?): ModifiableWorkspaceEntityBase<ListVFUEntity>(), ListVFUEntity.Builder {
+        constructor(): this(ListVFUEntityData())
                  
-        override val factory: ObjType<PersistentIdEntity, *> get() = TODO()
-        override fun build(): PersistentIdEntity = this
+        override val factory: ObjType<ListVFUEntity, *> get() = TODO()
+        override fun build(): ListVFUEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
             if (this.diff != null) {
@@ -41,7 +39,7 @@ open class PersistentIdEntityImpl: PersistentIdEntity, WorkspaceEntityBase() {
                     return
                 }
                 else {
-                    error("Entity PersistentIdEntity is already created in a different builder")
+                    error("Entity ListVFUEntity is already created in a different builder")
                 }
             }
             
@@ -50,6 +48,7 @@ open class PersistentIdEntityImpl: PersistentIdEntity, WorkspaceEntityBase() {
             addToBuilder()
             this.id = getEntityData().createEntityId()
             
+            index(this, "fileProperty", this.fileProperty.toHashSet())
             // Process entities from extension fields
             val keysToRemove = ArrayList<ExtRefKey>()
             for ((key, entity) in extReferences) {
@@ -103,10 +102,13 @@ open class PersistentIdEntityImpl: PersistentIdEntity, WorkspaceEntityBase() {
         fun checkInitialization() {
             val _diff = diff
             if (!getEntityData().isDataInitialized()) {
-                error("Field PersistentIdEntity#data should be initialized")
+                error("Field ListVFUEntity#data should be initialized")
             }
             if (!getEntityData().isEntitySourceInitialized()) {
-                error("Field PersistentIdEntity#entitySource should be initialized")
+                error("Field ListVFUEntity#entitySource should be initialized")
+            }
+            if (!getEntityData().isFilePropertyInitialized()) {
+                error("Field ListVFUEntity#fileProperty should be initialized")
             }
         }
     
@@ -127,22 +129,34 @@ open class PersistentIdEntityImpl: PersistentIdEntity, WorkspaceEntityBase() {
                 changedProperty.add("entitySource")
                 
             }
+            
+        override var fileProperty: List<VirtualFileUrl>
+            get() = getEntityData().fileProperty
+            set(value) {
+                checkModificationAllowed()
+                getEntityData().fileProperty = value
+                val _diff = diff
+                if (_diff != null) index(this, "fileProperty", value.toHashSet())
+                changedProperty.add("fileProperty")
+            }
         
-        override fun getEntityData(): PersistentIdEntityData = result ?: super.getEntityData() as PersistentIdEntityData
-        override fun getEntityClass(): Class<PersistentIdEntity> = PersistentIdEntity::class.java
+        override fun getEntityData(): ListVFUEntityData = result ?: super.getEntityData() as ListVFUEntityData
+        override fun getEntityClass(): Class<ListVFUEntity> = ListVFUEntity::class.java
     }
     
     // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(PersistentIdEntityData())
+    fun builder(): ObjBuilder<*> = Builder(ListVFUEntityData())
 }
     
-class PersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<PersistentIdEntity>() {
+class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
     lateinit var data: String
+    lateinit var fileProperty: List<VirtualFileUrl>
 
     fun isDataInitialized(): Boolean = ::data.isInitialized
+    fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<PersistentIdEntity> {
-        val modifiable = PersistentIdEntityImpl.Builder(null)
+    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ListVFUEntity> {
+        val modifiable = ListVFUEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
           modifiable.snapshot = diff
@@ -152,29 +166,25 @@ class PersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<Pe
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): PersistentIdEntity {
-        val entity = PersistentIdEntityImpl()
+    override fun createEntity(snapshot: WorkspaceEntityStorage): ListVFUEntity {
+        val entity = ListVFUEntityImpl()
         entity._data = data
+        entity._fileProperty = fileProperty
         entity.entitySource = entitySource
         entity.snapshot = snapshot
         entity.id = createEntityId()
         return entity
     }
 
-    override fun persistentId(): PersistentEntityId<*> {
-        
-      return LinkedListEntityId(data)
-    
-    }
-
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false
         
-        other as PersistentIdEntityData
+        other as ListVFUEntityData
         
         if (this.data != other.data) return false
         if (this.entitySource != other.entitySource) return false
+        if (this.fileProperty != other.fileProperty) return false
         return true
     }
 
@@ -182,15 +192,17 @@ class PersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<Pe
         if (other == null) return false
         if (this::class != other::class) return false
         
-        other as PersistentIdEntityData
+        other as ListVFUEntityData
         
         if (this.data != other.data) return false
+        if (this.fileProperty != other.fileProperty) return false
         return true
     }
 
     override fun hashCode(): Int {
         var result = entitySource.hashCode()
         result = 31 * result + data.hashCode()
+        result = 31 * result + fileProperty.hashCode()
         return result
     }
 }

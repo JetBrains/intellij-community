@@ -1,38 +1,40 @@
 package com.intellij.workspaceModel.storage.entities.api
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.PersistentEntityId
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.entities.api.VFUWithTwoPropertiesEntity
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import org.jetbrains.deft.*
-import org.jetbrains.deft.bytes.*
-import org.jetbrains.deft.collections.*
-import org.jetbrains.deft.impl.*
-import org.jetbrains.deft.impl.fields.Field
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.impl.ObjType
 
     
 
-open class PersistentIdEntityImpl: PersistentIdEntity, WorkspaceEntityBase() {
+open class VFUWithTwoPropertiesEntityImpl: VFUWithTwoPropertiesEntity, WorkspaceEntityBase() {
     
     
     override val factory: ObjType<*, *>
-        get() = PersistentIdEntity
+        get() = VFUWithTwoPropertiesEntity
         
     @JvmField var _data: String? = null
     override val data: String
         get() = _data!!
+                        
+    @JvmField var _fileProperty: VirtualFileUrl? = null
+    override val fileProperty: VirtualFileUrl
+        get() = _fileProperty!!
+                        
+    @JvmField var _secondFileProperty: VirtualFileUrl? = null
+    override val secondFileProperty: VirtualFileUrl
+        get() = _secondFileProperty!!
 
-    class Builder(val result: PersistentIdEntityData?): ModifiableWorkspaceEntityBase<PersistentIdEntity>(), PersistentIdEntity.Builder {
-        constructor(): this(PersistentIdEntityData())
+    class Builder(val result: VFUWithTwoPropertiesEntityData?): ModifiableWorkspaceEntityBase<VFUWithTwoPropertiesEntity>(), VFUWithTwoPropertiesEntity.Builder {
+        constructor(): this(VFUWithTwoPropertiesEntityData())
                  
-        override val factory: ObjType<PersistentIdEntity, *> get() = TODO()
-        override fun build(): PersistentIdEntity = this
+        override val factory: ObjType<VFUWithTwoPropertiesEntity, *> get() = TODO()
+        override fun build(): VFUWithTwoPropertiesEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
             if (this.diff != null) {
@@ -41,7 +43,7 @@ open class PersistentIdEntityImpl: PersistentIdEntity, WorkspaceEntityBase() {
                     return
                 }
                 else {
-                    error("Entity PersistentIdEntity is already created in a different builder")
+                    error("Entity VFUWithTwoPropertiesEntity is already created in a different builder")
                 }
             }
             
@@ -50,6 +52,8 @@ open class PersistentIdEntityImpl: PersistentIdEntity, WorkspaceEntityBase() {
             addToBuilder()
             this.id = getEntityData().createEntityId()
             
+            index(this, "fileProperty", this.fileProperty)
+            index(this, "secondFileProperty", this.secondFileProperty)
             // Process entities from extension fields
             val keysToRemove = ArrayList<ExtRefKey>()
             for ((key, entity) in extReferences) {
@@ -103,10 +107,16 @@ open class PersistentIdEntityImpl: PersistentIdEntity, WorkspaceEntityBase() {
         fun checkInitialization() {
             val _diff = diff
             if (!getEntityData().isDataInitialized()) {
-                error("Field PersistentIdEntity#data should be initialized")
+                error("Field VFUWithTwoPropertiesEntity#data should be initialized")
             }
             if (!getEntityData().isEntitySourceInitialized()) {
-                error("Field PersistentIdEntity#entitySource should be initialized")
+                error("Field VFUWithTwoPropertiesEntity#entitySource should be initialized")
+            }
+            if (!getEntityData().isFilePropertyInitialized()) {
+                error("Field VFUWithTwoPropertiesEntity#fileProperty should be initialized")
+            }
+            if (!getEntityData().isSecondFilePropertyInitialized()) {
+                error("Field VFUWithTwoPropertiesEntity#secondFileProperty should be initialized")
             }
         }
     
@@ -127,22 +137,46 @@ open class PersistentIdEntityImpl: PersistentIdEntity, WorkspaceEntityBase() {
                 changedProperty.add("entitySource")
                 
             }
+            
+        override var fileProperty: VirtualFileUrl
+            get() = getEntityData().fileProperty
+            set(value) {
+                checkModificationAllowed()
+                getEntityData().fileProperty = value
+                changedProperty.add("fileProperty")
+                val _diff = diff
+                if (_diff != null) index(this, "fileProperty", value)
+            }
+            
+        override var secondFileProperty: VirtualFileUrl
+            get() = getEntityData().secondFileProperty
+            set(value) {
+                checkModificationAllowed()
+                getEntityData().secondFileProperty = value
+                changedProperty.add("secondFileProperty")
+                val _diff = diff
+                if (_diff != null) index(this, "secondFileProperty", value)
+            }
         
-        override fun getEntityData(): PersistentIdEntityData = result ?: super.getEntityData() as PersistentIdEntityData
-        override fun getEntityClass(): Class<PersistentIdEntity> = PersistentIdEntity::class.java
+        override fun getEntityData(): VFUWithTwoPropertiesEntityData = result ?: super.getEntityData() as VFUWithTwoPropertiesEntityData
+        override fun getEntityClass(): Class<VFUWithTwoPropertiesEntity> = VFUWithTwoPropertiesEntity::class.java
     }
     
     // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(PersistentIdEntityData())
+    fun builder(): ObjBuilder<*> = Builder(VFUWithTwoPropertiesEntityData())
 }
     
-class PersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<PersistentIdEntity>() {
+class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPropertiesEntity>() {
     lateinit var data: String
+    lateinit var fileProperty: VirtualFileUrl
+    lateinit var secondFileProperty: VirtualFileUrl
 
     fun isDataInitialized(): Boolean = ::data.isInitialized
+    fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
+    fun isSecondFilePropertyInitialized(): Boolean = ::secondFileProperty.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<PersistentIdEntity> {
-        val modifiable = PersistentIdEntityImpl.Builder(null)
+    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<VFUWithTwoPropertiesEntity> {
+        val modifiable = VFUWithTwoPropertiesEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
           modifiable.snapshot = diff
@@ -152,29 +186,27 @@ class PersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<Pe
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): PersistentIdEntity {
-        val entity = PersistentIdEntityImpl()
+    override fun createEntity(snapshot: WorkspaceEntityStorage): VFUWithTwoPropertiesEntity {
+        val entity = VFUWithTwoPropertiesEntityImpl()
         entity._data = data
+        entity._fileProperty = fileProperty
+        entity._secondFileProperty = secondFileProperty
         entity.entitySource = entitySource
         entity.snapshot = snapshot
         entity.id = createEntityId()
         return entity
     }
 
-    override fun persistentId(): PersistentEntityId<*> {
-        
-      return LinkedListEntityId(data)
-    
-    }
-
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false
         
-        other as PersistentIdEntityData
+        other as VFUWithTwoPropertiesEntityData
         
         if (this.data != other.data) return false
         if (this.entitySource != other.entitySource) return false
+        if (this.fileProperty != other.fileProperty) return false
+        if (this.secondFileProperty != other.secondFileProperty) return false
         return true
     }
 
@@ -182,15 +214,19 @@ class PersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<Pe
         if (other == null) return false
         if (this::class != other::class) return false
         
-        other as PersistentIdEntityData
+        other as VFUWithTwoPropertiesEntityData
         
         if (this.data != other.data) return false
+        if (this.fileProperty != other.fileProperty) return false
+        if (this.secondFileProperty != other.secondFileProperty) return false
         return true
     }
 
     override fun hashCode(): Int {
         var result = entitySource.hashCode()
         result = 31 * result + data.hashCode()
+        result = 31 * result + fileProperty.hashCode()
+        result = 31 * result + secondFileProperty.hashCode()
         return result
     }
 }

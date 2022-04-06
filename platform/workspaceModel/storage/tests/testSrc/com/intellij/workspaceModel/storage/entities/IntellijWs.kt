@@ -1,36 +1,15 @@
 package org.jetbrains.deft.IntellijWs
 
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.entities.api.ChildSampleEntity
-import com.intellij.workspaceModel.storage.entities.api.ChildSampleEntityImpl
-import com.intellij.workspaceModel.storage.entities.api.ChildSourceEntity
-import com.intellij.workspaceModel.storage.entities.api.ChildSourceEntityImpl
-import com.intellij.workspaceModel.storage.entities.api.PersistentIdEntity
-import com.intellij.workspaceModel.storage.entities.api.PersistentIdEntityImpl
-import com.intellij.workspaceModel.storage.entities.api.SampleEntity
-import com.intellij.workspaceModel.storage.entities.api.SampleEntityImpl
-import com.intellij.workspaceModel.storage.entities.api.SecondSampleEntity
-import com.intellij.workspaceModel.storage.entities.api.SecondSampleEntityImpl
-import com.intellij.workspaceModel.storage.entities.api.SourceEntity
-import com.intellij.workspaceModel.storage.entities.api.SourceEntityImpl
-import com.intellij.workspaceModel.storage.entities.api.XChildChildEntity
-import com.intellij.workspaceModel.storage.entities.api.XChildChildEntityImpl
-import com.intellij.workspaceModel.storage.entities.api.XChildEntity
-import com.intellij.workspaceModel.storage.entities.api.XChildEntityImpl
-import com.intellij.workspaceModel.storage.entities.api.XChildWithOptionalParentEntity
-import com.intellij.workspaceModel.storage.entities.api.XChildWithOptionalParentEntityImpl
-import com.intellij.workspaceModel.storage.entities.api.XParentEntity
-import com.intellij.workspaceModel.storage.entities.api.XParentEntityImpl
+import com.intellij.workspaceModel.storage.entities.api.*
 import org.jetbrains.deft.impl.ObjModule
 
-import org.jetbrains.deft.impl.* 
-                        
 object IntellijWs: ObjModule(ObjModule.Id("org.jetbrains.deft.IntellijWs")) {
     @InitApi
     override fun init() {            
         
                     
-        beginInit(13)
+        beginInit(17)
         add(SampleEntity)
         add(ChildSampleEntity)
         add(SecondSampleEntity)
@@ -41,6 +20,10 @@ object IntellijWs: ObjModule(ObjModule.Id("org.jetbrains.deft.IntellijWs")) {
         add(XChildEntity)
         add(XChildWithOptionalParentEntity)
         add(XChildChildEntity)
+        add(VFUEntity)
+        add(VFUWithTwoPropertiesEntity)
+        add(NullableVFUEntity)
+        add(ListVFUEntity)
     }
 }
 
@@ -56,3 +39,7 @@ fun WorkspaceEntityStorageBuilder.modifyEntity(entity: XParentEntity, modificati
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: XChildEntity, modification: XChildEntity.Builder.() -> Unit) = modifyEntity(XChildEntityImpl.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: XChildWithOptionalParentEntity, modification: XChildWithOptionalParentEntity.Builder.() -> Unit) = modifyEntity(XChildWithOptionalParentEntityImpl.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: XChildChildEntity, modification: XChildChildEntity.Builder.() -> Unit) = modifyEntity(XChildChildEntityImpl.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: VFUEntity, modification: VFUEntity.Builder.() -> Unit) = modifyEntity(VFUEntityImpl.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: VFUWithTwoPropertiesEntity, modification: VFUWithTwoPropertiesEntity.Builder.() -> Unit) = modifyEntity(VFUWithTwoPropertiesEntityImpl.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: NullableVFUEntity, modification: NullableVFUEntity.Builder.() -> Unit) = modifyEntity(NullableVFUEntityImpl.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ListVFUEntity, modification: ListVFUEntity.Builder.() -> Unit) = modifyEntity(ListVFUEntityImpl.Builder::class.java, entity, modification)
