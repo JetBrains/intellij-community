@@ -22,10 +22,7 @@ data class IdeInfo(
     ): IdeInfo {
       // TODO: deal later with custom build number on CI (shouldn't affect anyone outside JB for now)
       if (TeamCityCIServer.isBuildRunningOnCI && tag == null) {
-        val paramBuildType = when (productCode == "IC") {
-          true -> jetBrainsCIBuildType
-          false -> TeamCityCIServer.buildParams["intellij.installer.build.type"]
-        }
+        val paramBuildType = TeamCityCIServer.buildParams["intellij.installer.build.type"]
         val paramBuildNumber = TeamCityCIServer.buildParams["intellij.installer.build.number"]
         if (paramBuildType != null && paramBuildNumber != null) {
           return IdeInfo(productCode, platformPrefix, executableFileName, paramBuildType, paramBuildNumber, null)
