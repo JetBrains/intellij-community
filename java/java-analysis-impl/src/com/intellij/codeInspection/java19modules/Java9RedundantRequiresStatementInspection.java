@@ -6,19 +6,23 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UFile;
+import org.jetbrains.uast.UImportStatement;
+import org.jetbrains.uast.UastContextKt;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author Pavel.Dolgov
@@ -202,41 +206,35 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
       if (refElement instanceof RefFile) {
         RefFile refFile = (RefFile)refElement;
         PsiFile file = refFile.getPsiElement();
-        if (file instanceof PsiJavaFile) {
-          onJavaFileReferencesBuilt(refFile, (PsiJavaFile)file);
+        UFile uFile = UastContextKt.toUElement(file, UFile.class);
+        if (uFile != null) {
+          onJavaFileReferencesBuilt(refFile, uFile);
         }
       }
     }
 
-    private static void onJavaFileReferencesBuilt(@NotNull RefFile refFile, @NotNull PsiJavaFile file) {
-      if (file.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_9)) {
-        PsiImportList importList = file.getImportList();
-        if (importList != null) {
-          RefModule refModule = refFile.getModule();
-          if (refModule != null) {
-            Set<String> packageNames = getImportedPackages(refModule, refFile);
-            if (packageNames != DONT_COLLECT_PACKAGES) {
-              for (PsiImportStatementBase statement : importList.getAllImportStatements()) {
-                String packageName = getPackageName(statement);
-                if (!StringUtil.isEmpty(packageName)) {
-                  packageNames.add(packageName);
-                }
-              }
-            }
-          }
+    private static void onJavaFileReferencesBuilt(@NotNull RefFile refFile, UFile file) {
+      RefModule refModule = refFile.getModule();
+      if (refModule != null && LanguageLevelUtil.getEffectiveLanguageLevel(refModule.getModule()).isAtLeast(LanguageLevel.JDK_1_9)) {
+        Set<String> packageNames = getImportedPackages(refModule, refFile);
+        if (packageNames != DONT_COLLECT_PACKAGES) {
+          Stream.concat(file.getImports().stream().map(st -> getPackageName(st)), 
+                        file.getImplicitImports().stream())
+            .filter(p -> !StringUtil.isEmpty(p))
+            .forEach(packageNames::add);
         }
       }
     }
 
-    private static @Nullable String getPackageName(@NotNull PsiImportStatementBase statement) {
+    private static @Nullable String getPackageName(UImportStatement statement) {
       PsiElement resolved = statement.resolve();
       if (resolved instanceof PsiPackage) {
         return ((PsiPackage)resolved).getQualifiedName();
       }
-      else if (resolved instanceof PsiMember) {
-        PsiJavaFile parentFile = PsiTreeUtil.getParentOfType(resolved, PsiJavaFile.class);
-        if (parentFile != null) {
-          return parentFile.getPackageName();
+      else if (resolved != null) {
+        UFile uFile = UastContextKt.getUastParentOfType(resolved, UFile.class);
+        if (uFile != null) {
+          return uFile.getPackageName();
         }
       }
       return null;
