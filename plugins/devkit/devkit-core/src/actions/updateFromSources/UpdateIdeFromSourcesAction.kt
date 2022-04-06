@@ -407,7 +407,7 @@ internal open class UpdateIdeFromSourcesAction
     params.classPath.addAll(classpath)
 
     params.vmParametersList.add("-D$includeBinAndRuntimeProperty=true")
-    params.vmParametersList.add("-Dintellij.build.bundled.jre.prefix=jbrsdk-")
+    params.vmParametersList.add("-Dintellij.build.bundled.jre.prefix=jbrsdk_jcef-")
 
     if (buildEnabledPluginsOnly) {
       if (bundledPluginDirsToSkip.isNotEmpty()) {
