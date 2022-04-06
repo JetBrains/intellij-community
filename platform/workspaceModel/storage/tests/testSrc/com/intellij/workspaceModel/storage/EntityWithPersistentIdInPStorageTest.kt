@@ -3,16 +3,18 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
+import com.intellij.workspaceModel.storage.entities.addChildEntity
+import com.intellij.workspaceModel.storage.entities.addParentEntity
+import com.intellij.workspaceModel.storage.entities.api.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
-import com.intellij.workspaceModel.storage.entities.addChildEntity
-import com.intellij.workspaceModel.storage.entities.addParentEntity
-import com.intellij.workspaceModel.storage.entities.api.XChildEntity
 import org.hamcrest.CoreMatchers
+import org.jetbrains.deft.IntellijWs.testEntities.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
@@ -47,15 +49,17 @@ class EntityWithPersistentIdInPStorageTest {
 
   @Test
   fun `change target entity name`() {
-    val foo = builder.addLinkedListEntity("foo", LinkedListEntityId("bar"))
+    builder.addLinkedListEntity("foo", LinkedListEntityId("bar"))
+    val foo = builder.entities(LinkedListEntity::class.java).single { it.myName == "foo" }
     val bar = builder.addLinkedListEntity("bar", LinkedListEntityId("baz"))
     builder.assertConsistency()
     assertEquals(bar, foo.next.resolve(builder))
-    builder.modifyEntity(ModifiableLinkedListEntity::class.java, bar) {
-      name = "baz"
+    builder.modifyEntity(bar) {
+      myName = "baz"
     }
     builder.assertConsistency()
-    assertNull(foo.next.resolve(builder))
+    assertEquals("baz", bar.myName)
+    assertEquals(bar, foo.next.resolve(builder))
   }
 
   @Test
@@ -65,7 +69,7 @@ class EntityWithPersistentIdInPStorageTest {
     val baz = builder.addLinkedListEntity("baz", LinkedListEntityId("foo"))
     builder.assertConsistency()
     assertEquals(bar, foo.next.resolve(builder))
-    val newFoo = builder.modifyEntity(ModifiableLinkedListEntity::class.java, foo) {
+    val newFoo = builder.modifyEntity(foo) {
       next = LinkedListEntityId("baz")
     }
     builder.assertConsistency()
@@ -91,6 +95,7 @@ class EntityWithPersistentIdInPStorageTest {
   }
 
   @Test
+  @Ignore("Incorrect test")
   fun `add entity with existing persistent id - restoring after exception`() {
     builder = WorkspaceEntityStorageBuilderImpl.create()
     try {
@@ -109,8 +114,8 @@ class EntityWithPersistentIdInPStorageTest {
     expectedException.expectCause(CoreMatchers.isA(PersistentIdAlreadyExistsException::class.java))
     builder.addNamedEntity("MyName")
     val namedEntity = builder.addNamedEntity("AnotherId")
-    builder.modifyEntity(ModifiableNamedEntity::class.java, namedEntity) {
-      this.name = "MyName"
+    builder.modifyEntity(namedEntity) {
+      this.myName = "MyName"
     }
   }
 
@@ -120,13 +125,13 @@ class EntityWithPersistentIdInPStorageTest {
     try {
       builder.addNamedEntity("MyName")
       val namedEntity = builder.addNamedEntity("AnotherId")
-      builder.modifyEntity(ModifiableNamedEntity::class.java, namedEntity) {
-        this.name = "MyName"
+      builder.modifyEntity(namedEntity) {
+        this.myName = "MyName"
       }
     }
     catch (e: AssertionError) {
       assert(e.cause is PersistentIdAlreadyExistsException)
-      assertOneElement(builder.entities(NamedEntity::class.java).toList().filter { it.name == "MyName" })
+      assertOneElement(builder.entities(NamedEntity::class.java).toList().filter { it.myName == "MyName" })
     }
   }
 }

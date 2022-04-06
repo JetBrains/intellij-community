@@ -4,11 +4,11 @@ package com.intellij.workspaceModel.storage
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.entities.addSampleEntity
+import com.intellij.workspaceModel.storage.entities.api.MySource
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import junit.framework.Assert.*
-import org.junit.Assert.assertArrayEquals
 import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -108,27 +108,6 @@ class EntityStorageSerializationTest {
     val result = serializer.deserializeCache(inputStream)
 
     assertNull(result)
-  }
-
-  @Test
-  fun `serialize array`() {
-    val virtualFileManager = VirtualFileUrlManagerImpl()
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
-
-    val builder = createEmptyBuilder()
-    val infoArray = arrayOf(Info("hello"))
-    builder.addEntity(ModifiableWithArrayEntity::class.java, MySource) {
-      stringArrayProperty = arrayOf("1", "2", "3")
-      info = infoArray
-    }
-
-    val stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, builder.toStorage())
-
-    val result = serializer.deserializeCache(stream.toByteArray().inputStream())!!
-
-    assertArrayEquals(arrayOf("1", "2", "3"), result.entities(WithArrayEntity::class.java).single().stringArrayProperty)
-    assertArrayEquals(infoArray, result.entities(WithArrayEntity::class.java).single().info)
   }
 }
 

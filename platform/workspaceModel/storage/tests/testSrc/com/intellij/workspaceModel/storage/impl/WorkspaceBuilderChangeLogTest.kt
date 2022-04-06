@@ -2,11 +2,12 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.testFramework.assertInstanceOf
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.createEmptyBuilder
 import com.intellij.workspaceModel.storage.entities.addChildWithOptionalParentEntity
 import com.intellij.workspaceModel.storage.entities.addParentEntity
-import com.intellij.workspaceModel.storage.entities.api.XParentEntityData
+import com.intellij.workspaceModel.storage.entities.api.*
 import org.jetbrains.deft.IntellijWs.modifyEntity
+import org.jetbrains.deft.IntellijWs.testEntities.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -352,7 +353,7 @@ class WorkspaceBuilderChangeLogTest {
     val entity = builder.addNamedEntity("Parent")
     builder.changeLog.clear()
 
-    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {}
+    builder.modifyEntity(entity) {}
 
     val log = builder.changeLog.changeLog
     assertEquals(0, log.size)
@@ -363,11 +364,11 @@ class WorkspaceBuilderChangeLogTest {
     val entity = builder.addNamedEntity("Parent")
     builder.changeLog.clear()
 
-    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
-      name = "AnotherName"
+    builder.modifyEntity(entity) {
+      myName = "AnotherName"
     }
-    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
-      name = "Parent"
+    builder.modifyEntity(entity) {
+      myName = "Parent"
     }
 
     val log = builder.changeLog.changeLog
@@ -381,12 +382,12 @@ class WorkspaceBuilderChangeLogTest {
     val child1 = builder.addNamedChildEntity(parent1)
     builder.changeLog.clear()
 
-    builder.modifyEntity(ModifiableNamedChildEntity::class.java, child1) {
-      this.parent = parent2
+    builder.modifyEntity(child1) {
+      this.parentEntity = parent2
     }
 
-    builder.modifyEntity(ModifiableNamedChildEntity::class.java, child1) {
-      this.parent = parent1
+    builder.modifyEntity(child1) {
+      this.parentEntity = parent1
     }
 
     val log = builder.changeLog.changeLog
@@ -418,14 +419,14 @@ class WorkspaceBuilderChangeLogTest {
     val entity = builder.addNamedEntity("Parent")
     builder.changeLog.clear()
 
-    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
-      name = "AnotherName"
+    builder.modifyEntity(entity) {
+      myName = "AnotherName"
     }
-    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
-      name = "AndAnotherName"
+    builder.modifyEntity(entity) {
+      myName = "AndAnotherName"
     }
-    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
-      name = "Parent"
+    builder.modifyEntity(entity) {
+      myName = "Parent"
     }
 
     val log = builder.changeLog.changeLog
@@ -437,12 +438,12 @@ class WorkspaceBuilderChangeLogTest {
     val entity = builder.addNamedEntity("Parent")
     builder.changeLog.clear()
 
-    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
-      name = "AnotherName"
+    builder.modifyEntity(entity) {
+      myName = "AnotherName"
     }
     builder.changeSource(entity, AnotherSource)
-    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
-      name = "Parent"
+    builder.modifyEntity(entity) {
+      myName = "Parent"
     }
 
     val log = builder.changeLog.changeLog
@@ -455,13 +456,13 @@ class WorkspaceBuilderChangeLogTest {
     val entity = builder.addNamedEntity("Parent")
     builder.changeLog.clear()
 
-    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
-      name = "AnotherName"
+    builder.modifyEntity(entity) {
+      myName = "AnotherName"
     }
     builder.changeSource(entity, AnotherSource)
     builder.changeSource(entity, MySource)
-    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
-      name = "Parent"
+    builder.modifyEntity(entity) {
+      myName = "Parent"
     }
 
     val log = builder.changeLog.changeLog
@@ -473,12 +474,12 @@ class WorkspaceBuilderChangeLogTest {
     val entity = builder.addNamedEntity("Parent")
     builder.changeLog.clear()
 
-    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
-      name = "AnotherName"
+    builder.modifyEntity(entity) {
+      myName = "AnotherName"
     }
     builder.changeSource(entity, AnotherSource)
-    builder.modifyEntity(ModifiableNamedEntity::class.java, entity) {
-      name = "Parent"
+    builder.modifyEntity(entity) {
+      myName = "Parent"
     }
     builder.changeSource(entity, MySource)
 

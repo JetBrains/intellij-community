@@ -4,10 +4,7 @@ package com.intellij.workspaceModel.storage
 import com.intellij.workspaceModel.storage.entities.addChildEntity
 import com.intellij.workspaceModel.storage.entities.addParentEntity
 import com.intellij.workspaceModel.storage.entities.addSampleEntity
-import com.intellij.workspaceModel.storage.entities.api.SampleEntity
-import com.intellij.workspaceModel.storage.entities.api.SecondSampleEntity
-import com.intellij.workspaceModel.storage.entities.api.XChildEntity
-import com.intellij.workspaceModel.storage.entities.api.XParentEntity
+import com.intellij.workspaceModel.storage.entities.api.*
 import org.jetbrains.deft.IntellijWs.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

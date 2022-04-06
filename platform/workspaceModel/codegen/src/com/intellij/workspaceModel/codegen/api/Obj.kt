@@ -46,7 +46,7 @@ inline fun <reified ToForceInline> _objModule(): ObjModule {
     return ObjModule.modules.requireByPackageName(c.packageName, c.classLoader)
 }
 
-operator fun <T : Obj, V> T.get(field: Field<in T, V>): V = getValue(field)
+//operator fun <T : Obj, V> T.get(field: Field<in T, V>): V = getValue(field)
 
 interface Root : Obj {
     interface Builder : Root, ObjBuilder<Root>, ExtensibleProvider
@@ -104,7 +104,7 @@ interface ObjBuilder<T : Obj> {
     fun build(): T
 }
 
-operator fun <T : Obj, V> ObjBuilder<T>.get(field: Field<in T, V>): V = (this as T).getValue(field)
+//operator fun <T : Obj, V> ObjBuilder<T>.get(field: Field<in T, V>): V = (this as T).getValue(field)
 
 
 fun alienFieldError(expectedObjType: ObjType<*, *>, field: Field<*, *>): Nothing {

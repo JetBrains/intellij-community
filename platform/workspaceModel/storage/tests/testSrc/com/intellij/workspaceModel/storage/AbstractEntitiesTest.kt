@@ -2,7 +2,12 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.workspaceModel.storage.entitiesx.*
+import com.intellij.workspaceModel.storage.entities.api.LeftEntity
+import com.intellij.workspaceModel.storage.entities.api.MiddleEntity
+import com.intellij.workspaceModel.storage.entities.api.addLeftEntity
+import com.intellij.workspaceModel.storage.entities.api.addMiddleEntity
+import org.jetbrains.deft.IntellijWs.modifyEntity
+import org.jetbrains.deft.IntellijWs.testEntities.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -29,8 +34,8 @@ class AbstractEntitiesTest {
     val leftEntity = builder.addLeftEntity(sequenceOf(middleEntity))
 
     val anotherMiddleEntity = builder.addMiddleEntity("second")
-    builder.modifyEntity(ModifiableLeftEntity::class.java, leftEntity) {
-      this.children = sequenceOf(anotherMiddleEntity)
+    builder.modifyEntity(leftEntity) {
+      this.children = listOf(anotherMiddleEntity)
     }
 
     val storage = builder.toStorage()
@@ -46,11 +51,11 @@ class AbstractEntitiesTest {
     val builder = WorkspaceEntityStorageBuilder.create()
 
     val middleEntity = builder.addMiddleEntity()
-    val leftEntity: CompositeBaseEntity = builder.addLeftEntity(sequenceOf(middleEntity))
+    val leftEntity = builder.addLeftEntity(sequenceOf(middleEntity))
 
     val anotherMiddleEntity = builder.addMiddleEntity()
-    builder.modifyEntity(ModifiableCompositeBaseEntity::class.java, leftEntity) {
-      this.children = sequenceOf(anotherMiddleEntity)
+    builder.modifyEntity(leftEntity) {
+      this.children = listOf(anotherMiddleEntity)
     }
 
     val storage = builder.toStorage()
@@ -65,17 +70,17 @@ class AbstractEntitiesTest {
   fun `children replace in addDiff`() {
     val builder = WorkspaceEntityStorageBuilder.create()
     val middleEntity = builder.addMiddleEntity()
-    val leftEntity: CompositeBaseEntity = builder.addLeftEntity(sequenceOf(middleEntity))
+    val leftEntity = builder.addLeftEntity(sequenceOf(middleEntity))
 
     val anotherBuilder = WorkspaceEntityStorageBuilder.from(builder)
     val anotherMiddleEntity = anotherBuilder.addMiddleEntity("Another")
-    anotherBuilder.modifyEntity(ModifiableLeftEntity::class.java, leftEntity) {
-      this.children = sequenceOf(middleEntity, anotherMiddleEntity)
+    anotherBuilder.modifyEntity(leftEntity) {
+      this.children = listOf(middleEntity, anotherMiddleEntity)
     }
 
     val initialMiddleEntity = builder.addMiddleEntity("Initial")
-    builder.modifyEntity(ModifiableLeftEntity::class.java, leftEntity) {
-      this.children = sequenceOf(middleEntity, initialMiddleEntity)
+    builder.modifyEntity(leftEntity) {
+      this.children = listOf(middleEntity, initialMiddleEntity)
     }
 
     builder.addDiff(anotherBuilder)

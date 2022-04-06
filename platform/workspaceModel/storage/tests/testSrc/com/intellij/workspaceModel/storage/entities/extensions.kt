@@ -2,8 +2,6 @@
 package com.intellij.workspaceModel.storage.entities
 
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.MySource
-import com.intellij.workspaceModel.storage.SampleEntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.entities.api.*
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl

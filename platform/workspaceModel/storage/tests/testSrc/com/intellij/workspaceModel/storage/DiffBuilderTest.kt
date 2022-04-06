@@ -3,17 +3,19 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.entities.addChildEntity
+import com.intellij.workspaceModel.storage.entities.addChildSampleEntity
 import com.intellij.workspaceModel.storage.entities.addChildWithOptionalParentEntity
 import com.intellij.workspaceModel.storage.entities.addParentEntity
-import com.intellij.workspaceModel.storage.entities.api.*
-import com.intellij.workspaceModel.storage.entities.addChildSampleEntity
 import com.intellij.workspaceModel.storage.entities.addSampleEntity
+import com.intellij.workspaceModel.storage.entities.api.*
+import com.intellij.workspaceModel.storage.entities.api.SampleEntity.Companion.stringProperty
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import org.hamcrest.CoreMatchers
 import org.jetbrains.deft.IntellijWs.modifyEntity
+import org.jetbrains.deft.IntellijWs.testEntities.modifyEntity
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -271,8 +273,8 @@ class DiffBuilderTest {
     val target = createBuilderFrom(source)
 
     source.addNamedEntity("Name")
-    target.modifyEntity(ModifiableNamedEntity::class.java, namedEntity) {
-      this.name = "Name"
+    target.modifyEntity(namedEntity) {
+      this.myName = "Name"
     }
 
     source.applyDiff(target)

@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.api.SampleEntity
+import com.intellij.workspaceModel.storage.entities.api.SampleEntitySource
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.deft.IntellijWs.modifyEntity
