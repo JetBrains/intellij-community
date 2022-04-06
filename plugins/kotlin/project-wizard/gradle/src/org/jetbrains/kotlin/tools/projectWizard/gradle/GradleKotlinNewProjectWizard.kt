@@ -33,6 +33,8 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
     override val name = "Gradle"
 
+    override val ordinal: Int = 300
+
     override fun createStep(parent: KotlinNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
 
     class Step(parent: KotlinNewProjectWizard.Step) :
