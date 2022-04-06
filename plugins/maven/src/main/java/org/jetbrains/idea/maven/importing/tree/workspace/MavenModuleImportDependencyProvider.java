@@ -13,10 +13,7 @@ import org.jetbrains.idea.maven.importing.tree.workspace.MavenProjectImportConte
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.project.MavenImportingSettings;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.SupportedRequestType;
+import org.jetbrains.idea.maven.project.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,13 +28,16 @@ public class MavenModuleImportDependencyProvider {
   @NotNull private final Project project;
   @NotNull private final Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId;
   @NotNull private final Set<String> dependencyTypesFromSettings;
+  @NotNull private MavenProjectsTree myProjectTree;
 
   public MavenModuleImportDependencyProvider(@NotNull Project project,
                                              @NotNull Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId,
-                                             @NotNull MavenImportingSettings importingSettings) {
+                                             @NotNull MavenImportingSettings importingSettings,
+                                             @NotNull MavenProjectsTree projectTree) {
     this.project = project;
     this.moduleImportDataByMavenId = moduleImportDataByMavenId;
     this.dependencyTypesFromSettings = importingSettings.getDependencyTypesAsSet();
+    myProjectTree = projectTree;
   }
 
   @NotNull
@@ -81,15 +81,14 @@ public class MavenModuleImportDependencyProvider {
 
     DependencyScope scope = selectScope(artifact.getScope());
 
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    MavenProject depProject = projectsManager.findProject(artifact.getMavenId());
+    MavenProject depProject = myProjectTree.findProject(artifact.getMavenId());
 
     if (depProject != null) {
       if (depProject == mavenProject) return null;
 
       MavenProjectImportData mavenProjectImportData = moduleImportDataByMavenId.get(depProject.getMavenId());
 
-      if (mavenProjectImportData == null || projectsManager.isIgnored(depProject)) {
+      if (mavenProjectImportData == null || myProjectTree.isIgnored(depProject)) {
         return new BaseDependency(createCopyForLocalRepo(artifact, mavenProject), scope);
       }
       else {

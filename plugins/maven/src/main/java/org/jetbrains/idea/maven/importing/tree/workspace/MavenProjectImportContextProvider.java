@@ -92,7 +92,7 @@ public class MavenProjectImportContextProvider {
     List<MavenModuleImportData> changedModuleDataWithDependencies = new ArrayList<>();
 
     MavenModuleImportDependencyProvider dependencyProvider =
-      new MavenModuleImportDependencyProvider(myProject, context.moduleImportDataByMavenId, myImportingSettings);
+      new MavenModuleImportDependencyProvider(myProject, context.moduleImportDataByMavenId, myImportingSettings, myProjectsTree);
 
     for (MavenProjectImportData importData : context.importData) {
       MavenModuleImportDataWithDependencies importDataWithDependencies = dependencyProvider.getDependencies(importData);
