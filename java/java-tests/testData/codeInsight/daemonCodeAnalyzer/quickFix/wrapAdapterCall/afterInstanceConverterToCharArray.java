@@ -1,4 +1,4 @@
-// "Wrap using 'toCharArray()'" "true"
+// "Adapt using 'toCharArray()'" "true"
 import java.util.*;
 import java.util.stream.*;
 

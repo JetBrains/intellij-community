@@ -1,4 +1,4 @@
-// "Wrap using 'toFile()'" "true"
+// "Adapt using 'toFile()'" "true"
 import java.io.*;
 import java.nio.file.*;
 

@@ -1,4 +1,4 @@
-// "Wrap argument using 'toPath()'" "true"
+// "Adapt argument using 'toPath()'" "true"
 import java.io.*;
 import java.nio.file.*;
 

@@ -1,4 +1,4 @@
-// "Wrap using 'asIterator()'" "true"
+// "Adapt using 'asIterator()'" "true"
 import java.util.*;
 import java.util.stream.*;
 
