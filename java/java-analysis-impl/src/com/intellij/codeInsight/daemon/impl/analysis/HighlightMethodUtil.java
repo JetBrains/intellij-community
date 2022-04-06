@@ -571,8 +571,12 @@ public final class HighlightMethodUtil {
     PsiType actualType = resolveResult.getSubstitutor(false).substitute(method.getReturnType());
     TextRange fixRange = getFixRange(elementToHighlight);
     if (expectedTypeByParent != null && actualType != null && !expectedTypeByParent.isAssignableFrom(actualType)) {
-      highlightInfo = HighlightUtil
-        .createIncompatibleTypeHighlightInfo(expectedTypeByParent, actualType, fixRange, 0, XmlStringUtil.escapeString(errorMessage));
+      highlightInfo = HighlightUtil.createIncompatibleTypeHighlightInfo(
+        expectedTypeByParent, actualType, fixRange, 0, XmlStringUtil.escapeString(errorMessage));
+      if (methodCall instanceof PsiMethodCallExpression) {
+        QuickFixAction.registerQuickFixAction(highlightInfo,
+                                              new WrapWithAdapterMethodCallFix(expectedTypeByParent, (PsiExpression)methodCall));
+      }
     }
     else {
       highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(errorMessage).range(fixRange).create();
