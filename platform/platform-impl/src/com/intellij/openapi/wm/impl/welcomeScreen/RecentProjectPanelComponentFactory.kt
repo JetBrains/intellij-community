@@ -76,15 +76,18 @@ internal object RecentProjectPanelComponentFactory {
 
   private fun createFilePathChecker(filteringTree: RecentProjectFilteringTree): FilePathChecker {
     val recentProjectTreeItems: List<RecentProjectTreeItem> = RecentProjectListActionProvider.getInstance().collectProjects()
-    val recentProjects = recentProjectTreeItems.filterIsInstance<ProjectsGroupItem>()
-      .flatMap { item -> item.children }
-      .toMutableList()
-      .apply { addAll(recentProjectTreeItems.filterIsInstance<RecentProjectItem>()) }
-      .map { it.displayName() }
+    val recentProjects = mutableListOf<RecentProjectItem>()
+    for (item in recentProjectTreeItems) {
+      when (item) {
+        is RecentProjectItem -> recentProjects.add(item)
+        is ProjectsGroupItem -> recentProjects.addAll(item.children)
+        else -> {}
+      }
+    }
 
     val treeUpdater = Runnable { filteringTree.searchModel.updateStructure() }
 
-    return FilePathChecker(treeUpdater, recentProjects)
+    return FilePathChecker(treeUpdater, recentProjects.map { it.projectPath })
   }
 
   class RecentProjectFilteringTree(tree: Tree) : FilteringTree<DefaultMutableTreeNode, RecentProjectTreeItem>(
