@@ -40,7 +40,13 @@ internal class MessageBusConnectionImpl(bus: MessageBusImpl) : BaseBusConnection
   }
 
   override fun deliverImmediately() {
-    bus!!.deliverImmediately(this)
+    val bus = bus
+    if (bus == null) {
+      MessageBusImpl.LOG.error("Bus is already disposed")
+    }
+    else {
+      bus.deliverImmediately(this)
+    }
   }
 
   fun isMyHandler(topic: Topic<*>, handler: Any): Boolean {
