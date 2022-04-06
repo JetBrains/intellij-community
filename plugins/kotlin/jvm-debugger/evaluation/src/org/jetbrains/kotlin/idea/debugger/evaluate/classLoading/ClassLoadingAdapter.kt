@@ -76,6 +76,11 @@ interface ClassLoadingAdapter {
                             return info.copy(containsCodeUnsupportedInEval4J = true)
                         }
                     }
+                    is MethodInsnNode -> {
+                        if (insn.opcode == Opcodes.INVOKESTATIC && insn.owner == classToLoad.className) {
+                                return info.copy(containsCodeUnsupportedInEval4J = true)
+                        }
+                    }
                 }
 
                 val nextInsn = insn.next ?: return info
