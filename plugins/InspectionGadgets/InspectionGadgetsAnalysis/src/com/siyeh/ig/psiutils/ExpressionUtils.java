@@ -3,7 +3,6 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
@@ -40,7 +39,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public final class ExpressionUtils {
   private static final @NonNls Set<String> IMPLICIT_TO_STRING_METHOD_NAMES =
     Set.of("append", "format", "print", "printf", "println", "valueOf");
-  @NonNls static final Set<String> convertableBoxedClassNames = new HashSet<>(3);
+  @NonNls private static final Set<String> convertableBoxedClassNames = new HashSet<>(3);
 
   static {
     convertableBoxedClassNames.add(CommonClassNames.JAVA_LANG_BYTE);
@@ -434,19 +433,6 @@ public final class ExpressionUtils {
     return false;
   }
 
-  public static boolean isVariableGreaterThanComparison(@Nullable PsiExpression expression, @NotNull PsiVariable variable) {
-    PsiBinaryExpression binaryExpression = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiBinaryExpression.class);
-    if (binaryExpression == null) return false;
-    final IElementType tokenType = binaryExpression.getOperationTokenType();
-    if (tokenType.equals(JavaTokenType.GT) || tokenType.equals(JavaTokenType.GE)) {
-      return isReferenceTo(binaryExpression.getLOperand(), variable);
-    }
-    else if (tokenType.equals(JavaTokenType.LT) || tokenType.equals(JavaTokenType.LE)) {
-      return isReferenceTo(binaryExpression.getROperand(), variable);
-    }
-    return false;
-  }
-
   /**
    * Returns true if given expression is an operand of String concatenation.
    * Also works if expression parent is {@link PsiParenthesizedExpression}.
@@ -732,30 +718,6 @@ public final class ExpressionUtils {
     final PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
     final PsiType type = expression.getType();
     return type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
-  }
-
-  public static boolean isAnnotatedNotNull(PsiExpression expression) {
-    return isAnnotated(expression, false);
-  }
-
-  public static boolean isAnnotatedNullable(PsiExpression expression) {
-    return isAnnotated(expression, true);
-  }
-
-  private static boolean isAnnotated(PsiExpression expression, boolean nullable) {
-    expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(expression instanceof PsiReferenceExpression)) {
-      return false;
-    }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-    final PsiElement target = referenceExpression.resolve();
-    if (!(target instanceof PsiModifierListOwner)) {
-      return false;
-    }
-    final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)target;
-    return nullable ?
-           NullableNotNullManager.isNullable(modifierListOwner):
-           NullableNotNullManager.isNotNull(modifierListOwner);
   }
 
   /**
@@ -1757,5 +1719,18 @@ public final class ExpressionUtils {
       return false;
     }
     return true;
+  }
+
+  public static boolean isOnlyExpressionInMethod(PsiExpression expression) {
+    final PsiElement parent = expression.getParent();
+    if (!(parent instanceof PsiReturnStatement)) {
+      return false;
+    }
+    final PsiElement grandParent = parent.getParent();
+    if (!(grandParent instanceof PsiCodeBlock) || !(grandParent.getParent() instanceof PsiMethod)) {
+      return false;
+    }
+    final PsiCodeBlock codeBlock = (PsiCodeBlock)grandParent;
+    return codeBlock.getStatementCount() == 1;
   }
 }
