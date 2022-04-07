@@ -2,8 +2,6 @@ package org.jetbrains.deft.impl
 
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
-//import org.jetbrains.deft.SemVer
-import org.jetbrains.deft.bytes.useCodegenImpl
 import org.jetbrains.deft.impl.fields.ExtField
 import org.jetbrains.deft.impl.fields.ExtFieldId
 import org.jetbrains.deft.obj.api.ExtFieldKotlinId
@@ -140,7 +138,6 @@ abstract class ObjModule(
     internal fun newBuilder(typeId: Int): ObjBuilder<*> = type(typeId).builder()
 
     fun <T : Obj, B : ObjBuilder<T>> _loadBuilderFactory(objType: ObjType<T, B>): () -> B {
-        if (!useCodegenImpl) return { ObjImplGeneric.Builder(objType) }
         val ivalClass = objType.ival
         val packageName = ivalClass.packageName
         val simpleName = objType.name.replace(".", "")

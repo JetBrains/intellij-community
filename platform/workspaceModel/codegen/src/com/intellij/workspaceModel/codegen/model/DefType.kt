@@ -2,7 +2,6 @@ package org.jetbrains.deft.codegen.model
 
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.annotations.Object
 import org.jetbrains.deft.impl.ObjModule
 import org.jetbrains.deft.impl.ObjType
 import org.jetbrains.deft.impl.fields.Field

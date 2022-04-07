@@ -7,10 +7,6 @@ import org.jetbrains.deft.impl.ExtensibleProvider
 fun <T : Obj, R> T.getExtension(extType: ExtField<*, R>): R? =
     (this as ExtensibleProvider).getExtensibleContainer().unsafeGetExtension(extType)
 
-fun <T : Obj, B : ObjBuilder<T>, R> B.getOrCreateExtension(extType: ExtField<*, R>): R {
-    return (this as ExtensibleProvider).getExtensibleContainer().unsafeGetOrCreateExtension(extType)
-}
-
 fun <T : Obj, B : ObjBuilder<T>, R> B.addExtension(extType: ExtField<T, R>, value: R) {
     (this as ExtensibleProvider).getExtensibleContainer().unsafeAddExtension(extType, value)
 }

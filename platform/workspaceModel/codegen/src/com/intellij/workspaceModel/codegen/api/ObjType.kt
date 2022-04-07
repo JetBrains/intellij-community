@@ -3,9 +3,6 @@ package org.jetbrains.deft.impl
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.impl.fields.*
-import org.jetbrains.deft.obj.impl.ObjBuilderImplWrapper
-import kotlin.properties.ReadOnlyProperty
-import kotlin.reflect.KProperty
 
 abstract class ObjType<T : Obj, B : ObjBuilder<T>>(private val _module: ObjModule, val id: Int, val base: ObjType<*, *>? = null) : Obj {
     var open: Boolean = false
@@ -65,10 +62,6 @@ abstract class ObjType<T : Obj, B : ObjBuilder<T>>(private val _module: ObjModul
         builder.init()
         return builder
     }
-
-    // used only for loading objects
-    @Suppress("UNCHECKED_CAST")
-    fun _newInstance(): T = (builder() as ObjBuilderImplWrapper<T>).unsafeResultInstance
 
     operator fun invoke(): B = builder()
 

@@ -1,7 +1,6 @@
 package org.jetbrains.deft.impl
 
 import org.jetbrains.deft.*
-import org.jetbrains.deft.collections.*
 import org.jetbrains.deft.impl.fields.Field
 
 sealed class ValueType<V> {
@@ -38,7 +37,6 @@ class TRef<T : Obj>(
     targetModuleType: Int,
     var child: Boolean = false,
     val relation: Boolean = false,
-    val onLink: OnLink<*, T>? = null
 ) : AtomicType<T>() {
     val targetObjTypeId: ObjType.Id<T, *> = ObjType.Id(ObjModule.Id(targetModule), targetModuleType)
     lateinit var targetObjType: ObjType<T, *>
@@ -47,7 +45,6 @@ class TRef<T : Obj>(
     @ObjModule.InitApi
     override fun link(linker: ObjModules) {
         targetObjType = linker[targetObjTypeId]
-        onLink?.init(linker)
     }
 }
 

@@ -1,14 +1,10 @@
 package org.jetbrains.deft.impl
 
-import com.intellij.workspaceModel.codegen.impl.ObjGraph
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.mutate
 import kotlinx.collections.immutable.persistentHashMapOf
-import kotlinx.io.core.Input
-import kotlinx.io.core.Output
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.ExtField
-import org.jetbrains.deft.impl.fields.ExtFieldId
 import org.jetbrains.deft.obj.api.extensible.Extensible
 
 abstract class ExtensibleImpl : Extensible {
@@ -20,36 +16,13 @@ abstract class ExtensibleImpl : Extensible {
 
     override fun getExtensibleContainer(): ExtensibleImpl = this
 
-    private inline fun _forEachExtensionRaw(item: (field: ExtField<*, *>, value: Any?) -> Unit) {
-        val fields = arrayOfNulls<ExtField<*, *>>(extensionsSchema.size)
-        extensionsSchema.forEach { (field, slot) ->
-            fields[slot] = field
-        }
-        fields.forEachIndexed { index, field ->
-            val value = extensions[index]
-            item(field!!, value)
-        }
-    }
-
-    override fun forEachExtension(item: (field: ExtField<*, *>, value: Any?) -> Unit) {
-        _forEachExtensionRaw { f, v -> item(f, f.type.extGetValue(this, v)) }
-    }
-
-    override fun forEachExtensionLazy(item: (field: ExtField<*, *>, value: () -> Any?) -> Unit) {
-        _forEachExtensionRaw { f, v -> item(f) { f.type.extGetValue(this, v) } }
-    }
-
-    fun extensionsMoveIntoGraph(graph: ObjGraph?) {
-        _forEachExtensionRaw { field, value ->
-            field.type.moveIntoGraph(graph, value)
-        }
-    }
-
+  // +++
     override fun <R> unsafeGetExtension(field: ExtField<*, R>): R? {
         val i = extensionsSchema[field] ?: return null
         return maybeUnwrap(field, i)
     }
 
+  // +++
     private fun <R> maybeUnwrap(field: ExtField<*, R>, i: Int): R {
         field as ExtField<Obj, R>
         val src = extensions[i]!!
@@ -62,6 +35,7 @@ abstract class ExtensibleImpl : Extensible {
         if (i != null) extensions[i] = null
     }
 
+    // +++
     override fun unsafeAddExtension(field: ExtField<*, *>, value: Any?, raw: Boolean) {
         _markChanged()
         field as ExtField<*, Any?>
@@ -75,89 +49,5 @@ abstract class ExtensibleImpl : Extensible {
             extensions[i1] = actualValue
             extensionsSchema = extensionsSchema.put(field, i1)
         }
-    }
-
-    override fun <R> unsafeGetOrCreateExtension(field: ExtField<*, R>): R {
-        val i = extensionsSchema[field]
-        if (i != null) {
-            return maybeUnwrap(field, i)
-        } else {
-            val i1 = extensionsSchema.size
-            extensions = extensions.copyOf(i1 + 1)
-
-            @Suppress("UNCHECKED_CAST")
-            val ext_ = (field as ExtField<Obj, R>).newValue(this)
-            val ext = field.type.extSetValue(this, ext_) as R
-            extensions[i1] = ext
-            extensionsSchema = extensionsSchema.put(field, i1)
-            _markChanged()
-            return ext
-        }
-    }
-
-    override fun unsafeAddExtensions(fields: Array<ExtField<*, *>>, values: Array<Any>) {
-        _markChanged()
-        val oldSchema = extensionsSchema
-        var s = oldSchema.size
-        extensionsSchema = extensionsSchema.mutate { schema ->
-            val newIds = IntArray(fields.size)
-            var n = 0
-            fields.forEachIndexed { index, field ->
-                field as ExtField<*, Any?>
-                val value = field.type.extSetValue(this, values[index])!!
-                val i = oldSchema[field]
-                if (i != null) {
-                    extensions[i] = value
-                } else {
-                    schema[field] = s++
-                    newIds[n++] = index
-                }
-            }
-
-            if (n > 0) {
-                var j = extensions.size
-                extensions = extensions.copyOf(j + n)
-                var i = 0
-                while (i < n) extensions[j++] = values[newIds[i++]]
-            }
-        }
-    }
-
-    override fun unsafeGetOrCreateExtensions(vararg types: ExtField<*, *>): Array<*> {
-        val oldSchema = extensionsSchema
-        var s = oldSchema.size
-        val result = arrayOfNulls<Any>(types.size)
-        extensionsSchema = extensionsSchema.mutate { schema ->
-            val newIds = IntArray(types.size)
-            var n = 0
-            types.forEachIndexed { index, field ->
-                val i = oldSchema[field]
-                if (i != null) {
-                    result[index] = maybeUnwrap(field, i)
-                } else {
-                    schema[field] = s++
-                    newIds[n++] = index
-
-                    field as ExtField<*, Any?>
-                    val newValue_ = (field as ExtField<Obj, *>).newValue(this)
-                    val newValue = field.type.extSetValue(this, newValue_)
-                    @Suppress("UNCHECKED_CAST")
-                    result[index] = newValue
-                    _markChanged()
-                }
-            }
-
-            if (n > 0) {
-                var j = extensions.size
-                extensions = extensions.copyOf(j + n)
-                var i = 0
-                while (i < n) extensions[j++] = result[newIds[i++]]
-            }
-        }
-        return result
-    }
-
-    companion object {
-        val notWrapped = Any()
     }
 }

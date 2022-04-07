@@ -1,4 +1,3 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.EntitySource
@@ -12,8 +11,6 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import org.jetbrains.deft.*
-import org.jetbrains.deft.bytes.*
-import org.jetbrains.deft.collections.*
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.Field
 

@@ -33,8 +33,6 @@ import org.jetbrains.deft.impl.ObjType
 fun ObjType<*, *>.implWsCode(simpleTypes: List<DefType>, additionalImports: String? = null): String {
     return """
 import org.jetbrains.deft.*
-import org.jetbrains.deft.bytes.*
-import org.jetbrains.deft.collections.*
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.Field
 ${if (additionalImports?.isNotBlank() == true)"\n$additionalImports\n" else ""}

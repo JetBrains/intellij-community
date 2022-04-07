@@ -175,7 +175,8 @@ interface PersistentEntityId<out E : WorkspaceEntityWithPersistentId> {
   override fun toString(): String
 }
 
-@Open interface WorkspaceEntityWithPersistentId : WorkspaceEntity {
+@Open
+interface WorkspaceEntityWithPersistentId : WorkspaceEntity {
   val persistentId: PersistentEntityId<WorkspaceEntityWithPersistentId>
 }
 

@@ -2,7 +2,6 @@
 package org.jetbrains.deft.codegen.model
 
 import org.jetbrains.deft.annotations.*
-import org.jetbrains.deft.annotations.Enum
 import kotlin.reflect.KClass
 
 class KtAnnotations {
@@ -17,11 +16,8 @@ class KtAnnotations {
         val result = Flags()
         list.forEach {
             when (it.name.text) {
-                Content::class.java.simpleName -> result.content = true
                 Open::class.java.simpleName -> result.open = true
                 Abstract::class.java.simpleName -> result.abstract = true
-                Enum::class.java.simpleName -> result.sealed = true
-                RelationDSL::class.java.simpleName -> result.relation = true
             }
         }
         result
