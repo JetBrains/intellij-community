@@ -663,6 +663,7 @@ private fun areShortcutsEqual(shortcuts1: List<Shortcut>, shortcuts2: List<Short
 @Suppress("SpellCheckingInspection") private const val eclipseKeymap = "com.intellij.plugins.eclipsekeymap"
 @Suppress("SpellCheckingInspection") private const val emacsKeymap = "com.intellij.plugins.emacskeymap"
 @Suppress("SpellCheckingInspection") private const val netbeansKeymap = "com.intellij.plugins.netbeanskeymap"
+@Suppress("SpellCheckingInspection") private const val qtcreatorKeymap = "com.intellij.plugins.qtcreatorkeymap"
 @Suppress("SpellCheckingInspection") private const val resharperKeymap = "com.intellij.plugins.resharperkeymap"
 @Suppress("SpellCheckingInspection") private const val sublimeKeymap = "com.intellij.plugins.sublimetextkeymap"
 @Suppress("SpellCheckingInspection") private const val visualStudioKeymap = "com.intellij.plugins.visualstudiokeymap"
@@ -693,6 +694,8 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
             "Eclipse (Mac OS X)" -> eclipseKeymap
             "Emacs" -> emacsKeymap
             "NetBeans 6.5" -> netbeansKeymap
+            "QtCreator",
+            "QtCreator OSX" -> qtcreatorKeymap
             "ReSharper",
             "ReSharper OSX" -> resharperKeymap
             "Sublime Text",
