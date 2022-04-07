@@ -24,11 +24,11 @@ internal object KotlinTestFrameworkUtils {
     }
 
     fun getTopmostClass(psiClass: KtClassOrObject): KtClassOrObject {
-        var topLevelClass: KtClassOrObject = psiClass
-        while (!topLevelClass.isTopLevel()) {
-            topLevelClass = topLevelClass.getParentOfType(true)!! // parent class exists since it's not toplevel
+        var topLevelClass: KtClassOrObject? = psiClass
+        while (topLevelClass != null && !topLevelClass.isTopLevel()) {
+            topLevelClass = topLevelClass.getParentOfType(true) // call for anonymous object might result in 'null'
         }
-        return topLevelClass
+        return topLevelClass ?: psiClass
     }
 
     fun KtAnnotated.isAnnotated(fqName: String): Boolean = annotationEntries.any {

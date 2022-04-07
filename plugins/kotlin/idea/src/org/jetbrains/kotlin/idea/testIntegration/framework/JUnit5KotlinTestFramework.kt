@@ -17,12 +17,6 @@ class JUnit5KotlinTestFramework : AbstractKotlinTestFramework() {
 
     override fun isTestClass(declaration: KtClassOrObject): Boolean {
         if (!super.isTestClass(declaration)) return false
-        if (with(declaration) {
-                annotationEntries.isEmpty()
-                        && superTypeListEntries.filterIsInstance<KtSuperTypeCallEntry>().isEmpty()
-
-            }) return false
-
         return cached(declaration) { isJUnit5TestClass(declaration) } ?: return false
     }
 
