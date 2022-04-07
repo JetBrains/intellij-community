@@ -20,9 +20,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SetInspectionOptionFix;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -33,7 +31,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.SwitchUtils;
-import one.util.streamex.StreamEx;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,6 +90,12 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
                                                              true)));
     }
     return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) {
+    defaultWriteSettings(node, "ignorePatternSwitch");
+    writeBooleanOption(node, "ignorePatternSwitch", false);
   }
 
   @Override
