@@ -76,7 +76,7 @@ class MethodExtractor {
 
   private fun <T, E: Exception> computeWithAnalyzeProgress(project: Project, throwableComputable: ThrowableComputable<T, E>): T {
     return ProgressManager.getInstance().run(object : Task.WithResult<T, E>(project,
-      JavaRefactoringBundle.message("dialog.title.analyze.code.fragment.to.extract"), false) {
+      JavaRefactoringBundle.message("dialog.title.analyze.code.fragment.to.extract"), true) {
       override fun compute(indicator: ProgressIndicator): T {
         return ReadAction.compute(throwableComputable)
       }
