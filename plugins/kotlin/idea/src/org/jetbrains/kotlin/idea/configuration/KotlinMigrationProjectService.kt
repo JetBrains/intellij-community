@@ -219,8 +219,8 @@ data class MigrationInfo(
     }
 }
 
-fun MigrationInfo.isLanguageVersionUpdate(old: LanguageVersion, new: LanguageVersion): Boolean {
-    return oldLanguageVersion <= old && newLanguageVersion >= new
+fun MigrationInfo.isLanguageVersionUpdate(untilOldVersion: LanguageVersion, sinceNewVersion: LanguageVersion): Boolean {
+    return oldLanguageVersion <= untilOldVersion && newLanguageVersion >= sinceNewVersion
 }
 
 
