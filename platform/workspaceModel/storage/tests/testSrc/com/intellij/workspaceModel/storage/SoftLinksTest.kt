@@ -173,7 +173,7 @@ class SoftLinksTest {
     }
     builder.addEntity(softLinkEntity)
 
-    builder.modifyEntity(OneEntityWithPersistentIdImpl.Builder::class.java, entity) {
+    builder.modifyEntity(OneEntityWithPersistentId.Builder::class.java, entity) {
       myName = "AnotherData"
     }
 

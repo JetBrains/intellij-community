@@ -32,11 +32,11 @@ interface OoParentEntity : WorkspaceEntity {
       override var anotherChild: OoChildWithNullableParentEntity?
   }
   
-  companion object: ObjType<OoParentEntity, Builder>(TestEntities, 15) {
+  companion object: ObjType<OoParentEntity, Builder>(TestEntities, 21) {
       val parentProperty: Field<OoParentEntity, String> = Field(this, 0, "parentProperty", TString)
       val entitySource: Field<OoParentEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val child: Field<OoParentEntity, OoChildEntity?> = Field(this, 0, "child", TOptional(TRef("org.jetbrains.deft.IntellijWs.testEntities", 16, child = true)))
-      val anotherChild: Field<OoParentEntity, OoChildWithNullableParentEntity?> = Field(this, 0, "anotherChild", TOptional(TRef("org.jetbrains.deft.IntellijWs.testEntities", 17, child = true)))
+      val child: Field<OoParentEntity, OoChildEntity?> = Field(this, 0, "child", TOptional(TRef("org.jetbrains.deft.IntellijWs.testEntities", 22, child = true)))
+      val anotherChild: Field<OoParentEntity, OoChildWithNullableParentEntity?> = Field(this, 0, "anotherChild", TOptional(TRef("org.jetbrains.deft.IntellijWs.testEntities", 23, child = true)))
   }
   //@formatter:on
   //endregion
@@ -72,10 +72,10 @@ interface OoChildEntity : WorkspaceEntity {
       override var parentEntity: OoParentEntity
   }
   
-  companion object: ObjType<OoChildEntity, Builder>(TestEntities, 16) {
+  companion object: ObjType<OoChildEntity, Builder>(TestEntities, 22) {
       val childProperty: Field<OoChildEntity, String> = Field(this, 0, "childProperty", TString)
       val entitySource: Field<OoChildEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val parentEntity: Field<OoChildEntity, OoParentEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWs.testEntities", 15))
+      val parentEntity: Field<OoChildEntity, OoParentEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWs.testEntities", 21))
   }
   //@formatter:on
   //endregion
@@ -112,8 +112,8 @@ interface OoChildWithNullableParentEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<OoChildWithNullableParentEntity, Builder>(TestEntities, 17) {
-      val parentEntity: Field<OoChildWithNullableParentEntity, OoParentEntity?> = Field(this, 0, "parentEntity", TOptional(TRef("org.jetbrains.deft.IntellijWs.testEntities", 15)))
+  companion object: ObjType<OoChildWithNullableParentEntity, Builder>(TestEntities, 23) {
+      val parentEntity: Field<OoChildWithNullableParentEntity, OoParentEntity?> = Field(this, 0, "parentEntity", TOptional(TRef("org.jetbrains.deft.IntellijWs.testEntities", 21)))
       val entitySource: Field<OoChildWithNullableParentEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
   }
   //@formatter:on
@@ -161,12 +161,12 @@ interface OoParentWithPidEntity : WorkspaceEntityWithPersistentId {
       override var childThree: OoChildAlsoWithPidEntity?
   }
   
-  companion object: ObjType<OoParentWithPidEntity, Builder>(TestEntities, 18) {
+  companion object: ObjType<OoParentWithPidEntity, Builder>(TestEntities, 24) {
       val parentProperty: Field<OoParentWithPidEntity, String> = Field(this, 0, "parentProperty", TString)
       val entitySource: Field<OoParentWithPidEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
       val persistentId: Field<OoParentWithPidEntity, OoParentEntityId> = Field(this, 0, "persistentId", TBlob("OoParentEntityId"))
-      val childOne: Field<OoParentWithPidEntity, OoChildForParentWithPidEntity?> = Field(this, 0, "childOne", TOptional(TRef("org.jetbrains.deft.IntellijWs.testEntities", 19, child = true)))
-      val childThree: Field<OoParentWithPidEntity, OoChildAlsoWithPidEntity?> = Field(this, 0, "childThree", TOptional(TRef("org.jetbrains.deft.IntellijWs.testEntities", 20, child = true)))
+      val childOne: Field<OoParentWithPidEntity, OoChildForParentWithPidEntity?> = Field(this, 0, "childOne", TOptional(TRef("org.jetbrains.deft.IntellijWs.testEntities", 25, child = true)))
+      val childThree: Field<OoParentWithPidEntity, OoChildAlsoWithPidEntity?> = Field(this, 0, "childThree", TOptional(TRef("org.jetbrains.deft.IntellijWs.testEntities", 26, child = true)))
   }
   //@formatter:on
   //endregion
@@ -201,10 +201,10 @@ interface OoChildForParentWithPidEntity : WorkspaceEntity {
       override var parentEntity: OoParentWithPidEntity
   }
   
-  companion object: ObjType<OoChildForParentWithPidEntity, Builder>(TestEntities, 19) {
+  companion object: ObjType<OoChildForParentWithPidEntity, Builder>(TestEntities, 25) {
       val childProperty: Field<OoChildForParentWithPidEntity, String> = Field(this, 0, "childProperty", TString)
       val entitySource: Field<OoChildForParentWithPidEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val parentEntity: Field<OoChildForParentWithPidEntity, OoParentWithPidEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWs.testEntities", 18))
+      val parentEntity: Field<OoChildForParentWithPidEntity, OoParentWithPidEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWs.testEntities", 24))
   }
   //@formatter:on
   //endregion
@@ -243,10 +243,10 @@ interface OoChildAlsoWithPidEntity : WorkspaceEntityWithPersistentId {
       override var parentEntity: OoParentWithPidEntity
   }
   
-  companion object: ObjType<OoChildAlsoWithPidEntity, Builder>(TestEntities, 20) {
+  companion object: ObjType<OoChildAlsoWithPidEntity, Builder>(TestEntities, 26) {
       val childProperty: Field<OoChildAlsoWithPidEntity, String> = Field(this, 0, "childProperty", TString)
       val entitySource: Field<OoChildAlsoWithPidEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val parentEntity: Field<OoChildAlsoWithPidEntity, OoParentWithPidEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWs.testEntities", 18))
+      val parentEntity: Field<OoChildAlsoWithPidEntity, OoParentWithPidEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWs.testEntities", 24))
       val persistentId: Field<OoChildAlsoWithPidEntity, OoChildEntityId> = Field(this, 0, "persistentId", TBlob("OoChildEntityId"))
   }
   //@formatter:on
@@ -285,10 +285,10 @@ interface OoParentWithoutPidEntity : WorkspaceEntity {
       override var childOne: OoChildWithPidEntity?
   }
   
-  companion object: ObjType<OoParentWithoutPidEntity, Builder>(TestEntities, 21) {
+  companion object: ObjType<OoParentWithoutPidEntity, Builder>(TestEntities, 27) {
       val parentProperty: Field<OoParentWithoutPidEntity, String> = Field(this, 0, "parentProperty", TString)
       val entitySource: Field<OoParentWithoutPidEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val childOne: Field<OoParentWithoutPidEntity, OoChildWithPidEntity?> = Field(this, 0, "childOne", TOptional(TRef("org.jetbrains.deft.IntellijWs.testEntities", 22, child = true)))
+      val childOne: Field<OoParentWithoutPidEntity, OoChildWithPidEntity?> = Field(this, 0, "childOne", TOptional(TRef("org.jetbrains.deft.IntellijWs.testEntities", 28, child = true)))
   }
   //@formatter:on
   //endregion
@@ -329,10 +329,10 @@ interface OoChildWithPidEntity : WorkspaceEntityWithPersistentId {
       override var parentEntity: OoParentWithoutPidEntity
   }
   
-  companion object: ObjType<OoChildWithPidEntity, Builder>(TestEntities, 22) {
+  companion object: ObjType<OoChildWithPidEntity, Builder>(TestEntities, 28) {
       val childProperty: Field<OoChildWithPidEntity, String> = Field(this, 0, "childProperty", TString)
       val entitySource: Field<OoChildWithPidEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val parentEntity: Field<OoChildWithPidEntity, OoParentWithoutPidEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWs.testEntities", 21))
+      val parentEntity: Field<OoChildWithPidEntity, OoParentWithoutPidEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWs.testEntities", 27))
       val persistentId: Field<OoChildWithPidEntity, OoChildEntityId> = Field(this, 0, "persistentId", TBlob("OoChildEntityId"))
   }
   //@formatter:on
