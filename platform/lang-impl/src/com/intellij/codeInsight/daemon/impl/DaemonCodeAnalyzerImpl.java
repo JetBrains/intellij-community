@@ -1012,7 +1012,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           // will be re-scheduled by HeavyLatch listener in DaemonListeners
           return;
         }
-        myPassExecutorService.submitPasses(preferredFileEditorMap, progress);
+        // synchronize on TextEditorHighlightingPassRegistrarImpl instance to avoid concurrent modification of TextEditorHighlightingPassRegistrarImpl.nextAvailableId
+        synchronized (TextEditorHighlightingPassRegistrar.getInstance(myProject)) {
+          myPassExecutorService.submitPasses(preferredFileEditorMap, progress);
+        }
       }, progress);
     }
     catch (ProcessCanceledException e) {
@@ -1202,14 +1205,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     setUpdateByTimerEnabled(false);
     try {
       cancelUpdateProgress(false, "serializeCodeInsightPasses");
-      // wait until passes stop being instantiated to avoid race condition between
-      // TextEditorHighlightingPassRegistrarImpl.reRegisterFactories() (where all caches and counters are reset) and
-      // PassExecutorService.assignUniqueId() (where these counters are accessed)
-      try {
-        myPassExecutorService.waitFor(10_000);
-      }
-      catch (Throwable ignored) {
-      }
       TextEditorHighlightingPassRegistrarImpl registrar =
         (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject);
       registrar.serializeCodeInsightPasses(flag);
