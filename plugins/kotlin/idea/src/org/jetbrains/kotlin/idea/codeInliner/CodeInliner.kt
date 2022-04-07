@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInliner
 
@@ -28,8 +28,6 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.getResolutionScope
-import org.jetbrains.kotlin.idea.util.*
-import org.jetbrains.kotlin.idea.intentions.isInvokeOperator
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -153,9 +151,10 @@ class CodeInliner<TCallElement : KtElement>(
             }
         }
 
-        codeToInline.fqNamesToImport
-            .flatMap { file.resolveImportReference(it) }
-            .forEach { ImportInsertHelper.getInstance(project).importDescriptor(file, it) }
+        for (importPath in codeToInline.fqNamesToImport) {
+            val importDescriptor = file.resolveImportReference(importPath.fqName).firstOrNull() ?: continue
+            ImportInsertHelper.getInstance(project).importDescriptor(file, importDescriptor, aliasName = importPath.alias)
+        }
 
         codeToInline.extraComments?.restoreComments(elementToBeReplaced)
 

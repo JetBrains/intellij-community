@@ -2234,6 +2234,21 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/UnitReturnType4.kt");
             }
 
+            @TestMetadata("withImportAlias.kt")
+            public void testWithImportAlias() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/withImportAlias.kt");
+            }
+
+            @TestMetadata("withImportAlias2.kt")
+            public void testWithImportAlias2() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/withImportAlias2.kt");
+            }
+
+            @TestMetadata("withImportAlias3.kt")
+            public void testWithImportAlias3() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/withImportAlias3.kt");
+            }
+
             @TestMetadata("withoutUsage.kt")
             public void testWithoutUsage() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/withoutUsage.kt");
