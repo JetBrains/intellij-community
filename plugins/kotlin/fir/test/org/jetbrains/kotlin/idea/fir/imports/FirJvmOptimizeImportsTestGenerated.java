@@ -574,6 +574,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
                 runTest("../idea/tests/testData/editor/optimizeImports/common/NestedClassReferenceOutsideClassBody.kt");
             }
 
+            @TestMetadata("NestedClassReferenceThroughAlias.kt")
+            public void testNestedClassReferenceThroughAlias() throws Exception {
+                runTest("../idea/tests/testData/editor/optimizeImports/common/NestedClassReferenceThroughAlias.kt");
+            }
+
             @TestMetadata("NestedClassReferenceThroughTopLevelClass.kt")
             public void testNestedClassReferenceThroughTopLevelClass() throws Exception {
                 runTest("../idea/tests/testData/editor/optimizeImports/common/NestedClassReferenceThroughTopLevelClass.kt");
