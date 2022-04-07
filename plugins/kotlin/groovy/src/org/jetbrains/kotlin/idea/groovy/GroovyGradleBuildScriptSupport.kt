@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.groovy
 
@@ -199,12 +199,6 @@ class GroovyBuildScriptManipulator(
 
     override fun changeApiVersion(version: String, forTests: Boolean): PsiElement? =
         changeKotlinTaskParameter(scriptFile, "apiVersion", version, forTests)
-
-    @Suppress("OverridingDeprecatedMember")
-    override fun addKotlinLibraryToModuleBuildScript(
-        scope: DependencyScope,
-        libraryDescriptor: ExternalLibraryDescriptor
-    ) = addKotlinLibraryToModuleBuildScript(null, scope, libraryDescriptor)
 
     override fun addKotlinLibraryToModuleBuildScript(
         targetModule: Module?,
