@@ -49,7 +49,7 @@ public interface Pointer<T> {
    */
   @Contract(value = "_ -> new", pure = true)
   static <T> @NotNull Pointer<T> hardPointer(@NotNull T value) {
-    return new HardPointer<>(value);
+    return new HardPointerEq<>(value);
   }
 
   /**

@@ -5,11 +5,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-final class HardPointer<T> implements Pointer<T> {
+final class HardPointerEq<T> implements Pointer<T> {
 
   private final T myValue;
 
-  HardPointer(@NotNull T value) {
+  HardPointerEq(@NotNull T value) {
     myValue = value;
   }
 
@@ -23,7 +23,7 @@ final class HardPointer<T> implements Pointer<T> {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    HardPointer<?> pointer = (HardPointer<?>)o;
+    HardPointerEq<?> pointer = (HardPointerEq<?>)o;
     return Objects.equals(myValue, pointer.myValue);
   }
 
