@@ -12,9 +12,10 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 class OverrideDeprecatedMigrationInspection :
     AbstractDiagnosticBasedMigrationInspection<KtNamedDeclaration>(KtNamedDeclaration::class.java),
     MigrationFix {
-    override fun isApplicable(migrationInfo: MigrationInfo): Boolean {
-        return migrationInfo.isLanguageVersionUpdate(LanguageVersion.KOTLIN_1_6, LanguageVersion.KOTLIN_1_7)
-    }
+    override fun isApplicable(migrationInfo: MigrationInfo): Boolean = migrationInfo.isLanguageVersionUpdate(
+        untilOldVersion = LanguageVersion.KOTLIN_1_8,
+        sinceNewVersion = LanguageVersion.KOTLIN_1_7,
+    )
 
     override val diagnosticFactory: DiagnosticFactoryWithPsiElement<KtNamedDeclaration, *> get() = Errors.OVERRIDE_DEPRECATION
 }
