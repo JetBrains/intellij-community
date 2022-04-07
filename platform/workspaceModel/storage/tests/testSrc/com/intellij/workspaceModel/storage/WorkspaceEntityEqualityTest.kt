@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.api.SampleEntity
-import com.intellij.workspaceModel.storage.entities.addSampleEntity
-import org.jetbrains.deft.IntellijWs.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity
+import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
+import org.jetbrains.deft.TestEntities.modifyEntity
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test

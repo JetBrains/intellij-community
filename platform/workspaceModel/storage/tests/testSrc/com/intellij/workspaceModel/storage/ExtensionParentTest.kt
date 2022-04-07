@@ -1,15 +1,15 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.createEmptyBuilder
-import com.intellij.workspaceModel.storage.entities.api.AttachedEntityToParent
-import com.intellij.workspaceModel.storage.entities.api.MainEntityToParent
-import com.intellij.workspaceModel.storage.entities.api.MySource
-import com.intellij.workspaceModel.storage.entities.api.ref
-import org.jetbrains.deft.IntellijWs.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.api.AttachedEntityToParent
+import com.intellij.workspaceModel.storage.entities.test.api.MainEntityToParent
+import com.intellij.workspaceModel.storage.entities.test.api.MySource
+import com.intellij.workspaceModel.storage.entities.test.api.ref
+import org.jetbrains.deft.TestEntities.modifyEntity
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import org.jetbrains.deft.IntellijWs.ref
+import org.jetbrains.deft.TestEntities.ref
 
 class ExtensionParentTest {
   @Test

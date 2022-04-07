@@ -2,12 +2,12 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.workspaceModel.storage.entities.addSampleEntity
-import com.intellij.workspaceModel.storage.entities.addSourceEntity
-import com.intellij.workspaceModel.storage.entities.api.SampleEntity
-import com.intellij.workspaceModel.storage.entities.api.SampleEntitySource
+import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
+import com.intellij.workspaceModel.storage.entities.test.addSourceEntity
+import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity
+import com.intellij.workspaceModel.storage.entities.test.api.SampleEntitySource
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
-import org.jetbrains.deft.IntellijWs.modifyEntity
+import org.jetbrains.deft.TestEntities.modifyEntity
 import org.junit.Assert.*
 import org.junit.Test
 

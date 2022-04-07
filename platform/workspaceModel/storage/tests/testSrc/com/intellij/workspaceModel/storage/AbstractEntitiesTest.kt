@@ -2,12 +2,11 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.workspaceModel.storage.entities.api.LeftEntity
-import com.intellij.workspaceModel.storage.entities.api.MiddleEntity
-import com.intellij.workspaceModel.storage.entities.api.addLeftEntity
-import com.intellij.workspaceModel.storage.entities.api.addMiddleEntity
-import org.jetbrains.deft.IntellijWs.modifyEntity
-import org.jetbrains.deft.IntellijWs.testEntities.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.api.LeftEntity
+import com.intellij.workspaceModel.storage.entities.test.api.MiddleEntity
+import com.intellij.workspaceModel.storage.entities.test.api.addLeftEntity
+import com.intellij.workspaceModel.storage.entities.test.api.addMiddleEntity
+import org.jetbrains.deft.TestEntities.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

@@ -2,9 +2,9 @@
 
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.api.ChildSingleFirstEntity
-import com.intellij.workspaceModel.storage.entities.api.MySource
-import com.intellij.workspaceModel.storage.entities.api.ParentSingleAbEntity
+import com.intellij.workspaceModel.storage.entities.test.api.ChildSingleFirstEntity
+import com.intellij.workspaceModel.storage.entities.test.api.MySource
+import com.intellij.workspaceModel.storage.entities.test.api.ParentSingleAbEntity
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 

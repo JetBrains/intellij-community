@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.api.*
-import org.jetbrains.deft.IntellijWs.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.api.*
+import org.jetbrains.deft.TestEntities.modifyEntity
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
@@ -20,7 +20,7 @@ class MutableStorageTest {
     builder.addEntity(sampleEntity)
     val simpleEntityFromStore = builder.entities(SampleEntity2::class.java).single()
     builder.modifyEntity(sampleEntity) {
-      entitySource = com.intellij.workspaceModel.storage.entities.api.AnotherSource
+      entitySource = AnotherSource
       data = "NewParentData"
     }
     assertEquals(AnotherSource, sampleEntity.entitySource)

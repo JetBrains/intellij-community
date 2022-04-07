@@ -3,14 +3,14 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.workspaceModel.storage.entities.addChildEntity
-import com.intellij.workspaceModel.storage.entities.addParentEntity
-import com.intellij.workspaceModel.storage.entities.api.*
+import com.intellij.workspaceModel.storage.entities.test.addChildEntity
+import com.intellij.workspaceModel.storage.entities.test.addParentEntity
+import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
 import org.hamcrest.CoreMatchers
-import org.jetbrains.deft.IntellijWs.testEntities.modifyEntity
+import org.jetbrains.deft.TestEntities.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before

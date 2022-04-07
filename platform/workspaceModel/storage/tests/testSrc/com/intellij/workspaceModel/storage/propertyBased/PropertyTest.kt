@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.createBuilderFrom
-import com.intellij.workspaceModel.storage.entities.api.AnotherSource
-import com.intellij.workspaceModel.storage.entities.api.MySource
+import com.intellij.workspaceModel.storage.entities.test.api.AnotherSource
+import com.intellij.workspaceModel.storage.entities.test.api.MySource
 import com.intellij.workspaceModel.storage.impl.RefsTable
 import com.intellij.workspaceModel.storage.impl.StorageIndexes
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl

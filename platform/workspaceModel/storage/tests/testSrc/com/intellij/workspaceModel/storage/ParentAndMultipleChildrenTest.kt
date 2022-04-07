@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.api.ChildMultipleEntity
-import com.intellij.workspaceModel.storage.entities.api.MySource
-import com.intellij.workspaceModel.storage.entities.api.ParentMultipleEntity
+import com.intellij.workspaceModel.storage.entities.test.api.ChildMultipleEntity
+import com.intellij.workspaceModel.storage.entities.test.api.MySource
+import com.intellij.workspaceModel.storage.entities.test.api.ParentMultipleEntity
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

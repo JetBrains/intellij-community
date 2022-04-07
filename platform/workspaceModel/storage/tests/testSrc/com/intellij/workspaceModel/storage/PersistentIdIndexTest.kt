@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.api.PersistentIdEntityImpl
-import com.intellij.workspaceModel.storage.entities.addPersistentIdEntity
-import org.jetbrains.deft.IntellijWs.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.api.PersistentIdEntityImpl
+import com.intellij.workspaceModel.storage.entities.test.addPersistentIdEntity
+import org.jetbrains.deft.TestEntities.modifyEntity
 import org.junit.Assert
 import org.junit.Test
 

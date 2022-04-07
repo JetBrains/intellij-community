@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.addChildEntity
-import com.intellij.workspaceModel.storage.entities.addParentEntity
-import com.intellij.workspaceModel.storage.entities.addSampleEntity
-import com.intellij.workspaceModel.storage.entities.api.*
-import org.jetbrains.deft.IntellijWs.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.addChildEntity
+import com.intellij.workspaceModel.storage.entities.test.addParentEntity
+import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
+import com.intellij.workspaceModel.storage.entities.test.api.*
+import org.jetbrains.deft.TestEntities.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before

@@ -2,11 +2,11 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.workspaceModel.storage.entities.api.*
+import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertNotNull
-import org.jetbrains.deft.IntellijWs.testEntities.modifyEntity
+import org.jetbrains.deft.TestEntities.modifyEntity
 import org.junit.Test
 import org.junit.jupiter.api.assertAll
 

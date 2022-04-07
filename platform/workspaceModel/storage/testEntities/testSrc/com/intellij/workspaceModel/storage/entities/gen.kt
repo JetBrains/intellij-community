@@ -11,9 +11,9 @@ import org.jetbrains.deft.impl.ObjModule
 import java.io.File
 
 fun main() {
-    val deftRoot = File("").absoluteFile
-    val dir = deftRoot.resolve("community/platform/workspaceModel/storage/testEntities/testSrc/com/intellij/workspaceModel/storage/entities")
-    CodeWriter().generate(dir, "api", "impl", "org.jetbrains.deft.IntellijWs.testEntities")
+    val root = File("community/platform/workspaceModel/storage/testEntities/testSrc/com/intellij/workspaceModel/storage/entities").absoluteFile
+    CodeWriter().generate(root.resolve("model"), "api", "impl", "org.jetbrains.deft.IntellijWs")
+    CodeWriter().generate(root.resolve("test"), "api", "impl", "org.jetbrains.deft.TestEntities")
 }
 
 fun DefType.implIjWsFileContents(simpleTypes: List<DefType>): String {

@@ -1,17 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.addSampleEntity
-import com.intellij.workspaceModel.storage.entities.api.*
+import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
+import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import org.jetbrains.deft.IntellijWs.modifyEntity
+import org.jetbrains.deft.TestEntities.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
-import org.jetbrains.deft.IntellijWs.ref
+import org.jetbrains.deft.TestEntities.ref
 
 internal fun WorkspaceEntityStorage.singleSampleEntity() = entities(SampleEntity::class.java).single()
 

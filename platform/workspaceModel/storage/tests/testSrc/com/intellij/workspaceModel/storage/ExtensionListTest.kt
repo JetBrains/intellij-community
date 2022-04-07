@@ -1,13 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.api.AttachedEntityList
-import com.intellij.workspaceModel.storage.entities.api.MainEntityList
-import com.intellij.workspaceModel.storage.entities.api.MySource
-import com.intellij.workspaceModel.storage.entities.api.child
+import com.intellij.workspaceModel.storage.entities.test.api.AttachedEntityList
+import com.intellij.workspaceModel.storage.entities.test.api.MainEntityList
+import com.intellij.workspaceModel.storage.entities.test.api.MySource
+import com.intellij.workspaceModel.storage.entities.test.api.child
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
-import org.jetbrains.deft.IntellijWs.child
+import org.jetbrains.deft.TestEntities.child
 
 class ExtensionListTest {
   @Test

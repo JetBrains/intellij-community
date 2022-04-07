@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.storage.impl
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.storage.entities.api.*
+import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals

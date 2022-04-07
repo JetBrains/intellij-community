@@ -1,0 +1,112 @@
+package com.intellij.workspaceModel.storage.entities.test.api
+
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import org.jetbrains.deft.IntellijWs.IntellijWs
+import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.annotations.Abstract
+import org.jetbrains.deft.annotations.Child
+import org.jetbrains.deft.impl.ObjType
+import org.jetbrains.deft.impl.TBlob
+import org.jetbrains.deft.impl.TRef
+import org.jetbrains.deft.impl.TString
+import org.jetbrains.deft.impl.fields.Field
+import org.jetbrains.deft.Obj
+import org.jetbrains.deft.impl.*
+import org.jetbrains.deft.impl.fields.*
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import org.jetbrains.deft.TestEntities.TestEntities
+
+
+
+
+
+
+interface ParentSingleAbEntity : WorkspaceEntity {
+    val child: @Child ChildSingleAbstractBaseEntity
+
+
+    //region generated code
+    //@formatter:off
+    interface Builder: ParentSingleAbEntity, ModifiableWorkspaceEntity<ParentSingleAbEntity>, ObjBuilder<ParentSingleAbEntity> {
+        override var child: ChildSingleAbstractBaseEntity
+        override var entitySource: EntitySource
+    }
+    
+    companion object: ObjType<ParentSingleAbEntity, Builder>(TestEntities, 47) {
+        val child: Field<ParentSingleAbEntity, ChildSingleAbstractBaseEntity> = Field(this, 0, "child", TRef("org.jetbrains.deft.TestEntities", 48, child = true))
+        val entitySource: Field<ParentSingleAbEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
+    }
+    //@formatter:on
+    //endregion
+
+}
+
+@Abstract
+interface ChildSingleAbstractBaseEntity : WorkspaceEntity {
+    val commonData: String
+
+    val parentEntity: ParentSingleAbEntity
+
+
+    //region generated code
+    //@formatter:off
+    interface Builder: ChildSingleAbstractBaseEntity, ModifiableWorkspaceEntity<ChildSingleAbstractBaseEntity>, ObjBuilder<ChildSingleAbstractBaseEntity> {
+        override var commonData: String
+        override var entitySource: EntitySource
+        override var parentEntity: ParentSingleAbEntity
+    }
+    
+    companion object: ObjType<ChildSingleAbstractBaseEntity, Builder>(TestEntities, 48) {
+        val commonData: Field<ChildSingleAbstractBaseEntity, String> = Field(this, 0, "commonData", TString)
+        val entitySource: Field<ChildSingleAbstractBaseEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
+        val parentEntity: Field<ChildSingleAbstractBaseEntity, ParentSingleAbEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.TestEntities", 47))
+    }
+    //@formatter:on
+    //endregion
+
+}
+
+interface ChildSingleFirstEntity : ChildSingleAbstractBaseEntity {
+    val firstData: String
+
+
+    //region generated code
+    //@formatter:off
+    interface Builder: ChildSingleFirstEntity, ModifiableWorkspaceEntity<ChildSingleFirstEntity>, ObjBuilder<ChildSingleFirstEntity> {
+        override var commonData: String
+        override var parentEntity: ParentSingleAbEntity
+        override var firstData: String
+        override var entitySource: EntitySource
+    }
+    
+    companion object: ObjType<ChildSingleFirstEntity, Builder>(TestEntities, 49, ChildSingleAbstractBaseEntity) {
+        val firstData: Field<ChildSingleFirstEntity, String> = Field(this, 0, "firstData", TString)
+        val entitySource: Field<ChildSingleFirstEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
+    }
+    //@formatter:on
+    //endregion
+
+}
+
+interface ChildSingleSecondEntity : ChildSingleAbstractBaseEntity {
+    val secondData: String
+
+
+    //region generated code
+    //@formatter:off
+    interface Builder: ChildSingleSecondEntity, ModifiableWorkspaceEntity<ChildSingleSecondEntity>, ObjBuilder<ChildSingleSecondEntity> {
+        override var commonData: String
+        override var parentEntity: ParentSingleAbEntity
+        override var secondData: String
+        override var entitySource: EntitySource
+    }
+    
+    companion object: ObjType<ChildSingleSecondEntity, Builder>(TestEntities, 50, ChildSingleAbstractBaseEntity) {
+        val secondData: Field<ChildSingleSecondEntity, String> = Field(this, 0, "secondData", TString)
+        val entitySource: Field<ChildSingleSecondEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
+    }
+    //@formatter:on
+    //endregion
+
+}

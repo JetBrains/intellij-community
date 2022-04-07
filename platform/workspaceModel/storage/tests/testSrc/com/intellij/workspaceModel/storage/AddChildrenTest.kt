@@ -2,9 +2,9 @@
 
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.api.*
+import com.intellij.workspaceModel.storage.entities.test.api.*
 import junit.framework.TestCase.*
-import org.jetbrains.deft.IntellijWs.modifyEntity
+import org.jetbrains.deft.TestEntities.modifyEntity
 import org.junit.Test
 
 class AddChildrenTest {
@@ -19,7 +19,7 @@ class AddChildrenTest {
 
     builder.modifyEntity(entity) {
       this.child = ChildNullableEntity {
-        entitySource = com.intellij.workspaceModel.storage.entities.api.MySource
+        entitySource = MySource
         childData = "ChildData"
       }
     }

@@ -5,11 +5,11 @@ import com.intellij.workspaceModel.storage.ClassConversion
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.entities.addChildEntity
-import com.intellij.workspaceModel.storage.entities.addChildWithOptionalParentEntity
-import com.intellij.workspaceModel.storage.entities.addParentEntity
-import com.intellij.workspaceModel.storage.entities.addSampleEntity
-import com.intellij.workspaceModel.storage.entities.api.*
+import com.intellij.workspaceModel.storage.entities.test.addChildEntity
+import com.intellij.workspaceModel.storage.entities.test.addChildWithOptionalParentEntity
+import com.intellij.workspaceModel.storage.entities.test.addParentEntity
+import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
+import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl

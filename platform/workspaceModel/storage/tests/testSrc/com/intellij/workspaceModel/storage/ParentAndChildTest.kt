@@ -1,8 +1,8 @@
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.api.ChildEntity
-import com.intellij.workspaceModel.storage.entities.api.MySource
-import com.intellij.workspaceModel.storage.entities.api.ParentEntity
+import com.intellij.workspaceModel.storage.entities.test.api.ChildEntity
+import com.intellij.workspaceModel.storage.entities.test.api.MySource
+import com.intellij.workspaceModel.storage.entities.test.api.ParentEntity
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

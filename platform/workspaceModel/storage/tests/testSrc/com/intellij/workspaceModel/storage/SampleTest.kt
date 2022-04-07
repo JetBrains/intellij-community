@@ -2,8 +2,8 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.entities.api.MySource
-import com.intellij.workspaceModel.storage.entities.api.SampleEntity2
+import com.intellij.workspaceModel.storage.entities.test.api.MySource
+import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity2
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
