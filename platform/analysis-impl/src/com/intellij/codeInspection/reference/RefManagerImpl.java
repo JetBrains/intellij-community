@@ -388,8 +388,8 @@ public class RefManagerImpl extends RefManager {
         }
       } finally {
         waitForWorkersToFinish();
+        LOG.info("Total duration of processing project usages: " + (System.currentTimeMillis() - before) + "ms");
       }
-      LOG.info("Total duration of processing project usages: " + (System.currentTimeMillis() - before) + "ms");
     }
   }
 
