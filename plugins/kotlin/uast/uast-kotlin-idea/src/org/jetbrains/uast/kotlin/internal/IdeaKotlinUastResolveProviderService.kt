@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin.internal
 
@@ -27,6 +27,7 @@ class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
     override fun getBindingContextIfAny(element: KtElement): BindingContext? =
         element.actionUnderSafeAnalyzeBlock({ getBindingContext(element) }, { null })
 
+    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
     override fun getTypeMapper(element: KtElement): KotlinTypeMapper? {
         return KotlinTypeMapper(
             getBindingContext(element), ClassBuilderMode.LIGHT_CLASSES,
