@@ -156,10 +156,6 @@
       <reference id="Vcs.Log.MatchCaseAction"/>
     </group>
     <group id="Vcs.Log.Toolbar.Internal">
-      <reference id="Vcs.Log.Refresh"/>
-      <group id="Vcs.Log.Toolbar"/>
-      <reference id="Vcs.Log.PresentationSettings"/>
-      <separator/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>
     </group>
     <group id="Vcs.Log.ContextMenu">
@@ -175,6 +171,9 @@
     </group>
     <group id="Vcs.Log.Toolbar.RightCorner">
       <reference id="Vcs.Log.ResumeIndexing"/>
+      <reference id="Vcs.Log.Refresh"/>
+      <group id="Vcs.Log.Toolbar"/>
+      <reference id="Vcs.Log.PresentationSettings"/>
       <reference id="Vcs.Log.GoToRef"/>
     </group>
     <group id="Vcs.Log.Diff.Preview.Location" popup="true" class="com.intellij.vcs.log.ui.actions.DiffPreviewLocationActionGroup">
