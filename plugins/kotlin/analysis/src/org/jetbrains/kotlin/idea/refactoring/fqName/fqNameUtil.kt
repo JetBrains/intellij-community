@@ -25,7 +25,7 @@ fun PsiElement.getKotlinFqName(): FqName? =
 
 @Deprecated(
     "For binary compatibility",
-    replaceWith = ReplaceWith("isImported", "org.jetbrains.kotlin.idea.base.utils.fqname.isImported"),
+    replaceWith = ReplaceWith("this.isImported(importPath, skipAliasedImports)", "org.jetbrains.kotlin.idea.base.utils.fqname.isImported"),
 )
 fun FqName.isImported(importPath: ImportPath, skipAliasedImports: Boolean = true): Boolean =
     _isImported(importPath, skipAliasedImports)
