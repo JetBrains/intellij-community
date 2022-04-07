@@ -3,6 +3,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
@@ -378,15 +379,31 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void findAllDeclarations() {
+    final AnalysisScope scope = getScope();
+    if (scope == null) {
+      return;
+    }
     if (!myDeclarationsFound.getAndSet(true)) {
       long before = System.currentTimeMillis();
       startTaskWorkers();
       try {
-        final AnalysisScope scope = getScope();
-        if (scope != null) {
+        if (!Registry.is("batch.inspections.process.project.usages.in.parallel")) {
           scope.accept(myProjectIterator);
         }
-      } finally {
+        else {
+          final PsiManager psiManager = PsiManager.getInstance(myProject);
+          scope.accept(vFile -> {
+            executeTask(() -> {
+              final PsiFile file = psiManager.findFile(vFile);
+              if (file != null && ProblemHighlightFilter.shouldProcessFileInBatch(file)) {
+                file.accept(myProjectIterator);
+              }
+            });
+            return true;
+          });
+        }
+      }
+      finally {
         waitForWorkersToFinish();
         LOG.info("Total duration of processing project usages: " + (System.currentTimeMillis() - before) + "ms");
       }
