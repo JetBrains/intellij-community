@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.util
 
@@ -78,13 +78,14 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
         element: KtElement,
         descriptor: DeclarationDescriptor,
         actionRunningMode: ActionRunningMode,
-        forceAllUnderImport: Boolean
+        forceAllUnderImport: Boolean,
+        aliasName: Name?,
     ): ImportDescriptorResult {
         val importer = Importer(element, actionRunningMode)
         return if (forceAllUnderImport) {
             importer.importDescriptorWithStarImport(descriptor)
         } else {
-            importer.importDescriptor(descriptor)
+            importer.importDescriptor(descriptor, aliasName)
         }
     }
 
@@ -100,11 +101,15 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
         private val resolutionFacade = file.getResolutionFacade()
         private val languageVersionSettings = resolutionFacade.getLanguageVersionSettings()
 
-        private fun alreadyImported(target: DeclarationDescriptor, scope: LexicalScope, targetFqName: FqName): ImportDescriptorResult? {
-            val name = target.name
+        private fun alreadyImported(
+            target: DeclarationDescriptor,
+            scope: LexicalScope,
+            targetFqName: FqName,
+            targetName: Name = target.name,
+        ): ImportDescriptorResult? {
             return when (target) {
                 is ClassifierDescriptorWithTypeParameters -> {
-                    val classifiers = scope.findClassifiers(name, NoLookupLocation.FROM_IDE).takeIf { it.isNotEmpty() } ?: return null
+                    val classifiers = scope.findClassifiers(targetName, NoLookupLocation.FROM_IDE).takeIf { it.isNotEmpty() } ?: return null
                     if (classifiers.all { it is TypeAliasDescriptor }) {
                         return when {
                             classifiers.all { it.importableFqName == targetFqName } -> ImportDescriptorResult.ALREADY_IMPORTED
@@ -127,12 +132,12 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
 
                 is FunctionDescriptor ->
                     ImportDescriptorResult.ALREADY_IMPORTED.takeIf {
-                        scope.findFunction(name, NoLookupLocation.FROM_IDE) { it.importableFqName == targetFqName } != null
+                        scope.findFunction(targetName, NoLookupLocation.FROM_IDE) { it.importableFqName == targetFqName } != null
                     }
 
                 is PropertyDescriptor ->
                     ImportDescriptorResult.ALREADY_IMPORTED.takeIf {
-                        scope.findVariable(name, NoLookupLocation.FROM_IDE) { it.importableFqName == targetFqName } != null
+                        scope.findVariable(targetName, NoLookupLocation.FROM_IDE) { it.importableFqName == targetFqName } != null
                     }
 
                 else -> null
@@ -168,10 +173,10 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
             return ImportDescriptorResult.IMPORT_ADDED
         }
 
-        fun importDescriptor(descriptor: DeclarationDescriptor): ImportDescriptorResult {
+        fun importDescriptor(descriptor: DeclarationDescriptor, aliasName: Name?): ImportDescriptorResult {
             val target = descriptor.getImportableDescriptor()
 
-            val name = target.name
+            val name = aliasName ?: target.name
             val topLevelScope = resolutionFacade.getFileResolutionScope(file)
 
             // check if import is not needed
@@ -179,12 +184,14 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
 
             val scope = if (element == file) topLevelScope else element.getResolutionScope()
 
-            alreadyImported(target, scope, targetFqName)?.let { return it }
+            alreadyImported(target, scope, targetFqName, name)?.let { return it }
 
             val imports = file.importDirectives
-
-            if (imports.any { !it.isAllUnder && it.importPath?.fqName == targetFqName }) {
-                return ImportDescriptorResult.FAIL
+            for (import in imports) {
+                val importPath = import.importPath ?: continue
+                if (!importPath.isAllUnder && importPath.alias == aliasName && importPath.fqName == targetFqName) {
+                    return ImportDescriptorResult.FAIL
+                }
             }
 
             // check there is an explicit import of a class/package with the same name already
@@ -199,7 +206,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
             }
 
             val containerFqName = targetFqName.parent()
-            val tryStarImport = shouldTryStarImport(containerFqName, target, imports) && when (target) {
+            val tryStarImport = aliasName == null && shouldTryStarImport(containerFqName, target, imports) && when (target) {
                 // this check does not give a guarantee that import with * will import the class - for example,
                 // there can be classes with conflicting name in more than one import with *
                 is ClassifierDescriptorWithTypeParameters -> topLevelScope.findClassifier(name, NoLookupLocation.FROM_IDE) == null
@@ -212,7 +219,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
                 if (result != ImportDescriptorResult.FAIL) return result
             }
 
-            return addExplicitImport(target)
+            return addExplicitImport(target, aliasName)
         }
 
         fun importDescriptorWithStarImport(descriptor: DeclarationDescriptor): ImportDescriptorResult {
@@ -352,10 +359,10 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
             return classDescriptor.defaultType.memberScope
         }
 
-        private fun addExplicitImport(target: DeclarationDescriptor): ImportDescriptorResult {
+        private fun addExplicitImport(target: DeclarationDescriptor, aliasName: Name?): ImportDescriptorResult {
             if (target is ClassDescriptor || target is PackageViewDescriptor) {
                 val topLevelScope = resolutionFacade.getFileResolutionScope(file)
-                val name = target.name
+                val name = aliasName ?: target.name
 
                 // check if there is a conflicting class imported with * import
                 // (not with explicit import - explicit imports are checked before this method invocation)
@@ -365,7 +372,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
                 }
             }
 
-            addImport(target.importableFqName!!, false)
+            addImport(target.importableFqName!!, false, aliasName)
             return ImportDescriptorResult.IMPORT_ADDED
         }
 
@@ -435,8 +442,8 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
         private fun KtReferenceExpression.resolveTargets(): Collection<DeclarationDescriptor> =
             this.getImportableTargets(resolutionFacade.analyze(this, BodyResolveMode.PARTIAL))
 
-        private fun addImport(fqName: FqName, allUnder: Boolean): KtImportDirective = actionRunningMode.runAction {
-            addImport(project, file, fqName, allUnder)
+        private fun addImport(fqName: FqName, allUnder: Boolean, aliasName: Name? = null): KtImportDirective = actionRunningMode.runAction {
+            addImport(project, file, fqName, allUnder, aliasName)
         }
     }
 
