@@ -7,7 +7,8 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.statistics.StatisticsInfo
 
-internal class SearchEverywhereFileStatistician : SearchEverywhereStatistician<Any>() {
+internal class SearchEverywhereFileStatistician
+  : SearchEverywhereStatistician<Any>(PsiFileSystemItem::class.java, PsiItemWithPresentation::class.java) {
   override fun serializeElement(element: Any, location: String): StatisticsInfo? {
     val file = getFile(element) ?: return null
 

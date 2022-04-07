@@ -8,7 +8,7 @@ import com.intellij.psi.statistics.StatisticsManager
 @Service(Service.Level.APP)
 internal class SearchEverywhereStatisticianService {
   companion object {
-    val KEY: Key<SearchEverywhereStatistician<in Any?>> = Key.create("searchEverywhere")
+    val KEY: Key<SearchEverywhereStatistician<in Any>> = Key.create("searchEverywhere")
   }
 
   fun increaseUseCount(element: Any) = getSerializedInfo(element)?.let { StatisticsManager.getInstance().incUseCount(it) }
