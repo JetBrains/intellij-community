@@ -13,6 +13,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.joinCanonicalPath
 import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.projectRoots.Sdk
@@ -57,7 +58,8 @@ abstract class CommonStarterInitialStep(
     starterContext.applicationType ?: StarterAppType("unknown", "")
   }
   protected val exampleCodeProperty: GraphProperty<Boolean> = propertyGraph.lazyProperty { starterContext.includeExamples }
-  protected val gitProperty: GraphProperty<Boolean> = propertyGraph.lazyProperty { false }
+  protected val gitProperty: GraphProperty<Boolean> = propertyGraph.property(false)
+    .bindBooleanStorage("NewProjectWizard.gitState")
 
   protected var entityName: String by entityNameProperty.trim()
   protected var location: String by locationProperty
