@@ -34,7 +34,7 @@ import kotlin.io.path.pathString
 
 internal class SettingsSyncIdeMediatorImpl(private val componentStore: ComponentStoreImpl,
                                            private val rootConfig: Path,
-                                           private val enabledCondition: () -> Boolean) : StreamProvider {
+                                           private val enabledCondition: () -> Boolean) : StreamProvider, SettingsSyncIdeMediator {
 
   companion object {
     val LOG = logger<SettingsSyncIdeMediatorImpl>()
@@ -53,7 +53,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     return true
   }
 
-  fun settingsLogged(snapshot: SettingsSnapshot) {
+  override fun applyToIde(snapshot: SettingsSnapshot) {
     // todo race between this code and SettingsSyncStreamProvider.write which can write other user settings at the same time
 
     // 1. update SettingsSyncSettings first to apply changes in categories
@@ -77,6 +77,20 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     updateSettings(regularFileStates)
 
     invokeLater { updateUI() }
+  }
+
+  override fun activateStreamProvider() {
+    componentStore.storageManager.addStreamProvider(this, true)
+  }
+
+  override fun removeStreamProvider() {
+    componentStore.storageManager.removeStreamProvider(this::class.java)
+  }
+
+  override fun collectFilesToExportFromSettings(): () -> Collection<Path> {
+    return {
+      getExportableItemsFromLocalStorage(getExportableComponentsMap(false), componentStore.storageManager).keys
+    }
   }
 
   override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {

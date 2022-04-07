@@ -4,27 +4,18 @@ import com.intellij.configurationStore.ApplicationStoreImpl
 import com.intellij.configurationStore.StateLoadPolicy
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.keymap.impl.KeymapImpl
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.replaceService
-import com.intellij.util.io.createDirectories
 import com.intellij.util.toBufferExposingByteArray
 import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.charset.Charset
@@ -35,40 +26,18 @@ import java.util.concurrent.TimeUnit
 private val TIMEOUT_UNIT = TimeUnit.SECONDS
 
 @RunWith(JUnit4::class)
-internal class SettingsSyncTest {
-
-  private val appRule = ApplicationRule()
-  private val tempDirManager = TemporaryDirectory()
-  private val disposableRule = DisposableRule()
-  @Rule @JvmField val ruleChain: RuleChain = RuleChain.outerRule(tempDirManager).around(appRule).around(disposableRule)
-
-  private lateinit var application: ApplicationImpl
-  private lateinit var configDir: Path
+internal class SettingsSyncTest : SettingsSyncTestBase() {
   private lateinit var componentStore: TestComponentStore
-  private lateinit var remoteCommunicator: TestRemoteCommunicator
-  private lateinit var updateChecker: SettingsSyncUpdateChecker
-  private lateinit var bridge: SettingsSyncBridge
 
   @Before
-  fun setup() {
-    application = ApplicationManager.getApplication() as ApplicationImpl
-    val mainDir = tempDirManager.createDir()
-    configDir = mainDir.resolve("rootconfig").createDirectories()
+  fun setupComponentStore() {
     componentStore = TestComponentStore(configDir)
-    remoteCommunicator = TestRemoteCommunicator()
-
-    application.replaceService(IComponentStore::class.java, componentStore, disposableRule.disposable)
+    application.replaceService(IComponentStore::class.java, componentStore, disposable)
   }
 
-  @After
-  fun cleanup() {
-    bridge.waitForAllExecuted(10, TimeUnit.SECONDS)
-  }
-
-  private fun initSettingsSync() {
-    val settingsSyncStorage = configDir.resolve("settingsSync")
-    val controls = SettingsSyncMain.init(application, disposableRule.disposable, settingsSyncStorage, configDir, componentStore,
-                                         remoteCommunicator, enabledCondition = { true })
+  protected fun initSettingsSync() {
+    val ideMediator = SettingsSyncIdeMediatorImpl(componentStore, configDir, enabledCondition = { true })
+    val controls = SettingsSyncMain.init(application, disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
     updateChecker = controls.updateChecker
     bridge = controls.bridge
     bridge.initialize(SettingsSyncBridge.InitMode.JustInit)
@@ -306,7 +275,7 @@ internal class SettingsSyncTest {
     }
   }
 
-  internal class TestComponentStore(configDir: Path) : ApplicationStoreImpl() {
+  private class TestComponentStore(configDir: Path) : ApplicationStoreImpl() {
     override val loadPolicy: StateLoadPolicy
       get() = StateLoadPolicy.LOAD
 

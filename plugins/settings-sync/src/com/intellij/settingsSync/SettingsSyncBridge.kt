@@ -17,11 +17,9 @@ import java.util.concurrent.TimeUnit
  */
 internal class SettingsSyncBridge(parentDisposable: Disposable,
                                   private val settingsLog: SettingsLog,
-                                  private val ideUpdater: SettingsSyncIdeMediatorImpl,
+                                  private val ideMediator: SettingsSyncIdeMediator,
                                   private val remoteCommunicator: SettingsSyncRemoteCommunicator,
-                                  private val updateChecker: SettingsSyncUpdateChecker,
-                                  private val activateStreamProvider: () -> Unit
-) {
+                                  private val updateChecker: SettingsSyncUpdateChecker) {
 
   private val pendingEvents = ContainerUtil.createConcurrentList<SyncSettingsEvent>()
 
@@ -41,7 +39,7 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
   fun initialize(initMode: InitMode) {
     settingsLog.initialize()
     // activate the stream provider at this point to correctly process the event from the server (e.g. to synchronize the access to xmls)
-    activateStreamProvider()
+    ideMediator.activateStreamProvider()
 
     when (initMode) {
       is InitMode.TakeFromServer -> {
@@ -161,7 +159,7 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
   }
 
   private fun pushToIde(settingsSnapshot: SettingsSnapshot): SettingsSyncPushResult {
-    ideUpdater.settingsLogged(settingsSnapshot)
+    ideMediator.applyToIde(settingsSnapshot)
     return SettingsSyncPushResult.Success // todo
   }
 
