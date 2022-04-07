@@ -171,13 +171,11 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
     }
 
     Notification notification = ourPreviousNotification.get();
-    if (notification == null) {
-      return;
-    }
-
-    Balloon balloon = notification.getBalloon();
-    if (balloon != null && !balloon.isDisposed()) {
-      return;
+    if (notification != null) {
+      Balloon balloon = notification.getBalloon();
+      if (balloon != null && !balloon.isDisposed()) {
+        return;
+      }
     }
 
     Notification newNotification = UpdateChecker.getNotificationGroupForIdeUpdateResults()
