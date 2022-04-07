@@ -11,6 +11,8 @@ import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.Field
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.*
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 
 
 interface VFUEntity : WorkspaceEntity {
@@ -19,13 +21,13 @@ interface VFUEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  interface Builder: VFUEntity, ObjBuilder<VFUEntity> {
+  interface Builder: VFUEntity, ModifiableWorkspaceEntity<VFUEntity>, ObjBuilder<VFUEntity> {
       override var data: String
       override var entitySource: EntitySource
       override var fileProperty: VirtualFileUrl
   }
   
-  companion object: ObjType<VFUEntity, Builder>(IntellijWs, 58) {
+  companion object: ObjType<VFUEntity, Builder>(IntellijWs, 45) {
       val data: Field<VFUEntity, String> = Field(this, 0, "data", TString)
       val entitySource: Field<VFUEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
       val fileProperty: Field<VFUEntity, VirtualFileUrl> = Field(this, 0, "fileProperty", TBlob("VirtualFileUrl"))
@@ -44,14 +46,14 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  interface Builder: VFUWithTwoPropertiesEntity, ObjBuilder<VFUWithTwoPropertiesEntity> {
+  interface Builder: VFUWithTwoPropertiesEntity, ModifiableWorkspaceEntity<VFUWithTwoPropertiesEntity>, ObjBuilder<VFUWithTwoPropertiesEntity> {
       override var data: String
       override var entitySource: EntitySource
       override var fileProperty: VirtualFileUrl
       override var secondFileProperty: VirtualFileUrl
   }
   
-  companion object: ObjType<VFUWithTwoPropertiesEntity, Builder>(IntellijWs, 59) {
+  companion object: ObjType<VFUWithTwoPropertiesEntity, Builder>(IntellijWs, 46) {
       val data: Field<VFUWithTwoPropertiesEntity, String> = Field(this, 0, "data", TString)
       val entitySource: Field<VFUWithTwoPropertiesEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
       val fileProperty: Field<VFUWithTwoPropertiesEntity, VirtualFileUrl> = Field(this, 0, "fileProperty", TBlob("VirtualFileUrl"))
@@ -70,13 +72,13 @@ interface NullableVFUEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  interface Builder: NullableVFUEntity, ObjBuilder<NullableVFUEntity> {
+  interface Builder: NullableVFUEntity, ModifiableWorkspaceEntity<NullableVFUEntity>, ObjBuilder<NullableVFUEntity> {
       override var data: String
       override var entitySource: EntitySource
       override var fileProperty: VirtualFileUrl?
   }
   
-  companion object: ObjType<NullableVFUEntity, Builder>(IntellijWs, 60) {
+  companion object: ObjType<NullableVFUEntity, Builder>(IntellijWs, 47) {
       val data: Field<NullableVFUEntity, String> = Field(this, 0, "data", TString)
       val entitySource: Field<NullableVFUEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
       val fileProperty: Field<NullableVFUEntity, VirtualFileUrl?> = Field(this, 0, "fileProperty", TOptional(TBlob("VirtualFileUrl")))
@@ -94,13 +96,13 @@ interface ListVFUEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  interface Builder: ListVFUEntity, ObjBuilder<ListVFUEntity> {
+  interface Builder: ListVFUEntity, ModifiableWorkspaceEntity<ListVFUEntity>, ObjBuilder<ListVFUEntity> {
       override var data: String
       override var entitySource: EntitySource
       override var fileProperty: List<VirtualFileUrl>
   }
   
-  companion object: ObjType<ListVFUEntity, Builder>(IntellijWs, 61) {
+  companion object: ObjType<ListVFUEntity, Builder>(IntellijWs, 48) {
       val data: Field<ListVFUEntity, String> = Field(this, 0, "data", TString)
       val entitySource: Field<ListVFUEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
       val fileProperty: Field<ListVFUEntity, List<VirtualFileUrl>> = Field(this, 0, "fileProperty", TList(TBlob("VirtualFileUrl")))

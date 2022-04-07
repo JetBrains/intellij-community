@@ -12,6 +12,8 @@ import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.Field
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.*
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 
 
 
@@ -48,12 +50,12 @@ interface OneEntityWithPersistentId : WorkspaceEntityWithPersistentId {
 
     //region generated code
     //@formatter:off
-    interface Builder: OneEntityWithPersistentId, ObjBuilder<OneEntityWithPersistentId> {
+    interface Builder: OneEntityWithPersistentId, ModifiableWorkspaceEntity<OneEntityWithPersistentId>, ObjBuilder<OneEntityWithPersistentId> {
         override var myName: String
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<OneEntityWithPersistentId, Builder>(IntellijWs, 19) {
+    companion object: ObjType<OneEntityWithPersistentId, Builder>(IntellijWs, 20) {
         val myName: Field<OneEntityWithPersistentId, String> = Field(this, 0, "myName", TString)
         val entitySource: Field<OneEntityWithPersistentId, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val persistentId: Field<OneEntityWithPersistentId, OnePersistentId> = Field(this, 0, "persistentId", TBlob("OnePersistentId"))
@@ -82,7 +84,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: EntityWithSoftLinks, ObjBuilder<EntityWithSoftLinks> {
+    interface Builder: EntityWithSoftLinks, ModifiableWorkspaceEntity<EntityWithSoftLinks>, ObjBuilder<EntityWithSoftLinks> {
         override var link: OnePersistentId
         override var entitySource: EntitySource
         override var manyLinks: List<OnePersistentId>
@@ -98,7 +100,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
         override var justListProperty: List<String>
     }
     
-    companion object: ObjType<EntityWithSoftLinks, Builder>(IntellijWs, 20) {
+    companion object: ObjType<EntityWithSoftLinks, Builder>(IntellijWs, 21) {
         val link: Field<EntityWithSoftLinks, OnePersistentId> = Field(this, 0, "link", TBlob("OnePersistentId"))
         val entitySource: Field<EntityWithSoftLinks, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val manyLinks: Field<EntityWithSoftLinks, List<OnePersistentId>> = Field(this, 0, "manyLinks", TList(TBlob("OnePersistentId")))

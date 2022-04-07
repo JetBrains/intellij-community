@@ -10,6 +10,11 @@ import org.jetbrains.deft.impl.ObjType
 import org.jetbrains.deft.impl.TBlob
 import org.jetbrains.deft.impl.TString
 import org.jetbrains.deft.impl.fields.Field
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import org.jetbrains.deft.Obj
+import org.jetbrains.deft.impl.*
+import org.jetbrains.deft.impl.fields.*
+
 
 
 
@@ -29,13 +34,13 @@ interface LinkedListEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   //@formatter:off
-  interface Builder: LinkedListEntity, ObjBuilder<LinkedListEntity> {
+  interface Builder: LinkedListEntity, ModifiableWorkspaceEntity<LinkedListEntity>, ObjBuilder<LinkedListEntity> {
       override var myName: String
       override var entitySource: EntitySource
       override var next: LinkedListEntityId
   }
   
-  companion object: ObjType<LinkedListEntity, Builder>(TestEntities, 19) {
+  companion object: ObjType<LinkedListEntity, Builder>(TestEntities, 8) {
       val myName: Field<LinkedListEntity, String> = Field(this, 0, "myName", TString)
       val entitySource: Field<LinkedListEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
       val next: Field<LinkedListEntity, LinkedListEntityId> = Field(this, 0, "next", TBlob("LinkedListEntityId"))

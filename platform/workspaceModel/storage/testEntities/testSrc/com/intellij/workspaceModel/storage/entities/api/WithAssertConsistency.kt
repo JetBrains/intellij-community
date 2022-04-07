@@ -9,6 +9,11 @@ import org.jetbrains.deft.impl.ObjType
 import org.jetbrains.deft.impl.TBlob
 import org.jetbrains.deft.impl.TBoolean
 import org.jetbrains.deft.impl.fields.Field
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import org.jetbrains.deft.Obj
+import org.jetbrains.deft.impl.*
+import org.jetbrains.deft.impl.fields.*
+
 
 
 
@@ -20,12 +25,12 @@ interface AssertConsistencyEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  interface Builder: AssertConsistencyEntity, ObjBuilder<AssertConsistencyEntity> {
+  interface Builder: AssertConsistencyEntity, ModifiableWorkspaceEntity<AssertConsistencyEntity>, ObjBuilder<AssertConsistencyEntity> {
       override var passCheck: Boolean
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<AssertConsistencyEntity, Builder>(TestEntities, 26) {
+  companion object: ObjType<AssertConsistencyEntity, Builder>(TestEntities, 23) {
       val passCheck: Field<AssertConsistencyEntity, Boolean> = Field(this, 0, "passCheck", TBoolean)
       val entitySource: Field<AssertConsistencyEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
   }

@@ -9,6 +9,10 @@ import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.Field
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import org.jetbrains.deft.Obj
+import org.jetbrains.deft.impl.fields.*
+
 
 
 @Abstract
@@ -17,13 +21,13 @@ interface BaseEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  interface Builder: BaseEntity, ObjBuilder<BaseEntity> {
+  interface Builder: BaseEntity, ModifiableWorkspaceEntity<BaseEntity>, ObjBuilder<BaseEntity> {
       override var parentEntity: CompositeBaseEntity?
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<BaseEntity, Builder>(TestEntities, 27) {
-      val parentEntity: Field<BaseEntity, CompositeBaseEntity?> = Field(this, 0, "parentEntity", TOptional(TRef("org.jetbrains.deft.IntellijWs.testEntities", 28)))
+  companion object: ObjType<BaseEntity, Builder>(TestEntities, 24) {
+      val parentEntity: Field<BaseEntity, CompositeBaseEntity?> = Field(this, 0, "parentEntity", TOptional(TRef("org.jetbrains.deft.IntellijWs.testEntities", 25)))
       val entitySource: Field<BaseEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
   }
   //@formatter:on
@@ -38,14 +42,14 @@ interface CompositeBaseEntity : BaseEntity {
 
   //region generated code
   //@formatter:off
-  interface Builder: CompositeBaseEntity, ObjBuilder<CompositeBaseEntity> {
+  interface Builder: CompositeBaseEntity, ModifiableWorkspaceEntity<CompositeBaseEntity>, ObjBuilder<CompositeBaseEntity> {
       override var parentEntity: CompositeBaseEntity?
       override var children: List<BaseEntity>
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<CompositeBaseEntity, Builder>(TestEntities, 28, BaseEntity) {
-      val children: Field<CompositeBaseEntity, List<BaseEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWs.testEntities", 27, child = true)))
+  companion object: ObjType<CompositeBaseEntity, Builder>(TestEntities, 25, BaseEntity) {
+      val children: Field<CompositeBaseEntity, List<BaseEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWs.testEntities", 24, child = true)))
       val entitySource: Field<CompositeBaseEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
   }
   //@formatter:on
@@ -59,13 +63,13 @@ interface MiddleEntity : BaseEntity {
 
   //region generated code
   //@formatter:off
-  interface Builder: MiddleEntity, ObjBuilder<MiddleEntity> {
+  interface Builder: MiddleEntity, ModifiableWorkspaceEntity<MiddleEntity>, ObjBuilder<MiddleEntity> {
       override var parentEntity: CompositeBaseEntity?
       override var property: String
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<MiddleEntity, Builder>(TestEntities, 29, BaseEntity) {
+  companion object: ObjType<MiddleEntity, Builder>(TestEntities, 26, BaseEntity) {
       val property: Field<MiddleEntity, String> = Field(this, 0, "property", TString)
       val entitySource: Field<MiddleEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
   }
@@ -89,13 +93,13 @@ interface LeftEntity : CompositeBaseEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: LeftEntity, ObjBuilder<LeftEntity> {
+    interface Builder: LeftEntity, ModifiableWorkspaceEntity<LeftEntity>, ObjBuilder<LeftEntity> {
         override var parentEntity: CompositeBaseEntity?
         override var children: List<BaseEntity>
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<LeftEntity, Builder>(TestEntities, 30, CompositeBaseEntity) {
+    companion object: ObjType<LeftEntity, Builder>(TestEntities, 27, CompositeBaseEntity) {
     }
     //@formatter:on
     //endregion
@@ -117,13 +121,13 @@ interface RightEntity : CompositeBaseEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: RightEntity, ObjBuilder<RightEntity> {
+    interface Builder: RightEntity, ModifiableWorkspaceEntity<RightEntity>, ObjBuilder<RightEntity> {
         override var parentEntity: CompositeBaseEntity?
         override var children: List<BaseEntity>
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<RightEntity, Builder>(TestEntities, 31, CompositeBaseEntity) {
+    companion object: ObjType<RightEntity, Builder>(TestEntities, 28, CompositeBaseEntity) {
     }
     //@formatter:on
     //endregion

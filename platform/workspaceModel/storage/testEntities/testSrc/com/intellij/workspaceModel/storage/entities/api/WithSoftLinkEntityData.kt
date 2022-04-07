@@ -6,6 +6,11 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.Field
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import org.jetbrains.deft.Obj
+import org.jetbrains.deft.impl.fields.*
+
 
 
 // ------------------------------ Persistent Id ---------------
@@ -42,18 +47,18 @@ interface NamedEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   //@formatter:off
-  interface Builder: NamedEntity, ObjBuilder<NamedEntity> {
+  interface Builder: NamedEntity, ModifiableWorkspaceEntity<NamedEntity>, ObjBuilder<NamedEntity> {
       override var myName: String
       override var entitySource: EntitySource
       override var additionalProperty: String?
       override var children: List<NamedChildEntity>
   }
   
-  companion object: ObjType<NamedEntity, Builder>(TestEntities, 20) {
+  companion object: ObjType<NamedEntity, Builder>(TestEntities, 9) {
       val myName: Field<NamedEntity, String> = Field(this, 0, "myName", TString)
       val entitySource: Field<NamedEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
       val additionalProperty: Field<NamedEntity, String?> = Field(this, 0, "additionalProperty", TOptional(TString))
-      val children: Field<NamedEntity, List<NamedChildEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWs.testEntities", 21, child = true)))
+      val children: Field<NamedEntity, List<NamedChildEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWs.testEntities", 10, child = true)))
       val persistentId: Field<NamedEntity, NameId> = Field(this, 0, "persistentId", TBlob("NameId"))
   }
   //@formatter:on
@@ -92,16 +97,16 @@ interface NamedChildEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  interface Builder: NamedChildEntity, ObjBuilder<NamedChildEntity> {
+  interface Builder: NamedChildEntity, ModifiableWorkspaceEntity<NamedChildEntity>, ObjBuilder<NamedChildEntity> {
       override var childProperty: String
       override var entitySource: EntitySource
       override var parentEntity: NamedEntity
   }
   
-  companion object: ObjType<NamedChildEntity, Builder>(TestEntities, 21) {
+  companion object: ObjType<NamedChildEntity, Builder>(TestEntities, 10) {
       val childProperty: Field<NamedChildEntity, String> = Field(this, 0, "childProperty", TString)
       val entitySource: Field<NamedChildEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val parentEntity: Field<NamedChildEntity, NamedEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWs.testEntities", 20))
+      val parentEntity: Field<NamedChildEntity, NamedEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWs.testEntities", 9))
   }
   //@formatter:on
   //endregion
@@ -131,12 +136,12 @@ interface WithSoftLinkEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  interface Builder: WithSoftLinkEntity, ObjBuilder<WithSoftLinkEntity> {
+  interface Builder: WithSoftLinkEntity, ModifiableWorkspaceEntity<WithSoftLinkEntity>, ObjBuilder<WithSoftLinkEntity> {
       override var link: NameId
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<WithSoftLinkEntity, Builder>(TestEntities, 22) {
+  companion object: ObjType<WithSoftLinkEntity, Builder>(TestEntities, 11) {
       val link: Field<WithSoftLinkEntity, NameId> = Field(this, 0, "link", TBlob("NameId"))
       val entitySource: Field<WithSoftLinkEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
   }
@@ -160,12 +165,12 @@ interface ComposedLinkEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  interface Builder: ComposedLinkEntity, ObjBuilder<ComposedLinkEntity> {
+  interface Builder: ComposedLinkEntity, ModifiableWorkspaceEntity<ComposedLinkEntity>, ObjBuilder<ComposedLinkEntity> {
       override var link: ComposedId
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<ComposedLinkEntity, Builder>(TestEntities, 23) {
+  companion object: ObjType<ComposedLinkEntity, Builder>(TestEntities, 12) {
       val link: Field<ComposedLinkEntity, ComposedId> = Field(this, 0, "link", TBlob("ComposedId"))
       val entitySource: Field<ComposedLinkEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
   }
@@ -194,13 +199,13 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   //@formatter:off
-  interface Builder: WithListSoftLinksEntity, ObjBuilder<WithListSoftLinksEntity> {
+  interface Builder: WithListSoftLinksEntity, ModifiableWorkspaceEntity<WithListSoftLinksEntity>, ObjBuilder<WithListSoftLinksEntity> {
       override var myName: String
       override var entitySource: EntitySource
       override var links: List<NameId>
   }
   
-  companion object: ObjType<WithListSoftLinksEntity, Builder>(TestEntities, 24) {
+  companion object: ObjType<WithListSoftLinksEntity, Builder>(TestEntities, 13) {
       val myName: Field<WithListSoftLinksEntity, String> = Field(this, 0, "myName", TString)
       val entitySource: Field<WithListSoftLinksEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
       val links: Field<WithListSoftLinksEntity, List<NameId>> = Field(this, 0, "links", TList(TBlob("NameId")))
@@ -237,13 +242,13 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   //@formatter:off
-  interface Builder: ComposedIdSoftRefEntity, ObjBuilder<ComposedIdSoftRefEntity> {
+  interface Builder: ComposedIdSoftRefEntity, ModifiableWorkspaceEntity<ComposedIdSoftRefEntity>, ObjBuilder<ComposedIdSoftRefEntity> {
       override var myName: String
       override var entitySource: EntitySource
       override var link: NameId
   }
   
-  companion object: ObjType<ComposedIdSoftRefEntity, Builder>(TestEntities, 25) {
+  companion object: ObjType<ComposedIdSoftRefEntity, Builder>(TestEntities, 14) {
       val myName: Field<ComposedIdSoftRefEntity, String> = Field(this, 0, "myName", TString)
       val entitySource: Field<ComposedIdSoftRefEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
       val link: Field<ComposedIdSoftRefEntity, NameId> = Field(this, 0, "link", TBlob("NameId"))

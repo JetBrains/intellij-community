@@ -1,6 +1,5 @@
 package com.intellij.workspaceModel.storage.entities.api
 
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -13,6 +12,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.*
 import org.jetbrains.deft.bytes.*
 import org.jetbrains.deft.collections.*

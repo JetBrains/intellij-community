@@ -25,6 +25,6 @@ object ${src.id.objName}: ${ObjModule::class.fqn}(${ObjModule.Id::class.fqn}("${
 
 ${extFields.lines { wsCode }}
 
-${typeDefs.filter { !it.abstract }.lines { "fun ${wsFqn("WorkspaceEntityStorageBuilder")}.modifyEntity(entity: ${fqn(packageName, name)}, modification: $name.Builder.() -> Unit) = modifyEntity(${fqn(packageName, "${name}Impl")}.Builder::class.java, entity, modification)" }}
+${typeDefs.filter { !it.abstract }.lines { "fun ${wsFqn("WorkspaceEntityStorageBuilder")}.modifyEntity(entity: ${fqn(packageName, name)}, modification: $name.Builder.() -> Unit) = modifyEntity(${fqn(packageName, name)}.Builder::class.java, entity, modification)" }}
 """
 )

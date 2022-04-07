@@ -12,8 +12,8 @@ import java.io.File
 
 fun main() {
     val deftRoot = File("").absoluteFile
-    val dir = deftRoot.resolve("plugins/workspaceModel/model")
-    CodeWriter().generate(dir, "api", "api/impl", "org.jetbrains.deft.IntellijWs")
+    val dir = deftRoot.resolve("community/platform/workspaceModel/codegen/test/testSrc/com/intellij/workspaceModel/model")
+    CodeWriter().generate(dir, "api", "impl", "org.jetbrains.deft.IntellijWs")
 }
 
 fun DefType.implIjWsFileContents(simpleTypes: List<DefType>): String {

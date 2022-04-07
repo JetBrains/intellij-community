@@ -12,6 +12,8 @@ import org.jetbrains.deft.impl.fields.Field
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.*
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 
 
 
@@ -26,12 +28,12 @@ interface FirstEntityWithPId  : WorkspaceEntityWithPersistentId {
 
     //region generated code
     //@formatter:off
-    interface Builder: FirstEntityWithPId, ObjBuilder<FirstEntityWithPId> {
+    interface Builder: FirstEntityWithPId, ModifiableWorkspaceEntity<FirstEntityWithPId>, ObjBuilder<FirstEntityWithPId> {
         override var data: String
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<FirstEntityWithPId, Builder>(IntellijWs, 39) {
+    companion object: ObjType<FirstEntityWithPId, Builder>(IntellijWs, 62) {
         val data: Field<FirstEntityWithPId, String> = Field(this, 0, "data", TString)
         val entitySource: Field<FirstEntityWithPId, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val persistentId: Field<FirstEntityWithPId, FirstPId> = Field(this, 0, "persistentId", TBlob("FirstPId"))
@@ -51,12 +53,12 @@ interface SecondEntityWithPId  : WorkspaceEntityWithPersistentId {
 
     //region generated code
     //@formatter:off
-    interface Builder: SecondEntityWithPId, ObjBuilder<SecondEntityWithPId> {
+    interface Builder: SecondEntityWithPId, ModifiableWorkspaceEntity<SecondEntityWithPId>, ObjBuilder<SecondEntityWithPId> {
         override var data: String
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<SecondEntityWithPId, Builder>(IntellijWs, 40) {
+    companion object: ObjType<SecondEntityWithPId, Builder>(IntellijWs, 63) {
         val data: Field<SecondEntityWithPId, String> = Field(this, 0, "data", TString)
         val entitySource: Field<SecondEntityWithPId, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val persistentId: Field<SecondEntityWithPId, SecondPId> = Field(this, 0, "persistentId", TBlob("SecondPId"))

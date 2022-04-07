@@ -3,6 +3,7 @@ package deft.storage.codegen
 
 import deft.storage.codegen.field.defCode
 import deft.storage.codegen.field.javaType
+import org.jetbrains.deft.codegen.ijws.wsFqn
 import org.jetbrains.deft.codegen.model.DefType
 import org.jetbrains.deft.codegen.model.WsEntityInterface
 import org.jetbrains.deft.codegen.utils.fqn
@@ -37,7 +38,7 @@ fun DefType.generatedApiCode(indent: String = "    "): String = lines(indent) {
     line("//region generated code")
     line("//@formatter:off")
 
-    section("interface Builder: $javaFullName, ObjBuilder<$javaFullName>") {
+    section("interface Builder: $javaFullName, ${wsFqn("ModifiableWorkspaceEntity")}<$javaFullName>, ObjBuilder<$javaFullName>") {
             list(structure.allFields.filter { it.hasSetter }) {
                 if (def.kind is WsEntityInterface) wsBuilderApi else builderApi
             }

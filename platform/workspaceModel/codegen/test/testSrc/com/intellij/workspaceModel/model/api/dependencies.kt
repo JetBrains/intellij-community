@@ -11,6 +11,8 @@ import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.*
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 
 
 
@@ -29,7 +31,7 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
 
     //region generated code
     //@formatter:off
-    interface Builder: LibraryEntity, ObjBuilder<LibraryEntity> {
+    interface Builder: LibraryEntity, ModifiableWorkspaceEntity<LibraryEntity>, ObjBuilder<LibraryEntity> {
         override var name: String
         override var entitySource: EntitySource
         override var tableId: LibraryTableId
@@ -63,7 +65,7 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: LibraryPropertiesEntity, ObjBuilder<LibraryPropertiesEntity> {
+    interface Builder: LibraryPropertiesEntity, ModifiableWorkspaceEntity<LibraryPropertiesEntity>, ObjBuilder<LibraryPropertiesEntity> {
         override var library: LibraryEntity
         override var entitySource: EntitySource
         override var libraryType: String
@@ -87,7 +89,7 @@ interface SdkEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: SdkEntity, ObjBuilder<SdkEntity> {
+    interface Builder: SdkEntity, ModifiableWorkspaceEntity<SdkEntity>, ObjBuilder<SdkEntity> {
         override var library: LibraryEntity
         override var entitySource: EntitySource
         override var homeUrl: VirtualFileUrl

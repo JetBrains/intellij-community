@@ -10,6 +10,8 @@ import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.Field
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.*
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 
 
 
@@ -21,13 +23,13 @@ interface ParentChainEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: ParentChainEntity, ObjBuilder<ParentChainEntity> {
+    interface Builder: ParentChainEntity, ModifiableWorkspaceEntity<ParentChainEntity>, ObjBuilder<ParentChainEntity> {
         override var root: CompositeAbstractEntity
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<ParentChainEntity, Builder>(IntellijWs, 41) {
-        val root: Field<ParentChainEntity, CompositeAbstractEntity> = Field(this, 0, "root", TRef("org.jetbrains.deft.IntellijWs", 43, child = true))
+    companion object: ObjType<ParentChainEntity, Builder>(IntellijWs, 40) {
+        val root: Field<ParentChainEntity, CompositeAbstractEntity> = Field(this, 0, "root", TRef("org.jetbrains.deft.IntellijWs", 42, child = true))
         val entitySource: Field<ParentChainEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
     //@formatter:on
@@ -43,13 +45,13 @@ interface SimpleAbstractEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: SimpleAbstractEntity, ObjBuilder<SimpleAbstractEntity> {
+    interface Builder: SimpleAbstractEntity, ModifiableWorkspaceEntity<SimpleAbstractEntity>, ObjBuilder<SimpleAbstractEntity> {
         override var parentInList: CompositeAbstractEntity
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<SimpleAbstractEntity, Builder>(IntellijWs, 42) {
-        val parentInList: Field<SimpleAbstractEntity, CompositeAbstractEntity> = Field(this, 0, "parentInList", TRef("org.jetbrains.deft.IntellijWs", 43))
+    companion object: ObjType<SimpleAbstractEntity, Builder>(IntellijWs, 41) {
+        val parentInList: Field<SimpleAbstractEntity, CompositeAbstractEntity> = Field(this, 0, "parentInList", TRef("org.jetbrains.deft.IntellijWs", 42))
         val entitySource: Field<SimpleAbstractEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
     //@formatter:on
@@ -66,17 +68,17 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: CompositeAbstractEntity, ObjBuilder<CompositeAbstractEntity> {
+    interface Builder: CompositeAbstractEntity, ModifiableWorkspaceEntity<CompositeAbstractEntity>, ObjBuilder<CompositeAbstractEntity> {
         override var parentInList: CompositeAbstractEntity
         override var children: List<SimpleAbstractEntity>
         override var entitySource: EntitySource
         override var parentEntity: ParentChainEntity?
     }
     
-    companion object: ObjType<CompositeAbstractEntity, Builder>(IntellijWs, 43, SimpleAbstractEntity) {
-        val children: Field<CompositeAbstractEntity, List<SimpleAbstractEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWs", 42, child = true)))
+    companion object: ObjType<CompositeAbstractEntity, Builder>(IntellijWs, 42, SimpleAbstractEntity) {
+        val children: Field<CompositeAbstractEntity, List<SimpleAbstractEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWs", 41, child = true)))
         val entitySource: Field<CompositeAbstractEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val parentEntity: Field<CompositeAbstractEntity, ParentChainEntity?> = Field(this, 0, "parentEntity", TOptional(TRef("org.jetbrains.deft.IntellijWs", 41)))
+        val parentEntity: Field<CompositeAbstractEntity, ParentChainEntity?> = Field(this, 0, "parentEntity", TOptional(TRef("org.jetbrains.deft.IntellijWs", 40)))
     }
     //@formatter:on
     //endregion
@@ -87,14 +89,14 @@ interface CompositeChildAbstractEntity : CompositeAbstractEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: CompositeChildAbstractEntity, ObjBuilder<CompositeChildAbstractEntity> {
+    interface Builder: CompositeChildAbstractEntity, ModifiableWorkspaceEntity<CompositeChildAbstractEntity>, ObjBuilder<CompositeChildAbstractEntity> {
         override var parentInList: CompositeAbstractEntity
         override var children: List<SimpleAbstractEntity>
         override var entitySource: EntitySource
         override var parentEntity: ParentChainEntity?
     }
     
-    companion object: ObjType<CompositeChildAbstractEntity, Builder>(IntellijWs, 44, CompositeAbstractEntity) {
+    companion object: ObjType<CompositeChildAbstractEntity, Builder>(IntellijWs, 43, CompositeAbstractEntity) {
     }
     //@formatter:on
     //endregion
@@ -105,12 +107,12 @@ interface SimpleChildAbstractEntity : SimpleAbstractEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: SimpleChildAbstractEntity, ObjBuilder<SimpleChildAbstractEntity> {
+    interface Builder: SimpleChildAbstractEntity, ModifiableWorkspaceEntity<SimpleChildAbstractEntity>, ObjBuilder<SimpleChildAbstractEntity> {
         override var parentInList: CompositeAbstractEntity
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<SimpleChildAbstractEntity, Builder>(IntellijWs, 45, SimpleAbstractEntity) {
+    companion object: ObjType<SimpleChildAbstractEntity, Builder>(IntellijWs, 44, SimpleAbstractEntity) {
     }
     //@formatter:on
     //endregion

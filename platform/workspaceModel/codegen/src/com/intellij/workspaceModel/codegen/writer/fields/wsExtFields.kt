@@ -7,6 +7,7 @@ import org.jetbrains.deft.codegen.ijws.classes.`for`
 import org.jetbrains.deft.codegen.ijws.classes.`if`
 import org.jetbrains.deft.codegen.ijws.getRefType
 import org.jetbrains.deft.codegen.ijws.wsFqn
+import org.jetbrains.deft.codegen.utils.fqn
 import org.jetbrains.deft.codegen.utils.lines
 import org.jetbrains.deft.impl.TList
 import org.jetbrains.deft.impl.TOptional
@@ -33,12 +34,12 @@ val ExtField<*, *>.wsCode: String
                 line("return ${wsFqn(referrFunction)}(${oppositeField.owner.javaSimpleName}::${oppositeField.javaName})$singleFunction")
             }
             section("set(value)") {
-                line("val diff = (this as ${owner.javaImplBuilderName}).diff")
+                line("val diff = (this as ${owner.javaImplFqn}.Builder).diff")
                 `if`("diff != null") {
                     when (type) {
                         is TOptional<*> -> {
                             `if`("value != null") {
-                                `if`("(value as ${oppositeField.owner.javaImplBuilderName}).diff == null") {
+                                `if`("(value as ${oppositeField.owner.javaImplFqn}.Builder).diff == null") {
                                     if (oppositeList) {
                                         line("value.${oppositeField.implFieldName} = (value.${oppositeField.implFieldName} ?: emptyList()) + this")
                                     } else {
@@ -49,7 +50,7 @@ val ExtField<*, *>.wsCode: String
                             }
                         }
                         is TRef<*> -> {
-                            `if`("(value as ${oppositeField.owner.javaImplBuilderName}).diff == null") {
+                            `if`("(value as ${oppositeField.owner.javaImplFqn}.Builder).diff == null") {
                                 if (oppositeList) {
                                     line("value.${oppositeField.implFieldName} = (value.${oppositeField.implFieldName} ?: emptyList()) + this")
                                 } else {
@@ -60,7 +61,7 @@ val ExtField<*, *>.wsCode: String
                         }
                         is TList<*> -> {
                             `for`("item in value") {
-                                `if`("(item as ${oppositeField.owner.javaImplBuilderName}).diff == null") {
+                                `if`("(item as ${oppositeField.owner.javaImplFqn}.Builder).diff == null") {
                                     if (oppositeList) {
                                         line("item.${oppositeField.implFieldName} = (item.${oppositeField.implFieldName} ?: emptyList()) + this")
                                     } else {
@@ -81,25 +82,25 @@ val ExtField<*, *>.wsCode: String
                         is TOptional<*> -> {
                             `if`("value != null") {
                                 if (oppositeList) {
-                                    line("(value as ${oppositeField.owner.javaImplBuilderName}).${oppositeField.implFieldName} = ((value as ${oppositeField.owner.javaImplBuilderName}).${oppositeField.implFieldName} ?: emptyList()) + this")
+                                    line("(value as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} = ((value as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} ?: emptyList()) + this")
                                 } else {
-                                    line("(value as ${oppositeField.owner.javaImplBuilderName}).${oppositeField.implFieldName} = this")
+                                    line("(value as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} = this")
                                 }
                             }
                         }
                         is TRef<*> -> {
                             if (oppositeList) {
-                                line("(value as ${oppositeField.owner.javaImplBuilderName}).${oppositeField.implFieldName} = ((value as ${oppositeField.owner.javaImplBuilderName}).${oppositeField.implFieldName} ?: emptyList()) + this")
+                                line("(value as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} = ((value as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} ?: emptyList()) + this")
                             } else {
-                                line("(value as ${oppositeField.owner.javaImplBuilderName}).${oppositeField.implFieldName} = this")
+                                line("(value as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} = this")
                             }
                         }
                         is TList<*> -> {
                             `for`("item in value") {
                                 if (oppositeList) {
-                                    line("(item as ${oppositeField.owner.javaImplBuilderName}).${oppositeField.implFieldName} = ((item as ${oppositeField.owner.javaImplBuilderName}).${oppositeField.implFieldName} ?: emptyList()) + this")
+                                    line("(item as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} = ((item as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} ?: emptyList()) + this")
                                 } else {
-                                    line("(item as ${oppositeField.owner.javaImplBuilderName}).${oppositeField.implFieldName} = this")
+                                    line("(item as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} = this")
                                 }
                             }
                         }

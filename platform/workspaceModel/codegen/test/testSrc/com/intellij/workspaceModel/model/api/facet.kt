@@ -8,6 +8,8 @@ import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.*
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 
 
 
@@ -26,7 +28,7 @@ interface FacetEntity: WorkspaceEntityWithPersistentId {
 
     //region generated code
     //@formatter:off
-    interface Builder: FacetEntity, ObjBuilder<FacetEntity> {
+    interface Builder: FacetEntity, ModifiableWorkspaceEntity<FacetEntity>, ObjBuilder<FacetEntity> {
         override var name: String
         override var entitySource: EntitySource
         override var module: ModuleEntity

@@ -16,7 +16,7 @@ fun wsFqn(name: String): String {
         "WorkspaceEntityStorage",
         "ModifiableWorkspaceEntity",
         "WorkspaceEntityStorageBuilder"-> "com.intellij.workspaceModel.storage"
-        "VirtualFileUrl" -> "com.intellij.workspaceModel.codegen.storage.url"
+        "VirtualFileUrl" -> "com.intellij.workspaceModel.storage.url"
         "WorkspaceMutableIndex" -> "com.intellij.workspaceModel.storage.impl.indices"
         "KMutableProperty1" -> "kotlin.reflect"
         "memberProperties" -> "kotlin.reflect.full"

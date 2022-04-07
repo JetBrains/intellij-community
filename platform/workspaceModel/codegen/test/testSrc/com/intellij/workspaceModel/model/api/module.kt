@@ -10,6 +10,8 @@ import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.*
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 
 
 
@@ -31,7 +33,7 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
 
     //region generated code
     //@formatter:off
-    interface Builder: ModuleEntity, ObjBuilder<ModuleEntity> {
+    interface Builder: ModuleEntity, ModifiableWorkspaceEntity<ModuleEntity>, ObjBuilder<ModuleEntity> {
         override var name: String
         override var entitySource: EntitySource
         override var type: String?
@@ -69,7 +71,7 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: ModuleCustomImlDataEntity, ObjBuilder<ModuleCustomImlDataEntity> {
+    interface Builder: ModuleCustomImlDataEntity, ModifiableWorkspaceEntity<ModuleCustomImlDataEntity>, ObjBuilder<ModuleCustomImlDataEntity> {
         override var module: ModuleEntity
         override var entitySource: EntitySource
         override var rootManagerTagCustomData: String?
@@ -93,7 +95,7 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: ModuleGroupPathEntity, ObjBuilder<ModuleGroupPathEntity> {
+    interface Builder: ModuleGroupPathEntity, ModifiableWorkspaceEntity<ModuleGroupPathEntity>, ObjBuilder<ModuleGroupPathEntity> {
         override var module: ModuleEntity
         override var entitySource: EntitySource
         override var path: List<String>
@@ -119,7 +121,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: JavaModuleSettingsEntity, ObjBuilder<JavaModuleSettingsEntity> {
+    interface Builder: JavaModuleSettingsEntity, ModifiableWorkspaceEntity<JavaModuleSettingsEntity>, ObjBuilder<JavaModuleSettingsEntity> {
         override var module: ModuleEntity
         override var entitySource: EntitySource
         override var inheritedCompilerOutput: Boolean
@@ -155,7 +157,7 @@ interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: ExternalSystemModuleOptionsEntity, ObjBuilder<ExternalSystemModuleOptionsEntity> {
+    interface Builder: ExternalSystemModuleOptionsEntity, ModifiableWorkspaceEntity<ExternalSystemModuleOptionsEntity>, ObjBuilder<ExternalSystemModuleOptionsEntity> {
         override var module: ModuleEntity
         override var entitySource: EntitySource
         override var externalSystem: String?
