@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -8,9 +8,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.impl.PsiImplUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -27,13 +30,15 @@ public class GrDeprecatedAPIUsageInspection extends BaseInspection {
       @Override
       public void visitReferenceExpression(@NotNull GrReferenceExpression ref) {
         super.visitReferenceExpression(ref);
-        checkRef(ref.resolve(), ref.getReferenceNameElement(), ref.getReferenceName());
+        PsiElement resolveResult = getResolveElement(ref);
+        checkRef(resolveResult, ref.getReferenceNameElement(), ref.getReferenceName());
       }
 
       @Override
       public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement ref) {
         super.visitCodeReferenceElement(ref);
-        checkRef(ref.resolve(), ref.getReferenceNameElement(), ref.getReferenceName());
+        PsiElement resolveResult = getResolveElement(ref);
+        checkRef(resolveResult, ref.getReferenceNameElement(), ref.getReferenceName());
       }
 
       @Override
@@ -57,6 +62,17 @@ public class GrDeprecatedAPIUsageInspection extends BaseInspection {
           registerError(elementToHighlight, GroovyBundle.message("0.is.deprecated", elementName), LocalQuickFix.EMPTY_ARRAY,
                         ProblemHighlightType.LIKE_DEPRECATED);
         }
+      }
+
+      private @Nullable PsiElement getResolveElement(GrReferenceElement<?> reference) {
+        GroovyResolveResult[] results = reference.multiResolve(true);
+        for (GroovyResolveResult result : results) {
+          PsiElement element = result.getElement();
+          if (element != null) {
+            return element;
+          }
+        }
+        return null;
       }
 
       private boolean isDeprecated(PsiElement resolved) {
