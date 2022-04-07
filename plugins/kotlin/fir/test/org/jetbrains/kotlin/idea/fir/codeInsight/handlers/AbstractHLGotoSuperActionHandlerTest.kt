@@ -1,8 +1,9 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.codeInsight.handlers
 
+import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.fir.codeInsight.handlers.superDeclarations.KotlinSuperDeclarationsInfo
 import org.jetbrains.kotlin.idea.fir.codeInsight.handlers.superDeclarations.KotlinSuperDeclarationsInfoService
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.KtFile
