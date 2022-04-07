@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.selection.selectableGroup
@@ -20,12 +21,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.jetbrains.jewel.Orientation
 import org.jetbrains.jewel.theme.idea.IntelliJTheme
 import org.jetbrains.jewel.theme.idea.addComposePanel
 import org.jetbrains.jewel.theme.intellij.IntelliJTheme
 import org.jetbrains.jewel.theme.intellij.components.Button
 import org.jetbrains.jewel.theme.intellij.components.Checkbox
 import org.jetbrains.jewel.theme.intellij.components.CheckboxRow
+import org.jetbrains.jewel.theme.intellij.components.Divider
 import org.jetbrains.jewel.theme.intellij.components.Text
 
 @ExperimentalCoroutinesApi
@@ -52,6 +55,19 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
                         }
 
                         var checked by remember { mutableStateOf(false) }
+
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(24.dp)
+                        ) {
+                            Text("One")
+                            Divider(orientation = Orientation.Vertical, startIndent = 12.dp)
+                            Text("Two")
+                            Divider(orientation = Orientation.Vertical)
+                            Text("Three")
+                            Divider(orientation = Orientation.Vertical)
+                            Text("Four")
+                        }
 
                         CheckboxRow(
                             checked = checked,
