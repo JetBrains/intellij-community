@@ -13,6 +13,8 @@ import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesTrac
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -27,6 +29,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
@@ -38,11 +41,13 @@ final public class BuildDependenciesDownloader {
   private static final String HTTP_HEADER_CONTENT_LENGTH = "Content-Length";
   private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
     .version(HttpClient.Version.HTTP_1_1).build();
-  private static Striped<Lock> fileLocks = Striped.lock(1024);
+  private static final Striped<Lock> fileLocks = Striped.lock(1024);
+  private static final AtomicBoolean cleanupFlag = new AtomicBoolean(false);
 
   /**
    * Set tracer to get telemetry. e.g. it's set for build scripts to get opentelemetry events
    */
+  @SuppressWarnings("StaticNonFinalField")
   @NotNull
   public static BuildDependenciesTracer TRACER = BuildDependenciesNoopTracer.INSTANCE;
 
@@ -54,6 +59,11 @@ final public class BuildDependenciesDownloader {
   public static void info(String message) {
     //noinspection UseOfSystemOutOrSystemErr
     System.out.println(message);
+  }
+
+  public static void warn(String message) {
+    //noinspection UseOfSystemOutOrSystemErr
+    System.out.println("WARNING: " + message);
   }
 
   public static Map<String, String> getDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
@@ -78,9 +88,16 @@ final public class BuildDependenciesDownloader {
     return URI.create(result);
   }
 
-  private static Path getProjectLocalDownloadCache(BuildDependenciesCommunityRoot communityRoot) throws IOException {
+  private static Path getProjectLocalDownloadCache(BuildDependenciesCommunityRoot communityRoot) {
     Path projectLocalDownloadCache = communityRoot.getCommunityRoot().resolve("build").resolve("download");
-    Files.createDirectories(projectLocalDownloadCache);
+
+    try {
+      Files.createDirectories(projectLocalDownloadCache);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
     return projectLocalDownloadCache;
   }
 
@@ -102,6 +119,8 @@ final public class BuildDependenciesDownloader {
   }
 
   public static synchronized Path downloadFileToCacheLocation(BuildDependenciesCommunityRoot communityRoot, URI uri) {
+    cleanUpIfRequired(communityRoot);
+
     try {
       String uriString = uri.toString();
       String lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1);
@@ -117,6 +136,8 @@ final public class BuildDependenciesDownloader {
   }
 
   public static synchronized Path extractFileToCacheLocation(BuildDependenciesCommunityRoot communityRoot, Path archiveFile, BuildDependenciesExtractOptions... options) {
+    cleanUpIfRequired(communityRoot);
+
     try {
       Path cachePath = getDownloadCachePath(communityRoot);
 
@@ -224,6 +245,8 @@ final public class BuildDependenciesDownloader {
   }
 
   public static void extractFile(Path archiveFile, Path target, BuildDependenciesCommunityRoot communityRoot, BuildDependenciesExtractOptions... options) {
+    cleanUpIfRequired(communityRoot);
+
     final Lock lock = fileLocks.get(target);
     lock.lock();
     try {
@@ -332,6 +355,30 @@ final public class BuildDependenciesDownloader {
       }
     } finally {
       lock.unlock();
+    }
+  }
+
+  private static void cleanUpIfRequired(BuildDependenciesCommunityRoot communityRoot) {
+    if (!cleanupFlag.getAndSet(true)) {
+      // run only once per process
+      return;
+    }
+
+    if (TeamCityHelper.isUnderTeamCity) {
+      // Cleanup on TeamCity is handled by TeamCity
+      return;
+    }
+
+    Path cachesDir = getProjectLocalDownloadCache(communityRoot);
+
+    try {
+      new BuildDependenciesDownloaderCleanup(cachesDir).runCleanupIfRequired();
+    }
+    catch (Throwable t) {
+      StringWriter writer = new StringWriter();
+      t.printStackTrace(new PrintWriter(writer));
+
+      warn("Cleaning up failed for the directory '" + cachesDir + "'\n" + writer);
     }
   }
 
