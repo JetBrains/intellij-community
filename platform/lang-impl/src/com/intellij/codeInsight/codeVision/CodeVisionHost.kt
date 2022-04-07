@@ -104,7 +104,7 @@ open class CodeVisionHost(val project: Project) {
 
 
   init {
-    lifeSettingModel.isEnabledWithRegistry.whenTrue(codeVisionLifetime) { enableCodeVisionLifetime ->
+    lifeSettingModel.isRegistryEnabled.whenTrue(codeVisionLifetime) { enableCodeVisionLifetime ->
       ApplicationManager.getApplication().invokeLater {
         runReadAction {
           if (project.isDisposed) return@runReadAction
