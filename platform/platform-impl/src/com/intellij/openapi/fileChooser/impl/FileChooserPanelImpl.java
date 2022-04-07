@@ -188,7 +188,16 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     var finder = new LocalFsFinder(false).withBaseDir(null);
     FileLookup.LookupFilter filter =
       f -> myDescriptor.isFileVisible(new CoreLocalVirtualFile(FS, ((LocalFsFinder.IoFile)f).getFile()), myShowHiddenFiles);
-    new FileTextFieldImpl(pathEditor, finder, filter, FileChooserFactoryImpl.getMacroMap(), this);
+    new FileTextFieldImpl(pathEditor, finder, filter, FileChooserFactoryImpl.getMacroMap(), this) {
+      @Override
+      protected void setTextToFile(FileLookup.LookupFile file) {
+        super.setTextToFile(file);
+        var path = typedPath();
+        if (path != null) {
+          load(path, null, 0, false);
+        }
+      }
+    };
     pathEditor.getActionMap().put(JTextField.notifyAction, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -197,10 +206,10 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         }
         var path = typedPath();
         if (path != null) {
-          load(path, null, 0);
+          load(path, null, 0, false);
         }
         else if (((String)myPath.getEditor().getItem()).isBlank()) {
-          load(null, null, 0);
+          load(null, null, 0, false);
         }
       }
     });
@@ -243,14 +252,14 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     myList.getActionMap().put(FileChooserPanelActions.Root.ID, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        load(null, myCurrentDirectory, 0);
+        load(null, myCurrentDirectory, 0, true);
       }
     });
     myList.getActionMap().put(FileChooserPanelActions.LevelUp.ID, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (myCurrentDirectory != null) {
-          load(parent(myCurrentDirectory), null, UPPER_LEVEL);
+          load(parent(myCurrentDirectory), null, UPPER_LEVEL, true);
         }
       }
     });
@@ -273,10 +282,10 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private void openItemAtIndex(int idx, InputEvent e) {
     FsItem item = myModel.get(idx);
     if (item.directory) {
-      load(item.path, null, FsItem.UPLINK.equals(item.name) ? UPPER_LEVEL : 0);
+      load(item.path, null, FsItem.UPLINK.equals(item.name) ? UPPER_LEVEL : 0, true);
     }
     else if (myDescriptor.isChooseJarContents() && myRegistry.getFileTypeByFileName(item.name) == ArchiveFileType.INSTANCE) {
-      load(item.path, null, INTO_ARCHIVE);
+      load(item.path, null, INTO_ARCHIVE, true);
     }
     else {
       myCallback.run();
@@ -313,7 +322,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   @Override
   public void load(@Nullable Path path) {
     if (path == null || path.isAbsolute()) {
-      load(path, null, 0);
+      load(path, null, 0, true);
     }
     else {
       throw new IllegalArgumentException("Not absolute: " + path);
@@ -329,7 +338,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       }
     }
     synchronized (myLock) {
-      load(myCurrentDirectory, focusOn, 0);
+      load(myCurrentDirectory, focusOn, 0, true);
     }
   }
 
@@ -408,9 +417,12 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private static final int UPPER_LEVEL = 1;
   private static final int INTO_ARCHIVE = 2;
 
-  private void load(@Nullable Path path, @Nullable Path focusOn, int direction) {
+  private void load(@Nullable Path path, @Nullable Path focusOn, int direction, boolean updatePathBar) {
     synchronized (myLock) {
-      myPath.setItem(path != null ? new PathWrapper(path) : null);
+      if (updatePathBar) {
+        myPath.setItem(path != null ? new PathWrapper(path) : null);
+      }
+
       myModel.clear();
       myList.clearSelection();
       myList.setPaintBusy(true);
@@ -428,10 +440,10 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
           var pathToSelect = focusOn != null ? focusOn :
                              childDir != null && childDir.getParent() == null && !isLocalFs(childDir) ? parent(childDir) :
                              childDir;
-          loadDirectory(directory, pathToSelect, id);
+          loadDirectory(id, directory, pathToSelect, updatePathBar);
         }
         else {
-          loadRoots(id, childDir);
+          loadRoots(id, childDir, updatePathBar);
         }
       }));
     }
@@ -477,7 +489,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     return null;
   }
 
-  private void loadDirectory(Path directory, @Nullable Path pathToSelect, int id) {
+  private void loadDirectory(int id, Path directory, @Nullable Path pathToSelect, boolean updatePathBar) {
     var cancelled = new AtomicBoolean(false);
 
     var vfsDirectory = new PreloadedDirectory(directory);
@@ -485,7 +497,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     var uplink = new FsItem(parent(directory), FsItem.UPLINK, true, true, false, AllIcons.Nodes.UpFolder);
     update(id, cancelled, () -> {
       myCurrentDirectory = directory;
-      myPath.setItem(new PathWrapper(directory));
+      if (updatePathBar) {
+        myPath.setItem(new PathWrapper(directory));
+      }
       myCurrentContent.add(dot);
       myCurrentContent.add(uplink);
       myModel.add(uplink);
@@ -558,12 +572,14 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     }
   }
 
-  private void loadRoots(int id, @Nullable Path pathToSelect) {
+  private void loadRoots(int id, @Nullable Path pathToSelect, boolean updatePathBar) {
     var cancelled = new AtomicBoolean(false);
 
     update(id, cancelled, () -> {
       myCurrentDirectory = null;
-      myPath.setItem(null);
+      if (updatePathBar) {
+        myPath.setItem(null);
+      }
     });
 
     var roots = new ArrayList<Path>();
