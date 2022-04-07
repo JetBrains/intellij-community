@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
 import androidx.compose.runtime.Composable
@@ -18,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.singleWindowApplication
 import org.jetbrains.jewel.modifiers.background
 import org.jetbrains.jewel.theme.intellij.IntelliJThemeDark
@@ -42,10 +44,17 @@ fun main() {
 
 @Composable
 fun WizardHeader(modifier: Modifier = Modifier) {
-    Box(modifier.background(Color.Red).height(100.dp).fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(painterResource("imageasset/android-studio.svg"), "logo", modifier = Modifier.height(50.dp))
-            Text("Configure Image Asset")
+    Box(modifier.background(Color(0xFF616161)).height(100.dp).fillMaxWidth()) {
+        Row(modifier = modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                modifier = modifier.height(74.dp).padding(10.dp),
+                painter = painterResource("imageasset/android-studio.svg"),
+                contentDescription = "logo"
+            )
+            Text(
+                text = "Configure Image Asset",
+                fontSize = 24.sp
+            )
         }
     }
 }
