@@ -188,11 +188,8 @@ final class BundledRuntime {
     if (buildContext.options.bundledRuntimePrefix != null) {
       return buildContext.options.bundledRuntimePrefix
     }
-    else if (buildContext.productProperties.runtimeDistribution.classifier.isEmpty()) {
-      return "jbr-"
-    }
     else {
-      return "jbr_${buildContext.productProperties.runtimeDistribution.classifier}-"
+      return buildContext.productProperties.runtimeDistribution.artifactPrefix
     }
   }
 

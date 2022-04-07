@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 
 @CompileStatic
 enum JetBrainsRuntimeDistribution {
@@ -15,12 +16,25 @@ enum JetBrainsRuntimeDistribution {
    */
   LIGHTWEIGHT(''),
 
+  static final List<JetBrainsRuntimeDistribution> ALL = List.of(values())
+
   /**
    * Distinguishes artifacts of different JBR distributions
    */
+  @NotNull
   final String classifier
 
-  JetBrainsRuntimeDistribution(String classifier) {
+  JetBrainsRuntimeDistribution(@NotNull String classifier) {
     this.classifier = classifier
+  }
+
+  @NotNull
+  String getArtifactPrefix() {
+    if (classifier.isEmpty()) {
+      return "jbr-"
+    }
+    else {
+      return "jbr_" + classifier + "-"
+    }
   }
 }
