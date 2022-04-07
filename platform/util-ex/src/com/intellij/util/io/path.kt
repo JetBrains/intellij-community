@@ -184,6 +184,15 @@ fun Path.copy(target: Path): Path {
   return Files.copy(this, target, StandardCopyOption.REPLACE_EXISTING)
 }
 
+fun Path.copyRecursively(target: Path) {
+  target.parent?.createDirectories()
+  Files.walk(this).use { stream ->
+    stream.forEach { file ->
+      Files.copy(file, target.resolve(this.relativize(file)))
+    }
+  }
+}
+
 /**
  * Opposite to Java, parent directories will be created
  */
