@@ -68,7 +68,7 @@ abstract class AbstractNewProjectWizardMultiStepWithAddButton<S : NewProjectWiza
       }
       else {
         ShowSettingsUtil.getInstance().editConfigurable(null, PluginManagerConfigurable(), Consumer {
-          it.openMarketplaceTab("/tag:Languages $step")
+          it.openMarketplaceTab("/tag: \"Programming Language\" $step")
         })
       }
     }
