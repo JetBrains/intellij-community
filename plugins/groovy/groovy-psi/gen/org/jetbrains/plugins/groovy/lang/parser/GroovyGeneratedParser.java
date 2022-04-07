@@ -1382,12 +1382,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // empty_modifier_list block_declaration_type_element
+  // empty_modifier_list mb_type_parameter_list block_declaration_type_element
   static boolean block_declaration_start_no_modifiers(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_declaration_start_no_modifiers")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = empty_modifier_list(b, l + 1);
+    r = r && mb_type_parameter_list(b, l + 1);
     r = r && block_declaration_type_element(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -2191,12 +2192,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // empty_modifier_list class_declaration_start_after_no_modifiers
+  // empty_modifier_list mb_type_parameter_list class_declaration_start_after_no_modifiers
   static boolean class_declaration_start_no_modifiers(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "class_declaration_start_no_modifiers")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = empty_modifier_list(b, l + 1);
+    r = r && mb_type_parameter_list(b, l + 1);
     r = r && class_declaration_start_after_no_modifiers(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -5149,20 +5151,21 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // empty_modifier_list (method_lookahead | compact_constructor_lookahead)
+  // empty_modifier_list  mb_type_parameter_list (method_lookahead | compact_constructor_lookahead)
   static boolean naked_method_declaration_start(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "naked_method_declaration_start")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = empty_modifier_list(b, l + 1);
-    r = r && naked_method_declaration_start_1(b, l + 1);
+    r = r && mb_type_parameter_list(b, l + 1);
+    r = r && naked_method_declaration_start_2(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // method_lookahead | compact_constructor_lookahead
-  private static boolean naked_method_declaration_start_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "naked_method_declaration_start_1")) return false;
+  private static boolean naked_method_declaration_start_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "naked_method_declaration_start_2")) return false;
     boolean r;
     r = method_lookahead(b, l + 1);
     if (!r) r = compact_constructor_lookahead(b, l + 1);
