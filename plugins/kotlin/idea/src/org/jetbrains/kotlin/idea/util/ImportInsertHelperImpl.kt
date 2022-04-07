@@ -104,8 +104,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
             val name = target.name
             return when (target) {
                 is ClassifierDescriptorWithTypeParameters -> {
-                    val classifiers = scope.findClassifiers(name, NoLookupLocation.FROM_IDE)
-                        .takeIf { it.isNotEmpty() } ?: return null
+                    val classifiers = scope.findClassifiers(name, NoLookupLocation.FROM_IDE).takeIf { it.isNotEmpty() } ?: return null
                     if (classifiers.all { it is TypeAliasDescriptor }) {
                         return when {
                             classifiers.all { it.importableFqName == targetFqName } -> ImportDescriptorResult.ALREADY_IMPORTED
@@ -121,13 +120,21 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
                     if (nonAliasClassifiers.size > 1 && nonAliasClassifiers.all { it.containingDeclaration is PackageFragmentDescriptor }) {
                         return null
                     }
+
                     val classifier: ClassifierDescriptor = nonAliasClassifiers.singleOrNull() ?: return ImportDescriptorResult.FAIL
                     ImportDescriptorResult.ALREADY_IMPORTED.takeIf { classifier.importableFqName == targetFqName }
                 }
+
                 is FunctionDescriptor ->
-                    ImportDescriptorResult.ALREADY_IMPORTED.takeIf { scope.findFunction(name, NoLookupLocation.FROM_IDE) { it.importableFqName == targetFqName } != null }
+                    ImportDescriptorResult.ALREADY_IMPORTED.takeIf {
+                        scope.findFunction(name, NoLookupLocation.FROM_IDE) { it.importableFqName == targetFqName } != null
+                    }
+
                 is PropertyDescriptor ->
-                    ImportDescriptorResult.ALREADY_IMPORTED.takeIf { scope.findVariable(name, NoLookupLocation.FROM_IDE) { it.importableFqName == targetFqName } != null }
+                    ImportDescriptorResult.ALREADY_IMPORTED.takeIf {
+                        scope.findVariable(name, NoLookupLocation.FROM_IDE) { it.importableFqName == targetFqName } != null
+                    }
+
                 else -> null
             }
         }
@@ -191,9 +198,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
                 }
             }
 
-            val fqName = target.importableFqName!!
-            val containerFqName = fqName.parent()
-
+            val containerFqName = targetFqName.parent()
             val tryStarImport = shouldTryStarImport(containerFqName, target, imports) && when (target) {
                 // this check does not give a guarantee that import with * will import the class - for example,
                 // there can be classes with conflicting name in more than one import with *
@@ -274,7 +279,11 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
             fun isVisible(descriptor: DeclarationDescriptor): Boolean {
                 if (descriptor !is DeclarationDescriptorWithVisibility) return true
                 val visibility = descriptor.visibility
-                return !visibility.mustCheckInImports() || DescriptorVisibilityUtils.isVisibleIgnoringReceiver(descriptor, filePackage, languageVersionSettings)
+                return !visibility.mustCheckInImports() || DescriptorVisibilityUtils.isVisibleIgnoringReceiver(
+                    descriptor,
+                    filePackage,
+                    languageVersionSettings,
+                )
             }
 
             val kindFilter = DescriptorKindFilter.ALL.withoutKinds(DescriptorKindFilter.PACKAGES_MASK)
@@ -441,8 +450,8 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
     private fun DeclarationDescriptor.comesFromLocalScopes(): Boolean =
         // local class
         DescriptorUtils.isLocal(this) ||
-        // nested class
-        this.safeAs<ClassifierDescriptor>()?.classId?.isNestedClass == true
+                // nested class
+                this.safeAs<ClassifierDescriptor>()?.classId?.isNestedClass == true
 
     companion object {
         fun addImport(project: Project, file: KtFile, fqName: FqName, allUnder: Boolean = false, alias: Name? = null): KtImportDirective {
