@@ -206,8 +206,8 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
         Collections.sort(versions, VersionComparatorUtil.COMPARATOR.reversed());
 
         // Handle the case when the new version has just been released and the Maven search index hasn't been updated yet
-        if (kotlinCompilerVersion.isRelease() && !versions.contains(kotlinCompilerVersion)) {
-            versions.add(0, kotlinCompilerVersion.getRawVersion());
+        if (kotlinCompilerVersion.isRelease() && !versions.contains(kotlinArtifactVersion)) {
+            versions.add(0, kotlinArtifactVersion);
         }
 
         return versions;
