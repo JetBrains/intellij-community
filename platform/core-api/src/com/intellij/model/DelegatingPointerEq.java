@@ -8,12 +8,12 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-abstract class DelegatingPointer<T, U> implements Pointer<T> {
+abstract class DelegatingPointerEq<T, U> implements Pointer<T> {
 
   private final @NotNull Pointer<? extends U> myUnderlyingPointer;
   private final @NotNull Object myKey;
 
-  protected DelegatingPointer(@NotNull Pointer<? extends U> underlyingPointer, @NotNull Object key) {
+  protected DelegatingPointerEq(@NotNull Pointer<? extends U> underlyingPointer, @NotNull Object key) {
     myUnderlyingPointer = underlyingPointer;
     myKey = key;
   }
@@ -30,7 +30,7 @@ abstract class DelegatingPointer<T, U> implements Pointer<T> {
   public final boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    DelegatingPointer<?, ?> base = (DelegatingPointer<?, ?>)o;
+    DelegatingPointerEq<?, ?> base = (DelegatingPointerEq<?, ?>)o;
     return myKey.equals(base.myKey) && myUnderlyingPointer.equals(base.myUnderlyingPointer);
   }
 
@@ -39,7 +39,7 @@ abstract class DelegatingPointer<T, U> implements Pointer<T> {
     return Objects.hash(myKey, myUnderlyingPointer);
   }
 
-  static final class ByValue<T, U> extends DelegatingPointer<T, U> {
+  static final class ByValue<T, U> extends DelegatingPointerEq<T, U> {
 
     private final @NotNull Function<? super U, ? extends T> myRestoration;
 
@@ -56,7 +56,7 @@ abstract class DelegatingPointer<T, U> implements Pointer<T> {
     }
   }
 
-  static final class ByValueAndPointer<T, U> extends DelegatingPointer<T, U> {
+  static final class ByValueAndPointer<T, U> extends DelegatingPointerEq<T, U> {
 
     private final @NotNull BiFunction<? super U, ? super Pointer<T>, ? extends T> myRestoration;
 

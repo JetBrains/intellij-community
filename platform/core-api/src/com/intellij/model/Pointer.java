@@ -63,7 +63,7 @@ public interface Pointer<T> {
   static <T, U> @NotNull Pointer<T> delegatingPointer(@NotNull Pointer<? extends U> underlyingPointer,
                                                       @NotNull Object key,
                                                       @NotNull Function<? super U, ? extends T> restoration) {
-    return new DelegatingPointer.ByValue<>(underlyingPointer, key, restoration);
+    return new DelegatingPointerEq.ByValue<>(underlyingPointer, key, restoration);
   }
 
   /**
@@ -74,6 +74,6 @@ public interface Pointer<T> {
   static <T, U> @NotNull Pointer<T> uroborosPointer(@NotNull Pointer<? extends U> underlyingPointer,
                                                     @NotNull Object key,
                                                     @NotNull BiFunction<? super U, ? super Pointer<T>, ? extends T> restoration) {
-    return new DelegatingPointer.ByValueAndPointer<>(underlyingPointer, key, restoration);
+    return new DelegatingPointerEq.ByValueAndPointer<>(underlyingPointer, key, restoration);
   }
 }
