@@ -20,6 +20,7 @@ import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -37,7 +38,6 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +61,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -77,6 +78,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private final FileTypeRegistry myRegistry;
   private final FileChooserDescriptor myDescriptor;
   private final Runnable myCallback;
+  private final Consumer<@Nullable @DialogMessage String> myErrorSink;
   private final @Nullable WatchService myWatcher;
   private final Map<Path, FileSystem> myOpenFileSystems;
 
@@ -95,12 +97,16 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private final List<FsItem> myCurrentContent = new ArrayList<>();
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private @Nullable WatchKey myWatchKey;
 
-  FileChooserPanelImpl(@NotNull FileChooserDescriptor descriptor, @NotNull Runnable callback, Path @NotNull [] recentPaths) {
+  FileChooserPanelImpl(@NotNull FileChooserDescriptor descriptor,
+                       @NotNull Runnable callback,
+                       @NotNull Consumer<@Nullable @DialogMessage String> errorSink,
+                       Path @NotNull [] recentPaths) {
     super(new GridBagLayout());
 
     myRegistry = FileTypeRegistry.getInstance();
     myDescriptor = descriptor;
     myCallback = callback;
+    myErrorSink = errorSink;
     myWatcher = startWatchService();
     myOpenFileSystems = new ConcurrentHashMap<>();
 
@@ -426,7 +432,6 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       myModel.clear();
       myList.clearSelection();
       myList.setPaintBusy(true);
-      myList.setEmptyText(StatusText.getDefaultEmptyText());
 
       var childDir = direction == UPPER_LEVEL ? myCurrentDirectory : null;
       myCurrentDirectory = null;
@@ -506,6 +511,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     });
 
     var selection = new AtomicReference<>(uplink);
+    var error = new AtomicReference<String>();
     try {
       var isSymlink = Files.isSymbolicLink(directory);
       var options = isSymlink ? EnumSet.of(FileVisitOption.FOLLOW_LINKS) : EnumSet.noneOf(FileVisitOption.class);
@@ -547,6 +553,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     }
     catch (Exception e) {
       LOG.warn(directory.toString(), e);
+      error.set(e.getMessage());
     }
 
     if (!cancelled.get()) {
@@ -566,6 +573,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         () -> {
           myList.setPaintBusy(false);
           myList.setSelectedValue(selection.get(), true);
+          reportError("file.chooser.cannot.load.dir", error);
           myWatchKey = _watchKey;
         },
         () -> { if (_watchKey != null) _watchKey.cancel(); });
@@ -595,6 +603,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     }
 
     var selection = new AtomicReference<FsItem>();
+    var error = new AtomicReference<String>();
     for (var root : roots) {
       if (cancelled.get()) break;
       try {
@@ -623,24 +632,20 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       }
       catch (Exception e) {
         LOG.warn(root.toString(), e);
+        error.set(e.getMessage());
       }
     }
 
     if (!cancelled.get()) {
       update(id, cancelled, () -> {
         myList.setPaintBusy(false);
-        if (myModel.getSize() == 0) {
-          myList.setEmptyText(UIBundle.message("file.chooser.cannot.load.roots"));
+        if (selection.get() != null) {
+          myList.setSelectedValue(selection.get(), true);
         }
-        else {
-          FsItem selectedItem = selection.get();
-          if (selectedItem != null) {
-            myList.setSelectedValue(selectedItem, true);
-          }
-          else {
-            myList.setSelectedIndex(0);
-          }
+        else if (myModel.getSize() > 0) {
+          myList.setSelectedIndex(0);
         }
+        reportError("file.chooser.cannot.load.roots", error);
       });
     }
   }
@@ -707,6 +712,11 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         (active ? whenActive : whenCancelled).run();
       }
     });
+  }
+
+  private void reportError(String key, AtomicReference<String> error) {
+    String message = error.get();
+    myErrorSink.accept(message != null ? UIBundle.message(key, message) : null);
   }
 
   private static final class PathWrapper {

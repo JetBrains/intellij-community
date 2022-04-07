@@ -88,7 +88,7 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
   @Override
   protected JComponent createCenterPanel() {
     Path[] recentPaths = FileChooserUtil.getRecentPaths().stream().map(NioFiles::toPath).filter(Objects::nonNull).toArray(Path[]::new);
-    myPanel = new FileChooserPanelImpl(myDescriptor, this::doOKAction, recentPaths);
+    myPanel = new FileChooserPanelImpl(myDescriptor, this::doOKAction, this::setErrorText, recentPaths);
     myPanel.setPreferredSize(JBUI.size(400));
 
     var dndLabel = new JLabel(UIBundle.message("file.chooser.tooltip.drag.drop"), SwingConstants.CENTER);
