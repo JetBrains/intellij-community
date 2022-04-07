@@ -126,7 +126,6 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
       var urls = misses.stream().map(s -> "&nbsp;&nbsp;&nbsp;" + s).collect(Collectors.joining("<br>"));
       var message = UIBundle.message("file.chooser.vfs.lookup", urls);
       Messages.showErrorDialog(myPanel, message, getTitle());
-      myPanel.reload(null);
       return;
     }
 
