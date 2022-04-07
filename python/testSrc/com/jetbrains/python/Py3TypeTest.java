@@ -1393,6 +1393,14 @@ public class Py3TypeTest extends PyTestCase {
     assertExpressionType("dict[str, Any]", dict);
   }
 
+  // PY-52656
+  public void testDictValuesType() {
+    doTest("int",
+           "d = {'foo': 42}\n" +
+           "for expr in d.values():\n" +
+           "    pass");
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
