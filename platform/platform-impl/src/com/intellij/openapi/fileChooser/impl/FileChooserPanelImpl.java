@@ -114,6 +114,57 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     toolBar.setTargetComponent(this);
 
     myPath = new ComboBox<>(Stream.of(recentPaths).map(PathWrapper::new).toArray(PathWrapper[]::new));
+    setupPathBar();
+
+    myModel = new SortedListModel<>(FsItem.COMPARATOR);
+    myList = new JBList<>(myModel);
+    setupDirectoryView();
+
+    var scrollPane = ScrollPaneFactory.createScrollPane(myList);
+    var pathInsets = myPath.getInsets();
+    @SuppressWarnings("UseDPIAwareInsets") var scrollInsets = new Insets(JBUI.scale(5) - pathInsets.bottom, pathInsets.left, 0, pathInsets.right);
+    scrollPane.setBorder(BorderFactory.createLineBorder(UIUtil.getBoundsColor()));
+
+    add(label, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.01, CENTER, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
+    add(toolBar.getComponent(), new GridBagConstraints(0, 1, 1, 1, 1.0, 0.01, CENTER, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
+    add(myPath, new GridBagConstraints(0, 2, 1, 1, 1.0, 0.01, CENTER, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
+    add(scrollPane, new GridBagConstraints(0, 3, 1, 1, 1.0, 0.98, CENTER, BOTH, scrollInsets, 0, 0));
+  }
+
+  private @Nullable WatchService startWatchService() {
+    try {
+      var watcher = FileSystems.getDefault().newWatchService();
+      execute(() -> {
+        while (true) {
+          try {
+            var key = watcher.take();
+            var events = key.pollEvents();
+            key.reset();
+            if (!events.isEmpty()) {
+              UIUtil.invokeLaterIfNeeded(() -> {
+                synchronized (myLock) {
+                  if (key == myWatchKey && myCurrentDirectory != null) {
+                    reload(null);
+                  }
+                }
+              });
+            }
+          }
+          catch (InterruptedException ignored) { }
+          catch (ClosedWatchServiceException e) {
+            break;
+          }
+        }
+      });
+      return watcher;
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+      return null;
+    }
+  }
+
+  private void setupPathBar() {
     myPath.setVisible(myShowPathBar);
     myPath.setEditable(true);
     var pathEditor = (JTextField)myPath.getEditor().getEditorComponent();
@@ -153,11 +204,11 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         }
       }
     });
+  }
 
-    myModel = new SortedListModel<>(FsItem.COMPARATOR);
-    myList = new JBList<>(myModel);
+  private void setupDirectoryView() {
     myList.setCellRenderer(new MyListCellRenderer());
-    myList.setSelectionMode(descriptor.isChooseMultiple() ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
+    myList.setSelectionMode(myDescriptor.isChooseMultiple() ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
     myList.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
@@ -203,49 +254,6 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         }
       }
     });
-
-    var scrollPane = ScrollPaneFactory.createScrollPane(myList);
-    var pathInsets = myPath.getInsets();
-    @SuppressWarnings("UseDPIAwareInsets") var scrollInsets = new Insets(JBUI.scale(5) - pathInsets.bottom, pathInsets.left, 0, pathInsets.right);
-    scrollPane.setBorder(BorderFactory.createLineBorder(UIUtil.getBoundsColor()));
-
-    add(label, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.01, CENTER, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
-    add(toolBar.getComponent(), new GridBagConstraints(0, 1, 1, 1, 1.0, 0.01, CENTER, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
-    add(myPath, new GridBagConstraints(0, 2, 1, 1, 1.0, 0.01, CENTER, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
-    add(scrollPane, new GridBagConstraints(0, 3, 1, 1, 1.0, 0.98, CENTER, BOTH, scrollInsets, 0, 0));
-  }
-
-  private @Nullable WatchService startWatchService() {
-    try {
-      var watcher = FileSystems.getDefault().newWatchService();
-      execute(() -> {
-        while (true) {
-          try {
-            var key = watcher.take();
-            var events = key.pollEvents();
-            key.reset();
-            if (!events.isEmpty()) {
-              UIUtil.invokeLaterIfNeeded(() -> {
-                synchronized (myLock) {
-                  if (key == myWatchKey && myCurrentDirectory != null) {
-                    reload(null);
-                  }
-                }
-              });
-            }
-          }
-          catch (InterruptedException ignored) { }
-          catch (ClosedWatchServiceException e) {
-            break;
-          }
-        }
-      });
-      return watcher;
-    }
-    catch (Exception e) {
-      LOG.warn(e);
-      return null;
-    }
   }
 
   private @Nullable Path typedPath() {
