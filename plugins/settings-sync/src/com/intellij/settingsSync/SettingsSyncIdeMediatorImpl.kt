@@ -32,12 +32,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 import kotlin.io.path.pathString
 
-internal class SettingsSyncIdeCommunicator(private val componentStore: ComponentStoreImpl,
+internal class SettingsSyncIdeMediatorImpl(private val componentStore: ComponentStoreImpl,
                                            private val rootConfig: Path,
                                            private val enabledCondition: () -> Boolean) : StreamProvider {
 
   companion object {
-    val LOG = logger<SettingsSyncIdeCommunicator>()
+    val LOG = logger<SettingsSyncIdeMediatorImpl>()
   }
 
   private val appConfig: Path get() = rootConfig.resolve(OPTIONS_DIRECTORY)

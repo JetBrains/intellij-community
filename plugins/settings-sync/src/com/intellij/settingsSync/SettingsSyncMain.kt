@@ -94,7 +94,7 @@ internal class SettingsSyncMain : Disposable {
       val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable) {
         getExportableItemsFromLocalStorage(getExportableComponentsMap(false), componentStore.storageManager).keys
       }
-      val ideUpdater = SettingsSyncIdeCommunicator(componentStore, appConfigPath, enabledCondition)
+      val ideUpdater = SettingsSyncIdeMediatorImpl(componentStore, appConfigPath, enabledCondition)
       val updateChecker = SettingsSyncUpdateChecker(application, remoteCommunicator)
       val bridge = SettingsSyncBridge(parentDisposable, settingsLog, ideUpdater, remoteCommunicator, updateChecker) {
         componentStore.storageManager.addStreamProvider(ideUpdater, true)

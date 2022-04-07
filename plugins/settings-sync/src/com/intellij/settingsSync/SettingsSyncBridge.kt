@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
  */
 internal class SettingsSyncBridge(parentDisposable: Disposable,
                                   private val settingsLog: SettingsLog,
-                                  private val ideUpdater: SettingsSyncIdeCommunicator,
+                                  private val ideUpdater: SettingsSyncIdeMediatorImpl,
                                   private val remoteCommunicator: SettingsSyncRemoteCommunicator,
                                   private val updateChecker: SettingsSyncUpdateChecker,
                                   private val activateStreamProvider: () -> Unit
