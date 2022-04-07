@@ -40,6 +40,7 @@ import static com.intellij.ide.actions.DragEditorTabsFusEventFields.SAME_WINDOW;
 import static javax.swing.SwingConstants.*;
 
 public final class DockableEditorTabbedContainer implements DockContainer.Persistent, Activatable, Disposable {
+  @NotNull
   private final EditorsSplitters mySplitters;
   private final Project myProject;
 
@@ -285,7 +286,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     return mySplitters;
   }
 
-  public EditorsSplitters getSplitters() {
+  public @NotNull EditorsSplitters getSplitters() {
     return mySplitters;
   }
 

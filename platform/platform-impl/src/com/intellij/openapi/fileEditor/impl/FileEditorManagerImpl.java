@@ -213,7 +213,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }, myProject);
   }
 
-  private void registerEditor(Editor editor) {
+  private void registerEditor(@NotNull Editor editor) {
     Project project = editor.getProject();
     if (project == null || project.isDisposed()) {
       return;
@@ -268,7 +268,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public void dispose() {
   }
 
-  private void dumbModeFinished(Project project) {
+  private void dumbModeFinished(@NotNull Project project) {
     VirtualFile[] files = getOpenFiles();
     for (VirtualFile file : files) {
       List<EditorComposite> composites = getAllComposites(file);
@@ -350,6 +350,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     return result;
   }
 
+  @NotNull
   private EditorsSplitters getActiveSplittersSync() {
     assertDispatchThread();
     if (Registry.is("ide.navigate.to.recently.focused.editor", false)) {
@@ -670,8 +671,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   public EditorWindow getCurrentWindow() {
     if (!ApplicationManager.getApplication().isDispatchThread()) return null;
-    EditorsSplitters splitters = getActiveSplittersSync();
-    return splitters == null ? null : splitters.getCurrentWindow();
+    return getActiveSplittersSync().getCurrentWindow();
   }
 
   @Override
@@ -766,8 +766,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Nullable
   private EditorWindow findWindowInAllSplitters(@NotNull VirtualFile file) {
-    EditorsSplitters activeSplitters = getActiveSplittersSync();
-    EditorWindow activeCurrentWindow = activeSplitters.getCurrentWindow();
+    EditorWindow activeCurrentWindow = getActiveSplittersSync().getCurrentWindow();
     if (activeCurrentWindow != null && isFileOpenInWindow(file, activeCurrentWindow)) {
       return activeCurrentWindow;
     }
@@ -1378,9 +1377,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public @NotNull EditorsSplitters getSplitters() {
-    EditorsSplitters active = null;
-    if (ApplicationManager.getApplication().isDispatchThread()) active = getActiveSplittersSync();
-    return active == null ? getMainSplitters() : active;
+    return ApplicationManager.getApplication().isDispatchThread() ? getActiveSplittersSync() : getMainSplitters();
   }
 
   @Override
@@ -1402,18 +1399,21 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public @Nullable FileEditorWithProvider getSelectedEditorWithProvider(@NotNull VirtualFile file) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     EditorComposite composite = getComposite(file);
     return composite == null ? null : composite.getSelectedWithProvider();
   }
 
   @Override
   public @NotNull Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     EditorComposite composite = getComposite(file);
     return EditorComposite.retrofit(composite);
   }
 
   @Override
   public FileEditor @NotNull [] getEditors(@NotNull VirtualFile file) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return getEditorsWithProviders(file).getFirst();
   }
 
