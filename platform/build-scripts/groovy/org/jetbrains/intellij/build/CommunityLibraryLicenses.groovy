@@ -816,7 +816,7 @@ final class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinx-collections-immutable-jvm"),
     jetbrainsLibrary("kotlinx.kotlinx-serialization-compiler-plugin-for-compilation"),
     jetbrainsLibrary("ml-completion-prev-exprs-models"),
-    jetbrainsLibrary("org.jetbrains.kotlin:backend.native.mobile"),
+    jetbrainsLibrary("org.jetbrains.kotlin:kotlin-backend-native-for-ide"),
     jetbrainsLibrary("rd-core"),
     jetbrainsLibrary("rd-framework"),
     jetbrainsLibrary("rd-swing"),
