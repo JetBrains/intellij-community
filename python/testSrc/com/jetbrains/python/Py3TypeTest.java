@@ -467,7 +467,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-21692
   public void testSumResult() {
-    doTest("int | Literal[0]",
+    doTest("int",
            "expr = sum([1, 2, 3])");
   }
 
