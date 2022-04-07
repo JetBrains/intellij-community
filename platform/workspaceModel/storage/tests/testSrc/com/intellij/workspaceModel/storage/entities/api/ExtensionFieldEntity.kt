@@ -28,7 +28,7 @@ interface MainEntity : WorkspaceEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<MainEntity, Builder>(IntellijWs, 24) {
+    companion object: ObjType<MainEntity, Builder>(IntellijWs, 37) {
         val x: Field<MainEntity, String> = Field(this, 0, "x", TString)
         val entitySource: Field<MainEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
@@ -50,8 +50,8 @@ interface AttachedEntity : WorkspaceEntity {
         override var data: String
     }
     
-    companion object: ObjType<AttachedEntity, Builder>(IntellijWs, 25) {
-        val ref: Field<AttachedEntity, MainEntity> = Field(this, 0, "ref", TRef("org.jetbrains.deft.IntellijWs", 24))
+    companion object: ObjType<AttachedEntity, Builder>(IntellijWs, 38) {
+        val ref: Field<AttachedEntity, MainEntity> = Field(this, 0, "ref", TRef("org.jetbrains.deft.IntellijWs", 37))
         val entitySource: Field<AttachedEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val data: Field<AttachedEntity, String> = Field(this, 0, "data", TString)
     }

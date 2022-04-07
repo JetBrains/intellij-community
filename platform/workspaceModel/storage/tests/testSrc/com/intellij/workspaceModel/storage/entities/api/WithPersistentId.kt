@@ -55,7 +55,7 @@ interface OneEntityWithPersistentId : WorkspaceEntityWithPersistentId {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<OneEntityWithPersistentId, Builder>(IntellijWs, 20) {
+    companion object: ObjType<OneEntityWithPersistentId, Builder>(IntellijWs, 19) {
         val myName: Field<OneEntityWithPersistentId, String> = Field(this, 0, "myName", TString)
         val entitySource: Field<OneEntityWithPersistentId, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val persistentId: Field<OneEntityWithPersistentId, OnePersistentId> = Field(this, 0, "persistentId", TBlob("OnePersistentId"))
@@ -100,7 +100,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
         override var justListProperty: List<String>
     }
     
-    companion object: ObjType<EntityWithSoftLinks, Builder>(IntellijWs, 21) {
+    companion object: ObjType<EntityWithSoftLinks, Builder>(IntellijWs, 20) {
         val link: Field<EntityWithSoftLinks, OnePersistentId> = Field(this, 0, "link", TBlob("OnePersistentId"))
         val entitySource: Field<EntityWithSoftLinks, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
         val manyLinks: Field<EntityWithSoftLinks, List<OnePersistentId>> = Field(this, 0, "manyLinks", TList(TBlob("OnePersistentId")))

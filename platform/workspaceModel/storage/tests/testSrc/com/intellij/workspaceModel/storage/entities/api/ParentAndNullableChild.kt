@@ -30,10 +30,10 @@ interface ParentNullableEntity : WorkspaceEntity {
         override var child: ChildNullableEntity?
     }
     
-    companion object: ObjType<ParentNullableEntity, Builder>(IntellijWs, 32) {
+    companion object: ObjType<ParentNullableEntity, Builder>(IntellijWs, 35) {
         val parentData: Field<ParentNullableEntity, String> = Field(this, 0, "parentData", TString)
         val entitySource: Field<ParentNullableEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val child: Field<ParentNullableEntity, ChildNullableEntity?> = Field(this, 0, "child", TOptional(TRef("org.jetbrains.deft.IntellijWs", 33, child = true)))
+        val child: Field<ParentNullableEntity, ChildNullableEntity?> = Field(this, 0, "child", TOptional(TRef("org.jetbrains.deft.IntellijWs", 36, child = true)))
     }
     //@formatter:on
     //endregion
@@ -54,10 +54,10 @@ interface ChildNullableEntity : WorkspaceEntity {
         override var parentEntity: ParentNullableEntity
     }
     
-    companion object: ObjType<ChildNullableEntity, Builder>(IntellijWs, 33) {
+    companion object: ObjType<ChildNullableEntity, Builder>(IntellijWs, 36) {
         val childData: Field<ChildNullableEntity, String> = Field(this, 0, "childData", TString)
         val entitySource: Field<ChildNullableEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val parentEntity: Field<ChildNullableEntity, ParentNullableEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWs", 32))
+        val parentEntity: Field<ChildNullableEntity, ParentNullableEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.IntellijWs", 35))
     }
     //@formatter:on
     //endregion

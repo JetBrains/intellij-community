@@ -31,10 +31,10 @@ interface MainEntityParentList : WorkspaceEntity {
         override var children: List<AttachedEntityParentList>
     }
     
-    companion object: ObjType<MainEntityParentList, Builder>(IntellijWs, 16) {
+    companion object: ObjType<MainEntityParentList, Builder>(IntellijWs, 21) {
         val x: Field<MainEntityParentList, String> = Field(this, 0, "x", TString)
         val entitySource: Field<MainEntityParentList, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val children: Field<MainEntityParentList, List<AttachedEntityParentList>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWs", 17, child = true)))
+        val children: Field<MainEntityParentList, List<AttachedEntityParentList>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.IntellijWs", 22, child = true)))
     }
     //@formatter:on
     //endregion
@@ -52,7 +52,7 @@ interface AttachedEntityParentList : WorkspaceEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<AttachedEntityParentList, Builder>(IntellijWs, 17) {
+    companion object: ObjType<AttachedEntityParentList, Builder>(IntellijWs, 22) {
         val data: Field<AttachedEntityParentList, String> = Field(this, 0, "data", TString)
         val entitySource: Field<AttachedEntityParentList, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
     }
