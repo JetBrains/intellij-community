@@ -17,6 +17,7 @@ import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -36,7 +37,7 @@ class CheckerRunner(val text: TextContent) {
       val deferred: List<Deferred<Collection<TextProblem>>> = checkers.map { checker ->
         when (checker) {
           is ExternalTextChecker -> async { checker.checkExternally(text) }
-          else -> async(start = CoroutineStart.LAZY) { checker.check(text) }
+          else -> async(start = CoroutineStart.LAZY) { blockingContext { checker.check(text) } }
         }
       }
       launch {
