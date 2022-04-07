@@ -871,4 +871,8 @@ public final class ProjectUtil extends ProjectUtilCore {
   public static @Nullable Project getProjectForComponent(@Nullable Component component) {
     return getProjectForWindow(ComponentUtil.getWindow(component));
   }
+
+  public static @Nullable Project getActiveProject() {
+    return getProjectForWindow(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow());
+  }
 }

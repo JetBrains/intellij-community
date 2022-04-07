@@ -115,7 +115,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
     // if focus transfer is requested to the active project's window, we call 'requestFocus' to allow focusing detached project windows
     // (editor or tool windows), otherwise we call 'requestFocusInWindow' to avoid unexpected project switching
-    Project activeProject = ProjectUtil.getProjectForWindow(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow());
+    Project activeProject = ProjectUtil.getActiveProject();
     if (activeProject != null) {
       if (project == null) {
         project = ProjectUtil.getProjectForComponent(c);

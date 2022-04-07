@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.MaximizeEditorInSplitAction;
 import com.intellij.ide.actions.SplitAction;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -973,6 +974,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                                                      AsyncFileEditorProvider.Builder @Nullable [] builders) {
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
     LOG.assertTrue(file.isValid(), "Invalid file: " + file);
+
+    Project activeProject = ProjectUtil.getActiveProject();
+    if (activeProject != null && !activeProject.equals(myProject)) {
+      // allow focus switching only within a project
+      options = options.clone().withRequestFocus(false);
+    }
 
     EditorComposite composite = window.getComposite(file);
     boolean newEditor = composite == null;
