@@ -3,7 +3,7 @@ package com.intellij.remoteDev.downloader
 import com.intellij.remoteDev.OsRegistryConfigProvider
 
 object IntellijClientDownloaderSystemSettings {
-  private val osRegistryConfigProvider = OsRegistryConfigProvider("IntellijClient")
+  private val osRegistryConfigProvider = OsRegistryConfigProvider("JetBrainsClient")
   private const val downloadDestinationKey = "downloadDestination"
 
   fun getDownloadDestination(): OsRegistryConfigProvider.OsRegistrySystemSetting<String?> {
