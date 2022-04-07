@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build.dependencies
 
 import com.intellij.util.io.Compressor
+import org.hamcrest.BaseMatcher
+import org.hamcrest.Description
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -64,7 +66,19 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
     BuildDependenciesDownloader.extractFileToCacheLocation(
       BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
 
-    thrown.expectMessage("$testArchive: entry name 'top-level2' should start with previously found prefix 'top-level1/'")
+    thrown.expectMessage(object : BaseMatcher<String>() {
+      val prefix = "should start with previously found prefix"
+
+      override fun describeTo(description: Description) {
+        description.appendText(prefix)
+      }
+
+      override fun matches(item: Any?): Boolean {
+        val str = (item as String)
+        return str.contains(prefix)
+      }
+    })
+
     BuildDependenciesDownloader.extractFileToCacheLocation(
       BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive,
       BuildDependenciesExtractOptions.STRIP_ROOT)
