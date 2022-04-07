@@ -433,6 +433,26 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
 
     if (old != null) g.setTransform(old);
+
+    debugGutterAreas(g);
+  }
+
+  private void debugGutterAreas(Graphics2D g) {
+    if (!debug()) return;
+    Point p = MouseInfo.getPointerInfo().getLocation();
+    SwingUtilities.convertPointFromScreen(p, this.myEditor.getComponent());
+    if (p.x >= 0 && p.x <= getWidth()) {
+      int off = 0;
+      for (EditorGutterLayout.GutterArea area : myLayout.getLayout()) {
+        int x = off;
+        off += area.width();
+        if (off >= p.x) {
+          g.setPaint(ColorUtil.withAlpha(JBColor.GREEN, 0.15));
+          g.fillRect(x, 0, area.width(), getHeight());
+          break;
+        }
+      }
+    }
   }
 
   private double getExpUIVerticalLineX() {
@@ -1881,6 +1901,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     else {
       computeTooltipInBackground(pointInfo);
     }
+    if (debug()) {
+      repaint();
+    }
+  }
+
+  private static boolean debug() {
+    return Registry.is("ide.debug.gutter.area", false);
   }
 
   private GutterIconRenderer myCalculatingInBackground;
