@@ -12,10 +12,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
@@ -42,6 +44,16 @@ public class GrDeprecatedAPIUsageInspection extends BaseInspection {
       }
 
       @Override
+      public void visitArgumentLabel(@NotNull GrArgumentLabel argumentLabel) {
+        super.visitArgumentLabel(argumentLabel);
+        PsiElement resolveResult = getResolveElement(argumentLabel);
+        if (resolveResult instanceof GrAccessorMethod) {
+          resolveResult = ((GrAccessorMethod)resolveResult).getProperty();
+        }
+        checkRef(resolveResult, argumentLabel.getNameElement(), argumentLabel.getName());
+      }
+
+      @Override
       public void visitNewExpression(@NotNull GrNewExpression ref) {
         super.visitNewExpression(ref);
         var resolvedCall = ref.resolveMethod();
@@ -64,7 +76,7 @@ public class GrDeprecatedAPIUsageInspection extends BaseInspection {
         }
       }
 
-      private @Nullable PsiElement getResolveElement(GrReferenceElement<?> reference) {
+      private @Nullable PsiElement getResolveElement(GroovyReference reference) {
         GroovyResolveResult[] results = reference.multiResolve(true);
         for (GroovyResolveResult result : results) {
           PsiElement element = result.getElement();
