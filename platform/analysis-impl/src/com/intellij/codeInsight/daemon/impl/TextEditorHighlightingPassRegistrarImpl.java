@@ -33,7 +33,6 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   private volatile PassConfig[] myFrozenPassConfigs; // passId -> PassConfig; contents is immutable, updated by COW
   private final List<DirtyScopeTrackingHighlightingPassFactory> myDirtyScopeTrackingFactories = ContainerUtil.createConcurrentList();
   private final AtomicInteger nextAvailableId = new AtomicInteger();
-  private boolean checkedForCycles; // guarded by this
   private final Project myProject;
   private boolean serializeCodeInsightPasses;
 
@@ -46,9 +45,6 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
       @Override
       public void extensionAdded(@NotNull TextEditorHighlightingPassFactoryRegistrar factoryRegistrar,
                                  @NotNull PluginDescriptor pluginDescriptor) {
-        synchronized (TextEditorHighlightingPassRegistrarImpl.this) {
-          checkedForCycles = false;
-        }
         factoryRegistrar.registerHighlightingPassFactory(TextEditorHighlightingPassRegistrarImpl.this, project);
       }
 
@@ -62,7 +58,6 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
 
   void reRegisterFactories() {
     synchronized (this) {
-      checkedForCycles = false;
       myRegisteredPassFactories.clear();
       myFrozenPassConfigs = null;
       nextAvailableId.set(Pass.LAST_PASS + 1);
@@ -115,7 +110,6 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
                                                              int @Nullable [] runAfterOfStartingOf,
                                                              boolean runIntentionsPassAfter,
                                                              int forcedPassId) {
-    assert !checkedForCycles;
     int[] afterCompletionOf = runAfterCompletionOf == null || runAfterCompletionOf.length == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY : runAfterCompletionOf;
     int[] afterStartingOf = runAfterOfStartingOf == null || runAfterOfStartingOf.length == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY : runAfterOfStartingOf;
     if (IntStream.of(afterCompletionOf).anyMatch(id->ArrayUtil.indexOf(afterStartingOf, id) != -1)) {
@@ -171,12 +165,6 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
                                                                               int @NotNull [] passesToIgnore) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       throw new IllegalStateException("Must not instantiate passes in EDT");
-    }
-    synchronized (this) {
-      if (!checkedForCycles) {
-        checkedForCycles = true;
-        checkForCycles();
-      }
     }
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     Document document = editor.getDocument();
@@ -252,37 +240,6 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
       }
     }
     return new ArrayList<>(ids);
-  }
-
-  private void checkForCycles() {
-    // check that each node of the entire graph with "this pass should start/complete before that pass" edges
-    // doesn't lie inside a cycle
-    PassConfig[] frozenPassConfigs = freezeRegisteredPassFactories();
-    IntSet visited = new IntOpenHashSet(frozenPassConfigs.length);
-    IntSet finished = new IntOpenHashSet(frozenPassConfigs.length);
-    for (int i = 1; i < frozenPassConfigs.length; i++) {
-      PassConfig passConfig = frozenPassConfigs[i];
-      if (passConfig != null) {
-        dfs(frozenPassConfigs, i, visited, finished);
-      }
-    }
-  }
-
-  private static void dfs(PassConfig @NotNull [] frozenPassConfigs, int passId, @NotNull IntSet visited, @NotNull IntSet finished) {
-    if (finished.contains(passId)) {
-      return;
-    }
-    if (!visited.add(passId)) {
-      throw new IllegalStateException("There is a cycle involving pass id=" + passId +" ("+frozenPassConfigs[passId].passFactory+")");
-    }
-    PassConfig passConfig = frozenPassConfigs[passId];
-    for (int predId : passConfig.completionPredecessorIds) {
-      dfs(frozenPassConfigs, predId, visited, finished);
-    }
-    for (int predId : passConfig.startingPredecessorIds) {
-      dfs(frozenPassConfigs, predId, visited, finished);
-    }
-    finished.add(passId);
   }
 
   @NotNull
