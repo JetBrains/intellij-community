@@ -50,7 +50,7 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
   override val clientCachesDir: Path get () {
     val downloadDestination = IntellijClientDownloaderSystemSettings.getDownloadDestination()
     if (downloadDestination.value != null) {
-      Path(downloadDestination.value)
+      return Path(downloadDestination.value)
     }
     return getJetBrainsSystemCachesDir() / "JetBrainsClientDist"
   }
