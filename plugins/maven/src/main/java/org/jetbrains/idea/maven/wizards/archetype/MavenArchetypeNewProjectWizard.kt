@@ -9,7 +9,6 @@ import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.buildSystem
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
@@ -71,8 +70,12 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
   override val icon: Icon = OpenapiIcons.RepositoryLibraryLogo
 
   override fun createStep(context: WizardContext) =
-    RootNewProjectWizardStep(context).chain(::CommentStep, ::NewProjectWizardBaseStep, ::GitNewProjectWizardStep, ::Step)
-      .chain(::AssetsStep)
+    RootNewProjectWizardStep(context).chain(
+      ::CommentStep,
+      ::newProjectWizardBaseStepWithoutGap,
+      ::GitNewProjectWizardStep,
+      ::Step
+    ).chain(::AssetsStep)
 
   private class CommentStep(parent: NewProjectWizardStep) : NewProjectLinkNewProjectWizardStep(parent) {
     override fun getComment(name: String): String {
@@ -231,6 +234,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       when {
         addedCatalogs.isNotEmpty() ->
           catalogItem = addedCatalogs.first()
+
         catalogItem !in catalogs ->
           catalogItem = catalogs.firstOrNull() ?: MavenCatalog.System.Internal
       }

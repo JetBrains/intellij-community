@@ -16,7 +16,12 @@ class NewEmptyProjectBuilder : AbstractNewProjectWizardBuilder() {
   override fun getNodeIcon(): Icon = EmptyIcon.ICON_0
 
   override fun createStep(context: WizardContext) =
-    RootNewProjectWizardStep(context).chain(::CommentStep, ::NewProjectWizardBaseStep, ::GitNewProjectWizardStep, ::Step)
+    RootNewProjectWizardStep(context).chain(
+      ::CommentStep,
+      ::newProjectWizardBaseStepWithoutGap,
+      ::GitNewProjectWizardStep,
+      ::Step
+    )
 
   private class CommentStep(parent: NewProjectWizardStep) : CommentNewProjectWizardStep(parent) {
     override val comment: String = UIBundle.message("label.project.wizard.empty.project.generator.full.description")
