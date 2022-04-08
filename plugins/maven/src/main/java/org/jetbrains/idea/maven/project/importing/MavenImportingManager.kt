@@ -109,7 +109,7 @@ class MavenImportingManager(val project: Project) {
       @Suppress("HardCodedStringLiteral")
       console.addWarning("New Maven importing flow is enabled", "New Maven importing flow is enabled, it is experimental feature. " +
                                                                 "\n\n" +
-                                                                "To revert to old importing flow, set \"maven.new.import\" registry flag to false");
+                                                                "To revert to old importing flow, set \"maven.linear.import\" registry flag to false");
       val initialImport = flow.prepareNewImport(project, indicator, importPaths, generalSettings, importingSettings, emptyList(),
                                                 emptyList())
       currentContext = initialImport

@@ -266,8 +266,8 @@
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector"/>
     <statistics.counterUsagesCollector groupId="build.maven.packagesearch" version="2"/>
 
-    <registryKey key="maven.new.import" defaultValue="false"
-                 description="new maven import"/>
+    <registryKey key="maven.linear.import" defaultValue="false"
+                 description="linear maven import process"/>
 
     <registryKey key="maven.import.to.workspace.model" defaultValue="false"
                  description="Enable experimental implementation of Maven import which writes to workspace model directly. Only basic features are supported for now, this mode may work incorrecly for many projects. See IDEA-284414 for details."/>

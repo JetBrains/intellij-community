@@ -1600,6 +1600,6 @@ public class MavenUtil {
   }
 
   public static boolean isLinearImportEnabled() {
-    return Registry.is("maven.new.import");
+    return Registry.is("maven.linear.import");
   }
 }
