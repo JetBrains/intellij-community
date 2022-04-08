@@ -40,6 +40,7 @@ import org.jetbrains.jewel.theme.intellij.IntelliJTheme
 import org.jetbrains.jewel.theme.intellij.IntelliJThemeDark
 import org.jetbrains.jewel.theme.intellij.components.Button
 import org.jetbrains.jewel.theme.intellij.components.CheckboxRow
+import org.jetbrains.jewel.theme.intellij.components.GroupHeader
 import org.jetbrains.jewel.theme.intellij.components.IconButton
 import org.jetbrains.jewel.theme.intellij.components.RadioButtonRow
 import org.jetbrains.jewel.theme.intellij.components.Separator
@@ -70,7 +71,7 @@ fun main() {
 
 @Composable
 fun Wizard(onFinish: () -> Unit) {
-    IntelliJThemeDark {
+    IntelliJTheme(true) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column {
                 val currentPage = mutableStateOf(1) // 1-based
@@ -278,43 +279,49 @@ enum class AssetType {
 
 @Composable
 fun ForegroundAssetTypeSelection(assetType: MutableState<AssetType>) {
-    RadioButtonRow(selected = assetType.value == AssetType.IMAGE, onClick = { assetType.value = AssetType.IMAGE }) { Text("Image") }
-    RadioButtonRow(selected = assetType.value == AssetType.CLIP_ART, onClick = { assetType.value = AssetType.CLIP_ART }) { Text("Clip Art") }
-    RadioButtonRow(selected = assetType.value == AssetType.TEXT, onClick = { assetType.value = AssetType.TEXT }) { Text("Text") }
+    Row {
+        val radioButtonModifier = Modifier.padding(end = 10.dp)
+        RadioButtonRow(selected = assetType.value == AssetType.IMAGE, onClick = { assetType.value = AssetType.IMAGE }) { Text("Image", modifier = radioButtonModifier) }
+        RadioButtonRow(selected = assetType.value == AssetType.CLIP_ART, onClick = { assetType.value = AssetType.CLIP_ART }) { Text("Clip Art", modifier = radioButtonModifier) }
+        RadioButtonRow(selected = assetType.value == AssetType.TEXT, onClick = { assetType.value = AssetType.TEXT }) { Text("Text", modifier = radioButtonModifier) }
+    }
 }
 
 @Composable
 fun BackgroundAssetTypeSelection(assetType: MutableState<AssetType>) {
-    RadioButtonRow(selected = assetType.value == AssetType.COLOR, onClick = { assetType.value = AssetType.COLOR }) { Text("Color") }
-    RadioButtonRow(selected = assetType.value == AssetType.IMAGE, onClick = { assetType.value = AssetType.IMAGE }) { Text("Image") }
+    Row {
+        val radioButtonModifier = Modifier.padding(end = 10.dp)
+        RadioButtonRow(selected = assetType.value == AssetType.COLOR, onClick = { assetType.value = AssetType.COLOR }) { Text("Color", modifier = radioButtonModifier) }
+        RadioButtonRow(selected = assetType.value == AssetType.IMAGE, onClick = { assetType.value = AssetType.IMAGE }) { Text("Image", modifier = radioButtonModifier) }
+    }
 }
 
 @Composable
-fun AssetTypeSpecificOptions(assetType: AssetType, subLabelModifier: Modifier) {
+fun AssetTypeSpecificOptions(assetType: AssetType, subLabelModifier: Modifier, rowModifier: Modifier) {
     when (assetType) {
-        AssetType.IMAGE -> Row {
+        AssetType.IMAGE -> Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
             Text("Path:", modifier = subLabelModifier)
-            TextField(value = "some_path", onValueChange = {})
+            TextField(value = "some_path", onValueChange = {}, modifier = Modifier.fillMaxWidth())
         }
         AssetType.CLIP_ART -> {
-            Row {
+            Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
                 Text("Clip Art:", modifier = subLabelModifier)
             }
-            Row {
+            Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
                 Text("Color:", modifier = subLabelModifier)
             }
         }
         AssetType.TEXT -> {
-            Row {
+            Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
                 Text("Text:", modifier = subLabelModifier)
                 TextField(value = "some text", onValueChange = {})
                 // ComboBox()
             }
-            Row {
+            Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
                 Text("Color:", modifier = subLabelModifier)
             }
         }
-        AssetType.COLOR -> Row {
+        AssetType.COLOR -> Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
             Text("Color:", modifier = subLabelModifier)
         }
     }
@@ -324,58 +331,55 @@ fun AssetTypeSpecificOptions(assetType: AssetType, subLabelModifier: Modifier) {
 fun CommonLayer(
     assetType: MutableState<AssetType>,
     assetTypeSelection: @Composable (assetType: MutableState<AssetType>) -> Unit,
-    assetTypeSpecificOptions: @Composable (assetType: AssetType, subLabelModifier: Modifier) -> Unit
+    assetTypeSpecificOptions: @Composable (assetType: AssetType, subLabelModifier: Modifier, rowModifier: Modifier) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column {
-        val labelColWidth = 100.dp
-        val subLabelsPadding = 10.dp
-        Row {
-            Text("Layer name:", modifier = Modifier.width(labelColWidth))
+    Column(modifier) {
+        val subLabelModifier = Modifier.width(100.dp).padding(start = 10.dp)
+        val rowModifier = Modifier.height(30.dp)
+        Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
+            Text("Layer name:", modifier = Modifier.width(100.dp))
             val layerNameState = remember { mutableStateOf("layer name...") }
-            TextField(value = layerNameState.value, onValueChange = { layerNameState.value = it })
+            TextField(value = layerNameState.value, onValueChange = { layerNameState.value = it }, modifier = Modifier.fillMaxWidth())
         }
-        Row {
-            Text("Source Asset")
-            Separator(orientation = Orientation.Horizontal, modifier = Modifier.align(alignment = Alignment.CenterVertically))
-        }
-        Row {
-            Text("Asset Type:", modifier = Modifier.width(labelColWidth).padding(start = subLabelsPadding))
+        GroupHeader("Source Asset", rowModifier)
+        Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
+            Text("Asset Type:", modifier = subLabelModifier)
             assetTypeSelection(assetType)
         }
-        assetTypeSpecificOptions(assetType.value, Modifier.width(labelColWidth).padding(start = subLabelsPadding))
-        Row {
-            Text("Scaling")
-            Separator(orientation = Orientation.Horizontal, modifier = Modifier.align(alignment = Alignment.CenterVertically))
-        }
-        Row {
+        assetTypeSpecificOptions(assetType.value, subLabelModifier, rowModifier)
+        GroupHeader("Scaling", rowModifier)
+        Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
             val trim = remember { mutableStateOf(true) }
-            Text("Trim:", modifier = Modifier.width(labelColWidth).padding(start = subLabelsPadding))
+            Text("Trim:", modifier = subLabelModifier)
             RadioButtonRow(selected = trim.value, onClick = { trim.value = true }) { Text("Yes" ) }
             RadioButtonRow(selected = !trim.value, onClick = { trim.value = false }) { Text("No") }
         }
-        Row {
-            Text("Resize:", modifier = Modifier.width(labelColWidth).padding(start = subLabelsPadding))
+        Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
+            Text("Resize:", modifier = subLabelModifier)
         }
     }
 }
 
 @Composable
-fun ForegroundLayer() {
+fun ForegroundLayer(modifier: Modifier) {
     val assetType = remember { mutableStateOf(AssetType.IMAGE) }
     CommonLayer(
-        assetType,
-        { ForegroundAssetTypeSelection(it) },
-        { at: AssetType, subLabelModifier: Modifier -> AssetTypeSpecificOptions(at, subLabelModifier) }
+        assetType = assetType,
+        assetTypeSelection = { ForegroundAssetTypeSelection(it) },
+        assetTypeSpecificOptions = { at: AssetType, subLabelModifier: Modifier, rowModifier: Modifier -> AssetTypeSpecificOptions(at, subLabelModifier, rowModifier) },
+        modifier = modifier
     )
 }
 
 @Composable
-fun BackgroundLayer() {
+fun BackgroundLayer(modifier: Modifier) {
     val assetType = remember { mutableStateOf(AssetType.COLOR) }
     CommonLayer(
-        assetType,
-        { BackgroundAssetTypeSelection(it) },
-        { at: AssetType, subLabelModifier: Modifier -> AssetTypeSpecificOptions(at, subLabelModifier) }
+        assetType = assetType,
+        assetTypeSelection = { BackgroundAssetTypeSelection(it) },
+        assetTypeSpecificOptions = { at: AssetType, subLabelModifier: Modifier, rowModifier: Modifier -> AssetTypeSpecificOptions(at, subLabelModifier, rowModifier) },
+        modifier = modifier,
     )
 }
 
@@ -388,15 +392,16 @@ enum class OptionTabs {
 @Composable
 fun FirstPage(modifier: Modifier = Modifier) {
     Row(modifier = modifier) {
-        Box(modifier = Modifier.width(400.dp)) {
+        Box(modifier = Modifier.width(400.dp).padding(all = 20.dp)) {
             Column {
-                Row {
-                    Text("Icon type:")
+                val labelModifier = Modifier.width(100.dp)
+                Row(Modifier.height(30.dp)) {
+                    Text("Icon type:", modifier = labelModifier.align(alignment = Alignment.CenterVertically))
                     // TextField(value = layerNameState.value, onValueChange = { })
                 }
-                Row {
-                    Text("Name:")
-                    TextField(value = "ic_launcher", onValueChange = { })
+                Row(Modifier.height(30.dp)) {
+                    Text("Name:", modifier = labelModifier.align(Alignment.CenterVertically))
+                    TextField(value = "ic_launcher", onValueChange = { }, modifier = Modifier.fillMaxWidth().align(Alignment.CenterVertically))
                 }
                 val tabState = rememberTabContainerState(OptionTabs.FOREGROUND)
                 TabRow(tabState) {
@@ -405,9 +410,10 @@ fun FirstPage(modifier: Modifier = Modifier) {
                     Tab(OptionTabs.OPTIONS) { Text("Options") }
                 }
                 Divider(orientation = Orientation.Horizontal)
+                val tabContentModifier = Modifier.padding(all = 10.dp)
                 when (tabState.selectedKey) {
-                    OptionTabs.FOREGROUND -> ForegroundLayer()
-                    OptionTabs.BACKGROUND -> BackgroundLayer()
+                    OptionTabs.FOREGROUND -> ForegroundLayer(tabContentModifier)
+                    OptionTabs.BACKGROUND -> BackgroundLayer(tabContentModifier)
                     else -> {
                     }
                 }
