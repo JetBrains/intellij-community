@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfo
@@ -42,9 +43,20 @@ object EventFields {
    * @param customRuleId ruleId that is accepted by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule.acceptRuleId],
    * e.g "class_name" for "{util#class_name}"
    */
+  @kotlin.Deprecated("Please use EventFields.StringValidatedByCustomRule(String, Class<out CustomValidationRule>)",
+                     ReplaceWith("EventFields.StringValidatedByCustomRule(name, customValidationRule)"))
   @JvmStatic
   fun StringValidatedByCustomRule(@NonNls name: String, @NonNls customRuleId: String): StringEventField =
     StringEventField.ValidatedByCustomRule(name, customRuleId)
+
+  /**
+   * Creates a field that will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
+   * @param name  name of the field
+   * @param customValidationRule inheritor of [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule],
+   */
+  @JvmStatic
+  fun StringValidatedByCustomRule(@NonNls name: String, @NonNls customValidationRule: Class<out CustomValidationRule>): StringEventField =
+    StringEventField.ValidatedByCustomValidationRule(name, customValidationRule)
 
   /**
    * Creates a field that allows only a specific list of values
@@ -113,9 +125,20 @@ object EventFields {
    * @param customRuleId ruleId that is accepted by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule.acceptRuleId],
    * e.g "class_name" for "{util#class_name}"
    */
+  @kotlin.Deprecated("Please use EventFields.StringListValidatedByCustomRule(String, Class<out CustomValidationRule>)",
+                     ReplaceWith("EventFields.StringListValidatedByCustomRule(name, customValidationRule)"))
   @JvmStatic
   fun StringListValidatedByCustomRule(@NonNls name: String, @NonNls customRuleId: String): StringListEventField =
     StringListEventField.ValidatedByCustomRule(name, customRuleId)
+
+  /**
+   * Creates a field for a list, each element of which will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
+   * @param name  name of the field
+   * @param customValidationRule inheritor of [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
+   */
+  @JvmStatic
+  fun StringListValidatedByCustomRule(@NonNls name: String, @NonNls customValidationRule: Class<out CustomValidationRule>): StringListEventField =
+    StringListEventField.ValidatedByCustomValidationRule(name, customValidationRule)
 
   /**
    * Creates a field for a list, each element of which will be validated by global enum rule

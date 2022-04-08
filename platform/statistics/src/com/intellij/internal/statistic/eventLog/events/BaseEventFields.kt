@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.getPluginInfo
 import org.jetbrains.annotations.NonNls
@@ -43,10 +44,20 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
       get() = listOf("{enum#$enumRef}")
   }
 
+  @kotlin.Deprecated("Please use StringEventField.ValidatedByCustomValidationRule(String, Class<out CustomValidationRule>)",
+                     ReplaceWith("StringEventField.ValidatedByCustomValidationRule(name, customValidationRule)"))
   data class ValidatedByCustomRule(@NonNls override val name: String,
                                    @NonNls val customRuleId: String) : StringEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{util#$customRuleId}")
+  }
+
+  data class ValidatedByCustomValidationRule(
+    @NonNls override val name: String,
+    @NonNls val customValidationRule: Class<out CustomValidationRule>
+  ) : StringEventField(name) {
+    override val validationRule: List<String>
+      get() = listOf("{util#${CustomValidationRule.getCustomValidationRuleInstance(customValidationRule).ruleId}}")
   }
 
   data class ValidatedByRegexp(@NonNls override val name: String, @NonNls val regexpRef: String) : StringEventField(name) {
@@ -177,10 +188,20 @@ abstract class StringListEventField(override val name: String) : ListEventField<
       get() = listOf("{enum#$enumRef}")
   }
 
+  @kotlin.Deprecated("Please use StringListEventField.ValidatedByCustomValidationRule(String, Class<out CustomValidationRule>)",
+                     ReplaceWith("StringListEventField.ValidatedByCustomValidationRule(name, customValidationRule)"))
   data class ValidatedByCustomRule(@NonNls override val name: String,
                                    @NonNls val customRuleId: String) : StringListEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{util#$customRuleId}")
+  }
+
+  data class ValidatedByCustomValidationRule(
+    @NonNls override val name: String,
+    @NonNls val customValidationRule: Class<out CustomValidationRule>
+    ) : StringListEventField(name) {
+    override val validationRule: List<String>
+      get() = listOf("{util#${CustomValidationRule.getCustomValidationRuleInstance(customValidationRule).ruleId}}")
   }
 
   data class ValidatedByRegexp(@NonNls override val name: String, @NonNls val regexpRef: String) : StringListEventField(name) {

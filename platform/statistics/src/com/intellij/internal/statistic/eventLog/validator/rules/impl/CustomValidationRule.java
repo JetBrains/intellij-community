@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
+
 /**
  * <p>
  *   Base class for custom validation rules.
@@ -38,7 +40,25 @@ public abstract class CustomValidationRule extends PerformanceCareRule implement
 
   public static final PayloadKey<PluginInfo> PLUGIN_INFO = new PayloadKey<>("plugin_info");
 
-  public abstract boolean acceptRuleId(@Nullable @NonNls String ruleId);
+  public boolean acceptRuleId(@Nullable @NonNls String ruleId) {
+    return getRuleId().equals(ruleId);
+  }
+
+  @NotNull
+  public String getRuleId() {
+    throw new UnsupportedOperationException(String.format("The method getRuleId must be overridden in %s", getClass()));
+  }
+
+  public static <T extends CustomValidationRule> T getCustomValidationRuleInstance(Class<T> clazz) {
+    Optional<CustomValidationRule> optionalCustomValidationRule = EP_NAME.getExtensionList()
+      .stream()
+      .filter(customValidationRule -> customValidationRule.getClass() == clazz)
+      .findFirst();
+    if (optionalCustomValidationRule.isEmpty())
+      throw new IllegalStateException(String.format("CustomValidationRule instance is not found for class %s.", clazz.getName()));
+    //noinspection unchecked
+    return  (T) optionalCustomValidationRule.get();
+  }
 
   @NotNull
   protected static ValidationResultType acceptWhenReportedByPluginFromPluginRepository(@NotNull EventContext context) {
