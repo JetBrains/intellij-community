@@ -9,20 +9,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.singleWindowApplication
 import org.jetbrains.jewel.theme.intellij.IntelliJThemeDark
 import org.jetbrains.jewel.theme.intellij.components.Button
+import org.jetbrains.jewel.theme.intellij.components.IconButton
 import org.jetbrains.jewel.theme.intellij.components.Text
 
 private const val WIZARD_PAGE_COUNT = 2
@@ -75,8 +78,12 @@ fun WizardMainContent(modifier: Modifier = Modifier, currentPage: MutableState<I
 
 @Composable
 fun WizardFooter(modifier: Modifier = Modifier, currentPage: MutableState<Int>) {
-    Box(modifier.background(Color.Blue).height(50.dp).fillMaxWidth()) {
-        Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    Box(modifier.height(50.dp).fillMaxWidth()) {
+        Row(
+            modifier = modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             HelpIcon()
             WizardControls(currentPage = currentPage)
         }
@@ -85,12 +92,22 @@ fun WizardFooter(modifier: Modifier = Modifier, currentPage: MutableState<Int>) 
 
 @Composable
 fun HelpIcon(modifier: Modifier = Modifier) {
-    Box(modifier.background(Color.White).size(24.dp))
+    val uriHandler = LocalUriHandler.current
+    IconButton(
+        modifier = modifier,
+        onClick = { uriHandler.openUri("https://developer.android.com/studio/write/image-asset-studio") },
+    ) {
+        Icon(
+            Icons.Default.Info, // Help icon requires adding a new dependency, so we're using info instead
+            contentDescription = "help button",
+            tint = Color.Unspecified // FIXME: tint is being applied regardless
+        )
+    }
 }
 
 @Composable
 fun WizardControls(modifier: Modifier = Modifier, currentPage: MutableState<Int>) {
-    Row {
+    Row(modifier) {
         Button(onClick = {}) { // TODO: close application on cancel
             Text("Cancel")
         }
