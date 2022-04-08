@@ -2,6 +2,7 @@ package org.jetbrains.jewel.theme.intellij
 
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.isMacOs
 import org.jetbrains.jewel.toBrush
 
@@ -119,6 +120,20 @@ val IntelliJPalette.Scrollbar.Companion.darcula
         thumbHoverColor = if (isMacOs()) Color(0x8C808080) else Color(0x59A6A6A6),
     )
 
+val IntelliJPalette.Tab.Companion.light
+    get() = IntelliJPalette.Tab(
+        underlineColor = Color(0xFF4083c9),
+        hoveredBackgroundColor = Color(0xFFD9D9D9),
+        tabSelectionHeight = 3.dp
+    )
+
+val IntelliJPalette.Tab.Companion.darcula
+    get() = IntelliJPalette.Tab(
+        underlineColor = Color(0xFFBBBBBB),
+        hoveredBackgroundColor = Color(0xFF2E3133),
+        tabSelectionHeight = 3.dp
+    )
+
 val IntelliJPalette.Companion.light
     get() = IntelliJPalette(
         button = IntelliJPalette.Button.light,
@@ -138,7 +153,8 @@ val IntelliJPalette.Companion.light
         controlHaloWarning = Color(0XFFE2A53A),
         separator = IntelliJPalette.Separator.light,
         scrollbar = IntelliJPalette.Scrollbar.light,
-        treeView = IntelliJPalette.TreeView.Companion.light
+        treeView = IntelliJPalette.TreeView.Companion.light,
+        tab = IntelliJPalette.Tab.light,
     )
 
 val IntelliJPalette.Companion.darcula
@@ -160,7 +176,8 @@ val IntelliJPalette.Companion.darcula
         controlHaloWarning = Color(0XFFAC7920),
         separator = IntelliJPalette.Separator.darcula,
         scrollbar = IntelliJPalette.Scrollbar.darcula,
-        treeView = IntelliJPalette.TreeView.darcula
+        treeView = IntelliJPalette.TreeView.darcula,
+        tab = IntelliJPalette.Tab.darcula,
     )
 
 val IntelliJPalette.TreeView.Companion.light

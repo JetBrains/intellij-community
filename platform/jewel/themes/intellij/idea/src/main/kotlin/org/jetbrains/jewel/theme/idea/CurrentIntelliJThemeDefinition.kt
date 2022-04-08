@@ -77,6 +77,11 @@ suspend fun CurrentIntelliJThemeDefinition(): IntelliJThemeDefinition {
             thumbHoverColor = retrieveColorOrUnspecified("ScrollBar.track"),
             thumbIdleColor = retrieveColorOrUnspecified("ScrollBar.foreground").copy(alpha = 0.12f)
         ),
+        tab = IntelliJPalette.Tab(
+            underlineColor = retrieveColorOrUnspecified("TabbedPane.underlineColor"),
+            hoveredBackgroundColor = retrieveColorOrUnspecified("TabbedPane.hoverColor"),
+            tabSelectionHeight = retrieveIntAsDp("TabbedPane.tabSelectionHeight")
+        ),
         treeView = IntelliJPalette.TreeView(
             focusedSelectedElementBackground = retrieveColorOrUnspecified("Tree.selectionBackground"),
             background = retrieveColorOrUnspecified("Tree.background"),

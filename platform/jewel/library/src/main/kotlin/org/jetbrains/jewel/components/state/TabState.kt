@@ -5,4 +5,5 @@ enum class TabState {
     Selected,
     Hovered,
     Disabled,
+    SelectedAndHovered,
 }
