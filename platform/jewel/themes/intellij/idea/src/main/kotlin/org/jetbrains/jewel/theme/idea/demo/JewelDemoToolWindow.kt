@@ -30,6 +30,7 @@ import org.jetbrains.jewel.theme.intellij.components.Checkbox
 import org.jetbrains.jewel.theme.intellij.components.CheckboxRow
 import org.jetbrains.jewel.theme.intellij.components.Divider
 import org.jetbrains.jewel.theme.intellij.components.Text
+import org.jetbrains.jewel.theme.intellij.components.TextField
 
 @ExperimentalCoroutinesApi
 internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
@@ -55,6 +56,14 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
                         }
 
                         var checked by remember { mutableStateOf(false) }
+
+                        var textFieldValue by remember { mutableStateOf("") }
+                        TextField(
+                            value = textFieldValue,
+                            onValueChange = {
+                                textFieldValue = it
+                            }
+                        )
 
                         Row(
                             modifier = Modifier.weight(1f),
