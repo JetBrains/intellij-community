@@ -6,6 +6,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,6 +21,7 @@ import org.jetbrains.jewel.theme.intellij.components.Checkbox
 import org.jetbrains.jewel.theme.intellij.components.Surface
 import org.jetbrains.jewel.theme.intellij.components.Tab
 import org.jetbrains.jewel.theme.intellij.components.TabRow
+import org.jetbrains.jewel.theme.intellij.components.TabScope
 import org.jetbrains.jewel.theme.intellij.components.Text
 import org.jetbrains.jewel.theme.intellij.components.rememberTabContainerState
 import kotlin.time.ExperimentalTime
@@ -34,13 +37,27 @@ fun main() = singleWindowApplication {
                     Text("Dark theme:")
                     Checkbox(checked = isDarkTheme, onCheckedChange = { isDarkTheme = it })
                 }
-                val tabState = rememberTabContainerState(1)
+                val tabState = rememberTabContainerState("1")
                 TabRow(tabState, ) {
-                    Tab(1) { Text("One") }
-                    Tab(2) { Text("Two") }
-                    Tab(3) { Text("Three") }
+                    Section("1", "One")
+                    Section("2", "Two")
+                    Section("3", "Three")
+                }
+                Column(modifier = Modifier.fillMaxSize()) {
+                    when (tabState.selectedKey) {
+                        "1" -> Text("Content of One")
+                        "2" -> Text("Content of Two")
+                        "3" -> Text("Content of Three")
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun TabScope<String>.Section(key: String, caption: String) {
+    Tab(key) {
+        Text(caption)
     }
 }
