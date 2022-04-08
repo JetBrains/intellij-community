@@ -26,17 +26,25 @@ import org.jetbrains.jewel.theme.intellij.IntelliJThemeDark
 import org.jetbrains.jewel.theme.intellij.components.Button
 import org.jetbrains.jewel.theme.intellij.components.Surface
 import org.jetbrains.jewel.theme.intellij.components.Text
+import java.awt.event.WindowEvent
 
 fun main() {
     singleWindowApplication {
-        IntelliJThemeDark {
-            Box(modifier = Modifier.fillMaxSize()) {
-                Column {
-                    // TODO: set proportion
-                    WizardHeader()
-                    WizardMainContent(Modifier.weight(1f))
-                    WizardFooter()
-                }
+        Wizard(onFinish = {
+            window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING))
+        })
+    }
+}
+
+@Composable
+fun Wizard(onFinish: () -> Unit) {
+    IntelliJThemeDark {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column {
+                // TODO: set proportion
+                WizardHeader()
+                WizardMainContent(Modifier.weight(1f))
+                WizardFooter(onFinish = onFinish)
             }
         }
     }
@@ -67,11 +75,11 @@ fun WizardMainContent(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun WizardFooter(modifier: Modifier = Modifier) {
+fun WizardFooter(modifier: Modifier = Modifier, onFinish: () -> Unit) {
     Box(modifier.background(Color.Blue).height(50.dp).fillMaxWidth()) {
         Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             HelpIcon()
-            WizardControls()
+            WizardControls(onFinish = onFinish)
         }
     }
 }
@@ -82,7 +90,7 @@ fun HelpIcon(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun WizardControls(modifier: Modifier = Modifier) {
+fun WizardControls(modifier: Modifier = Modifier, onFinish: () -> Unit) {
     Row {
         Button(onClick = {}) {
             Text("Cancel")
@@ -93,7 +101,7 @@ fun WizardControls(modifier: Modifier = Modifier) {
         Button(onClick = {}) {
             Text("Next")
         }
-        Button(onClick = {}) {
+        Button(onClick = onFinish) {
             Text("Finish")
         }
     }
