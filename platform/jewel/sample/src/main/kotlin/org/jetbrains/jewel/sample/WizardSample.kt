@@ -27,22 +27,30 @@ import org.jetbrains.jewel.theme.intellij.IntelliJThemeDark
 import org.jetbrains.jewel.theme.intellij.components.Button
 import org.jetbrains.jewel.theme.intellij.components.IconButton
 import org.jetbrains.jewel.theme.intellij.components.Text
+import java.awt.event.WindowEvent
 
 private const val WIZARD_PAGE_COUNT = 2
 
 fun main() {
     singleWindowApplication {
-        IntelliJThemeDark {
-            Box(modifier = Modifier.fillMaxSize()) {
-                Column {
-                    val currentPage = mutableStateOf(1) // 1-based
-                    WizardHeader()
-                    WizardMainContent(
-                        modifier = Modifier.weight(1f),
-                        currentPage = currentPage
-                    )
-                    WizardFooter(currentPage = currentPage)
-                }
+        Wizard(onFinish = {
+            window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING))
+        })
+    }
+}
+
+@Composable
+fun Wizard(onFinish: () -> Unit) {
+    IntelliJThemeDark {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column {
+                val currentPage = mutableStateOf(1) // 1-based
+                WizardHeader()
+                WizardMainContent(
+                    modifier = Modifier.weight(1f),
+                    currentPage = currentPage
+                )
+                WizardFooter(currentPage = currentPage, onFinish = onFinish)
             }
         }
     }
@@ -77,7 +85,7 @@ fun WizardMainContent(modifier: Modifier = Modifier, currentPage: MutableState<I
 }
 
 @Composable
-fun WizardFooter(modifier: Modifier = Modifier, currentPage: MutableState<Int>) {
+fun WizardFooter(modifier: Modifier = Modifier, currentPage: MutableState<Int>, onFinish: () -> Unit) {
     Box(modifier.height(50.dp).fillMaxWidth()) {
         Row(
             modifier = modifier.fillMaxSize(),
@@ -85,7 +93,7 @@ fun WizardFooter(modifier: Modifier = Modifier, currentPage: MutableState<Int>) 
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             HelpIcon()
-            WizardControls(currentPage = currentPage)
+            WizardControls(currentPage = currentPage, onFinish = onFinish)
         }
     }
 }
@@ -106,7 +114,7 @@ fun HelpIcon(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun WizardControls(modifier: Modifier = Modifier, currentPage: MutableState<Int>) {
+fun WizardControls(modifier: Modifier = Modifier, currentPage: MutableState<Int>, onFinish: () -> Unit) {
     Row(modifier) {
         Button(onClick = {}) { // TODO: close application on cancel
             Text("Cancel")
@@ -117,7 +125,7 @@ fun WizardControls(modifier: Modifier = Modifier, currentPage: MutableState<Int>
         Button(onClick = { currentPage.value++ }, enabled = currentPage.value < WIZARD_PAGE_COUNT) {
             Text("Next")
         }
-        Button(onClick = {}, enabled = currentPage.value == WIZARD_PAGE_COUNT) { // TODO: close application on finish
+        Button(onClick = onFinish, enabled = currentPage.value == WIZARD_PAGE_COUNT) {
             Text("Finish")
         }
     }
