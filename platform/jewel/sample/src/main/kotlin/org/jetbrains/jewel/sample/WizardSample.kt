@@ -34,13 +34,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.Orientation
 import org.jetbrains.jewel.components.Icon
-import org.jetbrains.jewel.theme.intellij.IntelliJThemeDark
+import org.jetbrains.jewel.theme.intellij.IntelliJTheme
 import org.jetbrains.jewel.theme.intellij.components.Button
-import org.jetbrains.jewel.theme.intellij.components.CheckboxRow
 import org.jetbrains.jewel.theme.intellij.components.GroupHeader
 import org.jetbrains.jewel.theme.intellij.components.IconButton
 import org.jetbrains.jewel.theme.intellij.components.RadioButtonRow
-import org.jetbrains.jewel.theme.intellij.components.Separator
 import org.jetbrains.jewel.theme.intellij.components.Surface
 import org.jetbrains.jewel.theme.intellij.components.Tab
 import org.jetbrains.jewel.theme.intellij.components.TabRow
