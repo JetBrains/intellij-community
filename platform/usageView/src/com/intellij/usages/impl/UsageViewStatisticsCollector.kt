@@ -34,7 +34,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("usage.view", 4)
+    val GROUP = EventLogGroup("usage.view", 5)
     private var sessionId = AtomicInteger(0)
     private val SESSION_ID = EventFields.Int("id")
     private val REFERENCE_CLASS = EventFields.Class("reference_class")
@@ -47,7 +47,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     const val SCOPE_RULE_ID = "scopeRule"
 
     private val SYMBOL_CLASS = EventFields.Class("symbol")
-    private val SEARCH_SCOPE = EventFields.StringValidatedByCustomRule("scope", SCOPE_RULE_ID)
+    private val SEARCH_SCOPE = EventFields.StringValidatedByCustomRule("scope", ScopeRuleValidator::class.java)
     private val RESULTS_TOTAL = EventFields.Int("results_total")
     private val FIRST_RESULT_TS = EventFields.Long("duration_first_results_ms")
     private val TOO_MANY_RESULTS = EventFields.Boolean("too_many_result_warning")
@@ -67,8 +67,8 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
 
     private val tabSwitched = GROUP.registerEvent("switch.tab", SESSION_ID)
 
-    private val PREVIOUS_SCOPE = EventFields.StringValidatedByCustomRule("previous", SCOPE_RULE_ID)
-    private val NEW_SCOPE = EventFields.StringValidatedByCustomRule("new", SCOPE_RULE_ID)
+    private val PREVIOUS_SCOPE = EventFields.StringValidatedByCustomRule("previous", ScopeRuleValidator::class.java)
+    private val NEW_SCOPE = EventFields.StringValidatedByCustomRule("new", ScopeRuleValidator::class.java)
 
     private val scopeChanged = GROUP.registerVarargEvent("scope.changed", SESSION_ID, PREVIOUS_SCOPE, NEW_SCOPE, SYMBOL_CLASS)
     private val OPEN_IN_FIND_TOOL_WINDOW = GROUP.registerEvent("open.in.tool.window", SESSION_ID)

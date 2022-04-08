@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.inline
 
+import com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -19,11 +20,11 @@ class KotlinInlineRefactoringFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
     companion object {
-        val GROUP = EventLogGroup("kotlin.ide.refactoring.inline", 3)
+        val GROUP = EventLogGroup("kotlin.ide.refactoring.inline", 4)
 
         private val elementType = EventFields.Enum("element_type", ElementType::class.java)
-        private val languageFrom = EventFields.StringValidatedByCustomRule("language_from", "lang")
-        private val languageTo = EventFields.StringValidatedByCustomRule("language_to", "lang")
+        private val languageFrom = EventFields.StringValidatedByCustomRule("language_from", LangCustomRuleValidator::class.java)
+        private val languageTo = EventFields.StringValidatedByCustomRule("language_to", LangCustomRuleValidator::class.java)
         private val isCrossLang = EventFields.Boolean("is_cross_lang")
         private val pluginInfo = EventFields.PluginInfo
         private val event = GROUP.registerVarargEvent(

@@ -24,9 +24,9 @@ class FeatureSuggesterStatistics : CounterUsagesCollector() {
     private const val SUGGESTER_ID_FIELD = "suggester_id"
     const val SUGGESTER_ID_VALIDATION_RULE = "feature_suggester_id"
 
-    private val GROUP = EventLogGroup(GROUP_ID, 3)
+    private val GROUP = EventLogGroup(GROUP_ID, 4)
 
-    private val suggesterIdField = EventFields.StringValidatedByCustomRule(SUGGESTER_ID_FIELD, SUGGESTER_ID_VALIDATION_RULE)
+    private val suggesterIdField = EventFields.StringValidatedByCustomRule(SUGGESTER_ID_FIELD, FeatureSuggesterIdRuleValidator::class.java)
 
     private val notificationShowedEvent = GROUP.registerEvent(NOTIFICATION_SHOWED_EVENT_ID, suggesterIdField)
     private val notificationDontSuggestEvent = GROUP.registerEvent(NOTIFICATION_DONT_SUGGEST_EVENT_ID, suggesterIdField)

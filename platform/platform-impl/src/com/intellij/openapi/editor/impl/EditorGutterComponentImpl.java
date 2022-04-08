@@ -17,6 +17,7 @@ import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId3;
@@ -2664,11 +2665,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   };
 
   private static final class GutterIconClickCollectors extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("gutter.icon.click", 3);
+    private static final EventLogGroup GROUP = new EventLogGroup("gutter.icon.click", 4);
     private static final EventId3<Language, String, PluginInfo> CLICKED =
       GROUP.registerEvent("clicked",
                           EventFields.Language,
-                          EventFields.StringValidatedByCustomRule("icon_id", "gutter_icon"),
+                          EventFields.StringValidatedByCustomRule("icon_id", PluginInfoValidationRule.class),
                           EventFields.PluginInfo);
 
     @Override

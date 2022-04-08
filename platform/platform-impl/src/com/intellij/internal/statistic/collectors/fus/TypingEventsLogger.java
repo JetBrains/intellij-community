@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus;
 
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowUtilValidator;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EnumEventField;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -24,10 +25,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 
 public class TypingEventsLogger extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 4);
+  private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 5);
 
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
-  private static final StringEventField TOOL_WINDOW = EventFields.StringValidatedByCustomRule("toolwindow_id", "toolwindow");
+  private static final StringEventField TOOL_WINDOW =
+    EventFields.StringValidatedByCustomRule("toolwindow_id", ToolWindowUtilValidator.class);
   private static final VarargEventId TYPED = GROUP.registerVarargEvent("typed", EDITOR_KIND, TOOL_WINDOW);
   private static final EventId TOO_MANY_EVENTS = GROUP.registerEvent("too.many.events");
 

@@ -4,6 +4,7 @@ package com.intellij.internal.statistics;
 import com.intellij.internal.statistic.FUCounterCollectorTestCase;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.Consumer;
@@ -67,7 +68,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
 
     EventLogGroup group = new EventLogGroup("newGroup", 1);
     StringEventField nameField = EventFields.StringValidatedByEnum("name", "os");
-    StringListEventField versionsField = EventFields.StringListValidatedByCustomRule("versions", "version");
+    StringListEventField versionsField = EventFields.StringListValidatedByCustomRule("versions", CustomValidationRule.class);
     IntEventField intEventField = EventFields.Int("intField");
     EventId2<Integer, ObjectEventData> event =
       group.registerEvent("testEvent", intEventField, new ObjectEventField("obj", nameField, versionsField));
@@ -189,7 +190,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
 
   public void testStringListField() {
     doTestListField(
-      EventFields.StringListValidatedByCustomRule("errors", "validation_rules"),
+      EventFields.StringListValidatedByCustomRule("errors", CustomValidationRule.class),
       ContainerUtil.newArrayList("foo", "bar"),
       ContainerUtil.newArrayList("foo", "bar")
     );

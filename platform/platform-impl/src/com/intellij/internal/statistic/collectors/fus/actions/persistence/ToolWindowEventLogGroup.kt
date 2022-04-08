@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence
 
 import com.intellij.ide.actions.ToolWindowMoveAction.Anchor
 import com.intellij.ide.actions.ToolWindowViewModeAction.ViewMode
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowUtilValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EnumEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -13,10 +14,10 @@ import com.intellij.toolWindow.ToolWindowEventSource
 
 class ToolWindowEventLogGroup : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("toolwindow", 61)
+    private val GROUP = EventLogGroup("toolwindow", 62)
 
     @JvmField
-    val TOOLWINDOW_ID = EventFields.StringValidatedByCustomRule("id", "toolwindow")
+    val TOOLWINDOW_ID = EventFields.StringValidatedByCustomRule("id", ToolWindowUtilValidator::class.java)
 
     @JvmField
     val VIEW_MODE: EnumEventField<ViewMode> = Enum("ViewMode", ViewMode::class.java) { mode: ViewMode -> mode.name }

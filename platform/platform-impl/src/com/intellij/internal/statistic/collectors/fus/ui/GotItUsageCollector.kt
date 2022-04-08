@@ -92,14 +92,14 @@ class GotItUsageCollectorGroup : CounterUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("got.it.tooltip", 1)
+    private val GROUP = EventLogGroup("got.it.tooltip", 2)
 
     internal val showEvent = GROUP.registerEvent("show",
-                                                 EventFields.StringValidatedByCustomRule("id_prefix", GotItTooltip.PROPERTY_PREFIX),
+                                                 EventFields.StringValidatedByCustomRule("id_prefix", GotItIDValidator::class.java),
                                                  EventFields.Int("count"))
 
     internal val closeEvent = GROUP.registerEvent("close",
-                                                  EventFields.StringValidatedByCustomRule("id_prefix", GotItTooltip.PROPERTY_PREFIX),
+                                                  EventFields.StringValidatedByCustomRule("id_prefix", GotItIDValidator::class.java),
                                                   EventFields.Enum<CloseType>("type"))
   }
 }

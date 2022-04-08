@@ -18,8 +18,9 @@ class MLCompletionSettingsCollector : CounterUsagesCollector() {
   }
 
   companion object {
-    private val COUNTER_GROUP = EventLogGroup("ml.completion", 4)
-    private val rankerIdField: StringEventField = EventFields.StringValidatedByCustomRule("ranker_id", "ml_completion_ranker_id")
+    private val COUNTER_GROUP = EventLogGroup("ml.completion", 5)
+    private val rankerIdField: StringEventField =
+      EventFields.StringValidatedByCustomRule("ranker_id", MLRankingSettingsValidationRule::class.java)
     private val enabledField: BooleanEventField = EventFields.Boolean("enabled")
     private val enabledByDefaultField: BooleanEventField = EventFields.Boolean("enabled_by_default")
     private val languageCheckboxUsedField: BooleanEventField = EventFields.Boolean("using_language_checkbox")

@@ -4,6 +4,7 @@ package com.intellij.internal.statistics.logger
 import com.intellij.internal.statistic.FUCounterCollectorTestCase
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistics.StatisticsTestEventFactory.DEFAULT_SESSION_ID
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
@@ -435,8 +436,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     } */
 
     class TestObjDescription : ObjectDescription() {
-      var name by field(EventFields.StringValidatedByCustomRule("name", "name_rule"))
-      var versions by field(EventFields.StringListValidatedByCustomRule("versions", "version_rule"))
+      var name by field(EventFields.StringValidatedByCustomRule("name", CustomValidationRule::class.java))
+      var versions by field(EventFields.StringListValidatedByCustomRule("versions", CustomValidationRule::class.java))
     }
 
     val group = EventLogGroup("newGroup", 1)
@@ -464,8 +465,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   @Test
   fun testObjectVarargEvent() {
     class TestObjDescription : ObjectDescription() {
-      var name by field(EventFields.StringValidatedByCustomRule("name", "name_rule"))
-      var versions by field(EventFields.StringListValidatedByCustomRule("versions", "version_rule"))
+      var name by field(EventFields.StringValidatedByCustomRule("name", CustomValidationRule::class.java))
+      var versions by field(EventFields.StringListValidatedByCustomRule("versions", CustomValidationRule::class.java))
     }
 
     val group = EventLogGroup("newGroup", 1)
@@ -494,8 +495,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   @Test
   fun testObjectListEventByDescription() {
     class TestObjDescription : ObjectDescription() {
-      var name by field(EventFields.StringValidatedByCustomRule("name", "name_rule"))
-      var version by field(EventFields.StringValidatedByCustomRule("versions", "version_rule"))
+      var name by field(EventFields.StringValidatedByCustomRule("name", CustomValidationRule::class.java))
+      var version by field(EventFields.StringValidatedByCustomRule("versions", CustomValidationRule::class.java))
     }
 
     val group = EventLogGroup("newGroup", 1)
@@ -535,12 +536,12 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     } */
 
     class InnerObjDescription : ObjectDescription() {
-      var foo by field(EventFields.StringValidatedByCustomRule("foo", "foo_rule"))
-      var bar by field(EventFields.StringValidatedByCustomRule("bar", "bar_rule"))
+      var foo by field(EventFields.StringValidatedByCustomRule("foo", CustomValidationRule::class.java))
+      var bar by field(EventFields.StringValidatedByCustomRule("bar", CustomValidationRule::class.java))
     }
 
     class OuterObjDescription : ObjectDescription() {
-      var name by field(EventFields.StringValidatedByCustomRule("name", "name_rule"))
+      var name by field(EventFields.StringValidatedByCustomRule("name", CustomValidationRule::class.java))
       var obj1 by field(ObjectEventField("obj2", InnerObjDescription()))
     }
 

@@ -275,11 +275,11 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
   }
 
   private static final class ProductivityUsageCollector extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("productivity", 58);
+    private static final EventLogGroup GROUP = new EventLogGroup("productivity", 59);
     private static final EventId3<String, String, PluginInfo> FEATURE_USED =
       GROUP.registerEvent("feature.used",
-                          EventFields.StringValidatedByCustomRule("id", "productivity"),
-                          EventFields.StringValidatedByCustomRule("group", "productivity_group"),
+                          EventFields.StringValidatedByCustomRule("id", ProductivityUtilValidator.class),
+                          EventFields.StringValidatedByCustomRule("group", ProductivityUtilValidator.class),
                           EventFields.PluginInfo);
 
     @Override

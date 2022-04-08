@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.notification.NotificationGroupManager
 
 class NotificationSettingsCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("notification.settings", 1)
+  private val GROUP = EventLogGroup("notification.settings", 2)
   private val SHOULD_LOG = EventFields.Boolean("should_log")
   private val PLAY_SOUND = EventFields.Boolean("play_sound")
   private val READ_ALOUD = EventFields.Boolean("read_aloud")

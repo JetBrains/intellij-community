@@ -32,9 +32,10 @@ import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesC
 
 public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
   public static final String GROUP_NAME = "run.configuration.exec";
-  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 63);
+  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 64);
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP_NAME, "started");
-  private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor", "run_config_executor");
+  private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor",
+                                                                                           RunConfigurationExecutorUtilValidator.class);
   /**
    * The type of the target the run configuration is being executed with. {@code null} stands for the local machine target.
    * <p>
@@ -42,7 +43,7 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
    * configuration.
    */
   private static final StringEventField TARGET =
-    EventFields.StringValidatedByCustomRule("target", RunConfigurationUsageTriggerCollector.RunTargetValidator.RULE_ID);
+    EventFields.StringValidatedByCustomRule("target", RunTargetValidator.class);
   private static final EnumEventField<RunConfigurationFinishType> FINISH_TYPE =
     EventFields.Enum("finish_type", RunConfigurationFinishType.class);
 

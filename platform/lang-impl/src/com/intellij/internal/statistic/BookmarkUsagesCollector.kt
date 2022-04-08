@@ -15,7 +15,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.project.Project
 
 class BookmarkUsagesCollector : ProjectUsagesCollector() {
-  private val group: EventLogGroup = EventLogGroup("bookmarks", 1)
+  private val group: EventLogGroup = EventLogGroup("bookmarks", 2)
 
   private val bookmarksTotal = group.registerEvent("bookmarks.total", EventFields.Count)
   private val bookmarksWithLine = group.registerEvent("bookmarks.with.line", EventFields.Count)
@@ -26,8 +26,9 @@ class BookmarkUsagesCollector : ProjectUsagesCollector() {
   private val favoritesTotal = group.registerEvent("favorites.total", EventFields.Count)
   private val favoriteFiles = group.registerEvent("favorites.files", EventFields.Count)
   private val favoriteDirectories = group.registerEvent("favorites.directories", EventFields.Count)
-  private val favoriteCustom = group.registerEvent("favorites.custom", EventFields.Count,
-                                                   EventFields.StringValidatedByCustomRule("type", "favorite_type"),
+  private val favoriteCustom = group.registerEvent("favorites.custom",
+                                                   EventFields.Count,
+                                                   EventFields.StringValidatedByCustomRule("type", FavoriteTypeValidationRule::class.java),
                                                    EventFields.PluginInfoFromInstance)
 
   override fun getGroup(): EventLogGroup {

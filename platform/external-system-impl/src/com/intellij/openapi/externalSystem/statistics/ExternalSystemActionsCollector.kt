@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.statistics
 
 import com.intellij.execution.Executor
+import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector.RunConfigurationExecutorUtilValidator
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -22,9 +23,10 @@ class ExternalSystemActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("build.tools.actions", 6)
+    private val GROUP = EventLogGroup("build.tools.actions", 7)
     val EXTERNAL_SYSTEM_ID = EventFields.StringValidatedByEnum("system_id", "build_tools")
-    private val ACTION_EXECUTOR_FIELD = EventFields.StringValidatedByCustomRule("executor", "run_config_executor")
+    private val ACTION_EXECUTOR_FIELD =
+      EventFields.StringValidatedByCustomRule("executor", RunConfigurationExecutorUtilValidator::class.java)
     private val DELEGATE_ACTION_ID = EventFields.Enum<ActionId>("action_id")
 
     private val ACTION_INVOKED = ActionsEventLogGroup.registerActionEvent(GROUP, "action.invoked", EXTERNAL_SYSTEM_ID)

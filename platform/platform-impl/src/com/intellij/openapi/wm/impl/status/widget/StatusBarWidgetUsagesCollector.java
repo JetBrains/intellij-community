@@ -15,17 +15,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class StatusBarWidgetUsagesCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("status.bar.widgets", 1);
+  private static final EventLogGroup GROUP = new EventLogGroup("status.bar.widgets", 2);
   private static final EventId3<PluginInfo, String, Boolean> WIDGET =
     GROUP.registerEvent("widget",
                         EventFields.PluginInfo,
-                        EventFields.StringValidatedByCustomRule("id", StatusBarWidgetFactoryValidationRule.RULE_ID),
+                        EventFields.StringValidatedByCustomRule("id", StatusBarWidgetFactoryValidationRule.class),
                         EventFields.Boolean("enabled"));
 
   @Override
