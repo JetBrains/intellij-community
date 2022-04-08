@@ -575,7 +575,7 @@ public final class HighlightMethodUtil {
         expectedTypeByParent, actualType, fixRange, 0, XmlStringUtil.escapeString(errorMessage));
       if (methodCall instanceof PsiMethodCallExpression) {
         QuickFixAction.registerQuickFixAction(highlightInfo,
-                                              new WrapWithAdapterMethodCallFix(expectedTypeByParent, (PsiExpression)methodCall));
+                                              QUICK_FIX_FACTORY.createWrapWithAdapterFix(expectedTypeByParent, (PsiExpression)methodCall));
       }
     }
     else {
