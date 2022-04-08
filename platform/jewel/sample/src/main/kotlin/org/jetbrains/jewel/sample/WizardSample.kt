@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.singleWindowApplication
@@ -397,9 +398,9 @@ fun CommonLayer(
                     paintTicks = true),
                 min = 0,
                 max = 400,
-                modifier = Modifier.width(200.dp)
+                modifier = Modifier.weight(1.0f)
             ) { sliderValue.value = it }
-            Text("${sliderValue.value}%")
+            Text("${sliderValue.value}%", modifier = Modifier.width(40.dp), textAlign = TextAlign.End)
         }
     }
 }
@@ -499,14 +500,13 @@ fun FirstPage(modifier: Modifier = Modifier) {
         Box(modifier = Modifier.padding(top = 20.dp)) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    GroupHeader("Preview", modifier = Modifier.width(100.dp))
+                    GroupHeader("Preview", modifier = Modifier.weight(1.0f))
                     TextField(value = "", onValueChange = {}, modifier = Modifier.width(50.dp))
                     val showSafeZone = remember { mutableStateOf(true) }
                     val showGrid = remember { mutableStateOf(false) }
-                    CheckboxRow(checked = showSafeZone.value, onCheckedChange = { showSafeZone.value = it }) {
+                    CheckboxRow(checked = showSafeZone.value, onCheckedChange = { showSafeZone.value = it }, modifier = Modifier.padding(horizontal = 10.dp)) {
                         Text(
                             "Show safe zone",
-                            modifier = Modifier.padding(horizontal = 10.dp)
                         )
                     }
                     CheckboxRow(checked = showGrid.value, onCheckedChange = { showGrid.value = it }) {
@@ -515,6 +515,9 @@ fun FirstPage(modifier: Modifier = Modifier) {
                             modifier = Modifier.padding(end = 10.dp)
                         )
                     }
+                }
+                Box (modifier = Modifier.padding(20.dp).background(color = Color.Green).fillMaxSize()) {
+
                 }
             }
         }
