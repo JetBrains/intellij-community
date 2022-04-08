@@ -38,6 +38,7 @@ import org.jetbrains.jewel.theme.intellij.components.CheckboxRow
 import org.jetbrains.jewel.theme.intellij.components.IconButton
 import org.jetbrains.jewel.theme.intellij.components.RadioButtonRow
 import org.jetbrains.jewel.theme.intellij.components.Separator
+import org.jetbrains.jewel.theme.intellij.components.Surface
 import org.jetbrains.jewel.theme.intellij.components.Tab
 import org.jetbrains.jewel.theme.intellij.components.TabRow
 import org.jetbrains.jewel.theme.intellij.components.Text
@@ -62,7 +63,7 @@ fun main() {
 @Composable
 fun Wizard(onFinish: () -> Unit) {
     IntelliJThemeDark {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Surface(modifier = Modifier.fillMaxSize()) {
             Column {
                 val currentPage = mutableStateOf(1) // 1-based
                 WizardHeader(currentPage = currentPage)
