@@ -22,8 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -331,7 +332,7 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
 
       if (message != null) {
         PsiElement toHighlight = ObjectUtils.notNull(tag.getValueElement(), tag.getNameElement());
-        holder.registerProblem(toHighlight, message);
+        holder.registerProblem(toHighlight, message, new RemoveTagFix(tagName));
       }
 
       PsiElement[] dataElements = tag.getDataElements();

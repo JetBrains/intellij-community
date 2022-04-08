@@ -669,34 +669,6 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     }
   }
 
-  private static class RemoveTagFix implements LocalQuickFix {
-    private final String myTagName;
-
-    RemoveTagFix(String tagName) {
-      myTagName = tagName;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return JavaBundle.message("quickfix.text.remove.javadoc.0", myTagName);
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return JavaBundle.message("quickfix.family.remove.javadoc.tag");
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiDocTag tag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
-      if (tag != null) {
-        tag.delete();
-      }
-    }
-  }
-
   private final class ProblemHolderImpl implements JavadocHighlightUtil.ProblemHolder {
     private final ProblemsHolder myHolder;
     private final boolean myOnTheFly;
