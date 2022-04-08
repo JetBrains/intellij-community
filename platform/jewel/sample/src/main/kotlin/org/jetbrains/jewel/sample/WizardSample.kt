@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -129,7 +130,7 @@ fun WizardFooter(modifier: Modifier = Modifier, currentPage: MutableState<Int>, 
 fun ConfirmIconPathPage(modifier: Modifier = Modifier) {
     Row(modifier.fillMaxSize()) {
         DirectorySelection(modifier)
-        Box(modifier.background(Color.Magenta).fillMaxSize())
+        OutputFilePanel(modifier)
     }
 }
 
@@ -143,7 +144,10 @@ fun DirectorySelection(modifier: Modifier = Modifier) {
 
 @Composable
 fun ResDirectoryLabelComboBox(modifier: Modifier = Modifier) {
-    Box(modifier.background(Color.Yellow).height(30.dp).fillMaxWidth())
+    Row(modifier.height(30.dp).fillMaxWidth()) {
+        Text("Res Directory:")
+        Box(modifier.background(Color.Yellow).fillMaxSize()) // TODO: combo box
+    }
 }
 
 @Composable
@@ -151,8 +155,7 @@ fun OutputDirectoriesLabelTree(modifier: Modifier = Modifier) {
     Row(modifier.fillMaxSize()) {
         Text(
             modifier = modifier.padding(5.dp),
-            text = "Output Directories:",
-            color = Color.Black
+            text = "Output Directories:"
         )
         var tree by remember { mutableStateOf(Paths.get(System.getProperty("user.dir")).asTree(true)) }
 
@@ -180,7 +183,46 @@ fun OutputDirectoriesLabelTree(modifier: Modifier = Modifier) {
             }
         }
     }
+}
 
+@Composable
+fun OutputFilePanel(modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxSize(), verticalArrangement = Arrangement.Top) {
+        Text(
+            modifier = Modifier.padding(5.dp),
+            text = "Output File"
+        )
+        TextFieldWithLabel(
+            label = "File Type:",
+            textFieldText = "PNG File",
+            textFieldEnabled = false
+        )
+        TextFieldWithLabel(
+            label = "Density:",
+            textFieldText = "nodpi",
+            textFieldEnabled = false
+        )
+        TextFieldWithLabel(
+            label = "Size (dp):",
+            textFieldText = "512x512",
+            textFieldEnabled = false
+        )
+        TextFieldWithLabel(
+            label = "Size (px):",
+            textFieldText = "512x512",
+            textFieldEnabled = false
+        )
+        Box(modifier.background(Color.Magenta).fillMaxSize().weight(1f))
+    }
+}
+
+@Composable
+fun TextFieldWithLabel(modifier: Modifier = Modifier, label: String, textFieldText: String, textFieldEnabled: Boolean) {
+    Row(modifier.fillMaxWidth().padding(5.dp), horizontalArrangement = Arrangement.Start) {
+        Text(label)
+        Spacer(modifier.width(5.dp))
+        TextField(modifier = modifier.fillMaxWidth(), value = textFieldText, onValueChange = {}, enabled = textFieldEnabled)
+    }
 }
 
 @Composable
