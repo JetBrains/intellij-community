@@ -11,7 +11,7 @@ import org.intellij.plugins.markdown.lang.MarkdownElementType
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 
-class PsiBuilderFillingVisitor(private val builder: PsiBuilder) : RecursiveVisitor() {
+internal class PsiBuilderFillingVisitor(private val builder: PsiBuilder) : RecursiveVisitor() {
   private var seenFirstMarker = false
 
   private val HEADERS = MarkdownTokenTypeSets.HEADERS.types.map { MarkdownElementType.markdownType(it) }.toSet()
