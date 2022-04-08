@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.theme.intellij.styles
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.compositionLocalOf
@@ -13,6 +12,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.jetbrains.jewel.Insets
 import org.jetbrains.jewel.ShapeStroke
 import org.jetbrains.jewel.components.state.TextFieldState
@@ -31,17 +31,12 @@ data class TextFieldAppearance(
     val shapeStroke: ShapeStroke? = null,
     val shape: Shape,
 
-    val adornmentStroke: ShapeStroke? = null,
-    val adornmentShape: Shape? = null,
-
     val cursorBrush: Brush = SolidColor(Color.Black),
     val contentPadding: PaddingValues,
 
     val haloStroke: ShapeStroke? = null,
-    val haloShape: Shape = shape,
 
     val minWidth: Dp = Dp.Unspecified,
-    val minHeight: Dp = Dp.Unspecified,
 )
 
 val LocalTextFieldStyle = compositionLocalOf<TextFieldStyle> { localNotProvided() }
@@ -56,19 +51,21 @@ fun TextFieldStyle(
     textStyle: TextStyle
 ) = TextFieldStyle {
     val defaultAppearance = TextFieldAppearance(
-        textStyle = textStyle.copy(palette.textField.foreground),
+        textStyle = textStyle.copy(
+            color = palette.textField.foreground,
+            lineHeight = 16.sp,
+            letterSpacing = 0.5.sp
+        ),
         backgroundColor = palette.textField.background,
         shape = RectangleShape,
-        contentPadding = PaddingValues(10.dp, 7.dp),
+        contentPadding = PaddingValues(7.dp, 4.dp),
         cursorBrush = palette.text.toBrush(),
         shapeStroke = ShapeStroke(
             1.dp,
             palette.controlStroke.toBrush(),
-            Insets(1.dp)
+            Insets(0.dp)
         ),
-        haloShape = RoundedCornerShape(metrics.controlFocusHaloArc),
         minWidth = 8.dp * 8,
-        minHeight = 8.dp * 2,
     )
 
     val disabledAppearance = defaultAppearance.copy(
@@ -80,7 +77,7 @@ fun TextFieldStyle(
         shapeStroke = ShapeStroke(
             1.dp,
             palette.controlStrokeFocused.toBrush(),
-            Insets(1.dp)
+            Insets(0.dp)
         ),
         haloStroke = ShapeStroke(
             metrics.controlFocusHaloWidth,
@@ -168,27 +165,6 @@ fun TextFieldStyle(
             )
         }
     }
-
-    variation(IntelliJTextFieldVariations.Search) {
-        allStateCombinations { enabled, focused, hovered ->
-            val appearance = when {
-                enabled -> when {
-                    focused -> focusedAppearance.copy(shape = RoundedCornerShape(metrics.controlArc))
-                    else -> defaultAppearance.copy(shape = RoundedCornerShape(metrics.controlArc))
-                }
-                else -> disabledAppearance.copy(shape = RoundedCornerShape(metrics.controlArc))
-            }
-
-            state(
-                TextFieldState(
-                    focused = focused,
-                    hovered = hovered,
-                    enabled = enabled
-                ),
-                appearance
-            )
-        }
-    }
 }
 
 private fun ControlStyle.ControlVariationBuilder<TextFieldAppearance, TextFieldState>.allStateCombinations(
@@ -205,6 +181,5 @@ private fun ControlStyle.ControlVariationBuilder<TextFieldAppearance, TextFieldS
 
 enum class IntelliJTextFieldVariations {
     Error,
-    Search,
     Warning
 }

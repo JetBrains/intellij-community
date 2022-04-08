@@ -4,9 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,13 +22,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.jetbrains.jewel.Orientation
 import org.jetbrains.jewel.theme.idea.IntelliJTheme
 import org.jetbrains.jewel.theme.idea.addComposePanel
 import org.jetbrains.jewel.theme.intellij.IntelliJTheme
 import org.jetbrains.jewel.theme.intellij.components.Button
 import org.jetbrains.jewel.theme.intellij.components.Checkbox
 import org.jetbrains.jewel.theme.intellij.components.CheckboxRow
+import org.jetbrains.jewel.theme.intellij.components.Divider
+import org.jetbrains.jewel.theme.intellij.components.Tab
+import org.jetbrains.jewel.theme.intellij.components.TabRow
+import org.jetbrains.jewel.theme.intellij.components.TabScope
 import org.jetbrains.jewel.theme.intellij.components.Text
+import org.jetbrains.jewel.theme.intellij.components.TextField
+import org.jetbrains.jewel.theme.intellij.components.rememberTabContainerState
 
 @ExperimentalCoroutinesApi
 internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
@@ -53,6 +62,27 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
 
                         var checked by remember { mutableStateOf(false) }
 
+                        var textFieldValue by remember { mutableStateOf("") }
+                        TextField(
+                            value = textFieldValue,
+                            onValueChange = {
+                                textFieldValue = it
+                            }
+                        )
+
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(24.dp)
+                        ) {
+                            Text("One")
+                            Divider(orientation = Orientation.Vertical, startIndent = 12.dp)
+                            Text("Two")
+                            Divider(orientation = Orientation.Vertical)
+                            Text("Three")
+                            Divider(orientation = Orientation.Vertical)
+                            Text("Four")
+                        }
+
                         CheckboxRow(
                             checked = checked,
                             onCheckedChange = { checked = it }
@@ -60,8 +90,19 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
                             Text("Hello, I am a themed checkbox")
                         }
 
-                        val textFieldState = remember { mutableStateOf("I am a textfield") }
-//                        TextField(textFieldState.value, { textFieldState.value = it })
+                        val tabState = rememberTabContainerState("1")
+                        TabRow(tabState, ) {
+                            Section("1", "One")
+                            Section("2", "Two")
+                            Section("3", "Three")
+                        }
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            when (tabState.selectedKey) {
+                                "1" -> Text("Content of One")
+                                "2" -> Text("Content of Two")
+                                "3" -> Text("Content of Three")
+                            }
+                        }
 
                         val radioState = remember { mutableStateOf(RadioSample.Automatic) }
                         Column(
@@ -104,5 +145,12 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun TabScope<String>.Section(key: String, caption: String) {
+    Tab(key) {
+        Text(caption)
     }
 }

@@ -17,11 +17,13 @@ import org.jetbrains.jewel.theme.intellij.styles.LocalFrameStyle
 import org.jetbrains.jewel.theme.intellij.styles.LocalIconButtonStyle
 import org.jetbrains.jewel.theme.intellij.styles.LocalRadioButtonStyle
 import org.jetbrains.jewel.theme.intellij.styles.LocalSeparatorStyle
+import org.jetbrains.jewel.theme.intellij.styles.LocalTabStyle
 import org.jetbrains.jewel.theme.intellij.styles.LocalTextFieldStyle
 import org.jetbrains.jewel.theme.intellij.styles.LocalTreeViewStyle
 import org.jetbrains.jewel.theme.intellij.styles.RadioButtonStyle
 import org.jetbrains.jewel.theme.intellij.styles.ScrollbarStyle
 import org.jetbrains.jewel.theme.intellij.styles.SeparatorStyle
+import org.jetbrains.jewel.theme.intellij.styles.TabStyle
 import org.jetbrains.jewel.theme.intellij.styles.TextFieldStyle
 import org.jetbrains.jewel.theme.intellij.styles.TreeViewStyle
 
@@ -49,6 +51,7 @@ fun IntelliJTheme(
     LocalScrollbarStyle provides ScrollbarStyle(palette, metrics),
     LocalTreeViewStyle provides TreeViewStyle(palette, metrics, painters),
     LocalIndication provides NoIndication,
+    LocalTabStyle provides TabStyle(palette, metrics, typography.default),
     LocalTypography provides typography,
     LocalMetrics provides metrics,
     LocalPainters provides painters,

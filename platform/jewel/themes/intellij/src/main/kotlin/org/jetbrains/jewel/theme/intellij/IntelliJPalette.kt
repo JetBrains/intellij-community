@@ -2,6 +2,7 @@ package org.jetbrains.jewel.theme.intellij
 
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 
 data class IntelliJPalette(
     val button: Button,
@@ -26,6 +27,7 @@ data class IntelliJPalette(
     val controlHaloError: Color, // Component.errorFocusColor
     val controlHaloWarning: Color, // Component.warningFocusColor
     val scrollbar: Scrollbar,
+    val tab: Tab,
 ) {
 
     data class TreeView(
@@ -94,6 +96,15 @@ data class IntelliJPalette(
     data class Scrollbar(
         val thumbHoverColor: Color, // See com.intellij.ui.components.ScrollBarPainter.THUMB_BACKGROUND
         val thumbIdleColor: Color,  // See com.intellij.ui.components.ScrollBarPainter.THUMB_HOVERED_BACKGROUND
+    ) {
+
+        companion object
+    }
+
+    data class Tab(
+        val underlineColor: Color,
+        val hoveredBackgroundColor: Color,
+        val tabSelectionHeight: Dp
     ) {
 
         companion object
