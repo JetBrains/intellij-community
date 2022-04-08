@@ -456,7 +456,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private double getExpUIVerticalLineX() {
-    return getFoldingAreaOffset() + getFoldingAnchorWidth() - scale(1f);
+    return getWidth() - 1;
   }
 
   private void paintEditorBackgrounds(Graphics g, int firstVisibleOffset, int lastVisibleOffset) {
@@ -1500,8 +1500,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private double getWhitespaceSeparatorOffset2D() {
-    return PaintUtil.alignToInt(getFoldingAreaOffset() + getFoldingAnchorWidth() / 2.,
-                                ScaleContext.create(myEditor.getComponent()), RoundingMode.ROUND, null);
+    ScaleContext ctx = ScaleContext.create(myEditor.getComponent());
+    if (ExperimentalUI.isNewUI()) {
+      return PaintUtil.alignToInt(getFoldingAreaOffset() + getFoldingAnchorWidth(), ctx, RoundingMode.ROUND, null);
+    }
+    return PaintUtil.alignToInt(getFoldingAreaOffset() + getFoldingAnchorWidth() / 2., ctx, RoundingMode.ROUND, null);
   }
 
   void setActiveFoldRegions(@NotNull List<FoldRegion> activeFoldRegions) {
@@ -1579,7 +1582,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       if (height > 0) {
         myAlphaContext.paintWithComposite(g, () -> {
           Icon icon = scaleIcon(IconLoader.getIcon("expui/gutter/fold.svg", AllIcons.class.getClassLoader()));
-          icon.paintIcon(this, g, (int)dxPoints[0], getFoldingIconY(visualLine, icon));
+          icon.paintIcon(this, g, getFoldingAreaOffset(), getFoldingIconY(visualLine, icon));
         });
       }
       return;
@@ -1616,7 +1619,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                                                 centerX, centerY, width, width, StrokeType.CENTERED, sw);
     if (ExperimentalUI.isNewEditorTabs()) {
       Icon icon = scaleIcon(IconLoader.getIcon("/expui/gutter/unfold.svg", AllIcons.class.getClassLoader()));
-      icon.paintIcon(this, g, (int)rect.getX(), getFoldingIconY(visualLine, icon));
+      icon.paintIcon(this, g, getFoldingAreaOffset(), getFoldingIconY(visualLine, icon));
       return;
     }
     g.setColor(myEditor.getBackgroundColor());
@@ -1653,7 +1656,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   private double getFoldingAnchorWidth2D() {
     if (ExperimentalUI.isNewEditorTabs()) {
-      return getEditorScaleFactor() * (UIUtil.getTreeCollapsedIcon().getIconWidth() + JBUIScale.scale(6f)) ;
+      return scale(IconLoader.getIcon("expui/gutter/fold.svg", AllIcons.class.getClassLoader()).getIconWidth());
     }
     return Math.min(scale(4f), myEditor.getLineHeight() / 2f - JBUIScale.scale(2f)) * 2;
   }
