@@ -41,18 +41,16 @@ fun main() {
 
 @Composable
 fun Wizard(onFinish: () -> Unit) {
-        IntelliJThemeDark {
-            Box(modifier = Modifier.fillMaxSize()) {
-                Column {
-                    val currentPage = mutableStateOf(1) // 1-based
-                    WizardHeader()
-                    WizardMainContent(
-                        modifier = Modifier.weight(1f),
-                        currentPage = currentPage,
-                        onFinish = onFinish
-                    )
-                    WizardFooter(currentPage = currentPage)
-                }
+    IntelliJThemeDark {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column {
+                val currentPage = mutableStateOf(1) // 1-based
+                WizardHeader()
+                WizardMainContent(
+                    modifier = Modifier.weight(1f),
+                    currentPage = currentPage
+                )
+                WizardFooter(currentPage = currentPage, onFinish = onFinish)
             }
         }
     }
