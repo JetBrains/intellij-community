@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.*
 
+@OptIn(FE10ApiUsage::class)
 internal class ProjectStructureProviderIdeImpl : ProjectStructureProvider() {
     private val cache = CollectionFactory.createConcurrentWeakIdentityMap<ModuleInfo, KtModule>()
 
@@ -35,6 +36,11 @@ internal class ProjectStructureProviderIdeImpl : ProjectStructureProvider() {
 
     override fun getKtLibraryModules(): Collection<KtLibraryModule> {
         TODO("This is a temporary function used for Android LINT, and should not be called in the IDE")
+    }
+
+    override fun getStdlibWithBuiltinsModule(module: KtModule): KtLibraryModule? {
+        val stdlibLibraryInfo = module.moduleInfo.findJvmStdlibAcrossDependencies() ?: return null
+        return getKtModuleByModuleInfo(stdlibLibraryInfo) as KtLibraryModule
     }
 
     companion object {
