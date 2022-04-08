@@ -68,7 +68,6 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl.FILE_CHOOSER_SHOW_PATH_PROPERTY;
 import static com.intellij.openapi.util.Pair.pair;
 import static java.awt.GridBagConstraints.*;
-import static java.util.Objects.requireNonNull;
 
 final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implements FileChooserPanel, Disposable {
   private static final Logger LOG = Logger.getInstance(FileChooserPanelImpl.class);
@@ -309,13 +308,10 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       return path != null ? List.of(path) : List.of();
     }
     else {
-      var items = myList.getSelectedValuesList();
-      if (items.size() == 1 && FsItem.UPLINK.equals(items.get(0).name)) {
-        items = List.of(myCurrentContent.get(0));  // substituting selected uplink with `.`
-      }
-      return items.stream()
+      return myList.getSelectedValuesList().stream()
         .filter(r -> r.selectable)
-        .map(r -> requireNonNull(r.path))
+        .map(r -> FsItem.UPLINK.equals(r.name) ? myCurrentDirectory : r.path)
+        .filter(Objects::nonNull)
         .collect(Collectors.toList());
     }
   }
@@ -373,7 +369,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       if (myCurrentDirectory != null) {
         var selection = myList.getSelectedValue();
         myModel.clear();
-        for (var i = 1; i < myCurrentContent.size(); i++) {  // excluding `.`
+        for (var i = 0; i < myCurrentContent.size(); i++) {
           FsItem item = myCurrentContent.get(i);
           if (show || item.visible) myModel.add(item);
         }
@@ -498,14 +494,12 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     var cancelled = new AtomicBoolean(false);
 
     var vfsDirectory = new PreloadedDirectory(directory);
-    var dot = new FsItem(directory, ".", true, false, myDescriptor.isFileSelectable(vfsDirectory), null);
-    var uplink = new FsItem(parent(directory), FsItem.UPLINK, true, true, false, AllIcons.Nodes.UpFolder);
+    var uplink = new FsItem(parent(directory), FsItem.UPLINK, true, true, myDescriptor.isFileSelectable(vfsDirectory), AllIcons.Nodes.UpFolder);
     update(id, cancelled, () -> {
       myCurrentDirectory = directory;
       if (updatePathBar) {
         myPath.setItem(new PathWrapper(directory));
       }
-      myCurrentContent.add(dot);
       myCurrentContent.add(uplink);
       myModel.add(uplink);
     });
