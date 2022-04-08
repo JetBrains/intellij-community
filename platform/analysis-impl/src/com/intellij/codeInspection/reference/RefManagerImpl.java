@@ -387,7 +387,7 @@ public class RefManagerImpl extends RefManager {
       long before = System.currentTimeMillis();
       startTaskWorkers();
       try {
-        if (!Registry.is("batch.inspections.process.project.usages.in.parallel")) {
+        if (!Registry.is("batch.inspections.visit.psi.in.parallel")) {
           scope.accept(myProjectIterator);
         }
         else {
