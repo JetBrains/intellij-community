@@ -103,6 +103,19 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     }
   }
 
+  @Override
+  public int getBaseline(JComponent c, int width, int height) {
+    super.getBaseline(c, width, height);
+    ToolbarComboWidget widget = (ToolbarComboWidget)c;
+    Rectangle iconRect = new Rectangle();
+    Rectangle textRect = new Rectangle();
+    SwingUtilities.layoutCompoundLabel(c, c.getFontMetrics(c.getFont()), widget.getText(), null,
+                                       SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER,
+                                       new Rectangle(width, height), iconRect, textRect, 0);
+    FontMetrics fm = c.getFontMetrics(c.getFont());
+    return textRect.y + fm.getAscent();
+  }
+
   private void paintBackground(Graphics g, ToolbarComboWidget c) {
     Graphics g2 = g.create();
     try {
@@ -125,11 +138,10 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   private static void drawText(JComponent c, @NotNull String fullText, Graphics2D g, Rectangle textBounds) {
     FontMetrics metrics = c.getFontMetrics(c.getFont());
 
+    int baseline = c.getBaseline(textBounds.width, textBounds.height);
     String text = calcShownText(fullText, metrics, textBounds.width);
     Rectangle strBounds = metrics.getStringBounds(text, g).getBounds();
-    strBounds.setLocation((int)(textBounds.getCenterX() - strBounds.getCenterX()),
-                          (int)(textBounds.getCenterY() - strBounds.getCenterY()));
-
+    strBounds.setLocation((int)(textBounds.getCenterX() - strBounds.getCenterX()), baseline);
     SwingUtilities2.drawString(c, g, text, strBounds.x, strBounds.y);
   }
 
