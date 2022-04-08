@@ -35,6 +35,7 @@ fun main() = singleWindowApplication(
     title = "JSlider sample"
 ) {
     var isDarkMode by remember { mutableStateOf(false) }
+    var value by remember { mutableStateOf(50) }
 
     IntelliJTheme(isDark = isDarkMode) {
         val scrollState = rememberScrollState()
@@ -59,10 +60,9 @@ fun main() = singleWindowApplication(
                         .fillMaxSize()
                         .border(IntelliJMetrics.Separator.default.strokeWidth, IntelliJTheme.palette.separator.color, RoundedCornerShape(4.dp))
                 ) {
-                    var value by remember { mutableStateOf(50) }
                     Slider(
                         value,
-                        modifier = Modifier.padding(24.dp).fillMaxWidth().height(50.dp),
+                        modifier = Modifier.padding(24.dp).fillMaxWidth().height(80.dp),
                         style = SliderStyle(palette = IntelliJTheme.palette, typography = IntelliJTheme.typography, paintTicks = true),
                     ) { value = it }
                 }

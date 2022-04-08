@@ -13,7 +13,6 @@ import org.jetbrains.jewel.toAwtColor
 import javax.swing.JSlider
 import javax.swing.SwingConstants
 
-// TODO pull out state (min, max, value)
 @Composable
 fun Slider(
     value: Int,
@@ -50,7 +49,9 @@ private fun jSlider(
     snapToTicks: Boolean,
     appearance: SliderAppearance
 ) = JSlider(appearance.orientation.toSwingInt(), min, max, min).apply {
-    addChangeListener { onValueChange(this@apply.value) }
+    addChangeListener {
+        if (!valueIsAdjusting) onValueChange(this@apply.value)
+    }
     background = appearance.background.toAwtColor()
     paintTrack = appearance.paintTrack
     paintTicks = appearance.paintTicks
