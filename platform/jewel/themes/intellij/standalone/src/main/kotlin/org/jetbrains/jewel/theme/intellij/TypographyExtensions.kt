@@ -32,6 +32,7 @@ val IntelliJTypography.Companion.light
         checkBox = TextStyle.IntelliJLight,
         radioButton = TextStyle.IntelliJLight,
         textField = TextStyle.IntelliJLight,
+        slider = TextStyle.IntelliJLight
     )
 
 val IntelliJTypography.Companion.darcula
@@ -41,4 +42,5 @@ val IntelliJTypography.Companion.darcula
         checkBox = TextStyle.IntelliJDark,
         radioButton = TextStyle.IntelliJDark,
         textField = TextStyle.IntelliJDark,
+        slider = TextStyle.IntelliJDark,
     )

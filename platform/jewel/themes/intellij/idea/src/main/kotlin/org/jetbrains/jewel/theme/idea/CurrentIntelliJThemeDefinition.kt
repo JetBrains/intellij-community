@@ -71,7 +71,7 @@ suspend fun CurrentIntelliJThemeDefinition(): IntelliJThemeDefinition {
         ),
         textField = textFieldPalette,
         separator = IntelliJPalette.Separator(
-            color = retrieveColorOrUnspecified("Separator.foreground"),
+            color = retrieveColorOrUnspecified("Separator.separatorColor"),
             background = retrieveColorOrUnspecified("Separator.background")
         ),
         scrollbar = IntelliJPalette.Scrollbar(
@@ -151,6 +151,7 @@ suspend fun CurrentIntelliJThemeDefinition(): IntelliJThemeDefinition {
             arrow = { rememberSvgResource("general/chevron-right.svg", AllIcons::class.java.classLoader) }
         )
     )
+
     val typography = IntelliJTypography(
         default = retrieveFont("Panel.font", palette.text),
         button = retrieveFont("Button.font", palette.button.foreground),

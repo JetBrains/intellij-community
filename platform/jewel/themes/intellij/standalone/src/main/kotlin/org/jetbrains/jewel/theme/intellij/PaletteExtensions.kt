@@ -22,7 +22,7 @@ val Color.Companion.IntelliJLightSelection
 val IntelliJPalette.Checkbox.Companion.light
     get() = IntelliJPalette.Checkbox(
         background = Color.IntelliJWhite,
-        foreground = Color(0xFF000000),
+        foreground = Color.Black,
         foregroundDisabled = Color(0xFF8C8C8C),
     )
 
@@ -36,7 +36,7 @@ val IntelliJPalette.Checkbox.Companion.darcula
 val IntelliJPalette.RadioButton.Companion.light
     get() = IntelliJPalette.RadioButton(
         background = Color.IntelliJWhite,
-        foreground = Color(0xFF000000),
+        foreground = Color.Black,
         foregroundDisabled = Color(0xFF8C8C8C),
     )
 
@@ -51,7 +51,7 @@ val IntelliJPalette.TextField.Companion.light
     get() = IntelliJPalette.TextField(
         background = Color(0xFFFFFFFF),
         backgroundDisabled = Color.IntelliJWhite,
-        foreground = Color(0xFF000000),
+        foreground = Color.Black,
         foregroundDisabled = Color(0xFF8C8C8C)
     )
 
@@ -103,7 +103,7 @@ val IntelliJPalette.Separator.Companion.light
 
 val IntelliJPalette.Separator.Companion.darcula
     get() = IntelliJPalette.Separator(
-        color = Color.IntelliJGrey,
+        color = Color(0xFF515151),
         background = Color.Unspecified,
     )
 
@@ -138,7 +138,8 @@ val IntelliJPalette.Companion.light
         controlHaloWarning = Color(0XFFE2A53A),
         separator = IntelliJPalette.Separator.light,
         scrollbar = IntelliJPalette.Scrollbar.light,
-        treeView = IntelliJPalette.TreeView.Companion.light
+        treeView = IntelliJPalette.TreeView.Companion.light,
+        slider = IntelliJPalette.Slider.Companion.light
     )
 
 val IntelliJPalette.Companion.darcula
@@ -160,7 +161,8 @@ val IntelliJPalette.Companion.darcula
         controlHaloWarning = Color(0XFFAC7920),
         separator = IntelliJPalette.Separator.darcula,
         scrollbar = IntelliJPalette.Scrollbar.darcula,
-        treeView = IntelliJPalette.TreeView.darcula
+        treeView = IntelliJPalette.TreeView.darcula,
+        slider = IntelliJPalette.Slider.darcula
     )
 
 val IntelliJPalette.TreeView.Companion.light
@@ -172,5 +174,17 @@ val IntelliJPalette.TreeView.Companion.light
 val IntelliJPalette.TreeView.Companion.darcula
     get() = IntelliJPalette.TreeView(
         focusedSelectedElementBackground = Color.IntelliJDarculaSelection,
+        background = Color.IntelliJGrey
+    )
+
+val IntelliJPalette.Slider.Companion.light
+    get() = IntelliJPalette.Slider(
+        foreground = Color.Black,
+        background = Color.IntelliJWhite
+    )
+
+val IntelliJPalette.Slider.Companion.darcula
+    get() = IntelliJPalette.Slider(
+        foreground = Color(0xFFBBBBBB),
         background = Color.IntelliJGrey
     )

@@ -30,7 +30,7 @@ data class ProgressIndicatorAppearance(
     val textStyle: TextStyle = TextStyle.Default,
     val color: Color = Color.White,
     val backgroundColor: Color = Color.White.copy(alpha = 0.24f),
-    val shapeStroke: ShapeStroke? = null,
+    val shapeStroke: ShapeStroke.SolidColor? = null,
     val shape: Shape = RectangleShape,
 
     val progressPadding: PaddingValues = PaddingValues(2.dp),

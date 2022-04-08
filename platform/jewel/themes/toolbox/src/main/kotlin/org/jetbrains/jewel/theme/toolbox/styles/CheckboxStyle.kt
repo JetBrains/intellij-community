@@ -21,7 +21,6 @@ import org.jetbrains.jewel.styles.Styles
 import org.jetbrains.jewel.styles.localNotProvided
 import org.jetbrains.jewel.theme.toolbox.Palette
 import org.jetbrains.jewel.theme.toolbox.ToolboxMetrics
-import org.jetbrains.jewel.toBrush
 
 typealias CheckboxStyle = ControlStyle<CheckboxAppearance, CheckboxState>
 
@@ -34,14 +33,14 @@ data class CheckboxAppearance(
     val contentSpacing: Dp = 8.dp,
 
     val backgroundColor: Color = Color.Blue,
-    val shapeStroke: ShapeStroke? = ShapeStroke(1.dp, Color.Blue.toBrush()),
+    val shapeStroke: ShapeStroke.SolidColor? = ShapeStroke.SolidColor(1.dp, Color.Blue),
     val shape: Shape = RectangleShape,
 
     val interiorPainter: PainterProvider? = null,
     val symbolPadding: Dp = 2.dp,
     val baseLine: Dp = 14.dp,
 
-    val haloStroke: ShapeStroke? = null,
+    val haloStroke: ShapeStroke.SolidColor? = null,
     val haloShape: Shape = shape,
 )
 
@@ -60,7 +59,7 @@ fun CheckboxStyle(palette: Palette, metrics: ToolboxMetrics) = CheckboxStyle {
         width = metrics.base * 2,
         height = metrics.base * 2,
         shape = RectangleShape,
-        shapeStroke = ShapeStroke(metrics.adornmentsThickness, palette.controlBackgroundDisabled.toBrush()),
+        shapeStroke = ShapeStroke.SolidColor(metrics.adornmentsThickness, palette.controlBackgroundDisabled),
         baseLine = metrics.base * 2 - metrics.base / 4,
         interiorPainter = null,
     )
@@ -71,7 +70,7 @@ fun CheckboxStyle(palette: Palette, metrics: ToolboxMetrics) = CheckboxStyle {
     default {
         for (focused in listOf(false, true)) {
             val haloStroke = if (focused)
-                ShapeStroke(metrics.adornmentsThickness, palette.controlAdornmentsHover.toBrush())
+                ShapeStroke.SolidColor(metrics.adornmentsThickness, palette.controlAdornmentsHover)
             else
                 null
             val disabledTextStyle = TextStyle(color = palette.textDisabled)
@@ -104,19 +103,19 @@ fun CheckboxStyle(palette: Palette, metrics: ToolboxMetrics) = CheckboxStyle {
                     CheckboxState(ToggleableState.On, buttonState, focused = focused), onAppearance.copy(
                     backgroundColor = filledBackgroundColor,
                     haloStroke = haloStroke,
-                    shapeStroke = ShapeStroke(metrics.adornmentsThickness, filledBackgroundColor.toBrush()),
+                    shapeStroke = ShapeStroke.SolidColor(metrics.adornmentsThickness, filledBackgroundColor),
                 )
                 )
                 state(
                     CheckboxState(ToggleableState.Off, buttonState, focused = focused), offAppearance.copy(
                     haloStroke = haloStroke,
-                    shapeStroke = ShapeStroke(
+                    shapeStroke = ShapeStroke.SolidColor(
                         metrics.adornmentsThickness,
                         when (buttonState) {
                             ButtonMouseState.Hovered -> palette.controlBackgroundHover
                             ButtonMouseState.Pressed -> palette.controlBackground
                             else -> palette.controlAdornments
-                        }.toBrush()
+                        }
                     ),
                 )
                 )
@@ -124,7 +123,7 @@ fun CheckboxStyle(palette: Palette, metrics: ToolboxMetrics) = CheckboxStyle {
                     CheckboxState(ToggleableState.Indeterminate, buttonState, focused = focused), indeterminateAppearance.copy(
                     backgroundColor = filledBackgroundColor,
                     haloStroke = haloStroke,
-                    shapeStroke = ShapeStroke(metrics.adornmentsThickness, filledBackgroundColor.toBrush()),
+                    shapeStroke = ShapeStroke.SolidColor(metrics.adornmentsThickness, filledBackgroundColor),
                 )
                 )
             }

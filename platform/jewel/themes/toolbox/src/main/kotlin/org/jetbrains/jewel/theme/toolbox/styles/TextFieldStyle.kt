@@ -22,23 +22,22 @@ import org.jetbrains.jewel.styles.localNotProvided
 import org.jetbrains.jewel.theme.toolbox.Palette
 import org.jetbrains.jewel.theme.toolbox.ToolboxMetrics
 import org.jetbrains.jewel.theme.toolbox.ToolboxTypography
-import org.jetbrains.jewel.toBrush
 
 typealias TextFieldStyle = ControlStyle<TextFieldAppearance, TextFieldState>
 
 data class TextFieldAppearance(
     val textStyle: TextStyle = TextStyle.Default,
     val backgroundColor: Color,
-    val shapeStroke: ShapeStroke? = null,
+    val shapeStroke: ShapeStroke.SolidColor? = null,
     val shape: Shape,
 
-    val adornmentStroke: ShapeStroke? = null,
+    val adornmentStroke: ShapeStroke.SolidColor? = null,
     val adornmentShape: Shape? = null,
 
     val cursorBrush: Brush = SolidColor(Color.Black),
     val contentPadding: PaddingValues,
 
-    val haloStroke: ShapeStroke? = null,
+    val haloStroke: ShapeStroke.SolidColor? = null,
     val haloShape: Shape = shape,
 
     val minWidth: Dp = Dp.Unspecified,
@@ -58,9 +57,9 @@ fun TextFieldStyle(palette: Palette, metrics: ToolboxMetrics, typography: Toolbo
         shape = RectangleShape,
         contentPadding = PaddingValues(0.dp, metrics.smallPadding),
         adornmentShape = BottomLineShape,
-        adornmentStroke = ShapeStroke(
+        adornmentStroke = ShapeStroke.SolidColor(
             metrics.adornmentsThickness,
-            palette.controlAdornments.toBrush(),
+            palette.controlAdornments,
             Insets(0.dp, metrics.adornmentsThickness / 2)
         ),
         minWidth = metrics.base * 4,
@@ -73,9 +72,9 @@ fun TextFieldStyle(palette: Palette, metrics: ToolboxMetrics, typography: Toolbo
                     val appearance = when {
                         enabled -> when {
                             focused -> default.copy(
-                                adornmentStroke = ShapeStroke(
+                                adornmentStroke = ShapeStroke.SolidColor(
                                     metrics.adornmentsThickness,
-                                    palette.controlAdornmentsActive.toBrush(),
+                                    palette.controlAdornmentsActive,
                                     Insets(0.dp, metrics.adornmentsThickness / 2)
                                 )
                             )

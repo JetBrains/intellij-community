@@ -16,10 +16,12 @@ import org.jetbrains.jewel.theme.intellij.styles.LocalCheckboxStyle
 import org.jetbrains.jewel.theme.intellij.styles.LocalFrameStyle
 import org.jetbrains.jewel.theme.intellij.styles.LocalIconButtonStyle
 import org.jetbrains.jewel.theme.intellij.styles.LocalSeparatorStyle
+import org.jetbrains.jewel.theme.intellij.styles.LocalSliderStyle
 import org.jetbrains.jewel.theme.intellij.styles.LocalTextFieldStyle
 import org.jetbrains.jewel.theme.intellij.styles.LocalTreeViewStyle
 import org.jetbrains.jewel.theme.intellij.styles.ScrollbarStyle
 import org.jetbrains.jewel.theme.intellij.styles.SeparatorStyle
+import org.jetbrains.jewel.theme.intellij.styles.SliderStyle
 import org.jetbrains.jewel.theme.intellij.styles.TextFieldStyle
 import org.jetbrains.jewel.theme.intellij.styles.TreeViewStyle
 
@@ -45,6 +47,7 @@ fun IntelliJTheme(
     LocalSeparatorStyle provides SeparatorStyle(palette, metrics),
     LocalScrollbarStyle provides ScrollbarStyle(palette, metrics),
     LocalTreeViewStyle provides TreeViewStyle(palette, metrics, painters),
+    LocalSliderStyle provides SliderStyle(palette, typography),
     LocalIndication provides NoIndication,
     LocalTypography provides typography,
     LocalMetrics provides metrics,

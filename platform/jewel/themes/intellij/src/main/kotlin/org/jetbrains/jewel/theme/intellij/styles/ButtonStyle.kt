@@ -75,7 +75,7 @@ fun ButtonStyle(
     controlTextStyle: TextStyle
 ) = ButtonStyle {
     val focusHaloStroke = ShapeStroke.SolidColor(metrics.controlFocusHaloWidth, palette.controlFocusHalo)
-    val default = ButtonAppearance(
+    val defaultAppearance = ButtonAppearance(
         textStyle = controlTextStyle.copy(palette.button.foreground),
         background = palette.button.background,
         shape = RoundedCornerShape(metrics.button.arc),
@@ -88,7 +88,7 @@ fun ButtonStyle(
 
     default {
         for (focused in listOf(false, true)) {
-            val appearance = default.copy(haloStroke = if (focused) focusHaloStroke else null)
+            val appearance = defaultAppearance.copy(haloStroke = if (focused) focusHaloStroke else null)
 
             populateStates(appearance, focused, focusHaloStroke, controlTextStyle, palette, metrics)
         }
@@ -97,7 +97,7 @@ fun ButtonStyle(
     variation(IntelliJButtonStyleVariations.DefaultButton) {
         for (focused in listOf(false, true)) {
             val strokeBrush = if (focused) palette.button.defaultStrokeFocused.toBrush() else palette.button.defaultStroke
-            val appearance = default.copy(
+            val appearance = defaultAppearance.copy(
                 background = palette.button.defaultBackground,
                 textStyle = controlTextStyle.copy(color = palette.button.defaultForeground),
                 shapeStroke = ShapeStroke.Brush(metrics.button.strokeWidth, strokeBrush, Insets(metrics.button.strokeWidth)),
