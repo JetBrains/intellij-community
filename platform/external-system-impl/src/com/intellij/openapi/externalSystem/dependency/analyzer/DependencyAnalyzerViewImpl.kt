@@ -356,7 +356,7 @@ class DependencyAnalyzerViewImpl(
       .bindEmptyText(dependencyEmptyTextProperty)
       .bindDependency(dependencyProperty)
       .bindEnabled(dependencyLoadingProperty)
-    val dependencyPanel = cardPanel<Boolean> { if (it) dependencyTree else dependencyList }
+    val dependencyPanel = cardPanel<Boolean> { ScrollPaneFactory.createScrollPane(if (it) dependencyTree else dependencyList, true) }
       .bind(showDependencyTreeProperty)
     val dependencyLoadingPanel = JBLoadingPanel(BorderLayout(), parentDisposable)
       .apply { add(dependencyPanel, BorderLayout.CENTER) }
@@ -409,7 +409,7 @@ class DependencyAnalyzerViewImpl(
               collapseDependencyTreeButton
             ))
           }
-          setContent(ScrollPaneFactory.createScrollPane(dependencyLoadingPanel, true))
+          setContent(dependencyLoadingPanel)
         }
         secondComponent = toolWindowPanel {
           toolbar = toolbarPanel {
