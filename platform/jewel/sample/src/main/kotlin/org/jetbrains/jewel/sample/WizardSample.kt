@@ -20,8 +20,10 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -339,8 +341,8 @@ fun CommonLayer(
         val rowModifier = Modifier.height(30.dp)
         Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
             Text("Layer name:", modifier = Modifier.width(100.dp))
-            val layerNameState = remember { mutableStateOf("layer name...") }
-            TextField(value = layerNameState.value, onValueChange = { layerNameState.value = it }, modifier = Modifier.fillMaxWidth())
+            var layerNameState by remember { mutableStateOf("layer name...") }
+            TextField(value = layerNameState, onValueChange = { layerNameState = it }, modifier = Modifier.fillMaxWidth())
         }
         GroupHeader("Source Asset", rowModifier)
         Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
@@ -350,11 +352,11 @@ fun CommonLayer(
         assetTypeSpecificOptions(assetType.value, subLabelModifier, rowModifier)
         GroupHeader("Scaling", rowModifier)
         Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
-            val trim = remember { mutableStateOf(true) }
+            var trim by remember { mutableStateOf(true) }
             Text("Trim:", modifier = subLabelModifier)
             val radioButtonModifier = Modifier.padding(end = 10.dp)
-            RadioButtonRow(selected = trim.value, onClick = { trim.value = true }) { Text("Yes", modifier = radioButtonModifier) }
-            RadioButtonRow(selected = !trim.value, onClick = { trim.value = false }) { Text("No", modifier = radioButtonModifier) }
+            RadioButtonRow(selected = trim, onClick = { trim = true }) { Text("Yes", modifier = radioButtonModifier) }
+            RadioButtonRow(selected = !trim, onClick = { trim = false }) { Text("No", modifier = radioButtonModifier) }
         }
         Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
             Text("Resize:", modifier = subLabelModifier)
@@ -405,30 +407,30 @@ fun OptionsTab(modifier: Modifier) {
         val rowModifier = Modifier.height(30.dp)
         GroupHeader("Legacy Icon (API ≤ 25):", rowModifier)
         Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
-            val generate = remember { mutableStateOf(true) }
+            var generate by remember { mutableStateOf(true) }
             Text("Generate:", modifier = subLabelModifier)
             val radioButtonModifier = Modifier.padding(end = 10.dp)
-            RadioButtonRow(selected = generate.value, onClick = { generate.value = true }) { Text("Yes", modifier = radioButtonModifier) }
-            RadioButtonRow(selected = !generate.value, onClick = { generate.value = false }) { Text("No", modifier = radioButtonModifier) }
+            RadioButtonRow(selected = generate, onClick = { generate = true }) { Text("Yes", modifier = radioButtonModifier) }
+            RadioButtonRow(selected = !generate, onClick = { generate = false }) { Text("No", modifier = radioButtonModifier) }
         }
         Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
             Text("Shape:", modifier = subLabelModifier)
         }
         GroupHeader("Round Icon (API = 25):", rowModifier)
         Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
-            val generate = remember { mutableStateOf(true) }
+            var generate by remember { mutableStateOf(true) }
             Text("Generate:", modifier = subLabelModifier)
             val radioButtonModifier = Modifier.padding(end = 10.dp)
-            RadioButtonRow(selected = generate.value, onClick = { generate.value = true }) { Text("Yes", modifier = radioButtonModifier) }
-            RadioButtonRow(selected = !generate.value, onClick = { generate.value = false }) { Text("No", modifier = radioButtonModifier) }
+            RadioButtonRow(selected = generate, onClick = { generate = true }) { Text("Yes", modifier = radioButtonModifier) }
+            RadioButtonRow(selected = !generate, onClick = { generate = false }) { Text("No", modifier = radioButtonModifier) }
         }
         GroupHeader("Google Play Store Icon", rowModifier)
         Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
-            val generate = remember { mutableStateOf(true) }
+            var generate by remember { mutableStateOf(true) }
             Text("Generate:", modifier = subLabelModifier)
             val radioButtonModifier = Modifier.padding(end = 10.dp)
-            RadioButtonRow(selected = generate.value, onClick = { generate.value = true }) { Text("Yes", modifier = radioButtonModifier) }
-            RadioButtonRow(selected = !generate.value, onClick = { generate.value = false }) { Text("No", modifier = radioButtonModifier) }
+            RadioButtonRow(selected = generate, onClick = { generate = true }) { Text("Yes", modifier = radioButtonModifier) }
+            RadioButtonRow(selected = !generate, onClick = { generate = false }) { Text("No", modifier = radioButtonModifier) }
         }
     }
 }
