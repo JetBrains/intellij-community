@@ -33,6 +33,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.singleWindowApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.Orientation
 import org.jetbrains.jewel.theme.intellij.IntelliJTheme
 import org.jetbrains.jewel.theme.intellij.IntelliJThemeDark
@@ -158,7 +160,9 @@ fun OutputDirectoriesLabelTree(modifier: Modifier = Modifier) {
     Row(modifier.fillMaxSize()) {
         val tree = remember { mutableStateOf(Optional.empty<Tree<File>>()) }
         LaunchedEffect(true) {
-            tree.value = Optional.of(Paths.get(System.getProperty("user.dir")).asTree(true))
+            withContext(Dispatchers.IO) {
+                tree.value = Optional.of(Paths.get(System.getProperty("user.dir")).asTree(true))
+            }
         }
 
         Text(
