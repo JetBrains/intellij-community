@@ -1797,6 +1797,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (!myLeftFreePaintersAreaShown) return 0;
     if (myForcedLeftFreePaintersAreaWidth >= 0) return myForcedLeftFreePaintersAreaWidth;
 
+    if (ExperimentalUI.isNewUI()) {
+      return (int)scale(FREE_PAINTERS_LEFT_AREA_WIDTH.get()) + 2;
+    }
     return FREE_PAINTERS_LEFT_AREA_WIDTH.get();
   }
 
@@ -1808,7 +1811,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
     if (ExperimentalUI.isNewEditorTabs()) {
       if (width == 0) return 0;
-      return Math.max(FREE_PAINTERS_RIGHT_AREA_WIDTH.get(), JBUI.getInt("Gutter.VcsChanges.width", 3));
+      return (int)Math.max(FREE_PAINTERS_RIGHT_AREA_WIDTH.get(), scale(JBUI.getInt("Gutter.VcsChanges.width", 4)) + 2);
     }
     return width;
   }
@@ -2608,7 +2611,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private static int getInitialLineNumberWidth() {
     if (ExperimentalUI.isNewUI()) {
       //have a placeholder for breakpoints
-      return 24;
+      return 12;
     }
     return 0;
   }
