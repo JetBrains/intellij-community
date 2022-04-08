@@ -6,11 +6,12 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -48,7 +49,7 @@ import org.jetbrains.jewel.theme.intellij.styles.RadioButtonStyle
 
 @Composable
 fun RadioButton(
-    checked: Boolean,
+    selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -58,7 +59,7 @@ fun RadioButton(
     variation: Any? = null,
 ) {
     RadioButtonImpl(
-        checked, onClick, modifier, enabled, focusable, interactionSource, style, variation
+        selected, onClick, modifier, enabled, focusable, interactionSource, style, variation
     ) { controlModifier, designModifier, _, painter, _, _ ->
         Box(controlModifier.then(designModifier)) {
             if (painter != null)
@@ -70,7 +71,7 @@ fun RadioButton(
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun RadioButtonImpl(
-    checked: Boolean,
+    selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -81,8 +82,8 @@ fun RadioButtonImpl(
     content: @Composable (Modifier, Modifier, Int, Painter?, TextStyle, Dp) -> Unit
 ) {
     var isHovered by remember { mutableStateOf(false) }
-    var interactionState by remember(checked, interactionSource, enabled) {
-        mutableStateOf(RadioButtonState(checked, ButtonMouseState.None, enabled = enabled))
+    var interactionState by remember(selected, interactionSource, enabled) {
+        mutableStateOf(RadioButtonState(selected, ButtonMouseState.None, enabled = enabled))
     }
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
@@ -102,7 +103,7 @@ fun RadioButtonImpl(
 
     val appearance = style.appearance(interactionState, variation)
 
-    val checkboxPainter = appearance.interiorPainter?.invoke()
+    val radioButtonPainter = appearance.interiorPainter?.invoke()
     val pointerModifier = if (enabled)
         Modifier.pointerMoveFilter(
             onEnter = {
@@ -118,13 +119,13 @@ fun RadioButtonImpl(
     else
         Modifier
 
-    val clickModifier = Modifier.toggleable(
-        value = checked,
+    val clickModifier = Modifier.selectable(
+        selected = selected,
         interactionSource = interactionSource,
         indication = null,
         enabled = enabled,
         role = Role.RadioButton,
-        onValueChange = { onClick() },
+        onClick = onClick,
     )
         .then(pointerModifier)
         .focusable(
@@ -156,12 +157,12 @@ fun RadioButtonImpl(
 
     val baseLine = LocalDensity.current.run { appearance.baseLine.roundToPx() }
     val textStyle = appearance.textStyle
-    content(modifier.then(clickModifier), designModifier, baseLine, checkboxPainter, textStyle, appearance.contentSpacing)
+    content(modifier.then(clickModifier), designModifier, baseLine, radioButtonPainter, textStyle, appearance.contentSpacing)
 }
 
 @Composable
 fun RadioButtonRow(
-    checked: Boolean,
+    selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -172,7 +173,7 @@ fun RadioButtonRow(
     content: @Composable RowScope.() -> Unit,
 ) {
     RadioButtonImpl(
-        checked,
+        selected,
         onClick,
         modifier,
         enabled,
@@ -181,7 +182,7 @@ fun RadioButtonRow(
         style,
         variation
     ) { controlModifier, designModifier, baseLine, painter, textStyle, spacing ->
-        androidx.compose.foundation.layout.Row(
+        Row(
             modifier = controlModifier,
             horizontalArrangement = Arrangement.spacedBy(spacing),
             verticalAlignment = Alignment.CenterVertically
@@ -233,14 +234,14 @@ fun RadioButton(
 @Composable
 fun RadioButton(
     text: String,
-    checked: Boolean = false,
-    onCheckedChange: (Boolean) -> Unit,
+    selected: Boolean = false,
+    onSelectionChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     focusable: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: RadioButtonStyle = LocalRadioButtonStyle.current,
-) = RadioButtonRow(checked, { onCheckedChange(!checked) }, modifier, enabled, focusable, interactionSource, style) {
+) = RadioButtonRow(selected, { onSelectionChange(!selected) }, modifier, enabled, focusable, interactionSource, style) {
     Text(text, Modifier.alignByBaseline())
 }
 
