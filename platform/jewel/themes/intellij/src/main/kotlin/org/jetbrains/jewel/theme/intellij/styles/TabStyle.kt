@@ -20,9 +20,7 @@ import org.jetbrains.jewel.components.state.TabState
 import org.jetbrains.jewel.styles.ControlStyle
 import org.jetbrains.jewel.styles.Styles
 import org.jetbrains.jewel.styles.localNotProvided
-import org.jetbrains.jewel.theme.intellij.IntelliJMetrics
 import org.jetbrains.jewel.theme.intellij.IntelliJPalette
-import org.jetbrains.jewel.toBrush
 
 typealias TabStyle = ControlStyle<TabAppearance, TabState>
 
@@ -30,14 +28,14 @@ typealias TabStyle = ControlStyle<TabAppearance, TabState>
 data class TabAppearance(
     val textStyle: TextStyle = TextStyle.Default,
     val backgroundColor: Color = Color.Unspecified,
-    val shapeStroke: ShapeStroke? = null,
+    val shapeStroke: ShapeStroke<*>? = null,
     val shape: Shape = RectangleShape,
 
     val contentPadding: PaddingValues = PaddingValues(16.dp, 8.dp),
     val contentArrangement: Arrangement.Horizontal = Arrangement.Start,
     val contentAlignment: Alignment.Vertical = Alignment.Top,
 
-    val adornmentStroke: ShapeStroke? = null,
+    val adornmentStroke: ShapeStroke<*>? = null,
     val adornmentShape: Shape? = null,
     val minWidth: Dp = 64.dp,
     val minHeight: Dp = 32.dp,
@@ -49,7 +47,7 @@ val Styles.tab: TabStyle
     @ReadOnlyComposable
     get() = LocalTabStyle.current
 
-fun TabStyle(palette: IntelliJPalette, metrics: IntelliJMetrics, typography: TextStyle): TabStyle = TabStyle {
+fun TabStyle(palette: IntelliJPalette, typography: TextStyle): TabStyle = TabStyle {
     variation(Orientation.Horizontal) {
         state(
             TabState.Normal,
@@ -75,10 +73,7 @@ fun TabStyle(palette: IntelliJPalette, metrics: IntelliJMetrics, typography: Tex
                 contentArrangement = Arrangement.Center,
                 textStyle = typography.copy(palette.text),
                 adornmentShape = BottomLineShape,
-                adornmentStroke = ShapeStroke(
-                    3.dp,
-                    palette.tab.underlineColor.toBrush()
-                ),
+                adornmentStroke = ShapeStroke.SolidColor(3.dp, palette.tab.underlineColor),
             )
         )
         state(
@@ -89,10 +84,7 @@ fun TabStyle(palette: IntelliJPalette, metrics: IntelliJMetrics, typography: Tex
                 textStyle = typography.copy(palette.text),
                 backgroundColor = palette.tab.hoveredBackgroundColor,
                 adornmentShape = BottomLineShape,
-                adornmentStroke = ShapeStroke(
-                    3.dp,
-                    palette.tab.underlineColor.toBrush()
-                ),
+                adornmentStroke = ShapeStroke.SolidColor(3.dp, palette.tab.underlineColor),
             )
         )
     }
@@ -113,10 +105,7 @@ fun TabStyle(palette: IntelliJPalette, metrics: IntelliJMetrics, typography: Tex
                 contentAlignment = Alignment.CenterVertically,
                 contentArrangement = Arrangement.Start,
                 textStyle = typography.copy(palette.text),
-                adornmentStroke = ShapeStroke(
-                    1.dp,
-                    palette.tab.underlineColor.toBrush()
-                ),
+                adornmentStroke = ShapeStroke.SolidColor(1.dp, palette.tab.underlineColor),
             )
         )
         state(

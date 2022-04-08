@@ -54,7 +54,7 @@ fun IntelliJTheme(
     LocalTreeViewStyle provides TreeViewStyle(palette, metrics, painters),
     LocalSliderStyle provides SliderStyle(palette, typography),
     LocalIndication provides NoIndication,
-    LocalTabStyle provides TabStyle(palette, metrics, typography.default),
+    LocalTabStyle provides TabStyle(palette, typography.default),
     LocalTypography provides typography,
     LocalMetrics provides metrics,
     LocalPainters provides painters,

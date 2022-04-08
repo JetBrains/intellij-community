@@ -18,12 +18,12 @@ fun IntelliJTheme(app: Application = IntelliJApplication, content: @Composable (
     val themeDefinition: IntelliJThemeDefinition? by remember(app) { app.intellijThemeFlow }
         .collectAsState(null)
 
-    themeDefinition?.let { themeDefinition ->
+    themeDefinition?.let {
         IntelliJTheme(
-            palette = themeDefinition.palette,
-            metrics = themeDefinition.metrics,
-            painters = themeDefinition.painters,
-            typography = themeDefinition.typography,
+            palette = it.palette,
+            metrics = it.metrics,
+            painters = it.painters,
+            typography = it.typography,
             content = content
         )
     }
