@@ -137,27 +137,29 @@ fun ConfirmIconPathPage(modifier: Modifier = Modifier) {
 
 @Composable
 fun DirectorySelection(modifier: Modifier = Modifier) {
+    val outputDir = remember { mutableStateOf(System.getProperty("user.dir")) }
     Column(modifier.fillMaxSize()) {
-        ResDirectoryLabelComboBox()
-        OutputDirectoriesLabelTree()
+        ResDirectoryLabelComboBox(outputDir = outputDir)
+        OutputDirectoriesLabelTree(outputDir = outputDir)
     }
 }
 
 @Composable
-fun ResDirectoryLabelComboBox(modifier: Modifier = Modifier) {
+fun ResDirectoryLabelComboBox(modifier: Modifier = Modifier, outputDir: MutableState<String>) {
+
     Row(modifier.height(30.dp).fillMaxWidth()) {
-        Text("Res Directory:")
-        Box(modifier.background(Color.Yellow).fillMaxSize()) // TODO: combo box
+        Text(modifier = Modifier.padding(5.dp), text = "Res Directory:")
+        TextField(modifier = Modifier.fillMaxSize().padding(5.dp), value = outputDir.value, onValueChange = {})
     }
 }
 
 @Composable
-fun OutputDirectoriesLabelTree(modifier: Modifier = Modifier) {
+fun OutputDirectoriesLabelTree(modifier: Modifier = Modifier, outputDir: MutableState<String>) {
     Row(modifier.fillMaxSize()) {
         val tree = remember { mutableStateOf(Optional.empty<Tree<File>>()) }
         LaunchedEffect(true) {
             withContext(Dispatchers.IO) {
-                tree.value = Optional.of(Paths.get(System.getProperty("user.dir")).asTree(true))
+                tree.value = Optional.of(Paths.get(outputDir.value).asTree(true))
             }
         }
 
@@ -173,7 +175,7 @@ fun OutputDirectoriesLabelTree(modifier: Modifier = Modifier) {
                 tree = tree.value.orElse(Tree(emptyList())),
                 state = listState,
                 onTreeChanged = { tree.value = Optional.of(it) },
-                onTreeElementDoubleClick = {},
+                onTreeElementDoubleClick = { outputDir.value = it.data.absolutePath },
                 rowContent = {
                     val text: String = when (it) {
                         is Tree.Element.Leaf -> it.data.name
