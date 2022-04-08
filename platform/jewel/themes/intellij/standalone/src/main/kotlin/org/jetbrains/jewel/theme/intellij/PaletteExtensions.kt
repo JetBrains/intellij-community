@@ -129,7 +129,7 @@ val IntelliJPalette.Tab.Companion.light
 
 val IntelliJPalette.Tab.Companion.darcula
     get() = IntelliJPalette.Tab(
-        underlineColor = Color(0xFFBBBBBB),
+        underlineColor = Color(0xFF4A88C7),
         hoveredBackgroundColor = Color(0xFF2E3133),
         tabSelectionHeight = 3.dp
     )
