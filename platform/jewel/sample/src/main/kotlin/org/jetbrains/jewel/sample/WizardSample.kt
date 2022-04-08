@@ -347,8 +347,9 @@ fun CommonLayer(
         Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
             val trim = remember { mutableStateOf(true) }
             Text("Trim:", modifier = subLabelModifier)
-            RadioButtonRow(selected = trim.value, onClick = { trim.value = true }) { Text("Yes" ) }
-            RadioButtonRow(selected = !trim.value, onClick = { trim.value = false }) { Text("No") }
+            val radioButtonModifier = Modifier.padding(end = 10.dp)
+            RadioButtonRow(selected = trim.value, onClick = { trim.value = true }) { Text("Yes", modifier = radioButtonModifier) }
+            RadioButtonRow(selected = !trim.value, onClick = { trim.value = false }) { Text("No", modifier = radioButtonModifier) }
         }
         Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
             Text("Resize:", modifier = subLabelModifier)
@@ -376,6 +377,41 @@ fun BackgroundLayer(modifier: Modifier) {
         assetTypeSpecificOptions = { at: AssetType, subLabelModifier: Modifier, rowModifier: Modifier -> AssetTypeSpecificOptions(at, subLabelModifier, rowModifier) },
         modifier = modifier,
     )
+}
+
+@Composable
+fun OptionsTab(modifier: Modifier) {
+    Column(modifier) {
+        val subLabelModifier = Modifier.width(100.dp).padding(start = 10.dp)
+        val rowModifier = Modifier.height(30.dp)
+        GroupHeader("Legacy Icon (API ≤ 25):", rowModifier)
+        Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
+            val generate = remember { mutableStateOf(true) }
+            Text("Generate:", modifier = subLabelModifier)
+            val radioButtonModifier = Modifier.padding(end = 10.dp)
+            RadioButtonRow(selected = generate.value, onClick = { generate.value = true }) { Text("Yes", modifier = radioButtonModifier) }
+            RadioButtonRow(selected = !generate.value, onClick = { generate.value = false }) { Text("No", modifier = radioButtonModifier) }
+        }
+        Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
+            Text("Shape:", modifier = subLabelModifier)
+        }
+        GroupHeader("Round Icon (API = 25):", rowModifier)
+        Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
+            val generate = remember { mutableStateOf(true) }
+            Text("Generate:", modifier = subLabelModifier)
+            val radioButtonModifier = Modifier.padding(end = 10.dp)
+            RadioButtonRow(selected = generate.value, onClick = { generate.value = true }) { Text("Yes", modifier = radioButtonModifier) }
+            RadioButtonRow(selected = !generate.value, onClick = { generate.value = false }) { Text("No", modifier = radioButtonModifier) }
+        }
+        GroupHeader("Google Play Store Icon", rowModifier)
+        Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
+            val generate = remember { mutableStateOf(true) }
+            Text("Generate:", modifier = subLabelModifier)
+            val radioButtonModifier = Modifier.padding(end = 10.dp)
+            RadioButtonRow(selected = generate.value, onClick = { generate.value = true }) { Text("Yes", modifier = radioButtonModifier) }
+            RadioButtonRow(selected = !generate.value, onClick = { generate.value = false }) { Text("No", modifier = radioButtonModifier) }
+        }
+    }
 }
 
 enum class OptionTabs {
@@ -409,8 +445,7 @@ fun FirstPage(modifier: Modifier = Modifier) {
                 when (tabState.selectedKey) {
                     OptionTabs.FOREGROUND -> ForegroundLayer(tabContentModifier)
                     OptionTabs.BACKGROUND -> BackgroundLayer(tabContentModifier)
-                    else -> {
-                    }
+                    OptionTabs.OPTIONS -> OptionsTab(tabContentModifier)
                 }
             }
         }
