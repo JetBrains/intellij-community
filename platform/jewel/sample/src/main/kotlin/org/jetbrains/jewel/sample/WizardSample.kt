@@ -83,7 +83,10 @@ fun Wizard(onFinish: () -> Unit) {
                     modifier = Modifier.weight(1f),
                     currentPage = currentPage
                 )
-                WizardFooter(currentPage = currentPage, onFinish = onFinish)
+                WizardFooter(
+                    currentPage = currentPage,
+                    onFinish = onFinish
+                )
             }
         }
     }
@@ -124,13 +127,17 @@ fun WizardMainContent(modifier: Modifier = Modifier, currentPage: MutableState<I
 @Composable
 fun WizardFooter(modifier: Modifier = Modifier, currentPage: MutableState<Int>, onFinish: () -> Unit) {
     Box(modifier.height(50.dp).fillMaxWidth()) {
+        Divider()
         Row(
-            modifier = modifier.fillMaxSize(),
+            modifier = modifier.fillMaxSize().padding(horizontal = 20.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             HelpIcon()
-            WizardControls(currentPage = currentPage, onFinish = onFinish)
+            WizardControls(
+                currentPage = currentPage,
+                onFinish = onFinish
+            )
         }
     }
 }
