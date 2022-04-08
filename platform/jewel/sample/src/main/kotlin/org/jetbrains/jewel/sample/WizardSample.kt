@@ -36,6 +36,7 @@ import org.jetbrains.jewel.Orientation
 import org.jetbrains.jewel.components.Icon
 import org.jetbrains.jewel.theme.intellij.IntelliJTheme
 import org.jetbrains.jewel.theme.intellij.components.Button
+import org.jetbrains.jewel.theme.intellij.components.CheckboxRow
 import org.jetbrains.jewel.theme.intellij.components.GroupHeader
 import org.jetbrains.jewel.theme.intellij.components.IconButton
 import org.jetbrains.jewel.theme.intellij.components.RadioButtonRow
@@ -451,6 +452,17 @@ fun FirstPage(modifier: Modifier = Modifier) {
                 }
             }
         }
-        Box { }
+        Box(modifier = Modifier.padding(top = 20.dp)) {
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    GroupHeader("Preview", modifier = Modifier.width(100.dp))
+                    TextField(value = "", onValueChange = {}, modifier = Modifier.width(50.dp).padding(end = 20.dp))
+                    val showSafeZone = remember { mutableStateOf(true) }
+                    val showGrid = remember { mutableStateOf(false) }
+                    CheckboxRow(checked = showSafeZone.value, onCheckedChange = { showSafeZone.value = it }) { Text("Show safe zone", modifier = Modifier.padding(end = 10.dp)) }
+                    CheckboxRow(checked = showGrid.value, onCheckedChange = { showGrid.value = it }) { Text("Show grid", modifier = Modifier.padding(end = 10.dp)) }
+                }
+            }
+        }
     }
 }
