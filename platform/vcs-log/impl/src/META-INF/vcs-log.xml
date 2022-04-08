@@ -140,10 +140,10 @@
       <separator key="action.vcs.log.show.separator"/>
       <reference id="Vcs.Log.ShowRootsColumnAction"/>
       <reference id="Vcs.Log.CompactReferencesView"/>
-      <reference id="Vcs.Log.AlignLabels"/>
       <reference id="Vcs.Log.ShowTagNames"/>
       <reference id="Vcs.Log.ShowLongEdges"/>
       <reference id="Vcs.Log.PreferCommitDate"/>
+      <reference id="Vcs.Log.AlignLabels"/>
       <reference id="Vcs.Log.ToggleColumns"/>
       <separator/>
       <reference id="Vcs.Log.HighlightersActionGroup"/>
