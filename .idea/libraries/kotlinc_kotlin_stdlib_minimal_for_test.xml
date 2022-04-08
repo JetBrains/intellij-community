@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-stdlib-minimal-for-test" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-stdlib-minimal-for-test-for-ide:1.6.20-release-285" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-stdlib-minimal-for-test-for-ide:1.7.0-dev-3331" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-minimal-for-test-for-ide/1.6.20-release-285/kotlin-stdlib-minimal-for-test-for-ide-1.6.20-release-285.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-minimal-for-test-for-ide/1.7.0-dev-3331/kotlin-stdlib-minimal-for-test-for-ide-1.7.0-dev-3331.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-minimal-for-test-for-ide/1.6.20-release-285/kotlin-stdlib-minimal-for-test-for-ide-1.6.20-release-285-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-minimal-for-test-for-ide/1.7.0-dev-3331/kotlin-stdlib-minimal-for-test-for-ide-1.7.0-dev-3331-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
