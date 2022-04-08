@@ -256,7 +256,10 @@ fun HelpIcon(modifier: Modifier = Modifier) {
 
 @Composable
 fun WizardControls(modifier: Modifier = Modifier, currentPage: MutableState<Int>, onFinish: () -> Unit) {
-    Row(modifier) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         Button(onClick = onFinish) {
             Text("Cancel")
         }
