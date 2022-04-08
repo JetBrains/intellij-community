@@ -18,10 +18,7 @@ import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.findUsages.ReferencesSearchScopeHelper
 import org.jetbrains.kotlin.idea.inspections.RedundantLambdaOrAnonymousFunctionInspection
 import org.jetbrains.kotlin.idea.inspections.RedundantUnitExpressionInspection
-import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
-import org.jetbrains.kotlin.idea.intentions.LambdaToAnonymousFunctionIntention
-import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
-import org.jetbrains.kotlin.idea.intentions.isInvokeOperator
+import org.jetbrains.kotlin.idea.intentions.*
 import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineAnonymousFunctionProcessor
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -63,7 +60,11 @@ class CodeInliner<TCallElement : KtElement>(
         val descriptor = resolvedCall.resultingDescriptor
         val file = callElement.containingKtFile
 
-        val qualifiedElement = if (callElement is KtExpression) callElement.getQualifiedExpressionForSelectorOrThis() else callElement
+        val qualifiedElement = if (callElement is KtExpression) {
+            callElement.getQualifiedExpressionForSelector()
+                ?: callElement.callableReferenceExpressionForReference()
+                ?: callElement
+        } else callElement
         val assignment = (qualifiedElement as? KtExpression)
             ?.getAssignmentByLHS()
             ?.takeIf { it.operationToken == KtTokens.EQ }
@@ -90,7 +91,7 @@ class CodeInliner<TCallElement : KtElement>(
             codeToInline.mainExpression = null
         }
 
-        var receiver = usageExpression?.getReceiverExpression()
+        var receiver = usageExpression?.receiverExpression()
         receiver?.marked(USER_CODE_KEY)
         var receiverType = if (receiver != null) bindingContext.getType(receiver) else null
 
@@ -129,6 +130,10 @@ class CodeInliner<TCallElement : KtElement>(
             wrapCodeForSafeCall(receiver!!, receiverType, elementToBeReplaced)
         } else if (callElement is KtBinaryExpression && callElement.operationToken == KtTokens.IDENTIFIER) {
             keepInfixFormIfPossible()
+        }
+
+        if (elementToBeReplaced is KtCallableReferenceExpression) {
+           codeToInline.convertToCallableReference()
         }
 
         if (elementToBeReplaced is KtExpression) {
@@ -192,6 +197,19 @@ class CodeInliner<TCallElement : KtElement>(
             }
             newRange
         })
+    }
+
+    private fun KtElement.callableReferenceExpressionForReference(): KtCallableReferenceExpression? =
+        parent.safeAs<KtCallableReferenceExpression>()?.takeIf { it.callableReference == callElement }
+
+    private fun KtSimpleNameExpression.receiverExpression(): KtExpression? =
+        getReceiverExpression() ?: parent.safeAs<KtCallableReferenceExpression>()?.receiverExpression
+
+    private fun MutableCodeToInline.convertToCallableReference() {
+        val qualified = mainExpression?.safeAs<KtQualifiedExpression>() ?: return
+        val callee = qualified.callExpression?.calleeExpression ?: return
+        val callableReference = psiFactory.createExpressionByPattern("$0::$1", qualified.receiverExpression, callee)
+        codeToInline.replaceExpression(qualified, callableReference)
     }
 
     private fun findAndMarkNewDeclarations() {

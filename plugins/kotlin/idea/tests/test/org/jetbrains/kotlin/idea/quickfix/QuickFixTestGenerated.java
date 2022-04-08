@@ -7439,6 +7439,26 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/explicitTypeArg2.kt");
                 }
 
+                @TestMetadata("functionReference.kt")
+                public void testFunctionReference() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/functionReference.kt");
+                }
+
+                @TestMetadata("functionReference2.kt")
+                public void testFunctionReference2() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/functionReference2.kt");
+                }
+
+                @TestMetadata("functionReference3.kt")
+                public void testFunctionReference3() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/functionReference3.kt");
+                }
+
+                @TestMetadata("functionReference4.kt")
+                public void testFunctionReference4() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/functionReference4.kt");
+                }
+
                 @TestMetadata("keepInUserCodeRuntime.kt")
                 public void testKeepInUserCodeRuntime() throws Exception {
                     runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/keepInUserCodeRuntime.kt");
