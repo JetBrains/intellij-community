@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Formats
 import com.intellij.util.io.Decompressor
 import com.intellij.util.lang.CompoundRuntimeException
-import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -165,7 +164,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
     DistributionJARsBuilder(compileModulesForDistribution(context)).buildJARs(context, true)
-    val arch = if (CpuArch.isArm64()) JvmArchitecture.aarch64 else JvmArchitecture.x64
+    val arch = JvmArchitecture.currentJvmArch
     layoutShared(context)
     if (includeBinAndRuntime) {
       val propertiesFile = patchIdeaPropertiesFile(context)

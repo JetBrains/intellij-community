@@ -3,6 +3,8 @@
 
 package org.jetbrains.intellij.build
 
+import com.intellij.util.system.CpuArch
+
 @Suppress("EnumEntryName")
 enum class JvmArchitecture(@JvmField val fileSuffix: String) {
   x64("64"), aarch64("aarch64");
@@ -10,15 +12,12 @@ enum class JvmArchitecture(@JvmField val fileSuffix: String) {
   companion object {
     @JvmField
     val ALL: List<JvmArchitecture> = java.util.List.of(*values())
-    @JvmField
-    val currentJvmArch: JvmArchitecture
 
-    init {
-      when (System.getProperty("os.arch")) {
-        "aarch64" -> currentJvmArch = aarch64
-        "x86_64", "amd64" -> currentJvmArch = x64
-        else -> throw IllegalStateException("Unsupported arch: \$archName")
-      }
+    @JvmField
+    val currentJvmArch: JvmArchitecture = when {
+      CpuArch.isArm64() -> aarch64
+      CpuArch.isIntel64() -> x64
+      else -> throw IllegalStateException("Unsupported arch: " + CpuArch.CURRENT)
     }
   }
 }

@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.impl.support
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.util.system.CpuArch
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
 import kotlin.Unit
@@ -104,10 +103,7 @@ final class RepairUtilityBuilder {
         if (BINARIES_CACHE.isEmpty()) {
           return Unit.INSTANCE
         }
-        OsFamily currentOs = SystemInfoRt.isWindows ? OsFamily.WINDOWS :
-                             SystemInfoRt.isMac ? OsFamily.MACOS :
-                             SystemInfoRt.isLinux ? OsFamily.LINUX : null
-        Binary binary = findBinary(context, currentOs, CpuArch.isArm64() ? JvmArchitecture.aarch64 : JvmArchitecture.x64)
+        Binary binary = findBinary(context, OsFamily.currentOs, JvmArchitecture.currentJvmArch)
         def binaryPath = repairUtilityProjectHome(context).resolve(binary.relativeSourcePath)
         def tmpDir = context.paths.tempDir.resolve(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP + UUID.randomUUID().toString())
         Files.createDirectories(tmpDir)
