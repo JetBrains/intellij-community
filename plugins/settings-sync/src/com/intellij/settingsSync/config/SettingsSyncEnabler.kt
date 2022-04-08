@@ -62,7 +62,7 @@ internal class SettingsSyncEnabler {
         // todo initialization must be modal but pushing to server can be made later
         settingsSyncControls.bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)
       }
-    }
+    }.queue()
   }
 
 
