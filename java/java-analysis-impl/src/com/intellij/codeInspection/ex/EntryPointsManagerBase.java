@@ -196,8 +196,10 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
 
   private void purgeTemporaryEntryPoints() {
-    for (RefElement entryPoint : myTemporaryEntryPoints) {
-      ((RefElementImpl)entryPoint).setEntry(false);
+    synchronized (myTemporaryEntryPoints) {
+      for (RefElement entryPoint : myTemporaryEntryPoints) {
+        ((RefElementImpl)entryPoint).setEntry(false);
+      }
     }
 
     myTemporaryEntryPoints.clear();
@@ -385,11 +387,13 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         }
       }
 
-      final Iterator<RefElement> it = myTemporaryEntryPoints.iterator();
-      while (it.hasNext()) {
-        RefElement refElement = it.next();
-        if (!refElement.isValid()) {
-          it.remove();
+      synchronized (myTemporaryEntryPoints) {
+        final Iterator<RefElement> it = myTemporaryEntryPoints.iterator();
+        while (it.hasNext()) {
+          RefElement refElement = it.next();
+          if (!refElement.isValid()) {
+            it.remove();
+          }
         }
       }
     }
