@@ -32,9 +32,6 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
         internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositeAbstractEntity::class.java, SimpleAbstractEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false)
         internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentChainEntity::class.java, CompositeAbstractEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = CompositeChildAbstractEntity
         
     override val parentInList: CompositeAbstractEntity
         get() = snapshot.extractOneToAbstractManyParent(PARENTINLIST_CONNECTION_ID, this)!!           
@@ -48,7 +45,6 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
     class Builder(val result: CompositeChildAbstractEntityData?): ModifiableWorkspaceEntityBase<CompositeChildAbstractEntity>(), CompositeChildAbstractEntity.Builder {
         constructor(): this(CompositeChildAbstractEntityData())
                  
-        override val factory: ObjType<CompositeChildAbstractEntity, *> get() = TODO()
         override fun build(): CompositeChildAbstractEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

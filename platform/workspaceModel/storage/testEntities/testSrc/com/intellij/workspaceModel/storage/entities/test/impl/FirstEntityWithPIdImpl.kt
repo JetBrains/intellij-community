@@ -18,9 +18,6 @@ import org.jetbrains.deft.impl.fields.Field
 
 open class FirstEntityWithPIdImpl: FirstEntityWithPId, WorkspaceEntityBase() {
     
-    
-    override val factory: ObjType<*, *>
-        get() = FirstEntityWithPId
         
     @JvmField var _data: String? = null
     override val data: String
@@ -29,7 +26,6 @@ open class FirstEntityWithPIdImpl: FirstEntityWithPId, WorkspaceEntityBase() {
     class Builder(val result: FirstEntityWithPIdData?): ModifiableWorkspaceEntityBase<FirstEntityWithPId>(), FirstEntityWithPId.Builder {
         constructor(): this(FirstEntityWithPIdData())
                  
-        override val factory: ObjType<FirstEntityWithPId, *> get() = TODO()
         override fun build(): FirstEntityWithPId = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

@@ -17,9 +17,6 @@ import org.jetbrains.deft.impl.fields.Field
 
 open class SampleEntity2Impl: SampleEntity2, WorkspaceEntityBase() {
     
-    
-    override val factory: ObjType<*, *>
-        get() = SampleEntity2
         
     @JvmField var _data: String? = null
     override val data: String
@@ -30,7 +27,6 @@ open class SampleEntity2Impl: SampleEntity2, WorkspaceEntityBase() {
     class Builder(val result: SampleEntity2Data?): ModifiableWorkspaceEntityBase<SampleEntity2>(), SampleEntity2.Builder {
         constructor(): this(SampleEntity2Data())
                  
-        override val factory: ObjType<SampleEntity2, *> get() = TODO()
         override fun build(): SampleEntity2 = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

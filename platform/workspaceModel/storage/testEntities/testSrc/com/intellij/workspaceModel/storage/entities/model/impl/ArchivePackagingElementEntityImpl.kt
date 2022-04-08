@@ -32,9 +32,6 @@ open class ArchivePackagingElementEntityImpl: ArchivePackagingElementEntity, Wor
         internal val ARTIFACT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java, CompositePackagingElementEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false)
         internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java, PackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = ArchivePackagingElementEntity
         
     override val compositePackagingElement: CompositePackagingElementEntity
         get() = snapshot.extractOneToAbstractManyParent(COMPOSITEPACKAGINGELEMENT_CONNECTION_ID, this)!!           
@@ -52,7 +49,6 @@ open class ArchivePackagingElementEntityImpl: ArchivePackagingElementEntity, Wor
     class Builder(val result: ArchivePackagingElementEntityData?): ModifiableWorkspaceEntityBase<ArchivePackagingElementEntity>(), ArchivePackagingElementEntity.Builder {
         constructor(): this(ArchivePackagingElementEntityData())
                  
-        override val factory: ObjType<ArchivePackagingElementEntity, *> get() = TODO()
         override fun build(): ArchivePackagingElementEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

@@ -25,9 +25,6 @@ open class MiddleEntityImpl: MiddleEntity, WorkspaceEntityBase() {
     companion object {
         internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositeBaseEntity::class.java, BaseEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = MiddleEntity
         
     override val parentEntity: CompositeBaseEntity?
         get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)           
@@ -39,7 +36,6 @@ open class MiddleEntityImpl: MiddleEntity, WorkspaceEntityBase() {
     class Builder(val result: MiddleEntityData?): ModifiableWorkspaceEntityBase<MiddleEntity>(), MiddleEntity.Builder {
         constructor(): this(MiddleEntityData())
                  
-        override val factory: ObjType<MiddleEntity, *> get() = TODO()
         override fun build(): MiddleEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

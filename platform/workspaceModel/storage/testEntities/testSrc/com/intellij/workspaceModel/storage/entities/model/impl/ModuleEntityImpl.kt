@@ -31,9 +31,6 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
         internal val EXMODULEOPTIONS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ExternalSystemModuleOptionsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
         internal val FACETS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = ModuleEntity
         
     @JvmField var _name: String? = null
     override val name: String
@@ -68,7 +65,6 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
     class Builder(val result: ModuleEntityData?): ModifiableWorkspaceEntityBase<ModuleEntity>(), ModuleEntity.Builder {
         constructor(): this(ModuleEntityData())
                  
-        override val factory: ObjType<ModuleEntity, *> get() = TODO()
         override fun build(): ModuleEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

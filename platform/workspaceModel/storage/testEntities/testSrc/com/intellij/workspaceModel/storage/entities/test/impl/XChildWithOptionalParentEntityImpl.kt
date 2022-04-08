@@ -23,9 +23,6 @@ open class XChildWithOptionalParentEntityImpl: XChildWithOptionalParentEntity, W
     companion object {
         internal val OPTIONALPARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(XParentEntity::class.java, XChildWithOptionalParentEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = XChildWithOptionalParentEntity
         
     @JvmField var _childProperty: String? = null
     override val childProperty: String
@@ -37,7 +34,6 @@ open class XChildWithOptionalParentEntityImpl: XChildWithOptionalParentEntity, W
     class Builder(val result: XChildWithOptionalParentEntityData?): ModifiableWorkspaceEntityBase<XChildWithOptionalParentEntity>(), XChildWithOptionalParentEntity.Builder {
         constructor(): this(XChildWithOptionalParentEntityData())
                  
-        override val factory: ObjType<XChildWithOptionalParentEntity, *> get() = TODO()
         override fun build(): XChildWithOptionalParentEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

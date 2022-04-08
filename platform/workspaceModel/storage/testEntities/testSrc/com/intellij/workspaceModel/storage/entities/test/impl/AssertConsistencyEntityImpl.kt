@@ -17,16 +17,12 @@ import org.jetbrains.deft.impl.fields.Field
 
 open class AssertConsistencyEntityImpl: AssertConsistencyEntity, WorkspaceEntityBase() {
     
-    
-    override val factory: ObjType<*, *>
-        get() = AssertConsistencyEntity
         
     override var passCheck: Boolean = false
 
     class Builder(val result: AssertConsistencyEntityData?): ModifiableWorkspaceEntityBase<AssertConsistencyEntity>(), AssertConsistencyEntity.Builder {
         constructor(): this(AssertConsistencyEntityData())
                  
-        override val factory: ObjType<AssertConsistencyEntity, *> get() = TODO()
         override fun build(): AssertConsistencyEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

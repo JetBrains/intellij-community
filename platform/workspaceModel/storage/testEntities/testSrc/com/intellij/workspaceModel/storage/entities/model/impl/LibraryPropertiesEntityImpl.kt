@@ -23,9 +23,6 @@ open class LibraryPropertiesEntityImpl: LibraryPropertiesEntity, WorkspaceEntity
     companion object {
         internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, LibraryPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = LibraryPropertiesEntity
         
     override val library: LibraryEntity
         get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!           
@@ -41,7 +38,6 @@ open class LibraryPropertiesEntityImpl: LibraryPropertiesEntity, WorkspaceEntity
     class Builder(val result: LibraryPropertiesEntityData?): ModifiableWorkspaceEntityBase<LibraryPropertiesEntity>(), LibraryPropertiesEntity.Builder {
         constructor(): this(LibraryPropertiesEntityData())
                  
-        override val factory: ObjType<LibraryPropertiesEntity, *> get() = TODO()
         override fun build(): LibraryPropertiesEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

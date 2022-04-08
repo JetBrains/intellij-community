@@ -23,9 +23,6 @@ open class JavaResourceRootEntityImpl: JavaResourceRootEntity, WorkspaceEntityBa
     companion object {
         internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java, JavaResourceRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = JavaResourceRootEntity
         
     override val sourceRoot: SourceRootEntity
         get() = snapshot.extractOneToManyParent(SOURCEROOT_CONNECTION_ID, this)!!           
@@ -38,7 +35,6 @@ open class JavaResourceRootEntityImpl: JavaResourceRootEntity, WorkspaceEntityBa
     class Builder(val result: JavaResourceRootEntityData?): ModifiableWorkspaceEntityBase<JavaResourceRootEntity>(), JavaResourceRootEntity.Builder {
         constructor(): this(JavaResourceRootEntityData())
                  
-        override val factory: ObjType<JavaResourceRootEntity, *> get() = TODO()
         override fun build(): JavaResourceRootEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

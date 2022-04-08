@@ -24,9 +24,6 @@ open class SourceRootOrderEntityImpl: SourceRootOrderEntity, WorkspaceEntityBase
     companion object {
         internal val CONTENTROOTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, SourceRootOrderEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = SourceRootOrderEntity
         
     override val contentRootEntity: ContentRootEntity
         get() = snapshot.extractOneToOneParent(CONTENTROOTENTITY_CONNECTION_ID, this)!!           
@@ -38,7 +35,6 @@ open class SourceRootOrderEntityImpl: SourceRootOrderEntity, WorkspaceEntityBase
     class Builder(val result: SourceRootOrderEntityData?): ModifiableWorkspaceEntityBase<SourceRootOrderEntity>(), SourceRootOrderEntity.Builder {
         constructor(): this(SourceRootOrderEntityData())
                  
-        override val factory: ObjType<SourceRootOrderEntity, *> get() = TODO()
         override fun build(): SourceRootOrderEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

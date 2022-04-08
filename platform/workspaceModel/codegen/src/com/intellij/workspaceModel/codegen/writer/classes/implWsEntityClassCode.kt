@@ -18,9 +18,6 @@ ${ if (abstract) "abstract" else "open" } class $javaImplName: $javaFullName, ${
     companion object {
         ${structure.allRefsFields.lines("        ") { refsConnectionIdCode }.trimEnd()}
     }""" else ""}
-    
-    override val factory: ObjType<*, *>
-        get() = $javaFullName
         
     ${structure.allFields.filter { it.name !in listOf("entitySource", "persistentId") }.lines("    ") { implWsEntityFieldCode }.trimEnd()}
 

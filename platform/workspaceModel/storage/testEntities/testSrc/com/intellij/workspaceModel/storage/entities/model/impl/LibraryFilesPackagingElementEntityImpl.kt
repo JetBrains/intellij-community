@@ -28,9 +28,6 @@ open class LibraryFilesPackagingElementEntityImpl: LibraryFilesPackagingElementE
         internal val COMPOSITEPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java, PackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false)
         internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, LibraryFilesPackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = LibraryFilesPackagingElementEntity
         
     override val compositePackagingElement: CompositePackagingElementEntity
         get() = snapshot.extractOneToAbstractManyParent(COMPOSITEPACKAGINGELEMENT_CONNECTION_ID, this)!!           
@@ -41,7 +38,6 @@ open class LibraryFilesPackagingElementEntityImpl: LibraryFilesPackagingElementE
     class Builder(val result: LibraryFilesPackagingElementEntityData?): ModifiableWorkspaceEntityBase<LibraryFilesPackagingElementEntity>(), LibraryFilesPackagingElementEntity.Builder {
         constructor(): this(LibraryFilesPackagingElementEntityData())
                  
-        override val factory: ObjType<LibraryFilesPackagingElementEntity, *> get() = TODO()
         override fun build(): LibraryFilesPackagingElementEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

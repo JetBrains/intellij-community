@@ -17,16 +17,12 @@ import org.jetbrains.deft.impl.fields.Field
 
 open class SecondSampleEntityImpl: SecondSampleEntity, WorkspaceEntityBase() {
     
-    
-    override val factory: ObjType<*, *>
-        get() = SecondSampleEntity
         
     override var intProperty: Int = 0
 
     class Builder(val result: SecondSampleEntityData?): ModifiableWorkspaceEntityBase<SecondSampleEntity>(), SecondSampleEntity.Builder {
         constructor(): this(SecondSampleEntityData())
                  
-        override val factory: ObjType<SecondSampleEntity, *> get() = TODO()
         override fun build(): SecondSampleEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

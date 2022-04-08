@@ -25,9 +25,6 @@ open class ModuleTestOutputPackagingElementEntityImpl: ModuleTestOutputPackaging
     companion object {
         internal val COMPOSITEPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java, PackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = ModuleTestOutputPackagingElementEntity
         
     override val compositePackagingElement: CompositePackagingElementEntity
         get() = snapshot.extractOneToAbstractManyParent(COMPOSITEPACKAGINGELEMENT_CONNECTION_ID, this)!!           
@@ -39,7 +36,6 @@ open class ModuleTestOutputPackagingElementEntityImpl: ModuleTestOutputPackaging
     class Builder(val result: ModuleTestOutputPackagingElementEntityData?): ModifiableWorkspaceEntityBase<ModuleTestOutputPackagingElementEntity>(), ModuleTestOutputPackagingElementEntity.Builder {
         constructor(): this(ModuleTestOutputPackagingElementEntityData())
                  
-        override val factory: ObjType<ModuleTestOutputPackagingElementEntity, *> get() = TODO()
         override fun build(): ModuleTestOutputPackagingElementEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

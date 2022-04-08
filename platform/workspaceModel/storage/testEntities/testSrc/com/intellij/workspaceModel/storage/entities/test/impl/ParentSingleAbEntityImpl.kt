@@ -25,9 +25,6 @@ open class ParentSingleAbEntityImpl: ParentSingleAbEntity, WorkspaceEntityBase()
     companion object {
         internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentSingleAbEntity::class.java, ChildSingleAbstractBaseEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = ParentSingleAbEntity
         
     override val child: ChildSingleAbstractBaseEntity
         get() = snapshot.extractOneToAbstractOneChild(CHILD_CONNECTION_ID, this)!!
@@ -35,7 +32,6 @@ open class ParentSingleAbEntityImpl: ParentSingleAbEntity, WorkspaceEntityBase()
     class Builder(val result: ParentSingleAbEntityData?): ModifiableWorkspaceEntityBase<ParentSingleAbEntity>(), ParentSingleAbEntity.Builder {
         constructor(): this(ParentSingleAbEntityData())
                  
-        override val factory: ObjType<ParentSingleAbEntity, *> get() = TODO()
         override fun build(): ParentSingleAbEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

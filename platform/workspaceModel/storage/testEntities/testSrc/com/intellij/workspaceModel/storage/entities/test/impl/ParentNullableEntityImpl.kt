@@ -23,9 +23,6 @@ open class ParentNullableEntityImpl: ParentNullableEntity, WorkspaceEntityBase()
     companion object {
         internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentNullableEntity::class.java, ChildNullableEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = ParentNullableEntity
         
     @JvmField var _parentData: String? = null
     override val parentData: String
@@ -37,7 +34,6 @@ open class ParentNullableEntityImpl: ParentNullableEntity, WorkspaceEntityBase()
     class Builder(val result: ParentNullableEntityData?): ModifiableWorkspaceEntityBase<ParentNullableEntity>(), ParentNullableEntity.Builder {
         constructor(): this(ParentNullableEntityData())
                  
-        override val factory: ObjType<ParentNullableEntity, *> get() = TODO()
         override fun build(): ParentNullableEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

@@ -24,9 +24,6 @@ open class SdkEntityImpl: SdkEntity, WorkspaceEntityBase() {
     companion object {
         internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, SdkEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = SdkEntity
         
     override val library: LibraryEntity
         get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!           
@@ -38,7 +35,6 @@ open class SdkEntityImpl: SdkEntity, WorkspaceEntityBase() {
     class Builder(val result: SdkEntityData?): ModifiableWorkspaceEntityBase<SdkEntity>(), SdkEntity.Builder {
         constructor(): this(SdkEntityData())
                  
-        override val factory: ObjType<SdkEntity, *> get() = TODO()
         override fun build(): SdkEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

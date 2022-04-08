@@ -23,9 +23,6 @@ open class OoChildForParentWithPidEntityImpl: OoChildForParentWithPidEntity, Wor
     companion object {
         internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(OoParentWithPidEntity::class.java, OoChildForParentWithPidEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = OoChildForParentWithPidEntity
         
     @JvmField var _childProperty: String? = null
     override val childProperty: String
@@ -37,7 +34,6 @@ open class OoChildForParentWithPidEntityImpl: OoChildForParentWithPidEntity, Wor
     class Builder(val result: OoChildForParentWithPidEntityData?): ModifiableWorkspaceEntityBase<OoChildForParentWithPidEntity>(), OoChildForParentWithPidEntity.Builder {
         constructor(): this(OoChildForParentWithPidEntityData())
                  
-        override val factory: ObjType<OoChildForParentWithPidEntity, *> get() = TODO()
         override fun build(): OoChildForParentWithPidEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

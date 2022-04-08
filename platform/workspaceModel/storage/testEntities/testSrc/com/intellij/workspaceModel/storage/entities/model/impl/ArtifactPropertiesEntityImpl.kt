@@ -23,9 +23,6 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
     companion object {
         internal val ARTIFACT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java, ArtifactPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = ArtifactPropertiesEntity
         
     override val artifact: ArtifactEntity
         get() = snapshot.extractOneToManyParent(ARTIFACT_CONNECTION_ID, this)!!           
@@ -41,7 +38,6 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
     class Builder(val result: ArtifactPropertiesEntityData?): ModifiableWorkspaceEntityBase<ArtifactPropertiesEntity>(), ArtifactPropertiesEntity.Builder {
         constructor(): this(ArtifactPropertiesEntityData())
                  
-        override val factory: ObjType<ArtifactPropertiesEntity, *> get() = TODO()
         override fun build(): ArtifactPropertiesEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

@@ -20,9 +20,6 @@ import org.jetbrains.deft.impl.fields.Field
 
 open class ComposedIdSoftRefEntityImpl: ComposedIdSoftRefEntity, WorkspaceEntityBase() {
     
-    
-    override val factory: ObjType<*, *>
-        get() = ComposedIdSoftRefEntity
         
     @JvmField var _myName: String? = null
     override val myName: String
@@ -35,7 +32,6 @@ open class ComposedIdSoftRefEntityImpl: ComposedIdSoftRefEntity, WorkspaceEntity
     class Builder(val result: ComposedIdSoftRefEntityData?): ModifiableWorkspaceEntityBase<ComposedIdSoftRefEntity>(), ComposedIdSoftRefEntity.Builder {
         constructor(): this(ComposedIdSoftRefEntityData())
                  
-        override val factory: ObjType<ComposedIdSoftRefEntity, *> get() = TODO()
         override fun build(): ComposedIdSoftRefEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

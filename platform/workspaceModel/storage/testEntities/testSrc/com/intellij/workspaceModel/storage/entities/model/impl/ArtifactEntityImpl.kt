@@ -33,9 +33,6 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
         internal val CUSTOMPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java, ArtifactPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
         internal val ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java, ArtifactOutputPackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = ArtifactEntity
         
     @JvmField var _name: String? = null
     override val name: String
@@ -62,7 +59,6 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
     class Builder(val result: ArtifactEntityData?): ModifiableWorkspaceEntityBase<ArtifactEntity>(), ArtifactEntity.Builder {
         constructor(): this(ArtifactEntityData())
                  
-        override val factory: ObjType<ArtifactEntity, *> get() = TODO()
         override fun build(): ArtifactEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

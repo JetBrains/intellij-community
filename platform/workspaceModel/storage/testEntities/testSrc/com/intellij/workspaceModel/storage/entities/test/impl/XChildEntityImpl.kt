@@ -26,9 +26,6 @@ open class XChildEntityImpl: XChildEntity, WorkspaceEntityBase() {
         internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(XParentEntity::class.java, XChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
         internal val CHILDCHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(XChildEntity::class.java, XChildChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = XChildEntity
         
     @JvmField var _childProperty: String? = null
     override val childProperty: String
@@ -47,7 +44,6 @@ open class XChildEntityImpl: XChildEntity, WorkspaceEntityBase() {
     class Builder(val result: XChildEntityData?): ModifiableWorkspaceEntityBase<XChildEntity>(), XChildEntity.Builder {
         constructor(): this(XChildEntityData())
                  
-        override val factory: ObjType<XChildEntity, *> get() = TODO()
         override fun build(): XChildEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

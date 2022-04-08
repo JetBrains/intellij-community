@@ -18,9 +18,6 @@ import org.jetbrains.deft.impl.fields.Field
 
 open class VFUWithTwoPropertiesEntityImpl: VFUWithTwoPropertiesEntity, WorkspaceEntityBase() {
     
-    
-    override val factory: ObjType<*, *>
-        get() = VFUWithTwoPropertiesEntity
         
     @JvmField var _data: String? = null
     override val data: String
@@ -37,7 +34,6 @@ open class VFUWithTwoPropertiesEntityImpl: VFUWithTwoPropertiesEntity, Workspace
     class Builder(val result: VFUWithTwoPropertiesEntityData?): ModifiableWorkspaceEntityBase<VFUWithTwoPropertiesEntity>(), VFUWithTwoPropertiesEntity.Builder {
         constructor(): this(VFUWithTwoPropertiesEntityData())
                  
-        override val factory: ObjType<VFUWithTwoPropertiesEntity, *> get() = TODO()
         override fun build(): VFUWithTwoPropertiesEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

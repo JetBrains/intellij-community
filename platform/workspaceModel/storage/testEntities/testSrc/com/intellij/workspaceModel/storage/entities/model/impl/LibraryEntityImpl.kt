@@ -27,9 +27,6 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
         internal val LIBRARYPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, LibraryPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
         internal val LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, LibraryFilesPackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = LibraryEntity
         
     @JvmField var _name: String? = null
     override val name: String
@@ -59,7 +56,6 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
     class Builder(val result: LibraryEntityData?): ModifiableWorkspaceEntityBase<LibraryEntity>(), LibraryEntity.Builder {
         constructor(): this(LibraryEntityData())
                  
-        override val factory: ObjType<LibraryEntity, *> get() = TODO()
         override fun build(): LibraryEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

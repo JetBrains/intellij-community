@@ -18,9 +18,6 @@ import org.jetbrains.deft.impl.fields.Field
 
 open class PersistentIdEntityImpl: PersistentIdEntity, WorkspaceEntityBase() {
     
-    
-    override val factory: ObjType<*, *>
-        get() = PersistentIdEntity
         
     @JvmField var _data: String? = null
     override val data: String
@@ -29,7 +26,6 @@ open class PersistentIdEntityImpl: PersistentIdEntity, WorkspaceEntityBase() {
     class Builder(val result: PersistentIdEntityData?): ModifiableWorkspaceEntityBase<PersistentIdEntity>(), PersistentIdEntity.Builder {
         constructor(): this(PersistentIdEntityData())
                  
-        override val factory: ObjType<PersistentIdEntity, *> get() = TODO()
         override fun build(): PersistentIdEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

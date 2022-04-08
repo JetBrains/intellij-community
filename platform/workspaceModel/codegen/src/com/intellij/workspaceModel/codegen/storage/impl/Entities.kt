@@ -102,7 +102,6 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
   lateinit var snapshot: WorkspaceEntityStorage
 
   override val name: String? get() = TODO()
-  override val parent: Obj? get() = TODO()
 
   override fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> {
     val mySnapshot = snapshot as AbstractEntityStorage

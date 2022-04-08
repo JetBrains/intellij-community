@@ -20,9 +20,6 @@ import org.jetbrains.deft.impl.fields.Field
 
 open class WithSoftLinkEntityImpl: WithSoftLinkEntity, WorkspaceEntityBase() {
     
-    
-    override val factory: ObjType<*, *>
-        get() = WithSoftLinkEntity
         
     @JvmField var _link: NameId? = null
     override val link: NameId
@@ -31,7 +28,6 @@ open class WithSoftLinkEntityImpl: WithSoftLinkEntity, WorkspaceEntityBase() {
     class Builder(val result: WithSoftLinkEntityData?): ModifiableWorkspaceEntityBase<WithSoftLinkEntity>(), WithSoftLinkEntity.Builder {
         constructor(): this(WithSoftLinkEntityData())
                  
-        override val factory: ObjType<WithSoftLinkEntity, *> get() = TODO()
         override fun build(): WithSoftLinkEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

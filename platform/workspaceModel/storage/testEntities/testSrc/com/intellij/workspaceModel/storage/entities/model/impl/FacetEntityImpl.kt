@@ -30,9 +30,6 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
         internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
         internal val UNDERLYINGFACET_CONNECTION_ID: ConnectionId = ConnectionId.create(FacetEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = FacetEntity
         
     @JvmField var _name: String? = null
     override val name: String
@@ -59,7 +56,6 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
     class Builder(val result: FacetEntityData?): ModifiableWorkspaceEntityBase<FacetEntity>(), FacetEntity.Builder {
         constructor(): this(FacetEntityData())
                  
-        override val factory: ObjType<FacetEntity, *> get() = TODO()
         override fun build(): FacetEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

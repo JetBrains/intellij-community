@@ -24,9 +24,6 @@ open class OoParentEntityImpl: OoParentEntity, WorkspaceEntityBase() {
         internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(OoParentEntity::class.java, OoChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
         internal val ANOTHERCHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(OoParentEntity::class.java, OoChildWithNullableParentEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = OoParentEntity
         
     @JvmField var _parentProperty: String? = null
     override val parentProperty: String
@@ -41,7 +38,6 @@ open class OoParentEntityImpl: OoParentEntity, WorkspaceEntityBase() {
     class Builder(val result: OoParentEntityData?): ModifiableWorkspaceEntityBase<OoParentEntity>(), OoParentEntity.Builder {
         constructor(): this(OoParentEntityData())
                  
-        override val factory: ObjType<OoParentEntity, *> get() = TODO()
         override fun build(): OoParentEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

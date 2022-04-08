@@ -84,9 +84,6 @@ class TStructure<T : Obj, B : ObjBuilder<T>>(
 
     val newFields get() = declaredFields.filter { it.base == null }
 
-    override val factory: ObjType<*, *> get() = TODO("meta type")
-    override val parent: Obj? get() = null
-
     override val name: String?
         get() = box.name
 

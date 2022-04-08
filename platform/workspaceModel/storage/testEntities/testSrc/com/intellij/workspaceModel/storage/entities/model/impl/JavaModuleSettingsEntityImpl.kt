@@ -24,9 +24,6 @@ open class JavaModuleSettingsEntityImpl: JavaModuleSettingsEntity, WorkspaceEnti
     companion object {
         internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, JavaModuleSettingsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = JavaModuleSettingsEntity
         
     override val module: ModuleEntity
         get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!           
@@ -48,7 +45,6 @@ open class JavaModuleSettingsEntityImpl: JavaModuleSettingsEntity, WorkspaceEnti
     class Builder(val result: JavaModuleSettingsEntityData?): ModifiableWorkspaceEntityBase<JavaModuleSettingsEntity>(), JavaModuleSettingsEntity.Builder {
         constructor(): this(JavaModuleSettingsEntityData())
                  
-        override val factory: ObjType<JavaModuleSettingsEntity, *> get() = TODO()
         override fun build(): JavaModuleSettingsEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

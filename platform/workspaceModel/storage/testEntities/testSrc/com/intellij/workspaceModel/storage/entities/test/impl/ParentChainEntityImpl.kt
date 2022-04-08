@@ -25,9 +25,6 @@ open class ParentChainEntityImpl: ParentChainEntity, WorkspaceEntityBase() {
     companion object {
         internal val ROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentChainEntity::class.java, CompositeAbstractEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = ParentChainEntity
         
     override val root: CompositeAbstractEntity
         get() = snapshot.extractOneToAbstractOneChild(ROOT_CONNECTION_ID, this)!!
@@ -35,7 +32,6 @@ open class ParentChainEntityImpl: ParentChainEntity, WorkspaceEntityBase() {
     class Builder(val result: ParentChainEntityData?): ModifiableWorkspaceEntityBase<ParentChainEntity>(), ParentChainEntity.Builder {
         constructor(): this(ParentChainEntityData())
                  
-        override val factory: ObjType<ParentChainEntity, *> get() = TODO()
         override fun build(): ParentChainEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

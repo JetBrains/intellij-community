@@ -23,9 +23,6 @@ open class ChildFirstEntityImpl: ChildFirstEntity, WorkspaceEntityBase() {
     companion object {
         internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentAbEntity::class.java, ChildAbstractBaseEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = ChildFirstEntity
         
     @JvmField var _commonData: String? = null
     override val commonData: String
@@ -41,7 +38,6 @@ open class ChildFirstEntityImpl: ChildFirstEntity, WorkspaceEntityBase() {
     class Builder(val result: ChildFirstEntityData?): ModifiableWorkspaceEntityBase<ChildFirstEntity>(), ChildFirstEntity.Builder {
         constructor(): this(ChildFirstEntityData())
                  
-        override val factory: ObjType<ChildFirstEntity, *> get() = TODO()
         override fun build(): ChildFirstEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

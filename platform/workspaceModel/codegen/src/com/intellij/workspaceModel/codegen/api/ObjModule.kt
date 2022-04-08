@@ -135,17 +135,6 @@ abstract class ObjModule(
     internal fun type(typeId: Int): ObjType<*, *> =
         byId[modules.typeIndex(typeId)]!!
 
-    internal fun newBuilder(typeId: Int): ObjBuilder<*> = type(typeId).builder()
-
-    fun <T : Obj, B : ObjBuilder<T>> _loadBuilderFactory(objType: ObjType<T, B>): () -> B {
-        val ivalClass = objType.ival
-        val packageName = ivalClass.packageName
-        val simpleName = objType.name.replace(".", "")
-        val c = ivalClass.classLoader.loadClass("$packageName.${simpleName}Impl\$Builder")
-        val ctor = c.constructors.find { it.parameterCount == 0 }!!
-        return { ctor.newInstance() as B }
-    }
-
     val _extKotlinProps = mutableMapOf<ExtFieldKotlinId, ExtField<*, *>>()
 
     fun <T : Obj, V> defExt(

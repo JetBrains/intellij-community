@@ -20,9 +20,6 @@ import org.jetbrains.deft.impl.fields.Field
 
 open class LinkedListEntityImpl: LinkedListEntity, WorkspaceEntityBase() {
     
-    
-    override val factory: ObjType<*, *>
-        get() = LinkedListEntity
         
     @JvmField var _myName: String? = null
     override val myName: String
@@ -35,7 +32,6 @@ open class LinkedListEntityImpl: LinkedListEntity, WorkspaceEntityBase() {
     class Builder(val result: LinkedListEntityData?): ModifiableWorkspaceEntityBase<LinkedListEntity>(), LinkedListEntity.Builder {
         constructor(): this(LinkedListEntityData())
                  
-        override val factory: ObjType<LinkedListEntity, *> get() = TODO()
         override fun build(): LinkedListEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

@@ -25,9 +25,6 @@ open class SimpleChildAbstractEntityImpl: SimpleChildAbstractEntity, WorkspaceEn
     companion object {
         internal val PARENTINLIST_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositeAbstractEntity::class.java, SimpleAbstractEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = SimpleChildAbstractEntity
         
     override val parentInList: CompositeAbstractEntity
         get() = snapshot.extractOneToAbstractManyParent(PARENTINLIST_CONNECTION_ID, this)!!
@@ -35,7 +32,6 @@ open class SimpleChildAbstractEntityImpl: SimpleChildAbstractEntity, WorkspaceEn
     class Builder(val result: SimpleChildAbstractEntityData?): ModifiableWorkspaceEntityBase<SimpleChildAbstractEntity>(), SimpleChildAbstractEntity.Builder {
         constructor(): this(SimpleChildAbstractEntityData())
                  
-        override val factory: ObjType<SimpleChildAbstractEntity, *> get() = TODO()
         override fun build(): SimpleChildAbstractEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

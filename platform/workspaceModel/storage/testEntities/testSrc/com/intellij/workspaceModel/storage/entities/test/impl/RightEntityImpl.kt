@@ -29,9 +29,6 @@ open class RightEntityImpl: RightEntity, WorkspaceEntityBase() {
         internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositeBaseEntity::class.java, BaseEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
         internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositeBaseEntity::class.java, BaseEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = RightEntity
         
     override val parentEntity: CompositeBaseEntity?
         get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)           
@@ -42,7 +39,6 @@ open class RightEntityImpl: RightEntity, WorkspaceEntityBase() {
     class Builder(val result: RightEntityData?): ModifiableWorkspaceEntityBase<RightEntity>(), RightEntity.Builder {
         constructor(): this(RightEntityData())
                  
-        override val factory: ObjType<RightEntity, *> get() = TODO()
         override fun build(): RightEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

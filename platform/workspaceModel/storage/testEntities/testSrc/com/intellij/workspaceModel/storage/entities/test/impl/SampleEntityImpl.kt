@@ -24,9 +24,6 @@ open class SampleEntityImpl: SampleEntity, WorkspaceEntityBase() {
     companion object {
         internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(SampleEntity::class.java, ChildSampleEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = SampleEntity
         
     override var booleanProperty: Boolean = false
     @JvmField var _stringProperty: String? = null
@@ -47,7 +44,6 @@ open class SampleEntityImpl: SampleEntity, WorkspaceEntityBase() {
     class Builder(val result: SampleEntityData?): ModifiableWorkspaceEntityBase<SampleEntity>(), SampleEntity.Builder {
         constructor(): this(SampleEntityData())
                  
-        override val factory: ObjType<SampleEntity, *> get() = TODO()
         override fun build(): SampleEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

@@ -1,6 +1,5 @@
 package deft.storage.codegen
 
-import deft.storage.codegen.field.*
 import org.jetbrains.deft.codegen.model.CodegenTypes
 import org.jetbrains.deft.getExtension
 import org.jetbrains.deft.impl.TBoolean

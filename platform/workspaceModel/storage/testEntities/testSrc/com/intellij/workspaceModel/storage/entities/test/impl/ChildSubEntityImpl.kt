@@ -26,9 +26,6 @@ open class ChildSubEntityImpl: ChildSubEntity, WorkspaceEntityBase() {
         internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentSubEntity::class.java, ChildSubEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
         internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ChildSubEntity::class.java, ChildSubSubEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = ChildSubEntity
         
     override val parentEntity: ParentSubEntity
         get() = snapshot.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this)!!           
@@ -39,7 +36,6 @@ open class ChildSubEntityImpl: ChildSubEntity, WorkspaceEntityBase() {
     class Builder(val result: ChildSubEntityData?): ModifiableWorkspaceEntityBase<ChildSubEntity>(), ChildSubEntity.Builder {
         constructor(): this(ChildSubEntityData())
                  
-        override val factory: ObjType<ChildSubEntity, *> get() = TODO()
         override fun build(): ChildSubEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

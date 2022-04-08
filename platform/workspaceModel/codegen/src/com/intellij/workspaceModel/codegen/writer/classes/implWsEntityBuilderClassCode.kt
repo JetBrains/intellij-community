@@ -16,7 +16,6 @@ fun ObjType<*, *>.implWsEntityBuilderCode(): String {
     class Builder(val result: $javaDataName?): ${wsFqn("ModifiableWorkspaceEntityBase")}<$javaFullName>(), $javaBuilderName {
         constructor(): this($javaDataName())
                  
-        override val factory: ObjType<$javaFullName, *> get() = TODO()
         override fun build(): $javaFullName = this
         
 ${

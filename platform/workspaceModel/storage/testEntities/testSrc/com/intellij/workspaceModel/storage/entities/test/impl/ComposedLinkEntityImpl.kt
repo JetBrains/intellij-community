@@ -20,9 +20,6 @@ import org.jetbrains.deft.impl.fields.Field
 
 open class ComposedLinkEntityImpl: ComposedLinkEntity, WorkspaceEntityBase() {
     
-    
-    override val factory: ObjType<*, *>
-        get() = ComposedLinkEntity
         
     @JvmField var _link: ComposedId? = null
     override val link: ComposedId
@@ -31,7 +28,6 @@ open class ComposedLinkEntityImpl: ComposedLinkEntity, WorkspaceEntityBase() {
     class Builder(val result: ComposedLinkEntityData?): ModifiableWorkspaceEntityBase<ComposedLinkEntity>(), ComposedLinkEntity.Builder {
         constructor(): this(ComposedLinkEntityData())
                  
-        override val factory: ObjType<ComposedLinkEntity, *> get() = TODO()
         override fun build(): ComposedLinkEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

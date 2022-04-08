@@ -17,9 +17,6 @@ import org.jetbrains.deft.impl.fields.Field
 
 open class MainEntityListImpl: MainEntityList, WorkspaceEntityBase() {
     
-    
-    override val factory: ObjType<*, *>
-        get() = MainEntityList
         
     @JvmField var _x: String? = null
     override val x: String
@@ -28,7 +25,6 @@ open class MainEntityListImpl: MainEntityList, WorkspaceEntityBase() {
     class Builder(val result: MainEntityListData?): ModifiableWorkspaceEntityBase<MainEntityList>(), MainEntityList.Builder {
         constructor(): this(MainEntityListData())
                  
-        override val factory: ObjType<MainEntityList, *> get() = TODO()
         override fun build(): MainEntityList = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

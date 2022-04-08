@@ -23,9 +23,6 @@ open class OoChildWithNullableParentEntityImpl: OoChildWithNullableParentEntity,
     companion object {
         internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(OoParentEntity::class.java, OoChildWithNullableParentEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = OoChildWithNullableParentEntity
         
     override val parentEntity: OoParentEntity?
         get() = snapshot.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this)
@@ -33,7 +30,6 @@ open class OoChildWithNullableParentEntityImpl: OoChildWithNullableParentEntity,
     class Builder(val result: OoChildWithNullableParentEntityData?): ModifiableWorkspaceEntityBase<OoChildWithNullableParentEntity>(), OoChildWithNullableParentEntity.Builder {
         constructor(): this(OoChildWithNullableParentEntityData())
                  
-        override val factory: ObjType<OoChildWithNullableParentEntity, *> get() = TODO()
         override fun build(): OoChildWithNullableParentEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

@@ -23,9 +23,6 @@ open class ModuleGroupPathEntityImpl: ModuleGroupPathEntity, WorkspaceEntityBase
     companion object {
         internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleGroupPathEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = ModuleGroupPathEntity
         
     override val module: ModuleEntity
         get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!           
@@ -37,7 +34,6 @@ open class ModuleGroupPathEntityImpl: ModuleGroupPathEntity, WorkspaceEntityBase
     class Builder(val result: ModuleGroupPathEntityData?): ModifiableWorkspaceEntityBase<ModuleGroupPathEntity>(), ModuleGroupPathEntity.Builder {
         constructor(): this(ModuleGroupPathEntityData())
                  
-        override val factory: ObjType<ModuleGroupPathEntity, *> get() = TODO()
         override fun build(): ModuleGroupPathEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

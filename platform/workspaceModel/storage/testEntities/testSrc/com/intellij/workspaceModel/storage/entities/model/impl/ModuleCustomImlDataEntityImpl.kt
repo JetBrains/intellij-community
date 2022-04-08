@@ -23,9 +23,6 @@ open class ModuleCustomImlDataEntityImpl: ModuleCustomImlDataEntity, WorkspaceEn
     companion object {
         internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleCustomImlDataEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = ModuleCustomImlDataEntity
         
     override val module: ModuleEntity
         get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!           
@@ -41,7 +38,6 @@ open class ModuleCustomImlDataEntityImpl: ModuleCustomImlDataEntity, WorkspaceEn
     class Builder(val result: ModuleCustomImlDataEntityData?): ModifiableWorkspaceEntityBase<ModuleCustomImlDataEntity>(), ModuleCustomImlDataEntity.Builder {
         constructor(): this(ModuleCustomImlDataEntityData())
                  
-        override val factory: ObjType<ModuleCustomImlDataEntity, *> get() = TODO()
         override fun build(): ModuleCustomImlDataEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

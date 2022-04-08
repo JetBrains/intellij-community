@@ -18,9 +18,6 @@ import org.jetbrains.deft.impl.fields.Field
 
 open class ListVFUEntityImpl: ListVFUEntity, WorkspaceEntityBase() {
     
-    
-    override val factory: ObjType<*, *>
-        get() = ListVFUEntity
         
     @JvmField var _data: String? = null
     override val data: String
@@ -33,7 +30,6 @@ open class ListVFUEntityImpl: ListVFUEntity, WorkspaceEntityBase() {
     class Builder(val result: ListVFUEntityData?): ModifiableWorkspaceEntityBase<ListVFUEntity>(), ListVFUEntity.Builder {
         constructor(): this(ListVFUEntityData())
                  
-        override val factory: ObjType<ListVFUEntity, *> get() = TODO()
         override fun build(): ListVFUEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

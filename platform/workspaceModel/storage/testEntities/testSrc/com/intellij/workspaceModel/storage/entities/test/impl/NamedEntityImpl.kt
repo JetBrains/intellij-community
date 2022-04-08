@@ -24,9 +24,6 @@ open class NamedEntityImpl: NamedEntity, WorkspaceEntityBase() {
     companion object {
         internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(NamedEntity::class.java, NamedChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = NamedEntity
         
     @JvmField var _myName: String? = null
     override val myName: String
@@ -42,7 +39,6 @@ open class NamedEntityImpl: NamedEntity, WorkspaceEntityBase() {
     class Builder(val result: NamedEntityData?): ModifiableWorkspaceEntityBase<NamedEntity>(), NamedEntity.Builder {
         constructor(): this(NamedEntityData())
                  
-        override val factory: ObjType<NamedEntity, *> get() = TODO()
         override fun build(): NamedEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

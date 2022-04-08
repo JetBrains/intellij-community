@@ -23,9 +23,6 @@ open class SourceEntityImpl: SourceEntity, WorkspaceEntityBase() {
     companion object {
         internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceEntity::class.java, ChildSourceEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = SourceEntity
         
     @JvmField var _data: String? = null
     override val data: String
@@ -37,7 +34,6 @@ open class SourceEntityImpl: SourceEntity, WorkspaceEntityBase() {
     class Builder(val result: SourceEntityData?): ModifiableWorkspaceEntityBase<SourceEntity>(), SourceEntity.Builder {
         constructor(): this(SourceEntityData())
                  
-        override val factory: ObjType<SourceEntity, *> get() = TODO()
         override fun build(): SourceEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

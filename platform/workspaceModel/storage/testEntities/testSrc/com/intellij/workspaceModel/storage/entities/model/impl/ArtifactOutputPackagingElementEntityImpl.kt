@@ -28,9 +28,6 @@ open class ArtifactOutputPackagingElementEntityImpl: ArtifactOutputPackagingElem
         internal val COMPOSITEPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java, PackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false)
         internal val ARTIFACT_CONNECTION_ID: ConnectionId = ConnectionId.create(ArtifactEntity::class.java, ArtifactOutputPackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = ArtifactOutputPackagingElementEntity
         
     override val compositePackagingElement: CompositePackagingElementEntity
         get() = snapshot.extractOneToAbstractManyParent(COMPOSITEPACKAGINGELEMENT_CONNECTION_ID, this)!!           
@@ -41,7 +38,6 @@ open class ArtifactOutputPackagingElementEntityImpl: ArtifactOutputPackagingElem
     class Builder(val result: ArtifactOutputPackagingElementEntityData?): ModifiableWorkspaceEntityBase<ArtifactOutputPackagingElementEntity>(), ArtifactOutputPackagingElementEntity.Builder {
         constructor(): this(ArtifactOutputPackagingElementEntityData())
                  
-        override val factory: ObjType<ArtifactOutputPackagingElementEntity, *> get() = TODO()
         override fun build(): ArtifactOutputPackagingElementEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

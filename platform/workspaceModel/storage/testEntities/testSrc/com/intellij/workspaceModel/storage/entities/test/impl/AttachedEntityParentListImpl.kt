@@ -17,9 +17,6 @@ import org.jetbrains.deft.impl.fields.Field
 
 open class AttachedEntityParentListImpl: AttachedEntityParentList, WorkspaceEntityBase() {
     
-    
-    override val factory: ObjType<*, *>
-        get() = AttachedEntityParentList
         
     @JvmField var _data: String? = null
     override val data: String
@@ -28,7 +25,6 @@ open class AttachedEntityParentListImpl: AttachedEntityParentList, WorkspaceEnti
     class Builder(val result: AttachedEntityParentListData?): ModifiableWorkspaceEntityBase<AttachedEntityParentList>(), AttachedEntityParentList.Builder {
         constructor(): this(AttachedEntityParentListData())
                  
-        override val factory: ObjType<AttachedEntityParentList, *> get() = TODO()
         override fun build(): AttachedEntityParentList = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

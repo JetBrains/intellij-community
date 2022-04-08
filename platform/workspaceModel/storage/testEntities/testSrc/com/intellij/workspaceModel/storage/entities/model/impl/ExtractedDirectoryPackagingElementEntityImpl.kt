@@ -25,9 +25,6 @@ open class ExtractedDirectoryPackagingElementEntityImpl: ExtractedDirectoryPacka
     companion object {
         internal val COMPOSITEPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java, PackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = ExtractedDirectoryPackagingElementEntity
         
     override val compositePackagingElement: CompositePackagingElementEntity
         get() = snapshot.extractOneToAbstractManyParent(COMPOSITEPACKAGINGELEMENT_CONNECTION_ID, this)!!           
@@ -43,7 +40,6 @@ open class ExtractedDirectoryPackagingElementEntityImpl: ExtractedDirectoryPacka
     class Builder(val result: ExtractedDirectoryPackagingElementEntityData?): ModifiableWorkspaceEntityBase<ExtractedDirectoryPackagingElementEntity>(), ExtractedDirectoryPackagingElementEntity.Builder {
         constructor(): this(ExtractedDirectoryPackagingElementEntityData())
                  
-        override val factory: ObjType<ExtractedDirectoryPackagingElementEntity, *> get() = TODO()
         override fun build(): ExtractedDirectoryPackagingElementEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

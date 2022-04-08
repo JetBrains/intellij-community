@@ -18,9 +18,6 @@ import org.jetbrains.deft.impl.fields.Field
 
 open class OneEntityWithPersistentIdImpl: OneEntityWithPersistentId, WorkspaceEntityBase() {
     
-    
-    override val factory: ObjType<*, *>
-        get() = OneEntityWithPersistentId
         
     @JvmField var _myName: String? = null
     override val myName: String
@@ -29,7 +26,6 @@ open class OneEntityWithPersistentIdImpl: OneEntityWithPersistentId, WorkspaceEn
     class Builder(val result: OneEntityWithPersistentIdData?): ModifiableWorkspaceEntityBase<OneEntityWithPersistentId>(), OneEntityWithPersistentId.Builder {
         constructor(): this(OneEntityWithPersistentIdData())
                  
-        override val factory: ObjType<OneEntityWithPersistentId, *> get() = TODO()
         override fun build(): OneEntityWithPersistentId = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

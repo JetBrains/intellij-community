@@ -23,9 +23,6 @@ open class ExternalSystemModuleOptionsEntityImpl: ExternalSystemModuleOptionsEnt
     companion object {
         internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ExternalSystemModuleOptionsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = ExternalSystemModuleOptionsEntity
         
     override val module: ModuleEntity
         get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!           
@@ -61,7 +58,6 @@ open class ExternalSystemModuleOptionsEntityImpl: ExternalSystemModuleOptionsEnt
     class Builder(val result: ExternalSystemModuleOptionsEntityData?): ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity>(), ExternalSystemModuleOptionsEntity.Builder {
         constructor(): this(ExternalSystemModuleOptionsEntityData())
                  
-        override val factory: ObjType<ExternalSystemModuleOptionsEntity, *> get() = TODO()
         override fun build(): ExternalSystemModuleOptionsEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

@@ -25,9 +25,6 @@ open class DirectoryCopyPackagingElementEntityImpl: DirectoryCopyPackagingElemen
     companion object {
         internal val COMPOSITEPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java, PackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = DirectoryCopyPackagingElementEntity
         
     override val compositePackagingElement: CompositePackagingElementEntity
         get() = snapshot.extractOneToAbstractManyParent(COMPOSITEPACKAGINGELEMENT_CONNECTION_ID, this)!!           
@@ -39,7 +36,6 @@ open class DirectoryCopyPackagingElementEntityImpl: DirectoryCopyPackagingElemen
     class Builder(val result: DirectoryCopyPackagingElementEntityData?): ModifiableWorkspaceEntityBase<DirectoryCopyPackagingElementEntity>(), DirectoryCopyPackagingElementEntity.Builder {
         constructor(): this(DirectoryCopyPackagingElementEntityData())
                  
-        override val factory: ObjType<DirectoryCopyPackagingElementEntity, *> get() = TODO()
         override fun build(): DirectoryCopyPackagingElementEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

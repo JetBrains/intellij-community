@@ -23,9 +23,6 @@ open class AttachedEntityImpl: AttachedEntity, WorkspaceEntityBase() {
     companion object {
         internal val REF_CONNECTION_ID: ConnectionId = ConnectionId.create(MainEntity::class.java, AttachedEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = AttachedEntity
         
     override val ref: MainEntity
         get() = snapshot.extractOneToOneParent(REF_CONNECTION_ID, this)!!           
@@ -37,7 +34,6 @@ open class AttachedEntityImpl: AttachedEntity, WorkspaceEntityBase() {
     class Builder(val result: AttachedEntityData?): ModifiableWorkspaceEntityBase<AttachedEntity>(), AttachedEntity.Builder {
         constructor(): this(AttachedEntityData())
                  
-        override val factory: ObjType<AttachedEntity, *> get() = TODO()
         override fun build(): AttachedEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

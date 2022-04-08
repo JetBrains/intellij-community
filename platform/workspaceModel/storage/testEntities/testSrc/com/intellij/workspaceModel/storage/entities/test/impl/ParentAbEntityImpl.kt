@@ -26,9 +26,6 @@ open class ParentAbEntityImpl: ParentAbEntity, WorkspaceEntityBase() {
     companion object {
         internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentAbEntity::class.java, ChildAbstractBaseEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = ParentAbEntity
         
     override val children: List<ChildAbstractBaseEntity>
         get() = snapshot.extractOneToAbstractManyChildren<ChildAbstractBaseEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
@@ -36,7 +33,6 @@ open class ParentAbEntityImpl: ParentAbEntity, WorkspaceEntityBase() {
     class Builder(val result: ParentAbEntityData?): ModifiableWorkspaceEntityBase<ParentAbEntity>(), ParentAbEntity.Builder {
         constructor(): this(ParentAbEntityData())
                  
-        override val factory: ObjType<ParentAbEntity, *> get() = TODO()
         override fun build(): ParentAbEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

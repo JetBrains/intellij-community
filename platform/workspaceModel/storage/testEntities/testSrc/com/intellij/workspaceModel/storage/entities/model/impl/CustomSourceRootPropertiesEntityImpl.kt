@@ -23,9 +23,6 @@ open class CustomSourceRootPropertiesEntityImpl: CustomSourceRootPropertiesEntit
     companion object {
         internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java, CustomSourceRootPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = CustomSourceRootPropertiesEntity
         
     override val sourceRoot: SourceRootEntity
         get() = snapshot.extractOneToOneParent(SOURCEROOT_CONNECTION_ID, this)!!           
@@ -37,7 +34,6 @@ open class CustomSourceRootPropertiesEntityImpl: CustomSourceRootPropertiesEntit
     class Builder(val result: CustomSourceRootPropertiesEntityData?): ModifiableWorkspaceEntityBase<CustomSourceRootPropertiesEntity>(), CustomSourceRootPropertiesEntity.Builder {
         constructor(): this(CustomSourceRootPropertiesEntityData())
                  
-        override val factory: ObjType<CustomSourceRootPropertiesEntity, *> get() = TODO()
         override fun build(): CustomSourceRootPropertiesEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

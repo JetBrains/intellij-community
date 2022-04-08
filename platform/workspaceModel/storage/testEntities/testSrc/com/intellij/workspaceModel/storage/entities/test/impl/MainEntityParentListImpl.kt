@@ -23,9 +23,6 @@ open class MainEntityParentListImpl: MainEntityParentList, WorkspaceEntityBase()
     companion object {
         internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(MainEntityParentList::class.java, AttachedEntityParentList::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = MainEntityParentList
         
     @JvmField var _x: String? = null
     override val x: String
@@ -37,7 +34,6 @@ open class MainEntityParentListImpl: MainEntityParentList, WorkspaceEntityBase()
     class Builder(val result: MainEntityParentListData?): ModifiableWorkspaceEntityBase<MainEntityParentList>(), MainEntityParentList.Builder {
         constructor(): this(MainEntityParentListData())
                  
-        override val factory: ObjType<MainEntityParentList, *> get() = TODO()
         override fun build(): MainEntityParentList = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

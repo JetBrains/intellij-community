@@ -25,9 +25,6 @@ open class FileCopyPackagingElementEntityImpl: FileCopyPackagingElementEntity, W
     companion object {
         internal val COMPOSITEPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java, PackagingElementEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = FileCopyPackagingElementEntity
         
     override val compositePackagingElement: CompositePackagingElementEntity
         get() = snapshot.extractOneToAbstractManyParent(COMPOSITEPACKAGINGELEMENT_CONNECTION_ID, this)!!           
@@ -43,7 +40,6 @@ open class FileCopyPackagingElementEntityImpl: FileCopyPackagingElementEntity, W
     class Builder(val result: FileCopyPackagingElementEntityData?): ModifiableWorkspaceEntityBase<FileCopyPackagingElementEntity>(), FileCopyPackagingElementEntity.Builder {
         constructor(): this(FileCopyPackagingElementEntityData())
                  
-        override val factory: ObjType<FileCopyPackagingElementEntity, *> get() = TODO()
         override fun build(): FileCopyPackagingElementEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

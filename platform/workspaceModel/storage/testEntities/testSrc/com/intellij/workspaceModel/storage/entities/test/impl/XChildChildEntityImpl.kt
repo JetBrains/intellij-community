@@ -24,9 +24,6 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
         internal val PARENT1_CONNECTION_ID: ConnectionId = ConnectionId.create(XParentEntity::class.java, XChildChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
         internal val PARENT2_CONNECTION_ID: ConnectionId = ConnectionId.create(XChildEntity::class.java, XChildChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     }
-    
-    override val factory: ObjType<*, *>
-        get() = XChildChildEntity
         
     override val parent1: XParentEntity
         get() = snapshot.extractOneToManyParent(PARENT1_CONNECTION_ID, this)!!           
@@ -37,7 +34,6 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
     class Builder(val result: XChildChildEntityData?): ModifiableWorkspaceEntityBase<XChildChildEntity>(), XChildChildEntity.Builder {
         constructor(): this(XChildChildEntityData())
                  
-        override val factory: ObjType<XChildChildEntity, *> get() = TODO()
         override fun build(): XChildChildEntity = this
         
         override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {

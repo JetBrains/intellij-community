@@ -14,12 +14,6 @@ abstract class MemberOrExtField<P : Obj, V>(
 ) : ExtensibleImpl() {
     override fun toString(): String = "${owner.name}.$name"
 
-    override val factory: ObjType<*, *>
-        get() = TODO()
-
-    override val parent: Obj?
-        get() = owner
-
     var open: Boolean = false
     var content: Boolean = false
     var constructorField = false

@@ -23,9 +23,6 @@ abstract class ObjType<T : Obj, B : ObjBuilder<T>>(private val _module: ObjModul
     val ival: Class<T> get() = javaClass.enclosingClass as Class<T>
     val ivar: Class<B> get() = ival.classes.single { it.simpleName == "Builder" } as Class<B>
 
-    override val factory: ObjType<*, *> get() = TODO("meta type")
-    override val parent: Obj? get() = null
-
     open val packageName: String
         get() = ival.packageName
 
@@ -47,11 +44,15 @@ abstract class ObjType<T : Obj, B : ObjBuilder<T>>(private val _module: ObjModul
     }
 
     protected open fun loadBuilderFactory(): () -> B {
-        return module._loadBuilderFactory(this)
+      val ivalClass = ival
+      val packageName = ivalClass.packageName
+      val simpleName = name.replace(".", "")
+      val c = ivalClass.classLoader.loadClass("$packageName.${simpleName}Impl\$Builder")
+      val ctor = c.constructors.find { it.parameterCount == 0 }!!
+      return { ctor.newInstance() as B }
     }
 
     private val _builder: () -> B by lazy {
-        module.require()
         loadBuilderFactory()
     }
 
@@ -70,8 +71,6 @@ abstract class ObjType<T : Obj, B : ObjBuilder<T>>(private val _module: ObjModul
         builder.init()
         return builder.build()
     }
-
-    override fun <V> getValue(field: Field<*, V>): V = TODO()
 
     override fun toString(): String = name
 }
