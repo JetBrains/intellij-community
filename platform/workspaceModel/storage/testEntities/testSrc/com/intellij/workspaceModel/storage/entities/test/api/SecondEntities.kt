@@ -27,11 +27,7 @@ interface SampleEntity2 : WorkspaceEntity {
       override var boolData: Boolean
   }
   
-  companion object: ObjType<SampleEntity2, Builder>(TestEntities, 25) {
-      val data: Field<SampleEntity2, String> = Field(this, 0, "data", TString)
-      val entitySource: Field<SampleEntity2, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val boolData: Field<SampleEntity2, Boolean> = Field(this, 0, "boolData", TBoolean)
-  }
+  companion object: ObjType<SampleEntity2, Builder>(TestEntities, 25)
   //@formatter:on
   //endregion
 
@@ -52,13 +48,7 @@ interface VFUEntity2 : WorkspaceEntity {
       override var notNullRoots: List<VirtualFileUrl>
   }
   
-  companion object: ObjType<VFUEntity2, Builder>(TestEntities, 26) {
-      val data: Field<VFUEntity2, String> = Field(this, 0, "data", TString)
-      val entitySource: Field<VFUEntity2, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val filePath: Field<VFUEntity2, VirtualFileUrl?> = Field(this, 0, "filePath", TOptional(TBlob("VirtualFileUrl")))
-      val directoryPath: Field<VFUEntity2, VirtualFileUrl> = Field(this, 0, "directoryPath", TBlob("VirtualFileUrl"))
-      val notNullRoots: Field<VFUEntity2, List<VirtualFileUrl>> = Field(this, 0, "notNullRoots", TList(TBlob("VirtualFileUrl")))
-  }
+  companion object: ObjType<VFUEntity2, Builder>(TestEntities, 26)
   //@formatter:on
   //endregion
 

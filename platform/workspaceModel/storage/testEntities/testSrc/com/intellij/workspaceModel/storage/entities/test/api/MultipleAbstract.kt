@@ -31,10 +31,7 @@ interface ParentAbEntity : WorkspaceEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<ParentAbEntity, Builder>(TestEntities, 70) {
-        val children: Field<ParentAbEntity, List<ChildAbstractBaseEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.TestEntities", 71, child = true)))
-        val entitySource: Field<ParentAbEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-    }
+    companion object: ObjType<ParentAbEntity, Builder>(TestEntities, 70)
     //@formatter:on
     //endregion
 
@@ -55,11 +52,7 @@ interface ChildAbstractBaseEntity : WorkspaceEntity {
         override var parentEntity: ParentAbEntity
     }
     
-    companion object: ObjType<ChildAbstractBaseEntity, Builder>(TestEntities, 71) {
-        val commonData: Field<ChildAbstractBaseEntity, String> = Field(this, 0, "commonData", TString)
-        val entitySource: Field<ChildAbstractBaseEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val parentEntity: Field<ChildAbstractBaseEntity, ParentAbEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.TestEntities", 70))
-    }
+    companion object: ObjType<ChildAbstractBaseEntity, Builder>(TestEntities, 71)
     //@formatter:on
     //endregion
 
@@ -78,10 +71,7 @@ interface ChildFirstEntity : ChildAbstractBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<ChildFirstEntity, Builder>(TestEntities, 72, ChildAbstractBaseEntity) {
-        val firstData: Field<ChildFirstEntity, String> = Field(this, 0, "firstData", TString)
-        val entitySource: Field<ChildFirstEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-    }
+    companion object: ObjType<ChildFirstEntity, Builder>(TestEntities, 72, ChildAbstractBaseEntity)
     //@formatter:on
     //endregion
 
@@ -104,10 +94,7 @@ interface ChildSecondEntity : ChildAbstractBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<ChildSecondEntity, Builder>(TestEntities, 73, ChildAbstractBaseEntity) {
-        val secondData: Field<ChildSecondEntity, String> = Field(this, 0, "secondData", TString)
-        val entitySource: Field<ChildSecondEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-    }
+    companion object: ObjType<ChildSecondEntity, Builder>(TestEntities, 73, ChildAbstractBaseEntity)
     //@formatter:on
     //endregion
 

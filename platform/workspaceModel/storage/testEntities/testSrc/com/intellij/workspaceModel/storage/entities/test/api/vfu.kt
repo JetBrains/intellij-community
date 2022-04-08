@@ -29,11 +29,7 @@ interface VFUEntity : WorkspaceEntity {
       override var fileProperty: VirtualFileUrl
   }
   
-  companion object: ObjType<VFUEntity, Builder>(TestEntities, 66) {
-      val data: Field<VFUEntity, String> = Field(this, 0, "data", TString)
-      val entitySource: Field<VFUEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val fileProperty: Field<VFUEntity, VirtualFileUrl> = Field(this, 0, "fileProperty", TBlob("VirtualFileUrl"))
-  }
+  companion object: ObjType<VFUEntity, Builder>(TestEntities, 66)
   //@formatter:on
   //endregion
 
@@ -55,12 +51,7 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
       override var secondFileProperty: VirtualFileUrl
   }
   
-  companion object: ObjType<VFUWithTwoPropertiesEntity, Builder>(TestEntities, 67) {
-      val data: Field<VFUWithTwoPropertiesEntity, String> = Field(this, 0, "data", TString)
-      val entitySource: Field<VFUWithTwoPropertiesEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val fileProperty: Field<VFUWithTwoPropertiesEntity, VirtualFileUrl> = Field(this, 0, "fileProperty", TBlob("VirtualFileUrl"))
-      val secondFileProperty: Field<VFUWithTwoPropertiesEntity, VirtualFileUrl> = Field(this, 0, "secondFileProperty", TBlob("VirtualFileUrl"))
-  }
+  companion object: ObjType<VFUWithTwoPropertiesEntity, Builder>(TestEntities, 67)
   //@formatter:on
   //endregion
 
@@ -80,11 +71,7 @@ interface NullableVFUEntity : WorkspaceEntity {
       override var fileProperty: VirtualFileUrl?
   }
   
-  companion object: ObjType<NullableVFUEntity, Builder>(TestEntities, 68) {
-      val data: Field<NullableVFUEntity, String> = Field(this, 0, "data", TString)
-      val entitySource: Field<NullableVFUEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val fileProperty: Field<NullableVFUEntity, VirtualFileUrl?> = Field(this, 0, "fileProperty", TOptional(TBlob("VirtualFileUrl")))
-  }
+  companion object: ObjType<NullableVFUEntity, Builder>(TestEntities, 68)
   //@formatter:on
   //endregion
 
@@ -104,11 +91,7 @@ interface ListVFUEntity : WorkspaceEntity {
       override var fileProperty: List<VirtualFileUrl>
   }
   
-  companion object: ObjType<ListVFUEntity, Builder>(TestEntities, 69) {
-      val data: Field<ListVFUEntity, String> = Field(this, 0, "data", TString)
-      val entitySource: Field<ListVFUEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val fileProperty: Field<ListVFUEntity, List<VirtualFileUrl>> = Field(this, 0, "fileProperty", TList(TBlob("VirtualFileUrl")))
-  }
+  companion object: ObjType<ListVFUEntity, Builder>(TestEntities, 69)
   //@formatter:on
   //endregion
 

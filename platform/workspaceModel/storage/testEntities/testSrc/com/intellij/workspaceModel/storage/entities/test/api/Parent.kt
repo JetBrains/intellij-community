@@ -30,13 +30,7 @@ interface XParentEntity : WorkspaceEntity {
       override var childChild: List<XChildChildEntity>
   }
   
-  companion object: ObjType<XParentEntity, Builder>(TestEntities, 57) {
-      val parentProperty: Field<XParentEntity, String> = Field(this, 0, "parentProperty", TString)
-      val entitySource: Field<XParentEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val children: Field<XParentEntity, List<XChildEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.TestEntities", 58, child = true)))
-      val optionalChildren: Field<XParentEntity, List<XChildWithOptionalParentEntity>> = Field(this, 0, "optionalChildren", TList(TRef("org.jetbrains.deft.TestEntities", 59, child = true)))
-      val childChild: Field<XParentEntity, List<XChildChildEntity>> = Field(this, 0, "childChild", TList(TRef("org.jetbrains.deft.TestEntities", 60, child = true)))
-  }
+  companion object: ObjType<XParentEntity, Builder>(TestEntities, 57)
   //@formatter:on
   //endregion
 
@@ -62,13 +56,7 @@ interface XChildEntity : WorkspaceEntity {
       override var childChild: List<XChildChildEntity>
   }
   
-  companion object: ObjType<XChildEntity, Builder>(TestEntities, 58) {
-      val childProperty: Field<XChildEntity, String> = Field(this, 0, "childProperty", TString)
-      val entitySource: Field<XChildEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val dataClass: Field<XChildEntity, DataClassX?> = Field(this, 0, "dataClass", TOptional(TBlob("DataClassX")))
-      val parentEntity: Field<XChildEntity, XParentEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.TestEntities", 57))
-      val childChild: Field<XChildEntity, List<XChildChildEntity>> = Field(this, 0, "childChild", TList(TRef("org.jetbrains.deft.TestEntities", 60, child = true)))
-  }
+  companion object: ObjType<XChildEntity, Builder>(TestEntities, 58)
   //@formatter:on
   //endregion
 
@@ -86,11 +74,7 @@ interface XChildWithOptionalParentEntity : WorkspaceEntity {
       override var optionalParent: XParentEntity?
   }
   
-  companion object: ObjType<XChildWithOptionalParentEntity, Builder>(TestEntities, 59) {
-      val childProperty: Field<XChildWithOptionalParentEntity, String> = Field(this, 0, "childProperty", TString)
-      val entitySource: Field<XChildWithOptionalParentEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val optionalParent: Field<XChildWithOptionalParentEntity, XParentEntity?> = Field(this, 0, "optionalParent", TOptional(TRef("org.jetbrains.deft.TestEntities", 57)))
-  }
+  companion object: ObjType<XChildWithOptionalParentEntity, Builder>(TestEntities, 59)
   //@formatter:on
   //endregion
 
@@ -109,11 +93,7 @@ interface XChildChildEntity : WorkspaceEntity {
       override var parent2: XChildEntity
   }
   
-  companion object: ObjType<XChildChildEntity, Builder>(TestEntities, 60) {
-      val parent1: Field<XChildChildEntity, XParentEntity> = Field(this, 0, "parent1", TRef("org.jetbrains.deft.TestEntities", 57))
-      val entitySource: Field<XChildChildEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val parent2: Field<XChildChildEntity, XChildEntity> = Field(this, 0, "parent2", TRef("org.jetbrains.deft.TestEntities", 58))
-  }
+  companion object: ObjType<XChildChildEntity, Builder>(TestEntities, 60)
   //@formatter:on
   //endregion
 

@@ -35,11 +35,7 @@ interface ParentEntity : WorkspaceEntity {
         override var child: ChildEntity
     }
     
-    companion object: ObjType<ParentEntity, Builder>(TestEntities, 51) {
-        val parentData: Field<ParentEntity, String> = Field(this, 0, "parentData", TString)
-        val entitySource: Field<ParentEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val child: Field<ParentEntity, ChildEntity> = Field(this, 0, "child", TRef("org.jetbrains.deft.TestEntities", 52, child = true))
-    }
+    companion object: ObjType<ParentEntity, Builder>(TestEntities, 51)
     //@formatter:on
     //endregion
 
@@ -60,11 +56,7 @@ interface ChildEntity : WorkspaceEntity {
         override var parentEntity: ParentEntity
     }
     
-    companion object: ObjType<ChildEntity, Builder>(TestEntities, 52) {
-        val childData: Field<ChildEntity, String> = Field(this, 0, "childData", TString)
-        val entitySource: Field<ChildEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val parentEntity: Field<ChildEntity, ParentEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.TestEntities", 51))
-    }
+    companion object: ObjType<ChildEntity, Builder>(TestEntities, 52)
     //@formatter:on
     //endregion
 

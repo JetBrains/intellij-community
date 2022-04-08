@@ -133,10 +133,11 @@ private fun ValueType<*>.operate(
             }
         }
         is TOptional<*> -> {
-            val type = type
-            context.line("val optionalLink_${varName.clean()} = $varName")
-            context.`if`("optionalLink_${varName.clean()} != null") label@{
+            if (type is TBlob && type.isPersistentId(simpleTypes)) {
+              context.line("val optionalLink_${varName.clean()} = $varName")
+              context.`if`("optionalLink_${varName.clean()} != null") label@{
                 type.operate("optionalLink_${varName.clean()}", simpleTypes, this@label, operation)
+              }
             }
         }
         else -> Unit

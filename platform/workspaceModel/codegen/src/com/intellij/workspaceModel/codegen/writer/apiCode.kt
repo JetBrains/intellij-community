@@ -44,21 +44,15 @@ fun DefType.generatedApiCode(indent: String = "    "): String = lines(indent) {
             }
     }
     line()
-    section(
-        head = buildString {
-            append("companion object: ObjType<$javaFullName, Builder>(")
-            append(fqn(ktModule.id.javaPackage, ktModule.id.objName)).append(", ")
-            append(id)
-            if (base != null) {
-                append(", ${base.javaFullName}")
-            }
-            append(")")
+    line(buildString {
+        append("companion object: ObjType<$javaFullName, Builder>(")
+        append(fqn(ktModule.id.javaPackage, ktModule.id.objName)).append(", ")
+        append(id)
+        if (base != null) {
+          append(", ${base.javaFullName}")
         }
-    ) {
-        if (singleton) line("val instance: $javaSimpleName by lazy { _newInstance() }")
-        list(structure.declaredFields) { defCode }
-    }
-
+        append(")")
+    })
     line("//@formatter:on")
     lineNoNl("//endregion")
 }

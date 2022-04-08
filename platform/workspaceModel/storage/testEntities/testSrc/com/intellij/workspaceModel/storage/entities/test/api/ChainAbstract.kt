@@ -30,10 +30,7 @@ interface ParentChainEntity : WorkspaceEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<ParentChainEntity, Builder>(TestEntities, 61) {
-        val root: Field<ParentChainEntity, CompositeAbstractEntity> = Field(this, 0, "root", TRef("org.jetbrains.deft.TestEntities", 63, child = true))
-        val entitySource: Field<ParentChainEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-    }
+    companion object: ObjType<ParentChainEntity, Builder>(TestEntities, 61)
     //@formatter:on
     //endregion
 
@@ -52,10 +49,7 @@ interface SimpleAbstractEntity : WorkspaceEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<SimpleAbstractEntity, Builder>(TestEntities, 62) {
-        val parentInList: Field<SimpleAbstractEntity, CompositeAbstractEntity> = Field(this, 0, "parentInList", TRef("org.jetbrains.deft.TestEntities", 63))
-        val entitySource: Field<SimpleAbstractEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-    }
+    companion object: ObjType<SimpleAbstractEntity, Builder>(TestEntities, 62)
     //@formatter:on
     //endregion
 
@@ -77,11 +71,7 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
         override var parentEntity: ParentChainEntity?
     }
     
-    companion object: ObjType<CompositeAbstractEntity, Builder>(TestEntities, 63, SimpleAbstractEntity) {
-        val children: Field<CompositeAbstractEntity, List<SimpleAbstractEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.TestEntities", 62, child = true)))
-        val entitySource: Field<CompositeAbstractEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val parentEntity: Field<CompositeAbstractEntity, ParentChainEntity?> = Field(this, 0, "parentEntity", TOptional(TRef("org.jetbrains.deft.TestEntities", 61)))
-    }
+    companion object: ObjType<CompositeAbstractEntity, Builder>(TestEntities, 63, SimpleAbstractEntity)
     //@formatter:on
     //endregion
 
@@ -98,8 +88,7 @@ interface CompositeChildAbstractEntity : CompositeAbstractEntity {
         override var parentEntity: ParentChainEntity?
     }
     
-    companion object: ObjType<CompositeChildAbstractEntity, Builder>(TestEntities, 64, CompositeAbstractEntity) {
-    }
+    companion object: ObjType<CompositeChildAbstractEntity, Builder>(TestEntities, 64, CompositeAbstractEntity)
     //@formatter:on
     //endregion
 
@@ -114,8 +103,7 @@ interface SimpleChildAbstractEntity : SimpleAbstractEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<SimpleChildAbstractEntity, Builder>(TestEntities, 65, SimpleAbstractEntity) {
-    }
+    companion object: ObjType<SimpleChildAbstractEntity, Builder>(TestEntities, 65, SimpleAbstractEntity)
     //@formatter:on
     //endregion
 

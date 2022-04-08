@@ -26,10 +26,7 @@ interface BaseEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<BaseEntity, Builder>(TestEntities, 78) {
-      val parentEntity: Field<BaseEntity, CompositeBaseEntity?> = Field(this, 0, "parentEntity", TOptional(TRef("org.jetbrains.deft.TestEntities", 79)))
-      val entitySource: Field<BaseEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-  }
+  companion object: ObjType<BaseEntity, Builder>(TestEntities, 78)
   //@formatter:on
   //endregion
 
@@ -49,10 +46,7 @@ interface CompositeBaseEntity : BaseEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<CompositeBaseEntity, Builder>(TestEntities, 79, BaseEntity) {
-      val children: Field<CompositeBaseEntity, List<BaseEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.TestEntities", 78, child = true)))
-      val entitySource: Field<CompositeBaseEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-  }
+  companion object: ObjType<CompositeBaseEntity, Builder>(TestEntities, 79, BaseEntity)
   //@formatter:on
   //endregion
 
@@ -71,10 +65,7 @@ interface MiddleEntity : BaseEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<MiddleEntity, Builder>(TestEntities, 80, BaseEntity) {
-      val property: Field<MiddleEntity, String> = Field(this, 0, "property", TString)
-      val entitySource: Field<MiddleEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-  }
+  companion object: ObjType<MiddleEntity, Builder>(TestEntities, 80, BaseEntity)
   //@formatter:on
   //endregion
 
@@ -102,8 +93,7 @@ interface LeftEntity : CompositeBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<LeftEntity, Builder>(TestEntities, 81, CompositeBaseEntity) {
-    }
+    companion object: ObjType<LeftEntity, Builder>(TestEntities, 81, CompositeBaseEntity)
     //@formatter:on
     //endregion
 
@@ -131,8 +121,7 @@ interface RightEntity : CompositeBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<RightEntity, Builder>(TestEntities, 82, CompositeBaseEntity) {
-    }
+    companion object: ObjType<RightEntity, Builder>(TestEntities, 82, CompositeBaseEntity)
     //@formatter:on
     //endregion
 

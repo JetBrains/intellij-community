@@ -30,11 +30,7 @@ interface ParentMultipleEntity : WorkspaceEntity {
         override var children: List<ChildMultipleEntity>
     }
     
-    companion object: ObjType<ParentMultipleEntity, Builder>(TestEntities, 91) {
-        val parentData: Field<ParentMultipleEntity, String> = Field(this, 0, "parentData", TString)
-        val entitySource: Field<ParentMultipleEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val children: Field<ParentMultipleEntity, List<ChildMultipleEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.TestEntities", 92, child = true)))
-    }
+    companion object: ObjType<ParentMultipleEntity, Builder>(TestEntities, 91)
     //@formatter:on
     //endregion
 
@@ -54,11 +50,7 @@ interface ChildMultipleEntity : WorkspaceEntity {
         override var parentEntity: ParentMultipleEntity
     }
     
-    companion object: ObjType<ChildMultipleEntity, Builder>(TestEntities, 92) {
-        val childData: Field<ChildMultipleEntity, String> = Field(this, 0, "childData", TString)
-        val entitySource: Field<ChildMultipleEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val parentEntity: Field<ChildMultipleEntity, ParentMultipleEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.TestEntities", 91))
-    }
+    companion object: ObjType<ChildMultipleEntity, Builder>(TestEntities, 92)
     //@formatter:on
     //endregion
 

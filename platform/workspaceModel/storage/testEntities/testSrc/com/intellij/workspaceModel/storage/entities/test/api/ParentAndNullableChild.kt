@@ -32,11 +32,7 @@ interface ParentNullableEntity : WorkspaceEntity {
         override var child: ChildNullableEntity?
     }
     
-    companion object: ObjType<ParentNullableEntity, Builder>(TestEntities, 53) {
-        val parentData: Field<ParentNullableEntity, String> = Field(this, 0, "parentData", TString)
-        val entitySource: Field<ParentNullableEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val child: Field<ParentNullableEntity, ChildNullableEntity?> = Field(this, 0, "child", TOptional(TRef("org.jetbrains.deft.TestEntities", 54, child = true)))
-    }
+    companion object: ObjType<ParentNullableEntity, Builder>(TestEntities, 53)
     //@formatter:on
     //endregion
 
@@ -56,11 +52,7 @@ interface ChildNullableEntity : WorkspaceEntity {
         override var parentEntity: ParentNullableEntity
     }
     
-    companion object: ObjType<ChildNullableEntity, Builder>(TestEntities, 54) {
-        val childData: Field<ChildNullableEntity, String> = Field(this, 0, "childData", TString)
-        val entitySource: Field<ChildNullableEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val parentEntity: Field<ChildNullableEntity, ParentNullableEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.TestEntities", 53))
-    }
+    companion object: ObjType<ChildNullableEntity, Builder>(TestEntities, 54)
     //@formatter:on
     //endregion
 

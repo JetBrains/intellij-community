@@ -38,12 +38,7 @@ interface LinkedListEntity : WorkspaceEntityWithPersistentId {
       override var next: LinkedListEntityId
   }
   
-  companion object: ObjType<LinkedListEntity, Builder>(TestEntities, 24) {
-      val myName: Field<LinkedListEntity, String> = Field(this, 0, "myName", TString)
-      val entitySource: Field<LinkedListEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val next: Field<LinkedListEntity, LinkedListEntityId> = Field(this, 0, "next", TBlob("LinkedListEntityId"))
-      val persistentId: Field<LinkedListEntity, LinkedListEntityId> = Field(this, 0, "persistentId", TBlob("LinkedListEntityId"))
-  }
+  companion object: ObjType<LinkedListEntity, Builder>(TestEntities, 24)
   //@formatter:on
   //endregion
 

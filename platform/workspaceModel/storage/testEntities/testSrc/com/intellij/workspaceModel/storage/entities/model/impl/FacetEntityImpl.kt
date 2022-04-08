@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.entities.model.api.FacetEntity.Companion.underlyingFacet
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -301,38 +300,20 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
 
     override fun getLinks(): Set<PersistentEntityId<*>> {
         val result = HashSet<PersistentEntityId<*>>()
-        val optionalLink_configurationXmlTag = configurationXmlTag
-        if (optionalLink_configurationXmlTag != null) {
-        }
         result.add(moduleId)
-        val optionalLink_underlyingFacet = underlyingFacet
-        if (optionalLink_underlyingFacet != null) {
-        }
         return result
     }
 
     override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
-        val optionalLink_configurationXmlTag = configurationXmlTag
-        if (optionalLink_configurationXmlTag != null) {
-        }
         index.index(this, moduleId)
-        val optionalLink_underlyingFacet = underlyingFacet
-        if (optionalLink_underlyingFacet != null) {
-        }
     }
 
     override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
         // TODO verify logic
         val mutablePreviousSet = HashSet(prev)
-        val optionalLink_configurationXmlTag = configurationXmlTag
-        if (optionalLink_configurationXmlTag != null) {
-        }
         val removedItem_moduleId = mutablePreviousSet.remove(moduleId)
         if (!removedItem_moduleId) {
             index.index(this, moduleId)
-        }
-        val optionalLink_underlyingFacet = underlyingFacet
-        if (optionalLink_underlyingFacet != null) {
         }
         for (removed in mutablePreviousSet) {
             index.remove(this, removed)

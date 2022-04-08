@@ -42,17 +42,7 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
         override var libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
     }
     
-    companion object: ObjType<LibraryEntity, Builder>(IntellijWs, 46) {
-        val nameField: Field<LibraryEntity, String> = Field(this, 0, "name", TString)
-        val entitySource: Field<LibraryEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val tableId: Field<LibraryEntity, LibraryTableId> = Field(this, 0, "tableId", TBlob("LibraryTableId"))
-        val roots: Field<LibraryEntity, List<LibraryRoot>> = Field(this, 0, "roots", TList(TBlob("LibraryRoot")))
-        val excludedRoots: Field<LibraryEntity, List<VirtualFileUrl>> = Field(this, 0, "excludedRoots", TList(TBlob("VirtualFileUrl")))
-        val sdk: Field<LibraryEntity, SdkEntity?> = Field(this, 0, "sdk", TOptional(TRef("org.jetbrains.deft.IntellijWs", 48, child = true)))
-        val libraryProperties: Field<LibraryEntity, LibraryPropertiesEntity?> = Field(this, 0, "libraryProperties", TOptional(TRef("org.jetbrains.deft.IntellijWs", 47, child = true)))
-        val libraryFilesPackagingElement: Field<LibraryEntity, LibraryFilesPackagingElementEntity?> = Field(this, 0, "libraryFilesPackagingElement", TOptional(TRef("org.jetbrains.deft.IntellijWs", 32, child = true)))
-        val persistentId: Field<LibraryEntity, LibraryId> = Field(this, 0, "persistentId", TBlob("LibraryId"))
-    }
+    companion object: ObjType<LibraryEntity, Builder>(IntellijWs, 46)
     //@formatter:on
     //endregion
 
@@ -72,12 +62,7 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
         override var propertiesXmlTag: String?
     }
     
-    companion object: ObjType<LibraryPropertiesEntity, Builder>(IntellijWs, 47) {
-        val library: Field<LibraryPropertiesEntity, LibraryEntity> = Field(this, 0, "library", TRef("org.jetbrains.deft.IntellijWs", 46))
-        val entitySource: Field<LibraryPropertiesEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val libraryType: Field<LibraryPropertiesEntity, String> = Field(this, 0, "libraryType", TString)
-        val propertiesXmlTag: Field<LibraryPropertiesEntity, String?> = Field(this, 0, "propertiesXmlTag", TOptional(TString))
-    }
+    companion object: ObjType<LibraryPropertiesEntity, Builder>(IntellijWs, 47)
     //@formatter:on
     //endregion
 
@@ -95,11 +80,7 @@ interface SdkEntity : WorkspaceEntity {
         override var homeUrl: VirtualFileUrl
     }
     
-    companion object: ObjType<SdkEntity, Builder>(IntellijWs, 48) {
-        val library: Field<SdkEntity, LibraryEntity> = Field(this, 0, "library", TRef("org.jetbrains.deft.IntellijWs", 46))
-        val entitySource: Field<SdkEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val homeUrl: Field<SdkEntity, VirtualFileUrl> = Field(this, 0, "homeUrl", TBlob("VirtualFileUrl"))
-    }
+    companion object: ObjType<SdkEntity, Builder>(IntellijWs, 48)
     //@formatter:on
     //endregion
 

@@ -57,11 +57,7 @@ interface OneEntityWithPersistentId : WorkspaceEntityWithPersistentId {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<OneEntityWithPersistentId, Builder>(TestEntities, 27) {
-        val myName: Field<OneEntityWithPersistentId, String> = Field(this, 0, "myName", TString)
-        val entitySource: Field<OneEntityWithPersistentId, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val persistentId: Field<OneEntityWithPersistentId, OnePersistentId> = Field(this, 0, "persistentId", TBlob("OnePersistentId"))
-    }
+    companion object: ObjType<OneEntityWithPersistentId, Builder>(TestEntities, 27)
     //@formatter:on
     //endregion
 
@@ -102,21 +98,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
         override var justListProperty: List<String>
     }
     
-    companion object: ObjType<EntityWithSoftLinks, Builder>(TestEntities, 28) {
-        val link: Field<EntityWithSoftLinks, OnePersistentId> = Field(this, 0, "link", TBlob("OnePersistentId"))
-        val entitySource: Field<EntityWithSoftLinks, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val manyLinks: Field<EntityWithSoftLinks, List<OnePersistentId>> = Field(this, 0, "manyLinks", TList(TBlob("OnePersistentId")))
-        val optionalLink: Field<EntityWithSoftLinks, OnePersistentId?> = Field(this, 0, "optionalLink", TOptional(TBlob("OnePersistentId")))
-        val inContainer: Field<EntityWithSoftLinks, Container> = Field(this, 0, "inContainer", TBlob("Container"))
-        val inOptionalContainer: Field<EntityWithSoftLinks, Container?> = Field(this, 0, "inOptionalContainer", TOptional(TBlob("Container")))
-        val inContainerList: Field<EntityWithSoftLinks, List<Container>> = Field(this, 0, "inContainerList", TList(TBlob("Container")))
-        val deepContainer: Field<EntityWithSoftLinks, List<TooDeepContainer>> = Field(this, 0, "deepContainer", TList(TBlob("TooDeepContainer")))
-        val sealedContainer: Field<EntityWithSoftLinks, SealedContainer> = Field(this, 0, "sealedContainer", TBlob("SealedContainer"))
-        val listSealedContainer: Field<EntityWithSoftLinks, List<SealedContainer>> = Field(this, 0, "listSealedContainer", TList(TBlob("SealedContainer")))
-        val justProperty: Field<EntityWithSoftLinks, String> = Field(this, 0, "justProperty", TString)
-        val justNullableProperty: Field<EntityWithSoftLinks, String?> = Field(this, 0, "justNullableProperty", TOptional(TString))
-        val justListProperty: Field<EntityWithSoftLinks, List<String>> = Field(this, 0, "justListProperty", TList(TString))
-    }
+    companion object: ObjType<EntityWithSoftLinks, Builder>(TestEntities, 28)
     //@formatter:on
     //endregion
 

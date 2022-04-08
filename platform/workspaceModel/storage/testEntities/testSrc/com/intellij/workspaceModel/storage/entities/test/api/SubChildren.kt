@@ -37,11 +37,7 @@ interface ParentSubEntity : WorkspaceEntity {
         override var child: ChildSubEntity
     }
     
-    companion object: ObjType<ParentSubEntity, Builder>(TestEntities, 75) {
-        val parentData: Field<ParentSubEntity, String> = Field(this, 0, "parentData", TString)
-        val entitySource: Field<ParentSubEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val child: Field<ParentSubEntity, ChildSubEntity> = Field(this, 0, "child", TRef("org.jetbrains.deft.TestEntities", 76, child = true))
-    }
+    companion object: ObjType<ParentSubEntity, Builder>(TestEntities, 75)
     //@formatter:on
     //endregion
 
@@ -62,11 +58,7 @@ interface ChildSubEntity : WorkspaceEntity {
         override var child: ChildSubSubEntity
     }
     
-    companion object: ObjType<ChildSubEntity, Builder>(TestEntities, 76) {
-        val parentEntity: Field<ChildSubEntity, ParentSubEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.TestEntities", 75))
-        val entitySource: Field<ChildSubEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val child: Field<ChildSubEntity, ChildSubSubEntity> = Field(this, 0, "child", TRef("org.jetbrains.deft.TestEntities", 77, child = true))
-    }
+    companion object: ObjType<ChildSubEntity, Builder>(TestEntities, 76)
     //@formatter:on
     //endregion
 
@@ -85,11 +77,7 @@ interface ChildSubSubEntity : WorkspaceEntity {
         override var childData: String
     }
     
-    companion object: ObjType<ChildSubSubEntity, Builder>(TestEntities, 77) {
-        val parentEntity: Field<ChildSubSubEntity, ChildSubEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.TestEntities", 76))
-        val entitySource: Field<ChildSubSubEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val childData: Field<ChildSubSubEntity, String> = Field(this, 0, "childData", TString)
-    }
+    companion object: ObjType<ChildSubSubEntity, Builder>(TestEntities, 77)
     //@formatter:on
     //endregion
 

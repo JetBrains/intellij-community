@@ -46,19 +46,7 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
         override var facets: List<FacetEntity>
     }
     
-    companion object: ObjType<ModuleEntity, Builder>(IntellijWs, 41) {
-        val nameField: Field<ModuleEntity, String> = Field(this, 0, "name", TString)
-        val entitySource: Field<ModuleEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val type: Field<ModuleEntity, String?> = Field(this, 0, "type", TOptional(TString))
-        val dependencies: Field<ModuleEntity, List<ModuleDependencyItem>> = Field(this, 0, "dependencies", TList(TBlob("ModuleDependencyItem")))
-        val contentRoots: Field<ModuleEntity, List<ContentRootEntity>> = Field(this, 0, "contentRoots", TList(TRef("org.jetbrains.deft.IntellijWs", 17, child = true)))
-        val customImlData: Field<ModuleEntity, ModuleCustomImlDataEntity?> = Field(this, 0, "customImlData", TOptional(TRef("org.jetbrains.deft.IntellijWs", 42, child = true)))
-        val groupPath: Field<ModuleEntity, ModuleGroupPathEntity?> = Field(this, 0, "groupPath", TOptional(TRef("org.jetbrains.deft.IntellijWs", 43, child = true)))
-        val javaSettings: Field<ModuleEntity, JavaModuleSettingsEntity?> = Field(this, 0, "javaSettings", TOptional(TRef("org.jetbrains.deft.IntellijWs", 44, child = true)))
-        val exModuleOptions: Field<ModuleEntity, ExternalSystemModuleOptionsEntity?> = Field(this, 0, "exModuleOptions", TOptional(TRef("org.jetbrains.deft.IntellijWs", 45, child = true)))
-        val facets: Field<ModuleEntity, List<FacetEntity>> = Field(this, 0, "facets", TList(TRef("org.jetbrains.deft.IntellijWs", 40, child = true)))
-        val persistentId: Field<ModuleEntity, ModuleId> = Field(this, 0, "persistentId", TBlob("ModuleId"))
-    }
+    companion object: ObjType<ModuleEntity, Builder>(IntellijWs, 41)
     //@formatter:on
     //endregion
 
@@ -78,12 +66,7 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
         override var customModuleOptions: Map<String, String>
     }
     
-    companion object: ObjType<ModuleCustomImlDataEntity, Builder>(IntellijWs, 42) {
-        val moduleField: Field<ModuleCustomImlDataEntity, ModuleEntity> = Field(this, 0, "module", TRef("org.jetbrains.deft.IntellijWs", 41))
-        val entitySource: Field<ModuleCustomImlDataEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val rootManagerTagCustomData: Field<ModuleCustomImlDataEntity, String?> = Field(this, 0, "rootManagerTagCustomData", TOptional(TString))
-        val customModuleOptions: Field<ModuleCustomImlDataEntity, Map<String, String>> = Field(this, 0, "customModuleOptions", TMap(TString, TString))
-    }
+    companion object: ObjType<ModuleCustomImlDataEntity, Builder>(IntellijWs, 42)
     //@formatter:on
     //endregion
 
@@ -101,11 +84,7 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
         override var path: List<String>
     }
     
-    companion object: ObjType<ModuleGroupPathEntity, Builder>(IntellijWs, 43) {
-        val moduleField: Field<ModuleGroupPathEntity, ModuleEntity> = Field(this, 0, "module", TRef("org.jetbrains.deft.IntellijWs", 41))
-        val entitySource: Field<ModuleGroupPathEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val path: Field<ModuleGroupPathEntity, List<String>> = Field(this, 0, "path", TList(TString))
-    }
+    companion object: ObjType<ModuleGroupPathEntity, Builder>(IntellijWs, 43)
     //@formatter:on
     //endregion
 
@@ -131,15 +110,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
         override var languageLevelId: String?
     }
     
-    companion object: ObjType<JavaModuleSettingsEntity, Builder>(IntellijWs, 44) {
-        val moduleField: Field<JavaModuleSettingsEntity, ModuleEntity> = Field(this, 0, "module", TRef("org.jetbrains.deft.IntellijWs", 41))
-        val entitySource: Field<JavaModuleSettingsEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val inheritedCompilerOutput: Field<JavaModuleSettingsEntity, Boolean> = Field(this, 0, "inheritedCompilerOutput", TBoolean)
-        val excludeOutput: Field<JavaModuleSettingsEntity, Boolean> = Field(this, 0, "excludeOutput", TBoolean)
-        val compilerOutput: Field<JavaModuleSettingsEntity, VirtualFileUrl?> = Field(this, 0, "compilerOutput", TOptional(TBlob("VirtualFileUrl")))
-        val compilerOutputForTests: Field<JavaModuleSettingsEntity, VirtualFileUrl?> = Field(this, 0, "compilerOutputForTests", TOptional(TBlob("VirtualFileUrl")))
-        val languageLevelId: Field<JavaModuleSettingsEntity, String?> = Field(this, 0, "languageLevelId", TOptional(TString))
-    }
+    companion object: ObjType<JavaModuleSettingsEntity, Builder>(IntellijWs, 44)
     //@formatter:on
     //endregion
 
@@ -170,17 +141,7 @@ interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
         override var externalSystemModuleType: String?
     }
     
-    companion object: ObjType<ExternalSystemModuleOptionsEntity, Builder>(IntellijWs, 45) {
-        val moduleField: Field<ExternalSystemModuleOptionsEntity, ModuleEntity> = Field(this, 0, "module", TRef("org.jetbrains.deft.IntellijWs", 41))
-        val entitySource: Field<ExternalSystemModuleOptionsEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val externalSystem: Field<ExternalSystemModuleOptionsEntity, String?> = Field(this, 0, "externalSystem", TOptional(TString))
-        val externalSystemModuleVersion: Field<ExternalSystemModuleOptionsEntity, String?> = Field(this, 0, "externalSystemModuleVersion", TOptional(TString))
-        val linkedProjectPath: Field<ExternalSystemModuleOptionsEntity, String?> = Field(this, 0, "linkedProjectPath", TOptional(TString))
-        val linkedProjectId: Field<ExternalSystemModuleOptionsEntity, String?> = Field(this, 0, "linkedProjectId", TOptional(TString))
-        val rootProjectPath: Field<ExternalSystemModuleOptionsEntity, String?> = Field(this, 0, "rootProjectPath", TOptional(TString))
-        val externalSystemModuleGroup: Field<ExternalSystemModuleOptionsEntity, String?> = Field(this, 0, "externalSystemModuleGroup", TOptional(TString))
-        val externalSystemModuleType: Field<ExternalSystemModuleOptionsEntity, String?> = Field(this, 0, "externalSystemModuleType", TOptional(TString))
-    }
+    companion object: ObjType<ExternalSystemModuleOptionsEntity, Builder>(IntellijWs, 45)
     //@formatter:on
     //endregion
 

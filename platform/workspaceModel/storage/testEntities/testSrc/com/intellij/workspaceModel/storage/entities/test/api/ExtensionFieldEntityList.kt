@@ -29,10 +29,7 @@ interface MainEntityList : WorkspaceEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<MainEntityList, Builder>(TestEntities, 55) {
-        val x: Field<MainEntityList, String> = Field(this, 0, "x", TString)
-        val entitySource: Field<MainEntityList, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-    }
+    companion object: ObjType<MainEntityList, Builder>(TestEntities, 55)
     //@formatter:on
     //endregion
 }
@@ -50,11 +47,7 @@ interface AttachedEntityList : WorkspaceEntity {
         override var data: String
     }
     
-    companion object: ObjType<AttachedEntityList, Builder>(TestEntities, 56) {
-        val ref: Field<AttachedEntityList, MainEntityList?> = Field(this, 0, "ref", TOptional(TRef("org.jetbrains.deft.TestEntities", 55)))
-        val entitySource: Field<AttachedEntityList, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val data: Field<AttachedEntityList, String> = Field(this, 0, "data", TString)
-    }
+    companion object: ObjType<AttachedEntityList, Builder>(TestEntities, 56)
     //@formatter:on
     //endregion
 

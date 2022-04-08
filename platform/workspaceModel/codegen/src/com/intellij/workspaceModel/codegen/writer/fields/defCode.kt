@@ -5,9 +5,6 @@ import deft.storage.codegen.javaMetaName
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.Field
 
-val Field<*, *>.defCode: String
-    get() = "val $javaMetaName: Field<${owner.javaFullName}, ${type.kotlinType}> = Field(this, $id, \"$name\", ${type.defCode})"
-
 val ValueType<*>.kotlinType: String
     get() = javaType
 

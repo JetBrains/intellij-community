@@ -35,11 +35,7 @@ interface FirstEntityWithPId  : WorkspaceEntityWithPersistentId {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<FirstEntityWithPId, Builder>(TestEntities, 89) {
-        val data: Field<FirstEntityWithPId, String> = Field(this, 0, "data", TString)
-        val entitySource: Field<FirstEntityWithPId, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val persistentId: Field<FirstEntityWithPId, FirstPId> = Field(this, 0, "persistentId", TBlob("FirstPId"))
-    }
+    companion object: ObjType<FirstEntityWithPId, Builder>(TestEntities, 89)
     //@formatter:on
     //endregion
 
@@ -60,11 +56,7 @@ interface SecondEntityWithPId  : WorkspaceEntityWithPersistentId {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<SecondEntityWithPId, Builder>(TestEntities, 90) {
-        val data: Field<SecondEntityWithPId, String> = Field(this, 0, "data", TString)
-        val entitySource: Field<SecondEntityWithPId, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val persistentId: Field<SecondEntityWithPId, SecondPId> = Field(this, 0, "persistentId", TBlob("SecondPId"))
-    }
+    companion object: ObjType<SecondEntityWithPId, Builder>(TestEntities, 90)
     //@formatter:on
     //endregion
 

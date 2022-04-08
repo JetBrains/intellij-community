@@ -35,15 +35,7 @@ interface ContentRootEntity : WorkspaceEntity {
         override var sourceRootOrder: SourceRootOrderEntity?
     }
     
-    companion object: ObjType<ContentRootEntity, Builder>(IntellijWs, 17) {
-        val moduleField: Field<ContentRootEntity, ModuleEntity> = Field(this, 0, "module", TRef("org.jetbrains.deft.IntellijWs", 41))
-        val entitySource: Field<ContentRootEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val url: Field<ContentRootEntity, VirtualFileUrl> = Field(this, 0, "url", TBlob("VirtualFileUrl"))
-        val excludedUrls: Field<ContentRootEntity, List<VirtualFileUrl>> = Field(this, 0, "excludedUrls", TList(TBlob("VirtualFileUrl")))
-        val excludedPatterns: Field<ContentRootEntity, List<String>> = Field(this, 0, "excludedPatterns", TList(TString))
-        val sourceRoots: Field<ContentRootEntity, List<SourceRootEntity>> = Field(this, 0, "sourceRoots", TList(TRef("org.jetbrains.deft.IntellijWs", 18, child = true)))
-        val sourceRootOrder: Field<ContentRootEntity, SourceRootOrderEntity?> = Field(this, 0, "sourceRootOrder", TOptional(TRef("org.jetbrains.deft.IntellijWs", 19, child = true)))
-    }
+    companion object: ObjType<ContentRootEntity, Builder>(IntellijWs, 17)
     //@formatter:on
     //endregion
 
@@ -70,15 +62,7 @@ interface SourceRootEntity : WorkspaceEntity {
         override var javaResourceRoots: List<JavaResourceRootEntity>
     }
     
-    companion object: ObjType<SourceRootEntity, Builder>(IntellijWs, 18) {
-        val contentRoot: Field<SourceRootEntity, ContentRootEntity> = Field(this, 0, "contentRoot", TRef("org.jetbrains.deft.IntellijWs", 17))
-        val entitySource: Field<SourceRootEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val url: Field<SourceRootEntity, VirtualFileUrl> = Field(this, 0, "url", TBlob("VirtualFileUrl"))
-        val rootType: Field<SourceRootEntity, String> = Field(this, 0, "rootType", TString)
-        val customSourceRootProperties: Field<SourceRootEntity, CustomSourceRootPropertiesEntity?> = Field(this, 0, "customSourceRootProperties", TOptional(TRef("org.jetbrains.deft.IntellijWs", 20, child = true)))
-        val javaSourceRoots: Field<SourceRootEntity, List<JavaSourceRootEntity>> = Field(this, 0, "javaSourceRoots", TList(TRef("org.jetbrains.deft.IntellijWs", 21, child = true)))
-        val javaResourceRoots: Field<SourceRootEntity, List<JavaResourceRootEntity>> = Field(this, 0, "javaResourceRoots", TList(TRef("org.jetbrains.deft.IntellijWs", 22, child = true)))
-    }
+    companion object: ObjType<SourceRootEntity, Builder>(IntellijWs, 18)
     //@formatter:on
     //endregion
 
@@ -96,11 +80,7 @@ interface SourceRootOrderEntity : WorkspaceEntity {
         override var orderOfSourceRoots: List<VirtualFileUrl>
     }
     
-    companion object: ObjType<SourceRootOrderEntity, Builder>(IntellijWs, 19) {
-        val contentRootEntity: Field<SourceRootOrderEntity, ContentRootEntity> = Field(this, 0, "contentRootEntity", TRef("org.jetbrains.deft.IntellijWs", 17))
-        val entitySource: Field<SourceRootOrderEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val orderOfSourceRoots: Field<SourceRootOrderEntity, List<VirtualFileUrl>> = Field(this, 0, "orderOfSourceRoots", TList(TBlob("VirtualFileUrl")))
-    }
+    companion object: ObjType<SourceRootOrderEntity, Builder>(IntellijWs, 19)
     //@formatter:on
     //endregion
 
@@ -118,11 +98,7 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
         override var propertiesXmlTag: String
     }
     
-    companion object: ObjType<CustomSourceRootPropertiesEntity, Builder>(IntellijWs, 20) {
-        val sourceRoot: Field<CustomSourceRootPropertiesEntity, SourceRootEntity> = Field(this, 0, "sourceRoot", TRef("org.jetbrains.deft.IntellijWs", 18))
-        val entitySource: Field<CustomSourceRootPropertiesEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val propertiesXmlTag: Field<CustomSourceRootPropertiesEntity, String> = Field(this, 0, "propertiesXmlTag", TString)
-    }
+    companion object: ObjType<CustomSourceRootPropertiesEntity, Builder>(IntellijWs, 20)
     //@formatter:on
     //endregion
 }
@@ -141,12 +117,7 @@ interface JavaSourceRootEntity : WorkspaceEntity {
         override var packagePrefix: String
     }
     
-    companion object: ObjType<JavaSourceRootEntity, Builder>(IntellijWs, 21) {
-        val sourceRoot: Field<JavaSourceRootEntity, SourceRootEntity> = Field(this, 0, "sourceRoot", TRef("org.jetbrains.deft.IntellijWs", 18))
-        val entitySource: Field<JavaSourceRootEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val generated: Field<JavaSourceRootEntity, Boolean> = Field(this, 0, "generated", TBoolean)
-        val packagePrefix: Field<JavaSourceRootEntity, String> = Field(this, 0, "packagePrefix", TString)
-    }
+    companion object: ObjType<JavaSourceRootEntity, Builder>(IntellijWs, 21)
     //@formatter:on
     //endregion
 
@@ -166,12 +137,7 @@ interface JavaResourceRootEntity: WorkspaceEntity {
         override var relativeOutputPath: String
     }
     
-    companion object: ObjType<JavaResourceRootEntity, Builder>(IntellijWs, 22) {
-        val sourceRoot: Field<JavaResourceRootEntity, SourceRootEntity> = Field(this, 0, "sourceRoot", TRef("org.jetbrains.deft.IntellijWs", 18))
-        val entitySource: Field<JavaResourceRootEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-        val generated: Field<JavaResourceRootEntity, Boolean> = Field(this, 0, "generated", TBoolean)
-        val relativeOutputPath: Field<JavaResourceRootEntity, String> = Field(this, 0, "relativeOutputPath", TString)
-    }
+    companion object: ObjType<JavaResourceRootEntity, Builder>(IntellijWs, 22)
     //@formatter:on
     //endregion
 

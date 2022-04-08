@@ -54,13 +54,7 @@ interface NamedEntity : WorkspaceEntityWithPersistentId {
       override var children: List<NamedChildEntity>
   }
   
-  companion object: ObjType<NamedEntity, Builder>(TestEntities, 31) {
-      val myName: Field<NamedEntity, String> = Field(this, 0, "myName", TString)
-      val entitySource: Field<NamedEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val additionalProperty: Field<NamedEntity, String?> = Field(this, 0, "additionalProperty", TOptional(TString))
-      val children: Field<NamedEntity, List<NamedChildEntity>> = Field(this, 0, "children", TList(TRef("org.jetbrains.deft.TestEntities", 32, child = true)))
-      val persistentId: Field<NamedEntity, NameId> = Field(this, 0, "persistentId", TBlob("NameId"))
-  }
+  companion object: ObjType<NamedEntity, Builder>(TestEntities, 31)
   //@formatter:on
   //endregion
 
@@ -102,11 +96,7 @@ interface NamedChildEntity : WorkspaceEntity {
       override var parentEntity: NamedEntity
   }
   
-  companion object: ObjType<NamedChildEntity, Builder>(TestEntities, 32) {
-      val childProperty: Field<NamedChildEntity, String> = Field(this, 0, "childProperty", TString)
-      val entitySource: Field<NamedChildEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val parentEntity: Field<NamedChildEntity, NamedEntity> = Field(this, 0, "parentEntity", TRef("org.jetbrains.deft.TestEntities", 31))
-  }
+  companion object: ObjType<NamedChildEntity, Builder>(TestEntities, 32)
   //@formatter:on
   //endregion
 
@@ -139,10 +129,7 @@ interface WithSoftLinkEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<WithSoftLinkEntity, Builder>(TestEntities, 33) {
-      val link: Field<WithSoftLinkEntity, NameId> = Field(this, 0, "link", TBlob("NameId"))
-      val entitySource: Field<WithSoftLinkEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-  }
+  companion object: ObjType<WithSoftLinkEntity, Builder>(TestEntities, 33)
   //@formatter:on
   //endregion
 
@@ -167,10 +154,7 @@ interface ComposedLinkEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<ComposedLinkEntity, Builder>(TestEntities, 34) {
-      val link: Field<ComposedLinkEntity, ComposedId> = Field(this, 0, "link", TBlob("ComposedId"))
-      val entitySource: Field<ComposedLinkEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-  }
+  companion object: ObjType<ComposedLinkEntity, Builder>(TestEntities, 34)
   //@formatter:on
   //endregion
 
@@ -201,12 +185,7 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithPersistentId {
       override var links: List<NameId>
   }
   
-  companion object: ObjType<WithListSoftLinksEntity, Builder>(TestEntities, 35) {
-      val myName: Field<WithListSoftLinksEntity, String> = Field(this, 0, "myName", TString)
-      val entitySource: Field<WithListSoftLinksEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val links: Field<WithListSoftLinksEntity, List<NameId>> = Field(this, 0, "links", TList(TBlob("NameId")))
-      val persistentId: Field<WithListSoftLinksEntity, AnotherNameId> = Field(this, 0, "persistentId", TBlob("AnotherNameId"))
-  }
+  companion object: ObjType<WithListSoftLinksEntity, Builder>(TestEntities, 35)
   //@formatter:on
   //endregion
 
@@ -243,12 +222,7 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithPersistentId {
       override var link: NameId
   }
   
-  companion object: ObjType<ComposedIdSoftRefEntity, Builder>(TestEntities, 36) {
-      val myName: Field<ComposedIdSoftRefEntity, String> = Field(this, 0, "myName", TString)
-      val entitySource: Field<ComposedIdSoftRefEntity, EntitySource> = Field(this, 0, "entitySource", TBlob("EntitySource"))
-      val link: Field<ComposedIdSoftRefEntity, NameId> = Field(this, 0, "link", TBlob("NameId"))
-      val persistentId: Field<ComposedIdSoftRefEntity, ComposedId> = Field(this, 0, "persistentId", TBlob("ComposedId"))
-  }
+  companion object: ObjType<ComposedIdSoftRefEntity, Builder>(TestEntities, 36)
   //@formatter:on
   //endregion
 

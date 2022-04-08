@@ -333,10 +333,6 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
             result.add(optionalLink_optionalLink)
         }
         result.add(inContainer.id)
-        val optionalLink_inOptionalContainer = inOptionalContainer
-        if (optionalLink_inOptionalContainer != null) {
-            result.add(optionalLink_inOptionalContainer.id)
-        }
         for (item in inContainerList) {
             result.add(item.id)
         }
@@ -385,9 +381,6 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
                 }
             }
         }
-        val optionalLink_justNullableProperty = justNullableProperty
-        if (optionalLink_justNullableProperty != null) {
-        }
         for (item in justListProperty) {
         }
         return result
@@ -403,10 +396,6 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
             index.index(this, optionalLink_optionalLink)
         }
         index.index(this, inContainer.id)
-        val optionalLink_inOptionalContainer = inOptionalContainer
-        if (optionalLink_inOptionalContainer != null) {
-            index.index(this, optionalLink_inOptionalContainer.id)
-        }
         for (item in inContainerList) {
             index.index(this, item.id)
         }
@@ -455,9 +444,6 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
                 }
             }
         }
-        val optionalLink_justNullableProperty = justNullableProperty
-        if (optionalLink_justNullableProperty != null) {
-        }
         for (item in justListProperty) {
         }
     }
@@ -485,13 +471,6 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
         val removedItem_inContainer_id = mutablePreviousSet.remove(inContainer.id)
         if (!removedItem_inContainer_id) {
             index.index(this, inContainer.id)
-        }
-        val optionalLink_inOptionalContainer = inOptionalContainer
-        if (optionalLink_inOptionalContainer != null) {
-            val removedItem_optionalLink_inOptionalContainer_id = mutablePreviousSet.remove(optionalLink_inOptionalContainer.id)
-            if (!removedItem_optionalLink_inOptionalContainer_id) {
-                index.index(this, optionalLink_inOptionalContainer.id)
-            }
         }
         for (item in inContainerList) {
             val removedItem_item_id = mutablePreviousSet.remove(item.id)
@@ -567,9 +546,6 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
                     }
                 }
             }
-        }
-        val optionalLink_justNullableProperty = justNullableProperty
-        if (optionalLink_justNullableProperty != null) {
         }
         for (item in justListProperty) {
         }
