@@ -15,16 +15,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
-import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,7 +33,7 @@ import androidx.compose.ui.window.singleWindowApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.Orientation
-import org.jetbrains.jewel.theme.intellij.IntelliJTheme
+import org.jetbrains.jewel.components.Icon
 import org.jetbrains.jewel.theme.intellij.IntelliJThemeDark
 import org.jetbrains.jewel.theme.intellij.components.Button
 import org.jetbrains.jewel.theme.intellij.components.CheckboxRow
@@ -49,12 +46,12 @@ import org.jetbrains.jewel.theme.intellij.components.Tab
 import org.jetbrains.jewel.theme.intellij.components.TabRow
 import org.jetbrains.jewel.theme.intellij.components.Text
 import org.jetbrains.jewel.theme.intellij.components.TextField
-import java.awt.event.WindowEvent
 import org.jetbrains.jewel.theme.intellij.components.Tree
 import org.jetbrains.jewel.theme.intellij.components.TreeLayout
 import org.jetbrains.jewel.theme.intellij.components.asTree
 import org.jetbrains.jewel.theme.intellij.components.rememberTabContainerState
 import org.jetbrains.jewel.theme.toolbox.components.Divider
+import java.awt.event.WindowEvent
 import java.io.File
 import java.nio.file.Paths
 import java.util.Optional
@@ -94,7 +91,7 @@ fun WizardHeader(modifier: Modifier = Modifier, currentPage: MutableState<Int>) 
                 modifier = modifier.height(74.dp).padding(10.dp),
                 painter = painterResource("imageasset/android-studio.svg"),
                 contentDescription = "logo",
-                tint = Color.Unspecified // FIXME: tint is being applied regardless
+                tint = Color.Unspecified
             )
             Text(
                 text = when (currentPage.value) {
