@@ -31,12 +31,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.singleWindowApplication
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.Orientation
 import org.jetbrains.jewel.components.Icon
 import org.jetbrains.jewel.theme.intellij.IntelliJTheme
 import org.jetbrains.jewel.theme.intellij.components.Button
 import org.jetbrains.jewel.theme.intellij.components.GroupHeader
+import org.jetbrains.jewel.theme.intellij.components.CheckboxRow
+import org.jetbrains.jewel.theme.intellij.components.CircularProgressIndicator
 import org.jetbrains.jewel.theme.intellij.components.IconButton
 import org.jetbrains.jewel.theme.intellij.components.RadioButtonRow
 import org.jetbrains.jewel.theme.intellij.components.Surface
@@ -163,10 +166,23 @@ fun OutputDirectoriesLabelTree(modifier: Modifier = Modifier, outputDir: Mutable
             }
         }
 
-        Text(
-            modifier = modifier.padding(5.dp),
-            text = if (tree.value.isPresent) "Output Directories:" else "Loading...",
-        )
+        if (tree.value.isEmpty) {
+            Row {
+                CircularProgressIndicator(
+                    modifier = modifier.align(Alignment.CenterVertically)
+                )
+                Text(
+                    modifier = modifier.padding(5.dp),
+                    text = "Loading...",
+                )
+            }
+        }
+        else {
+            Text(
+                modifier = modifier.padding(5.dp),
+                text = "Output Directories:" ,
+            )
+        }
 
         Box {
             val listState = rememberLazyListState()
