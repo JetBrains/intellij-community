@@ -28,16 +28,16 @@ typealias TextFieldStyle = ControlStyle<TextFieldAppearance, TextFieldState>
 data class TextFieldAppearance(
     val textStyle: TextStyle = TextStyle.Default,
     val backgroundColor: Color,
-    val shapeStroke: ShapeStroke? = null,
+    val shapeStroke: ShapeStroke<*>? = null,
     val shape: Shape,
 
-    val adornmentStroke: ShapeStroke? = null,
+    val adornmentStroke: ShapeStroke<*>? = null,
     val adornmentShape: Shape? = null,
 
     val cursorBrush: Brush = SolidColor(Color.Black),
     val contentPadding: PaddingValues,
 
-    val haloStroke: ShapeStroke? = null,
+    val haloStroke: ShapeStroke<*>? = null,
     val haloShape: Shape = shape,
 
     val minWidth: Dp = Dp.Unspecified,
@@ -61,11 +61,7 @@ fun TextFieldStyle(
         shape = RectangleShape,
         contentPadding = PaddingValues(10.dp, 7.dp),
         cursorBrush = palette.text.toBrush(),
-        shapeStroke = ShapeStroke(
-            1.dp,
-            palette.controlStroke.toBrush(),
-            Insets(1.dp)
-        ),
+        shapeStroke = ShapeStroke.SolidColor(1.dp, palette.controlStroke, Insets(1.dp)),
         haloShape = RoundedCornerShape(metrics.controlFocusHaloArc),
         minWidth = 8.dp * 8,
         minHeight = 8.dp * 2,
@@ -77,16 +73,8 @@ fun TextFieldStyle(
     )
 
     val focusedAppearance = defaultAppearance.copy(
-        shapeStroke = ShapeStroke(
-            1.dp,
-            palette.controlStrokeFocused.toBrush(),
-            Insets(1.dp)
-        ),
-        haloStroke = ShapeStroke(
-            metrics.controlFocusHaloWidth,
-            palette.controlFocusHalo.toBrush(),
-            Insets((-1).dp)
-        )
+        shapeStroke = ShapeStroke.SolidColor(1.dp, palette.controlStrokeFocused, Insets(1.dp)),
+        haloStroke = ShapeStroke.SolidColor(metrics.controlFocusHaloWidth, palette.controlFocusHalo, Insets((-1).dp))
     )
 
     default {
@@ -114,16 +102,8 @@ fun TextFieldStyle(
         allStateCombinations { enabled, focused, hovered ->
             val appearance = if (enabled) {
                 defaultAppearance.copy(
-                    shapeStroke = ShapeStroke(
-                        1.dp,
-                        palette.controlHaloError.toBrush(),
-                        Insets(1.dp)
-                    ),
-                    haloStroke = ShapeStroke(
-                        metrics.controlFocusHaloWidth,
-                        palette.controlInactiveHaloError.toBrush(),
-                        Insets((-1).dp)
-                    )
+                    shapeStroke = ShapeStroke.SolidColor(1.dp, palette.controlHaloError, Insets(1.dp)),
+                    haloStroke = ShapeStroke.SolidColor(metrics.controlFocusHaloWidth, palette.controlInactiveHaloError, Insets((-1).dp))
                 )
             } else {
                 disabledAppearance
@@ -144,17 +124,10 @@ fun TextFieldStyle(
         allStateCombinations { enabled, focused, hovered ->
             val appearance = when {
                 enabled -> defaultAppearance.copy(
-                    shapeStroke = ShapeStroke(
-                        1.dp,
-                        palette.controlHaloWarning.toBrush(),
-                        Insets(1.dp)
-                    ),
-                    haloStroke = ShapeStroke(
-                        metrics.controlFocusHaloWidth,
-                        palette.controlInactiveHaloWarning.toBrush(),
-                        Insets((-1).dp)
-                    )
+                    shapeStroke = ShapeStroke.SolidColor(1.dp, palette.controlHaloWarning, Insets(1.dp)),
+                    haloStroke = ShapeStroke.SolidColor(metrics.controlFocusHaloWidth, palette.controlInactiveHaloWarning, Insets((-1).dp))
                 )
+
                 else -> disabledAppearance
             }
 
@@ -176,6 +149,7 @@ fun TextFieldStyle(
                     focused -> focusedAppearance.copy(shape = RoundedCornerShape(metrics.controlArc))
                     else -> defaultAppearance.copy(shape = RoundedCornerShape(metrics.controlArc))
                 }
+
                 else -> disabledAppearance.copy(shape = RoundedCornerShape(metrics.controlArc))
             }
 

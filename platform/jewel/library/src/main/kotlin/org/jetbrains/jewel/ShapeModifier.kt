@@ -20,10 +20,10 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.unit.Dp
 
-fun Modifier.shape(shape: Shape, shapeStroke: ShapeStroke? = null, fillColor: Color = Color.Unspecified): Modifier =
+fun Modifier.shape(shape: Shape, shapeStroke: ShapeStroke<*>? = null, fillColor: Color = Color.Unspecified): Modifier =
     shape(shape, shapeStroke, fillColor.nullIfUnspecified()?.toBrush())
 
-fun Modifier.shape(shape: Shape, shapeStroke: ShapeStroke? = null, fillBrush: Brush?): Modifier =
+fun Modifier.shape(shape: Shape, shapeStroke: ShapeStroke<*>? = null, fillBrush: Brush?): Modifier =
     composed(
         factory = {
             this.then(
@@ -40,7 +40,7 @@ fun Modifier.shape(shape: Shape, shapeStroke: ShapeStroke? = null, fillBrush: Br
         }
     )
 
-private fun rectangleModifier(shapeStroke: ShapeStroke?, brush: Brush?) = Modifier.drawWithCache {
+private fun rectangleModifier(shapeStroke: ShapeStroke<*>?, brush: Brush?) = Modifier.drawWithCache {
     if (shapeStroke != null) {
         val strokeWidth = if (shapeStroke.width == Dp.Hairline) 1f else shapeStroke.width.toPx()
         val stroke = Stroke(strokeWidth)
@@ -108,6 +108,7 @@ private fun CacheDrawScope.drawRoundedShape(
                         )
                     }
             }
+
             else -> {
                 val path = Path().apply {
                     addRoundRect(outline.roundRect)
@@ -133,7 +134,7 @@ private fun CacheDrawScope.drawPathShape(path: Path, stroke: Stroke?, strokeBrus
             drawPath(path, strokeBrush, style = stroke)
     }
 
-private fun shapeModifier(shapeStroke: ShapeStroke?, fillBrush: Brush?, shape: Shape) = Modifier.drawWithCache {
+private fun shapeModifier(shapeStroke: ShapeStroke<*>?, fillBrush: Brush?, shape: Shape) = Modifier.drawWithCache {
     val strokeWidth = when (shapeStroke?.width) {
         null -> 0f
         Dp.Hairline -> 1f
@@ -158,6 +159,7 @@ private fun shapeModifier(shapeStroke: ShapeStroke?, fillBrush: Brush?, shape: S
                 drawPathShape(path, stroke, strokeBrush, fillBrush)
             }
         }
+
         else -> onDrawWithContent {
             drawContent()
         }

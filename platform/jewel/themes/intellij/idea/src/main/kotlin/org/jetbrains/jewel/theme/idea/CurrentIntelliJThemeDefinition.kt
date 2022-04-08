@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.theme.idea
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
@@ -92,7 +93,7 @@ suspend fun CurrentIntelliJThemeDefinition(): IntelliJThemeDefinition {
         button = IntelliJMetrics.Button(
             strokeWidth = 1.dp,
             arc = CornerSize(retrieveIntAsDp("Button.arc")),
-            padding = retrieveInsetsAsPaddingValues("Button.margin"),
+            padding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
         ),
         controlFocusHaloArc = retrieveIntAsDp("Component.arc"),
         separator = IntelliJMetrics.Separator(

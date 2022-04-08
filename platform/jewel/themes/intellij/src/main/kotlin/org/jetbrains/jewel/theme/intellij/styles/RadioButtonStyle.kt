@@ -18,7 +18,6 @@ import org.jetbrains.jewel.styles.Styles
 import org.jetbrains.jewel.styles.localNotProvided
 import org.jetbrains.jewel.theme.intellij.IntelliJPainters
 import org.jetbrains.jewel.theme.intellij.IntelliJPalette
-import org.jetbrains.jewel.toBrush
 
 typealias RadioButtonStyle = ControlStyle<RadioButtonAppearance, RadioButtonState>
 
@@ -38,14 +37,14 @@ data class RadioButtonAppearance(
     val contentSpacing: Dp = 8.dp,
 
     val backgroundColor: Color = Color.Blue,
-    val shapeStroke: ShapeStroke? = ShapeStroke(1.dp, Color.Blue.toBrush()),
+    val shapeStroke: ShapeStroke<*>? = ShapeStroke.SolidColor(1.dp, Color.Blue),
     val shape: Shape = RectangleShape,
 
     val interiorPainter: (@Composable () -> Painter)? = null,
     val symbolPadding: Dp = 2.dp,
     val baseLine: Dp = 14.dp,
 
-    val haloStroke: ShapeStroke? = null,
+    val haloStroke: ShapeStroke<*>? = null,
     val haloShape: Shape = shape,
 )
 

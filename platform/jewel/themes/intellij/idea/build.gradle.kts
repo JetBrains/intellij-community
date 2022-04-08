@@ -26,7 +26,7 @@ intellij {
 //    pluginName.set("Compose support for IJ UI development")
     version.set("LATEST-EAP-SNAPSHOT")
     plugins.set(listOf("org.jetbrains.kotlin", "org.jetbrains.compose.desktop.ide:${libs.versions.composeDesktop.get()}"))
-    version.set("2021.2.1")
+    version.set("2021.2.4")
 }
 
 dependencies {
