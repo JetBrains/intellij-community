@@ -70,7 +70,10 @@ public class WinPathChooserDialog implements PathChooserDialog, FileChooserDialo
                                        IdeBundle.message("windows.native.common.dialog.select.folder"));
       int hints = jbrDialog.getHints();
       if (myFileChooserDescriptor.isChooseFolders()) hints |= JBRFileDialog.SELECT_DIRECTORIES_HINT;
-      if (myFileChooserDescriptor.isChooseFiles()) hints |= JBRFileDialog.SELECT_FILES_HINT;
+      if (myFileChooserDescriptor.isChooseFiles() ||
+          (myFileChooserDescriptor.isChooseJars() && myFileChooserDescriptor.isChooseJarsAsFiles())) {
+        hints |= JBRFileDialog.SELECT_FILES_HINT;
+      }
       jbrDialog.setHints(hints);
     }
   }
