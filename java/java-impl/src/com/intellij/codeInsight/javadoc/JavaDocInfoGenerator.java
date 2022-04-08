@@ -560,20 +560,16 @@ public class JavaDocInfoGenerator {
   public @Nls @Nullable String generateDocInfo(List<@NlsSafe String> docURLs) {
     @Nls StringBuilder buffer = new StringBuilder();
 
+    HtmlChunk containerInfo = generateContainerInfo(myElement);
+    generatePrologue(buffer);
+
+    if (containerInfo != null) {
+      containerInfo.appendTo(buffer);
+    }
+
     if (!generateDocInfoCore(buffer, false)) {
       return null;
     }
-
-    HtmlChunk containerInfo = generateContainerInfo(myElement);
-    StringBuilder builder = new StringBuilder();
-    generatePrologue(builder);
-
-    if (containerInfo != null) {
-      containerInfo.appendTo(builder);
-    }
-
-    builder.append(buffer);
-    buffer = builder;
 
     if (docURLs != null) {
       if (buffer.length() > 0 && elementHasSourceCode()) {
