@@ -139,7 +139,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       text(LessonsBundle.message("recent.files.show.recent.locations", action(it)))
       val recentLocationsText = IdeBundle.message("recent.locations.popup.title")
       triggerUI().component { ui: SimpleColoredComponent ->
-        ui.getCharSequence(true).contains(recentLocationsText)
+        ui.getCharSequence(true) == recentLocationsText
       }
       test { actions(it) }
     }
@@ -216,7 +216,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
   private fun TaskContext.triggerOnRecentFilesShown() {
     val recentFilesText = IdeBundle.message("title.popup.recent.files")
     triggerUI().component { ui: JLabel ->
-      ui.text.isToStringContains(recentFilesText)
+      ui.text == recentFilesText
     }
   }
 
