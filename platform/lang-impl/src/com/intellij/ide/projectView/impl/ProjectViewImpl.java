@@ -934,6 +934,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
       }, myProject);
     }
+
+    ApplicationManager.getApplication().getMessageBus().connect(myProject).subscribe(
+      ProjectConfigurationDirectoryViewState.Listener.TOPIC,
+      () -> updatePanes(false)
+    );
   }
 
   private synchronized void reloadPanes() {

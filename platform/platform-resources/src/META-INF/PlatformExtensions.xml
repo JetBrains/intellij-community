@@ -1320,6 +1320,8 @@
     <advancedSetting id="documentation.components.enable.inline.code.highlighting" default="false" groupKey="group.advanced.settings.documentation.components"/>
     <advancedSetting id="documentation.components.enable.code.blocks.highlighting" default="true" groupKey="group.advanced.settings.documentation.components"/>
     <advancedSetting id="documentation.components.enable.highlighting.of.links" default="false" groupKey="group.advanced.settings.documentation.components"/>
+    <advancedSetting id="show.configuration.directory.in.project.view" default="false" groupKey="group.advanced.settings.project.view"
+                     service="com.intellij.ide.projectView.impl.ProjectConfigurationDirectoryViewState" property="shouldShow"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.DependencyFeatureCollector"/>
     <projectService serviceInterface="com.intellij.presentation.FilePresentationService"
@@ -1345,6 +1347,8 @@
 
     <applicationService serviceInterface="com.intellij.openapi.vfs.newvfs.persistent.FsRootDataLoader"
                         serviceImplementation="com.intellij.openapi.vfs.newvfs.persistent.EmptyFsRootDataLoader"/>
+
+    <applicationService serviceImplementation="com.intellij.ide.projectView.impl.ProjectConfigurationDirectoryViewState"/>
    </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
