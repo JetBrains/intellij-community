@@ -45,7 +45,11 @@ internal class EnableSettingsSyncDialog
 
   override fun createActions(): Array<Action> =
     if (remoteSettingsFound) arrayOf(cancelAction, SyncLocalSettingsAction(), GetSettingsFromAccountAction())
-    else arrayOf(cancelAction, EnableSyncAction())
+    else {
+      val enableSyncAction = EnableSyncAction()
+      enableSyncAction.putValue(DEFAULT_ACTION, true)
+      arrayOf(cancelAction, enableSyncAction)
+    }
 
   inner class EnableSyncAction : AbstractAction(message("enable.dialog.enable.sync.action")) {
     override fun actionPerformed(e: ActionEvent?) {
