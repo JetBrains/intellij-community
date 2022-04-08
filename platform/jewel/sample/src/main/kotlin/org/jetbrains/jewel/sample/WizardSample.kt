@@ -19,6 +19,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,7 +52,9 @@ import org.jetbrains.jewel.theme.intellij.components.TreeLayout
 import org.jetbrains.jewel.theme.intellij.components.asTree
 import org.jetbrains.jewel.theme.intellij.components.rememberTabContainerState
 import org.jetbrains.jewel.theme.toolbox.components.Divider
+import java.io.File
 import java.nio.file.Paths
+import java.util.Optional
 
 private const val WIZARD_PAGE_COUNT = 2
 
@@ -153,19 +156,24 @@ fun ResDirectoryLabelComboBox(modifier: Modifier = Modifier) {
 @Composable
 fun OutputDirectoriesLabelTree(modifier: Modifier = Modifier) {
     Row(modifier.fillMaxSize()) {
+        val tree = remember { mutableStateOf(Optional.empty<Tree<File>>()) }
+        LaunchedEffect(true) {
+            tree.value = Optional.of(Paths.get(System.getProperty("user.dir")).asTree(true))
+        }
+
         Text(
             modifier = modifier.padding(5.dp),
-            text = "Output Directories:"
+            text = if (tree.value.isPresent) "Output Directories:" else "Loading...",
+            color = Color.Black
         )
-        var tree by remember { mutableStateOf(Paths.get(System.getProperty("user.dir")).asTree(true)) }
 
         Box {
             val listState = rememberLazyListState()
             TreeLayout(
                 modifier = Modifier.fillMaxWidth(),
-                tree = tree,
+                tree = tree.value.orElse(Tree(emptyList())),
                 state = listState,
-                onTreeChanged = { tree = it },
+                onTreeChanged = { tree.value = Optional.of(it) },
                 onTreeElementDoubleClick = {},
                 rowContent = {
                     val text: String = when (it) {
