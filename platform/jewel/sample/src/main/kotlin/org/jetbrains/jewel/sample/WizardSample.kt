@@ -40,6 +40,7 @@ import org.jetbrains.jewel.theme.intellij.components.CheckboxRow
 import org.jetbrains.jewel.theme.intellij.components.GroupHeader
 import org.jetbrains.jewel.theme.intellij.components.IconButton
 import org.jetbrains.jewel.theme.intellij.components.RadioButtonRow
+import org.jetbrains.jewel.theme.intellij.components.Slider
 import org.jetbrains.jewel.theme.intellij.components.Surface
 import org.jetbrains.jewel.theme.intellij.components.Tab
 import org.jetbrains.jewel.theme.intellij.components.TabRow
@@ -49,6 +50,7 @@ import org.jetbrains.jewel.theme.intellij.components.Tree
 import org.jetbrains.jewel.theme.intellij.components.TreeLayout
 import org.jetbrains.jewel.theme.intellij.components.asTree
 import org.jetbrains.jewel.theme.intellij.components.rememberTabContainerState
+import org.jetbrains.jewel.theme.intellij.styles.SliderStyle
 import org.jetbrains.jewel.theme.toolbox.components.Divider
 import java.awt.event.WindowEvent
 import java.io.File
@@ -356,6 +358,20 @@ fun CommonLayer(
         }
         Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
             Text("Resize:", modifier = subLabelModifier)
+            val sliderValue = remember { mutableStateOf(0) }
+            Slider(
+                sliderValue.value,
+                style = SliderStyle(
+                    palette = IntelliJTheme.palette,
+                    typography = IntelliJTheme.typography,
+                    minorTickSpacing = 20,
+                    majorTickSpacing = 0,
+                    paintTicks = true),
+                min = 0,
+                max = 400,
+                modifier = Modifier.width(200.dp)
+            ) { sliderValue.value = it }
+            Text("${sliderValue.value}%")
         }
     }
 }
@@ -456,11 +472,21 @@ fun FirstPage(modifier: Modifier = Modifier) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     GroupHeader("Preview", modifier = Modifier.width(100.dp))
-                    TextField(value = "", onValueChange = {}, modifier = Modifier.width(50.dp).padding(end = 20.dp))
+                    TextField(value = "", onValueChange = {}, modifier = Modifier.width(50.dp))
                     val showSafeZone = remember { mutableStateOf(true) }
                     val showGrid = remember { mutableStateOf(false) }
-                    CheckboxRow(checked = showSafeZone.value, onCheckedChange = { showSafeZone.value = it }) { Text("Show safe zone", modifier = Modifier.padding(end = 10.dp)) }
-                    CheckboxRow(checked = showGrid.value, onCheckedChange = { showGrid.value = it }) { Text("Show grid", modifier = Modifier.padding(end = 10.dp)) }
+                    CheckboxRow(checked = showSafeZone.value, onCheckedChange = { showSafeZone.value = it }) {
+                        Text(
+                            "Show safe zone",
+                            modifier = Modifier.padding(horizontal = 10.dp)
+                        )
+                    }
+                    CheckboxRow(checked = showGrid.value, onCheckedChange = { showGrid.value = it }) {
+                        Text(
+                            "Show grid",
+                            modifier = Modifier.padding(end = 10.dp)
+                        )
+                    }
                 }
             }
         }
