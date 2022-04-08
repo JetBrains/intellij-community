@@ -86,7 +86,7 @@ fun WizardHeader(modifier: Modifier = Modifier, currentPage: MutableState<Int>) 
     Box(modifier.background(Color(0xFF616161)).height(100.dp).fillMaxWidth()) {
         Row(modifier = modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                modifier = modifier.height(74.dp).padding(10.dp),
+                modifier = modifier.height(64.dp).padding(10.dp),
                 painter = painterResource("imageasset/android-studio.svg"),
                 contentDescription = "logo",
                 tint = Color.Unspecified
