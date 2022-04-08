@@ -14,7 +14,7 @@ annotation class FE10ApiUsage
 @FE10ApiUsage
 val KtModule.moduleInfo: IdeaModuleInfo
     get() {
-        require(this is KtSourceModuleByModuleInfo)
+        require(this is KtModuleByModuleInfoBase)
         return ideaModuleInfo
     }
 
