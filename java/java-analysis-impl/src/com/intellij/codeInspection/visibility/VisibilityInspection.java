@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.analysis.AnalysisScope;
@@ -146,13 +145,6 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       }
     }
 
-    @EntryPointWithVisibilityLevel.VisibilityLevelResult
-    int minLevel = getMinVisibilityLevel(refElement);
-    //ignore entry points.
-    if (refElement.isEntry()) {
-      if (minLevel == EntryPointWithVisibilityLevel.ACCESS_LEVEL_INVALID) return null;
-    }
-
     if (refElement instanceof RefField) {
       Boolean implicitlyWritten = refElement.getUserData(RefField.IMPLICITLY_WRITTEN);
       if (implicitlyWritten != null && implicitlyWritten) {
@@ -185,9 +177,21 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
         return null;
       }
     }
+    //ignore interface members. They always have public access modifier.
+    if (refElement.getOwner() instanceof RefClass) {
+      RefClass refClass = (RefClass) refElement.getOwner();
+      if (refClass.isInterface()) return null;
+    }
 
     if (keepVisibilityLevel(refElement)) {
       return null;
+    }
+
+    @EntryPointWithVisibilityLevel.VisibilityLevelResult
+    int minLevel = getMinVisibilityLevel(refElement);
+    //ignore entry points.
+    if (refElement.isEntry()) {
+      if (minLevel == EntryPointWithVisibilityLevel.ACCESS_LEVEL_INVALID) return null;
     }
 
     //ignore unreferenced code. They could be a potential entry points.
@@ -206,11 +210,6 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       if (isTopLevelClass(refElement) && minLevel <= 0 && !SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES) return null;
     }
 
-    //ignore interface members. They always have public access modifier.
-    if (refElement.getOwner() instanceof RefClass) {
-      RefClass refClass = (RefClass) refElement.getOwner();
-      if (refClass.isInterface()) return null;
-    }
     String access = getPossibleAccess(refElement, minLevel <= 0 ? PsiUtil.ACCESS_LEVEL_PRIVATE : minLevel);
     if (access != refElement.getAccessModifier()) {
       return createDescriptions(refElement, access, manager, globalContext);
