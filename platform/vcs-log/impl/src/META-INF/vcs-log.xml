@@ -136,7 +136,7 @@
             icon="AllIcons.Process.ProgressResumeSmall"/>
 
     <group id="Vcs.Log.PresentationSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
-           icon="AllIcons.Actions.Show" popup="true">
+           icon="AllIcons.Actions.GroupBy" popup="true">
       <separator key="action.vcs.log.show.separator"/>
       <reference id="Vcs.Log.ShowRootsColumnAction"/>
       <reference id="Vcs.Log.CompactReferencesView"/>
