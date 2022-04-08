@@ -14,9 +14,7 @@ val IntelliJMetrics.Button.Companion.default
 
 val IntelliJMetrics.Companion.default
     get() = IntelliJMetrics(
-        gridSize = 8.dp,
         singlePadding = 8.dp,
-        doublePadding = 16.dp,
         controlFocusHaloWidth = 2.dp,
         controlFocusHaloArc = 1.dp,
         controlArc = 3.dp,

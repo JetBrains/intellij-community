@@ -10,6 +10,7 @@ data class IntelliJPalette(
     val textField: TextField,
     val separator: Separator,
     val treeView: TreeView,
+    val slider: Slider,
 
     val background: Color, // Panel.background
 
@@ -27,6 +28,14 @@ data class IntelliJPalette(
     val controlHaloWarning: Color, // Component.warningFocusColor
     val scrollbar: Scrollbar,
 ) {
+
+    data class Slider(
+        val foreground: Color,
+        val background: Color
+    ) {
+
+        companion object
+    }
 
     data class TreeView(
         val focusedSelectedElementBackground: Color,

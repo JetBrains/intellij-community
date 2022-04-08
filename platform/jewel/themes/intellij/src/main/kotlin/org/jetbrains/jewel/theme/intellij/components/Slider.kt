@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.graphics.Color
 import org.jetbrains.jewel.Orientation
+import org.jetbrains.jewel.theme.intellij.styles.SliderAppearance
 import javax.swing.BoxLayout
 import javax.swing.JPanel
 import javax.swing.JSlider
@@ -13,11 +14,10 @@ import javax.swing.SwingConstants
 // TODO pull out state (min, max, value)
 @Composable
 fun Slider(
-    min: Int,
-    max: Int,
     value: Int,
     modifier: Modifier = Modifier,
-    orientation: Orientation = Orientation.Vertical,
+    appearance: SliderAppearance = SliderAppearance(),
+    onValueChange: (Int) -> Unit
 ) {
     SwingPanel(
         background = Color.White,
@@ -25,19 +25,23 @@ fun Slider(
         factory = {
             JPanel().apply {
                 layout = BoxLayout(this, BoxLayout.Y_AXIS)
-                add(jSlider(min, max, value, orientation))
+                add(jSlider(appearance, value, onValueChange))
             }
         }
     )
 }
 
 private fun jSlider(
-    min: Int,
-    max: Int,
+    appearance: SliderAppearance,
     value: Int,
-    orientation: Orientation = Orientation.Vertical
-) = JSlider(orientation.toSwingInt(), min, max, value).apply {
-
+    onValueChange: (Int) -> Unit
+) = JSlider(
+    appearance.orientation.toSwingInt(),
+    appearance.min,
+    appearance.max,
+    value
+).apply {
+    addChangeListener { onValueChange(it.) }
 }
 
 private fun Orientation.toSwingInt() = when (this) {

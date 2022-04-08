@@ -5,9 +5,7 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.unit.Dp
 
 class IntelliJMetrics(
-    val gridSize: Dp,
     val singlePadding: Dp,
-    val doublePadding: Dp,
     val controlFocusHaloWidth: Dp, // Component.focusWidth
     val controlFocusHaloArc: Dp, // Component.focusWidth
     val controlArc: Dp, // Component.arc
@@ -18,8 +16,8 @@ class IntelliJMetrics(
 ) {
 
     data class TreeView(
-        val indentWidth: Dp,
-        val arrowEndPadding: Dp
+        val indentWidth: Dp, // Tree.leftChildIndent
+        val arrowEndPadding: Dp // Tree.rightChildIndent
     ) {
 
         companion object

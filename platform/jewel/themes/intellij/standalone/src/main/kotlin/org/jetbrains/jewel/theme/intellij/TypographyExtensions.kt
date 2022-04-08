@@ -31,7 +31,7 @@ val IntelliJTypography.Companion.light
         button = TextStyle.IntelliJLight,
         checkBox = TextStyle.IntelliJLight,
         radioButton = TextStyle.IntelliJLight,
-        textField = TextStyle.IntelliJLight
+        textField = TextStyle.IntelliJLight,
     )
 
 val IntelliJTypography.Companion.darcula
@@ -40,5 +40,5 @@ val IntelliJTypography.Companion.darcula
         button = TextStyle.IntelliJDark,
         checkBox = TextStyle.IntelliJDark,
         radioButton = TextStyle.IntelliJDark,
-        textField = TextStyle.IntelliJDark
+        textField = TextStyle.IntelliJDark,
     )
