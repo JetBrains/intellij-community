@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -28,6 +29,7 @@ import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
@@ -111,6 +113,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     mySchemeSupplier = editor != null ? () -> editor.getColorsScheme() : GLOBAL_SCHEME_SUPPLIER;
     myBackgroundColor = backgroundColor;
     myBackgroundColorKey = backgroundColorKey != null ? backgroundColorKey : EditorColors.NOTIFICATION_BACKGROUND;
+    putClientProperty(FileEditorManager.SEPARATOR_COLOR, JBUI.CurrentTheme.Editor.BORDER_COLOR);
 
     JPanel panel = new NonOpaquePanel(new BorderLayout());
     panel.add(BorderLayout.CENTER, myLabel);
@@ -120,7 +123,8 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
     add(BorderLayout.CENTER, panel);
     add(BorderLayout.EAST, myGearLabel);
-    setBorder(JBUI.Borders.empty(0, 10));
+    JBInsets defaultInsets = ExperimentalUI.isNewUI() && editor != null ? JBInsets.create(9, 16) : JBInsets.create(0, 10);
+    setBorder(JBUI.Borders.empty(JBUI.insets("Editor.Notification.borderInsets", defaultInsets)));
     setOpaque(true);
 
     myLabel.setForeground(mySchemeSupplier.get().getDefaultForeground());

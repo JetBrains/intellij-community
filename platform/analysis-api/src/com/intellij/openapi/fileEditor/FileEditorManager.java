@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -203,6 +204,8 @@ public abstract class FileEditorManager {
   public abstract void removeBottomComponent(final @NotNull FileEditor editor, final @NotNull JComponent component);
 
   public static final Key<Boolean> SEPARATOR_DISABLED = Key.create("FileEditorSeparatorDisabled");
+
+  public static final Key<Color> SEPARATOR_COLOR = Key.create("FileEditorSeparatorColor");
 
   /**
    * Adds specified {@code listener}
