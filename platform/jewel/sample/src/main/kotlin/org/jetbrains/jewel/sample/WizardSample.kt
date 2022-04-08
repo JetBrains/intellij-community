@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.singleWindowApplication
 import org.jetbrains.jewel.Orientation
+import org.jetbrains.jewel.theme.intellij.IntelliJTheme
 import org.jetbrains.jewel.theme.intellij.IntelliJThemeDark
 import org.jetbrains.jewel.theme.intellij.components.Button
 import org.jetbrains.jewel.theme.intellij.components.CheckboxRow
@@ -42,6 +43,7 @@ import org.jetbrains.jewel.theme.intellij.components.Surface
 import org.jetbrains.jewel.theme.intellij.components.Tab
 import org.jetbrains.jewel.theme.intellij.components.TabRow
 import org.jetbrains.jewel.theme.intellij.components.Text
+import org.jetbrains.jewel.theme.intellij.components.TextField
 import java.awt.event.WindowEvent
 import org.jetbrains.jewel.theme.intellij.components.Tree
 import org.jetbrains.jewel.theme.intellij.components.TreeLayout
@@ -239,6 +241,7 @@ fun AssetTypeSpecificOptions(assetType: AssetType, subLabelModifier: Modifier) {
     when (assetType) {
         AssetType.IMAGE -> Row {
             Text("Path:", modifier = subLabelModifier)
+            TextField(value = "some_path", onValueChange = {})
         }
         AssetType.CLIP_ART -> {
             Row {
@@ -251,6 +254,8 @@ fun AssetTypeSpecificOptions(assetType: AssetType, subLabelModifier: Modifier) {
         AssetType.TEXT -> {
             Row {
                 Text("Text:", modifier = subLabelModifier)
+                TextField(value = "some text", onValueChange = {})
+                // ComboBox()
             }
             Row {
                 Text("Color:", modifier = subLabelModifier)
@@ -268,13 +273,13 @@ fun CommonLayer(
     assetTypeSelection: @Composable (assetType: MutableState<AssetType>) -> Unit,
     assetTypeSpecificOptions: @Composable (assetType: AssetType, subLabelModifier: Modifier) -> Unit
 ) {
-    Column(modifier = Modifier.height(200.dp).width(300.dp)) {
+    Column {
         val labelColWidth = 100.dp
         val subLabelsPadding = 10.dp
         Row {
             Text("Layer name:", modifier = Modifier.width(labelColWidth))
             val layerNameState = remember { mutableStateOf("layer name...") }
-            // TextField(layerNameState.value, { layerNameState.value = it })
+            TextField(value = layerNameState.value, onValueChange = { layerNameState.value = it })
         }
         Row {
             Text("Source Asset")
@@ -282,7 +287,6 @@ fun CommonLayer(
         }
         Row {
             Text("Asset Type:", modifier = Modifier.width(labelColWidth).padding(start = subLabelsPadding))
-            // RadioButton("Image", select = false, onClick = {}) // (checked = false, onCheckedChange = {}) { Text("Image" ) }
             assetTypeSelection(assetType)
         }
         assetTypeSpecificOptions(assetType.value, Modifier.width(labelColWidth).padding(start = subLabelsPadding))
@@ -291,9 +295,10 @@ fun CommonLayer(
             Separator(orientation = Orientation.Horizontal, modifier = Modifier.align(alignment = Alignment.CenterVertically))
         }
         Row {
+            val trim = remember { mutableStateOf(true) }
             Text("Trim:", modifier = Modifier.width(labelColWidth).padding(start = subLabelsPadding))
-            CheckboxRow(checked = false, onCheckedChange = {}) { Text("Yes" ) }
-            CheckboxRow(checked = false, onCheckedChange = {}) { Text("No") }
+            RadioButtonRow(selected = trim.value, onClick = { trim.value = true }) { Text("Yes" ) }
+            RadioButtonRow(selected = !trim.value, onClick = { trim.value = false }) { Text("No") }
         }
         Row {
             Text("Resize:", modifier = Modifier.width(labelColWidth).padding(start = subLabelsPadding))
@@ -330,8 +335,16 @@ enum class OptionTabs {
 @Composable
 fun FirstPage(modifier: Modifier = Modifier) {
     Row(modifier = modifier) {
-        Box(modifier = Modifier.width(300.dp)) {
+        Box(modifier = Modifier.width(400.dp)) {
             Column {
+                Row {
+                    Text("Icon type:")
+                    // TextField(value = layerNameState.value, onValueChange = { })
+                }
+                Row {
+                    Text("Name:")
+                    TextField(value = "ic_launcher", onValueChange = { })
+                }
                 val tabState = rememberTabContainerState(OptionTabs.FOREGROUND)
                 TabRow(tabState) {
                     Tab(OptionTabs.FOREGROUND) { Text("Foreground Layer") }
