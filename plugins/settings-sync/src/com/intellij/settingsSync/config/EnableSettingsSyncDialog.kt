@@ -21,7 +21,6 @@ internal class EnableSettingsSyncDialog
   }
 
   enum class Result {
-    ENABLE_SYNC,
     PUSH_LOCAL,
     GET_FROM_SERVER
   }
@@ -50,7 +49,7 @@ internal class EnableSettingsSyncDialog
 
   inner class EnableSyncAction : AbstractAction(message("enable.dialog.enable.sync.action")) {
     override fun actionPerformed(e: ActionEvent?) {
-      applyAndClose(Result.ENABLE_SYNC)
+      applyAndClose(Result.PUSH_LOCAL)
     }
   }
 

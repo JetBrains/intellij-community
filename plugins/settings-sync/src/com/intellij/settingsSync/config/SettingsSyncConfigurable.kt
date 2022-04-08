@@ -164,11 +164,10 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     EnableSettingsSyncDialog.showAndGetResult(configPanel, remoteSettingsFound)?.let {
       reset()
       when (it) {
-        EnableSettingsSyncDialog.Result.ENABLE_SYNC -> SettingsSyncSettings.getInstance().syncEnabled = true
         EnableSettingsSyncDialog.Result.GET_FROM_SERVER -> syncEnabler.getSettingsFromServer()
         EnableSettingsSyncDialog.Result.PUSH_LOCAL -> {
-          syncEnabler.pushSettingsToServer()
           SettingsSyncSettings.getInstance().syncEnabled = true
+          syncEnabler.pushSettingsToServer()
         }
       }
     }
