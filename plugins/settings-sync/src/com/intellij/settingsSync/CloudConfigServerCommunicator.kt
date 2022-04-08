@@ -203,6 +203,8 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
   @Throws(IOException::class)
   fun delete() {
+    currentVersionOfFiles.remove(SETTINGS_SYNC_SNAPSHOT_ZIP)
+    clientVersionContext.store(SETTINGS_SYNC_SNAPSHOT_ZIP, null)
     client.delete(SETTINGS_SYNC_SNAPSHOT_ZIP)
   }
 
@@ -219,8 +221,9 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
       return contextVersionMap[path]
     }
 
-    override fun store(path: String, value: String) {
-      contextVersionMap[path] = value
+    override fun store(path: String, value: String?) {
+      if (value != null) contextVersionMap[path] = value
+      else contextVersionMap.remove(path)
     }
 
     fun <T> doWithVersion(path: String, version: String?, function: () -> T): T {
