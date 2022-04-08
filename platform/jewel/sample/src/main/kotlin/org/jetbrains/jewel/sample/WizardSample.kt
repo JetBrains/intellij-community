@@ -164,7 +164,6 @@ fun OutputDirectoriesLabelTree(modifier: Modifier = Modifier) {
         Text(
             modifier = modifier.padding(5.dp),
             text = if (tree.value.isPresent) "Output Directories:" else "Loading...",
-            color = Color.Black
         )
 
         Box {
