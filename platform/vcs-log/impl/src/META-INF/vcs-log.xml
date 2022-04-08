@@ -146,10 +146,11 @@
       <reference id="Vcs.Log.PreferCommitDate"/>
       <reference id="Vcs.Log.ToggleColumns"/>
       <separator/>
+      <reference id="Vcs.Log.HighlightersActionGroup"/>
+      <separator/>
       <separator key="action.vcs.log.branches.separator"/>
       <reference id="Vcs.Log.CollapseAll"/>
       <reference id="Vcs.Log.ExpandAll"/>
-      <reference id="Vcs.Log.HighlightersActionGroup"/>
     </group>
     <group id="Vcs.Log.TextFilterSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
            icon="AllIcons.General.GearPlain" popup="true">
