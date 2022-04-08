@@ -167,7 +167,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
         return JavaDocExternalFilter.filterInternalDocInfo(result.toString())
     }
 
-    override fun getCustomDocumentationElement(editor: Editor, fil: PsiFile, contextElement: PsiElement?): PsiElement? {
+    override fun getCustomDocumentationElement(editor: Editor, file: PsiFile, contextElement: PsiElement?, targetOffset: Int): PsiElement? {
         return if (contextElement.isModifier()) contextElement else null
     }
 
@@ -241,6 +241,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
         return null
     }
 
+    @Deprecated("Deprecated in Java")
     override fun hasDocumentationFor(element: PsiElement?, originalElement: PsiElement?): Boolean {
         return CompositeDocumentationProvider.hasUrlsFor(this, element, originalElement)
     }
