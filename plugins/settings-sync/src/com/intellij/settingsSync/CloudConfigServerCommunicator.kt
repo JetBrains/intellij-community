@@ -103,11 +103,11 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   override fun checkServerState(): ServerState {
     try {
       val version = client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP)?.versionId
-      return if (version == currentVersionOfFiles[SETTINGS_SYNC_SNAPSHOT_ZIP]) ServerState.UpToDate else ServerState.UpdateNeeded
-    }
-    catch (e: FileNotFoundException) {
-      LOG.info("File not found on server, update is not needed")
-      return ServerState.FileNotExists
+      when (version) {
+        null -> return ServerState.FileNotExists
+        currentVersionOfFiles[SETTINGS_SYNC_SNAPSHOT_ZIP] -> return ServerState.UpToDate
+        else -> return ServerState.UpdateNeeded
+      }
     }
     catch (e: Throwable) {
       val message = handleRemoteError(e)
