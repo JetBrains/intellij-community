@@ -41,8 +41,6 @@ fun generateKotlincLibraries(kotlincArtifactsMode: KotlincArtifactsMode, version
         singleJarMvnLib("kotlinc.kotlin-jps-plugin-classpath", "$ktGroup:kotlin-jps-plugin-classpath:$version", transitive = false),
         singleJarMvnLib("kotlinc.kotlin-reflect", "$ktGroup:kotlin-reflect:$version", excludes = listOf(MavenId(ktGroup, "kotlin-stdlib"))),
         singleJarMvnLib("kotlinc.kotlin-script-runtime", "$ktGroup:kotlin-script-runtime:$version"),
-        singleJarMvnLib("kotlinc.kotlin-jps-plugin-classpath", "$ktGroup:kotlin-jps-plugin-classpath:$version"),
-        singleJarMvnLib("kotlinc.kotlin-jps-common", "$ktGroup:kotlin-jps-common-for-ide:$version"),
         run {
             val mavenIds = listOf(
                 MavenId.fromCoordinates("$ktGroup:kotlin-stdlib-jdk8:$version"),
