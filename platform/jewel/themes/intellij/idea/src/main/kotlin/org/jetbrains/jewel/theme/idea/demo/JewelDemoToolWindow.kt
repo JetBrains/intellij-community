@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,8 +30,12 @@ import org.jetbrains.jewel.theme.intellij.components.Button
 import org.jetbrains.jewel.theme.intellij.components.Checkbox
 import org.jetbrains.jewel.theme.intellij.components.CheckboxRow
 import org.jetbrains.jewel.theme.intellij.components.Divider
+import org.jetbrains.jewel.theme.intellij.components.Tab
+import org.jetbrains.jewel.theme.intellij.components.TabRow
+import org.jetbrains.jewel.theme.intellij.components.TabScope
 import org.jetbrains.jewel.theme.intellij.components.Text
 import org.jetbrains.jewel.theme.intellij.components.TextField
+import org.jetbrains.jewel.theme.intellij.components.rememberTabContainerState
 
 @ExperimentalCoroutinesApi
 internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
@@ -85,8 +90,19 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
                             Text("Hello, I am a themed checkbox")
                         }
 
-                        val textFieldState = remember { mutableStateOf("I am a textfield") }
-//                        TextField(textFieldState.value, { textFieldState.value = it })
+                        val tabState = rememberTabContainerState("1")
+                        TabRow(tabState, ) {
+                            Section("1", "One")
+                            Section("2", "Two")
+                            Section("3", "Three")
+                        }
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            when (tabState.selectedKey) {
+                                "1" -> Text("Content of One")
+                                "2" -> Text("Content of Two")
+                                "3" -> Text("Content of Three")
+                            }
+                        }
 
                         val radioState = remember { mutableStateOf(RadioSample.Automatic) }
                         Column(
@@ -129,5 +145,12 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun TabScope<String>.Section(key: String, caption: String) {
+    Tab(key) {
+        Text(caption)
     }
 }
