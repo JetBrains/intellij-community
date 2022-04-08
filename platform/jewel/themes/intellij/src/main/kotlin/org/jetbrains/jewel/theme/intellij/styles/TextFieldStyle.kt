@@ -28,13 +28,13 @@ typealias TextFieldStyle = ControlStyle<TextFieldAppearance, TextFieldState>
 data class TextFieldAppearance(
     val textStyle: TextStyle = TextStyle.Default,
     val backgroundColor: Color,
-    val shapeStroke: ShapeStroke? = null,
+    val shapeStroke: ShapeStroke<*>? = null,
     val shape: Shape,
 
     val cursorBrush: Brush = SolidColor(Color.Black),
     val contentPadding: PaddingValues,
 
-    val haloStroke: ShapeStroke? = null,
+    val haloStroke: ShapeStroke<*>? = null,
 
     val minWidth: Dp = Dp.Unspecified,
 )
@@ -60,11 +60,7 @@ fun TextFieldStyle(
         shape = RectangleShape,
         contentPadding = PaddingValues(7.dp, 4.dp),
         cursorBrush = palette.text.toBrush(),
-        shapeStroke = ShapeStroke(
-            1.dp,
-            palette.controlStroke.toBrush(),
-            Insets(0.dp)
-        ),
+        shapeStroke = ShapeStroke.SolidColor(1.dp, palette.controlStroke, Insets(0.dp)),
         minWidth = 8.dp * 8,
     )
 
@@ -74,16 +70,8 @@ fun TextFieldStyle(
     )
 
     val focusedAppearance = defaultAppearance.copy(
-        shapeStroke = ShapeStroke(
-            1.dp,
-            palette.controlStrokeFocused.toBrush(),
-            Insets(0.dp)
-        ),
-        haloStroke = ShapeStroke(
-            metrics.controlFocusHaloWidth,
-            palette.controlFocusHalo.toBrush(),
-            Insets((-1).dp)
-        )
+        shapeStroke = ShapeStroke.SolidColor(1.dp, palette.controlStrokeFocused, Insets(0.dp)),
+        haloStroke = ShapeStroke.SolidColor(metrics.controlFocusHaloWidth, palette.controlFocusHalo, Insets((-1).dp))
     )
 
     default {
@@ -111,16 +99,8 @@ fun TextFieldStyle(
         allStateCombinations { enabled, focused, hovered ->
             val appearance = if (enabled) {
                 defaultAppearance.copy(
-                    shapeStroke = ShapeStroke(
-                        1.dp,
-                        palette.controlHaloError.toBrush(),
-                        Insets(1.dp)
-                    ),
-                    haloStroke = ShapeStroke(
-                        metrics.controlFocusHaloWidth,
-                        palette.controlInactiveHaloError.toBrush(),
-                        Insets((-1).dp)
-                    )
+                    shapeStroke = ShapeStroke.SolidColor(1.dp, palette.controlHaloError, Insets(1.dp)),
+                    haloStroke = ShapeStroke.SolidColor(metrics.controlFocusHaloWidth, palette.controlInactiveHaloError, Insets((-1).dp))
                 )
             } else {
                 disabledAppearance
@@ -141,17 +121,10 @@ fun TextFieldStyle(
         allStateCombinations { enabled, focused, hovered ->
             val appearance = when {
                 enabled -> defaultAppearance.copy(
-                    shapeStroke = ShapeStroke(
-                        1.dp,
-                        palette.controlHaloWarning.toBrush(),
-                        Insets(1.dp)
-                    ),
-                    haloStroke = ShapeStroke(
-                        metrics.controlFocusHaloWidth,
-                        palette.controlInactiveHaloWarning.toBrush(),
-                        Insets((-1).dp)
-                    )
+                    shapeStroke = ShapeStroke.SolidColor(1.dp, palette.controlHaloWarning, Insets(1.dp)),
+                    haloStroke = ShapeStroke.SolidColor(metrics.controlFocusHaloWidth, palette.controlInactiveHaloWarning, Insets((-1).dp))
                 )
+
                 else -> disabledAppearance
             }
 

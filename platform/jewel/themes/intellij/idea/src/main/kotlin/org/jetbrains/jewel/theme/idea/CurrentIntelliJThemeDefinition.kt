@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.theme.idea
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
@@ -70,7 +71,7 @@ suspend fun CurrentIntelliJThemeDefinition(): IntelliJThemeDefinition {
         ),
         textField = textFieldPalette,
         separator = IntelliJPalette.Separator(
-            color = retrieveColorOrUnspecified("Separator.foreground"),
+            color = retrieveColorOrUnspecified("Separator.separatorColor"),
             background = retrieveColorOrUnspecified("Separator.background")
         ),
         scrollbar = IntelliJPalette.Scrollbar(
@@ -85,21 +86,23 @@ suspend fun CurrentIntelliJThemeDefinition(): IntelliJThemeDefinition {
         treeView = IntelliJPalette.TreeView(
             focusedSelectedElementBackground = retrieveColorOrUnspecified("Tree.selectionBackground"),
             background = retrieveColorOrUnspecified("Tree.background"),
+        ),
+        slider = IntelliJPalette.Slider(
+            background = retrieveColorOrUnspecified("Slider.background"),
+            foreground = retrieveColorOrUnspecified("Slider.foreground")
         )
     )
 
     val metrics = IntelliJMetrics(
-        gridSize = 8.dp,
         singlePadding = 8.dp,
-        doublePadding = 16.dp,
         controlFocusHaloWidth = retrieveIntAsDp("Component.focusWidth"),
+        controlFocusHaloArc = retrieveIntAsDp("Component.arc"),
         controlArc = retrieveIntAsDp("Component.arc"),
         button = IntelliJMetrics.Button(
             strokeWidth = 1.dp,
             arc = CornerSize(retrieveIntAsDp("Button.arc")),
-            padding = retrieveInsetsAsPaddingValues("Button.margin"),
+            padding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
         ),
-        controlFocusHaloArc = retrieveIntAsDp("Component.arc"),
         separator = IntelliJMetrics.Separator(
             strokeWidth = 1.dp
         ),
@@ -109,8 +112,8 @@ suspend fun CurrentIntelliJThemeDefinition(): IntelliJThemeDefinition {
             thumbCornerSize = CornerSize(4.dp)
         ),
         treeView = IntelliJMetrics.TreeView(
-            indentWidth = retrieveIntAsDp("Tree.rightChildIndent"),
-            arrowEndPadding = 4.dp
+            indentWidth = retrieveIntAsDp("Tree.leftChildIndent"),
+            arrowEndPadding = retrieveIntAsDp("Tree.rightChildIndent")
         )
     )
 
@@ -153,12 +156,14 @@ suspend fun CurrentIntelliJThemeDefinition(): IntelliJThemeDefinition {
             arrow = { rememberSvgResource("general/chevron-right.svg", AllIcons::class.java.classLoader) }
         )
     )
+
     val typography = IntelliJTypography(
         default = retrieveFont("Panel.font", palette.text),
         button = retrieveFont("Button.font", palette.button.foreground),
         checkBox = retrieveFont("CheckBox.font", palette.checkbox.foreground),
         radioButton = retrieveFont("RadioButton.font", palette.radioButton.foreground),
-        textField = retrieveFont("TextField.font", palette.textField.foreground)
+        textField = retrieveFont("TextField.font", palette.textField.foreground),
+        slider = retrieveFont("Slider.font", palette.slider.foreground),
     )
 
     return IntelliJThemeDefinition(

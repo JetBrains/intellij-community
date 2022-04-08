@@ -24,5 +24,4 @@ dependencies {
         exclude(group = "org.jetbrains.compose.material")
     }
     api(projects.library)
-
 }

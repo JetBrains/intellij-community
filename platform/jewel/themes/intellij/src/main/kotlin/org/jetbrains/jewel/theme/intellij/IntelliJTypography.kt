@@ -7,7 +7,8 @@ data class IntelliJTypography(
     val button: TextStyle,
     val checkBox: TextStyle,
     val radioButton: TextStyle,
-    val textField: TextStyle
+    val textField: TextStyle,
+    val slider: TextStyle
 ) {
 
     companion object

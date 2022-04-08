@@ -19,8 +19,8 @@ data class ButtonState(
 
 class ButtonAppearanceTransitionState(
     background: State<Brush?>,
-    shapeStroke: State<ShapeStroke?>,
-    haloStroke: State<ShapeStroke?>,
+    shapeStroke: State<ShapeStroke<*>?>,
+    haloStroke: State<ShapeStroke<*>?>,
 ) {
 
     val background by background

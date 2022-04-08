@@ -43,7 +43,6 @@ import org.jetbrains.jewel.theme.intellij.styles.ButtonAppearance
 import org.jetbrains.jewel.theme.intellij.styles.ButtonStyle
 import org.jetbrains.jewel.theme.intellij.styles.LocalButtonStyle
 import org.jetbrains.jewel.theme.intellij.styles.LocalIconButtonStyle
-import org.jetbrains.jewel.theme.intellij.styles.updateButtonAppearanceTransition
 
 @Composable
 fun IconButton(
@@ -106,6 +105,7 @@ fun Button(
                     else
                         ButtonMouseState.None
                 )
+
                 is FocusInteraction.Focus -> buttonState = buttonState.copy(focused = true)
                 is FocusInteraction.Unfocus -> buttonState = buttonState.copy(focused = false)
             }
@@ -113,14 +113,13 @@ fun Button(
     }
 
     val appearance = style.appearance(buttonState, variation)
-    val appearanceTransition = updateButtonAppearanceTransition(appearance)
 
-    val shapeModifier = if (appearanceTransition.shapeStroke != null || appearanceTransition.background != null)
-        Modifier.shape(appearance.shape, appearanceTransition.shapeStroke, appearanceTransition.background)
+    val shapeModifier = if (appearance.shapeStroke != null || appearance.background != null)
+        Modifier.shape(appearance.shape, appearance.shapeStroke, appearance.background)
     else
         Modifier
 
-    val haloStroke = appearanceTransition.haloStroke
+    val haloStroke = appearance.haloStroke
     val haloModifier = if (haloStroke != null)
         Modifier.drawBehind {
             val outline = appearance.haloShape.createOutline(size, layoutDirection, this)

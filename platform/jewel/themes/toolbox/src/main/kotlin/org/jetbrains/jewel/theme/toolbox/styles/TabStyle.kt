@@ -25,7 +25,6 @@ import org.jetbrains.jewel.styles.localNotProvided
 import org.jetbrains.jewel.theme.toolbox.Palette
 import org.jetbrains.jewel.theme.toolbox.ToolboxMetrics
 import org.jetbrains.jewel.theme.toolbox.ToolboxTypography
-import org.jetbrains.jewel.toBrush
 
 typealias TabStyle = ControlStyle<TabAppearance, TabState>
 
@@ -33,14 +32,14 @@ typealias TabStyle = ControlStyle<TabAppearance, TabState>
 data class TabAppearance(
     val textStyle: TextStyle = TextStyle.Default,
     val backgroundColor: Color = Color.Unspecified,
-    val shapeStroke: ShapeStroke? = null,
+    val shapeStroke: ShapeStroke.SolidColor? = null,
     val shape: Shape = RectangleShape,
 
     val contentPadding: PaddingValues = PaddingValues(16.dp, 8.dp),
     val contentArrangement: Arrangement.Horizontal = Arrangement.Start,
     val contentAlignment: Alignment.Vertical = Alignment.Top,
 
-    val adornmentStroke: ShapeStroke? = null,
+    val adornmentStroke: ShapeStroke.SolidColor? = null,
     val adornmentShape: Shape? = null,
     val minWidth: Dp = 64.dp,
     val minHeight: Dp = 32.dp,
@@ -61,9 +60,9 @@ fun TabStyle(palette: Palette, metrics: ToolboxMetrics, typography: ToolboxTypog
                 contentArrangement = Arrangement.Center,
                 textStyle = typography.control.copy(palette.text),
                 backgroundColor = Color.Unspecified,
-                adornmentStroke = ShapeStroke(
+                adornmentStroke = ShapeStroke.SolidColor(
                     metrics.adornmentsThickness,
-                    palette.text.toBrush(),
+                    palette.text,
                     Insets(0.dp, metrics.adornmentsThickness / 2)
                 ),
             )
@@ -76,9 +75,9 @@ fun TabStyle(palette: Palette, metrics: ToolboxMetrics, typography: ToolboxTypog
                 textStyle = typography.control.copy(palette.text),
                 backgroundColor = Color.Unspecified,
                 adornmentShape = BottomLineShape,
-                adornmentStroke = ShapeStroke(
+                adornmentStroke = ShapeStroke.SolidColor(
                     metrics.adornmentsThickness,
-                    palette.controlAdornmentsHover.toBrush(),
+                    palette.controlAdornmentsHover,
                     Insets(0.dp, metrics.adornmentsThickness / 2)
                 ),
             )
@@ -91,9 +90,9 @@ fun TabStyle(palette: Palette, metrics: ToolboxMetrics, typography: ToolboxTypog
                 textStyle = typography.control.copy(palette.textActive),
                 backgroundColor = Color.Unspecified,
                 adornmentShape = BottomLineShape,
-                adornmentStroke = ShapeStroke(
+                adornmentStroke = ShapeStroke.SolidColor(
                     metrics.adornmentsThickness,
-                    palette.controlAdornmentsActive.toBrush(),
+                    palette.controlAdornmentsActive,
                     Insets(0.dp, metrics.adornmentsThickness / 2)
                 ),
             )

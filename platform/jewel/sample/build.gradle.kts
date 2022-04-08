@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -27,7 +29,7 @@ dependencies {
     implementation(projects.library)
     implementation(projects.themes.toolbox)
     implementation(projects.themes.intellij.standalone)
-    api("org.jetbrains.compose.components:components-splitpane:${libs.versions.composeDesktop.get()}")
+    api(libs.compose.components.splitpane)
 }
 
 compose.desktop {

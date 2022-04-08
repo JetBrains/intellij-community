@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import org.jetbrains.jewel.ShapeStroke
-import org.jetbrains.jewel.animateShapeStroke
+import org.jetbrains.jewel.animateSolidColorShapeStroke
 import org.jetbrains.jewel.components.state.ButtonAppearanceTransitionState
 import org.jetbrains.jewel.components.state.ButtonMouseState
 import org.jetbrains.jewel.components.state.ButtonState
@@ -30,14 +30,14 @@ import org.jetbrains.jewel.toBrush
 data class ButtonAppearance(
     val textStyle: TextStyle = TextStyle.Default,
     val background: Brush? = null,
-    val shapeStroke: ShapeStroke? = null,
+    val shapeStroke: ShapeStroke.SolidColor? = null,
     val shape: Shape,
 
     val contentPadding: PaddingValues,
     val minWidth: Dp,
     val minHeight: Dp,
 
-    val haloStroke: ShapeStroke? = null,
+    val haloStroke: ShapeStroke.SolidColor? = null,
     val haloShape: Shape = shape,
 
     val shadowColor: Color? = null,
@@ -48,8 +48,8 @@ data class ButtonAppearance(
 fun updateButtonAppearanceTransition(appearance: ButtonAppearance): ButtonAppearanceTransitionState {
     val transition = updateTransition(appearance)
     val background = mutableStateOf(appearance.background)
-    val shapeStroke = transition.animateShapeStroke(label = "AnimateShapeStroke") { it.shapeStroke }
-    val haloStroke = transition.animateShapeStroke(label = "AnimateHaloStroke") { it.haloStroke }
+    val shapeStroke = transition.animateSolidColorShapeStroke(label = "AnimateShapeStroke") { it.shapeStroke }
+    val haloStroke = transition.animateSolidColorShapeStroke(label = "AnimateHaloStroke") { it.haloStroke }
     return ButtonAppearanceTransitionState(background, shapeStroke, haloStroke)
 }
 
@@ -71,7 +71,7 @@ fun ButtonStyle(palette: Palette, metrics: ToolboxMetrics, typography: ToolboxTy
     default {
         for (focused in listOf(false, true)) {
             val haloStroke = if (focused)
-                ShapeStroke(metrics.adornmentsThickness, palette.controlAdornmentsHover.toBrush())
+                ShapeStroke.SolidColor(metrics.adornmentsThickness, palette.controlAdornmentsHover)
             else
                 null
             val appearance = ButtonAppearance(

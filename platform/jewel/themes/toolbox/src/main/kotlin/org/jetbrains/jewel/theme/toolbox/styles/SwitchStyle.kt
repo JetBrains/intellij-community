@@ -26,13 +26,13 @@ data class SwitchAppearance(
     val height: Dp = 14.dp,
 
     val backgroundColor: Color = Color.Blue,
-    val shapeStroke: ShapeStroke? = null,
+    val shapeStroke: ShapeStroke.SolidColor? = null,
     val shape: Shape = RoundedCornerShape(8.dp),
 
     val thumbSize: Dp = 10.dp,
     val thumbPadding: Dp = 2.dp,
     val thumbBackgroundColor: Color = Color.White,
-    val thumbBorderStroke: ShapeStroke? = null,
+    val thumbBorderStroke: ShapeStroke.SolidColor? = null,
     val thumbShape: Shape = CircleShape,
 )
 
