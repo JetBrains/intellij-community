@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.visibility;
 
@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -130,6 +131,13 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
 
     if (refElement instanceof RefParameter) return null;
     if (refElement.isSyntheticJSP()) return null;
+
+    if (refElement instanceof RefElementImpl) {
+      PsiFile containingFile = ((RefElementImpl)refElement).getContainingFile();
+      if (containingFile == null || !containingFile.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+        return null;
+      }
+    }
 
     if (!SUGGEST_FOR_CONSTANTS && refEntity instanceof RefField) {
       RefField refField = (RefField)refEntity;
