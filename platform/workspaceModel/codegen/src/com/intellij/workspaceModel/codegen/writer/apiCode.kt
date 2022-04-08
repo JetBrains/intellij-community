@@ -3,6 +3,7 @@ package deft.storage.codegen
 
 import deft.storage.codegen.field.defCode
 import deft.storage.codegen.field.javaType
+import org.jetbrains.deft.Type
 import org.jetbrains.deft.codegen.ijws.wsFqn
 import org.jetbrains.deft.codegen.model.DefType
 import org.jetbrains.deft.codegen.model.WsEntityInterface
@@ -45,8 +46,7 @@ fun DefType.generatedApiCode(indent: String = "    "): String = lines(indent) {
     }
     line()
     line(buildString {
-        append("companion object: ObjType<$javaFullName, Builder>(")
-        append(fqn(ktModule.id.javaPackage, ktModule.id.objName)).append(", ")
+        append("companion object: ${Type::class.fqn}<$javaFullName, Builder>(")
         append(id)
         if (base != null) {
           append(", ${base.javaFullName}")

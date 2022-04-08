@@ -11,6 +11,8 @@ import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.IntellijWs.IntellijWs
+import org.jetbrains.deft.Type
+
 
 
 
@@ -46,7 +48,7 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
         override var facets: List<FacetEntity>
     }
     
-    companion object: ObjType<ModuleEntity, Builder>(IntellijWs, 41)
+    companion object: Type<ModuleEntity, Builder>(41)
     //@formatter:on
     //endregion
 
@@ -66,7 +68,7 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
         override var customModuleOptions: Map<String, String>
     }
     
-    companion object: ObjType<ModuleCustomImlDataEntity, Builder>(IntellijWs, 42)
+    companion object: Type<ModuleCustomImlDataEntity, Builder>(42)
     //@formatter:on
     //endregion
 
@@ -84,7 +86,7 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
         override var path: List<String>
     }
     
-    companion object: ObjType<ModuleGroupPathEntity, Builder>(IntellijWs, 43)
+    companion object: Type<ModuleGroupPathEntity, Builder>(43)
     //@formatter:on
     //endregion
 
@@ -110,7 +112,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
         override var languageLevelId: String?
     }
     
-    companion object: ObjType<JavaModuleSettingsEntity, Builder>(IntellijWs, 44)
+    companion object: Type<JavaModuleSettingsEntity, Builder>(44)
     //@formatter:on
     //endregion
 
@@ -141,7 +143,7 @@ interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
         override var externalSystemModuleType: String?
     }
     
-    companion object: ObjType<ExternalSystemModuleOptionsEntity, Builder>(IntellijWs, 45)
+    companion object: Type<ExternalSystemModuleOptionsEntity, Builder>(45)
     //@formatter:on
     //endregion
 

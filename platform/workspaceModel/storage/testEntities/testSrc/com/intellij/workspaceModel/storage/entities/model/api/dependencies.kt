@@ -12,6 +12,8 @@ import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.IntellijWs.IntellijWs
+import org.jetbrains.deft.Type
+
 
 
 
@@ -42,7 +44,7 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
         override var libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
     }
     
-    companion object: ObjType<LibraryEntity, Builder>(IntellijWs, 46)
+    companion object: Type<LibraryEntity, Builder>(46)
     //@formatter:on
     //endregion
 
@@ -62,7 +64,7 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
         override var propertiesXmlTag: String?
     }
     
-    companion object: ObjType<LibraryPropertiesEntity, Builder>(IntellijWs, 47)
+    companion object: Type<LibraryPropertiesEntity, Builder>(47)
     //@formatter:on
     //endregion
 
@@ -80,7 +82,7 @@ interface SdkEntity : WorkspaceEntity {
         override var homeUrl: VirtualFileUrl
     }
     
-    companion object: ObjType<SdkEntity, Builder>(IntellijWs, 48)
+    companion object: Type<SdkEntity, Builder>(48)
     //@formatter:on
     //endregion
 

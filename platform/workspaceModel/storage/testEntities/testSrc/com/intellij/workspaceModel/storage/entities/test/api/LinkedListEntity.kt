@@ -14,6 +14,8 @@ import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.*
 import org.jetbrains.deft.TestEntities.TestEntities
+import org.jetbrains.deft.Type
+
 
 
 data class LinkedListEntityId(val name: String) : PersistentEntityId<LinkedListEntity> {
@@ -38,7 +40,7 @@ interface LinkedListEntity : WorkspaceEntityWithPersistentId {
       override var next: LinkedListEntityId
   }
   
-  companion object: ObjType<LinkedListEntity, Builder>(TestEntities, 24)
+  companion object: Type<LinkedListEntity, Builder>(24)
   //@formatter:on
   //endregion
 

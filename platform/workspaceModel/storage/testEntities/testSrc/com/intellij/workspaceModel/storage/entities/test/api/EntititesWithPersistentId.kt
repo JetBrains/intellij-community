@@ -14,6 +14,8 @@ import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.TestEntities.TestEntities
+import org.jetbrains.deft.Type
+
 
 
 
@@ -35,7 +37,7 @@ interface FirstEntityWithPId  : WorkspaceEntityWithPersistentId {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<FirstEntityWithPId, Builder>(TestEntities, 89)
+    companion object: Type<FirstEntityWithPId, Builder>(89)
     //@formatter:on
     //endregion
 
@@ -56,7 +58,7 @@ interface SecondEntityWithPId  : WorkspaceEntityWithPersistentId {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<SecondEntityWithPId, Builder>(TestEntities, 90)
+    companion object: Type<SecondEntityWithPId, Builder>(90)
     //@formatter:on
     //endregion
 

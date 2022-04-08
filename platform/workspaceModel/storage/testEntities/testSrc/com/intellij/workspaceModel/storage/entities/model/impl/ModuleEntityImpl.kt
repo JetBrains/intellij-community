@@ -15,9 +15,7 @@ import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
 import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
-import org.jetbrains.deft.*
-import org.jetbrains.deft.impl.*
-import org.jetbrains.deft.impl.fields.Field
+import org.jetbrains.deft.ObjBuilder
 
     
 

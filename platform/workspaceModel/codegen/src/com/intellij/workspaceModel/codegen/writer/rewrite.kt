@@ -11,10 +11,7 @@ import org.jetbrains.deft.codegen.model.visitRecursively
 
 fun KtFile.rewrite(cleanUpOnly: Boolean = false): String {
     val toImport = Imports(pkg.fqn)
-    toImport.set.add("org.jetbrains.deft.Obj")
     toImport.set.add("org.jetbrains.deft.ObjBuilder")
-    toImport.set.add("org.jetbrains.deft.impl.*")
-    toImport.set.add("org.jetbrains.deft.impl.fields.*")
     toImport.set.add("com.intellij.workspaceModel.storage.EntitySource")
 
     val code = mutableMapOf<KtBlock, String>()

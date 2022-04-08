@@ -1,33 +1,34 @@
 package deft.storage.codegen
 
 import org.jetbrains.deft.Obj
+import org.jetbrains.deft.Type
 import org.jetbrains.deft.codegen.utils.fqn
 import org.jetbrains.deft.impl.ObjType
 import org.jetbrains.deft.impl.TStructure
 import org.jetbrains.deft.impl.fields.Field
 
-val ObjType<*, *>.javaFullName
+val Type<*, *>.javaFullName
     get() = fqn(packageName, name)
 
-val ObjType<*, *>.javaSimpleName
+val Type<*, *>.javaSimpleName
     get() = name.substringAfterLast('.')
 
-val ObjType<*, *>.javaBuilderName
+val Type<*, *>.javaBuilderName
     get() = "$name.Builder"
 
-val ObjType<*, *>.javaImplName
+val Type<*, *>.javaImplName
     get() = "${name.replace(".", "")}Impl"
 
-val ObjType<*, *>.javaImplFqn
+val Type<*, *>.javaImplFqn
     get() = fqn(packageName, javaImplName)
 
-val ObjType<*, *>.javaImplBuilderName
+val Type<*, *>.javaImplBuilderName
     get() = "${javaImplName}.Builder"
 
-val ObjType<*, *>.javaSuperType
+val Type<*, *>.javaSuperType
     get() = if (base == null) "Obj" else base!!.javaSimpleName
 
-val ObjType<*, *>.javaImplSuperType
+val Type<*, *>.javaImplSuperType
     get() = if (base == null) "ObjImpl" else base!!.javaImplFqn
 
 val TStructure<*, *>.fieldsToStore: List<Field<out Obj, Any?>>

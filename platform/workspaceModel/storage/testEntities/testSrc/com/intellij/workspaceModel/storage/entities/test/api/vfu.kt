@@ -13,6 +13,8 @@ import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.TestEntities.TestEntities
+import org.jetbrains.deft.Type
+
 
 
 
@@ -29,7 +31,7 @@ interface VFUEntity : WorkspaceEntity {
       override var fileProperty: VirtualFileUrl
   }
   
-  companion object: ObjType<VFUEntity, Builder>(TestEntities, 66)
+  companion object: Type<VFUEntity, Builder>(66)
   //@formatter:on
   //endregion
 
@@ -51,7 +53,7 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
       override var secondFileProperty: VirtualFileUrl
   }
   
-  companion object: ObjType<VFUWithTwoPropertiesEntity, Builder>(TestEntities, 67)
+  companion object: Type<VFUWithTwoPropertiesEntity, Builder>(67)
   //@formatter:on
   //endregion
 
@@ -71,7 +73,7 @@ interface NullableVFUEntity : WorkspaceEntity {
       override var fileProperty: VirtualFileUrl?
   }
   
-  companion object: ObjType<NullableVFUEntity, Builder>(TestEntities, 68)
+  companion object: Type<NullableVFUEntity, Builder>(68)
   //@formatter:on
   //endregion
 
@@ -91,7 +93,7 @@ interface ListVFUEntity : WorkspaceEntity {
       override var fileProperty: List<VirtualFileUrl>
   }
   
-  companion object: ObjType<ListVFUEntity, Builder>(TestEntities, 69)
+  companion object: Type<ListVFUEntity, Builder>(69)
   //@formatter:on
   //endregion
 

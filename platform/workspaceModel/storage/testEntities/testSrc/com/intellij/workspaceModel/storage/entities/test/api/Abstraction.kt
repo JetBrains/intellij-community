@@ -12,6 +12,8 @@ import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.*
 import org.jetbrains.deft.TestEntities.TestEntities
+import org.jetbrains.deft.Type
+
 
 
 
@@ -26,7 +28,7 @@ interface BaseEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<BaseEntity, Builder>(TestEntities, 78)
+  companion object: Type<BaseEntity, Builder>(78)
   //@formatter:on
   //endregion
 
@@ -46,7 +48,7 @@ interface CompositeBaseEntity : BaseEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<CompositeBaseEntity, Builder>(TestEntities, 79, BaseEntity)
+  companion object: Type<CompositeBaseEntity, Builder>(79, BaseEntity)
   //@formatter:on
   //endregion
 
@@ -65,7 +67,7 @@ interface MiddleEntity : BaseEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<MiddleEntity, Builder>(TestEntities, 80, BaseEntity)
+  companion object: Type<MiddleEntity, Builder>(80, BaseEntity)
   //@formatter:on
   //endregion
 
@@ -93,7 +95,7 @@ interface LeftEntity : CompositeBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<LeftEntity, Builder>(TestEntities, 81, CompositeBaseEntity)
+    companion object: Type<LeftEntity, Builder>(81, CompositeBaseEntity)
     //@formatter:on
     //endregion
 
@@ -121,7 +123,7 @@ interface RightEntity : CompositeBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<RightEntity, Builder>(TestEntities, 82, CompositeBaseEntity)
+    companion object: Type<RightEntity, Builder>(82, CompositeBaseEntity)
     //@formatter:on
     //endregion
 

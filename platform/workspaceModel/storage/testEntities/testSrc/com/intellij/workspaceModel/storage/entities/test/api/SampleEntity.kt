@@ -11,6 +11,8 @@ import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.TestEntities.TestEntities
+import org.jetbrains.deft.Type
+
 
 
 
@@ -32,7 +34,7 @@ interface SampleEntity : WorkspaceEntity {
       override var children: List<ChildSampleEntity>
   }
   
-  companion object: ObjType<SampleEntity, Builder>(TestEntities, 83)
+  companion object: Type<SampleEntity, Builder>(83)
   //@formatter:on
   //endregion
 
@@ -49,7 +51,7 @@ interface ChildSampleEntity : WorkspaceEntity {
       override var parentEntity: SampleEntity?
   }
   
-  companion object: ObjType<ChildSampleEntity, Builder>(TestEntities, 84)
+  companion object: Type<ChildSampleEntity, Builder>(84)
   //@formatter:on
   //endregion
 
@@ -81,7 +83,7 @@ interface SecondSampleEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<SecondSampleEntity, Builder>(TestEntities, 85)
+  companion object: Type<SecondSampleEntity, Builder>(85)
   //@formatter:on
   //endregion
 
@@ -98,7 +100,7 @@ interface SourceEntity : WorkspaceEntity {
       override var children: List<ChildSourceEntity>
   }
   
-  companion object: ObjType<SourceEntity, Builder>(TestEntities, 86)
+  companion object: Type<SourceEntity, Builder>(86)
   //@formatter:on
   //endregion
 
@@ -115,7 +117,7 @@ interface ChildSourceEntity : WorkspaceEntity {
       override var parentEntity: SourceEntity
   }
   
-  companion object: ObjType<ChildSourceEntity, Builder>(TestEntities, 87)
+  companion object: Type<ChildSourceEntity, Builder>(87)
   //@formatter:on
   //endregion
 
@@ -134,7 +136,7 @@ interface PersistentIdEntity : WorkspaceEntityWithPersistentId {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<PersistentIdEntity, Builder>(TestEntities, 88)
+  companion object: Type<PersistentIdEntity, Builder>(88)
   //@formatter:on
   //endregion
 

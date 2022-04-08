@@ -11,6 +11,8 @@ import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.*
 import org.jetbrains.deft.TestEntities.TestEntities
+import org.jetbrains.deft.Type
+
 
 
 
@@ -27,7 +29,7 @@ interface SampleEntity2 : WorkspaceEntity {
       override var boolData: Boolean
   }
   
-  companion object: ObjType<SampleEntity2, Builder>(TestEntities, 25)
+  companion object: Type<SampleEntity2, Builder>(25)
   //@formatter:on
   //endregion
 
@@ -48,7 +50,7 @@ interface VFUEntity2 : WorkspaceEntity {
       override var notNullRoots: List<VirtualFileUrl>
   }
   
-  companion object: ObjType<VFUEntity2, Builder>(TestEntities, 26)
+  companion object: Type<VFUEntity2, Builder>(26)
   //@formatter:on
   //endregion
 

@@ -8,8 +8,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.deft.Obj
-import org.jetbrains.deft.impl.ObjType
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 

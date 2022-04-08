@@ -10,6 +10,8 @@ import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.*
 import org.jetbrains.deft.TestEntities.TestEntities
+import org.jetbrains.deft.Type
+
 
 
 
@@ -54,7 +56,7 @@ interface NamedEntity : WorkspaceEntityWithPersistentId {
       override var children: List<NamedChildEntity>
   }
   
-  companion object: ObjType<NamedEntity, Builder>(TestEntities, 31)
+  companion object: Type<NamedEntity, Builder>(31)
   //@formatter:on
   //endregion
 
@@ -96,7 +98,7 @@ interface NamedChildEntity : WorkspaceEntity {
       override var parentEntity: NamedEntity
   }
   
-  companion object: ObjType<NamedChildEntity, Builder>(TestEntities, 32)
+  companion object: Type<NamedChildEntity, Builder>(32)
   //@formatter:on
   //endregion
 
@@ -129,7 +131,7 @@ interface WithSoftLinkEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<WithSoftLinkEntity, Builder>(TestEntities, 33)
+  companion object: Type<WithSoftLinkEntity, Builder>(33)
   //@formatter:on
   //endregion
 
@@ -154,7 +156,7 @@ interface ComposedLinkEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<ComposedLinkEntity, Builder>(TestEntities, 34)
+  companion object: Type<ComposedLinkEntity, Builder>(34)
   //@formatter:on
   //endregion
 
@@ -185,7 +187,7 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithPersistentId {
       override var links: List<NameId>
   }
   
-  companion object: ObjType<WithListSoftLinksEntity, Builder>(TestEntities, 35)
+  companion object: Type<WithListSoftLinksEntity, Builder>(35)
   //@formatter:on
   //endregion
 
@@ -222,7 +224,7 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithPersistentId {
       override var link: NameId
   }
   
-  companion object: ObjType<ComposedIdSoftRefEntity, Builder>(TestEntities, 36)
+  companion object: Type<ComposedIdSoftRefEntity, Builder>(36)
   //@formatter:on
   //endregion
 

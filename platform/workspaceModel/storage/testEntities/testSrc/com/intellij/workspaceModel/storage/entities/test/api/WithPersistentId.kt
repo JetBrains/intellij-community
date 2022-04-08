@@ -14,6 +14,8 @@ import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.TestEntities.TestEntities
+import org.jetbrains.deft.Type
+
 
 
 
@@ -57,7 +59,7 @@ interface OneEntityWithPersistentId : WorkspaceEntityWithPersistentId {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<OneEntityWithPersistentId, Builder>(TestEntities, 27)
+    companion object: Type<OneEntityWithPersistentId, Builder>(27)
     //@formatter:on
     //endregion
 
@@ -98,7 +100,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
         override var justListProperty: List<String>
     }
     
-    companion object: ObjType<EntityWithSoftLinks, Builder>(TestEntities, 28)
+    companion object: Type<EntityWithSoftLinks, Builder>(28)
     //@formatter:on
     //endregion
 

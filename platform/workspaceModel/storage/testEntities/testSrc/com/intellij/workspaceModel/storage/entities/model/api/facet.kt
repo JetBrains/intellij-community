@@ -9,6 +9,8 @@ import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.IntellijWs.IntellijWs
+import org.jetbrains.deft.Type
+
 
 
 
@@ -38,7 +40,7 @@ interface FacetEntity: WorkspaceEntityWithPersistentId {
         override var underlyingFacet: FacetEntity?
     }
     
-    companion object: ObjType<FacetEntity, Builder>(IntellijWs, 40)
+    companion object: Type<FacetEntity, Builder>(40)
     //@formatter:on
     //endregion
 

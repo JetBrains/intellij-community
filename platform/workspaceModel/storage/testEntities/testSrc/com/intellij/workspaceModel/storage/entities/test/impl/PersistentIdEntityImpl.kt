@@ -10,9 +10,7 @@ import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import org.jetbrains.deft.*
-import org.jetbrains.deft.impl.*
-import org.jetbrains.deft.impl.fields.Field
+import org.jetbrains.deft.ObjBuilder
 
     
 

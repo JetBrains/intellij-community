@@ -10,6 +10,8 @@ import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.IntellijWs.IntellijWs
+import org.jetbrains.deft.Type
+
 
 
 
@@ -35,7 +37,7 @@ interface ContentRootEntity : WorkspaceEntity {
         override var sourceRootOrder: SourceRootOrderEntity?
     }
     
-    companion object: ObjType<ContentRootEntity, Builder>(IntellijWs, 17)
+    companion object: Type<ContentRootEntity, Builder>(17)
     //@formatter:on
     //endregion
 
@@ -62,7 +64,7 @@ interface SourceRootEntity : WorkspaceEntity {
         override var javaResourceRoots: List<JavaResourceRootEntity>
     }
     
-    companion object: ObjType<SourceRootEntity, Builder>(IntellijWs, 18)
+    companion object: Type<SourceRootEntity, Builder>(18)
     //@formatter:on
     //endregion
 
@@ -80,7 +82,7 @@ interface SourceRootOrderEntity : WorkspaceEntity {
         override var orderOfSourceRoots: List<VirtualFileUrl>
     }
     
-    companion object: ObjType<SourceRootOrderEntity, Builder>(IntellijWs, 19)
+    companion object: Type<SourceRootOrderEntity, Builder>(19)
     //@formatter:on
     //endregion
 
@@ -98,7 +100,7 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
         override var propertiesXmlTag: String
     }
     
-    companion object: ObjType<CustomSourceRootPropertiesEntity, Builder>(IntellijWs, 20)
+    companion object: Type<CustomSourceRootPropertiesEntity, Builder>(20)
     //@formatter:on
     //endregion
 }
@@ -117,7 +119,7 @@ interface JavaSourceRootEntity : WorkspaceEntity {
         override var packagePrefix: String
     }
     
-    companion object: ObjType<JavaSourceRootEntity, Builder>(IntellijWs, 21)
+    companion object: Type<JavaSourceRootEntity, Builder>(21)
     //@formatter:on
     //endregion
 
@@ -137,7 +139,7 @@ interface JavaResourceRootEntity: WorkspaceEntity {
         override var relativeOutputPath: String
     }
     
-    companion object: ObjType<JavaResourceRootEntity, Builder>(IntellijWs, 22)
+    companion object: Type<JavaResourceRootEntity, Builder>(22)
     //@formatter:on
     //endregion
 

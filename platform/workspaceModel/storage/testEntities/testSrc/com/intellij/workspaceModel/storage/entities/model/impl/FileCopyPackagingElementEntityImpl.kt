@@ -14,9 +14,7 @@ import com.intellij.workspaceModel.storage.impl.extractOneToAbstractManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyParentOfChild
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
-import org.jetbrains.deft.*
-import org.jetbrains.deft.impl.*
-import org.jetbrains.deft.impl.fields.Field
+import org.jetbrains.deft.ObjBuilder
 
     
 

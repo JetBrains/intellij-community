@@ -10,6 +10,8 @@ import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.*
 import org.jetbrains.deft.TestEntities.TestEntities
+import org.jetbrains.deft.Type
+
 
 
 //region ------------------- Parent Entity --------------------------------
@@ -32,7 +34,7 @@ interface OoParentEntity : WorkspaceEntity {
       override var anotherChild: OoChildWithNullableParentEntity?
   }
   
-  companion object: ObjType<OoParentEntity, Builder>(TestEntities, 39)
+  companion object: Type<OoParentEntity, Builder>(39)
   //@formatter:on
   //endregion
 
@@ -68,7 +70,7 @@ interface OoChildEntity : WorkspaceEntity {
       override var parentEntity: OoParentEntity
   }
   
-  companion object: ObjType<OoChildEntity, Builder>(TestEntities, 40)
+  companion object: Type<OoChildEntity, Builder>(40)
   //@formatter:on
   //endregion
 
@@ -104,7 +106,7 @@ interface OoChildWithNullableParentEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<OoChildWithNullableParentEntity, Builder>(TestEntities, 41)
+  companion object: Type<OoChildWithNullableParentEntity, Builder>(41)
   //@formatter:on
   //endregion
 
@@ -148,7 +150,7 @@ interface OoParentWithPidEntity : WorkspaceEntityWithPersistentId {
       override var childThree: OoChildAlsoWithPidEntity?
   }
   
-  companion object: ObjType<OoParentWithPidEntity, Builder>(TestEntities, 42)
+  companion object: Type<OoParentWithPidEntity, Builder>(42)
   //@formatter:on
   //endregion
 
@@ -182,7 +184,7 @@ interface OoChildForParentWithPidEntity : WorkspaceEntity {
       override var parentEntity: OoParentWithPidEntity
   }
   
-  companion object: ObjType<OoChildForParentWithPidEntity, Builder>(TestEntities, 43)
+  companion object: Type<OoChildForParentWithPidEntity, Builder>(43)
   //@formatter:on
   //endregion
 
@@ -218,7 +220,7 @@ interface OoChildAlsoWithPidEntity : WorkspaceEntityWithPersistentId {
       override var parentEntity: OoParentWithPidEntity
   }
   
-  companion object: ObjType<OoChildAlsoWithPidEntity, Builder>(TestEntities, 44)
+  companion object: Type<OoChildAlsoWithPidEntity, Builder>(44)
   //@formatter:on
   //endregion
 
@@ -253,7 +255,7 @@ interface OoParentWithoutPidEntity : WorkspaceEntity {
       override var childOne: OoChildWithPidEntity?
   }
   
-  companion object: ObjType<OoParentWithoutPidEntity, Builder>(TestEntities, 45)
+  companion object: Type<OoParentWithoutPidEntity, Builder>(45)
   //@formatter:on
   //endregion
 
@@ -294,7 +296,7 @@ interface OoChildWithPidEntity : WorkspaceEntityWithPersistentId {
       override var parentEntity: OoParentWithoutPidEntity
   }
   
-  companion object: ObjType<OoChildWithPidEntity, Builder>(TestEntities, 46)
+  companion object: Type<OoChildWithPidEntity, Builder>(46)
   //@formatter:on
   //endregion
 

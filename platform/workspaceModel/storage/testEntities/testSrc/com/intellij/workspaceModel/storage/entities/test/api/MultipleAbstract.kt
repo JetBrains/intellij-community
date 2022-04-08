@@ -12,6 +12,8 @@ import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.TestEntities.TestEntities
+import org.jetbrains.deft.Type
+
 
 
 
@@ -31,7 +33,7 @@ interface ParentAbEntity : WorkspaceEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<ParentAbEntity, Builder>(TestEntities, 70)
+    companion object: Type<ParentAbEntity, Builder>(70)
     //@formatter:on
     //endregion
 
@@ -52,7 +54,7 @@ interface ChildAbstractBaseEntity : WorkspaceEntity {
         override var parentEntity: ParentAbEntity
     }
     
-    companion object: ObjType<ChildAbstractBaseEntity, Builder>(TestEntities, 71)
+    companion object: Type<ChildAbstractBaseEntity, Builder>(71)
     //@formatter:on
     //endregion
 
@@ -71,7 +73,7 @@ interface ChildFirstEntity : ChildAbstractBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<ChildFirstEntity, Builder>(TestEntities, 72, ChildAbstractBaseEntity)
+    companion object: Type<ChildFirstEntity, Builder>(72, ChildAbstractBaseEntity)
     //@formatter:on
     //endregion
 
@@ -94,7 +96,7 @@ interface ChildSecondEntity : ChildAbstractBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: ObjType<ChildSecondEntity, Builder>(TestEntities, 73, ChildAbstractBaseEntity)
+    companion object: Type<ChildSecondEntity, Builder>(73, ChildAbstractBaseEntity)
     //@formatter:on
     //endregion
 

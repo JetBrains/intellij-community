@@ -11,6 +11,8 @@ import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.TestEntities.TestEntities
+import org.jetbrains.deft.Type
+
 
 interface XParentEntity : WorkspaceEntity {
   val parentProperty: String
@@ -30,7 +32,7 @@ interface XParentEntity : WorkspaceEntity {
       override var childChild: List<XChildChildEntity>
   }
   
-  companion object: ObjType<XParentEntity, Builder>(TestEntities, 57)
+  companion object: Type<XParentEntity, Builder>(57)
   //@formatter:on
   //endregion
 
@@ -56,7 +58,7 @@ interface XChildEntity : WorkspaceEntity {
       override var childChild: List<XChildChildEntity>
   }
   
-  companion object: ObjType<XChildEntity, Builder>(TestEntities, 58)
+  companion object: Type<XChildEntity, Builder>(58)
   //@formatter:on
   //endregion
 
@@ -74,7 +76,7 @@ interface XChildWithOptionalParentEntity : WorkspaceEntity {
       override var optionalParent: XParentEntity?
   }
   
-  companion object: ObjType<XChildWithOptionalParentEntity, Builder>(TestEntities, 59)
+  companion object: Type<XChildWithOptionalParentEntity, Builder>(59)
   //@formatter:on
   //endregion
 
@@ -93,7 +95,7 @@ interface XChildChildEntity : WorkspaceEntity {
       override var parent2: XChildEntity
   }
   
-  companion object: ObjType<XChildChildEntity, Builder>(TestEntities, 60)
+  companion object: Type<XChildChildEntity, Builder>(60)
   //@formatter:on
   //endregion
 

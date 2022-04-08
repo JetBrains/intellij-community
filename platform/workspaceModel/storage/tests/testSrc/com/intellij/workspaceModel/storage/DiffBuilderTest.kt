@@ -8,7 +8,6 @@ import com.intellij.workspaceModel.storage.entities.test.addChildWithOptionalPar
 import com.intellij.workspaceModel.storage.entities.test.addParentEntity
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
-import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity.Companion.stringProperty
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException

@@ -11,6 +11,8 @@ import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.TestEntities.TestEntities
+import org.jetbrains.deft.Type
+
 
 
 
@@ -32,7 +34,7 @@ interface ParentNullableEntity : WorkspaceEntity {
         override var child: ChildNullableEntity?
     }
     
-    companion object: ObjType<ParentNullableEntity, Builder>(TestEntities, 53)
+    companion object: Type<ParentNullableEntity, Builder>(53)
     //@formatter:on
     //endregion
 
@@ -52,7 +54,7 @@ interface ChildNullableEntity : WorkspaceEntity {
         override var parentEntity: ParentNullableEntity
     }
     
-    companion object: ObjType<ChildNullableEntity, Builder>(TestEntities, 54)
+    companion object: Type<ChildNullableEntity, Builder>(54)
     //@formatter:on
     //endregion
 

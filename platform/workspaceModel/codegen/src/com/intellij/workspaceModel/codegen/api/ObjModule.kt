@@ -2,6 +2,7 @@ package org.jetbrains.deft.impl
 
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.Type
 import org.jetbrains.deft.impl.fields.ExtField
 import org.jetbrains.deft.impl.fields.ExtFieldId
 import org.jetbrains.deft.obj.api.ExtFieldKotlinId
@@ -72,8 +73,8 @@ abstract class ObjModule(
     }
 
     @InitApi
-    protected fun add(type: ObjType<*, *>) {
-        byId[modules.typeIndex(type.id)] = type
+    protected fun add(type: Type<*, *>) {
+        byId[modules.typeIndex(type.id)] = type as ObjType<*, *>
     }
 
     private var extFields: Array<ExtField<*, *>?>? = null

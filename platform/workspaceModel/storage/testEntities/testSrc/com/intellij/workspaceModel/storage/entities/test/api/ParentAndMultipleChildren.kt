@@ -11,6 +11,8 @@ import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.TestEntities.TestEntities
+import org.jetbrains.deft.Type
+
 
 
 
@@ -30,7 +32,7 @@ interface ParentMultipleEntity : WorkspaceEntity {
         override var children: List<ChildMultipleEntity>
     }
     
-    companion object: ObjType<ParentMultipleEntity, Builder>(TestEntities, 91)
+    companion object: Type<ParentMultipleEntity, Builder>(91)
     //@formatter:on
     //endregion
 
@@ -50,7 +52,7 @@ interface ChildMultipleEntity : WorkspaceEntity {
         override var parentEntity: ParentMultipleEntity
     }
     
-    companion object: ObjType<ChildMultipleEntity, Builder>(TestEntities, 92)
+    companion object: Type<ChildMultipleEntity, Builder>(92)
     //@formatter:on
     //endregion
 

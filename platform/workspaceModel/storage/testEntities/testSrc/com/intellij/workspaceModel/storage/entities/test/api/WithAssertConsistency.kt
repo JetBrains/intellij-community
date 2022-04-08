@@ -13,6 +13,8 @@ import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.*
 import org.jetbrains.deft.TestEntities.TestEntities
+import org.jetbrains.deft.Type
+
 
 
 
@@ -29,7 +31,7 @@ interface AssertConsistencyEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: ObjType<AssertConsistencyEntity, Builder>(TestEntities, 74)
+  companion object: Type<AssertConsistencyEntity, Builder>(74)
   //@formatter:on
   //endregion
 
