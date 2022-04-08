@@ -67,6 +67,16 @@ class PluginRepositoryAuthServiceTest {
     authService.getAllCustomHeaders(unescapedUrl)
   }
 
+  @Test
+  fun multipleValidRepos() {
+    val authService = PluginRepositoryAuthService()
+    setupContributors(FakeUrlMatchingContributor(fooDomain))
+    authService.getAllCustomHeaders(barUrl)
+    authService.getAllCustomHeaders(fooUrl)
+    authService.getAllCustomHeaders(barUrl)
+    assertEquals(authService.getAllCustomHeaders(fooUrl), headers)
+  }
+
   private fun setupContributors(vararg contributor: PluginRepositoryAuthProvider) {
     ExtensionTestUtil.maskExtensions(PluginRepositoryAuthProvider.EP_NAME, contributor.asList(), disposableRule.disposable)
   }
