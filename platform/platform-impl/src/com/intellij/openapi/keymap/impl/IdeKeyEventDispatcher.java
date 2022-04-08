@@ -602,8 +602,7 @@ public final class IdeKeyEventDispatcher {
     DataContext wrappedContext = Utils.wrapDataContext(context);
     Project project = CommonDataKeys.PROJECT.getData(wrappedContext);
     boolean dumb = project != null && DumbService.getInstance(project).isDumb();
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC)
-      .beforeShortcutTriggered(shortcut, Collections.unmodifiableList(actions), context);
+    fireBeforeShortcutTriggered(shortcut, actions, context);
 
     List<AnAction> wouldBeEnabledIfNotDumb = ContainerUtil.createLockFreeCopyOnWriteList();
     ProgressIndicator indicator = Registry.is("actionSystem.update.actions.cancelable.beforeActionPerformedUpdate") ?
@@ -796,6 +795,16 @@ public final class IdeKeyEventDispatcher {
         final KeyboardShortcut altShortCut = new KeyboardShortcut(firstKeyStroke, KeyStroke.getKeyStroke(secondKeyStroke.getKeyCode(), 0));
         addActionsFromActiveKeymap(altShortCut);
       }
+    }
+  }
+
+  private static void fireBeforeShortcutTriggered(@NotNull Shortcut shortcut, @NotNull List<AnAction> actions, @NotNull DataContext context) {
+    try {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC)
+        .beforeShortcutTriggered(shortcut, Collections.unmodifiableList(actions), context);
+    }
+    catch (Exception ex) {
+      LOG.error(ex);
     }
   }
 
