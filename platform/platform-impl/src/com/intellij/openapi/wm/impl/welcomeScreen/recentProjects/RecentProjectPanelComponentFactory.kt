@@ -149,34 +149,34 @@ internal object RecentProjectPanelComponentFactory {
       get() = RecentProjectsManagerBase.instanceEx
 
     // Recent project component
-    private val projectNameLabel = JLabel()
-    private val projectPathLabel = JLabel().apply {
+    private val recentProjectNameLabel = JLabel()
+    private val recentProjectPathLabel = JLabel().apply {
       foreground = UIUtil.getInactiveTextColor()
     }
-    private val projectIconLabel = JLabel().apply {
+    private val recentProjectIconLabel = JLabel().apply {
       border = JBUI.Borders.empty(8, 0, 0, 8)
       horizontalAlignment = SwingConstants.LEFT
       verticalAlignment = SwingConstants.TOP
     }
-    private val projectActions = JLabel().apply {
+    private val recentProjectActions = JLabel().apply {
       border = JBUI.Borders.empty(0, 0, 0, 10)
       icon = IconUtil.toSize(AllIcons.Ide.Notification.Gear,
                              ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
                              ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
     }
-    private val namePanel = JBUI.Panels.simplePanel().apply {
+    private val recentProjectNamePanel = JBUI.Panels.simplePanel().apply {
       isOpaque = false
       border = JBUI.Borders.empty(4)
 
-      add(projectNameLabel, BorderLayout.NORTH)
-      add(projectPathLabel, BorderLayout.SOUTH)
+      add(recentProjectNameLabel, BorderLayout.NORTH)
+      add(recentProjectPathLabel, BorderLayout.SOUTH)
     }
     private val recentProjectComponent = JBUI.Panels.simplePanel().apply {
       border = JBUI.Borders.empty(4)
 
-      add(namePanel, BorderLayout.CENTER)
-      add(projectIconLabel, BorderLayout.WEST)
-      add(projectActions, BorderLayout.EAST)
+      add(recentProjectNamePanel, BorderLayout.CENTER)
+      add(recentProjectIconLabel, BorderLayout.WEST)
+      add(recentProjectActions, BorderLayout.EAST)
     }
 
     // Project group component
@@ -214,25 +214,25 @@ internal object RecentProjectPanelComponentFactory {
     private fun createReopenProjectComponent(item: RecentProjectItem, isHovered: Boolean): JComponent = recentProjectComponent.apply {
       val isProjectPathValid = isProjectPathValid(item.projectPath)
 
-      projectNameLabel.apply {
+      recentProjectNameLabel.apply {
         text = item.displayName
         foreground = if (isProjectPathValid) UIUtil.getListForeground() else UIUtil.getInactiveTextColor()
       }
-      projectPathLabel.apply {
+      recentProjectPathLabel.apply {
         text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(item.projectPath), false)
       }
-      projectIconLabel.apply {
+      recentProjectIconLabel.apply {
         icon = recentProjectsManager.getProjectIcon(item.projectPath, true)
         disabledIcon = IconUtil.desaturate(icon)
         isEnabled = isProjectPathValid
       }
-      projectActions.isVisible = isHovered
+      recentProjectActions.isVisible = isHovered
 
       val toolTipPath = PathUtil.toSystemDependentName(item.projectPath)
       toolTipText = if (isProjectPathValid) toolTipPath else "$toolTipPath ${IdeBundle.message("recent.project.unavailable")}"
 
-      AccessibleContextUtil.setCombinedName(this, projectNameLabel, "-", projectPathLabel) // NON-NLS
-      AccessibleContextUtil.setCombinedDescription(this, projectNameLabel, "-", projectPathLabel) // NON-NLS
+      AccessibleContextUtil.setCombinedName(this, recentProjectNameLabel, "-", recentProjectPathLabel) // NON-NLS
+      AccessibleContextUtil.setCombinedDescription(this, recentProjectNameLabel, "-", recentProjectPathLabel) // NON-NLS
     }
 
     private fun createProjectGroupComponent(item: ProjectsGroupItem, isHovered: Boolean): JComponent {
