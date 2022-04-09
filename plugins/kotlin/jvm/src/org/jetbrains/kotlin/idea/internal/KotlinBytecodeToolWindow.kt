@@ -191,7 +191,7 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
         enableInline = JCheckBox(KotlinJvmBundle.message("checkbox.text.inline"), true)
         enableOptimization = JCheckBox(KotlinJvmBundle.message("checkbox.text.optimization"), true)
         enableAssertions = JCheckBox(KotlinJvmBundle.message("checkbox.text.assertions"), true)
-        jvmTargets = ComboBox(JvmTarget.values().map { it.description }.toTypedArray())
+        jvmTargets = ComboBox(JvmTarget.supportedValues().map { it.description }.toTypedArray())
         @NlsSafe
         val description = JvmTarget.DEFAULT.description
         jvmTargets.selectedItem = description
