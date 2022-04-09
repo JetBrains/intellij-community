@@ -146,23 +146,17 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     }
 
     if (refElement instanceof RefField) {
-      Boolean implicitlyWritten = refElement.getUserData(RefField.IMPLICITLY_WRITTEN);
-      if (implicitlyWritten != null && implicitlyWritten) {
+      final RefField refField = (RefField)refElement;
+      if (refField.isImplicitlyWritten() || refField.isImplicitlyRead()) {
         return null;
       }
-      Boolean implicitlyRead = refElement.getUserData(RefField.IMPLICITLY_READ);
-      if (implicitlyRead != null && implicitlyRead) {
+      if (refField.isEnumConstant()) {
         return null;
       }
     }
 
     //ignore implicit constructors. User should not be able to see them.
     if (refElement instanceof RefImplicitConstructor) return null;
-
-    if (refElement instanceof RefField) {
-      final Boolean isEnumConstant = refElement.getUserData(RefField.ENUM_CONSTANT);
-      if (isEnumConstant != null && isEnumConstant.booleanValue()) return null;
-    }
 
     //ignore library override methods.
     if (refElement instanceof RefMethod) {

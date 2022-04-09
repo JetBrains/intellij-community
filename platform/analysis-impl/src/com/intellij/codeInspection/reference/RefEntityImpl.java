@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.project.DumbService;
@@ -16,83 +15,115 @@ import java.util.List;
 /**
  * Table of presently used flag bits, a minus (-) signifies the bit is free.
  * <table>
- *   <thead>
- *     <tr><th>Bits</th><th>Usage</th><th>User(s)</th></tr>
- *   </thead>
+ *   <thead> <tr><th>Bits<th>Usage<th>User(s)</thead>
  *   <tbody>
- *      <tr valign="top"><td>1</td><td><pre>access modifiers</pre></td><td>{@link com.intellij.codeInspection.reference.RefJavaElementImpl}</td></tr>
- *      <tr valign="top"><td>2</td><td><pre>access modifiers</pre></td><td>{@link com.intellij.codeInspection.reference.RefJavaElementImpl}</td></tr>
- *      <tr valign="top"><td>3</td><td><pre>is static</pre></td><td>{@link com.intellij.codeInspection.reference.RefJavaElementImpl}</td></tr>
- *      <tr valign="top"><td>4</td><td><pre>is final</pre></td><td>{@link com.intellij.codeInspection.reference.RefJavaElementImpl}</td></tr>
- *      <tr valign="top"><td>5</td><td><pre>is deleted</pre></td><td>{@link RefElementImpl}</td></tr>
- *      <tr valign="top"><td>6</td><td><pre>is initialized</pre></td><td>{@link RefElementImpl}</td></tr>
- *      <tr valign="top"><td>7</td><td><pre>is reachable</pre></td><td>{@link RefElementImpl}</td></tr>
- *      <tr valign="top"><td>8</td><td><pre>is entry point</pre></td><td>{@link RefElementImpl}</td></tr>
- *      <tr valign="top"><td>9</td><td><pre>is permanent entry</pre></td><td>{@link RefElementImpl}</td></tr>
- *      <tr valign="top"><td>10</td><td>-</td><td>-</td></tr>
- *      <tr valign="top"><td>11</td><td><pre>is synthetic jsp element</pre></td><td>{@link com.intellij.codeInspection.reference.RefJavaElementImpl}<br>
- *      <tr valign="top"><td></td><td><pre>is from common</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefElementImpl}</td></tr>
- *      <tr valign="top"><td>12</td><td><pre>is forbid protected access</pre></td><td>{@link com.intellij.codeInspection.reference.RefJavaElementImpl}<br>
- *      <tr valign="top"><td></td><td><pre>is traversed</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefElementImpl}</td></tr>
- *      <tr valign="top"><td>13</td><td>-</td><td>-</td></tr>
- *      <tr valign="top"><td>14</td><td>-</td><td>-</td></tr>
- *      <tr valign="top"><td>15</td><td>-</td><td>-</td></tr>
- *      <tr valign="top"><td>16</td><td>-</td><td>-</td></tr>
- *      <tr valign="top"><td>17</td><td><pre>is anonymous</pre></td><td>{@link com.intellij.codeInspection.reference.RefClassImpl} &
- *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}<br>
- *      <tr valign="top"><td></td><td><pre>used for reading</pre></td><td>{@link com.intellij.codeInspection.reference.RefFieldImpl},
+ *      <tr valign="top"><td>1<td><pre>access modifiers</pre><td>{@link com.intellij.codeInspection.reference.RefJavaElementImpl}
+ *
+ *      <tr valign="top"><td>2<td><pre>access modifiers</pre><td>{@link com.intellij.codeInspection.reference.RefJavaElementImpl}
+ *
+ *      <tr valign="top"><td>3<td><pre>is static</pre><td>{@link com.intellij.codeInspection.reference.RefJavaElementImpl}
+ *
+ *      <tr valign="top"><td>4<td><pre>is final</pre><td>{@link com.intellij.codeInspection.reference.RefJavaElementImpl}
+ *
+ *      <tr valign="top"><td>5<td><pre>is deleted</pre><td>{@link RefElementImpl}
+ *
+ *      <tr valign="top"><td>6<td><pre>is initialized</pre><td>{@link RefElementImpl}
+ *
+ *      <tr valign="top"><td>7<td><pre>is reachable</pre><td>{@link RefElementImpl}
+ *
+ *      <tr valign="top"><td>8<td><pre>is entry point</pre><td>{@link RefElementImpl}
+ *
+ *      <tr valign="top"><td>9<td><pre>is permanent entry</pre><td>{@link RefElementImpl}
+ *
+ *      <tr valign="top"><td>10<td>-<td>-
+ *
+ *      <tr valign="top"><td>11<td><pre>is synthetic jsp element</pre><td>{@link com.intellij.codeInspection.reference.RefJavaElementImpl}
+ *
+ *      <tr valign="top"><td><td><pre>is from common</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefElementImpl}
+ *
+ *      <tr valign="top"><td>12<td><pre>is forbid protected access</pre><td>{@link com.intellij.codeInspection.reference.RefJavaElementImpl}
+ *
+ *      <tr valign="top"><td><td><pre>is traversed</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefElementImpl}
+ *
+ *      <tr valign="top"><td>13<td>-<td>-
+ *
+ *      <tr valign="top"><td>14<td>-<td>-
+ *
+ *      <tr valign="top"><td>15<td>-<td>-
+ *
+ *      <tr valign="top"><td>16<td>-<td>-
+ *
+ *      <tr valign="top"><td>17<td><pre>is anonymous</pre><td>{@link com.intellij.codeInspection.reference.RefClassImpl} &
+ *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}
+ *      <tr valign="top"><td><td><pre>used for reading</pre><td>{@link com.intellij.codeInspection.reference.RefFieldImpl},
  *      {@link com.intellij.codeInspection.reference.RefParameterImpl},
  *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefFieldImpl} &
- *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefParameterImpl}<br>
- *      <tr valign="top"><td></td><td><pre>is appmain</pre></td><td>{@link com.intellij.codeInspection.reference.RefMethodImpl}<br>
- *      <tr valign="top"><td></td><td><pre>has body</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefFunctionImpl} &
- *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefMethodImpl}</td></tr>
- *      <tr valign="top"><td>18</td><td><pre>is interface</pre></td><td>{@link com.intellij.codeInspection.reference.RefClassImpl} &
- *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}<br>
- *      <tr valign="top"><td></td><td><pre>used for writing</pre></td><td>{@link com.intellij.codeInspection.reference.RefFieldImpl},
+ *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefParameterImpl}
+ *      <tr valign="top"><td><td><pre>is appmain</pre><td>{@link com.intellij.codeInspection.reference.RefMethodImpl}
+ *      <tr valign="top"><td><td><pre>has body</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefFunctionImpl} &
+ *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefMethodImpl}
+ *
+ *      <tr valign="top"><td>18<td><pre>is interface</pre><td>{@link com.intellij.codeInspection.reference.RefClassImpl} &
+ *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}
+ *      <tr valign="top"><td><td><pre>used for writing</pre><td>{@link com.intellij.codeInspection.reference.RefFieldImpl},
  *      {@link com.intellij.codeInspection.reference.RefParameterImpl},
  *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefFieldImpl},
- *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefParameterImpl}<br>
- *      <tr valign="top"><td></td><td><pre>is library override</pre></td><td>{@link com.intellij.codeInspection.reference.RefMethodImpl}<br>
- *      <tr valign="top"><td></td><td><pre>empty body</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefFunctionImpl} &
- *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefMethodImpl}</td></tr>
- *      <tr valign="top"><td>19</td><td><pre>is utility</pre></td><td>{@link com.intellij.codeInspection.reference.RefClassImpl}<br>
- *      <tr valign="top"><td></td><td><pre>assigned only in initializer</pre></td><td>{@link com.intellij.codeInspection.reference.RefFieldImpl} &
- *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefFieldImpl}<br>
- *      <tr valign="top"><td></td><td><pre>is constructor</pre></td><td>{@link com.intellij.codeInspection.reference.RefMethodImpl}<br>
- *      <tr valign="top"><td></td><td><pre>closure</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefFunctionImpl} &
- *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefMethodImpl}<br></td></tr>
- *      <tr valign="top"><td>20</td><td><pre>is abstract</pre></td><td>{@link com.intellij.codeInspection.reference.RefClassImpl},
+ *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefParameterImpl}
+ *      <tr valign="top"><td><td><pre>is library override</pre><td>{@link com.intellij.codeInspection.reference.RefMethodImpl}
+ *      <tr valign="top"><td><td><pre>empty body</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefFunctionImpl} &
+ *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefMethodImpl}
+ *
+ *      <tr valign="top"><td>19<td><pre>is utility</pre><td>{@link com.intellij.codeInspection.reference.RefClassImpl}
+ *      <tr valign="top"><td><td><pre>assigned only in initializer</pre><td>{@link com.intellij.codeInspection.reference.RefFieldImpl} &
+ *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefFieldImpl}
+ *      <tr valign="top"><td><td><pre>is constructor</pre><td>{@link com.intellij.codeInspection.reference.RefMethodImpl}
+ *      <tr valign="top"><td><td><pre>closure</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefFunctionImpl} &
+ *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefMethodImpl}
+ *
+ *      <tr valign="top"><td>20<td><pre>is abstract</pre><td>{@link com.intellij.codeInspection.reference.RefClassImpl},
  *      {@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl} &
- *      {@link com.intellij.codeInspection.reference.RefMethodImpl}<br>
- *      <tr valign="top"><td></td><td><pre>implicitly used from core</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefFunctionImpl}<br>
- *      <tr valign="top"><td></td><td><pre>constructor</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefMethodImpl}</td></tr>
- *      <tr valign="top"><td>21</td><td><pre>is body empty</pre></td><td>{@link com.intellij.codeInspection.reference.RefMethodImpl}<br>
- *      <tr valign="top"><td></td><td><pre>is final</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}<br>
- *      <tr valign="top"><td></td><td><pre>with static constructor</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefMethodImpl}</td></tr>
- *      <tr valign="top"><td>22</td><td><pre>is applet</pre></td><td>{@link com.intellij.codeInspection.reference.RefClassImpl}<br>
- *      <tr valign="top"><td></td><td><pre>only calls super</pre></td><td>{@link com.intellij.codeInspection.reference.RefMethodImpl}<br>
- *      <tr valign="top"><td></td><td><pre>is trait</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}</td></tr>
- *      <tr valign="top"><td>23</td><td><pre>is servlet</pre></td><td>{@link com.intellij.codeInspection.reference.RefClassImpl}<br>
- *      <tr valign="top"><td></td><td><pre>is return value used</pre></td><td>{@link com.intellij.codeInspection.reference.RefMethodImpl}<br>
- *      <tr valign="top"><td></td><td><pre>is with implicit constructor</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}<br>
- *      <tr valign="top"><td></td><td><pre>access private</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}</td></tr>
- *      <tr valign="top"><td>24</td><td><pre>is test case</pre></td><td>{@link com.intellij.codeInspection.reference.RefClassImpl}<br>
- *      <tr valign="top"><td></td><td><pre>is utility</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}<br>
- *      <tr valign="top"><td></td><td><pre>access protected</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}</td></tr>
- *      <tr valign="top"><td>25</td><td><pre>is local</pre></td><td>{@link com.intellij.codeInspection.reference.RefClassImpl}<br>
- *      <tr valign="top"><td></td><td><pre>is test</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}<br>
- *      <tr valign="top"><td></td><td><pre>access public</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}</td></tr>
- *      <tr valign="top"><td>26</td><td><pre>is implicitly used constructor</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}</td></tr>
- *      <tr valign="top"><td>27</td><td><pre>-</pre></td><td>-<br>
- *      <tr valign="top"><td></td><td><pre>is with duplicates</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}<br>
- *      <tr valign="top"><td></td><td><pre>is abstract</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}</td></tr>
- *      <tr valign="top"><td>28</td><td><pre>is called on subclass</pre></td><td>{@link com.intellij.codeInspection.reference.RefMethodImpl}<br>
- *      <tr valign="top"><td></td><td><pre>is duplicates initiator</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}<br>
- *      <tr valign="top"><td></td><td><pre>is dynamic</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}</td></tr>
- *      <tr valign="top"><td>29</td><td><pre>is static</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}</td></tr>
- *      <tr valign="top"><td>30</td><td><pre>is final</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}</td></tr>
- *      <tr valign="top"><td>31</td><td><pre>was used by static reference</pre></td><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}</td></tr>
+ *      {@link com.intellij.codeInspection.reference.RefMethodImpl}
+ *      <tr valign="top"><td><td><pre>implicitly used from core</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefFunctionImpl}
+ *      <tr valign="top"><td><td><pre>constructor</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefMethodImpl}
+ *      <tr valign="top"><td><td><pre>implicitly read</pre><td>{@link com.intellij.codeInspection.reference.RefFieldImpl}
+ *
+ *      <tr valign="top"><td>21<td><pre>is body empty</pre><td>{@link com.intellij.codeInspection.reference.RefMethodImpl}
+ *      <tr valign="top"><td><td><pre>is final</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}
+ *      <tr valign="top"><td><td><pre>with static constructor</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefMethodImpl}
+ *      <tr valign="top"><td><td><pre>implicitly written</pre><td>{@link com.intellij.codeInspection.reference.RefFieldImpl}
+ *
+ *      <tr valign="top"><td>22<td><pre>is applet</pre><td>{@link com.intellij.codeInspection.reference.RefClassImpl}
+ *      <tr valign="top"><td><td><pre>only calls super</pre><td>{@link com.intellij.codeInspection.reference.RefMethodImpl}
+ *      <tr valign="top"><td><td><pre>is trait</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}
+ *      <tr valign="top"><td><td><pre>is enum constant</pre><td>{@link com.intellij.codeInspection.reference.RefFieldImpl}
+ *
+ *      <tr valign="top"><td>23<td><pre>is servlet</pre><td>{@link com.intellij.codeInspection.reference.RefClassImpl}
+ *      <tr valign="top"><td><td><pre>is return value used</pre><td>{@link com.intellij.codeInspection.reference.RefMethodImpl}
+ *      <tr valign="top"><td><td><pre>is with implicit constructor</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}
+ *      <tr valign="top"><td><td><pre>access private</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}
+ *
+ *      <tr valign="top"><td>24<td><pre>is test case</pre><td>{@link com.intellij.codeInspection.reference.RefClassImpl}
+ *      <tr valign="top"><td><td><pre>is utility</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}
+ *      <tr valign="top"><td><td><pre>access protected</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}
+ *
+ *      <tr valign="top"><td>25<td><pre>is local</pre><td>{@link com.intellij.codeInspection.reference.RefClassImpl}
+ *      <tr valign="top"><td><td><pre>is test</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}
+ *      <tr valign="top"><td><td><pre>access public</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}
+ *
+ *      <tr valign="top"><td>26<td><pre>is implicitly used constructor</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}
+ *
+ *      <tr valign="top"><td>27<td><pre>is with duplicates</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}
+ *      <tr valign="top"><td><td><pre>is abstract</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}
+ *
+ *      <tr valign="top"><td>28<td><pre>is called on subclass</pre><td>{@link com.intellij.codeInspection.reference.RefMethodImpl}
+ *      <tr valign="top"><td><td><pre>is duplicates initiator</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}
+ *      <tr valign="top"><td><td><pre>is dynamic</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}
+ *
+ *      <tr valign="top"><td>29<td><pre>is static</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}
+ *
+ *      <tr valign="top"><td>30<td><pre>is final</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}
+ *
+ *      <tr valign="top"><td>31<td><pre>was used by static reference</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}
  *   </tbody>
  * </table>
  * <br>

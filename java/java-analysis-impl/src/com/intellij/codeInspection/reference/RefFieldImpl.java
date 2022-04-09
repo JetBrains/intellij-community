@@ -12,9 +12,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
 public class RefFieldImpl extends RefJavaElementImpl implements RefField {
-  private static final int USED_FOR_READING_MASK = 0b1_00000000_00000000;
-  private static final int USED_FOR_WRITING_MASK = 0b10_00000000_00000000;
-  private static final int ASSIGNED_ONLY_IN_INITIALIZER_MASK = 0b100_00000000_00000000;
+  private static final int USED_FOR_READING_MASK = 0b1_00000000_00000000; // 17th bit
+  private static final int USED_FOR_WRITING_MASK = 0b10_00000000_00000000; // 18th bit
+  private static final int ASSIGNED_ONLY_IN_INITIALIZER_MASK = 0b100_00000000_00000000; // 19th bit
+  private static final int IMPLICITLY_READ_MASK = 0b1000_00000000_00000000; // 20th bit
+  private static final int IMPLICITLY_WRITTEN_MASK = 0b10000_00000000_00000000; // 21st bit
+  private static final int IS_ENUM_CONSTANT = 0b100000_00000000_00000000; // 22nd bit
 
   RefFieldImpl(UField field, PsiElement psi, RefManager manager) {
     super(field, psi, manager);
@@ -23,7 +26,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     }
 
     if (field instanceof UEnumConstant) {
-      putUserData(ENUM_CONSTANT, true);
+      setEnumConstant(true);
     }
   }
 
@@ -108,6 +111,33 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     return checkFlag(ASSIGNED_ONLY_IN_INITIALIZER_MASK);
   }
 
+  private void setEnumConstant(boolean enumConstant) {
+    setFlag(enumConstant, IS_ENUM_CONSTANT);
+  }
+
+  @Override
+  public boolean isEnumConstant() {
+    return checkFlag(IS_ENUM_CONSTANT);
+  }
+
+  private void setImplicitlyRead(boolean implicitlyRead) {
+    setFlag(implicitlyRead, IMPLICITLY_READ_MASK);
+  }
+
+  @Override
+  public boolean isImplicitlyRead() {
+    return checkFlag(IMPLICITLY_READ_MASK);
+  }
+
+  private void setImplicitlyWritten(boolean implicitlyWritten) {
+    setFlag(implicitlyWritten, IMPLICITLY_WRITTEN_MASK);
+  }
+
+  @Override
+  public boolean isImplicitlyWritten() {
+    return checkFlag(IMPLICITLY_WRITTEN_MASK);
+  }
+
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
@@ -132,12 +162,12 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
         setInitializerMasks();
       }
       else if (RefUtil.isImplicitWrite(uField.getJavaPsi())) {
-        putUserData(IMPLICITLY_WRITTEN, true);
+        setImplicitlyWritten(true);
         setInitializerMasks();
       }
 
       if (RefUtil.isImplicitRead(uField.getJavaPsi())) {
-        putUserData(IMPLICITLY_READ, true);
+        setImplicitlyRead(true);
       }
 
       refUtil.addTypeReference(uField, uField.getType(), getRefManager(), this);
@@ -176,6 +206,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     return (RefField)manager.getReference(findPsiField(PsiManager.getInstance(manager.getProject()), externalName));
   }
 
+  @SuppressWarnings("WeakerAccess") // used by TeamCity
   @Nullable
   public static PsiField findPsiField(PsiManager manager, String externalName) {
     int classNameDelimiter = externalName.lastIndexOf(' ');
