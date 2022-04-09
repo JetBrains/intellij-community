@@ -589,11 +589,6 @@ public abstract class UltraLightClassSanityTestGenerated extends AbstractUltraLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/SpecialAnnotationsOnAnnotationClass.kt"));
         }
 
-        @TestMetadata("SpecialAnnotationsOnAnnotationClass_1_6.kt")
-        public void testSpecialAnnotationsOnAnnotationClass_1_6() throws Exception {
-            runTest(compilerTestData("compiler/testData/asJava/lightClasses/SpecialAnnotationsOnAnnotationClass_1_6.kt"));
-        }
-
         @TestMetadata("StubOrderForOverloads.kt")
         public void testStubOrderForOverloads() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/StubOrderForOverloads.kt"));
