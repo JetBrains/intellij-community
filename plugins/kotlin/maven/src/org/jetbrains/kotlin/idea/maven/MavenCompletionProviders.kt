@@ -21,7 +21,7 @@ class MavenApiVersionsCompletionProvider : MavenFixedValueReferenceProvider(
 )
 
 class MavenJvmTargetsCompletionProvider : MavenFixedValueReferenceProvider(
-    JvmTarget.values().map(JvmTarget::description).toTypedArray()
+    JvmTarget.supportedValues().map(JvmTarget::description).toTypedArray()
 )
 
 class MavenJsModuleKindsCompletionProvider : MavenFixedValueReferenceProvider(
