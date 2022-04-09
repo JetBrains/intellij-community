@@ -967,7 +967,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       myFileEditors = fileEditorHighlightingInfos;
     }
   }
-  private void submitInBackground(@NotNull List<FileEditorInfo> preferredFileEditorMap,
+  private void submitInBackground(@NotNull List<? extends FileEditorInfo> preferredFileEditorMap,
                                   int @NotNull [] passesToIgnore,
                                   int modificationCountBefore,
                                   @NotNull DaemonProgressIndicator progress) {
@@ -1055,7 +1055,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
               }
               return new FileEditorInfo.FileEditorHighlightingInfo(fileEditor, highlighter); // highlighting passes will be created later in background
             });
-      putPreferredFileEditorFirst(virtualFile, infos);
+      if (!infos.isEmpty()) {
+        putPreferredFileEditorFirst(virtualFile, infos);
+      }
       result.add(new FileEditorInfo(document, virtualFile, infos));
     }
     return result;
