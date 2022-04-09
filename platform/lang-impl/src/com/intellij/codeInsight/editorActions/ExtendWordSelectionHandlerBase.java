@@ -134,20 +134,20 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
     TextRange last = result.isEmpty() ? range : result.get(result.size() - 1);
     int start = last.getStartOffset();
     int end = last.getEndOffset();
-    while (true) {
-      int blankLineEnd = CharArrayUtil.shiftForward(text, end, " \t");
-      if (blankLineEnd >= text.length() || text.charAt(blankLineEnd) != '\n') {
+    while (start > 0 && text.charAt(start - 1) == '\n') {
+      int blankLineStart = CharArrayUtil.shiftBackward(text, start - 2, " \t");
+      if (blankLineStart <= 0 || text.charAt(blankLineStart) != '\n') {
         break;
       }
-      end = blankLineEnd + 1;
+      start = blankLineStart + 1;
     }
-    if (end == last.getEndOffset()) {
-      while (start > 0 && text.charAt(start - 1) == '\n') {
-        int blankLineStart = CharArrayUtil.shiftBackward(text, start - 2, " \t");
-        if (blankLineStart <= 0 || text.charAt(blankLineStart) != '\n') {
+    if (start == last.getStartOffset()) {
+      while (true) {
+        int blankLineEnd = CharArrayUtil.shiftForward(text, end, " \t");
+        if (blankLineEnd >= text.length() || text.charAt(blankLineEnd) != '\n') {
           break;
         }
-        start = blankLineStart + 1;
+        end = blankLineEnd + 1;
       }
     }
     if (start != last.getStartOffset() || end != last.getEndOffset()) {
