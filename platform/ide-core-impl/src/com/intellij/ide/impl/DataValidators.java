@@ -67,7 +67,7 @@ public abstract class DataValidators {
       }
     }
     catch (ClassCastException ex) {
-      LOG.error("Object of incorrect type provided by " + source.getClass().getName() + ".getData(\"" + dataId + "\")");
+      LOG.error("Object of incorrect type provided by " + source.getClass().getName() + ".getData(\"" + dataId + "\")", ex);
       return false;
     }
     return true;
