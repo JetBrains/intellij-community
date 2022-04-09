@@ -22,6 +22,7 @@ public final class PlatformDataValidators extends DataValidators {
 
     Validator<Editor> editorValidator = (data, dataId, source) -> !data.isDisposed();
     registry.register(CommonDataKeys.EDITOR, editorValidator);
+    registry.register(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE, editorValidator);
     registry.register(CommonDataKeys.HOST_EDITOR, editorValidator);
     registry.register(InjectedDataKeys.EDITOR, editorValidator);
 
