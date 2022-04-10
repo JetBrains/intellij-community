@@ -12,6 +12,8 @@ import static org.jetbrains.intellij.build.LibraryLicense.jetbrainsLibrary
 final class CommunityLibraryLicenses {
   @SuppressWarnings("SpellCheckingInspection")
   public static final List<LibraryLicense> LICENSES_LIST = [
+    new LibraryLicense(name: "A fast Java JSON schema validator", libraryName: "networknt.json.schema.validator",
+                       url: "https://github.com/networknt/json-schema-validator").apache(),
     new LibraryLicense(name: "aalto-xml", libraryName: "aalto-xml", url: "https://github.com/FasterXML/aalto-xml/").apache(),
     new LibraryLicense(name: "AAPT Protos", libraryName: "aapt-proto", url: "https://source.android.com/").apache(),
     new LibraryLicense(name: "AhoCorasickDoubleArrayTrie", libraryName: "com.hankcs:aho-corasick-double-array-trie:1.2.2",
