@@ -500,6 +500,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     public Icon getIcon(@Nullable TextEditorWithPreview editor) {
       if (this == SHOW_EDITOR) return AllIcons.General.LayoutEditorOnly;
       if (this == SHOW_PREVIEW) return AllIcons.General.LayoutPreviewOnly;
+      if (ExperimentalUI.isNewUI()) return AllIcons.General.LayoutEditorPreview; //todo[kb] add icon for horizontal split
       return editor != null && editor.myIsVerticalSplit ? AllIcons.Actions.PreviewDetailsVertically : AllIcons.Actions.PreviewDetails;
     }
   }
