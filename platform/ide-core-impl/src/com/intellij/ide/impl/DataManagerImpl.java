@@ -57,18 +57,18 @@ public class DataManagerImpl extends DataManager {
   public @Nullable Object getDataFromProviderAndRules(@NotNull String dataId,
                                                       @Nullable GetDataRuleType ruleType,
                                                       @NotNull DataProvider provider) {
-    return getDataFromProviderInner(ruleType, dataId, null, provider);
+    return getDataFromProviderInner(dataId, ruleType, null, provider);
   }
 
   @ApiStatus.Internal
   public @Nullable Object getDataFromRules(@NotNull String dataId,
                                            @NotNull GetDataRuleType ruleType,
                                            @NotNull DataProvider provider) {
-    return getDataFromRulesInner(dataId, ruleType, new HashSet<>(), provider);
+    return getDataFromRulesInner(dataId, ruleType, null, provider);
   }
 
-  private @Nullable Object getDataFromProviderInner(@Nullable GetDataRuleType ruleType,
-                                                    @NotNull String dataId,
+  private @Nullable Object getDataFromProviderInner(@NotNull String dataId,
+                                                    @Nullable GetDataRuleType ruleType,
                                                     @Nullable Set<String> alreadyComputedIds,
                                                     @NotNull DataProvider provider) {
     ProgressManager.checkCanceled();
@@ -92,13 +92,21 @@ public class DataManagerImpl extends DataManager {
                                                  @NotNull GetDataRuleType ruleType,
                                                  @Nullable Set<String> alreadyComputedIds,
                                                  @NotNull DataProvider provider) {
+    GetDataRule rule = myRulesCache.get(Pair.create(dataId, ruleType));
+    if (rule == null) return null;
+    return getDataFromRuleInner(rule, dataId, ruleType, alreadyComputedIds, provider);
+  }
+
+  private @Nullable Object getDataFromRuleInner(@NotNull GetDataRule rule,
+                                                @NotNull String dataId,
+                                                @NotNull GetDataRuleType ruleType,
+                                                @Nullable Set<String> alreadyComputedIds,
+                                                @NotNull DataProvider provider) {
     int[] depth = ourGetDataLevel.get();
     try {
-      GetDataRule rule = myRulesCache.get(Pair.create(dataId, ruleType));
-      if (rule == null) return null;
       Set<String> ids = alreadyComputedIds == null ? new HashSet<>() : alreadyComputedIds;
       ids.add(dataId);
-      Object data = rule.getData(id -> getDataFromProviderInner(ruleType, id, ids, provider));
+      Object data = rule.getData(id -> getDataFromProviderInner(id, ruleType, ids, provider));
       return data == null ? null : DataValidators.validOrNull(data, dataId, rule);
     }
     finally {
@@ -139,11 +147,11 @@ public class DataManagerImpl extends DataManager {
   public @Nullable Object getDataSimple(@NotNull String dataId, @NotNull DataProvider provider) {
     Object result = getDataFromProviderAndRules(dataId, GetDataRuleType.PROVIDER, provider);
     if (result != null) return result;
+    GetDataRule rule = myRulesCache.get(Pair.create(dataId, GetDataRuleType.CONTEXT));
+    if (rule == null) return null;
     Set<String> computedIds = new HashSet<>();
-    return getDataFromRulesInner(dataId, GetDataRuleType.CONTEXT, computedIds, id -> {
-      Object r = getDataFromProviderAndRules(id, GetDataRuleType.FAST, provider);
-      return r != null ? r : getDataFromRulesInner(id, GetDataRuleType.PROVIDER, computedIds, provider);
-    });
+    return getDataFromRuleInner(rule, dataId, GetDataRuleType.CONTEXT, computedIds, id ->
+      getDataFromProviderInner(id, GetDataRuleType.PROVIDER, computedIds, provider));
   }
 
   private static @Nullable GetDataRule getDataRule(@NotNull String dataId, @NotNull GetDataRuleType ruleType) {
