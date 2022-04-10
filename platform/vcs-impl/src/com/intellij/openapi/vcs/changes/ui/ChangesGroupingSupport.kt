@@ -48,16 +48,7 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
     }
   }
 
-  val grouping: ChangesGroupingPolicyFactory
-    get() = object : ChangesGroupingPolicyFactory() {
-      override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): ChangesGroupingPolicy {
-        var result = DefaultChangesGroupingPolicy.Factory(showConflictsNode).createGroupingPolicy(project, model)
-        groupingConfig.filterValues { it }.keys.sortedByDescending { PREDEFINED_PRIORITIES[it] }.forEach {
-          result = findFactory(it)!!.createGroupingPolicy(project, model).apply { setNextGroupingPolicy(result) }
-        }
-        return result
-      }
-    }
+  val grouping: ChangesGroupingPolicyFactory get() = CombinedGroupingPolicyFactory()
 
   val isNone: Boolean get() = groupingKeys.isEmpty()
   val isDirectory: Boolean get() = this[DIRECTORY_GROUPING]
@@ -65,6 +56,7 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
   fun setGroupingKeysOrSkip(groupingKeys: Set<String>) {
     groupingConfig.entries.forEach { it.setValue(it.key in groupingKeys) }
   }
+
   open fun isAvailable(groupingKey: String) = findFactory(groupingKey) != null
 
   fun addPropertyChangeListener(listener: PropertyChangeListener) {
@@ -73,6 +65,16 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
 
   fun removePropertyChangeListener(listener: PropertyChangeListener) {
     changeSupport.removePropertyChangeListener(listener)
+  }
+
+  private inner class CombinedGroupingPolicyFactory : ChangesGroupingPolicyFactory() {
+    override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): ChangesGroupingPolicy {
+      var result = DefaultChangesGroupingPolicy.Factory(showConflictsNode).createGroupingPolicy(project, model)
+      groupingConfig.filterValues { it }.keys.sortedByDescending { PREDEFINED_PRIORITIES[it] }.forEach {
+        result = findFactory(it)!!.createGroupingPolicy(project, model).apply { setNextGroupingPolicy(result) }
+      }
+      return result
+    }
   }
 
   companion object {
