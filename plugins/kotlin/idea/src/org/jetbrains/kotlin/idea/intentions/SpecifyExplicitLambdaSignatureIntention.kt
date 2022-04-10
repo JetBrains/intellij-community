@@ -8,6 +8,7 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
@@ -24,7 +25,7 @@ open class SpecifyExplicitLambdaSignatureIntention : SelfTargetingOffsetIndepend
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtLambdaExpression): Boolean {
         if (element.functionLiteral.arrow != null && element.valueParameters.all { it.typeReference != null }) return false
-        val functionDescriptor = element.analyze(BodyResolveMode.PARTIAL)[BindingContext.FUNCTION, element.functionLiteral] ?: return false
+        val functionDescriptor = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)[BindingContext.FUNCTION, element.functionLiteral] ?: return false
         return functionDescriptor.valueParameters.none { it.type.isError }
     }
 

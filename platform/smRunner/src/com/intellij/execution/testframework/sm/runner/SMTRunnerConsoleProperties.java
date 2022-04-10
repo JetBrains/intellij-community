@@ -26,7 +26,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.config.Storage;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,8 +65,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
    * If enabled, runner must add new line char (\n) before each TC message. This char is not reported to user.
    * @deprecated Fix your runner and stop adding "\n" before TC message.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean serviceMessageHasNewLinePrefix() {
     return false;
   }

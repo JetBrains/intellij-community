@@ -44,8 +44,9 @@ if (window.__IntelliJTools === undefined) {
       e.preventDefault();
       const cmd = target.getAttribute('data-command')
       let cmdType = target.getAttribute('data-commandtype')
+      let firstLineHash = target.getAttribute('data-firstLine')
       if (cmdType === 'block') {
-        runBlock(cmd);
+        runBlock(cmd + ":" + firstLineHash + ":" + e.clientX + ":" + e.clientY);
       } else {
         runLine(cmd);
       }

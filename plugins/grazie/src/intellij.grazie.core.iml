@@ -25,6 +25,7 @@
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="library" name="slf4j-jdk14" level="project" />
     <orderEntry type="library" name="commons-lang3" level="project" />
     <orderEntry type="library" name="commons-logging" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
@@ -87,26 +88,24 @@
     <orderEntry type="library" scope="RUNTIME" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module-library">
-      <library name="org.languagetool:languagetool-core:5.5" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.5.5-grz" />
+      <library name="org.languagetool:languagetool-core:5.6" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.6.2-grz" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.5.5-grz/languagetool-core-5.5.5-grz.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.6.2-grz/languagetool-core-5.6.2-grz.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.5.5-grz/languagetool-core-5.5.5-grz-sources.jar!/" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.languagetool:language-en:5.5" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-en:5.5" />
+      <library name="org.languagetool:language-en:5.6" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-en:5.6" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.5/language-en-5.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.6/language-en-5.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.5/language-en-5.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.6/language-en-5.6-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -271,20 +270,6 @@
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common/0.1.50/utils-common-0.1.50-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="java-string-similarity" type="repository">
-        <properties include-transitive-deps="false" maven-id="info.debatty:java-string-similarity:2.0.0" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/info/debatty/java-string-similarity/2.0.0/java-string-similarity-2.0.0.jar!/" />
-        </CLASSES>
-        <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/info/debatty/java-string-similarity/2.0.0/java-string-similarity-2.0.0-javadoc.jar!/" />
-        </JAVADOC>
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/info/debatty/java-string-similarity/2.0.0/java-string-similarity-2.0.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

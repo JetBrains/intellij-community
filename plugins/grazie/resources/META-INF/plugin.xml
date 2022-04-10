@@ -3,20 +3,27 @@
   <name>Grazie</name>
   <vendor>JetBrains</vendor>
 
+  <incompatible-with>com.intellij.cwm.guest</incompatible-with>
+  <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
+  <incompatible-with>com.intellij.gateway</incompatible-with>
+
   <description><![CDATA[
-    <p>Provides intelligent spelling and grammar checks for text that you write in the IDE.</p>
+    <p>Intelligent spelling and grammar checks for any text you write in the IDE.</p>
 
     <ul>
-        <li>Supports over 15 languages, including English, German, Russian, Chinese, and others.</li>
-        <li>Recognizes natural language constructs in programming languages (Python, Java and others),
-            markup languages (Latex, Markdown, XML, HTML), comments, commits messages, and more.</li>
+      <li>
+        Supports over 20 languages, including English, German, Russian, and Chinese.
+        English is enabled by default.
+        To add other languages, open <b>Settings/Preferences | Editor | Natural Languages</b>.
+      </li>
+      <li>
+        Works with natural languages in programming language constructs (Python, Java, and others),
+        markup languages (Markdown, HTML, XML, and others), comments, and commit messages.
+      </li>
       <li>Uses <a href="https://www.languagetool.org/">LanguageTool</a> as its proofreading engine.</li>
     </ul>
 
-    <p>English is enabled by default when you install the plugin. To enable other languages, open <strong>Settings/Preferences</strong>
-       and select <strong>Editor</strong> > <strong>Natural Languages</strong>.</p>
-
-    <p><strong>NOTE:</strong> By default, all verification is performed locally, inside your IDE.</p>
+    <p>Data privacy: all verification is performed locally, inside your IDE.</p>
     ]]></description>
 
   <content>
@@ -58,6 +65,12 @@
     <annotator language="TEXT" implementationClass="com.intellij.grazie.ide.language.commit.CommitAnnotator"/>
 
     <preloadingActivity implementation="com.intellij.grazie.jlanguage.LangTool$Preloader"/>
+
+    <additionalTextAttributes scheme="Default" file="colorSchemes/GrazieDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/GrazieDarcula.xml"/>
+
+    <severitiesProvider implementation="com.intellij.grazie.ide.TextProblemSeverities"/>
+    <daemon.statusItemMerger implementation="com.intellij.grazie.ide.TextSeverityMerger"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">
@@ -65,6 +78,7 @@
 
     <textExtractor language="TEXT" implementationClass="com.intellij.grazie.text.PlainTextExtractor"/>
 
+    <problemFilter language="" implementationClass="com.intellij.grazie.text.CodeProblemFilter"/>
     <problemFilter language="" implementationClass="com.intellij.grazie.text.CommentProblemFilter"/>
   </extensions>
 

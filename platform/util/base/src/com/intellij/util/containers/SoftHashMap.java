@@ -6,6 +6,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 
+/**
+ * Soft keys hash map.
+ * Null keys are NOT allowed
+ * Null values are allowed
+ */
 final class SoftHashMap<K,V> extends RefHashMap<K,V> {
   SoftHashMap(int initialCapacity) {
     super(initialCapacity);

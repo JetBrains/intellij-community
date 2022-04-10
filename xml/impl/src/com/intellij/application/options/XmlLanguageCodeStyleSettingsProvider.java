@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @Override
   @NotNull
@@ -106,19 +103,33 @@ public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSetti
   @Override
   public CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject,
                                             @NotNull Field field) {
-    if (codeStyleObject instanceof XmlCodeStyleSettings && "XML_WHITE_SPACE_AROUND_CDATA".equals(field.getName())) {
-      return new MagicIntegerConstAccessor(
-        codeStyleObject, field,
-        new int[]{
-          XmlCodeStyleSettings.WS_AROUND_CDATA_PRESERVE,
-          XmlCodeStyleSettings.WS_AROUND_CDATA_NONE,
-          XmlCodeStyleSettings.WS_AROUND_CDATA_NEW_LINES
-        },
-        new String[]{
-          "preserve",
-          "none",
-          "new_lines"
-        });
+    if (codeStyleObject instanceof XmlCodeStyleSettings) {
+      if ("XML_WHITE_SPACE_AROUND_CDATA".equals(field.getName())) {
+        return new MagicIntegerConstAccessor(
+          codeStyleObject, field,
+          new int[]{
+            XmlCodeStyleSettings.WS_AROUND_CDATA_PRESERVE,
+            XmlCodeStyleSettings.WS_AROUND_CDATA_NONE,
+            XmlCodeStyleSettings.WS_AROUND_CDATA_NEW_LINES
+          },
+          new String[]{
+            "preserve",
+            "none",
+            "new_lines"
+          });
+      }
+      else if ("XML_TEXT_WRAP".equals(field.getName())) {
+        return new MagicIntegerConstAccessor(
+          codeStyleObject, field,
+          new int[]{
+            CommonCodeStyleSettings.DO_NOT_WRAP,
+            CommonCodeStyleSettings.WRAP_AS_NEEDED
+          },
+          new String[]{
+            "off",
+            "normal"
+          });
+      }
     }
     return super.getAccessor(codeStyleObject, field);
   }

@@ -16,8 +16,8 @@ public class JavaHomeFinderMac extends JavaHomeFinderBasic {
 
   static String defaultJavaLocation = "/Library/Java/JavaVirtualMachines";
 
-  public JavaHomeFinderMac(boolean checkDefaultLocations, boolean forceEmbeddedJava, @NotNull JavaHomeFinder.SystemInfoProvider systemInfoProvider) {
-    super(checkDefaultLocations, forceEmbeddedJava, systemInfoProvider);
+  public JavaHomeFinderMac(@NotNull JavaHomeFinder.SystemInfoProvider systemInfoProvider) {
+    super(systemInfoProvider);
 
     registerFinder(() -> {
       Set<String> result = new TreeSet<>();

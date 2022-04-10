@@ -5,64 +5,43 @@ import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.pom.Navigatable
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.utils.MavenLog
-import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Path
+import org.jetbrains.idea.maven.server.MavenServerManager
 import java.util.concurrent.CompletableFuture
 
 object DownloadArtifactBuildIssue {
-  fun getIssue(title: String, quickFix: BuildIssueQuickFix): BuildIssue {
-    val quickFixes = listOf(quickFix)
+  fun getIssue(title: String, errorMessage: String): BuildIssue {
+    val quickFixes = listOf(ForceUpdateSnapshotsImportQuickFix())
+
+    val issueDescription = StringBuilder(errorMessage)
+      .append("\n\n")
+      .append(MavenProjectBundle.message("maven.quickfix.cannot.artifact.download", ForceUpdateSnapshotsImportQuickFix.ID))
+      .toString()
 
     return object : BuildIssue {
       override val title: String = title
-      override val description: String = MavenProjectBundle.message("maven.quickfix.cannot.artifact.download", title, quickFix.id)
+      override val description: String = issueDescription
       override val quickFixes = quickFixes
       override fun getNavigatable(project: Project): Navigatable? = null
     }
   }
 }
 
-class CleanBrokenArtifactsAndReimportQuickFix(val unresolvedArtifactFiles: Collection<Path?>) : BuildIssueQuickFix {
+class ForceUpdateSnapshotsImportQuickFix() : BuildIssueQuickFix {
 
   override val id: String = ID
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-    unresolvedArtifactFiles.filterNotNull().forEach { deleteLastUpdatedFiles(it) }
+    MavenServerManager.getInstance().shutdown(false)
+    MavenProjectsManager.getInstance(project).setForceUpdateSnapshots(true)
     MavenProjectsManager.getInstance(project).forceUpdateProjects()
     return CompletableFuture.completedFuture(null)
   }
 
-  private fun deleteLastUpdatedFiles(unresolvedArtifactDirectory: Path) {
-    MavenLog.LOG.info("start deleting lastUpdated file from $unresolvedArtifactDirectory")
-
-    val listUpdatedFiles = try {
-      Files.list(unresolvedArtifactDirectory).filter { child ->
-        child.fileName.toString().endsWith(".lastUpdated", true)
-      }
-    }
-    catch (e: Exception) {
-      MavenLog.LOG.warn("error deleting lastUpdated file from $unresolvedArtifactDirectory", e)
-      return
-    }
-
-    for (childFiles in listUpdatedFiles) {
-      try {
-        FileUtil.delete(childFiles)
-      }
-      catch (e: IOException) {
-        MavenLog.LOG.warn("$childFiles not deleted", e)
-      }
-    }
-  }
-
   companion object {
-    const val ID = "clean_broken_artifacts_and_reimport_quick_fix"
+    const val ID = "force_update_snapshots_import_quick_fix"
   }
 }
 

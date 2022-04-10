@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -16,14 +15,14 @@ public abstract class IntentionsUI {
     return project.getService(IntentionsUI.class);
   }
 
-  public IntentionsUI(Project project) {
+  public IntentionsUI(@NotNull Project project) {
     myProject = project;
   }
 
   private final AtomicReference<CachedIntentions> myCachedIntentions = new AtomicReference<>();
 
   @NotNull
-  public CachedIntentions getCachedIntentions(@Nullable Editor editor, @NotNull PsiFile file) {
+  public CachedIntentions getCachedIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
     return myCachedIntentions.updateAndGet(cachedIntentions -> {
       if (cachedIntentions != null && editor == cachedIntentions.getEditor() && file == cachedIntentions.getFile()) {
         return cachedIntentions;

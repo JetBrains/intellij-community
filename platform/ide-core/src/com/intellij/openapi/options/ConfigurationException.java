@@ -77,7 +77,7 @@ public class ConfigurationException extends Exception {
    *
    * @deprecated use {@link #getConfigurationQuickFix()} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public Runnable getQuickFix() {
     return myQuickFix == null ? null : () -> myQuickFix.applyFix(DataContext.EMPTY_CONTEXT);

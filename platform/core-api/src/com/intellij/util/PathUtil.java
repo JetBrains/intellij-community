@@ -1,24 +1,25 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileProvider;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class PathUtil {
   private PathUtil() { }
 
-  @Nullable
-  public static @NlsSafe String getLocalPath(@Nullable VirtualFile file) {
+  public static @Nullable @NlsSafe String getLocalPath(@Nullable VirtualFile file) {
     if (file == null || !file.isValid()) {
       return null;
     }
@@ -28,9 +29,8 @@ public final class PathUtil {
     return getLocalPath(file.getPath());
   }
 
-  @NotNull
-  public static @NlsSafe String getLocalPath(@NotNull String path) {
-    return FileUtil.toSystemDependentName(StringUtil.trimEnd(path, URLUtil.JAR_SEPARATOR));
+  public static @NotNull @NlsSafe String getLocalPath(@NotNull String path) {
+    return FileUtilRt.toSystemDependentName(Strings.trimEnd(path, URLUtil.JAR_SEPARATOR));
   }
 
   public static @NotNull String getJarPathForClass(@NotNull Class<?> aClass) {
@@ -39,8 +39,7 @@ public final class PathUtil {
     return pathForClass;
   }
 
-  @NotNull
-  public static @NlsSafe String toPresentableUrl(@NotNull String url) {
+  public static @NotNull @NlsSafe String toPresentableUrl(@NotNull String url) {
     return getLocalPath(VirtualFileManager.extractPath(url));
   }
 
@@ -52,28 +51,23 @@ public final class PathUtil {
     return FileUtil.toCanonicalPath(path);
   }
 
-  @NotNull
-  public static @NlsSafe String getFileName(@NotNull String path) {
+  public static @NotNull @NlsSafe String getFileName(@NotNull String path) {
     return PathUtilRt.getFileName(path);
   }
 
-  @Nullable
-  public static @NlsSafe String getFileExtension(@NotNull String name) {
+  public static @Nullable @NlsSafe String getFileExtension(@NotNull String name) {
     return PathUtilRt.getFileExtension(name);
   }
 
-  @NotNull
-  public static @NlsSafe String getParentPath(@NotNull String path) {
+  public static @NotNull @NlsSafe String getParentPath(@NotNull String path) {
     return PathUtilRt.getParentPath(path);
   }
 
-  @NotNull
-  public static @NlsSafe String suggestFileName(@NotNull String text) {
+  public static @NotNull @NlsSafe String suggestFileName(@NotNull String text) {
     return PathUtilRt.suggestFileName(text);
   }
 
-  @NotNull
-  public static @NlsSafe String suggestFileName(@NotNull String text, final boolean allowDots, final boolean allowSpaces) {
+  public static @NotNull @NlsSafe String suggestFileName(@NotNull String text, final boolean allowDots, final boolean allowSpaces) {
     return PathUtilRt.suggestFileName(text, allowDots, allowSpaces);
   }
 
@@ -95,36 +89,14 @@ public final class PathUtil {
     return path == null ? null : FileUtilRt.toSystemDependentName(path);
   }
 
-  @NotNull
-  public static String driveLetterToLowerCase(@NotNull String path) {
-    if (SystemInfo.isWindows && FileUtil.isWindowsAbsolutePath(path) && Character.isUpperCase(path.charAt(0))) {
+  public static @NotNull String driveLetterToLowerCase(@NotNull String path) {
+    if (SystemInfoRt.isWindows && OSAgnosticPathUtil.isAbsoluteDosPath(path) && Character.isUpperCase(path.charAt(0))) {
       return Character.toLowerCase(path.charAt(0)) + path.substring(1);
     }
     return path;
   }
 
-  @NotNull
-  public static String makeFileName(@NotNull String name, @Nullable String extension) {
-    return StringUtil.isEmpty(extension) ? name : name + '.' + extension;
+  public static @NotNull String makeFileName(@NotNull String name, @Nullable String extension) {
+    return extension == null || extension.isEmpty() ? name : name + '.' + extension;
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link com.intellij.openapi.vfs.VfsUtil#getLocalFile(VirtualFile)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @NotNull
-  public static VirtualFile getLocalFile(@NotNull VirtualFile file) {
-    if (file.isValid()) {
-      VirtualFileSystem fileSystem = file.getFileSystem();
-      if (fileSystem instanceof LocalFileProvider) {
-        VirtualFile localFile = ((LocalFileProvider)fileSystem).getLocalVirtualFileFor(file);
-        if (localFile != null) {
-          return localFile;
-        }
-      }
-    }
-
-    return file;
-  }
-  //</editor-fold>
 }

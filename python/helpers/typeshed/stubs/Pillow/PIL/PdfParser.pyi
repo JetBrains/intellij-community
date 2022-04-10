@@ -1,5 +1,5 @@
 import collections
-from typing import Any, List
+from typing import Any
 
 def encode_text(s: str) -> bytes: ...
 
@@ -44,7 +44,7 @@ class PdfName:
     allowed_chars: Any
     def __bytes__(self): ...
 
-class PdfArray(List[Any]):
+class PdfArray(list[Any]):
     def __bytes__(self): ...
 
 class PdfDict(collections.UserDict):

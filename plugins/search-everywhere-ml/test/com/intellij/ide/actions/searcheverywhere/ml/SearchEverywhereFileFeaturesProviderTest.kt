@@ -33,8 +33,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiFileFactory
@@ -373,35 +371,62 @@ internal class SearchEverywhereFileFeaturesProviderTest
   }
 
   fun testFileInDifferentModule() {
-    val moduleAFiles = createModuleWithTextFiles("testModuleA", 1)
-    val moduleBFiles = createModuleWithTextFiles("testModuleB", 1)
+    var openedFile: VirtualFile? = null
+    var foundFile: VirtualFile? = null
 
-    FileEditorManager.getInstance(project).openFile(moduleAFiles.first(), true)
+    module("testModuleA") {
+      source {
+        file("fileA.java") { openedFile = it }
+      }
+    }
 
-    val psiFile = moduleBFiles.first().toPsi()
+    module("testModuleB") {
+      source {
+        file("fileB.java") { foundFile = it }
+      }
+    }
+
+    FileEditorManager.getInstance(project).openFile(openedFile!!, true)
+
+    val psiFile = foundFile!!.toPsi()
     checkThatFeature(IS_SAME_MODULE_DATA_KEY)
       .ofElement(psiFile)
       .isEqualTo(false)
   }
 
   fun testFileInTheSameModule() {
-    val files = createModuleWithTextFiles("testModule", 2)
+    var openedFile: VirtualFile? = null
+    var foundFile: VirtualFile? = null
 
-    FileEditorManager.getInstance(project).openFile(files.first(), true)
+    module {
+      source {
+        file("fileA.java") { openedFile = it }
+        file("fileB.java") { foundFile = it }
+      }
+    }
 
-    val psiFile = files.last().toPsi()
+    FileEditorManager.getInstance(project).openFile(openedFile!!, true)
+
+    val psiFile = foundFile!!.toPsi()
     checkThatFeature(IS_SAME_MODULE_DATA_KEY)
       .ofElement(psiFile)
       .isEqualTo(true)
   }
 
   fun `test if same module is reported for directories`() {
-    val moduleFiles = createModuleWithTextFiles("testModuleA", 1)
-    val foundDirectory = File(moduleFiles.first().parent.path, "foundDir").apply { mkdir() }
+    var openedFile: VirtualFile? = null
+    var foundDirectory: VirtualFile? = null
 
-    FileEditorManager.getInstance(project).openFile(moduleFiles.first(), true)
+    module {
+      source {
+        file("fileA.java") { openedFile = it }
+        directory("directory") { foundDirectory = it }
+      }
+    }
 
-    val psiFile = foundDirectory.toPsi()
+    FileEditorManager.getInstance(project).openFile(openedFile!!, true)
+
+    val psiFile = foundDirectory!!.toPsi()
     checkThatFeature(IS_SAME_MODULE_DATA_KEY)
       .ofElement(psiFile)
       .isEqualTo(true)
@@ -409,175 +434,246 @@ internal class SearchEverywhereFileFeaturesProviderTest
   }
 
   fun `test package distance is reported for directories`() {
-    val srcDir = createModuleWithSrcDir("packageTestModule")
-    val packageDir = createPackageDirectory(srcDir, "a.b.c")
-    val openedFile = createTextFileInDirectory(packageDir, "fileB.txt")
-    val foundDirectory = createDirectoryInDirectory(packageDir, "foundDirectory")
+    var openedFile: VirtualFile? = null
+    var foundDirectory: VirtualFile? = null
 
-    FileEditorManager.getInstance(project).openFile(openedFile, true)
+    module {
+      source {
+        createPackage("a.b.c") {
+          file("fileA.txt") { openedFile = it }
+          directory("foundDirectory") { foundDirectory = it }
+        }
+      }
+    }
+
+    FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
     val expected = mapOf(
       PACKAGE_DISTANCE_DATA_KEY to 1,  // The found directory is considered a subpackage, hence the distance should be 1
       PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(1 / (3 + 4).toDouble()),
     )
 
-    val psiFile = foundDirectory.toPsi()
+    val psiFile = foundDirectory!!.toPsi()
     checkThatFeatures()
       .ofElement(psiFile)
       .isEqualTo(expected)
   }
 
   fun `test package distance is 0 when same package`() {
-    val srcDir = createModuleWithSrcDir("packageTestModule")
-    val packageDir = createPackageDirectory(srcDir, "a.b.c.d")
-    val openedFile = createTextFileInDirectory(packageDir, "fileA.txt")
-    val foundFile = createTextFileInDirectory(packageDir, "fileB.txt")
+    var openedFile: VirtualFile? = null
+    var foundFile: VirtualFile? = null
 
-    FileEditorManager.getInstance(project).openFile(openedFile, true)
+    module {
+      source {
+        createPackage("a.b.c") {
+          file("fileA.txt") { openedFile = it }
+          file("fileB.txt") { foundFile = it }
+        }
+      }
+    }
+
+    FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
     val expected = mapOf(
       PACKAGE_DISTANCE_DATA_KEY to 0,
       PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to 0.0,
     )
 
-    val psiFile = foundFile.toPsi()
+    val psiFile = foundFile!!.toPsi()
     checkThatFeatures()
       .ofElement(psiFile)
       .isEqualTo(expected)
   }
 
   fun `test package distance is 1 when in child package`() {
-    val srcDir = createModuleWithSrcDir("packageTestModule")
-    val packageDir = createPackageDirectory(srcDir, "a.b.c.d")
-    val childPackageDir = createPackageDirectory(srcDir, "a.b.c.d.e")
-    val openedFile = createTextFileInDirectory(packageDir, "fileA.txt")
-    val foundFile = createTextFileInDirectory(childPackageDir, "fileB.txt")
+    var openedFile: VirtualFile? = null
+    var foundFile: VirtualFile? = null
 
-    FileEditorManager.getInstance(project).openFile(openedFile, true)
+    module {
+      source {
+        createPackage("a.b.c.d") {
+          file("fileA.txt") { openedFile = it }
+          createPackage("e") {
+            file("fileB.txt") { foundFile = it }
+          }
+        }
+      }
+    }
+
+    FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
     val expected = mapOf(
       PACKAGE_DISTANCE_DATA_KEY to 1,
       PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(1 / (4 + 5).toDouble()),
     )
 
-    val psiFile = foundFile.toPsi()
+    val psiFile = foundFile!!.toPsi()
     checkThatFeatures()
       .ofElement(psiFile)
       .isEqualTo(expected)
   }
 
   fun `test package distance is 1 when in parent package`() {
-    val srcDir = createModuleWithSrcDir("packageTestModule")
-    val packageDir = createPackageDirectory(srcDir, "a.b.c.d")
-    val parentPackageDir = createPackageDirectory(srcDir, "a.b.c")
-    val openedFile = createTextFileInDirectory(packageDir, "fileA.txt")
-    val foundFile = createTextFileInDirectory(parentPackageDir, "fileB.txt")
+    var openedFile: VirtualFile? = null
+    var foundFile: VirtualFile? = null
 
-    FileEditorManager.getInstance(project).openFile(openedFile, true)
+    module {
+      source {
+        createPackage("a.b.c") {
+          file("fileB.txt") { foundFile = it }
+          createPackage("d") {
+            file("fileA.txt") { openedFile = it }
+          }
+        }
+      }
+    }
+
+    FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
     val expected = mapOf(
       PACKAGE_DISTANCE_DATA_KEY to 1,
       PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(1 / (4 + 3).toDouble()),
     )
 
-    val psiFile = foundFile.toPsi()
+    val psiFile = foundFile!!.toPsi()
     checkThatFeatures()
       .ofElement(psiFile)
       .isEqualTo(expected)
   }
 
   fun `test package distance on a parent of different group`() {
-    val srcDir = createModuleWithSrcDir("packageTestModule")
-    val packageDir = createPackageDirectory(srcDir, "a.b.c.d")
-    val otherPackageDir = createPackageDirectory(srcDir, "a.b.x")
-    val openedFile = createTextFileInDirectory(packageDir, "fileA.txt")
-    val foundFile = createTextFileInDirectory(otherPackageDir, "fileB.txt")
+    var openedFile: VirtualFile? = null
+    var foundFile: VirtualFile? = null
 
-    FileEditorManager.getInstance(project).openFile(openedFile, true)
+    module {
+      source {
+        createPackage("a.b") {
+          createPackage("c.d") {
+            file("fileA.txt") { openedFile = it }
+          }
+          createPackage("x") {
+            file("fileB.txt") { foundFile = it }
+          }
+        }
+      }
+    }
+
+    FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
     val expected = mapOf(
       PACKAGE_DISTANCE_DATA_KEY to 3,
       PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(3 / (4 + 3).toDouble()),
     )
 
-    val psiFile = foundFile.toPsi()
+    val psiFile = foundFile!!.toPsi()
     checkThatFeatures()
       .ofElement(psiFile)
       .isEqualTo(expected)
   }
 
   fun `test package distance on a child of different group`() {
-    val srcDir = createModuleWithSrcDir("packageTestModule")
-    val packageDir = createPackageDirectory(srcDir, "a.b.c.d")
-    val otherPackageDir = createPackageDirectory(srcDir, "a.b.x.y")
-    val openedFile = createTextFileInDirectory(packageDir, "fileA.txt")
-    val foundFile = createTextFileInDirectory(otherPackageDir, "fileB.txt")
+    var openedFile: VirtualFile? = null
+    var foundFile: VirtualFile? = null
 
-    FileEditorManager.getInstance(project).openFile(openedFile, true)
+    module {
+      source {
+        createPackage("a.b") {
+          createPackage("c.d") {
+            file("fileA.txt") { openedFile = it }
+          }
+          createPackage("x.y") {
+            file("fileB.txt") { foundFile = it }
+          }
+        }
+      }
+    }
+
+    FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
     val expected = mapOf(
       PACKAGE_DISTANCE_DATA_KEY to 4,
       PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(4 / (4 + 4).toDouble())
     )
 
-    val psiFile = foundFile.toPsi()
+    val psiFile = foundFile!!.toPsi()
     checkThatFeatures()
       .ofElement(psiFile)
       .isEqualTo(expected)
   }
 
   fun `test package distance when root is different`() {
-    val srcDir = createModuleWithSrcDir("packageTestModule")
-    val packageDir = createPackageDirectory(srcDir, "a.b.c.d")
-    val otherPackageDir = createPackageDirectory(srcDir, "x.y")
-    val openedFile = createTextFileInDirectory(packageDir, "fileA.txt")
-    val foundFile = createTextFileInDirectory(otherPackageDir, "fileB.txt")
+    var openedFile: VirtualFile? = null
+    var foundFile: VirtualFile? = null
 
-    FileEditorManager.getInstance(project).openFile(openedFile, true)
+    module {
+      source {
+        createPackage("a.b.c.d") {
+          file("fileA.txt") { openedFile = it }
+        }
+        createPackage("x.y") {
+          file("fileB.txt") { foundFile = it }
+        }
+      }
+    }
+
+    FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
     val expected = mapOf(
       PACKAGE_DISTANCE_DATA_KEY to 6,
       PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(6 / (4 + 2).toDouble()),
     )
 
-    val psiFile = foundFile.toPsi()
+    val psiFile = foundFile!!.toPsi()
     checkThatFeatures()
       .ofElement(psiFile)
       .isEqualTo(expected)
   }
 
   fun `test package distance is 0 when files are not in packages`() {
-    val srcDir = createModuleWithSrcDir("packageTestModule")
-    val openedFile = createTextFileInDirectory(srcDir, "fileA.txt")
-    val foundFile = createTextFileInDirectory(srcDir, "fileB.txt")
+    var openedFile: VirtualFile? = null
+    var foundFile: VirtualFile? = null
 
-    FileEditorManager.getInstance(project).openFile(openedFile, true)
+    module {
+      source {
+        file("fileA.txt") { openedFile = it }
+        file("fileB.txt") { foundFile = it }
+      }
+    }
+
+    FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
     val expected = mapOf(
       PACKAGE_DISTANCE_DATA_KEY to 0,
       PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to 0.0,
     )
 
-    val psiFile = foundFile.toPsi()
+    val psiFile = foundFile!!.toPsi()
     checkThatFeatures()
       .ofElement(psiFile)
       .isEqualTo(expected)
   }
 
   fun `test package distance when one file is not in a package`() {
-    val srcDir = createModuleWithSrcDir("packageTestModule")
-    val packageDir = createPackageDirectory(srcDir, "a.b.c.d")
-    val openedFile = createTextFileInDirectory(packageDir, "fileA.txt")
-    val foundFile = createTextFileInDirectory(srcDir, "fileB.txt")
+    var openedFile: VirtualFile? = null
+    var foundFile: VirtualFile? = null
 
-    FileEditorManager.getInstance(project).openFile(openedFile, true)
+    module {
+      source {
+        createPackage("a.b.c.d") {
+          file("fileA.txt") { openedFile = it }
+        }
+        file("fileB.txt") { foundFile = it }
+      }
+    }
+
+    FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
     val expected = mapOf(
       PACKAGE_DISTANCE_DATA_KEY to 4,
       PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(4 / (4 + 0).toDouble()),
     )
 
-    val psiFile = foundFile.toPsi()
+    val psiFile = foundFile!!.toPsi()
     checkThatFeatures()
       .ofElement(psiFile)
       .isEqualTo(expected)
@@ -604,44 +700,6 @@ internal class SearchEverywhereFileFeaturesProviderTest
     }.onEach { file -> editor.openFile(file.virtualFile, true) }
   }
 
-  /**
-   * @return List of created files
-   */
-  private fun createModuleWithTextFiles(moduleName: String, numberOfFiles: Int): List<VirtualFile> {
-    val srcDir = createModuleWithSrcDir(moduleName)
-
-    val createdFiles = (1..numberOfFiles).map {
-      File(srcDir, "file$it.txt").apply { createNewFile() }.toVirtualFile()
-    }.toList()
-
-    return createdFiles
-  }
-
-  private fun createPackageDirectory(srcDirectory: File, packageStatement: String): File {
-    var dir = srcDirectory
-    packageStatement.split('.')
-      .forEach { dir = File(dir, it).apply { mkdir() } }
-
-    return dir
-  }
-
-  /**
-   * @return Source directory
-   */
-  private fun createModuleWithSrcDir(moduleName: String): File {
-    val moduleDir = createTempDir(moduleName)
-    val module = createModuleAt(moduleName, project, moduleType, moduleDir.toPath())
-    val srcDir = File(moduleDir, "src").apply { mkdir() }
-
-    ModuleRootModificationUtil.updateModel(module) { model ->
-      val srcDirUrl = VfsUtilCore.pathToUrl(srcDir.path)
-      val contentEntry = model.addContentEntry(srcDirUrl)
-      contentEntry.addSourceFolder(srcDirUrl, false)
-    }
-
-    return srcDir
-  }
-
   private fun createTextFileInDirectory(parentDir: File, filename: String): VirtualFile {
     val vfManager = VirtualFileManager.getInstance()
 
@@ -652,12 +710,6 @@ internal class SearchEverywhereFileFeaturesProviderTest
     }
 
     return vfManager.refreshAndFindFileByUrl(psiDirectory.virtualFile.url + "/${file.name}")!!
-  }
-
-  private fun createDirectoryInDirectory(parentDir: File, name: String): VirtualFile {
-    return File(parentDir, name).apply {
-      mkdir()
-    }.toVirtualFile()
   }
 
   private fun closeAllOpenedFiles() {

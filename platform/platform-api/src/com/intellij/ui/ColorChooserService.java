@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.picker.ColorListener;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,8 +23,7 @@ public abstract class ColorChooserService {
   /**
    * @deprecated this overload does not work with headless implementation, use one with the Project instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nullable
   public abstract Color showDialog(Component parent, @DialogTitle String caption, Color preselectedColor, boolean enableOpacity,
                                    List<? extends ColorPickerListener> listeners, boolean opacityInPercent);

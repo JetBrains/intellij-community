@@ -30,6 +30,10 @@ public final class EditorFontsConstants {
     return round(getMinEditorFontSize(), getMaxEditorFontSize(), size);
   }
 
+  public static float checkAndFixEditorFontSize(float size) {
+    return round(getMinEditorFontSize(), getMaxEditorFontSize(), size);
+  }
+
   public static float checkAndFixEditorLineSpacing(float lineSpacing) {
     return round(getMinEditorLineSpacing(), getMaxEditorLineSpacing(), lineSpacing);
   }

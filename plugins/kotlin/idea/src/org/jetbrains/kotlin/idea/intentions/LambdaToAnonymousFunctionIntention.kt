@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.moveInsideParentheses
 import org.jetbrains.kotlin.idea.core.replaced
@@ -25,10 +26,10 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunctionDescriptor
-import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.types.ErrorType
+import org.jetbrains.kotlin.types.error.ErrorType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeConstructor
 import org.jetbrains.kotlin.types.isFlexible
@@ -46,7 +47,7 @@ class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpres
         val call = argument?.getStrictParentOfType<KtCallElement>()
         if (call?.getStrictParentOfType<KtFunction>()?.hasModifier(KtTokens.INLINE_KEYWORD) == true) return false
 
-        val context = element.analyze(BodyResolveMode.PARTIAL)
+        val context = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
         if (call?.getResolvedCall(context)?.getParameterForArgument(argument)?.type?.isSuspendFunctionType == true) return false
         val descriptor = context[
                 BindingContext.DECLARATION_TO_DESCRIPTOR,
@@ -118,7 +119,7 @@ class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpres
                         val lastStatement = bodyExpression.statements.lastOrNull()
                         if (lastStatement != null && lastStatement !is KtReturnExpression) {
                             val foldableReturns = BranchedFoldingUtils.getFoldableReturns(lastStatement)
-                            if (foldableReturns == null || foldableReturns.isEmpty()) {
+                            if (foldableReturns.isNullOrEmpty()) {
                                 lastStatement.replace(psiFactory.createExpressionByPattern("return $0", lastStatement))
                             }
                         }

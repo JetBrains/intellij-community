@@ -5,6 +5,7 @@ import com.intellij.compiler.impl.*;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
+import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.Compiler;
@@ -36,7 +37,6 @@ import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -80,8 +80,7 @@ public class CompilerManagerImpl extends CompilerManager {
   private volatile ExternalJavacManager myExternalJavacManager;
 
   @NonInjectable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public CompilerManagerImpl(@NotNull Project project, @NotNull MessageBus messageBus) {
     this(project);
   }
@@ -502,6 +501,7 @@ public class CompilerManagerImpl extends CompilerManager {
           manager = new ExternalJavacManager(
             compilerWorkingDir, ProcessIOExecutorService.INSTANCE, Registry.intValue("compiler.external.javac.keep.alive.timeout", 5*60*1000)
           );
+          manager.setWslExecutablePath(WSLDistribution.findWslExe());
           manager.start(listenPort);
           myExternalJavacManager = manager;
           IdeEventQueue.getInstance().addIdleListener(new IdleTask(manager), IdleTask.CHECK_PERIOD);

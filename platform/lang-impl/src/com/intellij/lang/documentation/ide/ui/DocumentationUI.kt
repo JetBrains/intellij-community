@@ -1,38 +1,42 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems") // KTIJ-19938
+
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.documentation.*
+import com.intellij.codeInsight.documentation.DocumentationHintEditorPane
+import com.intellij.codeInsight.documentation.DocumentationLinkHandler
 import com.intellij.codeInsight.documentation.DocumentationManager.SELECTED_QUICK_DOC_TEXT
 import com.intellij.codeInsight.documentation.DocumentationManager.decorate
+import com.intellij.codeInsight.documentation.DocumentationScrollPane
 import com.intellij.ide.DataManager
-import com.intellij.lang.documentation.DocumentationData
 import com.intellij.lang.documentation.DocumentationImageResolver
 import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_BROWSER
 import com.intellij.lang.documentation.ide.actions.PRIMARY_GROUP_ID
 import com.intellij.lang.documentation.ide.actions.registerBackForwardActions
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
-import com.intellij.lang.documentation.impl.DocumentationRequest
+import com.intellij.lang.documentation.ide.impl.DocumentationPage
+import com.intellij.lang.documentation.ide.impl.DocumentationPageContent
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.FontSizeModel
 import com.intellij.ui.PopupHandler
-import com.intellij.util.SmartList
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.JScrollPane
-import javax.swing.SwingUtilities
 
 internal class DocumentationUI(
   project: Project,
@@ -41,17 +45,19 @@ internal class DocumentationUI(
 
   val scrollPane: JScrollPane
   val editorPane: DocumentationHintEditorPane
+  val fontSize: FontSizeModel = DocumentationFontSizeModel()
 
   private val icons = mutableMapOf<String, Icon>()
   private var imageResolver: DocumentationImageResolver? = null
   private val linkHandler: DocumentationLinkHandler
   private val cs = CoroutineScope(Dispatchers.EDT)
-  private val contentListeners: MutableList<() -> Unit> = SmartList()
+  private val myContentUpdates = MutableSharedFlow<ContentUpdateKind>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  val contentUpdates: Flow<Unit> = myContentUpdates.map {}
 
-  override fun dispose() {
-    icons.clear()
-    imageResolver = null
-    cs.cancel()
+  private enum class ContentUpdateKind {
+    FETCHING,
+    EMPTY,
+    CONTENT,
   }
 
   init {
@@ -59,16 +65,12 @@ internal class DocumentationUI(
     editorPane = DocumentationHintEditorPane(project, DocumentationScrollPane.keyboardActions(scrollPane), {
       imageResolver?.resolveImage(it)
     }, { icons[it] })
-    editorPane.applyFontProps(DocumentationComponent.getQuickDocFontSize())
     scrollPane.setViewportView(editorPane)
-    scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(editorPane::applyFontProps))
+    scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(fontSize))
     linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, browser::navigateByLink)
 
     browser.ui = this
     Disposer.register(this, browser)
-    Disposer.register(this, browser.addStateListener { request, result, _ ->
-      applyStateLater(request, result)
-    })
 
     for (action in linkHandler.createLinkActions()) {
       action.registerCustomShortcutSet(editorPane, this)
@@ -84,7 +86,21 @@ internal class DocumentationUI(
 
     DataManager.registerDataProvider(editorPane, this)
 
-    fetchingProgress()
+    cs.launch(CoroutineName("DocumentationUI content update")) {
+      browser.pageFlow.collectLatest { page ->
+        handlePage(page)
+      }
+    }
+    cs.launch(CoroutineName("DocumentationUI font size update"), start = CoroutineStart.UNDISPATCHED) {
+      fontSize.updates.collect {
+        editorPane.applyFontProps(it)
+      }
+    }
+  }
+
+  override fun dispose() {
+    cs.cancel("DocumentationUI disposal")
+    clearImages()
   }
 
   override fun getData(dataId: String): Any? {
@@ -103,55 +119,57 @@ internal class DocumentationUI(
     }
   }
 
-  fun addContentListener(listener: () -> Unit): Disposable {
-    EDT.assertIsEdt()
-    contentListeners.add(listener)
-    return Disposable {
-      EDT.assertIsEdt()
-      contentListeners.remove(listener)
-    }
+  /**
+   * Waits until UI has something to show. One of possible results:
+   * - content was not loaded after [DEFAULT_UI_RESPONSE_TIMEOUT] => "Fetching..." is shown;
+   * - content was loaded and it's empty => "No documentation" is shown;
+   * - content was loaded => content is shown.
+   *
+   * @return `true` if the loaded content is empty,
+   * or `false` if the content is not yet loaded or if the content is not empty
+   */
+  suspend fun waitForContentUpdate(): Boolean {
+    return myContentUpdates.first() == ContentUpdateKind.EMPTY
   }
 
-  private fun fireContentChanged() {
-    for (listener in contentListeners) {
-      listener.invoke()
-    }
-  }
-
-  private fun applyStateLater(request: DocumentationRequest, asyncData: Deferred<DocumentationData?>) {
-    // to avoid flickering: don't show ""Fetching..." message right away, give a chance for documentation to load
-    val fetchingMessage = cs.launch {
-      delay(DEFAULT_UI_RESPONSE_TIMEOUT)
-      fetchingProgress()
-    }
-    asyncData.invokeOnCompletion {
-      fetchingMessage.cancel()
-    }
-    cs.launch {
-      val data = try {
-        asyncData.await()
-      }
-      catch (e: IndexNotReadyException) {
-        null // normal situation, nothing to do
-      }
-      applyState(request, data)
-    }
-  }
-
-  private fun applyState(request: DocumentationRequest, data: DocumentationData?) {
+  private fun clearImages() {
     icons.clear()
     imageResolver = null
-    if (data == null) {
-      showMessage(CodeInsightBundle.message("no.documentation.found"))
-      return
+  }
+
+  private suspend fun handlePage(page: DocumentationPage) {
+    val presentation = page.request.presentation
+    page.contentFlow.collectLatest {
+      handleContent(presentation, it)
     }
-    imageResolver = data.imageResolver
-    val presentation = request.presentation
+  }
+
+  private suspend fun handleContent(presentation: TargetPresentation, pageContent: DocumentationPageContent?) {
+    when (pageContent) {
+      null -> {
+        // to avoid flickering: don't show ""Fetching..." message right away, give a chance for documentation to load
+        delay(DEFAULT_UI_RESPONSE_TIMEOUT) // this call will be immediately cancelled once a new emission happens
+        clearImages()
+        showMessage(ContentUpdateKind.FETCHING, CodeInsightBundle.message("javadoc.fetching.progress"))
+      }
+      DocumentationPageContent.Empty -> {
+        clearImages()
+        showMessage(ContentUpdateKind.EMPTY, CodeInsightBundle.message("no.documentation.found"))
+      }
+      is DocumentationPageContent.Content -> {
+        clearImages()
+        handleContent(presentation, pageContent)
+      }
+    }
+  }
+
+  private suspend fun handleContent(presentation: TargetPresentation, pageContent: DocumentationPageContent.Content) {
+    val content = pageContent.content
+    imageResolver = content.imageResolver
     val locationChunk = getDefaultLocationChunk(presentation)
-    val linkChunk = linkChunk(presentation.presentableText, data)
-    val decorated = decorate(data.html, locationChunk, linkChunk)
-    val scrollingPosition = data.anchor?.let(ScrollingPosition::Anchor) ?: ScrollingPosition.Reset
-    update(decorated, scrollingPosition)
+    val linkChunk = linkChunk(presentation.presentableText, pageContent.links)
+    val decorated = decorate(content.html, locationChunk, linkChunk)
+    update(ContentUpdateKind.CONTENT, decorated, pageContent.uiState)
   }
 
   private fun getDefaultLocationChunk(presentation: TargetPresentation): HtmlChunk? {
@@ -173,48 +191,52 @@ internal class DocumentationUI(
     return key
   }
 
-  private fun fetchingProgress() {
-    showMessage(CodeInsightBundle.message("javadoc.fetching.progress"))
-  }
-
-  private fun showMessage(message: @Nls String) {
+  private suspend fun showMessage(kind: ContentUpdateKind, message: @Nls String) {
     val element = HtmlChunk.div()
       .setClass("content-only")
       .addText(message)
       .wrapWith("body")
       .wrapWith("html")
-    update(element.toString(), ScrollingPosition.Reset)
+    update(kind, element.toString(), UIState.Reset)
   }
 
-  fun update(text: @Nls String, scrollingPosition: ScrollingPosition) {
+  private suspend fun update(kind: ContentUpdateKind, text: @Nls String, uiState: UIState?) {
     EDT.assertIsEdt()
     if (editorPane.text == text) {
       return
     }
     editorPane.text = text
-    fireContentChanged()
-    SwingUtilities.invokeLater {
-      when (scrollingPosition) {
-        ScrollingPosition.Keep -> {
-          // do nothing
+    myContentUpdates.emit(kind)
+    if (uiState == null) {
+      return
+    }
+    yield()
+    applyUIState(uiState)
+  }
+
+  private fun applyUIState(uiState: UIState) {
+    when (uiState) {
+      UIState.Reset -> {
+        editorPane.scrollRectToVisible(Rectangle(0, 0))
+        if (ScreenReader.isActive()) {
+          editorPane.caretPosition = 0
         }
-        ScrollingPosition.Reset -> {
-          editorPane.scrollRectToVisible(Rectangle(0, 0))
-          if (ScreenReader.isActive()) {
-            editorPane.caretPosition = 0
-          }
-        }
-        is ScrollingPosition.Anchor -> {
-          UIUtil.scrollToReference(editorPane, scrollingPosition.anchor)
-        }
+      }
+      is UIState.ScrollToAnchor -> {
+        UIUtil.scrollToReference(editorPane, uiState.anchor)
+      }
+      is UIState.RestoreFromSnapshot -> {
+        uiState.snapshot.invoke()
       }
     }
   }
 
   fun uiSnapshot(): UISnapshot {
+    EDT.assertIsEdt()
     val viewRect = scrollPane.viewport.viewRect
     val highlightedLink = linkHandler.highlightedLink
     return {
+      EDT.assertIsEdt()
       linkHandler.highlightLink(highlightedLink)
       editorPane.scrollRectToVisible(viewRect)
       if (ScreenReader.isActive()) {

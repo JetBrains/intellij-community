@@ -3796,11 +3796,11 @@
   "group": "nodes",
   "data": {
     "id": "ZR",
-    "name": "intellij.wsl",
+    "name": "intellij.wsl.remoteSdk",
     "n": "i.wsl",
-    "package": "com.intellij.wsl",
-    "sourceModule": "intellij.wsl",
-    "descriptor": "plugins/WSL/resources/META-INF/plugin.xml",
+    "package": "com.intellij.wsl.remoteSdk",
+    "sourceModule": "intellij.wsl.remoteSdk",
+    "descriptor": "plugins/wsl-remote-sdk/resources/META-INF/plugin.xml",
     "pluginId": "org.jetbrains.plugins.wsl",
     "type": 1
   }

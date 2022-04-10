@@ -3,11 +3,12 @@ package training.featuresSuggester.listeners
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointListener
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import training.featuresSuggester.SuggestingUtils.handleAction
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.BreakpointAddedAction
 import training.featuresSuggester.actions.BreakpointChangedAction
 import training.featuresSuggester.actions.BreakpointRemovedAction
-import training.featuresSuggester.handleAction
 
 class BreakpointsListener(val project: Project) : XBreakpointListener<XBreakpoint<*>> {
 
@@ -27,13 +28,15 @@ class BreakpointsListener(val project: Project) : XBreakpointListener<XBreakpoin
     breakpoint: XBreakpoint<*>,
     actionConstructor: (XBreakpoint<*>, Project, Long) -> T
   ) {
-    handleAction(
-      project,
-      actionConstructor(
-        breakpoint,
+    if (breakpoint.type is XLineBreakpointType<*>) {
+      handleAction(
         project,
-        System.currentTimeMillis()
+        actionConstructor(
+          breakpoint,
+          project,
+          System.currentTimeMillis()
+        )
       )
-    )
+    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -105,7 +105,7 @@ public class ClassWrapper {
           }
           for (int i = 0; i < md.params.length; i++) {
             varProc.setVarName(new VarVersionPair(varIndex, 0), vc.getFreeName(varIndex));
-            varIndex += md.params[i].stackSize;
+            varIndex += md.params[i].getStackSize();
           }
         }
       }
@@ -151,7 +151,7 @@ public class ClassWrapper {
           if ((entry.myAccessFlags & CodeConstants.ACC_FINAL) != 0) {
             varProc.setParameterFinal(new VarVersionPair(index, 0));
           }
-          index += md.params[i].stackSize;
+          index += md.params[i].getStackSize();
         }
       }
     }

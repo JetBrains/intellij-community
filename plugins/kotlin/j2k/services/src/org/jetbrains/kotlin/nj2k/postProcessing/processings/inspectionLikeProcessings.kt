@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.postProcessing.processings
 
@@ -22,9 +22,8 @@ import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
-import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.isInSingleLine
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -101,7 +100,7 @@ class RemoveExplicitTypeArgumentsProcessing : InspectionLikeProcessingForElement
     }
 }
 
-// the types arguments for Stream.collect calls cannot be explicitly specified in Kotlin
+// the types arguments for Stream.collect calls cannot be explicitly specified in Kotlin,
 // but we need them in nullability inference, so we remove it here
 class RemoveJavaStreamsCollectCallTypeArgumentsProcessing :
     InspectionLikeProcessingForElement<KtCallExpression>(KtCallExpression::class.java) {
@@ -427,7 +426,7 @@ class RemoveExplicitGetterInspectionBasedProcessing :
         element.isRedundantGetter()
 
     override fun apply(element: KtPropertyAccessor) {
-        RemoveRedundantGetterFix.removeRedundantGetter(element)
+        removeRedundantGetter(element)
     }
 }
 
@@ -437,7 +436,7 @@ class RemoveExplicitSetterInspectionBasedProcessing :
         element.isRedundantSetter()
 
     override fun apply(element: KtPropertyAccessor) {
-        RemoveRedundantSetterFix.removeRedundantSetter(element)
+        removeRedundantSetter(element)
     }
 }
 

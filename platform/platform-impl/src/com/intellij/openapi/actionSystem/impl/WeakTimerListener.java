@@ -4,15 +4,13 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.openapi.actionSystem.TimerListener;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ModalityState;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
 /** @deprecated use {@link com.intellij.openapi.actionSystem.ActionManager#removeTimerListener(TimerListener)} instead */
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-@Deprecated
+@Deprecated(forRemoval = true)
 public class WeakTimerListener implements TimerListener {
   private final Reference<TimerListener> myRef;
 

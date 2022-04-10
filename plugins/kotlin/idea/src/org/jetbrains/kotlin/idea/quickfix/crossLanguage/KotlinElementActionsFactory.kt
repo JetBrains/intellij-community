@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
@@ -30,8 +30,9 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.appendModifier
-import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
-import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFix
+import org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10
+import org.jetbrains.kotlin.idea.quickfix.MakeFieldPublicFix
+import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -148,9 +149,10 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             .getElementFactory(project)
             .createParameterList(
                 parameters.map { it.semanticNames.firstOrNull() }.toTypedArray(),
-                parameters.map {
-                    it.expectedTypes.firstOrNull()?.theType
-                        ?.let { JvmPsiConversionHelper.getInstance(project).convertType(it) } ?: return null
+                parameters.map { param ->
+                    param.expectedTypes.firstOrNull()?.theType?.let { type ->
+                        JvmPsiConversionHelper.getInstance(project).convertType(type)
+                    } ?: return null
                 }.toTypedArray()
             )
             .parameters
@@ -164,6 +166,11 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
         val modifier = request.modifier
         val shouldPresent = request.shouldBePresent()
+
+        if (modifier == JvmModifier.PUBLIC && shouldPresent && kModifierOwner is KtProperty) {
+            return listOf(MakeFieldPublicFix(kModifierOwner))
+        }
+
         //TODO: make similar to `createAddMethodActions`
         val (kToken, shouldPresentMapped) = when {
             modifier == JvmModifier.FINAL -> KtTokens.OPEN_KEYWORD to !shouldPresent
@@ -175,10 +182,11 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         }
         if (kToken == null) return emptyList()
 
-        val action = if (shouldPresentMapped)
-            AddModifierFix.createIfApplicable(kModifierOwner, kToken)
-        else
-            RemoveModifierFix(kModifierOwner, kToken, false)
+        val action = if (shouldPresentMapped) {
+            AddModifierFixFE10.createIfApplicable(kModifierOwner, kToken)
+        } else {
+            RemoveModifierFixBase(kModifierOwner, kToken, false)
+        }
         return listOfNotNull(action)
     }
 
@@ -450,8 +458,7 @@ internal fun addAnnotationEntry(
             FqName(request.qualifiedName), NoLookupLocation.FROM_IDE
         ) ?: return@prefixEvaluation ""
 
-        val applicableTargetSet =
-            AnnotationChecker.applicableTargetSet(annotationClassDescriptor) ?: KotlinTarget.DEFAULT_TARGET_SET
+        val applicableTargetSet = AnnotationChecker.applicableTargetSet(annotationClassDescriptor)
 
         if (KotlinTarget.PROPERTY !in applicableTargetSet) return@prefixEvaluation ""
 
@@ -479,7 +486,7 @@ private fun renderAnnotation(
     return "${request.qualifiedName}${
         request.attributes.takeIf { it.isNotEmpty() }?.mapIndexed { i, p ->
             if (!isKotlinAnnotation(request) && i == 0 && p.name == "value")
-                renderAttributeValue(p.value, psiFactory, isKotlinAnnotation)
+                renderAttributeValue(p.value, psiFactory, isKotlinAnnotation, isVararg = true)
             else
                 "${p.name} = ${renderAttributeValue(p.value, psiFactory, isKotlinAnnotation)}"
         }?.joinToString(", ", "(", ")") ?: ""
@@ -490,6 +497,7 @@ private fun renderAttributeValue(
     annotationAttributeRequest: AnnotationAttributeValueRequest,
     psiFactory: KtPsiFactory,
     isKotlinAnnotation: (AnnotationRequest) -> Boolean,
+    isVararg: Boolean = false,
 ): String =
     when (annotationAttributeRequest) {
         is AnnotationAttributeValueRequest.PrimitiveValue -> annotationAttributeRequest.value.toString()
@@ -498,8 +506,10 @@ private fun renderAttributeValue(
         is AnnotationAttributeValueRequest.ConstantValue -> annotationAttributeRequest.text
         is AnnotationAttributeValueRequest.NestedAnnotation ->
             renderAnnotation(annotationAttributeRequest.annotationRequest, psiFactory, isKotlinAnnotation)
-        is AnnotationAttributeValueRequest.ArrayValue ->
-            annotationAttributeRequest.members.joinToString(", ", "[", "]") { memberRequest ->
+        is AnnotationAttributeValueRequest.ArrayValue -> {
+            val (prefix, suffix) = if (isVararg) "" to "" else "[" to "]"
+            annotationAttributeRequest.members.joinToString(", ", prefix, suffix) { memberRequest ->
                 renderAttributeValue(memberRequest, psiFactory, isKotlinAnnotation)
             }
+        }
     }

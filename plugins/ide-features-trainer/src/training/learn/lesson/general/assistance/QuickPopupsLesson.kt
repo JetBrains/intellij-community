@@ -35,7 +35,7 @@ class QuickPopupsLesson(private val sample: LessonSample) :
 
     task("QuickImplementations") {
       text(LessonsBundle.message("quick.popups.show.implementation", action(it)))
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { _: ImplementationViewComponent -> true }
+      triggerUI().component { _: ImplementationViewComponent -> true }
       restoreIfModifiedOrMoved()
       test {
         actions(it)

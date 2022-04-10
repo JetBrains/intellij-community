@@ -16,7 +16,7 @@ import java.util.List;
 final class ProjectLocatorImpl extends ProjectLocator {
   @Override
   @Nullable
-  public Project guessProjectForFile(@Nullable VirtualFile file) {
+  public Project guessProjectForFile(@Nullable("for plugin compatibility only; actually it should have been notnull") VirtualFile file) {
     if (file == null) {
       return null;
     }

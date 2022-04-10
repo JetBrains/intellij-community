@@ -269,8 +269,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   /**
    * @deprecated method has no effect
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected final void setFocusBorderEnabled(boolean enabled) { }
 
   protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,

@@ -19,7 +19,7 @@ import java.util.Set;
 
 public final class JavaSdkUtil {
   /** @deprecated use {@link #getJdkClassesRoots(Path, boolean)} instead */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @NotNull List<File> getJdkClassesRoots(@NotNull File home, boolean isJre) {
     return ContainerUtil.map(getJdkClassesRoots(home.toPath(), isJre), Path::toFile);
@@ -27,7 +27,8 @@ public final class JavaSdkUtil {
 
   public static @NotNull List<Path> getJdkClassesRoots(@NotNull Path home, boolean isJre) {
     Path[] jarDirs;
-    if ("Home".equals(home.getFileName().toString()) && Files.exists(home.resolve("../Classes/classes.jar"))) {
+    Path fileName = home.getFileName();
+    if (fileName != null && "Home".equals(fileName.toString()) && Files.exists(home.resolve("../Classes/classes.jar"))) {
       Path libDir = home.resolve("lib");
       Path classesDir = home.resolveSibling("Classes");
       Path libExtDir = libDir.resolve("ext");

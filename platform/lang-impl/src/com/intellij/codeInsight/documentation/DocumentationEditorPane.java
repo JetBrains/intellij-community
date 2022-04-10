@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.lang.documentation.DocumentationImageResolver;
@@ -34,8 +34,7 @@ import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.addDo
 
 @Internal
 public abstract class DocumentationEditorPane extends JEditorPane {
-
-  private static final Color BACKGROUND_COLOR = new JBColor(() -> {
+  private static final Color BACKGROUND_COLOR = JBColor.lazy(() -> {
     ColorKey colorKey = DocumentationComponent.COLOR_KEY;
     EditorColorsScheme scheme = EditorColorsUtil.getColorSchemeForBackground(null);
     Color color;
@@ -73,8 +72,7 @@ public abstract class DocumentationEditorPane extends JEditorPane {
     }
     setBackground(BACKGROUND_COLOR);
     HTMLEditorKit editorKit = new HTMLEditorKitBuilder()
-      .withViewFactoryExtensions(DocumentationHtmlUtil.getHiDPIImagesExtension(this),
-                                 ExtendableHTMLViewFactory.Extensions.icons(iconResolver::apply),
+      .withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.icons(iconResolver::apply),
                                  DocumentationHtmlUtil.getModuleIconsExtension())
       .withFontResolver(EditorCssFontResolver.getGlobalInstance()).build();
     addDocumentationPaneDefaultCssRules(editorKit);

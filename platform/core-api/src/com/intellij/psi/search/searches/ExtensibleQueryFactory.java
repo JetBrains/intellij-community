@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.QueryFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,6 +34,7 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
    * @deprecated Please specify the extension point name explicitly
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   protected ExtensibleQueryFactory(@NonNls final String epNamespace) {
     myPoint = new SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>>() {
       @Override

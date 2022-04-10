@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.maven.configuration
 
@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.psi.PsiFile
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.configuration.addStdlibToJavaModuleInfo
 import org.jetbrains.kotlin.idea.configuration.hasKotlinJvmRuntimeInScope
@@ -24,7 +25,7 @@ class KotlinJavaMavenConfigurator : KotlinMavenConfigurator(TEST_LIB_ID, false, 
     override fun isRelevantGoal(goalName: String) =
         goalName == PomFile.KotlinGoals.Compile
 
-    override fun getStdlibArtifactId(module: Module, version: String): String =
+    override fun getStdlibArtifactId(module: Module, version: IdeKotlinVersion): String =
         getStdlibArtifactId(ModuleRootManager.getInstance(module).sdk, version)
 
     override fun createExecutions(pomFile: PomFile, kotlinPlugin: MavenDomPlugin, module: Module) {
@@ -32,7 +33,7 @@ class KotlinJavaMavenConfigurator : KotlinMavenConfigurator(TEST_LIB_ID, false, 
         createExecution(pomFile, kotlinPlugin, PomFile.DefaultPhases.TestCompile, PomFile.KotlinGoals.TestCompile, module, true)
     }
 
-    override fun configurePlugin(pom: PomFile, plugin: MavenDomPlugin, module: Module, version: String) {
+    override fun configurePlugin(pom: PomFile, plugin: MavenDomPlugin, module: Module, version: IdeKotlinVersion) {
         val sdk = ModuleRootManager.getInstance(module).sdk
         val jvmTarget = getDefaultJvmTarget(sdk, version)
         if (jvmTarget != null) {
@@ -40,7 +41,7 @@ class KotlinJavaMavenConfigurator : KotlinMavenConfigurator(TEST_LIB_ID, false, 
         }
     }
 
-    override fun configureModule(module: Module, file: PsiFile, version: String, collector: NotificationMessageCollector): Boolean {
+    override fun configureModule(module: Module, file: PsiFile, version: IdeKotlinVersion, collector: NotificationMessageCollector): Boolean {
         if (!super.configureModule(module, file, version, collector)) {
             return false
         }
@@ -51,9 +52,6 @@ class KotlinJavaMavenConfigurator : KotlinMavenConfigurator(TEST_LIB_ID, false, 
 
     override val targetPlatform: TargetPlatform
         get() = JvmPlatforms.unspecifiedJvmPlatform
-
-    @Suppress("DEPRECATION_ERROR")
-    override fun getTargetPlatform() = JvmPlatforms.CompatJvmPlatform
 
     companion object {
         private const val NAME = "maven"

@@ -5,12 +5,10 @@ package org.jetbrains.kotlin.idea.facet
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModel
-import com.intellij.util.text.VersionComparatorUtil
-import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.config.VersionView
-import org.jetbrains.kotlin.idea.compiler.configuration.Version
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.orDefault
@@ -20,19 +18,19 @@ interface KotlinVersionInfoProvider {
         val EP_NAME: ExtensionPointName<KotlinVersionInfoProvider> = ExtensionPointName("org.jetbrains.kotlin.versionInfoProvider")
     }
 
-    fun getCompilerVersion(module: Module): String?
+    fun getCompilerVersion(module: Module): IdeKotlinVersion?
     fun getLibraryVersions(
         module: Module,
         platformKind: IdePlatformKind,
         rootModel: ModuleRootModel?
-    ): Collection<String>
+    ): Collection<IdeKotlinVersion>
 }
 
 fun getRuntimeLibraryVersions(
     module: Module,
     rootModel: ModuleRootModel?,
     platformKind: IdePlatformKind
-): Collection<String> {
+): Collection<IdeKotlinVersion> {
     return KotlinVersionInfoProvider.EP_NAME.extensionList.asSequence()
         .map { it.getLibraryVersions(module, platformKind, rootModel) }
         .firstOrNull { it.isNotEmpty() } ?: emptyList()
@@ -43,77 +41,53 @@ fun getLibraryLanguageLevel(
     rootModel: ModuleRootModel?,
     platformKind: IdePlatformKind?,
     coerceRuntimeLibraryVersionToReleased: Boolean = true
-) = getLibraryVersion(module, rootModel, platformKind, coerceRuntimeLibraryVersionToReleased).languageVersion
+): LanguageVersion = getLibraryVersion(module, rootModel, platformKind, coerceRuntimeLibraryVersionToReleased).languageVersion
 
 fun getLibraryVersion(
     module: Module,
     rootModel: ModuleRootModel?,
     platformKind: IdePlatformKind?,
     coerceRuntimeLibraryVersionToReleased: Boolean = true
-): Version {
+): IdeKotlinVersion {
     val minVersion = getRuntimeLibraryVersions(module, rootModel, platformKind.orDefault())
         .addReleaseVersionIfNecessary(coerceRuntimeLibraryVersionToReleased)
-        .minWithOrNull(VersionComparatorUtil.COMPARATOR)
+        .minOrNull()
     return getDefaultVersion(module, minVersion, coerceRuntimeLibraryVersionToReleased)
 }
 
 fun getDefaultVersion(
     module: Module,
-    explicitVersion: String? = null,
+    explicitVersion: IdeKotlinVersion? = null,
     coerceRuntimeLibraryVersionToReleased: Boolean = true
-): Version {
-    val libVersion = explicitVersion
-        ?: KotlinVersionInfoProvider.EP_NAME.extensions
-            .mapNotNull { it.getCompilerVersion(module) }
-            .addReleaseVersionIfNecessary(coerceRuntimeLibraryVersionToReleased)
-            .minWithOrNull(VersionComparatorUtil.COMPARATOR)
-    return Version.parse(libVersion)
+): IdeKotlinVersion {
+    if (explicitVersion != null) {
+        return explicitVersion
+    }
+
+    val libVersion = KotlinVersionInfoProvider.EP_NAME.extensions
+        .mapNotNull { it.getCompilerVersion(module) }
+        .addReleaseVersionIfNecessary(coerceRuntimeLibraryVersionToReleased)
+        .minOrNull()
+
+    return libVersion ?: KotlinPluginLayout.instance.standaloneCompilerVersion
 }
 
 fun getDefaultLanguageLevel(
     module: Module,
-    explicitVersion: String? = null,
+    explicitVersion: IdeKotlinVersion? = null,
     coerceRuntimeLibraryVersionToReleased: Boolean = true
-) = getDefaultVersion(module, explicitVersion, coerceRuntimeLibraryVersionToReleased).languageVersion
+): LanguageVersion = getDefaultVersion(module, explicitVersion, coerceRuntimeLibraryVersionToReleased).languageVersion
 
-fun String?.toLanguageVersion(): LanguageVersion = when {
-    this == null -> LanguageVersion.LATEST_STABLE
-    startsWith("1.6") -> LanguageVersion.KOTLIN_1_6
-    startsWith("1.5") -> LanguageVersion.KOTLIN_1_5
-    startsWith("1.4") -> LanguageVersion.KOTLIN_1_4
-    startsWith("1.3") -> LanguageVersion.KOTLIN_1_3
-    startsWith("1.2") -> LanguageVersion.KOTLIN_1_2
-    startsWith("1.1") -> LanguageVersion.KOTLIN_1_1
-    startsWith("1.0") -> LanguageVersion.KOTLIN_1_0
-    else -> LanguageVersion.LATEST_STABLE
-}
+private fun Iterable<IdeKotlinVersion>.addReleaseVersionIfNecessary(shouldAdd: Boolean): Iterable<IdeKotlinVersion> =
+    if (shouldAdd) this + KotlinPluginLayout.instance.standaloneCompilerVersion else this
 
-fun String?.toApiVersion(): ApiVersion = ApiVersion.createByLanguageVersion(toLanguageVersion())
-
-private fun Iterable<String>.addReleaseVersionIfNecessary(shouldAdd: Boolean): Iterable<String> =
-    if (shouldAdd) this + LanguageVersion.LATEST_STABLE.versionString else this
-
-fun getRuntimeLibraryVersion(module: Module): String? {
+fun getRuntimeLibraryVersion(module: Module): IdeKotlinVersion? {
     val settingsProvider = KotlinFacetSettingsProvider.getInstance(module.project) ?: return null
     val targetPlatform = settingsProvider.getInitializedSettings(module).targetPlatform
     val versions = getRuntimeLibraryVersions(module, null, targetPlatform.orDefault().idePlatformKind)
     return versions.toSet().singleOrNull()
 }
 
-fun getCleanRuntimeLibraryVersion(module: Module) = getRuntimeLibraryVersion(module)?.cleanUpVersion()
-
-private fun String.cleanUpVersion(): String {
-    return StringBuilder(this)
-        .apply {
-            val parIndex = indexOf("(")
-            if (parIndex >= 0) {
-                delete(parIndex, length)
-            }
-            val releaseIndex = indexOf("-release-")
-            if (releaseIndex >= 0) {
-                delete(releaseIndex, length)
-            }
-        }
-        .toString()
-        .trim()
+fun getRuntimeLibraryVersionOrDefault(module: Module): IdeKotlinVersion {
+    return getRuntimeLibraryVersion(module) ?: KotlinPluginLayout.instance.standaloneCompilerVersion
 }

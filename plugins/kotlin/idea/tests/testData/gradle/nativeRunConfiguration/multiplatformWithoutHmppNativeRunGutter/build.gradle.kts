@@ -19,5 +19,7 @@ kotlin {
                 implementation(kotlin("stdlib-common"))
             }
         }
+        val macosMain by getting {
+        }
     }
 }

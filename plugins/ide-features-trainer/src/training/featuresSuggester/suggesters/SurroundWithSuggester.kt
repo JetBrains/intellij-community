@@ -4,8 +4,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.startOffset
 import training.featuresSuggester.FeatureSuggesterBundle
-import training.featuresSuggester.LanguageSupport
 import training.featuresSuggester.NoSuggestion
+import training.featuresSuggester.SuggesterSupport
 import training.featuresSuggester.Suggestion
 import training.featuresSuggester.actions.*
 import training.util.WeakReferenceDelegator
@@ -17,6 +17,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
   override val message = FeatureSuggesterBundle.message("surround.with.message")
   override val suggestingActionId = "SurroundWith"
   override val suggestingTipFileName = "SurroundWith.html"
+  override val minSuggestingIntervalDays = 14
 
   override val languages = listOf("JAVA", "kotlin")
 
@@ -65,7 +66,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
   @Suppress("NestedBlockDepth")
   override fun getSuggestion(action: Action): Suggestion {
     val language = action.language ?: return NoSuggestion
-    val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
+    val langSupport = SuggesterSupport.getForLanguage(language) ?: return NoSuggestion
     if (action is PsiAction && State.run { surroundingStatementStartOffset != -1 && surroundingStatement?.isValid == false }) {
       State.tryToUpdateSurroundingStatement(langSupport, action)
     }
@@ -129,7 +130,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
     return NoSuggestion
   }
 
-  private fun State.tryToUpdateSurroundingStatement(langSupport: LanguageSupport, action: PsiAction) {
+  private fun State.tryToUpdateSurroundingStatement(langSupport: SuggesterSupport, action: PsiAction) {
     val element = action.psiFile.findElementAt(surroundingStatementStartOffset) ?: return
     val parent = element.parent ?: return
     if (langSupport.isSurroundingStatement(parent)) {
@@ -137,19 +138,19 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
     }
   }
 
-  private fun State.isBraceAddedToStatement(langSupport: LanguageSupport, psiFile: PsiFile, offset: Int): Boolean {
+  private fun State.isBraceAddedToStatement(langSupport: SuggesterSupport, psiFile: PsiFile, offset: Int): Boolean {
     val curElement = psiFile.findElementAt(offset) ?: return false
     return curElement.parent === langSupport.getCodeBlock(surroundingStatement!!)
   }
 
-  private fun State.saveFirstStatementInBlock(langSupport: LanguageSupport) {
+  private fun State.saveFirstStatementInBlock(langSupport: SuggesterSupport) {
     val statements = langSupport.getStatementsOfBlock(surroundingStatement!!)
     if (statements.isNotEmpty()) {
       firstStatementInBlockText = statements.first().text
     }
   }
 
-  private fun State.isStatementsSurrounded(langSupport: LanguageSupport): Boolean {
+  private fun State.isStatementsSurrounded(langSupport: SuggesterSupport): Boolean {
     if (surroundingStatement?.isValid == false ||
         !isLeftBraceAdded ||
         !isRightBraceAdded
@@ -161,7 +162,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
            statements.first().text == firstStatementInBlockText
   }
 
-  private fun LanguageSupport.getStatementsOfBlock(psiElement: PsiElement): List<PsiElement> {
+  private fun SuggesterSupport.getStatementsOfBlock(psiElement: PsiElement): List<PsiElement> {
     val codeBlock = getCodeBlock(psiElement)
     return if (codeBlock != null) {
       getStatements(codeBlock)
@@ -171,7 +172,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
     }
   }
 
-  private fun LanguageSupport.isSurroundingStatement(psiElement: PsiElement): Boolean {
+  private fun SuggesterSupport.isSurroundingStatement(psiElement: PsiElement): Boolean {
     return isIfStatement(psiElement) || isForStatement(psiElement) || isWhileStatement(psiElement)
   }
 

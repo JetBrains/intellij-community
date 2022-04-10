@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Version
 import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import org.intellij.lang.annotations.Language as InjectedLanguage
 
 @Suppress("FunctionName")
 object EventFields {
@@ -64,7 +65,7 @@ object EventFields {
    * Please choose regexp carefully to avoid reporting any sensitive data.
    */
   @JvmStatic
-  fun RegexpInt(@NonNls name: String, @NonNls regexp: String): RegexpIntEventField =
+  fun RegexpInt(@NonNls name: String, @InjectedLanguage("RegExp") @NonNls regexp: String): RegexpIntEventField =
     RegexpIntEventField(name, regexp)
 
   /**
@@ -150,14 +151,14 @@ object EventFields {
    * Please choose regexp carefully to avoid reporting any sensitive data.
    */
   @JvmStatic
-  fun StringValidatedByInlineRegexp(@NonNls name: String, @NonNls regexp: String): StringEventField =
+  fun StringValidatedByInlineRegexp(@NonNls name: String, @InjectedLanguage("RegExp") @NonNls regexp: String): StringEventField =
     StringEventField.ValidatedByInlineRegexp(name, regexp)
 
   /**
    * Please choose regexp carefully to avoid reporting any sensitive data.
    */
   @JvmStatic
-  fun StringListValidatedByInlineRegexp(@NonNls name: String, @NonNls regexp: String): StringListEventField =
+  fun StringListValidatedByInlineRegexp(@NonNls name: String, @InjectedLanguage("RegExp") @NonNls regexp: String): StringListEventField =
     StringListEventField.ValidatedByInlineRegexp(name, regexp)
 
   @JvmField

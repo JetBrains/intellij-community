@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k
 
@@ -45,7 +45,6 @@ object ConversionsRunner {
         AssertStatementConversion(context),
         SwitchToWhenConversion(context),
         YieldStatementConversion(context),
-        LiteralConversion(context),
         ForConversion(context),
         LabeledStatementConversion(context),
         ArrayOperationsConversion(context),
@@ -66,7 +65,6 @@ object ConversionsRunner {
         ImplicitCastsConversion(context),
         PrimitiveTypeCastsConversion(context),
         LiteralConversion(context),
-        StaticMemberAccessConversion(context),
         RemoveRedundantQualifiersForCallsConversion(context),
         FunctionalInterfacesConverter(context),
 
@@ -94,7 +92,9 @@ object ConversionsRunner {
 
     private fun Conversion.description(): String {
         val conversionName = this::class.simpleName
-        val words = conversionName?.let { wordRegex.findAll(conversionName).map { it.value.decapitalize(Locale.US) }.toList() }
+        val words = conversionName?.let {
+            wordRegex.findAll(conversionName).map { it.value.replaceFirstChar { char -> char.lowercase(Locale.US) } }.toList()
+        }
         return when {
             conversionName == null -> "Converting..."
             conversionName.endsWith("Conversion") -> "Converting ${words!!.dropLast(1).joinToString(" ")}"
@@ -102,5 +102,5 @@ object ConversionsRunner {
         }
     }
 
-    private val wordRegex = "[A-Z][a-z0-9]+".toRegex()
+    private val wordRegex = """[A-Z][a-z\d]+""".toRegex()
 }

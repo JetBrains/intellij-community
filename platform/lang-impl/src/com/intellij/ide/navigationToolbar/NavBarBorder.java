@@ -15,7 +15,9 @@
  */
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.ide.ui.NavBarLocation;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
@@ -29,6 +31,7 @@ import java.awt.*;
 */
 public class NavBarBorder implements Border {
   private static final Color BORDER_COLOR = JBColor.namedColor("NavBar.borderColor", new JBColor(Gray.xCD, Gray.x51));
+  private static final Insets NO_RUN_INSETS = JBUI.insets("NavBar.Breadcrumbs.itemInsets", JBUI.insets(4, 2));
   private static final JBValue BW = new JBValue.Float(1);
 
   @Override
@@ -41,7 +44,11 @@ public class NavBarBorder implements Border {
 
   @Override
   public Insets getBorderInsets(final Component c) {
-    if (!UISettings.getInstance().getShowMainToolbar()) {
+    var settings = UISettings.getInstance();
+    if (ExperimentalUI.isNewToolbar() && settings.getShowNavigationBar() && settings.getNavBarLocation() == NavBarLocation.TOP) {
+      return NO_RUN_INSETS;
+    }
+    else if (!settings.getShowMainToolbar()) {
       return JBUI.insets(1, 0, 1, 4);
     }
     return JBUI.insets(1, 0, 0, 4);

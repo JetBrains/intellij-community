@@ -37,6 +37,7 @@ class ColumnProperty(StrategizedProperty):
     def merge(
         self, session, source_state, source_dict, dest_state, dest_dict, load, _recursive, _resolve_conflict_map
     ) -> None: ...
+
     class Comparator(util.MemoizedSlots, PropComparator):
         expressions: Any
         def _memoized_method___clause_element__(self): ...

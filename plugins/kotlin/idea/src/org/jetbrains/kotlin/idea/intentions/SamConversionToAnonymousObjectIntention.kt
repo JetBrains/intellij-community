@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.replaced
@@ -25,8 +26,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.sam.getSingleAbstractMethodOrNull
@@ -45,7 +46,7 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
         val callee = element.calleeExpression ?: return null
         val lambda = getLambdaExpression(element) ?: return null
         val functionLiteral = lambda.functionLiteral
-        val bindingContext = functionLiteral.analyze()
+        val bindingContext = functionLiteral.safeAnalyzeNonSourceRootCode()
         val sam = element.getSingleAbstractMethod(bindingContext) ?: return null
 
         val samValueParameters = sam.valueParameters
@@ -213,7 +214,7 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
         }
 
         private fun Name.actualType(functionTypes: List<KotlinType>, lambdaTypes: List<KotlinType>): KotlinType? {
-            return functionTypes.zip(lambdaTypes).firstNotNullResult { actualType(it.first, it.second) }
+            return functionTypes.zip(lambdaTypes).firstNotNullOfOrNull { actualType(it.first, it.second) }
         }
 
         private fun Name.actualType(functionType: KotlinType?, lambdaType: KotlinType?): KotlinType? {

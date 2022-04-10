@@ -7,11 +7,10 @@ import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
 import org.jetbrains.kotlin.tools.projectWizard.core.Writer
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ModuleIR
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.RepositoryIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.MppModuleConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.SimpleTargetConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.mpp.applyMppStructure
 import org.jetbrains.kotlin.tools.projectWizard.mpp.mppSources
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
@@ -37,6 +36,14 @@ class MobileMppTemplate : Template() {
 
     override fun Writer.getIrsToAddToBuildFile(module: ModuleIR): List<BuildSystemIR> = irsList {
         +RepositoryIR(DefaultRepository.JCENTER)
+
+        val cocoaPods = module.originalModule.subModules.any {
+            (it.configurator as? SimpleTargetConfigurator)?.moduleSubType == ModuleSubType.iosCocoaPods
+        }
+
+        if (cocoaPods) {
+            +KotlinBuildSystemPluginIR(KotlinBuildSystemPluginIR.Type.nativeCocoapods, null)
+        }
     }
 
     override fun Writer.runArbitratyTask(module: ModuleIR): TaskResult<Unit> {
@@ -52,7 +59,7 @@ class MobileMppTemplate : Template() {
                     )
 
                     actualFor(
-                        ModuleSubType.iosArm64, ModuleSubType.iosX64, ModuleSubType.ios,
+                        ModuleSubType.iosArm64, ModuleSubType.iosX64, ModuleSubType.ios, ModuleSubType.iosCocoaPods,
                         actualBody =
                         """actual val platform: String = UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion"""
                     ) {
@@ -69,7 +76,7 @@ class MobileMppTemplate : Template() {
                 file(FileTemplateDescriptor("android/androidTest.kt.vm", relativePath = null), "androidTest.kt", SourcesetType.test)
             }
 
-            filesFor(ModuleSubType.iosArm64, ModuleSubType.iosX64, ModuleSubType.ios) {
+            filesFor(ModuleSubType.iosArm64, ModuleSubType.iosX64, ModuleSubType.ios, ModuleSubType.iosCocoaPods) {
                 file(FileTemplateDescriptor("ios/iosTest.kt.vm", relativePath = null), "iosTest.kt", SourcesetType.test)
             }
 

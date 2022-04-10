@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus;
  * or {@link com.intellij.util.containers.CollectionFactory#createCaseInsensitiveStringSet()} instead
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 public final class CaseInsensitiveStringHashingStrategy implements TObjectHashingStrategy<String> {
   public static final CaseInsensitiveStringHashingStrategy INSTANCE = new CaseInsensitiveStringHashingStrategy();
 

@@ -1,0 +1,27 @@
+<idea-plugin package="org.jetbrains.idea.devkit.dummy">
+  <id>DevKit</id>
+  <!--suppress PluginXmlValidity -->
+  <name>Plugin DevKit</name>
+  <category>Plugin Development</category>
+  <vendor>JetBrains</vendor>
+
+  <description><![CDATA[
+    Supports development of plugins for IntelliJ IDEA and other products based on the IntelliJ Platform.
+    <br>
+    <a href="https://plugins.jetbrains.com/docs/intellij/?from=DevkitPluginDescription">IntelliJ Platform SDK Docs</a>
+  ]]></description>
+
+  <content>
+    <module name="intellij.devkit.core"/>
+    <module name="intellij.devkit.git"/>
+    <module name="intellij.devkit.gradle"/>
+    <module name="intellij.devkit.i18n"/>
+    <module name="intellij.devkit.images"/>
+    <module name="intellij.devkit.intelliLang"/>
+    <module name="intellij.devkit.psiviewer"/>
+    <module name="intellij.devkit.themes"/>
+    <module name="intellij.devkit.uiDesigner"/>
+    <module name="intellij.java.devkit"/>
+    <module name="intellij.groovy.devkit"/>
+  </content>
+</idea-plugin>

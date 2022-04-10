@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
   static ProgressManager ourInstance = CachedSingletonsRegistry.markCachedField(ProgressManager.class);
@@ -168,7 +169,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @deprecated use {@link #run(Task)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
                                                             @NotNull @ProgressTitle String progressTitle,
                                                             @NotNull Runnable process,
@@ -256,4 +257,10 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   @ApiStatus.Internal
   public abstract <T, E extends Throwable> T computePrioritized(@NotNull ThrowableComputable<T, E> computable) throws E;
+
+  /**
+   * Makes {@link #getProgressIndicator()} return {@code null} within {@code computable}.
+   */
+  @ApiStatus.Internal
+  public abstract <X> X silenceGlobalIndicator(@NotNull Supplier<X> computable);
 }

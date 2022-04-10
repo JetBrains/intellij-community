@@ -63,7 +63,7 @@ public class EditorColorPaletteTest extends LightPlatformTestCase {
     final TextAttributes bcOrigAttr = colorsScheme.getAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT);
     checkUsed(colorsScheme, bcOrigAttr.getForegroundColor(), false);
 
-    final TextAttributesKey generatedRainbowKey = new RainbowHighlighter(null).getRainbowTempKeys()[0];
+    final TextAttributesKey generatedRainbowKey = RainbowHighlighter.getRainbowTempKeys()[0];
     
     // make BLOCK_COMMENT the same as LOCAL_VARIABLE => has conflict with non-rainbow BLOCK_COMMENT color 
     colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, newColorAttrInPallete);

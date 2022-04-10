@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.text.Strings
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
@@ -53,9 +54,9 @@ final class ApplicationInfoProperties {
   @CompileStatic(TypeCheckingMode.SKIP)
   private ApplicationInfoProperties(ProductProperties productProperties, BuildOptions buildOptions, String appInfoXml, BuildMessages messages) {
     this.appInfoXml = appInfoXml
-    def root = new StringReader(appInfoXml).withCloseable { new XmlParser().parse(it) }
+    Node root = loadXml(appInfoXml)
 
-    def versionTag = root.version.first()
+    Node versionTag = root["version"].first()
     majorVersion = versionTag.@major
     minorVersion = versionTag.@minor ?: "0"
     microVersion = versionTag.@micro ?: "0"
@@ -65,9 +66,9 @@ final class ApplicationInfoProperties {
     versionSuffix = versionTag.@suffix ?: isEAP ? "EAP" : null
     minorVersionMainPart = minorVersion.takeWhile { it != '.' }
 
-    def namesTag = root.names.first()
+    def namesTag = root["names"].first()
     shortProductName = namesTag.@product
-    String buildNumber = root.build.first().@number
+    String buildNumber = root["build"].first().@number
     int productCodeSeparator = buildNumber.indexOf('-')
     String productCode = null
     if (productCodeSeparator != -1) {
@@ -80,7 +81,7 @@ final class ApplicationInfoProperties {
       productCode = productProperties.productCode
     }
     this.productCode = productCode
-    def majorReleaseDate = root.build.first().@majorReleaseDate
+    def majorReleaseDate = root["build"].first().@majorReleaseDate
     if (!isEAP && (majorReleaseDate == null || majorReleaseDate.startsWith('__'))) {
       messages.error("majorReleaseDate may be omitted only for EAP")
     }
@@ -89,15 +90,32 @@ final class ApplicationInfoProperties {
     edition = namesTag.@edition
     motto = namesTag.@motto
 
-    def companyTag = root.company.first()
+    def companyTag = root["company"].first()
     companyName = companyTag.@name
     shortCompanyName = companyTag.@shortName ?: shortenCompanyName(companyName)
 
-    def svgPath = root.icon[0]?.@svg
-    svgRelativePath = isEAP ? (root."icon-eap"[0]?.@svg ?: svgPath) : svgPath
-    svgProductIcons = (root.icon + root."icon-eap").collectMany { [it?.@"svg", it?.@"svg-small"] }.findAll { it != null }
+    def svgPath = getFirst(root["icon"])?.@svg
+    svgRelativePath = isEAP ? (getFirst(root["icon-eap"])?.@svg ?: svgPath) : svgPath
+    svgProductIcons = collectAllIcons(root)
 
-    patchesUrl = root."update-urls"[0]?.@"patches"
+    patchesUrl = getFirst(root["update-urls"])?.@"patches"
+  }
+
+  /** this code is extracted to a method to work around Groovy compiler bug (https://issues.apache.org/jira/projects/GROOVY/issues/GROOVY-10459) */
+  private static Node getFirst(NodeList children) {
+    if (children == null || children.isEmpty()) return null
+    return children[0] as Node
+  }
+
+  @SuppressWarnings('GrUnresolvedAccess')
+  @CompileDynamic
+  private static List<String> collectAllIcons(Node root) {
+    (root.icon + root."icon-eap").collectMany { [it?.@"svg", it?.@"svg-small"] }.findAll { it != null }
+  }
+
+  /** this code is extracted to a method to work around Groovy compiler bug (https://issues.apache.org/jira/projects/GROOVY/issues/GROOVY-10457) */
+  private static Node loadXml(String appInfoXml) {
+    new StringReader(appInfoXml).withCloseable { new XmlParser().parse(it) }
   }
 
   String getAppInfoXml() {

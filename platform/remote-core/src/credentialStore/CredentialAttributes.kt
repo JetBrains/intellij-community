@@ -69,7 +69,7 @@ class Credentials(@NlsSafe user: String?, @NlsSafe val password: OneTimeString? 
 
 /** @deprecated Use [CredentialAttributes] instead. */
 @Deprecated("Never use it in a new code.")
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 @Suppress("FunctionName", "DeprecatedCallableAddReplaceWith")
 fun CredentialAttributes(requestor: Class<*>, userName: String?) = CredentialAttributes(requestor.name, userName, requestor)
 

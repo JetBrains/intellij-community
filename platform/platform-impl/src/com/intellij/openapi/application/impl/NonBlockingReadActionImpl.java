@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
@@ -40,6 +39,7 @@ import kotlin.reflect.KClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
@@ -107,7 +107,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   }
 
   private static void invokeLater(@NotNull Runnable runnable) {
-    ApplicationManager.getApplication().invokeLaterOnWriteThread(runnable, ModalityState.any());
+    ApplicationManager.getApplication().invokeLaterOnWriteThread(runnable, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
   }
 
   @Override
@@ -423,34 +423,43 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     T executeSynchronously() {
-      while (true) {
-        attemptComputation();
+      try {
+        while (true) {
+          attemptComputation();
 
-        if (isCancelled()) {
-          throw new ProcessCanceledException();
-        }
-        if (isDone()) {
-          try {
-            return blockingGet(0, TimeUnit.MILLISECONDS);
+          if (isDone()) {
+            if (isCancelled()) {
+              throw new ProcessCanceledException();
+            }
+            try {
+              return blockingGet(0, TimeUnit.MILLISECONDS);
+            }
+            catch (TimeoutException e) {
+              throw new RuntimeException(e);
+            }
           }
-          catch (TimeoutException e) {
-            throw new RuntimeException(e);
-          }
-        }
 
-        Semaphore semaphore = new Semaphore(1);
-        invokeLater(() -> {
-          if (checkObsolete()) {
-            semaphore.up();
+          ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(myProgressIndicator);
+          ContextConstraint[] constraints = builder.myConstraints;
+          if (shouldFinishOnEdt() || constraints.length != 0) {
+            Semaphore semaphore = new Semaphore(1);
+            invokeLater(() -> {
+              if (checkObsolete()) {
+                semaphore.up();
+              }
+              else {
+                BaseConstrainedExecution.scheduleWithinConstraints(semaphore::up, null, constraints);
+              }
+            });
+            ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, myProgressIndicator);
+            if (isCancelled()) {
+              throw new ProcessCanceledException();
+            }
           }
-          else {
-            BaseConstrainedExecution.scheduleWithinConstraints(semaphore::up, null, builder.myConstraints);
-          }
-        });
-        ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, myProgressIndicator);
-        if (isCancelled()) {
-          throw new ProcessCanceledException();
         }
+      }
+      finally {
+        cleanupIfNeeded();
       }
     }
 
@@ -526,7 +535,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
         T result = builder.myComputation.call();
 
-        if (builder.myModalityState != null) {
+        if (shouldFinishOnEdt()) {
           safeTransferToEdt(result);
         }
         else {
@@ -545,6 +554,10 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       catch (Throwable e) {
         setError(e);
       }
+    }
+
+    private boolean shouldFinishOnEdt() {
+      return builder.myModalityState != null;
     }
 
     private boolean checkObsolete() {

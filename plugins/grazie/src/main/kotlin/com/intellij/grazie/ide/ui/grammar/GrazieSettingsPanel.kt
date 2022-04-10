@@ -8,6 +8,7 @@ import com.intellij.grazie.ide.ui.grammar.tabs.rules.GrazieRulesTab
 import com.intellij.grazie.ide.ui.grammar.tabs.scope.GrazieScopeTab
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurableUi
+import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
@@ -45,4 +46,5 @@ internal class GrazieSettingsPanel : ConfigurableUi<GrazieConfig>, Disposable {
   override fun getComponent(): JComponent = component
 
   override fun dispose() = rules.dispose()
+
 }

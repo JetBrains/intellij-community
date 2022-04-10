@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.formatter;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -71,6 +71,11 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
             @TestMetadata("UnfinishedLambdaInCodeAsVarInitiailzer.after.kt")
             public void testUnfinishedLambdaInCodeAsVarInitiailzer() throws Exception {
                 runTest("testData/editor/enterHandler/afterUnmatchedBrace/UnfinishedLambdaInCodeAsVarInitiailzer.after.kt");
+            }
+
+            @TestMetadata("UnfinishedLambdaIsLastElement.after.kt")
+            public void testUnfinishedLambdaIsLastElement() throws Exception {
+                runTest("testData/editor/enterHandler/afterUnmatchedBrace/UnfinishedLambdaIsLastElement.after.kt");
             }
 
             @TestMetadata("UnfinishedLambdaWithCommentInCode.after.kt")
@@ -162,279 +167,259 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/controlFlowConstructions")
-        public abstract static class ControlFlowConstructions extends AbstractEnterHandlerTest {
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/editor/enterHandler/controlFlowConstructions")
-            public static class TestBucket001 extends AbstractEnterHandlerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("BetweenOpenBraceAndParenthesis.after.kt")
-                public void testBetweenOpenBraceAndParenthesis() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/BetweenOpenBraceAndParenthesis.after.kt");
-                }
-
-                @TestMetadata("Catch.after.kt")
-                public void testCatch() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/Catch.after.kt");
-                }
-
-                @TestMetadata("Catch2.after.kt")
-                public void testCatch2() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/Catch2.after.kt");
-                }
-
-                @TestMetadata("Catch3.after.kt")
-                public void testCatch3() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/Catch3.after.kt");
-                }
-
-                @TestMetadata("Catch4.after.kt")
-                public void testCatch4() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/Catch4.after.kt");
-                }
-
-                @TestMetadata("Do2.after.kt")
-                public void testDo2() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/Do2.after.kt");
-                }
-
-                @TestMetadata("DoInFun.after.kt")
-                public void testDoInFun() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/DoInFun.after.kt");
-                }
-
-                @TestMetadata("DoWhile.after.kt")
-                public void testDoWhile() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/DoWhile.after.kt");
-                }
-
-                @TestMetadata("DoWhile2.after.kt")
-                public void testDoWhile2() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/DoWhile2.after.kt");
-                }
-
-                @TestMetadata("DoWhile3.after.kt")
-                public void testDoWhile3() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/DoWhile3.after.kt");
-                }
-
-                @TestMetadata("DoWhile4.after.kt")
-                public void testDoWhile4() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/DoWhile4.after.kt");
-                }
-
-                @TestMetadata("DoWhile5.after.kt")
-                public void testDoWhile5() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/DoWhile5.after.kt");
-                }
-
-                @TestMetadata("DoWhile6.after.kt")
-                public void testDoWhile6() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/DoWhile6.after.kt");
-                }
-
-                @TestMetadata("DoWhile7.after.kt")
-                public void testDoWhile7() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/DoWhile7.after.kt");
-                }
-
-                @TestMetadata("DoWithBraces.after.kt")
-                public void testDoWithBraces() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/DoWithBraces.after.kt");
-                }
-
-                @TestMetadata("DoWithBraces2.after.kt")
-                public void testDoWithBraces2() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/DoWithBraces2.after.kt");
-                }
-
-                @TestMetadata("ElseIf.after.kt")
-                public void testElseIf() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/ElseIf.after.kt");
-                }
-
-                @TestMetadata("ElseInWhenWithOption.after.kt")
-                public void testElseInWhenWithOption() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/ElseInWhenWithOption.after.kt");
-                }
-
-                @TestMetadata("ElseInWhenWithoutOption.after.kt")
-                public void testElseInWhenWithoutOption() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/ElseInWhenWithoutOption.after.kt");
-                }
-
-                @TestMetadata("ElseWithBrace.after.kt")
-                public void testElseWithBrace() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/ElseWithBrace.after.kt");
-                }
+        public static class ControlFlowConstructions extends AbstractEnterHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
 
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/editor/enterHandler/controlFlowConstructions")
-            public static class TestBucket002 extends AbstractEnterHandlerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("ElseWithBraceAndComment.after.kt")
-                public void testElseWithBraceAndComment() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/ElseWithBraceAndComment.after.kt");
-                }
-
-                @TestMetadata("ElseWithBraceAndComment2.after.kt")
-                public void testElseWithBraceAndComment2() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/ElseWithBraceAndComment2.after.kt");
-                }
-
-                @TestMetadata("ElseWithoutBrace.after.kt")
-                public void testElseWithoutBrace() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/ElseWithoutBrace.after.kt");
-                }
-
-                @TestMetadata("ElseWithoutBrace2.after.kt")
-                public void testElseWithoutBrace2() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/ElseWithoutBrace2.after.kt");
-                }
-
-                @TestMetadata("Finally.after.kt")
-                public void testFinally() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/Finally.after.kt");
-                }
-
-                @TestMetadata("Finally2.after.kt")
-                public void testFinally2() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/Finally2.after.kt");
-                }
-
-                @TestMetadata("Finally3.after.kt")
-                public void testFinally3() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/Finally3.after.kt");
-                }
-
-                @TestMetadata("Finally4.after.kt")
-                public void testFinally4() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/Finally4.after.kt");
-                }
-
-                @TestMetadata("For.after.kt")
-                public void testFor() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/For.after.kt");
-                }
-
-                @TestMetadata("ForWithBlock.after.kt")
-                public void testForWithBlock() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/ForWithBlock.after.kt");
-                }
-
-                @TestMetadata("ForWithCondition.after.kt")
-                public void testForWithCondition() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/ForWithCondition.after.kt");
-                }
-
-                @TestMetadata("ForWithoutCondition.after.kt")
-                public void testForWithoutCondition() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/ForWithoutCondition.after.kt");
-                }
-
-                @TestMetadata("If.after.kt")
-                public void testIf() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/If.after.kt");
-                }
-
-                @TestMetadata("IfBeforeCondition.after.kt")
-                public void testIfBeforeCondition() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/IfBeforeCondition.after.kt");
-                }
-
-                @TestMetadata("IfBeforeCondition2.after.kt")
-                public void testIfBeforeCondition2() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/IfBeforeCondition2.after.kt");
-                }
-
-                @TestMetadata("IfBeforeCondition3.after.kt")
-                public void testIfBeforeCondition3() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/IfBeforeCondition3.after.kt");
-                }
-
-                @TestMetadata("IfBeforeCondition4.after.kt")
-                public void testIfBeforeCondition4() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/IfBeforeCondition4.after.kt");
-                }
-
-                @TestMetadata("IfWithBraces.after.kt")
-                public void testIfWithBraces() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/IfWithBraces.after.kt");
-                }
-
-                @TestMetadata("IfWithBraces2.after.kt")
-                public void testIfWithBraces2() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/IfWithBraces2.after.kt");
-                }
-
-                @TestMetadata("Try.after.kt")
-                public void testTry() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/Try.after.kt");
-                }
+            @TestMetadata("BetweenOpenBraceAndParenthesis.after.kt")
+            public void testBetweenOpenBraceAndParenthesis() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/BetweenOpenBraceAndParenthesis.after.kt");
             }
 
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/editor/enterHandler/controlFlowConstructions")
-            public static class TestBucket003 extends AbstractEnterHandlerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
+            @TestMetadata("Catch.after.kt")
+            public void testCatch() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/Catch.after.kt");
+            }
 
-                @TestMetadata("Try2.after.kt")
-                public void testTry2() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/Try2.after.kt");
-                }
+            @TestMetadata("Catch2.after.kt")
+            public void testCatch2() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/Catch2.after.kt");
+            }
 
-                @TestMetadata("WhenWithCondition.after.kt")
-                public void testWhenWithCondition() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/WhenWithCondition.after.kt");
-                }
+            @TestMetadata("Catch3.after.kt")
+            public void testCatch3() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/Catch3.after.kt");
+            }
 
-                @TestMetadata("WhenWithCondition2.after.kt")
-                public void testWhenWithCondition2() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/WhenWithCondition2.after.kt");
-                }
+            @TestMetadata("Catch4.after.kt")
+            public void testCatch4() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/Catch4.after.kt");
+            }
 
-                @TestMetadata("WhenWithoutCondition.after.kt")
-                public void testWhenWithoutCondition() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/WhenWithoutCondition.after.kt");
-                }
+            @TestMetadata("Do2.after.kt")
+            public void testDo2() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/Do2.after.kt");
+            }
 
-                @TestMetadata("While.after.kt")
-                public void testWhile() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/While.after.kt");
-                }
+            @TestMetadata("DoInFun.after.kt")
+            public void testDoInFun() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/DoInFun.after.kt");
+            }
 
-                @TestMetadata("While2.after.kt")
-                public void testWhile2() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/While2.after.kt");
-                }
+            @TestMetadata("DoWhile.after.kt")
+            public void testDoWhile() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/DoWhile.after.kt");
+            }
 
-                @TestMetadata("While3.after.kt")
-                public void testWhile3() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/While3.after.kt");
-                }
+            @TestMetadata("DoWhile2.after.kt")
+            public void testDoWhile2() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/DoWhile2.after.kt");
+            }
 
-                @TestMetadata("WhileWithBlock.after.kt")
-                public void testWhileWithBlock() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/WhileWithBlock.after.kt");
-                }
+            @TestMetadata("DoWhile3.after.kt")
+            public void testDoWhile3() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/DoWhile3.after.kt");
+            }
 
-                @TestMetadata("WhileWithCondition.after.kt")
-                public void testWhileWithCondition() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/WhileWithCondition.after.kt");
-                }
+            @TestMetadata("DoWhile4.after.kt")
+            public void testDoWhile4() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/DoWhile4.after.kt");
+            }
 
-                @TestMetadata("WhileWithoutCondition.after.kt")
-                public void testWhileWithoutCondition() throws Exception {
-                    runTest("testData/editor/enterHandler/controlFlowConstructions/WhileWithoutCondition.after.kt");
-                }
+            @TestMetadata("DoWhile5.after.kt")
+            public void testDoWhile5() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/DoWhile5.after.kt");
+            }
+
+            @TestMetadata("DoWhile6.after.kt")
+            public void testDoWhile6() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/DoWhile6.after.kt");
+            }
+
+            @TestMetadata("DoWhile7.after.kt")
+            public void testDoWhile7() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/DoWhile7.after.kt");
+            }
+
+            @TestMetadata("DoWithBraces.after.kt")
+            public void testDoWithBraces() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/DoWithBraces.after.kt");
+            }
+
+            @TestMetadata("DoWithBraces2.after.kt")
+            public void testDoWithBraces2() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/DoWithBraces2.after.kt");
+            }
+
+            @TestMetadata("ElseIf.after.kt")
+            public void testElseIf() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/ElseIf.after.kt");
+            }
+
+            @TestMetadata("ElseInWhenWithOption.after.kt")
+            public void testElseInWhenWithOption() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/ElseInWhenWithOption.after.kt");
+            }
+
+            @TestMetadata("ElseInWhenWithoutOption.after.kt")
+            public void testElseInWhenWithoutOption() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/ElseInWhenWithoutOption.after.kt");
+            }
+
+            @TestMetadata("ElseWithBrace.after.kt")
+            public void testElseWithBrace() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/ElseWithBrace.after.kt");
+            }
+
+            @TestMetadata("ElseWithBraceAndComment.after.kt")
+            public void testElseWithBraceAndComment() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/ElseWithBraceAndComment.after.kt");
+            }
+
+            @TestMetadata("ElseWithBraceAndComment2.after.kt")
+            public void testElseWithBraceAndComment2() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/ElseWithBraceAndComment2.after.kt");
+            }
+
+            @TestMetadata("ElseWithoutBrace.after.kt")
+            public void testElseWithoutBrace() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/ElseWithoutBrace.after.kt");
+            }
+
+            @TestMetadata("ElseWithoutBrace2.after.kt")
+            public void testElseWithoutBrace2() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/ElseWithoutBrace2.after.kt");
+            }
+
+            @TestMetadata("Finally.after.kt")
+            public void testFinally() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/Finally.after.kt");
+            }
+
+            @TestMetadata("Finally2.after.kt")
+            public void testFinally2() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/Finally2.after.kt");
+            }
+
+            @TestMetadata("Finally3.after.kt")
+            public void testFinally3() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/Finally3.after.kt");
+            }
+
+            @TestMetadata("Finally4.after.kt")
+            public void testFinally4() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/Finally4.after.kt");
+            }
+
+            @TestMetadata("For.after.kt")
+            public void testFor() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/For.after.kt");
+            }
+
+            @TestMetadata("ForWithBlock.after.kt")
+            public void testForWithBlock() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/ForWithBlock.after.kt");
+            }
+
+            @TestMetadata("ForWithCondition.after.kt")
+            public void testForWithCondition() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/ForWithCondition.after.kt");
+            }
+
+            @TestMetadata("ForWithoutCondition.after.kt")
+            public void testForWithoutCondition() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/ForWithoutCondition.after.kt");
+            }
+
+            @TestMetadata("If.after.kt")
+            public void testIf() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/If.after.kt");
+            }
+
+            @TestMetadata("IfBeforeCondition.after.kt")
+            public void testIfBeforeCondition() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/IfBeforeCondition.after.kt");
+            }
+
+            @TestMetadata("IfBeforeCondition2.after.kt")
+            public void testIfBeforeCondition2() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/IfBeforeCondition2.after.kt");
+            }
+
+            @TestMetadata("IfBeforeCondition3.after.kt")
+            public void testIfBeforeCondition3() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/IfBeforeCondition3.after.kt");
+            }
+
+            @TestMetadata("IfBeforeCondition4.after.kt")
+            public void testIfBeforeCondition4() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/IfBeforeCondition4.after.kt");
+            }
+
+            @TestMetadata("IfWithBraces.after.kt")
+            public void testIfWithBraces() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/IfWithBraces.after.kt");
+            }
+
+            @TestMetadata("IfWithBraces2.after.kt")
+            public void testIfWithBraces2() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/IfWithBraces2.after.kt");
+            }
+
+            @TestMetadata("Try.after.kt")
+            public void testTry() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/Try.after.kt");
+            }
+
+            @TestMetadata("Try2.after.kt")
+            public void testTry2() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/Try2.after.kt");
+            }
+
+            @TestMetadata("WhenWithCondition.after.kt")
+            public void testWhenWithCondition() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/WhenWithCondition.after.kt");
+            }
+
+            @TestMetadata("WhenWithCondition2.after.kt")
+            public void testWhenWithCondition2() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/WhenWithCondition2.after.kt");
+            }
+
+            @TestMetadata("WhenWithoutCondition.after.kt")
+            public void testWhenWithoutCondition() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/WhenWithoutCondition.after.kt");
+            }
+
+            @TestMetadata("While.after.kt")
+            public void testWhile() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/While.after.kt");
+            }
+
+            @TestMetadata("While2.after.kt")
+            public void testWhile2() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/While2.after.kt");
+            }
+
+            @TestMetadata("While3.after.kt")
+            public void testWhile3() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/While3.after.kt");
+            }
+
+            @TestMetadata("WhileWithBlock.after.kt")
+            public void testWhileWithBlock() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/WhileWithBlock.after.kt");
+            }
+
+            @TestMetadata("WhileWithCondition.after.kt")
+            public void testWhileWithCondition() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/WhileWithCondition.after.kt");
+            }
+
+            @TestMetadata("WhileWithoutCondition.after.kt")
+            public void testWhileWithoutCondition() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/WhileWithoutCondition.after.kt");
             }
         }
 
@@ -526,314 +511,294 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/emptyParameters")
-        public abstract static class EmptyParameters extends AbstractEnterHandlerTest {
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/editor/enterHandler/emptyParameters")
-            public static class TestBucket001 extends AbstractEnterHandlerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("EmptyArgumentInCallByArrayAccess.after.kt")
-                public void testEmptyArgumentInCallByArrayAccess() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByArrayAccess.after.kt");
-                }
-
-                @TestMetadata("EmptyArgumentInCallByArrayAccess2.after.kt")
-                public void testEmptyArgumentInCallByArrayAccess2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByArrayAccess2.after.kt");
-                }
-
-                @TestMetadata("EmptyArgumentInCallByDeclaration.after.kt")
-                public void testEmptyArgumentInCallByDeclaration() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByDeclaration.after.kt");
-                }
-
-                @TestMetadata("EmptyArgumentInCallByDeclaration2.after.kt")
-                public void testEmptyArgumentInCallByDeclaration2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByDeclaration2.after.kt");
-                }
-
-                @TestMetadata("EmptyArgumentInCallByReference.after.kt")
-                public void testEmptyArgumentInCallByReference() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReference.after.kt");
-                }
-
-                @TestMetadata("EmptyArgumentInCallByReference2.after.kt")
-                public void testEmptyArgumentInCallByReference2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReference2.after.kt");
-                }
-
-                @TestMetadata("EmptyArgumentInCallByReferenceInSuperType.after.kt")
-                public void testEmptyArgumentInCallByReferenceInSuperType() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceInSuperType.after.kt");
-                }
-
-                @TestMetadata("EmptyArgumentInCallByReferenceInSuperType2.after.kt")
-                public void testEmptyArgumentInCallByReferenceInSuperType2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceInSuperType2.after.kt");
-                }
-
-                @TestMetadata("EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments.after.kt")
-                public void testEmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments.after.kt");
-                }
-
-                @TestMetadata("EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments2.after.kt")
-                public void testEmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments2.after.kt");
-                }
-
-                @TestMetadata("EmptyArgumentInCallByReferenceWithTypeArguments.after.kt")
-                public void testEmptyArgumentInCallByReferenceWithTypeArguments() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceWithTypeArguments.after.kt");
-                }
-
-                @TestMetadata("EmptyArgumentInCallByReferenceWithTypeArguments2.after.kt")
-                public void testEmptyArgumentInCallByReferenceWithTypeArguments2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceWithTypeArguments2.after.kt");
-                }
-
-                @TestMetadata("EmptyArgumentInThisAsClassicFunction.after.kt")
-                public void testEmptyArgumentInThisAsClassicFunction() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInThisAsClassicFunction.after.kt");
-                }
-
-                @TestMetadata("EmptyArgumentInThisAsConstructor.after.kt")
-                public void testEmptyArgumentInThisAsConstructor() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInThisAsConstructor.after.kt");
-                }
-
-                @TestMetadata("EmptyArgumentInThisAsConstructor2.after.kt")
-                public void testEmptyArgumentInThisAsConstructor2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInThisAsConstructor2.after.kt");
-                }
-
-                @TestMetadata("EmptyConditionInCatch.after.kt")
-                public void testEmptyConditionInCatch() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyConditionInCatch.after.kt");
-                }
-
-                @TestMetadata("EmptyConditionInCatch2.after.kt")
-                public void testEmptyConditionInCatch2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyConditionInCatch2.after.kt");
-                }
-
-                @TestMetadata("EmptyConditionInDoWhile.after.kt")
-                public void testEmptyConditionInDoWhile() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyConditionInDoWhile.after.kt");
-                }
-
-                @TestMetadata("EmptyConditionInFor.after.kt")
-                public void testEmptyConditionInFor() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyConditionInFor.after.kt");
-                }
-
-                @TestMetadata("EmptyConditionInIf.after.kt")
-                public void testEmptyConditionInIf() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyConditionInIf.after.kt");
-                }
+        public static class EmptyParameters extends AbstractEnterHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
 
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/editor/enterHandler/emptyParameters")
-            public static class TestBucket002 extends AbstractEnterHandlerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("EmptyConditionInWhen.after.kt")
-                public void testEmptyConditionInWhen() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyConditionInWhen.after.kt");
-                }
-
-                @TestMetadata("EmptyConditionInWhile.after.kt")
-                public void testEmptyConditionInWhile() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyConditionInWhile.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInAnnonymousFunction.after.kt")
-                public void testEmptyParameterInAnnonymousFunction() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunction.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInAnnonymousFunction2.after.kt")
-                public void testEmptyParameterInAnnonymousFunction2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunction2.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInAnnonymousFunctionWithNullableReceiver.after.kt")
-                public void testEmptyParameterInAnnonymousFunctionWithNullableReceiver() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunctionWithNullableReceiver.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInAnnonymousFunctionWithNullableReceiver2.after.kt")
-                public void testEmptyParameterInAnnonymousFunctionWithNullableReceiver2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunctionWithNullableReceiver2.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInAnnonymousFunctionWithReceiver.after.kt")
-                public void testEmptyParameterInAnnonymousFunctionWithReceiver() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunctionWithReceiver.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInAnnonymousFunctionWithReceiver2.after.kt")
-                public void testEmptyParameterInAnnonymousFunctionWithReceiver2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunctionWithReceiver2.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInDestructuringDeclaration.after.kt")
-                public void testEmptyParameterInDestructuringDeclaration() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInDestructuringDeclaration.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInDestructuringDeclaration2.after.kt")
-                public void testEmptyParameterInDestructuringDeclaration2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInDestructuringDeclaration2.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInDestructuringDeclaration3.after.kt")
-                public void testEmptyParameterInDestructuringDeclaration3() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInDestructuringDeclaration3.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInExplicitPrimaryConstructor.after.kt")
-                public void testEmptyParameterInExplicitPrimaryConstructor() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInExplicitPrimaryConstructor.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInExplicitPrimaryConstructor2.after.kt")
-                public void testEmptyParameterInExplicitPrimaryConstructor2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInExplicitPrimaryConstructor2.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInFunction.after.kt")
-                public void testEmptyParameterInFunction() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunction.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInFunction2.after.kt")
-                public void testEmptyParameterInFunction2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunction2.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInFunctionWithReceiver.after.kt")
-                public void testEmptyParameterInFunctionWithReceiver() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithReceiver.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInFunctionWithReceiver2.after.kt")
-                public void testEmptyParameterInFunctionWithReceiver2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithReceiver2.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInFunctionWithTypeParameters.after.kt")
-                public void testEmptyParameterInFunctionWithTypeParameters() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParameters.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInFunctionWithTypeParameters2.after.kt")
-                public void testEmptyParameterInFunctionWithTypeParameters2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParameters2.after.kt");
-                }
-
-                @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver.after.kt")
-                public void testEmptyParameterInFunctionWithTypeParametersAndReceiver() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver.after.kt");
-                }
+            @TestMetadata("EmptyArgumentInCallByArrayAccess.after.kt")
+            public void testEmptyArgumentInCallByArrayAccess() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByArrayAccess.after.kt");
             }
 
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/editor/enterHandler/emptyParameters")
-            public static class TestBucket003 extends AbstractEnterHandlerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
+            @TestMetadata("EmptyArgumentInCallByArrayAccess2.after.kt")
+            public void testEmptyArgumentInCallByArrayAccess2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByArrayAccess2.after.kt");
+            }
 
-                @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver2.after.kt")
-                public void testEmptyParameterInFunctionWithTypeParametersAndReceiver2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver2.after.kt");
-                }
+            @TestMetadata("EmptyArgumentInCallByDeclaration.after.kt")
+            public void testEmptyArgumentInCallByDeclaration() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByDeclaration.after.kt");
+            }
 
-                @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver3.after.kt")
-                public void testEmptyParameterInFunctionWithTypeParametersAndReceiver3() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver3.after.kt");
-                }
+            @TestMetadata("EmptyArgumentInCallByDeclaration2.after.kt")
+            public void testEmptyArgumentInCallByDeclaration2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByDeclaration2.after.kt");
+            }
 
-                @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver4.after.kt")
-                public void testEmptyParameterInFunctionWithTypeParametersAndReceiver4() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver4.after.kt");
-                }
+            @TestMetadata("EmptyArgumentInCallByReference.after.kt")
+            public void testEmptyArgumentInCallByReference() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReference.after.kt");
+            }
 
-                @TestMetadata("EmptyParameterInGetter.after.kt")
-                public void testEmptyParameterInGetter() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInGetter.after.kt");
-                }
+            @TestMetadata("EmptyArgumentInCallByReference2.after.kt")
+            public void testEmptyArgumentInCallByReference2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReference2.after.kt");
+            }
 
-                @TestMetadata("EmptyParameterInGetter2.after.kt")
-                public void testEmptyParameterInGetter2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInGetter2.after.kt");
-                }
+            @TestMetadata("EmptyArgumentInCallByReferenceInSuperType.after.kt")
+            public void testEmptyArgumentInCallByReferenceInSuperType() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceInSuperType.after.kt");
+            }
 
-                @TestMetadata("EmptyParameterInImplicitPrimaryConstructor.after.kt")
-                public void testEmptyParameterInImplicitPrimaryConstructor() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInImplicitPrimaryConstructor.after.kt");
-                }
+            @TestMetadata("EmptyArgumentInCallByReferenceInSuperType2.after.kt")
+            public void testEmptyArgumentInCallByReferenceInSuperType2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceInSuperType2.after.kt");
+            }
 
-                @TestMetadata("EmptyParameterInImplicitPrimaryConstructor2.after.kt")
-                public void testEmptyParameterInImplicitPrimaryConstructor2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInImplicitPrimaryConstructor2.after.kt");
-                }
+            @TestMetadata("EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments.after.kt")
+            public void testEmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments.after.kt");
+            }
 
-                @TestMetadata("EmptyParameterInImplicitPrimaryConstructorWithTypeParameters.after.kt")
-                public void testEmptyParameterInImplicitPrimaryConstructorWithTypeParameters() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInImplicitPrimaryConstructorWithTypeParameters.after.kt");
-                }
+            @TestMetadata("EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments2.after.kt")
+            public void testEmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments2.after.kt");
+            }
 
-                @TestMetadata("EmptyParameterInImplicitPrimaryConstructorWithTypeParameters2.after.kt")
-                public void testEmptyParameterInImplicitPrimaryConstructorWithTypeParameters2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInImplicitPrimaryConstructorWithTypeParameters2.after.kt");
-                }
+            @TestMetadata("EmptyArgumentInCallByReferenceWithTypeArguments.after.kt")
+            public void testEmptyArgumentInCallByReferenceWithTypeArguments() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceWithTypeArguments.after.kt");
+            }
 
-                @TestMetadata("EmptyParameterInInnerAnnonymousFunction.after.kt")
-                public void testEmptyParameterInInnerAnnonymousFunction() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInInnerAnnonymousFunction.after.kt");
-                }
+            @TestMetadata("EmptyArgumentInCallByReferenceWithTypeArguments2.after.kt")
+            public void testEmptyArgumentInCallByReferenceWithTypeArguments2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInCallByReferenceWithTypeArguments2.after.kt");
+            }
 
-                @TestMetadata("EmptyParameterInInnerAnnonymousFunction2.after.kt")
-                public void testEmptyParameterInInnerAnnonymousFunction2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInInnerAnnonymousFunction2.after.kt");
-                }
+            @TestMetadata("EmptyArgumentInThisAsClassicFunction.after.kt")
+            public void testEmptyArgumentInThisAsClassicFunction() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInThisAsClassicFunction.after.kt");
+            }
 
-                @TestMetadata("EmptyParameterInSecondaryConstructor.after.kt")
-                public void testEmptyParameterInSecondaryConstructor() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInSecondaryConstructor.after.kt");
-                }
+            @TestMetadata("EmptyArgumentInThisAsConstructor.after.kt")
+            public void testEmptyArgumentInThisAsConstructor() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInThisAsConstructor.after.kt");
+            }
 
-                @TestMetadata("EmptyParameterInSecondaryConstructor2.after.kt")
-                public void testEmptyParameterInSecondaryConstructor2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInSecondaryConstructor2.after.kt");
-                }
+            @TestMetadata("EmptyArgumentInThisAsConstructor2.after.kt")
+            public void testEmptyArgumentInThisAsConstructor2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyArgumentInThisAsConstructor2.after.kt");
+            }
 
-                @TestMetadata("EmptyParameterInSetter.after.kt")
-                public void testEmptyParameterInSetter() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInSetter.after.kt");
-                }
+            @TestMetadata("EmptyConditionInCatch.after.kt")
+            public void testEmptyConditionInCatch() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyConditionInCatch.after.kt");
+            }
 
-                @TestMetadata("EmptyParameterInSetter2.after.kt")
-                public void testEmptyParameterInSetter2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInSetter2.after.kt");
-                }
+            @TestMetadata("EmptyConditionInCatch2.after.kt")
+            public void testEmptyConditionInCatch2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyConditionInCatch2.after.kt");
+            }
 
-                @TestMetadata("EmptyParameters.after.kt")
-                public void testEmptyParameters() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameters.after.kt");
-                }
+            @TestMetadata("EmptyConditionInDoWhile.after.kt")
+            public void testEmptyConditionInDoWhile() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyConditionInDoWhile.after.kt");
+            }
 
-                @TestMetadata("EmptyParameters2.after.kt")
-                public void testEmptyParameters2() throws Exception {
-                    runTest("testData/editor/enterHandler/emptyParameters/EmptyParameters2.after.kt");
-                }
+            @TestMetadata("EmptyConditionInFor.after.kt")
+            public void testEmptyConditionInFor() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyConditionInFor.after.kt");
+            }
+
+            @TestMetadata("EmptyConditionInIf.after.kt")
+            public void testEmptyConditionInIf() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyConditionInIf.after.kt");
+            }
+
+            @TestMetadata("EmptyConditionInWhen.after.kt")
+            public void testEmptyConditionInWhen() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyConditionInWhen.after.kt");
+            }
+
+            @TestMetadata("EmptyConditionInWhile.after.kt")
+            public void testEmptyConditionInWhile() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyConditionInWhile.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInAnnonymousFunction.after.kt")
+            public void testEmptyParameterInAnnonymousFunction() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunction.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInAnnonymousFunction2.after.kt")
+            public void testEmptyParameterInAnnonymousFunction2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunction2.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInAnnonymousFunctionWithNullableReceiver.after.kt")
+            public void testEmptyParameterInAnnonymousFunctionWithNullableReceiver() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunctionWithNullableReceiver.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInAnnonymousFunctionWithNullableReceiver2.after.kt")
+            public void testEmptyParameterInAnnonymousFunctionWithNullableReceiver2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunctionWithNullableReceiver2.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInAnnonymousFunctionWithReceiver.after.kt")
+            public void testEmptyParameterInAnnonymousFunctionWithReceiver() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunctionWithReceiver.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInAnnonymousFunctionWithReceiver2.after.kt")
+            public void testEmptyParameterInAnnonymousFunctionWithReceiver2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInAnnonymousFunctionWithReceiver2.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInDestructuringDeclaration.after.kt")
+            public void testEmptyParameterInDestructuringDeclaration() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInDestructuringDeclaration.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInDestructuringDeclaration2.after.kt")
+            public void testEmptyParameterInDestructuringDeclaration2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInDestructuringDeclaration2.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInDestructuringDeclaration3.after.kt")
+            public void testEmptyParameterInDestructuringDeclaration3() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInDestructuringDeclaration3.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInExplicitPrimaryConstructor.after.kt")
+            public void testEmptyParameterInExplicitPrimaryConstructor() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInExplicitPrimaryConstructor.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInExplicitPrimaryConstructor2.after.kt")
+            public void testEmptyParameterInExplicitPrimaryConstructor2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInExplicitPrimaryConstructor2.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInFunction.after.kt")
+            public void testEmptyParameterInFunction() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunction.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInFunction2.after.kt")
+            public void testEmptyParameterInFunction2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunction2.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInFunctionWithReceiver.after.kt")
+            public void testEmptyParameterInFunctionWithReceiver() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithReceiver.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInFunctionWithReceiver2.after.kt")
+            public void testEmptyParameterInFunctionWithReceiver2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithReceiver2.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInFunctionWithTypeParameters.after.kt")
+            public void testEmptyParameterInFunctionWithTypeParameters() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParameters.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInFunctionWithTypeParameters2.after.kt")
+            public void testEmptyParameterInFunctionWithTypeParameters2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParameters2.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver.after.kt")
+            public void testEmptyParameterInFunctionWithTypeParametersAndReceiver() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver2.after.kt")
+            public void testEmptyParameterInFunctionWithTypeParametersAndReceiver2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver2.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver3.after.kt")
+            public void testEmptyParameterInFunctionWithTypeParametersAndReceiver3() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver3.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver4.after.kt")
+            public void testEmptyParameterInFunctionWithTypeParametersAndReceiver4() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver4.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInGetter.after.kt")
+            public void testEmptyParameterInGetter() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInGetter.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInGetter2.after.kt")
+            public void testEmptyParameterInGetter2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInGetter2.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInImplicitPrimaryConstructor.after.kt")
+            public void testEmptyParameterInImplicitPrimaryConstructor() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInImplicitPrimaryConstructor.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInImplicitPrimaryConstructor2.after.kt")
+            public void testEmptyParameterInImplicitPrimaryConstructor2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInImplicitPrimaryConstructor2.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInImplicitPrimaryConstructorWithTypeParameters.after.kt")
+            public void testEmptyParameterInImplicitPrimaryConstructorWithTypeParameters() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInImplicitPrimaryConstructorWithTypeParameters.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInImplicitPrimaryConstructorWithTypeParameters2.after.kt")
+            public void testEmptyParameterInImplicitPrimaryConstructorWithTypeParameters2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInImplicitPrimaryConstructorWithTypeParameters2.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInInnerAnnonymousFunction.after.kt")
+            public void testEmptyParameterInInnerAnnonymousFunction() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInInnerAnnonymousFunction.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInInnerAnnonymousFunction2.after.kt")
+            public void testEmptyParameterInInnerAnnonymousFunction2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInInnerAnnonymousFunction2.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInSecondaryConstructor.after.kt")
+            public void testEmptyParameterInSecondaryConstructor() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInSecondaryConstructor.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInSecondaryConstructor2.after.kt")
+            public void testEmptyParameterInSecondaryConstructor2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInSecondaryConstructor2.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInSetter.after.kt")
+            public void testEmptyParameterInSetter() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInSetter.after.kt");
+            }
+
+            @TestMetadata("EmptyParameterInSetter2.after.kt")
+            public void testEmptyParameterInSetter2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameterInSetter2.after.kt");
+            }
+
+            @TestMetadata("EmptyParameters.after.kt")
+            public void testEmptyParameters() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameters.after.kt");
+            }
+
+            @TestMetadata("EmptyParameters2.after.kt")
+            public void testEmptyParameters2() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParameters/EmptyParameters2.after.kt");
             }
         }
 
@@ -1018,211 +983,199 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
         public abstract static class MultilineString extends AbstractEnterHandlerTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler/multilineString/spaces")
-            public abstract static class Spaces extends AbstractEnterHandlerTest {
-                @RunWith(JUnit3RunnerWithInners.class)
-                @TestMetadata("testData/editor/enterHandler/multilineString/spaces")
-                public static class TestBucket001 extends AbstractEnterHandlerTest {
-                    private void runTest(String testDataFilePath) throws Exception {
-                        KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                    }
-
-                    @TestMetadata("DontAddMarginCharWhenMultilineWithoutMargins.after.kt")
-                    public void testDontAddMarginCharWhenMultilineWithoutMargins() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/DontAddMarginCharWhenMultilineWithoutMargins.after.kt");
-                    }
-
-                    @TestMetadata("DontAddMarginWhenItIsUnused.after.kt")
-                    public void testDontAddMarginWhenItIsUnused() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/DontAddMarginWhenItIsUnused.after.kt");
-                    }
-
-                    @TestMetadata("DontAddMarginWhenItIsUnusedWithEmptyPrevious.after.kt")
-                    public void testDontAddMarginWhenItIsUnusedWithEmptyPrevious() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/DontAddMarginWhenItIsUnusedWithEmptyPrevious.after.kt");
-                    }
-
-                    @TestMetadata("DontAddTrimCallWhenAlreadyMultiline.after.kt")
-                    public void testDontAddTrimCallWhenAlreadyMultiline() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/DontAddTrimCallWhenAlreadyMultiline.after.kt");
-                    }
-
-                    @TestMetadata("DontAddTrimCallWhenAlreadyMultilineFirstLine.after.kt")
-                    public void testDontAddTrimCallWhenAlreadyMultilineFirstLine() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/DontAddTrimCallWhenAlreadyMultilineFirstLine.after.kt");
-                    }
-
-                    @TestMetadata("DontInsertTrimMargin1.after.kt")
-                    public void testDontInsertTrimMargin1() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/DontInsertTrimMargin1.after.kt");
-                    }
-
-                    @TestMetadata("DontInsertTrimMargin2.after.kt")
-                    public void testDontInsertTrimMargin2() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/DontInsertTrimMargin2.after.kt");
-                    }
-
-                    @TestMetadata("DontInsertTrimMargin3.after.kt")
-                    public void testDontInsertTrimMargin3() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/DontInsertTrimMargin3.after.kt");
-                    }
-
-                    @TestMetadata("DontInsertTrimMargin4.after.kt")
-                    public void testDontInsertTrimMargin4() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/DontInsertTrimMargin4.after.kt");
-                    }
-
-                    @TestMetadata("EnterAfterOpenningBrace.after.kt")
-                    public void testEnterAfterOpenningBrace() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterAfterOpenningBrace.after.kt");
-                    }
-
-                    @TestMetadata("EnterBeforeLongEntryOneLine.after.kt")
-                    public void testEnterBeforeLongEntryOneLine() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterBeforeLongEntryOneLine.after.kt");
-                    }
-
-                    @TestMetadata("EnterBeforeMarginChar.after.kt")
-                    public void testEnterBeforeMarginChar() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterBeforeMarginChar.after.kt");
-                    }
-
-                    @TestMetadata("EnterBeforeShortEntryOneLine.after.kt")
-                    public void testEnterBeforeShortEntryOneLine() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterBeforeShortEntryOneLine.after.kt");
-                    }
-
-                    @TestMetadata("EnterInInfixMargin.after.kt")
-                    public void testEnterInInfixMargin() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterInInfixMargin.after.kt");
-                    }
-
-                    @TestMetadata("EnterInInjectedFragment.after.kt")
-                    public void testEnterInInjectedFragment() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterInInjectedFragment.after.kt");
-                    }
-
-                    @TestMetadata("EnterInLineWithMarginOnNotMargedLine.after.kt")
-                    public void testEnterInLineWithMarginOnNotMargedLine() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterInLineWithMarginOnNotMargedLine.after.kt");
-                    }
-
-                    @TestMetadata("EnterInMethodCallMargin.after.kt")
-                    public void testEnterInMethodCallMargin() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterInMethodCallMargin.after.kt");
-                    }
-
-                    @TestMetadata("EnterInOneLineAfterSpaces.after.kt")
-                    public void testEnterInOneLineAfterSpaces() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterInOneLineAfterSpaces.after.kt");
-                    }
-
-                    @TestMetadata("EnterInTwoLinesNoMarginCall.after.kt")
-                    public void testEnterInTwoLinesNoMarginCall() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterInTwoLinesNoMarginCall.after.kt");
-                    }
-
-                    @TestMetadata("EnterInsideBraces.after.kt")
-                    public void testEnterInsideBraces() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterInsideBraces.after.kt");
-                    }
+            public static class Spaces extends AbstractEnterHandlerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
 
-                @RunWith(JUnit3RunnerWithInners.class)
-                @TestMetadata("testData/editor/enterHandler/multilineString/spaces")
-                public static class TestBucket002 extends AbstractEnterHandlerTest {
-                    private void runTest(String testDataFilePath) throws Exception {
-                        KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                    }
+                @TestMetadata("DontAddMarginCharWhenMultilineWithoutMargins.after.kt")
+                public void testDontAddMarginCharWhenMultilineWithoutMargins() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/DontAddMarginCharWhenMultilineWithoutMargins.after.kt");
+                }
 
-                    @TestMetadata("EnterInsideBraces1.after.kt")
-                    public void testEnterInsideBraces1() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterInsideBraces1.after.kt");
-                    }
+                @TestMetadata("DontAddMarginWhenItIsUnused.after.kt")
+                public void testDontAddMarginWhenItIsUnused() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/DontAddMarginWhenItIsUnused.after.kt");
+                }
 
-                    @TestMetadata("EnterInsideBraces2.after.kt")
-                    public void testEnterInsideBraces2() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterInsideBraces2.after.kt");
-                    }
+                @TestMetadata("DontAddMarginWhenItIsUnusedWithEmptyPrevious.after.kt")
+                public void testDontAddMarginWhenItIsUnusedWithEmptyPrevious() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/DontAddMarginWhenItIsUnusedWithEmptyPrevious.after.kt");
+                }
 
-                    @TestMetadata("EnterInsideTextMargin.after.kt")
-                    public void testEnterInsideTextMargin() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterInsideTextMargin.after.kt");
-                    }
+                @TestMetadata("DontAddTrimCallWhenAlreadyMultiline.after.kt")
+                public void testDontAddTrimCallWhenAlreadyMultiline() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/DontAddTrimCallWhenAlreadyMultiline.after.kt");
+                }
 
-                    @TestMetadata("EnterMLSimpleMargin.after.kt")
-                    public void testEnterMLSimpleMargin() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterMLSimpleMargin.after.kt");
-                    }
+                @TestMetadata("DontAddTrimCallWhenAlreadyMultilineFirstLine.after.kt")
+                public void testDontAddTrimCallWhenAlreadyMultilineFirstLine() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/DontAddTrimCallWhenAlreadyMultilineFirstLine.after.kt");
+                }
 
-                    @TestMetadata("EnterMLStartOnSameLineMargin.after.kt")
-                    public void testEnterMLStartOnSameLineMargin() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterMLStartOnSameLineMargin.after.kt");
-                    }
+                @TestMetadata("DontInsertTrimMargin1.after.kt")
+                public void testDontInsertTrimMargin1() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/DontInsertTrimMargin1.after.kt");
+                }
 
-                    @TestMetadata("EnterOnFirstLineWithPresentTrimMargin.after.kt")
-                    public void testEnterOnFirstLineWithPresentTrimMargin() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterOnFirstLineWithPresentTrimMargin.after.kt");
-                    }
+                @TestMetadata("DontInsertTrimMargin2.after.kt")
+                public void testDontInsertTrimMargin2() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/DontInsertTrimMargin2.after.kt");
+                }
 
-                    @TestMetadata("EnterOnFirstLineWithPresentTrimMarginAndLine.after.kt")
-                    public void testEnterOnFirstLineWithPresentTrimMarginAndLine() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterOnFirstLineWithPresentTrimMarginAndLine.after.kt");
-                    }
+                @TestMetadata("DontInsertTrimMargin3.after.kt")
+                public void testDontInsertTrimMargin3() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/DontInsertTrimMargin3.after.kt");
+                }
 
-                    @TestMetadata("EnterOnFirstNonEmptyLineWithPresentTrimMargin.after.kt")
-                    public void testEnterOnFirstNonEmptyLineWithPresentTrimMargin() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterOnFirstNonEmptyLineWithPresentTrimMargin.after.kt");
-                    }
+                @TestMetadata("DontInsertTrimMargin4.after.kt")
+                public void testDontInsertTrimMargin4() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/DontInsertTrimMargin4.after.kt");
+                }
 
-                    @TestMetadata("EnterOnNewLine.after.kt")
-                    public void testEnterOnNewLine() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterOnNewLine.after.kt");
-                    }
+                @TestMetadata("EnterAfterOpenningBrace.after.kt")
+                public void testEnterAfterOpenningBrace() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterAfterOpenningBrace.after.kt");
+                }
 
-                    @TestMetadata("EnterSimple.after.kt")
-                    public void testEnterSimple() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterSimple.after.kt");
-                    }
+                @TestMetadata("EnterBeforeLongEntryOneLine.after.kt")
+                public void testEnterBeforeLongEntryOneLine() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterBeforeLongEntryOneLine.after.kt");
+                }
 
-                    @TestMetadata("EnterWithTextMargin.after.kt")
-                    public void testEnterWithTextMargin() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterWithTextMargin.after.kt");
-                    }
+                @TestMetadata("EnterBeforeMarginChar.after.kt")
+                public void testEnterBeforeMarginChar() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterBeforeMarginChar.after.kt");
+                }
 
-                    @TestMetadata("EnterWithTextOnNewLineMargin.after.kt")
-                    public void testEnterWithTextOnNewLineMargin() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/EnterWithTextOnNewLineMargin.after.kt");
-                    }
+                @TestMetadata("EnterBeforeShortEntryOneLine.after.kt")
+                public void testEnterBeforeShortEntryOneLine() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterBeforeShortEntryOneLine.after.kt");
+                }
 
-                    @TestMetadata("InsertCustomMargin.after.kt")
-                    public void testInsertCustomMargin() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/InsertCustomMargin.after.kt");
-                    }
+                @TestMetadata("EnterInInfixMargin.after.kt")
+                public void testEnterInInfixMargin() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterInInfixMargin.after.kt");
+                }
 
-                    @TestMetadata("InsertCustomMarginInLineStart.after.kt")
-                    public void testInsertCustomMarginInLineStart() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/InsertCustomMarginInLineStart.after.kt");
-                    }
+                @TestMetadata("EnterInInjectedFragment.after.kt")
+                public void testEnterInInjectedFragment() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterInInjectedFragment.after.kt");
+                }
 
-                    @TestMetadata("InsertDefaultMargin.after.kt")
-                    public void testInsertDefaultMargin() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/InsertDefaultMargin.after.kt");
-                    }
+                @TestMetadata("EnterInLineWithMarginOnNotMargedLine.after.kt")
+                public void testEnterInLineWithMarginOnNotMargedLine() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterInLineWithMarginOnNotMargedLine.after.kt");
+                }
 
-                    @TestMetadata("NoTrimIndentInAnnotations.after.kt")
-                    public void testNoTrimIndentInAnnotations() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/NoTrimIndentInAnnotations.after.kt");
-                    }
+                @TestMetadata("EnterInMethodCallMargin.after.kt")
+                public void testEnterInMethodCallMargin() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterInMethodCallMargin.after.kt");
+                }
 
-                    @TestMetadata("NoTrimIndentInConst.after.kt")
-                    public void testNoTrimIndentInConst() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/NoTrimIndentInConst.after.kt");
-                    }
+                @TestMetadata("EnterInOneLineAfterSpaces.after.kt")
+                public void testEnterInOneLineAfterSpaces() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterInOneLineAfterSpaces.after.kt");
+                }
 
-                    @TestMetadata("RestoreIndentFromEmptyLine.after.kt")
-                    public void testRestoreIndentFromEmptyLine() throws Exception {
-                        runTest("testData/editor/enterHandler/multilineString/spaces/RestoreIndentFromEmptyLine.after.kt");
-                    }
+                @TestMetadata("EnterInTwoLinesNoMarginCall.after.kt")
+                public void testEnterInTwoLinesNoMarginCall() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterInTwoLinesNoMarginCall.after.kt");
+                }
+
+                @TestMetadata("EnterInsideBraces.after.kt")
+                public void testEnterInsideBraces() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterInsideBraces.after.kt");
+                }
+
+                @TestMetadata("EnterInsideBraces1.after.kt")
+                public void testEnterInsideBraces1() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterInsideBraces1.after.kt");
+                }
+
+                @TestMetadata("EnterInsideBraces2.after.kt")
+                public void testEnterInsideBraces2() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterInsideBraces2.after.kt");
+                }
+
+                @TestMetadata("EnterInsideTextMargin.after.kt")
+                public void testEnterInsideTextMargin() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterInsideTextMargin.after.kt");
+                }
+
+                @TestMetadata("EnterMLSimpleMargin.after.kt")
+                public void testEnterMLSimpleMargin() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterMLSimpleMargin.after.kt");
+                }
+
+                @TestMetadata("EnterMLStartOnSameLineMargin.after.kt")
+                public void testEnterMLStartOnSameLineMargin() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterMLStartOnSameLineMargin.after.kt");
+                }
+
+                @TestMetadata("EnterOnFirstLineWithPresentTrimMargin.after.kt")
+                public void testEnterOnFirstLineWithPresentTrimMargin() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterOnFirstLineWithPresentTrimMargin.after.kt");
+                }
+
+                @TestMetadata("EnterOnFirstLineWithPresentTrimMarginAndLine.after.kt")
+                public void testEnterOnFirstLineWithPresentTrimMarginAndLine() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterOnFirstLineWithPresentTrimMarginAndLine.after.kt");
+                }
+
+                @TestMetadata("EnterOnFirstNonEmptyLineWithPresentTrimMargin.after.kt")
+                public void testEnterOnFirstNonEmptyLineWithPresentTrimMargin() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterOnFirstNonEmptyLineWithPresentTrimMargin.after.kt");
+                }
+
+                @TestMetadata("EnterOnNewLine.after.kt")
+                public void testEnterOnNewLine() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterOnNewLine.after.kt");
+                }
+
+                @TestMetadata("EnterSimple.after.kt")
+                public void testEnterSimple() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterSimple.after.kt");
+                }
+
+                @TestMetadata("EnterWithTextMargin.after.kt")
+                public void testEnterWithTextMargin() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterWithTextMargin.after.kt");
+                }
+
+                @TestMetadata("EnterWithTextOnNewLineMargin.after.kt")
+                public void testEnterWithTextOnNewLineMargin() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/EnterWithTextOnNewLineMargin.after.kt");
+                }
+
+                @TestMetadata("InsertCustomMargin.after.kt")
+                public void testInsertCustomMargin() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/InsertCustomMargin.after.kt");
+                }
+
+                @TestMetadata("InsertCustomMarginInLineStart.after.kt")
+                public void testInsertCustomMarginInLineStart() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/InsertCustomMarginInLineStart.after.kt");
+                }
+
+                @TestMetadata("InsertDefaultMargin.after.kt")
+                public void testInsertDefaultMargin() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/InsertDefaultMargin.after.kt");
+                }
+
+                @TestMetadata("NoTrimIndentInAnnotations.after.kt")
+                public void testNoTrimIndentInAnnotations() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/NoTrimIndentInAnnotations.after.kt");
+                }
+
+                @TestMetadata("NoTrimIndentInConst.after.kt")
+                public void testNoTrimIndentInConst() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/NoTrimIndentInConst.after.kt");
+                }
+
+                @TestMetadata("RestoreIndentFromEmptyLine.after.kt")
+                public void testRestoreIndentFromEmptyLine() throws Exception {
+                    runTest("testData/editor/enterHandler/multilineString/spaces/RestoreIndentFromEmptyLine.after.kt");
                 }
             }
 
@@ -1397,542 +1350,502 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/templates")
-        public abstract static class Templates extends AbstractEnterHandlerTest {
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/editor/enterHandler/templates")
-            public static class TestBucket001 extends AbstractEnterHandlerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("LargeFileWithStringTemplate.after.kt")
-                public void testLargeFileWithStringTemplate() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/LargeFileWithStringTemplate.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryClose.after.kt")
-                public void testTemplateEntryClose() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryClose.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryClose2.after.kt")
-                public void testTemplateEntryClose2() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryClose2.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryClose3.after.kt")
-                public void testTemplateEntryClose3() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryClose3.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryClose4.after.kt")
-                public void testTemplateEntryClose4() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryClose4.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryClose5.after.kt")
-                public void testTemplateEntryClose5() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryClose5.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryClose6.after.kt")
-                public void testTemplateEntryClose6() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryClose6.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryClose7.after.kt")
-                public void testTemplateEntryClose7() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryClose7.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryCloseInMultilineString.after.kt")
-                public void testTemplateEntryCloseInMultilineString() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryCloseInMultilineString.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryCloseInMultilineString2.after.kt")
-                public void testTemplateEntryCloseInMultilineString2() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryCloseInMultilineString2.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryCloseInMultilineString3.after.kt")
-                public void testTemplateEntryCloseInMultilineString3() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryCloseInMultilineString3.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryOpen.after.kt")
-                public void testTemplateEntryOpen() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryOpen.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryOpen2.after.kt")
-                public void testTemplateEntryOpen2() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryOpen2.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryOpenInMultilineString.after.kt")
-                public void testTemplateEntryOpenInMultilineString() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryOpenInMultilineString.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryOpenInMultilineString2.after.kt")
-                public void testTemplateEntryOpenInMultilineString2() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryOpenInMultilineString2.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryOpenInMultilineString3.after.kt")
-                public void testTemplateEntryOpenInMultilineString3() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryOpenInMultilineString3.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryOpenWithComment.after.kt")
-                public void testTemplateEntryOpenWithComment() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryOpenWithComment.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryOpenWithComment2.after.kt")
-                public void testTemplateEntryOpenWithComment2() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryOpenWithComment2.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryOpenWithoutContent.after.kt")
-                public void testTemplateEntryOpenWithoutContent() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryOpenWithoutContent.after.kt");
-                }
-
-                @TestMetadata("TemplateEntryOpenWithoutContent2.after.kt")
-                public void testTemplateEntryOpenWithoutContent2() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryOpenWithoutContent2.after.kt");
-                }
+        public static class Templates extends AbstractEnterHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
 
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/editor/enterHandler/templates")
-            public static class TestBucket002 extends AbstractEnterHandlerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
+            @TestMetadata("LargeFileWithStringTemplate.after.kt")
+            public void testLargeFileWithStringTemplate() throws Exception {
+                runTest("testData/editor/enterHandler/templates/LargeFileWithStringTemplate.after.kt");
+            }
 
-                @TestMetadata("TemplateEntryOpenWithoutContent3.after.kt")
-                public void testTemplateEntryOpenWithoutContent3() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryOpenWithoutContent3.after.kt");
-                }
+            @TestMetadata("TemplateEntryClose.after.kt")
+            public void testTemplateEntryClose() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryClose.after.kt");
+            }
 
-                @TestMetadata("TemplateEntryOpenWithoutContent4.after.kt")
-                public void testTemplateEntryOpenWithoutContent4() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryOpenWithoutContent4.after.kt");
-                }
+            @TestMetadata("TemplateEntryClose2.after.kt")
+            public void testTemplateEntryClose2() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryClose2.after.kt");
+            }
 
-                @TestMetadata("TemplateEntryOpenWithoutContent5.after.kt")
-                public void testTemplateEntryOpenWithoutContent5() throws Exception {
-                    runTest("testData/editor/enterHandler/templates/TemplateEntryOpenWithoutContent5.after.kt");
-                }
+            @TestMetadata("TemplateEntryClose3.after.kt")
+            public void testTemplateEntryClose3() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryClose3.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryClose4.after.kt")
+            public void testTemplateEntryClose4() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryClose4.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryClose5.after.kt")
+            public void testTemplateEntryClose5() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryClose5.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryClose6.after.kt")
+            public void testTemplateEntryClose6() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryClose6.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryClose7.after.kt")
+            public void testTemplateEntryClose7() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryClose7.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryCloseInMultilineString.after.kt")
+            public void testTemplateEntryCloseInMultilineString() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryCloseInMultilineString.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryCloseInMultilineString2.after.kt")
+            public void testTemplateEntryCloseInMultilineString2() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryCloseInMultilineString2.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryCloseInMultilineString3.after.kt")
+            public void testTemplateEntryCloseInMultilineString3() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryCloseInMultilineString3.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryOpen.after.kt")
+            public void testTemplateEntryOpen() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryOpen.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryOpen2.after.kt")
+            public void testTemplateEntryOpen2() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryOpen2.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryOpenInMultilineString.after.kt")
+            public void testTemplateEntryOpenInMultilineString() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryOpenInMultilineString.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryOpenInMultilineString2.after.kt")
+            public void testTemplateEntryOpenInMultilineString2() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryOpenInMultilineString2.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryOpenInMultilineString3.after.kt")
+            public void testTemplateEntryOpenInMultilineString3() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryOpenInMultilineString3.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryOpenWithComment.after.kt")
+            public void testTemplateEntryOpenWithComment() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryOpenWithComment.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryOpenWithComment2.after.kt")
+            public void testTemplateEntryOpenWithComment2() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryOpenWithComment2.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryOpenWithoutContent.after.kt")
+            public void testTemplateEntryOpenWithoutContent() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryOpenWithoutContent.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryOpenWithoutContent2.after.kt")
+            public void testTemplateEntryOpenWithoutContent2() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryOpenWithoutContent2.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryOpenWithoutContent3.after.kt")
+            public void testTemplateEntryOpenWithoutContent3() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryOpenWithoutContent3.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryOpenWithoutContent4.after.kt")
+            public void testTemplateEntryOpenWithoutContent4() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryOpenWithoutContent4.after.kt");
+            }
+
+            @TestMetadata("TemplateEntryOpenWithoutContent5.after.kt")
+            public void testTemplateEntryOpenWithoutContent5() throws Exception {
+                runTest("testData/editor/enterHandler/templates/TemplateEntryOpenWithoutContent5.after.kt");
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler")
-        public abstract static class Uncategorized extends AbstractEnterHandlerTest {
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/editor/enterHandler")
-            public static class TestBucket001 extends AbstractEnterHandlerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("AfterCatch.after.kt")
-                public void testAfterCatch() throws Exception {
-                    runTest("testData/editor/enterHandler/AfterCatch.after.kt");
-                }
-
-                @TestMetadata("AfterClassNameBeforeFun.after.kt")
-                public void testAfterClassNameBeforeFun() throws Exception {
-                    runTest("testData/editor/enterHandler/AfterClassNameBeforeFun.after.kt");
-                }
-
-                @TestMetadata("AfterExtensionPropertyGetter.after.kt")
-                public void testAfterExtensionPropertyGetter() throws Exception {
-                    runTest("testData/editor/enterHandler/AfterExtensionPropertyGetter.after.kt");
-                }
-
-                @TestMetadata("AfterExtensionPropertySetter.after.kt")
-                public void testAfterExtensionPropertySetter() throws Exception {
-                    runTest("testData/editor/enterHandler/AfterExtensionPropertySetter.after.kt");
-                }
-
-                @TestMetadata("AfterFinally.after.kt")
-                public void testAfterFinally() throws Exception {
-                    runTest("testData/editor/enterHandler/AfterFinally.after.kt");
-                }
-
-                @TestMetadata("AfterImport.after.kt")
-                public void testAfterImport() throws Exception {
-                    runTest("testData/editor/enterHandler/AfterImport.after.kt");
-                }
-
-                @TestMetadata("AfterPropertyGetter.after.kt")
-                public void testAfterPropertyGetter() throws Exception {
-                    runTest("testData/editor/enterHandler/AfterPropertyGetter.after.kt");
-                }
-
-                @TestMetadata("AfterPropertySetter.after.kt")
-                public void testAfterPropertySetter() throws Exception {
-                    runTest("testData/editor/enterHandler/AfterPropertySetter.after.kt");
-                }
-
-                @TestMetadata("AfterTry.after.kt")
-                public void testAfterTry() throws Exception {
-                    runTest("testData/editor/enterHandler/AfterTry.after.kt");
-                }
-
-                @TestMetadata("Annotation.after.kt")
-                public void testAnnotation() throws Exception {
-                    runTest("testData/editor/enterHandler/Annotation.after.kt");
-                }
-
-                @TestMetadata("AnnotationInDeclaration.after.kt")
-                public void testAnnotationInDeclaration() throws Exception {
-                    runTest("testData/editor/enterHandler/AnnotationInDeclaration.after.kt");
-                }
-
-                @TestMetadata("ArgumentListNormalIndent.after.kt")
-                public void testArgumentListNormalIndent() throws Exception {
-                    runTest("testData/editor/enterHandler/ArgumentListNormalIndent.after.kt");
-                }
-
-                @TestMetadata("AutoIndentInWhenClause.after.kt")
-                public void testAutoIndentInWhenClause() throws Exception {
-                    runTest("testData/editor/enterHandler/AutoIndentInWhenClause.after.kt");
-                }
-
-                @TestMetadata("BlockCommentAfterCatch.after.kt")
-                public void testBlockCommentAfterCatch() throws Exception {
-                    runTest("testData/editor/enterHandler/BlockCommentAfterCatch.after.kt");
-                }
-
-                @TestMetadata("ConsecutiveCallsAfterDot.after.kt")
-                public void testConsecutiveCallsAfterDot() throws Exception {
-                    runTest("testData/editor/enterHandler/ConsecutiveCallsAfterDot.after.kt");
-                }
-
-                @TestMetadata("ConsecutiveCallsInSaeCallsMiddle.after.kt")
-                public void testConsecutiveCallsInSaeCallsMiddle() throws Exception {
-                    runTest("testData/editor/enterHandler/ConsecutiveCallsInSaeCallsMiddle.after.kt");
-                }
-
-                @TestMetadata("ConsecutiveCallsInSafeCallsEnd.after.kt")
-                public void testConsecutiveCallsInSafeCallsEnd() throws Exception {
-                    runTest("testData/editor/enterHandler/ConsecutiveCallsInSafeCallsEnd.after.kt");
-                }
-
-                @TestMetadata("EnterInFunctionWithExpressionBody.after.kt")
-                public void testEnterInFunctionWithExpressionBody() throws Exception {
-                    runTest("testData/editor/enterHandler/EnterInFunctionWithExpressionBody.after.kt");
-                }
-
-                @TestMetadata("EnterInMultiDeclaration.after.kt")
-                public void testEnterInMultiDeclaration() throws Exception {
-                    runTest("testData/editor/enterHandler/EnterInMultiDeclaration.after.kt");
-                }
-
-                @TestMetadata("EnterInVariableDeclaration.after.kt")
-                public void testEnterInVariableDeclaration() throws Exception {
-                    runTest("testData/editor/enterHandler/EnterInVariableDeclaration.after.kt");
-                }
+        public static class Uncategorized extends AbstractEnterHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
 
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/editor/enterHandler")
-            public static class TestBucket002 extends AbstractEnterHandlerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("EoLCommentAfterCatch.after.kt")
-                public void testEoLCommentAfterCatch() throws Exception {
-                    runTest("testData/editor/enterHandler/EoLCommentAfterCatch.after.kt");
-                }
-
-                @TestMetadata("EoLCommentAfterFor.after.kt")
-                public void testEoLCommentAfterFor() throws Exception {
-                    runTest("testData/editor/enterHandler/EoLCommentAfterFor.after.kt");
-                }
-
-                @TestMetadata("EoLCommentAfterIf.after.kt")
-                public void testEoLCommentAfterIf() throws Exception {
-                    runTest("testData/editor/enterHandler/EoLCommentAfterIf.after.kt");
-                }
-
-                @TestMetadata("FunctionBlock.after.kt")
-                public void testFunctionBlock() throws Exception {
-                    runTest("testData/editor/enterHandler/FunctionBlock.after.kt");
-                }
-
-                @TestMetadata("HigherOrderFunction.after.kt")
-                public void testHigherOrderFunction() throws Exception {
-                    runTest("testData/editor/enterHandler/HigherOrderFunction.after.kt");
-                }
-
-                @TestMetadata("HigherOrderFunction2.after.kt")
-                public void testHigherOrderFunction2() throws Exception {
-                    runTest("testData/editor/enterHandler/HigherOrderFunction2.after.kt");
-                }
-
-                @TestMetadata("HigherOrderFunction3.after.kt")
-                public void testHigherOrderFunction3() throws Exception {
-                    runTest("testData/editor/enterHandler/HigherOrderFunction3.after.kt");
-                }
-
-                @TestMetadata("InDelegationListAfterColon.after.kt")
-                public void testInDelegationListAfterColon() throws Exception {
-                    runTest("testData/editor/enterHandler/InDelegationListAfterColon.after.kt");
-                }
-
-                @TestMetadata("InDelegationListAfterComma.after.kt")
-                public void testInDelegationListAfterComma() throws Exception {
-                    runTest("testData/editor/enterHandler/InDelegationListAfterComma.after.kt");
-                }
-
-                @TestMetadata("InDelegationListNotEmpty.after.kt")
-                public void testInDelegationListNotEmpty() throws Exception {
-                    runTest("testData/editor/enterHandler/InDelegationListNotEmpty.after.kt");
-                }
-
-                @TestMetadata("InElseBlockBeforeParenthesis.after.kt")
-                public void testInElseBlockBeforeParenthesis() throws Exception {
-                    runTest("testData/editor/enterHandler/InElseBlockBeforeParenthesis.after.kt");
-                }
-
-                @TestMetadata("InEnumAfterSemicolon.after.kt")
-                public void testInEnumAfterSemicolon() throws Exception {
-                    runTest("testData/editor/enterHandler/InEnumAfterSemicolon.after.kt");
-                }
-
-                @TestMetadata("InEnumInitializerListAfterComma.after.kt")
-                public void testInEnumInitializerListAfterComma() throws Exception {
-                    runTest("testData/editor/enterHandler/InEnumInitializerListAfterComma.after.kt");
-                }
-
-                @TestMetadata("InEnumInitializerListNotEmpty.after.kt")
-                public void testInEnumInitializerListNotEmpty() throws Exception {
-                    runTest("testData/editor/enterHandler/InEnumInitializerListNotEmpty.after.kt");
-                }
-
-                @TestMetadata("InIfBlockBeforeParenthesis.after.kt")
-                public void testInIfBlockBeforeParenthesis() throws Exception {
-                    runTest("testData/editor/enterHandler/InIfBlockBeforeParenthesis.after.kt");
-                }
-
-                @TestMetadata("InLabmdaAfterArrow.after.kt")
-                public void testInLabmdaAfterArrow() throws Exception {
-                    runTest("testData/editor/enterHandler/InLabmdaAfterArrow.after.kt");
-                }
-
-                @TestMetadata("InLambdaAfterArrowWithSpaces.after.kt")
-                public void testInLambdaAfterArrowWithSpaces() throws Exception {
-                    runTest("testData/editor/enterHandler/InLambdaAfterArrowWithSpaces.after.kt");
-                }
-
-                @TestMetadata("InLambdaBeforeParams.after.kt")
-                public void testInLambdaBeforeParams() throws Exception {
-                    runTest("testData/editor/enterHandler/InLambdaBeforeParams.after.kt");
-                }
-
-                @TestMetadata("InLambdaInsideChainCallSameLine.after.kt")
-                public void testInLambdaInsideChainCallSameLine() throws Exception {
-                    runTest("testData/editor/enterHandler/InLambdaInsideChainCallSameLine.after.kt");
-                }
-
-                @TestMetadata("InLambdaInsideChainCallSameLineWithSpaces.after.kt")
-                public void testInLambdaInsideChainCallSameLineWithSpaces() throws Exception {
-                    runTest("testData/editor/enterHandler/InLambdaInsideChainCallSameLineWithSpaces.after.kt");
-                }
+            @TestMetadata("AfterCatch.after.kt")
+            public void testAfterCatch() throws Exception {
+                runTest("testData/editor/enterHandler/AfterCatch.after.kt");
             }
 
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/editor/enterHandler")
-            public static class TestBucket003 extends AbstractEnterHandlerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("InLambdaInsideChainCallWithNewLine.after.kt")
-                public void testInLambdaInsideChainCallWithNewLine() throws Exception {
-                    runTest("testData/editor/enterHandler/InLambdaInsideChainCallWithNewLine.after.kt");
-                }
-
-                @TestMetadata("InLambdaInsideChainCallWithNewLineWithSpaces.after.kt")
-                public void testInLambdaInsideChainCallWithNewLineWithSpaces() throws Exception {
-                    runTest("testData/editor/enterHandler/InLambdaInsideChainCallWithNewLineWithSpaces.after.kt");
-                }
-
-                @TestMetadata("InMultilineLambdaAfterArrow.after.kt")
-                public void testInMultilineLambdaAfterArrow() throws Exception {
-                    runTest("testData/editor/enterHandler/InMultilineLambdaAfterArrow.after.kt");
-                }
-
-                @TestMetadata("IndentBeforeElseWithBlock.after.kt")
-                public void testIndentBeforeElseWithBlock() throws Exception {
-                    runTest("testData/editor/enterHandler/IndentBeforeElseWithBlock.after.kt");
-                }
-
-                @TestMetadata("IndentBeforeElseWithoutBlock.after.kt")
-                public void testIndentBeforeElseWithoutBlock() throws Exception {
-                    runTest("testData/editor/enterHandler/IndentBeforeElseWithoutBlock.after.kt");
-                }
-
-                @TestMetadata("IndentNotFinishedVariableEndAfterEquals.after.kt")
-                public void testIndentNotFinishedVariableEndAfterEquals() throws Exception {
-                    runTest("testData/editor/enterHandler/IndentNotFinishedVariableEndAfterEquals.after.kt");
-                }
-
-                @TestMetadata("IndentOnFinishedVariableEndAfterEquals.after.kt")
-                public void testIndentOnFinishedVariableEndAfterEquals() throws Exception {
-                    runTest("testData/editor/enterHandler/IndentOnFinishedVariableEndAfterEquals.after.kt");
-                }
-
-                @TestMetadata("KT20783.after.kt")
-                public void testKT20783() throws Exception {
-                    runTest("testData/editor/enterHandler/KT20783.after.kt");
-                }
-
-                @TestMetadata("LambdaInArguments.after.kt")
-                public void testLambdaInArguments() throws Exception {
-                    runTest("testData/editor/enterHandler/LambdaInArguments.after.kt");
-                }
-
-                @TestMetadata("LambdaInArguments2.after.kt")
-                public void testLambdaInArguments2() throws Exception {
-                    runTest("testData/editor/enterHandler/LambdaInArguments2.after.kt");
-                }
-
-                @TestMetadata("LargeFile.after.kt")
-                public void testLargeFile() throws Exception {
-                    runTest("testData/editor/enterHandler/LargeFile.after.kt");
-                }
-
-                @TestMetadata("LiteralExpression.after.kt")
-                public void testLiteralExpression() throws Exception {
-                    runTest("testData/editor/enterHandler/LiteralExpression.after.kt");
-                }
-
-                @TestMetadata("LiteralExpression2.after.kt")
-                public void testLiteralExpression2() throws Exception {
-                    runTest("testData/editor/enterHandler/LiteralExpression2.after.kt");
-                }
-
-                @TestMetadata("LiteralExpression3.after.kt")
-                public void testLiteralExpression3() throws Exception {
-                    runTest("testData/editor/enterHandler/LiteralExpression3.after.kt");
-                }
-
-                @TestMetadata("ModifierListInUnfinishedDeclaration.after.kt")
-                public void testModifierListInUnfinishedDeclaration() throws Exception {
-                    runTest("testData/editor/enterHandler/ModifierListInUnfinishedDeclaration.after.kt");
-                }
-
-                @TestMetadata("NotFirstParameter.after.kt")
-                public void testNotFirstParameter() throws Exception {
-                    runTest("testData/editor/enterHandler/NotFirstParameter.after.kt");
-                }
-
-                @TestMetadata("ReindentOnUnmatchedBrace.after.kt")
-                public void testReindentOnUnmatchedBrace() throws Exception {
-                    runTest("testData/editor/enterHandler/ReindentOnUnmatchedBrace.after.kt");
-                }
-
-                @TestMetadata("ReturnContinue.after.kt")
-                public void testReturnContinue() throws Exception {
-                    runTest("testData/editor/enterHandler/ReturnContinue.after.kt");
-                }
-
-                @TestMetadata("Semicolon.after.kt")
-                public void testSemicolon() throws Exception {
-                    runTest("testData/editor/enterHandler/Semicolon.after.kt");
-                }
-
-                @TestMetadata("Semicolon2.after.kt")
-                public void testSemicolon2() throws Exception {
-                    runTest("testData/editor/enterHandler/Semicolon2.after.kt");
-                }
+            @TestMetadata("AfterClassNameBeforeFun.after.kt")
+            public void testAfterClassNameBeforeFun() throws Exception {
+                runTest("testData/editor/enterHandler/AfterClassNameBeforeFun.after.kt");
             }
 
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/editor/enterHandler")
-            public static class TestBucket004 extends AbstractEnterHandlerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-                }
+            @TestMetadata("AfterExtensionPropertyGetter.after.kt")
+            public void testAfterExtensionPropertyGetter() throws Exception {
+                runTest("testData/editor/enterHandler/AfterExtensionPropertyGetter.after.kt");
+            }
 
-                @TestMetadata("SettingAlignMultilineParametersInCalls.after.kt")
-                public void testSettingAlignMultilineParametersInCalls() throws Exception {
-                    runTest("testData/editor/enterHandler/SettingAlignMultilineParametersInCalls.after.kt");
-                }
+            @TestMetadata("AfterExtensionPropertySetter.after.kt")
+            public void testAfterExtensionPropertySetter() throws Exception {
+                runTest("testData/editor/enterHandler/AfterExtensionPropertySetter.after.kt");
+            }
 
-                @TestMetadata("SmartEnterBetweenOpeningAndClosingBrackets.after.kt")
-                public void testSmartEnterBetweenOpeningAndClosingBrackets() throws Exception {
-                    runTest("testData/editor/enterHandler/SmartEnterBetweenOpeningAndClosingBrackets.after.kt");
-                }
+            @TestMetadata("AfterFinally.after.kt")
+            public void testAfterFinally() throws Exception {
+                runTest("testData/editor/enterHandler/AfterFinally.after.kt");
+            }
 
-                @TestMetadata("SmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultiline.after.kt")
-                public void testSmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultiline() throws Exception {
-                    runTest("testData/editor/enterHandler/SmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultiline.after.kt");
-                }
+            @TestMetadata("AfterImport.after.kt")
+            public void testAfterImport() throws Exception {
+                runTest("testData/editor/enterHandler/AfterImport.after.kt");
+            }
 
-                @TestMetadata("SmartEnterWithTabsInMethodParameters.after.kt")
-                public void testSmartEnterWithTabsInMethodParameters() throws Exception {
-                    runTest("testData/editor/enterHandler/SmartEnterWithTabsInMethodParameters.after.kt");
-                }
+            @TestMetadata("AfterPropertyGetter.after.kt")
+            public void testAfterPropertyGetter() throws Exception {
+                runTest("testData/editor/enterHandler/AfterPropertyGetter.after.kt");
+            }
 
-                @TestMetadata("SmartEnterWithTabsOnConstructorParameters.after.kt")
-                public void testSmartEnterWithTabsOnConstructorParameters() throws Exception {
-                    runTest("testData/editor/enterHandler/SmartEnterWithTabsOnConstructorParameters.after.kt");
-                }
+            @TestMetadata("AfterPropertySetter.after.kt")
+            public void testAfterPropertySetter() throws Exception {
+                runTest("testData/editor/enterHandler/AfterPropertySetter.after.kt");
+            }
 
-                @TestMetadata("SmartEnterWithTabsOnConstructorParametersWithInvertedAlignWhenMultiline.after.kt")
-                public void testSmartEnterWithTabsOnConstructorParametersWithInvertedAlignWhenMultiline() throws Exception {
-                    runTest("testData/editor/enterHandler/SmartEnterWithTabsOnConstructorParametersWithInvertedAlignWhenMultiline.after.kt");
-                }
+            @TestMetadata("AfterTry.after.kt")
+            public void testAfterTry() throws Exception {
+                runTest("testData/editor/enterHandler/AfterTry.after.kt");
+            }
 
-                @TestMetadata("SmartEnterWithTrailingCommaAndWhitespaceBeforeLineBreak.after.kt")
-                public void testSmartEnterWithTrailingCommaAndWhitespaceBeforeLineBreak() throws Exception {
-                    runTest("testData/editor/enterHandler/SmartEnterWithTrailingCommaAndWhitespaceBeforeLineBreak.after.kt");
-                }
+            @TestMetadata("Annotation.after.kt")
+            public void testAnnotation() throws Exception {
+                runTest("testData/editor/enterHandler/Annotation.after.kt");
+            }
 
-                @TestMetadata("SmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters.after.kt")
-                public void testSmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters() throws Exception {
-                    runTest("testData/editor/enterHandler/SmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters.after.kt");
-                }
+            @TestMetadata("AnnotationInDeclaration.after.kt")
+            public void testAnnotationInDeclaration() throws Exception {
+                runTest("testData/editor/enterHandler/AnnotationInDeclaration.after.kt");
+            }
 
-                @TestMetadata("SplitStringByEnter.after.kt")
-                public void testSplitStringByEnter() throws Exception {
-                    runTest("testData/editor/enterHandler/SplitStringByEnter.after.kt");
-                }
+            @TestMetadata("ArgumentListNormalIndent.after.kt")
+            public void testArgumentListNormalIndent() throws Exception {
+                runTest("testData/editor/enterHandler/ArgumentListNormalIndent.after.kt");
+            }
 
-                @TestMetadata("SplitStringByEnterAddParentheses.after.kt")
-                public void testSplitStringByEnterAddParentheses() throws Exception {
-                    runTest("testData/editor/enterHandler/SplitStringByEnterAddParentheses.after.kt");
-                }
+            @TestMetadata("AutoIndentInWhenClause.after.kt")
+            public void testAutoIndentInWhenClause() throws Exception {
+                runTest("testData/editor/enterHandler/AutoIndentInWhenClause.after.kt");
+            }
 
-                @TestMetadata("SplitStringByEnterBeforeEscapeSequence.after.kt")
-                public void testSplitStringByEnterBeforeEscapeSequence() throws Exception {
-                    runTest("testData/editor/enterHandler/SplitStringByEnterBeforeEscapeSequence.after.kt");
-                }
+            @TestMetadata("BlockCommentAfterCatch.after.kt")
+            public void testBlockCommentAfterCatch() throws Exception {
+                runTest("testData/editor/enterHandler/BlockCommentAfterCatch.after.kt");
+            }
 
-                @TestMetadata("SplitStringByEnterBeforeSubstitution.after.kt")
-                public void testSplitStringByEnterBeforeSubstitution() throws Exception {
-                    runTest("testData/editor/enterHandler/SplitStringByEnterBeforeSubstitution.after.kt");
-                }
+            @TestMetadata("ConsecutiveCallsAfterDot.after.kt")
+            public void testConsecutiveCallsAfterDot() throws Exception {
+                runTest("testData/editor/enterHandler/ConsecutiveCallsAfterDot.after.kt");
+            }
 
-                @TestMetadata("SplitStringByEnterEmpty.after.kt")
-                public void testSplitStringByEnterEmpty() throws Exception {
-                    runTest("testData/editor/enterHandler/SplitStringByEnterEmpty.after.kt");
-                }
+            @TestMetadata("ConsecutiveCallsInSaeCallsMiddle.after.kt")
+            public void testConsecutiveCallsInSaeCallsMiddle() throws Exception {
+                runTest("testData/editor/enterHandler/ConsecutiveCallsInSaeCallsMiddle.after.kt");
+            }
 
-                @TestMetadata("SplitStringByEnterExistingParentheses.after.kt")
-                public void testSplitStringByEnterExistingParentheses() throws Exception {
-                    runTest("testData/editor/enterHandler/SplitStringByEnterExistingParentheses.after.kt");
-                }
+            @TestMetadata("ConsecutiveCallsInSafeCallsEnd.after.kt")
+            public void testConsecutiveCallsInSafeCallsEnd() throws Exception {
+                runTest("testData/editor/enterHandler/ConsecutiveCallsInSafeCallsEnd.after.kt");
+            }
+
+            @TestMetadata("EnterInFunctionWithExpressionBody.after.kt")
+            public void testEnterInFunctionWithExpressionBody() throws Exception {
+                runTest("testData/editor/enterHandler/EnterInFunctionWithExpressionBody.after.kt");
+            }
+
+            @TestMetadata("EnterInMultiDeclaration.after.kt")
+            public void testEnterInMultiDeclaration() throws Exception {
+                runTest("testData/editor/enterHandler/EnterInMultiDeclaration.after.kt");
+            }
+
+            @TestMetadata("EnterInVariableDeclaration.after.kt")
+            public void testEnterInVariableDeclaration() throws Exception {
+                runTest("testData/editor/enterHandler/EnterInVariableDeclaration.after.kt");
+            }
+
+            @TestMetadata("EoLCommentAfterCatch.after.kt")
+            public void testEoLCommentAfterCatch() throws Exception {
+                runTest("testData/editor/enterHandler/EoLCommentAfterCatch.after.kt");
+            }
+
+            @TestMetadata("EoLCommentAfterFor.after.kt")
+            public void testEoLCommentAfterFor() throws Exception {
+                runTest("testData/editor/enterHandler/EoLCommentAfterFor.after.kt");
+            }
+
+            @TestMetadata("EoLCommentAfterIf.after.kt")
+            public void testEoLCommentAfterIf() throws Exception {
+                runTest("testData/editor/enterHandler/EoLCommentAfterIf.after.kt");
+            }
+
+            @TestMetadata("FunctionBlock.after.kt")
+            public void testFunctionBlock() throws Exception {
+                runTest("testData/editor/enterHandler/FunctionBlock.after.kt");
+            }
+
+            @TestMetadata("HigherOrderFunction.after.kt")
+            public void testHigherOrderFunction() throws Exception {
+                runTest("testData/editor/enterHandler/HigherOrderFunction.after.kt");
+            }
+
+            @TestMetadata("HigherOrderFunction2.after.kt")
+            public void testHigherOrderFunction2() throws Exception {
+                runTest("testData/editor/enterHandler/HigherOrderFunction2.after.kt");
+            }
+
+            @TestMetadata("HigherOrderFunction3.after.kt")
+            public void testHigherOrderFunction3() throws Exception {
+                runTest("testData/editor/enterHandler/HigherOrderFunction3.after.kt");
+            }
+
+            @TestMetadata("InDelegationListAfterColon.after.kt")
+            public void testInDelegationListAfterColon() throws Exception {
+                runTest("testData/editor/enterHandler/InDelegationListAfterColon.after.kt");
+            }
+
+            @TestMetadata("InDelegationListAfterComma.after.kt")
+            public void testInDelegationListAfterComma() throws Exception {
+                runTest("testData/editor/enterHandler/InDelegationListAfterComma.after.kt");
+            }
+
+            @TestMetadata("InDelegationListNotEmpty.after.kt")
+            public void testInDelegationListNotEmpty() throws Exception {
+                runTest("testData/editor/enterHandler/InDelegationListNotEmpty.after.kt");
+            }
+
+            @TestMetadata("InElseBlockBeforeParenthesis.after.kt")
+            public void testInElseBlockBeforeParenthesis() throws Exception {
+                runTest("testData/editor/enterHandler/InElseBlockBeforeParenthesis.after.kt");
+            }
+
+            @TestMetadata("InEnumAfterSemicolon.after.kt")
+            public void testInEnumAfterSemicolon() throws Exception {
+                runTest("testData/editor/enterHandler/InEnumAfterSemicolon.after.kt");
+            }
+
+            @TestMetadata("InEnumInitializerListAfterComma.after.kt")
+            public void testInEnumInitializerListAfterComma() throws Exception {
+                runTest("testData/editor/enterHandler/InEnumInitializerListAfterComma.after.kt");
+            }
+
+            @TestMetadata("InEnumInitializerListNotEmpty.after.kt")
+            public void testInEnumInitializerListNotEmpty() throws Exception {
+                runTest("testData/editor/enterHandler/InEnumInitializerListNotEmpty.after.kt");
+            }
+
+            @TestMetadata("InIfBlockBeforeParenthesis.after.kt")
+            public void testInIfBlockBeforeParenthesis() throws Exception {
+                runTest("testData/editor/enterHandler/InIfBlockBeforeParenthesis.after.kt");
+            }
+
+            @TestMetadata("InLabmdaAfterArrow.after.kt")
+            public void testInLabmdaAfterArrow() throws Exception {
+                runTest("testData/editor/enterHandler/InLabmdaAfterArrow.after.kt");
+            }
+
+            @TestMetadata("InLambdaAfterArrowWithSpaces.after.kt")
+            public void testInLambdaAfterArrowWithSpaces() throws Exception {
+                runTest("testData/editor/enterHandler/InLambdaAfterArrowWithSpaces.after.kt");
+            }
+
+            @TestMetadata("InLambdaBeforeParams.after.kt")
+            public void testInLambdaBeforeParams() throws Exception {
+                runTest("testData/editor/enterHandler/InLambdaBeforeParams.after.kt");
+            }
+
+            @TestMetadata("InLambdaInsideChainCallSameLine.after.kt")
+            public void testInLambdaInsideChainCallSameLine() throws Exception {
+                runTest("testData/editor/enterHandler/InLambdaInsideChainCallSameLine.after.kt");
+            }
+
+            @TestMetadata("InLambdaInsideChainCallSameLineWithSpaces.after.kt")
+            public void testInLambdaInsideChainCallSameLineWithSpaces() throws Exception {
+                runTest("testData/editor/enterHandler/InLambdaInsideChainCallSameLineWithSpaces.after.kt");
+            }
+
+            @TestMetadata("InLambdaInsideChainCallWithNewLine.after.kt")
+            public void testInLambdaInsideChainCallWithNewLine() throws Exception {
+                runTest("testData/editor/enterHandler/InLambdaInsideChainCallWithNewLine.after.kt");
+            }
+
+            @TestMetadata("InLambdaInsideChainCallWithNewLineWithSpaces.after.kt")
+            public void testInLambdaInsideChainCallWithNewLineWithSpaces() throws Exception {
+                runTest("testData/editor/enterHandler/InLambdaInsideChainCallWithNewLineWithSpaces.after.kt");
+            }
+
+            @TestMetadata("InMultilineLambdaAfterArrow.after.kt")
+            public void testInMultilineLambdaAfterArrow() throws Exception {
+                runTest("testData/editor/enterHandler/InMultilineLambdaAfterArrow.after.kt");
+            }
+
+            @TestMetadata("IndentBeforeElseWithBlock.after.kt")
+            public void testIndentBeforeElseWithBlock() throws Exception {
+                runTest("testData/editor/enterHandler/IndentBeforeElseWithBlock.after.kt");
+            }
+
+            @TestMetadata("IndentBeforeElseWithoutBlock.after.kt")
+            public void testIndentBeforeElseWithoutBlock() throws Exception {
+                runTest("testData/editor/enterHandler/IndentBeforeElseWithoutBlock.after.kt");
+            }
+
+            @TestMetadata("IndentNotFinishedVariableEndAfterEquals.after.kt")
+            public void testIndentNotFinishedVariableEndAfterEquals() throws Exception {
+                runTest("testData/editor/enterHandler/IndentNotFinishedVariableEndAfterEquals.after.kt");
+            }
+
+            @TestMetadata("IndentOnFinishedVariableEndAfterEquals.after.kt")
+            public void testIndentOnFinishedVariableEndAfterEquals() throws Exception {
+                runTest("testData/editor/enterHandler/IndentOnFinishedVariableEndAfterEquals.after.kt");
+            }
+
+            @TestMetadata("KT20783.after.kt")
+            public void testKT20783() throws Exception {
+                runTest("testData/editor/enterHandler/KT20783.after.kt");
+            }
+
+            @TestMetadata("LambdaInArguments.after.kt")
+            public void testLambdaInArguments() throws Exception {
+                runTest("testData/editor/enterHandler/LambdaInArguments.after.kt");
+            }
+
+            @TestMetadata("LambdaInArguments2.after.kt")
+            public void testLambdaInArguments2() throws Exception {
+                runTest("testData/editor/enterHandler/LambdaInArguments2.after.kt");
+            }
+
+            @TestMetadata("LargeFile.after.kt")
+            public void testLargeFile() throws Exception {
+                runTest("testData/editor/enterHandler/LargeFile.after.kt");
+            }
+
+            @TestMetadata("LiteralExpression.after.kt")
+            public void testLiteralExpression() throws Exception {
+                runTest("testData/editor/enterHandler/LiteralExpression.after.kt");
+            }
+
+            @TestMetadata("LiteralExpression2.after.kt")
+            public void testLiteralExpression2() throws Exception {
+                runTest("testData/editor/enterHandler/LiteralExpression2.after.kt");
+            }
+
+            @TestMetadata("LiteralExpression3.after.kt")
+            public void testLiteralExpression3() throws Exception {
+                runTest("testData/editor/enterHandler/LiteralExpression3.after.kt");
+            }
+
+            @TestMetadata("ModifierListInUnfinishedDeclaration.after.kt")
+            public void testModifierListInUnfinishedDeclaration() throws Exception {
+                runTest("testData/editor/enterHandler/ModifierListInUnfinishedDeclaration.after.kt");
+            }
+
+            @TestMetadata("NotFirstParameter.after.kt")
+            public void testNotFirstParameter() throws Exception {
+                runTest("testData/editor/enterHandler/NotFirstParameter.after.kt");
+            }
+
+            @TestMetadata("ReindentOnUnmatchedBrace.after.kt")
+            public void testReindentOnUnmatchedBrace() throws Exception {
+                runTest("testData/editor/enterHandler/ReindentOnUnmatchedBrace.after.kt");
+            }
+
+            @TestMetadata("ReturnContinue.after.kt")
+            public void testReturnContinue() throws Exception {
+                runTest("testData/editor/enterHandler/ReturnContinue.after.kt");
+            }
+
+            @TestMetadata("Semicolon.after.kt")
+            public void testSemicolon() throws Exception {
+                runTest("testData/editor/enterHandler/Semicolon.after.kt");
+            }
+
+            @TestMetadata("Semicolon2.after.kt")
+            public void testSemicolon2() throws Exception {
+                runTest("testData/editor/enterHandler/Semicolon2.after.kt");
+            }
+
+            @TestMetadata("SettingAlignMultilineParametersInCalls.after.kt")
+            public void testSettingAlignMultilineParametersInCalls() throws Exception {
+                runTest("testData/editor/enterHandler/SettingAlignMultilineParametersInCalls.after.kt");
+            }
+
+            @TestMetadata("SmartEnterBetweenOpeningAndClosingBrackets.after.kt")
+            public void testSmartEnterBetweenOpeningAndClosingBrackets() throws Exception {
+                runTest("testData/editor/enterHandler/SmartEnterBetweenOpeningAndClosingBrackets.after.kt");
+            }
+
+            @TestMetadata("SmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultiline.after.kt")
+            public void testSmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultiline() throws Exception {
+                runTest("testData/editor/enterHandler/SmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultiline.after.kt");
+            }
+
+            @TestMetadata("SmartEnterWithTabsInMethodParameters.after.kt")
+            public void testSmartEnterWithTabsInMethodParameters() throws Exception {
+                runTest("testData/editor/enterHandler/SmartEnterWithTabsInMethodParameters.after.kt");
+            }
+
+            @TestMetadata("SmartEnterWithTabsOnConstructorParameters.after.kt")
+            public void testSmartEnterWithTabsOnConstructorParameters() throws Exception {
+                runTest("testData/editor/enterHandler/SmartEnterWithTabsOnConstructorParameters.after.kt");
+            }
+
+            @TestMetadata("SmartEnterWithTabsOnConstructorParametersWithInvertedAlignWhenMultiline.after.kt")
+            public void testSmartEnterWithTabsOnConstructorParametersWithInvertedAlignWhenMultiline() throws Exception {
+                runTest("testData/editor/enterHandler/SmartEnterWithTabsOnConstructorParametersWithInvertedAlignWhenMultiline.after.kt");
+            }
+
+            @TestMetadata("SmartEnterWithTrailingCommaAndWhitespaceBeforeLineBreak.after.kt")
+            public void testSmartEnterWithTrailingCommaAndWhitespaceBeforeLineBreak() throws Exception {
+                runTest("testData/editor/enterHandler/SmartEnterWithTrailingCommaAndWhitespaceBeforeLineBreak.after.kt");
+            }
+
+            @TestMetadata("SmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters.after.kt")
+            public void testSmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters() throws Exception {
+                runTest("testData/editor/enterHandler/SmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnter.after.kt")
+            public void testSplitStringByEnter() throws Exception {
+                runTest("testData/editor/enterHandler/SplitStringByEnter.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnterAddParentheses.after.kt")
+            public void testSplitStringByEnterAddParentheses() throws Exception {
+                runTest("testData/editor/enterHandler/SplitStringByEnterAddParentheses.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnterBeforeEscapeSequence.after.kt")
+            public void testSplitStringByEnterBeforeEscapeSequence() throws Exception {
+                runTest("testData/editor/enterHandler/SplitStringByEnterBeforeEscapeSequence.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnterBeforeSubstitution.after.kt")
+            public void testSplitStringByEnterBeforeSubstitution() throws Exception {
+                runTest("testData/editor/enterHandler/SplitStringByEnterBeforeSubstitution.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnterEmpty.after.kt")
+            public void testSplitStringByEnterEmpty() throws Exception {
+                runTest("testData/editor/enterHandler/SplitStringByEnterEmpty.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnterExistingParentheses.after.kt")
+            public void testSplitStringByEnterExistingParentheses() throws Exception {
+                runTest("testData/editor/enterHandler/SplitStringByEnterExistingParentheses.after.kt");
             }
         }
     }

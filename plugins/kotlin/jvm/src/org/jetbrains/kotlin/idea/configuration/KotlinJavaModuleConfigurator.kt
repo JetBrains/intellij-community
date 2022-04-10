@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration
 
@@ -62,9 +62,6 @@ open class KotlinJavaModuleConfigurator : KotlinWithLibraryConfigurator<Reposito
     override val targetPlatform: TargetPlatform
         get() = JvmPlatforms.unspecifiedJvmPlatform
 
-    @Suppress("DEPRECATION_ERROR", "OverridingDeprecatedMember")
-    override fun getTargetPlatform() = JvmPlatforms.CompatJvmPlatform
-
     override val libraryJarDescriptor get() = LibraryJarDescriptor.RUNTIME_JDK8_JAR
 
     override val libraryMatcher: (Library, Project) -> Boolean =
@@ -87,7 +84,7 @@ open class KotlinJavaModuleConfigurator : KotlinWithLibraryConfigurator<Reposito
                     try {
                         val facet = module.getOrCreateFacet(modelsProvider, useProjectSettings = false, commitModel = true)
                         val facetSettings = facet.configuration.settings
-                        facetSettings.initializeIfNeeded(module, null, JvmPlatforms.jvm18)
+                        facetSettings.initializeIfNeeded(module, null, JvmPlatforms.jvm8)
                         (facetSettings.compilerArguments as? K2JVMCompilerArguments)?.jvmTarget = "1.8"
                     } finally {
                         modelsProvider.dispose()

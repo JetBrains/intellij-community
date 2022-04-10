@@ -11,10 +11,7 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.ide.lightEdit.LightEditUtil;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.NotificationsManager;
+import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -582,7 +579,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     }
 
     public UnableToSaveProjectNotification(@NotNull Project project, @NotNull List<VirtualFile> readOnlyFiles) {
-      super(NotificationGroup.createIdWithTitle("Project Settings", IdeBundle.message("notification.group.project.settings")),
+      super("Project Settings",
             IdeUICustomization.getInstance().projectMessage("notification.title.cannot.save.project"),
             IdeBundle.message("notification.content.unable.to.save.project.files"), NotificationType.ERROR);
       setListener((notification, event) -> {

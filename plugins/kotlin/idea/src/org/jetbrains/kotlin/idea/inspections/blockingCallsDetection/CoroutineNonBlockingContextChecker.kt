@@ -41,7 +41,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
+import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.checkers.isRestrictsSuspensionReceiver
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
@@ -79,8 +79,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
             val type = parameterForArgument.returnType ?: return Blocking
 
             if (type.isBuiltinFunctionalType) {
-                val hasRestrictSuspensionAnnotation = type.getReceiverTypeFromFunctionType()
-                    ?.isRestrictsSuspensionReceiver(getLanguageVersionSettings(element)) ?: false
+                val hasRestrictSuspensionAnnotation = type.getReceiverTypeFromFunctionType()?.isRestrictsSuspensionReceiver() ?: false
                 return if (!hasRestrictSuspensionAnnotation && type.isSuspendFunctionType) NonBlocking.INSTANCE else Blocking
             }
         }

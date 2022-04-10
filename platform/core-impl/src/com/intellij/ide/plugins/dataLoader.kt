@@ -27,6 +27,9 @@ class LocalFsDataLoader(val basePath: Path) : DataLoader {
   override val pool: ZipFilePool?
     get() = ZipFilePool.POOL
 
+  override val emptyDescriptorIfCannotResolve: Boolean
+    get() = true
+
   override fun load(path: String): InputStream? {
     return try {
       Files.newInputStream(basePath.resolve(path))

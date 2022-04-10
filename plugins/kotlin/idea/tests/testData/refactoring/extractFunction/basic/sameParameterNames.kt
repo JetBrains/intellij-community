@@ -2,7 +2,7 @@
 // PARAM_TYPES: kotlin.String
 // PARAM_TYPES: kotlin.String, kotlin.Comparable<kotlin.String>, kotlin.CharSequence, java.io.Serializable, kotlin.Any
 // PARAM_TYPES: kotlin.String, kotlin.Comparable<kotlin.String>, kotlin.CharSequence, java.io.Serializable, kotlin.Any
-// PARAM_DESCRIPTOR: local final fun kotlin.String.<anonymous>(): kotlin.Unit defined in Foo.foo.<anonymous>.<anonymous>, local final fun kotlin.String.<anonymous>(): kotlin.Unit defined in Foo.foo.<anonymous>, local final fun kotlin.String.<anonymous>(): kotlin.Unit defined in Foo.foo
+// PARAM_DESCRIPTOR: local final fun kotlin.String.`<anonymous>`(): kotlin.Unit defined in Foo.foo.`<anonymous>`.`<anonymous>`, local final fun kotlin.String.`<anonymous>`(): kotlin.Unit defined in Foo.foo.`<anonymous>`, local final fun kotlin.String.`<anonymous>`(): kotlin.Unit defined in Foo.foo
 class Foo {
     fun foo() {
         block("a") a@ {

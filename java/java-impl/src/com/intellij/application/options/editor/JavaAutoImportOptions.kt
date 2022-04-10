@@ -51,7 +51,7 @@ class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Sim
                       else -> ""
                     })
           }
-        ).bindItem(ciSettings::ADD_IMPORTS_ON_PASTE)
+        ).bindItem(ciSettings::ADD_IMPORTS_ON_PASTE.toNullableProperty())
       }
       row {
         checkBox(ApplicationBundle.message("checkbox.add.unambiguous.imports.on.the.fly"))

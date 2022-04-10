@@ -24,7 +24,8 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedQueue
 
 @Service
-internal class Saul {
+@ApiStatus.Internal
+class Saul {
   companion object {
     @JvmStatic
     private val RECOVERY_ACTION_EP_NAME = ExtensionPointName.create<RecoveryAction>("com.intellij.recoveryAction")
@@ -45,7 +46,9 @@ internal class Saul {
 
   val modificationRecoveryActionTracker = ModificationTracker { recoveryActionModificationCounter }
 
-  fun sortThingsOut(recoveryScope: RecoveryScope) = RecoveryWorker(sortedActions).start(recoveryScope)
+  fun sortThingsOut(recoveryScope: RecoveryScope, actions: Collection<RecoveryAction>) = RecoveryWorker(actions).start(recoveryScope)
+
+  fun sortThingsOut(recoveryScope: RecoveryScope) = sortThingsOut(recoveryScope, sortedActions)
 }
 
 private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
@@ -77,9 +80,8 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
       .createNotification(
         IdeBundle.message("notification.cache.diagnostic.helper.title"),
         IdeBundle.message("notification.cache.diagnostic.helper.text",
-          previousRecoveryAction.presentableName,
           next,
-          service<Saul>().sortedActions.filter { it.canBeApplied(recoveryScope) }.size),
+          previousRecoveryAction.presentableName),
         NotificationType.WARNING
       )
     notification
@@ -126,7 +128,7 @@ internal fun RecoveryAction.performUnderProgress(recoveryScope: RecoveryScope, f
         }
 
         if (res.problems.isNotEmpty()) {
-          RecoveryWorker.LOG.error("${recoveryAction.actionKey} found and fixed ${res.problems.size} problems, samples: " +
+          RecoveryWorker.LOG.info("${recoveryAction.actionKey} found and fixed ${res.problems.size} problems, samples: " +
                                    res.problems.take(10).joinToString(", ") { it.message })
         }
 
@@ -177,7 +179,7 @@ sealed interface RecoveryScope {
 
 data class ProjectRecoveryScope(override val project: Project) : RecoveryScope
 
-data class FilesRecoveryScope(override val project: Project, val files: Set<VirtualFile>) : RecoveryScope
+data class FilesRecoveryScope(override val project: Project, val files: Collection<VirtualFile>) : RecoveryScope
 
 data class AsyncRecoveryResult(val scope: RecoveryScope, val problems: List<CacheInconsistencyProblem>)
 

@@ -16,8 +16,7 @@ import java.util.Map;
 /**
  * @author ibessonov
  */
-public class MavenAnnotationProcessorTargetType extends ModuleBasedBuildTargetType<MavenAnnotationProcessorTarget> {
-
+public final class MavenAnnotationProcessorTargetType extends ModuleBasedBuildTargetType<MavenAnnotationProcessorTarget> {
   public static final MavenAnnotationProcessorTargetType PRODUCTION = new MavenAnnotationProcessorTargetType("maven-annotations-production", false);
   public static final MavenAnnotationProcessorTargetType TESTS = new MavenAnnotationProcessorTargetType("maven-annotations-test", true);
 

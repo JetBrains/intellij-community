@@ -15,6 +15,7 @@ class UnwrapSuggester : AbstractFeatureSuggester() {
   override val suggestingActionId = "Unwrap"
   override val suggestingDocUrl =
     "https://www.jetbrains.com/help/idea/working-with-source-code.html#unwrap_remove_statement"
+  override val minSuggestingIntervalDays = 14
 
   override val languages = listOf("JAVA", "kotlin", "ECMAScript 6")
 
@@ -41,7 +42,7 @@ class UnwrapSuggester : AbstractFeatureSuggester() {
 
   override fun getSuggestion(action: Action): Suggestion {
     val language = action.language ?: return NoSuggestion
-    val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
+    val langSupport = SuggesterSupport.getForLanguage(language) ?: return NoSuggestion
     if (action is BeforeEditorTextRemovedAction) {
       val text = action.textFragment.text
       when {
@@ -55,7 +56,7 @@ class UnwrapSuggester : AbstractFeatureSuggester() {
     return NoSuggestion
   }
 
-  private fun LanguageSupport.handleCloseBraceDeleted(action: BeforeEditorTextRemovedAction): Suggestion {
+  private fun SuggesterSupport.handleCloseBraceDeleted(action: BeforeEditorTextRemovedAction): Suggestion {
     when {
       State.isInitial -> handleCloseBraceDeletedFirst(action)
       State.closeBraceOffset != -1 -> {
@@ -71,7 +72,7 @@ class UnwrapSuggester : AbstractFeatureSuggester() {
     return NoSuggestion
   }
 
-  private fun LanguageSupport.handleStatementStartDeleted(action: BeforeEditorTextRemovedAction): Suggestion {
+  private fun SuggesterSupport.handleStatementStartDeleted(action: BeforeEditorTextRemovedAction): Suggestion {
     when {
       State.isInitial -> handleStatementStartDeletedFirst(action)
       State.surroundingStatementStartOffset != -1 -> {
@@ -87,7 +88,7 @@ class UnwrapSuggester : AbstractFeatureSuggester() {
     return NoSuggestion
   }
 
-  private fun LanguageSupport.handleCloseBraceDeletedFirst(action: BeforeEditorTextRemovedAction) {
+  private fun SuggesterSupport.handleCloseBraceDeletedFirst(action: BeforeEditorTextRemovedAction) {
     val curElement = action.psiFile?.findElementAt(action.caretOffset) ?: return
     val codeBlock = curElement.parent
     if (!isCodeBlock(codeBlock)) return
@@ -106,7 +107,7 @@ class UnwrapSuggester : AbstractFeatureSuggester() {
            surroundingStatementStartOffset == action.textFragment.contentStartOffset
   }
 
-  private fun LanguageSupport.handleStatementStartDeletedFirst(action: BeforeEditorTextRemovedAction) {
+  private fun SuggesterSupport.handleStatementStartDeletedFirst(action: BeforeEditorTextRemovedAction) {
     val textFragment = action.textFragment
     val curElement = action.psiFile?.findElementAt(textFragment.contentStartOffset) ?: return
     val curStatement = curElement.parent
@@ -130,7 +131,7 @@ class UnwrapSuggester : AbstractFeatureSuggester() {
       return startOffset + countOfStartDelimiters
     }
 
-  private fun LanguageSupport.isSurroundingStatement(psiElement: PsiElement): Boolean {
+  private fun SuggesterSupport.isSurroundingStatement(psiElement: PsiElement): Boolean {
     return isIfStatement(psiElement) || isForStatement(psiElement) || isWhileStatement(psiElement)
   }
 

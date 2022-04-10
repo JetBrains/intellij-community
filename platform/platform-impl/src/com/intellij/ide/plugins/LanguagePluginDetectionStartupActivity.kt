@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.marketplace.FeatureImpl
@@ -11,10 +11,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
+import java.io.IOException
 import java.util.*
 import java.util.function.BiConsumer
 
@@ -25,7 +27,13 @@ private class LanguagePluginDetectionStartupActivity : StartupActivity.Backgroun
       return
     }
 
-    val pluginId = findLanguagePluginToInstall() ?: return
+    val pluginId = try {
+      findLanguagePluginToInstall() ?: return
+    }
+    catch (e: IOException) {
+      LOG.info("Failed to detect recommended language plugin: ${e.message}")
+      return
+    }
 
     val notification = NotificationGroupManager.getInstance()
       .getNotificationGroup("Language Plugins Notifications")
@@ -33,6 +41,7 @@ private class LanguagePluginDetectionStartupActivity : StartupActivity.Backgroun
         ApplicationBundle.message("notification.title.language.plugin.enable", ApplicationInfo.getInstance().fullApplicationName),
         NotificationType.INFORMATION,
       )
+      .setSuggestionType(true)
 
     notification.addAction(createSwitchAndRestartAction { _, _ ->
       installAndEnable(project, setOf(pluginId)) {
@@ -40,6 +49,10 @@ private class LanguagePluginDetectionStartupActivity : StartupActivity.Backgroun
         application.restart(true)
       }
     }).notify(project)
+  }
+
+  companion object {
+    val LOG = Logger.getInstance(LanguagePluginDetectionStartupActivity::class.java)
   }
 }
 

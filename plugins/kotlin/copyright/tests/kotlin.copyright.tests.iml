@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.tests-common" />
     <orderEntry type="module" module-name="kotlin.test-framework" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.analysis" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.copyright" />
   </component>

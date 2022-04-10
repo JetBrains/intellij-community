@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.MultiRequestPositionManager;
@@ -13,8 +13,8 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -29,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class CompoundPositionManager implements PositionManagerWithConditionEvaluation, MultiRequestPositionManager {
-  private static final Logger LOG = Logger.getInstance(CompoundPositionManager.class);
-
   public static final CompoundPositionManager EMPTY = new CompoundPositionManager();
 
   private final ArrayList<PositionManager> myPositionManagers = new ArrayList<>();
@@ -65,12 +63,12 @@ public class CompoundPositionManager implements PositionManagerWithConditionEval
     T produce(PositionManager positionManager) throws NoDataException;
   }
 
-  private <T> T iterate(Producer<? extends T> processor, T defaultValue, SourcePosition position) {
-    return iterate(processor, defaultValue, position, true);
+  private <T> T iterate(Producer<? extends T> processor, T defaultValue, @Nullable SourcePosition position) {
+    FileType fileType = position != null ? position.getFile().getFileType() : null;
+    return iterate(processor, defaultValue, fileType, true);
   }
 
-  private <T> T iterate(Producer<? extends T> processor, T defaultValue, SourcePosition position, boolean ignorePCE) {
-    FileType fileType = position != null ? position.getFile().getFileType() : null;
+  private <T> T iterate(Producer<? extends T> processor, T defaultValue, @Nullable FileType fileType, boolean ignorePCE) {
     for (PositionManager positionManager : myPositionManagers) {
       if (fileType != null) {
         Set<? extends FileType> types = positionManager.getAcceptedFileTypes();
@@ -103,6 +101,9 @@ public class CompoundPositionManager implements PositionManagerWithConditionEval
       }
       if (checkCacheEntry(res, location)) return res;
 
+      String sourceName = DebuggerUtilsEx.getSourceName(location, e -> null);
+      FileType fileType = sourceName != null ? FileTypeManager.getInstance().getFileTypeByFileName(sourceName) : null;
+
       return iterate(positionManager -> {
         SourcePosition res1 = positionManager.getSourcePosition(location);
         try {
@@ -111,7 +112,7 @@ public class CompoundPositionManager implements PositionManagerWithConditionEval
         catch (IllegalArgumentException ignored) { // Invalid method id
         }
         return res1;
-      }, null, null, false);
+      }, null, fileType, false);
     }).executeSynchronously();
   }
 
@@ -174,28 +175,23 @@ public class CompoundPositionManager implements PositionManagerWithConditionEval
   @NotNull
   public List<XStackFrame> createStackFrames(@NotNull StackFrameDescriptorImpl descriptor) {
     Location location = descriptor.getLocation();
-    for (PositionManager positionManager : myPositionManagers) {
-      try {
-        if (positionManager instanceof PositionManagerWithMultipleStackFrames && location != null) {
-          List<XStackFrame> stackFrames = ((PositionManagerWithMultipleStackFrames)positionManager).createStackFrames(
-            descriptor.getFrameProxy(), (DebugProcessImpl)descriptor.getDebugProcess(), location
-          );
-          if (stackFrames != null) {
-            return stackFrames;
-          }
-        }
-        else if (positionManager instanceof PositionManagerEx) {
-          XStackFrame xStackFrame = ((PositionManagerEx)positionManager).createStackFrame(descriptor);
-          if (xStackFrame != null) {
-            return Collections.singletonList(xStackFrame);
-          }
+    return iterate(positionManager -> {
+      if (positionManager instanceof PositionManagerWithMultipleStackFrames && location != null) {
+        List<XStackFrame> stackFrames = ((PositionManagerWithMultipleStackFrames)positionManager).createStackFrames(
+          descriptor.getFrameProxy(), (DebugProcessImpl)descriptor.getDebugProcess(), location
+        );
+        if (stackFrames != null) {
+          return stackFrames;
         }
       }
-      catch (Throwable e) {
-        DebuggerUtilsImpl.logError(e);
+      else if (positionManager instanceof PositionManagerEx) {
+        XStackFrame xStackFrame = ((PositionManagerEx)positionManager).createStackFrame(descriptor);
+        if (xStackFrame != null) {
+          return Collections.singletonList(xStackFrame);
+        }
       }
-    }
-    return Collections.emptyList();
+      throw NoDataException.INSTANCE;
+    }, Collections.emptyList(), null, false);
   }
 
   @Override

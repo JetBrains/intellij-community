@@ -85,19 +85,15 @@
         <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFunctionBreakpointHandlerFactory"/>
         <debugger.jvmSteppingCommandProvider implementation="org.jetbrains.kotlin.idea.debugger.stepping.KotlinSteppingCommandProvider"/>
         <debugger.simplePropertyGetterProvider implementation="org.jetbrains.kotlin.idea.debugger.stepping.KotlinSimpleGetterProvider"/>
+        <debugger.dfaAssistProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.debugger.dfaassist.KotlinDfaAssistProvider"/>
 
         <projectService
                 serviceInterface="org.jetbrains.kotlin.idea.debugger.StackFrameInterceptor"
                 serviceImplementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineStackFrameInterceptor"/>
 
-        <projectService
-                serviceInterface="org.jetbrains.kotlin.idea.debugger.coroutine.DebuggerListener"
-                serviceImplementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebuggerListener"/>
-
         <runConfigurationExtension implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebugConfigurationExtension"/>
 
         <framework.type implementation="org.jetbrains.kotlin.idea.framework.JavaFrameworkType"/>
-        <projectTemplatesFactory implementation="org.jetbrains.kotlin.idea.framework.KotlinTemplatesFactory" />
 
         <library.presentationProvider implementation="org.jetbrains.kotlin.idea.framework.JavaRuntimePresentationProvider"/>
 
@@ -106,19 +102,19 @@
         <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer"/>
         <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer"/>
 
+        <applicationService serviceInterface="org.jetbrains.kotlin.idea.run.KotlinMainFunctionLocatingService"
+                            serviceImplementation="org.jetbrains.kotlin.idea.run.KotlinFE10MainFunctionLocatingService"/>
+
         <library.type implementation="org.jetbrains.kotlin.idea.framework.JSLibraryType"/>
         <library.javaSourceRootDetector implementation="org.jetbrains.kotlin.idea.configuration.KotlinSourceRootDetector"/>
 
         <multipleRunLocationsProvider implementation="org.jetbrains.kotlin.idea.run.multiplatform.KotlinMultiplatformRunLocationsProvider"/>
 
         <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider"/>
-        <postStartupActivity implementation="org.jetbrains.kotlin.idea.configuration.JvmStartupActivity"/>
 
-        <postStartupActivity implementation="org.jetbrains.kotlin.idea.JvmPluginStartupActivity"/>
         <postStartupActivity implementation="org.jetbrains.kotlin.idea.debugger.filter.JvmDebuggerAddFilterStartupActivity"/>
 
         <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilableFileTypesProvider" />
-        <postStartupActivity implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilerStartupActivity"/>
 
         <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinAlternativeSourceNotificationProvider"/>
 
@@ -140,6 +136,8 @@
         <runLineMarkerContributor language="kotlin"
                                   implementationClass="org.jetbrains.kotlin.idea.scratch.actions.ScratchRunLineMarkerContributor"/>
 
+        <applicationService serviceInterface="org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService"
+                        serviceImplementation="org.jetbrains.uast.kotlin.internal.IdeaKotlinUastResolveProviderService"/>
         <projectService serviceInterface="org.jetbrains.uast.kotlin.KotlinUastResolveProviderService"
                         serviceImplementation="org.jetbrains.uast.kotlin.internal.IdeaKotlinUastResolveProviderService"/>
 
@@ -232,17 +230,27 @@
         <completionInformationProvider implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldCompletionInformationProvider" />
         <kotlinIndicesHelperExtension implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldKotlinIndicesHelperExtension"/>
 
-        <lightTestFramework id="junit3LightTestFramework" order="before junit4LightTestFramework" implementation="org.jetbrains.kotlin.idea.platform.testintegration.JUnit3LightTestFramework"/>
-        <lightTestFramework id="junit4LightTestFramework" order="before lightClassDelegateTestFramework" implementation="org.jetbrains.kotlin.idea.platform.testintegration.JUnit4LightTestFramework"/>
-        <lightTestFramework id="lightClassDelegateTestFramework" implementation="org.jetbrains.kotlin.idea.platform.testintegration.LightClassDelegateTestFramework"/>
+        <kotlinTestFramework id="junit5PsiFramework" order="before junit4PsiFramework" implementation="org.jetbrains.kotlin.idea.testIntegration.framework.JUnit5KotlinTestFramework"/>
+        <kotlinTestFramework id="junit4PsiFramework" order="before junit3PsiFramework" implementation="org.jetbrains.kotlin.idea.testIntegration.framework.JUnit4KotlinTestFramework"/>
+        <kotlinTestFramework id="junit3PsiFramework" order="before delegateTestFramework" implementation="org.jetbrains.kotlin.idea.testIntegration.framework.JUnit3KotlinTestFramework"/>
+        <kotlinTestFramework id="delegateTestFramework" implementation="org.jetbrains.kotlin.idea.testIntegration.framework.KotlinDelegatingTestFramework"/>
     </extensions>
 
     <extensionPoints>
-      <extensionPoint qualifiedName="org.jetbrains.kotlin.lightTestFramework"
-                      interface="org.jetbrains.kotlin.idea.platform.testintegration.LightTestFramework" dynamic="true"/>
+      <extensionPoint qualifiedName="org.jetbrains.kotlin.kotlinTestFramework"
+                      interface="org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework" dynamic="true"/>
     </extensionPoints>
     <resource-bundle>messages.KotlinBundle</resource-bundle>
-    <projectListeners>
-        <listener class="org.jetbrains.kotlin.idea.scratch.ScratchFileModuleInfoProvider" topic="org.jetbrains.kotlin.idea.scratch.ScratchFileListener"/>
-    </projectListeners>
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.scratch.ScratchFileModuleInfoProvider"
+              topic="org.jetbrains.kotlin.idea.scratch.ScratchFileListener"/>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    <listener class="org.jetbrains.kotlin.idea.compiler.KotlinCompilationStatusListener"
+              topic="com.intellij.openapi.compiler.CompilationStatusListener"/>
+  </projectListeners>
 </idea-plugin>

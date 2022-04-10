@@ -1,0 +1,53 @@
+package decompiler;
+
+public class TestInstanceofPatternNotSupported {
+   void typePattern(Object str) {
+      if (!(str instanceof String)) {// 5
+         System.out.println("no");// 6
+      } else {
+         String s = (String)str;// 9
+         if (s.length() > 3) {// 10
+            System.out.println(s);// 11
+         } else if (s.startsWith("a")) {// 12
+            System.out.println("" + s);// 13
+         }
+
+      }
+   }// 7 15
+}
+
+class 'decompiler/TestInstanceofPatternNotSupported' {
+   method 'typePattern (Ljava/lang/Object;)V' {
+      1      4
+      4      4
+      7      5
+      a      5
+      c      5
+      f      15
+      11      7
+      14      7
+      16      8
+      19      8
+      1a      8
+      1d      9
+      21      9
+      28      10
+      2a      10
+      2d      10
+      30      11
+      34      11
+      39      11
+      3c      15
+   }
+}
+
+Lines mapping:
+5 <-> 5
+6 <-> 6
+7 <-> 16
+9 <-> 8
+10 <-> 9
+11 <-> 10
+12 <-> 11
+13 <-> 12
+15 <-> 16

@@ -24,6 +24,7 @@ public interface KotlinIcons {
     Icon EXTENSION_FUNCTION = PlatformIcons.FUNCTION_ICON;
     /** 16x16 */ @NotNull Icon FIELD_VAL = KotlinFirFrontendIndependentIcons.Field_value;
     /** 16x16 */ @NotNull Icon FIELD_VAR = KotlinFirFrontendIndependentIcons.Field_variable;
+    /** 16x16 */ @NotNull Icon FIR = KotlinFirFrontendIndependentIcons.Fir;
     Icon FUNCTION = AllIcons.Nodes.Function;
     /** 16x16 */ @NotNull Icon INTERFACE = KotlinFirFrontendIndependentIcons.InterfaceKotlin;
     /** 16x16 */ @NotNull Icon FILE = KotlinFirFrontendIndependentIcons.Kotlin_file;

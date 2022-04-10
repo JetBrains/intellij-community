@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
@@ -133,12 +133,11 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
    * 1. Conditional iteration (no need to create all extensions if iteration will be stopped due to some condition).
    * 2. Iterated only once per application (no need to cache extension list internally).
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public @NotNull Iterable<T> getIterable() {
     return getPointImpl(null);
   }
 
-  @ApiStatus.Experimental
   @ApiStatus.Internal
   public void processWithPluginDescriptor(@NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
     getPointImpl(null).processWithPluginDescriptor(/* shouldBeSorted = */ true, consumer);

@@ -15,7 +15,7 @@ import java.util.Collection;
 public abstract class BreakpointPanelProvider<B> {
 
   /**
-   * @deprecated instead register at {@link com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule#EP}
+   * @deprecated instead register at {@link XBreakpointGroupingRule#EP}
    */
   @Deprecated
   public abstract void createBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules);

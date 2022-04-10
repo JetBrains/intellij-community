@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.pom.PomRenameableTarget;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,12 +103,11 @@ public interface PsiClass
   PsiClassType @NotNull [] getImplementsListTypes();
 
   /**
-   * Returns the list of classes that this class or interface permits.
+   * Returns the list of classes that this class or interface explicitly permits.
    *
-   * @return the permits list.
+   * @return the permits list, or null if there's none.
    */
   @Nullable
-  @ApiStatus.Experimental
   default PsiReferenceList getPermitsList() {
     return null;
   }
@@ -119,7 +117,6 @@ public interface PsiClass
    *
    * @return the list of explicitly permitted classes.
    */
-  @ApiStatus.Experimental
   default PsiClassType @NotNull [] getPermitsListTypes() {
     PsiReferenceList permitsList = getPermitsList();
     if (permitsList != null) {
@@ -240,7 +237,7 @@ public interface PsiClass
    * @return the method instance, or null if the method cannot be found.
    */
   @Nullable
-  PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases);
+  PsiMethod findMethodBySignature(@NotNull PsiMethod patternMethod, boolean checkBases);
 
   /**
    * Searches the class (and optionally its superclasses) for the methods with the signature
@@ -251,7 +248,7 @@ public interface PsiClass
    * @param checkBases    if true, the method is also searched in the base classes of the class.
    * @return the found methods, or an empty array if no methods are found.
    */
-  PsiMethod @NotNull [] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases);
+  PsiMethod @NotNull [] findMethodsBySignature(@NotNull PsiMethod patternMethod, boolean checkBases);
 
   @Override
   default JvmMethod @NotNull [] findMethodsByName(@NotNull String methodName) {
@@ -276,7 +273,7 @@ public interface PsiClass
    * @return the found methods and their substitutors, or an empty list if no methods are found.
    */
   @NotNull
-  List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls String name, boolean checkBases);
+  List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls @NotNull String name, boolean checkBases);
 
   /**
    * Returns the list of methods in the class and all its superclasses, along with their
@@ -356,7 +353,7 @@ public interface PsiClass
    * @param classToByPass class to bypass the inheritance check for
    * @return true if the class is an inheritor, false otherwise
    */
-  boolean isInheritorDeep(PsiClass baseClass, @Nullable PsiClass classToByPass);
+  boolean isInheritorDeep(@NotNull PsiClass baseClass, @Nullable PsiClass classToByPass);
 
   /**
    * For an inner class, returns its containing class.

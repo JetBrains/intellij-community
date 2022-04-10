@@ -1,4 +1,34 @@
 from . import client, connection, exceptions, sentinel, utils
+from .cluster import RedisCluster as RedisCluster
+
+__all__ = [
+    "AuthenticationError",
+    "AuthenticationWrongNumberOfArgsError",
+    "BlockingConnectionPool",
+    "BusyLoadingError",
+    "ChildDeadlockedError",
+    "Connection",
+    "ConnectionError",
+    "ConnectionPool",
+    "DataError",
+    "from_url",
+    "InvalidResponse",
+    "PubSubError",
+    "ReadOnlyError",
+    "Redis",
+    "RedisCluster",
+    "RedisError",
+    "ResponseError",
+    "Sentinel",
+    "SentinelConnectionPool",
+    "SentinelManagedConnection",
+    "SentinelManagedSSLConnection",
+    "SSLConnection",
+    "StrictRedis",
+    "TimeoutError",
+    "UnixDomainSocketConnection",
+    "WatchError",
+]
 
 Redis = client.Redis
 

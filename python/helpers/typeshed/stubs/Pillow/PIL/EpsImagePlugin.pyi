@@ -1,4 +1,5 @@
-from typing import Any
+from typing import Any, ClassVar
+from typing_extensions import Literal
 
 from .ImageFile import ImageFile
 
@@ -7,7 +8,7 @@ field: Any
 gs_windows_binary: Any
 
 def has_ghostscript(): ...
-def Ghostscript(tile, size, fp, scale: int = ...): ...
+def Ghostscript(tile, size, fp, scale: int = ..., transparency: bool = ...): ...
 
 class PSFile:
     fp: Any
@@ -17,11 +18,11 @@ class PSFile:
     def readline(self): ...
 
 class EpsImageFile(ImageFile):
-    format: str
-    format_description: str
+    format: ClassVar[Literal["EPS"]]
+    format_description: ClassVar[str]
     mode_map: Any
     im: Any
     mode: Any
     tile: Any
-    def load(self, scale: int = ...) -> None: ...
+    def load(self, scale: int = ..., transparency: bool = ...) -> None: ...
     def load_seek(self, *args, **kwargs) -> None: ...

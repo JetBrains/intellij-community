@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
@@ -152,7 +152,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
             }
             else -> {
                 val declaration = element.unwrapped as? KtNamedFunction ?: return
-                checkSuperMethodsWithPopup(declaration, deepestSuperMethods.toList(), "rename", editor) {
+                checkSuperMethodsWithPopup(declaration, deepestSuperMethods.toList(), editor) {
                     preprocessAndPass(if (it.size > 1) FunctionWithSupersWrapper(declaration, it) else wrappedMethod ?: element)
                 }
             }
@@ -201,7 +201,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
                     val overriderName = overrider.name
                     val newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newBaseName)
                     if (newOverriderName != null) {
-                        RenameProcessor.assertNonCompileElement(overrider)
+                        RenameUtil.assertNonCompileElement(overrider)
                         allRenames[overrider] = newOverriderName
                     }
                     return@forEachOverridingMethod true

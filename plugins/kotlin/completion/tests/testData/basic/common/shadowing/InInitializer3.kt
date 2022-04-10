@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 fun foo(xxx: Int) {
     val xxx: Any = run {
         xx<caret>

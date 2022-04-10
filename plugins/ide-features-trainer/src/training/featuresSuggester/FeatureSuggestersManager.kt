@@ -3,6 +3,7 @@ package training.featuresSuggester
 
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
@@ -12,7 +13,6 @@ import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.EditorFocusGainedAction
 import training.featuresSuggester.settings.FeatureSuggesterSettings
 import training.featuresSuggester.statistics.FeatureSuggesterStatistics
-import training.featuresSuggester.statistics.FeatureSuggesterStatistics.Companion.SUGGESTION_FOUND
 import training.featuresSuggester.suggesters.FeatureSuggester
 import training.featuresSuggester.ui.NotificationSuggestionPresenter
 import training.featuresSuggester.ui.SuggestionPresenter
@@ -26,15 +26,21 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
   }
 
   fun actionPerformed(action: Action) {
-    if (project.isDisposed) return
+    try {
+      handleAction(action)
+    }
+    catch (t: Throwable) {
+      thisLogger().error("An error occurred during action processing: $action", t)
+    }
+  }
+
+  private fun handleAction(action: Action) {
     val language = action.language ?: return
     val suggesters = FeatureSuggester.suggesters
       .filter { it.languages.find { id -> id == Language.ANY.id || id == language.id } != null }
-    if (suggesters.isNotEmpty()) {
-      for (suggester in suggesters) {
-        if (suggester.isEnabled()) {
-          processSuggester(suggester, action)
-        }
+    for (suggester in suggesters) {
+      if (suggester.isEnabled()) {
+        processSuggester(suggester, action)
       }
     }
   }
@@ -42,10 +48,11 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
   private fun processSuggester(suggester: FeatureSuggester, action: Action) {
     val suggestion = suggester.getSuggestion(action)
     if (suggestion is PopupSuggestion) {
-      FeatureSuggesterStatistics.sendStatistics(SUGGESTION_FOUND, suggester.id)
-      if (suggester.isSuggestionNeeded(FeatureSuggesterSettings.instance().suggestingIntervalDays)) {
-        suggestionPresenter.showSuggestion(project, suggestion)
+      FeatureSuggesterStatistics.logSuggestionFound(suggester.id)
+      if (SuggestingUtils.forceShowSuggestions || suggester.isSuggestionNeeded()) {
+        suggestionPresenter.showSuggestion(project, suggestion, disposable = this)
         fireSuggestionFound(suggestion)
+        FeatureSuggesterSettings.instance().updateSuggestionShownTime(suggestion.suggesterId)
       }
     }
   }
@@ -60,7 +67,7 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
     eventMulticaster?.addFocusChangeListener(
       object : FocusChangeListener {
         override fun focusGained(editor: Editor) {
-          if (editor.project != project) return
+          if (editor.project != project || !SuggestingUtils.isActionsProcessingEnabled(project)) return
           actionPerformed(
             EditorFocusGainedAction(
               editor = editor,

@@ -29,7 +29,7 @@ public class ExceptionInfoCache {
   /**
    * @deprecated use {@link #ExceptionInfoCache(Project, GlobalSearchScope)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ExceptionInfoCache(@NotNull GlobalSearchScope searchScope) {
     this(Objects.requireNonNull(searchScope.getProject()), searchScope);
   }

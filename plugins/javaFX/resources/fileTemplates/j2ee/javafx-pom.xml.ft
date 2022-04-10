@@ -31,6 +31,11 @@
       <artifactId>javafx-web</artifactId>
       <version>${context.getProperty("javafx.version")}</version>
     </dependency>#end
+    #if ($context.hasLibrary("fxgl"))<dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-media</artifactId>
+      <version>${context.getProperty("javafx.version")}</version>
+    </dependency>#end
     #if ($context.hasLibrary("controlsfx"))<dependency>
       <groupId>org.controlsfx</groupId>
       <artifactId>controlsfx</artifactId>
@@ -79,6 +84,17 @@
         </exclusion>
       </exclusions>
     </dependency>#end
+    #if ($context.hasLibrary("fxgl"))<dependency>
+      <groupId>com.github.almasb</groupId>
+      <artifactId>fxgl</artifactId>
+      <version>#if ($context.sdkFeatureVersion >= 17)${context.getBomProperty("fxgl17.version")}#else${context.getBomProperty("fxgl11.version")}#end</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.openjfx</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>#end
 
     #if ($context.testRunnerId == "junit")<dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -116,6 +132,22 @@
     <testSourceDirectory>${context.asPlaceholder("project.basedir")}/src/test/kotlin</testSourceDirectory>
     #end
     <plugins>
+      #if ($context.hasLanguage("groovy"))<plugin>
+        <groupId>org.codehaus.gmavenplus</groupId>
+        <artifactId>gmavenplus-plugin</artifactId>
+        <version>${context.getVersion("org.codehaus.gmavenplus", "gmavenplus-plugin")}</version>
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <goals>
+              <goal>addSources</goal>
+              <goal>addTestSources</goal>
+              <goal>compile</goal>
+              <goal>compileTests</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>#end
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -124,6 +156,16 @@
           <source>${context.sdkFeatureVersion}</source>
           <target>${context.sdkFeatureVersion}</target>
         </configuration>
+      #if ($context.hasLanguage("groovy"))
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+          </execution>
+        </executions>
+      #end
       </plugin>
       <plugin>
         <groupId>org.openjfx</groupId>
@@ -145,21 +187,6 @@
           </execution>
         </executions>
       </plugin>
-      #if ($context.hasLanguage("groovy"))<plugin>
-        <groupId>org.codehaus.gmavenplus</groupId>
-        <artifactId>gmavenplus-plugin</artifactId>
-        <version>${context.getVersion("org.codehaus.gmavenplus", "gmavenplus-plugin")}</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>addSources</goal>
-              <goal>addTestSources</goal>
-              <goal>compile</goal>
-              <goal>compileTests</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>#end
       #if ($context.hasLanguage("kotlin"))<plugin>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-maven-plugin</artifactId>

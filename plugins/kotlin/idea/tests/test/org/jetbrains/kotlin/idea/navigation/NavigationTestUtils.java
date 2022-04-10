@@ -16,16 +16,16 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.TestCase;
 import kotlin.collections.ArraysKt;
 import org.jetbrains.kotlin.asJava.LightClassUtilsKt;
-import org.jetbrains.kotlin.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.test.util.ReferenceUtils;
 import org.junit.Assert;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public final class NavigationTestUtils {
     private NavigationTestUtils() {
@@ -43,13 +43,14 @@ public final class NavigationTestUtils {
         String documentText = editor.getDocument().getText();
         // Get expected references from the tested document
         List<String> expectedReferences = InTextDirectivesUtils.findListWithPrefixes(documentText, "// REF:");
-        expectedReferences.replaceAll(expectedText -> {
+        for (int i = 0; i < expectedReferences.size(); i++) {
+            String expectedText = expectedReferences.get(i);
             expectedText = expectedText.replace("\\n", "\n");
             if (!expectedText.startsWith("<")) {
                 expectedText = PathUtil.toSystemDependentName(expectedText).replace("//", "/");
             }
-            return expectedText;
-        });
+            expectedReferences.set(i, expectedText);
+        }
 
         Collections.sort(expectedReferences);
 
@@ -62,10 +63,10 @@ public final class NavigationTestUtils {
                 targets = Arrays.asList(gotoData.targets);
             }
             // Transform given reference result to strings
-            List<String> psiElements = ContainerUtil.map(targets, element -> {
+            List<String> psiElements = targets.stream().map(element -> {
                 Assert.assertNotNull(element);
                 return ReferenceUtils.renderAsGotoImplementation(element, renderModule);
-            });
+            }).collect(Collectors.toList());
 
             // Compare
             UsefulTestCase.assertOrderedEquals(Ordering.natural().sortedCopy(psiElements), expectedReferences);

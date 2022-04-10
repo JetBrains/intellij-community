@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler.actions;
 
-import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -33,17 +32,17 @@ public class MakeModuleAction extends CompileActionBase {
 
   @Override
   protected void doAction(DataContext dataContext, Project project) {
-    Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
-    Module module;
-    if (modules == null) {
-      module = PlatformCoreDataKeys.MODULE.getData(dataContext);
-      if (module == null) {
-        return;
-      }
-      modules = new Module[]{module};
-    }
     try {
-      ProjectTaskManager.getInstance(project).build(modules);
+      final Module[] modules = dataContext.getData(LangDataKeys.MODULE_CONTEXT_ARRAY);
+      if (modules != null) {
+        ProjectTaskManager.getInstance(project).build(modules);
+      }
+      else {
+        final Module module = dataContext.getData(PlatformCoreDataKeys.MODULE);
+        if (module != null) {
+          ProjectTaskManager.getInstance(project).build(module);
+        }
+      }
     }
     catch (Exception e) {
       LOG.error(e);
@@ -57,35 +56,37 @@ public class MakeModuleAction extends CompileActionBase {
     if (!presentation.isEnabled()) {
       return;
     }
-    final DataContext dataContext = event.getDataContext();
-    final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
-    Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
-    final boolean isEnabled = module != null || modules != null;
-    presentation.setEnabled(isEnabled);
-    final String actionName = getTemplatePresentation().getTextWithMnemonic();
-
+    boolean isEnabled = false;
     String presentationText;
+    final Module[] modules = event.getData(LangDataKeys.MODULE_CONTEXT_ARRAY);
     if (modules != null) {
+      isEnabled = true;
       if (ArrayUtil.contains(null, modules)) {
-        LOG.error("Unexpected null module slipped through validator; dataContext = " + dataContext +
-                  "; class = "+dataContext.getClass().getName());
+        final DataContext dataContext = event.getDataContext();
+        LOG.error("Unexpected null module slipped through validator; dataContext = " + dataContext + "; class = "+dataContext.getClass().getName());
       }
       if (modules.length == 1) {
         presentationText = JavaCompilerBundle.message("action.make.single.module.text", modules[0].getName());
-      } else {
+      }
+      else {
         String moduleNames = Stream.of(modules).map(m -> "'"+m.getName()+"'").collect(NlsMessages.joiningNarrowAnd());
         presentationText = moduleNames.length() > 20 ?
                            JavaCompilerBundle.message("action.make.selected.modules.text") :
                            JavaCompilerBundle.message("action.make.few.modules.text", moduleNames);
       }
     }
-    else if (module != null) {
-      presentationText = JavaCompilerBundle.message("action.make.single.module.text", module.getName());
-    }
     else {
-      presentationText = actionName;
+      final Module module = event.getData(PlatformCoreDataKeys.MODULE);
+      if (module != null) {
+        isEnabled = true;
+        presentationText = JavaCompilerBundle.message("action.make.single.module.text", module.getName());
+      }
+      else {
+        presentationText = getTemplatePresentation().getTextWithMnemonic();
+      }
     }
     presentation.setText(presentationText);
+    presentation.setEnabled(isEnabled);
     presentation.setVisible(isEnabled || !ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()));
   }
 }

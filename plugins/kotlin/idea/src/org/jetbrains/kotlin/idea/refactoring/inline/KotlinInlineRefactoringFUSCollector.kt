@@ -11,7 +11,7 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.util.isAnonymousFunction
 import org.jetbrains.kotlin.psi.*
 
@@ -40,7 +40,7 @@ class KotlinInlineRefactoringFUSCollector : CounterUsagesCollector() {
             this.languageFrom.with(languageFrom.id),
             this.languageTo.with(languageTo.id),
             this.isCrossLang.with(isCrossLanguage),
-            this.pluginInfo.with(getPluginInfoById(KotlinPluginUtil.KOTLIN_PLUGIN_ID)),
+            this.pluginInfo.with(getPluginInfoById(KotlinIdePlugin.id)),
         )
 
         fun log(elementFrom: PsiElement, languageTo: Language, isCrossLanguage: Boolean) = log(

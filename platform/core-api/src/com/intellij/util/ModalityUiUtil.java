@@ -64,7 +64,7 @@ public final class ModalityUiUtil {
    * @deprecated Use ModalityUiUtil.invokeLaterIfNeeded(ModalityState, Runnable) instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable,
                                          @NotNull ModalityState modalityState) {
     invokeLaterIfNeeded(modalityState,runnable);
@@ -74,7 +74,7 @@ public final class ModalityUiUtil {
    * @deprecated Use ModalityUiUtil.invokeLaterIfNeeded(ModalityState, Condition<?>, Runnable) instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState,
                                          @NotNull Condition<?> expired) {
     invokeLaterIfNeeded(modalityState, expired, runnable);

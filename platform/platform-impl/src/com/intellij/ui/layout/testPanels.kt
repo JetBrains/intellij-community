@@ -8,14 +8,12 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.*
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.GridLayout
 import java.util.function.Supplier
 import javax.swing.*
 
 @Deprecated(message = "New UI DSL is implemented, see com.intellij.ui.dsl. Whole file should be removed")
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
 fun labelRowShouldNotGrow(): JPanel {
   return panel {
     row("Create Android module") { CheckBox("FooBar module name foo")() }

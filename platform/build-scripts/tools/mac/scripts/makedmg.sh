@@ -66,8 +66,11 @@ find "/Volumes/$1" -maxdepth 1
 log "Updating $VOLNAME disk image styles..."
 stat "/Volumes/$1/DSStorePlaceHolder"
 rm "/Volumes/$1/DSStorePlaceHolder"
-if hdiutil internet-enable -help >/dev/null 2>/dev/null; then
-  perl makedmg.pl "$VOLNAME" "$BG_PIC" "$1"
+if python3 -c "import ds_store; import mac_alias;" >/dev/null 2>/dev/null; then
+  python3 makedmg.py "$VOLNAME" "$BG_PIC" "$1"
+  log "DMG/DS_Store is generated"
+else
+  log "DMG/DS_Store generation is skipped. If you need it please install python3 and ds_store library."
 fi
 rm -rf "/Volumes/$1/.fseventsd"
 

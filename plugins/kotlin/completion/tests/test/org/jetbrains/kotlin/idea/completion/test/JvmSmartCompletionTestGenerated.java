@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -77,136 +77,124 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/smart/callableReference")
-    public abstract static class CallableReference extends AbstractJvmSmartCompletionTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart/callableReference")
-        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("AfterDot.kt")
-            public void testAfterDot() throws Exception {
-                runTest("testData/smart/callableReference/AfterDot.kt");
-            }
-
-            @TestMetadata("ClassLiteral.kt")
-            public void testClassLiteral() throws Exception {
-                runTest("testData/smart/callableReference/ClassLiteral.kt");
-            }
-
-            @TestMetadata("ClassLiteralDotJava.kt")
-            public void testClassLiteralDotJava() throws Exception {
-                runTest("testData/smart/callableReference/ClassLiteralDotJava.kt");
-            }
-
-            @TestMetadata("ConcreteJavaClassExpected.kt")
-            public void testConcreteJavaClassExpected() throws Exception {
-                runTest("testData/smart/callableReference/ConcreteJavaClassExpected.kt");
-            }
-
-            @TestMetadata("ConcreteKClassExpected.kt")
-            public void testConcreteKClassExpected() throws Exception {
-                runTest("testData/smart/callableReference/ConcreteKClassExpected.kt");
-            }
-
-            @TestMetadata("ConcreteKClassExpectedNoDuplicates.kt")
-            public void testConcreteKClassExpectedNoDuplicates() throws Exception {
-                runTest("testData/smart/callableReference/ConcreteKClassExpectedNoDuplicates.kt");
-            }
-
-            @TestMetadata("EmptyQualifier1.kt")
-            public void testEmptyQualifier1() throws Exception {
-                runTest("testData/smart/callableReference/EmptyQualifier1.kt");
-            }
-
-            @TestMetadata("EmptyQualifier2.kt")
-            public void testEmptyQualifier2() throws Exception {
-                runTest("testData/smart/callableReference/EmptyQualifier2.kt");
-            }
-
-            @TestMetadata("EmptyQualifier3.kt")
-            public void testEmptyQualifier3() throws Exception {
-                runTest("testData/smart/callableReference/EmptyQualifier3.kt");
-            }
-
-            @TestMetadata("ExpressionQualifier.kt")
-            public void testExpressionQualifier() throws Exception {
-                runTest("testData/smart/callableReference/ExpressionQualifier.kt");
-            }
-
-            @TestMetadata("NoQualifier1.kt")
-            public void testNoQualifier1() throws Exception {
-                runTest("testData/smart/callableReference/NoQualifier1.kt");
-            }
-
-            @TestMetadata("NoQualifier10.kt")
-            public void testNoQualifier10() throws Exception {
-                runTest("testData/smart/callableReference/NoQualifier10.kt");
-            }
-
-            @TestMetadata("NoQualifier12.kt")
-            public void testNoQualifier12() throws Exception {
-                runTest("testData/smart/callableReference/NoQualifier12.kt");
-            }
-
-            @TestMetadata("NoQualifier2.kt")
-            public void testNoQualifier2() throws Exception {
-                runTest("testData/smart/callableReference/NoQualifier2.kt");
-            }
-
-            @TestMetadata("NoQualifier3.kt")
-            public void testNoQualifier3() throws Exception {
-                runTest("testData/smart/callableReference/NoQualifier3.kt");
-            }
-
-            @TestMetadata("NoQualifier4.kt")
-            public void testNoQualifier4() throws Exception {
-                runTest("testData/smart/callableReference/NoQualifier4.kt");
-            }
-
-            @TestMetadata("NoQualifier7.kt")
-            public void testNoQualifier7() throws Exception {
-                runTest("testData/smart/callableReference/NoQualifier7.kt");
-            }
-
-            @TestMetadata("NoQualifier9.kt")
-            public void testNoQualifier9() throws Exception {
-                runTest("testData/smart/callableReference/NoQualifier9.kt");
-            }
-
-            @TestMetadata("NoQualifierMultipleConstructors.kt")
-            public void testNoQualifierMultipleConstructors() throws Exception {
-                runTest("testData/smart/callableReference/NoQualifierMultipleConstructors.kt");
-            }
-
-            @TestMetadata("NoQualifierPropertyExpected.kt")
-            public void testNoQualifierPropertyExpected() throws Exception {
-                runTest("testData/smart/callableReference/NoQualifierPropertyExpected.kt");
-            }
+    public static class CallableReference extends AbstractJvmSmartCompletionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart/callableReference")
-        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
+        @TestMetadata("AfterDot.kt")
+        public void testAfterDot() throws Exception {
+            runTest("testData/smart/callableReference/AfterDot.kt");
+        }
 
-            @TestMetadata("NonConcreteKClassExpected.kt")
-            public void testNonConcreteKClassExpected() throws Exception {
-                runTest("testData/smart/callableReference/NonConcreteKClassExpected.kt");
-            }
+        @TestMetadata("ClassLiteral.kt")
+        public void testClassLiteral() throws Exception {
+            runTest("testData/smart/callableReference/ClassLiteral.kt");
+        }
 
-            @TestMetadata("NonEmptyQualifier1.kt")
-            public void testNonEmptyQualifier1() throws Exception {
-                runTest("testData/smart/callableReference/NonEmptyQualifier1.kt");
-            }
+        @TestMetadata("ClassLiteralDotJava.kt")
+        public void testClassLiteralDotJava() throws Exception {
+            runTest("testData/smart/callableReference/ClassLiteralDotJava.kt");
+        }
 
-            @TestMetadata("NonEmptyQualifier2.kt")
-            public void testNonEmptyQualifier2() throws Exception {
-                runTest("testData/smart/callableReference/NonEmptyQualifier2.kt");
-            }
+        @TestMetadata("ConcreteJavaClassExpected.kt")
+        public void testConcreteJavaClassExpected() throws Exception {
+            runTest("testData/smart/callableReference/ConcreteJavaClassExpected.kt");
+        }
+
+        @TestMetadata("ConcreteKClassExpected.kt")
+        public void testConcreteKClassExpected() throws Exception {
+            runTest("testData/smart/callableReference/ConcreteKClassExpected.kt");
+        }
+
+        @TestMetadata("ConcreteKClassExpectedNoDuplicates.kt")
+        public void testConcreteKClassExpectedNoDuplicates() throws Exception {
+            runTest("testData/smart/callableReference/ConcreteKClassExpectedNoDuplicates.kt");
+        }
+
+        @TestMetadata("EmptyQualifier1.kt")
+        public void testEmptyQualifier1() throws Exception {
+            runTest("testData/smart/callableReference/EmptyQualifier1.kt");
+        }
+
+        @TestMetadata("EmptyQualifier2.kt")
+        public void testEmptyQualifier2() throws Exception {
+            runTest("testData/smart/callableReference/EmptyQualifier2.kt");
+        }
+
+        @TestMetadata("EmptyQualifier3.kt")
+        public void testEmptyQualifier3() throws Exception {
+            runTest("testData/smart/callableReference/EmptyQualifier3.kt");
+        }
+
+        @TestMetadata("ExpressionQualifier.kt")
+        public void testExpressionQualifier() throws Exception {
+            runTest("testData/smart/callableReference/ExpressionQualifier.kt");
+        }
+
+        @TestMetadata("NoQualifier1.kt")
+        public void testNoQualifier1() throws Exception {
+            runTest("testData/smart/callableReference/NoQualifier1.kt");
+        }
+
+        @TestMetadata("NoQualifier10.kt")
+        public void testNoQualifier10() throws Exception {
+            runTest("testData/smart/callableReference/NoQualifier10.kt");
+        }
+
+        @TestMetadata("NoQualifier12.kt")
+        public void testNoQualifier12() throws Exception {
+            runTest("testData/smart/callableReference/NoQualifier12.kt");
+        }
+
+        @TestMetadata("NoQualifier2.kt")
+        public void testNoQualifier2() throws Exception {
+            runTest("testData/smart/callableReference/NoQualifier2.kt");
+        }
+
+        @TestMetadata("NoQualifier3.kt")
+        public void testNoQualifier3() throws Exception {
+            runTest("testData/smart/callableReference/NoQualifier3.kt");
+        }
+
+        @TestMetadata("NoQualifier4.kt")
+        public void testNoQualifier4() throws Exception {
+            runTest("testData/smart/callableReference/NoQualifier4.kt");
+        }
+
+        @TestMetadata("NoQualifier7.kt")
+        public void testNoQualifier7() throws Exception {
+            runTest("testData/smart/callableReference/NoQualifier7.kt");
+        }
+
+        @TestMetadata("NoQualifier9.kt")
+        public void testNoQualifier9() throws Exception {
+            runTest("testData/smart/callableReference/NoQualifier9.kt");
+        }
+
+        @TestMetadata("NoQualifierMultipleConstructors.kt")
+        public void testNoQualifierMultipleConstructors() throws Exception {
+            runTest("testData/smart/callableReference/NoQualifierMultipleConstructors.kt");
+        }
+
+        @TestMetadata("NoQualifierPropertyExpected.kt")
+        public void testNoQualifierPropertyExpected() throws Exception {
+            runTest("testData/smart/callableReference/NoQualifierPropertyExpected.kt");
+        }
+
+        @TestMetadata("NonConcreteKClassExpected.kt")
+        public void testNonConcreteKClassExpected() throws Exception {
+            runTest("testData/smart/callableReference/NonConcreteKClassExpected.kt");
+        }
+
+        @TestMetadata("NonEmptyQualifier1.kt")
+        public void testNonEmptyQualifier1() throws Exception {
+            runTest("testData/smart/callableReference/NonEmptyQualifier1.kt");
+        }
+
+        @TestMetadata("NonEmptyQualifier2.kt")
+        public void testNonEmptyQualifier2() throws Exception {
+            runTest("testData/smart/callableReference/NonEmptyQualifier2.kt");
         }
     }
 
@@ -865,141 +853,129 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/smart/propertyDelegate")
-    public abstract static class PropertyDelegate extends AbstractJvmSmartCompletionTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart/propertyDelegate")
-        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("ConflictingSubstitutors.kt")
-            public void testConflictingSubstitutors() throws Exception {
-                runTest("testData/smart/propertyDelegate/ConflictingSubstitutors.kt");
-            }
-
-            @TestMetadata("DelegatesDot.kt")
-            public void testDelegatesDot() throws Exception {
-                runTest("testData/smart/propertyDelegate/DelegatesDot.kt");
-            }
-
-            @TestMetadata("DelegatesDotExplicitPropertyType.kt")
-            public void testDelegatesDotExplicitPropertyType() throws Exception {
-                runTest("testData/smart/propertyDelegate/DelegatesDotExplicitPropertyType.kt");
-            }
-
-            @TestMetadata("ExplicitValType.kt")
-            public void testExplicitValType() throws Exception {
-                runTest("testData/smart/propertyDelegate/ExplicitValType.kt");
-            }
-
-            @TestMetadata("ExplicitVarType.kt")
-            public void testExplicitVarType() throws Exception {
-                runTest("testData/smart/propertyDelegate/ExplicitVarType.kt");
-            }
-
-            @TestMetadata("ExtensionSubstitution1.kt")
-            public void testExtensionSubstitution1() throws Exception {
-                runTest("testData/smart/propertyDelegate/ExtensionSubstitution1.kt");
-            }
-
-            @TestMetadata("ExtensionSubstitution2.kt")
-            public void testExtensionSubstitution2() throws Exception {
-                runTest("testData/smart/propertyDelegate/ExtensionSubstitution2.kt");
-            }
-
-            @TestMetadata("ExtensionSubstitution3.kt")
-            public void testExtensionSubstitution3() throws Exception {
-                runTest("testData/smart/propertyDelegate/ExtensionSubstitution3.kt");
-            }
-
-            @TestMetadata("ExtensionSubstitution4.kt")
-            public void testExtensionSubstitution4() throws Exception {
-                runTest("testData/smart/propertyDelegate/ExtensionSubstitution4.kt");
-            }
-
-            @TestMetadata("ExtensionVal.kt")
-            public void testExtensionVal() throws Exception {
-                runTest("testData/smart/propertyDelegate/ExtensionVal.kt");
-            }
-
-            @TestMetadata("ExtensionVar.kt")
-            public void testExtensionVar() throws Exception {
-                runTest("testData/smart/propertyDelegate/ExtensionVar.kt");
-            }
-
-            @TestMetadata("GenericOperator.kt")
-            public void testGenericOperator() throws Exception {
-                runTest("testData/smart/propertyDelegate/GenericOperator.kt");
-            }
-
-            @TestMetadata("GenericVal.kt")
-            public void testGenericVal() throws Exception {
-                runTest("testData/smart/propertyDelegate/GenericVal.kt");
-            }
-
-            @TestMetadata("GenericVar.kt")
-            public void testGenericVar() throws Exception {
-                runTest("testData/smart/propertyDelegate/GenericVar.kt");
-            }
-
-            @TestMetadata("NonConflictingSubstitutors.kt")
-            public void testNonConflictingSubstitutors() throws Exception {
-                runTest("testData/smart/propertyDelegate/NonConflictingSubstitutors.kt");
-            }
-
-            @TestMetadata("Order.kt")
-            public void testOrder() throws Exception {
-                runTest("testData/smart/propertyDelegate/Order.kt");
-            }
-
-            @TestMetadata("OverrideVal.kt")
-            public void testOverrideVal() throws Exception {
-                runTest("testData/smart/propertyDelegate/OverrideVal.kt");
-            }
-
-            @TestMetadata("TopLevelVal.kt")
-            public void testTopLevelVal() throws Exception {
-                runTest("testData/smart/propertyDelegate/TopLevelVal.kt");
-            }
-
-            @TestMetadata("ValInClass.kt")
-            public void testValInClass() throws Exception {
-                runTest("testData/smart/propertyDelegate/ValInClass.kt");
-            }
-
-            @TestMetadata("ValInGenericClass1.kt")
-            public void testValInGenericClass1() throws Exception {
-                runTest("testData/smart/propertyDelegate/ValInGenericClass1.kt");
-            }
+    public static class PropertyDelegate extends AbstractJvmSmartCompletionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart/propertyDelegate")
-        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
+        @TestMetadata("ConflictingSubstitutors.kt")
+        public void testConflictingSubstitutors() throws Exception {
+            runTest("testData/smart/propertyDelegate/ConflictingSubstitutors.kt");
+        }
 
-            @TestMetadata("ValInGenericClass2.kt")
-            public void testValInGenericClass2() throws Exception {
-                runTest("testData/smart/propertyDelegate/ValInGenericClass2.kt");
-            }
+        @TestMetadata("DelegatesDot.kt")
+        public void testDelegatesDot() throws Exception {
+            runTest("testData/smart/propertyDelegate/DelegatesDot.kt");
+        }
 
-            @TestMetadata("ValInGenericClass3.kt")
-            public void testValInGenericClass3() throws Exception {
-                runTest("testData/smart/propertyDelegate/ValInGenericClass3.kt");
-            }
+        @TestMetadata("DelegatesDotExplicitPropertyType.kt")
+        public void testDelegatesDotExplicitPropertyType() throws Exception {
+            runTest("testData/smart/propertyDelegate/DelegatesDotExplicitPropertyType.kt");
+        }
 
-            @TestMetadata("VarInClass.kt")
-            public void testVarInClass() throws Exception {
-                runTest("testData/smart/propertyDelegate/VarInClass.kt");
-            }
+        @TestMetadata("ExplicitValType.kt")
+        public void testExplicitValType() throws Exception {
+            runTest("testData/smart/propertyDelegate/ExplicitValType.kt");
+        }
 
-            @TestMetadata("VarInGenericClass.kt")
-            public void testVarInGenericClass() throws Exception {
-                runTest("testData/smart/propertyDelegate/VarInGenericClass.kt");
-            }
+        @TestMetadata("ExplicitVarType.kt")
+        public void testExplicitVarType() throws Exception {
+            runTest("testData/smart/propertyDelegate/ExplicitVarType.kt");
+        }
+
+        @TestMetadata("ExtensionSubstitution1.kt")
+        public void testExtensionSubstitution1() throws Exception {
+            runTest("testData/smart/propertyDelegate/ExtensionSubstitution1.kt");
+        }
+
+        @TestMetadata("ExtensionSubstitution2.kt")
+        public void testExtensionSubstitution2() throws Exception {
+            runTest("testData/smart/propertyDelegate/ExtensionSubstitution2.kt");
+        }
+
+        @TestMetadata("ExtensionSubstitution3.kt")
+        public void testExtensionSubstitution3() throws Exception {
+            runTest("testData/smart/propertyDelegate/ExtensionSubstitution3.kt");
+        }
+
+        @TestMetadata("ExtensionSubstitution4.kt")
+        public void testExtensionSubstitution4() throws Exception {
+            runTest("testData/smart/propertyDelegate/ExtensionSubstitution4.kt");
+        }
+
+        @TestMetadata("ExtensionVal.kt")
+        public void testExtensionVal() throws Exception {
+            runTest("testData/smart/propertyDelegate/ExtensionVal.kt");
+        }
+
+        @TestMetadata("ExtensionVar.kt")
+        public void testExtensionVar() throws Exception {
+            runTest("testData/smart/propertyDelegate/ExtensionVar.kt");
+        }
+
+        @TestMetadata("GenericOperator.kt")
+        public void testGenericOperator() throws Exception {
+            runTest("testData/smart/propertyDelegate/GenericOperator.kt");
+        }
+
+        @TestMetadata("GenericVal.kt")
+        public void testGenericVal() throws Exception {
+            runTest("testData/smart/propertyDelegate/GenericVal.kt");
+        }
+
+        @TestMetadata("GenericVar.kt")
+        public void testGenericVar() throws Exception {
+            runTest("testData/smart/propertyDelegate/GenericVar.kt");
+        }
+
+        @TestMetadata("NonConflictingSubstitutors.kt")
+        public void testNonConflictingSubstitutors() throws Exception {
+            runTest("testData/smart/propertyDelegate/NonConflictingSubstitutors.kt");
+        }
+
+        @TestMetadata("Order.kt")
+        public void testOrder() throws Exception {
+            runTest("testData/smart/propertyDelegate/Order.kt");
+        }
+
+        @TestMetadata("OverrideVal.kt")
+        public void testOverrideVal() throws Exception {
+            runTest("testData/smart/propertyDelegate/OverrideVal.kt");
+        }
+
+        @TestMetadata("TopLevelVal.kt")
+        public void testTopLevelVal() throws Exception {
+            runTest("testData/smart/propertyDelegate/TopLevelVal.kt");
+        }
+
+        @TestMetadata("ValInClass.kt")
+        public void testValInClass() throws Exception {
+            runTest("testData/smart/propertyDelegate/ValInClass.kt");
+        }
+
+        @TestMetadata("ValInGenericClass1.kt")
+        public void testValInGenericClass1() throws Exception {
+            runTest("testData/smart/propertyDelegate/ValInGenericClass1.kt");
+        }
+
+        @TestMetadata("ValInGenericClass2.kt")
+        public void testValInGenericClass2() throws Exception {
+            runTest("testData/smart/propertyDelegate/ValInGenericClass2.kt");
+        }
+
+        @TestMetadata("ValInGenericClass3.kt")
+        public void testValInGenericClass3() throws Exception {
+            runTest("testData/smart/propertyDelegate/ValInGenericClass3.kt");
+        }
+
+        @TestMetadata("VarInClass.kt")
+        public void testVarInClass() throws Exception {
+            runTest("testData/smart/propertyDelegate/VarInClass.kt");
+        }
+
+        @TestMetadata("VarInGenericClass.kt")
+        public void testVarInGenericClass() throws Exception {
+            runTest("testData/smart/propertyDelegate/VarInGenericClass.kt");
         }
     }
 
@@ -1111,535 +1087,499 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/smart")
-    public abstract static class Uncategorized extends AbstractJvmSmartCompletionTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart")
-        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("AbstractMembers.kt")
-            public void testAbstractMembers() throws Exception {
-                runTest("testData/smart/AbstractMembers.kt");
-            }
-
-            @TestMetadata("AfterEmptyArgument.kt")
-            public void testAfterEmptyArgument() throws Exception {
-                runTest("testData/smart/AfterEmptyArgument.kt");
-            }
-
-            @TestMetadata("AfterExclSign.kt")
-            public void testAfterExclSign() throws Exception {
-                runTest("testData/smart/AfterExclSign.kt");
-            }
-
-            @TestMetadata("AfterNamedArgument.kt")
-            public void testAfterNamedArgument() throws Exception {
-                runTest("testData/smart/AfterNamedArgument.kt");
-            }
-
-            @TestMetadata("AnyExpected.kt")
-            public void testAnyExpected() throws Exception {
-                runTest("testData/smart/AnyExpected.kt");
-            }
-
-            @TestMetadata("BeforeArgumentWithBinaryOperation.kt")
-            public void testBeforeArgumentWithBinaryOperation() throws Exception {
-                runTest("testData/smart/BeforeArgumentWithBinaryOperation.kt");
-            }
-
-            @TestMetadata("BeforeArgumentWithBinaryOperation2.kt")
-            public void testBeforeArgumentWithBinaryOperation2() throws Exception {
-                runTest("testData/smart/BeforeArgumentWithBinaryOperation2.kt");
-            }
-
-            @TestMetadata("BeforeArgumentWithBinaryOperation3.kt")
-            public void testBeforeArgumentWithBinaryOperation3() throws Exception {
-                runTest("testData/smart/BeforeArgumentWithBinaryOperation3.kt");
-            }
-
-            @TestMetadata("BooleanArgumentExpected.kt")
-            public void testBooleanArgumentExpected() throws Exception {
-                runTest("testData/smart/BooleanArgumentExpected.kt");
-            }
-
-            @TestMetadata("BooleanExpected.kt")
-            public void testBooleanExpected() throws Exception {
-                runTest("testData/smart/BooleanExpected.kt");
-            }
-
-            @TestMetadata("BooleanOrNullableArgumentExpected.kt")
-            public void testBooleanOrNullableArgumentExpected() throws Exception {
-                runTest("testData/smart/BooleanOrNullableArgumentExpected.kt");
-            }
-
-            @TestMetadata("ChainedCall.kt")
-            public void testChainedCall() throws Exception {
-                runTest("testData/smart/ChainedCall.kt");
-            }
-
-            @TestMetadata("ClassObjectMembers.kt")
-            public void testClassObjectMembers() throws Exception {
-                runTest("testData/smart/ClassObjectMembers.kt");
-            }
-
-            @TestMetadata("ClassObjectMembersForNullable.kt")
-            public void testClassObjectMembersForNullable() throws Exception {
-                runTest("testData/smart/ClassObjectMembersForNullable.kt");
-            }
-
-            @TestMetadata("ClassObjectMembersWithPrefix.kt")
-            public void testClassObjectMembersWithPrefix() throws Exception {
-                runTest("testData/smart/ClassObjectMembersWithPrefix.kt");
-            }
-
-            @TestMetadata("EA70945.kt")
-            public void testEA70945() throws Exception {
-                runTest("testData/smart/EA70945.kt");
-            }
-
-            @TestMetadata("EmptyPrefix.kt")
-            public void testEmptyPrefix() throws Exception {
-                runTest("testData/smart/EmptyPrefix.kt");
-            }
-
-            @TestMetadata("EnumExpected.kt")
-            public void testEnumExpected() throws Exception {
-                runTest("testData/smart/EnumExpected.kt");
-            }
-
-            @TestMetadata("EnumMembers.kt")
-            public void testEnumMembers() throws Exception {
-                runTest("testData/smart/EnumMembers.kt");
-            }
-
-            @TestMetadata("EqOperator.kt")
-            public void testEqOperator() throws Exception {
-                runTest("testData/smart/EqOperator.kt");
-            }
+    public static class Uncategorized extends AbstractJvmSmartCompletionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart")
-        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("EqOperatorPlatformType.kt")
-            public void testEqOperatorPlatformType() throws Exception {
-                runTest("testData/smart/EqOperatorPlatformType.kt");
-            }
-
-            @TestMetadata("ExtensionFunctionTypeVariables.kt")
-            public void testExtensionFunctionTypeVariables() throws Exception {
-                runTest("testData/smart/ExtensionFunctionTypeVariables.kt");
-            }
-
-            @TestMetadata("FilterTo.kt")
-            public void testFilterTo() throws Exception {
-                runTest("testData/smart/FilterTo.kt");
-            }
-
-            @TestMetadata("GetOperator.kt")
-            public void testGetOperator() throws Exception {
-                runTest("testData/smart/GetOperator.kt");
-            }
-
-            @TestMetadata("GroupBySubstitutor.kt")
-            public void testGroupBySubstitutor() throws Exception {
-                runTest("testData/smart/GroupBySubstitutor.kt");
-            }
-
-            @TestMetadata("HighOrderFunction.kt")
-            public void testHighOrderFunction() throws Exception {
-                runTest("testData/smart/HighOrderFunction.kt");
-            }
-
-            @TestMetadata("IfCondition.kt")
-            public void testIfCondition() throws Exception {
-                runTest("testData/smart/IfCondition.kt");
-            }
-
-            @TestMetadata("ImmediateExtensionMembers.kt")
-            public void testImmediateExtensionMembers() throws Exception {
-                runTest("testData/smart/ImmediateExtensionMembers.kt");
-            }
-
-            @TestMetadata("ImmediateMembers.kt")
-            public void testImmediateMembers() throws Exception {
-                runTest("testData/smart/ImmediateMembers.kt");
-            }
-
-            @TestMetadata("ImplicitInvoke.kt")
-            public void testImplicitInvoke() throws Exception {
-                runTest("testData/smart/ImplicitInvoke.kt");
-            }
-
-            @TestMetadata("ImplicitlyTypedFunBody.kt")
-            public void testImplicitlyTypedFunBody() throws Exception {
-                runTest("testData/smart/ImplicitlyTypedFunBody.kt");
-            }
-
-            @TestMetadata("ImplicitlyTypedOverrideFunBody.kt")
-            public void testImplicitlyTypedOverrideFunBody() throws Exception {
-                runTest("testData/smart/ImplicitlyTypedOverrideFunBody.kt");
-            }
-
-            @TestMetadata("ImplicitlyTypedOverrideValInitializer.kt")
-            public void testImplicitlyTypedOverrideValInitializer() throws Exception {
-                runTest("testData/smart/ImplicitlyTypedOverrideValInitializer.kt");
-            }
-
-            @TestMetadata("ImplicitlyTypedValInitializer1.kt")
-            public void testImplicitlyTypedValInitializer1() throws Exception {
-                runTest("testData/smart/ImplicitlyTypedValInitializer1.kt");
-            }
-
-            @TestMetadata("ImplicitlyTypedValInitializer2.kt")
-            public void testImplicitlyTypedValInitializer2() throws Exception {
-                runTest("testData/smart/ImplicitlyTypedValInitializer2.kt");
-            }
-
-            @TestMetadata("ImplicitlyTypedValInitializerUnknownType.kt")
-            public void testImplicitlyTypedValInitializerUnknownType() throws Exception {
-                runTest("testData/smart/ImplicitlyTypedValInitializerUnknownType.kt");
-            }
-
-            @TestMetadata("InCompanionObject.kt")
-            public void testInCompanionObject() throws Exception {
-                runTest("testData/smart/InCompanionObject.kt");
-            }
-
-            @TestMetadata("InNestedClass.kt")
-            public void testInNestedClass() throws Exception {
-                runTest("testData/smart/InNestedClass.kt");
-            }
-
-            @TestMetadata("InaccessibleConstructor.kt")
-            public void testInaccessibleConstructor() throws Exception {
-                runTest("testData/smart/InaccessibleConstructor.kt");
-            }
-
-            @TestMetadata("InaccessibleDeclarations.kt")
-            public void testInaccessibleDeclarations() throws Exception {
-                runTest("testData/smart/InaccessibleDeclarations.kt");
-            }
+        @TestMetadata("AbstractMembers.kt")
+        public void testAbstractMembers() throws Exception {
+            runTest("testData/smart/AbstractMembers.kt");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart")
-        public static class TestBucket003 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("IndexingOperator.kt")
-            public void testIndexingOperator() throws Exception {
-                runTest("testData/smart/IndexingOperator.kt");
-            }
-
-            @TestMetadata("InfixCall.kt")
-            public void testInfixCall() throws Exception {
-                runTest("testData/smart/InfixCall.kt");
-            }
-
-            @TestMetadata("InsideIdentifier.kt")
-            public void testInsideIdentifier() throws Exception {
-                runTest("testData/smart/InsideIdentifier.kt");
-            }
-
-            @TestMetadata("InvokeFunctionVariable.kt")
-            public void testInvokeFunctionVariable() throws Exception {
-                runTest("testData/smart/InvokeFunctionVariable.kt");
-            }
-
-            @TestMetadata("JavaEnumMembers.kt")
-            public void testJavaEnumMembers() throws Exception {
-                runTest("testData/smart/JavaEnumMembers.kt");
-            }
-
-            @TestMetadata("JavaEnumMembersAfterQualifier.kt")
-            public void testJavaEnumMembersAfterQualifier() throws Exception {
-                runTest("testData/smart/JavaEnumMembersAfterQualifier.kt");
-            }
-
-            @TestMetadata("JavaEnumMembersForNullable.kt")
-            public void testJavaEnumMembersForNullable() throws Exception {
-                runTest("testData/smart/JavaEnumMembersForNullable.kt");
-            }
-
-            @TestMetadata("JavaStaticFields.kt")
-            public void testJavaStaticFields() throws Exception {
-                runTest("testData/smart/JavaStaticFields.kt");
-            }
-
-            @TestMetadata("JavaStaticFieldsForNullable.kt")
-            public void testJavaStaticFieldsForNullable() throws Exception {
-                runTest("testData/smart/JavaStaticFieldsForNullable.kt");
-            }
-
-            @TestMetadata("JavaStaticMethods.kt")
-            public void testJavaStaticMethods() throws Exception {
-                runTest("testData/smart/JavaStaticMethods.kt");
-            }
-
-            @TestMetadata("kt5873.kt")
-            public void testKt5873() throws Exception {
-                runTest("testData/smart/kt5873.kt");
-            }
-
-            @TestMetadata("LambdaValue1.kt")
-            public void testLambdaValue1() throws Exception {
-                runTest("testData/smart/LambdaValue1.kt");
-            }
-
-            @TestMetadata("LambdaValue2.kt")
-            public void testLambdaValue2() throws Exception {
-                runTest("testData/smart/LambdaValue2.kt");
-            }
-
-            @TestMetadata("LambdaValue3.kt")
-            public void testLambdaValue3() throws Exception {
-                runTest("testData/smart/LambdaValue3.kt");
-            }
-
-            @TestMetadata("LambdaValue4.kt")
-            public void testLambdaValue4() throws Exception {
-                runTest("testData/smart/LambdaValue4.kt");
-            }
-
-            @TestMetadata("MapTo.kt")
-            public void testMapTo() throws Exception {
-                runTest("testData/smart/MapTo.kt");
-            }
-
-            @TestMetadata("MapTo2.kt")
-            public void testMapTo2() throws Exception {
-                runTest("testData/smart/MapTo2.kt");
-            }
-
-            @TestMetadata("MethodCallArgument.kt")
-            public void testMethodCallArgument() throws Exception {
-                runTest("testData/smart/MethodCallArgument.kt");
-            }
-
-            @TestMetadata("NamedArgument.kt")
-            public void testNamedArgument() throws Exception {
-                runTest("testData/smart/NamedArgument.kt");
-            }
-
-            @TestMetadata("NoAssertFailsWith.kt")
-            public void testNoAssertFailsWith() throws Exception {
-                runTest("testData/smart/NoAssertFailsWith.kt");
-            }
+        @TestMetadata("AfterEmptyArgument.kt")
+        public void testAfterEmptyArgument() throws Exception {
+            runTest("testData/smart/AfterEmptyArgument.kt");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart")
-        public static class TestBucket004 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("NoExtensionMethodFromClassObject.kt")
-            public void testNoExtensionMethodFromClassObject() throws Exception {
-                runTest("testData/smart/NoExtensionMethodFromClassObject.kt");
-            }
-
-            @TestMetadata("NoNothing.kt")
-            public void testNoNothing() throws Exception {
-                runTest("testData/smart/NoNothing.kt");
-            }
-
-            @TestMetadata("NoPrivateOverload.kt")
-            public void testNoPrivateOverload() throws Exception {
-                runTest("testData/smart/NoPrivateOverload.kt");
-            }
-
-            @TestMetadata("NoSillyAssignment.kt")
-            public void testNoSillyAssignment() throws Exception {
-                runTest("testData/smart/NoSillyAssignment.kt");
-            }
-
-            @TestMetadata("NotEqOperator.kt")
-            public void testNotEqOperator() throws Exception {
-                runTest("testData/smart/NotEqOperator.kt");
-            }
-
-            @TestMetadata("NotSillyAssignment.kt")
-            public void testNotSillyAssignment() throws Exception {
-                runTest("testData/smart/NotSillyAssignment.kt");
-            }
-
-            @TestMetadata("Null.kt")
-            public void testNull() throws Exception {
-                runTest("testData/smart/Null.kt");
-            }
-
-            @TestMetadata("NullableBooleanExpected.kt")
-            public void testNullableBooleanExpected() throws Exception {
-                runTest("testData/smart/NullableBooleanExpected.kt");
-            }
-
-            @TestMetadata("Object.kt")
-            public void testObject() throws Exception {
-                runTest("testData/smart/Object.kt");
-            }
-
-            @TestMetadata("ObjectsFromType.kt")
-            public void testObjectsFromType() throws Exception {
-                runTest("testData/smart/ObjectsFromType.kt");
-            }
-
-            @TestMetadata("OverloadedConstructorArgument.kt")
-            public void testOverloadedConstructorArgument() throws Exception {
-                runTest("testData/smart/OverloadedConstructorArgument.kt");
-            }
-
-            @TestMetadata("OverloadedMethodCallArgument1.kt")
-            public void testOverloadedMethodCallArgument1() throws Exception {
-                runTest("testData/smart/OverloadedMethodCallArgument1.kt");
-            }
-
-            @TestMetadata("OverloadedMethodCallArgument2.kt")
-            public void testOverloadedMethodCallArgument2() throws Exception {
-                runTest("testData/smart/OverloadedMethodCallArgument2.kt");
-            }
-
-            @TestMetadata("OverloadedMethodCallArgument3.kt")
-            public void testOverloadedMethodCallArgument3() throws Exception {
-                runTest("testData/smart/OverloadedMethodCallArgument3.kt");
-            }
-
-            @TestMetadata("ParameterWithDefaultValue.kt")
-            public void testParameterWithDefaultValue() throws Exception {
-                runTest("testData/smart/ParameterWithDefaultValue.kt");
-            }
-
-            @TestMetadata("PreviousArgError.kt")
-            public void testPreviousArgError() throws Exception {
-                runTest("testData/smart/PreviousArgError.kt");
-            }
-
-            @TestMetadata("PreviousArgMismatchedType.kt")
-            public void testPreviousArgMismatchedType() throws Exception {
-                runTest("testData/smart/PreviousArgMismatchedType.kt");
-            }
-
-            @TestMetadata("QualifiedOverloadedMethodCallArgument1.kt")
-            public void testQualifiedOverloadedMethodCallArgument1() throws Exception {
-                runTest("testData/smart/QualifiedOverloadedMethodCallArgument1.kt");
-            }
-
-            @TestMetadata("QualifiedOverloadedMethodCallArgument2.kt")
-            public void testQualifiedOverloadedMethodCallArgument2() throws Exception {
-                runTest("testData/smart/QualifiedOverloadedMethodCallArgument2.kt");
-            }
-
-            @TestMetadata("SAMConstructorForTypeAlias.kt")
-            public void testSAMConstructorForTypeAlias() throws Exception {
-                runTest("testData/smart/SAMConstructorForTypeAlias.kt");
-            }
+        @TestMetadata("AfterExclSign.kt")
+        public void testAfterExclSign() throws Exception {
+            runTest("testData/smart/AfterExclSign.kt");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart")
-        public static class TestBucket005 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
+        @TestMetadata("AfterNamedArgument.kt")
+        public void testAfterNamedArgument() throws Exception {
+            runTest("testData/smart/AfterNamedArgument.kt");
+        }
 
-            @TestMetadata("SAMExpected1.kt")
-            public void testSAMExpected1() throws Exception {
-                runTest("testData/smart/SAMExpected1.kt");
-            }
+        @TestMetadata("AnyExpected.kt")
+        public void testAnyExpected() throws Exception {
+            runTest("testData/smart/AnyExpected.kt");
+        }
 
-            @TestMetadata("SAMExpected2.kt")
-            public void testSAMExpected2() throws Exception {
-                runTest("testData/smart/SAMExpected2.kt");
-            }
+        @TestMetadata("BeforeArgumentWithBinaryOperation.kt")
+        public void testBeforeArgumentWithBinaryOperation() throws Exception {
+            runTest("testData/smart/BeforeArgumentWithBinaryOperation.kt");
+        }
 
-            @TestMetadata("SealedMembers.kt")
-            public void testSealedMembers() throws Exception {
-                runTest("testData/smart/SealedMembers.kt");
-            }
+        @TestMetadata("BeforeArgumentWithBinaryOperation2.kt")
+        public void testBeforeArgumentWithBinaryOperation2() throws Exception {
+            runTest("testData/smart/BeforeArgumentWithBinaryOperation2.kt");
+        }
 
-            @TestMetadata("SkipDeclarationsOfType.kt")
-            public void testSkipDeclarationsOfType() throws Exception {
-                runTest("testData/smart/SkipDeclarationsOfType.kt");
-            }
+        @TestMetadata("BeforeArgumentWithBinaryOperation3.kt")
+        public void testBeforeArgumentWithBinaryOperation3() throws Exception {
+            runTest("testData/smart/BeforeArgumentWithBinaryOperation3.kt");
+        }
 
-            @TestMetadata("SkipUnresolvedTypes.kt")
-            public void testSkipUnresolvedTypes() throws Exception {
-                runTest("testData/smart/SkipUnresolvedTypes.kt");
-            }
+        @TestMetadata("BooleanArgumentExpected.kt")
+        public void testBooleanArgumentExpected() throws Exception {
+            runTest("testData/smart/BooleanArgumentExpected.kt");
+        }
 
-            @TestMetadata("SuperConstructorArgument.kt")
-            public void testSuperConstructorArgument() throws Exception {
-                runTest("testData/smart/SuperConstructorArgument.kt");
-            }
+        @TestMetadata("BooleanExpected.kt")
+        public void testBooleanExpected() throws Exception {
+            runTest("testData/smart/BooleanExpected.kt");
+        }
 
-            @TestMetadata("SuperConstructorArgumentInClassHeader.kt")
-            public void testSuperConstructorArgumentInClassHeader() throws Exception {
-                runTest("testData/smart/SuperConstructorArgumentInClassHeader.kt");
-            }
+        @TestMetadata("BooleanOrNullableArgumentExpected.kt")
+        public void testBooleanOrNullableArgumentExpected() throws Exception {
+            runTest("testData/smart/BooleanOrNullableArgumentExpected.kt");
+        }
 
-            @TestMetadata("SuperMembers.kt")
-            public void testSuperMembers() throws Exception {
-                runTest("testData/smart/SuperMembers.kt");
-            }
+        @TestMetadata("ChainedCall.kt")
+        public void testChainedCall() throws Exception {
+            runTest("testData/smart/ChainedCall.kt");
+        }
 
-            @TestMetadata("SuperMembers2.kt")
-            public void testSuperMembers2() throws Exception {
-                runTest("testData/smart/SuperMembers2.kt");
-            }
+        @TestMetadata("ClassObjectMembers.kt")
+        public void testClassObjectMembers() throws Exception {
+            runTest("testData/smart/ClassObjectMembers.kt");
+        }
 
-            @TestMetadata("ThisConstructorArgument.kt")
-            public void testThisConstructorArgument() throws Exception {
-                runTest("testData/smart/ThisConstructorArgument.kt");
-            }
+        @TestMetadata("ClassObjectMembersForNullable.kt")
+        public void testClassObjectMembersForNullable() throws Exception {
+            runTest("testData/smart/ClassObjectMembersForNullable.kt");
+        }
 
-            @TestMetadata("UnresolvedExpectedType.kt")
-            public void testUnresolvedExpectedType() throws Exception {
-                runTest("testData/smart/UnresolvedExpectedType.kt");
-            }
+        @TestMetadata("ClassObjectMembersWithPrefix.kt")
+        public void testClassObjectMembersWithPrefix() throws Exception {
+            runTest("testData/smart/ClassObjectMembersWithPrefix.kt");
+        }
 
-            @TestMetadata("VariableAsFunction1.kt")
-            public void testVariableAsFunction1() throws Exception {
-                runTest("testData/smart/VariableAsFunction1.kt");
-            }
+        @TestMetadata("EA70945.kt")
+        public void testEA70945() throws Exception {
+            runTest("testData/smart/EA70945.kt");
+        }
 
-            @TestMetadata("VariableAsFunction3.kt")
-            public void testVariableAsFunction3() throws Exception {
-                runTest("testData/smart/VariableAsFunction3.kt");
-            }
+        @TestMetadata("EmptyPrefix.kt")
+        public void testEmptyPrefix() throws Exception {
+            runTest("testData/smart/EmptyPrefix.kt");
+        }
 
-            @TestMetadata("VariableInitializer.kt")
-            public void testVariableInitializer() throws Exception {
-                runTest("testData/smart/VariableInitializer.kt");
-            }
+        @TestMetadata("EnumExpected.kt")
+        public void testEnumExpected() throws Exception {
+            runTest("testData/smart/EnumExpected.kt");
+        }
 
-            @TestMetadata("WithPrefix.kt")
-            public void testWithPrefix() throws Exception {
-                runTest("testData/smart/WithPrefix.kt");
-            }
+        @TestMetadata("EnumMembers.kt")
+        public void testEnumMembers() throws Exception {
+            runTest("testData/smart/EnumMembers.kt");
+        }
 
-            @TestMetadata("WithQualifier.kt")
-            public void testWithQualifier() throws Exception {
-                runTest("testData/smart/WithQualifier.kt");
-            }
+        @TestMetadata("EqOperator.kt")
+        public void testEqOperator() throws Exception {
+            runTest("testData/smart/EqOperator.kt");
+        }
 
-            @TestMetadata("WrongNumberOfTypeArguments.kt")
-            public void testWrongNumberOfTypeArguments() throws Exception {
-                runTest("testData/smart/WrongNumberOfTypeArguments.kt");
-            }
+        @TestMetadata("EqOperatorPlatformType.kt")
+        public void testEqOperatorPlatformType() throws Exception {
+            runTest("testData/smart/EqOperatorPlatformType.kt");
+        }
 
-            @TestMetadata("WrongReceiver.kt")
-            public void testWrongReceiver() throws Exception {
-                runTest("testData/smart/WrongReceiver.kt");
-            }
+        @TestMetadata("ExtensionFunctionTypeVariables.kt")
+        public void testExtensionFunctionTypeVariables() throws Exception {
+            runTest("testData/smart/ExtensionFunctionTypeVariables.kt");
+        }
+
+        @TestMetadata("FilterTo.kt")
+        public void testFilterTo() throws Exception {
+            runTest("testData/smart/FilterTo.kt");
+        }
+
+        @TestMetadata("GetOperator.kt")
+        public void testGetOperator() throws Exception {
+            runTest("testData/smart/GetOperator.kt");
+        }
+
+        @TestMetadata("GroupBySubstitutor.kt")
+        public void testGroupBySubstitutor() throws Exception {
+            runTest("testData/smart/GroupBySubstitutor.kt");
+        }
+
+        @TestMetadata("HighOrderFunction.kt")
+        public void testHighOrderFunction() throws Exception {
+            runTest("testData/smart/HighOrderFunction.kt");
+        }
+
+        @TestMetadata("IfCondition.kt")
+        public void testIfCondition() throws Exception {
+            runTest("testData/smart/IfCondition.kt");
+        }
+
+        @TestMetadata("ImmediateExtensionMembers.kt")
+        public void testImmediateExtensionMembers() throws Exception {
+            runTest("testData/smart/ImmediateExtensionMembers.kt");
+        }
+
+        @TestMetadata("ImmediateMembers.kt")
+        public void testImmediateMembers() throws Exception {
+            runTest("testData/smart/ImmediateMembers.kt");
+        }
+
+        @TestMetadata("ImplicitInvoke.kt")
+        public void testImplicitInvoke() throws Exception {
+            runTest("testData/smart/ImplicitInvoke.kt");
+        }
+
+        @TestMetadata("ImplicitlyTypedFunBody.kt")
+        public void testImplicitlyTypedFunBody() throws Exception {
+            runTest("testData/smart/ImplicitlyTypedFunBody.kt");
+        }
+
+        @TestMetadata("ImplicitlyTypedOverrideFunBody.kt")
+        public void testImplicitlyTypedOverrideFunBody() throws Exception {
+            runTest("testData/smart/ImplicitlyTypedOverrideFunBody.kt");
+        }
+
+        @TestMetadata("ImplicitlyTypedOverrideValInitializer.kt")
+        public void testImplicitlyTypedOverrideValInitializer() throws Exception {
+            runTest("testData/smart/ImplicitlyTypedOverrideValInitializer.kt");
+        }
+
+        @TestMetadata("ImplicitlyTypedValInitializer1.kt")
+        public void testImplicitlyTypedValInitializer1() throws Exception {
+            runTest("testData/smart/ImplicitlyTypedValInitializer1.kt");
+        }
+
+        @TestMetadata("ImplicitlyTypedValInitializer2.kt")
+        public void testImplicitlyTypedValInitializer2() throws Exception {
+            runTest("testData/smart/ImplicitlyTypedValInitializer2.kt");
+        }
+
+        @TestMetadata("ImplicitlyTypedValInitializerUnknownType.kt")
+        public void testImplicitlyTypedValInitializerUnknownType() throws Exception {
+            runTest("testData/smart/ImplicitlyTypedValInitializerUnknownType.kt");
+        }
+
+        @TestMetadata("InCompanionObject.kt")
+        public void testInCompanionObject() throws Exception {
+            runTest("testData/smart/InCompanionObject.kt");
+        }
+
+        @TestMetadata("InNestedClass.kt")
+        public void testInNestedClass() throws Exception {
+            runTest("testData/smart/InNestedClass.kt");
+        }
+
+        @TestMetadata("InaccessibleConstructor.kt")
+        public void testInaccessibleConstructor() throws Exception {
+            runTest("testData/smart/InaccessibleConstructor.kt");
+        }
+
+        @TestMetadata("InaccessibleDeclarations.kt")
+        public void testInaccessibleDeclarations() throws Exception {
+            runTest("testData/smart/InaccessibleDeclarations.kt");
+        }
+
+        @TestMetadata("IndexingOperator.kt")
+        public void testIndexingOperator() throws Exception {
+            runTest("testData/smart/IndexingOperator.kt");
+        }
+
+        @TestMetadata("InfixCall.kt")
+        public void testInfixCall() throws Exception {
+            runTest("testData/smart/InfixCall.kt");
+        }
+
+        @TestMetadata("InsideIdentifier.kt")
+        public void testInsideIdentifier() throws Exception {
+            runTest("testData/smart/InsideIdentifier.kt");
+        }
+
+        @TestMetadata("InvokeFunctionVariable.kt")
+        public void testInvokeFunctionVariable() throws Exception {
+            runTest("testData/smart/InvokeFunctionVariable.kt");
+        }
+
+        @TestMetadata("JavaEnumMembers.kt")
+        public void testJavaEnumMembers() throws Exception {
+            runTest("testData/smart/JavaEnumMembers.kt");
+        }
+
+        @TestMetadata("JavaEnumMembersAfterQualifier.kt")
+        public void testJavaEnumMembersAfterQualifier() throws Exception {
+            runTest("testData/smart/JavaEnumMembersAfterQualifier.kt");
+        }
+
+        @TestMetadata("JavaEnumMembersForNullable.kt")
+        public void testJavaEnumMembersForNullable() throws Exception {
+            runTest("testData/smart/JavaEnumMembersForNullable.kt");
+        }
+
+        @TestMetadata("JavaStaticFields.kt")
+        public void testJavaStaticFields() throws Exception {
+            runTest("testData/smart/JavaStaticFields.kt");
+        }
+
+        @TestMetadata("JavaStaticFieldsForNullable.kt")
+        public void testJavaStaticFieldsForNullable() throws Exception {
+            runTest("testData/smart/JavaStaticFieldsForNullable.kt");
+        }
+
+        @TestMetadata("JavaStaticMethods.kt")
+        public void testJavaStaticMethods() throws Exception {
+            runTest("testData/smart/JavaStaticMethods.kt");
+        }
+
+        @TestMetadata("kt5873.kt")
+        public void testKt5873() throws Exception {
+            runTest("testData/smart/kt5873.kt");
+        }
+
+        @TestMetadata("LambdaValue1.kt")
+        public void testLambdaValue1() throws Exception {
+            runTest("testData/smart/LambdaValue1.kt");
+        }
+
+        @TestMetadata("LambdaValue2.kt")
+        public void testLambdaValue2() throws Exception {
+            runTest("testData/smart/LambdaValue2.kt");
+        }
+
+        @TestMetadata("LambdaValue3.kt")
+        public void testLambdaValue3() throws Exception {
+            runTest("testData/smart/LambdaValue3.kt");
+        }
+
+        @TestMetadata("LambdaValue4.kt")
+        public void testLambdaValue4() throws Exception {
+            runTest("testData/smart/LambdaValue4.kt");
+        }
+
+        @TestMetadata("MapTo.kt")
+        public void testMapTo() throws Exception {
+            runTest("testData/smart/MapTo.kt");
+        }
+
+        @TestMetadata("MapTo2.kt")
+        public void testMapTo2() throws Exception {
+            runTest("testData/smart/MapTo2.kt");
+        }
+
+        @TestMetadata("MethodCallArgument.kt")
+        public void testMethodCallArgument() throws Exception {
+            runTest("testData/smart/MethodCallArgument.kt");
+        }
+
+        @TestMetadata("NamedArgument.kt")
+        public void testNamedArgument() throws Exception {
+            runTest("testData/smart/NamedArgument.kt");
+        }
+
+        @TestMetadata("NoAssertFailsWith.kt")
+        public void testNoAssertFailsWith() throws Exception {
+            runTest("testData/smart/NoAssertFailsWith.kt");
+        }
+
+        @TestMetadata("NoExtensionMethodFromClassObject.kt")
+        public void testNoExtensionMethodFromClassObject() throws Exception {
+            runTest("testData/smart/NoExtensionMethodFromClassObject.kt");
+        }
+
+        @TestMetadata("NoNothing.kt")
+        public void testNoNothing() throws Exception {
+            runTest("testData/smart/NoNothing.kt");
+        }
+
+        @TestMetadata("NoPrivateOverload.kt")
+        public void testNoPrivateOverload() throws Exception {
+            runTest("testData/smart/NoPrivateOverload.kt");
+        }
+
+        @TestMetadata("NoSillyAssignment.kt")
+        public void testNoSillyAssignment() throws Exception {
+            runTest("testData/smart/NoSillyAssignment.kt");
+        }
+
+        @TestMetadata("NotEqOperator.kt")
+        public void testNotEqOperator() throws Exception {
+            runTest("testData/smart/NotEqOperator.kt");
+        }
+
+        @TestMetadata("NotSillyAssignment.kt")
+        public void testNotSillyAssignment() throws Exception {
+            runTest("testData/smart/NotSillyAssignment.kt");
+        }
+
+        @TestMetadata("Null.kt")
+        public void testNull() throws Exception {
+            runTest("testData/smart/Null.kt");
+        }
+
+        @TestMetadata("NullableBooleanExpected.kt")
+        public void testNullableBooleanExpected() throws Exception {
+            runTest("testData/smart/NullableBooleanExpected.kt");
+        }
+
+        @TestMetadata("Object.kt")
+        public void testObject() throws Exception {
+            runTest("testData/smart/Object.kt");
+        }
+
+        @TestMetadata("ObjectsFromType.kt")
+        public void testObjectsFromType() throws Exception {
+            runTest("testData/smart/ObjectsFromType.kt");
+        }
+
+        @TestMetadata("OverloadedConstructorArgument.kt")
+        public void testOverloadedConstructorArgument() throws Exception {
+            runTest("testData/smart/OverloadedConstructorArgument.kt");
+        }
+
+        @TestMetadata("OverloadedMethodCallArgument1.kt")
+        public void testOverloadedMethodCallArgument1() throws Exception {
+            runTest("testData/smart/OverloadedMethodCallArgument1.kt");
+        }
+
+        @TestMetadata("OverloadedMethodCallArgument2.kt")
+        public void testOverloadedMethodCallArgument2() throws Exception {
+            runTest("testData/smart/OverloadedMethodCallArgument2.kt");
+        }
+
+        @TestMetadata("OverloadedMethodCallArgument3.kt")
+        public void testOverloadedMethodCallArgument3() throws Exception {
+            runTest("testData/smart/OverloadedMethodCallArgument3.kt");
+        }
+
+        @TestMetadata("ParameterWithDefaultValue.kt")
+        public void testParameterWithDefaultValue() throws Exception {
+            runTest("testData/smart/ParameterWithDefaultValue.kt");
+        }
+
+        @TestMetadata("PreviousArgError.kt")
+        public void testPreviousArgError() throws Exception {
+            runTest("testData/smart/PreviousArgError.kt");
+        }
+
+        @TestMetadata("PreviousArgMismatchedType.kt")
+        public void testPreviousArgMismatchedType() throws Exception {
+            runTest("testData/smart/PreviousArgMismatchedType.kt");
+        }
+
+        @TestMetadata("QualifiedOverloadedMethodCallArgument1.kt")
+        public void testQualifiedOverloadedMethodCallArgument1() throws Exception {
+            runTest("testData/smart/QualifiedOverloadedMethodCallArgument1.kt");
+        }
+
+        @TestMetadata("QualifiedOverloadedMethodCallArgument2.kt")
+        public void testQualifiedOverloadedMethodCallArgument2() throws Exception {
+            runTest("testData/smart/QualifiedOverloadedMethodCallArgument2.kt");
+        }
+
+        @TestMetadata("SAMConstructorForTypeAlias.kt")
+        public void testSAMConstructorForTypeAlias() throws Exception {
+            runTest("testData/smart/SAMConstructorForTypeAlias.kt");
+        }
+
+        @TestMetadata("SAMExpected1.kt")
+        public void testSAMExpected1() throws Exception {
+            runTest("testData/smart/SAMExpected1.kt");
+        }
+
+        @TestMetadata("SAMExpected2.kt")
+        public void testSAMExpected2() throws Exception {
+            runTest("testData/smart/SAMExpected2.kt");
+        }
+
+        @TestMetadata("SealedMembers.kt")
+        public void testSealedMembers() throws Exception {
+            runTest("testData/smart/SealedMembers.kt");
+        }
+
+        @TestMetadata("SkipDeclarationsOfType.kt")
+        public void testSkipDeclarationsOfType() throws Exception {
+            runTest("testData/smart/SkipDeclarationsOfType.kt");
+        }
+
+        @TestMetadata("SkipUnresolvedTypes.kt")
+        public void testSkipUnresolvedTypes() throws Exception {
+            runTest("testData/smart/SkipUnresolvedTypes.kt");
+        }
+
+        @TestMetadata("SuperConstructorArgument.kt")
+        public void testSuperConstructorArgument() throws Exception {
+            runTest("testData/smart/SuperConstructorArgument.kt");
+        }
+
+        @TestMetadata("SuperConstructorArgumentInClassHeader.kt")
+        public void testSuperConstructorArgumentInClassHeader() throws Exception {
+            runTest("testData/smart/SuperConstructorArgumentInClassHeader.kt");
+        }
+
+        @TestMetadata("SuperMembers.kt")
+        public void testSuperMembers() throws Exception {
+            runTest("testData/smart/SuperMembers.kt");
+        }
+
+        @TestMetadata("SuperMembers2.kt")
+        public void testSuperMembers2() throws Exception {
+            runTest("testData/smart/SuperMembers2.kt");
+        }
+
+        @TestMetadata("ThisConstructorArgument.kt")
+        public void testThisConstructorArgument() throws Exception {
+            runTest("testData/smart/ThisConstructorArgument.kt");
+        }
+
+        @TestMetadata("UnresolvedExpectedType.kt")
+        public void testUnresolvedExpectedType() throws Exception {
+            runTest("testData/smart/UnresolvedExpectedType.kt");
+        }
+
+        @TestMetadata("VariableAsFunction1.kt")
+        public void testVariableAsFunction1() throws Exception {
+            runTest("testData/smart/VariableAsFunction1.kt");
+        }
+
+        @TestMetadata("VariableAsFunction3.kt")
+        public void testVariableAsFunction3() throws Exception {
+            runTest("testData/smart/VariableAsFunction3.kt");
+        }
+
+        @TestMetadata("VariableInitializer.kt")
+        public void testVariableInitializer() throws Exception {
+            runTest("testData/smart/VariableInitializer.kt");
+        }
+
+        @TestMetadata("WithPrefix.kt")
+        public void testWithPrefix() throws Exception {
+            runTest("testData/smart/WithPrefix.kt");
+        }
+
+        @TestMetadata("WithQualifier.kt")
+        public void testWithQualifier() throws Exception {
+            runTest("testData/smart/WithQualifier.kt");
+        }
+
+        @TestMetadata("WrongNumberOfTypeArguments.kt")
+        public void testWrongNumberOfTypeArguments() throws Exception {
+            runTest("testData/smart/WrongNumberOfTypeArguments.kt");
+        }
+
+        @TestMetadata("WrongReceiver.kt")
+        public void testWrongReceiver() throws Exception {
+            runTest("testData/smart/WrongReceiver.kt");
         }
     }
 

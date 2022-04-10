@@ -274,9 +274,6 @@ public final class PyPackageManagerUI {
         try {
           manager.install(null, myExtraArgs);
         }
-        catch (RunCanceledByUserException e) {
-          exceptions.add(e);
-        }
         catch (ExecutionException e) {
           exceptions.add(e);
         }

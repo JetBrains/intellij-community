@@ -30,10 +30,11 @@ public interface VcsLogHighlighter {
    *
    * @param commitId      id of selected commit.
    * @param commitDetails details of selected commit.
+   * @param column        column index in the table model
    * @param isSelected    if true, the row currently has selection on it.
    */
   @NotNull
-  VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails commitDetails, boolean isSelected);
+  VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails commitDetails, int column, boolean isSelected);
 
   /**
    * This method is called when new data arrives to the ui.

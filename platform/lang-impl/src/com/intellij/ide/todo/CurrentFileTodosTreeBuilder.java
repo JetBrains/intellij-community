@@ -39,7 +39,7 @@ public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
   }
 
   @Override
-  void collectFiles(Processor<? super VirtualFile> collector) {
+  void collectFiles(@NotNull Processor<? super VirtualFile> collector) {
     CurrentFileTodosTreeStructure treeStructure=(CurrentFileTodosTreeStructure)getTodoTreeStructure();
     PsiFile psiFile=treeStructure.getFile();
     if(treeStructure.accept(psiFile)){

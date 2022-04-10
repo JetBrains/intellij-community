@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -116,7 +117,11 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
       val isDumbMode = DumbService.isDumb(project)
 
       return HintUtils.getHintProvidersForLanguage(language, project)
-        .filter { (!isDumbMode || DumbService.isDumbAware(it.provider)) && (settings.hintsShouldBeShown(it.provider.key, language) || isProviderAlwaysEnabledForEditor(editor, it.provider.key)) }
+        .filter {
+          (!isDumbMode || DumbService.isDumbAware(it.provider))
+          && !(it.provider.group == InlayGroup.CODE_VISION_GROUP && Registry.`is`("editor.codeVision.new")) // to avoid cases when old and new code vision UI are shown
+          && (settings.hintsShouldBeShown(it.provider.key, language)
+              || isProviderAlwaysEnabledForEditor(editor, it.provider.key)) }
     }
 
     @ApiStatus.Internal

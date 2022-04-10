@@ -3,3 +3,5 @@ fun test(): String? {
     if (true) return "foo"
     return null<caret>
 }
+
+/* IGNORE_FIR */

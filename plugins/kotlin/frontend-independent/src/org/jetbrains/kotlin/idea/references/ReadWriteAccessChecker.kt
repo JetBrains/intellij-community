@@ -7,10 +7,11 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
+import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 import org.jetbrains.kotlin.utils.addToStdlib.constant
 
 interface ReadWriteAccessChecker {
-    fun readWriteAccessWithFullExpressionByResolve(assignment: KtBinaryExpression): Pair<ReferenceAccess, KtExpression>? = null
+    fun readWriteAccessWithFullExpressionByResolve(assignment: KtBinaryExpression): Pair<ReferenceAccess, KtExpression>?
 
     fun readWriteAccessWithFullExpression(
         targetExpression: KtExpression,
@@ -26,14 +27,12 @@ interface ReadWriteAccessChecker {
 
         val assignment = expression.getAssignmentByLHS()
         if (assignment != null) {
-            when (assignment.operationToken) {
-                KtTokens.EQ -> return ReferenceAccess.WRITE to assignment
+            return when (assignment.operationToken) {
+                KtTokens.EQ -> ReferenceAccess.WRITE to assignment
 
                 else -> {
-                    return (
-                            if (useResolveForReadWrite) readWriteAccessWithFullExpressionByResolve(assignment)
-                            else null
-                            ) ?: (ReferenceAccess.READ_WRITE to assignment)
+                    (if (useResolveForReadWrite) readWriteAccessWithFullExpressionByResolve(assignment) else null)
+                        ?: (ReferenceAccess.READ_WRITE to assignment)
                 }
             }
         }
@@ -50,14 +49,9 @@ interface ReadWriteAccessChecker {
     }
 }
 
-enum class ReferenceAccess(val isRead: Boolean, val isWrite: Boolean) {
-    READ(true, false), WRITE(false, true), READ_WRITE(true, true)
-}
-
-fun KtExpression.readWriteAccess(useResolveForReadWrite: Boolean) =
-    readWriteAccessWithFullExpression(useResolveForReadWrite).first
-
 fun KtExpression.readWriteAccessWithFullExpression(useResolveForReadWrite: Boolean): Pair<ReferenceAccess, KtExpression> =
     ReadWriteAccessChecker.getInstance().readWriteAccessWithFullExpression(this, useResolveForReadWrite)
 
+fun KtExpression.readWriteAccess(useResolveForReadWrite: Boolean): ReferenceAccess =
+    ReadWriteAccessChecker.getInstance().readWriteAccessWithFullExpression(this, useResolveForReadWrite).first
 

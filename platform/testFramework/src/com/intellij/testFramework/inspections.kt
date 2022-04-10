@@ -17,6 +17,7 @@ import com.intellij.util.containers.mapSmart
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 
+@TestOnly
 fun configureInspections(tools: Array<InspectionProfileEntry>,
                          project: Project,
                          parentDisposable: Disposable): InspectionProfileImpl {
@@ -81,7 +82,10 @@ fun enableInspectionTool(project: Project, toolWrapper: InspectionToolWrapper<*,
     if (existingWrapper == null || existingWrapper.isInitialized != toolWrapper.isInitialized || toolWrapper.isInitialized && toolWrapper.tool !== existingWrapper.tool) {
       profile.addTool(project, toolWrapper, null)
       profile.enableTool(shortName, project)
-      Disposer.register(disposable, Disposable { profile.removeTool(toolWrapper) })
+      Disposer.register(disposable, Disposable {
+        profile.removeTool(toolWrapper)
+        HighlightDisplayKey.unregister(shortName)
+      })
     }
     else {
       profile.enableTool(shortName, project)
@@ -96,6 +100,7 @@ fun enableInspectionTool(project: Project, toolWrapper: InspectionToolWrapper<*,
   IdeaTestExecutionPolicy.current()?.inspectionToolEnabled(project, toolWrapper, disposable)
 }
 
+@TestOnly
 inline fun <T> runInInitMode(runnable: () -> T): T {
   val old = InspectionProfileImpl.INIT_INSPECTIONS
   try {

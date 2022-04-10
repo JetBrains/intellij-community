@@ -3,43 +3,46 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.*
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView.Companion.ACTION_PLACE
 import com.intellij.openapi.externalSystem.dependency.analyzer.util.*
+import com.intellij.openapi.externalSystem.dependency.analyzer.util.DependencyGroup.Companion.hasWarnings
+import com.intellij.openapi.externalSystem.dependency.analyzer.util.bind
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
 import com.intellij.openapi.observable.operations.asProperty
-import com.intellij.openapi.observable.properties.AtomicObservableProperty
+import com.intellij.openapi.observable.operations.whenOperationCompleted
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.observable.properties.and
+import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.asSequence
+import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBLoadingPanel
-import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
 class DependencyAnalyzerViewImpl(
   private val project: Project,
   private val systemId: ProjectSystemId,
   private val parentDisposable: Disposable
 ) : DependencyAnalyzerView {
-  override val component: JComponent
 
   private val iconsProvider = ExternalSystemIconProvider.getExtension(systemId)
   private val contributor = DependencyAnalyzerExtension.EP_NAME.extensionList
@@ -49,19 +52,19 @@ class DependencyAnalyzerViewImpl(
   private val dependencyLoadingOperation = AnonymousParallelOperationTrace("DA: Dependency loading")
   private val dependencyLoadingProperty = dependencyLoadingOperation.asProperty()
 
-  private val externalProjectProperty = AtomicObservableProperty<ExternalProject?>(null)
-  private val dependencyDataFilterProperty = AtomicObservableProperty("")
-  private val dependencyScopeFilterProperty = AtomicObservableProperty(emptyList<ScopeItem>())
-  private val showDependencyWarningsProperty = AtomicObservableProperty(false)
-  private val showDependencyGroupIdProperty = AtomicObservableProperty(false)
-    .bindWithBooleanStorage(SHOW_GROUP_ID_PROPERTY)
+  private val externalProjectProperty = AtomicProperty<DependencyAnalyzerProject?>(null)
+  private val dependencyDataFilterProperty = AtomicProperty("")
+  private val dependencyScopeFilterProperty = AtomicProperty(emptyList<ScopeItem>())
+  private val showDependencyWarningsProperty = AtomicProperty(false)
+  private val showDependencyGroupIdProperty = AtomicProperty(false)
+    .bindBooleanStorage(SHOW_GROUP_ID_PROPERTY)
 
-  private val dependencyModelProperty = AtomicObservableProperty(emptyList<Dependency>())
-  private val dependencyProperty = AtomicObservableProperty<Dependency?>(null)
-  private val showDependencyTreeProperty = AtomicObservableProperty(false)
-    .bindWithBooleanStorage(SHOW_AS_TREE_PROPERTY)
-  private val dependencyEmptyTextProperty = AtomicObservableProperty("")
-  private val usagesTitleProperty = AtomicObservableProperty("")
+  private val dependencyModelProperty = AtomicProperty(emptyList<DependencyGroup>())
+  private val dependencyProperty = AtomicProperty<Dependency?>(null)
+  private val showDependencyTreeProperty = AtomicProperty(false)
+    .bindBooleanStorage(SHOW_AS_TREE_PROPERTY)
+  private val dependencyEmptyTextProperty = AtomicProperty("")
+  private val usagesTitleProperty = AtomicProperty("")
 
   private var externalProject by externalProjectProperty
   private var dependencyDataFilter by dependencyDataFilterProperty
@@ -74,35 +77,64 @@ class DependencyAnalyzerViewImpl(
   private var dependencyEmptyState by dependencyEmptyTextProperty
   private var usagesTitle by usagesTitleProperty
 
-  private val externalProjects = ArrayList<ExternalProject>()
+  private val externalProjects = ArrayList<DependencyAnalyzerProject>()
 
   private val dependencyListModel = CollectionListModel<DependencyGroup>()
   private val dependencyTreeModel = DefaultTreeModel(null)
   private val usagesTreeModel = DefaultTreeModel(null)
 
   override fun setSelectedExternalProject(externalProjectPath: String) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    externalProject = externalProjects.find { it.path == externalProjectPath }
+    setSelectedExternalProject(externalProjectPath) {}
   }
 
   override fun setSelectedDependency(externalProjectPath: String, dependency: Dependency) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    setSelectedExternalProject(externalProjectPath)
-    this.dependency = dependency
+    setSelectedExternalProject(externalProjectPath) {
+      this.dependency = dependency
+    }
+  }
+
+  override fun setSelectedDependency(externalProjectPath: String, data: Dependency.Data) {
+    setSelectedExternalProject(externalProjectPath) {
+      dependency = findDependency { it.data == data } ?: dependency
+    }
+  }
+
+  override fun setSelectedDependency(externalProjectPath: String, data: Dependency.Data, scope: Dependency.Scope) {
+    setSelectedExternalProject(externalProjectPath) {
+      dependency = findDependency { it.data == data && it.scope == scope } ?: dependency
+    }
+  }
+
+  private fun setSelectedExternalProject(externalProjectPath: String, onReady: () -> Unit) {
+    whenLoadingOperationCompleted {
+      externalProject = findExternalProject { it.path == externalProjectPath } ?: externalProject
+      whenLoadingOperationCompleted {
+        onReady()
+      }
+    }
+  }
+
+  private fun findDependency(predicate: (Dependency) -> Boolean): Dependency? {
+    return dependencyListModel.items.flatMap { it.variances }.find(predicate)
+           ?: dependencyModel.flatMap { it.variances }.find(predicate)
+  }
+
+  private fun findExternalProject(predicate: (DependencyAnalyzerProject) -> Boolean): DependencyAnalyzerProject? {
+    return externalProjects.find(predicate)
   }
 
   override fun getData(dataId: String): Any? {
     return when (dataId) {
       DependencyAnalyzerView.VIEW.name -> this
-      DependencyAnalyzerView.PROJECT.name -> project
-      DependencyAnalyzerView.EXTERNAL_SYSTEM_ID.name -> systemId
+      CommonDataKeys.PROJECT.name -> project
+      ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.name -> systemId
       DependencyAnalyzerView.EXTERNAL_PROJECT_PATH.name -> externalProject?.path
       else -> null
     }
   }
 
   private fun updateViewModel() {
-    invokeLater {
+    executeLoadingTaskOnEdt {
       updateExternalProjectsModel()
     }
   }
@@ -115,14 +147,14 @@ class DependencyAnalyzerViewImpl(
     val showDependencyWarnings = showDependencyWarnings
     return filter { dependency -> dependencyDataFilter in dependency.data.getDisplayText(showDependencyGroupId) }
       .filter { dependency -> dependency.scope in dependencyScopeFilter }
-      .filter { dependency -> if (showDependencyWarnings) dependency.status.any { it is Status.Warning } else true }
+      .filter { dependency -> if (showDependencyWarnings) dependency.hasWarnings else true }
   }
 
   private fun updateExternalProjectsModel() {
     externalProjects.clear()
     executeLoadingTask(
       onBackgroundThread = {
-        contributor.getExternalProjects()
+        contributor.getProjects()
       },
       onUiThread = { projects ->
         externalProjects.addAll(projects)
@@ -139,9 +171,9 @@ class DependencyAnalyzerViewImpl(
         externalProject?.path?.let(contributor::getDependencyScopes) ?: emptyList()
       },
       onUiThread = { scopes ->
-        val scopesIndex = dependencyScopeFilter.associate { it.scope.id to it.isSelected }
+        val scopesIndex = dependencyScopeFilter.associate { it.scope to it.isSelected }
         val isAny = scopesIndex.all { it.value }
-        dependencyScopeFilter = scopes.map { ScopeItem(it, scopesIndex[it.id] ?: isAny) }
+        dependencyScopeFilter = scopes.map { ScopeItem(it, scopesIndex[it] ?: isAny) }
       }
     )
   }
@@ -152,16 +184,20 @@ class DependencyAnalyzerViewImpl(
       onBackgroundThread = {
         externalProject?.path?.let(contributor::getDependencies) ?: emptyList()
       },
-      onUiThread = {
-        dependencyModel = it
+      onUiThread = { dependencies ->
+        dependencyModel = dependencies
+          .collectAllDependencies()
+          .createDependencyGroups()
       }
     )
   }
 
   private fun updateFilteredDependencyModel() {
-    val filteredDependencyGroups = dependencyModel
-      .filterDependencies()
-      .createDependencyGroups()
+    val filteredDependencyGroups = dependencyModel.asSequence()
+      .map { it.variances.filterDependencies() }
+      .filter { it.isNotEmpty() }
+      .map { DependencyGroup(it) }
+      .toList()
     dependencyListModel.replaceAll(filteredDependencyGroups)
 
     val filteredDependencies = filteredDependencyGroups.flatMap { it.variances }
@@ -184,11 +220,19 @@ class DependencyAnalyzerViewImpl(
   }
 
   private fun updateUsagesModel() {
-    val dependencies = dependencyListModel.asSequence()
-      .filter { it.data == dependency?.data }
+    val dependencies = dependencyModel.asSequence()
+      .filter { group -> dependency?.data in group.variances.map { it.data } }
       .flatMap { it.variances }
       .asIterable()
     usagesTreeModel.setRoot(buildTree(dependencies))
+  }
+
+  private fun executeLoadingTaskOnEdt(onUiThread: () -> Unit) {
+    dependencyLoadingOperation.startTask()
+    runInEdt {
+      onUiThread()
+      dependencyLoadingOperation.finishTask()
+    }
   }
 
   private fun <R> executeLoadingTask(onBackgroundThread: () -> R, onUiThread: (R) -> Unit) {
@@ -202,8 +246,16 @@ class DependencyAnalyzerViewImpl(
     }
   }
 
+  private fun whenLoadingOperationCompleted(onUiThread: () -> Unit) {
+    dependencyLoadingOperation.whenOperationCompleted(parentDisposable) {
+      runInEdt {
+        onUiThread()
+      }
+    }
+  }
+
   private fun buildTree(dependencies: Iterable<Dependency>): DefaultMutableTreeNode? {
-    val dependenciesForTree = dependencies.flatMap { getTreePath(it) }.toSet()
+    val dependenciesForTree = dependencies.collectAllDependencies()
 
     if (dependenciesForTree.isEmpty()) {
       return null
@@ -243,6 +295,10 @@ class DependencyAnalyzerViewImpl(
     return rootNode
   }
 
+  private fun Iterable<Dependency>.collectAllDependencies(): Set<Dependency> {
+    return flatMap { getTreePath(it) }.toSet()
+  }
+
   private fun getTreePath(dependency: Dependency): List<Dependency> {
     val dependencyPath = ArrayList<Dependency>()
     var current: Dependency? = dependency
@@ -259,10 +315,11 @@ class DependencyAnalyzerViewImpl(
   }
 
   private fun Iterable<Dependency>.createDependencyGroups(): List<DependencyGroup> =
-    groupBy { it.data.getGroup() }
+    sortedWith(Comparator.comparing({ it.data }, DependencyDataComparator(showDependencyGroupId)))
+      .groupBy { it.data.getGroup() }
       .map { DependencyGroup(it.value) }
 
-  init {
+  fun createComponent(): JComponent {
     val externalProjectSelector = ExternalProjectSelector(externalProjectProperty, externalProjects, iconsProvider)
       .bindEnabled(dependencyLoadingProperty)
     val dataFilterField = SearchTextField(SEARCH_HISTORY_PROPERTY)
@@ -299,7 +356,7 @@ class DependencyAnalyzerViewImpl(
       .bindEmptyText(dependencyEmptyTextProperty)
       .bindDependency(dependencyProperty)
       .bindEnabled(dependencyLoadingProperty)
-    val dependencyPanel = cardPanel<Boolean> { if (it) dependencyTree else dependencyList }
+    val dependencyPanel = cardPanel<Boolean> { ScrollPaneFactory.createScrollPane(if (it) dependencyTree else dependencyList, true) }
       .bind(showDependencyTreeProperty)
     val dependencyLoadingPanel = JBLoadingPanel(BorderLayout(), parentDisposable)
       .apply { add(dependencyPanel, BorderLayout.CENTER) }
@@ -328,7 +385,7 @@ class DependencyAnalyzerViewImpl(
       .asActionButton(ACTION_PLACE)
       .bindEnabled(dependencyLoadingProperty)
 
-    component = toolWindowPanel {
+    return toolWindowPanel {
       toolbar = toolbarPanel {
         addToLeft(horizontalPanel(
           externalProjectSelector,
@@ -352,7 +409,7 @@ class DependencyAnalyzerViewImpl(
               collapseDependencyTreeButton
             ))
           }
-          setContent(ScrollPaneFactory.createScrollPane(dependencyLoadingPanel, true))
+          setContent(dependencyLoadingPanel)
         }
         secondComponent = toolWindowPanel {
           toolbar = toolbarPanel {
@@ -398,6 +455,24 @@ class DependencyAnalyzerViewImpl(
       ExternalSystemProjectNotificationAware.whenNotificationChanged(project, {
         listener(get())
       }, parentDisposable)
+  }
+
+  private class DependencyDataComparator(private val showDependencyGroupId: Boolean) : Comparator<Dependency.Data> {
+    override fun compare(o1: Dependency.Data, o2: Dependency.Data): Int {
+      val text1 = o1.getDisplayText(showDependencyGroupId)
+      val text2 = o2.getDisplayText(showDependencyGroupId)
+      return when (o1) {
+        is Dependency.Data.Module -> when (o2) {
+          is Dependency.Data.Module -> NaturalComparator.INSTANCE.compare(text1, text2)
+          is Dependency.Data.Artifact -> -1
+        }
+
+        is Dependency.Data.Artifact -> when (o2) {
+          is Dependency.Data.Module -> 1
+          is Dependency.Data.Artifact -> NaturalComparator.INSTANCE.compare(text1, text2)
+        }
+      }
+    }
   }
 
   companion object {

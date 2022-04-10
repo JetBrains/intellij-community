@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core
 
@@ -10,10 +10,10 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
-import org.jetbrains.kotlin.idea.caches.IDEKotlinBinaryClassCache
 import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
@@ -56,7 +56,7 @@ class KotlinIndicesHelper(
 
     private val moduleDescriptor = resolutionFacade.moduleDescriptor
     private val project = resolutionFacade.project
-    private val scopeWithoutKotlin = scope.excludeKotlinSources() as GlobalSearchScope
+    private val scopeWithoutKotlin = scope.excludeKotlinSources(project) as GlobalSearchScope
 
     @OptIn(FrontendInternals::class)
     private val descriptorFilter: (DeclarationDescriptor) -> Boolean = filter@{
@@ -595,7 +595,7 @@ class KotlinIndicesHelper(
                 KotlinExceptionWithAttachments("KtElement not inside KtFile ($ktFile, is valid: ${ktFile.isValid})")
                     .withAttachment("file", ktFile)
                     .withAttachment("virtualFile", containingFile.virtualFile)
-                    .withAttachment("compiledFile", IDEKotlinBinaryClassCache.getInstance().isKotlinJvmCompiledFile(containingFile.virtualFile))
+                    .withAttachment("compiledFile", ClsKotlinBinaryClassCache.getInstance().isKotlinJvmCompiledFile(containingFile.virtualFile))
                     .withAttachment("element", this)
                     .withAttachment("type", javaClass)
                     .withPsiAttachment("file.kt", ktFile)

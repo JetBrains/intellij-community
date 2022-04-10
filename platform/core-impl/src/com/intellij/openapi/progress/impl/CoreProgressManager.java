@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
@@ -38,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.Supplier;
 
 public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(CoreProgressManager.class);
@@ -65,7 +67,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private enum CheckCanceledBehavior {NONE, ONLY_HOOKS, INDICATOR_PLUS_HOOKS}
 
   /**
-   * active (i.e. which have {@link #executeProcessUnderProgress(Runnable, ProgressIndicator)} method running) indicators
+   * active (i.e., which have {@link #executeProcessUnderProgress(Runnable, ProgressIndicator)} method running) indicators
    * which are not inherited from {@link StandardProgressIndicator}.
    * for them an extra processing thread (see {@link #myCheckCancelledFuture}) has to be run
    * to call their non-standard {@link ProgressIndicator#checkCanceled()} method periodically.
@@ -207,9 +209,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           LOG.error("This thread is already running under this indicator, starting/stopping it here might be a data race");
         }
         else {
-          StringWriter dump = new StringWriter();
-          ThreadDumper.dumpCallStack(other, dump, other.getStackTrace());
-          LOG.error("Other thread is already running under this indicator, starting/stopping it here might be a data race. Its thread dump:\n" + dump);
+          StringWriter stackTrace = new StringWriter();
+          ThreadDumper.dumpCallStack(other, stackTrace, other.getStackTrace());
+          LOG.error("Other (" + other +") is already running under this indicator (" + progress+", " + progress.getClass()+ ")," +
+                    " starting/stopping it here might be a data race. Its stack trace:\n" + stackTrace);
         }
       }
     }
@@ -336,7 +339,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
    * Different places in IntelliJ codebase behaves differently in case of headless mode.
    * <p>
    * Often, they're trying to make async parts synchronous to make it more predictable or controllable.
-   * E.g. in tests or IntelliJ-based command line tools this is the usual code:
+   * E.g., in tests or IntelliJ-based command line tools this is the usual code:
    * <p>
    * ```
    * if (ApplicationManager.getApplication().isHeadless()) {
@@ -516,7 +519,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   }
 
-  // ASSERT IS EDT->UI bg or calling if cant
+  // ASSERT IS EDT->UI bg or calling if can't
   // NEW: no assert; bg or calling ...
   protected boolean runProcessWithProgressSynchronously(@NotNull Task task) {
     Ref<Throwable> exceptionRef = new Ref<>();
@@ -616,28 +619,29 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   private <V, E extends Throwable> V computeUnderProgress(@NotNull ThrowableComputable<V, E> process, ProgressIndicator progress) throws E {
-    if (progress == null) myUnsafeProgressCount.incrementAndGet();
-
-    try {
-      ProgressIndicator oldIndicator = null;
-      boolean set = progress != null && progress != (oldIndicator = getProgressIndicator());
-      if (set) {
-        Thread currentThread = Thread.currentThread();
-        long threadId = currentThread.getId();
-        setCurrentIndicator(threadId, progress);
-        try {
-          return registerIndicatorAndRun(progress, currentThread, oldIndicator, process);
-        }
-        finally {
-          setCurrentIndicator(threadId, oldIndicator);
-        }
-      }
-      else {
+    if (progress == null) {
+      myUnsafeProgressCount.incrementAndGet();
+      try {
         return process.compute();
       }
+      finally {
+        myUnsafeProgressCount.decrementAndGet();
+      }
+    }
+
+    ProgressIndicator oldIndicator = getProgressIndicator();
+    if (progress == oldIndicator) {
+      return process.compute();
+    }
+
+    Thread currentThread = Thread.currentThread();
+    long threadId = currentThread.getId();
+    setCurrentIndicator(threadId, progress);
+    try {
+      return registerIndicatorAndRun(progress, currentThread, oldIndicator, process);
     }
     finally {
-      if (progress == null) myUnsafeProgressCount.decrementAndGet();
+      setCurrentIndicator(threadId, oldIndicator);
     }
   }
 
@@ -865,19 +869,13 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   private boolean isCurrentThreadEffectivelyPrioritized() {
-    Thread current = Thread.currentThread();
-    for (Thread prioritized : myEffectivePrioritizedThreads) {
-      if (prioritized == current) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.indexOfIdentity(myEffectivePrioritizedThreads, Thread.currentThread()) != -1;
   }
 
   private boolean checkLowPriorityReallyApplicable() {
     long time = System.nanoTime() - myPrioritizingStarted;
     if (time < 5_000_000) {
-      return false; // don't sleep when activities are very short (e.g. empty processing of mouseMoved events)
+      return false; // don't sleep when activities are very short (e.g., empty processing of mouseMoved events)
     }
 
     if (avoidBlockingPrioritizingThread()) {
@@ -959,6 +957,19 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   private static ProgressIndicator getCurrentIndicator(@NotNull Thread thread) {
     return currentIndicators.get(thread.getId());
+  }
+
+  @Override
+  public <X> X silenceGlobalIndicator(@NotNull Supplier<X> computable) {
+    long id = Thread.currentThread().getId();
+    ProgressIndicator indicator = currentIndicators.get(id);
+    setCurrentIndicator(id, null);
+    try {
+      return computable.get();
+    }
+    finally {
+      setCurrentIndicator(id, indicator);
+    }
   }
 
   @FunctionalInterface

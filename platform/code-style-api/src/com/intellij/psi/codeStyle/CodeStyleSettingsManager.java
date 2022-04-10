@@ -34,8 +34,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   /**
    * @deprecated Use {@link #setMainProjectCodeStyle(CodeStyleSettings)} or {@link #getMainProjectCodeStyle()} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nullable
   public volatile CodeStyleSettings PER_PROJECT_SETTINGS;
 
@@ -206,8 +205,6 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     return getInstance(project).getCurrentSettings();
   }
 
-  protected void checkState() {}
-
   /**
    * @deprecated see comments for {@link #getSettings(Project)} or {@link CodeStyle#getDefaultSettings()}
    */
@@ -216,7 +213,6 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   public CodeStyleSettings getCurrentSettings() {
     CodeStyleSettings temporarySettings = myTemporarySettings;
     if (temporarySettings != null) return temporarySettings;
-    checkState();
     CodeStyleSettings projectSettings = getMainProjectCodeStyle();
     if (USE_PER_PROJECT_SETTINGS && projectSettings != null) return projectSettings;
     return CodeStyleSchemes.getInstance().findPreferredScheme(PREFERRED_PROJECT_CODE_STYLE).getCodeStyleSettings();

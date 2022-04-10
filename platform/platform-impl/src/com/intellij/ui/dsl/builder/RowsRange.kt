@@ -2,10 +2,12 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Grouped rows range to perform operations on them. All rows use parent grid
  */
+@ApiStatus.NonExtendable
 interface RowsRange {
 
   fun visible(isVisible: Boolean): RowsRange

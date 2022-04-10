@@ -1,0 +1,8 @@
+// "Create member function 'Foo.bar'" "true"
+object Foo {
+    fun bar(s: String): Int {
+        TODO("Not yet implemented")
+    }
+}
+
+val f: (String) -> Int = Foo::bar

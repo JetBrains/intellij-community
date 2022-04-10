@@ -18,7 +18,10 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Async;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -39,7 +42,7 @@ public class Alarm implements Disposable {
 
   // requests scheduled to myExecutorService
   private final List<Request> myRequests = new SmartList<>(); // guarded by LOCK
-  // requests not yet scheduled to myExecutorService (because e.g. the corresponding component isn't active yet)
+  // requests not yet scheduled to myExecutorService (because e.g., the corresponding component isn't active yet)
   private final List<Request> myPendingRequests = new SmartList<>(); // guarded by LOCK
 
   private final ScheduledExecutorService myExecutorService;
@@ -74,7 +77,6 @@ public class Alarm implements Disposable {
 
     /** @deprecated Use {@link #POOLED_THREAD} instead */
     @Deprecated(forRemoval = true)
-    @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
     SHARED_THREAD,
 
     /**
@@ -302,7 +304,7 @@ public class Alarm implements Disposable {
   }
 
   /**
-   * wait for all requests to start execution (i.e. their delay elapses and their run() method, well, runs)
+   * wait for all requests to start execution (i.e., their delay elapses and their run() method, well, runs)
    * and then wait for the execution to finish.
    */
   @TestOnly
@@ -446,7 +448,6 @@ public class Alarm implements Disposable {
 
   /** @deprecated use {@link #Alarm(JComponent, Disposable)} instead */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public @NotNull Alarm setActivationComponent(@NotNull JComponent component) {
     PluginException.reportDeprecatedUsage("Alarm#setActivationComponent", "Please use `#Alarm(JComponent, Disposable)` instead");
     ApplicationManager.getApplication().assertIsDispatchThread();

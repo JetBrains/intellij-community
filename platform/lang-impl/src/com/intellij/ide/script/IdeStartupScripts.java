@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.script;
 
 import com.intellij.ide.extensionResources.ExtensionsRootType;
@@ -46,11 +46,12 @@ final class IdeStartupScripts implements StartupActivity.DumbAware {
     if (!isActive.compareAndSet(true, false)) {
       return;
     }
+
     List<Path> scripts = getScripts();
     LOG.info(scripts.size() + " startup script(s) found");
-    if (scripts.isEmpty()) return;
-
-    runAllScriptsImpl(project, prepareScriptsAndEngines(scripts), LOG);
+    if (!scripts.isEmpty()) {
+      runAllScriptsImpl(project, prepareScriptsAndEngines(scripts), LOG);
+    }
   }
 
   static @NotNull List<Pair<Path, IdeScriptEngine>> prepareScriptsAndEngines(List<Path> scripts) {

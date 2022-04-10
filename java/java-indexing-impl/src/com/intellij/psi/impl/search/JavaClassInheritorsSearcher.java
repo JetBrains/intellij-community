@@ -82,6 +82,10 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
 
     for (final PsiClass subClass : cached) {
       ProgressManager.checkCanceled();
+      if (subClass == null) {
+        // PsiAnchor failed to retrieve?
+        continue;
+      }
       if (ReadAction.compute(() ->
         checkCandidate(subClass, parameters) && !consumer.process(subClass))) {
         return;
@@ -90,17 +94,17 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
   }
 
   @NotNull
-  private static Iterable<PsiClass> getOrComputeSubClasses(@NotNull Project project,
-                                                           @NotNull PsiClass baseClass,
-                                                           @NotNull SearchScope searchScopeForNonPhysical,
-                                                           boolean includeAnonymous) {
+  private static Iterable<@NotNull PsiClass> getOrComputeSubClasses(@NotNull Project project,
+                                                                    @NotNull PsiClass baseClass,
+                                                                    @NotNull SearchScope searchScopeForNonPhysical,
+                                                                    boolean includeAnonymous) {
     HighlightingCaches caches = HighlightingCaches.getInstance(project);
     ConcurrentMap<PsiClass, Iterable<PsiClass>> map = includeAnonymous ? caches.ALL_SUB_CLASSES : caches.ALL_SUB_CLASSES_NO_ANONYMOUS;
     Iterable<PsiClass> cached = map.get(baseClass);
     if (cached == null) {
       // returns lazy collection of subclasses. Each call to next() leads to calculation of next batch of subclasses.
-      Function<PsiAnchor, PsiClass> converter =
-        anchor -> ReadAction.compute(() -> (PsiClass)anchor.retrieve());
+      Function<@NotNull PsiAnchor, @NotNull PsiClass> converter =
+        anchor -> ReadAction.compute(() -> (@NotNull PsiClass)anchor.retrieve());
       Predicate<PsiClass> applicableFilter =
         candidate -> !(candidate instanceof PsiAnonymousClass) && candidate != null && !candidate.hasModifierProperty(PsiModifier.FINAL);
       // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
@@ -109,7 +113,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       LazyConcurrentCollection.MoreElementsGenerator<PsiAnchor, PsiClass> generator = (candidate, processor) ->
         DirectClassInheritorsSearch.search(candidate, scopeToUse, includeAnonymous).allowParallelProcessing().forEach(subClass -> {
           ProgressManager.checkCanceled();
-          PsiAnchor pointer = ReadAction.compute(() -> PsiAnchor.create(subClass));
+          @NotNull PsiAnchor pointer = ReadAction.compute(() -> PsiAnchor.create(subClass));
           // append found result to subClasses as early as possible to allow other waiting threads to continue
           processor.accept(pointer);
           return true;
@@ -134,31 +138,40 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     VirtualFile[] virtualFiles = searchScope.getVirtualFiles();
 
     final boolean[] success = {true};
+    if (virtualFiles.length == 0) {
+      for (PsiElement element : searchScope.getScope()) {
+        processFile(element.getContainingFile(), consumer, parameters, baseClass, success);
+      }
+    }
     for (VirtualFile virtualFile : virtualFiles) {
       ProgressManager.checkCanceled();
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-          if (psiFile != null) {
-            psiFile.accept(new JavaRecursiveElementVisitor() {
-              @Override
-              public void visitClass(PsiClass candidate) {
-                ProgressManager.checkCanceled();
-                if (!success[0]) return;
-                if (candidate.isInheritor(baseClass, true)
-                    && checkCandidate(candidate, parameters)
-                    && !consumer.process(candidate)) {
-                  success[0] = false;
-                  return;
-                }
-                super.visitClass(candidate);
-              }
-            });
-          }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+        if (psiFile != null) {
+          processFile(psiFile, consumer, parameters, baseClass, success);
         }
       });
     }
+  }
+
+  private static void processFile(PsiFile psiFile,
+                           final Processor<? super PsiClass> consumer,
+                           final ClassInheritorsSearch.@NotNull SearchParameters parameters,
+                           @NotNull final PsiClass baseClass, final boolean[] success) {
+    psiFile.accept(new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitClass(PsiClass candidate) {
+        ProgressManager.checkCanceled();
+        if (!success[0]) return;
+        if (candidate.isInheritor(baseClass, true)
+            && checkCandidate(candidate, parameters)
+            && !consumer.process(candidate)) {
+          success[0] = false;
+          return;
+        }
+        super.visitClass(candidate);
+      }
+    });
   }
 
   private static boolean checkCandidate(@NotNull PsiClass candidate, @NotNull ClassInheritorsSearch.SearchParameters parameters) {

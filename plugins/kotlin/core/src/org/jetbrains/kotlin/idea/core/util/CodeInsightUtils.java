@@ -183,6 +183,7 @@ public class CodeInsightUtils {
         return element;
     }
 
+    @SafeVarargs
     @NotNull
     public static List<PsiElement> findElementsOfClassInRange(@NotNull PsiFile file, int startOffset, int endOffset, Class<? extends PsiElement> ... classes) {
         PsiElement element1 = getElementAtOffsetIgnoreWhitespaceBefore(file, startOffset);
@@ -360,8 +361,9 @@ public class CodeInsightUtils {
     }
 
 
+    @SafeVarargs
     @Nullable
-    public static <T> T getTopmostElementAtOffset(@NotNull PsiElement element, int offset, @NotNull Class<? extends T>... classes) {
+    public static <T> T getTopmostElementAtOffset(@NotNull PsiElement element, int offset, @NotNull Class<? extends T> @NotNull ... classes) {
         T lastElementOfType = null;
         if (anyIsInstance(element, classes)) {
             lastElementOfType = (T) element;
@@ -381,7 +383,7 @@ public class CodeInsightUtils {
         return lastElementOfType;
     }
 
-    private static <T> boolean anyIsInstance(PsiElement finalElement, @NotNull Class<? extends T>[] klass) {
+    private static <T> boolean anyIsInstance(PsiElement finalElement, @NotNull Class<? extends T> @NotNull [] klass) {
         return ArraysKt.any(klass, aClass -> aClass.isInstance(finalElement));
     }
 }

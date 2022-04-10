@@ -10,7 +10,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,8 +47,7 @@ public abstract class PostfixTemplate {
   /**
    * @deprecated use {@link #PostfixTemplate(String, String, String, PostfixTemplateProvider)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected PostfixTemplate(@NotNull @NlsSafe String name, @NotNull @NlsSafe String example) {
     this(null, name, "." + name, example, null);
   }
@@ -64,7 +62,7 @@ public abstract class PostfixTemplate {
   /**
    * @deprecated use {@link #PostfixTemplate(String, String, String, String, PostfixTemplateProvider)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected PostfixTemplate(@NotNull String name, @NotNull String key, @NotNull String example) {
     this(null, name, key, example, null);
   }

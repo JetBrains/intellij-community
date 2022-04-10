@@ -1,16 +1,8 @@
 {
   "name": "html",
-  "displayName": "%displayName%",
-  "description": "%description%",
   "version": "1.0.0",
-  "publisher": "vscode",
+  "description": "%description%",
   "license": "MIT",
-  "engines": {
-    "vscode": "0.10.x"
-  },
-  "scripts": {
-    "update-grammar": "node ./build/update-grammar.js"
-  },
   "contributes": {
     "languages": [
       {
@@ -77,9 +69,5 @@
         }
       }
     ]
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/vscode.git"
   }
 }

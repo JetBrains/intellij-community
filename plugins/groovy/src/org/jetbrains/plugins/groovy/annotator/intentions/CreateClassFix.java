@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
@@ -200,6 +200,13 @@ public abstract class CreateClassFix {
             return factory.createInterface(name);
           case ANNOTATION:
             return factory.createAnnotationType(name);
+          case RECORD:
+            if (factory instanceof GroovyPsiElementFactory) {
+              return ((GroovyPsiElementFactory)factory).createRecord(name);
+            }
+            else {
+              return null;
+            }
           default:
             return null;
         }
@@ -267,6 +274,8 @@ public abstract class CreateClassFix {
         return GroovyTemplates.GROOVY_INTERFACE;
       case ANNOTATION:
         return GroovyTemplates.GROOVY_ANNOTATION;
+      case RECORD:
+        return GroovyTemplates.GROOVY_RECORD;
       default:
         return null;
     }

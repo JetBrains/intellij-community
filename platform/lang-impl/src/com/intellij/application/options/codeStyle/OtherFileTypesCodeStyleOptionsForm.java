@@ -33,8 +33,6 @@ import java.awt.*;
 
 /**
  * Used for non-language settings (if file type is not supported by Intellij IDEA), for example, plain text.
- *
- * @author Rustam Vishnyakov.
  */
 public class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
   private final IndentOptionsEditorWithSmartTabs myIndentOptionsEditor;

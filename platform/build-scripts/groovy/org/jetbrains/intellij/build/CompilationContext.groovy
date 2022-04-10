@@ -15,7 +15,6 @@ import java.nio.file.Path
 @CompileStatic
 interface CompilationContext {
   AntBuilder getAnt()
-  GradleRunner getGradle()
   BuildOptions getOptions()
   BuildMessages getMessages()
   BuildPaths getPaths()

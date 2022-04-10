@@ -17,8 +17,5 @@ interface NotebookCellSelectionModel {
 
   fun removeSelection(cell: NotebookCellLines.Interval)
 
-  fun selectSingleCell(cell: NotebookCellLines.Interval) {
-    selectCell(cell, makePrimary = true)
-    removeSecondarySelections()
-  }
+  fun selectSingleCell(cell: NotebookCellLines.Interval)
 }

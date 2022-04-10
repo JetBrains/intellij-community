@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
 import org.jetbrains.kotlin.idea.refactoring.getLineNumber
@@ -87,8 +87,8 @@ private fun KtIfExpression.lastSingleElseKeyword(): PsiElement? {
 }
 
 private fun KtIfExpression.hasRedundantElse(): Boolean {
-    val context = analyze()
-    if (isUsedAsExpression(context)) return false
+    val context = safeAnalyzeNonSourceRootCode()
+    if (context == BindingContext.EMPTY || isUsedAsExpression(context)) return false
     var ifExpression = this
     while (true) {
         if ((ifExpression.then)?.isReturnOrNothing(context) != true) return false

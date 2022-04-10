@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.ide.IdeBundle;
@@ -23,11 +23,11 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReadOnlyStatusDialog extends OptionsDialog {
+public final class ReadOnlyStatusDialog extends OptionsDialog {
   private static final SimpleTextAttributes BOLD_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.foreground());
   private static final SimpleTextAttributes SELECTED_BOLD_ATTRIBUTES =
-    new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, new JBColor(() -> UIUtil.getListSelectionForeground(true)));
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.lazy(() -> UIUtil.getListSelectionForeground(true)));
 
   private JPanel myTopPanel;
   private JList<PresentableFileInfo> myFileList;

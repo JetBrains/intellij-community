@@ -32,6 +32,8 @@ import training.statistic.FeatureUsageStatisticConsts.HELP_LINK_CLICKED
 import training.statistic.FeatureUsageStatisticConsts.KEYMAP_SCHEME
 import training.statistic.FeatureUsageStatisticConsts.LANGUAGE
 import training.statistic.FeatureUsageStatisticConsts.LAST_BUILD_LEARNING_OPENED
+import training.statistic.FeatureUsageStatisticConsts.LEARNING_PROBLEM
+import training.statistic.FeatureUsageStatisticConsts.LEARNING_PROBLEM_EVENT
 import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENED_FIRST_TIME
 import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENING_WAY
 import training.statistic.FeatureUsageStatisticConsts.LESSON_ID
@@ -62,7 +64,7 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JOptionPane
 
 enum class LessonStartingWay {
-  NEXT_BUTTON, PREV_BUTTON, RESTART_BUTTON, RESTORE_LINK, ONBOARDING_PROMOTER, LEARN_TAB, TIP_AND_TRICK_PROMOTER
+  NEXT_BUTTON, PREV_BUTTON, RESTART_BUTTON, RESTORE_LINK, ONBOARDING_PROMOTER, LEARN_TAB, TIP_AND_TRICK_PROMOTER, NO_SDK_RESTART
 }
 
 internal enum class FeedbackEntryPlace {
@@ -71,6 +73,10 @@ internal enum class FeedbackEntryPlace {
 
 internal enum class FeedbackLikenessAnswer {
   NO_ANSWER, LIKE, DISLIKE
+}
+
+enum class LearningProblems {
+  NO_SDK_CONFIGURED, // Before learning start we are trying to autoconfigure SDK or at least ask about location
 }
 
 internal class StatisticBase : CounterUsagesCollector() {
@@ -90,7 +96,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val LOG = logger<StatisticBase>()
     private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
     private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 16)
+    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 17)
 
     var isLearnProjectCloseLogged = false
 
@@ -116,6 +122,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val feedbackOpenedViaNotification = EventFields.Boolean(FEEDBACK_OPENED_VIA_NOTIFICATION)
     private val feedbackLikenessAnswer = EventFields.Enum<FeedbackLikenessAnswer>(FEEDBACK_LIKENESS_ANSWER)
     private val feedbackExperiencedUser = EventFields.Boolean(FEEDBACK_EXPERIENCED_USER)
+    private val learningProblemField = EventFields.Enum<LearningProblems>(LEARNING_PROBLEM)
 
     private val lastBuildLearningOpened = object : PrimitiveEventField<String?>() {
       override val name: String = LAST_BUILD_LEARNING_OPENED
@@ -153,6 +160,9 @@ internal class StatisticBase : CounterUsagesCollector() {
       GROUP.registerEvent(SHOW_NEW_LESSONS, newLessonsCount, lastBuildLearningOpened)
     private val needShowNewLessonsNotifications =
       GROUP.registerEvent(NEED_SHOW_NEW_LESSONS_NOTIFICATIONS, newLessonsCount, lastBuildLearningOpened, showNewLessonsState)
+
+    private val learningProblem =
+      GROUP.registerEvent(LEARNING_PROBLEM_EVENT, learningProblemField, lessonIdField, languageField)
 
     private val lessonLinkClickedFromTip = GROUP.registerEvent(LESSON_LINK_CLICKED_FROM_TIP, lessonIdField, languageField, tipFilenameField)
     private val helpLinkClicked = GROUP.registerEvent(HELP_LINK_CLICKED, lessonIdField, languageField)
@@ -285,6 +295,10 @@ internal class StatisticBase : CounterUsagesCollector() {
         feedbackLikenessAnswer with likenessAnswer,
         feedbackExperiencedUser with experiencedUser
       )
+    }
+
+    fun logLearningProblem(problem: LearningProblems, lesson: Lesson) {
+      learningProblem.log(problem, lesson.id, courseLanguage())
     }
 
     private fun courseLanguage() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.toLowerCase() ?: ""

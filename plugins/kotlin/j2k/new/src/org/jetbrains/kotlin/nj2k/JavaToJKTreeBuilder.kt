@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k
 
@@ -18,14 +18,14 @@ import com.intellij.psi.infos.MethodCandidateInfo
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.TypeConversionUtil.calcTypeForBinaryExpression
+import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.idea.caches.lightClasses.KtLightClassForDecompiledDeclaration
+import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.j2k.content
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -41,7 +41,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-
 
 class JavaToJKTreeBuilder constructor(
     private val symbolProvider: JKSymbolProvider,
@@ -141,7 +140,7 @@ class JavaToJKTreeBuilder constructor(
         val name =
             target.safeAs<KtLightElement<*, *>>()?.kotlinOrigin?.getKotlinFqName()?.asString()
                 ?: target.safeAs<KtLightClass>()?.containingFile?.safeAs<KtFile>()?.packageFqName?.asString()?.let { "$it.*" }
-                ?: target.safeAs<KtLightClassForFacade>()?.fqName?.parent()?.asString()?.let { "$it.*" }
+                ?: target.safeAs<KtLightClassForFacade>()?.facadeClassFqName?.parent()?.asString()?.let { "$it.*" }
                 ?: target.safeAs<KtLightClassForDecompiledDeclaration>()?.fqName()?.parent()?.asString()?.let { "$it.*" }
                 ?: rawName
 
@@ -190,7 +189,7 @@ class JavaToJKTreeBuilder constructor(
             )
             is PsiPolyadicExpression -> {
                 val token = JKOperatorToken.fromElementType(operationTokenType)
-                val jkOperandsWithPsiTypes = operands.map { it.toJK().withLineBreaksFrom(it).parenthesizeIfBinaryExpression() to it.type }
+                val jkOperandsWithPsiTypes = operands.map { it.toJK().withLineBreaksFrom(it).parenthesizeIfCompoundExpression() to it.type }
                 jkOperandsWithPsiTypes.reduce { (left, leftType), (right, rightType) ->
                     val psiType = calcTypeForBinaryExpression(leftType, rightType, operationTokenType, true)
                     val jkType = psiType?.toJK() ?: typeFactory.types.nullableAny
@@ -361,7 +360,7 @@ class JavaToJKTreeBuilder constructor(
                     when (val origin = target.kotlinOrigin) {
                         is KtNamedFunction -> {
                             if (origin.isExtensionDeclaration()) {
-                                val receiver = arguments.expressions.firstOrNull()?.toJK()?.parenthesizeIfBinaryExpression()
+                                val receiver = arguments.expressions.firstOrNull()?.toJK()?.parenthesizeIfCompoundExpression()
                                 origin.fqName?.also { importStorage.addImport(it) }
                                 JKCallExpressionImpl(
                                     symbolProvider.provideDirectSymbol(origin) as JKMethodSymbol,
@@ -530,7 +529,7 @@ class JavaToJKTreeBuilder constructor(
                         classOrAnonymousClassReference?.resolve()?.let {
                             symbolProvider.provideDirectSymbol(it) as JKClassSymbol
                         } ?: JKUnresolvedClassSymbol(
-                            classOrAnonymousClassReference?.referenceName ?: NO_NAME_RPOVIDNO_NAME_PROVIDEDD,
+                            classOrAnonymousClassReference?.referenceName ?: NO_NAME_PROVIDED,
                             typeFactory
                         )
                     val typeArgumentList =
@@ -547,7 +546,9 @@ class JavaToJKTreeBuilder constructor(
                         typeArgumentList,
                         with(declarationMapper) { anonymousClass?.createClassBody() } ?: JKClassBody(),
                         anonymousClass != null
-                    )
+                    ).also {
+                        it.psi = this
+                    }
                 }
             return newExpression.qualified(qualifier?.toJK())
         }
@@ -789,9 +790,9 @@ class JavaToJKTreeBuilder constructor(
 
         fun PsiAnnotation.toJK(): JKAnnotation {
             val symbol = when (val reference = nameReferenceElement) {
-                null -> JKUnresolvedClassSymbol(NO_NAME_RPOVIDNO_NAME_PROVIDEDD, typeFactory)
+                null -> JKUnresolvedClassSymbol(NO_NAME_PROVIDED, typeFactory)
                 else -> symbolProvider.provideSymbolForReference<JKSymbol>(reference).safeAs<JKClassSymbol>()
-                    ?: JKUnresolvedClassSymbol(nameReferenceElement?.text ?: NO_NAME_RPOVIDNO_NAME_PROVIDEDD, typeFactory)
+                    ?: JKUnresolvedClassSymbol(nameReferenceElement?.text ?: NO_NAME_PROVIDED, typeFactory)
             }
             return JKAnnotation(
                 symbol,
@@ -799,7 +800,7 @@ class JavaToJKTreeBuilder constructor(
                     if (parameter.nameIdentifier != null) {
                         JKAnnotationNameParameter(
                             parameter.value?.toJK() ?: JKStubExpression(),
-                            JKNameIdentifier(parameter.name ?: NO_NAME_RPOVIDNO_NAME_PROVIDEDD)
+                            JKNameIdentifier(parameter.name ?: NO_NAME_PROVIDED)
                         )
                     } else {
                         JKAnnotationParameterImpl(
@@ -1017,7 +1018,7 @@ class JavaToJKTreeBuilder constructor(
         fun PsiCatchSection.toJK(): JKJavaTryCatchSection =
             JKJavaTryCatchSection(
                 parameter?.toJK()
-                    ?: JKParameter(JKTypeElement(JKNoType), JKNameIdentifier(NO_NAME_RPOVIDNO_NAME_PROVIDEDD)),
+                    ?: JKParameter(JKTypeElement(JKNoType), JKNameIdentifier(NO_NAME_PROVIDED)),
                 catchBlock?.toJK() ?: JKBodyStub
             ).also {
                 it.psi = this
@@ -1078,7 +1079,7 @@ class JavaToJKTreeBuilder constructor(
                         statement.isDefaultCase -> JKJavaDefaultSwitchCase(emptyList())
                         else -> JKJavaClassicLabelSwitchCase(
                             with(expressionTreeMapper) {
-                                statement.getCaseLabelElementList()?.elements?.map { (it as? PsiExpression).toJK() }.orEmpty()
+                                statement.caseLabelElementList?.elements?.map { (it as? PsiExpression).toJK() }.orEmpty()
                             },
                             emptyList()
                         )
@@ -1090,7 +1091,7 @@ class JavaToJKTreeBuilder constructor(
                         else -> {
                             JKJavaArrowSwitchLabelCase(
                                 with(expressionTreeMapper) {
-                                    statement.getCaseLabelElementList()?.elements?.map { (it as? PsiExpression).toJK() }.orEmpty()
+                                    statement.caseLabelElementList?.elements?.map { (it as? PsiExpression).toJK() }.orEmpty()
                                 },
                                 listOf(body),
                             )
@@ -1111,7 +1112,6 @@ class JavaToJKTreeBuilder constructor(
 
     companion object {
         private const val DEPRECATED_ANNOTATION_FQ_NAME = "java.lang.Deprecated"
-        private const val NO_NAME_RPOVIDNO_NAME_PROVIDEDD = "NO_NAME_PROVIDED"
+        private const val NO_NAME_PROVIDED = "NO_NAME_PROVIDED"
     }
 }
-

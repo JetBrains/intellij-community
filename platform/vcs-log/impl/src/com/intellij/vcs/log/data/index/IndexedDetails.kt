@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 class IndexedDetails(private val dataGetter: IndexDataGetter,
                      storage: VcsLogStorage,
                      private val commitIndex: Int,
-                     loadingTaskIndex: Long = 0) : LoadingDetailsImpl({ storage.getCommitId(commitIndex) }, loadingTaskIndex) {
+                     loadingTaskIndex: Long = 0) : LoadingDetailsImpl(storage, commitIndex, loadingTaskIndex) {
   private val _parents by lazy { dataGetter.getParents(commitIndex) }
   private val _author by lazy { dataGetter.getAuthor(commitIndex) }
   private val _committer by lazy { dataGetter.getCommitter(commitIndex) }

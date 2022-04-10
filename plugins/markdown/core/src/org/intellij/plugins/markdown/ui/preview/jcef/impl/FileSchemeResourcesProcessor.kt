@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.jcef.impl
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.DigestUtil
@@ -16,7 +17,10 @@ internal class FileSchemeResourcesProcessor: IncrementalDOMBuilder.FileSchemeRes
   private val resources = hashMapOf<String, String>()
 
   override fun processFileSchemeResource(basePath: Path, originalUri: URI): String? {
-    val path = originalUri.path?.takeUnless { it.isEmpty() } ?: return null
+    var path = originalUri.path?.takeUnless { it.isEmpty() } ?: return null
+    if (SystemInfo.isWindows && path.startsWith("/")) {
+      path = path.trimStart('/', '\\')
+    }
     val resolvedPath = basePath.resolve(path)
     if (resolvedPath.notExists() || resolvedPath.isDirectory()) {
       return null

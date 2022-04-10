@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShFileType;
+import com.intellij.sh.ShNotificationDisplayIds;
 import com.intellij.sh.codeStyle.ShCodeStyleSettings;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.sh.ShBundle.message;
+import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP;
 import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
 
 public class ShExternalFormatter extends AsyncDocumentFormattingService {
@@ -72,20 +74,24 @@ public class ShExternalFormatter extends AsyncDocumentFormattingService {
     String shFmtExecutable = ShSettings.getShfmtPath();
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
       if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        Notification notification = new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"), message("sh.fmt.install.question"),
+        Notification notification = NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.fmt.install.question"),
                                                      NotificationType.INFORMATION);
+        notification.setDisplayId(ShNotificationDisplayIds.INSTALL_FORMATTER);
+        notification.setSuggestionType(true);
         notification.addAction(
           NotificationAction.createSimple(ShBundle.messagePointer("sh.install"), () -> {
             notification.expire();
             ShShfmtFormatterUtil.download(formattingContext.getProject(),
                                           () -> Notifications.Bus
-                                            .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"),
+                                            .notify(NOTIFICATION_GROUP.createNotification(message("sh.shell.script"),
                                                                      message("sh.fmt.success.install"),
-                                                                     NotificationType.INFORMATION)),
+                                                                     NotificationType.INFORMATION)
+                                                      .setDisplayId(ShNotificationDisplayIds.INSTALL_FORMATTER_SUCCESS)),
                                           () -> Notifications.Bus
-                                            .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"),
+                                            .notify(NOTIFICATION_GROUP.createNotification(message("sh.shell.script"),
                                                                      message("sh.fmt.cannot.download"),
-                                                                     NotificationType.ERROR)));
+                                                                     NotificationType.ERROR)
+                                                      .setDisplayId(ShNotificationDisplayIds.INSTALL_FORMATTER_ERROR)));
           }));
         notification.addAction(NotificationAction.createSimple(ShBundle.messagePointer("sh.no.thanks"), () -> {
           notification.expire();

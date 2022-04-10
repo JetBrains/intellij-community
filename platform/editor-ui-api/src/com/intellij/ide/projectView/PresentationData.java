@@ -16,7 +16,6 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,8 +137,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    *             Sets the icon shown for the node when it is collapsed in a tree, or when it is displayed
    *             in a non-tree view.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void setClosedIcon(Icon closedIcon) {
     setIcon(closedIcon);
   }
@@ -150,8 +148,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    * @deprecated Different icons for open/closed no longer supported. This function is no op.
    *             Sets the icon shown for the node when it is expanded in the tree.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void setOpenIcon(Icon openIcon) {
   }
 

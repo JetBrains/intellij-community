@@ -630,7 +630,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testImplicitUnboxingExtendsInteger() { doTest(); }
 
   public void testIncompleteArrayAccessInLoop() { doTest(); }
-  public void testSameArguments() { doTest(); }
   public void testMaxLoop() { doTest(); }
   public void testExplicitBoxing() { doTest(); }
   public void testBoxedBoolean() { doTest(); }
@@ -716,4 +715,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testVarargConstructorNoArgs() { doTest(); }
   public void testStringBuilderLengthReturn() { doTest(); }
   public void testEqualsTwoFields() { doTest();}
+  public void testPureMethodReadsMutableArray() { doTest(); }
+  public void testBoxingInConstructorArguments() { doTest(); }
+  public void testBoxingInArrayDeclaration() { doTest(); }
+  public void testNestedVersusSuper() { doTest(); }
 }

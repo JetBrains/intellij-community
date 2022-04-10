@@ -5,6 +5,8 @@ import com.intellij.dvcs.branch.DvcsBranchUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -22,6 +24,10 @@ import javax.swing.*;
 import java.util.Objects;
 
 public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAware {
+
+  public GitBranchesComboBoxAction() {
+    KeymapManager.getInstance().bindShortcuts("Git.Branches", "Git.ShowBranches");
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -43,6 +49,7 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwa
     presentation.setText(name, false);
     presentation.setIcon(BranchIconUtil.Companion.getBranchIcon(repo));
     presentation.setEnabledAndVisible(true);
+    presentation.setDescription(GitBundle.messagePointer("action.Git.ShowBranches.description").get());
   }
 
   @Override

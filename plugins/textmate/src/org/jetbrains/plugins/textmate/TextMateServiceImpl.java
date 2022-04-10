@@ -90,7 +90,7 @@ public final class TextMateServiceImpl extends TextMateService {
       if (bundleConfigBean.isEnabled()) {
         VirtualFile bundleFile = LocalFileSystem.getInstance().findFileByPath(bundleConfigBean.getPath());
         boolean result = registerBundle(bundleFile, newExtensionsMapping);
-        if (!result) {
+        if (!result && (bundleFile != null || !bundleConfigBean.getPath().startsWith(BUNDLED_BUNDLES_PATH))) {
           String bundleName = bundleConfigBean.getName();
           String errorMessage = bundleFile != null ? TextMateBundle.message("textmate.cant.register.bundle", bundleName)
                                                    : TextMateBundle.message("textmate.cant.find.bundle", bundleName);
@@ -134,11 +134,12 @@ public final class TextMateServiceImpl extends TextMateService {
     TextMateSettings.TextMateSettingsState state = settings.getState();
     state = state == null ? new TextMateSettings.TextMateSettingsState() : state;
 
-    List<BundleConfigBean> newBundles = new ArrayList<>(state.getBundles());
+    List<BundleConfigBean> oldBundles = state.getBundles();
+    List<BundleConfigBean> newBundles = new ArrayList<>(oldBundles);
     for (File file : files) {
       if (file.getName().startsWith(".")) continue;
       String path = FileUtil.toSystemIndependentName(file.getPath());
-      BundleConfigBean existing = ContainerUtil.find(state.getBundles(), (BundleConfigBean bundle) -> bundle.getPath().equals(path));
+      BundleConfigBean existing = ContainerUtil.find(oldBundles, (BundleConfigBean bundle) -> bundle.getPath().equals(path));
       if (existing != null) {
         continue;
       }

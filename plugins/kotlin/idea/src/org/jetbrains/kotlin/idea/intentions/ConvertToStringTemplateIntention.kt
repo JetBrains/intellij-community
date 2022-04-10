@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
@@ -130,7 +131,7 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
 
         private fun isApplicableToNoParentCheck(expression: KtBinaryExpression): Boolean {
             if (expression.operationToken != KtTokens.PLUS) return false
-            val expressionType = expression.analyze(BodyResolveMode.PARTIAL).getType(expression)
+            val expressionType = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL).getType(expression)
             if (!KotlinBuiltIns.isString(expressionType)) return false
             return isSuitable(expression)
         }

@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -37,6 +36,16 @@ import java.util.List;
 import static com.intellij.codeInsight.daemon.problems.pass.ProjectProblemHintProvider.hintsEnabled;
 import static com.intellij.util.ObjectUtils.tryCast;
 
+/**
+ * Listener that reacts to user initiated changes and updates current problems state.
+ * <p>
+ * Events that are handled by this listener:
+ * 1. selection change (user opened different file) -> store current timestamp for closed file and restores state for new file
+ * 2. vfs changes -> remove states for deleted files, remove problems for updated files (in order to recalculate them later)
+ * 3. hints settings change -> rollback file state, so that there are no reported problems yet (but they can be found using a rollbacked state)
+ * 4. refactoring done for member -> rollback member file state
+ * 5. psi tree changed -> rollback file state for all the editors with this file
+ */
 final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter implements FileEditorManagerListener,
                                                                                         InlayHintsSettings.SettingsListener,
                                                                                         BulkFileListener,

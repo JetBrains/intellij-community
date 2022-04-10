@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -6,13 +6,13 @@ import com.intellij.codeInsight.lookup.*
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.completion.handlers.BaseDeclarationInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.KotlinClassifierInsertHandler
+import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionCompositeDeclarativeInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionInsertHandler
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.core.completion.PackageLookupObject
@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.synthetic.SamAdapterExtensionFunctionDescriptor
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
-import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
+import org.jetbrains.kotlin.util.firstNotNullResult
 import java.awt.Font
 import javax.swing.Icon
 
@@ -37,7 +37,7 @@ class BasicLookupElementFactory(
     val insertHandlerProvider: InsertHandlerProvider
 ) {
     companion object {
-        // we skip parameter names in functional types in most of cases for shortness
+        // we skip parameter names in functional types in most of the cases for shortness
         val SHORT_NAMES_RENDERER = DescriptorRenderer.SHORT_NAMES_IN_TYPES.withOptions {
             enhancedTypes = true
             parameterNamesInFunctionalTypes = false
@@ -93,7 +93,7 @@ class BasicLookupElementFactory(
                 for (i in 1..nestLevel) {
                     val outerClassName = containerName.substringAfterLast('.')
                     element = element.withLookupString(outerClassName)
-                    itemText = outerClassName + "." + itemText
+                    itemText = "$outerClassName.$itemText"
                     containerName = containerName.substringBeforeLast('.', FqName.ROOT.toString())
                 }
                 element = element.withPresentableText(itemText!!)
@@ -192,7 +192,12 @@ class BasicLookupElementFactory(
                     parametersAndTypeGrayed
                 )
 
-                val insertsLambda = (insertHandler as? KotlinFunctionInsertHandler.Normal)?.lambdaInfo != null
+                val insertsLambda = when (insertHandler) {
+                    is KotlinFunctionInsertHandler.Normal -> insertHandler.lambdaInfo != null
+                    is KotlinFunctionCompositeDeclarativeInsertHandler -> insertHandler.isLambda
+                    else -> false
+                }
+
                 if (insertsLambda) {
                     element = element.appendTailText(" {...} ", parametersAndTypeGrayed)
                 }

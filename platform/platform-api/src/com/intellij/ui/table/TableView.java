@@ -24,7 +24,6 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.TableViewModel;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,8 +58,7 @@ public class TableView<Item> extends BaseTableView implements SelectionProvider 
   /**
    * @deprecated use {@link #setModelAndUpdateColumns(ListTableModel<Item>)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void setModel(final ListTableModel<Item> model) {
     setModelAndUpdateColumns(model);
   }

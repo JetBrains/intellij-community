@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.commander;
 
@@ -39,6 +39,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -261,7 +262,7 @@ public class CommanderPanel extends JPanel {
 
     myParentTitle = new MyTitleLabel(myTitlePanel);
     myParentTitle.setText(" ");
-    myParentTitle.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    myParentTitle.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
     myParentTitle.setForeground(JBColor.foreground());
     myParentTitle.setUI(new RightAlignedLabelUI());
     final JPanel panel1 = new JPanel(new BorderLayout());

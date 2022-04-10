@@ -189,7 +189,7 @@ class ModulesToIRsConverter(
                     persistentListOf()
                 ),
                 listOf(module),
-                data.pomIr.copy(artifactId = module.name),
+                data.pomIr.copy(),
                 isRoot = false, /* TODO */
                 renderPomIr = renderPomIr,
                 writer.createBuildFileIRs(module, state)

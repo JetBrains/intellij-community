@@ -2,10 +2,10 @@
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -20,7 +20,7 @@ public class AlphaNumericTypeCommand extends TypeCommand {
   }
 
   @Override
-  public Promise<Object> _execute(PlaybackContext context) {
+  public @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     return type(context, getText());
   }
 

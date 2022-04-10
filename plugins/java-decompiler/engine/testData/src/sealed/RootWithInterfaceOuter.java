@@ -1,4 +1,4 @@
 package sealed;
 
-sealed interface RootWithInterfaceOuter permits FinalImplements, InterfaceNonSealed, ClassNonSealedImplements {
+sealed interface RootWithInterfaceOuter permits ClassImplements, InterfaceNonSealed, ClassNonSealedExtendsImplements {
 }

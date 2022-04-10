@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractMethodFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +32,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class OverlyComplexBooleanExpressionInspection extends BaseInspection {
-  protected static final Set<IElementType> s_booleanOperators = new HashSet<>(5);
+  private static final Set<IElementType> s_booleanOperators = new HashSet<>(5);
   static {
     s_booleanOperators.add(JavaTokenType.ANDAND);
     s_booleanOperators.add(JavaTokenType.OROR);
@@ -117,6 +118,9 @@ public class OverlyComplexBooleanExpressionInspection extends BaseInspection {
         return;
       }
       if (m_ignorePureConjunctionsDisjunctions && isPureConjunctionDisjunction(expression)) {
+        return;
+      }
+      if (ExpressionUtils.isOnlyExpressionInMethod(expression)) {
         return;
       }
       registerError(expression, Integer.valueOf(numTerms));

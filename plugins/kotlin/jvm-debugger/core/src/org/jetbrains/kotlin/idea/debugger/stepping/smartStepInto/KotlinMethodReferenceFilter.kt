@@ -3,19 +3,22 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.BreakpointStepMethodFilter
+import com.intellij.util.Range
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 
 class KotlinMethodReferenceFilter(
-    target: KotlinMethodReferenceSmartStepTarget
-) : KotlinMethodFilter(
-    target.declaration,
-    false,
-    target.callingExpressionLines,
-    target.targetMethodName
-), BreakpointStepMethodFilter {
+    declaration: KtDeclarationWithBody?,
+    lines: Range<Int>?,
+    methodInfo: CallableMemberInfo
+) : KotlinMethodFilter(declaration, lines, methodInfo), BreakpointStepMethodFilter {
     private val breakpointPosition: SourcePosition?
     private val lastStatementLine: Int
     init {
-        val (firstPosition, lastPosition) = findFirstAndLastStatementPositions(target.declaration)
+        val (firstPosition, lastPosition) =
+            if (declaration != null)
+                findFirstAndLastStatementPositions(declaration)
+            else
+                Pair(null, null)
         breakpointPosition = firstPosition
         lastStatementLine = lastPosition?.line ?: -1
     }

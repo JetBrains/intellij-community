@@ -86,24 +86,33 @@ class IntellijModulesPublication {
       !options.modulesToExclude.contains(it.name)
     }
     if (modules.isEmpty()) context.messages.warning('Nothing to publish')
-    modules.each {
-      def coordinates = MavenArtifactsBuilder.generateMavenCoordinates(it.name, context.messages, options.version)
-      def dir = new File(options.outputDir, coordinates.directoryPath)
-      def pom = new File(dir, coordinates.getFileName('', 'pom'))
-      def jar = new File(dir, coordinates.getFileName('', 'jar'))
-      def sources = new File(dir, coordinates.getFileName('sources', 'jar'))
-      if (jar.exists()) {
-        deployJar(jar, pom, coordinates)
+    modules.each { JpsModule module ->
+      def coordinates = MavenArtifactsBuilder.generateMavenCoordinates(module.name, context.messages, options.version)
+      deployModuleArtifact(coordinates)
+
+      def squashedCoordinates = MavenArtifactsBuilder.generateMavenCoordinatesSquashed(module.name, context.messages, options.version)
+      if (new File(options.outputDir, squashedCoordinates.directoryPath).exists()) {
+        deployModuleArtifact(squashedCoordinates)
       }
-      else {
-        context.messages.warning("$it.name jar is not found")
-      }
-      if (sources.exists()) {
-        deploySources(sources, coordinates)
-      }
-      else {
-        context.messages.warning("$it.name sources is not found")
-      }
+    }
+  }
+
+  private void deployModuleArtifact(MavenArtifactsBuilder.MavenCoordinates coordinates) {
+    def dir = new File(options.outputDir, coordinates.directoryPath)
+    def pom = new File(dir, coordinates.getFileName('', 'pom'))
+    def jar = new File(dir, coordinates.getFileName('', 'jar'))
+    def sources = new File(dir, coordinates.getFileName('sources', 'jar'))
+    if (jar.exists()) {
+      deployJar(jar, pom, coordinates)
+    }
+    else {
+      context.messages.warning("${coordinates.toString()} jar is not found")
+    }
+    if (sources.exists()) {
+      deploySources(sources, coordinates)
+    }
+    else {
+      context.messages.warning("${coordinates.toString()} sources is not found")
     }
   }
 

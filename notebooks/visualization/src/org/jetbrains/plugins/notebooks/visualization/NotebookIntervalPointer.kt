@@ -2,6 +2,8 @@ package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
+import com.intellij.util.EventDispatcher
+import java.util.*
 
 /**
  * Pointer becomes invalid when code cell is removed
@@ -24,18 +26,39 @@ interface NotebookIntervalPointerFactory {
    */
   fun <T> modifyingPointers(changes: Iterable<Change>, modifyDocumentAction: () -> T): T
 
+  fun invalidateCell(cell: NotebookCellLines.Interval) {
+    modifyingPointers(listOf(Invalidate(create(cell)))) {}
+  }
+
+  fun moveCells(newPositions: List<Pair<NotebookCellLines.Interval, Int>>) {
+    modifyingPointers(newPositions.map { (interval, newOrdinal) -> Reuse(create(interval), newOrdinal) }) {}
+  }
+
+  interface ChangeListener : EventListener {
+    fun onInserted(ordinal: Int)
+
+    fun onEdited(ordinal: Int)
+
+    fun onRemoved(ordinal: Int)
+
+    /** [fromOrdinal] and [toOrdinal] are never equal */
+    fun onMoved(fromOrdinal: Int, toOrdinal: Int)
+  }
+
+  val changeListeners: EventDispatcher<ChangeListener>
+
   companion object {
     fun get(editor: Editor): NotebookIntervalPointerFactory =
       getOrNull(editor)!!
 
     fun getOrNull(editor: Editor): NotebookIntervalPointerFactory? =
-      key.get(editor) ?: tryInstall(editor)
+      key.get(editor.document) ?: tryInstall(editor)
 
     private fun tryInstall(editor: Editor): NotebookIntervalPointerFactory? =
       getLanguage(editor)
         ?.let { NotebookIntervalPointerFactoryProvider.forLanguage(it) }
         ?.create(editor)
-        ?.also { key.set(editor, it) }
+        ?.also { key.set(editor.document, it) }
   }
 
   sealed interface Change

@@ -36,12 +36,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PythonCompletionWeigher extends CompletionWeigher {
 
+  // TODO Unify different ways of detecting and weighing elements
   public static final int PRIORITY_WEIGHT = 5;
   public static final int WEIGHT_FOR_MULTIPLE_ARGUMENTS = 5;
   public static final int WEIGHT_FOR_KEYWORDS = 0;
   private static final Logger LOG = Logger.getInstance(PythonCompletionWeigher.class);
   public static final String COLLECTION_KEY = "dict key";
   private static final int COLLECTION_KEY_WEIGHT = 10;
+  public static final int NOT_IMPORTED_MODULE_WEIGHT = -1;
 
   @Override
   public Comparable weigh(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {

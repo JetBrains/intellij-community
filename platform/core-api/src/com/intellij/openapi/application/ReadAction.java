@@ -39,7 +39,7 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    * @deprecated use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @ApiStatus.ScheduledForRemoval
   public static AccessToken start() {
     return ApplicationManager.getApplication().acquireReadActionLock();
   }
@@ -70,9 +70,19 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
 
   /**
    * Create an {@link NonBlockingReadAction} builder to run the given Runnable in non-blocking read action on a background thread.
+   *
+   * @deprecated reorganize the code so that this method is not used at all (better),
+   * or pass explicit {@code Callable<Void>} to {@link #nonBlocking(Callable)}, if this method is really needed
+   * <p>
+   * The {@code task} might be executed several times, it may be cancelled on write action,
+   * and then restarted again once write action is finished.
+   * If the client doesn't expect a result, then the task is mutating some outer state,
+   * which greatly lowers its probability of being idempotent,
+   * which in turn may cause delayed bugs in unrelated places and races.
    */
   @NotNull
   @Contract(pure = true)
+  @Deprecated
   public static NonBlockingReadAction<Void> nonBlocking(@NotNull Runnable task) {
     return nonBlocking(new RunnableCallable(task));
   }

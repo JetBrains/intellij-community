@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.jcef.impl
 
+import com.intellij.openapi.diagnostic.thisLogger
 import org.intellij.plugins.markdown.ui.preview.html.links.IntelliJImageGeneratingProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jsoup.Jsoup
@@ -12,6 +13,7 @@ import java.net.URI
 import java.net.URISyntaxException
 import java.net.URLEncoder
 import java.nio.file.Path
+import java.nio.file.Paths
 
 @ApiStatus.Internal
 class IncrementalDOMBuilder(
@@ -98,26 +100,32 @@ class IncrementalDOMBuilder(
   }
 
   private fun preprocessNode(node: Node): Node {
-    if (node.nodeName() != "img" || fileSchemeResourceProcessor == null ||
-        node.hasAttr(IntelliJImageGeneratingProvider.ignorePathProcessingAttributeName)) {
-      return node
-    }
-    val originalUrlValue = node.attr("src")
-    val uri = createUri(originalUrlValue) ?: return node
-    if ((uri.scheme == null || uri.scheme == "file") && basePath != null) {
-      val processed = fileSchemeResourceProcessor.processFileSchemeResource(basePath, uri) ?: return node
-      node.attr("data-original-src", originalUrlValue)
-      node.attr("src", processed)
+    if (fileSchemeResourceProcessor != null && basePath != null && shouldPreprocessImageNode(node)) {
+      try {
+        actuallyProcessImageNode(node, basePath, fileSchemeResourceProcessor)
+      } catch (exception: Throwable) {
+        val originalUrlValue = node.attr("src")
+        thisLogger().error("Failed to process image node\nbasePath: $basePath\noriginalUrl: $originalUrlValue", exception)
+      }
     }
     return node
   }
 
-  private fun createUri(string: String): URI? {
-    try {
-      return URI(string)
-    } catch (exception: URISyntaxException) {
-      return null
+  private fun actuallyProcessImageNode(node: Node, basePath: Path, fileSchemeResourceProcessor: FileSchemeResourceProcessingStrategy) {
+    val originalUrlValue = node.attr("src")
+    val uri = when {
+      originalUrlValue.startsWith("file:/") -> createUri(originalUrlValue)
+      else -> createFileUri(originalUrlValue, basePath) ?: createUri(originalUrlValue)
     }
+    if (uri != null && (uri.scheme == null || uri.scheme == "file")) {
+      val processed = fileSchemeResourceProcessor.processFileSchemeResource(basePath, uri) ?: return
+      node.attr("data-original-src", originalUrlValue)
+      node.attr("src", processed)
+    }
+  }
+
+  private fun shouldPreprocessImageNode(node: Node): Boolean {
+    return node.nodeName() == "img" && !node.hasAttr(IntelliJImageGeneratingProvider.ignorePathProcessingAttributeName)
   }
 
   private fun traverse(node: Node) {
@@ -132,6 +140,25 @@ class IncrementalDOMBuilder(
           traverse(child)
         }
         closeTag(preprocessed)
+      }
+    }
+  }
+
+  companion object {
+    private fun createUri(string: String): URI? {
+      try {
+        return URI(string)
+      } catch (exception: URISyntaxException) {
+        return null
+      }
+    }
+
+    private fun createFileUri(string: String, basePath: Path?): URI? {
+      try {
+        val resolved = basePath?.resolve(string) ?: Paths.get(string)
+        return resolved.toUri()
+      } catch(ignored: Throwable) {
+        return null
       }
     }
   }

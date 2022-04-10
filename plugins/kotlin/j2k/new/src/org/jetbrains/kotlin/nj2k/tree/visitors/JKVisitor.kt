@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.nj2k.tree.visitors
 
 import org.jetbrains.kotlin.nj2k.tree.*
@@ -137,7 +137,7 @@ abstract class JKVisitor {
     open fun visitForInStatement(forInStatement: JKForInStatement) = visitStatement(forInStatement)
     open fun visitIfElseStatement(ifElseStatement: JKIfElseStatement) = visitStatement(ifElseStatement)
     open fun visitBreakStatement(breakStatement: JKBreakStatement) = visitStatement(breakStatement)
-    open fun visitJavaYildStatement(javaYieldStatement: JKJavaYieldStatement) = visitStatement(javaYieldStatement)
+    open fun visitJavaYieldStatement(javaYieldStatement: JKJavaYieldStatement) = visitStatement(javaYieldStatement)
     open fun visitContinueStatement(continueStatement: JKContinueStatement) = visitStatement(continueStatement)
     open fun visitBlockStatement(blockStatement: JKBlockStatement) = visitStatement(blockStatement)
     open fun visitBlockStatementWithoutBrackets(blockStatementWithoutBrackets: JKBlockStatementWithoutBrackets) =

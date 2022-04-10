@@ -33,8 +33,6 @@ import java.util.*;
 
 /**
  * Base class for code style settings panels supporting multiple programming languages.
- *
- * @author rvishnyakov
  */
 public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstractPanel implements CodeStyleSettingsCustomizable {
   private static final Logger LOG = Logger.getInstance(CustomizableLanguageCodeStylePanel.class);

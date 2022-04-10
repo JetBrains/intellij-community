@@ -69,6 +69,6 @@ class Z extends Y {
 
 class TestPattern {
   void f(Object o) {
-    if (o instanceof Map m) {}
+    if (o instanceof <warning descr="Raw use of parameterized class 'Map'">Map</warning> m) {}
   }
 }

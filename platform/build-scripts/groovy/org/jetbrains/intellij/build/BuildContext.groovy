@@ -7,9 +7,11 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.DependenciesProperties
+import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder
 import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Path
+import java.util.function.UnaryOperator
 
 @CompileStatic
 abstract class BuildContext implements CompilationContext {
@@ -47,6 +49,11 @@ abstract class BuildContext implements CompilationContext {
    * Names of JARs inside `IDE_HOME/lib` directory which need to be added to the JVM classpath to start the IDE.
    */
   List<String> bootClassPathJarNames
+
+  /**
+   * Allows customize classpath for buildSearchableOptions and builtinModules
+   */
+  UnaryOperator<Set<String>> classpathCustomizer
 
   /**
    * Add file to be copied into application.
@@ -103,4 +110,6 @@ abstract class BuildContext implements CompilationContext {
   abstract BuildContext forkForParallelTask(String taskName)
 
   abstract BuildContext createCopyForProduct(ProductProperties productProperties, String projectHomeForCustomizers)
+
+  abstract @Nullable OsSpecificDistributionBuilder getOsDistributionBuilder(OsFamily os, Path ideaProperties = null)
 }

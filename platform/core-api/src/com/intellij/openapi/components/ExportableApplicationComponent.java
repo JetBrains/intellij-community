@@ -4,6 +4,6 @@ package com.intellij.openapi.components;
 import org.jetbrains.annotations.ApiStatus;
 
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+@ApiStatus.ScheduledForRemoval
 public interface ExportableApplicationComponent extends ApplicationComponent, ExportableComponent {
 }

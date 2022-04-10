@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java.generate
 
 import com.intellij.codeInsight.BlockUtils
@@ -90,6 +90,18 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
       }
       else -> replaced.toUElementOfExpectedTypes(elementType)
     }
+  }
+
+  override fun bindToElement(reference: UReferenceExpression, element: PsiElement): PsiElement? {
+    val sourceReference = reference.sourcePsi ?: return null
+    if (sourceReference !is PsiReference) return null
+    return sourceReference.bindToElement(element)
+  }
+
+  override fun shortenReference(reference: UReferenceExpression): UReferenceExpression? {
+    val sourceReference = reference.sourcePsi ?: return null
+    val styleManager = JavaCodeStyleManager.getInstance(sourceReference.project)
+    return styleManager.shortenClassReferences(sourceReference).toUElementOfType()
   }
 }
 

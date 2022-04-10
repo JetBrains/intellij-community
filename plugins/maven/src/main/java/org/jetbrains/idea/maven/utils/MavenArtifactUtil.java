@@ -143,8 +143,7 @@ public final class MavenArtifactUtil {
     try {
       if (!Files.exists(file)) return null;
 
-      ZipFile jar = new ZipFile(file.toFile());
-      try {
+      try (ZipFile jar = new ZipFile(file.toFile())) {
         ZipEntry entry = jar.getEntry(MAVEN_PLUGIN_DESCRIPTOR);
 
         if (entry == null) {
@@ -152,17 +151,10 @@ public final class MavenArtifactUtil {
           return null;
         }
 
-        InputStream is = jar.getInputStream(entry);
-        try {
+        try (InputStream is = jar.getInputStream(entry)) {
           byte[] bytes = FileUtil.loadBytes(is);
           return new MavenPluginInfo(bytes);
         }
-        finally {
-          is.close();
-        }
-      }
-      finally {
-        jar.close();
       }
     }
     catch (IOException e) {

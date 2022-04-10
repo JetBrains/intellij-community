@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 open class C<T> {
     fun foo(t: T): T = t
 }

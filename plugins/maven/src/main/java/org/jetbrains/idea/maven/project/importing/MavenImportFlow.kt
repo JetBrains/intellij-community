@@ -2,8 +2,10 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -15,6 +17,8 @@ import com.intellij.util.io.exists
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
+import org.jetbrains.idea.maven.importing.MavenProjectImporterBase
+import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.*
@@ -25,7 +29,6 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.IOException
-import java.nio.file.Path
 
 @IntellijInternalApi
 @ApiStatus.Internal
@@ -68,17 +71,19 @@ class MavenImportFlow {
 
     val projectsTree = loadOrCreateProjectTree(projectManager)
     MavenProjectsManager.applyStateToTree(projectsTree, projectManager)
-    val pomFiles = ArrayList(MavenProjectsManager.getInstance(context.project).projectsFiles)
+    val rootFiles = MavenProjectsManager.getInstance(context.project).projectsTree?.rootProjectsFiles
+    val pomFiles = LinkedHashSet<VirtualFile>()
+    rootFiles?.let { pomFiles.addAll(it.filterNotNull()) }
 
     val newPomFiles = when (context.paths) {
       is FilesList -> context.paths.poms
       is RootPath -> searchForMavenFiles(context.paths.path, context.indicator)
     }
-    pomFiles.addAll(newPomFiles)
+    pomFiles.addAll(newPomFiles.filterNotNull())
 
-    projectsTree.addManagedFilesWithProfiles(pomFiles, context.profiles)
-    val toResolve = HashSet<MavenProject>()
-    val errorsSet = HashSet<MavenProject>()
+    projectsTree.addManagedFilesWithProfiles(pomFiles.toList(), context.profiles)
+    val toResolve = LinkedHashSet<MavenProject>()
+    val errorsSet = LinkedHashSet<MavenProject>()
     val d = Disposer.newDisposable("MavenImportFlow:readMavenFiles:treeListener")
     Disposer.register(projectManager, d)
     projectsTree.addListener(object : MavenProjectsTree.Listener {
@@ -113,7 +118,7 @@ class MavenImportFlow {
       projectsTree.ignoredFilesPatterns = curr
     }
 
-    projectsTree.update(pomFiles, true, context.generalSettings, context.indicator)
+    projectsTree.updateAll(true, context.generalSettings, context.indicator)
     Disposer.dispose(d)
     return MavenReadContext(context.project, projectsTree, toResolve, errorsSet, context)
   }
@@ -175,15 +180,18 @@ class MavenImportFlow {
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
 
-    val unresolvedPlugins = HashMap<MavenPlugin, Path?>()
+    val unresolvedPlugins = LinkedHashSet<MavenPlugin>()
     context.nativeProjectHolder.forEach {
-      unresolvedPlugins.putAll(resolver.resolvePlugins(context.project, it.first, it.second, embeddersManager, consoleToBeRemoved,
-                                                       context.initialContext.indicator, false))
+      unresolvedPlugins.addAll(resolver.resolvePlugins(it.first, it.second, embeddersManager, consoleToBeRemoved,
+                                                       context.initialContext.indicator, false,
+                                                       projectManager.forceUpdateSnapshots))
     }
+    projectManager.forceUpdateSnapshots = false;
     return MavenPluginResolvedContext(context.project, unresolvedPlugins, context)
   }
 
   fun downloadArtifacts(context: MavenResolvedContext, sources: Boolean, javadocs: Boolean): MavenArtifactDownloader.DownloadResult {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
     if (!(sources || javadocs)) return MavenArtifactDownloader.DownloadResult()
     val projectManager = MavenProjectsManager.getInstance(context.project)
     val embeddersManager = projectManager.embeddersManager
@@ -195,6 +203,25 @@ class MavenImportFlow {
 
   }
 
+  fun downloadSpecificArtifacts(project: Project,
+                                mavenProjects: Collection<MavenProject>,
+                                mavenArtifacts: Collection<MavenArtifact>?,
+                                sources: Boolean,
+                                javadocs: Boolean,
+                                indicator: MavenProgressIndicator): MavenArtifactDownloader.DownloadResult {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    if (!(sources || javadocs)) return MavenArtifactDownloader.DownloadResult()
+    val projectManager = MavenProjectsManager.getInstance(project)
+    val embeddersManager = projectManager.embeddersManager
+    val resolver = MavenProjectResolver(projectManager.projectsTree)
+    val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings()
+    val consoleToBeRemoved = BTWMavenConsole(project, settings.outputLevel,
+                                             settings.isPrintErrorStackTraces)
+    return resolver.downloadSourcesAndJavadocs(project, mavenProjects, mavenArtifacts, sources, javadocs, embeddersManager,
+                                               consoleToBeRemoved, indicator)
+
+  }
+
   fun resolveFolders(context: MavenResolvedContext): MavenSourcesGeneratedContext {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val projectManager = MavenProjectsManager.getInstance(context.project)
@@ -203,7 +230,7 @@ class MavenImportFlow {
     val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
     val d = Disposer.newDisposable("MavenImportFlow:resolveFolders:treeListener")
-    val projectsToImport = HashSet<MavenProject>(context.projectsToImport);
+    val projectsToImport = LinkedHashSet<MavenProject>(context.projectsToImport);
     val projectsFoldersResolved = ArrayList<MavenProject>();
     Disposer.register(projectManager, d)
     context.readContext.projectsTree.addListener(object : MavenProjectsTree.Listener {
@@ -229,15 +256,23 @@ class MavenImportFlow {
   fun commitToWorkspaceModel(context: MavenResolvedContext): MavenImportedContext {
     val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(context.project)
     ApplicationManager.getApplication().assertIsNonDispatchThread()
-    val projectManager = MavenProjectsManager.getInstance(context.project)
-    val projectImporter = MavenProjectImporter(context.project, context.readContext.projectsTree,
-                                               projectManager.getFileToModuleMapping(MavenDefaultModelsProvider(context.project)),
-                                               context.projectsToImport.map {
-                                                 it to MavenProjectChanges.ALL
-                                               }.toMap(), false, modelsProvider, context.initialContext.importingSettings, null)
+    val projectImporter = MavenProjectImporter.createImporter(context.project, context.readContext.projectsTree,
+                                                              context.projectsToImport.map {
+                                                                it to MavenProjectChanges.ALL
+                                                              }.toMap(), false, modelsProvider,
+                                                              context.initialContext.importingSettings, null)
     val postImportTasks = projectImporter.importProject();
     val modulesCreated = projectImporter.createdModules
-    return MavenImportedContext(context.project, modulesCreated, postImportTasks, context.initialContext);
+    return MavenImportedContext(context.project, modulesCreated, postImportTasks, context.readContext);
+  }
+
+  fun configureMavenProject(context: MavenImportedContext) {
+    val projectsManager = MavenProjectsManager.getInstance(context.project)
+    val projects = context.readContext.projectsTree.projects
+    val moduleMap = ReadAction.compute<Map<MavenProject, Module?>, Throwable> { projects.map { it to projectsManager.findModule(it) }.toMap(); }
+    MavenProjectImporterBase.configureMavenProjects(context.readContext.projectsTree.projects, moduleMap, context.project,
+                                                    context.readContext.indicator)
+
   }
 
   fun updateProjectManager(context: MavenReadContext) {
@@ -256,10 +291,10 @@ class MavenImportFlow {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val projectManager = MavenProjectsManager.getInstance(context.project)
     val embeddersManager = projectManager.embeddersManager
-    val consoleToBeRemoved = BTWMavenConsole(context.project, context.initialContext.generalSettings.outputLevel,
-                                             context.initialContext.generalSettings.isPrintErrorStackTraces)
+    val consoleToBeRemoved = BTWMavenConsole(context.project, context.readContext.initialContext.generalSettings.outputLevel,
+                                             context.readContext.initialContext.generalSettings.isPrintErrorStackTraces)
     context.postImportTasks?.forEach {
-      it.perform(context.project, embeddersManager, consoleToBeRemoved, context.initialContext.indicator)
+      it.perform(context.project, embeddersManager, consoleToBeRemoved, context.readContext.indicator)
     }
   }
 

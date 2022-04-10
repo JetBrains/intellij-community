@@ -15,7 +15,8 @@ import java.nio.file.StandardCopyOption
 // TODO remove: this is temporary decision for prototyping and debugging purposes only
 internal const val SETTINGS_SYNC_LOCAL_SERVER_PATH_PROPERTY = "idea.settings.sync.local.server.path"
 
-internal const val SETTINGS_SYNC_SNAPSHOT_ZIP = "settings.sync.snapshot.zip"
+internal const val SETTINGS_SYNC_SNAPSHOT = "settings.sync.snapshot"
+internal const val SETTINGS_SYNC_SNAPSHOT_ZIP = "$SETTINGS_SYNC_SNAPSHOT.zip"
 
 internal class LocalDirSettingsSyncRemoteCommunicator(private val settingsSyncStorage: Path) : SettingsSyncRemoteCommunicator {
   companion object {
@@ -35,8 +36,8 @@ internal class LocalDirSettingsSyncRemoteCommunicator(private val settingsSyncSt
 
   private val zipFile get() = serverDir.resolve(SETTINGS_SYNC_SNAPSHOT_ZIP)
 
-  override fun isUpdateNeeded(): Boolean {
-    return zipFile.exists()
+  override fun checkServerState(): ServerState {
+    return if (zipFile.exists()) ServerState.UpToDate else ServerState.UpdateNeeded
   }
 
   override fun receiveUpdates(): UpdateResult {
@@ -61,7 +62,8 @@ internal fun prepareTempZipFile(snapshot: SettingsSnapshot): Path {
   Compressor.Zip(file)
     .use { zip ->
       for (fileState in snapshot.fileStates) {
-        zip.addFile(fileState.file, fileState.content)
+        val content = if (fileState is FileState.Modified) fileState.content else DELETED_FILE_MARKER.toByteArray()
+        zip.addFile(fileState.file, content)
       }
     }
   return file.toPath()
@@ -73,9 +75,7 @@ internal fun extractZipFile(zipFile: Path): SettingsSnapshot {
   val fileStates = mutableSetOf<FileState>()
   FileUtil.processFilesRecursively(tempDir, Processor {
     if (it.isFile) {
-      val name = FileUtil.getRelativePath(tempDir, it)!!
-      val content = it.readBytes()
-      fileStates.add(FileState(name, content, content.size))
+      fileStates.add(getFileStateFromFileWithDeletedMarker(it.toPath(), tempDir.toPath()))
     }
     true
   })

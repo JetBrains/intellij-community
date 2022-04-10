@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.remoteDev.connection.CodeWithMeSessionInfoProvider
 import com.intellij.remoteDev.connection.StunTurnServerInfo
@@ -46,6 +47,7 @@ import java.io.IOException
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
@@ -109,7 +111,7 @@ object CodeWithMeClientDownloader {
 
     val clientDistributionName = getClientDistributionName(clientBuildVersion)
 
-    val clientDownloadUrl = "${config.clientDownloadLocation}$clientDistributionName-$hostBuildNumber$platformSuffix"
+    val clientDownloadUrl = "${config.clientDownloadUrl}$clientDistributionName-$hostBuildNumber$platformSuffix"
 
     val platformString = when {
       SystemInfo.isLinux -> "linux-x64"
@@ -126,10 +128,14 @@ object CodeWithMeClientDownloader {
 
     val jdkVersion = jreBuildParts[0]
     val jdkBuild = jreBuildParts[1]
-    val jreDownloadUrl = "${config.jreDownloadLocation}jbr_jcef-$jdkVersion-$platformString-b${jdkBuild}.tar.gz"
+    val jreDownloadUrl = "${config.jreDownloadUrl}jbr_jcef-$jdkVersion-$platformString-b${jdkBuild}.tar.gz"
 
     val clientName = "$clientDistributionName-$hostBuildNumber"
     val jreName = jreDownloadUrl.substringAfterLast('/').removeSuffix(".tar.gz")
+
+    val pgpPublicKeyUrl = if (unattendedMode) {
+      RemoteDevSystemSettings.getPgpPublicKeyUrl().value
+    } else null
 
     val sessionInfo = object : CodeWithMeSessionInfoProvider {
       override val hostBuildNumber = hostBuildNumber
@@ -140,8 +146,7 @@ object CodeWithMeClientDownloader {
       override val compatibleJreUrl = jreDownloadUrl
       override val hostFeaturesToEnable: Set<String>? = null
       override val stunTurnServers: List<StunTurnServerInfo>? = null
-      override val turnAllocationServerInfo: StunTurnServerInfo? = null
-      override val downloadPgpPublicKeyUrl: String? = null
+      override val downloadPgpPublicKeyUrl: String? = pgpPublicKeyUrl
     }
 
     LOG.info("Generated session info: $sessionInfo")
@@ -160,7 +165,7 @@ object CodeWithMeClientDownloader {
     jdkBuildProgressIndicator.text = RemoteDevUtilBundle.message("thinClientDownloader.checking")
 
     val clientDistributionName = getClientDistributionName(clientBuildVersion)
-    val clientJdkDownloadUrl = "${config.clientDownloadLocation}$clientDistributionName-$clientBuildVersion-jdk-build.txt"
+    val clientJdkDownloadUrl = "${config.clientDownloadUrl}$clientDistributionName-$clientBuildVersion-jdk-build.txt"
     LOG.info("Downloading from $clientJdkDownloadUrl")
 
     val tempFile = Files.createTempFile("jdk-build", "txt")
@@ -183,7 +188,6 @@ object CodeWithMeClientDownloader {
    * @returns Pair(path/to/thin/client, path/to/jre)
    *
    * Update this method (any jdk-related stuff) together with:
-   *  `setupJdk.gradle`
    *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
    */
   fun downloadClientAndJdk(clientBuildVersion: String,
@@ -417,7 +421,17 @@ object CodeWithMeClientDownloader {
       try {
         LOG.info("Downloading from $url to ${path.absolutePathString()}, attempt $i of $MAX_ATTEMPTS")
 
-        HttpRequests.request(url.toString()).saveToFile(path, progressIndicator)
+        when (url.scheme) {
+          "http", "https" -> {
+            HttpRequests.request(url.toString()).saveToFile(path, progressIndicator)
+          }
+          "file" -> {
+            Files.copy(url.toPath(), path, StandardCopyOption.REPLACE_EXISTING)
+          }
+          else -> {
+            error("scheme ${url.scheme} is not supported")
+          }
+        }
 
         LOG.info("Download from $url to ${path.absolutePathString()} succeeded on attempt $i of $MAX_ATTEMPTS")
         return

@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
+import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -42,8 +44,8 @@ import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.XmlCharsetDetector;
 import com.intellij.util.ui.UIUtil;
@@ -59,10 +61,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertNotEquals;
 
 public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialog {
   private static final Charset US_ASCII = StandardCharsets.US_ASCII;
@@ -994,26 +997,35 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     }).assertTiming();
   }
 
-  public void testEncodingDetectionRequestsRunInOneThreadForEachDocument() throws IOException {
-    Set<Thread> detectThreads = ContainerUtil.newConcurrentSet();
+  public void testEncodingDetectionRequestsRunAtMostOneThreadForEachDocument() throws Throwable {
+    Map<VirtualFile, Thread> detectThreads = new ConcurrentHashMap<>();
+    AtomicReference<Throwable> exception = new AtomicReference<>();
     class MyFT extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
       private MyFT() { super(new Language("my") {}); }
       @Override public boolean isMyFileType(@NotNull VirtualFile file) { return getDefaultExtension().equals(file.getExtension()); }
       @Override public @NotNull String getName() { return "my"; }
       @Override public @NotNull String getDescription() { return getName(); }
       @Override public @NotNull String getDefaultExtension() { return "my"; }
-      @Override public @Nullable Icon getIcon() { return null; }
+      @Override public Icon getIcon() { return null; }
 
       @Override
       public Charset extractCharsetFromFileContent(@Nullable Project project, @Nullable VirtualFile file, @NotNull CharSequence content) {
-        detectThreads.add(Thread.currentThread());
-        TimeoutUtil.sleep(1000);
-        return US_ASCII;
+        Thread prev = detectThreads.put(file, Thread.currentThread());
+        try {
+          if (prev != null) {
+            exception.set(new Throwable(file +" has two detection threads: "+prev +" and "+ Thread.currentThread()+"\nThe full thread dump:\n"+ThreadDumper.dumpThreadsToString()));
+          }
+          TimeoutUtil.sleep(1000);
+          return US_ASCII;
+        }
+        finally {
+          detectThreads.remove(file);
+        }
       }
     }
 
     FileType foo = new MyFT();
-    ((FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx()).registerFileType(foo, List.of(), getTestRootDisposable());
+    ((FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx()).registerFileType(foo, List.of(), getTestRootDisposable(), PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
 
     VirtualFile file = createTempFile("my", NO_BOM, StringUtil.repeat("c", 20), US_ASCII);
     FileEditorManager.getInstance(getProject()).openFile(file, false);
@@ -1021,7 +1033,6 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     Document document = getDocument(file);
     assertEquals(foo, file.getFileType());
     file.setCharset(null);
-    detectThreads.clear();
 
     for (int i=0; i<1000; i++) {
       WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, " "));
@@ -1031,9 +1042,11 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     encodingManager.waitAllTasksExecuted(60, TimeUnit.SECONDS);
     UIUtil.dispatchAllInvocationEvents();
 
-    Thread thread = assertOneElement(detectThreads);
     ApplicationManager.getApplication().assertIsDispatchThread();
-    assertNotEquals(Thread.currentThread(), thread);
+
+    if (exception.get() != null) {
+      throw exception.get();
+    }
   }
 
   public void testSetMappingMustResetEncodingOfNotYetLoadedFiles() {
@@ -1109,14 +1122,15 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       @Override public @NotNull String getName() { return "Test"; }
       @Override public @NotNull String getDescription() { return "Test"; }
       @Override public @NotNull String getDefaultExtension() { return ext; }
-      @Override public @Nullable Icon getIcon() { return null; }
+      @Override public Icon getIcon() { return null; }
       @Override public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) { return StandardCharsets.ISO_8859_1.name(); }
     }
     MyForcedFileType fileType = new MyForcedFileType();
     FileEncodingProvider encodingProvider = __ -> StandardCharsets.UTF_16;
     FileEncodingProvider.EP_NAME.getPoint().registerExtension(encodingProvider, getTestRootDisposable());
     FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
-    fileTypeManager.registerFileType(fileType, List.of(new ExtensionFileNameMatcher(ext)), getTestRootDisposable());
+    fileTypeManager.registerFileType(fileType, List.of(new ExtensionFileNameMatcher(ext)), getTestRootDisposable(),
+                                     PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
     VirtualFile file = createTempFile(ext, NO_BOM, "some", StandardCharsets.UTF_8);
     assertEquals(fileType, file.getFileType());
     assertEquals(StandardCharsets.ISO_8859_1, file.getCharset());

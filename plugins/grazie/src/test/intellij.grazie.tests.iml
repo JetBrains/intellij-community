@@ -12,24 +12,24 @@
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.java.testFramework" exported="" />
     <orderEntry type="module-library" scope="TEST">
-      <library name="org.languagetool:language-ru:5.5" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-ru:5.5" />
+      <library name="org.languagetool:language-ru:5.6" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-ru:5.6" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/5.5/language-ru-5.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/5.6/language-ru-5.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
-      <library name="org.languagetool:language-de:5.5" type="repository">
-        <properties maven-id="org.languagetool:language-de:5.5">
+      <library name="org.languagetool:language-de:5.6" type="repository">
+        <properties maven-id="org.languagetool:language-de:5.6">
           <exclude>
             <dependency maven-id="org.languagetool:languagetool-core" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/5.5/language-de-5.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/5.6/language-de-5.6.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.2/german-pos-dict-1.2.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
@@ -40,10 +40,10 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
-      <library name="org.languagetool:language-it:5.5" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-it:5.5" />
+      <library name="org.languagetool:language-it:5.6" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-it:5.6" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/5.5/language-it-5.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/5.6/language-it-5.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -54,5 +54,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.grazie.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.markdown" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-jdk8" level="project" />
   </component>
 </module>

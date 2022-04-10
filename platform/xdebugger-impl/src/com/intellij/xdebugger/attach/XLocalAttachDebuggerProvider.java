@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -14,8 +13,7 @@ import java.util.List;
 /**
  * @deprecated use {@link XAttachDebuggerProvider} instead
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public interface XLocalAttachDebuggerProvider extends XAttachDebuggerProvider {
   ExtensionPointName<XAttachDebuggerProvider> EP = ExtensionPointName.create("com.intellij.xdebugger.localAttachDebuggerProvider");
 
@@ -24,8 +22,8 @@ public interface XLocalAttachDebuggerProvider extends XAttachDebuggerProvider {
    */
   @Deprecated
   List<XLocalAttachDebugger> getAvailableDebuggers(@NotNull Project project,
-                                                     @NotNull ProcessInfo process,
-                                                     @NotNull UserDataHolder contextHolder);
+                                                   @NotNull ProcessInfo processInfo,
+                                                   @NotNull UserDataHolder contextHolder);
 
   /**
    * @deprecated use {@link XAttachDebuggerProvider#getPresentationGroup()} instead
@@ -50,11 +48,11 @@ public interface XLocalAttachDebuggerProvider extends XAttachDebuggerProvider {
   @NotNull
   @Override
   default List<XAttachDebugger> getAvailableDebuggers(@NotNull Project project,
-                                                     @NotNull XAttachHost hostInfo,
-                                                     @NotNull ProcessInfo process,
-                                                     @NotNull UserDataHolder contextHolder) {
-    assert hostInfo instanceof LocalAttachHost;
+                                                      @NotNull XAttachHost attachHost,
+                                                      @NotNull ProcessInfo processInfo,
+                                                      @NotNull UserDataHolder contextHolder) {
+    assert attachHost instanceof LocalAttachHost;
 
-    return new ArrayList<>(getAvailableDebuggers(project, process, contextHolder));
+    return new ArrayList<>(getAvailableDebuggers(project, processInfo, contextHolder));
   }
 }

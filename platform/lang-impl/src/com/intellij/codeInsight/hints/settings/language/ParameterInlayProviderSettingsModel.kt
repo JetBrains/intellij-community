@@ -3,11 +3,13 @@ package com.intellij.codeInsight.hints.settings.language
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
+import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.settings.CASE_KEY
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.ParameterHintsSettingsPanel
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
@@ -34,6 +36,10 @@ class ParameterInlayProviderSettingsModel(
     return getCasePreview(language, provider, case)
   }
 
+  override fun getCasePreviewLanguage(case: ImmediateConfigurable.Case?): Language {
+    return language
+  }
+
   override fun getCaseDescription(case: ImmediateConfigurable.Case): String? {
     return provider.getProperty("inlay.parameters." + case.id)
   }
@@ -57,24 +63,32 @@ class ParameterInlayProviderSettingsModel(
     )
   }
 
-  override fun collectAndApply(editor: Editor, file: PsiFile) {
+  override fun collectData(editor: Editor, file: PsiFile): Runnable {
     val pass = ParameterHintsPass(file, editor, HintInfoFilter { true }, true)
     ProgressManager.getInstance().runProcess({
                                                val backup = ParameterInlayProviderSettingsModel(provider, language)
+                                               val enabled = ParameterNameHintsSettings.getInstance().isEnabledForLanguage(getLanguageForSettingKey(language))
                                                backup.reset()
                                                try {
                                                  apply()
+                                                 val case = CASE_KEY.get(editor)
+                                                 ParameterHintsPresentationManager.getInstance().setPreviewMode(editor, !isEnabled || case != null && !case.value)
+                                                 provider.supportedOptions.forEach { it.set(true) }
+                                                 setShowParameterHintsForLanguage(true, language)
                                                  pass.collectInformation(ProgressIndicatorBase())
                                                }
                                                finally {
                                                  backup.apply()
+                                                 setShowParameterHintsForLanguage(enabled, language)
                                                }
                                              }, DaemonProgressIndicator())
-    ApplicationManager.getApplication().invokeLater { pass.applyInformationToEditor() }
+    return Runnable {
+      ParameterHintsPass(file, editor, HintInfoFilter { true }, true).doApplyInformationToEditor() // clean up hints
+      pass.doApplyInformationToEditor()
+    }
   }
 
-  override val description: String?
-    get() = null
+  override val description: String? = provider.description
 
   override fun toString(): String = name
 

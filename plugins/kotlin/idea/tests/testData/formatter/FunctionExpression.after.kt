@@ -5,7 +5,7 @@ val c = fun() {}
 val c = fun() = 4
 
 val c = fun() =
-        4
+    4
 
 val c = fun() {}
 val c = fun() = 4
@@ -28,8 +28,10 @@ fun test() {
     test(fun test() = 4)
 }
 
-fun d = fun(a: Int,
-            b: String) {
+fun d = fun(
+    a: Int,
+    b: String
+) {
 }
 
 fun e = fun() {

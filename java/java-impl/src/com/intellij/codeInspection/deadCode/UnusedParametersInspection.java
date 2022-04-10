@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
@@ -29,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@SuppressWarnings("InspectionDescriptionNotFoundInspection") // via UnusedDeclarationInspection
 class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   @Override
   public CommonProblemDescriptor @Nullable [] checkElement(@NotNull final RefEntity refEntity,
@@ -73,12 +73,11 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   @Override
   protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
                                                 @NotNull final ProblemDescriptionsProcessor processor) {
-    Project project = manager.getProject();
     for (RefElement entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints(manager)) {
       processor.ignoreElement(entryPoint);
     }
 
-    PsiSearchHelper helper = PsiSearchHelper.getInstance(project);
+    PsiSearchHelper helper = PsiSearchHelper.getInstance(manager.getProject());
     AnalysisScope scope = manager.getScope();
     manager.iterate(new RefJavaVisitor() {
       @Override
@@ -137,10 +136,9 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     return null;
   }
 
-
   @Override
   @Nullable
-  public QuickFix getQuickFix(final String hint) {
+  public LocalQuickFix getQuickFix(final String hint) {
     return new AcceptSuggested(null, null, hint);
   }
 

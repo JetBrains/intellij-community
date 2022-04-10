@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.openapi.keymap.impl
@@ -29,7 +29,7 @@ import org.jdom.Element
 import java.util.function.Function
 import java.util.function.Predicate
 
-internal const val KEYMAPS_DIR_PATH = "keymaps"
+const val KEYMAPS_DIR_PATH = "keymaps"
 
 private const val ACTIVE_KEYMAP = "active_keymap"
 private const val NAME_ATTRIBUTE = "name"
@@ -247,13 +247,9 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   override fun removeWeakListener(listenerToRemove: KeymapManagerListener) {
     listeners.removeAll { it is WeakKeymapManagerListener && it.isWrapped(listenerToRemove) }
   }
-
-  internal fun fireShortcutChanged(keymap: Keymap, actionId: String) {
-    ApplicationManager.getApplication().messageBus.syncPublisher(KeymapManagerListener.TOPIC).shortcutChanged(keymap, actionId)
-  }
 }
 
-val keymapComparator: Comparator<Keymap?> by lazy {
+internal val keymapComparator: Comparator<Keymap?> by lazy {
   val defaultKeymapName = DefaultKeymap.getInstance().defaultKeymapName
   Comparator { keymap1, keymap2 ->
     if (keymap1 === keymap2) return@Comparator 0

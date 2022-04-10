@@ -8,9 +8,9 @@ class High {
     } catch (IllegalAccessException | InstantiationException e) {
       e.printStackTrace();
     } catch (NoSuchMethodException e) {
-        e.printStackTrace();
+        throw new RuntimeException(e);
     } catch (InvocationTargetException e) {
-        e.printStackTrace();
+        throw new RuntimeException(e);
     }
   }
 }

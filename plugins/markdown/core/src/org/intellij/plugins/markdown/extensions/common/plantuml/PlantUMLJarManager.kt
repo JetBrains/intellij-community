@@ -5,7 +5,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
+import org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager.Companion.obtainExternalFilesDirectoryPath
+import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.OutputStream
 import java.lang.reflect.Method
@@ -19,8 +21,9 @@ import java.util.concurrent.locks.ReentrantLock
  * It could potentially support dynamic replacements of actual jar file
  * if [dropCache] is called before changing physical file in the file system.
  */
+@ApiStatus.Internal
 @Service(Service.Level.APP)
-internal class PlantUMLJarManager: Disposable {
+class PlantUMLJarManager: Disposable {
   private data class Holder(
     val loadedClass: Class<*>,
     val method: Method
@@ -58,11 +61,10 @@ internal class PlantUMLJarManager: Disposable {
   }
 
   private fun findPath(): File? {
-    val extension = CodeFenceGeneratingProvider.all
-      .asSequence()
-      .filterIsInstance<PlantUMLCodeGeneratingProvider>()
-      .firstOrNull()
-    return extension?.fullPath
+    val extension = MarkdownExtensionsUtil.findCodeFenceGeneratingProvider<PlantUMLCodeGeneratingProvider>() ?: return null
+    val filename = PlantUMLCodeGeneratingProvider.jarFilename
+    val directory = extension.obtainExternalFilesDirectoryPath()
+    return directory.resolve(filename).toFile()
   }
 
   private fun obtainCurrentHolder(): Holder? {

@@ -36,6 +36,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
@@ -134,7 +135,9 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     }
     installEditListeners();
 
-    fixEditorNotReleasedFalsePositiveException(session);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      fixEditorNotReleasedFalsePositiveException(session);
+    }
   }
 
   // Workaround for IDEA-273987, IDEA-278153.
@@ -168,7 +171,6 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   @Override
   protected JPanel createMainPanel(@NotNull JComponent localsPanelComponent) {
     var top = createTopPanel();
-    //noinspection ConstantConditions
     if (top == null) {
       return super.createMainPanel(localsPanelComponent);
     }
@@ -187,12 +189,16 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     }
   }
 
-  private JComponent createTopPanel() {
+  private @Nullable JComponent createTopPanel() {
     //if (Registry.is("debugger.new.tool.window.layout")) {
       XDebuggerTree tree = getTree();
       Ref<AnAction> addToWatchesActionRef = new Ref<>();
+      XDebuggerEditorsProvider provider = tree.getEditorsProvider();
+      if (!provider.isEvaluateExpressionFieldEnabled()) {
+        return null;
+      }
       myEvaluateComboBox =
-        new XDebuggerExpressionComboBox(tree.getProject(), tree.getEditorsProvider(), "evaluateExpression", null, false, true) {
+        new XDebuggerExpressionComboBox(tree.getProject(), provider, "evaluateExpression", null, false, true) {
           @Override
           protected ComboBox<XExpression> createComboBox(CollectionComboBoxModel<XExpression> model, int width) {
             AnAction addToWatchesAction =

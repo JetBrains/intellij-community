@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,11 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspection {
   private static final CallMatcher REFLECTION_EQUALS =
-    CallMatcher.staticCall("org.apache.commons.lang.builder.EqualsBuilder", "reflectionEquals");
+    CallMatcher.anyOf(
+      CallMatcher.staticCall("org.apache.commons.lang.builder.EqualsBuilder", "reflectionEquals"),
+      CallMatcher.staticCall("org.apache.commons.lang3.builder.EqualsBuilder", "reflectionEquals")
+    );
+
   private static final CallMatcher CLASS_IS_INSTANCE =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, "isInstance").parameterCount(1);
   private static final CallMatcher OBJECT_GET_CLASS =

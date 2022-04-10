@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ProjectTopics;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -32,9 +33,12 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 public final class EditorNotificationsImpl extends EditorNotifications {
 
@@ -43,6 +47,9 @@ public final class EditorNotificationsImpl extends EditorNotifications {
    */
   @Deprecated
   public static final ProjectExtensionPointName<EditorNotificationProvider> EP_PROJECT = EditorNotificationProvider.EP_NAME;
+
+  private static final Key<Map<Class<? extends EditorNotificationProvider>, JComponent>> EDITOR_NOTIFICATION_PROVIDER =
+    Key.create("editor.notification.provider");
   private static final Key<Boolean> PENDING_UPDATE = Key.create("pending.notification.update");
 
   private final @NotNull MergingUpdateQueue myUpdateMerger;
@@ -170,23 +177,29 @@ public final class EditorNotificationsImpl extends EditorNotifications {
   private void updateNotification(@NotNull FileEditor editor,
                                   @NotNull EditorNotificationProvider provider,
                                   @Nullable JComponent component) {
-    @SuppressWarnings("unchecked") Key<JComponent> key = (Key<JComponent>)provider.getKey();
-    JComponent old = editor.getUserData(key);
+    Map<Class<? extends EditorNotificationProvider>, JComponent> panels = getNotificationPanels(editor);
+    if (panels == null) {
+      return;
+    }
+
+    Class<? extends EditorNotificationProvider> providerClass = provider.getClass();
+    JComponent old = panels.get(providerClass);
     if (old != null) {
       FileEditorManager.getInstance(myProject).removeTopComponent(editor, old);
     }
 
     if (component != null) {
       if (component instanceof EditorNotificationPanel) {
-        ((EditorNotificationPanel)component).setProvider(provider);
-        ((EditorNotificationPanel)component).setProject(myProject);
+        EditorNotificationPanel panel = (EditorNotificationPanel)component;
+        panel.setProvider(provider);
+        panel.setProject(myProject);
       }
 
       EditorNotificationUsagesCollectorKt.logNotificationShown(myProject, provider);
       FileEditorManager.getInstance(myProject).addTopComponent(editor, component);
     }
 
-    editor.putUserData(key, component);
+    panels.put(providerClass, component);
   }
 
   @Override
@@ -242,9 +255,28 @@ public final class EditorNotificationsImpl extends EditorNotifications {
     }
   }
 
+  @VisibleForTesting
+  public static @NotNull Map<Class<? extends EditorNotificationProvider>, JComponent> getNotificationPanels(@NotNull FileEditor editor) {
+    Map<Class<? extends EditorNotificationProvider>, JComponent> panels = editor.getUserData(EDITOR_NOTIFICATION_PROVIDER);
+    if (panels != null) {
+      return panels;
+    }
+
+    editor.putUserData(EDITOR_NOTIFICATION_PROVIDER, new WeakHashMap<>());
+    panels = editor.getUserData(EDITOR_NOTIFICATION_PROVIDER);
+    if (panels != null) {
+      return panels;
+    }
+
+    Class<? extends FileEditor> editorClass = editor.getClass();
+    throw PluginException.createByClass(
+      "User data is not supported; editorClass='" + editorClass.getName() + "'; key='" + EDITOR_NOTIFICATION_PROVIDER + "'",
+      null,
+      editorClass);
+  }
+
   @TestOnly
   public static void completeAsyncTasks() {
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
-
 }

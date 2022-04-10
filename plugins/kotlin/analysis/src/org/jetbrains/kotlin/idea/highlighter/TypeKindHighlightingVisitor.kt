@@ -11,8 +11,9 @@ import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.FakeCallableDescriptorForObject
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingContext: BindingContext) :
     AfterAnalysisHighlightingVisitor(holder, bindingContext) {
@@ -23,6 +24,11 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
             // Do nothing: 'super' and 'this' are highlighted as a keyword
             return
         }
+
+        // Prevent custom highlighting for a name that is a part of a definitely non-nullable type
+        // (the only kind of intersection types that is currently supported by the compiler).
+        // The type is highlighted as a whole in `visitIntersectionType`.
+        if (parent?.parent?.parent?.safeAs<KtIntersectionType>() != null) return
 
         if (!NameHighlighter.namesHighlightingEnabled) return
 
@@ -95,6 +101,12 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
 
     override fun visitDynamicType(type: KtDynamicType) {
         // Do nothing: 'dynamic' is highlighted as a keyword
+    }
+
+    override fun visitIntersectionType(type: KtIntersectionType) {
+        // Currently, the only kind of intersection types is definitely non-nullable type, so highlight it without further analysis
+        type.parent?.safeAs<KtTypeReference>()?.run { highlightName(this, TYPE_PARAMETER) }
+        super.visitIntersectionType(type)
     }
 
     private fun calculateClassReferenceAttributes(target: ClassDescriptor): TextAttributesKey {

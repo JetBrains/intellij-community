@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml.model
 
+import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeatureMapper
 
 
-internal class SearchEverywhereRankingModel(private val provider: SearchEverywhereMLRankingModelProvider) {
-  val model by lazy { provider.model }
+internal class SearchEverywhereRankingModel(private val model: DecisionFunction) {
 
   fun predict(features: Map<String, Any>): Double {
     return model.predict(buildArray(model.featuresOrder, features))

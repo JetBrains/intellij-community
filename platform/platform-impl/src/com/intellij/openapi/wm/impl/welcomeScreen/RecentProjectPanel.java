@@ -17,7 +17,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.UniqueNameBuilder;
+import com.intellij.filename.UniqueNameBuilder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -81,7 +81,7 @@ public class RecentProjectPanel extends JPanel {
 
     List<AnAction> recentProjectActions = RecentProjectListActionProvider.getInstance().getActions(false, isUseGroups());
 
-    myPathShortener = new UniqueNameBuilder<>(SystemProperties.getUserHome(), File.separator, 40);
+    myPathShortener = new UniqueNameBuilder<>(SystemProperties.getUserHome(), File.separator);
     Collection<String> pathsToCheck = new HashSet<>();
     for (AnAction action : recentProjectActions) {
       if (action instanceof ReopenProjectAction) {

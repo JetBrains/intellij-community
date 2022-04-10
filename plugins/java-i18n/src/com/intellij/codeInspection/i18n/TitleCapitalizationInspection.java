@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.ibm.icu.text.MessagePattern;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.restriction.AnnotationContext;
+import com.intellij.codeInspection.restriction.StringFlowUtil;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.project.Project;
@@ -13,8 +15,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
-import com.intellij.codeInspection.restriction.AnnotationContext;
-import com.intellij.codeInspection.restriction.StringFlowUtil;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -36,6 +36,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
         super.visitElement(element);
         UExpression uElement =
           UastContextKt.toUElementOfExpectedTypes(element, UInjectionHost.class, UCallExpression.class, UReferenceExpression.class);
+        if (uElement == null) return;
         Value titleValue = getTitleValue(uElement, new HashSet<>());
         if (titleValue == null) return;
         List<UExpression> usages = I18nInspection.findIndirectUsages(uElement, false);

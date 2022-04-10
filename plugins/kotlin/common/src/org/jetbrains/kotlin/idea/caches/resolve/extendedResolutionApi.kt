@@ -7,10 +7,12 @@ import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
+import org.jetbrains.kotlin.idea.util.returnIfNoDescriptorForDeclarationException
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.lazy.NoDescriptorForDeclarationException
 
@@ -37,6 +39,9 @@ fun KtDeclaration.resolveToDescriptorIfAny(
     val context = safeAnalyze(resolutionFacade, bodyResolveMode)
     return if (this is KtParameter && hasValOrVar()) {
         context.get(BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER, this)
+        // It is incorrect to have `val/var` parameters outside the primary constructor (e.g., `fun foo(val x: Int)`)
+        // but we still want to try to resolve in such cases.
+            ?: context.get(BindingContext.DECLARATION_TO_DESCRIPTOR, this)
     } else {
         context.get(BindingContext.DECLARATION_TO_DESCRIPTOR, this)
     }
@@ -123,3 +128,23 @@ fun KtDeclaration.analyzeWithContent(resolutionFacade: ResolutionFacade): Bindin
 inline fun <reified T> T.analyzeWithContent(resolutionFacade: ResolutionFacade): BindingContext where T : KtDeclarationContainer, T : KtElement =
     resolutionFacade.analyzeWithAllCompilerChecks(this).bindingContext
 
+
+@JvmOverloads
+fun KtElement.safeAnalyzeNonSourceRootCode(
+    bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
+): BindingContext = safeAnalyzeNonSourceRootCode(getResolutionFacade(), bodyResolveMode)
+
+fun KtElement.safeAnalyzeNonSourceRootCode(
+    resolutionFacade: ResolutionFacade,
+    bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
+): BindingContext =
+    actionUnderSafeAnalyzeBlock({ analyze(resolutionFacade, bodyResolveMode) }, { BindingContext.EMPTY })
+
+@JvmOverloads
+fun KtDeclaration.safeAnalyzeWithContentNonSourceRootCode(): BindingContext =
+    safeAnalyzeWithContentNonSourceRootCode(getResolutionFacade())
+
+fun KtDeclaration.safeAnalyzeWithContentNonSourceRootCode(
+    resolutionFacade: ResolutionFacade,
+): BindingContext =
+    actionUnderSafeAnalyzeBlock({ analyzeWithContent(resolutionFacade) }, { BindingContext.EMPTY })

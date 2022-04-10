@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -60,7 +60,8 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.matches("Replace with throws .*") || //may break catches with explicit exceptions
            actionText.equals("Generate 'clone()' method which always throws exception") || // IDEA-207048
            actionText.matches("Replace '.+' with '.+' in cast") || // can produce uncompilable code by design
-           actionText.matches("Replace with '(new .+\\[]|.+\\[]::new)'"); // Suspicious toArray may introduce compilation error
+           actionText.matches("Replace with '(new .+\\[]|.+\\[]::new)'") || // Suspicious toArray may introduce compilation error
+           actionText.equals("Rollback changes in current line"); //revert only one line
   }
 
   static boolean skipPreview(@NotNull IntentionAction action) {
@@ -178,7 +179,8 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
       // "Simplify 'foo || bar || baz || ...' to false" and "Simplify 'foo || (bar) || baz ...' to false"
       familyName.equals("Simplify boolean expression") ||
       // A parenthesized enum switch case label is a compilation error
-      familyName.equals("Create missing enum switch branches");
+      familyName.equals("Create missing enum switch branches") ||
+      familyName.equals("Reformat the whole file");
   }
 
   @NotNull

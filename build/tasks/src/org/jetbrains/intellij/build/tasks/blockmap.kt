@@ -39,14 +39,12 @@ fun bulkZipWithPrefix(commonSourceDir: Path, items: List<Map.Entry<String, Path>
                   }
                 }
               }
-            if (compress) {
-              tracer.spanBuilder("build plugin blockmap")
-                .setAttribute("file", target.toString())
-                .startSpan()
-                .use {
-                  buildBlockMap(target, json)
-                }
-            }
+            tracer.spanBuilder("build plugin blockmap")
+              .setAttribute("file", target.toString())
+              .startSpan()
+              .use {
+                buildBlockMap(target, json)
+              }
           }
         }
       })

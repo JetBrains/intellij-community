@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +52,10 @@ public class TestMethodGradleConfigurationProducer extends AbstractGradleTestRun
     if (psiMethod == null) return null;
     PsiClass psiClass = psiMethod.getContainingClass();
     if (psiClass == null || psiClass.getName() == null || psiClass.getQualifiedName() == null) return null;
+    PsiFile psiFile = psiMethod.getContainingFile();
+    if (psiFile == null) return null;
+    VirtualFile source = psiFile.getVirtualFile();
+    if (source == null) return null;
     return psiMethod;
   }
 
@@ -88,7 +93,7 @@ public class TestMethodGradleConfigurationProducer extends AbstractGradleTestRun
   ) {
     Project project = Objects.requireNonNull(context.getProject());
     Location<?> location = Objects.requireNonNull(context.getLocation());
-    VirtualFile source = element.getContainingFile().getVirtualFile();
+    VirtualFile source = Objects.requireNonNull(element.getContainingFile().getVirtualFile());
     PsiClass aClass = Objects.requireNonNull(element.getContainingClass());
     List<? extends PsiClass> elements = chosenElements.isEmpty() ? List.of(aClass) : chosenElements;
     List<TestTasksToRun> testsTasksToRun = new ArrayList<>();

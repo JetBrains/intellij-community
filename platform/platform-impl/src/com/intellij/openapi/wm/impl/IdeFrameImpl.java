@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -10,7 +10,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -50,8 +50,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
     void dispose();
 
     void setTitle(@Nullable String title);
-
-    void updateView();
 
     @Nullable
     Project getProject();
@@ -144,7 +142,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   @NotNull
   @Override
   public Insets getInsets() {
-    return SystemInfoRt.isMac && isInFullScreen() ? JBUI.emptyInsets() : super.getInsets();
+    return SystemInfoRt.isMac && isInFullScreen() ? JBInsets.emptyInsets() : super.getInsets();
   }
 
   @Override
@@ -187,8 +185,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
    * @deprecated Use {@link ProjectFrameHelper#getProject()} instead.
    */
   @Override
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated(forRemoval = true)
   public Project getProject() {
     return myFrameHelper == null ? null : myFrameHelper.getProject();
   }
@@ -223,5 +220,11 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   @Override
   public BalloonLayout getBalloonLayout() {
     return myFrameHelper == null ? null : myFrameHelper.getHelper().getBalloonLayout();
+  }
+
+  @Override
+  public void notifyProjectActivation() {
+    ProjectFrameHelper helper = ProjectFrameHelper.getFrameHelper(this);
+    if (helper != null) helper.notifyProjectActivation();
   }
 }

@@ -38,7 +38,7 @@ class LookupStorageReader private constructor(
             val idToFileStoragePath = kotlinDataContainerPath.resolve(ID_TO_FILE_STORAGE_NAME).takeIf { it.exists() } ?: return null
             val lookupStorage = openReadOnlyPersistentHashMap(
                 lookupStoragePath,
-                LookupSymbolKeyDescriptor,
+                LookupSymbolKeyDescriptor(storeFullFqNames = false),
                 IntCollectionExternalizer,
             )
 

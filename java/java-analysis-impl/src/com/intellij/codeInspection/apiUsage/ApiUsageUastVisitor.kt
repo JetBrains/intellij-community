@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.apiUsage
 
 import com.intellij.lang.java.JavaLanguage
@@ -15,6 +15,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
  * Non-recursive UAST visitor that detects usages of APIs in source code of UAST-supporting languages
  * and reports them via [ApiUsageProcessor] interface.
  */
+
 @ApiStatus.Experimental
 open class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : AbstractUastNonRecursiveVisitor() {
 

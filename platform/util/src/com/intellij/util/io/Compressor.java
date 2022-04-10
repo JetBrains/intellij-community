@@ -168,11 +168,16 @@ public abstract class Compressor implements Closeable {
   }
 
   public final void addFile(@NotNull String entryName, @NotNull Path file) throws IOException {
+    addFile(entryName, file, -1);
+  }
+
+  public final void addFile(@NotNull String entryName, @NotNull Path file, long timestampInMillis) throws IOException {
     entryName = entryName(entryName);
     if (accept(entryName, file)) {
       try (InputStream source = Files.newInputStream(file)) {
         BasicFileAttributes attributes = Files.readAttributes(file, BasicFileAttributes.class);
-        writeFileEntry(entryName, source, attributes.size(), attributes.lastModifiedTime().toMillis());
+        long timestamp = timestampInMillis == -1 ? attributes.lastModifiedTime().toMillis() : timestampInMillis;
+        writeFileEntry(entryName, source, attributes.size(), timestamp);
       }
     }
   }
@@ -215,7 +220,7 @@ public abstract class Compressor implements Closeable {
   }
 
   public final void addDirectory(@NotNull Path directory) throws IOException {
-    addRecursively("", directory);
+    addRecursively("", directory, -1);
   }
 
   public final void addDirectory(@NotNull String prefix, @NotNull File directory) throws IOException {
@@ -223,7 +228,11 @@ public abstract class Compressor implements Closeable {
   }
 
   public final void addDirectory(@NotNull String prefix, @NotNull Path directory) throws IOException {
-    addRecursively(entryName(prefix), directory);
+    addRecursively(entryName(prefix), directory, -1);
+  }
+
+  public final void addDirectory(@NotNull String prefix, @NotNull Path directory, long timestampInMillis) throws IOException {
+    addRecursively(entryName(prefix), directory, timestampInMillis);
   }
 
   //<editor-fold desc="Internal interface">
@@ -243,7 +252,7 @@ public abstract class Compressor implements Closeable {
     return myFilter == null || myFilter.test(entryName, file);
   }
 
-  private void addRecursively(String prefix, Path root) throws IOException {
+  private void addRecursively(String prefix, Path root, long timestampMs) throws IOException {
     Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -252,7 +261,7 @@ public abstract class Compressor implements Closeable {
           return FileVisitResult.CONTINUE;
         }
         else if (accept(name, dir)) {
-          writeDirectoryEntry(name, attrs.lastModifiedTime().toMillis());
+          writeDirectoryEntry(name, timestampMs == -1 ? attrs.lastModifiedTime().toMillis() : timestampMs);
           return FileVisitResult.CONTINUE;
         }
         else {
@@ -265,7 +274,7 @@ public abstract class Compressor implements Closeable {
         String name = entryName(file);
         if (accept(name, file)) {
           try (InputStream source = Files.newInputStream(file)) {
-            writeFileEntry(name, source, attrs.size(), attrs.lastModifiedTime().toMillis());
+            writeFileEntry(name, source, attrs.size(), timestampMs == -1 ? attrs.lastModifiedTime().toMillis() : timestampMs);
           }
         }
         return FileVisitResult.CONTINUE;

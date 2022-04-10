@@ -67,19 +67,18 @@ abstract class ProjectTemplate : DisplayableSettingItem {
         }
     }
 
-
     companion object {
         val ALL = listOf(
-            ConsoleApplicationProjectTemplate,
+            FullStackWebApplicationProjectTemplate,
             MultiplatformLibraryProjectTemplate,
             NativeApplicationProjectTemplate,
             FrontendApplicationProjectTemplate,
             ReactApplicationProjectTemplate,
-            FullStackWebApplicationProjectTemplate,
             NodeJsApplicationProjectTemplate,
             ComposeDesktopApplicationProjectTemplate,
             ComposeMultiplatformApplicationProjectTemplate,
-            ComposeWebApplicationProjectTemplate
+            ComposeWebApplicationProjectTemplate,
+            ConsoleApplicationProjectTemplateWithSample
         )
 
         fun byId(id: String): ProjectTemplate? = ALL.firstOrNull {
@@ -94,7 +93,7 @@ private infix fun <V : Any, T : SettingType<V>> PluginSettingReference<V, T>.wit
 private inline infix fun <V : Any, reified T : SettingType<V>> PluginSetting<V, T>.withValue(value: V): SettingWithValue<V, T> =
     SettingWithValue(reference, value)
 
-private fun createDefaultSourceSets() =
+fun createDefaultSourceSets() =
     SourcesetType.values().map { sourceSetType ->
         Sourceset(
             sourceSetType,
@@ -106,7 +105,7 @@ private fun ModuleType.createDefaultTarget(name: String = this.name, permittedTe
     MultiplatformTargetModule(name, defaultTarget, createDefaultSourceSets(), permittedTemplateIds)
 
 
-object ConsoleApplicationProjectTemplate : ProjectTemplate() {
+open class ConsoleApplicationProjectTemplate(private val addSampleCode: Boolean) : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.empty.jvm.console.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.empty.jvm.console.description")
     override val id = "consoleApplication"
@@ -123,11 +122,14 @@ object ConsoleApplicationProjectTemplate : ProjectTemplate() {
                     createDefaultSourceSets(),
                     permittedTemplateIds = setOf(ConsoleJvmApplicationTemplate.id)
                 ).apply {
-                    withTemplate(ConsoleJvmApplicationTemplate)
+                    if (addSampleCode)
+                        withTemplate(ConsoleJvmApplicationTemplate)
                 }
             )
         )
 }
+
+object ConsoleApplicationProjectTemplateWithSample : ConsoleApplicationProjectTemplate(addSampleCode = true)
 
 object MultiplatformLibraryProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.mpp.lib.title")
@@ -295,7 +297,7 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
                 },
                 Module(
                     "ios",
-                    RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.ios),
+                    sharedIosConfigurator,
                     null,
                     permittedTemplateIds = emptySet(),
                     sourceSets = createDefaultSourceSets(),
@@ -310,6 +312,8 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
 
     protected abstract fun iosAppModule(shared: Module): Module
     protected abstract fun androidAppModule(shared: Module): Module
+
+    open val sharedIosConfigurator get() = RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.ios)
 }
 
 object NodeJsApplicationProjectTemplate : ProjectTemplate() {
@@ -407,7 +411,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                     Module(
                         "desktop",
                         JvmTargetConfigurator,
-                        template = null,
+                        template = ComposeCommonDesktopTemplate(),
                         sourceSets = createDefaultSourceSets(),
                         subModules = emptyList()
                     ).withConfiguratorSettings<JvmTargetConfigurator> {
@@ -429,7 +433,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
             +Module(
                 "desktop",
                 MppModuleConfigurator,
-                template = null,
+                template = ComposeCommonDesktopTemplate(),
                 sourceSets = createDefaultSourceSets(),
                 subModules = listOf(
                     Module(

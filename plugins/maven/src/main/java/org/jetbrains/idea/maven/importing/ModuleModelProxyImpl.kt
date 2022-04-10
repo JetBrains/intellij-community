@@ -69,7 +69,7 @@ class ModuleModelProxyImpl(private val diff: WorkspaceEntityStorageBuilder,
       return
     }
     if (module !is ModuleBridge) return
-    val moduleEntity: ModuleEntity = diff.findModuleEntity(module) ?: return //MavenProjectImporter.LOG.error("Could not find module entity to remove by $module");
+    val moduleEntity: ModuleEntity = diff.findModuleEntity(module) ?: return //MavenProjectImporterImpl.LOG.error("Could not find module entity to remove by $module");
 
     moduleEntity.dependencies
       .asSequence()

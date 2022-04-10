@@ -27,18 +27,9 @@ apply plugin: 'base'
 group 'intellij.tools'
 version '1.0'
 
-apply from: 'setupJdk.gradle'
-apply from: 'setupAndroidSdk.gradle'
-apply from: 'setupBuildScriptsDeps.gradle'
-apply from: 'setupToolboxLiteGen.gradle'
-apply from: 'setupBundledMaven.gradle'
 apply from: 'setupCidr.gradle'
-apply from: 'setupRpluginDeps.gradle'
-apply from: 'setupAndroidStudio.gradle'
-apply from: 'setupVulnerabilitySearchPlugin.gradle'
 
-task setupDependencies(dependsOn: ['setupJdks', 'setupBundledMaven'], group: 'dependencies')
-clean.dependsOn('cleanSetupJdks', 'cleanSetupBundledMaven')
+clean.dependsOn('cleanSetupJdks')
 
 wrapper {
   gradleVersion = '5.5'

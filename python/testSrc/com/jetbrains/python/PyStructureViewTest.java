@@ -73,13 +73,13 @@ public class PyStructureViewTest extends PyTestCase {
            "  __init__(self)\n" +
            "  __new__(cls)\n" +
            "  __setattr__(self, __name, __value)\n" +
+           "  __delattr__(self, __name)\n" +
            "  __eq__(self, __o)\n" +
            "  __ne__(self, __o)\n" +
            "  __repr__(self)\n" +
            "  __hash__(self)\n" +
            "  __format__(self, __format_spec)\n" +
            "  __getattribute__(self, __name)\n" +
-           "  __delattr__(self, __name)\n" +
            "  __sizeof__(self)\n" +
            "  __reduce__(self)\n" +
            "  __reduce_ex__(self, __protocol)\n" +
@@ -88,8 +88,7 @@ public class PyStructureViewTest extends PyTestCase {
            "  __annotations__\n" +
            "  __dict__\n" +
            "  __doc__\n" +
-           "  __module__\n" +
-           "  __slots__",
+           "  __module__",
            true);
   }
 
@@ -118,6 +117,7 @@ public class PyStructureViewTest extends PyTestCase {
            "  __init__(self)\n" +
            "  __new__(cls)\n" +
            "  __setattr__(self, __name, __value)\n" +
+           "  __delattr__(self, __name)\n" +
            "  __eq__(self, __o)\n" +
            "  __ne__(self, __o)\n" +
            "  __str__(self)\n" +
@@ -125,7 +125,6 @@ public class PyStructureViewTest extends PyTestCase {
            "  __hash__(self)\n" +
            "  __format__(self, __format_spec)\n" +
            "  __getattribute__(self, __name)\n" +
-           "  __delattr__(self, __name)\n" +
            "  __sizeof__(self)\n" +
            "  __reduce__(self)\n" +
            "  __reduce_ex__(self, __protocol)\n" +
@@ -134,8 +133,7 @@ public class PyStructureViewTest extends PyTestCase {
            "  __annotations__\n" +
            "  __dict__\n" +
            "  __doc__\n" +
-           "  __module__\n" +
-           "  __slots__",
+           "  __module__",
            true);
   }
 

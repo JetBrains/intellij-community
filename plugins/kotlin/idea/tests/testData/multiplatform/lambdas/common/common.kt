@@ -2,7 +2,7 @@
 
 package sample
 
-expect interface <!LINE_MARKER("descr='Has actuals in JVM'")!>A<!>
+expect interface <!LINE_MARKER("descr='Has actuals in jvm module'")!>A<!>
 
 fun useA(block: A.() -> Unit) {}
 

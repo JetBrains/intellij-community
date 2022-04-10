@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -244,11 +244,19 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
     // optimization: reduce number of instructions
-    boolean isGeneratingStatement = element instanceof PsiStatement && !(element instanceof PsiSwitchLabelStatement);
-    boolean isGeneratingCodeBlock = element instanceof PsiCodeBlock && !(element.getParent() instanceof PsiSwitchStatement);
-    if (isGeneratingStatement || isGeneratingCodeBlock) {
+    boolean isGeneratingStatement = element instanceof PsiStatement && !(element instanceof PsiSwitchLabelStatement) &&
+                                    !isAbruptStatement(element);
+    PsiElement parent = element.getParent();
+    boolean isGeneratingCodeBlock = element instanceof PsiCodeBlock && !(parent instanceof PsiSwitchStatement);
+    boolean isGeneratingExpression = element instanceof PsiExpression && !(element instanceof PsiSwitchExpression) &&
+                                     isAbruptStatement(parent);
+    if (isGeneratingStatement || isGeneratingCodeBlock || isGeneratingExpression) {
       generateUncheckedExceptionJumps(element, atStart);
     }
+  }
+
+  private static boolean isAbruptStatement(@NotNull PsiElement element) {
+    return element instanceof PsiReturnStatement || element instanceof PsiYieldStatement || element instanceof PsiThrowStatement;
   }
 
   private void finishElement(@NotNull PsiElement element) {
@@ -877,7 +885,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override
   public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
     startElement(statement);
-    generateCaseValueInstructions(statement.getCaseValues());
+    generateCaseValueInstructions(statement.getCaseLabelElementList());
     finishElement(statement);
   }
 
@@ -885,7 +893,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
   public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
     startElement(statement);
 
-    generateCaseValueInstructions(statement.getCaseValues());
+    generateCaseValueInstructions(statement.getCaseLabelElementList());
 
     PsiStatement body = statement.getBody();
     if (body != null) {
@@ -903,11 +911,13 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  private void generateCaseValueInstructions(@Nullable PsiExpressionList values) {
+  private void generateCaseValueInstructions(@Nullable PsiCaseLabelElementList values) {
     if (values != null) {
-      for (PsiExpression caseValue : values.getExpressions()) {
+      for (PsiCaseLabelElement caseValue : values.getElements()) {
         ProgressManager.checkCanceled();
-        generateExpressionInstructions(caseValue);
+        if (caseValue instanceof PsiExpression) {
+          generateExpressionInstructions((PsiExpression)caseValue);
+        }
       }
     }
   }
@@ -1413,7 +1423,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     myStartStatementStack.pushStatement(rExpr == null ? expression : rExpr, false);
     myEndStatementStack.pushStatement(rExpr == null ? expression : rExpr, false);
 
-    boolean generatedWriteInstruction = false;
+    int pc = myCurrentFlow.getSize();
     PsiExpression lExpr = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
     if (lExpr instanceof PsiReferenceExpression) {
       if (!myImplicitCompactConstructorAssignments.isEmpty()) {
@@ -1440,7 +1450,6 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
           rExpr.accept(this);
         }
         generateWriteInstruction(variable);
-        generatedWriteInstruction = true;
 
         if (myAssignmentTargetsAreElements) finishElement(lExpr);
       }
@@ -1451,22 +1460,6 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
         lExpr.accept(this); //?
       }
     }
-    else if (lExpr instanceof PsiArrayAccessExpression &&
-             ((PsiArrayAccessExpression)lExpr).getArrayExpression() instanceof PsiReferenceExpression){
-      PsiVariable variable = getUsedVariable((PsiReferenceExpression)((PsiArrayAccessExpression)lExpr).getArrayExpression());
-      if (variable != null) {
-        generateReadInstruction(variable);
-        final PsiExpression indexExpression = ((PsiArrayAccessExpression)lExpr).getIndexExpression();
-        if (indexExpression != null) {
-          indexExpression.accept(this);
-        }
-      } else {
-        lExpr.accept(this);
-      }
-      if (rExpr != null) {
-        rExpr.accept(this);
-      }
-    }
     else if (lExpr != null) {
       lExpr.accept(this);
       if (rExpr != null) {
@@ -1474,7 +1467,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
     //each statement should contain at least one instruction in order to getElement(offset) work
-    if (!generatedWriteInstruction) emitEmptyInstruction();
+    if (pc == myCurrentFlow.getSize()) emitEmptyInstruction();
 
     myStartStatementStack.popStatement();
     myEndStatementStack.popStatement();

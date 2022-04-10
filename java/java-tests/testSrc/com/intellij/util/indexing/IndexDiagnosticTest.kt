@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -81,6 +81,8 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
           JsonDuration(234),
           JsonDuration(345),
           JsonDuration(345),
+          false,
+          JsonDuration(),
           JsonDateTime(ZonedDateTime.now()),
           JsonDateTime(ZonedDateTime.now()),
           JsonDuration(333),
@@ -150,8 +152,8 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             providerName = "providerName",
             totalNumberOfIndexedFiles = 444,
             totalNumberOfFilesFullyIndexedByExtensions = 33,
-            totalIndexingTime = JsonDuration(123),
-            contentLoadingTime = JsonDuration(456),
+            totalIndexingVisibleTime = JsonDuration(123),
+            contentLoadingVisibleTime = JsonDuration(456),
             numberOfTooLargeForIndexingFiles = 1,
             slowIndexedFiles = listOf(
               JsonFileProviderIndexStatistics.JsonSlowIndexedFile(
@@ -166,7 +168,9 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
                 path = PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java"),
                 wasFullyIndexedByExtensions = true
               )
-            )
+            ),
+            isAppliedAllValuesSeparately = true,
+            separateApplyingIndexesVisibleTime = JsonDuration(362)
           )
         )
       )

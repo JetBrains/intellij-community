@@ -10,7 +10,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.libraries.AddCustomLibraryDialog;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
@@ -29,13 +28,6 @@ import java.util.function.Function;
  * @author Maxim.Medvedev
  */
 final class ConfigureGroovyLibraryNotificationProvider implements EditorNotificationProvider {
-
-  private static final Key<EditorNotificationPanel> KEY = Key.create("configure.groovy.library");
-
-  @Override
-  public @NotNull Key<EditorNotificationPanel> getKey() {
-    return KEY;
-  }
 
   @Override
   public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,

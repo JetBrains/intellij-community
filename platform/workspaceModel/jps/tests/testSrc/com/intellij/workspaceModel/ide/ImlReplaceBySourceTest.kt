@@ -115,7 +115,7 @@ class ImlReplaceBySourceTest {
                                                                                   storageBuilder1, virtualFileManager)
 
     val storageBuilder2 = WorkspaceEntityStorageBuilder.create()
-    val reader = CachingJpsFileContentReader(projectFile.asConfigLocation(virtualFileManager).baseDirectoryUrlString)
+    val reader = CachingJpsFileContentReader(projectFile.asConfigLocation(virtualFileManager))
     data.loadAll(reader, storageBuilder2, TestErrorReporter, null)
 
     val before = storageBuilder1.toStorage()

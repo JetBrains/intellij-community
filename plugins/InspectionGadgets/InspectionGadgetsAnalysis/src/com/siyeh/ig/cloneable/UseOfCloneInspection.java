@@ -2,6 +2,7 @@
 package com.siyeh.ig.cloneable;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -54,7 +55,8 @@ public class UseOfCloneInspection extends BaseInspection {
     @Override
     public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
       final PsiElement target = expression.resolve();
-      if (!(target instanceof PsiMethod) || !CloneUtils.isClone((PsiMethod)target)) {
+      if (!(target instanceof PsiMethod) || !CloneUtils.isClone((PsiMethod)target) ||
+          PsiUtil.isArrayClass(((PsiMethod)target).getContainingClass())) {
         return;
       }
       registerError(expression, expression);

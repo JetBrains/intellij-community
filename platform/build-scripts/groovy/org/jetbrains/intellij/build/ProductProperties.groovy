@@ -12,9 +12,10 @@ import java.nio.file.Path
 import java.util.function.BiPredicate
 
 /**
- * Describes distribution of an IntelliJ-based IDE. Override this class and call {@link BuildTasks#buildProduct} from a build script to build
- * distribution of your product.
+ * Describes distribution of an IntelliJ-based IDE. Override this class and build distribution of your product.
+ * Refer to e.g. {@link PyCharmCommunityInstallersBuildTarget}
  */
+@SuppressWarnings('GroovyDocCheck')
 @CompileStatic
 abstract class ProductProperties {
   /**
@@ -212,7 +213,7 @@ abstract class ProductProperties {
    */
   List<String> modulesToCompileTests = []
 
-  JetBrainsRuntimeDistribution runtimeDistribution = JetBrainsRuntimeDistribution.DCEVM
+  JetBrainsRuntimeDistribution runtimeDistribution = JetBrainsRuntimeDistribution.JCEF
 
   /**
    * Prefix for names of environment variables used by Windows and Linux distributions to allow users customize location of the product JDK
@@ -263,4 +264,14 @@ abstract class ProductProperties {
    * Names of JARs inside IDE_HOME/lib directory which need to be added to the Xbootclasspath to start the IDE
    */
   List<String> xBootClassPathJarNames = []
+
+  /**
+   * Customize PRODUCT_CODE-builtinModules.json which contains information about product modules,
+   * bundled plugins, and file extensions. builtinModules.json is used to populate marketplace settings
+   * for the product.
+   * <p>
+   * It's particularly useful when you want to limit modules used to calculate compatible plugins on marketplace.
+   */
+  void customizeBuiltinModules(@NotNull BuildContext context, @NotNull Path builtinModulesFile) {
+  }
 }

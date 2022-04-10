@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,7 +47,7 @@ public class RefJavaFileImpl extends RefFileImpl {
   }
 
   @Override
-  protected void initialize() {
+  protected synchronized void initialize() {
     PsiFile psiFile = getPsiElement();
     if (psiFile == null) return;
     UFile file = UastContextKt.toUElement(psiFile, UFile.class);

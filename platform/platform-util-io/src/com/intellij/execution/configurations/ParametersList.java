@@ -402,6 +402,10 @@ public final class ParametersList implements Cloneable {
     return sb == null ? text : sb.append(text, start, text.length()).toString();
   }
 
+  public void patchMacroWithEnvs(Map<String, String> envs) {
+    myMacroMap.getValue().putAll(envs);
+  }
+
   private static Map<String, String> ourTestMacros;
 
   @TestOnly

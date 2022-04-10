@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -16,7 +16,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -84,12 +84,9 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
       }
 
       final PsiMethod finalMethod = method;
-      ChangeSignatureProcessor processor = new ChangeSignatureProcessor(project,
-                                                                        finalMethod,
-                                                                        false, null,
-                                                                        finalMethod.getName(),
-                                                                        finalMethod.getReturnType(),
-                                                                        getNewParametersInfo(finalMethod));
+      var processor = JavaRefactoringFactory.getInstance(project)
+        .createChangeSignatureProcessor(finalMethod, false, null, finalMethod.getName(), finalMethod.getReturnType(),
+                                        getNewParametersInfo(finalMethod), null, null, null, null);
 
       processor.run();
 

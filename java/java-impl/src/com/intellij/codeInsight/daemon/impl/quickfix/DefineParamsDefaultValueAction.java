@@ -44,8 +44,8 @@ import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -124,7 +124,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
 
     Runnable runnable = () -> {
       final PsiMethod prototype = (PsiMethod)containingClass.addBefore(methodPrototype, method);
-      RefactoringUtil.fixJavadocsForParams(prototype, ContainerUtil.set(prototype.getParameterList().getParameters()));
+      CommonJavaRefactoringUtil.fixJavadocsForParams(prototype, ContainerUtil.set(prototype.getParameterList().getParameters()));
 
 
       PsiCodeBlock body = prototype.getBody();

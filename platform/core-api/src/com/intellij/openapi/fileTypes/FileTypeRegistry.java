@@ -144,7 +144,7 @@ public abstract class FileTypeRegistry {
 
     /** @deprecated not used anymore, do not override */
     @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+    @ApiStatus.ScheduledForRemoval
     default int getVersion() { return 0; }
   }
 }

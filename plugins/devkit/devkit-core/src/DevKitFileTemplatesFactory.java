@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 public final class DevKitFileTemplatesFactory implements FileTemplateGroupDescriptorFactory {
 
   public static final String PLUGIN_XML = "devkit-plugin.xml";
+  public static final String THEME_PLUGIN_XML = "devkit-theme-plugin.xml";
+  public static final String THEME_JSON = "devkit-theme.json";
   public static final String BUILD_GRADLE_KTS = "devkit-build.gradle.kts";
   public static final String SETTINGS_GRADLE_KTS = "devkit-settings.gradle.kts";
   public static final String GRADLE_WRAPPER_PROPERTIES = "devkit-gradle-wrapper.properties";
@@ -37,6 +39,8 @@ public final class DevKitFileTemplatesFactory implements FileTemplateGroupDescri
       new FileTemplateGroupDescriptor(DevKitBundle.message("file.templates.new.plugin"), AllIcons.Nodes.Plugin);
 
     newProjectRoot.addTemplate(PLUGIN_XML);
+    newProjectRoot.addTemplate(THEME_PLUGIN_XML);
+    newProjectRoot.addTemplate(THEME_JSON);
     newProjectRoot.addTemplate(BUILD_GRADLE_KTS);
     newProjectRoot.addTemplate(SETTINGS_GRADLE_KTS);
     newProjectRoot.addTemplate(GRADLE_WRAPPER_PROPERTIES);

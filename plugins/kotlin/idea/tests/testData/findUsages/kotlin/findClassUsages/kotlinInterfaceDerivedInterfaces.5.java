@@ -1,3 +1,3 @@
-class D implements X {
+class JavaD implements X {
 
 }

@@ -33,7 +33,7 @@ final class RootChangesLogger {
 
     if (isNew) {
       myLogger.info("New rootsChanged event for \"" + project.getName() + "\" project with " +
-                    (fullReindex ? "full" : "partial") + " reindex with trace_hash = " + hash + ":\n" +
+                    (fullReindex ? "full" : "partial") + " rescanning with trace_hash = " + hash + ":\n" +
                     ExceptionUtil.getThrowableText(stacktrace));
       return;
     }

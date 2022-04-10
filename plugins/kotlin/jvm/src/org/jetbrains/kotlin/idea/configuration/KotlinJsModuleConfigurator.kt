@@ -1,17 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.DummyLibraryProperties
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryType
-import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.JSLibraryStdDescription
@@ -29,9 +27,6 @@ open class KotlinJsModuleConfigurator : KotlinWithLibraryConfigurator<DummyLibra
 
     override val targetPlatform: TargetPlatform
         get() = JsPlatforms.defaultJsPlatform
-
-    @Suppress("DEPRECATION_ERROR")
-    override fun getTargetPlatform() = JsPlatforms.CompatJsPlatform
 
     override val presentableText: String
         get() = KotlinJvmBundle.message("language.name.javascript")

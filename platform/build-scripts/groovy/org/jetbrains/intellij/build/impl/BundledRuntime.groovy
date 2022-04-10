@@ -3,13 +3,15 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
@@ -21,7 +23,6 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
-import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
 
 import static java.nio.file.attribute.PosixFilePermission.*
@@ -40,7 +41,12 @@ final class BundledRuntime {
 
   @NotNull
   Path getHomeForCurrentOsAndArch() {
-    String prefix = "jbr_dcevm-"
+    String prefix = "jbr_jcef-"
+    def os = OsFamily.currentOs
+    def arch = JvmArchitecture.currentJvmArch
+    if (os == OsFamily.LINUX && arch == JvmArchitecture.aarch64) {
+      prefix = "jbr-"
+    }
     if (System.getProperty("intellij.build.jbr.setupSdk", "false").toBoolean()) {
       // required as a runtime for debugger tests
       prefix = "jbrsdk-"
@@ -48,10 +54,10 @@ final class BundledRuntime {
     else if (context.options.bundledRuntimePrefix != null) {
       prefix = context.options.bundledRuntimePrefix
     }
-    def path = extract(prefix, OsFamily.currentOs, JvmArchitecture.currentJvmArch)
+    def path = extract(prefix, os, arch)
 
     Path home
-    if (OsFamily.currentOs == OsFamily.MACOS) {
+    if (os == OsFamily.MACOS) {
       home = path.resolve("jbr/Contents/Home")
     }
     else {
@@ -72,7 +78,7 @@ final class BundledRuntime {
     Path targetDir = Path.of(context.paths.communityHome, "build", "download", "${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
     def jbrDir = targetDir.resolve("jbr")
 
-    Path archive = findArchiveImpl(prefix, os, build, arch, context.options, context.paths)
+    Path archive = findArchiveImpl(prefix, os, arch)
     BuildDependenciesDownloader.extractFile(
       archive, jbrDir,
       new BuildDependenciesCommunityRoot(context.paths.communityHomeDir),
@@ -96,7 +102,7 @@ final class BundledRuntime {
   }
 
   void extractTo(String prefix, OsFamily os, Path destinationDir, JvmArchitecture arch) {
-    Path archive = findArchiveImpl(prefix, os, build, arch, context.options, context.paths)
+    Path archive = findArchiveImpl(prefix, os, arch)
     if (archive != null) {
       doExtract(archive, destinationDir, os)
     }
@@ -124,13 +130,13 @@ final class BundledRuntime {
   }
 
   Path findArchive(String prefix, OsFamily os, JvmArchitecture arch) {
-    return findArchiveImpl(prefix, os, build, arch, context.options, context.paths)
+    return findArchiveImpl(prefix, os, arch)
   }
 
-  private static Path findArchiveImpl(String prefix, OsFamily os, String jreBuild, JvmArchitecture arch, BuildOptions options, BuildPaths paths) {
-    String archiveName = archiveName(prefix, jreBuild, options.bundledRuntimeVersion, arch, os)
+  private Path findArchiveImpl(String prefix, OsFamily os, JvmArchitecture arch) {
+    String archiveName = archiveName(prefix, arch, os)
     URI url = new URI("https://cache-redirector.jetbrains.com/intellij-jbr/$archiveName")
-    return BuildDependenciesDownloader.downloadFileToCacheLocation(new BuildDependenciesCommunityRoot(paths.communityHomeDir), url)
+    return BuildDependenciesDownloader.downloadFileToCacheLocation(new BuildDependenciesCommunityRoot(context.paths.communityHomeDir), url)
   }
 
   private static void unTar(Path archive, Path destination) {
@@ -142,41 +148,7 @@ final class BundledRuntime {
       throw new IllegalStateException("Unable to detect root dir of $archive")
     }
 
-    boolean stripRootDir = rootDir.startsWith("jbr")
-    if (SystemInfoRt.isWindows) {
-      Decompressor.Tar decompressor = new Decompressor.Tar(archive)
-      if (stripRootDir) {
-        decompressor.removePrefixPath(rootDir)
-      }
-      decompressor.extract(destination)
-    }
-    else {
-      // 'tar' command is used to ensure that executable flags will be preserved
-      Files.createDirectories(destination)
-      List<String> args = new ArrayList<>(10)
-      args.add("tar")
-      args.add("xf")
-      args.add(archive.fileName.toString())
-      if (stripRootDir) {
-        args.add("--strip")
-        args.add("1")
-      }
-      args.add("--directory")
-      args.add(destination.toString())
-
-      // return BuildHelper.runProcess(context, args, archive.parent) when we switch to jps-bootstrap
-
-      ProcessBuilder builder = new ProcessBuilder(args).inheritIO().directory(archive.parent.toFile())
-      Process process = builder.start()
-      if (!process.waitFor(10, TimeUnit.MINUTES)) {
-        process.destroyForcibly().waitFor()
-        throw new IllegalStateException("Cannot execute $args: 10 min timeout")
-      }
-      int exitCode = process.exitValue()
-      if (exitCode != 0) {
-        throw new RuntimeException("Cannot execute $args (exitCode=$exitCode)")
-      }
-    }
+    ArchiveUtils.unTar(archive, destination, rootDir.startsWith("jbr") ? rootDir : null)
   }
 
   private static TarArchiveInputStream createTarGzInputStream(@NotNull Path archive) {
@@ -216,21 +188,20 @@ final class BundledRuntime {
     if (buildContext.options.bundledRuntimePrefix != null) {
       return buildContext.options.bundledRuntimePrefix
     }
-    else if (buildContext.productProperties.runtimeDistribution.classifier.isEmpty()) {
-      return "jbr-"
-    }
     else {
-      return "jbr_${buildContext.productProperties.runtimeDistribution.classifier}-"
+      return buildContext.productProperties.runtimeDistribution.artifactPrefix
     }
   }
 
   /**
    * Update this method together with:
-   *  `build/dependencies/setupJdk.gradle`
    *  `com.jetbrains.gateway.downloader.CodeWithMeClientDownloader#downloadClientAndJdk(java.lang.String, java.lang.String, com.intellij.openapi.progress.ProgressIndicator)`
+   *  `UploadingAndSigning#getMissingJbrs(java.lang.String)`
   */
   @SuppressWarnings('SpellCheckingInspection')
-  private static String archiveName(String prefix, String jreBuild, int version, JvmArchitecture arch, OsFamily os) {
+  private String archiveName(String prefix, JvmArchitecture arch, OsFamily os) {
+    int version = context.options.bundledRuntimeVersion
+    String jreBuild = build
     String update, build
     String[] split = jreBuild.split('b')
     if (split.length > 2) {
@@ -248,7 +219,18 @@ final class BundledRuntime {
     }
 
     String archSuffix = getArchSuffix(arch)
-    return "${prefix}${update}-${os.jbrArchiveSuffix}-${archSuffix}-${build}.tar.gz"
+    return "${prefix}${update}-${os.jbrArchiveSuffix}-${archSuffix}-${runtimeBuildPrefix()}${build}.tar.gz"
+  }
+
+  private String runtimeBuildPrefix() {
+    if (!context.options.runtimeDebug) {
+      return ''
+    }
+    if (!context.options.isTestBuild && !context.options.isInDevelopmentMode) {
+      context.messages.error("Either test or development mode is required to use fastdebug runtime build")
+    }
+    context.messages.info("Fastdebug runtime build is requested")
+    return 'fastdebug-'
   }
 
   private static String getArchSuffix(JvmArchitecture arch) {

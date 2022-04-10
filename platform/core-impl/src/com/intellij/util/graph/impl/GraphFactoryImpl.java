@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.graph.impl;
 
+import com.google.common.graph.Graphs;
 import com.intellij.util.graph.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +19,12 @@ public class GraphFactoryImpl extends GraphFactory {
   }
 
   @Override
-  public @NotNull <N, E> NetworkBuilder<N, E> newNetworkWithSameProperties(@NotNull Network<N, E> network) {
+  public @NotNull <N, E> Network<N, E> emptyNetwork() {
+    return new NetworkBuilderImpl<>(false).build();
+  }
+
+  @Override
+  public <N, E> @NotNull NetworkBuilder<N, E> newNetworkWithSameProperties(@NotNull Network<N, E> network) {
     return new NetworkBuilderImpl<N, E>(network.isDirected())
       .allowsParallelEdges(network.allowsParallelEdges())
       .allowsSelfLoops(network.allowsSelfLoops())
@@ -27,7 +33,12 @@ public class GraphFactoryImpl extends GraphFactory {
   }
 
   @Override
-  public @NotNull <N> MutableNetwork<N, EndpointPair<N>> toNetwork(@NotNull Graph<N> graph) {
+  public <N, E> @NotNull MutableNetwork<N, E> copyOf(@NotNull Network<N, E> network) {
+    return GraphAdapter.wrapNetwork(Graphs.copyOf(GraphAdapter.unwrapNetwork(network)));
+  }
+
+  @Override
+  public <N> @NotNull MutableNetwork<N, EndpointPair<N>> toNetwork(@NotNull Graph<N> graph) {
     MutableNetwork<N, EndpointPair<N>> network = new NetworkBuilderImpl<N, EndpointPair<N>>(true)
       .allowsParallelEdges(true)
       .allowsSelfLoops(true)

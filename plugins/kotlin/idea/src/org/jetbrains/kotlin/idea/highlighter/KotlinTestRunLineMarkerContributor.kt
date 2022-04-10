@@ -8,11 +8,12 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.configuration.isGradleModule
 import org.jetbrains.kotlin.idea.platform.tooling
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.project.platform
+import org.jetbrains.kotlin.idea.run.KotlinMainFunctionLocatingService
+import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework
 import org.jetbrains.kotlin.idea.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -26,11 +27,18 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import javax.swing.Icon
 
 class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
     companion object {
+
+        private fun KtNamedDeclaration.getTestFramework(): KotlinTestFramework? =
+            KotlinTestFramework.getApplicableFor(this)
+
+        private fun KtNamedFunction.isIgnored(): Boolean {
+            return getTestFramework()?.isIgnoredMethod(this) ?: false
+        }
+
         fun getTestStateIcon(urls: List<String>, declaration: KtNamedDeclaration): Icon {
             val testStateStorage = TestStateStorage.getInstance(declaration.project)
             val isClass = declaration is KtClass
@@ -64,35 +72,49 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
         fun TargetPlatform.providesRunnableTests(): Boolean = componentPlatforms.any { it.providesRunnableTests() }
     }
 
-    override fun getInfo(element: PsiElement): Info? {
-        val declaration = element.getStrictParentOfType<KtNamedDeclaration>() ?: return null
-        if (declaration.nameIdentifier != element) return null
+    override fun getInfo(element: PsiElement): Info? = calculateIcon(element, false)
+
+    override fun getSlowInfo(element: PsiElement): Info? = calculateIcon(element, true)
+
+    private fun calculateIcon(
+        element: PsiElement,
+        includeSlowProviders: Boolean
+    ): Info? {
+        val declaration = element.getStrictParentOfType<KtNamedDeclaration>()?.takeIf { it.nameIdentifier == element } ?: return null
 
         val targetPlatform = declaration.module?.platform ?: return null
 
         if (declaration is KtNamedFunction) {
-            if (declaration.containingClassOrObject == null) return null
-            if (targetPlatform.isMultiPlatform() && declaration.containingClass() == null) return null
-        }
-        else {
-            if (declaration !is KtClassOrObject) return null
-            if (targetPlatform.isMultiPlatform() && declaration !is KtClass) return null
+            if (declaration.containingClassOrObject == null ||
+                targetPlatform.isMultiPlatform() && declaration.containingClass() == null) return null
+            if (declaration.isIgnored() && declaration.module?.isGradleModule() == true) return null
+        } else {
+            if (declaration !is KtClassOrObject ||
+                targetPlatform.isMultiPlatform() && declaration !is KtClass
+            ) return null
         }
 
         if (!targetPlatform.providesRunnableTests()) return null
 
         if (!declaration.isUnderKotlinSourceRootTypes()) return null
 
-        val icon = targetPlatform.idePlatformKind.tooling.getTestIcon(declaration) {
-            declaration.resolveToDescriptorIfAny()
-        } ?: return null
-        
-        return Info(icon, Function { KotlinBundle.message("highlighter.tool.tip.text.run.test") }, *ExecutorAction.getActions(getOrder(declaration)))
+        val icon = targetPlatform.idePlatformKind.tooling.getTestIcon(
+            declaration = declaration,
+            descriptorProvider = {
+                declaration.resolveToDescriptorIfAny()
+            },
+            includeSlowProviders = includeSlowProviders
+        ) ?: return null
+
+        return Info(
+            icon,
+            Function { KotlinBundle.message("highlighter.tool.tip.text.run.test") },
+            *ExecutorAction.getActions(getOrder(declaration))
+        )
     }
 
     private fun getOrder(declaration: KtNamedDeclaration): Int {
-        val mainFunctionDetector =
-                MainFunctionDetector(declaration.languageVersionSettings) { it.resolveToDescriptorIfAny(BodyResolveMode.FULL) }
+        val mainFunctionDetector = KotlinMainFunctionLocatingService.getInstance()
 
         if (declaration is KtClassOrObject && mainFunctionDetector.hasMain(declaration.companionObjects)) {
             return 1

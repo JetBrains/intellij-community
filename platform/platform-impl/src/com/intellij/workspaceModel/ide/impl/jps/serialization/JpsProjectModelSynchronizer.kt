@@ -28,7 +28,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.stateStore
-import com.intellij.util.PlatformUtils
+import com.intellij.util.PlatformUtils.isIntelliJ
+import com.intellij.util.PlatformUtils.isRider
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
@@ -232,15 +233,9 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     ModuleManagerEx.getInstanceEx(project).unloadNewlyAddedModulesIfPossible(storage)
   }
 
-  // FIXME: 21.01.2021 This is a fix for OC-21192
-  // We do disable delayed loading of JPS model if modules.xml file missing (what happens because of bug if you open a project in 2020.3)
-  fun blockCidrDelayedUpdate(): Boolean {
-    if (!PlatformUtils.isCidr()) return false
-
-    val currentSerializers = prepareSerializers() as JpsProjectSerializersImpl
-    if (currentSerializers.moduleSerializers.isNotEmpty()) return false
-    return currentSerializers.moduleListSerializersByUrl.keys.all { !JpsPathUtil.urlToFile(it).exists() }
-  }
+  // IDEA-288703
+  fun hasNoSerializedJpsModules(): Boolean = !isIntelliJ() && // todo: https://youtrack.jetbrains.com/issue/IDEA-291451#focus=Comments-27-5967781.0-0
+                                             !isRider() && (prepareSerializers() as JpsProjectSerializersImpl).moduleSerializers.isEmpty()
 
   private fun prepareSerializers(): JpsProjectSerializers {
     val existingSerializers = this.serializers.get()

@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StoragePathMacros
@@ -10,8 +12,6 @@ import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
 import com.intellij.util.io.exists
 import com.intellij.util.io.outputStream
-import com.intellij.util.isEmpty
-import com.intellij.util.write
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.nio.file.Path
@@ -56,23 +56,20 @@ internal fun normalizeDefaultProjectElement(defaultProject: Project, element: El
   moveComponentConfiguration(defaultProject, element, { it }) { projectConfigDir.resolve(it) }
 }
 
-private fun getProfileName(profile: Element) =
-  profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue("value")
+private fun getProfileName(profile: Element): String? {
+  return profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue("value")
+}
 
 private fun writeProfileSettings(schemeDir: Path, componentName: String, component: Element) {
   component.removeAttribute("name")
-  if (component.isEmpty()) {
+  if (JDOMUtil.isEmpty(component)) {
     return
   }
 
   val wrapper = Element("component").setAttribute("name", componentName)
   component.name = "settings"
   wrapper.addContent(component)
-
-  val file = schemeDir.resolve("profiles_settings.xml")
-  file.outputStream().use {
-    wrapper.write(it)
-  }
+  JDOMUtil.write(wrapper, schemeDir.resolve("profiles_settings.xml"))
 }
 
 private fun convertProfiles(profileIterator: MutableIterator<Element>,
@@ -177,6 +174,6 @@ private fun writeConfigFile(elements: List<Element>, file: Path) {
   file.outputStream().use {
     it.write(XML_PROLOG)
     it.write(LineSeparator.LF.separatorBytes)
-    wrapper.write(it)
+    JDOMUtil.write(wrapper, it)
   }
 }

@@ -6,7 +6,7 @@ class C {
         try {
             if(foo() && foo())
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
     

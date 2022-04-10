@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.completion.handlers
 import com.intellij.codeInsight.completion.CompletionType
 import org.jetbrains.kotlin.idea.completion.test.handlers.CompletionHandlerTestBase
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.test.TestRoot
+import org.jetbrains.kotlin.idea.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -67,6 +67,8 @@ class BasicCompletionHandlerTest12 : CompletionHandlerTestBase() {
     fun testNamedParametersAreNotProperlyOrdered() = doTest()
 
     fun testAddNameToExistingArgument() = doTest()
+
+    fun testBasicCompletionWorksAfterLastAllowedArgument() = doTest()
 
     fun testNamedParameterBeforeAnotherNamedParameter() = doTest() // The test checks parsing error
 

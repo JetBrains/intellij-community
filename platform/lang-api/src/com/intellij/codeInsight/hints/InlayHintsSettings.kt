@@ -120,13 +120,14 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
       val element = myState.settingsMapElement.clone()
       element.removeChild(fullId)
       val serialized = serialize(value)
-      if (serialized != null) {
+      if (serialized == null) {
+        myState.settingsMapElement = element
+      }
+      else {
         val storeElement = Element(fullId)
         val wrappedSettingsElement = storeElement.addContent(serialized)
         myState.settingsMapElement = element.addContent(wrappedSettingsElement)
         element.sortAttributes(compareBy { it.name })
-      } else {
-        myState.settingsMapElement = element
       }
     }
     listener.settingsChanged()

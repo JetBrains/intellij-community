@@ -30,7 +30,6 @@ import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
- *
  * @see #createDecorator(JList)
  * @see #createDecorator(JTable)
  * @see #createDecorator(JTree)
@@ -96,12 +95,8 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   }
 
   /**
-   * @deprecated Equivalent to
-   * <pre>{@code decorator
-   * .setToolbarPosition(ActionToolbarPosition.TOP)
-   * .setPanelBorder(JBUI.Borders.empty())}</pre>
-   *
    * @see #setScrollPaneBorder(Border)
+   * @deprecated Use <code>setToolbarPosition(ActionToolbarPosition.TOP).setPanelBorder(JBUI.Borders.empty())</code> instead.
    */
   @Deprecated
   public ToolbarDecorator setAsUsualTopToolbar() {
@@ -162,7 +157,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   }
 
   @NotNull
-  public static <T> ToolbarDecorator  createDecorator(@NotNull TableView<T> table, @Nullable ElementProducer<T> producer) {
+  public static <T> ToolbarDecorator createDecorator(@NotNull TableView<T> table, @Nullable ElementProducer<T> producer) {
     return new TableToolbarDecorator(table, producer).initPosition();
   }
 
@@ -217,7 +212,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   }
 
   @NotNull
-  public ToolbarDecorator setButtonComparator(@Nls String @NotNull ...actionNames) {
+  public ToolbarDecorator setButtonComparator(@Nls String @NotNull ... actionNames) {
     final List<String> names = Arrays.asList(actionNames);
     myButtonComparator = (o1, o2) -> {
       final String t1 = o1.getTemplatePresentation().getText();
@@ -354,7 +349,6 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   public ToolbarDecorator setForcedDnD() {
     myForcedDnD = true;
     return this;
-
   }
 
   @NotNull
@@ -400,11 +394,11 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     JComponent contextComponent = getComponent();
     UIUtil.putClientProperty(contextComponent, JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY, true);
     myActionsPanel = new CommonActionsPanel(this, contextComponent,
-                             myToolbarPosition,
-                             myExtraActions.toArray(new AnActionButton[0]),
-                             myButtonComparator,
-                             myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
-                             myAddIcon, buttons);
+                                            myToolbarPosition,
+                                            myExtraActions.toArray(new AnActionButton[0]),
+                                            myButtonComparator,
+                                            myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
+                                            myAddIcon, buttons);
     JScrollPane scrollPane = null;
     if (contextComponent instanceof JTree || contextComponent instanceof JTable || contextComponent instanceof JList) {
       // add scroll pane to supported components only
@@ -432,6 +426,12 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
       public void addNotify() {
         super.addNotify();
         updateButtons();
+      }
+
+      @Override
+      public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        contextComponent.setEnabled(enabled);
       }
     };
     panel.add(scrollPane != null ? scrollPane : contextComponent, BorderLayout.CENTER);
@@ -480,8 +480,8 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   }
 
   protected void installDnD() {
-    if ((myForcedDnD || (myUpAction != null && myUpActionEnabled
-        && myDownAction != null && myDownActionEnabled))
+    if ((myForcedDnD || (myUpAction != null && myUpActionEnabled &&
+                         myDownAction != null && myDownActionEnabled))
         && !ApplicationManager.getApplication().isHeadlessEnvironment()
         && isModelEditable()) {
       installDnDSupport();
@@ -495,10 +495,14 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   @NotNull
   static Object getPlacement(@NotNull ActionToolbarPosition position) {
     switch (position) {
-      case TOP: return BorderLayout.NORTH;
-      case LEFT: return BorderLayout.WEST;
-      case BOTTOM: return BorderLayout.SOUTH;
-      case RIGHT: return BorderLayout.EAST;
+      case TOP:
+        return BorderLayout.NORTH;
+      case LEFT:
+        return BorderLayout.WEST;
+      case BOTTOM:
+        return BorderLayout.SOUTH;
+      case RIGHT:
+        return BorderLayout.EAST;
     }
     return BorderLayout.SOUTH;
   }

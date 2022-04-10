@@ -374,6 +374,10 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     }
   }
 
+  public void testRemoveAnnotationWithImportQuickFix() {
+    doTestWithFix("Remove annotation");
+  }
+  
   public void testQuickFixOnTypeArgumentNullable() {
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     NullableNotNullManager manager = NullableNotNullManager.getInstance(getProject());
@@ -399,6 +403,11 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
                        "  Class<? extends Annotation> value();" +
                        "  TypeUseLocation[] locations() default {TypeUseLocation.ALL};" +
                        "}");
+    doTest();
+  }
+
+  public void testMapComputeLambdaAnnotation() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
 }

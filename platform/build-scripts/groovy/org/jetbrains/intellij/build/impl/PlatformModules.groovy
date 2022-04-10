@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -84,6 +83,8 @@ final class PlatformModules {
     "intellij.platform.elevation.client",
     "intellij.platform.elevation.common",
     "intellij.platform.elevation.daemon",
+    "intellij.platform.externalProcessAuthHelper",
+    "intellij.platform.refactoring",
     "intellij.platform.inspect",
     "intellij.platform.lang.impl",
     "intellij.platform.workspaceModel.storage",
@@ -94,6 +95,7 @@ final class PlatformModules {
     "intellij.platform.projectModel.impl",
     "intellij.platform.macro",
     "intellij.platform.execution.impl",
+    "intellij.platform.wsl.impl",
     "intellij.platform.externalSystem.impl",
     "intellij.platform.scriptDebugger.protocolReaderRuntime",
     "intellij.regexp",
@@ -118,13 +120,19 @@ final class PlatformModules {
     "intellij.remoteDev.util",
     "intellij.platform.feedback",
     "intellij.platform.warmup",
+    "intellij.platform.buildScripts.downloader",
+    "intellij.idea.community.build.dependencies",
+    "intellij.platform.usageView.impl",
     )
 
   private static final String UTIL_JAR = "util.jar"
 
+  private static final String UTIL_RT_JAR = "util_rt.jar"
+
   public static final Map<String, PackMode> CUSTOM_PACK_MODE = Map.of(
     // jna uses native lib
     "jna", PackMode.STANDALONE_MERGED,
+    "lz4-java", PackMode.STANDALONE_MERGED,
     "jetbrains-annotations-java5", PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
     "intellij-coverage", PackMode.STANDALONE_SEPARATE,
     )
@@ -198,19 +206,29 @@ final class PlatformModules {
       layout.moduleExcludes.putValues(entry.key, entry.value)
     }
 
+    jar(UTIL_RT_JAR, List.of(
+      "intellij.platform.util.rt",
+      ), productLayout, layout)
+
+
     jar(UTIL_JAR, List.of(
       "intellij.platform.util.rt.java8",
       "intellij.platform.util.zip",
       "intellij.platform.util.classLoader",
       "intellij.platform.bootstrap",
-      "intellij.platform.util.rt",
       "intellij.platform.util",
       "intellij.platform.util.text.matching",
       "intellij.platform.util.base",
+      "intellij.platform.util.diff",
       "intellij.platform.util.xmlDom",
+      "intellij.platform.util.jdom",
       "intellij.platform.extensions",
       "intellij.platform.tracing.rt",
-      "intellij.platform.boot"
+      "intellij.platform.boot",
+      ), productLayout, layout)
+
+    jar("externalProcess-rt.jar", List.of(
+      "intellij.platform.externalProcessAuthHelper.rt"
     ), productLayout, layout)
 
     jar(BaseLayout.APP_JAR, PLATFORM_IMPLEMENTATION_MODULES, productLayout, layout)
@@ -221,7 +239,7 @@ final class PlatformModules {
       "intellij.platform.ide.util.io",
       "intellij.platform.ide.util.io.impl",
       "intellij.platform.ide.util.netty",
-    ), productLayout, layout)
+      ), productLayout, layout)
 
     jar(BaseLayout.APP_JAR, List.of(
       "intellij.relaxng",
@@ -277,18 +295,12 @@ final class PlatformModules {
 
     String productPluginSourceModuleName = context.productProperties.applicationInfoModule
     if (productPluginSourceModuleName != null) {
-      List<String> modules = getProductPluginContentModules(context, productPluginSourceModuleName)
-      if (modules != null) {
-        for (String name : modules) {
-          layout.withModule(name, BaseLayout.APP_JAR)
-        }
+      for (String name : getProductPluginContentModules(context, productPluginSourceModuleName)) {
+        layout.withModule(name, BaseLayout.APP_JAR)
       }
     }
 
-    layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
-      "JDOM",
-      "Trove4j",
-    ))
+    layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of("Trove4j"))
 
     for (ProjectLibraryData item in additionalProjectLevelLibraries) {
       String name = item.libraryName
@@ -309,31 +321,35 @@ final class PlatformModules {
     return layout
   }
 
-  static @Nullable List<String> getProductPluginContentModules(@NotNull BuildContext buildContext,
-                                                               @NotNull String productPluginSourceModuleName) {
+  static @NotNull
+  Set<String> getProductPluginContentModules(@NotNull BuildContext buildContext,
+                                             @NotNull String productPluginSourceModuleName) {
     Path file = buildContext.findFileInModuleSources(productPluginSourceModuleName, "META-INF/plugin.xml")
     if (file == null) {
       file = buildContext.findFileInModuleSources(productPluginSourceModuleName,
                                                   "META-INF/" + buildContext.productProperties.platformPrefix + "Plugin.xml")
       if (file == null) {
         buildContext.messages.warning("Cannot find product plugin descriptor in '$productPluginSourceModuleName' module")
-        return null
+        return Set.of()
       }
     }
 
     Files.newInputStream(file).withCloseable {
-      NodeList contentList = DocumentBuilderFactory.newDefaultInstance().newDocumentBuilder()
-        .parse(it, file.toString()).getDocumentElement().getElementsByTagName("content")
+      NodeList contentList = DocumentBuilderFactory.newDefaultInstance()
+        .newDocumentBuilder()
+        .parse(it, file.toString())
+        .getDocumentElement()
+        .getElementsByTagName("content")
       if (contentList.length != 0) {
         NodeList modules = ((Element)contentList.item(0)).getElementsByTagName("module")
-        List<String> result = new ArrayList<>(modules.length)
+        Set<String> result = new LinkedHashSet<>(modules.length)
         for (int i = 0; i < modules.length; i++) {
-          Element module = (Element)modules.item(i)
-          result.add(module.getAttribute("name"))
+          Element element = (Element)modules.item(i)
+          result.add(element.getAttribute("name"))
         }
-        return result
+        return Set.copyOf(result)
       }
-      return null
+      return Set.<String> of()
     }
   }
 }

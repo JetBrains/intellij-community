@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup
 
 import com.intellij.indexing.shared.ultimate.project.waitIndexInitialization
@@ -11,7 +12,7 @@ import com.intellij.warmup.util.withLoggingProgresses
 import kotlin.math.max
 import kotlin.system.exitProcess
 
-class ProjectIndexesWarmup : ApplicationStarter {
+internal class ProjectIndexesWarmup : ApplicationStarter {
   override fun getCommandName(): String {
     return "warmup"
   }

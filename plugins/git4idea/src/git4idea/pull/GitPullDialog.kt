@@ -38,7 +38,7 @@ import git4idea.merge.GIT_REF_PROTOTYPE_VALUE
 import git4idea.merge.createRepositoryField
 import git4idea.merge.createSouthPanelWithOptionsDropDown
 import git4idea.merge.dialog.*
-import git4idea.merge.validateBranchField
+import git4idea.merge.validateBranchExists
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -157,7 +157,7 @@ class GitPullDialog(private val project: Project,
       ValidationInfo(GitBundle.message("pull.remote.not.selected"), remoteField)
   }
 
-  private fun validateBranchField() = validateBranchField(branchField, "pull.branch.not.selected.error")
+  private fun validateBranchField() = validateBranchExists(branchField, "pull.branch.not.selected.error")
 
   private fun getSelectedRepository(): GitRepository? = repositoryField.item
 

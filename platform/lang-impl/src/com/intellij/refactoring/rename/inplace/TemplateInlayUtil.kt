@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace
 
 import com.intellij.codeInsight.hints.InlayPresentationFactory
@@ -51,9 +51,16 @@ object TemplateInlayUtil {
                               inEditorOffset: Int,
                               presentation: SelectableInlayPresentation,
                               templateElement: VirtualTemplateElement): Inlay<PresentationRenderer>? {
+    VirtualTemplateElement.installOnTemplate(templateState, templateElement)
+    return createNavigatableButton(templateState, inEditorOffset, presentation)
+  }
+
+  @JvmStatic
+  fun createNavigatableButton(templateState: TemplateState,
+                              inEditorOffset: Int,
+                              presentation: InlayPresentation): Inlay<PresentationRenderer>? {
     val renderer = PresentationRenderer(presentation)
     val inlay = templateState.editor.inlayModel.addInlineElement(inEditorOffset, true, renderer) ?: return null
-    VirtualTemplateElement.installOnTemplate(templateState, templateElement)
     presentation.addListener(object : PresentationListener {
       override fun contentChanged(area: Rectangle) {
         inlay.repaint()

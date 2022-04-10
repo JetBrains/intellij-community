@@ -7,7 +7,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.elementType
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
-import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentSpaces
+import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentInnerSpacesLength
 import org.intellij.plugins.markdown.editor.lists.ListUtils.items
 import org.intellij.plugins.markdown.editor.lists.ListUtils.normalizedMarker
 import org.intellij.plugins.markdown.editor.lists.ListUtils.sublists
@@ -25,7 +25,7 @@ internal object ListRenumberUtils {
 
   fun MarkdownList.renumber(document: Document, recursive: Boolean, restart: Boolean): List<Replacement> {
     val line = document.getLineNumber(this.startOffset)
-    val firstIndent = document.getLineIndentSpaces(line, containingFile)!!.length
+    val firstIndent = document.getLineIndentInnerSpacesLength(line, containingFile)!!
     return renumberingReplacements(this, ListItemIndentInfo(firstIndent, 0), document, containingFile, recursive, restart).toList()
   }
 

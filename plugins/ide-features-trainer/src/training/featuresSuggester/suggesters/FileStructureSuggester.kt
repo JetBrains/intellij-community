@@ -7,8 +7,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
 import training.featuresSuggester.FeatureSuggesterBundle
-import training.featuresSuggester.LanguageSupport
 import training.featuresSuggester.NoSuggestion
+import training.featuresSuggester.SuggesterSupport
 import training.featuresSuggester.Suggestion
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.EditorFindAction
@@ -21,6 +21,7 @@ class FileStructureSuggester : AbstractFeatureSuggester() {
   override val message = FeatureSuggesterBundle.message("file.structure.message")
   override val suggestingActionId = "FileStructurePopup"
   override val suggestingTipFileName = "FileStructurePopup.html"
+  override val minSuggestingIntervalDays = 14
 
   override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
@@ -28,7 +29,7 @@ class FileStructureSuggester : AbstractFeatureSuggester() {
 
   override fun getSuggestion(action: Action): Suggestion {
     val language = action.language ?: return NoSuggestion
-    val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
+    val langSupport = SuggesterSupport.getForLanguage(language) ?: return NoSuggestion
     when (action) {
       is EditorFindAction -> {
         prevActionIsEditorFindAction = true
@@ -56,7 +57,7 @@ class FileStructureSuggester : AbstractFeatureSuggester() {
     return NoSuggestion
   }
 
-  private fun LanguageSupport.getDefinitionOnCaret(psiFile: PsiFile, caretOffset: Int): PsiElement? {
+  private fun SuggesterSupport.getDefinitionOnCaret(psiFile: PsiFile, caretOffset: Int): PsiElement? {
     val offset = caretOffset - 1
     if (offset < 0) return null
     val curElement = psiFile.findElementAt(offset)

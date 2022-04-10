@@ -216,7 +216,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
 
   @Override
   public long getLength() {
-    return -1;
+    return 0;
   }
 
   @Override

@@ -2,30 +2,39 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 
 @CompileStatic
 enum JetBrainsRuntimeDistribution {
   /**
-   * JBR with JCEF
+   * JBR with JCEF and DCEVM
    */
   JCEF('jcef'),
 
   /**
-   * JBR with DCEVM and JCEF
-   */
-  DCEVM('dcevm'),
-
-  /**
    * JBR without JCEF and DCEVM
    */
-  LIGHTWEIGHT('nomod'),
+  LIGHTWEIGHT(''),
+
+  static final List<JetBrainsRuntimeDistribution> ALL = List.of(values())
 
   /**
    * Distinguishes artifacts of different JBR distributions
    */
+  @NotNull
   final String classifier
 
-  JetBrainsRuntimeDistribution(String classifier) {
+  JetBrainsRuntimeDistribution(@NotNull String classifier) {
     this.classifier = classifier
+  }
+
+  @NotNull
+  String getArtifactPrefix() {
+    if (classifier.isEmpty()) {
+      return "jbr-"
+    }
+    else {
+      return "jbr_" + classifier + "-"
+    }
   }
 }

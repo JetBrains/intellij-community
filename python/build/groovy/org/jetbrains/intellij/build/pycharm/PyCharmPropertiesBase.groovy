@@ -37,7 +37,7 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
     tasks.zipSourcesOfModules(["intellij.python.community", "intellij.python.psi"], "$targetDirectory/lib/src/pycharm-openapi-src.zip")
 
     context.ant.copy(todir: "$targetDirectory/help", failonerror: false) {
-      fileset(dir: "$context.paths.projectHome/python/help") {
+      fileset(dir: getKeymapReferenceDirectory(context)) {
         include(name: "*.pdf")
       }
     }
@@ -46,5 +46,9 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
   @Override
   String getEnvironmentVariableBaseName(ApplicationInfoProperties applicationInfo) {
     return "PYCHARM"
+  }
+  
+  String getKeymapReferenceDirectory(BuildContext context) {
+    return "$context.paths.projectHome/python/help"
   }
 }

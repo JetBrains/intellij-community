@@ -18,6 +18,7 @@ import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -35,7 +36,7 @@ import java.util.function.Function;
 import static com.intellij.grazie.text.TextContent.TextDomain.*;
 
 public class XmlTextExtractor extends TextExtractor {
-  private static final TextContentBuilder builder = TextContentBuilder.FromPsi.removingIndents(" \t");
+  private static final TextContentBuilder builder = TextContentBuilder.FromPsi.removingIndents(" \t").removingLineSuffixes(" \t");
   private final Set<Class<? extends Language>> myEnabledDialects;
 
   protected XmlTextExtractor(Class<? extends Language>... enabledDialects) {
@@ -98,7 +99,11 @@ public class XmlTextExtractor extends TextExtractor {
             return;
           }
         }
-        
+        if (each instanceof OuterLanguageElement) {
+          flushGroup(true);
+          unknownBefore = true;
+        }
+
         if (isText(PsiUtilCore.getElementType(each))) {
           group.add(each);
         }

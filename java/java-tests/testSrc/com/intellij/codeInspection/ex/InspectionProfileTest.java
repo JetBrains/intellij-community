@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
@@ -293,6 +294,10 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertThat(profile.writeScheme()).isEqualTo(element);
   }
 
+  public void testDefaultScope(){
+
+  }
+
   public void testMergeUnusedDeclarationAndUnusedSymbol() throws Exception {
     //no specific settings
     InspectionProfileImpl profile = createEmptyProfile();
@@ -302,7 +307,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     @Language("XML") String serialized =
       "<profile version=\"1.0\">\n" +
       "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
-      "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+      "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
       "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
       "    <option name=\"FIELD\" value=\"true\" />\n" +
       "    <option name=\"METHOD\" value=\"true\" />\n" +
@@ -310,7 +315,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
       "    <option name=\"PARAMETER\" value=\"true\" />\n" +
       "    <option name=\"REPORT_PARAMETER_FOR_PUBLIC_METHODS\" value=\"false\" />\n" +
       "  </inspection_tool>\n" +
-      "  <inspection_tool class=\"UnusedDeclaration\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+      "  <inspection_tool class=\"UnusedDeclaration\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
       "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
       "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
       "    <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
@@ -323,6 +328,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     //make them default
     profile = createProfile(new InspectionProfileImpl("foo"));
     profile.readExternal(unusedProfile);
+    InspectionToolRegistrar.getInstance().createTools();
     profile.modifyProfile(it -> {
       InspectionToolWrapper<?, ?> toolWrapper = it.getInspectionTool("unused", getProject());
       UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)toolWrapper.getTool();
@@ -332,7 +338,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     });
     @Language("XML") String mergedText = "<profile version=\"1.0\">\n" +
                                          "  <option name=\"myName\" value=\"ToConvert\" />\n" +
-                                         "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                                         "  <inspection_tool class=\"UNUSED_SYMBOL\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
                                          "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
                                          "    <option name=\"FIELD\" value=\"true\" />\n" +
                                          "    <option name=\"METHOD\" value=\"true\" />\n" +
@@ -340,7 +346,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                          "    <option name=\"PARAMETER\" value=\"true\" />\n" +
                                          "    <option name=\"REPORT_PARAMETER_FOR_PUBLIC_METHODS\" value=\"false\" />\n" +
                                          "  </inspection_tool>\n" +
-                                         "  <inspection_tool class=\"UnusedDeclaration\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                                         "  <inspection_tool class=\"UnusedDeclaration\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
                                          "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
                                          "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
                                          "    <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
@@ -359,6 +365,34 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertThat(profile.writeScheme()).isEqualTo(mergedElement);
 
     assertThat(importedProfile.writeScheme()).isEqualTo(mergedElement);
+  }
+
+  public void testDefaultScopeDisabled() throws Exception {
+    @Language("XML") String content = "<inspections version=\"1.0\">\n" +
+                                      "  <option name=\"myName\" value=\"ToConvert\" />\n" +
+                                      "  <inspection_tool class=\"JavaDoc\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                                      "  <scope name=\"Open Files\" level=\"WARNING\" enabled=\"true\"/>\n" +
+                                      "  </inspection_tool>\n" +
+                                      "</inspections>";
+    InspectionProfileImpl profile = createProfile();
+    readFromXml(profile, content);
+    ToolsImpl tools = profile.getTools("MissingJavadoc", getProject());
+    assertFalse(tools.getDefaultState().isEnabled());
+    assertTrue(tools.getNonDefaultTools().get(0).isEnabled());
+  }
+
+  public void testDefaultScopeEnabled() throws Exception {
+    @Language("XML") String content = "<inspections version=\"1.0\">\n" +
+                                      "  <option name=\"myName\" value=\"ToConvert\" />\n" +
+                                      "  <inspection_tool class=\"JavaDoc\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                                      "  <scope name=\"Open Files\" level=\"WARNING\" enabled=\"false\"/>\n" +
+                                      "  </inspection_tool>\n" +
+                                      "</inspections>";
+    InspectionProfileImpl profile = createProfile();
+    readFromXml(profile, content);
+    ToolsImpl tools = profile.getTools("MissingJavadoc", getProject());
+    assertTrue(tools.getDefaultState().isEnabled());
+    assertFalse(tools.getNonDefaultTools().get(0).isEnabled());
   }
 
   public void testScopesInNamingConventions() throws Exception {
@@ -757,6 +791,24 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertFalse(profile.isToolEnabled(HighlightDisplayKey.find("StringOperationCanBeSimplified"), null));
   }
 
+  public void testMergedReformatInspection() throws Exception {
+    InspectionProfileImpl profile = checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                                                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                                                         "  <inspection_tool class=\"Reformat\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                                                         "</profile>");
+    InspectionToolWrapper toolWrapper = profile.getInspectionTool("IncorrectFormatting", getProject()); //call to initialize inspections
+    assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("IncorrectFormatting"), null));
+    IncorrectFormattingInspection tool = (IncorrectFormattingInspection)toolWrapper.getTool();
+    assertTrue("Should be enabled for kotlin only", tool.kotlinOnly);
+  }
+  
+  public void testMergedReformatInspectionDisabled() throws Exception {
+    InspectionProfileImpl profile = checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                                                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                                                         "</profile>");
+    assertFalse("Should be disabled by default", profile.isToolEnabled(HighlightDisplayKey.find("IncorrectFormatting"), null));
+  }
+
   public void testSecondMergedRedundantStringOperationsInspections() throws Exception {
     InspectionProfileImpl bothDisabled = checkMergedNoChanges("<profile version=\"1.0\">\n" +
                                                          "  <option name=\"myName\" value=\"ToConvert\" />\n" +
@@ -770,7 +822,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     InspectionProfileImpl oneEnabled = checkMergedNoChanges("<profile version=\"1.0\">\n" +
                                                          "  <option name=\"myName\" value=\"ToConvert\" />\n" +
                                                          "  <inspection_tool class=\"RedundantStringOperation\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
-                                                         "  <inspection_tool class=\"StringConstructor\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                                                         "  <inspection_tool class=\"StringConstructor\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
                                                          "    <option name=\"ignoreSubstringArguments\" value=\"false\" />\n" +
                                                          "  </inspection_tool>\n" +
                                                          "</profile>");

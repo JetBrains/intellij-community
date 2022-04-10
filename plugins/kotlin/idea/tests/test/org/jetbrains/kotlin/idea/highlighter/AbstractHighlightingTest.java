@@ -9,8 +9,9 @@ import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
-import org.jetbrains.kotlin.test.InTextDirectivesUtils;
-import org.jetbrains.kotlin.test.TagsTestDataUtil;
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt;
+import org.jetbrains.kotlin.idea.test.TagsTestDataUtil;
 
 import java.io.File;
 import java.util.List;
@@ -27,7 +28,8 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
         boolean checkWeakWarnings = !InTextDirectivesUtils.isDirectiveDefined(fileText, NO_CHECK_WEAK_WARNINGS_PREFIX);
         boolean checkWarnings = !InTextDirectivesUtils.isDirectiveDefined(fileText, NO_CHECK_WARNINGS_PREFIX);
 
-        myFixture.checkHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
+        KotlinLightCodeInsightFixtureTestCaseKt.withCustomCompilerOptions(fileText, getProject(), getModule(), () ->
+                myFixture.checkHighlighting(checkWarnings, checkInfos, checkWeakWarnings));
     }
 
     protected void doTest(String unused) throws Exception {
@@ -36,7 +38,7 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
 
         myFixture.configureByFile(fileName());
 
-        withExpectedDuplicatedHighlighting(expectedDuplicatedHighlighting, () -> {
+        withExpectedDuplicatedHighlighting(expectedDuplicatedHighlighting, isFirPlugin(), () -> {
             try {
                 checkHighlighting(fileText);
             }
@@ -51,7 +53,7 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
         });
     }
 
-    private void withExpectedDuplicatedHighlighting(boolean expectedDuplicatedHighlighting, Runnable runnable) {
+    public static void withExpectedDuplicatedHighlighting(boolean expectedDuplicatedHighlighting, boolean isFirPlugin, Runnable runnable) {
         if (!expectedDuplicatedHighlighting) {
             runnable.run();
             return;
@@ -60,7 +62,7 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
         try {
             ExpectedHighlightingData.expectedDuplicatedHighlighting(runnable);
         } catch (IllegalStateException e) {
-            if (isFirPlugin()) {
+            if (isFirPlugin) {
                 runnable.run();
             } else {
                 throw e;

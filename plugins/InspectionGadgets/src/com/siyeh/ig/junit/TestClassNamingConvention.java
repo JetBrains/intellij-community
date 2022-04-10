@@ -34,7 +34,7 @@ public class TestClassNamingConvention extends NamingConvention<PsiClass> {
 
   @Override
   public NamingConventionBean createDefaultBean() {
-    return new NamingConventionBean("[A-Z][A-Za-z\\d]*Test(s|Case)?|Test[A-Z][A-Za-z\\d]*", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
+    return new NamingConventionBean("[A-Z][A-Za-z\\d]*Test(s|Case)?|Test[A-Z][A-Za-z\\d]*|IT(.*)|(.*)IT(Case)?", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
   }
 
   @Override

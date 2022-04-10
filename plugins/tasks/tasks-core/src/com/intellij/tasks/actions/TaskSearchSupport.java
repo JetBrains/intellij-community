@@ -79,7 +79,6 @@ public final class TaskSearchSupport {
   private static void notifyAboutConnectionFailure(RequestFailedException e, Project project) {
     String details = e.getMessage();
     TaskRepository repository = e.getRepository();
-    Notifications.Bus.register(TASKS_NOTIFICATION_GROUP, NotificationDisplayType.BALLOON);
     String content = TaskBundle.message("notification.content.p.href.configure.server.p");
     if (!StringUtil.isEmpty(details)) {
       content = "<p>" + details + "</p>" + content; //NON-NLS

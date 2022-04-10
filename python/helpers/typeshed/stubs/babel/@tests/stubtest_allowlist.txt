@@ -1,3 +1,0 @@
-# In the stub we alias to OrderedDict, but it has positional-only differences
-babel.util.odict.fromkeys
-babel.util.odict.setdefault

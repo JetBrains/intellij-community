@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.icons.AllIcons;
@@ -37,7 +37,7 @@ import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 /**
  * @author Konstantin Bulenkov
  */
-public class NavBarItem extends SimpleColoredComponent implements DataProvider, Disposable {
+public final class NavBarItem extends SimpleColoredComponent implements DataProvider, Disposable {
   private final @Nls String myText;
   private final SimpleTextAttributes myAttributes;
   private final int myIndex;
@@ -47,8 +47,10 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
   private final boolean isPopupElement;
   private final NavBarUI myUI;
   private boolean mouseHovered;
+  private final boolean myIsModule;
 
   public static final Icon CHEVRON_ICON = AllIcons.General.ChevronRight;
+  private static final Icon MODULE_ICON = IconManager.getInstance().getIcon("expui/nodes/module8x8.svg", AllIcons.class);
 
   public NavBarItem(NavBarPanel panel, Object object, int idx, Disposable parent) {
     this(panel, object, idx, parent, false);
@@ -64,13 +66,15 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
     if (object != null) {
       NavBarPresentation presentation = myPanel.getPresentation();
       myText = presentation.getPresentableText(object, inPopup);
-      myIcon = presentation.getIcon(object);
       myAttributes = presentation.getTextAttributes(object, false);
+      myIsModule = presentation.isModule(object);
+      myIcon = ExperimentalUI.isNewUI() && myIsModule ? MODULE_ICON : presentation.getIcon(object);
     }
     else {
       myText = IdeBundle.message("navigation.bar.item.sample");
       myIcon = PlatformIcons.FOLDER_ICON;
       myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+      myIsModule = false;
     }
 
     Disposer.register(parent == null ? panel : parent, this);
@@ -219,11 +223,15 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
 
   @DirtyUI
   public boolean needPaintIcon() {
-    if (Registry.is("navBar.show.icons") || isPopupElement || isLastElement()) {
+    if (Registry.is("navBar.show.icons") || isPopupElement || isLastElement() || ExperimentalUI.isNewUI() && myIsModule) {
       return true;
     }
     Object object = getObject();
-    return object instanceof PsiElement && ((PsiElement)object).getContainingFile() != null;
+    return object instanceof PsiElement && ((PsiElement) object).isValid() && ((PsiElement)object).getContainingFile() != null;
+  }
+
+  public int getVerticalIconOffset() {
+    return myIsModule && ExperimentalUI.isNewUI() ? JBUI.scale(1) : 0;
   }
 
   @NotNull

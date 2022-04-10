@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -203,8 +203,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     LOG.assertTrue(sourcePsi != null, "UParameter " + param + " has null sourcePsi");
     RefElement result = myRefManager.getFromRefTableOrCache(sourcePsi, () -> {
       RefParameterImpl ref = new RefParameterImpl(param, sourcePsi, index, myRefManager, refElement);
-      ref.initialize();
-      ref.setInitialized(true);
+      ref.waitForInitialized();
       return (RefElement)ref;
     });
     return result instanceof RefParameter ? (RefParameter)result : null;
@@ -226,7 +225,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
         RefClass refClass = (RefClass)refElement;
         RefMethod refDefaultConstructor = refClass.getDefaultConstructor();
         if (refDefaultConstructor instanceof RefImplicitConstructor) {
-          refClass.getDefaultConstructor().accept(visitor);
+          refDefaultConstructor.accept(visitor);
         }
       }
     }
@@ -360,9 +359,9 @@ public final class RefJavaManagerImpl extends RefJavaManager {
             visitJavaModule((PsiJavaModule)element);
           }
           else if (element instanceof PsiFunctionalExpression) {
-            RefElement decl = myRefManager.getReference(element);
-            if (decl != null) {
-              myRefManager.executeTask(() -> ((RefElementImpl)decl).buildReferences());
+            RefElement refElement = myRefManager.getReference(element);
+            if (refElement != null) {
+              myRefManager.buildReferences(refElement);
             }
           }
         }
@@ -370,7 +369,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
         private void visitJavaModule(PsiJavaModule module) {
           RefElement refElement = myRefManager.getReference(module);
           if (refElement != null) {
-            myRefManager.executeTask(() -> ((RefJavaModuleImpl)refElement).buildReferences());
+            myRefManager.buildReferences(refElement);
           }
         }
       };
@@ -453,7 +452,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     public boolean visitFile(@NotNull UFile node) {
       RefElement refElement = myRefManager.getReference(node.getSourcePsi());
       if (refElement instanceof RefJavaFileImpl) {
-        myRefManager.executeTask(() -> ((RefJavaFileImpl)refElement).buildReferences());
+        myRefManager.buildReferences(refElement);
       }
       return true;
     }
@@ -461,9 +460,9 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     @Override
     public boolean visitDeclaration(@NotNull UDeclaration node) {
       processComments(node);
-      RefElement decl = myRefManager.getReference(node.getSourcePsi());
-      if (decl != null) {
-        myRefManager.executeTask(() -> ((RefElementImpl)decl).buildReferences());
+      RefElement refElement = myRefManager.getReference(node.getSourcePsi());
+      if (refElement != null) {
+        myRefManager.buildReferences(refElement);
       }
 
       PsiModifierListOwner javaModifiersListOwner = ObjectUtils.tryCast(node.getJavaPsi(), PsiModifierListOwner.class);
@@ -488,9 +487,9 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     public boolean visitVariable(@NotNull UVariable variable) {
       myRefUtil.addTypeReference((UElement)variable, variable.getType(), myRefManager);
       if (variable instanceof UParameter) {
-        final RefElement reference = myRefManager.getReference(variable.getSourcePsi());
-        if (reference instanceof RefParameterImpl) {
-          myRefManager.executeTask(() -> ((RefParameterImpl)reference).buildReferences());
+        final RefElement refElement = myRefManager.getReference(variable.getSourcePsi());
+        if (refElement instanceof RefParameterImpl) {
+          myRefManager.buildReferences(refElement);
         }
       }
       return false;

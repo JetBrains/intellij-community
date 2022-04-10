@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.util.indexing.FileBasedIndexTumbler
+import com.intellij.util.indexing.ID
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
@@ -28,6 +29,8 @@ object CacheSwitcher {
 
           setupProp("caches_dir", cachesDir)
           setupProp("index_root_path", indexDir)
+
+          ID.reloadEnumFile()
         }
       }
     }

@@ -84,7 +84,7 @@ final class BuildContextImpl extends BuildContext {
     buildNumber = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDir)
 
     xBootClassPathJarNames = productProperties.xBootClassPathJarNames
-    bootClassPathJarNames = List.of("util.jar")
+    bootClassPathJarNames = List.of("util.jar", "util_rt.jar")
     applicationInfo = new ApplicationInfoProperties(project, productProperties, options, messages).patch(this)
     if (productProperties.productCode == null && applicationInfo.productCode != null) {
       productProperties.productCode = applicationInfo.productCode
@@ -150,11 +150,6 @@ final class BuildContextImpl extends BuildContext {
   @Override
   AntBuilder getAnt() {
     compilationContext.ant
-  }
-
-  @Override
-  GradleRunner getGradle() {
-    compilationContext.gradle
   }
 
   @Override
@@ -439,9 +434,32 @@ final class BuildContextImpl extends BuildContext {
     }
 
     if (options.bundledRuntimeVersion >= 17) {
-      jvmArgs.addAll(OpenedPackages.INSTANCE)
+      jvmArgs.addAll(OpenedPackages.getCommandLineArguments(this))
     }
 
     return jvmArgs
+  }
+
+  @Override
+  OsSpecificDistributionBuilder getOsDistributionBuilder(OsFamily os, Path ideaProperties) {
+    OsSpecificDistributionBuilder builder
+    switch (os) {
+      case OsFamily.WINDOWS:
+        builder = windowsDistributionCustomizer?.with {
+          new WindowsDistributionBuilder(this, it, ideaProperties, "$applicationInfo")
+        }
+        break
+      case OsFamily.LINUX:
+        builder = linuxDistributionCustomizer?.with {
+          new LinuxDistributionBuilder(this, it, ideaProperties)
+        }
+        break
+      case OsFamily.MACOS:
+        builder = macDistributionCustomizer?.with {
+          new MacDistributionBuilder(this, it, ideaProperties)
+        }
+        break
+    }
+    return builder
   }
 }

@@ -1,6 +1,6 @@
-from typing import Any, Dict
+from typing import Any
 
-class OAuth2Token(Dict[Any, Any]):
+class OAuth2Token(dict[Any, Any]):
     def __init__(self, params, old_scope: Any | None = ...) -> None: ...
     @property
     def scope_changed(self): ...

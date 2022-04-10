@@ -42,8 +42,8 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -1256,6 +1256,14 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testChangeClassParameter() = doTest {
         newName = "s"
         newReturnTypeInfo = KotlinTypeInfo(true, BUILT_INS.stringType)
+    }
+
+    fun testChangeClassParameterWithInvalidCharacter() = doTest {
+        newParameters[0].name = "a@bc"
+    }
+
+    fun testChangeClassParameterWithEscapedName() = doTest {
+        newParameters[0].name = "`x@yz`"
     }
 
     fun testParameterPropagation() = doTestAndIgnoreConflicts {

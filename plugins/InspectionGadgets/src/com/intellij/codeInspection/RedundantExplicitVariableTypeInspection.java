@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -7,7 +7,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +28,10 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
         if (!typeElement.isInferredType()) {
           PsiElement parent = variable.getParent();
           if (parent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)parent).getDeclaredElements().length > 1) {
+            return;
+          }
+          PsiExpression initializer = variable.getInitializer();
+          if (initializer instanceof PsiFunctionalExpression) {
             return;
           }
           doCheck(variable, (PsiLocalVariable)variable.copy(), typeElement);
@@ -54,7 +58,7 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
 
         PsiTypeElement typeElementCopy = copyVariable.getTypeElement();
         if (typeElementCopy != null) {
-          IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar(typeElementCopy, variable);
+          IntroduceVariableUtil.expandDiamondsAndReplaceExplicitTypeWithVar(typeElementCopy, variable);
           if (variable.getType().equals(getNormalizedType(copyVariable))) {
             holder.registerProblem(element2Highlight,
                                    InspectionGadgetsBundle.message("inspection.redundant.explicit.variable.type.description"),
@@ -88,7 +92,7 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiTypeElement) {
         CodeStyleManager.getInstance(project)
-          .reformat(IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar((PsiTypeElement)element, element));
+          .reformat(IntroduceVariableUtil.expandDiamondsAndReplaceExplicitTypeWithVar((PsiTypeElement)element, element));
       }
     }
   }

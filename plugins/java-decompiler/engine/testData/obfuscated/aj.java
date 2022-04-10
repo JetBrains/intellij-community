@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -102,7 +101,7 @@ public class aj implements am {
             Iterator var5 = var2.entrySet().iterator();
 
             while(var5.hasNext()) {
-               Entry var6 = (Entry)var5.next();
+               Map.Entry var6 = (Map.Entry)var5.next();
                Long var7 = (Long)this.b.get(var6.getKey());
                if (var7 != null) {
                   double var8 = (double)(((Long)var6.getValue() - var7) * 10L) / (double)var3;

@@ -145,7 +145,7 @@ if [ "$COMPRESS_INPUT" != "false" ]; then
   log "Zipping $BUILD_NAME to $INPUT_FILE ..."
   (
     cd "$EXPLODED"
-    ditto -c -k --sequesterRsrc --keepParent "$BUILD_NAME" "../$INPUT_FILE"
+    ditto -c -k --zlibCompressionLevel=-1 --sequesterRsrc --keepParent "$BUILD_NAME" "../$INPUT_FILE"
     log "Finished zipping"
   )
 fi

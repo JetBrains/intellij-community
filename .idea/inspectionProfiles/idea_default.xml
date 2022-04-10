@@ -743,9 +743,7 @@
       <option name="m_ignoreExpressionsContainingConstants" value="false" />
     </inspection_tool>
     <inspection_tool class="PointlessBooleanExpressionJS" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="PointlessNullCheck" enabled="true" level="WARNING" enabled_by_default="true">
-      <scope name="android" level="WARNING" enabled="false" />
-    </inspection_tool>
+    <inspection_tool class="PointlessNullCheck" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PrivatePropertyName" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <option name="namePattern" value="([A-Z_][A-Z_\d]*)|(_?[a-z][A-Za-z\d]*)" />
     </inspection_tool>
@@ -769,6 +767,9 @@
       <option name="ignoreLazyOperators" value="true" />
       <option name="ignoreObscureOperators" value="true" />
     </inspection_tool>
+    <inspection_tool class="ReplaceNullCheck" enabled="true" level="INFORMATION" enabled_by_default="true">
+      <option name="noWarningReplacementBigger" value="false" />
+    </inspection_tool>
     <inspection_tool class="ReservedWordUsedAsNameJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Restricted_Python_calls" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ReturnFromFinallyBlockJS" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -787,6 +788,14 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="class" regexp=".*Performance.*" negateName="true" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="@ScheduledForRemoval with version" description="Report usages of @ScheduledForRemoval annotation which specify 'inVersion' attribute. " suppressId="ScheduledForRemovalWithVersion" problemDescriptor="We don't specify target version in @ScheduledForRemoval annotation anymore." text="@org.jetbrains.annotations.ApiStatus.ScheduledForRemoval(inVersion = $version$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="@org.jetbrains.annotations.ApiStatus.ScheduledForRemoval">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="version" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="@ScheduledForRemoval with version" text="@org.jetbrains.annotations.ApiStatus.ScheduledForRemoval(inVersion = $version$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="true" replacement="@org.jetbrains.annotations.ApiStatus.ScheduledForRemoval">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="version" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="Anonymous Disposable passed to method" description="Do not pass Disposer.newDisposable() or similar to method expecting Disposable, because it can cause memory leak via Disposer tree.&#10;Instead, pass Disposable which you can guarantee to be disposed at the time needed." problemDescriptor="Anonymous Disposable passed to method: possible memory leak" text="new $f$($s1$, com.intellij.openapi.util.Disposer.$newDisposable$($a$), $s2$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
@@ -1090,6 +1099,14 @@
         <constraint name="T1" within="" contains="" />
         <constraint name="T2" within="" contains="" />
         <constraint name="T3" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Don't use javax.swing.FocusManager" uuid="fdcd3e7e-31cb-3d1e-b4c1-373c34bde609" description="javax.swing.FocusManager is obsolete, using it can cause default application's focus traversal policy to be changed. javax.swing.KeyboardFocusManager should be used instead." suppressId="jsFocusManager" problemDescriptor="Obsolete class, use KeyboardFocusManager instead" text="$Clz$" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Clz" nameOfExprType="javax\.swing\.FocusManager" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Don't use javax.swing.FocusManager" uuid="fdcd3e7e-31cb-3d1e-b4c1-373c34bde609" order="1" text="$Clz$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Clz" nameOfExprType="javax\.swing\.FocusManager" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="EventLogGroup version should be &gt; 0" text="EventLogGroup($Parameter1$, $Parameter2$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
         <constraint name="__context__" within="" contains="" />
@@ -1856,11 +1873,12 @@
     <inspection_tool class="StringConstructor" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="ignoreSubstringArguments" value="false" />
     </inspection_tool>
-    <inspection_tool class="StringEquality" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="StringEqualsEmptyString" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL" value="true" />
     </inspection_tool>
-    <inspection_tool class="StringOperationCanBeSimplifiedMerged" />
+    <inspection_tool class="StringOperationCanBeSimplified" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoreStringConstructor" value="true" />
+    </inspection_tool>
     <inspection_tool class="StringToUpperWithoutLocale" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="Struts2ModelInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="StrutsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
@@ -1897,7 +1915,6 @@
     <inspection_tool class="TrivialIf" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="TrivialIfJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="TrivialStringConcatenation" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="TryFinallyCanBeTryWithResources" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="TryWithIdenticalCatches" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="TypeParameterExtendsFinalClass" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="UNCHECKED_WARNING" enabled="true" level="WARNING" enabled_by_default="true">

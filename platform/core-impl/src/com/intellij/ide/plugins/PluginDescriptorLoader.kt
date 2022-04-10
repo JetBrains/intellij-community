@@ -10,13 +10,13 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.createNonCoalescingXmlStreamReader
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.URLUtil
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.lang.ZipFilePool
+import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -36,6 +36,7 @@ import java.util.function.BiConsumer
 import java.util.function.Supplier
 import java.util.zip.ZipFile
 import javax.xml.stream.XMLStreamException
+import kotlin.io.path.name
 
 private val LOG: Logger
   get() = PluginManagerCore.getLogger()
@@ -534,7 +535,8 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
   try {
     Decompressor.Zip(file).extract(outputDir)
     try {
-      val rootDir = NioFiles.list(outputDir).firstOrNull()
+      //org.jetbrains.intellij.build.io.ZipArchiveOutputStream may add __index__ entry to the plugin zip, we need to ignore it here
+      val rootDir = NioFiles.list(outputDir).firstOrNull { it.name != "__index__" }
       if (rootDir != null) {
         return loadDescriptorFromFileOrDir(file = rootDir,
                                            context = context,

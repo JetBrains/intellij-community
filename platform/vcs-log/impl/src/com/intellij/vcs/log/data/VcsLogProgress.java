@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -17,6 +18,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 public class VcsLogProgress implements Disposable {
+  @NotNull private final CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
   @NotNull private final Object myLock = new Object();
   @NotNull private final List<ProgressListener> myListeners = new ArrayList<>();
   @NotNull private final Set<VcsLogProgressIndicator> myTasksWithVisibleProgress = new HashSet<>();
@@ -25,6 +27,7 @@ public class VcsLogProgress implements Disposable {
 
   public VcsLogProgress(@NotNull Disposable parent) {
     Disposer.register(parent, this);
+    Disposer.register(this, myDisposableFlag);
   }
 
   @NotNull
@@ -119,7 +122,7 @@ public class VcsLogProgress implements Disposable {
   private void fireNotification(@NotNull Consumer<? super ProgressListener> action) {
     synchronized (myLock) {
       List<ProgressListener> list = new ArrayList<>(myListeners);
-      ApplicationManager.getApplication().invokeLater(() -> list.forEach(action), o -> Disposer.isDisposed(this));
+      ApplicationManager.getApplication().invokeLater(() -> list.forEach(action), o -> myDisposableFlag.isDisposed());
     }
   }
 

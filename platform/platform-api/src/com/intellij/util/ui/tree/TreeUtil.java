@@ -395,8 +395,7 @@ public final class TreeUtil {
   /**
    * @deprecated use {@link #promiseSelectFirstLeaf}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public static TreePath getFirstLeafNodePath(@NotNull JTree tree) {
     final TreeModel model = tree.getModel();
@@ -453,15 +452,13 @@ public final class TreeUtil {
   }
 
   /** @deprecated use TreeUtil#treeTraverser() or TreeUtil#treeNodeTraverser() directly */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static boolean traverse(@NotNull TreeNode node, @NotNull Traverse traverse) {
     return treeNodeTraverser(node).traverse(TreeTraversal.POST_ORDER_DFS).processEach(traverse::accept);
   }
 
   /** @deprecated use TreeUtil#treeTraverser() or TreeUtil#treeNodeTraverser() directly */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static boolean traverseDepth(@NotNull TreeNode node, @NotNull Traverse traverse) {
     return treeNodeTraverser(node).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(traverse::accept);
   }
@@ -1380,8 +1377,7 @@ public final class TreeUtil {
   }
 
   /** @deprecated use TreeUtil#treePathTraverser() */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @FunctionalInterface
   public interface Traverse{
     boolean accept(Object node);

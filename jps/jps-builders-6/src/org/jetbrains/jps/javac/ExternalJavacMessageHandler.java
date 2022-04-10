@@ -3,10 +3,14 @@ package org.jetbrains.jps.javac;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.MessageLite;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
@@ -22,13 +26,27 @@ public final class ExternalJavacMessageHandler {
   @Nullable
   private final String myEncodingName;
   private volatile boolean myTerminatedSuccessfully;
+  private final WslSupport myWslSupport;
+
+  public interface WslSupport {
+    WslSupport DIRECT = new WslSupport() {
+      @Override
+      public String convertPath(String path) {
+        return path != null? path.replace('\\', '/') : null;
+      }
+    };
+
+    String convertPath(String path);
+  }
 
   public ExternalJavacMessageHandler(DiagnosticOutputConsumer diagnosticSink,
                                      OutputFileConsumer outputSink,
-                                     @Nullable final String encodingName) {
+                                     @Nullable final String encodingName,
+                                     @NotNull WslSupport wslSupport) {
     myDiagnosticSink = diagnosticSink;
     myOutputSink = outputSink;
     myEncodingName = encodingName;
+    myWslSupport = wslSupport;
   }
 
   public DiagnosticOutputConsumer getDiagnosticSink() {
@@ -67,7 +85,7 @@ public final class ExternalJavacMessageHandler {
           final JavacRemoteProto.Message.Response.OutputObject.Kind kind = outputObject.getKind();
 
           final String outputRoot = outputObject.hasOutputRoot()? outputObject.getOutputRoot() : null;
-          final File outputRootFile = outputRoot != null? new File(outputRoot) : null;
+          final File outputRootFile = outputRoot != null? new File(myWslSupport.convertPath(outputRoot)) : null;
 
           final BinaryContent fileObjectContent;
           final ByteString content = outputObject.hasContent()? outputObject.getContent() : null;
@@ -90,7 +108,7 @@ public final class ExternalJavacMessageHandler {
             null,
             outputRootFile,
             outputObject.hasRelativePath()? outputObject.getRelativePath() : null,
-            new File(outputObject.getFilePath()),
+            new File(myWslSupport.convertPath(outputObject.getFilePath())),
             convertKind(kind),
             outputObject.hasClassName()? outputObject.getClassName() : null,
             sources,
@@ -104,7 +122,7 @@ public final class ExternalJavacMessageHandler {
 
         if (responseType == JavacRemoteProto.Message.Response.Type.SRC_FILE_LOADED) {
           final JavacRemoteProto.Message.Response.OutputObject outputObject = response.getOutputObject();
-          final File file = new File(outputObject.getFilePath());
+          final File file = new File(myWslSupport.convertPath(outputObject.getFilePath()));
           myDiagnosticSink.javaFileLoaded(file);
           return false;
         }

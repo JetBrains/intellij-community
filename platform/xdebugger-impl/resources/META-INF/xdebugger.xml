@@ -87,9 +87,9 @@
     <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
 
     <titleInfoProvider implementation="com.intellij.xdebugger.impl.ui.DebuggerTitleInfoProvider"/>
-    <notificationGroup id="Debugger messages" displayType="TOOL_WINDOW" toolWindowId="Debug" isLogByDefault="false"/>
-    <notificationGroup id="Breakpoint hit" displayType="NONE" toolWindowId="Debug" isLogByDefault="false"/>
-    <notificationGroup id="Attach to Process action" displayType="BALLOON"/>
+    <notificationGroup id="Debugger messages" displayType="TOOL_WINDOW" toolWindowId="Debug" isLogByDefault="false" bundle="messages.XDebuggerBundle" key="notification.group.debugger.messages"/>
+    <notificationGroup id="Breakpoint hit" displayType="NONE" toolWindowId="Debug" isLogByDefault="false" bundle="messages.XDebuggerBundle" key="notification.group.breakpoint.hit"/>
+    <notificationGroup id="Attach to Process action" displayType="BALLOON" bundle="messages.XDebuggerBundle" key="notification.group.attach.to.process"/>
 
     <advancedSetting id="debugger.max.recent.expressions" default="50"
                      groupKey="group.advanced.settings.debugger" bundle="messages.XDebuggerBundle"/>

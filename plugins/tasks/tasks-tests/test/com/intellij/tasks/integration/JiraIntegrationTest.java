@@ -18,7 +18,10 @@ package com.intellij.tasks.integration;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import com.intellij.tasks.*;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.LocalTaskImpl;
@@ -62,6 +65,8 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
    * JIRA 5.0.6, REST API 2.0
    */
   @NonNls private static final String JIRA_5_TEST_SERVER_URL = "http://trackers-tests.labs.intellij.net:8015";
+
+  private static final Logger LOG = Logger.getInstance(JiraIntegrationTest.class);
 
   private JiraRepository myRepository;
 
@@ -262,12 +267,29 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   }
 
   private void assumeServerAccessible(@NotNull String baseUrl) {
+    GetMethod method = new GetMethod(baseUrl + "/rest/api/latest/serverInfo");
+    boolean accessible = false;
     try {
-      int statusCode = myRepository.getHttpClient().executeMethod(new GetMethod(baseUrl + "/rest/api/latest/serverInfo"));
-      Assume.assumeTrue("Server '" + myRepository.getUrl() + "' is inaccessible", statusCode == 200);
+      accessible = myRepository.getHttpClient().executeMethod(method) == 200;
+      Assume.assumeTrue("Server '" + myRepository.getUrl() + "' is inaccessible", accessible);
     }
     catch (IOException e) {
-      Assume.assumeNoException(e);
+      ExternalResourcesChecker.reportUnavailability(baseUrl, e);
+    }
+    finally {
+      if (!accessible) {
+        try {
+          LOG.warn(
+            "Response from " + method.getURI() + ":\n" +
+            method.getStatusCode() + " " + method.getStatusText() + "\n" +
+            StringUtil.join(Arrays.asList(method.getResponseHeaders()), "") + "\n" +
+            method.getResponseBodyAsString()
+          );
+        }
+        catch (Exception e) {
+          LOG.warn("Failed to log response", e);
+        }
+      }
     }
   }
 }

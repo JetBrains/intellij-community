@@ -62,6 +62,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import junit.framework.AssertionFailedError
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import sun.awt.AWTAutoShutdown
 import java.awt.EventQueue
 import java.awt.Toolkit
@@ -186,6 +187,7 @@ private var testCounter = 0
 
 // Kotlin allows to easily debug code and to get clear and short stack traces
 @ApiStatus.Internal
+@TestOnly
 fun tearDownProjectAndApp(project: Project) {
   if (project.isDisposed) {
     return

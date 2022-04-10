@@ -2,6 +2,7 @@
 package com.intellij.psi.javadoc;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see PsiSnippetDocTag
  */
+@ApiStatus.Experimental
 public interface PsiSnippetAttributeList extends PsiElement {
   /**
    * @return list of name-value pairs of snippet tag.

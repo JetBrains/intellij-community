@@ -1,2 +1,2 @@
 version = "2.9.*"
-requires = ["types-docutils"]
+requires = ["types-docutils", "types-setuptools"]

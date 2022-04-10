@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PluginException;
@@ -22,10 +22,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @see FileBasedIndexExtension
@@ -39,6 +36,24 @@ public abstract class FileBasedIndex {
    */
   @Nullable
   public abstract VirtualFile getFileBeingCurrentlyIndexed();
+
+  /**
+   * @return the file which the current thread is writing evaluated values of indexes right now,
+   * or {@code null} if current thread isn't writing index values.
+   */
+  @Nullable
+  public abstract IndexWritingFile getFileWritingCurrentlyIndexes();
+
+  public static class IndexWritingFile {
+    public final int fileId;
+    @Nullable
+    public final String filePath;
+
+    public IndexWritingFile(int id, @Nullable String path) {
+      fileId = id;
+      filePath = path;
+    }
+  }
 
   @ApiStatus.Internal
   public void registerProjectFileSets(@NotNull Project project) {
@@ -79,8 +94,7 @@ public abstract class FileBasedIndex {
   /**
    * @deprecated see {@link com.intellij.openapi.vfs.newvfs.ManagingFS#findFileById(int)}
    */ // note: upsource implementation requires access to Project here, please don't remove (not anymore)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract VirtualFile findFileById(Project project, int id);
 
   public void requestRebuild(@NotNull ID<?, ?> indexId) {
@@ -94,6 +108,15 @@ public abstract class FileBasedIndex {
   public abstract <K, V> Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
                                                                     @NotNull K dataKey,
                                                                     @NotNull GlobalSearchScope filter);
+
+  /**
+   * @return lazily reified iterator of VirtualFile's.
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public abstract <K, V> Iterator<VirtualFile> getContainingFilesIterator(@NotNull ID<K, V> indexId,
+                                                                          @NotNull K dataKey,
+                                                                          @NotNull GlobalSearchScope filter);
 
   /**
    * @return {@code false} if ValueProcessor.process() returned {@code false}; {@code true} otherwise or if ValueProcessor was not called at all
@@ -123,6 +146,13 @@ public abstract class FileBasedIndex {
                                                                @NotNull GlobalSearchScope filter,
                                                                @Nullable Condition<? super V> valueChecker,
                                                                @NotNull Processor<? super VirtualFile> processor);
+
+  public abstract <K, V> boolean processFilesContainingAnyKey(@NotNull ID<K, V> indexId,
+                                                              @NotNull Collection<? extends K> dataKeys,
+                                                              @NotNull GlobalSearchScope filter,
+                                                              @Nullable IdFilter idFilter,
+                                                              @Nullable Condition<? super V> valueChecker,
+                                                              @NotNull Processor<? super VirtualFile> processor);
 
   /**
    * It is guaranteed to return data which is up-to-date within the given project.
@@ -331,8 +361,7 @@ public abstract class FileBasedIndex {
   }
 
   /** @deprecated inline true */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping = true;
 
   @ApiStatus.Internal

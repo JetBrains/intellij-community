@@ -4,6 +4,7 @@ package com.intellij.vcs.log.util;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
@@ -16,6 +17,7 @@ import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.CommittedChangeListForRevision;
@@ -26,10 +28,7 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
-import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -60,16 +59,9 @@ public final class VcsLogUtil {
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<? extends VcsRef> refs) {
-    return groupByRoot(refs, VcsRef::getRoot);
-  }
-
-  @NotNull
-  private static <T> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<? extends T> items,
-                                                          @NotNull Function<? super T, ? extends VirtualFile> rootGetter) {
-    Map<VirtualFile, Set<T>> map = new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
-    for (T item : items) {
-      VirtualFile root = rootGetter.fun(item);
-      map.computeIfAbsent(root, k -> new HashSet<>()).add(item);
+    Map<VirtualFile, Set<VcsRef>> map = new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
+    for (VcsRef item : refs) {
+      map.computeIfAbsent(item.getRoot(), k -> new HashSet<>()).add(item);
     }
     return map;
   }
@@ -427,5 +419,18 @@ public final class VcsLogUtil {
       return getCommitRow(storage, visiblePack, hash, root);
     }, future, silently, focus);
     return future;
+  }
+
+  public static void runWhenVcsAndLogIsReady(@NotNull Project project, @NotNull Consumer<? super VcsLogManager> action) {
+    VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
+    if (logManager != null) {
+      action.consume(logManager);
+      return;
+    }
+    ProjectLevelVcsManager.getInstance(project).runAfterInitialization(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        VcsProjectLog.runWhenLogIsReady(project, action);
+      });
+    });
   }
 }

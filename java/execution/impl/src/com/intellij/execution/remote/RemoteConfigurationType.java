@@ -15,7 +15,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class RemoteConfigurationType extends SimpleConfigurationType implements DumbAware {
@@ -42,8 +41,7 @@ public final class RemoteConfigurationType extends SimpleConfigurationType imple
   }
 
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public ConfigurationFactory getFactory() {
     return this;
   }

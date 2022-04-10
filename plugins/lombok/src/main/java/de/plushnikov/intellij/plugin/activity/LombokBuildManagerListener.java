@@ -4,6 +4,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.notification.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -19,10 +20,10 @@ import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.UUID;
 
 public class LombokBuildManagerListener implements BuildManagerListener {
+  private final SingletonNotificationManager myNotificationManager = new SingletonNotificationManager(Version.PLUGIN_NAME, NotificationType.ERROR);
 
   @Override
   public void beforeBuildProcessStarted(@NotNull Project project,
@@ -60,19 +61,16 @@ public class LombokBuildManagerListener implements BuildManagerListener {
       .show(RelativePoint.getNorthEastOf(statusBar.getComponent()), Balloon.Position.atRight);
   }
 
-  private static void suggestEnableAnnotations(Project project) {
-    NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(Version.PLUGIN_NAME);
-    Notification notification =
-      notificationGroup.createNotification(LombokBundle.message("config.warn.annotation-processing.disabled.title"),
-                                           LombokBundle.message("config.warn.annotation-processing.disabled.message"),
-                                           NotificationType.ERROR);
-    notification.setListener((not, e) -> {
-      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-        enableAnnotationProcessors(project);
-        not.expire();
-      }
+  private void suggestEnableAnnotations(Project project) {
+    myNotificationManager.notify("", LombokBundle.message("config.warn.annotation-processing.disabled.title"), project, (notification) -> {
+      notification.setSuggestionType(true);
+      notification.addAction(new NotificationAction(LombokBundle.message("notification.enable.annotation.processing")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          enableAnnotationProcessors(project);
+          notification.expire();
+        }
+      });
     });
-
-    Notifications.Bus.notify(notification, project);
   }
 }

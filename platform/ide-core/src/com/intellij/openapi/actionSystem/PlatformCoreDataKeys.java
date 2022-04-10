@@ -5,6 +5,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 
 import java.awt.*;
 
@@ -62,4 +63,6 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
    * @see #SELECTED_ITEM
    */
   public static final DataKey<Object[]> SELECTED_ITEMS = DataKey.create("selectedItems");
+
+  public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create("psi.Element.array");
 }

@@ -45,7 +45,7 @@ import javax.swing.JButton
 import javax.swing.JDialog
 
 class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessonsBundle.message("git.feature.branch.lesson.name")) {
-  override val existedFile = "git/simple_cat.yml"
+  override val sampleFilePath = "git/simple_cat.yml"
   private val remoteName = "origin"
   override val branchName = "feature"
   private val main = "main"
@@ -95,7 +95,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
 
     task {
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: TextPanel.WithIconAndArrows -> ui.text == branchName }
+      triggerAndFullHighlight { usePulsation = true }.component { ui: TextPanel.WithIconAndArrows -> ui.text == branchName }
     }
 
     lateinit var firstShowBranchesTaskId: TaskContext.TaskId
@@ -108,13 +108,13 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
 
     task {
-      triggerByListItemAndHighlight { item -> item.toString() == main }
+      triggerAndBorderHighlight().listItem { item -> item.toString() == main }
     }
 
     task {
       val checkoutItemText = GitBundle.message("branches.checkout")
       text(GitLessonsBundle.message("git.feature.branch.checkout.branch", strong(main), strong(checkoutItemText)))
-      triggerByListItemAndHighlight(clearPreviousHighlights = false) { item ->
+      triggerAndBorderHighlight { clearPreviousHighlights = false }.listItem { item ->
         (item as? PopupFactoryImpl.ActionItem)?.action is GitBranchPopupActions.LocalBranchActions.CheckoutAction
       }
       triggerOnCheckout { newBranch -> newBranch == main }
@@ -136,7 +136,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     task("Vcs.UpdateProject") {
       val updateProjectDialogTitle = VcsBundle.message("action.display.name.update.scope", VcsBundle.message("update.project.scope.name"))
       openUpdateDialogText(GitLessonsBundle.message("git.feature.branch.open.update.dialog", strong(main)))
-      triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
+      triggerUI().component { ui: JDialog ->
         ui.title?.contains(updateProjectDialogTitle) == true
       }
       showWarningIfGitWindowClosed()
@@ -145,7 +145,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
 
     task {
       text(GitLessonsBundle.message("git.feature.branch.confirm.update", strong(CommonBundle.getOkButtonText())))
-      triggerByUiComponentAndHighlight { ui: JButton ->
+      triggerAndFullHighlight().component { ui: JButton ->
         ui.text == CommonBundle.getOkButtonText()
       }
       highlightSubsequentCommitsInGitLog { commit ->
@@ -164,7 +164,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
 
     task {
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: TextPanel.WithIconAndArrows -> ui.text == main }
+      triggerAndFullHighlight { usePulsation = true }.component { ui: TextPanel.WithIconAndArrows -> ui.text == main }
     }
 
     lateinit var secondShowBranchesTaskId: TaskContext.TaskId
@@ -178,7 +178,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
 
     task {
-      triggerByListItemAndHighlight { item -> item.toString() == branchName }
+      triggerAndBorderHighlight().listItem { item -> item.toString() == branchName }
     }
 
     task {
@@ -186,7 +186,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       val checkoutAndRebaseText = GitBundle.message("branches.checkout.and.rebase.onto.branch",
                                                     GitBranchPopupActions.getCurrentBranchTruncatedPresentation(project, repositories))
       text(GitLessonsBundle.message("git.feature.branch.checkout.and.rebase", strong(branchName), strong(checkoutAndRebaseText)))
-      triggerByListItemAndHighlight(clearPreviousHighlights = false) { item ->
+      triggerAndBorderHighlight { clearPreviousHighlights = false }.listItem { item ->
         item.toString().contains(checkoutAndRebaseText)
       }
       triggerOnNotification { notification -> notification.title == GitBundle.message("rebase.notification.successful.title") }
@@ -202,7 +202,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
 
     task("Vcs.Push") {
       openPushDialogText(GitLessonsBundle.message("git.feature.branch.open.push.dialog", strong(branchName)))
-      triggerByUiComponentAndHighlight(false, false) { _: PushLog -> true }
+      triggerUI().component { _: PushLog -> true }
       test { actions(it) }
     }
 
@@ -210,9 +210,9 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     task {
       text(GitLessonsBundle.message("git.feature.branch.choose.force.push",
                                     strong(branchName), strong(forcePushText), strong(DvcsBundle.message("action.push").dropMnemonic())))
-      triggerByUiComponentAndHighlight(usePulsation = true) { _: BasicOptionButtonUI.ArrowButton -> true }
+      triggerAndFullHighlight { usePulsation = true }.component { _: BasicOptionButtonUI.ArrowButton -> true }
       val forcePushDialogTitle = DvcsBundle.message("force.push.dialog.title")
-      triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
+      triggerUI().component { ui: JDialog ->
         ui.title?.contains(forcePushDialogTitle) == true
       }
       restoreByUi()
@@ -244,7 +244,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
   }
 
   private fun TaskContext.triggerOnBranchesPopupShown() {
-    triggerByUiComponentAndHighlight(false, false) { ui: EngravedLabel ->
+    triggerUI().component { ui: EngravedLabel ->
       val branchesInRepoText = DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", GitBundle.message("git4idea.vcs.name"),
                                                   DvcsUtil.getShortRepositoryName(repository))
       ui.text?.contains(branchesInRepoText) == true

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.ProjectTopics;
@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -86,9 +87,6 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
 
     List<Pair<PsiClass, VirtualFile>> result = new ArrayList<>(classes.size());
     for (PsiClass aClass : classes) {
-      String qualifiedName = aClass.getQualifiedName();
-      if (!qName.equals(qualifiedName)) continue;
-
       PsiFile file = aClass.getContainingFile();
       if (file == null) {
         throw new AssertionError("No file for class: " + aClass + " of " + aClass.getClass());
@@ -172,6 +170,18 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
       results.add(LightJavaModule.create(myManager, root, moduleName));
     }
 
+    if (results.isEmpty()) {
+      for (Module module : ModuleManager.getInstance(myManager.getProject()).getModules()) {
+        if (moduleName.equals(LightJavaModule.moduleName(module.getName()))) {
+          VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(false);
+          if (sourceRoots.length > 0) {
+            results.add(LightJavaModule.create(myManager, sourceRoots[0], moduleName));
+            break;
+          }
+        }
+      }
+    }
+    
     return upgradeModules(sortModules(results, scope), moduleName, scope);
   }
 

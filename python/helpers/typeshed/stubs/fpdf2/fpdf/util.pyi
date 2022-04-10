@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Any, Tuple
+from typing import Any
 from typing_extensions import Literal
 
 _Unit = Literal["pt", "mm", "cm", "in"]
@@ -14,5 +14,5 @@ def convert_unit(
     to_convert: float | Iterable[float | Iterable[Any]],
     old_unit: str | float,
     new_unit: str | float,
-) -> float | Tuple[float, ...]: ...
+) -> float | tuple[float, ...]: ...
 def dochecks() -> None: ...

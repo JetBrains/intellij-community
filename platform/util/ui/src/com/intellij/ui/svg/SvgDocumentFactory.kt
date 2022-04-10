@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.svg
 
-import com.intellij.openapi.util.createXmlStreamReader
+import com.intellij.util.xml.dom.createXmlStreamReader
 import org.apache.batik.anim.dom.SVG12DOMImplementation
 import org.apache.batik.anim.dom.SVGDOMImplementation
 import org.apache.batik.anim.dom.SVGOMDocument
@@ -70,7 +70,7 @@ private fun buildDocument(reader: XMLStreamReader): SVGOMDocument {
         }
 
         val implementation: SVGDOMImplementation = when {
-          version == null || version.isEmpty() || version == "1.0" || version == "1.1" -> SVGDOMImplementation.getDOMImplementation() as SVGDOMImplementation
+          version.isNullOrEmpty() || version == "1.0" || version == "1.1" -> SVGDOMImplementation.getDOMImplementation() as SVGDOMImplementation
           version == "1.2" -> SVG12DOMImplementation.getDOMImplementation() as SVGDOMImplementation
           else -> throw TranscoderException("Unsupported SVG version: $version")
         }

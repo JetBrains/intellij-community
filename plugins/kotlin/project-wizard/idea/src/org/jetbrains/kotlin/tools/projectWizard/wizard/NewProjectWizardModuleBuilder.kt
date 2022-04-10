@@ -24,7 +24,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.EDT
-import org.jetbrains.kotlin.idea.framework.KotlinTemplatesFactory
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.ProjectCreationStats
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.UiEditorUsageStats
@@ -50,6 +49,7 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep.FirstWizardS
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.runWithProgressBar
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.SecondStepWizardComponent
 import java.io.File
+import java.util.*
 import java.util.regex.Pattern
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -88,7 +88,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
     private var finishButtonClicked: Boolean = false
 
     override fun getModuleType(): ModuleType<*> = NewProjectWizardModuleType()
-    override fun getParentGroup(): String = KotlinTemplatesFactory.KOTLIN_PARENT_GROUP_NAME
+    override fun getParentGroup(): String = "Kotlin Group"
 
     override fun createWizardSteps(
         wizardContext: WizardContext,
@@ -179,7 +179,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
             KotlinPlugin.modules.reference.settingValue
         }
         val projectCreationStats = ProjectCreationStats(
-            KotlinTemplatesFactory.KOTLIN_GROUP_NAME,
+            "Kotlin",
             wizard.projectTemplate!!.id,
             wizard.buildSystemType!!.id,
             modules.map { it.configurator.id },
@@ -298,7 +298,7 @@ class ModuleNewWizardFirstStep(wizard: IdeWizard, disposable: Disposable) : Wiza
     private fun suggestGroupId(): String {
         val username = SystemProperties.getUserName() ?: return DEFAULT_GROUP_ID
         if (!username.matches("[\\w\\s]+".toRegex())) return DEFAULT_GROUP_ID
-        val usernameAsGroupId = username.trim().toLowerCase().split("\\s+".toRegex()).joinToString(separator = ".")
+        val usernameAsGroupId = username.trim().toLowerCase(Locale.US).split("\\s+".toRegex()).joinToString(separator = ".")
         return "me.$usernameAsGroupId"
     }
 

@@ -8,6 +8,8 @@ import groovy.transform.CompileStatic
 enum JvmArchitecture {
   x64("64"), aarch64("aarch64"),
 
+  static final List<JvmArchitecture> ALL = List.of(values())
+
   static final JvmArchitecture currentJvmArch
   static {
     String archName = System.getProperty("os.arch")

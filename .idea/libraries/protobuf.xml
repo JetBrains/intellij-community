@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="protobuf" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.google.protobuf:protobuf-java:3.15.8" />
+    <properties include-transitive-deps="false" maven-id="com.google.protobuf:protobuf-java:3.19.4" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3.15.8/protobuf-java-3.15.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3.19.4/protobuf-java-3.19.4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3.15.8/protobuf-java-3.15.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java/3.19.4/protobuf-java-3.19.4-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

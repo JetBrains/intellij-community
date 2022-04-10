@@ -4,7 +4,11 @@ import com.google.common.collect.EvictingQueue
 import com.intellij.lang.Language
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.XSourcePosition.isOnTheSameLine
-import training.featuresSuggester.*
+import training.featuresSuggester.FeatureSuggesterBundle
+import training.featuresSuggester.NoSuggestion
+import training.featuresSuggester.SuggestingUtils.findBreakpointOnPosition
+import training.featuresSuggester.Suggestion
+import training.featuresSuggester.TipSuggestion
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.DebugSessionPausedAction
 import training.util.WeakReferenceDelegator
@@ -18,6 +22,7 @@ class EditBreakpointSuggester : AbstractFeatureSuggester() {
   override val message = FeatureSuggesterBundle.message("edit.breakpoint.message")
   override val suggestingActionId = "com.intellij.xdebugger.impl.actions.EditBreakpointAction\$ContextAction"
   override val suggestingTipFileName = "BreakpointSpeedmenu.html"
+  override val minSuggestingIntervalDays = 30
 
   override val languages = listOf(Language.ANY.id)
 

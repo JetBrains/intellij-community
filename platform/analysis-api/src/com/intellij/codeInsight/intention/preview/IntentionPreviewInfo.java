@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.preview;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -54,6 +55,39 @@ public interface IntentionPreviewInfo {
       return "DIFF";
     }
   };
+
+  /**
+   * Diff preview where old text and new text are explicitly displayed.
+   * Could be used to generate fake diff previews (e.g. when changes are to be applied to another file)
+   */
+  class CustomDiff implements IntentionPreviewInfo {
+    private final @NotNull FileType myFileType;
+    private final @NotNull String myOrigText;
+    private final @NotNull String myModifiedText;
+
+    /**
+     * @param type file type, used for highlighting
+     * @param origText original file text
+     * @param modifiedText changed file text
+     */
+    public CustomDiff(@NotNull FileType type, @NotNull String origText, @NotNull String modifiedText) {
+      myFileType = type;
+      myOrigText = origText;
+      myModifiedText = modifiedText;
+    }
+
+    public @NotNull FileType fileType() {
+      return myFileType;
+    }
+
+    public @NotNull String originalText() {
+      return myOrigText;
+    }
+
+    public @NotNull String modifiedText() {
+      return myModifiedText;
+    }
+  }
 
   /**
    * HTML description

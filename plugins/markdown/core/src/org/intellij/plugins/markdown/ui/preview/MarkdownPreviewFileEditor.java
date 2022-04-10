@@ -2,12 +2,12 @@
 package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.Project;
@@ -15,10 +15,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.markdown.MarkdownBundle;
+import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings;
 import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
 import org.intellij.plugins.markdown.ui.split.SplitFileEditor;
@@ -29,10 +31,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseWheelEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Objects;
+import java.util.function.Supplier;
 
-public class MarkdownPreviewFileEditor extends UserDataHolderBase implements FileEditor {
+public final class MarkdownPreviewFileEditor extends UserDataHolderBase implements FileEditor {
   private static final long PARSING_CALL_TIMEOUT_MS = 50L;
   private static final long RENDERING_DELAY_MS = 20L;
   public static final Key<MarkdownHtmlPanel> PREVIEW_BROWSER = Key.create("PREVIEW_BROWSER");
@@ -102,13 +107,38 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
       attachHtmlPanel();
     }
 
-    final var settingsConnection = myProject.getMessageBus().connect(this);
+    final var messageBusConnection = myProject.getMessageBus().connect(this);
     final var settingsChangedListener = new MyUpdatePanelOnSettingsChangedListener();
-    settingsConnection.subscribe(MarkdownSettings.ChangeListener.TOPIC, settingsChangedListener);
+    messageBusConnection.subscribe(MarkdownSettings.ChangeListener.TOPIC, settingsChangedListener);
+    messageBusConnection.subscribe(MarkdownExtensionsSettings.ChangeListener.TOPIC, fromSettingsDialog -> {
+      if (!fromSettingsDialog) {
+        mySwingAlarm.addRequest(() -> {
+          if (myPanel != null) {
+            myPanel.reloadWithOffset(mainEditor.getCaretModel().getOffset());
+          }
+        }, 0, ModalityState.stateForComponent(getComponent()));
+      }
+    });
+  }
+
+  private void setupScrollHelper() {
+    final var actualEditor = (mainEditor instanceof EditorImpl)? (EditorImpl)mainEditor : null;
+    if (actualEditor == null) {
+      return;
+    }
+    final var scrollPane = actualEditor.getScrollPane();
+    final var helper = new PreciseVerticalScrollHelper(
+      actualEditor,
+      () -> (myPanel instanceof MarkdownHtmlPanelEx)? (MarkdownHtmlPanelEx)myPanel : null
+    );
+    scrollPane.addMouseWheelListener(helper);
   }
 
   public void setMainEditor(Editor editor) {
     this.mainEditor = editor;
+    if (Registry.is("markdown.experimental.boundary.precise.scroll.enable")) {
+      setupScrollHelper();
+    }
   }
 
   public void scrollToSrcOffset(final int offset) {
@@ -176,18 +206,10 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
   }
 
   @Override
-  public void deselectNotify() { }
-
-  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
   @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
-
-  @Override
-  public @Nullable BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
-  }
 
   @Override
   public @Nullable FileEditorLocation getCurrentLocation() {
@@ -332,6 +354,39 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
           myPanel.reloadWithOffset(mainEditor.getCaretModel().getOffset());
         }
       }, 0, ModalityState.stateForComponent(getComponent()));
+    }
+  }
+
+  private static class PreciseVerticalScrollHelper extends MouseAdapter {
+    private final @NotNull EditorImpl editor;
+    private final @NotNull Supplier<MarkdownHtmlPanelEx> htmlPanelSupplier;
+    private int lastOffset = 0;
+
+    private PreciseVerticalScrollHelper(@NotNull EditorImpl editor, @NotNull Supplier<MarkdownHtmlPanelEx> htmlPanelSupplier) {
+      this.editor = editor;
+      this.htmlPanelSupplier = htmlPanelSupplier;
+    }
+
+    @Override
+    public void mouseWheelMoved(MouseWheelEvent event) {
+      final var currentOffset = editor.getScrollingModel().getVerticalScrollOffset();
+      if (lastOffset == currentOffset) {
+        boundaryReached(event);
+      } else {
+        lastOffset = currentOffset;
+      }
+    }
+
+    private void boundaryReached(MouseWheelEvent event) {
+      final var actualPanel = htmlPanelSupplier.get();
+      if (actualPanel == null) {
+        return;
+      }
+      if (event.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
+        final var multiplier = Registry.intValue("ide.browser.jcef.osr.wheelRotation.factor", 1);
+        final var amount = event.getScrollAmount() * event.getWheelRotation() * multiplier;
+        actualPanel.scrollBy(0, amount);
+      }
     }
   }
 }

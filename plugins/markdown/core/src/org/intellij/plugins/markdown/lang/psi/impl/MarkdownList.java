@@ -3,12 +3,12 @@ package org.intellij.plugins.markdown.lang.psi.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes;
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor;
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -43,14 +43,10 @@ public class MarkdownList extends MarkdownCompositePsiElementBase {
     return new ItemPresentation() {
       @Override
       public String getPresentableText() {
-        PsiElement[] parentChildren = getParent().getChildren();
-        if (MarkdownPsiUtil.isSimpleNestedList(parentChildren)) {
-          ItemPresentation parentPresentation = getParent().getNode().getPsi(MarkdownListItem.class).getPresentation();
-          if (parentPresentation != null) {
-            return parentPresentation.getPresentableText();
-          }
+        final var nestedPresentation = getSimpleNestedPresentation(MarkdownList.this);
+        if (nestedPresentation != null) {
+          return nestedPresentation.getPresentableText();
         }
-
         return getNode().getElementType() == MarkdownElementTypes.ORDERED_LIST
                ? ORDERED_LIST_TEXT
                : UNORDERED_LIST_TEXT;
@@ -58,14 +54,10 @@ public class MarkdownList extends MarkdownCompositePsiElementBase {
 
       @Override
       public String getLocationString() {
-        PsiElement[] parentChildren = getParent().getChildren();
-        if (MarkdownPsiUtil.isSimpleNestedList(parentChildren)) {
-          ItemPresentation parentPresentation = getParent().getNode().getPsi(MarkdownListItem.class).getPresentation();
-          if (parentPresentation != null) {
-            return parentPresentation.getLocationString();
-          }
+        final var nestedPresentation = getSimpleNestedPresentation(MarkdownList.this);
+        if (nestedPresentation != null) {
+          return nestedPresentation.getLocationString();
         }
-
         return null;
       }
 
@@ -76,5 +68,13 @@ public class MarkdownList extends MarkdownCompositePsiElementBase {
                : AllIcons.Actions.ListFiles;
       }
     };
+  }
+
+  private static @Nullable ItemPresentation getSimpleNestedPresentation(@NotNull MarkdownList element) {
+    final var parent = element.getParent();
+    if (MarkdownPsiUtil.isSimpleNestedList(parent.getChildren()) && parent instanceof MarkdownListItem) {
+      return ((MarkdownListItem)parent).getPresentation();
+    }
+    return null;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport
 
 import com.intellij.openapi.diagnostic.Logger
@@ -111,7 +111,7 @@ class BuildScriptDataBuilder(
   override fun withKotlinJvmPlugin() = apply { backend.withKotlinJvmPlugin() }
   override fun withKotlinJsPlugin() = apply { backend.withKotlinJsPlugin() }
   override fun withKotlinMultiplatformPlugin() = apply { backend.withKotlinMultiplatformPlugin() }
-  override fun withGroovyPlugin() = apply { backend.withGroovyPlugin() }
+  override fun withGroovyPlugin(version: String) = apply { backend.withGroovyPlugin(version) }
   override fun withApplicationPlugin(mainClass: String?, mainModule: String?, executableDir: String?, defaultJvmArgs: List<String>?) =
     apply { backend.withApplicationPlugin(mainClass, mainModule, executableDir, defaultJvmArgs) }
   override fun withJUnit() = apply { backend.withJUnit() }

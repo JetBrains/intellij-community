@@ -1,15 +1,15 @@
 from datetime import timedelta
-from typing import Any, Tuple
+from typing import Any
 
 from .base import Component
 from .behavior import Behavior
 
-DATENAMES: Tuple[str, ...]
-RULENAMES: Tuple[str, ...]
-DATESANDRULES: Tuple[str, ...]
+DATENAMES: tuple[str, ...]
+RULENAMES: tuple[str, ...]
+DATESANDRULES: tuple[str, ...]
 PRODID: str
-WEEKDAYS: Tuple[str, ...]
-FREQUENCIES: Tuple[str, ...]
+WEEKDAYS: tuple[str, ...]
+FREQUENCIES: tuple[str, ...]
 zeroDelta: timedelta
 twoHours: timedelta
 

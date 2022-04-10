@@ -7,8 +7,6 @@ import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.ui.*
 import com.intellij.ide.macro.MacrosDialog
-import com.intellij.ide.wizard.getCanonicalPath
-import com.intellij.ide.wizard.getPresentablePath
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineField
 import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineInfo
@@ -23,6 +21,8 @@ import com.intellij.openapi.roots.ui.distribution.DistributionComboBox
 import com.intellij.openapi.roots.ui.distribution.DistributionInfo
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.LabeledComponent
+import com.intellij.openapi.ui.getCanonicalPath
+import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts

@@ -18,6 +18,7 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -470,7 +471,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
     PsiMethod method = Util.getContainingMethod(context);
     if (method == null) return false;
 
-    final List<PsiMethod> methods = com.intellij.refactoring.introduceParameter.IntroduceParameterHandler.getEnclosingMethods(method);
+    final List<PsiMethod> methods = CommonJavaRefactoringUtil.getEnclosingMethods(method);
     assertTrue(methods.size() > enclosingLevel);
     method = methods.get(enclosingLevel);
 

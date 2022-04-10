@@ -363,7 +363,7 @@ public class HgVcs extends AbstractVcs {
       protected void hyperlinkActivated(@NotNull Notification notification,
                                         @NotNull HyperlinkEvent e) {
         if (SETTINGS_LINK.equals(e.getDescription())) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, HgProjectConfigurable.getDISPLAY_NAME());
+          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, HgProjectConfigurable.class);
         }
         else if (UPDATE_LINK.equals(e.getDescription())) {
           BrowserUtil.browse("http://mercurial.selenic.com");

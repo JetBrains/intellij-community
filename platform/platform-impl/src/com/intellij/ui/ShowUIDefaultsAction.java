@@ -43,6 +43,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 
@@ -108,7 +109,13 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                 updateValue(pair, !((Boolean)value), row, column);
                 changed = true;
               } else if (value instanceof Integer) {
-                Integer newValue = editNumber(key.toString(), value.toString());
+                Integer newValue = editNumber(key.toString(), value.toString(), Integer::parseInt);
+                if (newValue != null) {
+                  updateValue(pair, newValue, row, column);
+                  changed = true;
+                }
+              } else if (value instanceof Float) {
+                Float newValue = editNumber(key.toString(), value.toString(), Float::parseFloat);
                 if (newValue != null) {
                   updateValue(pair, newValue, row, column);
                   changed = true;
@@ -340,14 +347,14 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
       }
 
-      private @Nullable Integer editNumber(String key, String value) {
+      private @Nullable <T> T editNumber(String key, String value, Function<String, T> parser) {
         String newValue = Messages.showInputDialog(getRootPane(), IdeBundle.message("dialog.message.enter.new.value.for.0", key),
                                                    IdeBundle.message("dialog.title.number.editor"), null, value,
                                                    new InputValidator() {
                                      @Override
                                      public boolean checkInput(String inputString) {
                                        try {
-                                         Integer.parseInt(inputString);
+                                         parser.apply(inputString);
                                          return true;
                                        } catch (NumberFormatException nfe){
                                          return false;
@@ -360,7 +367,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                                      }
                                    });
 
-        return newValue != null ? Integer.valueOf(newValue) : null;
+        return newValue != null ? parser.apply(newValue) : null;
       }
 
       @Nullable
@@ -494,6 +501,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         return (value instanceof Color ||
                 value instanceof Boolean ||
                 value instanceof Integer ||
+                value instanceof Float ||
                 value instanceof EmptyBorder ||
                 value instanceof Insets ||
                 value instanceof UIUtil.GrayFilter ||

@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 public class n<F, S> {
    private F a;
@@ -107,7 +106,7 @@ public class n<F, S> {
       ArrayList var10000;
       while(true) {
          if (var2.hasNext()) {
-            Entry var3 = (Entry)var2.next();
+            Map.Entry var3 = (Map.Entry)var2.next();
 
             try {
                var10000 = var1;

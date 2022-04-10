@@ -15,7 +15,7 @@ import java.util.Arrays;
 
 public final class IntToIntBtree {
   public static int version() {
-    return 4 + (IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER ? 0xFF : 0);
+    return 4 + (IOUtil.useNativeByteOrderForByteBuffers() ? 0xFF : 0);
   }
 
   private static final int HAS_ZERO_KEY_MASK = 0xFF000000;
@@ -57,7 +57,7 @@ public final class IntToIntBtree {
       Files.deleteIfExists(file);
     }
 
-    storage = new ResizeableMappedFile(file, pageSize, storageLockContext, 1024 * 1024, true, IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER);
+    storage = new ResizeableMappedFile(file, pageSize, storageLockContext, 1024 * 1024, true, IOUtil.useNativeByteOrderForByteBuffers());
     storage.setRoundFactor(pageSize);
     root = new BtreeRootNode(this);
 

@@ -41,7 +41,7 @@ internal class ToolboxUpdateNotificationHandler : ToolboxServiceHandler<UpdateNo
     val fullProductName = ApplicationNamesInfo.getInstance().fullProductName
     val title = IdeBundle.message("toolbox.updates.download.update.action.text", request.build, request.version, fullProductName)
     val description = IdeBundle.message("toolbox.updates.download.update.action.description", request.build, request.version, fullProductName)
-    val action = ToolboxUpdateAction("toolbox-02-update-${request.build}", lifetime, title, description, actionHandler)
+    val action = ToolboxUpdateAction("toolbox-02-update-${request.build}", lifetime, title, description, actionHandler, false)
     service<ToolboxSettingsActionRegistry>().registerUpdateAction(action)
   }
 }
@@ -77,7 +77,7 @@ internal class ToolboxRestartNotificationHandler : ToolboxServiceHandler<UpdateN
     val fullProductName = ApplicationNamesInfo.getInstance().fullProductName
     val title = IdeBundle.message("toolbox.updates.download.ready.action.text", request.build, request.version, fullProductName)
     val description = IdeBundle.message("toolbox.updates.download.ready.action.description", request.build, request.version, fullProductName)
-    val action = ToolboxUpdateAction("toolbox-01-restart-${request.build}", lifetime, title, description, actionHandler)
+    val action = ToolboxUpdateAction("toolbox-01-restart-${request.build}", lifetime, title, description, actionHandler, true)
     service<ToolboxSettingsActionRegistry>().registerUpdateAction(action)
   }
 }

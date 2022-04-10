@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.extensions
 
 import com.intellij.execution.actions.ConfigurationFromContext
@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 interface KotlinTestFrameworkProvider {
     companion object {
@@ -21,16 +22,15 @@ interface KotlinTestFrameworkProvider {
             var found: KtLightClass? = null
 
             for (declaration in file.declarations) {
-                if (declaration is KtClass) {
-                    val javaClass = declaration.toLightClass()
-                    if (javaClass != null && predicate(javaClass)) {
-                        if (found != null) {
-                            // There should be exactly one class
-                            return null
-                        }
-
-                        found = javaClass
+                val classOrObject = declaration.safeAs<KtClassOrObject>() ?: continue
+                val javaClass = classOrObject.toLightClass()
+                if (javaClass != null && predicate(javaClass)) {
+                    if (found != null) {
+                        // There should be exactly one class
+                        return null
                     }
+
+                    found = javaClass
                 }
             }
 
@@ -71,4 +71,26 @@ interface KotlinTestFrameworkProvider {
     }
 
     class JavaTestEntity(val testClass: PsiClass, val testMethod: PsiMethod?)
+
+    fun getJavaEntity(element: PsiElement): JavaEntity? {
+        val function = element.getParentOfType<KtNamedFunction>(strict = false)
+        val owner = PsiTreeUtil.getParentOfType(function ?: element, KtClassOrObject::class.java, KtDeclarationWithBody::class.java)
+
+        var testClass = (owner as? KtClassOrObject)?.toLightClass()
+        if (testClass == null) {
+            val file = element.containingFile as? KtFile ?: return null
+            testClass = findSingleJavaTestClassInFile(file) { true } ?: return null
+        }
+
+        if (function != null) {
+            for (method in testClass.methods) {
+                if (PsiTreeUtil.isAncestor(method.navigationElement, function, false)) {
+                    return JavaEntity(testClass, method)
+                }
+            }
+        }
+
+        return JavaEntity(testClass, null)
+    }
+    class JavaEntity(val testClass: PsiClass, val method: PsiMethod?)
 }

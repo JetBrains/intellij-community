@@ -1,9 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
-import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
@@ -16,7 +15,7 @@ import javax.swing.event.ListDataListener
 object GHPRReviewThreadsPanel {
 
   fun create(model: GHPRReviewThreadsModel, threadComponentFactory: (GHPRReviewThreadModel) -> JComponent): JComponent {
-    val panel = JPanel(VerticalLayout(JBUIScale.scale(12))).apply {
+    val panel = JPanel(VerticalLayout(12)).apply {
       isOpaque = false
     }
 
@@ -49,7 +48,7 @@ object GHPRReviewThreadsPanel {
 
         override fun intervalAdded(e: ListDataEvent) {
           for (i in e.index0..e.index1) {
-            panel.add(threadComponentFactory(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i)
+            panel.add(threadComponentFactory(model.getElementAt(i)), i)
           }
           updateVisibility()
           panel.revalidate()
@@ -65,10 +64,10 @@ object GHPRReviewThreadsPanel {
       })
 
       if (!model.loaded) {
-        panel.add(loadingPanel, VerticalLayout.FILL_HORIZONTAL)
+        panel.add(loadingPanel)
       }
       else for (i in 0 until model.size) {
-        panel.add(threadComponentFactory(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i)
+        panel.add(threadComponentFactory(model.getElementAt(i)), i)
       }
       updateVisibility()
     }

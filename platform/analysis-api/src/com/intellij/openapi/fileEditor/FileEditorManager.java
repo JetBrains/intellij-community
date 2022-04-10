@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -64,8 +65,7 @@ public abstract class FileEditorManager {
   /**
    * @deprecated use {@link #openTextEditor(OpenFileDescriptor, boolean)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void navigateToTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
     openTextEditor(descriptor, focusEditor);
   }
@@ -92,6 +92,15 @@ public abstract class FileEditorManager {
    * @return {@code true} if {@code file} is opened, {@code false} otherwise
    */
   public abstract boolean isFileOpen(@NotNull VirtualFile file);
+
+  /**
+   * @return {@code true} if {@code file} is opened, {@code false} otherwise
+   * Unlike {@link #isFileOpen(VirtualFile)} includes files which were opened by all guests during a collaborative development session.
+   */
+  @ApiStatus.Experimental
+  public boolean isFileOpenWithRemotes(@NotNull VirtualFile file) {
+    return isFileOpen(file);
+  }
 
   /**
    * @return all opened files. Order of files in the array corresponds to the order of editor tabs.
@@ -196,6 +205,8 @@ public abstract class FileEditorManager {
 
   public static final Key<Boolean> SEPARATOR_DISABLED = Key.create("FileEditorSeparatorDisabled");
 
+  public static final Key<Color> SEPARATOR_COLOR = Key.create("FileEditorSeparatorColor");
+
   /**
    * Adds specified {@code listener}
    *
@@ -263,5 +274,5 @@ public abstract class FileEditorManager {
    *
    * @param file the file to refresh.
    */
-  public void updateFilePresentation(@NotNull VirtualFile file) {}
+  public void updateFilePresentation(@NotNull VirtualFile file) { }
 }

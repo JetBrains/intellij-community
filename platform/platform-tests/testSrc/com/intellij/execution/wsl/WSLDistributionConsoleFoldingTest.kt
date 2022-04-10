@@ -4,18 +4,25 @@ package com.intellij.execution.wsl
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.wsl.WSLDistribution.*
+import com.intellij.testFramework.fixtures.TestFixtureRule
 import junit.framework.TestCase.assertEquals
+import org.junit.ClassRule
 import org.junit.Test
+import org.junit.rules.RuleChain
 
-class WSLDistributionConsoleFoldingTest : WslTestBase() {
+class WSLDistributionConsoleFoldingTest {
+  companion object {
+    private val appRule = TestFixtureRule()
+    private val wslRule = WslRule()
+    @ClassRule @JvmField val ruleChain: RuleChain = RuleChain.outerRule(appRule).around(wslRule)
+  }
+
   private val folding = WslDistributionConsoleFolding()
-
 
   @Test
   fun `should fold`() {
-    fun assertShouldFold(commandLine: GeneralCommandLine = GeneralCommandLine("echo"),
-                         options: WSLCommandLineOptions) {
-      val line = wsl.patchCommandLine(commandLine, null, options).commandLineString
+    fun assertShouldFold(commandLine: GeneralCommandLine = GeneralCommandLine("echo"), options: WSLCommandLineOptions) {
+      val line = wslRule.wsl.patchCommandLine(commandLine, null, options).commandLineString
       assertShouldFold(expected = true, line = line)
     }
 
@@ -49,7 +56,7 @@ class WSLDistributionConsoleFoldingTest : WslTestBase() {
     assertShouldNotFold("--distribution Ubuntu-18.04 wsl.exe --exec echo") // --distribution before wsl.exe
     assertShouldNotFold("wsl.exe --distribution Ubuntu-18.04") // no --exec
 
-    val wslEcho = wsl.patchCommandLine(GeneralCommandLine("echo"), null, WSLCommandLineOptions()).commandLineString
+    val wslEcho = wslRule.wsl.patchCommandLine(GeneralCommandLine("echo"), null, WSLCommandLineOptions()).commandLineString
 
     assertShouldNotFold(wslEcho.remove(WSL_EXE)) // no wsl.exe
     assertShouldNotFold(wslEcho.remove(DISTRIBUTION_PARAMETER)) // no --distribution
@@ -89,8 +96,8 @@ class WSLDistributionConsoleFoldingTest : WslTestBase() {
       } else {
         commandLineString
       }
-      val expected = ExecutionBundle.message("wsl.folding.placeholder", wsl.msId, expectedLine)
-      val actual = folding.getPlaceholderText(wsl.patchCommandLine(commandLine, null, options).commandLineString)
+      val expected = ExecutionBundle.message("wsl.folding.placeholder", wslRule.wsl.msId, expectedLine)
+      val actual = folding.getPlaceholderText(wslRule.wsl.patchCommandLine(commandLine, null, options).commandLineString)
       assertEquals(expected, actual)
     }
 
@@ -106,13 +113,9 @@ class WSLDistributionConsoleFoldingTest : WslTestBase() {
     assertReplacement(commandLine = GeneralCommandLine("echo").withEnvironment("foo", "bar"), options = WSLCommandLineOptions())
     assertReplacement(options = WSLCommandLineOptions().addInitCommand("foo bar"))
   }
-}
 
-private fun String.remove(substring: String): String {
-  val start = this.indexOf(substring)
-  if (start < 0) {
-    return this
+  private fun String.remove(substring: String): String {
+    val start = this.indexOf(substring)
+    return if (start < 0) this else this.removeRange(start, start + substring.length)
   }
-
-  return this.removeRange(start, start + substring.length)
 }

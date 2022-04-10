@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 open class MySecondClass() {
 }
 
@@ -11,3 +12,4 @@ class A() : My<caret> {
 }
 
 // EXIST: MySecondClass, MyFirstClass
+// FIR_COMPARISON

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.CommonBundle;
@@ -1130,7 +1130,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
 
     final List<ConfigurationFromContext> producers = PreferredProducerFind.getConfigurationsFromContext(context.getLocation(),
-                                                                                                         context, false);
+                                                                                                        context, false, true);
     if (producers == null) return;
 
     producers.sort(ConfigurationFromContext.NAME_COMPARATOR);

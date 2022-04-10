@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInsight
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -213,5 +213,21 @@ try {
 
   void testReduce() {
     doAutoPopupTest "[1, 2, 3].<caret>", "reduce", "[1, 2, 3].inject {}", GrReducePostfixTemplate
+  }
+
+  void testInClosure() {
+    doAutoPopupTest "1.with { [1, 2, 3].<caret> }", "par", "1.with { ([1, 2, 3]) }", GrParenthesizedExpressionPostfixTemplate
+  }
+
+  void testInClosure2() {
+    doAutoPopupTest "1.with { [1, 2, 3].<caret> }", "map", "1.with { [1, 2, 3].collect {} }", GrMapPostfixTemplate
+  }
+
+  void testIf() {
+    doAutoPopupTest "true.<caret>", "if", "if (true) {\n    \n}", GrIfPostfixTemplate
+  }
+
+  void testElse() {
+    doAutoPopupTest "true.<caret>", "else", "if (!true) {\n    \n}", GrElsePostfixTemplate
   }
 }

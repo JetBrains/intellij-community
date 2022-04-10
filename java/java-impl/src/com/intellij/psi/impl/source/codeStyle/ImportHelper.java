@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -39,7 +39,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,8 +65,7 @@ public final class ImportHelper{
    * @deprecated Use {@link #ImportHelper(JavaCodeStyleSettings)} instead. The instance of JavaCodeStyleSettings
    *             can be obtained using {@link JavaCodeStyleSettings#getInstance(PsiFile)} method.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public ImportHelper(@NotNull CodeStyleSettings settings){
     mySettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
   }
@@ -151,17 +149,15 @@ public final class ImportHelper{
   public static void collectOnDemandImports(@NotNull List<? extends Pair<String, Boolean>> resultList,
                                             @NotNull JavaCodeStyleSettings settings,
                                             @NotNull Map<String, Boolean> outClassesOrPackagesToImportOnDemand) {
-    ObjectIntHashMap<String> packageToCountMap = new ObjectIntHashMap<>();
-    ObjectIntHashMap<String> classToCountMap = new ObjectIntHashMap<>();
+    ObjectIntMap<String> packageToCountMap = new ObjectIntHashMap<>();
+    ObjectIntMap<String> classToCountMap = new ObjectIntHashMap<>();
     for (Pair<String, Boolean> pair : resultList) {
       String name = pair.getFirst();
       Boolean isStatic = pair.getSecond();
       String packageOrClassName = getPackageOrClassName(name);
       if (packageOrClassName.isEmpty()) continue;
-      ObjectIntHashMap<String> map = isStatic ? classToCountMap : packageToCountMap;
-      if (!map.increment(packageOrClassName)) {
-        map.put(packageOrClassName, 1);
-      }
+      ObjectIntMap<String> map = isStatic ? classToCountMap : packageToCountMap;
+      map.put(packageOrClassName, map.getOrDefault(packageOrClassName, 0) + 1);
     }
 
     for (ObjectIntMap.Entry<String> entry : classToCountMap.entries()) {
@@ -434,9 +430,12 @@ public final class ImportHelper{
     String shortName = PsiNameHelper.getShortClassName(className);
 
     findUnusedSingleImport(file, shortName, className).ifPresent(PsiElement::delete);
-    PsiClass conflictSingleRef = findSingleImportByShortName(file, shortName);
-    if (conflictSingleRef != null && !forceReimport){
-      return className.equals(conflictSingleRef.getQualifiedName());
+
+    if (!forceReimport) {
+      PsiClass conflictSingleRef = findSingleImportByShortName(file, shortName);
+      if (conflictSingleRef != null) {
+        return className.equals(conflictSingleRef.getQualifiedName());
+      }
     }
 
     PsiClass curRefClass = helper.resolveReferencedClass(shortName, file);
@@ -636,7 +635,8 @@ public final class ImportHelper{
 
           @Override
           public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-            if (file.getManager().areElementsEquivalent(reference.resolve(), aClass)) {
+            if (shortClassName.equals(reference.getReferenceName()) && 
+                file.getManager().areElementsEquivalent(reference.resolve(), aClass)) {
               foundRef[0] = true;
             }
             super.visitReferenceElement(reference);

@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.isSingleUnderscore
 
 class RedundantLambdaArrowInspection : AbstractKotlinInspection() {
@@ -32,6 +32,7 @@ class RedundantLambdaArrowInspection : AbstractKotlinInspection() {
             val arrow = functionLiteral.arrow ?: return
             val parameters = functionLiteral.valueParameters
             val singleParameter = parameters.singleOrNull()
+            if (singleParameter?.typeReference != null) return
             if (parameters.isNotEmpty() && singleParameter?.isSingleUnderscore != true && singleParameter?.name != "it") {
                 return
             }
@@ -86,8 +87,8 @@ class RedundantLambdaArrowInspection : AbstractKotlinInspection() {
 }
 
 private fun KtCallExpression.isApplicableCall(lambdaExpression: KtLambdaExpression, lambdaContext: BindingContext): Boolean {
-    val dotQualifiedExpression = parent as? KtDotQualifiedExpression
-    return if (dotQualifiedExpression == null) {
+    val qualifiedExpression = parent as? KtQualifiedExpression
+    return if (qualifiedExpression == null) {
         val offset = lambdaExpression.textOffset - textOffset
         replaceWithCopyWithResolveCheck(
             resolveStrategy = { expr, context ->
@@ -99,8 +100,8 @@ private fun KtCallExpression.isApplicableCall(lambdaExpression: KtLambdaExpressi
             }
         )
     } else {
-        val offset = lambdaExpression.textOffset - dotQualifiedExpression.textOffset
-        dotQualifiedExpression.replaceWithCopyWithResolveCheck(
+        val offset = lambdaExpression.textOffset - qualifiedExpression.textOffset
+        qualifiedExpression.replaceWithCopyWithResolveCheck(
             resolveStrategy = { expr, context ->
                 expr.selectorExpression.getResolvedCall(context)?.resultingDescriptor
             },

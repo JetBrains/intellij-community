@@ -23,11 +23,6 @@ abstract class DelegatingCompilationContext implements CompilationContext {
   }
 
   @Override
-  GradleRunner getGradle() {
-    return delegate.getGradle()
-  }
-
-  @Override
   BuildOptions getOptions() {
     return delegate.getOptions()
   }

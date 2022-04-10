@@ -175,7 +175,9 @@ fun setupPoetrySdkUnderProgress(project: Project?,
                                 installPackages: Boolean,
                                 poetryPath: String? = null): Sdk? {
   val projectPath = newProjectPath ?: module?.basePath ?: project?.basePath ?: return null
-  val task = object : Task.WithResult<String, ExecutionException>(project, "Setting Up Poetry Environment", true) {
+  val task = object : Task.WithResult<String, ExecutionException>(
+    project, PyBundle.message("python.sdk.dialog.title.setting.up.poetry.environment"), true) {
+
     override fun compute(indicator: ProgressIndicator): String {
       indicator.isIndeterminate = true
       val poetry = when (poetryPath) {
@@ -391,7 +393,7 @@ class PoetryInstallQuickFix : LocalQuickFix {
     }
   }
 
-  override fun getFamilyName() = "Install requirements from poetry.lock"
+  override fun getFamilyName() = PyBundle.message("python.sdk.intention.family.name.install.requirements.from.poetry.lock")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement ?: return
@@ -501,7 +503,7 @@ private val LOCK_NOTIFICATION_GROUP = NotificationGroup(PyBundle.message("python
 private val Module.poetryLock: VirtualFile?
   get() = baseDir?.findChild(POETRY_LOCK)
 
-fun runPoetryInBackground(module: Module, args: List<String>, description: String) {
+fun runPoetryInBackground(module: Module, args: List<String>, @NlsSafe description: String) {
   val task = object : Task.Backgroundable(module.project, StringUtil.toTitleCase(description), true) {
     override fun run(indicator: ProgressIndicator) {
       val sdk = module.pythonSdk ?: return
@@ -576,8 +578,13 @@ fun getPoetryEnvs(projectPath: String): List<String> =
 
 
 fun isVirtualEnvsInProject(projectPath: String): Boolean? =
-  syncRunPoetry(projectPath, "config", "virtualenvs.in-project", defaultResult = null) {
-    it.trim() == "true"
+  if (FileUtil.exists(projectPath)) {
+    syncRunPoetry(projectPath, "config", "virtualenvs.in-project", defaultResult = null) {
+      it.trim() == "true"
+    }
+  }
+  else {
+    false
   }
 
 val poetryVersion: String?

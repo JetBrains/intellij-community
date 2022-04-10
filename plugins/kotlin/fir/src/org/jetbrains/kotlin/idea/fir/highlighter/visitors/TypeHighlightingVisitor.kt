@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.fir.highlighter.visitors
 
@@ -11,7 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.highlighter.isAnnotationClass
 import org.jetbrains.kotlin.idea.highlighter.textAttributesKeyForTypeDeclaration
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.highlighter.NameHighlighter
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
@@ -31,28 +28,29 @@ internal class TypeHighlightingVisitor(
             return
         }
         val target = expression.mainReference.resolve() ?: return
+        if (isAnnotationCall(expression, target)) {
+            // higlighted by AnnotationEntryHiglightingVisitor
+            return
+        }
         textAttributesKeyForTypeDeclaration(target)?.let { key ->
             if (expression.isConstructorCallReference() && key != Colors.ANNOTATION) {
                 // Do not highlight constructor call as class reference
                 return@let
             }
-            highlightName(computeHighlightingRangeForUsage(expression, target), key)
+            highlightName(expression.textRange, key)
         }
     }
 
-
-    private fun computeHighlightingRangeForUsage(expression: KtSimpleNameExpression, target: PsiElement): TextRange {
+    private fun isAnnotationCall(expression: KtSimpleNameExpression, target: PsiElement): Boolean {
         val expressionRange = expression.textRange
 
-        if (!target.isAnnotationClass()) return expressionRange
+        val isKotlinAnnotation = target is KtPrimaryConstructor && target.parent.isAnnotationClass()
+        if (!isKotlinAnnotation && !target.isAnnotationClass()) return false
 
-        // include '@' symbol if the reference is the first segment of KtAnnotationEntry
-        // if "Deprecated" is highlighted then '@' should be highlighted too in "@Deprecated"
         val annotationEntry = PsiTreeUtil.getParentOfType(
             expression, KtAnnotationEntry::class.java, /* strict = */false, KtValueArgumentList::class.java
         )
-        val atSymbol = annotationEntry?.atSymbol ?: return expressionRange
-        return TextRange(atSymbol.textRange.startOffset, expression.textRange.endOffset)
+       return annotationEntry?.atSymbol != null
     }
 }
 

@@ -68,7 +68,7 @@ class EditorInlaysManager(val project: Project, private val editor: EditorImpl, 
     addDocumentListener()
     addViewportListener()
     editor.settings.isRightMarginShown = false
-    UISettings.instance.showEditorToolTip = false
+    UISettings.getInstance().showEditorToolTip = false
     MouseWheelUtils.wrapEditorMouseWheelListeners(editor)
     restoreToolbars().onSuccess { restoreOutputs() }
     onCaretPositionChanged()

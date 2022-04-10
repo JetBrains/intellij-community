@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin.generate
 
@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReferenceDescriptorsImpl
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -26,7 +28,6 @@ import org.jetbrains.uast.generate.UastCodeGenerationPlugin
 import org.jetbrains.uast.generate.UastElementFactory
 import org.jetbrains.uast.kotlin.*
 import org.jetbrains.uast.kotlin.internal.KotlinFakeUElement
-import org.jetbrains.uast.kotlin.internal.toSourcePsiFakeAware
 
 class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     override val language: Language
@@ -71,6 +72,19 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
             else -> replaced
         }?.toUElementOfExpectedTypes(elementType)
     }
+
+    override fun bindToElement(reference: UReferenceExpression, element: PsiElement): PsiElement? {
+        val sourcePsi = reference.sourcePsi ?: return null
+        if (sourcePsi !is KtSimpleNameExpression) return null
+        return KtSimpleNameReferenceDescriptorsImpl(sourcePsi)
+            .bindToElement(element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
+    }
+
+    override fun shortenReference(reference: UReferenceExpression): UReferenceExpression? {
+        val sourcePsi = reference.sourcePsi ?: return null
+        if (sourcePsi !is KtElement) return null
+        return ShortenReferences.DEFAULT.process(sourcePsi).toUElementOfType()
+    }
 }
 
 private fun hasBraces(oldPsi: KtBlockExpression): Boolean = oldPsi.lBrace != null && oldPsi.rBrace != null
@@ -78,6 +92,7 @@ private fun hasBraces(oldPsi: KtBlockExpression): Boolean = oldPsi.lBrace != nul
 class KotlinUastElementFactory(project: Project) : UastElementFactory {
     private val psiFactory = KtPsiFactory(project)
 
+    @Suppress("UNUSED_PARAMETER")
     override fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression? {
         return psiFactory.createExpression(qualifiedName).let {
             when (it) {
@@ -187,6 +202,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return psiFactory.createExpression("null").toUElementOfType()!!
     }
 
+    @Suppress("UNUSED_PARAMETER")
     /*override*/ fun createIntLiteral(value: Int, context: PsiElement?): ULiteralExpression {
         return psiFactory.createExpression(value.toString()).toUElementOfType()!!
     }
@@ -216,7 +232,10 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         val thenBranchPsi = thenBranch.sourcePsi as? KtExpression ?: return null
         val elseBranchPsi = elseBranch?.sourcePsi as? KtExpression
 
-        return KotlinUIfExpression(psiFactory.createIf(conditionPsi, thenBranchPsi.ensureBlockExpressionBraces(), elseBranchPsi?.ensureBlockExpressionBraces()), null)
+        return KotlinUIfExpression(
+            psiFactory.createIf(conditionPsi, thenBranchPsi.ensureBlockExpressionBraces(), elseBranchPsi?.ensureBlockExpressionBraces()),
+            givenParent = null
+        )
     }
 
     @Deprecated("use version with context parameter")

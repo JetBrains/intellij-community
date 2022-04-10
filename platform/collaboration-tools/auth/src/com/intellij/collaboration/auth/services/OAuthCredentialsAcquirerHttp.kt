@@ -28,7 +28,9 @@ object OAuthCredentialsAcquirerHttp {
 
   fun requestToken(url: Url): HttpResponse<String> {
     val tokenUrl = url.toExternalForm()
-    val client = HttpClient.newHttpClient()
+    val client = HttpClient.newBuilder()
+      .version(HttpClient.Version.HTTP_1_1)
+      .build()
     val request = HttpRequest.newBuilder()
       .uri(URI.create(tokenUrl))
       .header("Content-Type", "application/json")

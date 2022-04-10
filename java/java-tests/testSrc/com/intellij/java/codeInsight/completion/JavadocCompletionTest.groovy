@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
@@ -160,7 +160,7 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   void testInlineLookup() {
     configureByFile("InlineTagName.java")
-    assertStringItems("code", "docRoot", "index", "inheritDoc", "link", "linkplain", "literal", "summary", "systemProperty", "value")
+    assertStringItems("code", "docRoot", "index", "inheritDoc", "link", "linkplain", "literal", "snippet", "summary", "systemProperty", "value")
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -775,7 +775,7 @@ interface Bar<T> extends Foo<T> {
   void "test tags at top level inline"() {
     myFixture.configureByText 'a.java', "interface Foo { /** Hello <caret> */void foo(int a); }"
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings == ['{@code}', '{@docRoot}', '{@index}', '{@inheritDoc}', '{@linkplain}', '{@link}', '{@literal}', '{@summary}', '{@systemProperty}', '{@value}']
+    assert myFixture.lookupElementStrings == ['{@code}', '{@docRoot}', '{@index}', '{@inheritDoc}', '{@linkplain}', '{@link}', '{@literal}', '{@snippet}', '{@summary}', '{@systemProperty}', '{@value}']
     def element = myFixture.lookupElements[5]
     assert element.lookupString == "{@link}"
     selectItem(element)
@@ -785,7 +785,7 @@ interface Bar<T> extends Foo<T> {
   void "test tags after return"() {
     myFixture.configureByText 'a.java', "interface Foo { /** @return <caret> */int foo(int a); }"
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings == ['{@code}', '{@docRoot}', '{@index}', '{@inheritDoc}', '{@linkplain}', '{@link}', '{@literal}', '{@return}', '{@summary}', '{@systemProperty}', '{@value}']
+    assert myFixture.lookupElementStrings == ['{@code}', '{@docRoot}', '{@index}', '{@inheritDoc}', '{@linkplain}', '{@link}', '{@literal}', '{@return}', '{@snippet}', '{@summary}', '{@systemProperty}', '{@value}']
     def element = myFixture.lookupElements[5]
     assert element.lookupString == "{@link}"
     selectItem(element)
@@ -795,7 +795,7 @@ interface Bar<T> extends Foo<T> {
   void "test tags at top level inline in brace"() {
     myFixture.configureByText 'a.java', "interface Foo { /** Hello {<caret>} */void foo(int a); }"
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings == ['@code', '@docRoot', '@index', '@inheritDoc', '@link', '@linkplain', '@literal', '@summary', '@systemProperty', '@value']
+    assert myFixture.lookupElementStrings == ['@code', '@docRoot', '@index', '@inheritDoc', '@link', '@linkplain', '@literal', '@snippet', '@summary', '@systemProperty', '@value']
     def element = myFixture.lookupElements[4]
     assert element.lookupString == "@link"
     selectItem(element)

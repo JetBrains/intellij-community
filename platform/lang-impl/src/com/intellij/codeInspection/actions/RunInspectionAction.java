@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.CommonBundle;
@@ -39,6 +39,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -164,7 +165,7 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
         final boolean hasOptionsPanel = toolWrapper.getTool().createOptionsPanel() != null;
         var constraints = new GridBagConstraints(0, 0, 1, 1, 1, hasOptionsPanel ? 0 : 1,
                                                  GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                                                 JBUI.emptyInsets(),
+                                                 JBInsets.emptyInsets(),
                                                  0, 0);
 
         panel.add(fileFilterPanel.getPanel(), constraints);

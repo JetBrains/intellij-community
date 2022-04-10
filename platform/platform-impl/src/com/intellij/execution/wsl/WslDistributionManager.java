@@ -5,6 +5,7 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -124,13 +125,9 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   private @NotNull List<WSLDistribution> loadInstalledDistributions() {
-    final int releaseId = WSLUtil.getWindowsReleaseId();
-    if (releaseId > 0 && releaseId < 2004) {
-      final WSLUtil.WSLToolFlags wslTool = WSLUtil.getWSLToolFlags();
-      if (wslTool == null || (!wslTool.isVerboseFlagAvailable && !wslTool.isQuietFlagAvailable)) {
-        //noinspection deprecation
-        return WSLUtil.getAvailableDistributions();
-      }
+    if (!isWslExeSupported()) {
+      //noinspection deprecation
+      return WSLUtil.getAvailableDistributions();
     }
 
     // we assume that after "2004" Windows release wsl.exe and all required flags are available
@@ -154,6 +151,15 @@ public abstract class WslDistributionManager implements Disposable {
     return ContainerUtil.map(loadInstalledDistributionMsIds(), (msId) -> {
       return getOrCreateDistributionByMsId(msId, true);
     });
+  }
+
+  protected boolean isWslExeSupported() {
+    Long windowsBuild = SystemInfo.getWinBuildNumber();
+    if (windowsBuild != null && windowsBuild > 0 && windowsBuild < 19041) {
+      WSLUtil.WSLToolFlags wslTool = WSLUtil.getWSLToolFlags();
+      return wslTool != null && (wslTool.isVerboseFlagAvailable || wslTool.isQuietFlagAvailable);
+    }
+    return true;
   }
 
   protected abstract @NotNull List<String> loadInstalledDistributionMsIds();

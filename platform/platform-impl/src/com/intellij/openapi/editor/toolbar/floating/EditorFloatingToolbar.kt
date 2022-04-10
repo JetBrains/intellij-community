@@ -30,12 +30,15 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
       add(component)
     }
 
+    val executor = ExecutorWithThrottling(SCHEDULE_SHOW_DELAY)
     editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
       override fun mouseMoved(e: EditorMouseEvent) {
-        if (isInsideActivationArea(container, e.mouseEvent.point)) {
-          for (component in toolbarComponents) {
-            if (component.autoHideable) {
-              component.scheduleShow()
+        executor.executeOrSkip {
+          if (isInsideActivationArea(container, e.mouseEvent.point)) {
+            for (component in toolbarComponents) {
+              if (component.autoHideable) {
+                component.scheduleShow()
+              }
             }
           }
         }
@@ -44,6 +47,9 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
   }
 
   companion object {
+    // Should be less than [VisibilityController.RETENTION_DELAY]
+    private const val SCHEDULE_SHOW_DELAY = 1000
+
     private fun isInsideActivationArea(container: JScrollPane, p: Point): Boolean {
       val viewport = container.viewport
       val r = viewport.bounds

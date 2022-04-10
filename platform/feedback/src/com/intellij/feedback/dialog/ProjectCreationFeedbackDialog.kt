@@ -17,7 +17,7 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.JBGaps
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -224,7 +224,7 @@ class ProjectCreationFeedbackDialog(
       row {
         checkBox("").bindSelected(checkBoxOtherProperty).applyToComponent {
           checkBoxOther = this
-        }.customize(Gaps(right = JBUI.scale(4)))
+        }.customize(JBGaps(right = 4))
 
         textField()
           .bindText(textFieldOtherProblemProperty)

@@ -343,7 +343,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
     catch (Exception e) {
       LOG.warn(e);
-      new Notification("Merge", DiffBundle.message("can.t.finish.merge.resolve"), e.getMessage(), NotificationType.ERROR).notify(myProject);
+      new Notification("Merge Internal Error", DiffBundle.message("can.t.finish.merge.resolve"), e.getMessage(), NotificationType.ERROR).notify(myProject);
     }
   }
 

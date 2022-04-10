@@ -2,7 +2,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.XmlElement;
+import com.intellij.util.xml.dom.XmlElement;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 

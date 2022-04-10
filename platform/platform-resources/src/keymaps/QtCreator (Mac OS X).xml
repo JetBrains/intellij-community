@@ -32,7 +32,7 @@
   <action id="$Redo">
     <keyboard-shortcut first-keystroke="meta shift Z"/>
   </action>
-  <action id="FileChooser.TogglePathShowing"/>
+  <action id="FileChooser.TogglePathBar"/>
   <action id="ParameterInfo"/>
   <action id="Print">
     <keyboard-shortcut first-keystroke="meta P"/>

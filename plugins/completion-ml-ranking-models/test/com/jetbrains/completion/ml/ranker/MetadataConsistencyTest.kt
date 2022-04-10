@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.completion.ml.ranker
 
 import org.junit.Test
@@ -14,7 +14,7 @@ class MetadataConsistencyTest {
   fun testJavaMetadata() = ExperimentJavaMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
-  fun testJavaNoPositionMetadata() = ExperimentJavaNoPositionMLRankingProvider().assertModelMetadataConsistent()
+  fun testJavaWithRecommendersMetadata() = ExperimentJavaRecommendersMLRankingProvider().assertModelMetadataConsistent()
 
   @Test
   fun testRustMetadata() = ExperimentRustMLRankingProvider().assertModelMetadataConsistent()

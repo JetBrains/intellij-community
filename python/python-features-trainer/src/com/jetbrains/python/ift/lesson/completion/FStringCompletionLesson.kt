@@ -60,7 +60,7 @@ class FStringCompletionLesson
         } == null
         if (prefixTyped) PythonLessonsBundle.message("python.f.string.completion.invoke.manually", action("CodeCompletion")) else null
       }
-      triggerByListItemAndHighlight(highlightBorder = false) { item ->
+      triggerUI().listItem { item ->
         item.isToStringContains(completionItem)
       }
       proposeRestore {

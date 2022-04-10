@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -38,6 +38,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+// generates HighlightInfoType.ERROR-like HighlightInfos for modularity-related (Jigsaw) problems
 final class ModuleHighlightUtil {
   static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file, @Nullable PsiJavaModule module) {
     if (PsiUtil.isModuleFile(file)) {
@@ -371,7 +372,11 @@ final class ModuleHighlightUtil {
         }
         else {
           String message = JavaErrorBundle.message("module.service.impl");
-          results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
+          HighlightInfo info =
+            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create();
+           PsiClassType type = JavaPsiFacade.getElementFactory(file.getProject()).createType(((PsiClass)intTarget));
+           QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createExtendsListFix(implClass, type, true));
+          results.add(info);
         }
       }
     }

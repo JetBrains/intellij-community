@@ -47,7 +47,7 @@ import java.awt.Rectangle
 import javax.swing.JButton
 
 class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLessonsBundle.message("git.changelists.shelf.lesson.name")) {
-  override val existedFile = "git/martian_cat.yml"
+  override val sampleFilePath = "git/martian_cat.yml"
   override val branchName = "main"
   private val commentingLineText = "fur_type: long haired"
   private val commentText = "# debug: check another types (short haired, hairless)"
@@ -78,7 +78,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     lateinit var highlightLineMarkerTaskId: TaskContext.TaskId
     task {
       highlightLineMarkerTaskId = taskId
-      triggerByPartOfComponent(highlightInside = true, usePulsation = true) l@{ ui: EditorGutterComponentEx ->
+      triggerAndFullHighlight { usePulsation = true }.componentPart l@{ ui: EditorGutterComponentEx ->
         if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
         ui.getLineMarkerRect(commentText)
       }
@@ -88,7 +88,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       text(GitLessonsBundle.message("git.changelists.shelf.introduction"))
       text(GitLessonsBundle.message("git.changelists.shelf.click.line.marker.balloon"),
            LearningBalloonConfig(Balloon.Position.below, 0))
-      triggerByUiComponentAndHighlight(highlightInside = false) { ui: DropDownLink<*> ->
+      triggerAndBorderHighlight().component { ui: DropDownLink<*> ->
         ui.text?.contains(defaultChangelistName) == true
       }
       test {
@@ -106,7 +106,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       val newChangelistText = VcsBundle.message("ex.new.changelist")
       text(GitLessonsBundle.message("git.changelists.shelf.choose.new.changelist",
                                     strong(defaultChangelistName), strong(newChangelistText)))
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: EditorComponentImpl ->
+      triggerUI().component { ui: EditorComponentImpl ->
         ui.text.contains(defaultChangelistName)
       }
       restoreByUi(highlightLineMarkerTaskId)
@@ -154,7 +154,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     }
 
     task {
-      triggerByUiComponentAndHighlight(false, false) { ui: ChangesListView ->
+      triggerUI().component { ui: ChangesListView ->
         ui.expandAll()
         true
       }
@@ -170,7 +170,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     lateinit var letsShelveTaskId: TaskContext.TaskId
     task {
       letsShelveTaskId = taskId
-      triggerByFoundPathAndHighlight(highlightInside = true) { _, path ->
+      triggerAndFullHighlight().treeItem { _, path ->
         path.getPathComponent(path.pathCount - 1).toString().contains(newChangeListName)
       }
     }
@@ -179,7 +179,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       text(GitLessonsBundle.message("git.changelists.shelf.open.context.menu"))
       text(GitLessonsBundle.message("git.changelists.shelf.click.changelist.tooltip", strong(newChangeListName)),
            LearningBalloonConfig(Balloon.Position.above, 250))
-      triggerByUiComponentAndHighlight(highlightInside = false) { ui: ActionMenuItem ->
+      triggerAndBorderHighlight().component { ui: ActionMenuItem ->
         ui.anAction is ShelveChangesAction
       }
       showWarningIfCommitWindowClosed(restoreTaskWhenResolved = true)
@@ -205,7 +205,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
 
     val shelveChangesButtonText = VcsBundle.message("shelve.changes.action").dropMnemonic()
     task {
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: JButton ->
+      triggerAndFullHighlight { usePulsation = true }.component { ui: JButton ->
         ui.text?.contains(shelveChangesButtonText) == true
       }
     }
@@ -228,7 +228,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
 
     val removeButtonText = VcsBundle.message("button.remove")
     task {
-      triggerByUiComponentAndHighlight { ui: JButton ->
+      triggerAndFullHighlight().component { ui: JButton ->
         ui.text?.contains(removeButtonText) == true
       }
     }
@@ -243,7 +243,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
 
     task {
       text(GitLessonsBundle.message("git.changelists.shelf.performed.explanation", strong(shelfText)))
-      triggerByFoundPathAndHighlight(highlightInside = true, usePulsation = true) { _, path ->
+      triggerAndBorderHighlight { usePulsation = true }.treeItem { _, path ->
         path.pathCount == 2
       }
       proceedLink()
@@ -252,7 +252,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     val unshelveChangesButtonText = VcsBundle.message("unshelve.changes.action")
     task("ShelveChanges.UnshelveWithDialog") {
       text(GitLessonsBundle.message("git.changelists.shelf.open.unshelve.dialog", strong(shelfText), action(it)))
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: JButton ->
+      triggerAndFullHighlight { usePulsation = true }.component { ui: JButton ->
         ui.text?.contains(unshelveChangesButtonText) == true
       }
       showWarningIfCommitWindowClosed()

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.jna.JnaLoader;
@@ -379,7 +379,8 @@ public final class FileSystemUtil {
           try {
             attributes = Files.readAttributes(path, schema);
           }
-          catch (NoSuchFileException e) {
+          catch (FileSystemException e) {
+            LOG.debug(pathStr, e);
             return FileAttributes.BROKEN_SYMLINK;
           }
         }
@@ -418,7 +419,8 @@ public final class FileSystemUtil {
       try {
         return Paths.get(path).toRealPath().toString();
       }
-      catch (NoSuchFileException e) {
+      catch (FileSystemException e) {
+        LOG.debug(path, e);
         return null;
       }
     }
@@ -668,12 +670,16 @@ public final class FileSystemUtil {
         PointerByReference resultPtr = new PointerByReference(), errorPtr = new PointerByReference();
         Pointer result;
         if (!cf.CFURLCopyResourcePropertyForKey(url, CoreFoundation.kCFURLVolumeSupportsCaseSensitiveNamesKey, resultPtr, errorPtr)) {
-          Pointer error = errorPtr.getValue();
-          String description = error != null ? cf.CFErrorGetDomain(error).stringValue() + '/' + cf.CFErrorGetCode(error) : "error";
-          LOG.warn("CFURLCopyResourcePropertyForKey(" + path + "): " + description);
+          if (LOG.isDebugEnabled()) {
+            Pointer error = errorPtr.getValue();
+            String description = error != null ? cf.CFErrorGetDomain(error).stringValue() + '/' + cf.CFErrorGetCode(error) : "error";
+            LOG.debug("CFURLCopyResourcePropertyForKey(" + path + "): " + description);
+          }
         }
         else if ((result = resultPtr.getValue()) == null) {
-          LOG.info("CFURLCopyResourcePropertyForKey(" + path + "): property not available");
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("CFURLCopyResourcePropertyForKey(" + path + "): property not available");
+          }
         }
         else {
           boolean value = new CoreFoundation.CFBooleanRef(result).booleanValue();

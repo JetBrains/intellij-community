@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.impl.ProjectUtilCore;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.idea.SplashManager;
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
@@ -43,10 +44,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 
 public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
   public static final ExtensionPointName<WelcomeFrameProvider> EP = new ExtensionPointName<>("com.intellij.welcomeFrameProvider");
-         static final String DIMENSION_KEY = "WELCOME_SCREEN";
+  static final String DIMENSION_KEY = "WELCOME_SCREEN";
 
   private static IdeFrame ourInstance;
   private static Disposable ourTouchbar;
@@ -156,7 +159,7 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     }
 
     // ActionManager is used on Welcome Frame, but should be initialized in a pooled thread and not in EDT.
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    ForkJoinPool.commonPool().execute(() -> {
       ActionManager.getInstance();
       if (SystemInfoRt.isMac) {
         TouchbarSupport.initialize();
@@ -168,7 +171,7 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
         return;
       }
 
-      IdeFrame frame = EP.computeSafeIfAny(provider -> provider.createFrame());
+      IdeFrame frame = EP.computeSafeIfAny(WelcomeFrameProvider::createFrame);
       if (frame == null) {
         throw new IllegalStateException("No implementation of `com.intellij.welcomeFrameProvider` extension point");
       }
@@ -206,16 +209,18 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
       return;
     }
 
+    Runnable show = prepareToShow();
+    if (show == null) {
+      return;
+    }
+
     ApplicationManager.getApplication().invokeLater(() -> {
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
       windowManager.disposeRootFrame();
       if (windowManager.getProjectFrameHelpers().isEmpty()) {
-        Runnable show = prepareToShow();
-        if (show != null) {
-          show.run();
-          if (lifecyclePublisher != null) {
-            lifecyclePublisher.welcomeScreenDisplayed();
-          }
+        show.run();
+        if (lifecyclePublisher != null) {
+          lifecyclePublisher.welcomeScreenDisplayed();
         }
       }
     }, ModalityState.NON_MODAL);

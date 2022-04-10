@@ -70,6 +70,8 @@ if sys.platform != "win32":
         SCHED_SPORADIC as SCHED_SPORADIC,
         SEEK_DATA as SEEK_DATA,
         SEEK_HOLE as SEEK_HOLE,
+        ST_NOSUID as ST_NOSUID,
+        ST_RDONLY as ST_RDONLY,
         TMP_MAX as TMP_MAX,
         W_OK as W_OK,
         WCONTINUED as WCONTINUED,
@@ -264,10 +266,23 @@ if sys.platform != "win32":
             waitid_result as waitid_result,
         )
 
+        if sys.version_info >= (3, 10):
+            from os import RWF_APPEND as RWF_APPEND
+
     if sys.version_info >= (3, 9):
-        from os import waitstatus_to_exitcode as waitstatus_to_exitcode
+        from os import CLD_KILLED as CLD_KILLED, CLD_STOPPED as CLD_STOPPED, waitstatus_to_exitcode as waitstatus_to_exitcode
+
+        if sys.platform == "linux":
+            from os import P_PIDFD as P_PIDFD, pidfd_open as pidfd_open
+
     if sys.version_info >= (3, 8):
-        from os import posix_spawn as posix_spawn, posix_spawnp as posix_spawnp
+        from os import (
+            POSIX_SPAWN_CLOSE as POSIX_SPAWN_CLOSE,
+            POSIX_SPAWN_DUP2 as POSIX_SPAWN_DUP2,
+            POSIX_SPAWN_OPEN as POSIX_SPAWN_OPEN,
+            posix_spawn as posix_spawn,
+            posix_spawnp as posix_spawnp,
+        )
 
         if sys.platform == "linux":
             from os import (
@@ -288,10 +303,21 @@ if sys.platform != "win32":
                 MFD_HUGE_MASK as MFD_HUGE_MASK,
                 MFD_HUGE_SHIFT as MFD_HUGE_SHIFT,
                 MFD_HUGETLB as MFD_HUGETLB,
+                copy_file_range as copy_file_range,
                 memfd_create as memfd_create,
             )
     if sys.version_info >= (3, 7):
         from os import register_at_fork as register_at_fork
+
+        if sys.platform != "darwin":
+            from os import (
+                RWF_DSYNC as RWF_DSYNC,
+                RWF_HIPRI as RWF_HIPRI,
+                RWF_NOWAIT as RWF_NOWAIT,
+                RWF_SYNC as RWF_SYNC,
+                preadv as preadv,
+                pwritev as pwritev,
+            )
 
     # Not same as os.environ or os.environb
     # Because of this variable, we can't do "from posix import *" in os/__init__.pyi

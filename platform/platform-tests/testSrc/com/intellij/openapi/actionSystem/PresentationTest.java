@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.ui.UISettings;
@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettingsState;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.testFramework.LightPlatformTestCase;
 
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
@@ -128,7 +129,7 @@ public class PresentationTest extends LightPlatformTestCase {
       Presentation p = new Presentation();
       p.setText(testCase.inputTextsUnderscore);
       assertEquals(testCase.menuText, p.getText());
-      assertEquals(0, p.getMnemonic());
+      assertEquals(KeyEvent.VK_UNDEFINED, p.getMnemonic());
       assertEquals(-1, p.getDisplayedMnemonicIndex());
     }
   }

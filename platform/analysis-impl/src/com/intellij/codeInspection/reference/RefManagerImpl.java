@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
@@ -155,7 +155,16 @@ public class RefManagerImpl extends RefManager {
     return myScope;
   }
 
-  private void fireNodeInitialized(RefElement refElement) {
+  void fireNodeInitialized(RefElement refElement) {
+    if (!myIsInProcess || !isDeclarationsFound()) {
+      return;
+    }
+    final PsiElement psi = refElement.getPsiElement();
+    if (psi != null) {
+      for (RefManagerExtension<?> each : myExtensions.values()) {
+        each.onEntityInitialized(refElement, psi);
+      }
+    }
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
       annotator.onInitialize(refElement);
     }
@@ -329,10 +338,10 @@ public class RefManagerImpl extends RefManager {
     if (range == null) return element;
 
     int firstRangeLine = document.getLineNumber(range.getStartOffset());
-    int lineStartOffset = Math.min(range.getEndOffset(), document.getLineStartOffset(firstRangeLine));
-    int lineEndOffset = Math.min(range.getEndOffset(), document.getLineEndOffset(firstRangeLine));
+    int lineStartOffset = document.getLineStartOffset(firstRangeLine);
+    int endOffset = Math.min(range.getEndOffset(), document.getLineEndOffset(firstRangeLine));
 
-    TextRange exportedRange = new TextRange(range.getStartOffset(), lineEndOffset);
+    TextRange exportedRange = new TextRange(range.getStartOffset(), endOffset);
     String text = ProblemDescriptorUtil.extractHighlightedText(exportedRange, psiFile);
 
     element.addContent(new Element("offset").addContent(String.valueOf(exportedRange.getStartOffset() - lineStartOffset)));
@@ -370,19 +379,38 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void findAllDeclarations() {
+    final AnalysisScope scope = getScope();
+    if (scope == null) {
+      return;
+    }
     if (!myDeclarationsFound.getAndSet(true)) {
       long before = System.currentTimeMillis();
-      startTaskRunners();
-      final AnalysisScope scope = getScope();
-      if (scope != null) {
-        scope.accept(myProjectIterator);
+      startTaskWorkers();
+      try {
+        if (!Registry.is("batch.inspections.visit.psi.in.parallel")) {
+          scope.accept(myProjectIterator);
+        }
+        else {
+          final PsiManager psiManager = PsiManager.getInstance(myProject);
+          scope.accept(vFile -> {
+            executeTask(() -> {
+              final PsiFile file = psiManager.findFile(vFile);
+              if (file != null && ProblemHighlightFilter.shouldProcessFileInBatch(file)) {
+                file.accept(myProjectIterator);
+              }
+            });
+            return true;
+          });
+        }
       }
-      waitForTasksToComplete();
-      LOG.info("Total duration of processing project usages: " + (System.currentTimeMillis() - before) + "ms");
+      finally {
+        waitForWorkersToFinish();
+        LOG.info("Total duration of processing project usages: " + (System.currentTimeMillis() - before) + "ms");
+      }
     }
   }
 
-  private void waitForTasksToComplete() {
+  private void waitForWorkersToFinish() {
     final List<Future<?>> futures = myFutures;
     if (futures == null) return;
     myFutures = null;
@@ -390,10 +418,18 @@ public class RefManagerImpl extends RefManager {
       for (Future<?> future : futures) {
         future.get();
       }
+      myTasks = null;
     }
     catch (ExecutionException | InterruptedException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public void buildReferences(RefElement element) {
+    executeTask(() -> {
+      element.waitForInitialized();
+      element.buildReferences();
+    });
   }
 
   @Override
@@ -409,7 +445,7 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
-  private void startTaskRunners() {
+  private void startTaskWorkers() {
     if (!Registry.is("batch.inspections.process.project.usages.in.parallel")) {
       return;
     }
@@ -424,21 +460,20 @@ public class RefManagerImpl extends RefManager {
     myFutures = new ArrayList<>();
     final Application application = ApplicationManager.getApplication();
     final ProgressManager progressManager = ProgressManager.getInstance();
-    final ProgressIndicator indicator = progressManager.getProgressIndicator();
+    final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
     for (int i = 0; i < (threadsCount > 0 ? threadsCount : 4) ; i++) {
       final Future<?> future = application.executeOnPooledThread(() -> {
-        while (myTasks != null) {
-          if (myFutures == null && myTasks.isEmpty()) return;
+        while (myFutures != null || !myTasks.isEmpty()) {
           try {
             final Runnable task = myTasks.poll(50, TimeUnit.MILLISECONDS);
+            ProgressManager.checkCanceled();
             if (task != null) {
               DumbService.getInstance(myProject).runReadActionInSmartMode(
-                () -> progressManager.executeProcessUnderProgress(task, indicator)
+                () -> progressManager.executeProcessUnderProgress(task, progressIndicator)
               );
             }
           }
-          catch (InterruptedException ignore) {
-          }
+          catch (InterruptedException ignore) {}
         }
       });
       myFutures.add(future);
@@ -455,8 +490,6 @@ public class RefManagerImpl extends RefManager {
       runnable.run();
     }
     finally {
-      myTasks = null; // remove any pending tasks
-      waitForTasksToComplete();
       myIsInProcess = false;
       if (myScope != null) {
         myScope.invalidate();
@@ -681,14 +714,7 @@ public class RefManagerImpl extends RefManager {
         }
         return null;
       }),
-      element -> {
-        element.initialize();
-        element.setInitialized(true);
-        for (RefManagerExtension<?> each : myExtensions.values()) {
-          each.onEntityInitialized(element, elem);
-        }
-        fireNodeInitialized(element);
-      });
+      element -> ReadAction.run(() -> element.waitForInitialized()));
   }
 
   private RefManagerExtension<?> getExtension(final Language language) {
@@ -748,7 +774,7 @@ public class RefManagerImpl extends RefManager {
       return (T)prev;
     }
     if (whenCached != null) {
-      ReadAction.nonBlocking(() -> whenCached.consume(newElement)).executeSynchronously();
+      whenCached.consume(newElement);
     }
 
     return newElement;

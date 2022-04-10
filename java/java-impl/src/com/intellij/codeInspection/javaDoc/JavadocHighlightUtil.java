@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.javaDoc;
 
+import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -10,6 +11,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
@@ -17,6 +19,7 @@ import com.intellij.psi.javadoc.*;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -212,26 +215,49 @@ public final class JavadocHighlightUtil {
         if (docManager.getTagInfo(tagName) == null) {
           checkTagInfo(tag, tagName, null, holder);
         }
-        if (!holder.inspection().IGNORE_POINT_TO_ITSELF) {
-          PsiDocTagValue value = tag.getValueElement();
-          if (value != null) {
-            PsiReference reference = value.getReference();
-            if (reference != null) {
-              PsiElement target = reference.resolve();
-              if (target != null) {
-                if (PsiTreeUtil.getParentOfType(tag, PsiDocCommentOwner.class) ==
-                    PsiTreeUtil.getParentOfType(target, PsiDocCommentOwner.class, false)) {
-                  PsiElement nameElement = tag.getNameElement();
-                  if (nameElement != null) {
-                    holder.problem(nameElement, JavaBundle.message("inspection.javadoc.problem.pointing.to.itself"), null);
-                  }
-                }
-              }
-            }
-          }
+        checkPointToSelf(holder, tag);
+        checkSnippetTag(holder, element, tag);
+      }
+    }
+  }
+
+  private static void checkSnippetTag(@NotNull ProblemHolder holder, PsiElement element, PsiInlineDocTag tag) {
+    if (element instanceof PsiSnippetDocTag) {
+      if (!PsiUtil.getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_18)) {
+        PsiElement nameElement = tag.getNameElement();
+        if (nameElement != null) {
+          String message = JavaBundle.message("inspection.javadoc.problem.snippet.tag.is.not.available");
+          holder.problem(nameElement, message, new IncreaseLanguageLevelFix(LanguageLevel.JDK_18));
         }
       }
     }
+  }
+
+  private static void checkPointToSelf(@NotNull ProblemHolder holder, PsiInlineDocTag tag) {
+    if (holder.inspection().IGNORE_POINT_TO_ITSELF) {
+      return;
+    }
+    PsiDocTagValue value = tag.getValueElement();
+    if (value == null) {
+      return;
+    }
+    PsiReference reference = value.getReference();
+    if (reference == null) {
+      return;
+    }
+    PsiElement target = reference.resolve();
+    if (target == null) {
+      return;
+    }
+    if (PsiTreeUtil.getParentOfType(tag, PsiDocCommentOwner.class) !=
+        PsiTreeUtil.getParentOfType(target, PsiDocCommentOwner.class, false)) {
+      return;
+    }
+    PsiElement nameElement = tag.getNameElement();
+    if (nameElement == null) {
+      return;
+    }
+    holder.problem(nameElement, JavaBundle.message("inspection.javadoc.problem.pointing.to.itself"), null);
   }
 
   private static boolean checkTagInfo(PsiDocTag tag, String tagName, JavadocTagInfo tagInfo, ProblemHolder holder) {

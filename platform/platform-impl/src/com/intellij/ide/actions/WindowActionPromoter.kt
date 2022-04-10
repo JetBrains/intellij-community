@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.ActionPromoter
@@ -7,14 +7,14 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExpandableActions
-import com.intellij.util.ui.UIUtil
 import java.util.*
 import javax.swing.JFrame
 
 class WindowActionPromoter: ActionPromoter {
-  override fun promote(actions: MutableList<out AnAction>, context: DataContext): MutableList<AnAction> {
-    val window = UIUtil.getWindow(context.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
+  override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
+    val window = ComponentUtil.getWindow(context.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
     if (window != null && window !is JFrame
         && !JBPopupFactory.getInstance().isPopupActive
         && actions.any { it is WindowAction }) {

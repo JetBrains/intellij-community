@@ -227,7 +227,7 @@ public final class UpdateHighlightersUtil {
       }
       return true;
     };
-    DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(document, project, null, priorityRange.getStartOffset(), priorityRange.getEndOffset(), processor);
+    DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(document, project, priorityRange.getStartOffset(), priorityRange.getEndOffset(), processor);
 
     Long2ObjectMap<RangeMarker> ranges2markersCache = new Long2ObjectOpenHashMap<>(10);
     boolean[] changed = {false};
@@ -252,12 +252,7 @@ public final class UpdateHighlightersUtil {
       return true;
     });
 
-    if (!HighlightingLevelManager.getInstance(project).runEssentialHighlightingOnly(psiFile)) {
-      for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
-        highlighter.dispose();
-        changed[0] = true;
-      }
-    }
+    changed[0] |= incinerateObsoleteHighlighters(psiFile, infosToRemove);
 
     if (changed[0]) {
       clearWhiteSpaceOptimizationFlag(document);
@@ -317,13 +312,7 @@ public final class UpdateHighlightersUtil {
       return true;
     });
 
-    // do not remove obsolete highlighters if we are in "essential highlighting only" mode, because otherwise all inspection-produced results would be gone
-    if (!HighlightingLevelManager.getInstance(project).runEssentialHighlightingOnly(psiFile) || shouldRemoveInfosEvenInEssentialMode(group)) {
-      for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
-        highlighter.dispose();
-        changed[0] = true;
-      }
-    }
+    changed[0] |= incinerateObsoleteHighlighters(psiFile, infosToRemove);
 
     if (changed[0]) {
       clearWhiteSpaceOptimizationFlag(document);
@@ -331,8 +320,40 @@ public final class UpdateHighlightersUtil {
     assertMarkupConsistent(markup, project);
   }
 
-  private static boolean shouldRemoveInfosEvenInEssentialMode(int group) {
-    return group != Pass.LOCAL_INSPECTIONS && group != Pass.EXTERNAL_TOOLS && group != Pass.WHOLE_FILE_LOCAL_INSPECTIONS;
+  private static boolean incinerateObsoleteHighlighters(@NotNull PsiFile psiFile, @NotNull HighlightersRecycler infosToRemove) {
+    boolean changed = false;
+    // do not remove obsolete highlighters if we are in "essential highlighting only" mode, because otherwise all inspection-produced results would be gone
+    for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
+      if (shouldRemoveHighlighter(psiFile, highlighter)) {
+        highlighter.dispose();
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
+  static boolean shouldRemoveHighlighter(@NotNull PsiFile psiFile, @NotNull RangeHighlighter highlighter) {
+    return !HighlightingLevelManager.getInstance(psiFile.getProject()).runEssentialHighlightingOnly(psiFile)
+           || shouldRemoveInfoEvenInEssentialMode(highlighter);
+  }
+
+  private static boolean shouldRemoveInfoEvenInEssentialMode(@NotNull RangeHighlighter highlighter) {
+    Object tooltip = highlighter.getErrorStripeTooltip();
+    if (!(tooltip instanceof HighlightInfo)) return true;
+    HighlightInfo info = (HighlightInfo)tooltip;
+    int group = info.getGroup();
+    if (group != Pass.LOCAL_INSPECTIONS
+        && group != Pass.EXTERNAL_TOOLS
+        && group != Pass.WHOLE_FILE_LOCAL_INSPECTIONS
+        && group != Pass.UPDATE_ALL
+        && group != GeneralHighlightingPass.POST_UPDATE_ALL
+    ) {
+      return true;
+    }
+
+    // update highlight if it's symbol type (field/statics/etc), otherwise don't touch it (could have been e.g. unused symbol highlight)
+    return group == Pass.UPDATE_ALL && (
+      info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY || info.getSeverity() == HighlightSeverity.ERROR);
   }
 
   private static boolean isWarningCoveredByError(@NotNull HighlightInfo info,

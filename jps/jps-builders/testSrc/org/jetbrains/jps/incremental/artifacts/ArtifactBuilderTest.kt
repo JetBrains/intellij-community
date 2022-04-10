@@ -330,7 +330,8 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   fun `test jars build reproducibility`() {
     myBuildParams[GlobalOptions.BUILD_DATE_IN_SECONDS] = (System.currentTimeMillis() / 1000).toString()
     val jar = root().archive("a.jar")
-      .extractedDir(createXJarFile(), "/dir")
+      .extractedDir(createXJarFile(), "/")
+      .dir("META-INF").fileCopy(createFile("src/MANIFEST.MF"))
       .let { addArtifact("a", it).outputPath }
       ?.let { Paths.get(it).resolve("a.jar") }
     requireNotNull(jar)

@@ -31,6 +31,10 @@ import java.util.Set;
 import static com.intellij.grazie.text.TextContentTest.unknownOffsets;
 
 public class TextExtractionTest extends BasePlatformTestCase {
+  public void testFindPsiAtLastOffset() {
+    assertInstanceOf(extractText("a.txt", "foo", 1).findPsiElementAt(3), PsiPlainText.class);
+  }
+
   public void testMarkdownInlineLink() {
     TextContent extracted = extractText("a.md", "* list [item](http://x) with a local link", 3);
     assertEquals("list item with a local link", unknownOffsets(extracted));
@@ -50,8 +54,12 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   public void testMarkdownIndent() {
-    TextContent extracted = extractText("a.md", "* first line\n  second line", 3);
+    TextContent extracted = extractText("a.md", "* first line \n  second line", 3);
     assertEquals("first line\nsecond line", unknownOffsets(extracted));
+  }
+
+  public void testMarkdownStyles() {
+    assertEquals("bold italic strikethrough", unknownOffsets(extractText("a.md", "**bold** *italic* ~~strikethrough~~", 3)));
   }
 
   public void testMarkdownInlineCode() {

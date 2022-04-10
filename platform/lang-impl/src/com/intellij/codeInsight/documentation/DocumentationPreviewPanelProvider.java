@@ -4,13 +4,11 @@ package com.intellij.codeInsight.documentation;
 import com.intellij.openapi.preview.PreviewProviderId;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @deprecated this class isn't used by the platform anymore
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public final class DocumentationPreviewPanelProvider {
   public static final PreviewProviderId<Couple<PsiElement>, DocumentationComponent> ID = null;
 

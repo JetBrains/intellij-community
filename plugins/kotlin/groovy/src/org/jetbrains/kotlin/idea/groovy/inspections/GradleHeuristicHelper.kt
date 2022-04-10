@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.groovy.inspections
 
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
@@ -18,7 +19,7 @@ import java.util.*
 object GradleHeuristicHelper {
 
 
-    fun getHeuristicVersionInBuildScriptDependency(classpathStatement: GrCallExpression): String? {
+    fun getHeuristicVersionInBuildScriptDependency(classpathStatement: GrCallExpression): IdeKotlinVersion? {
         val argumentList = when (classpathStatement) {
             is GrMethodCall -> classpathStatement.argumentList // classpath('argument')
             else -> classpathStatement.getChildrenOfType<GrCommandArgumentList>().singleOrNull() // classpath 'argument'
@@ -38,10 +39,10 @@ object GradleHeuristicHelper {
         val versionText = literalValue.toString().substringAfterLast(':')
         if (versionText.isEmpty()) return null
 
-        return versionText
+        return IdeKotlinVersion.opt(versionText)
     }
 
-    private fun resolveVariableInBuildScript(classpathStatement: GrCallExpression, name: String): String? {
+    private fun resolveVariableInBuildScript(classpathStatement: GrCallExpression, name: String): IdeKotlinVersion? {
         val dependenciesClosure = classpathStatement.getStrictParentOfType<GrClosableBlock>() ?: return null
         val buildScriptClosure = dependenciesClosure.getStrictParentOfType<GrClosableBlock>() ?: return null
 
@@ -51,7 +52,7 @@ object GradleHeuristicHelper {
                     if (child.lValue.text == "ext.$name") { // ext.variable = '1.0.0'
                         val assignValue = child.rValue
                         if (assignValue is GrLiteral) {
-                            return assignValue.value.toString()
+                            return IdeKotlinVersion.opt(assignValue.value.toString())
                         }
                     }
                 }
@@ -60,7 +61,7 @@ object GradleHeuristicHelper {
                         if (variable.name == name) {
                             val assignValue = variable.initializerGroovy
                             if (assignValue is GrLiteral) {
-                                return assignValue.value.toString()
+                                return IdeKotlinVersion.opt(assignValue.value.toString())
                             }
                         }
                     }

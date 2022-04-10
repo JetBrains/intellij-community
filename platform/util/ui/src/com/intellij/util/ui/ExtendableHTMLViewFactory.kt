@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.nullize
+import com.intellij.util.ui.html.HiDpiScalingImageView
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -18,6 +19,7 @@ import javax.swing.text.Position.Bias
 import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.HTMLEditorKit.HTMLFactory
+import javax.swing.text.html.ImageView
 import javax.swing.text.html.ParagraphView
 import kotlin.math.max
 
@@ -44,12 +46,12 @@ internal constructor(private val extensions: List<(Element, View) -> View?>,
 
   companion object {
     @JvmField
-    val DEFAULT_EXTENSIONS = listOf(Extensions.ICONS, Extensions.BASE64_IMAGES)
+    val DEFAULT_EXTENSIONS = listOf(Extensions.ICONS, Extensions.BASE64_IMAGES, Extensions.HIDPI_IMAGES)
 
     @JvmField
     val DEFAULT = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS)
 
-    private val DEFAULT_EXTENSIONS_WORD_WRAP = listOf(Extensions.ICONS, Extensions.BASE64_IMAGES, Extensions.WORD_WRAP)
+    private val DEFAULT_EXTENSIONS_WORD_WRAP = DEFAULT_EXTENSIONS + Extensions.WORD_WRAP
 
     @JvmField
     val DEFAULT_WORD_WRAP = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS_WORD_WRAP)
@@ -100,6 +102,12 @@ internal constructor(private val extensions: List<(Element, View) -> View?>,
      */
     @JvmField
     val WORD_WRAP: Extension = WordWrapExtension()
+
+    /**
+     * Renders images with proper scaling according to sysScale
+     */
+    @JvmField
+    val HIDPI_IMAGES: Extension = HiDpiImagesExtension()
 
     private class IconsExtension(private val existingIconsProvider: (key: String) -> Icon?) : Extension {
 
@@ -322,6 +330,14 @@ internal constructor(private val extensions: List<(Element, View) -> View?>,
               alignment = 0.5f
             }
         }
+      }
+    }
+
+    private class HiDpiImagesExtension : Extension {
+
+      override fun invoke(elem: Element, defaultView: View): View? {
+        if (defaultView !is ImageView) return null
+        return HiDpiScalingImageView(elem)
       }
     }
   }

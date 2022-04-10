@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
@@ -26,6 +27,7 @@ import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -43,6 +45,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull private final MiniDetailsGetter myMiniDetailsGetter;
   @NotNull private final CommitDetailsGetter myDetailsGetter;
+  @NotNull private final CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
 
   /**
    * Current user name, as specified in the VCS settings.
@@ -124,19 +127,20 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
         }
       }
     });
+    Disposer.register(this, myDisposableFlag);
   }
 
   @NotNull
   private VcsLogStorage createStorage() {
-    VcsLogStorage hashMap;
+    VcsLogStorage vcsLogStorage;
     try {
-      hashMap = new VcsLogStorageImpl(myProject, myLogProviders, myFatalErrorsConsumer, this);
+      vcsLogStorage = new VcsLogStorageImpl(myProject, myLogProviders, myFatalErrorsConsumer, this);
     }
     catch (IOException e) {
-      hashMap = new InMemoryStorage();
+      vcsLogStorage = new InMemoryStorage();
       LOG.error("Falling back to in-memory hashes", e);
     }
-    return hashMap;
+    return vcsLogStorage;
   }
 
   public void initialize() {
@@ -227,7 +231,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
       for (DataPackChangeListener listener : myDataPackChangeListeners) {
         listener.onDataPackChange(dataPack);
       }
-    }, o -> Disposer.isDisposed(this));
+    }, o -> myDisposableFlag.isDisposed());
   }
 
   public void addDataPackChangeListener(@NotNull final DataPackChangeListener listener) {
@@ -361,9 +365,11 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @NotNull
   public VcsLogIndex getIndex() {
+    //noinspection TestOnlyProblems
     return getModifiableIndex();
   }
 
+  @TestOnly
   @NotNull
   VcsLogModifiableIndex getModifiableIndex() {
     return myIndex;

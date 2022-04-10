@@ -4,6 +4,7 @@ package training.featuresSuggester
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.find.FindManager
 import com.intellij.find.FindModel
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.LogicalPosition
@@ -16,8 +17,8 @@ import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 
 object FeatureSuggesterTestUtils {
-  fun subscribeToSuggestions(project: Project, suggestionFound: (PopupSuggestion) -> Unit) {
-    project.messageBus.connect().subscribe(FeatureSuggestersManagerListener.TOPIC,
+  fun subscribeToSuggestions(project: Project, disposable: Disposable, suggestionFound: (PopupSuggestion) -> Unit) {
+    project.messageBus.connect(disposable).subscribe(FeatureSuggestersManagerListener.TOPIC,
       object : FeatureSuggestersManagerListener {
         override fun featureFound(suggestion: PopupSuggestion) {
           suggestionFound(suggestion)

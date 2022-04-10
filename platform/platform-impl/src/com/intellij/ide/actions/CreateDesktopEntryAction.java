@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -40,9 +40,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
-
-import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.util.containers.ContainerUtil.newHashMap;
 
 public final class CreateDesktopEntryAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CreateDesktopEntryAction.class);
@@ -124,22 +121,18 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
       throw new RuntimeException(ApplicationBundle.message("desktop.entry.icon.missing", binPath));
     }
 
-    File starter = Restarter.getIdeStarter();
+    Path starter = Restarter.getIdeStarter();
     if (starter == null) {
       throw new RuntimeException(ApplicationBundle.message("desktop.entry.script.missing", binPath));
     }
-    String execPath = StringUtil.wrapWithDoubleQuote(starter.getPath());
+    String execPath = StringUtil.wrapWithDoubleQuote(starter.toString());
 
     ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
 
     String name = names.getFullProductNameWithEdition();
     String comment = StringUtil.notNullize(names.getMotto(), name);
     String wmClass = AppUIUtil.getFrameClass();
-    Map<String, String> vars = newHashMap(pair("$NAME$", name),
-                                          pair("$SCRIPT$", execPath),
-                                          pair("$ICON$", iconPath),
-                                          pair("$COMMENT$", comment),
-                                          pair("$WM_CLASS$", wmClass));
+    Map<String, String> vars = Map.of("$NAME$", name, "$SCRIPT$", execPath, "$ICON$", iconPath, "$COMMENT$", comment, "$WM_CLASS$", wmClass);
     String content = ExecUtil.loadTemplate(CreateDesktopEntryAction.class.getClassLoader(), "entry.desktop", vars);
     Path entryFile = Paths.get(PathManager.getTempPath(), wmClass + ".desktop");
     Files.write(entryFile, content.getBytes(StandardCharsets.UTF_8));

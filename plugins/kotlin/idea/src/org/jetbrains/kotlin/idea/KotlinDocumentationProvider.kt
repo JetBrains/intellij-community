@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea
 
@@ -6,8 +6,11 @@ import com.google.common.html.HtmlEscapers
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory
-import com.intellij.lang.documentation.*
+import com.intellij.lang.documentation.AbstractDocumentationProvider
+import com.intellij.lang.documentation.CompositeDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup.*
+import com.intellij.lang.documentation.DocumentationSettings
+import com.intellij.lang.documentation.ExternalDocumentationProvider
 import com.intellij.lang.java.JavaDocumentationProvider
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
@@ -32,9 +35,9 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
@@ -164,7 +167,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
         return JavaDocExternalFilter.filterInternalDocInfo(result.toString())
     }
 
-    override fun getCustomDocumentationElement(editor: Editor, fil: PsiFile, contextElement: PsiElement?): PsiElement? {
+    override fun getCustomDocumentationElement(editor: Editor, file: PsiFile, contextElement: PsiElement?, targetOffset: Int): PsiElement? {
         return if (contextElement.isModifier()) contextElement else null
     }
 
@@ -181,7 +184,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
     override fun getDocumentationElementForLink(psiManager: PsiManager, link: String, context: PsiElement?): PsiElement? {
         val navElement = context?.navigationElement as? KtElement ?: return null
         val resolutionFacade = navElement.getResolutionFacade()
-        val bindingContext = navElement.analyze(resolutionFacade, BodyResolveMode.PARTIAL)
+        val bindingContext = navElement.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL)
         val contextDescriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, navElement] ?: return null
         val descriptors = resolveKDocLink(
             bindingContext, resolutionFacade,
@@ -214,7 +217,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
         if (docUrls == null
             || project == null
             || element == null
-            || !element.language.`is`(KotlinLanguage.INSTANCE)
+            || !runReadAction { element.language }.`is`(KotlinLanguage.INSTANCE)
         ) {
             return null
         }
@@ -238,6 +241,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
         return null
     }
 
+    @Deprecated("Deprecated in Java")
     override fun hasDocumentationFor(element: PsiElement?, originalElement: PsiElement?): Boolean {
         return CompositeDocumentationProvider.hasUrlsFor(this, element, originalElement)
     }
@@ -420,7 +424,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                 // When caret on special enum function (e.g. SomeEnum.values<caret>())
                 // element is not an KtReferenceExpression, but KtClass of enum
                 // so reference extracted from originalElement
-                val context = referenceExpression.analyze(BodyResolveMode.PARTIAL)
+                val context = referenceExpression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
                 (context[BindingContext.REFERENCE_TARGET, referenceExpression]
                     ?: context[BindingContext.REFERENCE_TARGET, referenceExpression.getChildOfType<KtReferenceExpression>()])?.let {
                     if (it is FunctionDescriptor) // To protect from Some<caret>Enum.values()
@@ -502,7 +506,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
             if (quickNavigation) {
                 val referenceExpression = originalElement?.getNonStrictParentOfType<KtReferenceExpression>()
                 if (referenceExpression != null) {
-                    val context = referenceExpression.analyze(BodyResolveMode.PARTIAL)
+                    val context = referenceExpression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
                     val declarationDescriptor = context[BindingContext.REFERENCE_TARGET, referenceExpression]
                     if (declarationDescriptor != null) {
                         return mixKotlinToJava(declarationDescriptor, element, originalElement)
@@ -521,7 +525,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
 
         private fun buildKotlinDeclaration(declaration: KtExpression, quickNavigation: Boolean): KDocTemplate {
             val resolutionFacade = declaration.getResolutionFacade()
-            val context = declaration.analyze(resolutionFacade, BodyResolveMode.PARTIAL)
+            val context = declaration.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL)
             val declarationDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, declaration]
 
             if (declarationDescriptor == null) {
@@ -539,7 +543,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
         @NlsSafe
         private fun renderKotlinImplicitLambdaParameter(element: KtReferenceExpression, quickNavigation: Boolean): String? {
             val resolutionFacade = element.getResolutionFacade()
-            val context = element.analyze(resolutionFacade, BodyResolveMode.PARTIAL)
+            val context = element.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL)
             val target = element.mainReference.resolveToDescriptors(context).singleOrNull() as? ValueParameterDescriptor? ?: return null
             return renderKotlin(context, target, quickNavigation, element, resolutionFacade)
         }
@@ -585,7 +589,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                 if (!quickNavigation) {
                     description {
                         declarationDescriptor.findKDoc { DescriptorToSourceUtilsIde.getAnyDeclaration(ktElement.project, it) }?.let {
-                            renderKDoc(it)
+                            renderKDoc(it.contentTag, it.sections)
                             return@description
                         }
                         if (declarationDescriptor is ClassConstructorDescriptor && !declarationDescriptor.isPrimary) {
@@ -595,7 +599,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                                     it
                                 )
                             }?.let {
-                                renderKDoc(it)
+                                renderKDoc(it.contentTag, it.sections)
                                 return@description
                             }
                         }
@@ -666,12 +670,11 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
             if (element !is KtExpression) return null
 
             val resolutionFacade = element.getResolutionFacade()
-            val context = element.analyze(resolutionFacade, BodyResolveMode.PARTIAL)
+            val context = element.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL)
             val descriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, element] ?: return null
             if (DescriptorUtils.isLocal(descriptor)) return null
 
-            val containingDeclaration = descriptor.containingDeclaration
-            if (containingDeclaration == null) return null
+            val containingDeclaration = descriptor.containingDeclaration ?: return null
 
             val fqNameSection = containingDeclaration.fqNameSafe
                 .takeUnless { it.isRoot }

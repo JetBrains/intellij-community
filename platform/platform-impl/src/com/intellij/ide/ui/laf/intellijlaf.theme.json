@@ -140,6 +140,13 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI"
     },
 
+    "SegmentedButton": {
+      "selectedStartBorderColor": "componentBorder",
+      "selectedEndBorderColor": "componentBorder",
+      "selectedButtonColor": "white",
+      "focusedSelectedButtonColor": "#dae4ed"
+    },
+
     "CellEditor.border.width": 2,
 
     "CheckBox": {
@@ -196,6 +203,12 @@
       "iconColor": "#7f8b917f"
     },
 
+    "ContextHelp": {
+      "fontSizeOffset": {
+        "os.windows": 0
+      }
+    },
+
     "Counter": {
       "background": "#9aa7b0cc",
       "foreground": "white"
@@ -238,7 +251,8 @@
     "Editor": {
       "background": "grey09",
       "foreground": "infoPanelForeground",
-      "shortcutForeground": "#4274A6"
+      "shortcutForeground": "#4274A6",
+      "SearchField.background" : "contentBackground"
     },
 
     "EditorPane": {
@@ -904,13 +918,13 @@
 
     "MainToolbar": {
       "background": "#f2f2f2",
-      "icon": {
+      "Icon": {
         "borderInsets": "10,10,10,10",
         "background": "#f2f2f2",
         "hoverBackground": "#dfdfdf",
         "pressedBackground": "#dfdfdf"
       },
-      "dropdown": {
+      "Dropdown": {
         "borderInsets": "12,6,12,6",
         "background": "#f2f2f2",
         "hoverBackground": "#dfdfdf",

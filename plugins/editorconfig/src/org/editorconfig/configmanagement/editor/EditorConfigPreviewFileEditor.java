@@ -2,7 +2,6 @@
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -35,10 +34,11 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
   public EditorConfigPreviewFileEditor(@NotNull Editor editor, @NotNull EditorConfigPreviewFile previewFile) {
     myEditor = editor;
     myPreviewFile = previewFile;
+    JComponent headerComponent = getHeaderComponent();
     if (myEditor instanceof EditorEx) {
-      ((EditorEx)myEditor).setPermanentHeaderComponent(getHeaderComponent());
+      ((EditorEx)myEditor).setPermanentHeaderComponent(headerComponent);
     }
-    myEditor.setHeaderComponent(getHeaderComponent());
+    myEditor.setHeaderComponent(headerComponent);
     final EditorSettings editorSettings = myEditor.getSettings();
     editorSettings.setWhitespacesShown(true);
     editorSettings.setGutterIconsShown(false);
@@ -91,16 +91,6 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
   }
 
   @Override
-  public void selectNotify() {
-
-  }
-
-  @Override
-  public void deselectNotify() {
-
-  }
-
-  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
 
   }
@@ -108,12 +98,6 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
   @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
 
-  }
-
-  @Nullable
-  @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
   }
 
   @Nullable

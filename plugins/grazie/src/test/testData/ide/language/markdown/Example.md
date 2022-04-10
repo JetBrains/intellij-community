@@ -1,6 +1,6 @@
 # Here is the good part
 
-It is written completely OK.
+It is written completely OK. `code` is also OK.
 
 It has:
 * lists;
@@ -23,7 +23,7 @@ Of <warning descr="MISSING_COMMA_AFTER_INTRODUCTORY_PHRASE">course</warning> it 
 * so much <TYPO descr="Typo: In word 'errorsss'">errorsss</TYPO>!
 * even here it is <warning descr="EN_A_VS_AN">an</warning> friend of human
 
-Once more we have an inline fragment<warning descr="COMMA_COMPOUND_SENTENCE"> and</warning> it is `a` friend.
+<warning descr="UPPERCASE_SENTENCE_START">once</warning> more we have an inline fragment<warning descr="COMMA_COMPOUND_SENTENCE"> and</warning> it is `a` friend.
 
 It is <warning descr="EN_A_VS_AN">an</warning> friend of human
 

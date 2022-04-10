@@ -1,14 +1,14 @@
 import sys
-from typing import Any, Iterable, Sequence, Text, Type, TypeVar
+from typing import Any, Iterable, Sequence, Text, TypeVar
 
 _T = TypeVar("_T")
 
 PY2: bool
 
-string_types: Type[Any] | Sequence[Type[Any]]
-text_type: Type[Any] | Sequence[Type[Any]]
-bytes_types: Type[Any] | Sequence[Type[Any]]
-integer_types: Type[Any] | Sequence[Type[Any]]
+string_types: type[Any] | Sequence[type[Any]]
+text_type: type[Any] | Sequence[type[Any]]
+bytes_types: type[Any] | Sequence[type[Any]]
+integer_types: type[Any] | Sequence[type[Any]]
 long = int
 
 def input(prompt: Any) -> str: ...

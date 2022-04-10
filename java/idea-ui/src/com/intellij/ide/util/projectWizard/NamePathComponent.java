@@ -35,6 +35,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 
+import static com.intellij.openapi.ui.UiUtils.getCanonicalPath;
+import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 import static java.awt.GridBagConstraints.*;
 
 /**
@@ -189,15 +191,15 @@ public final class NamePathComponent extends JPanel {
   }
 
   public String getPath() {
-    String text = myTfPath.getText().trim();
-    return FileUtil.toCanonicalPath(FileUtil.expandUserHome(text));
+    String text = myTfPath.getText();
+    return getCanonicalPath(text);
   }
 
   public void setPath(String path) {
     boolean isPathChangedByUser = myIsPathChangedByUser;
     myIsPathNameSyncEnabled = false;
     try {
-      myTfPath.setText(FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(path)));
+      myTfPath.setText(getPresentablePath(path));
     }
     finally {
       myIsPathChangedByUser = isPathChangedByUser;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service
 
 import com.intellij.openapi.Disposable
@@ -36,7 +36,7 @@ class GradleFileModificationTracker: Disposable {
   fun notifyConnectionAboutChangedPaths(connection: ProjectConnection) {
     val collection = myCacheRef.getAndSet(ConcurrentHashMap.newKeySet()).toList()
     if (collection.isNotEmpty()) {
-      connection.notifyDaemonsAboutChangedPaths(collection);
+      connection.notifyDaemonsAboutChangedPaths(collection)
     }
   }
 
@@ -53,7 +53,7 @@ class GradleFileModificationTracker: Disposable {
   }
 }
 
-class GradleFileModificationListener: FileDocumentManagerListener {
+internal class GradleFileModificationListener: FileDocumentManagerListener {
   override fun beforeDocumentSaving(document: Document) {
     val modificationTracker = ApplicationManager.getApplication().getService(GradleFileModificationTracker::class.java)
     FileDocumentManager.getInstance().getFile(document)?.let { modificationTracker.beforeSaving(it) }

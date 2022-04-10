@@ -37,8 +37,12 @@ class GroovyParameterTypeHintsInlayProvider : InlayHintsProvider<GroovyParameter
   override val group: InlayGroup
     get() = InlayGroup.TYPES_GROUP
 
-  override fun getProperty(key: String): String {
-    return GroovyBundle.message(key)
+  override fun getCaseDescription(case: ImmediateConfigurable.Case): String? {
+    when(case.id) {
+      "inferred.parameter.types" -> return GroovyBundle.message("inlay.groovy.parameters.hints.inferred.parameter.types")
+      "type.parameter.list" -> return GroovyBundle.message("inlay.groovy.parameters.hints.type.parameter.list")
+    }
+    return null
   }
 
   override val previewText: String

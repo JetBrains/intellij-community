@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -74,12 +74,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
               : ConcurrentCollectionFactory.createConcurrentMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(),
                                                                 HashingStrategy.caseInsensitive());
 
-    ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
+    ShutDownTracker.getInstance().registerShutdownTask(this::disconnect);
     LowMemoryWatcher.register(this::clearIdCache, this);
 
     AsyncEventSupport.startListening();
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener(){
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener(){
       @Override
       public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         // `myIdToDirCache` could retain alien file systems
@@ -96,7 +96,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
     });
 
-    doConnect();
+    connect();
   }
 
   @ApiStatus.Internal
@@ -139,7 +139,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public void dispose() {
-    performShutdown();
+    disconnect();
   }
 
   private void performShutdown() {
@@ -265,12 +265,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public @Nullable DataInputStream readAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att) {
+  public @Nullable AttributeInputStream readAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att) {
     return FSRecords.readAttributeWithLock(getFileId(file), att);
   }
 
   @Override
-  public @NotNull DataOutputStream writeAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att) {
+  public @NotNull AttributeOutputStream writeAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att) {
     return FSRecords.writeAttribute(getFileId(file), att);
   }
 
@@ -762,7 +762,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return FSRecords.getContentHash(getFileId(file));
   }
 
-  // returns last recorded length or -1 if must reload from delegate
+  // returns last recorded length or -1 if it must reload from delegate
   private static long getLengthIfUpToDate(@NotNull VirtualFile file) {
     int fileId = getFileId(file);
     return BitUtil.isSet(FSRecords.getFlags(fileId), Flags.MUST_RELOAD_LENGTH) ? -1 : FSRecords.getLength(fileId);
@@ -1344,6 +1344,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     CharSequence rootName;
     String rootPath;
+    FileAttributes attributes;
     if (fs instanceof ArchiveFileSystem) {
       ArchiveFileSystem afs = (ArchiveFileSystem)fs;
       VirtualFile localFile = afs.findLocalByRootPath(path);
@@ -1351,12 +1352,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       rootName = localFile.getNameSequence();
       rootPath = afs.getRootPathByLocal(localFile);
       rootUrl = UriUtil.trimTrailingSlashes(VirtualFileManager.constructUrl(fs.getProtocol(), rootPath));
+      attributes = afs.getArchiveRootAttributes(new StubVirtualFile(fs) {
+        @Override public @NotNull String getPath() { return rootPath; }
+        @Override public @Nullable VirtualFile getParent() { return null; }
+      });
     }
     else {
       rootName = rootPath = path;
+      attributes = loadAttributes(fs, rootPath);
     }
 
-    FileAttributes attributes = loadAttributes(fs, rootPath);
     if (attributes == null || !attributes.isDirectory()) {
       return null;
     }

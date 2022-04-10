@@ -17,8 +17,16 @@ import com.intellij.psi.search.UsageSearchContext
 import com.intellij.util.text.StringSearcher
 import java.util.function.IntPredicate
 
+
 open class MemberUsageCollector {
   companion object {
+    /**
+     * Search files with memberName occurence in code.
+     * 
+     * Note that it is not necessarily the same member that we were searching for,
+     * it might be just reference to an element with a same name (see ProblemCollector#extractUsage for details).
+     * Also note that there's a limit on how many files we analyze for references (and their total size) 
+     */
     fun collect(
       memberName: String,
       containingFile: PsiFile,

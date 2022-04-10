@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.DataManager;
@@ -123,19 +123,22 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     }
     if (myPanel.isInFloatingMode()) {
       final Window window = SwingUtilities.windowForComponent(getList());
-      window.addWindowFocusListener(new WindowFocusListener() {
-        @Override
-        public void windowGainedFocus(WindowEvent e) {
-        }
-
-        @Override
-        public void windowLostFocus(WindowEvent e) {
-          final Window w = e.getOppositeWindow();
-          if (w != null && DialogWrapper.findInstance(w.getComponent(0)) != null) {
-            myPanel.hideHint();
+      if (window != null) {
+        // add listener only if hint is not hidden yet
+        window.addWindowFocusListener(new WindowFocusListener() {
+          @Override
+          public void windowGainedFocus(WindowEvent e) {
           }
-        }
-      });
+
+          @Override
+          public void windowLostFocus(WindowEvent e) {
+            final Window w = e.getOppositeWindow();
+            if (w != null && DialogWrapper.findInstance(w.getComponent(0)) != null) {
+              myPanel.hideHint();
+            }
+          }
+        });
+      }
     }
   }
 

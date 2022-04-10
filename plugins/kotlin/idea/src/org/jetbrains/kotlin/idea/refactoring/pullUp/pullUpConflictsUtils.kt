@@ -16,6 +16,7 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.useScope
@@ -88,7 +90,7 @@ private fun collectConflicts(
             checkClashWithSuperDeclaration(member, memberDescriptor, conflicts)
             checkAccidentalOverrides(member, memberDescriptor, conflicts)
             checkInnerClassToInterface(member, memberDescriptor, conflicts)
-            checkVisibility(memberInfo, memberDescriptor, conflicts)
+            checkVisibility(memberInfo, memberDescriptor, conflicts, resolutionFacade.getLanguageVersionSettings())
         }
     }
     checkVisibilityInAbstractedMembers(memberInfos, pullUpData.resolutionFacade, conflicts)
@@ -261,13 +263,14 @@ private fun KotlinPullUpData.checkInnerClassToInterface(
 private fun KotlinPullUpData.checkVisibility(
     memberInfo: KotlinMemberInfo,
     memberDescriptor: DeclarationDescriptor,
-    conflicts: MultiMap<PsiElement, String>
+    conflicts: MultiMap<PsiElement, String>,
+    languageVersionSettings: LanguageVersionSettings
 ) {
-    fun reportConflictIfAny(targetDescriptor: DeclarationDescriptor) {
+    fun reportConflictIfAny(targetDescriptor: DeclarationDescriptor, languageVersionSettings: LanguageVersionSettings) {
         if (targetDescriptor in memberDescriptors.values) return
         val target = (targetDescriptor as? DeclarationDescriptorWithSource)?.source?.getPsi() ?: return
         if (targetDescriptor is DeclarationDescriptorWithVisibility
-            && !DescriptorVisibilities.isVisibleIgnoringReceiver(targetDescriptor, targetClassDescriptor)
+            && !DescriptorVisibilityUtils.isVisibleIgnoringReceiver(targetDescriptor, targetClassDescriptor, languageVersionSettings)
         ) {
             val message = RefactoringBundle.message(
                 "0.uses.1.which.is.not.accessible.from.the.superclass",
@@ -286,7 +289,7 @@ private fun KotlinPullUpData.checkVisibility(
                 val typeInTargetClass = sourceToTargetClassSubstitutor.substitute(returnType, Variance.INVARIANT)
                 val descriptorToCheck = typeInTargetClass?.constructor?.declarationDescriptor as? ClassDescriptor
                 if (descriptorToCheck != null) {
-                    reportConflictIfAny(descriptorToCheck)
+                    reportConflictIfAny(descriptorToCheck, languageVersionSettings)
                 }
             }
         }
@@ -301,8 +304,7 @@ private fun KotlinPullUpData.checkVisibility(
                     val context = resolutionFacade.analyze(expression)
                     expression.references
                         .flatMap { (it as? KtReference)?.resolveToDescriptors(context) ?: emptyList() }
-                        .forEach(::reportConflictIfAny)
-
+                        .forEach { reportConflictIfAny(it, languageVersionSettings) }
                 }
             }
         )

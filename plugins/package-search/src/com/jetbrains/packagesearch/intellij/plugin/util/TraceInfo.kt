@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 private val traceId = AtomicInteger(0)
 
-internal data class TraceInfo(
+data class TraceInfo(
     val source: TraceSource,
     val id: Int = traceId.incrementAndGet()
 ) {

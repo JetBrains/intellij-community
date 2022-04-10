@@ -8,6 +8,7 @@ At present the active maintainers are (alphabetically):
 * Shantanu (@hauntsaninja)
 * Rune Tynan (@CraftSpider)
 * Aku Viljanen (@Akuli)
+* Alex Waygood (@AlexWaygood)
 * Jelle Zijlstra (@JelleZijlstra)
 
 Former and inactive maintainers include:

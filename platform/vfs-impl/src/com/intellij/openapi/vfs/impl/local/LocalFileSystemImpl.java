@@ -47,9 +47,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     myWatcher = new FileWatcher(myManagingFS, () -> {
       AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
           if (!ApplicationManager.getApplication().isDisposed()) {
-            if (storeRefreshStatusToFiles() && myAfterMarkDirtyCallback != null) {
-              myAfterMarkDirtyCallback.run();
-            }
+            storeRefreshStatusToFiles();
           }
         },
         STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
@@ -80,15 +78,17 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     myWatcher.dispose();
   }
 
-  private boolean storeRefreshStatusToFiles() {
+  private void storeRefreshStatusToFiles() {
     if (myWatcher.isOperational()) {
       FileWatcher.DirtyPaths dirtyPaths = myWatcher.getDirtyPaths();
       markPathsDirty(dirtyPaths.dirtyPaths);
       markFlatDirsDirty(dirtyPaths.dirtyDirectories);
       markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive);
-      return !dirtyPaths.dirtyPaths.isEmpty() || !dirtyPaths.dirtyDirectories.isEmpty() || !dirtyPaths.dirtyPathsRecursive.isEmpty();
+      if ((!dirtyPaths.dirtyPaths.isEmpty() || !dirtyPaths.dirtyDirectories.isEmpty() || !dirtyPaths.dirtyPathsRecursive.isEmpty())
+            && myAfterMarkDirtyCallback != null) {
+        myAfterMarkDirtyCallback.run();
+      }
     }
-    return false;
   }
 
   private void markPathsDirty(@NotNull Iterable<String> dirtyPaths) {

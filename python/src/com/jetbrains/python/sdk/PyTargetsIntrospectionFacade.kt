@@ -45,7 +45,7 @@ class PyTargetsIntrospectionFacade(val sdk: Sdk, val project: Project) {
     val cmd = cmdBuilder.build()
 
     val environment = targetEnvRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
-    return sdkFlavor.getVersionStringFromOutput(cmd.execute(environment, indicator).stdout)
+    return sdkFlavor.getVersionStringFromOutput(cmd.execute(environment, indicator))
   }
 
   @Throws(ExecutionException::class)

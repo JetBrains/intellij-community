@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.run
 
 import com.intellij.execution.PsiLocation
@@ -45,7 +45,8 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
         super.setUp()
         myFixture.addClass("package junit.framework; public class TestCase {}")
         myFixture.addClass("package org.junit; public @interface Test {}")
-        myFixture.addClass("package org.junit.jupiter.api; public @interface Test {}")
+        myFixture.addClass("package org.junit.platform.commons.annotation; public @interface Testable{}")
+        myFixture.addClass("package org.junit.jupiter.api; import org.junit.platform.commons.annotation.Testable; @Testable public @interface Test {}")
         myFixture.addClass("package org.junit.jupiter.api; public @interface Nested {}")
     }
 

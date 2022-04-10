@@ -216,6 +216,11 @@ public class RunnerLayout  {
     return view;
   }
 
+  @Nullable
+  public ViewImpl getViewById(@NotNull String id) {
+    return myViews.get(id);
+  }
+
   @NotNull
   private ViewImpl.Default getOrCreateDefault(@NotNull String id) {
     if (myDefaultViews.containsKey(id)) {
@@ -282,8 +287,17 @@ public class RunnerLayout  {
     myLightWeightIds.add(getOrCreateContentId(content));
   }
 
+  public boolean isTabLabelsHidden() {
+    return myGeneral.isTabLabelsHidden;
+  }
+
+  public void setTabLabelsHidden(boolean tabLabelsHidden) {
+    myGeneral.isTabLabelsHidden = tabLabelsHidden;
+  }
+
   public static class General {
     public volatile boolean horizontalToolbar = false;
     public volatile Map<String, String> focusOnCondition = new HashMap<>();
+    public volatile boolean isTabLabelsHidden = true;
   }
 }

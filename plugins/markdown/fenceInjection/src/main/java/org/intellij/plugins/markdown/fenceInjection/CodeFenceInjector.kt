@@ -7,7 +7,6 @@ import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
-import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
@@ -61,7 +60,7 @@ internal open class CodeFenceInjector : MultiHostInjector {
    * injected context, so we should do it with great care.
    */
   private fun injectAsOnePlace(host: MarkdownCodeFence, registrar: MultiHostRegistrar) {
-    val elements = MarkdownCodeFenceUtils.getContent(host, withWhitespaces = true) ?: return
+    val elements = MarkdownCodeFence.obtainFenceContent(host, withWhitespaces = true) ?: return
 
     val first = elements.first()
     val last = elements.last()

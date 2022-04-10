@@ -2,13 +2,11 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.progress.PerformInBackgroundOption;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @deprecated use nothing or {@link PerformInBackgroundOption#ALWAYS_BACKGROUND} instead
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public class BackgroundFromStartOption {
 
   public static PerformInBackgroundOption getInstance() {

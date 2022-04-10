@@ -111,6 +111,7 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.util.ObjectUtils.consumeIfNotNull;
 import static org.junit.Assert.*;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -1144,19 +1145,29 @@ public final class PlatformTestUtil {
     waitWithEventsDispatching(() -> errorMessage, condition, timeoutInSeconds);
   }
 
-  /**
-   * Wait and dispatch events during timeout
-   */
   public static void waitWithEventsDispatching(@NotNull Supplier<String> errorMessageSupplier,
                                                @NotNull BooleanSupplier condition,
                                                int timeoutInSeconds) {
+    waitWithEventsDispatching(errorMessageSupplier, condition, timeoutInSeconds, null);
+  }
+
+  /**
+   * Wait and dispatch events during timeout.
+   * A {@link Runnable} callback may be provided to be executed when {@code condition} gets satisfied or {@code timeoutInSeconds} runs out.
+   */
+  public static void waitWithEventsDispatching(@NotNull Supplier<String> errorMessageSupplier,
+                                               @NotNull BooleanSupplier condition,
+                                               int timeoutInSeconds,
+                                               @Nullable Runnable callback) {
     long start = System.currentTimeMillis();
     while (true) {
       try {
         if (System.currentTimeMillis() - start > timeoutInSeconds * 1000L) {
+          consumeIfNotNull(callback, Runnable::run);
           fail(errorMessageSupplier.get());
         }
         if (condition.getAsBoolean()) {
+          consumeIfNotNull(callback, Runnable::run);
           break;
         }
         dispatchAllEventsInIdeEventQueue();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.feedback.state.projectCreation.ProjectCreationInfoService;
@@ -37,8 +37,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,8 +55,7 @@ public final class NewProjectUtil {
   /**
    * @deprecated Use {@link #createNewProject(AbstractProjectWizard)}, projectToClose param is not used.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void createNewProject(@Nullable Project projectToClose, @NotNull AbstractProjectWizard wizard) {
     createNewProject(wizard);
   }
@@ -66,22 +65,22 @@ public final class NewProjectUtil {
     Runnable warmUp = () -> ProjectManager.getInstance().getDefaultProject();  // warm-up components
     boolean proceed = ProgressManager.getInstance().runProcessWithProgressSynchronously(warmUp, title, true, null);
 
-    StructuredIdeActivity activity = null;
+    long time = 0;
+    WizardContext context = wizard.getWizardContext();
     if (isNewWizard()) {
-      WizardContext context = wizard.getWizardContext();
-      activity = NewProjectWizardCollector.logStarted(context.getProject());
+      time = System.nanoTime();
       NewProjectWizardCollector.logOpen(context);
     }
     if (proceed && wizard.showAndGet()) {
       createFromWizard(wizard);
-      if (isNewWizard() && activity != null) {
-        NewProjectWizardCollector.logFinished(activity, true);
+      if (isNewWizard()) {
+        NewProjectWizardCollector.logFinish(context, true, TimeoutUtil.getDurationMillis(time));
       }
       return;
     }
 
-    if (isNewWizard() && activity != null) {
-      NewProjectWizardCollector.logFinished(activity, false);
+    if (isNewWizard()) {
+      NewProjectWizardCollector.logFinish(context, false, TimeoutUtil.getDurationMillis(time));
     }
   }
 
@@ -156,7 +155,7 @@ public final class NewProjectUtil {
       if (projectBuilder == null || !projectBuilder.isUpdate()) {
         String name = wizard.getProjectName();
         if (projectBuilder == null) {
-          newProject = projectManager.newProject(projectFile, OpenProjectTask.newProject().withProjectName(name));
+          newProject = projectManager.newProject(projectFile, OpenProjectTask.build().asNewProject().withProjectName(name));
         }
         else {
           newProject = projectBuilder.createProject(name, projectFilePath);
@@ -211,7 +210,7 @@ public final class NewProjectUtil {
 
       if (newProject != projectToClose) {
         ProjectUtil.updateLastProjectLocation(projectFile);
-        OpenProjectTask options = OpenProjectTask.withCreatedProject(newProject);
+        OpenProjectTask options = OpenProjectTask.build().withProject(newProject);
         Path fileName = projectFile.getFileName();
         if (fileName != null) {
           options = options.withProjectName(fileName.toString());

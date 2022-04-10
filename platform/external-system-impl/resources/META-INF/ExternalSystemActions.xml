@@ -111,6 +111,8 @@
       <reference id="ExternalSystem.OpenTasksActivationManager"/>
     </group>
 
+    <group id="ExternalSystemView.DependencyMenu" popup="true"/>
+
     <group id="ExternalSystemView.ActionsToolbar.LeftPanel">
       <reference id="ExternalSystem.RefreshAllProjects"/>
 <!--      <reference id="ExternalSystem.AttachProject"/>-->

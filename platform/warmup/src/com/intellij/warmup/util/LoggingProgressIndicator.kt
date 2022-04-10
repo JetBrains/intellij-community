@@ -12,6 +12,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -92,6 +93,8 @@ private class LoggingProgressIndicator(private val messages: SendChannel<String>
   }
 
   private fun offerState() {
-    messages.offer(progressIndicatorText(this@LoggingProgressIndicator) ?: return)
+    messages.trySend(progressIndicatorText(this@LoggingProgressIndicator) ?: return).onClosed {
+      throw IllegalStateException(it)
+    }
   }
 }

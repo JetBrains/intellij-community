@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.ide.plugins
 
@@ -91,7 +91,7 @@ class DynamicPluginsTest {
     app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
     assertThat(receivedNotifications).hasSize(1)
 
-    DynamicPlugins.unloadAndUninstallPlugin(descriptor)
+    unloadAndUninstallPlugin(descriptor)
     app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
     assertThat(receivedNotifications).hasSize(1)
   }
@@ -104,9 +104,12 @@ class DynamicPluginsTest {
     assertThat(descriptor).isNotNull
 
     DynamicPlugins.loadPlugin(descriptor)
-
-    DisabledPluginsState.saveDisabledPlugins(PathManager.getConfigDir(), builder.id)
-    DynamicPlugins.unloadAndUninstallPlugin(descriptor)
+    try {
+      DisabledPluginsState.saveDisabledPlugins(PathManager.getConfigDir(), builder.id)
+    }
+    finally {
+      unloadAndUninstallPlugin(descriptor)
+    }
     assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNull()
 
     DisabledPluginsState.saveDisabledPlugins(PathManager.getConfigDir())
@@ -117,7 +120,7 @@ class DynamicPluginsTest {
       assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNotNull()
     }
     finally {
-      DynamicPlugins.unloadAndUninstallPlugin(newDescriptor)
+      unloadAndUninstallPlugin(newDescriptor)
     }
   }
 
@@ -309,9 +312,52 @@ class DynamicPluginsTest {
         val extension = ep!!.extensionList.single()
         assertThat(extension.key).isEqualTo("foo")
         assertThat(extension.pluginDescriptor)
-          .isEqualTo(PluginManagerCore.getPluginSet().findEnabledModule("intellij.foo.sub")!!)
+          .isEqualTo(findEnabledModuleByName("intellij.foo.sub")!!)
       }
       assertThat(ep!!.extensionList).isEmpty()
+    }
+  }
+
+  @Test
+  fun testExcessDependency() {
+    val foo = PluginBuilder()
+      .randomId("com.intellij.foo")
+      .packagePrefix("com.intellij.foo")
+
+    val barBuilder = PluginBuilder()
+      .randomId("com.intellij.bar")
+      .packagePrefix("com.intellij.bar")
+      .module(
+        "intellij.bar.foo",
+        PluginBuilder()
+          .packagePrefix("com.intellij.bar.foo")
+          .pluginDependency(foo.id)
+      )
+
+    val bazBuilder = PluginBuilder()
+      .randomId("com.intellij.baz")
+      .packagePrefix("com.intellij.baz")
+      .module(
+        "intellij.baz.foo",
+        PluginBuilder()
+          .packagePrefix("com.intellij.baz.foo")
+          .pluginDependency(foo.id)
+          .dependency("intellij.bar.foo")
+      )
+
+    loadPluginWithText(barBuilder).use {
+      loadPluginWithText(bazBuilder).use {
+        assertThat(findEnabledModuleByName("intellij.bar.foo")).isNull()
+        assertThat(findEnabledModuleByName("intellij.baz.foo")).isNull()
+
+        loadPluginWithText(foo).use {
+          assertThat(findEnabledModuleByName("intellij.bar.foo")?.pluginClassLoader).isNotNull()
+          assertThat(findEnabledModuleByName("intellij.baz.foo")?.pluginClassLoader).isNotNull()
+        }
+
+        assertThat(findEnabledModuleByName("intellij.bar.foo")).isNull()
+        assertThat(findEnabledModuleByName("intellij.baz.foo")).isNull()
+      }
     }
   }
 
@@ -662,3 +708,5 @@ private inline fun runAndCheckThatNoNewPlugins(block: () -> Unit) {
 private fun lexicographicallySortedPluginIds() =
   PluginManagerCore.getLoadedPlugins()
     .toSortedSet(compareBy { it.pluginId })
+
+private fun findEnabledModuleByName(id: String) = PluginManagerCore.getPluginSet().findEnabledModule(id)

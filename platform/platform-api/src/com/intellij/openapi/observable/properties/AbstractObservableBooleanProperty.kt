@@ -3,10 +3,13 @@ package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.containers.DisposableWrapperList
+import org.jetbrains.annotations.ApiStatus
 
-abstract class AbstractObservableBooleanProperty : AbstractObservableClearableProperty<Boolean>(), BooleanProperty {
+@ApiStatus.Internal
+abstract class AbstractObservableBooleanProperty : AbstractObservableProperty<Boolean>(), BooleanProperty {
 
   private val setListeners = DisposableWrapperList<() -> Unit>()
+  private val resetListeners = DisposableWrapperList<() -> Unit>()
 
   protected fun fireChangeEvents(oldValue: Boolean, newValue: Boolean) {
     when {
@@ -16,7 +19,7 @@ abstract class AbstractObservableBooleanProperty : AbstractObservableClearablePr
     fireChangeEvent(newValue)
   }
 
-  protected fun fireSetEvent() {
+  private fun fireSetEvent() {
     setListeners.forEach { it() }
   }
 
@@ -26,5 +29,17 @@ abstract class AbstractObservableBooleanProperty : AbstractObservableClearablePr
 
   override fun afterSet(listener: () -> Unit, parentDisposable: Disposable) {
     setListeners.add(listener, parentDisposable)
+  }
+
+  private fun fireResetEvent() {
+    resetListeners.forEach { it() }
+  }
+
+  override fun afterReset(listener: () -> Unit) {
+    resetListeners.add(listener)
+  }
+
+  override fun afterReset(listener: () -> Unit, parentDisposable: Disposable) {
+    resetListeners.add(listener, parentDisposable)
   }
 }

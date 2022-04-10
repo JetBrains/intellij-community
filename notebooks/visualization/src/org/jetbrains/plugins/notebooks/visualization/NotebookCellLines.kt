@@ -49,24 +49,41 @@ interface NotebookCellLines {
 
   interface IntervalListener : EventListener {
     /**
-     * Called when amount of intervals is changed, or types of some intervals are changed,
-     * or line counts of intervals is changed.
+     * Called when document is changed.
      *
      * Intervals that were just shifted are included neither [oldIntervals], nor in [newIntervals].
      *
      * Intervals in the lists are valid only until the document changes. Check their validity
      * when postponing handling of intervals.
      *
+     * If document is changed, but intervals aren’t changed, both [oldIntervals] and [newIntervals] are empty,
+     * and the [modificationStamp] stamp doesn’t change.
+     *
+     * [oldAffectedIntervals] and [oldAffectedIntervals] are same as event.oldFragment and event.newFragment
+     * [oldAffectedIntervals] are intervals containing oldFragment and same with [newAffectedIntervals]
+     *
+     * If existing line is edited, [oldAffectedIntervals] and/or [newAffectedIntervals] contain interval with the line,
+     * but [oldIntervals] and  [newIntervals] are empty.
+     *
+     * Both [oldAffectedIntervals] and [newAffectedIntervals] are necessary to distinguish last cell line removing and whole cell removing.
+     * "#%%\n 1 \n\n#%%\n 2" -> "#%%\n 1 \n": [oldAffectedIntervals] contains second cell, [newAffectedIntervals] are empty
+     *            ^^^^^^^^^
+     * "#%%\n 1 \n text"     -> "#%%\n 1 \n": [oldAffectedIntervals] contain cell, [newAffectedIntervals] are empty
+     *            ^^^^^
+     * "#%%\n 1  text \n#%%\n 2" -> "#%% 1 \n#%%\n new": [oldAffectedIntervals] contain all cells,
+     *           ^^^^^^^^^^^^^^            ^^^^^^^^^^^
+     * [newAffectedIntervals] contain only second cell, because range of inserted text related to second cell only
+     *
      * It is guaranteed that:
-     * * At least one of [oldIntervals] and [newIntervals] is not empty.
      * * Ordinals from every list defines an arithmetical progression where
      *   every next element has ordinal of the previous element incremented by one.
-     * * If both lists are not empty, the first elements of both lists has the same ordinal.
+     * * If oldIntervals and newIntervals lists are not empty, the first elements of both lists has the same ordinal.
      * * Both lists don't contain any interval that has been only shifted, shrank or enlarged.
      *
      * See `NotebookCellLinesTest` for examples of calls for various changes.
      */
-    fun segmentChanged(oldIntervals: List<Interval>, newIntervals: List<Interval>)
+    fun segmentChanged(oldIntervals: List<Interval>, oldAffectedIntervals: List<Interval>,
+                       newIntervals: List<Interval>, newAffectedIntervals: List<Interval>)
   }
 
   fun intervalsIterator(startLine: Int = 0): ListIterator<Interval>

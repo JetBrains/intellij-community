@@ -3,3 +3,4 @@ class A() {
     val i: Int
         get(): Int = 1
 }
+/* IGNORE_FIR */

@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * <p/>
  * N.B. Please DO NOT store PSI elements inside the LocalQuickFix instance, to avoid holding too much PSI files during inspection.
  * Instead, use the {@link ProblemDescriptor#getPsiElement()}
- * in {@link QuickFix#applyFix(com.intellij.openapi.project.Project, CommonProblemDescriptor)}
+ * in {@link QuickFix#applyFix(Project, CommonProblemDescriptor)}
  * to retrieve the PSI context the fix will work on.
  * See also {@link LocalQuickFixOnPsiElement} which uses {@link com.intellij.psi.SmartPsiElementPointer} instead of storing PSI elements.
  * <p/>
@@ -57,8 +56,7 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
    * @return true if the fix was successfully applied to the copy; false otherwise
    * @deprecated do not call or override this method: this API will be changed.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default boolean applyFixForPreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
     if (!startInWriteAction()) return false;
     PsiElement element = previewDescriptor.getStartElement();

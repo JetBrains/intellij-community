@@ -9,11 +9,9 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros.CACHE_FILE
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.*
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType.EXTERNAL
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType.INTERNAL
 import com.intellij.openapi.externalSystem.autoimport.update.PriorityEatUpdate
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
@@ -112,12 +110,12 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
       AutoReloadType.ALL -> when (getModificationType()) {
         INTERNAL -> scheduleDelayedSmartProjectReload()
         EXTERNAL -> scheduleDelayedSmartProjectReload()
-        null -> updateProjectNotification()
+        UNKNOWN -> updateProjectNotification()
       }
       AutoReloadType.SELECTIVE -> when (getModificationType()) {
         INTERNAL -> updateProjectNotification()
         EXTERNAL -> scheduleDelayedSmartProjectReload()
-        null -> updateProjectNotification()
+        UNKNOWN -> updateProjectNotification()
       }
       AutoReloadType.NONE -> updateProjectNotification()
     }
@@ -164,13 +162,13 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
            !projectReloadOperation.isOperationCompleted()
   }
 
-  private fun getModificationType(): ModificationType? {
+  private fun getModificationType(): ExternalSystemModificationType {
     return projectDataMap.values
       .asSequence()
-      .mapNotNull { it.getModificationType() }
+      .map { it.getModificationType() }
       .asStream()
-      .reduce(ModificationType::merge)
-      .orElse(null)
+      .reduce(ProjectStatus::merge)
+      .orElse(UNKNOWN)
   }
 
   override fun register(projectAware: ExternalSystemProjectAware) {
@@ -313,14 +311,8 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
     fun isUpToDate() = status.isUpToDate() && settingsTracker.isUpToDate()
 
-    fun getModificationType(): ModificationType? {
-      val trackerModificationType = status.getModificationType()
-      val settingsTrackerModificationType = settingsTracker.getModificationType()
-      return when {
-        trackerModificationType == null -> settingsTrackerModificationType
-        settingsTrackerModificationType == null -> trackerModificationType
-        else -> settingsTrackerModificationType.merge(trackerModificationType)
-      }
+    fun getModificationType(): ExternalSystemModificationType {
+      return ProjectStatus.merge(status.getModificationType(), settingsTracker.getModificationType())
     }
   }
 

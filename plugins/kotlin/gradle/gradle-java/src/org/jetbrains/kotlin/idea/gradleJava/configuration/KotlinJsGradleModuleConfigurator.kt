@@ -1,14 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.extensions.gradle.*
-import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
+import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.gradle.configuration.GradleVersionProviderImpl
+import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.idea.versions.MAVEN_JS_STDLIB_ID
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -23,12 +24,9 @@ class KotlinJsGradleModuleConfigurator : KotlinWithGradleConfigurator() {
         if (forKotlinDsl) "id(\"kotlin2js\")" else "id 'kotlin2js'"
 
     override fun getMinimumSupportedVersion() = "1.1.0"
-    override fun getStdlibArtifactName(sdk: Sdk?, version: String): String = MAVEN_JS_STDLIB_ID
+    override fun getStdlibArtifactName(sdk: Sdk?, version: IdeKotlinVersion): String = MAVEN_JS_STDLIB_ID
 
-    @Suppress("DEPRECATION_ERROR")
-    override fun getTargetPlatform() = JsPlatforms.CompatJsPlatform
-
-    override fun addElementsToFile(file: PsiFile, isTopLevelProjectFile: Boolean, version: String): Boolean {
+    override fun addElementsToFile(file: PsiFile, isTopLevelProjectFile: Boolean, version: IdeKotlinVersion): Boolean {
         val gradleVersion = GradleVersionProviderImpl.fetchGradleVersion(file)
 
         if (KotlinGradleFacadeImpl.getManipulator(file).useNewSyntax(kotlinPluginName, gradleVersion, GradleVersionProviderImpl)) {

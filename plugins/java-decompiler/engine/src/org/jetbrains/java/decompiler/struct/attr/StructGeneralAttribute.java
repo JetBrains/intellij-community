@@ -22,10 +22,16 @@ public class StructGeneralAttribute {
   public static final Key<StructEnclosingMethodAttribute> ATTRIBUTE_ENCLOSING_METHOD = new Key<>("EnclosingMethod");
   public static final Key<StructAnnotationAttribute> ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS = new Key<>("RuntimeVisibleAnnotations");
   public static final Key<StructAnnotationAttribute> ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS = new Key<>("RuntimeInvisibleAnnotations");
+  public static final Key<?>[] ANNOTATION_ATTRIBUTES = {
+    ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS, ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS};
   public static final Key<StructAnnotationParameterAttribute> ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS = new Key<>("RuntimeVisibleParameterAnnotations");
   public static final Key<StructAnnotationParameterAttribute> ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS = new Key<>("RuntimeInvisibleParameterAnnotations");
+  public static final Key<?>[] PARAMETER_ANNOTATION_ATTRIBUTES = {
+    ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS, ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS};
   public static final Key<StructTypeAnnotationAttribute> ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS = new Key<>("RuntimeVisibleTypeAnnotations");
   public static final Key<StructTypeAnnotationAttribute> ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS = new Key<>("RuntimeInvisibleTypeAnnotations");
+  public static final Key<?>[] TYPE_ANNOTATION_ATTRIBUTES = {
+    ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS, ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS};
   public static final Key<StructLocalVariableTableAttribute> ATTRIBUTE_LOCAL_VARIABLE_TABLE = new Key<>("LocalVariableTable");
   public static final Key<StructLocalVariableTypeTableAttribute> ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE = new Key<>("LocalVariableTypeTable");
   public static final Key<StructConstantValueAttribute> ATTRIBUTE_CONSTANT_VALUE = new Key<>("ConstantValue");

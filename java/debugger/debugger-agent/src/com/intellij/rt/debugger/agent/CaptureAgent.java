@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.debugger.agent;
 
 import org.jetbrains.capture.org.objectweb.asm.*;
@@ -18,14 +18,7 @@ public final class CaptureAgent {
 
   private static final Map<String, List<InstrumentPoint>> myInstrumentPoints = new HashMap<String, List<InstrumentPoint>>();
 
-  public static void premain(String args, Instrumentation instrumentation) {
-    // never instrument twice
-    if (System.getProperty("intellij.debug.agent") != null) {
-      System.err.println("Capture agent: more than one agent is not allowed, skipping");
-      return;
-    }
-    System.setProperty("intellij.debug.agent", "true");
-
+  public static void init(String args, Instrumentation instrumentation) {
     ourInstrumentation = instrumentation;
     try {
       readSettings(args);

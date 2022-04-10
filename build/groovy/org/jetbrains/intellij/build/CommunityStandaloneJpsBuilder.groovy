@@ -27,13 +27,19 @@ final class CommunityStandaloneJpsBuilder {
     new LayoutBuilder(buildContext).process(targetDir, projectStructureMapping, copyFiles) {
       zip(getZipName(buildNumber)) {
         jar("util.jar") {
-          module("intellij.platform.util.rt")
           module("intellij.platform.util")
           module("intellij.platform.util.classLoader")
           module("intellij.platform.util.text.matching")
           module("intellij.platform.util.base")
           module("intellij.platform.util.xmlDom")
+          module("intellij.platform.util.jdom")
           module("intellij.platform.tracing.rt")
+          module("intellij.platform.util.diff")
+          module("intellij.platform.util.rt.java8")
+        }
+
+        jar("util_rt.jar") {
+          module("intellij.platform.util.rt")
         }
 
         jar("jps-launcher.jar") {
@@ -85,7 +91,7 @@ final class CommunityStandaloneJpsBuilder {
         jar("space-java-jps.jar") { module("intellij.space.java.jps") }
 
         for (String name in List.of(
-          "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
+          "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
           "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
           "jetbrains-annotations-java5", "gson", "jps-javac-extension", "fastutil-min", "kotlin-stdlib-jdk8",
           "commons-lang3", "maven-resolver-provider", "netty-buffer", "aalto-xml"

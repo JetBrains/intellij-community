@@ -452,4 +452,8 @@
   <action id="ShowContent">
     <keyboard-shortcut first-keystroke="shift meta alt DOWN"/>
   </action>
+
+  <action id="TextSearchAction">
+    <keyboard-shortcut first-keystroke="shift ctrl alt E"/>
+  </action>
 </keymap>

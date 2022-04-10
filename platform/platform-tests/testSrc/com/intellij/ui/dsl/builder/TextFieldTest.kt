@@ -31,14 +31,6 @@ class TextFieldTest {
         assertEquals(textField.component.text, localProperty)
       }
     }
-
-    panel {
-      row {
-        val textField = textField()
-          .bindText(PropertyBinding({ localProperty }, { localProperty = it }))
-        assertEquals(textField.component.text, localProperty)
-      }
-    }
   }
 
   @Test

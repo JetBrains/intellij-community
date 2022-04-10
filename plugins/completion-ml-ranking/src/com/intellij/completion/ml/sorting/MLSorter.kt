@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.completion.ml.sorting
 
@@ -140,9 +140,14 @@ class MLSorter : CompletionFinalSorter() {
       val features = elementFeatureProvider.calculateFeatures(calculatedElementFeatures)
       lookupFeatures.putAll(features)
     }
+    val additionalContextFeatures = mutableMapOf<String, String>()
+    for (contextFeatureProvider in AdditionalContextFeatureProvider.forLanguage(lookupStorage.language)) {
+      val features = contextFeatureProvider.calculateFeatures(lookupStorage.contextFactors)
+      additionalContextFeatures.putAll(features)
+    }
 
+    val contextFactors = lookupStorage.contextFactors + additionalContextFeatures
     val commonSessionFactors = SessionFactorsUtils.updateSessionFactors(lookupStorage, items)
-    val contextFactors = lookupStorage.contextFactors
     val meaningfulRelevance = meaningfulRelevanceExtractor.meaningfulFeatures()
     val features = RankingFeatures(lookupStorage.userFactors, contextFactors, commonSessionFactors, lookupFeatures, meaningfulRelevance)
 

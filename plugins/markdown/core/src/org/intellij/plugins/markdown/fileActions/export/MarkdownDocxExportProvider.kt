@@ -10,11 +10,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.MarkdownNotifier
 import org.intellij.plugins.markdown.fileActions.MarkdownFileActionFormat
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.settings.pandoc.PandocExecutableDetector
+import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import java.util.*
 
 internal class MarkdownDocxExportProvider : MarkdownExportProvider {
@@ -26,8 +26,11 @@ internal class MarkdownDocxExportProvider : MarkdownExportProvider {
   }
 
   override fun validate(project: Project, file: VirtualFile): String? {
+    val detected = PandocExecutableDetector.detect(project)
+
     return when {
-      PandocExecutableDetector.detect().isEmpty() -> MarkdownBundle.message("markdown.export.to.docx.failure.msg")
+      detected == null -> MarkdownBundle.message("markdown.settings.pandoc.executable.run.in.safe.mode")
+      detected.isEmpty() -> MarkdownBundle.message("markdown.export.to.docx.failure.msg")
       else -> null
     }
   }
@@ -48,19 +51,27 @@ internal class MarkdownDocxExportProvider : MarkdownExportProvider {
     }
 
     override fun onThrowable(error: Throwable) {
-      MarkdownNotifier.showErrorNotification(project, "[${mdFile.name}] ${error.localizedMessage}")
+      MarkdownNotifications.showError(
+        project,
+        id = MarkdownExportProvider.Companion.NotificationIds.exportFailed,
+        message = "[${mdFile.name}] ${error.localizedMessage}"
+      )
     }
 
     override fun onSuccess() {
       if (output.stderrLines.isEmpty()) {
         MarkdownImportExportUtils.refreshProjectDirectory(project, mdFile.parent.path)
-        MarkdownNotifier.showInfoNotification(
+        MarkdownNotifications.showInfo(
           project,
-          MarkdownBundle.message("markdown.export.success.msg", mdFile.name)
+          id = MarkdownExportProvider.Companion.NotificationIds.exportSuccess,
+          message = MarkdownBundle.message("markdown.export.success.msg", mdFile.name)
         )
-      }
-      else {
-        MarkdownNotifier.showErrorNotification(project, "[${mdFile.name}] ${output.stderrLines.joinToString("\n")}")
+      } else {
+        MarkdownNotifications.showError(
+          project,
+          id = MarkdownExportProvider.Companion.NotificationIds.exportFailed,
+          message = "[${mdFile.name}] ${output.stderrLines.joinToString("\n")}"
+        )
       }
     }
 

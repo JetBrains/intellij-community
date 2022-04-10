@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.updater;
 
 import com.intellij.concurrency.JobScheduler;
@@ -25,6 +25,7 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
   private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 5 * 60 * 1000;
   private static final int CHECK_STATISTICS_PROVIDERS_DELAY_IN_MIN = 1;
   private static final int CHECK_EXTERNAL_UPLOADER_DELAY_IN_MIN = 3;
+  private static final String REDUCE_DELAY_FLAG_KEY = "fus.internal.reduce.initial.delay";
 
   StatisticsJobsScheduler() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -47,6 +48,7 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
   }
 
   private static void runValidationRulesUpdate() {
+    int initialDelay = Boolean.parseBoolean(System.getProperty(REDUCE_DELAY_FLAG_KEY)) ? 0 : 3;
     JobScheduler.getScheduler().scheduleWithFixedDelay(
       () -> {
         final List<StatisticsEventLoggerProvider> providers = StatisticsEventLogProviderUtil.getEventLogProviders();
@@ -55,7 +57,7 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
             IntellijSensitiveDataValidator.getInstance(provider.getRecorderId()).update();
           }
         }
-      }, 3, 180, TimeUnit.MINUTES);
+      }, initialDelay, 180, TimeUnit.MINUTES);
   }
 
   private static void checkPreviousExternalUploadResult() {

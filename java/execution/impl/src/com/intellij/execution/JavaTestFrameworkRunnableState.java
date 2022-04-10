@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -200,8 +200,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   /**
    * @deprecated Use {@link #createSearchingForTestsTask(TargetEnvironment)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public @Nullable SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
     return null;
   }
@@ -498,7 +497,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected static PsiJavaModule findJavaModule(Module module, boolean inTests) {
     return DumbService.getInstance(module.getProject())
-      .computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findDescriptorByModule(module, inTests));
+      .computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findNonAutomaticDescriptorByModule(module, inTests));
   }
 
   private void configureModulePath(JavaParameters javaParameters, @NotNull Module module) {

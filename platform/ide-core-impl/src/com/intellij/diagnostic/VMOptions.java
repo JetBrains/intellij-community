@@ -301,7 +301,6 @@ public final class VMOptions {
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated ignores write errors; please use {@link #setOption(MemoryKind, int)} instead */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static void writeOption(@NotNull MemoryKind option, int value) {
     try {
@@ -314,7 +313,6 @@ public final class VMOptions {
 
   /** @deprecated ignores write errors; please use {@link #setProperty} instead */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static void writeOption(@NotNull String option, @NotNull String separator, @NotNull String value) {
     try {
       setOption("-D" + option + separator, value);
@@ -331,7 +329,6 @@ public final class VMOptions {
    * Please use {@link #readOption}/{@link #setOption} methods instead.
    */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static @Nullable String read() {
     try {
       Path newFile = getUserOptionsFile();
@@ -353,14 +350,12 @@ public final class VMOptions {
 
   /** @deprecated please see {@link #read()} for details */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static @Nullable Path getWriteFile() {
     return getUserOptionsFile();
   }
 
   /** @deprecated the name is no longer accurate; please use {@link #getFileName()} instead */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static @NotNull String getCustomVMOptionsFileName() {
     return getFileName();
   }

@@ -4,6 +4,6 @@ interface Base {
     val notNull: String
 }
 
-class Tesst : Base {
+class Test : Base {
     override val notNull<caret> = java.lang.String.valueOf("")
 }

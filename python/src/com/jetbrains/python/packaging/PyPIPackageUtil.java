@@ -18,7 +18,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
+import com.intellij.util.io.RequestBuilder;
 import com.intellij.webcore.packaging.RepoPackage;
+import com.jetbrains.python.packaging.repository.PyPackageRepositories;
+import com.jetbrains.python.packaging.repository.PyPackageRepositoryUtil;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -30,10 +33,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -129,15 +129,34 @@ public class PyPIPackageUtil {
   }
 
   public void loadAdditionalPackages(@NotNull List<String> repositories, boolean alwaysRefresh) throws IOException {
+    var failedToConnect = new ArrayList<String>();
     if (alwaysRefresh) {
       for (String url : repositories) {
-        myAdditionalPackages.refresh(url);
+        try {
+          myAdditionalPackages.refresh(url);
+        }
+        catch (Exception e) {
+          LOG.error("Error connecting to " + url, e);
+          failedToConnect.add(url);
+          ApplicationManager.getApplication().getService(PyPackageRepositories.class).markInvalid(url);
+        }
       }
     }
     else {
       for (String url : repositories) {
-        getCachedValueOrRethrowIO(myAdditionalPackages, url);
+        try {
+          getCachedValueOrRethrowIO(myAdditionalPackages, url);
+        }
+        catch (Exception e) {
+          LOG.warn("Error connecting to " + url, e);
+          failedToConnect.add(url);
+          ApplicationManager.getApplication().getService(PyPackageRepositories.class).markInvalid(url);
+        }
       }
+    }
+    if (!failedToConnect.isEmpty()) {
+      PyPackageService packageService = ApplicationManager.getApplication().getService(PyPackageService.class);
+      failedToConnect.forEach(repo -> packageService.removeRepository(repo));
     }
   }
 
@@ -320,7 +339,15 @@ public class PyPIPackageUtil {
   @NotNull
   public static List<String> parsePyPIListFromWeb(@NotNull String url) throws IOException {
     LOG.info("Fetching index of all packages available on " + url);
-    return HttpRequests.request(url).userAgent(getUserAgent()).connect(request -> {
+    RequestBuilder builder = HttpRequests.request(url).userAgent(getUserAgent());
+
+    PyPackageRepositories service = ApplicationManager.getApplication().getService(PyPackageRepositories.class);
+    service.getRepositories().stream()
+      .filter(repo -> url.equals(repo.getRepositoryUrl()))
+      .findFirst()
+      .ifPresent(repository -> PyPackageRepositoryUtil.withBasicAuthorization(builder, repository));
+
+    return builder.connect(request -> {
       final List<String> packages = new ArrayList<>();
       final Reader reader = request.getReader();
       new ParserDelegator().parse(reader, new HTMLEditorKit.ParserCallback() {

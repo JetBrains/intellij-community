@@ -1,8 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actionsOnSave.impl;
 
+import com.intellij.ide.actions.SaveDocumentAction;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionResult;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -38,6 +44,27 @@ public final class ActionsOnSaveFileDocumentManagerListener implements FileDocum
    * Not empty state of this set means that processing has been scheduled (invokeLater(...)) but bot yet performed.
    */
   private final Set<Document> myDocumentsToProcess = new HashSet<>();
+
+  @Override
+  public void beforeDocumentSaving(@NotNull Document document) {
+    if (!CurrentActionHolder.getInstance().myRunningSaveDocumentAction) {
+      // There are hundreds of places in IntelliJ codebase where saveDocument() is called. IDE and plugins may decide to save some specific
+      // document at any time. Sometimes a document is saved on typing (com.intellij.openapi.vcs.ex.LineStatusTrackerKt.saveDocumentWhenUnchanged).
+      // Running Actions on Save on each document save might be unexpected and frustrating (Actions on Save might take noticeable time to run, they may
+      // update the document in the editor). So the Platform won't run Actions on Save when an individual file is being saved, unless this
+      // is caused by an explicit 'Save document' action.
+      return;
+    }
+
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      for (ActionOnSave saveAction : EP_NAME.getExtensionList()) {
+        if (saveAction.isEnabledForProject(project)) {
+          scheduleDocumentsProcessing(new Document[]{document});
+          return;
+        }
+      }
+    }
+  }
 
   @Override
   public void beforeAllDocumentsSaving() {
@@ -99,5 +126,30 @@ public final class ActionsOnSaveFileDocumentManagerListener implements FileDocum
     for (Document document : processedDocuments) {
       manager.saveDocument(document);
     }
+  }
+
+
+  public static class CurrentActionListener implements AnActionListener {
+    @Override
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+      if (action instanceof SaveDocumentAction) {
+        CurrentActionHolder.getInstance().myRunningSaveDocumentAction = true;
+      }
+    }
+
+    @Override
+    public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
+      CurrentActionHolder.getInstance().myRunningSaveDocumentAction = false;
+    }
+  }
+
+
+  @Service
+  public static final class CurrentActionHolder {
+    public static CurrentActionHolder getInstance() {
+      return ApplicationManager.getApplication().getService(CurrentActionHolder.class);
+    }
+
+    private boolean myRunningSaveDocumentAction;
   }
 }

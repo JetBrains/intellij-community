@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.EditorTextField
@@ -243,11 +244,12 @@ class SingleLanguageInlayHintsSettingsPanel(
         val document = myEditorTextField.document
         val fileType = myLanguage.associatedFileType ?: PlainTextFileType.INSTANCE
         ReadAction.nonBlocking(Callable {
-          model.createFile(myProject, fileType, document)
+          val psiFile = model.createFile(myProject, fileType, document)
+          myCurrentProvider.collectData(editor, psiFile)
         })
-          .finishOnUiThread(ModalityState.defaultModalityState()) { psiFile ->
+          .finishOnUiThread(ModalityState.defaultModalityState()) { continuation ->
             ApplicationManager.getApplication().runWriteAction {
-              myCurrentProvider.collectAndApply(editor, psiFile)
+              continuation.run()
             }
           }
           .inSmartMode(myProject)
@@ -287,13 +289,20 @@ class SingleLanguageInlayHintsSettingsPanel(
   override fun isCopyVisible(dataContext: DataContext): Boolean = false
 }
 
+internal val SETTINGS_EDITOR_MARKER: Key<Boolean> = Key.create("inlay.settings.editor")
+
+fun isInlaySettingsEditor(editor: Editor) : Boolean {
+  return editor.getUserData(SETTINGS_EDITOR_MARKER) == true
+}
+
 fun createEditor(language: Language,
                  project: Project,
                  updateHints: (editor: Editor) -> Any): EditorTextField {
   val fileType: FileType = language.associatedFileType ?: FileTypes.PLAIN_TEXT
-  val editorField = object : EditorTextField(null, project, fileType, false, false) {
+  val editorField = object : EditorTextField(null, project, fileType, true, false) {
     override fun createEditor(): EditorEx {
       val editor = super.createEditor()
+      editor.putUserData(SETTINGS_EDITOR_MARKER, true)
       updateHints(editor)
       return editor
     }

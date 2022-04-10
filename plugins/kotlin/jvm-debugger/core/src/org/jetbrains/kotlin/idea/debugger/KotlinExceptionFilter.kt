@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import java.lang.Math.max
-import java.util.*
 import java.util.regex.Pattern
 
 class KotlinExceptionFilterFactory : ExceptionFilterFactory {
@@ -23,12 +22,10 @@ class KotlinExceptionFilterFactory : ExceptionFilterFactory {
     }
 }
 
-class KotlinExceptionFilter(private val searchScope: GlobalSearchScope) : Filter {
-    private val exceptionFilter = ExceptionFilter(searchScope)
-
+class KotlinExceptionFilter(private val searchScope: GlobalSearchScope) : ExceptionFilter(searchScope) {
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
         return runReadAction {
-            val result = exceptionFilter.applyFilter(line, entireLength)
+            val result = super.applyFilter(line, entireLength)
             if (result == null) parseNativeStackTraceLine(line, entireLength) else patchResult(result, line)
         }
     }

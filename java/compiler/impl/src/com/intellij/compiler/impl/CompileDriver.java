@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
@@ -34,7 +34,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -376,7 +375,6 @@ public final class CompileDriver {
                                    status = ExitStatus.ERRORS;
                                    break;
                                  case SUCCESS:
-                                   status = ExitStatus.SUCCESS;
                                    break;
                                  case UP_TO_DATE:
                                    status = ExitStatus.UP_TO_DATE;
@@ -596,14 +594,12 @@ public final class CompileDriver {
         final String statusMessage = createStatusMessage(_status, warningCount, errorCount, duration);
         final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
         if (duration > ONE_MINUTE_MS && CompilerWorkspaceConfiguration.getInstance(myProject).DISPLAY_NOTIFICATION_POPUP) {
-          String toolWindowId = Registry.is("ide.jps.use.build.tool.window", true) ?
-                                BuildContentManager.TOOL_WINDOW_ID : ToolWindowId.MESSAGES_WINDOW;
+          String toolWindowId = useBuildToolWindow() ? BuildContentManager.TOOL_WINDOW_ID : ToolWindowId.MESSAGES_WINDOW;
           ToolWindowManager.getInstance(myProject).notifyByBalloon(toolWindowId, messageType, statusMessage);
         }
 
-        final String wrappedMessage = _status != ExitStatus.UP_TO_DATE ?
-                                      HtmlChunk.link("#", statusMessage).toString() : statusMessage;
-        final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(wrappedMessage, messageType.toNotificationType())
+        String wrappedMessage = _status == ExitStatus.UP_TO_DATE ? statusMessage : HtmlChunk.link("#", statusMessage).toString();
+        Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(wrappedMessage, messageType.toNotificationType())
           .setListener(new BuildToolWindowActivationListener(compileContext))
           .setImportant(false);
         compileContext.getBuildSession().registerCloseAction(notification::expire);
@@ -761,7 +757,7 @@ public final class CompileDriver {
         return false;
       }
 
-      //we do not trust the CompilerDriverUnknownSdkTracker, to extra check has to be done anyways
+      //we do not trust the CompilerDriverUnknownSdkTracker, to extra check has to be done anyway
       return validateJdks(scopeModules, false);
     }
     else {
@@ -906,7 +902,7 @@ public final class CompileDriver {
     }
   }
 
-  private static class BuildToolWindowActivationListener extends NotificationListener.Adapter {
+  private static final class BuildToolWindowActivationListener extends NotificationListener.Adapter {
     private final WeakReference<Project> myProjectRef;
     private final Object myContentId;
 
@@ -917,23 +913,23 @@ public final class CompileDriver {
 
     @Override
     protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-      final Project project = myProjectRef.get();
-      boolean useBuildToolwindow = Registry.is("ide.jps.use.build.tool.window", true);
+      Project project = myProjectRef.get();
+      boolean useBuildToolwindow = useBuildToolWindow();
       String toolWindowId = useBuildToolwindow ? BuildContentManager.TOOL_WINDOW_ID : ToolWindowId.MESSAGES_WINDOW;
-      if (project != null && !project.isDisposed()) {
-        if (useBuildToolwindow || CompilerMessagesService.showCompilerContent(project, myContentId)) {
-          final ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
-          if (tw != null) {
-            tw.activate(null, false);
-          }
-        }
-        else {
-          notification.expire();
+      if (project != null && !project.isDisposed() &&
+          (useBuildToolwindow || CompilerMessagesService.showCompilerContent(project, myContentId))) {
+        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
+        if (toolWindow != null) {
+          toolWindow.activate(null, false);
         }
       }
       else {
         notification.expire();
       }
     }
+  }
+
+  private static boolean useBuildToolWindow() {
+    return SystemProperties.getBooleanProperty("ide.jps.use.build.tool.window", true);
   }
 }

@@ -6,22 +6,22 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
+import com.intellij.util.Alarm
 import training.featuresSuggester.DocumentationSuggestion
 import training.featuresSuggester.FeatureSuggesterBundle
 import training.featuresSuggester.PopupSuggestion
 import training.featuresSuggester.TipSuggestion
 import training.featuresSuggester.settings.FeatureSuggesterSettings
 import training.featuresSuggester.statistics.FeatureSuggesterStatistics
-import training.featuresSuggester.statistics.FeatureSuggesterStatistics.Companion.NOTIFICATION_DONT_SUGGEST_EVENT_ID
-import training.featuresSuggester.statistics.FeatureSuggesterStatistics.Companion.NOTIFICATION_LEARN_MORE_EVENT_ID
-import training.featuresSuggester.statistics.FeatureSuggesterStatistics.Companion.NOTIFICATION_SHOWED_EVENT_ID
 
 interface SuggestionPresenter {
-  fun showSuggestion(project: Project, suggestion: PopupSuggestion)
+  fun showSuggestion(project: Project, suggestion: PopupSuggestion, disposable: Disposable)
 }
 
 @Suppress("UnstableApiUsage", "DialogTitleCapitalization")
@@ -30,7 +30,7 @@ class NotificationSuggestionPresenter :
   private val notificationGroup: NotificationGroup = NotificationGroupManager.getInstance()
     .getNotificationGroup("IDE Feature Suggester")
 
-  override fun showSuggestion(project: Project, suggestion: PopupSuggestion) {
+  override fun showSuggestion(project: Project, suggestion: PopupSuggestion, disposable: Disposable) {
     val notification = notificationGroup.createNotification(
       title = FeatureSuggesterBundle.message("notification.title"),
       content = suggestion.message,
@@ -51,7 +51,8 @@ class NotificationSuggestionPresenter :
     }
 
     notification.notify(project)
-    FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_SHOWED_EVENT_ID, suggestion.suggesterId)
+    Alarm(disposable).addRequest(notification::expire, 10000, ModalityState.any())
+    FeatureSuggesterStatistics.logNotificationShowed(suggestion.suggesterId)
   }
 
   private fun createDontSuggestAction(notification: Notification, suggestion: PopupSuggestion): AnAction {
@@ -60,7 +61,7 @@ class NotificationSuggestionPresenter :
         val settings = FeatureSuggesterSettings.instance()
         settings.setEnabled(suggestion.suggesterId, false)
         notification.hideBalloon()
-        FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_DONT_SUGGEST_EVENT_ID, suggestion.suggesterId)
+        FeatureSuggesterStatistics.logNotificationDontSuggest(suggestion.suggesterId)
       }
     }
   }
@@ -78,7 +79,7 @@ class NotificationSuggestionPresenter :
       override fun actionPerformed(e: AnActionEvent) {
         BrowserUtil.open(suggestion.documentURL)
         notification.hideBalloon()
-        FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_LEARN_MORE_EVENT_ID, suggestion.suggesterId)
+        FeatureSuggesterStatistics.logNotificationLearnMore(suggestion.suggesterId)
       }
     }
   }
@@ -93,7 +94,7 @@ class NotificationSuggestionPresenter :
       override fun actionPerformed(e: AnActionEvent) {
         SingleTipDialog.showForProject(project, tip)
         notification.hideBalloon()
-        FeatureSuggesterStatistics.sendStatistics(NOTIFICATION_LEARN_MORE_EVENT_ID, suggestion.suggesterId)
+        FeatureSuggesterStatistics.logNotificationLearnMore(suggestion.suggesterId)
       }
     }
   }

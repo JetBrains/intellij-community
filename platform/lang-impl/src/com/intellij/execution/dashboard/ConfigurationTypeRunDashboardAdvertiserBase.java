@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.ExecutionBundle;
@@ -27,7 +27,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 public abstract class ConfigurationTypeRunDashboardAdvertiserBase implements RunManagerListener, Disposable {
-  private static final String DASHBOARD_NOTIFICATION_GROUP_ID = "Services Tool Window";
+  public static final String DASHBOARD_NOTIFICATION_GROUP_ID = "Services Tool Window";
   private static final String DASHBOARD_MULTIPLE_RUN_CONFIGURATIONS_NOTIFICATION_ID = "run.dashboard.multiple.run.configurations";
   private static final String SHOW_RUN_DASHBOARD_NOTIFICATION = "show.run.dashboard.notification";
 
@@ -94,6 +94,7 @@ public abstract class ConfigurationTypeRunDashboardAdvertiserBase implements Run
       .createNotification(ExecutionBundle.message("run.dashboard.multiple.run.config.notification", typeDisplayName, toolWindowName),
                           NotificationType.INFORMATION)
       .setDisplayId(DASHBOARD_MULTIPLE_RUN_CONFIGURATIONS_NOTIFICATION_ID)
+      .setSuggestionType(true)
       .setIcon(AllIcons.Nodes.Services)
       .addAction(new NotificationAction(ExecutionBundle.message("run.dashboard.use.services.action", toolWindowName)) {
         @Override

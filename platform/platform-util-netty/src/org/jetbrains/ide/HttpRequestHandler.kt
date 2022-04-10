@@ -63,6 +63,12 @@ abstract class HttpRequestHandler {
     return if (request.isLocalOrigin()) OriginCheckResult.ALLOW else OriginCheckResult.FORBID
   }
 
+  /**
+   * Note that changes of [request] object in methods that overrides [isSupported] are highly undesirable. The same mutable [request] object
+   * (as [FullHttpRequest] is mutable) is passed to every registered [HttpRequestHandler] until the first handler that accepts the request.
+   * If one [isSupported] method changes [request] then other services in the chain are affected by this change and might function
+   * improperly.
+   */
   open fun isSupported(request: FullHttpRequest): Boolean {
     return request.method() === HttpMethod.GET || request.method() === HttpMethod.HEAD
   }

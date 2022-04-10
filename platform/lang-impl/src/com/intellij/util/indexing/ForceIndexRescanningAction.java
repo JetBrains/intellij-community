@@ -3,7 +3,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +12,7 @@ final class ForceIndexRescanningAction extends DumbAwareAction {
     Project project = e.getProject();
     if (project == null) return;
     UnindexedFilesUpdater task = new UnindexedFilesUpdater(project,
+                                                           false,
                                                            false,
                                                            null,
                                                            "Force re-scanning");

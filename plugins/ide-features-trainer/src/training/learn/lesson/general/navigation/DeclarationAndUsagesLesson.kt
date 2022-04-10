@@ -22,7 +22,7 @@ import training.util.isToStringContains
 abstract class DeclarationAndUsagesLesson
   : KLesson("Declaration and usages", LessonsBundle.message("declaration.and.usages.lesson.name")) {
   abstract fun LessonContext.setInitialPosition()
-  abstract override val existedFile: String
+  abstract override val sampleFilePath: String
   abstract val entityName: String
 
   override val lessonContent: LessonContext.() -> Unit
@@ -73,7 +73,7 @@ abstract class DeclarationAndUsagesLesson
         }
         text(LessonsBundle.message("declaration.and.usages.find.usages", action(it)))
 
-        triggerByUiComponentAndHighlight { ui: BaseLabel ->
+        triggerAndFullHighlight().component { ui: BaseLabel ->
           ui.javaClass.simpleName == "ContentTabLabel" && ui.text.isToStringContains(entityName)
         }
         restoreIfModifiedOrMoved()
@@ -89,7 +89,7 @@ abstract class DeclarationAndUsagesLesson
             previous.ui?.let { usagesTab -> jComponent(usagesTab).rightClick() }
           }
         }
-        triggerByUiComponentAndHighlight(highlightInside = false) { ui: ActionMenuItem ->
+        triggerAndBorderHighlight().component { ui: ActionMenuItem ->
           ui.text.isToStringContains(pinTabText)
         }
         restoreByUi()

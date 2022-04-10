@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -39,6 +38,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.components.DropDownLink;
@@ -50,6 +50,7 @@ import com.jetbrains.python.packaging.PyPackageManagers;
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,7 +116,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       customUiProvider == null ? null : new Pair<>(customUiProvider, myDisposable);
 
     final JButton additionalAction;
-    if (Experiments.getInstance().isFeatureEnabled("python.use.targets.api")) {
+    if (Registry.get("python.use.targets.api").asBoolean()) {
       additionalAction = new DropDownLink<>(PyBundle.message("active.sdk.dialog.link.add.interpreter.text"),
                                             link -> createAddInterpreterPopup(project, module, link, this::updateSdkListAndSelect));
     }
@@ -129,11 +130,11 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myProjectSdksModel = myInterpreterList.getModel();
   }
 
-  @NotNull
-  private static ListPopup createAddInterpreterPopup(@NotNull Project project,
-                                                     @Nullable Module module,
-                                                     @NotNull Component dataContextComponent,
-                                                     @NotNull Consumer<Sdk> onSdkCreated) {
+  @ApiStatus.Internal
+  public static @NotNull ListPopup createAddInterpreterPopup(@NotNull Project project,
+                                                             @Nullable Module module,
+                                                             @NotNull Component dataContextComponent,
+                                                             @NotNull Consumer<Sdk> onSdkCreated) {
     DataContext dataContext = DataManager.getInstance().getDataContext(dataContextComponent);
     List<AnAction> actions = AddInterpreterActions.collectAddInterpreterActions(project, module, onSdkCreated);
     return JBPopupFactory.getInstance().createActionGroupPopup(

@@ -19,8 +19,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.ResolveResult
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class JavaUQualifiedReferenceExpression(
   override val sourcePsi: PsiJavaCodeReferenceElement,
   givenParent: UElement?
@@ -29,7 +31,7 @@ class JavaUQualifiedReferenceExpression(
     sourcePsi.qualifier?.let { JavaConverter.convertPsiElement(it, this) as? UExpression } ?: UastEmptyExpression(this)
   }
 
-  override val selector: JavaUSimpleNameReferenceExpression by lz {
+  override val selector: USimpleNameReferenceExpression by lz {
     JavaUSimpleNameReferenceExpression(sourcePsi.referenceNameElement, sourcePsi.referenceName ?: "<error>", this, sourcePsi)
   }
 

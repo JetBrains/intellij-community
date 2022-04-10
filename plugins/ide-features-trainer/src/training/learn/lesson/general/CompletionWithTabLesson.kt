@@ -20,7 +20,7 @@ abstract class CompletionWithTabLesson(private val proposal: String) :
 
       task("CodeCompletion") {
         text(LessonsBundle.message("completion.with.tab.begin.completion", action(it), code(proposal)))
-        triggerByListItemAndHighlight { item -> item.isToStringContains(proposal) }
+        triggerAndBorderHighlight().listItem { item -> item.isToStringContains(proposal) }
         restoreIfModifiedOrMoved()
         test { actions(it) }
       }

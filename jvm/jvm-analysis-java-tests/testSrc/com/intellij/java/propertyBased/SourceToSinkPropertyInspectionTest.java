@@ -49,7 +49,7 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_16;
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   public void testSinkToSourceFlowIsReported() {

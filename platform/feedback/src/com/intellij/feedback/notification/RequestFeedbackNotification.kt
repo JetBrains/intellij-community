@@ -6,7 +6,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 
 /**
- * Basic notification for Kotlin feedback requests
+ * Basic notification for feedback requests
  */
 
 class RequestFeedbackNotification : Notification(

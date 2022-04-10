@@ -7,6 +7,7 @@ import com.intellij.execution.impl.EditConfigurationsDialog
 import com.intellij.execution.impl.ProjectRunConfigurationConfigurable
 import com.intellij.execution.impl.RunConfigurable
 import com.intellij.execution.impl.SingleConfigurationConfigurable
+import com.intellij.execution.runToolbar.data.RWWaitingForAProcesses
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
@@ -47,7 +48,7 @@ interface RunToolbarData {
   val id: String
   var configuration: RunnerAndConfigurationSettings?
   val environment: ExecutionEnvironment?
-  val waitingForAProcesses: WaitingForAProcesses
+  val waitingForAProcesses: RWWaitingForAProcesses
 
   fun clear()
 }
@@ -62,7 +63,7 @@ internal fun AnActionEvent.runToolbarData(): RunToolbarData? {
   return this.dataContext.runToolbarData()
 }
 
-internal fun DataContext.runToolbarData(): RunToolbarData? {
+fun DataContext.runToolbarData(): RunToolbarData? {
   return this.getData(RunToolbarData.RUN_TOOLBAR_DATA_KEY)
 }
 
@@ -82,7 +83,7 @@ internal fun AnActionEvent.isActiveProcess(): Boolean {
   return this.environment() != null
 }
 
-internal fun RunToolbarData.startWaitingForAProcess(project: Project, settings: RunnerAndConfigurationSettings, executorId: String) {
+fun RunToolbarData.startWaitingForAProcess(project: Project, settings: RunnerAndConfigurationSettings, executorId: String) {
   RunToolbarSlotManager.getInstance(project).startWaitingForAProcess(this, settings, executorId)
 }
 

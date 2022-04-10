@@ -198,8 +198,12 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   protected Project createProjectFromTemplate(@NotNull Consumer<NewProjectWizardStep> adjuster) throws IOException {
+    return createProjectFromTemplate(UIBundle.message("label.project.wizard.project.generator.name"), adjuster);
+  }
+
+  protected Project createProjectFromTemplate(@NotNull String group, @NotNull Consumer<NewProjectWizardStep> adjuster) throws IOException {
     return createProject(step -> {
-      var npwStep = getNewProjectWizardStep(step, UIBundle.message("label.project.wizard.project.generator.name"));
+      var npwStep = getNewProjectWizardStep(step, group);
       if (npwStep != null) {
         adjuster.accept(npwStep);
       }
@@ -214,8 +218,16 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   protected Module createModuleFromTemplate(@NotNull Project project, @NotNull Consumer<NewProjectWizardStep> adjuster) throws IOException {
-    return createModuleFromTemplate(UIBundle.message("label.project.wizard.module.generator.name"), null, project, step -> {
-      var npwStep = getNewProjectWizardStep(step, UIBundle.message("label.project.wizard.module.generator.name"));
+    return createModuleFromTemplate(project, UIBundle.message("label.project.wizard.module.generator.name"), adjuster);
+  }
+
+  protected Module createModuleFromTemplate(
+    @NotNull Project project,
+    @NotNull String group,
+    @NotNull Consumer<NewProjectWizardStep> adjuster
+  ) throws IOException {
+    return createModuleFromTemplate(group, null, project, step -> {
+      var npwStep = getNewProjectWizardStep(step, group);
       if (npwStep != null) {
         adjuster.accept(npwStep);
       }

@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,7 +44,6 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.CollectionFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -81,7 +81,7 @@ public class ConsoleHistoryController implements Disposable {
   private final LanguageConsoleView myConsole;
   private final AnAction myHistoryNext = new MyAction(true, getKeystrokesUpDown(true));
   private final AnAction myHistoryPrev = new MyAction(false, getKeystrokesUpDown(false));
-  private final AnAction myBrowseHistory = new MyBrowseAction();
+  private final AnAction myBrowseHistory = createBrowseAction();
   private boolean myMultiline;
   private ModelHelper myHelper;
   private long myLastSaveStamp;
@@ -89,8 +89,7 @@ public class ConsoleHistoryController implements Disposable {
   /**
    * @deprecated use {@link #ConsoleHistoryController(ConsoleRootType, String, LanguageConsoleView)} or {@link #ConsoleHistoryController(ConsoleRootType, String, LanguageConsoleView, ConsoleHistoryModel)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public ConsoleHistoryController(@NotNull String type, @Nullable String persistenceId, @NotNull LanguageConsoleView console) {
     this(new ConsoleRootType(type, null) { }, persistenceId, console);
   }
@@ -341,7 +340,11 @@ public class ConsoleHistoryController implements Disposable {
 
 
 
-  private class MyBrowseAction extends DumbAwareAction {
+  protected BrowseAction createBrowseAction() {
+    return new BrowseAction();
+  }
+
+  protected class BrowseAction extends DumbAwareAction {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -351,7 +354,7 @@ public class ConsoleHistoryController implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      String title = LangBundle.message("dialog.title.history", myConsole.getTitle());
+      String title = getTitle();
       final ContentChooser<String> chooser = new ContentChooser<>(myConsole.getProject(), title, true, true) {
         {
           setOKButtonText(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE));
@@ -408,6 +411,13 @@ public class ConsoleHistoryController implements Disposable {
       if (chooser.showAndGet() && myConsole.getCurrentEditor().getComponent().isShowing()) {
         setConsoleText(new Entry(chooser.getSelectedText(), -1), false, true);
       }
+    }
+
+
+    @NotNull
+    @NlsContexts.DialogTitle
+    protected String getTitle() {
+      return LangBundle.message("dialog.title.history", myConsole.getTitle());
     }
   }
 

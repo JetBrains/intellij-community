@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.configuration.findApplicableConfigurator
 import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
-import org.jetbrains.kotlin.idea.facet.getCleanRuntimeLibraryVersion
+import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.psi.KtFile
@@ -57,7 +57,7 @@ sealed class ChangeGeneralLanguageFeatureSupportFix(
                 additionalArguments = additionalArguments.replaceLanguageFeature(
                     feature,
                     featureSupport,
-                    file.module?.let { getCleanRuntimeLibraryVersion(it) },
+                    file.module?.let { getRuntimeLibraryVersion(it) },
                     separator = " ",
                     quoted = false
                 )

@@ -2,26 +2,23 @@ package com.intellij.settingsSync
 
 import com.intellij.configurationStore.ApplicationStoreImpl
 import com.intellij.configurationStore.StateLoadPolicy
-import com.intellij.configurationStore.getDefaultStoragePathSpec
-import com.intellij.configurationStore.serializeStateInto
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
-import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.keymap.impl.KeymapImpl
+import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.replaceService
 import com.intellij.util.io.createDirectories
-import com.intellij.util.toByteArray
-import com.intellij.util.xmlb.Constants
+import com.intellij.util.toBufferExposingByteArray
 import kotlinx.coroutines.runBlocking
-import org.jdom.Element
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -30,12 +27,12 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.nio.charset.StandardCharsets.UTF_8
+import java.nio.charset.Charset
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-private val TIMEOUT_UNIT = TimeUnit.MINUTES
+private val TIMEOUT_UNIT = TimeUnit.SECONDS
 
 @RunWith(JUnit4::class)
 internal class SettingsSyncTest {
@@ -45,7 +42,7 @@ internal class SettingsSyncTest {
   private val disposableRule = DisposableRule()
   @Rule @JvmField val ruleChain: RuleChain = RuleChain.outerRule(tempDirManager).around(appRule).around(disposableRule)
 
-  private lateinit var application: Application
+  private lateinit var application: ApplicationImpl
   private lateinit var configDir: Path
   private lateinit var componentStore: TestComponentStore
   private lateinit var remoteCommunicator: TestRemoteCommunicator
@@ -54,11 +51,13 @@ internal class SettingsSyncTest {
 
   @Before
   fun setup() {
-    application = ApplicationManager.getApplication() as ApplicationEx
+    application = ApplicationManager.getApplication() as ApplicationImpl
     val mainDir = tempDirManager.createDir()
     configDir = mainDir.resolve("rootconfig").createDirectories()
     componentStore = TestComponentStore(configDir)
     remoteCommunicator = TestRemoteCommunicator()
+
+    application.replaceService(IComponentStore::class.java, componentStore, disposableRule.disposable)
   }
 
   @After
@@ -68,9 +67,11 @@ internal class SettingsSyncTest {
 
   private fun initSettingsSync() {
     val settingsSyncStorage = configDir.resolve("settingsSync")
-    val controls = SettingsSyncMain.init(application, disposableRule.disposable, settingsSyncStorage, configDir, componentStore, remoteCommunicator)
+    val controls = SettingsSyncMain.init(application, disposableRule.disposable, settingsSyncStorage, configDir, componentStore,
+                                         remoteCommunicator, enabledCondition = { true })
     updateChecker = controls.updateChecker
     bridge = controls.bridge
+    bridge.initialize(SettingsSyncBridge.InitMode.JustInit)
   }
 
   @Test
@@ -87,6 +88,23 @@ internal class SettingsSyncTest {
           isSaveOnFrameDeactivation = false
         }
       }
+    }
+  }
+
+  @Test
+  fun `scheme changes are logged`() {
+    initSettingsSync()
+
+    val keymap = KeymapImpl()
+    val name = "SettingsSyncTestKeyMap"
+    keymap.name = name
+
+    KeymapManagerImpl().schemeManager.addScheme(keymap, false)
+
+    runBlocking { componentStore.save() }
+
+    assertSettingsPushed {
+      fileState("keymaps/$name.xml", String(keymap.writeScheme().toBufferExposingByteArray().toByteArray(), Charset.defaultCharset()))
     }
   }
 
@@ -125,7 +143,7 @@ internal class SettingsSyncTest {
 
     initSettingsSync()
 
-    UISettings.instance.initModifyAndSave {
+    UISettings.getInstance().initModifyAndSave {
       recentFilesLimit = 1000
     }
 
@@ -153,7 +171,7 @@ internal class SettingsSyncTest {
     }.toFileState()
     remoteCommunicator.updateResult = UpdateResult.Success(SettingsSnapshot(setOf(fileState)))
 
-    updateChecker.updateFromServer()
+    updateChecker.scheduleUpdateFromServer()
 
     waitForSettingsToBeApplied(generalSettings)
     assertFalse(generalSettings.isSaveOnFrameDeactivation)
@@ -188,7 +206,7 @@ internal class SettingsSyncTest {
     remoteCommunicator.updateResult = UpdateResult.Success(SettingsSnapshot(setOf(fileState)))
     remoteCommunicator.offline = false
 
-    updateChecker.updateFromServer() // merge will happen here
+    updateChecker.scheduleUpdateFromServer() // merge will happen here
 
     assertSettingsPushed {
       fileState {
@@ -205,6 +223,11 @@ internal class SettingsSyncTest {
     waitForSettingsToBeApplied(generalSettings, EditorSettingsExternalizable.getInstance())
     assertFalse(generalSettings.isSaveOnFrameDeactivation)
     assertFalse(EditorSettingsExternalizable.getInstance().isShowIntentionBulb)
+  }
+
+  //@Test
+  fun `only changed components should be reloaded`() {
+    TODO()
   }
 
   private fun waitForSettingsToBeApplied(vararg componentsToReinit: PersistentStateComponent<*>) {
@@ -230,7 +253,7 @@ internal class SettingsSyncTest {
     assertSnapshot(pushedSnap!!)
   }
 
-  private fun <T : PersistentStateComponent<*>> T.init() : T {
+  private fun <T : PersistentStateComponent<*>> T.init(): T {
     componentStore.initComponent(this, null, null)
     return this
   }
@@ -258,52 +281,15 @@ internal class SettingsSyncTest {
     }
   }
 
-  private fun SettingsSnapshot.assertSettingsSnapshot(build: SettingsSnapshotBuilder.() -> Unit) {
-    val settingsSnapshotBuilder = SettingsSnapshotBuilder()
-    settingsSnapshotBuilder.build()
-    val actualMap = this.fileStates.associate { it.file to String(it.content, UTF_8) }
-    val expectedMap = settingsSnapshotBuilder.fileStates.associate { it.file to String(it.content, UTF_8) }
-    assertEquals(expectedMap, actualMap)
-  }
-
-  private val <T> PersistentStateComponent<T>.name: String
-    get() = (this::class.annotations.find { it is State } as? State)?.name!!
-
-  private fun PersistentStateComponent<*>.serialize(): ByteArray {
-    val compElement = Element("component")
-    compElement.setAttribute(Constants.NAME, this.name)
-    serializeStateInto(this, compElement)
-
-    val appElement = Element("application")
-    appElement.addContent(compElement)
-    return appElement.toByteArray()
-  }
-
-  fun PersistentStateComponent<*>.toFileState() : FileState {
-    val file = OPTIONS_DIRECTORY + "/" + getDefaultStoragePathSpec(this::class.java)
-    val content = this.serialize()
-    return FileState(file, content, content.size)
-  }
-
-  internal inner class SettingsSnapshotBuilder {
-    val fileStates = mutableListOf<FileState>()
-
-    fun fileState(function: () -> PersistentStateComponent<*>) {
-      val component : PersistentStateComponent<*> = function()
-      fileStates.add(component.toFileState())
-    }
-  }
-
   internal class TestRemoteCommunicator : SettingsSyncRemoteCommunicator {
     var offline: Boolean = false
-    var updateNeeded: Boolean = false
     var updateResult: UpdateResult? = null
     var pushed: SettingsSnapshot? = null
     var startPushLatch: CountDownLatch? = null
     lateinit var pushedLatch: CountDownLatch
 
-    override fun isUpdateNeeded(): Boolean {
-      return updateNeeded
+    override fun checkServerState(): ServerState {
+      return ServerState.UpdateNeeded
     }
 
     override fun receiveUpdates(): UpdateResult {
@@ -320,7 +306,7 @@ internal class SettingsSyncTest {
     }
   }
 
-  internal class TestComponentStore(configDir: Path): ApplicationStoreImpl() {
+  internal class TestComponentStore(configDir: Path) : ApplicationStoreImpl() {
     override val loadPolicy: StateLoadPolicy
       get() = StateLoadPolicy.LOAD
 

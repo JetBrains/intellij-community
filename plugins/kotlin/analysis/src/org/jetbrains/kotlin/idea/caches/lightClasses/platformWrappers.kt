@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.lightClasses
 
@@ -293,7 +293,7 @@ private class KtLightMethodWrapper(
     override fun findSuperMethodSignaturesIncludingStatic(checkAccess: Boolean) =
         PsiSuperMethodImplUtil.findSuperMethodSignaturesIncludingStatic(this, checkAccess)
 
-    @Suppress("OverridingDeprecatedMember")
+    @Deprecated("Deprecated in Java")
     override fun findDeepestSuperMethod() = PsiSuperMethodImplUtil.findDeepestSuperMethod(this)
 
     override fun findDeepestSuperMethods() = PsiSuperMethodImplUtil.findDeepestSuperMethods(this)
@@ -387,7 +387,7 @@ abstract class KtAbstractContainerWrapper(internal val fqName: FqName, private v
         InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass)
 
     override fun isAnnotationType() = false
-    override fun findMethodsAndTheirSubstitutorsByName(name: String?, checkBases: Boolean) =
+    override fun findMethodsAndTheirSubstitutorsByName(name: String, checkBases: Boolean) =
         PsiClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases)
 
     override fun getInnerClasses() = PsiClass.EMPTY_ARRAY

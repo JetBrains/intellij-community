@@ -314,6 +314,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     override fun beforeDocumentChange(event: DocumentEvent) {
       if (hasUndoInCommand) return
       if (undoManager.isUndoOrRedoInProgress) return
+      if (CommandProcessor.getInstance().currentCommand == null) return
       hasUndoInCommand = true
 
       registerUndoAction(true)

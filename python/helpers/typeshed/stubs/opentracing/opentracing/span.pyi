@@ -1,6 +1,6 @@
 from _typeshed import Self
 from types import TracebackType
-from typing import Any, Type
+from typing import Any
 
 from .tracer import Tracer
 
@@ -23,7 +23,7 @@ class Span:
     def get_baggage_item(self, key: str) -> str | None: ...
     def __enter__(self: Self) -> Self: ...
     def __exit__(
-        self, exc_type: Type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
     ) -> None: ...
     def log_event(self: Self, event: Any, payload: Any | None = ...) -> Self: ...
     def log(self: Self, **kwargs: Any) -> Self: ...

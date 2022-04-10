@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoAfter
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
-import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.hasBothReceivers
+import org.jetbrains.kotlin.resolve.calls.util.hasBothReceivers
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValueFactory
 import org.jetbrains.kotlin.resolve.calls.tasks.isSynthesizedInvoke
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
@@ -353,6 +353,7 @@ private fun suggestParameterType(
                 builtIns,
                 Annotations.EMPTY,
                 originalDescriptor.extensionReceiverParameter?.type,
+                originalDescriptor.contextReceiverParameters.map { it.type },
                 originalDescriptor.valueParameters.map { it.type },
                 originalDescriptor.valueParameters.map { it.name },
                 originalDescriptor.returnType ?: builtIns.defaultReturnType

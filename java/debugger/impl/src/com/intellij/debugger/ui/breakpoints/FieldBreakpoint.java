@@ -327,17 +327,16 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
   @Override
   public void readExternal(@NotNull Element breakpointNode) throws InvalidDataException {
     super.readExternal(breakpointNode);
-    //noinspection HardCodedStringLiteral
     setFieldName(breakpointNode.getAttributeValue("field_name"));
     if(getFieldName() == null) {
       throw new InvalidDataException("No field name for field breakpoint");
     }
     try {
-      getProperties().WATCH_MODIFICATION = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_MODIFICATION"));
+      getProperties().WATCH_MODIFICATION = Boolean.parseBoolean(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_MODIFICATION"));
     } catch (Exception ignored) {
     }
     try {
-      getProperties().WATCH_ACCESS = Boolean.valueOf(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_ACCESS"));
+      getProperties().WATCH_ACCESS = Boolean.parseBoolean(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_ACCESS"));
     } catch (Exception ignored) {
     }
   }

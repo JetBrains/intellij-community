@@ -10,10 +10,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -60,8 +57,7 @@ public final class PluginInstallOperation {
   /**
    * @deprecated use {@link #PluginInstallOperation(List, Collection, PluginEnabler, ProgressIndicator)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
                                 @NotNull List<? extends IdeaPluginDescriptor> customReposPlugins,
                                 @NotNull PluginManagerMain.PluginEnabler pluginEnabler,
@@ -203,9 +199,9 @@ public final class PluginInstallOperation {
       }
       catch (IOException e) {
         String title = IdeBundle.message("title.plugin.error");
-        Notifications.Bus.notify(
-          new Notification(NotificationGroup.createIdWithTitle("Plugin Error", title), title, pluginNode.getName() + ": " + e.getMessage(),
-                           NotificationType.ERROR));
+        LOG.warn(e);
+        NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("Plugin Error");
+        Notifications.Bus.notify(group.createNotification(title, pluginNode.getName() + ": " + e.getMessage(), NotificationType.ERROR));
         return false;
       }
     }

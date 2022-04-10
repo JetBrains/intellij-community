@@ -1,4 +1,4 @@
-// "Wrap argument using 'List.of()'" "true"
+// "Adapt argument using 'List.of()'" "true"
 import java.util.List;
 
 public class Test {

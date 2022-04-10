@@ -21,6 +21,8 @@ import com.intellij.util.io.*
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.initDefaultProfile
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.OpenProject
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.ProjectOpenAction
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.addRoot
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
@@ -154,12 +156,17 @@ class ClassSource(name: String, private val topLevel: Boolean = true) : Abstract
 class FunSource(val name: String) : AbstractSource() {
     private val params = mutableMapOf<String, String>()
     private var openFunction: Boolean = false
+    private var overrideFunction: Boolean = false
     private var returnType: String? = null
 
     override fun intendLevel(): Int = 1
 
     fun openFunction() {
         this.openFunction = true
+    }
+
+    fun overrideFunction() {
+        this.overrideFunction = true
     }
 
     fun param(name: String, type: String) {
@@ -171,8 +178,10 @@ class FunSource(val name: String) : AbstractSource() {
     }
 
     private fun modifiers(): String {
-        val s = if (openFunction) "open" else ""
-        return if (s.isEmpty()) s else "$s "
+        val modifiers = mutableListOf<String>()
+        if (openFunction) modifiers.add("open")
+        if (overrideFunction) modifiers.add("override")
+        return if (modifiers.isEmpty()) "" else "${modifiers.joinToString(" ")} "
     }
 
     private fun retType(): String {

@@ -11,8 +11,11 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.Consumer
 import com.intellij.util.ThreeState
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
@@ -23,6 +26,10 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
 import org.toml.ide.experiments.TomlExperiments
+import org.toml.lang.psi.TomlLiteral
+import org.toml.lang.psi.TomlTableHeader
+import org.toml.lang.psi.ext.TomlLiteralKind
+import org.toml.lang.psi.ext.kind
 
 class TomlJsonSchemaCompletionContributor : CompletionContributor() {
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
@@ -64,7 +71,11 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
                     val adapter = walker.getParentPropertyAdapter(checkable)
 
                     val schemaProperties = schema.properties
-                    addAllPropertyVariants(properties, adapter, schemaProperties, knownNames)
+                    addAllPropertyVariants(properties, adapter, schemaProperties, knownNames, originalPosition)
+                }
+
+                if (isName != ThreeState.YES) {
+                    suggestValues(schema, isName == ThreeState.NO)
                 }
             }
 
@@ -77,7 +88,8 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
             properties: Collection<String>,
             adapter: JsonPropertyAdapter?,
             schemaProperties: Map<String, JsonSchemaObject>,
-            knownNames: MutableSet<String>
+            knownNames: MutableSet<String>,
+            originalPosition: PsiElement
         ) {
             val variants = schemaProperties.keys.filter { name ->
                 !properties.contains(name) && !knownNames.contains(name) || name == adapter?.name
@@ -88,6 +100,11 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
                 val jsonSchemaObject = schemaProperties[variant]
 
                 if (jsonSchemaObject != null) {
+                    // skip basic types keys as they can't be in the table header
+                    val isTomlHeader = originalPosition.parentOfType<TomlTableHeader>() != null
+
+                    if (isTomlHeader && jsonSchemaObject.guessType() !in JSON_COMPOUND_TYPES) continue
+
                     addPropertyVariant(variant, jsonSchemaObject)
                 }
             }
@@ -110,10 +127,56 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
             variants.add(lookupElement)
         }
 
+        private val isInsideStringLiteral: Boolean
+            get() = (position.parent as? TomlLiteral)?.kind is TomlLiteralKind.String
+
+        private fun suggestValues(schema: JsonSchemaObject, isSurelyValue: Boolean) {
+            val enumVariants = schema.enum
+            if (enumVariants != null) {
+                for (o in enumVariants) {
+                    if (isInsideStringLiteral && o !is String) continue
+
+                    val variant = if (isInsideStringLiteral) {
+                        StringUtil.unquoteString(o.toString())
+                    } else {
+                        o.toString()
+                    }
+                    variants.add(LookupElementBuilder.create(variant))
+                }
+            } else if (isSurelyValue) {
+                variants.addAll(suggestValuesByType(schema.guessType()))
+            }
+        }
+
+        private fun suggestValuesByType(type: JsonSchemaType?): List<LookupElement> = when (type) {
+            JsonSchemaType._object -> listOf(buildPairLookupElement("{}"))
+            JsonSchemaType._array -> listOf(buildPairLookupElement("[]"))
+            JsonSchemaType._string -> if (isInsideStringLiteral) {
+                emptyList()
+            } else {
+                listOf(buildPairLookupElement("\"\""))
+            }
+            JsonSchemaType._boolean -> listOf("true", "false").map { LookupElementBuilder.create(it) }
+            else -> emptyList()
+        }
+
+        private fun buildPairLookupElement(element: String): LookupElementBuilder =
+            LookupElementBuilder.create(element)
+                .withInsertHandler { context, _ ->
+                    EditorModificationUtil.moveCaretRelatively(context.editor, -1)
+                }
+
         private fun getIconForType(type: JsonSchemaType?) = when (type) {
             JsonSchemaType._object -> AllIcons.Json.Object
             JsonSchemaType._array -> AllIcons.Json.Array
             else -> AllIcons.Nodes.Property
         }
+    }
+
+    companion object {
+        private val JSON_COMPOUND_TYPES = listOf(
+            JsonSchemaType._array, JsonSchemaType._object,
+            JsonSchemaType._any, null // type is uncertain
+        )
     }
 }

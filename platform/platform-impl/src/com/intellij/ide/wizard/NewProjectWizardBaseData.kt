@@ -11,9 +11,15 @@ interface NewProjectWizardBaseData {
   val pathProperty: GraphProperty<String>
 
   var name: String
-  var path: String
+  var path: String // canonical
 
+  /**
+   * @deprecated projectPath throws exception when it isn't validated
+   */
+  @Deprecated("Unsafe", ReplaceWith("Path.of(path, name)", "java.nio.file.Path"))
+  @JvmDefault
   val projectPath: Path
+    get() = Path.of(path, name)
 
   companion object {
     @JvmStatic val KEY = Key.create<NewProjectWizardBaseData>(NewProjectWizardBaseData::class.java.name)
@@ -24,6 +30,5 @@ interface NewProjectWizardBaseData {
     @JvmStatic val NewProjectWizardStep.pathProperty get() = baseData.pathProperty
     @JvmStatic var NewProjectWizardStep.name get() = baseData.name; set(it) { baseData.name = it }
     @JvmStatic var NewProjectWizardStep.path get() = baseData.path; set(it) { baseData.path = it }
-    @JvmStatic val NewProjectWizardStep.projectPath get() = baseData.projectPath
   }
 }

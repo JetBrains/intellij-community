@@ -1111,6 +1111,16 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     });
   }
 
+  // PY-50930
+  public void testNoInspectionInCallableParameterParamSpecFromTypingExpressions() {
+    doTestByText("from typing import Callable, TypeVar\n" +
+                 "from typing_extensions import ParamSpec\n" +
+                 "P = ParamSpec(\"P\")\n" +
+                 "R = TypeVar(\"R\")\n" +
+                 "def foo(it: Callable[P, R]) -> Callable[P, R]:\n" +
+                 "    ...");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.stubs
 
@@ -8,15 +8,12 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
-import org.jetbrains.kotlin.idea.test.AstAccessControl
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.util.DescriptorValidator.ValidationVisitor.errorTypesForbidden
+import org.jetbrains.kotlin.idea.test.util.RecursiveDescriptorComparator
 import org.jetbrains.kotlin.load.java.descriptors.PossiblyExternalAnnotationDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.util.DescriptorValidator.ValidationVisitor.errorTypesForbidden
-import org.jetbrains.kotlin.test.util.RecursiveDescriptorComparator
 import org.junit.Assert
 import java.io.File
 
@@ -45,25 +42,28 @@ abstract class AbstractResolveByStubTest : KotlinLightCodeInsightFixtureTestCase
 
     private fun performTest(path: String) {
         val file = file as KtFile
-        val module = file.findModuleDescriptor()
-        val packageViewDescriptor = module.getPackage(FqName("test"))
-        Assert.assertFalse(packageViewDescriptor.isEmpty())
 
-        val fileToCompareTo = File(FileUtil.getNameWithoutExtension(path) + ".txt")
+        withCustomCompilerOptions(file.text, project, module) {
+            val module = file.findModuleDescriptor()
+            val packageViewDescriptor = module.getPackage(FqName("test"))
+            Assert.assertFalse(packageViewDescriptor.isEmpty())
 
-        RecursiveDescriptorComparator.validateAndCompareDescriptorWithFile(
-            packageViewDescriptor,
-            RecursiveDescriptorComparator.DONT_INCLUDE_METHODS_OF_OBJECT
-                .filterRecursion(RecursiveDescriptorComparator.SKIP_BUILT_INS_PACKAGES)
-                .checkPrimaryConstructors(true)
-                .checkPropertyAccessors(true)
-                .withValidationStrategy(errorTypesForbidden())
-                .withRendererOptions { options ->
-                    options.annotationFilter = { annotationDescriptor ->
-                        annotationDescriptor !is PossiblyExternalAnnotationDescriptor || !annotationDescriptor.isIdeExternalAnnotation
-                    }
-                },
-            fileToCompareTo
-        )
+            val fileToCompareTo = File(FileUtil.getNameWithoutExtension(path) + ".txt")
+
+            RecursiveDescriptorComparator.validateAndCompareDescriptorWithFile(
+                packageViewDescriptor,
+                RecursiveDescriptorComparator.DONT_INCLUDE_METHODS_OF_OBJECT
+                    .filterRecursion(RecursiveDescriptorComparator.SKIP_BUILT_INS_PACKAGES)
+                    .checkPrimaryConstructors(true)
+                    .checkPropertyAccessors(true)
+                    .withValidationStrategy(errorTypesForbidden())
+                    .withRendererOptions { options ->
+                        options.annotationFilter = { annotationDescriptor ->
+                            annotationDescriptor !is PossiblyExternalAnnotationDescriptor || !annotationDescriptor.isIdeExternalAnnotation
+                        }
+                    },
+                fileToCompareTo,
+            )
+        }
     }
 }

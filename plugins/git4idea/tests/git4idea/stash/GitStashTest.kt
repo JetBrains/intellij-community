@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash
 
 import com.intellij.openapi.vcs.Executor.echo
 import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.vcs.log.util.VcsLogUtil
-import git4idea.GitVcs
 import git4idea.history.GitLogUtil
 import git4idea.test.*
 import git4idea.ui.StashInfo
@@ -65,7 +64,7 @@ class GitStashTest : GitSingleRepoTest() {
   private fun stash() = git(project, "stash")
 
   private fun stashAuthorTime(stashNumber: Int): Long {
-    val noWalkParameter = GitLogUtil.getNoWalkParameter(GitVcs.getInstance(project))
+    val noWalkParameter = GitLogUtil.getNoWalkParameter(project)
     val timeString = git(project, "log --pretty=format:%at $noWalkParameter stash@{$stashNumber}")
     return GitLogUtil.parseTime(timeString)
   }

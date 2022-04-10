@@ -40,6 +40,11 @@ public final class WslDistributionManagerTest {
         protected boolean isAvailable() {
           return true;
         }
+
+        @Override
+        protected boolean isWslExeSupported() {
+          return true;
+        }
       }, myTestFixtureRule.getFixture().getTestRootDisposable());
     WslDistributionManager distributionManager = WslDistributionManager.getInstance();
     WSLDistribution lowerCaseUbuntu = distributionManager.getOrCreateDistributionByMsId(lowerCaseUbuntuName);

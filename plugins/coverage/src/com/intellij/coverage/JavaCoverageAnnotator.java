@@ -9,13 +9,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -30,7 +30,7 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myTestDirCoverageInfos =
     new HashMap<>();
   private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new ConcurrentHashMap<>();
-  private final Map<PsiElement, PackageAnnotator.SummaryCoverageInfo> myExtensionCoverageInfos = CollectionFactory.createWeakMap();
+  private final Map<PsiElement, PackageAnnotator.SummaryCoverageInfo> myExtensionCoverageInfos = new WeakHashMap<>();
 
   public JavaCoverageAnnotator(final Project project) {
     super(project);
@@ -190,13 +190,12 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
       return getCoverageInformationString(result, subCoverageActive);
     }
     else {
-      PackageAnnotator.PackageCoverageInfo info = getPackageCoverageInfo(psiPackage, flatten);
+      PackageAnnotator.PackageCoverageInfo info = getPackageCoverageInfo(psiPackage.getQualifiedName(), flatten);
       return getCoverageInformationString(info, subCoverageActive);
     }
   }
 
-  public PackageAnnotator.PackageCoverageInfo getPackageCoverageInfo(@NotNull PsiPackage psiPackage, boolean flattenPackages) {
-    final String qualifiedName = psiPackage.getQualifiedName();
+  public PackageAnnotator.PackageCoverageInfo getPackageCoverageInfo(@NotNull String qualifiedName, boolean flattenPackages) {
     return flattenPackages ? myFlattenPackageCoverageInfos.get(qualifiedName) : myPackageCoverageInfos.get(qualifiedName);
   }
 

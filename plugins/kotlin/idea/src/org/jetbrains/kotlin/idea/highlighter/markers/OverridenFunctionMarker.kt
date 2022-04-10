@@ -39,15 +39,22 @@ private fun PsiMethod.isMethodWithDeclarationInOtherClass(): Boolean {
 
 internal fun <T> getOverriddenDeclarations(mappingToJava: MutableMap<PsiElement, T>, classes: Set<PsiClass>): Set<T> {
     val overridden = HashSet<T>()
+
     for (aClass in classes) {
         aClass.forEachDeclaredMemberOverride { superMember, overridingMember ->
             ProgressManager.checkCanceled()
-            if (overridingMember.toPossiblyFakeLightMethods().any { !it.isMethodWithDeclarationInOtherClass() }) {
-                val declaration = mappingToJava[superMember]
-                if (declaration != null) {
-                    mappingToJava.remove(superMember)
+            val possiblyFakeLightMethods = overridingMember.toPossiblyFakeLightMethods()
+            possiblyFakeLightMethods.find { !it.isMethodWithDeclarationInOtherClass() }?.let {
+                mappingToJava.remove(superMember)?.let { declaration ->
+                    // Light methods points to same methods
+                    // and no reason to keep searching those methods
+                    // those originals are found
+                    if (mappingToJava.remove(it) == null) {
+                        mappingToJava.values.removeIf(superMember::equals)
+                    }
                     overridden.add(declaration)
                 }
+                false
             }
 
             mappingToJava.isNotEmpty()

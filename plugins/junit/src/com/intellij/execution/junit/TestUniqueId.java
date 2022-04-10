@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -18,6 +18,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.Function;
 import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UField;
 import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.UastContextKt;
 
@@ -60,7 +61,9 @@ public class TestUniqueId extends TestObject {
       }
       else {
         UClass containingClass = UastContextKt.getUastParentOfType(psiElement, UClass.class);
-        if (containingClass == null || TestFrameworks.detectFramework(containingClass) == null) {
+        if (containingClass == null || 
+            TestFrameworks.detectFramework(containingClass) == null || 
+            UastContextKt.getUastParentOfType(psiElement, UField.class) != null) {
           return nodeId;
         }
       }
@@ -82,7 +85,7 @@ public class TestUniqueId extends TestObject {
   }
 
   @Override
-  public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
+  public RefactoringElementListener getListener(final PsiElement element) {
     return null;
   }
 

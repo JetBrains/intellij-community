@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.notification;
 
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
@@ -19,8 +20,13 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -29,6 +35,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.BalloonLayoutData;
+import com.intellij.ui.Gray;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ArrayUtil;
@@ -50,6 +57,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -156,7 +164,7 @@ public final class EventLog {
     String content = truncateLongString(showMore, notification.getContent());
 
     RangeMarker afterTitle = null;
-    boolean hasHtml = parseHtmlContent(addIndents(title, indent), notification, logDoc, showMore, links, lineSeparators);
+    boolean hasHtml = parseHtmlContent(addIndents(title, indent), notification, logDoc, showMore, links, lineSeparators, null, null);
     if (StringUtil.isNotEmpty(title)) {
       if (StringUtil.isNotEmpty(content)) {
         appendText(logDoc, ": ");
@@ -165,7 +173,7 @@ public final class EventLog {
     }
     int titleLength = logDoc.getTextLength();
 
-    hasHtml |= parseHtmlContent(addIndents(content, indent), notification, logDoc, showMore, links, lineSeparators);
+    hasHtml |= parseHtmlContent(addIndents(content, indent), notification, logDoc, showMore, links, lineSeparators, null, null);
 
     List<AnAction> actions = notification.getActions();
     if (!actions.isEmpty()) {
@@ -196,7 +204,7 @@ public final class EventLog {
       if (title.length() > 0 || content.length() > 0) {
         lineSeparators.add(logDoc.createRangeMarker(TextRange.from(logDoc.getTextLength(), 0)));
       }
-      hasHtml |= parseHtmlContent(text, n, logDoc, showMore, links, lineSeparators);
+      hasHtml |= parseHtmlContent(text, n, logDoc, showMore, links, lineSeparators, null, null);
     }
 
     String status = getStatusText(logDoc, showMore, lineSeparators, indent, hasHtml);
@@ -223,6 +231,81 @@ public final class EventLog {
     }
 
     return new LogEntry(logDoc.getText(), status, list, titleLength);
+  }
+
+  public static @Nullable Runnable formatContent(@NotNull EditorEx editor,
+                                   @NotNull Notification notification,
+                                   @NotNull Supplier<? extends @Nullable Notification> notificationProvider) {
+    DocumentImpl logDoc = new DocumentImpl("",true);
+    Map<RangeMarker, HyperlinkInfo> links = new LinkedHashMap<>();
+    List<RangeMarker> lineSeparators = new ArrayList<>();
+    List<RangeMarker> boldMarkers = new ArrayList<>();
+    List<RangeMarker> italicMarkers = new ArrayList<>();
+
+    boolean hasHtml = parseHtmlContent(notification.getContent(), notification, logDoc, new AtomicBoolean(false), links, lineSeparators,
+                                       boldMarkers, italicMarkers);
+
+    indentNewLines(logDoc, lineSeparators, null, hasHtml, "");
+
+    List<Pair<TextRange, HyperlinkInfo>> list = new ArrayList<>();
+    for (RangeMarker marker : links.keySet()) {
+      if (!marker.isValid()) {
+        continue;
+      }
+      list.add(Pair.create(new TextRange(marker.getStartOffset(), marker.getEndOffset()), links.get(marker)));
+    }
+
+    int msgStart = editor.getDocument().getTextLength();
+    editor.getDocument().insertString(0, logDoc.getText());
+
+    Runnable removeCallback = null;
+
+    if (!list.isEmpty()) {
+      EditorHyperlinkSupport rangeHighlighter = EditorHyperlinkSupport.get(editor);
+      List<RangeHighlighter> highlighters = new ArrayList<>();
+
+      for (Pair<TextRange, HyperlinkInfo> link : list) {
+        HyperlinkInfo hyperlinkInfo = new HyperlinkInfo() {
+          @Override
+          public void navigate(@NotNull Project project) {
+            Notification notificationRef = notificationProvider.get();
+            NotificationListener listener = notificationRef == null ? null : notificationRef.getListener();
+            if (listener != null) {
+              JComponent component = editor.getComponent();
+              String href = ((NotificationHyperlinkInfo)link.second).myHref;
+              listener.hyperlinkUpdate(notificationRef, IJSwingUtilities.createHyperlinkEvent(href, component));
+            }
+          }
+        };
+        highlighters.add(rangeHighlighter.createHyperlink(link.first.getStartOffset() + msgStart, link.first.getEndOffset() + msgStart,
+                                                          null, hyperlinkInfo));
+      }
+
+      removeCallback = () -> {
+        TextAttributes italic = new TextAttributes(Gray.x80, null, null, null, Font.PLAIN);
+
+        for (RangeHighlighter highlighter : highlighters) {
+          editor.getMarkupModel().addRangeHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(), HighlighterLayer.SYNTAX,
+                                                      italic, HighlighterTargetArea.EXACT_RANGE);
+          rangeHighlighter.removeHyperlink(highlighter);
+        }
+      };
+    }
+    highlightTags(boldMarkers, editor, Font.BOLD);
+    highlightTags(italicMarkers, editor, Font.ITALIC);
+    return removeCallback;
+  }
+
+  private static void highlightTags(List<RangeMarker> markers, @NotNull EditorEx editor, int fontType) {
+    if (!markers.isEmpty()) {
+      MarkupModelEx model = editor.getMarkupModel();
+      TextAttributes attributes = new TextAttributes(null, null, null, null, fontType);
+
+      for (RangeMarker marker : markers) {
+        model.addRangeHighlighterAndChangeAttributes(marker.getStartOffset(), marker.getEndOffset(), HighlighterLayer.SYNTAX, attributes,
+                                                     HighlighterTargetArea.EXACT_RANGE, false, null);
+      }
+    }
   }
 
   private static @NotNull String addIndents(@NotNull String text, @NotNull String indent) {
@@ -304,7 +387,10 @@ public final class EventLog {
   private static boolean parseHtmlContent(String text, Notification notification,
                                           Document document,
                                           AtomicBoolean showMore,
-                                          Map<RangeMarker, HyperlinkInfo> links, List<RangeMarker> lineSeparators) {
+                                          Map<RangeMarker, HyperlinkInfo> links,
+                                          List<RangeMarker> lineSeparators,
+                                          List<RangeMarker> boldMarkers,
+                                          List<RangeMarker> italicMarkers) {
     String content = StringUtil.convertLineSeparators(text);
 
     int initialLen = document.getTextLength();
@@ -332,6 +418,18 @@ public final class EventLog {
           continue;
         }
       }
+      else {
+        String boldResult = parseTag(boldMarkers, document, content, tagMatcher, "<b>", "</b>");
+        if (boldResult != null) {
+          content = boldResult;
+          continue;
+        }
+        String italicResult = parseTag(italicMarkers, document, content, tagMatcher, "<i>", "</i>");
+        if (italicResult != null) {
+          content = italicResult;
+          continue;
+        }
+      }
 
       if (isTag(HTML_TAGS, tagStart)) {
         hasHtml = true;
@@ -351,6 +449,33 @@ public final class EventLog {
     }
     lineSeparators.removeIf(next -> next.getEndOffset() == document.getTextLength());
     return hasHtml;
+  }
+
+  private static String parseTag(List<RangeMarker> markers,
+                                 Document document,
+                                 String content,
+                                 Matcher tagMatcher,
+                                 String parseStartTag,
+                                 String parseEndTag) {
+    if (markers == null) {
+      return null;
+    }
+
+    String tagStart = tagMatcher.group();
+    if (!parseStartTag.equalsIgnoreCase(tagStart)) {
+      return null;
+    }
+
+    int end = content.indexOf(parseEndTag, tagMatcher.end());
+    if (end > 0) {
+      String text = content.substring(tagMatcher.end(), end).replaceAll(TAG_PATTERN.pattern(), "");
+      int textStart = document.getTextLength();
+      appendText(document, text);
+      markers.add(document.createRangeMarker(textStart, document.getTextLength()));
+      return content.substring(end + parseEndTag.length());
+    }
+
+    return null;
   }
 
   @NonNls private static final String[] HTML_TAGS =
@@ -506,7 +631,7 @@ public final class EventLog {
         }
       }
 
-      project.getMessageBus().connect().subscribe(Notifications.TOPIC, new Notifications() {
+      project.getMessageBus().simpleConnect().subscribe(Notifications.TOPIC, new Notifications() {
         @Override
         public void notify(@NotNull Notification notification) {
           printNotification(notification);

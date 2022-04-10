@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CommonActionsManager;
@@ -30,7 +30,6 @@ import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -57,9 +56,6 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTO
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
-import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.ar;
-import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.ThreeStateCheckBox.State;
 import static java.util.stream.Collectors.toList;
 
@@ -87,7 +83,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @Deprecated @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
   @NonNls protected static final String GROUPING_KEYS = "ChangesTree.GroupingKeys";
 
-  public static final String[] DEFAULT_GROUPING_KEYS = ar(DIRECTORY_GROUPING, MODULE_GROUPING);
+  public static final List<String> DEFAULT_GROUPING_KEYS = List.of(DIRECTORY_GROUPING, MODULE_GROUPING);
 
   @NonNls public static final String GROUP_BY_ACTION_GROUP = "ChangesView.GroupBy";
 
@@ -98,10 +94,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   private AWTEvent myEventProcessingInProgress;
 
   public ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
-    this(project, showCheckboxes, highlightProblems, false);
+    this(project, showCheckboxes, highlightProblems, true);
   }
 
-  protected ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems, boolean expandInSpeedSearch) {
+  protected ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems, boolean withSpeedSearch) {
     super(ChangesBrowserNode.createRoot());
     myProject = project;
     myShowCheckboxes = showCheckboxes;
@@ -112,7 +108,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setRootVisible(false);
     setShowsRootHandles(true);
     setOpaque(false);
-    new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER, expandInSpeedSearch);
+    if (withSpeedSearch) {
+      new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER, false);
+    }
 
     final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, this::isShowFlatten, highlightProblems);
     setCellRenderer(new ChangesTreeCellRenderer(nodeRenderer));
@@ -206,13 +204,14 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return result;
   }
 
-  protected static void installGroupingSupport(@NotNull ChangesTree tree, @NotNull ChangesGroupingSupport groupingSupport,
-                                               @NotNull @NonNls String propertyName, @NonNls String... defaultGroupingKeys) {
-    groupingSupport.setGroupingKeysOrSkip(set(notNull(PropertiesComponent.getInstance(tree.getProject()).getValues(propertyName),
-                                                      defaultGroupingKeys)));
+  protected static void installGroupingSupport(@NotNull ChangesTree tree,
+                                               @NotNull ChangesGroupingSupport groupingSupport,
+                                               @NotNull @NonNls String propertyName,
+                                               @NonNls List<String> defaultGroupingKeys) {
+    groupingSupport.setGroupingKeysOrSkip(
+      Set.copyOf(Objects.requireNonNullElse(PropertiesComponent.getInstance(tree.getProject()).getList(propertyName), defaultGroupingKeys)));
     groupingSupport.addPropertyChangeListener(e -> {
-      PropertiesComponent.getInstance(tree.getProject()).setValues(propertyName,
-                                                                   ArrayUtilRt.toStringArray(groupingSupport.getGroupingKeys()));
+      PropertiesComponent.getInstance(tree.getProject()).setList(propertyName, groupingSupport.getGroupingKeys());
 
       List<Object> oldSelection = selected(tree).userObjects();
       tree.rebuildTree();
@@ -224,8 +223,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     PropertiesComponent properties = PropertiesComponent.getInstance(myProject);
 
     if (properties.isValueSet(FLATTEN_OPTION_KEY)) {
-      properties.setValues(GROUPING_KEYS, properties.isTrueValue(FLATTEN_OPTION_KEY) ? ArrayUtilRt.EMPTY_STRING_ARRAY
-                                                                                     : DEFAULT_GROUPING_KEYS);
+      properties.setList(GROUPING_KEYS, properties.isTrueValue(FLATTEN_OPTION_KEY) ? Collections.emptyList() : DEFAULT_GROUPING_KEYS);
       properties.unsetValue(FLATTEN_OPTION_KEY);
     }
   }
@@ -248,15 +246,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     addTreeSelectionListener(listener);
     if (parent != null) Disposer.register(parent, () -> removeTreeSelectionListener(listener));
-  }
-
-  /**
-   * @deprecated Use {@link #setDoubleClickAndEnterKeyHandler(Runnable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void setDoubleClickHandler(@NotNull Runnable doubleClickHandler) {
-    setDoubleClickAndEnterKeyHandler(doubleClickHandler);
   }
 
   public void setDoubleClickAndEnterKeyHandler(@NotNull Runnable handler) {
@@ -576,8 +565,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   /**
    * @deprecated See {@link ChangesTree#GROUP_BY_ACTION_GROUP}, {@link TreeActionsToolbarPanel}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public AnAction[] getTreeActions() {
     return new AnAction[]{
       ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP),

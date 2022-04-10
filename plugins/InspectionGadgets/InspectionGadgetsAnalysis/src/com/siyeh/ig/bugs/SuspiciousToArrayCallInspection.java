@@ -196,6 +196,9 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
     @NonNls private final String myPresented;
     
     SuspiciousToArrayCallFix(PsiType wantedType, boolean isFunction) {
+      if (wantedType instanceof PsiClassType) {
+        wantedType = ((PsiClassType)wantedType).rawType();
+      }
       if (isFunction) {
         myReplacement = wantedType.getCanonicalText() + "[]::new";
         myPresented = wantedType.getPresentableText() + "[]::new";

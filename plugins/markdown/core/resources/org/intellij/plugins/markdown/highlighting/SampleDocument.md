@@ -155,6 +155,14 @@ Mixed:
 3. Third
 </ol>
 
+
+Definition list:
+
+<dl><dt>Some term</dt>
+<dm>:</dm> <dd>First definition</dd>
+<dm>:</dm> <dd>Second definition</dd>
+</dl>
+
 Tables:
 
 | Header 1 | Header 2 |

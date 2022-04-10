@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui.views
 
 import com.intellij.lang.Language
@@ -25,8 +25,8 @@ class ModulesPanel(project: Project) : JPanel() {
     layout = BoxLayout(this, BoxLayout.Y_AXIS)
     isFocusable = false
     isOpaque = true
-    background = UISettings.instance.backgroundColor
-    border = UISettings.instance.emptyBorder
+    background = UISettings.getInstance().backgroundColor
+    border = UISettings.getInstance().emptyBorder
 
     initModulesPanel()
 
@@ -48,7 +48,7 @@ class ModulesPanel(project: Project) : JPanel() {
     removeAll()
     addHeaderPanel()
     modulesPanel.alignmentX = LEFT_ALIGNMENT
-    modulesPanel.maximumSize = Dimension(UISettings.instance.let { it.panelWidth - (it.westInset + it.eastInset) }, 10000)
+    modulesPanel.maximumSize = Dimension(UISettings.getInstance().let { it.panelWidth - (it.westInset + it.eastInset) }, 10000)
     add(modulesPanel)
     add(Box.createVerticalGlue())
     addFooter()
@@ -63,14 +63,14 @@ class ModulesPanel(project: Project) : JPanel() {
     val primaryLanguageId = langSupport.primaryLanguage
     val language = Language.findLanguageByID(primaryLanguageId) ?: return
     headerContent.add(JLabel(LearnBundle.message("modules.panel.header", language.displayName)).also {
-      it.font = UISettings.instance.getFont(3).deriveFont(Font.BOLD)
+      it.font = UISettings.getInstance().getFont(3).deriveFont(Font.BOLD)
     })
     headerContent.add(rigid(0, 4))
     headerContent.add(JLabel(learningProgressString(CourseManager.instance.lessonsForModules)).also {
-      it.foreground = UISettings.instance.moduleProgressColor
+      it.foreground = UISettings.getInstance().moduleProgressColor
     })
 
-    headerContent.add(scaledRigid(0, UISettings.instance.northInset - UISettings.instance.verticalModuleItemInset))
+    headerContent.add(scaledRigid(0, UISettings.getInstance().northInset - UISettings.getInstance().verticalModuleItemInset))
     add(headerContent)
   }
 
@@ -87,8 +87,8 @@ class ModulesPanel(project: Project) : JPanel() {
     footerContent.add(linkLabel.wrapWithUrlPanel())
     footerContent.add(rigid(0, 4))
     footerContent.add(JLabel(LearnBundle.message("feedback.link.hint")).also {
-      it.foreground = UISettings.instance.moduleProgressColor
-      it.font = UISettings.instance.getFont(-1)
+      it.foreground = UISettings.getInstance().moduleProgressColor
+      it.font = UISettings.getInstance().getFont(-1)
     })
 
     val shiftedFooter = JPanel()
@@ -96,7 +96,7 @@ class ModulesPanel(project: Project) : JPanel() {
     shiftedFooter.layout = BoxLayout(shiftedFooter, BoxLayout.X_AXIS)
     shiftedFooter.isFocusable = false
     shiftedFooter.isOpaque = false
-    shiftedFooter.border = MatteBorder(JBUI.scale(1), 0, 0, 0, UISettings.instance.separatorColor)
+    shiftedFooter.border = MatteBorder(JBUI.scale(1), 0, 0, 0, UISettings.getInstance().separatorColor)
     shiftedFooter.alignmentX = LEFT_ALIGNMENT
 
     shiftedFooter.add(footerContent)

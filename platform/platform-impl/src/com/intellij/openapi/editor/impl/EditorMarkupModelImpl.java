@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -148,7 +148,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private Rectangle cachedToolbarBounds = new Rectangle();
   private final JLabel smallIconLabel;
   @NotNull
-  private AnalyzerStatus analyzerStatus = AnalyzerStatus.getDEFAULT();
+  private AnalyzerStatus analyzerStatus = AnalyzerStatus.getEMPTY();
   private boolean hasAnalyzed;
   private boolean isAnalyzing;
   private boolean showNavigation;
@@ -309,7 +309,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       }
     });
     smallIconLabel.setOpaque(false);
-    smallIconLabel.setBackground(new JBColor(() -> myEditor.getColorsScheme().getDefaultBackground()));
+    smallIconLabel.setBackground(JBColor.lazy(() -> myEditor.getColorsScheme().getDefaultBackground()));
     smallIconLabel.setVisible(false);
 
     JPanel statusPanel = new NonOpaquePanel();
@@ -1004,7 +1004,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         myDirtyYPositions = null;
       }
 
-      UIUtil.drawImage(g, myCachedTrack, null, 0, 0);
+      StartupUiUtil.drawImage(g, myCachedTrack);
     }
 
     private void paintTrackBasement(@NotNull Graphics g, @NotNull Rectangle bounds) {
@@ -1471,6 +1471,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       List<StatusItem> newStatus = analyzerStatus.getExpandedStatus();
       Icon newIcon = analyzerStatus.getIcon();
 
+      presentation.setVisible(!AnalyzerStatus.isEmpty(analyzerStatus));
+
       if (!hasAnalyzed || analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
         if (newStatus.isEmpty()) {
           newStatus = Collections.singletonList(new StatusItem("", newIcon));
@@ -1526,6 +1528,11 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
         else if (propName.equals(TRANSLUCENT_STATE.toString())) {
           translucent = l.getNewValue() == Boolean.TRUE;
+          repaint();
+        }
+        else if (propName.equals(Presentation.PROP_VISIBLE)) {
+          setVisible(l.getNewValue() == Boolean.TRUE);
+          revalidate();
           repaint();
         }
       };
@@ -1681,7 +1688,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
       };
 
-      label.setForeground(new JBColor(() -> ObjectUtils.notNull(colorsScheme.getColor(ICON_TEXT_COLOR), ICON_TEXT_COLOR.getDefaultColor())));
+      label.setForeground(JBColor.lazy(() -> ObjectUtils.notNull(colorsScheme.getColor(ICON_TEXT_COLOR), ICON_TEXT_COLOR.getDefaultColor())));
       label.setIconTextGap(JBUIScale.scale(1));
 
       return label;

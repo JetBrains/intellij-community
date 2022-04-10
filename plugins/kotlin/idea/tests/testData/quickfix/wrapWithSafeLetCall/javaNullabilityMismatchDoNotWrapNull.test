@@ -1,0 +1,51 @@
+// FILE: test.before.kt
+// "Wrap with '?.let { ... }' call" "false"
+// ACTION: Add 'toString()' call
+// ACTION: Add names in comment to call arguments
+// ACTION: Convert to run
+// ACTION: Convert to with
+// ACTION: Do not show hints for current method
+package p;
+
+fun test(x: Foo) {
+    x.foo(<caret>null);
+}
+
+// FILE: org/jspecify/nullness/NullMarked.java
+package org.jspecify.nullness;
+
+import static java.lang.annotation.ElementType.MODULE;
+import static java.lang.annotation.ElementType.PACKAGE;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+@Target({TYPE, PACKAGE, MODULE})
+@Retention(RUNTIME)
+public @interface NullMarked {}
+
+// FILE: org/jspecify/nullness/Nullable.java
+package org.jspecify.nullness;
+
+import static java.lang.annotation.ElementType.TYPE_USE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+@Target(TYPE_USE)
+@Retention(RUNTIME)
+public @interface Nullable {}
+
+// FILE: p/Foo.java
+package p;
+
+import org.jspecify.nullness.NullMarked;
+
+@NullMarked
+public class Foo {
+    public void foo(String arg) {}
+}

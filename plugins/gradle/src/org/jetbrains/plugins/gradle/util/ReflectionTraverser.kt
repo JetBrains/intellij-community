@@ -116,14 +116,26 @@ class ReflectionTraverser : Closeable {
     }
 
     private fun walkMap(stack: Deque<Any>, map: Map<*, *>) {
-      for (entry in map) {
-        val key = entry.key ?: continue
-        if (!key.javaClass.isPrimitive) {
-          stack += key
+      val entrySet = try {
+        map.entries
+      }
+      catch (e: UnsupportedOperationException) {
+        null
+      }
+
+      if (entrySet != null) {
+        for (entry in entrySet) {
+          val key = entry.key ?: continue
+          if (!key.javaClass.isPrimitive) {
+            stack += key
+          }
+          val value = entry.value ?: continue
+          if (value.javaClass.isPrimitive) continue
+          stack += value
         }
-        val value = entry.value ?: continue
-        if (value.javaClass.isPrimitive) continue
-        stack += value
+      } else {
+        walkCollection(stack, map.keys)
+        walkCollection(stack, map.values)
       }
     }
   }

@@ -3,7 +3,6 @@
 
 package com.intellij.execution.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.configurationStore.*
 import com.intellij.execution.*
 import com.intellij.execution.configurations.*
@@ -17,6 +16,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -27,8 +27,6 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.util.ClearableLazyValue
@@ -39,10 +37,20 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.*
-import com.intellij.util.containers.*
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.containers.filterSmart
+import com.intellij.util.containers.mapSmart
+import com.intellij.util.containers.nullize
+import com.intellij.util.containers.toMutableSmartList
 import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -207,11 +215,13 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   init {
     val messageBusConnection = project.messageBus.connect()
-    messageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-      override fun rootsChanged(event: ModuleRootEvent) {
-        clearSelectedConfigurationIcon()
+    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(messageBusConnection, object : WorkspaceModelChangeListener {
+      override fun changed(event: VersionedStorageChange) {
+        if (event.getChanges(ContentRootEntity::class.java).isNotEmpty() || event.getChanges(SourceRootEntity::class.java).isNotEmpty()) {
+          clearSelectedConfigurationIcon()
 
-        deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
+          deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
+        }
       }
     })
 
@@ -354,9 +364,17 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   private fun deleteRunConfigsFromArbitraryFilesNotWithinProjectContent() {
-    val deletedConfigs = lock.write { rcInArbitraryFileManager.findRunConfigsThatAreNotWithinProjectContent() }
-    // don't delete file just because it has become excluded
-    removeConfigurations(deletedConfigs, deleteFileIfStoredInArbitraryFile = false)
+    ReadAction
+      .nonBlocking(Callable {
+        lock.read { rcInArbitraryFileManager.findRunConfigsThatAreNotWithinProjectContent() }
+      })
+      .coalesceBy(this)
+      .expireWith(project)
+      .finishOnUiThread(ModalityState.defaultModalityState()) {
+        // don't delete file just because it has become excluded
+        removeConfigurations(it, deleteFileIfStoredInArbitraryFile = false)
+      }
+      .submit(AppExecutorUtil.getAppExecutorService())
   }
 
   // Paths in <code>deletedFilePaths</code> and <code>updatedFilePaths</code> may be not related to the project, use ProjectIndex.isInContent() when needed

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.ex
 
 import com.intellij.analysis.AnalysisBundle
+import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInspection.*
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.Application
@@ -54,6 +55,7 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
 
   private fun unregisterInspectionOrProvider(inspectionOrProvider: Any, factories: MutableMap<Any, MutableList<InspectionFactory>>) {
     for (removedTool in (factories.remove(inspectionOrProvider) ?: return)) {
+      removedTool()?.shortName?.let { shortName -> HighlightDisplayKey.unregister(shortName) }
       fireToolRemoved(removedTool)
     }
   }

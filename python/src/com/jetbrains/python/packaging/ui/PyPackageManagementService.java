@@ -464,4 +464,10 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
       return mySdk;
     }
   }
+
+  @Override
+  public boolean canManageRepositories() {
+    // Package management from ManageRepositoriesDialog is disabled in favor of Packaging toolwindow
+    return false;
+  }
 }

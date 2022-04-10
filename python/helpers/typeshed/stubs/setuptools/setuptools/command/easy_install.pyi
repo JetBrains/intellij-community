@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 from pkg_resources import Environment
 from setuptools import Command, SetuptoolsDeprecationWarning
@@ -106,7 +106,7 @@ class RewritePthDistributions(PthDistributions):
     prelude: Any
     postlude: Any
 
-class CommandSpec(List[str]):
+class CommandSpec(list[str]):
     options: Any
     split_args: Any
     @classmethod

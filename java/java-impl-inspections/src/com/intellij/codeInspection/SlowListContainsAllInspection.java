@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -6,10 +6,12 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,16 +25,16 @@ public class SlowListContainsAllInspection extends AbstractBaseJavaLocalInspecti
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
-
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
+        if (TestUtils.isInTestCode(call)) return;
         super.visitMethodCallExpression(call);
         if (!LIST_CONTAINS_ALL.test(call)) return;
         PsiReferenceExpression expression = call.getMethodExpression();
         final PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(expression);
         if (qualifier == null) return;
         final LongRangeSet listSizeRange = SlowAbstractSetRemoveAllInspection.getSizeRangeOfCollection(qualifier);
-        if (listSizeRange.isEmpty() || listSizeRange.max() <= 1) return;
+        if (listSizeRange.isEmpty() || listSizeRange.max() <= 5) return;
         holder.registerProblem(call,
                                JavaBundle.message("inspection.slow.list.contains.all.description"),
                                ProblemHighlightType.WARNING,
@@ -69,8 +71,10 @@ public class SlowListContainsAllInspection extends AbstractBaseJavaLocalInspecti
       if (call == null) return;
       final PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier == null) return;
+      PsiExpression strippedQualifier = PsiUtil.deparenthesizeExpression(qualifier);
+      if (strippedQualifier == null) return;
       final CommentTracker ct = new CommentTracker();
-      PsiElement result = ct.replace(qualifier, "new java.util.HashSet<>(" + ct.text(qualifier) + ")");
+      PsiElement result = ct.replace(qualifier, "new java.util.HashSet<>(" + ct.text(strippedQualifier) + ")");
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
     }
   }

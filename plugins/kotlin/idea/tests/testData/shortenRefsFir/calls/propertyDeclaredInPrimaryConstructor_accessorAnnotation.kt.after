@@ -1,0 +1,6 @@
+// FIR_COMPARISON
+package some
+
+annotation class SomeAnnotation
+
+class Complete(@set:SomeAnnotation var field: Int)

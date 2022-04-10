@@ -365,7 +365,7 @@ class KotlinFieldBreakpoint(
         }
         val className = className
         @Suppress("HardCodedStringLiteral")
-        return if (className != null && className.isNotEmpty()) className + "." + getFieldName() else getFieldName()
+        return if (!className.isNullOrEmpty()) className + "." + getFieldName() else getFieldName()
     }
 
     private fun getFieldName(): String {

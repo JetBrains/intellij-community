@@ -49,7 +49,9 @@ public class LookupManagerImpl extends LookupManager {
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
       @Override
-      public void hintShown(final Project project, @NotNull final LightweightHint hint, final int flags) {
+      public void hintShown(final Project project,
+                            @NotNull final LightweightHint hint,
+                            final int flags) {
         if (project == myProject) {
           Lookup lookup = getActiveLookup();
           if (lookup != null && BitUtil.isSet(flags, HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE)) {

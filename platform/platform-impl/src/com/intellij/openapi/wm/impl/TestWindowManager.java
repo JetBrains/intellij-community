@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
@@ -32,7 +32,6 @@ import java.util.Map;
 
 public final class TestWindowManager extends WindowManagerEx {
   private static final Key<StatusBar> STATUS_BAR = Key.create("STATUS_BAR");
-  private final DesktopLayout myLayout = new DesktopLayout();
 
   @Override
   public void doNotSuggestAsParent(final Window window) { }
@@ -112,16 +111,6 @@ public final class TestWindowManager extends WindowManagerEx {
   @Override
   public IdeFrame findFrameFor(@Nullable Project project) {
     return null;
-  }
-
-  @Override
-  public @NotNull DesktopLayout getLayout() {
-    return myLayout;
-  }
-
-  @Override
-  public void setLayout(@NotNull DesktopLayout layout) {
-    throw new UnsupportedOperationException();
   }
 
   @Override

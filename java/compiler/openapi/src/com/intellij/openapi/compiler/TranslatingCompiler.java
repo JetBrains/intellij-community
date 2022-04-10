@@ -18,7 +18,6 @@ package com.intellij.openapi.compiler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Chunk;
-import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Collection;
 
@@ -27,8 +26,7 @@ import java.util.Collection;
  * this class aren't used by the IDE, you should integrate into 'external build system' instead
  * (http://www.jetbrains.org/intellij/sdk/docs/reference_guide/frameworks_and_external_apis/external_builder_api.html).
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+@Deprecated(forRemoval = true)
 public interface TranslatingCompiler extends Compiler {
 
   /**

@@ -120,6 +120,14 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction {
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
                                                        @NotNull Editor editor,
                                                        @NotNull PsiFile file) {
-    return myFix.generatePreview(project, myDescriptor.getDescriptorForPreview(file));
+    ProblemDescriptor descriptorForPreview;
+    try {
+      descriptorForPreview = myDescriptor.getDescriptorForPreview(file);
+    }
+    catch (Exception e) {
+      throw new RuntimeException("Cannot create preview descriptor for quickfix " + myFix.getFamilyName() + " (" + myFix.getClass() + ")",
+                                 e);
+    }
+    return myFix.generatePreview(project, descriptorForPreview);
   }
 }

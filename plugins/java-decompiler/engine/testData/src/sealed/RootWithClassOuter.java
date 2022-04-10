@@ -1,4 +1,4 @@
 package sealed;
 
-abstract sealed class RootWithClassOuter permits ClassExtends, ClassNonSealed, ClassNonSealedImplements {
+abstract sealed class RootWithClassOuter permits ClassExtends, ClassNonSealed, ClassNonSealedExtendsImplements {
 }

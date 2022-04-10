@@ -14,5 +14,6 @@ interface IntelliJJavaNewProjectWizardData: IntelliJNewProjectWizardData {
     @JvmStatic var NewProjectWizardStep.moduleName get() = javaData.moduleName; set(it) { javaData.moduleName = it }
     @JvmStatic var NewProjectWizardStep.contentRoot get() = javaData.contentRoot; set(it) { javaData.contentRoot = it }
     @JvmStatic var NewProjectWizardStep.moduleFileLocation get() = javaData.moduleFileLocation; set(it) { javaData.moduleFileLocation = it }
+    @JvmStatic var NewProjectWizardStep.addSampleCode get() = javaData.addSampleCode; set(it) { javaData.addSampleCode = it }
   }
 }

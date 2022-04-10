@@ -1,5 +1,0 @@
-toml.TomlDecodeError.__init__
-toml.dump
-toml.dumps
-toml.load
-toml.loads

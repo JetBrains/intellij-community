@@ -2,9 +2,11 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiBreakStatement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UBreakExpression
 import org.jetbrains.uast.UElement
 
+@ApiStatus.Internal
 class JavaUBreakExpression(
   override val sourcePsi: PsiBreakStatement,
   givenParent: UElement?

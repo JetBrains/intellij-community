@@ -17,9 +17,9 @@ import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.VerticalGaps
+import com.intellij.ui.dsl.gridLayout.JBGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
@@ -81,7 +81,9 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
             settingsCopy.state.copyFrom(settings.state)
             settingsCopy.state.isCheckNeeded = true
             settingsCopy.state.isPluginsCheckNeeded = true
-            settingsCopy.selectedChannelStatus = selectedChannel(channelModel.selected)
+            if (channelSelectionLockedMessage == null) {
+              settingsCopy.selectedChannelStatus = selectedChannel(channelModel.selected)
+            }
             UpdateChecker.updateAndShowResult(project, settingsCopy)
             updateLastCheckedLabel(settings.lastTimeChecked)
           }
@@ -115,11 +117,11 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
 
       if (!(manager == ExternalUpdateManager.TOOLBOX || Registry.`is`("ide.hide.toolbox.promo"))) {
         group(indent = false) {
-          customizeSpacingConfiguration(SpacingConfiguration.EMPTY) {
+          customizeSpacingConfiguration(EmptySpacingConfiguration()) {
             row {
               icon(PluginLogo.reloadIcon(AllIcons.Nodes.Toolbox, 40, 40, null))
                 .verticalAlign(VerticalAlign.TOP)
-                .customize(customGaps = Gaps(right = JBUI.scale(10)))
+                .customize(customGaps = JBGaps(right = 10))
               panel {
                 row {
                   text(IdeBundle.message("updates.settings.recommend.toolbox", TOOLBOX_URL, ExternalUpdateManager.TOOLBOX.toolName))

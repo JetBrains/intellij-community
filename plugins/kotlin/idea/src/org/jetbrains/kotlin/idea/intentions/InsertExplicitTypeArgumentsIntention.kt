@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -14,11 +15,11 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.inference.CapturedType
 import org.jetbrains.kotlin.resolve.calls.tower.NewResolvedCallImpl
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.types.ErrorUtils
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.checker.NewCapturedType
 
 class InsertExplicitTypeArgumentsIntention : SelfTargetingRangeIntention<KtCallExpression>(
@@ -26,12 +27,12 @@ class InsertExplicitTypeArgumentsIntention : SelfTargetingRangeIntention<KtCallE
     KotlinBundle.lazyMessage("add.explicit.type.arguments")
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtCallExpression): TextRange? =
-        if (isApplicableTo(element, element.analyze())) element.calleeExpression?.textRange else null
+        if (isApplicableTo(element, element.safeAnalyzeNonSourceRootCode())) element.calleeExpression?.textRange else null
 
     override fun applyTo(element: KtCallExpression, editor: Editor?) = applyTo(element)
 
     companion object {
-        fun isApplicableTo(element: KtCallElement, bindingContext: BindingContext = element.analyze(BodyResolveMode.PARTIAL)): Boolean {
+        fun isApplicableTo(element: KtCallElement, bindingContext: BindingContext = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)): Boolean {
             if (element.typeArguments.isNotEmpty()) return false
             if (element.calleeExpression == null) return false
 

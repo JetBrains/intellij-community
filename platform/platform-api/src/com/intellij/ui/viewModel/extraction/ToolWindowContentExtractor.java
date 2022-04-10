@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public interface ToolWindowContentExtractor {
   ExtensionPointName<ToolWindowContentExtractor> EP_NAME = ExtensionPointName.create("com.intellij.toolWindowContentExtractor");
   Key<Boolean> SYNC_TAB_TO_GUEST = Key.create("ToolWindowContentExtractor.SyncTabToGuest");
+  Key<Boolean> FILE_VISIBLE_FOR_GUEST = Key.create("ToolWindowContentExtractor.FileVisibleForGuest");
   
   boolean isApplicable(@NotNull Content content);
   

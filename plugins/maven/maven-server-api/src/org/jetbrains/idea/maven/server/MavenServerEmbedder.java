@@ -65,7 +65,10 @@ public interface MavenServerEmbedder extends Remote {
   MavenArtifact resolve(@NotNull MavenArtifactInfo info,
                         @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token) throws RemoteException,
                                                                                                           MavenServerProcessCanceledException;
-
+  /**
+   * @deprecated use {@link Maven3XServerEmbedder#resolveArtifactTransitively()}
+   */
+  @Deprecated
   @NotNull
   List<MavenArtifact> resolveTransitively(@NotNull List<MavenArtifactInfo> artifacts,
                                           @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token) throws
@@ -111,4 +114,10 @@ public interface MavenServerEmbedder extends Remote {
   Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
                                                        @NotNull List<MavenRemoteRepository> repositories,
                                                        @Nullable String url, MavenToken token) throws RemoteException;
+
+  @NotNull
+  MavenArtifactResolveResult resolveArtifactTransitively(
+    @NotNull List<MavenArtifactInfo> artifacts,
+    @NotNull List<MavenRemoteRepository> remoteRepositories,
+    MavenToken token) throws RemoteException;
 }

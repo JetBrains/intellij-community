@@ -15,8 +15,11 @@ import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.charset.StandardCharsets
 import java.nio.file.*
 
+import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
+
 @CompileStatic
 final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
+  private static final String NO_JBR_SUFFIX = "-no-jbr"
   private final LinuxDistributionCustomizer customizer
   private final Path ideaProperties
   private final Path iconPngPath
@@ -68,12 +71,13 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
-  void buildArtifacts(Path osSpecificDistPath) {
-    copyFilesForOsDistribution(osSpecificDistPath)
-    buildContext.executeStep("build linux .tar.gz", BuildOptions.LINUX_ARTIFACTS_STEP) {
+  void buildArtifacts(@NotNull Path osAndArchSpecificDistPath, @NotNull JvmArchitecture arch) {
+    copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
+    buildContext.executeStep(spanBuilder("build linux .tar.gz")
+                               .setAttribute("arch", arch.name()), BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildTarGzWithoutBundledRuntime) {
         buildContext.executeStep("Build Linux .tar.gz without bundled JRE", BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP) {
-          buildTarGz(null, osSpecificDistPath, "-no-jbr", buildContext)
+          buildTarGz(null, osAndArchSpecificDistPath, NO_JBR_SUFFIX, buildContext)
         }
       }
 
@@ -81,18 +85,18 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         return
       }
 
-      Path jreDirectoryPath = buildContext.bundledRuntime.extract(BundledRuntime.getProductPrefix(buildContext), OsFamily.LINUX, JvmArchitecture.x64)
-      Path tarGzPath = buildTarGz(jreDirectoryPath.toString(), osSpecificDistPath, "", buildContext)
+      Path jreDirectoryPath = buildContext.bundledRuntime.extract(BundledRuntime.getProductPrefix(buildContext), OsFamily.LINUX, arch)
+      Path tarGzPath = buildTarGz(jreDirectoryPath.toString(), osAndArchSpecificDistPath, "", buildContext)
 
       if (jreDirectoryPath != null) {
-        buildSnapPackage(jreDirectoryPath.toString(), osSpecificDistPath)
+        buildSnapPackage(jreDirectoryPath.toString(), osAndArchSpecificDistPath)
       }
       else {
         buildContext.messages.info("Skipping building Snap packages because no modular JRE are available")
       }
       Path tempTar = Files.createTempDirectory(buildContext.paths.tempDir, "tar-")
       try {
-        BuildHelper.runProcess(buildContext, ["tar", "xzf", tarGzPath.toString(), "--directory", tempTar.toString()])
+        ArchiveUtils.unTar(tarGzPath, tempTar)
         String tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
         RepairUtilityBuilder.generateManifest(buildContext, tempTar.resolve(tarRoot), tarGzPath.fileName.toString())
       }
@@ -138,6 +142,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       "bin/remote-dev-server.sh",
     ] + customizer.extraExecutables
     if (includeJre) {
+      // When changing this list of patterns, also change patch_bin_file in launcher.sh (for remote dev)
       patterns += "jbr/bin/*"
       patterns += "jbr/lib/jexec"
       patterns += "jbr/lib/jcef_helper"
@@ -147,11 +152,27 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     return patterns
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
+  @Override
+  List<String> getArtifactNames(BuildContext context) {
+    List<String> suffixes = []
+    if (customizer.buildTarGzWithoutBundledRuntime) {
+      suffixes += NO_JBR_SUFFIX
+    }
+    if (!customizer.buildOnlyBareTarGz) {
+      suffixes += ""
+    }
+    return suffixes.collect { artifactName(context, it) }
+  }
+
+  private static String artifactName(BuildContext buildContext, String suffix) {
+    def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
+    return "${baseName}${suffix}.tar.gz"
+  }
+
   private Path buildTarGz(@Nullable String jreDirectoryPath, Path unixDistPath, String suffix, BuildContext buildContext) {
     def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-    def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-    Path tarPath = buildContext.paths.artifactDir.resolve("${baseName}${suffix}.tar.gz")
+    def tarName = artifactName(buildContext, suffix)
+    Path tarPath = buildContext.paths.artifactDir.resolve(tarName)
     List<String> paths = [buildContext.paths.distAll, unixDistPath.toString()]
 
     String javaExecutablePath = null
@@ -172,26 +193,10 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
     buildContext.messages.block("Build Linux tar.gz $description") {
       buildContext.messages.progress("Building Linux tar.gz $description")
-      buildContext.ant.tar(tarfile: tarPath.toString(), longfile: "gnu", compression: "gzip") {
-        paths.each { path ->
-          tarfileset(dir: path, prefix: tarRoot) {
-            executableFilesPatterns.each {pattern ->
-              exclude(name: pattern)
-            }
-            type(type: "file")
-          }
-        }
-
-        paths.each { path ->
-          tarfileset(dir: path, prefix: tarRoot, filemode: "755") {
-            executableFilesPatterns.each { pattern ->
-              include(name: pattern)
-            }
-            type(type: "file")
-          }
-        }
+      paths.each {
+        new BuildTasksImpl(buildContext).updateExecutablePermissions(Paths.get(it), executableFilesPatterns)
       }
-
+      ArchiveUtils.tar(tarPath, tarRoot, paths, buildContext.options.buildDateInSeconds)
       ProductInfoValidator.checkInArchive(buildContext, tarPath, tarRoot)
       buildContext.notifyArtifactBuilt(tarPath)
       return tarPath
@@ -298,6 +303,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       }
 
       BuildHelper.moveFileToDir(resultDir.resolve(snapArtifact), buildContext.paths.artifactDir)
+      buildContext.notifyArtifactBuilt(buildContext.paths.artifactDir.resolve(snapArtifact))
     }
   }
 

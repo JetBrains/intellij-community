@@ -191,7 +191,7 @@ class Test(unittest.TestCase):
                 socket_code(socket)
 
         debugger_thread = DebuggerServerThread(debugger_port, socket_code)
-        debugger_thread.setDaemon(True)
+        debugger_thread.daemon = True
         debugger_thread.start()
         return debugger_thread
 
@@ -226,7 +226,7 @@ class Test(unittest.TestCase):
                     pydevconsole.start_server(self.backend_port)
 
             server_thread = ServerThread(port)
-            server_thread.setDaemon(True)
+            server_thread.daemon = True
             server_thread.start()
 
             import time

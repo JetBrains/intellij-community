@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.AbstractBundle;
 import com.intellij.BundleBase;
 import com.intellij.DynamicBundle;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -24,7 +25,6 @@ import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -52,12 +52,12 @@ import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.XmlElement;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.xml.dom.XmlElement;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import kotlin.Unit;
@@ -254,7 +254,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                        @NotNull String iconPath,
                                        @NotNull Presentation presentation) {
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-    Icon icon = IconLoader.findIcon(iconPath, actionClass, module.getClassLoader(), null, true);
+    Icon icon = IconLoader.findIcon(iconPath, module.getClassLoader());
     if (icon == null) {
       reportActionError(module, "Icon cannot be found in '" + iconPath + "', action '" + actionClass + "'");
       icon = AllIcons.Nodes.Unknown;
@@ -270,7 +270,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                                                          String descriptionValue,
                                                                          @NotNull ClassLoader classLoader) {
     if (bundle != null && DefaultBundleService.isDefaultBundle()) {
-      bundle = DynamicBundle.INSTANCE.getResourceBundle(bundle.getBaseBundleName(), classLoader);
+      bundle = DynamicBundle.getResourceBundle(classLoader, bundle.getBaseBundleName());
     }
     return AbstractBundle.messageOrDefault(bundle, elementType + "." + id + "." + DESCRIPTION, Strings.notNullize(descriptionValue));
   }
@@ -283,7 +283,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                                                  @NotNull ClassLoader classLoader) {
     String defaultValue = Strings.notNullize(textValue);
     if (bundle != null && DefaultBundleService.isDefaultBundle()) {
-      bundle = DynamicBundle.INSTANCE.getResourceBundle(bundle.getBaseBundleName(), classLoader);
+      bundle = DynamicBundle.getResourceBundle(classLoader, bundle.getBaseBundleName());
     }
     return bundle == null ? defaultValue : AbstractBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, defaultValue);
   }
@@ -352,7 +352,12 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   }
 
   private static void reportKeymapNotFoundWarning(@NotNull PluginDescriptor module, @NotNull String keymapName) {
-    if (!DefaultKeymap.Companion.isBundledKeymapHidden(keymapName)) {
+    Application app = ApplicationManager.getApplication();
+    if (
+      !app.isHeadlessEnvironment() &&
+      !app.isCommandLine() &&
+      !DefaultKeymap.Companion.isBundledKeymapHidden(keymapName)
+    ) {
       LOG.warn("keymap \"" + keymapName + "\" not found" + " " + module);
     }
   }
@@ -393,6 +398,20 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     }
 
     myTimer.listeners.add(listener);
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public void reinitializeTimer() {
+    if (myTimer != null) {
+      var oldListeners = myTimer.listeners;
+
+      myTimer.stop();
+      myTimer = null;
+
+      for (var listener: oldListeners)
+        addTimerListener(listener);
+    }
   }
 
   @Override
@@ -451,7 +470,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       }
       else {
         try {
-          bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, module.getClassLoader());
+          bundle = DynamicBundle.getResourceBundle(module.getClassLoader(), bundleName);
           lastBundle = bundle;
           lastBundleName = bundleName;
         }
@@ -1427,16 +1446,6 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     }
   }
 
-  public boolean isToolWindowContextMenuVisible() {
-    for (Object popup : myPopups) {
-      if (popup instanceof ActionPopupMenuImpl &&
-          ((ActionPopupMenuImpl)popup).isToolWindowContextMenu()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @Override
   public boolean isActionPopupStackEmpty() {
     return myPopups.isEmpty();
@@ -1642,7 +1651,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
           inputEvent == null ? 0 : inputEvent.getModifiersEx()
         );
 
-        ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, false);
+        ActionUtil.performDumbAwareUpdate(action, event, false);
         if (!event.getPresentation().isEnabled()) {
           result.setRejected();
           return;
@@ -1681,6 +1690,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   private final class MyTimer extends Timer implements ActionListener {
     final List<TimerListener> listeners = ContainerUtil.createLockFreeCopyOnWriteList();
     private int myLastTimePerformed;
+    private final ClientId myClientId = ClientId.getCurrent();
 
     private MyTimer() {
       super(TIMER_DELAY, null);
@@ -1718,8 +1728,10 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       if (myLastTimePerformed == lastEventCount) {
         return;
       }
-      for (TimerListener listener : listeners) {
-        runListenerAction(listener);
+      try (AccessToken ignored = ClientId.withClientId(myClientId)) {
+        for (TimerListener listener : listeners) {
+          runListenerAction(listener);
+        }
       }
     }
 

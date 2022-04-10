@@ -382,7 +382,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       for (PsiClass aClass : getAllNullabilityNickNames()) {
         String qName = aClass.getQualifiedName();
         if (qName != null) {
-          result.put(qName, Jsr305Support.getNickNamedNullability(aClass));
+          result.putIfAbsent(qName, Jsr305Support.getNickNamedNullability(aClass));
         }
       }
       NullabilityAnnotationDataHolder holder = new NullabilityAnnotationDataHolder() {

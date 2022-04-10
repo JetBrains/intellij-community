@@ -1,0 +1,37 @@
+KotlinUFile:objects.kt(
+    UComment(// file comment)
+    KotlinUClass:ObjectsKt(
+        KotlinUField:topRunnable(
+            UComment(// Single-line comment bound to top-level property)
+            KotlinUAnonymousClass:<no name provided>(
+                KotlinUMethod:run(
+                )
+                KotlinUMethod:<no name provided>(
+                )
+            )
+        )
+        KotlinUMethod:getTopRunnable(
+        )
+        KotlinUMethod:main(
+        )
+    )
+    KotlinUClass:RunnableManager(
+        UComment(// Single-line comment bound to object)
+        KotlinUField:tasks(
+        )
+        KotlinUField:INSTANCE(
+            UComment(// Single-line comment bound to object)
+        )
+        KotlinUMethod:getTasks(
+        )
+        KotlinUMethod:register(
+            KotlinUParameter:runnable(
+            )
+        )
+        KotlinUMethod:runAll(
+        )
+        KotlinConstructorUMethod:RunnableManager(
+            UComment(// Single-line comment bound to object)
+        )
+    )
+)

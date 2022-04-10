@@ -4,7 +4,6 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.UserDataHolderEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,8 +92,7 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
   /**
    * @deprecated Use {@link #update()} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default void updateSize() {
     update();
   }

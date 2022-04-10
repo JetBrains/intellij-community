@@ -1,6 +1,14 @@
-from typing import Any
+from typing import Any, Protocol, TypeVar
 
 from yaml.error import YAMLError
+
+_T_contra = TypeVar("_T_contra", str, bytes, contravariant=True)
+
+class _WriteStream(Protocol[_T_contra]):
+    def write(self, __data: _T_contra) -> object: ...
+    # Optional fields:
+    # encoding: str
+    # def flush(self) -> object: ...
 
 class EmitterError(YAMLError): ...
 
@@ -19,7 +27,7 @@ class ScalarAnalysis:
 
 class Emitter:
     DEFAULT_TAG_PREFIXES: Any
-    stream: Any
+    stream: _WriteStream[Any]
     encoding: Any
     states: Any
     state: Any
@@ -47,7 +55,9 @@ class Emitter:
     prepared_tag: Any
     analysis: Any
     style: Any
-    def __init__(self, stream, canonical=..., indent=..., width=..., allow_unicode=..., line_break=...) -> None: ...
+    def __init__(
+        self, stream: _WriteStream[Any], canonical=..., indent=..., width=..., allow_unicode=..., line_break=...
+    ) -> None: ...
     def dispose(self): ...
     def emit(self, event): ...
     def need_more_events(self): ...

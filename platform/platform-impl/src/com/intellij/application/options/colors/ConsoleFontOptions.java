@@ -107,6 +107,11 @@ public class ConsoleFontOptions extends FontOptions {
 
   @Override
   protected void setFontSize(int fontSize) {
+    setFontSize((float)fontSize);
+  }
+
+  @Override
+  protected void setFontSize(float fontSize) {
     getCurrentScheme().setConsoleFontSize(fontSize);
   }
 

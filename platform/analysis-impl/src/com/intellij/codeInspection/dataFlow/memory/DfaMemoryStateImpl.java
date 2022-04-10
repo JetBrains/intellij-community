@@ -39,7 +39,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   // dfa value id -> indices in myEqClasses list of the classes which contain the id
   protected final Int2IntMap myIdToEqClassesIndices;
   protected final Stack<DfaValue> myStack;
-  private final DistinctPairSet myDistinctClasses;
+  private DistinctPairSet myDistinctClasses;
   private final LinkedHashMap<DfaVariableValue,DfType> myVariableTypes;
   private boolean myEphemeral;
 
@@ -178,7 +178,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void push(@NotNull DfaValue value) {
-    assert value.getFactory() == myFactory;
+    assert value.getFactory() == myFactory : value;
     myCachedHash = null;
     myStack.push(value);
   }
@@ -1080,16 +1080,24 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     EqClass eqClass = getEqClass(value);
     if (eqClass == null) return true;
     if (type.fromRelation(RelationType.GT) == DfType.TOP && type.fromRelation(RelationType.LT) == DfType.TOP) return true;
-    for (DistinctPairSet.DistinctPair pair : getDistinctClassPairs().toArray(new DistinctPairSet.DistinctPair[0])) {
-      if (pair.isOrdered()) {
-        if (pair.getFirst() == eqClass) {
-          DfaVariableValue var = Objects.requireNonNull(pair.getSecond().getCanonicalVariable());
-          if (!meetDfType(var, getDfType(var).meetRelation(RelationType.GT, type))) return false;
-        } else if(pair.getSecond() == eqClass) {
-          DfaVariableValue var = Objects.requireNonNull(pair.getFirst().getCanonicalVariable());
-          if (!meetDfType(var, getDfType(var).meetRelation(RelationType.LT, type))) return false;
+    DistinctPairSet distinctPairs = myDistinctClasses;
+    myDistinctClasses = new DistinctPairSet(this);
+    try {
+      for (DistinctPairSet.DistinctPair pair : distinctPairs) {
+        if (pair.isOrdered()) {
+          if (pair.getFirst() == eqClass) {
+            DfaVariableValue var = Objects.requireNonNull(pair.getSecond().getCanonicalVariable());
+            if (!meetDfType(var, getDfType(var).meetRelation(RelationType.GT, type))) return false;
+          }
+          else if (pair.getSecond() == eqClass) {
+            DfaVariableValue var = Objects.requireNonNull(pair.getFirst().getCanonicalVariable());
+            if (!meetDfType(var, getDfType(var).meetRelation(RelationType.LT, type))) return false;
+          }
         }
       }
+    }
+    finally {
+      myDistinctClasses = distinctPairs;
     }
     return true;
   }
@@ -1371,11 +1379,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void flushQualifiedMethods(@NotNull DfaVariableValue variable) {
-    DfaVariableValue qualifier = variable.getQualifier();
-    if (qualifier != null) {
+    if (variable.isFlushableByCalls()) {
       // Flush method results on field write
       List<DfaVariableValue> toFlush =
-        ContainerUtil.filter(qualifier.getDependentVariables(), DfaVariableValue::containsCalls);
+        ContainerUtil.filter(myVariableTypes.keySet(), DfaVariableValue::containsCalls);
       toFlush.forEach(val -> doFlush(val, true));
     }
   }

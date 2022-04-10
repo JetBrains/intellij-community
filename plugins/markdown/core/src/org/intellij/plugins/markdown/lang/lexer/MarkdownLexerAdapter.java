@@ -32,7 +32,7 @@ public class MarkdownLexerAdapter extends LexerBase {
   @Override
   public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     this.endOffset = endOffset;
-    delegateLexer.start(buffer, startOffset, endOffset);
+    delegateLexer.start(buffer, startOffset, endOffset, initialState);
   }
 
   @Override

@@ -4,14 +4,13 @@ package org.jetbrains.kotlin.idea.statistics
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
-import org.jetbrains.kotlin.idea.PlatformVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 
 
 open class KotlinFUSLogger {
 
     companion object {
-        private val context = FeatureUsageData().addData("plugin_version", KotlinPluginUtil.getPluginVersion())
+        private val context = FeatureUsageData().addData("plugin_version", KotlinIdePlugin.version)
         private val logger = FUCounterUsageLogger.getInstance()
 
         fun log(group: FUSEventGroups, event: String) {

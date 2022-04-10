@@ -1,9 +1,10 @@
-from typing import Any
+from typing import Any, ClassVar
+from typing_extensions import Literal
 
 from .ImageFile import ImageFile
 
 xbm_head: Any
 
 class XbmImageFile(ImageFile):
-    format: str
-    format_description: str
+    format: ClassVar[Literal["XBM"]]
+    format_description: ClassVar[str]

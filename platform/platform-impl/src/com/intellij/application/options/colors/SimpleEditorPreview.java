@@ -6,6 +6,7 @@ import com.intellij.application.options.colors.highlighting.HighlightData;
 import com.intellij.application.options.colors.highlighting.HighlightsExtractor;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.UsedColors;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -23,6 +24,7 @@ import com.intellij.openapi.options.colors.EditorHighlightingProvidingColorSetti
 import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.EditorCustomization;
 import com.intellij.util.Alarm;
@@ -63,8 +65,15 @@ public class SimpleEditorPreview implements PreviewPanel {
                                                     page.getAdditionalInlineElementToDescriptorMap(),
                                                     page.getAdditionalHighlightingTagToColorKeyMap());
     EditorColorsScheme colorScheme = myPage.customizeColorScheme(myOptions.getSelectedScheme());
+    String demoText = page.getDemoText();
+    try {
+      StringUtil.assertValidSeparators(demoText);
+    }
+    catch (Exception e) {
+      throw PluginException.createByClass("Implementation of ColorSettingsPage::getDemoText in " + page.getClass() + " must use \\n separators", e, page.getClass());
+    }
     myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(
-      myHighlightsExtractor.extractHighlights(page.getDemoText(), myHighlightData), // text without tags
+      myHighlightsExtractor.extractHighlights(demoText, myHighlightData), // text without tags
       colorScheme, false);
     if (page instanceof EditorCustomization) {
       ((EditorCustomization)page).customize(myEditor);
@@ -347,7 +356,7 @@ public class SimpleEditorPreview implements PreviewPanel {
     final List<HighlightData> rainbowMarkup = setupRainbowHighlighting(
       page,
       initialMarkup,
-      new RainbowHighlighter(colorsScheme).getRainbowTempKeys(),
+      RainbowHighlighter.getRainbowTempKeys(),
       RainbowHighlighter.isRainbowEnabledWithInheritance(colorsScheme, page.getLanguage()));
 
     myHighlightData.clear();

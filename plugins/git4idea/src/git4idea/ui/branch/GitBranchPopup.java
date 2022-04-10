@@ -57,7 +57,7 @@ import static java.util.stream.Collectors.toList;
  * <p/>
  */
 public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
-  @NonNls private static final String DIMENSION_SERVICE_KEY = "Git.Branch.Popup";
+  @NonNls static final String DIMENSION_SERVICE_KEY = "Git.Branch.Popup";
   @NonNls static final String SHOW_ALL_LOCALS_KEY = "Git.Branch.Popup.ShowAllLocals";
   @NonNls static final String SHOW_ALL_REMOTES_KEY = "Git.Branch.Popup.ShowAllRemotes";
   @NonNls static final String SHOW_ALL_REPOSITORIES = "Git.Branch.Popup.ShowAllRepositories";

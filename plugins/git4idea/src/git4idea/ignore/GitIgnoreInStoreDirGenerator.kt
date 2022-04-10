@@ -104,7 +104,7 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : Disposable {
     }
   }
 
-  private fun generateGitignoreInStoreDirIfNeeded() {
+  fun generateGitignoreInStoreDirIfNeeded() {
     if (!needGenerate.compareAndSet(true, false)) return
 
     val projectConfigDirPath = project.stateStore.directoryStorePath

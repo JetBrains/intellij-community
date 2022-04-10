@@ -44,7 +44,7 @@ class MarkdownPreviewSecurityTest(enableOsr: Boolean) {
 
   @Test
   fun `test meta redirects are not allowed`() {
-    ExtensionTestUtil.maskExtensions(MarkdownBrowserPreviewExtension.Provider.extensionPointName, emptyList(), disposableRule.disposable)
+    ExtensionTestUtil.maskExtensions(MarkdownBrowserPreviewExtension.Provider.EP, emptyList(), disposableRule.disposable)
     val maliciousUrl = "https://evil.example.com/poc.html"
     // language=HTML
     val content = """
@@ -74,7 +74,7 @@ class MarkdownPreviewSecurityTest(enableOsr: Boolean) {
 
   @Test
   fun `test panel won't reload on manual location change`() {
-    ExtensionTestUtil.maskExtensions(MarkdownBrowserPreviewExtension.Provider.extensionPointName, emptyList(), disposableRule.disposable)
+    ExtensionTestUtil.maskExtensions(MarkdownBrowserPreviewExtension.Provider.EP, emptyList(), disposableRule.disposable)
     val maliciousUrl = "https://google.com/"
     // language=HTML
     val content = "<html><body></body></html>"
@@ -100,7 +100,7 @@ class MarkdownPreviewSecurityTest(enableOsr: Boolean) {
 
   @Test
   fun `test external scripts are not allowed`() {
-    ExtensionTestUtil.maskExtensions(MarkdownBrowserPreviewExtension.Provider.extensionPointName, emptyList(), disposableRule.disposable)
+    ExtensionTestUtil.maskExtensions(MarkdownBrowserPreviewExtension.Provider.EP, emptyList(), disposableRule.disposable)
     val maliciousUrl = "https://evil.example.com/some-script.js"
     // language=HTML
     val content = "<html><body><script src='$maliciousUrl'></body></html>"
@@ -117,7 +117,7 @@ class MarkdownPreviewSecurityTest(enableOsr: Boolean) {
 
   @Test
   fun `test dynamically added inline scripts are not allowed`() {
-    ExtensionTestUtil.maskExtensions(MarkdownBrowserPreviewExtension.Provider.extensionPointName, emptyList(), disposableRule.disposable)
+    ExtensionTestUtil.maskExtensions(MarkdownBrowserPreviewExtension.Provider.EP, emptyList(), disposableRule.disposable)
     // language=HTML
     val content = "<html><body><script>console.log('Ops!');</script></body></html>"
     val latch = CountDownLatch(1)

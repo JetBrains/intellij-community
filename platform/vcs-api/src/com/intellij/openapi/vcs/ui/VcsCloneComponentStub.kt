@@ -15,6 +15,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 class VcsCloneComponentStub(
+  private val project: Project,
   private val checkoutProvider: CheckoutProvider,
   @Nls private val primaryActionText: String = VcsBundle.message("clone.dialog.clone.button")
 ) : VcsCloneComponent {
@@ -29,7 +30,7 @@ class VcsCloneComponentStub(
     return panel
   }
 
-  override fun doClone(project: Project, listener: CheckoutProvider.Listener) = checkoutProvider.doCheckout(project, listener)
+  override fun doClone(listener: CheckoutProvider.Listener) = checkoutProvider.doCheckout(project, listener)
 
   override fun isOkEnabled() = true
 

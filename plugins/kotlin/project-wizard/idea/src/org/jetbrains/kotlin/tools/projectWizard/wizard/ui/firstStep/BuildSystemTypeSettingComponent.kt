@@ -1,15 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.project.DumbAware
-import icons.OpenapiIcons
-import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleFacade
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.ValidationResult
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.isSpecificError
@@ -27,7 +23,6 @@ import java.awt.Dimension
 import java.awt.Insets
 import javax.swing.JComponent
 
-
 class BuildSystemTypeSettingComponent(
     context: Context
 ) : SettingComponent<BuildSystemType, DropDownSettingType<BuildSystemType>>(
@@ -38,7 +33,8 @@ class BuildSystemTypeSettingComponent(
     private val toolbar by lazy(LazyThreadSafetyMode.NONE) {
         val buildSystemTypes = read { setting.type.values.filter { setting.type.filter(this, reference, it) } }
         val actionGroup = DefaultActionGroup(buildSystemTypes.map(::BuildSystemTypeAction))
-        BuildSystemToolbar(ActionPlaces.UNKNOWN, actionGroup, true)
+        val buildSystemToolbar = BuildSystemToolbar(ActionPlaces.NEW_PROJECT_WIZARD, actionGroup, true)
+        buildSystemToolbar.also { it.targetComponent = null }
     }
 
     override val alignment: TitleComponentAlignment
@@ -63,7 +59,7 @@ class BuildSystemTypeSettingComponent(
 
     private inner class BuildSystemTypeAction(
         val buildSystemType: BuildSystemType
-    ) : ToggleAction(buildSystemType.text, null, buildSystemType.icon), DumbAware {
+    ) : ToggleAction(buildSystemType.text, null, null), DumbAware {
         override fun isSelected(e: AnActionEvent): Boolean = value == buildSystemType
 
         override fun setSelected(e: AnActionEvent, state: Boolean) {
@@ -125,11 +121,3 @@ class BuildSystemTypeSettingComponent(
         private const val TOP_BOTTOM_PADDING = 2
     }
 }
-
-private val BuildSystemType.icon
-    get() = when (this) {
-        BuildSystemType.GradleKotlinDsl -> KotlinIcons.GRADLE_SCRIPT
-        BuildSystemType.GradleGroovyDsl -> KotlinGradleFacade.instance?.gradleIcon ?: KotlinIcons.GRADLE_SCRIPT
-        BuildSystemType.Maven -> OpenapiIcons.RepositoryLibraryLogo
-        BuildSystemType.Jps -> AllIcons.Nodes.Module
-    }

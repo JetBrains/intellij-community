@@ -20,11 +20,12 @@ import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.PermanentGraph
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties
-import com.intellij.vcs.log.impl.VcsLogContentUtil
-import com.intellij.vcs.log.impl.VcsLogManager
-import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.ui.*
+import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.log.impl.VcsLogTabLocation.Companion.findLogUi
+import com.intellij.vcs.log.ui.MainVcsLogUi
+import com.intellij.vcs.log.ui.VcsLogColorManager
+import com.intellij.vcs.log.ui.VcsLogUiEx
+import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.util.containsAll
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
 import com.intellij.vcs.log.visible.VisiblePack
@@ -129,18 +130,19 @@ class GitUpdateInfoAsLog(private val project: Project,
   }
 
   private fun findOrCreateLogUi(rangeFilter: VcsLogRangeFilter, select: Boolean) {
-    val logUi = VcsLogContentUtil.find(project, VcsLogUiEx::class.java, select) { ui ->
+    val logManager = projectLog.logManager
+    if (logManager == null) {
+      if (select) {
+        VcsLogContentUtil.showLogIsNotAvailableMessage(project)
+      }
+      return
+    }
+    val logUi = logManager.findLogUi(VcsLogTabLocation.TOOL_WINDOW, VcsLogUiEx::class.java, select) { ui ->
       isUpdateTabId(ui.id) && ui.filterUi.filters.get(RANGE_FILTER) == rangeFilter
     }
     if (logUi != null) return
 
-    val logManager = projectLog.logManager
-    if (logManager != null) {
-      createLogUi(logManager, MyLogUiFactory(logManager.colorManager, rangeFilter), select)
-    }
-    else if (select) {
-      VcsLogContentUtil.showLogIsNotAvailableMessage(project)
-    }
+    createLogUi(logManager, MyLogUiFactory(logManager.colorManager, rangeFilter), select)
   }
 
   private fun getViewCommitsAction(rangeFilter: VcsLogRangeFilter): Runnable {

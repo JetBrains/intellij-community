@@ -17,13 +17,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.rmi.RemoteException;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,11 +34,11 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
   protected final Integer myDebugPort;
 
 
-  private ScheduledFuture<?> myLoggerFuture;
-  private ScheduledFuture<?> myDownloadListenerFuture;
+  private ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("Maven connector pulling", 2);
   private final AtomicInteger myLoggerConnectFailedCount = new AtomicInteger(0);
   private final AtomicInteger myDownloadConnectFailedCount = new AtomicInteger(0);
   private final AtomicBoolean myConnectStarted = new AtomicBoolean(false);
+  private final AtomicBoolean myTerminated = new AtomicBoolean(false);
 
   private MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport mySupport;
   private final AsyncPromise<@NotNull MavenServer> myServerPromise = new AsyncPromise<>() {
@@ -101,7 +99,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     }
     catch (Throwable e) {
       try {
-        shutdown(false);
+        MavenServerManager.getInstance().shutdownConnector(this, false);
       }
       catch (Throwable ignored) {
       }
@@ -128,19 +126,16 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     return myServerPromise.get();
   }
 
-  private void cleanUp() {
-    if (myLoggerFuture != null) {
+  private void cleanUpFutures() {
+    try {
+      if(!myExecutor.isShutdown()) {
+        myExecutor.shutdownNow();
+      }
       int count = myLoggerConnectFailedCount.get();
       if (count != 0) MavenLog.LOG.warn("Maven pulling logger was failed: " + count + " times");
-      myLoggerFuture.cancel(true);
-      myLoggerFuture = null;
-    }
-    if (myDownloadListenerFuture != null) {
-      int count = myDownloadConnectFailedCount.get();
+      count = myDownloadConnectFailedCount.get();
       if (count != 0) MavenLog.LOG.warn("Maven pulling download listener was failed: " + count + " times");
-      myDownloadListenerFuture.cancel(true);
-      myDownloadListenerFuture = null;
-    }
+    } catch (IllegalStateException ignore){}
   }
 
   @Override
@@ -155,16 +150,16 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
 
   @ApiStatus.Internal
   @Override
-  public void shutdown(boolean wait) {
-    MavenLog.LOG.debug("[connector] shutdown "  + this + " " + (mySupport == null));
-    super.shutdown(true);
-    cleanUp();
+  public void stop(boolean wait) {
+    MavenLog.LOG.debug("[connector] shutdown " + this + " " + (mySupport == null));
+    cleanUpFutures();
     MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport support = mySupport;
     if (support != null) {
       support.stopAll(wait);
-      mySupport = null;
     }
+    myTerminated.set(true);
   }
+
 
   @Override
   protected <R, E extends Exception> R perform(RemoteObjectWrapper.Retriable<R, E> r) throws E {
@@ -177,8 +172,8 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
         last = e;
       }
     }
-    cleanUp();
-    myManager.cleanUp(this);
+    cleanUpFutures();
+    myManager.shutdownConnector(this, false);
     MavenLog.LOG.debug("[connector] perform error " + this);
     throw new RuntimeException("Cannot reconnect.", last);
   }
@@ -193,7 +188,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
   public State getState() {
     switch (myServerPromise.getState()) {
       case SUCCEEDED: {
-        return mySupport == null ? State.STOPPED : State.RUNNING;
+        return myTerminated.get() ? State.STOPPED : State.RUNNING;
       }
       case REJECTED:
         return State.FAILED;
@@ -205,7 +200,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
   @Override
   public boolean checkConnected() {
     MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport support = mySupport;
-    return support!=null && !support.getActiveConfigurations().isEmpty();
+    return support != null && !support.getActiveConfigurations().isEmpty();
   }
 
   private static class MavenServerDownloadDispatcher implements MavenServerDownloadListener {
@@ -234,7 +229,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
         mySupport = factory.create(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
         mySupport.onTerminate(e -> {
           MavenLog.LOG.debug("[connector] terminate " + MavenServerConnectorImpl.this);
-          shutdown(false);
+          MavenServerManager.getInstance().shutdownConnector(MavenServerConnectorImpl.this, false);
         });
         MavenServer server = mySupport.acquire(this, "", indicator);
         startPullingDownloadListener(server);
@@ -252,7 +247,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
   private void startPullingDownloadListener(MavenServer server) throws RemoteException {
     MavenPullDownloadListener listener = server.createPullDownloadListener(MavenRemoteObjectWrapper.ourToken);
     if (listener == null) return;
-    myDownloadListenerFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(
+    myExecutor.scheduleWithFixedDelay(
       () -> {
         try {
           List<DownloadArtifactEvent> artifactEvents = listener.pull();
@@ -266,6 +261,9 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
           if (!Thread.currentThread().isInterrupted()) {
             myDownloadConnectFailedCount.incrementAndGet();
           }
+          else {
+            throw new RuntimeException(e);
+          }
         }
       },
       500,
@@ -277,7 +275,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
   private void startPullingLogger(MavenServer server) throws RemoteException {
     MavenPullServerLogger logger = server.createPullLogger(MavenRemoteObjectWrapper.ourToken);
     if (logger == null) return;
-    myLoggerFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(
+    myExecutor.scheduleWithFixedDelay(
       () -> {
         try {
           List<ServerLogEvent> logEvents = logger.pull();
@@ -301,6 +299,9 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
         catch (RemoteException e) {
           if (!Thread.currentThread().isInterrupted()) {
             myLoggerConnectFailedCount.incrementAndGet();
+          }
+          else {
+            throw new RuntimeException(e);
           }
         }
       },

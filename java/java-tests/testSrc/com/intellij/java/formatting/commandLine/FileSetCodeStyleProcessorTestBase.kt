@@ -21,7 +21,8 @@ val BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/commandLine
 
 abstract class FileSetCodeStyleProcessorTestBase : LightPlatformTestCase() {
 
-  var codeStyleSettings: CodeStyleSettings? = null
+  lateinit var codeStyleSettings: CodeStyleSettings
+
   var messageOutput: MessageOutput? = null
 
   override fun setUp() {

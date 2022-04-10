@@ -8,9 +8,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
@@ -51,11 +53,13 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
       if (editor != null && !editor.isDisposed()) {
         // usability: show auto import popup as soon as possible
         if (!DumbService.isDumb(project)) {
-          ShowAutoImportPassFactory siFactory = TextEditorHighlightingPassRegistrarImpl.EP_NAME.findExtensionOrFail(ShowAutoImportPassFactory.class);
-          TextEditorHighlightingPass highlightingPass = siFactory.createHighlightingPass(psiFile, editor);
-          if (highlightingPass != null) {
-            highlightingPass.doApplyInformationToEditor();
-          }
+          ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+            ShowAutoImportPassFactory siFactory = TextEditorHighlightingPassRegistrarImpl.EP_NAME.findExtensionOrFail(ShowAutoImportPassFactory.class);
+            TextEditorHighlightingPass highlightingPass = siFactory.createHighlightingPass(psiFile, editor);
+            if (highlightingPass != null) {
+              highlightingPass.doApplyInformationToEditor();
+            }
+          }, session.getProgressIndicator());
         }
 
         repaintErrorStripeAndIcon(editor, project);
@@ -117,8 +121,11 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
             if (existing.equalsByActualOffset(created)) return true;
           }
         }
-        // seems that highlight info 'existing' is going to disappear; remove it earlier
-        ((HighlightingSessionImpl)highlightingSession).queueDisposeHighlighterFor(existing);
+        RangeHighlighterEx highlighter = existing.highlighter;
+        if (highlighter != null && UpdateHighlightersUtil.shouldRemoveHighlighter(highlightingSession.getPsiFile(), highlighter)) {
+          // seems that highlight info 'existing' is going to disappear; remove it earlier
+          ((HighlightingSessionImpl)highlightingSession).queueDisposeHighlighter(existing);
+        }
       }
       return true;
     });

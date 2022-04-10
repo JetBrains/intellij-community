@@ -62,7 +62,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
   static {
     String property = System.getProperty("idea.initialIndexSize");
-    INITIAL_INDEX_SIZE = property == null ? 4 * 1024 : Integer.valueOf(property);
+    INITIAL_INDEX_SIZE = property == null ? 4 * 1024 : Integer.parseInt(property);
   }
 
   @NonNls

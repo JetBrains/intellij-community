@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.diagnostic.startUpPerformanceReporter
@@ -49,7 +49,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   companion object {
     internal val LOG = logger<StartUpMeasurer>()
 
-    internal const val VERSION = "35"
+    internal const val VERSION = "36"
 
     internal fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->
@@ -84,7 +84,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
     ActivityImpl.listener = ActivityListener(projectName)
   }
 
-  inner class ActivityListener(private val projectName: String) : Consumer<ActivityImpl> {
+  private inner class ActivityListener(private val projectName: String) : Consumer<ActivityImpl> {
     @Volatile
     private var projectOpenedActivitiesPassed = false
 
@@ -126,19 +126,19 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
       StartUpMeasurer.stopPluginCostMeasurement()
       // don't report statistic from here if we want to measure project import duration
       if (!java.lang.Boolean.getBoolean("idea.collect.project.import.performance")) {
-        logStats(projectName)
+        keepAndLogStats(projectName)
       }
     }
   }
 
   override fun reportStatistics(project: Project) {
     ForkJoinPool.commonPool().execute {
-      logStats(project.name)
+      keepAndLogStats(project.name)
     }
   }
 
   @Synchronized
-  private fun logStats(projectName: String) {
+  private fun keepAndLogStats(projectName: String) {
     val params = doLogStats(projectName)
     pluginCostMap = params.pluginCostMap
     lastReport = params.lastReport

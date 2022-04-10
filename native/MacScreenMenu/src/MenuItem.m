@@ -65,6 +65,7 @@ NSString* JavaStringToNSString(JNIEnv *env, jstring jstr) {
 - (id) initWithPeer:(jobject)peer asSeparator: (BOOL) asSeparator{
     self = [super initWithPeer:peer];
     if (self) {
+        isAttached = false;
         if (asSeparator) {
             nsMenuItem = (NSMenuItem*)[NSMenuItem separatorItem]; // creates autorelease
             [nsMenuItem retain];
@@ -73,6 +74,15 @@ NSString* JavaStringToNSString(JNIEnv *env, jstring jstr) {
             [nsMenuItem setAction:@selector(handleAction:)];
             [nsMenuItem setTarget:self];
         }
+    }
+    return self;
+}
+
+- (id) initWithNSObject:(NSMenuItem *)menuItem javaPeer:(jobject)peer{
+    self = [super initWithPeer:peer];
+    if (self) {
+        isAttached = true;
+        nsMenuItem = menuItem; // must be already retained (when found by title)
     }
     return self;
 }
@@ -244,13 +254,15 @@ NSUInteger JavaModifiersToNsKeyModifiers(jint javaModifiers, BOOL isExtMods)
 }
 
 - (void) dealloc {
-    if ([nsMenuItem.view isKindOfClass:CustomMenuItemView.class]) {
-        ((CustomMenuItemView *)nsMenuItem.view)->owner = nil;
-    }
-    nsMenuItem.view = nil;
+    if (!isAttached) {
+        if ([nsMenuItem.view isKindOfClass:CustomMenuItemView.class]) {
+            ((CustomMenuItemView *)nsMenuItem.view)->owner = nil;
+        }
+        nsMenuItem.view = nil;
 
-    [nsMenuItem setAction:NULL];
-    [nsMenuItem setTarget:nil];
+        [nsMenuItem setAction:NULL];
+        [nsMenuItem setTarget:nil];
+    }
     [nsMenuItem release];
     nsMenuItem = nil;
     [super dealloc];
@@ -262,16 +274,7 @@ NSUInteger JavaModifiersToNsKeyModifiers(jint javaModifiers, BOOL isExtMods)
 
 @end
 
-
-/*
- * Class:     com_intellij_ui_mac_screenmenu_MenuItem
- * Method:    nativeCreate
- * Signature: (Z)J
- */
-JNIEXPORT jlong JNICALL
-Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeCreate
-(JNIEnv *env, jobject peer, jboolean isSeparator)
-{
+static void initGlobals(JNIEnv *env, jobject peer) {
     initGlobalVMPtr(env);
 
     if (sjc_MenuItem == NULL) {
@@ -284,6 +287,18 @@ Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeCreate
             sjc_MenuItem = (*env)->NewGlobalRef(env, sjc_MenuItem);
         }
     }
+}
+
+/*
+ * Class:     com_intellij_ui_mac_screenmenu_MenuItem
+ * Method:    nativeCreate
+ * Signature: (Z)J
+ */
+JNIEXPORT jlong JNICALL
+Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeCreate
+(JNIEnv *env, jobject peer, jboolean isSeparator)
+{
+    initGlobals(env, peer);
 
     JNI_COCOA_ENTER();
     jobject javaPeer = (*env)->NewGlobalRef(env, peer);
@@ -299,10 +314,30 @@ Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeCreate
 
 /*
  * Class:     com_intellij_ui_mac_screenmenu_MenuItem
+ * Method:    nativeAttach
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL
+Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeAttach
+(JNIEnv *env, jobject peer, jlong nsMenuItem/*must be retained*/)
+{
+    initGlobals(env, peer);
+
+    JNI_COCOA_ENTER();
+    jobject javaPeer = (*env)->NewGlobalRef(env, peer);
+    // NOTE: returns retained MenuItem
+    // Java owner must release it manually via nativeDispose (see MenuItem.dispose())
+    MenuItem * menuItem = [[MenuItem alloc] initWithNSObject:(NSMenuItem*)nsMenuItem javaPeer:javaPeer];
+    return (jlong)menuItem;
+    JNI_COCOA_EXIT();
+}
+
+/*
+ * Class:     com_intellij_ui_mac_screenmenu_MenuItem
  * Method:    nativeDispose
  * Signature: (J)V
  */
-JNIEXPORT jlong JNICALL
+JNIEXPORT void JNICALL
 Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeDispose
 (JNIEnv *env, jobject peer, jlong menuItemObj)
 {
@@ -400,11 +435,11 @@ static unichar AWTKeyToMacShortcut(jint awtKey, BOOL doShift) {
 
 /*
  * Class:     com_intellij_ui_mac_screenmenu_MenuItem
- * Method:    nativeSetLabel
+ * Method:    nativeSetTitleAndAccelerator
  * Signature: (JLjava/lang/String;CIIZ)V
  */
 JNIEXPORT void JNICALL
-Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetLabel
+Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetTitleAndAccelerator
 (JNIEnv *env, jobject peer, jlong menuItemObj, jstring label, jchar shortcutKey, jint shortcutKeyCode, jint mods, jboolean onAppKit)
 {
     JNI_COCOA_ENTER();
@@ -426,6 +461,32 @@ Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetLabel
     __strong MenuItem * item = (MenuItem *)menuItemObj;
     dispatch_block_t block = ^{
         [item setLabel:theLabel shortcut:theKeyEquivalent modifierMask:mods];
+    };
+    if (!onAppKit || [NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), block);
+    }
+    JNI_COCOA_EXIT();
+}
+
+/*
+ * Class:     com_intellij_ui_mac_screenmenu_MenuItem
+ * Method:    nativeSetTitle
+ * Signature: (JLjava/lang/String;Z)V
+ */
+JNIEXPORT void JNICALL
+Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetTitle
+(JNIEnv *env, jobject peer, jlong menuItemObj, jstring title, jboolean onAppKit)
+{
+    JNI_COCOA_ENTER();
+    NSString *theLabel = JavaStringToNSString(env, title);
+    __strong MenuItem * item = (MenuItem *)menuItemObj;
+    dispatch_block_t block = ^{
+        [item->nsMenuItem setTitle:theLabel];
+        if ([item->nsMenuItem.view isKindOfClass:CustomMenuItemView.class]) {
+            [(CustomMenuItemView *)(item->nsMenuItem.view) recalcSizes];
+        }
     };
     if (!onAppKit || [NSThread isMainThread]) {
         block();

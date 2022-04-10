@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jsonpath.ui
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
@@ -42,6 +42,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.*
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.popup.PopupState
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jayway.jsonpath.Configuration
@@ -191,7 +192,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
         panel.add(JLabel(JsonBundle.message("jsonpath.evaluate.output.option")),
                   GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.insetsLeft(5), 0, 0))
         panel.add(super.createCustomComponent(presentation, place),
-                  GridBagConstraints(1, 0, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0))
+                  GridBagConstraints(1, 0, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBInsets.emptyInsets(), 0, 0))
         return panel
       }
     }

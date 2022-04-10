@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,10 +53,11 @@ public final class IconTransform {
   }
 
   public @Nullable Pair<String, ClassLoader> patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
+    String pathWithLeadingSlash = path.charAt(0) == '/' ? path : ('/' + path);
     for (IconPathPatcher patcher : patchers) {
       String newPath;
       try {
-        newPath = patcher.patchPath(path, classLoader);
+        newPath = patcher.patchPath(pathWithLeadingSlash, classLoader);
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -70,11 +71,14 @@ public final class IconTransform {
         continue;
       }
 
-      LOG.debug("replace '" + path + "' with '" + newPath + "'");
-      ClassLoader contextClassLoader = patcher.getContextClassLoader(path, classLoader);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("replace '" + path + "' with '" + newPath + "'");
+      }
+
+      ClassLoader contextClassLoader = patcher.getContextClassLoader(pathWithLeadingSlash, classLoader);
       if (contextClassLoader == null) {
         //noinspection deprecation
-        Class<?> contextClass = patcher.getContextClass(path);
+        Class<?> contextClass = patcher.getContextClass(pathWithLeadingSlash);
         if (contextClass != null) {
           contextClassLoader = contextClass.getClassLoader();
         }

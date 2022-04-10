@@ -3,11 +3,17 @@
 package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiConstructorCall
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 interface KotlinFindUsagesSupport {
 
@@ -15,10 +21,13 @@ interface KotlinFindUsagesSupport {
         fun getInstance(project: Project): KotlinFindUsagesSupport = project.getServiceSafe()
 
         val KtParameter.isDataClassComponentFunction: Boolean
-            get() =  getInstance(project).isDataClassComponentFunction(this)
+            get() = getInstance(project).isDataClassComponentFunction(this)
 
-        fun KtElement.isCallReceiverRefersToCompanionObject(companionObject: KtObjectDeclaration): Boolean =
-            getInstance(project).isCallReceiverRefersToCompanionObject(this, companionObject)
+        fun processCompanionObjectInternalReferences(
+            companionObject: KtObjectDeclaration,
+            referenceProcessor: Processor<PsiReference>
+        ): Boolean =
+            getInstance(companionObject.project).processCompanionObjectInternalReferences(companionObject, referenceProcessor)
 
         fun getTopMostOverriddenElementsToHighlight(target: PsiElement): List<PsiElement> =
             getInstance(target.project).getTopMostOverriddenElementsToHighlight(target)
@@ -26,8 +35,14 @@ interface KotlinFindUsagesSupport {
         fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String? =
             getInstance(declaration.project).tryRenderDeclarationCompactStyle(declaration)
 
-        fun PsiReference.isConstructorUsage(ktClassOrObject: KtClassOrObject): Boolean =
-            getInstance(ktClassOrObject.project).isConstructorUsage(this, ktClassOrObject)
+        fun PsiReference.isConstructorUsage(ktClassOrObject: KtClassOrObject): Boolean {
+            fun isJavaConstructorUsage(): Boolean {
+                val call = element.getNonStrictParentOfType<PsiConstructorCall>()
+                return call == element.parent && call?.resolveConstructor()?.containingClass?.navigationElement == ktClassOrObject
+            }
+
+            return isJavaConstructorUsage() || getInstance(ktClassOrObject.project).isKotlinConstructorUsage(this, ktClassOrObject)
+        }
 
         fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?) : List<PsiElement> =
             getInstance(declaration.project).getSuperMethods(declaration, ignore)
@@ -36,7 +51,7 @@ interface KotlinFindUsagesSupport {
             getInstance(project).sourcesAndLibraries(delegate, project)
     }
 
-    fun isCallReceiverRefersToCompanionObject(element: KtElement, companionObject: KtObjectDeclaration): Boolean
+    fun processCompanionObjectInternalReferences(companionObject: KtObjectDeclaration, referenceProcessor: Processor<PsiReference>): Boolean
 
     fun isDataClassComponentFunction(element: KtParameter): Boolean
 
@@ -44,7 +59,7 @@ interface KotlinFindUsagesSupport {
 
     fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String?
 
-    fun isConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean
+    fun isKotlinConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean
 
     fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?) : List<PsiElement>
 

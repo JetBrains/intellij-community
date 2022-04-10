@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.configuration;
 
-import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -13,7 +12,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
-import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.module.PyContentEntriesEditor;
 import org.jetbrains.annotations.NotNull;
@@ -63,11 +61,6 @@ public class PyContentEntriesModuleConfigurable extends SearchableConfigurable.P
         @Override
         public ModuleRootModel getCurrentRootModel() {
           return myModifiableModel;
-        }
-
-        @Override
-        public FacetsProvider getFacetsProvider() {
-          return DefaultFacetsProvider.INSTANCE;
         }
       };
     myEditor = createEditor(myModule, moduleConfigurationState);

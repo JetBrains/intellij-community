@@ -32,26 +32,26 @@ import com.intellij.util.ThreeState
 import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
+import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
+import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
-import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getBorders
+import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getElementsAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.isSamLambda
-import org.jetbrains.kotlin.idea.decompiler.classFile.KtClsFile
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
@@ -226,7 +226,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     private fun Method.getInlineFunctionBorders(sourceFileName: String): List<ClosedRange<Location>> {
-        return getInlineFunctionLocalVariables()
+        return getInlineFunctionOrArgumentVariables()
             .mapNotNull { it.getBorders() }
             .filter { it.start.safeSourceName() == sourceFileName }
             .toList()
@@ -400,8 +400,10 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         val debuggerClassNameProvider = DebuggerClassNameProvider(debugProcess.project, debugProcess.searchScope)
         val lineNumber = runReadAction { sourcePosition.line }
         val classes = debuggerClassNameProvider.getClassesForPosition(sourcePosition)
-        return classes.flatMap { className -> debugProcess.virtualMachineProxy.classesByName(className) }
+            .flatMap { className -> debugProcess.virtualMachineProxy.classesByName(className) }
+        return classes
             .flatMap { referenceType -> debugProcess.findTargetClasses(referenceType, lineNumber) }
+            .ifEmpty { classes }
     }
 
     fun originalClassNamesForPosition(position: SourcePosition): List<String> {
@@ -424,7 +426,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             val line = position.line + 1
 
             val locations = DebuggerUtilsAsync.locationsOfLineSync(type, KOTLIN_STRATA_NAME, null, line)
-            if (locations == null || locations.isEmpty()) {
+            if (locations.isNullOrEmpty()) {
                 throw NoDataException.INSTANCE
             }
 
@@ -476,8 +478,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 }
 
-internal fun Method.getInlineFunctionNamesAndBorders(): Map<LocalVariable, ClosedRange<Location>> {
-    return getInlineFunctionLocalVariables()
+internal fun Method.getInlineFunctionAndArgumentVariablesToBordersMap(): Map<LocalVariable, ClosedRange<Location>> {
+    return getInlineFunctionOrArgumentVariables()
         .mapNotNull {
             val borders = it.getBorders()
             if (borders == null)
@@ -488,23 +490,17 @@ internal fun Method.getInlineFunctionNamesAndBorders(): Map<LocalVariable, Close
         .toMap()
 }
 
-private fun Method.getInlineFunctionLocalVariables(): Sequence<LocalVariable> {
+private fun Method.getInlineFunctionOrArgumentVariables(): Sequence<LocalVariable> {
     val localVariables = safeVariables() ?: return emptySequence()
     return localVariables
         .asSequence()
-        .filter { it.isInlineFunctionLocalVariable(name()) }
+        .filter { isFakeLocalVariableForInline(it.name()) }
 }
-
-private fun LocalVariable.isInlineFunctionLocalVariable(methodName: String) =
-    name().startsWith(LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) &&
-    name().substringAfter(LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) != methodName
 
 fun Location.getClassName(): String? {
     val currentLocationFqName = declaringType().name() ?: return null
     return JvmClassName.byFqNameWithoutInnerClasses(FqName(currentLocationFqName)).internalName.replace('/', '.')
 }
-
-
 
 private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: Int): List<ReferenceType> {
     val vmProxy = virtualMachineProxy
@@ -523,7 +519,7 @@ private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: In
         for (location in outerClass.safeAllLineLocations()) {
             val locationLine = location.lineNumber() - 1
             if (locationLine < 0) {
-                // such locations are not correspond to real lines in code
+                // such locations do not correspond to real lines in code
                 continue
             }
 
@@ -539,15 +535,13 @@ private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: In
             }
         }
 
-        // The same line number may appear in different classes so we have to scan nested classes as well.
-        // For example, in the next example line 3 appears in both Foo and Foo$Companion.
-
-        /* class Foo {
-            companion object {
-                val a = Foo() /* line 3 */
-            }
-        } */
-
+        // The same line number may appear in different classes, so we have to scan nested classes as well.
+        // In the next example line 3 appears in both Foo and Foo$Companion.
+        //     class Foo {
+        //         companion object {
+        //             val a = Foo() /* line 3 */
+        //          }
+        //     }
         val nestedTypes = vmProxy.nestedTypes(outerClass)
         for (nested in nestedTypes) {
             targetClasses += findTargetClasses(nested, lineAt)

@@ -1,18 +1,22 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.script;
 
+import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.ui.IdeUiService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.ClassLoaderUtil;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.util.ExceptionUtilRt;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,21 +31,35 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
 
 final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
-  private static final Logger LOG = Logger.getInstance(IdeScriptEngineManager.class);
+  private static final Logger LOG = Logger.getInstance(IdeScriptEngineManagerImpl.class);
 
-  private final Future<Map<EngineInfo, ScriptEngineFactory>> myStateFuture = AppExecutorUtil.getAppExecutorService().submit(() -> {
-    long start = System.currentTimeMillis();
-    try {
-      return calcFactories();
-    }
-    finally {
-      long end = System.currentTimeMillis();
-      LOG.info(ScriptEngineManager.class.getName() + " initialized in " + (end - start) + " ms");
-    }
+  private final ClearableLazyValue<Map<EngineInfo, ScriptEngineFactory>> myFactories = ClearableLazyValue.createAtomic(() -> {
+    long start = System.nanoTime();
+    Map<EngineInfo, ScriptEngineFactory> map = calcFactories();
+    LOG.info(TimeoutUtil.getDurationMillis(start) + " ms to enumerate javax.scripting engines on " +
+             (EDT.isCurrentThreadEdt() ? "EDT" : "BGT"));
+    return map;
   });
+
+  IdeScriptEngineManagerImpl() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        dropFactories();
+      }
+
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+      }
+
+      @Override
+      public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        dropFactories();
+      }
+    });
+  }
 
   @Override
   public @NotNull List<EngineInfo> getEngineInfos() {
@@ -75,20 +93,19 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     return null;
   }
 
-  @Override
-  public boolean isInitialized() {
-    return myStateFuture.isDone();
-  }
 
   private @NotNull Map<EngineInfo, ScriptEngineFactory> getFactories() {
-    Map<EngineInfo, ScriptEngineFactory> state = null;
     try {
-      state = myStateFuture.get();
+      return myFactories.getValue();
     }
     catch (Exception e) {
       LOG.error(e);
+      return Collections.emptyMap();
     }
-    return state != null ? state : Collections.emptyMap();
+  }
+
+  private void dropFactories() {
+    myFactories.drop();
   }
 
   private static @NotNull Map<EngineInfo, ScriptEngineFactory> calcFactories() {
@@ -127,7 +144,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     IdeScriptEngine engine = new EngineImpl(scriptEngineFactory, loader == null ? AllPluginsLoader.INSTANCE : loader);
     redirectOutputToLog(engine);
 
-    IdeUiService.getInstance().logUsageEvent(scriptEngineFactory.getClass(), "ide.script.engine", "used");
+    IdeUiService.getInstance().logIdeScriptUsageEvent(scriptEngineFactory.getClass());
 
     return engine;
   }

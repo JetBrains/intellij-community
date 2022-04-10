@@ -171,8 +171,7 @@ public abstract class ChangeListManager implements ChangeListModification {
    * @deprecated Use {@link com.intellij.openapi.vcs.ProjectLevelVcsManager#getVcsFor}
    */
   @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract AbstractVcs getVcsFor(@NotNull Change change);
 
 
@@ -192,8 +191,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   /**
    * @deprecated use {@link LocalCommitExecutor#LOCAL_COMMIT_EXECUTOR} extension point
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Deprecated(forRemoval = true)
   public abstract void registerCommitExecutor(@NotNull CommitExecutor executor);
 
   @NotNull
@@ -209,8 +207,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract IgnoredFileBean @NotNull [] getFilesToIgnore();
 
   public abstract boolean isIgnoredFile(@NotNull VirtualFile file);
@@ -223,22 +220,19 @@ public abstract class ChangeListManager implements ChangeListModification {
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void setFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles);
 
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void addFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles);
 
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void addDirectoryToIgnoreImplicitly(@NotNull @NlsSafe String path);
 
 
@@ -254,7 +248,7 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   public abstract boolean isFreezedWithNotification(@NlsContexts.DialogTitle @Nullable String modalTitle);
 
-  @Deprecated // used in TeamCity
+  @Deprecated(forRemoval = true)
   public abstract void reopenFiles(@NotNull List<? extends FilePath> paths);
 
 }

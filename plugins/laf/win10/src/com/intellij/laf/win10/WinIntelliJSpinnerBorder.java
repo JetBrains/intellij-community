@@ -24,7 +24,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 
-public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder {
+public final class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (!(c instanceof JSpinner)) return;

@@ -4,6 +4,7 @@ package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Bitness
 import com.intellij.openapi.util.io.WindowsRegistryUtil
 import com.intellij.util.io.exists
@@ -35,11 +36,9 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     }
   }
 
-  constructor(checkDefaultLocations: Boolean,
-              forceEmbeddedJava: Boolean,
-              registeredJdks: Boolean,
+  constructor(registeredJdks: Boolean,
               wslJdks: Boolean,
-              systemInfoProvider: JavaHomeFinder.SystemInfoProvider) : super(checkDefaultLocations, forceEmbeddedJava, systemInfoProvider) {
+              systemInfoProvider: JavaHomeFinder.SystemInfoProvider) : super(systemInfoProvider) {
     if (registeredJdks) {
       /** Whether the OS is 64-bit (**important**: it's not the same as [com.intellij.util.system.CpuArch]). */
       val os64bit = !systemInfoProvider.getEnvironmentVariable("ProgramFiles(x86)").isNullOrBlank()
@@ -100,6 +99,7 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     val fsRoots = systemInfo.fsRoots
     val roots: MutableSet<Path> = HashSet()
     for (root in fsRoots) {
+      ProgressManager.checkCanceled()
       if (!root.exists()) {
         continue
       }

@@ -2,6 +2,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.util
 
 import com.intellij.ui.DocumentAdapter
+import net.miginfocom.layout.CC
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import javax.swing.JTextField
@@ -10,6 +11,8 @@ import javax.swing.event.DocumentEvent
 
 @ScaledPixels
 internal fun scrollbarWidth() = UIManager.get("ScrollBar.width") as Int
+
+internal fun CC.compensateForHighlightableComponentMarginLeft() = pad(0, (-2).scaled(), 0, 0)
 
 internal fun mouseListener(
     onClick: (e: MouseEvent) -> Unit = {},
@@ -39,7 +42,7 @@ internal fun mouseListener(
     }
 }
 
-internal fun JTextField.addOnTextChangedListener(onTextChanged: (DocumentEvent) -> Unit) {
+fun JTextField.addOnTextChangedListener(onTextChanged: (DocumentEvent) -> Unit) {
     document.addDocumentListener(
         object : DocumentAdapter() {
             override fun textChanged(e: DocumentEvent) {

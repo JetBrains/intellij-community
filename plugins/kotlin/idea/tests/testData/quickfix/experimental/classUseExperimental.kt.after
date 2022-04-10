@@ -1,6 +1,6 @@
-// "Add '@OptIn(MyExperimentalAPI::class)' annotation to containing class 'Bar'" "true"
+// "Opt in for 'MyExperimentalAPI' on containing class 'Bar'" "true"
 // PRIORITY: HIGH
-// COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
+// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 
 package a.b

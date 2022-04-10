@@ -19,20 +19,26 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ConvertSwitchToIfIntention;
 import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.SetInspectionOptionFix;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.SwitchUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection {
 
@@ -41,10 +47,16 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
   @SuppressWarnings("PublicField")
   public int m_limit = DEFAULT_BRANCH_LIMIT;
 
+  public boolean ignorePatternSwitch = false;
+
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.min.option"),
-                                              this, "m_limit");
+    SingleIntegerFieldOptionsPanel panel =
+      new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.min.option"),
+                                         this, "m_limit");
+    panel.addCheckbox(InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.ignore.pattern.option"),
+                      "ignorePatternSwitch");
+    return panel;
   }
 
   @Override
@@ -62,11 +74,28 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
            : InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.problem.descriptor", branchCount);
   }
 
-  @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    final Integer branchCount = (Integer)infos[0];
-    return (Boolean)infos[2] ? new UnwrapSwitchStatementFix(branchCount) : null;
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+    boolean canFix = (Boolean)infos[2];
+    boolean patternSwitch = (Boolean)infos[3];
+    List<InspectionGadgetsFix> fixes = new ArrayList<>();
+    if (canFix) {
+      final Integer branchCount = (Integer)infos[0];
+      fixes.add(new UnwrapSwitchStatementFix(branchCount));
+    }
+    if (patternSwitch) {
+      fixes.add(new DelegatingFix(new SetInspectionOptionFix(this, "ignorePatternSwitch",
+                                                             InspectionGadgetsBundle.message(
+                                                               "switch.statement.with.too.few.branches.ignore.pattern.option"),
+                                                             true)));
+    }
+    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) {
+    defaultWriteSettings(node, "ignorePatternSwitch");
+    writeBooleanOption(node, "ignorePatternSwitch", false);
   }
 
   @Override
@@ -101,6 +130,8 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
         // Empty switch is reported by another inspection
         return null;
       }
+      boolean patternSwitch = ContainerUtil.exists(SwitchUtils.getSwitchBranches(block), e -> e instanceof PsiPattern);
+      if (patternSwitch && ignorePatternSwitch) return null;
       boolean fixIsAvailable;
       if (block instanceof PsiSwitchStatement) {
         fixIsAvailable = ConvertSwitchToIfIntention.isAvailable((PsiSwitchStatement)block);
@@ -115,7 +146,7 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
           fixIsAvailable = false;
         }
       }
-      return new Object[]{Integer.valueOf(notDefaultBranches), block, fixIsAvailable};
+      return new Object[]{Integer.valueOf(notDefaultBranches), block, fixIsAvailable, patternSwitch};
     }
   }
 

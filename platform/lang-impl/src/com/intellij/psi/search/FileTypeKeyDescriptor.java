@@ -84,7 +84,6 @@ final class FileTypeKeyDescriptor implements KeyDescriptor<FileType> {
       throw new UnsupportedOperationException();
     }
 
-    @Nullable
     @Override
     public Icon getIcon() {
       throw new UnsupportedOperationException();

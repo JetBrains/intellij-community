@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -48,9 +48,8 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     myCanHideWarnings = canHideWarnings;
   }
 
-  @NotNull
   @Override
-  public Object getRootElement() {
+  public @NotNull Object getRootElement() {
     return myRoot;
   }
 
@@ -190,8 +189,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
   }
 
   @Override
-  @NotNull
-  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
+  public @NotNull NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     return new ErrorTreeNodeDescriptor(myProject, parentDescriptor, (ErrorTreeElement)element);
   }
 
@@ -285,10 +283,9 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     return addSimpleMessage(kind, text, data);
   }
 
-  @NotNull
-  public List<NavigatableMessageElement> removeNavigatableMessage(@NotNull String groupName,
-                                                                  @NotNull ErrorTreeElementKind kind,
-                                                                  @NotNull Navigatable navigatable) {
+  public @NotNull List<NavigatableMessageElement> removeNavigatableMessage(@NotNull String groupName,
+                                                                           @NotNull ErrorTreeElementKind kind,
+                                                                           @NotNull Navigatable navigatable) {
     synchronized (myLock) {
       List<NavigatableMessageElement> elements = myGroupNameToMessagesMap.get(groupName);
       if (elements == null) return Collections.emptyList();
@@ -307,8 +304,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     }
   }
 
-  @NotNull
-  public List<NavigatableMessageElement> removeAllNavigatableMessagesInGroup(@NotNull String groupName) {
+  public @NotNull List<NavigatableMessageElement> removeAllNavigatableMessagesInGroup(@NotNull String groupName) {
     synchronized (myLock) {
       List<NavigatableMessageElement> elements = myGroupNameToMessagesMap.get(groupName);
       if (elements == null) return Collections.emptyList();
@@ -375,8 +371,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     return element;
   }
 
-  @Nullable
-  public GroupingElement lookupGroupingElement(String groupName) {
+  public @Nullable GroupingElement lookupGroupingElement(String groupName) {
     synchronized (myLock) {
       return myGroupNameToElementMap.get(groupName);
     }
@@ -395,8 +390,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     }
   }
 
-  @NotNull
-  protected GroupingElement createGroupingElement(String groupName, Object data, VirtualFile file) {
+  protected @NotNull GroupingElement createGroupingElement(String groupName, Object data, VirtualFile file) {
     return new GroupingElement(groupName, data, file);
   }
 
@@ -416,8 +410,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     }
   }
 
-  @Nullable
-  public ErrorTreeElement getFirstMessage(@NotNull ErrorTreeElementKind kind) {
+  public @Nullable ErrorTreeElement getFirstMessage(@NotNull ErrorTreeElementKind kind) {
     if (shouldHide(kind)) {
       return null; // elements of this kind are hidden
     }
@@ -512,7 +505,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
                                          @NotNull ErrorTreeElementKind kind,
                                          GroupingElement parent,
                                          String[] message,
-                                         @NotNull final VirtualFile vf,
+                                         final @NotNull VirtualFile vf,
                                          String exportText,
                                          String rendererTextPrefix) {
       super(kind, parent, message, new OpenFileDescriptor(project, vf, -1, -1), exportText, rendererTextPrefix);

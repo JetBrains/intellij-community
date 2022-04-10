@@ -1,0 +1,8 @@
+// "Add else branch" "true"
+fun foo(x: String?) {
+    x ?: if (x == null) {
+        return
+    } else {
+        <caret>
+    }
+}

@@ -33,14 +33,14 @@ import java.nio.file.Path
 
 internal class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
   private val wrapActionBaseName: String
-    get() = MarkdownBundle.message("action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.text")
+    get() = MarkdownBundle.message("action.Markdown.Styling.CreateLink.text")
 
   private val unwrapActionName: String
-    get() = MarkdownBundle.message("action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.unwrap.text")
+    get() = MarkdownBundle.message("action.Markdown.Styling.CreateLink.unwrap.text")
 
   private fun obtainWrapActionName(place: String): @Nls String {
     return when (place) {
-      MarkdownActionPlaces.INSERT_POPUP -> MarkdownBundle.message("action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.insert.popup.text")
+      MarkdownActionPlaces.INSERT_POPUP -> MarkdownBundle.message("action.Markdown.Styling.CreateLink.insert.popup.text")
       else -> wrapActionBaseName
     }
   }
@@ -64,14 +64,14 @@ internal class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
         e.presentation.isEnabled = !editor.isViewer
         e.presentation.text = obtainWrapActionName(e.place)
         e.presentation.description = MarkdownBundle.message(
-          "action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.description")
+          "action.Markdown.Styling.CreateLink.description")
         false
       }
       caretsWithLinksCount == editor.caretModel.caretCount -> {
         e.presentation.isEnabled = !editor.isViewer
         e.presentation.text = unwrapActionName
         e.presentation.description = MarkdownBundle.message(
-          "action.org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction.unwrap.description")
+          "action.Markdown.Styling.CreateLink.unwrap.description")
         true
       }
       else -> { // some carets are located at links, others are not

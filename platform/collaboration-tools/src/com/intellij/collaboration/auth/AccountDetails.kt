@@ -2,8 +2,12 @@
 package com.intellij.collaboration.auth
 
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.NonNls
 
 interface AccountDetails {
   @get:NlsSafe
   val name: String
+
+  @get:NonNls
+  val avatarUrl: String?
 }

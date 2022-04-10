@@ -1,14 +1,14 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.fir.highlighter.visitors
 
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
+import com.intellij.util.applyIf
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.idea.fir.highlighter.HiglightingFactory
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingVisitor
 
 abstract class FirAfterResolveHighlightingVisitor(
@@ -17,9 +17,7 @@ abstract class FirAfterResolveHighlightingVisitor(
 ) : AbstractHighlightingVisitor() {
 
     override fun createInfoAnnotation(textRange: TextRange, message: String?, textAttributes: TextAttributesKey?) {
-        // TODO: Temporary use deprecated for FIR plugin as it is supposes to be rewritten fully
-        holder.createInfoAnnotation(textRange, message)
-            .also { annotation -> textAttributes?.let { annotation.textAttributes = textAttributes } }
+        HiglightingFactory.createInfoAnnotation(holder, textRange, message, textAttributes)
     }
 
     companion object {

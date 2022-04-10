@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.declarationsSearch
 
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.isOverridable
-import org.jetbrains.kotlin.idea.caches.lightClasses.KtFakeLightMethod
+import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
@@ -77,7 +77,7 @@ fun PsiMethod.forEachOverridingMethod(
     processor: (PsiMethod) -> Boolean
 ): Boolean {
     if (this !is KtFakeLightMethod) {
-        if (!OverridingMethodsSearch.search(this, scope.excludeKotlinSources(), true).forEach(Processor { processor(it) })) return false
+        if (!OverridingMethodsSearch.search(this, scope.excludeKotlinSources(project), true).forEach(Processor { processor(it) })) return false
     }
 
     val ktMember = this.unwrapped as? KtNamedDeclaration ?: return true
@@ -143,36 +143,6 @@ fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
     }
 }
 
-fun findOverridingMethodsInKotlin(
-    parentClass: PsiClass,
-    baseElement: PsiNamedElement,
-    parameters: OverridingMethodsSearch.SearchParameters,
-    consumer: Processor<in PsiMethod>,
-): Boolean = ClassInheritorsSearch.search(parentClass, parameters.scope, true).forEach(Processor { inheritor: PsiClass ->
-    val found = runReadAction { findOverridingMethod(inheritor, baseElement) }
 
-    found == null || (consumer.process(found) && parameters.isCheckDeep)
-})
 
-private fun findOverridingMethod(inheritor: PsiClass, baseElement: PsiNamedElement): PsiMethod? {
-    // Leave Java classes search to JavaOverridingMethodsSearcher
-    if (inheritor !is KtLightClass) return null
 
-    val name = baseElement.name
-    val methodsByName = inheritor.findMethodsByName(name, false)
-
-    for (lightMethodCandidate in methodsByName) {
-        val candidateDescriptor = (lightMethodCandidate as? KtLightMethod)?.kotlinOrigin?.unsafeResolveToDescriptor() ?: continue
-        if (candidateDescriptor !is CallableMemberDescriptor) continue
-
-        val overriddenDescriptors = candidateDescriptor.getDirectlyOverriddenDeclarations()
-        for (candidateSuper in overriddenDescriptors) {
-            val candidateDeclaration = DescriptorToSourceUtils.descriptorToDeclaration(candidateSuper)
-            if (candidateDeclaration == baseElement) {
-                return lightMethodCandidate
-            }
-        }
-    }
-
-    return null
-}

@@ -4,7 +4,6 @@ import ai.grazie.nlp.tokenizer.sentence.SRXSentenceTokenizer
 import com.intellij.grazie.text.TextContent.TextDomain.COMMENTS
 import com.intellij.grazie.text.TextContent.TextDomain.DOCUMENTATION
 import com.intellij.grazie.utils.Text
-import com.intellij.grazie.utils.Text.looksLikeCode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiTodoSearchHelper
@@ -28,9 +27,6 @@ internal class CommentProblemFilter : ProblemFilter() {
     }
 
     if (domain == COMMENTS) {
-      if (problem.highlightRanges.any { textAround(text, it).looksLikeCode() }) {
-        return true
-      }
       if (problem.fitsGroup(RuleGroup(RuleGroup.UNDECORATED_SENTENCE_SEPARATION))) {
         return true
       }

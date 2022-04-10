@@ -13,7 +13,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.config.MavenConfig;
@@ -97,7 +96,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void setPluginUpdatePolicy(MavenExecutionOptions.PluginUpdatePolicy value) {
-    if (value == null) return; // null may come from deserializator
+    if (value == null) return; // null may come from deserializer
     this.pluginUpdatePolicy = value;
     changed();
   }
@@ -109,7 +108,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void setChecksumPolicy(MavenExecutionOptions.ChecksumPolicy value) {
-    if (value == null) return; // null may come from deserializator
+    if (value == null) return; // null may come from deserializer
     if (!Comparing.equal(this.checksumPolicy, value)) {
       this.checksumPolicy = value;
       changed();
@@ -123,7 +122,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void setFailureBehavior(MavenExecutionOptions.FailureMode value) {
-    if (value == null) return; // null may come from deserializator
+    if (value == null) return; // null may come from deserializer
     if (!Comparing.equal(this.failureBehavior, value)) {
       this.failureBehavior = value;
       changed();
@@ -135,8 +134,7 @@ public class MavenGeneralSettings implements Cloneable {
    */
   @Transient
   @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public MavenExecutionOptions.LoggingLevel getLoggingLevel() {
     return getOutputLevel();
   }
@@ -148,7 +146,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void setOutputLevel(MavenExecutionOptions.LoggingLevel value) {
-    if (value == null) return; // null may come from deserializator
+    if (value == null) return; // null may come from deserializer
     if (!Comparing.equal(this.outputLevel, value)) {
       this.outputLevel = value;
       changed();
@@ -187,8 +185,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable File getEffectiveMavenHome() {
     if (myEffectiveLocalHomeCache == null) {
       myEffectiveLocalHomeCache = MavenWslUtil.resolveMavenHome(myProject, getMavenHome());
@@ -211,29 +208,25 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable File getEffectiveUserSettingsIoFile() {
     return MavenWslUtil.getUserSettings(myProject, getUserSettingsFile(), getMavenConfig());
   }
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable File getEffectiveGlobalSettingsIoFile() {
     return MavenWslUtil.getGlobalSettings(myProject, getMavenHome(), getMavenConfig());
   }
 
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable VirtualFile getEffectiveUserSettingsFile() {
     File file = getEffectiveUserSettingsIoFile();
     return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
   }
 
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public List<VirtualFile> getEffectiveSettingsFiles() {
     List<VirtualFile> result = new ArrayList<>(2);
     VirtualFile file = getEffectiveUserSettingsFile();
@@ -244,8 +237,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable VirtualFile getEffectiveGlobalSettingsFile() {
     File file = getEffectiveGlobalSettingsIoFile();
     return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
@@ -256,19 +248,18 @@ public class MavenGeneralSettings implements Cloneable {
     return overriddenLocalRepository;
   }
 
-  public void setLocalRepository(final @Nullable String overridenLocalRepository) {
-    if (overridenLocalRepository == null) return;
+  public void setLocalRepository(final @Nullable String overriddenLocalRepository) {
+    if (overriddenLocalRepository == null) return;
 
-    if (!Objects.equals(this.overriddenLocalRepository, overridenLocalRepository)) {
-      this.overriddenLocalRepository = overridenLocalRepository;
+    if (!Objects.equals(this.overriddenLocalRepository, overriddenLocalRepository)) {
+      this.overriddenLocalRepository = overriddenLocalRepository;
       MavenServerManager.getInstance().shutdown(true);
       changed();
     }
   }
 
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public File getEffectiveLocalRepository() {
     File result = myEffectiveLocalRepositoryCache;
     if (result != null) return result;
@@ -279,8 +270,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable VirtualFile getEffectiveSuperPom() {
     VirtualFile result = myEffectiveSuperPomCache;
     if (result != null && result.isValid()) {
@@ -485,24 +475,24 @@ public class MavenGeneralSettings implements Cloneable {
     needUpdate = needUpdate || !Objects.equals(failureBehavior, failureBehaviorConfig);
     failureBehavior = failureBehaviorConfig;
 
-    MavenExecutionOptions.LoggingLevel outputLevelCongig = requireNonNullElse(config.getOutputLevel(),
+    MavenExecutionOptions.LoggingLevel outputLevelConfig = requireNonNullElse(config.getOutputLevel(),
                                                                               MavenExecutionOptions.LoggingLevel.INFO);
-    needUpdate = needUpdate || !Objects.equals(outputLevel, outputLevelCongig);
-    outputLevel = outputLevelCongig;
+    needUpdate = needUpdate || !Objects.equals(outputLevel, outputLevelConfig);
+    outputLevel = outputLevelConfig;
 
-    Boolean offlineConfig = requireNonNullElse(config.hasOption(OFFLINE), false);
+    Boolean offlineConfig = config.hasOption(OFFLINE);
     needUpdate = needUpdate || !Objects.equals(workOffline, offlineConfig);
     workOffline = offlineConfig;
 
-    Boolean stackTracesConfig = requireNonNullElse(config.hasOption(ERRORS), false);
+    Boolean stackTracesConfig = config.hasOption(ERRORS);
     needUpdate = needUpdate || !Objects.equals(printErrorStackTraces, stackTracesConfig);
     printErrorStackTraces = stackTracesConfig;
 
-    Boolean updateSnapshotsConfig = requireNonNullElse(config.hasOption(UPDATE_SNAPSHOTS), false);
+    Boolean updateSnapshotsConfig = config.hasOption(UPDATE_SNAPSHOTS);
     needUpdate = needUpdate || !Objects.equals(alwaysUpdateSnapshots, updateSnapshotsConfig);
     alwaysUpdateSnapshots = updateSnapshotsConfig;
 
-    Boolean nonRecursiveConfig = requireNonNullElse(config.hasOption(NON_RECURSIVE), false);
+    Boolean nonRecursiveConfig = config.hasOption(NON_RECURSIVE);
     needUpdate = needUpdate || !Objects.equals(nonRecursive, nonRecursiveConfig);
     nonRecursive = nonRecursiveConfig;
 

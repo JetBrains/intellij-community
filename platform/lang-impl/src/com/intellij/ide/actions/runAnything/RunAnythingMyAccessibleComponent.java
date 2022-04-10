@@ -11,7 +11,6 @@ class RunAnythingMyAccessibleComponent extends JPanel {
 
   RunAnythingMyAccessibleComponent(LayoutManager layout) {
     super(layout);
-    setOpaque(false);
   }
 
   void setAccessible(Accessible comp) {

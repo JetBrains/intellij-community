@@ -10,10 +10,9 @@ import org.jetbrains.annotations.ApiStatus;
 /**
  * @deprecated this class will be removed from open API in IDEA 11. Use {@link com.intellij.util.download.DownloadableFileService} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 @ApiStatus.Internal
 @Tag("artifact")
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class Artifact {
   public static final Artifact[] EMPTY_ARRAY = new Artifact[0];
   

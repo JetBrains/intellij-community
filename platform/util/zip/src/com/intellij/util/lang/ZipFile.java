@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -33,6 +33,8 @@ public interface ZipFile extends AutoCloseable {
 
   interface ZipResource {
     int getUncompressedSize();
+
+    @NotNull String getPath();
 
     @NotNull ByteBuffer getByteBuffer() throws IOException;
 

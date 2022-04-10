@@ -1,42 +1,41 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.gant;
 
-import com.intellij.openapi.diagnostic.Log4jBasedLogger;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-import org.apache.log4j.RollingFileAppender;
+import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter;
+import com.intellij.openapi.diagnostic.JulLogger;
+import com.intellij.openapi.diagnostic.RollingFileHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * Used in org.jetbrains.intellij.build.impl.JpsCompilationData via jps-build-script-dependencies-bootstrap
+ * Used in {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner} via jps-build-script-dependencies-bootstrap
  */
 @SuppressWarnings("unused")
 public class Log4jFileLoggerFactory implements com.intellij.openapi.diagnostic.Logger.Factory {
-  private final RollingFileAppender myAppender;
+  private final RollingFileHandler myAppender;
   private final List<String> myCategoriesWithDebugLevel;
 
-  public Log4jFileLoggerFactory(File logFile, String categoriesWithDebugLevel) throws IOException {
+  public Log4jFileLoggerFactory(File logFile, String categoriesWithDebugLevel) {
     myCategoriesWithDebugLevel = categoriesWithDebugLevel.isEmpty() ? Collections.emptyList() : Arrays.asList(categoriesWithDebugLevel.split(","));
-    PatternLayout pattern = new PatternLayout("%d [%7r] %6p - %30.30c - %m\n");
-    myAppender = new RollingFileAppender(pattern, logFile.getAbsolutePath());
-    myAppender.setMaxFileSize("20MB");
-    myAppender.setMaxBackupIndex(10);
+    myAppender = new RollingFileHandler(logFile.toPath(), 20_000_000L, 10, true);
+    myAppender.setFormatter(new IdeaLogRecordFormatter());
   }
 
   @NotNull
   @Override
   public com.intellij.openapi.diagnostic.Logger getLoggerInstance(@NotNull String category) {
     final Logger logger = Logger.getLogger(category);
-    logger.addAppender(myAppender);
-    logger.setLevel(isDebugLevel(category) ? Level.DEBUG : Level.INFO);
-    return new Log4jBasedLogger(logger);
+    JulLogger.clearHandlers(logger);
+    logger.addHandler(myAppender);
+    logger.setUseParentHandlers(false);
+    logger.setLevel(isDebugLevel(category) ? Level.FINE : Level.INFO);
+    return new JulLogger(logger);
   }
 
   private boolean isDebugLevel(String category) {

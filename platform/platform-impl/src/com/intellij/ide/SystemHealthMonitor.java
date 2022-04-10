@@ -1,19 +1,25 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.StartupUtil;
 import com.intellij.jna.JnaLoader;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.notification.impl.NotificationFullContent;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
@@ -36,14 +41,13 @@ import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -59,6 +63,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
     checkReservedCodeCacheSize();
     checkEnvironment();
     checkSignalBlocking();
+    checkTempDirEnvVars();
     startDiskSpaceMonitoring();
   }
 
@@ -112,7 +117,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
 
     String jreHome = SystemProperties.getJavaHome();
     if (!(PathManager.isUnderHomeDirectory(jreHome) || isModernJBR())) {
-      // the JRE is non-bundled and is either non-JB or older than bundled
+      // boot JRE is non-bundled and is either non-JB or older than bundled
       NotificationAction switchAction = null;
 
       String directory = PathManager.getCustomOptionsDirectory();
@@ -213,6 +218,24 @@ final class SystemHealthMonitor extends PreloadingActivity {
     }
   }
 
+  private static void checkTempDirEnvVars() {
+    List<String> envVars = SystemInfo.isWindows ? List.of("TMP", "TEMP") : List.of("TMPDIR");
+    for (String name : envVars) {
+      String value = System.getenv(name);
+      if (value != null) {
+        try {
+          if (!Files.isDirectory(Path.of(value))) {
+            showNotification("temp.dir.env.invalid", false, null, name, value);
+          }
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+          showNotification("temp.dir.env.invalid", false, null, name, value);
+        }
+      }
+    }
+  }
+
   private static void showNotification(@PropertyKey(resourceBundle = "messages.IdeBundle") String key,
                                        boolean suppressable,
                                        @Nullable NotificationAction action,
@@ -232,6 +255,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
         IdeBundle.message("sys.health.acknowledge.action"), () -> PropertiesComponent.getInstance().setValue("ignore." + key, "true")));
     }
     notification.setImportant(true);
+    notification.setSuggestionType(true);
 
     Notifications.Bus.notify(notification);
   }
@@ -241,77 +265,59 @@ final class SystemHealthMonitor extends PreloadingActivity {
       return;
     }
 
-    final File file = new File(PathManager.getSystemPath());
-    final AtomicBoolean reported = new AtomicBoolean();
-    final ThreadLocal<Future<Long>> ourFreeSpaceCalculation = new ThreadLocal<>();
+    FileStore store;
+    try {
+      store = Files.getFileStore(Path.of(PathManager.getSystemPath()));
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return;
+    }
 
     AppExecutorUtil.getAppScheduledExecutorService().schedule(new Runnable() {
-      private static final long LOW_DISK_SPACE_THRESHOLD = 50 * 1024 * 1024;
-      private static final long MAX_WRITE_SPEED_IN_BPS = 500 * 1024 * 1024;  // 500 MB/s is (somewhat outdated) peak SSD write speed
+      private static final long NO_DISK_SPACE_THRESHOLD = 1 << 20;
+      private static final long LOW_DISK_SPACE_THRESHOLD = 50 << 20;
+      private static final long MAX_WRITE_SPEED_IN_BPS = 500 << 20;  // 500 MB/s is (somewhat outdated) peak SSD write speed
+
+      private volatile @Nullable Future<Long> freeSpaceCalculator;
 
       @Override
       public void run() {
-        if (!reported.get()) {
-          Future<@Nullable Long> future = ourFreeSpaceCalculation.get();
-          if (future == null) {
-            ourFreeSpaceCalculation.set(future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-              // file.getUsableSpace() can fail and return 0 (e.g. after macOS restart or awakening from sleep)
-              // so several times try to recalculate usable space on receiving 0 to be sure
-              long fileUsableSpace = file.getUsableSpace();
-              while (fileUsableSpace == 0) {
-                TimeoutUtil.sleep(5000);  // hopefully we are not hammering the disk too much
-                fileUsableSpace = file.getUsableSpace();
-              }
-              return fileUsableSpace;
-            }));
-          }
-          if (!future.isDone() || future.isCancelled()) {
-            restart(1);
-            return;
-          }
+        Future<Long> future = freeSpaceCalculator;
+        if (future == null) {
+          freeSpaceCalculator = future = ProcessIOExecutorService.INSTANCE.submit(store::getUsableSpace);
+        }
+        if (!future.isDone()) {
+          restart(1);
+          return;  // calculating...
+        }
 
-          try {
-            Long result = future.get();
-            if (result == null) return;
-            ourFreeSpaceCalculation.set(null);
+        long usableSpace;
+        try {
+          usableSpace = future.get();
+          freeSpaceCalculator = null;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          return;  // something went wrong, aborting
+        }
 
-            long usableSpace = result;
-            long delaySeconds = MathUtil.clamp((usableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS, 5, 3600);
-            if (usableSpace < LOW_DISK_SPACE_THRESHOLD) {
-              if (ReadAction.compute(() -> NotificationsConfiguration.getNotificationsConfiguration()) == null) {
-                ourFreeSpaceCalculation.set(future);
-                restart(1);
-                return;
-              }
-              reported.compareAndSet(false, true);
-
-              SwingUtilities.invokeLater(() -> {
-                String productName = ApplicationNamesInfo.getInstance().getFullProductName();
-                String message = IdeBundle.message("low.disk.space.message", productName);
-                if (usableSpace < 100 * 1024) {
-                  LOG.warn(message + " (" + usableSpace + ")");
-                  Messages.showErrorDialog(message, IdeBundle.message("dialog.title.fatal.configuration.problem"));
-                  reported.compareAndSet(true, false);
-                  restart(delaySeconds);
-                }
-                else {
-                  new MyNotification(file.getPath(), NotificationType.ERROR, "low.disk")
-                    .setTitle(message)
-                    .whenExpired(() -> {
-                      reported.compareAndSet(true, false);
-                      restart(delaySeconds);
-                    })
-                    .notify(null);
-                }
-              });
-            }
-            else {
-              restart(delaySeconds);
-            }
-          }
-          catch (Exception ex) {
-            LOG.error(ex);
-          }
+        if (usableSpace < NO_DISK_SPACE_THRESHOLD) {
+          LOG.warn("Extremely low disk space: " + usableSpace);
+          SwingUtilities.invokeLater(() -> {
+            Messages.showErrorDialog(IdeBundle.message("no.disk.space.message", store.name()), IdeBundle.message("no.disk.space.title"));
+            restart(5);
+          });
+        }
+        else if (usableSpace < LOW_DISK_SPACE_THRESHOLD) {
+          LOG.warn("Low disk space: " + usableSpace);
+          new MyNotification(IdeBundle.message("low.disk.space.message", store.name()), NotificationType.WARNING, "low.disk")
+            .setTitle(IdeBundle.message("low.disk.space.title"))
+            .whenExpired(() -> restart(5))
+            .notify(null);
+        }
+        else {
+          restart(MathUtil.clamp((usableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS, 5, 3600));
         }
       }
 

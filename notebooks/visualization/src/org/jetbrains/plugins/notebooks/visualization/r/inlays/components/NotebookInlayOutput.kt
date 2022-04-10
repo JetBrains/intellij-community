@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.ui.RelativeFont
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Font
@@ -48,7 +49,7 @@ class NotebookInlayOutput(private val editor: Editor, private val parent: Dispos
     private const val RESIZE_TIME_SPAN = 500
 
     private val monospacedFont = RelativeFont.NORMAL.family(Font.MONOSPACED)
-    private val outputFont = monospacedFont.derive(UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL)))
+    private val outputFont = monospacedFont.derive(StartupUiUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL)))
   }
 
   private var output: InlayOutput? = null

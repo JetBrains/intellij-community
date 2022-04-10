@@ -23,17 +23,18 @@ import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.Assert
 import java.io.File
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun intentionFileName(): String = ".intention"
 
-    protected open fun afterFileNameSuffix(): String = ".after"
+    protected open fun afterFileNameSuffix(ktFilePath: File): String = ".after"
 
     protected open fun isApplicableDirectiveName(): String = "IS_APPLICABLE"
 
@@ -92,11 +93,11 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
             break
         }
 
-        val psiFiles = myFixture.configureByFiles(*sourceFilePaths.toTypedArray())
-        val pathToFiles = mapOf(*(sourceFilePaths zip psiFiles).toTypedArray())
-
         val fileText = FileUtil.loadFile(mainFile, true)
         withCustomCompilerOptions(fileText, project, module) {
+            val psiFiles = myFixture.configureByFiles(*sourceFilePaths.toTypedArray())
+            val pathToFiles = mapOf(*(sourceFilePaths zip psiFiles).toTypedArray())
+
             ConfigLibraryUtil.configureLibrariesByDirective(module, fileText)
             configureCodeStyleAndRun(project, { FormatSettingsUtil.createConfigurator(fileText, it).configureSettings() }) {
                 configureRegistryAndRun(fileText) {
@@ -107,27 +108,11 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
                             if (!SystemInfo.isJavaVersionAtLeast(minJavaVersion)) return@configureRegistryAndRun
                         }
 
-                        if (file is KtFile && !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_BEFORE")) {
-                            DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
-                        }
+                        checkForErrorsBefore(fileText)
 
-                        doTestFor(mainFile.name, pathToFiles, intentionAction, fileText)
+                        doTestFor(mainFile, pathToFiles, intentionAction, fileText)
 
-                        if (file is KtFile &&
-                            isApplicableDirective(fileText) &&
-                            !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER")
-                        ) {
-                            val ktFile = file as KtFile
-
-                            if (!InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_WARNINGS_AFTER")) {
-                                DirectiveBasedActionUtils.checkForUnexpectedWarnings(
-                                    ktFile,
-                                    disabledByDefault = false,
-                                    directiveName = "AFTER-WARNING"
-                                )
-                            }
-                            DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
-                        }
+                        checkForErrorsAfter(fileText)
 
                         PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
                     } finally {
@@ -138,24 +123,55 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
+    protected open fun checkForErrorsAfter(fileText: String) {
+        val file = this.file
+
+        if (file is KtFile && isApplicableDirective(fileText) && !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER")) {
+            if (!InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_WARNINGS_AFTER")) {
+                DirectiveBasedActionUtils.checkForUnexpectedWarnings(
+                    file,
+                    disabledByDefault = false,
+                    directiveName = "AFTER-WARNING"
+                )
+            }
+
+            DirectiveBasedActionUtils.checkForUnexpectedErrors(file)
+        }
+    }
+
+    protected open fun checkForErrorsBefore(fileText: String) {
+        val file = this.file
+
+        if (file is KtFile && !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_BEFORE")) {
+            DirectiveBasedActionUtils.checkForUnexpectedErrors(file)
+        }
+    }
+
     private fun <T> computeUnderProgressIndicatorAndWait(compute: () -> T): T {
         val result = CompletableFuture<T>()
         val progressIndicator = ProgressIndicatorBase()
+        var exceptionDuringCompute: Throwable? = null
         try {
             val task = object : Task.Backgroundable(project, "isApplicable", false) {
                 override fun run(indicator: ProgressIndicator) {
-                    result.complete(compute())
+                    try {
+                        result.complete(compute())
+                    } catch(e: Throwable) {
+                        exceptionDuringCompute = e
+                    }
                 }
             }
             ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, progressIndicator)
             return result.get(10, TimeUnit.SECONDS)
         } finally {
             progressIndicator.cancel()
+            exceptionDuringCompute?.let { throw it }
         }
     }
 
     @Throws(Exception::class)
-    private fun doTestFor(mainFilePath: String, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
+    protected open fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
+        val mainFilePath = mainFile.name
         val isApplicableExpected = isApplicableDirective(fileText)
 
         val isApplicableOnPooled = computeUnderProgressIndicatorAndWait {
@@ -194,7 +210,7 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
                 // Don't bother checking if it should have failed.
                 if (shouldFailString.isEmpty()) {
                     for ((filePath, value) in pathToFiles) {
-                        val canonicalPathToExpectedFile = filePath + afterFileNameSuffix()
+                        val canonicalPathToExpectedFile = filePath + afterFileNameSuffix(mainFile)
                         val afterFile = testDataFile(canonicalPathToExpectedFile)
                         if (filePath == mainFilePath) {
                             try {

@@ -73,11 +73,6 @@ public final class IronPythonSdkFlavor extends PythonSdkFlavor {
   }
 
   @Override
-  public @NotNull String getVersionOption() {
-    return "-V";
-  }
-
-  @Override
   public @NotNull Collection<String> getExtraDebugOptions() {
     return Collections.singletonList("-X:Frames");
   }

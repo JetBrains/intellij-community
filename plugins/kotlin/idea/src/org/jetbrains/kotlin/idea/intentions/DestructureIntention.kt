@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.core.copied
@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 
 class DestructureInspection : IntentionBasedInspection<KtDeclaration>(
@@ -165,7 +165,7 @@ class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
         internal data class UsagesToRemove(val data: List<UsageData>, val removeSelectorInLoopRange: Boolean)
 
         internal fun collectUsagesToRemove(declaration: KtDeclaration): UsagesToRemove? {
-            val context = declaration.analyze()
+            val context = declaration.safeAnalyzeNonSourceRootCode()
 
             val variableDescriptor = when (declaration) {
                 is KtParameter -> context.get(BindingContext.VALUE_PARAMETER, declaration)

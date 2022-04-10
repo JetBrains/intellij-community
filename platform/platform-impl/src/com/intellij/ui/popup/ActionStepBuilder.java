@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.*;
@@ -10,6 +10,8 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.TextWithMnemonic;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SizedIcon;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -76,7 +79,7 @@ class ActionStepBuilder {
     if (myListModel.isEmpty()) {
       myListModel.add(new PopupFactoryImpl.ActionItem(
         Utils.EMPTY_MENU_FILLER, Objects.requireNonNull(Utils.EMPTY_MENU_FILLER.getTemplateText()), null, myShowNumbers, null, null,
-        false, false, null, null, false, null, null));
+        false, false, false, null, null, false, null, null));
     }
   }
 
@@ -100,7 +103,7 @@ class ActionStepBuilder {
 
   private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
     List<AnAction> newVisibleActions = Utils.expandActionGroup(
-      false, actionGroup, myPresentationFactory, myDataContext, myActionPlace);
+      actionGroup, myPresentationFactory, myDataContext, myActionPlace);
     List<AnAction> filtered = myShowDisabled ? newVisibleActions : ContainerUtil.filter(
       newVisibleActions, o -> o instanceof Separator || myPresentationFactory.getPresentation(o).isEnabled());
     calcMaxIconSize(filtered);
@@ -150,10 +153,11 @@ class ActionStepBuilder {
     if (icon == null) icon = selectedIcon != null ? selectedIcon : myEmptyIcon;
     boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
     LOG.assertTrue(text != null, "Action in `" + myActionPlace + "` has no presentation: " + action.getClass().getName());
+    boolean suppressSubstep = action instanceof ActionGroup && Utils.isSubmenuSuppressed(presentation);
     myListModel.add(new PopupFactoryImpl.ActionItem(
       action, text, mnemonic, myShowNumbers, presentation.getDescription(),
       (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY),
-      presentation.isEnabled(), action instanceof ActionGroup && presentation.isPerformGroup(),
+      presentation.isEnabled(), action instanceof ActionGroup && presentation.isPerformGroup(), suppressSubstep,
       icon, selectedIcon, prependSeparator, mySeparatorText,
       presentation.getClientProperty(Presentation.PROP_VALUE)));
     myPrependWithSeparator = false;
@@ -173,7 +177,9 @@ class ActionStepBuilder {
       }
       else if (action instanceof Toggleable && Toggleable.isSelected(presentation)) {
         icon = LafIconLookup.getIcon("checkmark");
-        selectedIcon = LafIconLookup.getSelectedIcon("checkmark");
+        Color selectionBg = UIManager.getColor("PopupMenu.selectionBackground");
+        boolean isLightSelectionInLightTheme = selectionBg != null && JBColor.isBright() && !ColorUtil.isDark(selectionBg);
+        selectedIcon = isLightSelectionInLightTheme ?  icon : LafIconLookup.getSelectedIcon("checkmark");
         disabledIcon = LafIconLookup.getDisabledIcon("checkmark");
       }
     }

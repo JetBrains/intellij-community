@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
 
 /** @deprecated please use {@link com.sun.jna.platform.win32.Advapi32Util JNA} instead. */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
 public final class WindowsRegistryUtil {
   private WindowsRegistryUtil() { }
 

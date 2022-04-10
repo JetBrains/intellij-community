@@ -12,9 +12,9 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.parameterInfo.HintsTypeRenderer
-import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -29,12 +29,12 @@ import org.jetbrains.kotlin.types.isError
 class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedExpression, KotlinType, BindingContext>() {
 
     override val group: InlayGroup
-        get() = InlayGroup.METHOD_CHAINS_GROUP
+        get() = InlayGroup.TYPES_GROUP
 
     override val previewText: String
         get() = """
-            fun main() {
-                (1..100).filter { it % 2 == 0 }
+            fun doSomething(list: List<Int>) {
+                list.filter { it % 2 == 0 }
                     .map { it * 2 }
                     .takeIf { list ->
                         list.all { it % 2 == 0 }
@@ -42,7 +42,18 @@ class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedE
                     ?.map { "item: ${'$'}it" }
                     ?.forEach { println(it) }
             }
+            
+            class List<T> {
+                fun filter(pred: (T) -> Boolean) : List<T> = TODO()
+                fun <R> map(op: (T) -> R) : List<R> = TODO()
+                fun all(op: (T) -> Boolean) : Boolean = TODO()
+                fun forEach(op: (T) -> Unit) : Unit = TODO()
+            }
+            fun <T> T.takeIf(predicate: (T) -> Boolean): T? = TODO()
         """.trimIndent()
+
+    override val description: String
+        get() = KotlinBundle.message("inlay.kotlin.call.chains.hints")
 
     override fun createFile(project: Project, fileType: FileType, document: Document): PsiFile =
         KotlinAbstractHintsProvider.createKtFile(project, document, fileType)

@@ -20,7 +20,7 @@ import java.util.function.Function;
 
 public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
   @NonNls
-  static final String CODE_STYLES_DIR_PATH = "codestyles";
+  public static final String CODE_STYLES_DIR_PATH = "codestyles";
 
   protected final SchemeManager<CodeStyleScheme> mySchemeManager;
 
@@ -91,6 +91,11 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
         }
       }
     }, null);
+  }
+
+  @Override
+  public List<CodeStyleScheme> getAllSchemes() {
+    return mySchemeManager.getAllSchemes();
   }
 
   private List<CodeStyleSettings> getAllSettings() {

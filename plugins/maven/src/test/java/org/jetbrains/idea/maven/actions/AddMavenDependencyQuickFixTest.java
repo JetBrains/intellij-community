@@ -65,6 +65,7 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
     MavenArtifactSearchDialog.ourResultForTest = Collections.singletonList(new MavenId("commons-io", "commons-io", "2.4"));
 
     intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile());
+    waitForImportCompletion();
 
     String pomText = PsiManager.getInstance(myProject).findFile(myProjectPom).getText();
     assertTrue(pomText.matches(
@@ -93,9 +94,11 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
 
     MavenArtifactSearchDialog.ourResultForTest = Collections.singletonList(new MavenId("commons-io", "commons-io", "2.4"));
     intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile());
+    waitForImportCompletion();
     MavenArtifactSearchDialog.ourResultForTest = Collections.singletonList(new MavenId("commons-io", "commons-io", "2.4"));
     intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile());
 
+    waitForImportCompletion();
     String pomText = PsiManager.getInstance(myProject).findFile(myProjectPom).getText();
     assertEquals("<?xml version=\"1.0\"?><project xmlns=\"http://maven.apache.org/POM/4.0.0\"         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">  <modelVersion>4.0.0</modelVersion><groupId>test</groupId><artifactId>project</artifactId><version>1</version>\n" +
                  "    <dependencies>\n" +
@@ -138,7 +141,7 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
 
     MavenArtifactSearchDialog.ourResultForTest = Collections.singletonList(new MavenId("commons-io", "commons-io", "2.4"));
     intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile());
-
+    waitForImportCompletion();
     String pomText = PsiManager.getInstance(myProject).findFile(myProjectPom).getText();
     assertEquals("<?xml version=\"1.0\"?><project xmlns=\"http://maven.apache.org/POM/4.0.0\"         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">  <modelVersion>4.0.0</modelVersion><groupId>test</groupId><artifactId>project</artifactId><version>1</version>\n" +
                             "<dependencies>\n" +
@@ -174,7 +177,7 @@ public class AddMavenDependencyQuickFixTest extends MavenDomWithIndicesTestCase 
     MavenArtifactSearchDialog.ourResultForTest = Collections.singletonList(new MavenId("commons-io", "commons-io", "2.4"));
 
     intentionAction.invoke(myProject, myFixture.getEditor(), myFixture.getFile());
-
+    waitForImportCompletion();
     String pomText = PsiManager.getInstance(myProject).findFile(myProjectPom).getText();
     assertTrue(pomText.matches(
       "(?s).*<dependency>\\s*<groupId>commons-io</groupId>\\s*<artifactId>commons-io</artifactId>\\s*<version>2.4</version>\\s*<scope>test</scope>\\s*</dependency>.*"));

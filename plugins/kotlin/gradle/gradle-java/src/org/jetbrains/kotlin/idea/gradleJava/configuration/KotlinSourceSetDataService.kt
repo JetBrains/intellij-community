@@ -18,14 +18,9 @@ import com.intellij.openapi.roots.ExportableOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
-import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.config.KotlinModuleKind
-import org.jetbrains.kotlin.config.SourceKotlinRootType
-import org.jetbrains.kotlin.config.TestSourceKotlinRootType
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.facet.*
-import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetInfo
-import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
-import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
+import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
@@ -155,26 +150,38 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             mainModuleNode: DataNode<ModuleData>,
             ideModule: Module,
             modelsProvider: IdeModifiableModelsProvider
-        ) = configureFacet(
-            moduleData,
-            kotlinSourceSet,
-            mainModuleNode,
-            ideModule,
-            modelsProvider,
-            enumValues<KotlinPlatform>().toList()
-        )
+        ) {
+            // TODO Review this code after AS Chipmunk released and merged to master
+            // In https://android.googlesource.com/platform/tools/adt/idea/+/ab31cd294775b7914ddefbe417a828b5c18acc81%5E%21/#F1
+            // creation of KotlinAndroidSourceSetData node was dropped, all tasks must be stored in corresponding KotlinSourceSetData nodes
+            val additionalRunTasks = mainModuleNode.kotlinAndroidSourceSets
+                ?.filter { it.isTestModule }
+                ?.flatMap { it.externalSystemRunTasks }
+                ?.toSet()
+            configureFacet(
+                moduleData,
+                kotlinSourceSet,
+                mainModuleNode,
+                ideModule,
+                modelsProvider,
+                enumValues<KotlinPlatform>().toList(),
+                additionalRunTasks
+            )
+        }
 
+        @OptIn(ExperimentalStdlibApi::class)
         fun configureFacet(
             moduleData: ModuleData,
             kotlinSourceSet: KotlinSourceSetInfo,
             mainModuleNode: DataNode<ModuleData>,
             ideModule: Module,
             modelsProvider: IdeModifiableModelsProvider,
-            projectPlatforms: List<KotlinPlatform>
+            projectPlatforms: List<KotlinPlatform>,
+            additionalRunTasks: Collection<ExternalSystemRunTask>? = null
         ): KotlinFacet? {
 
             val compilerVersion = KotlinGradleFacadeImpl.findKotlinPluginVersion(mainModuleNode)
-                // ?: return null TODO: Fix in CLion or our plugin KT-27623
+            // ?: return null TODO: Fix in CLion or our plugin KT-27623
 
             val platformKinds = kotlinSourceSet.actualPlatforms.platforms //TODO(auskov): fix calculation of jvm target
                 .map { IdePlatformKindTooling.getTooling(it).kind }
@@ -218,7 +225,11 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 kind = kotlinSourceSet.kotlinComponent.kind
 
                 isTestModule = kotlinSourceSet.isTestModule
-                externalSystemRunTasks = ArrayList(kotlinSourceSet.externalSystemRunTasks)
+
+                externalSystemRunTasks = buildList {
+                    addAll(kotlinSourceSet.externalSystemRunTasks)
+                    additionalRunTasks?.let(::addAll)
+                }
 
                 externalProjectId = kotlinSourceSet.gradleModuleId
 

@@ -14,7 +14,7 @@ public abstract class RefJavaUtil {
   /**
    * @deprecated use {@link RefJavaUtil#addReferencesTo} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addReferences(@NotNull PsiModifierListOwner psiFrom, @NotNull RefJavaElement ref, @Nullable PsiElement findIn);
 
   public void addReferencesTo(@NotNull UElement elem, @NotNull RefJavaElement ref, UElement @Nullable ... findIn) {
@@ -39,7 +39,7 @@ public abstract class RefJavaUtil {
     throw new UnsupportedOperationException();
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public RefClass getOwnerClass(RefManager refManager, PsiElement psiElement) {
     throw new UnsupportedOperationException();
@@ -63,7 +63,7 @@ public abstract class RefJavaUtil {
     throw new UnsupportedOperationException();
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isMethodOnlyCallsSuper(PsiMethod derivedMethod) {
     throw new UnsupportedOperationException();
   }
@@ -96,12 +96,12 @@ public abstract class RefJavaUtil {
     throw new UnsupportedOperationException();
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isCallToSuperMethod(PsiExpression expression, PsiMethod method) {
     throw new UnsupportedOperationException();
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void addTypeReference(PsiElement psiElement, PsiType psiType, RefManager refManager) {
     throw new UnsupportedOperationException();
   }

@@ -10,12 +10,19 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Initializes a Git repository in the specified place.
+ *
+ * @see GitSilentFileAdderProvider#create(Project)
  */
 public interface GitRepositoryInitializer {
   ExtensionPointName<GitRepositoryInitializer> EP_NAME = ExtensionPointName.create("com.intellij.gitRepositoryInitializer");
 
   @RequiresBackgroundThread
-  void initRepository(@NotNull Project project, @NotNull VirtualFile root);
+  default void initRepository(@NotNull Project project, @NotNull VirtualFile root) {
+    initRepository(project, root, false);
+  }
+
+  @RequiresBackgroundThread
+  void initRepository(@NotNull Project project, @NotNull VirtualFile root, boolean addFilesToVcs);
 
   @Nullable
   static GitRepositoryInitializer getInstance() {

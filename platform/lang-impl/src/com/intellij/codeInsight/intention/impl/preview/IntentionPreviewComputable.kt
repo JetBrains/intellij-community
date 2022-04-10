@@ -71,12 +71,14 @@ internal class IntentionPreviewComputable(private val project: Project,
   }
 
   fun generatePreview(): IntentionPreviewInfo? {
+    if (project.isDisposed) return null
     val origPair = ShowIntentionActionsHandler.chooseFileForAction(originalFile, originalEditor, action) ?: return null
     val origFile: PsiFile
     val caretOffset: Int
+    val fileFactory = PsiFileFactory.getInstance(project)
     if (origPair.first != originalFile) {
       val manager = InjectedLanguageManager.getInstance(project)
-      origFile = PsiFileFactory.getInstance(project).createFileFromText(
+      origFile = fileFactory.createFileFromText(
         origPair.first.name, origPair.first.fileType, manager.getUnescapedText(origPair.first))
       caretOffset = mapInjectedOffsetToUnescaped(origPair.first, origPair.second.caretModel.offset) 
     }
@@ -115,6 +117,15 @@ internal class IntentionPreviewComputable(private val project: Project,
               .compareLines(origFile.text, editorCopy.document.text, ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE))
         }
         IntentionPreviewInfo.EMPTY -> null
+        is IntentionPreviewInfo.CustomDiff -> {
+          IntentionPreviewDiffResult(
+            fileFactory.createFileFromText("__dummy__", result.fileType(), result.modifiedText()),
+            fileFactory.createFileFromText("__dummy__", result.fileType(), result.originalText()),
+            ComparisonManager.getInstance()
+              .compareLines(result.originalText(), result.modifiedText(),
+                            ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE),
+            fakeDiff = false)
+        }
         else -> result
       }
     }
@@ -164,4 +175,5 @@ private fun findCopyIntention(project: Project,
 
 internal data class IntentionPreviewDiffResult(val psiFile: PsiFile,
                                                val origFile: PsiFile,
-                                               val lineFragments: List<LineFragment>): IntentionPreviewInfo
+                                               val lineFragments: List<LineFragment>,
+                                               val fakeDiff: Boolean = true): IntentionPreviewInfo

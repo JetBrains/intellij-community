@@ -1,39 +1,71 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation
 
-import com.intellij.openapi.progress.withJob
+import com.intellij.model.Pointer
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.VisibleForTesting
+import java.awt.Image
 import java.util.function.Supplier
 
-@VisibleForTesting
-data class DocumentationData internal constructor(
+internal data class DocumentationContentData internal constructor(
   val html: @Nls String,
-  val anchor: String?,
-  val externalUrl: String?,
-  val linkUrls: List<String>,
-  val imageResolver: DocumentationImageResolver?
-) : DocumentationResult
+  val imageResolver: DocumentationImageResolver?,
+) : DocumentationContent
+
+internal data class LinkData(
+  val externalUrl: String? = null,
+  val linkUrls: List<String> = emptyList(),
+)
 
 internal class AsyncDocumentation(
-  val supplier: AsyncSupplier<DocumentationResult?>
+  val supplier: AsyncSupplier<DocumentationResult.Data?>
 ) : DocumentationResult
 
 internal class ResolvedTarget(
   val target: DocumentationTarget,
-) : LinkResult
+) : LinkResolveResult
 
-internal class UpdateContent(
-  val updater: LinkResult.ContentUpdater,
-) : LinkResult
+internal class AsyncLinkResolveResult(
+  val supplier: AsyncSupplier<LinkResolveResult.Async?>,
+) : LinkResolveResult
+
+internal class AsyncResolvedTarget(
+  val pointer: Pointer<out DocumentationTarget>,
+) : LinkResolveResult.Async
 
 internal fun <X> Supplier<X>.asAsyncSupplier(): AsyncSupplier<X> = {
   withContext(Dispatchers.IO) {
-    withJob {
+    blockingContext {
       this@asAsyncSupplier.get()
     }
   }
+}
+
+internal fun imageResolver(map: Map<String, Image>): DocumentationImageResolver? {
+  if (map.isEmpty()) {
+    return null
+  }
+  return DocumentationImageResolver(map.toMap()::get)
+}
+
+@Suppress("OPT_IN_USAGE")
+internal fun DocumentationContentUpdater.asFlow(): Flow<DocumentationContent> {
+  val flow = channelFlow {
+    blockingContext {
+      updateContent { content ->
+        check(trySend(content).isSuccess) // sanity check
+      }
+    }
+  }
+  return flow
+    .buffer(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    .flowOn(Dispatchers.IO)
 }

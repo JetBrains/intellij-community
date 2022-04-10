@@ -1168,6 +1168,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   public String someDocumentDebugInfo(@NotNull Document document) {
     FileViewProvider viewProvider = getCachedViewProvider(document);
-    return "cachedProvider: " + viewProvider + "; isEventSystemEnabled: " + isEventSystemEnabled(document);
+    return "cachedProvider: " + viewProvider + "; isEventSystemEnabled: " + isEventSystemEnabled(document) + "; isCommitted:"+isCommitted(document)+"; myIsCommitInProgress:"+isCommitInProgress()+"; isInUncommittedSet:"+isInUncommittedSet(document);
   }
 }

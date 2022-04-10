@@ -10,7 +10,6 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
@@ -22,10 +21,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
@@ -35,6 +31,7 @@ import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
@@ -117,30 +114,37 @@ public final class Utils {
   }
 
   @ApiStatus.Internal
-  public static CancellablePromise<List<AnAction>> expandActionGroupAsync(boolean isInModalContext,
-                                                                          @NotNull ActionGroup group,
+  public static CancellablePromise<List<AnAction>> expandActionGroupAsync(@NotNull ActionGroup group,
                                                                           @NotNull PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place) {
-    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false)
+    return new ActionUpdater(presentationFactory, context, place, false, false)
       .expandActionGroupAsync(group, group instanceof CompactActionGroup);
   }
 
   @ApiStatus.Internal
-  public static List<AnAction> expandActionGroupWithTimeout(boolean isInModalContext,
-                                                            @NotNull ActionGroup group,
+  public static List<AnAction> expandActionGroupWithTimeout(@NotNull ActionGroup group,
                                                             @NotNull PresentationFactory presentationFactory,
                                                             @NotNull DataContext context,
                                                             @NotNull String place,
                                                             int timeoutMs) {
-    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false)
+    return new ActionUpdater(presentationFactory, context, place, false, false)
       .expandActionGroupWithTimeout(group, group instanceof CompactActionGroup, timeoutMs);
   }
 
   private static final boolean DO_FULL_EXPAND = Boolean.getBoolean("actionSystem.use.full.group.expand"); // for tests and debug
 
+  /** @deprecated Use {@link #expandActionGroup(ActionGroup, PresentationFactory, DataContext, String)} */
+  @Deprecated(forRemoval = true)
   public static @NotNull List<AnAction> expandActionGroup(boolean isInModalContext,
                                                           @NotNull ActionGroup group,
+                                                          @NotNull PresentationFactory presentationFactory,
+                                                          @NotNull DataContext context,
+                                                          @NotNull String place) {
+    return expandActionGroup(group, presentationFactory, context, place);
+  }
+
+  public static @NotNull List<AnAction> expandActionGroup(@NotNull ActionGroup group,
                                                           @NotNull PresentationFactory presentationFactory,
                                                           @NotNull DataContext context,
                                                           @NotNull String place) {
@@ -148,15 +152,14 @@ public final class Utils {
                           JBPopupFactory.getInstance().guessBestPopupLocation(context);
     Runnable removeIcon = addLoadingIcon(point, place);
     return computeWithRetries(
-      () -> expandActionGroupImpl(isInModalContext, group, presentationFactory,
+      () -> expandActionGroupImpl(group, presentationFactory,
                                   context, place, ActionPlaces.isPopupPlace(place), removeIcon, null),
       null, removeIcon);
   }
 
   private static int ourExpandActionGroupImplEDTLoopLevel;
 
-  private static @NotNull List<AnAction> expandActionGroupImpl(boolean isInModalContext,
-                                                               @NotNull ActionGroup group,
+  private static @NotNull List<AnAction> expandActionGroupImpl(@NotNull ActionGroup group,
                                                                @NotNull PresentationFactory presentationFactory,
                                                                @NotNull DataContext context,
                                                                @NotNull String place,
@@ -167,7 +170,7 @@ public final class Utils {
     boolean asyncUI = async && Registry.is("actionSystem.update.actions.async.ui");
     BlockingQueue<Runnable> queue0 = async && !asyncUI ? new LinkedBlockingQueue<>() : null;
     ActionUpdater updater = new ActionUpdater(
-      isInModalContext, presentationFactory, context, place, isContextMenu, false, null, queue0 != null ? queue0::offer : null);
+      presentationFactory, context, place, isContextMenu, false, null, queue0 != null ? queue0::offer : null);
     ActionGroupExpander expander = ActionGroupExpander.getInstance();
     Project project = CommonDataKeys.PROJECT.getData(context);
     List<AnAction> list;
@@ -189,7 +192,7 @@ public final class Utils {
       }
       IdeEventQueue queue = IdeEventQueue.getInstance();
       CancellablePromise<List<AnAction>> promise = expander.expandActionGroupAsync(
-        project, place, group, group instanceof CompactActionGroup, updater::expandActionGroupAsync);
+        project, context, place, group, group instanceof CompactActionGroup, updater::expandActionGroupAsync);
       if (onProcessed != null) {
         promise.onSuccess(__ -> onProcessed.run());
         promise.onError(ex -> {
@@ -288,8 +291,7 @@ public final class Utils {
     }
     Runnable removeIcon = addLoadingIcon(progressPoint, place);
     List<AnAction> list = computeWithRetries(
-      () -> expandActionGroupImpl(LaterInvocator.isInModalContext(), group, presentationFactory,
-                                  context, place, true, removeIcon, component),
+      () -> expandActionGroupImpl(group, presentationFactory, context, place, true, removeIcon, component),
       expire, removeIcon);
     boolean checked = group instanceof CheckedActionGroup;
     fillMenuInner(component, list, checked, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
@@ -366,8 +368,7 @@ public final class Utils {
           if (nativePeer != null) nativePeer.add(null);
         }
       }
-      else if (action instanceof ActionGroup &&
-               !Boolean.TRUE.equals(presentation.getClientProperty(ActionUpdater.SUPPRESS_SUBMENU_IMPL))) {
+      else if (action instanceof ActionGroup && !isSubmenuSuppressed(presentation)) {
         ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons);
         component.add(menu);
         children.add(menu);
@@ -413,6 +414,10 @@ public final class Utils {
         }
       }
     }
+  }
+
+  public static boolean isSubmenuSuppressed(@NotNull Presentation presentation) {
+    return Boolean.TRUE.equals(presentation.getClientProperty(ActionUpdater.SUPPRESS_SUBMENU_IMPL));
   }
 
   private static @NotNull JPopupMenu.Separator createSeparator(@NlsContexts.Separator String text) {
@@ -482,7 +487,7 @@ public final class Utils {
     UpdateSession updater = e.getUpdateSession();
     if (updater == null) {
       ActionUpdater actionUpdater = new ActionUpdater(
-        LaterInvocator.isInModalContext(), new PresentationFactory(), e.getDataContext(),
+        new PresentationFactory(), e.getDataContext(),
         e.getPlace(), e.isFromContextMenu(), e.isFromActionToolbar());
       updater = actionUpdater.asUpdateSession();
     }
@@ -508,14 +513,14 @@ public final class Utils {
       LOG.warn("Recursive shortcut processing invocation is ignored");
       return null;
     }
-    long start = System.currentTimeMillis();
+    long start = System.nanoTime();
     boolean async = isAsyncDataContext(dataContext);
     // we will manually process "invokeLater" calls using a queue for performance reasons:
     // direct approach would be to pump events in a custom modality state (enterModal/leaveModal)
     // EventQueue would add significant overhead (x10), but key events must be processed ASAP.
     BlockingQueue<Runnable> queue = async ? new LinkedBlockingQueue<>() : null;
     ActionUpdater actionUpdater = new ActionUpdater(
-      LaterInvocator.isInModalContext(), factory, dataContext,
+      factory, dataContext,
       place, false, false, event -> {
         AnActionEvent transformed = actionProcessor.createEvent(
           inputEvent, event.getDataContext(), event.getPlace(), event.getPresentation(), event.getActionManager());
@@ -531,33 +536,27 @@ public final class Utils {
       ActionUpdater.ourBeforePerformedExecutor.execute(() -> {
         try {
           Ref<T> ref = Ref.create();
-          Ref<UpdateSession> sessionRef = Ref.create();
-          Runnable runnable = () -> {
+          ThrowableComputable<Void, RuntimeException> computable = () -> {
             Set<String> missedKeys = Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt") ? null : ContainerUtil.newConcurrentSet();
             if (missedKeys != null) {
               UpdateSession fastSession = actionUpdater.asFastUpdateSession(missedKeys::add, null);
-              T fastResult = function.apply(fastSession);
-              ref.set(fastResult);
-              sessionRef.set(fastSession);
+              ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(fastSession);
+              fastUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () -> ref.set(function.apply(fastSession)));
+              if (!ref.isNull()) queue.offer(fastUpdater::applyPresentationChanges);
             }
-            if (ref.isNull() && (missedKeys == null || tryInReadAction(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null)))) {
-              UpdateSession slowSession = actionUpdater.asUpdateSession();
-              T slowResult = function.apply(slowSession);
-              ref.set(slowResult);
-              sessionRef.set(slowSession);
+            if (!ref.isNull() || promise.isDone()) return null;
+            if (missedKeys == null || tryInReadAction(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null))) {
+              UpdateSession session = actionUpdater.asUpdateSession();
+              actionUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () -> ref.set(function.apply(session)));
+              queue.offer(actionUpdater::applyPresentationChanges);
             }
+            return null;
           };
           ProgressIndicator indicator = parentIndicator == null ? new ProgressIndicatorBase() : new SensitiveProgressWrapper(parentIndicator);
           promise.onError(__ -> indicator.cancel());
-          ProgressManager.getInstance().computePrioritized(() -> {
-            ProgressManager.getInstance().executeProcessUnderProgress(() ->
-              ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
-                applicationEx,
-                () -> ActionUpdater.cancelPromise(promise, "nested write-action requested"),
-                () -> applicationEx.tryRunReadAction(runnable)), indicator);
-            return ref.get();
-          });
-          queue.offer(ActionUpdater.getActionUpdater(sessionRef.get())::applyPresentationChanges);
+          ProgressManager.getInstance().executeProcessUnderProgress(
+            () -> ProgressManager.getInstance().computePrioritized(computable),
+            indicator);
           queue.offer(() -> promise.setResult(ref.get()));
         }
         catch (Throwable e) {
@@ -580,9 +579,9 @@ public final class Utils {
       result = function.apply(actionUpdater.asUpdateSession());
       actionUpdater.applyPresentationChanges();
     }
-    long time = System.currentTimeMillis() - start;
-    if (time > 500) {
-      LOG.debug("runUpdateSessionForKeyEvent() took: " + time + " ms");
+    long elapsed = TimeoutUtil.getDurationMillis(start);
+    if (elapsed > 1000) {
+      LOG.warn(elapsed + " ms to update actions for " + place);
     }
     return result;
   }

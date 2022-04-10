@@ -170,12 +170,12 @@ public final class NavigationUtil {
     CommandProcessor.getInstance().executeCommand(element.getProject(), () -> {
       if (openAsNativeFinal || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
         final NavigationItem navigationItem = (NavigationItem)element;
-        if (!navigationItem.canNavigate()) {
-          resultRef.set(Boolean.FALSE);
-        }
-        else {
+        if (navigationItem.canNavigate()) {
           navigationItem.navigate(requestFocus);
           resultRef.set(Boolean.TRUE);
+        }
+        else {
+          resultRef.set(Boolean.FALSE);
         }
       }
     }, "", null);

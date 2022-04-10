@@ -28,6 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -90,7 +91,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     super(project, refactoringScope, null);
     myPrimaryElement = element;
 
-    assertNonCompileElement(element);
+    RenameUtil.assertNonCompileElement(element);
 
     mySearchInComments = isSearchInComments;
     mySearchTextOccurrences = isSearchTextOccurrences;
@@ -158,7 +159,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         if (!ConflictsInTestsException.isTestIgnore()) throw new ConflictsInTestsException(conflicts.values());
         return true;
       }
-      ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, refUsages.get());
+      ConflictsDialogBase conflictsDialog = prepareConflictsDialog(conflicts, refUsages.get());
       if (!conflictsDialog.showAndGet()) {
         if (conflictsDialog.isShowConflicts()) prepareSuccessful();
         return false;
@@ -181,7 +182,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
       if (!renames.isEmpty()) {
         for (PsiElement element : renames.keySet()) {
-          assertNonCompileElement(element);
+          RenameUtil.assertNonCompileElement(element);
         }
         myAllRenames.putAll(renames);
         final Runnable runnable = () -> {
@@ -233,10 +234,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return PsiElementRenameHandler.canRename(myProject, null, myPrimaryElement);
   }
 
-  public static void assertNonCompileElement(PsiElement element) {
-    LOG.assertTrue(!(element instanceof PsiCompiledElement), element);
-  }
-
   private boolean findRenamedVariables(final List<UsageInfo> variableUsages) {
     for (Iterator<AutomaticRenamer> iterator = myRenamers.iterator(); iterator.hasNext(); ) {
       AutomaticRenamer automaticVariableRenamer = iterator.next();
@@ -267,7 +264,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   public void addElement(@NotNull PsiElement element, @NotNull String newName) {
-    assertNonCompileElement(element);
+    RenameUtil.assertNonCompileElement(element);
     myAllRenames.put(element, newName);
   }
 

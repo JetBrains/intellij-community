@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback
 
 import com.intellij.feedback.state.DontShowAgainFeedbackService
@@ -11,13 +11,14 @@ import kotlin.random.Random
 
 object FeedbackTypeResolver {
   // 10 minutes
-  private const val MIN_INACTIVE_TIME = 10
+  private const val MIN_INACTIVE_TIME = 600
 
   var lastActivityTime: LocalDateTime = LocalDateTime.now()
     private set
 
   fun checkActivity(project: Project?) {
-    if (Duration.between(lastActivityTime, LocalDateTime.now()).toMinutes() >= MIN_INACTIVE_TIME) {
+    if (Duration.between(lastActivityTime, LocalDateTime.now()).toSeconds() >=
+        Registry.intValue("platform.feedback.time.to.show.notification", MIN_INACTIVE_TIME)) {
       showFeedbackNotification(project)
     }
     lastActivityTime = LocalDateTime.now()
@@ -38,7 +39,7 @@ object FeedbackTypeResolver {
     }
 
   private fun showFeedbackNotification(project: Project?) {
-    if (!Registry.`is`("platform.feedback", true) || isFeedbackNotificationDisabled) {
+    if (isFeedbackNotificationDisabled || !Registry.`is`("platform.feedback", true)) {
       return
     }
     val suitableFeedbackTypes = FeedbackTypes.values().filter { it.isSuitable() }

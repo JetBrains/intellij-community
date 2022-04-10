@@ -1,21 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.references
 
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addDelayedImportRequest
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
+import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -38,11 +38,15 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
 class KtSimpleNameReferenceDescriptorsImpl(
     expression: KtSimpleNameExpression
 ) : KtSimpleNameReference(expression), KtDescriptorsBasedReference {
-    override fun doCanBeReferenceTo(candidateTarget: PsiElement): Boolean =
-        canBeReferenceTo(candidateTarget)
 
-    override fun isReferenceToWithoutExtensionChecking(candidateTarget: PsiElement): Boolean =
-        matchesTarget(candidateTarget)
+    override fun canBeReferenceTo(candidateTarget: PsiElement): Boolean {
+        return element.containingFile == candidateTarget.containingFile
+                || ProjectRootsUtil.isInProjectOrLibSource(element, includeScriptsOutsideSourceRoots = true)
+    }
+
+    override fun isReferenceToImportAlias(alias: KtImportAlias): Boolean {
+        return super<KtDescriptorsBasedReference>.isReferenceToImportAlias(alias)
+    }
 
     override fun getTargetDescriptors(context: BindingContext): Collection<DeclarationDescriptor> {
         return SmartList<DeclarationDescriptor>().apply {
@@ -70,29 +74,11 @@ class KtSimpleNameReferenceDescriptorsImpl(
         }
     }
 
-    override fun isReferenceTo(element: PsiElement): Boolean {
-        if (!canBeReferenceTo(element)) return false
-
+    override fun isReferenceToViaExtension(element: PsiElement): Boolean {
         for (extension in element.project.extensionArea.getExtensionPoint(SimpleNameReferenceExtension.EP_NAME).extensions) {
             if (extension.isReferenceTo(this, element)) return true
         }
-
-        return super<KtDescriptorsBasedReference>.isReferenceTo(element)
-    }
-
-    override fun getRangeInElement(): TextRange {
-        val element = element.getReferencedNameElement()
-        val startOffset = getElement().startOffset
-        return element.textRange.shiftRight(-startOffset)
-    }
-
-    override fun canRename(): Boolean {
-        if (expression.getParentOfTypeAndBranch<KtWhenConditionInRange>(strict = true) { operationReference } != null) return false
-
-        val elementType = expression.getReferencedNameElementType()
-        if (elementType == KtTokens.PLUSPLUS || elementType == KtTokens.MINUSMINUS) return false
-
-        return true
+        return false
     }
 
     override fun handleElementRename(newElementName: String): PsiElement {
@@ -146,11 +132,6 @@ class KtSimpleNameReferenceDescriptorsImpl(
         }
         return expression
     }
-
-
-    // By default reference binding is delayed
-    override fun bindToElement(element: PsiElement): PsiElement =
-        bindToElement(element, ShorteningMode.DELAYED_SHORTENING)
 
     override fun bindToElement(element: PsiElement, shorteningMode: ShorteningMode): PsiElement =
         element.getKotlinFqName()?.let { fqName -> bindToFqName(fqName, shorteningMode, element) } ?: expression
@@ -263,31 +244,6 @@ class KtSimpleNameReferenceDescriptorsImpl(
             ?: error("No selector for $newElement")
         return selector as KtNameReferenceExpression
     }
-
-    override fun getCanonicalText(): String = expression.text
-
-    override val resolvesByNames: Collection<Name>
-        get() {
-            val element = element
-
-            if (element is KtOperationReferenceExpression) {
-                val tokenType = element.operationSignTokenType
-                if (tokenType != null) {
-                    val name = OperatorConventions.getNameForOperationSymbol(
-                        tokenType, element.parent is KtUnaryExpression, element.parent is KtBinaryExpression
-                    ) ?: return emptyList()
-                    val counterpart = OperatorConventions.ASSIGNMENT_OPERATION_COUNTERPARTS[tokenType]
-                    return if (counterpart != null) {
-                        val counterpartName = OperatorConventions.getNameForOperationSymbol(counterpart, false, true)!!
-                        listOf(name, counterpartName)
-                    } else {
-                        listOf(name)
-                    }
-                }
-            }
-
-            return listOf(element.getReferencedNameAsName())
-        }
 
     override fun getImportAlias(): KtImportAlias? {
         fun DeclarationDescriptor.unwrap() = if (this is ImportedFromObjectCallableDescriptor<*>) callableFromObject else this

@@ -12,9 +12,9 @@ import com.intellij.execution.runners.DefaultProgramRunnerKt;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +53,7 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
     AsyncPromise<RunContentDescriptor> promise = new AsyncPromise<>();
     execute(state, () -> {
       try {
-        boolean useTargetsAPI = Experiments.getInstance().isFeatureEnabled("python.use.targets.api");
+        boolean useTargetsAPI = Registry.get("python.use.targets.api").asBoolean();
 
         ExecutionResult executionResult;
         RunProfile profile = env.getRunProfile();

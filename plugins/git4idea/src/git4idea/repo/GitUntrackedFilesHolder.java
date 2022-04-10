@@ -2,6 +2,7 @@
 package git4idea.repo;
 
 import com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,11 +23,16 @@ import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
+import git4idea.GitRefreshUsageCollector;
 import git4idea.index.GitIndexStatusUtilKt;
 import git4idea.index.LightFileStatus.StatusRecord;
 import git4idea.status.GitRefreshListener;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -142,8 +148,7 @@ public class GitUntrackedFilesHolder implements Disposable {
    * @throws VcsException if there is an unexpected error during Git execution.
    * @deprecated use {@link #retrieveUntrackedFilePaths} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public Collection<VirtualFile> retrieveUntrackedFiles() throws VcsException {
     return ContainerUtil.mapNotNull(retrieveUntrackedFilePaths(), FilePath::getVirtualFile);
@@ -237,7 +242,11 @@ public class GitUntrackedFilesHolder implements Disposable {
 
     BackgroundTaskUtil.syncPublisher(myProject, GitRefreshListener.TOPIC).progressStarted();
     try {
+      boolean everythingDirty = dirtyFiles == null || dirtyFiles.contains(VcsUtil.getFilePath(myRoot));
+      StructuredIdeActivity activity = GitRefreshUsageCollector.logUntrackedRefresh(myProject, everythingDirty);
       RefreshResult result = refreshFiles(dirtyFiles);
+      activity.finished();
+
       removePathsUnderOtherRoots(result.untracked, "unversioned");
       removePathsUnderOtherRoots(result.ignored, "ignored");
 

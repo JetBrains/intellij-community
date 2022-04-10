@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -47,6 +46,8 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   private final Class<EntryPoint> myValueClass;
   private final AtomicReference<Heartbeat> myHeartbeatRef = new AtomicReference<>();
+
+  private final AtomicReference<Future> myShutdownFuture = new AtomicReference<>();
   private final Map<Pair<Target, Parameters>, Info> myProcMap = new HashMap<>();
   private final Map<Pair<Target, Parameters>, InProcessInfo<EntryPoint>> myInProcMap = new HashMap<>();
 
@@ -77,24 +78,34 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   }
 
   public void stopAll(final boolean wait) {
-    final List<Info> infos = new ArrayList<>();
-    synchronized (myProcMap) {
-      for (Info o : myProcMap.values()) {
-        if (o.handler != null) infos.add(o);
-      }
-    }
-    if (infos.isEmpty()) return;
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      destroyProcessesImpl(infos);
-      if (wait) {
-        for (Info o : infos) {
-          o.handler.waitFor();
+    CompletableFuture<?> finishFuture = new CompletableFuture<>();
+    if (myShutdownFuture.compareAndSet(null, finishFuture)) {
+      final List<Info> infos = new ArrayList<>();
+      synchronized (myProcMap) {
+        for (Info o : myProcMap.values()) {
+          if (o.handler != null) infos.add(o);
         }
       }
-    });
+      if (infos.isEmpty()) return;
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        try {
+          destroyProcessesImpl(infos);
+          if (wait) {
+            for (Info o : infos) {
+              o.handler.waitFor();
+            }
+          }
+          finishFuture.complete(null);
+        }
+        catch (Throwable e) {
+          finishFuture.completeExceptionally(e);
+        }
+      });
+    }
+
     if (wait) {
       try {
-        future.get();
+        myShutdownFuture.get().get();
       }
       catch (InterruptedException ignored) {
       }
@@ -139,16 +150,15 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   }
 
   /**
-   @deprecated
-    * use acquire(Target, Parameters, ProgressIndicator)
+   * @deprecated use acquire(Target, Parameters, ProgressIndicator)
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public EntryPoint acquire(@NotNull Target target, @NotNull Parameters configuration) throws Exception {
     return acquire(target, configuration, null);
   }
 
-  public EntryPoint acquire(@NotNull Target target, @NotNull Parameters configuration, @Nullable ProgressIndicator indicator) throws Exception {
+  public EntryPoint acquire(@NotNull Target target, @NotNull Parameters configuration, @Nullable ProgressIndicator indicator)
+    throws Exception {
     ExecutionUiService.getInstance().assertTimeConsuming();
 
     EntryPoint inProcess = acquireInProcess(target, configuration);
@@ -409,9 +419,9 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     };
   }
 
-  protected void onProcessTerminated(ProcessEvent event) {}
+  protected void onProcessTerminated(ProcessEvent event) { }
 
-  protected void sendDataAfterStart(ProcessHandler handler) {}
+  protected void sendDataAfterStart(ProcessHandler handler) { }
 
   protected String getRemoteHost() {
     return ObjectUtils.notNull(System.getProperty(RemoteServer.SERVER_HOSTNAME), "127.0.0.1");
@@ -579,18 +589,20 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
 
     @TestOnly
-    public void kill(int exitCode){
+    public void kill(int exitCode) {
       try {
         getWatchdog().dieNow(exitCode);
-      } catch (RemoteException|NotBoundException ignore) {}
-
+      }
+      catch (RemoteException | NotBoundException ignore) {
+      }
     }
 
     private IdeaWatchdog getWatchdog() throws RemoteException, NotBoundException {
       Remote remote = myRegistry.lookup(IdeaWatchdog.BINDING_NAME);
       if (remote instanceof IdeaWatchdog) {
         return (IdeaWatchdog)remote;
-      } else {
+      }
+      else {
         return RemoteUtil.castToLocal(remote, IdeaWatchdog.class);
       }
     }

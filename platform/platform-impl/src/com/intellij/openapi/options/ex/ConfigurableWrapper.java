@@ -9,7 +9,6 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchableConfigurable {
+public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchicalConfigurable {
   static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
   @Nullable
@@ -98,8 +97,6 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
 
   private final ConfigurableEP<?> myEp;
   int myWeight; // see ConfigurableExtensionPointUtil.getConfigurableToReplace
-
-  private @Nullable String overriddenId = null;
 
   private ConfigurableWrapper(@NotNull ConfigurableEP<?> ep) {
     myEp = ep;
@@ -207,10 +204,6 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
   @NotNull
   @Override
   public String getId() {
-    if (overriddenId != null) {
-      return overriddenId;
-    }
-
     if (myEp.id != null) {
       return myEp.id;
     }
@@ -229,11 +222,6 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
            : myEp.instanceClass != null
              ? myEp.instanceClass
              : myEp.implementationClass;
-  }
-
-  @ApiStatus.Experimental
-  public void overrideId(String overridenId) {
-    this.overriddenId = overridenId;
   }
 
   @NotNull

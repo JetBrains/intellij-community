@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.docking.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -27,6 +28,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.docking.*;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
@@ -48,6 +50,8 @@ import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
+
+import static javax.swing.SwingConstants.CENTER;
 
 @State(name = "DockManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class DockManagerImpl extends DockManager implements PersistentStateComponent<Element> {
@@ -217,7 +221,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     private final JLabel myImageContainer;
 
     private MyDragSession(MouseEvent me, @NotNull DockableContent content) {
-      myWindow = new JDialog(UIUtil.getWindow(me.getComponent()));
+      myWindow = new JDialog(ComponentUtil.getWindow(me.getComponent()));
       myWindow.setUndecorated(true);
       myContent = content;
       myStartDragContainer = getContainerFor(me.getComponent());
@@ -332,6 +336,10 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
         }
         else {
           myCurrentOverContainer.add(myContent, point);
+          ObjectUtils.consumeIfCast(myCurrentOverContainer, DockableEditorTabbedContainer.class, container -> {
+            //Marker for DragHelper, not 'refined' drop in tab-set shouldn't affect ABC-order setting
+            if (container.getCurrentDropSide() == CENTER) e.consume();
+          });
         }
         stopCurrentDragSession();
       }
@@ -715,7 +723,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
       DockContainer container = ((DockContainerFactory.Persistent)factory).loadContainerFrom(eachContent);
       String withNorthPanelStr = windowElement.getAttributeValue("withNorthPanel", Boolean.toString(true));
-      boolean withNorthPanel = Boolean.valueOf(withNorthPanelStr);
+      boolean withNorthPanel = Boolean.parseBoolean(withNorthPanelStr);
       DockWindow window = createWindowFor(null, windowElement.getAttributeValue("id"), container, true);
       if (withNorthPanel) {
         window.setupNorthPanel();

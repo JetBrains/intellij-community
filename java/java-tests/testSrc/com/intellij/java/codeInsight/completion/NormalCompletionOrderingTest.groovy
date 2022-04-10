@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.java.codeInsight.completion
 
@@ -774,7 +772,7 @@ class ContainerUtil extends ContainerUtilRt {
 
   @NeedsIndex.Full
   void testPreselectClosestExactPrefixItem() {
-    UISettings.instance.setSortLookupElementsLexicographically(true)
+    UISettings.getInstance().setSortLookupElementsLexicographically(true)
     myFixture.addClass 'package pack1; public class SameNamed {}'
     myFixture.addClass 'package pack2; public class SameNamed {}'
     checkPreferredItems 1, 'SameNamed', 'SameNamed'
@@ -979,6 +977,13 @@ class Foo {
     myFixture.configureByText("a.java", "class X { String getName() {return \"\";} void test() {System.out.println(this.n<caret>);}}")
     myFixture.completeBasic()
     assertStringItems "getName", "clone", "toString", "notify", "notifyAll", "finalize"
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test void context replace"() {
+    myFixture.configureByText("a.java", "class X { String getName() {return \"\";} void test() {this.n<caret>otify();}}")
+    myFixture.completeBasic()
+    assertStringItems "notify", "notifyAll", "getName", "clone", "toString", "finalize"
   }
 
   @NeedsIndex.Full

@@ -18,12 +18,12 @@ package com.intellij.refactoring.ui;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiType;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 
-class TypeListCreatingVisitor implements RefactoringHierarchyUtil.SuperTypeVisitor {
+class TypeListCreatingVisitor implements CommonJavaRefactoringUtil.SuperTypeVisitor {
   private final ArrayList<? super PsiType> myList;
   private final PsiElementFactory myFactory;
   private final HashSet<PsiType> mySet;

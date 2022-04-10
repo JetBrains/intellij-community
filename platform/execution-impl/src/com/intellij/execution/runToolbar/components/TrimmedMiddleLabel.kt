@@ -23,22 +23,25 @@ open class TrimmedMiddleLabel : JLabel() {
     }
 
     val ellipsisWidth = fm.stringWidth(StringUtil.ELLIPSIS)
-    if (textW <= availableWidth + (icon?.let { 0 } ?: magicConst) || width < ellipsisWidth) {
+    if (availableWidth <= 0 || textW <= availableWidth + (icon?.let { 0 } ?: magicConst) || width < ellipsisWidth) {
       super.paintComponent(g)
     }
     else {
+      var offsetY = fm.ascent
       icon?.let {
         icon.paintIcon(this, g, insets.left, 0)
+        offsetY += (it.iconWidth / 2) - fm.height/2
       }
 
       val charArray = text.toCharArray()
       val stringLength = charArray.size
       var w = 0
       val avW = availableWidth - ellipsisWidth
+
       for (nChars in 0 until stringLength) {
         w += fm.charWidth(charArray[nChars])
         if (w > avW) {
-          g.drawString(StringUtil.trimMiddle(text, nChars - 1), x, fm.ascent)
+          g.drawString(StringUtil.trimMiddle(text, nChars - 1), x, offsetY)
           return
         }
       }

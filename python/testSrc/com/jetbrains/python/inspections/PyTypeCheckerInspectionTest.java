@@ -892,8 +892,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-35235
   public void testDistinguishTypingLiteralsFromTypeHintOrValue() {
     doTestByText("from typing_extensions import Literal\n" +
-                 "# no warning because `Literal[10]` as an expression has type `Any`\n" +
-                 "a = Literal[10]  # type: Literal[0]");
+                 "a = <warning descr=\"Expected type 'Literal[0]', got 'Type[int]' instead\">Literal[10]</warning>  # type: Literal[0]");
   }
 
   // PY-35235
@@ -976,9 +975,8 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-36008
   public void testTypedDictUsageAlternativeSyntax() {
     doTestByText("from typing import TypedDict\n" +
-                 "\n" +
                  "Movie = TypedDict('Movie', {'name': str, 'year': int}, total=False)\n" +
-                 "movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, Union[str, int]]' instead\">{'name': 'Blade Runner', 'lo': 1234}</warning> # type: Movie\n");
+                 "movie = {'name': 'Blade Runner', <warning descr=\"Extra key 'director' for TypedDict 'Movie'\">'director': 'Ridley Scott'</warning>} # type: Movie\n");
   }
 
   // PY-36008
@@ -986,12 +984,17 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> doTestByText("from typing import TypedDict\n" +
+                         "class Point(TypedDict):\n" +
+                         "    x: int\n" +
+                         "    y: int\n" +
                          "class Movie(TypedDict):\n" +
                          "    name: str\n" +
                          "    year: int\n" +
                          "def record_movie(movie: Movie) -> None: ...\n" +
-                         "record_movie({'name': 'Blade Runner', 'year': 1982})\n" +
-                         "record_movie(<warning descr=\"Expected type 'Movie', got 'dict[str, int]' instead\">{'name': 1984}</warning>)")
+                         "record_movie({'name': <warning descr=\"Expected type 'str', got 'int' instead\">1984</warning>, 'year': 1984})\n" +
+                         "record_movie(<warning descr=\"TypedDict 'Movie' has missing keys: 'name', 'year'\">{}</warning>)\n" +
+                         "record_movie({'name': '1984', 'year': 1984, <warning descr=\"Extra key 'director' for TypedDict 'Movie'\">'director': 'Michael Radford'</warning>})\n" +
+                         "record_movie(<warning descr=\"Expected type 'Movie', got 'Point' instead\">Point(x=123, y=321)</warning>)")
     );
   }
 
@@ -1021,11 +1024,24 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "class Movie(TypedDict):\n" +
                          "    name: str\n" +
                          "    year: int\n" +
-                         "m1: Movie = dict(name='Alien', year=1979)\n" +
-                         "m2: Movie = <warning descr=\"Expected type 'Movie', got 'dict[str, str]' instead\">dict(name='Alien', year='1979')</warning>\n" +
-                         "m3: Movie = typing.cast(Movie, dict(zip(['name', 'year'], ['Alien', 1979])))\n" +
-                         "m4: Movie = <warning descr=\"Expected type 'Movie', got 'dict[str, str]' instead\">{'name': 'Alien', 'year': '1979'}</warning>\n" +
-                         "m5 = Movie(name='Garden State', year=2004)"));
+                         "class NotPoint(TypedDict):\n" +
+                         "    x: int\n" +
+                         "    y: str\n" +
+                         "class Point(TypedDict):\n" +
+                         "    x: int\n" +
+                         "    y: int\n" +
+                         "p1: Point = {'x': 0, 'y': <warning descr=\"Expected type 'int', got 'str' instead\">'a'</warning>}\n" +
+                         "p2: NotPoint = {'x': <warning descr=\"Expected type 'int', got 'str' instead\">'x'</warning>, 'y': <warning descr=\"Expected type 'str', got 'int' instead\">42</warning>}\n" +
+                         "p3: Point = <warning descr=\"Expected type 'Point', got 'NotPoint' instead\">p2</warning>\n" +
+                         "p4: Point = <warning descr=\"TypedDict 'Point' has missing keys: 'x', 'y'\">{}</warning>\n" +
+                         "p5: Point = {'x': 0, 'y': 0, <warning descr=\"Extra key 'z' for TypedDict 'Point'\">'z': 123</warning>, <warning descr=\"Extra key 'k' for TypedDict 'Point'\">'k': 6</warning>}\n" +
+                         "p6: Point = <warning descr=\"TypedDict 'Point' has missing key: 'x'\">{'y': 123}</warning>\n" +
+                         "p7: Movie = dict(name='Alien', year=1979)\n" +
+                         "p8: Movie = dict(name='Alien', year=<warning descr=\"Expected type 'int', got 'str' instead\">'1979'</warning>)\n" +
+                         "p9: Movie = dict(name='Alien', year=1979, <warning descr=\"Extra key 'director' for TypedDict 'Movie'\">director='Ridley Scott'</warning>)\n" +
+                         "p10 = {'x': 'x', 'y': 42, 'z': 42}\n" +
+                         "p11: Point = <warning descr=\"Expected type 'Point', got 'dict[str, str | int]' instead\">p10</warning>"
+      ));
   }
 
   // PY-36008
@@ -1035,9 +1051,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       () -> doTestByText("from typing import TypedDict\n" +
                          "Movie = TypedDict('Movie', {'name': str, 'year': int})\n" +
                          "m1: Movie = dict(name='Alien', year=1979)\n" +
-                         "m2: Movie = <warning descr=\"Expected type 'Movie', got 'dict[str, str]' instead\">dict(name='Alien', year='1979')</warning>\n" +
+                         "m2: Movie = dict(name='Alien', year=<warning descr=\"Expected type 'int', got 'str' instead\">'1979'</warning>)\n" +
                          "m3: Movie = typing.cast(Movie, dict(zip(['name', 'year'], ['Alien', 1979])))\n" +
-                         "m4: Movie = <warning descr=\"Expected type 'Movie', got 'dict[str, str]' instead\">{'name': 'Alien', 'year': '1979'}</warning>\n" +
+                         "m4: Movie = {'name': 'Alien', 'year': <warning descr=\"Expected type 'int', got 'str' instead\">'1979'</warning>}\n" +
                          "m5 = Movie(name='Garden State', year=2004)"));
   }
 
@@ -1323,11 +1339,19 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> doTestByText("from typing import TypedDict\n" +
+                         "class Point(TypedDict):\n" +
+                         "    x: int\n" +
+                         "    y: int\n" +
                          "class Movie(TypedDict):\n" +
                          "    name: str\n" +
+                         "    year: int\n" +
                          "def record_movie(movie: Movie) -> None: ...\n" +
-                         "record_movie(movie={'name': 'Blade Runner'})\n" +
-                         "record_movie(<warning descr=\"Expected type 'Movie', got 'dict' instead\">movie={}</warning>)")
+                         "record_movie(movie={'name': 'Blade Runner', 'year': 1984})\n" +
+                         "record_movie(movie=<warning descr=\"TypedDict 'Movie' has missing key: 'name'\">{'year': 1984}</warning>)\n" +
+                         "record_movie(movie={'name': <warning descr=\"Expected type 'str', got 'int' instead\">1984</warning>, 'year': 1984})\n" +
+                         "record_movie(movie=<warning descr=\"TypedDict 'Movie' has missing keys: 'name', 'year'\">{}</warning>)\n" +
+                         "record_movie(movie={'name': '1984', 'year': 1984, <warning descr=\"Extra key 'director' for TypedDict 'Movie'\">'director': 'Michael Radford'</warning>})\n" +
+                         "record_movie(movie=<warning descr=\"Expected type 'Movie', got 'Point' instead\">Point(x=123, y=321)</warning>)")
     );
   }
 
@@ -1346,8 +1370,8 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "f(<warning descr=\"Expected type 'C', got 'dict' instead\">y</warning>)\n" +
                          "f(<warning descr=\"Expected type 'C', got 'dict[str, int | str]' instead\">n</warning>)\n" +
                          "f(z)\n" +
-                         "f(<warning descr=\"Expected type 'C', got 'dict' instead\">x=y</warning>)\n" +
-                         "f(<warning descr=\"Expected type 'C', got 'dict[str, int | str]' instead\">x=n</warning>)\n" +
+                         "f(x=<warning descr=\"Expected type 'C', got 'dict' instead\">y</warning>)\n" +
+                         "f(x=<warning descr=\"Expected type 'C', got 'dict[str, int | str]' instead\">n</warning>)\n" +
                          "f(x=z)\n" +
                          "z2: C = <warning descr=\"Expected type 'C', got 'dict' instead\">y</warning>\n" +
                          "z2: C = <warning descr=\"Expected type 'C', got 'dict[str, int | str]' instead\">n</warning>\n" +
@@ -1362,7 +1386,63 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "class Foo(TypedDict):\n" +
                          "    foo: Literal['bar']\n" +
                          "a: Foo = {'foo': 'bar'}\n" +
-                         "b: Foo = <warning descr=\"Expected type 'Foo', got 'dict[str, str]' instead\">{'foo': 'baz'}</warning>")
+                         "b: Foo = {'foo': <warning descr=\"Expected type 'Literal['bar']', got 'str' instead\">'baz'</warning>}")
+    );
+  }
+
+  // PY-46661
+  public void testNestedTypedDict() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing_extensions import TypedDict\n" +
+                         "class EasyDict(TypedDict):\n" +
+                         "    a: str\n" +
+                         "    b: str\n" +
+                         "    c: str\n" +
+                         "\n" +
+                         "\n" +
+                         "class NotSoHardDict(TypedDict):\n" +
+                         "    a: str\n" +
+                         "    b: EasyDict\n" +
+                         "\n" +
+                         "\n" +
+                         "class HardDict(TypedDict):\n" +
+                         "    a: str\n" +
+                         "    d: NotSoHardDict\n" +
+                         "\n" +
+                         "\n" +
+                         "q: HardDict = {\n" +
+                         "    'a': <warning descr=\"Expected type 'str', got 'int' instead\">42</warning>,\n" +
+                         "    'd': {\n" +
+                         "        'b': <warning descr=\"TypedDict 'EasyDict' has missing keys: 'b', 'c'\">{'a': <warning descr=\"Expected type 'str', got 'int' instead\">42</warning>, <warning descr=\"Extra key 'd' for TypedDict 'EasyDict'\">'d': 42</warning>}</warning>,\n" +
+                         "        'a': 'xx',\n" +
+                         "        <warning descr=\"Extra key 'c' for TypedDict 'NotSoHardDict'\">'c': 42</warning>\n" +
+                         "    },\n" +
+                         "}\n" +
+                         "t = {\n" +
+                         "    'a': 'xx',\n" +
+                         "    'd': {\n" +
+                         "        0: 'zero',\n" +
+                         "    }\n" +
+                         "}\n" +
+                         "s: HardDict = {'a': 'xx', 'd': <warning descr=\"Expected type 'NotSoHardDict', got 'dict[str, dict[int, str] | str]' instead\">t</warning>}\n" +
+                         "s1: HardDict = <warning descr=\"Expected type 'HardDict', got 'dict[str, dict[int, str] | str]' instead\">t</warning>\n" +
+                         "t1 = {\n" +
+                         "    'a': 'xx',\n" +
+                         "    'd': {\n" +
+                         "        'a': 0,\n" +
+                         "        'd': {}\n" +
+                         "    }\n" +
+                         "}\n" +
+                         "s2: HardDict = {'a': 'xx', 'd': <warning descr=\"Expected type 'NotSoHardDict', got 'dict[str, dict[str, dict | int] | str]' instead\">t1</warning>}\n" +
+                         "s3: HardDict = <warning descr=\"Expected type 'HardDict', got 'dict[str, dict[str, dict | int] | str]' instead\">t1</warning>\n" +
+                         "s4: HardDict = <warning descr=\"TypedDict 'HardDict' has missing key: 'a'\">{\n" +
+                         "    'd': {\n" +
+                         "        'a': 'a',\n" +
+                         "        'b': {'a': 'a', 'b': 'b', 'c': 'c'}\n" +
+                         "    }\n" +
+                         "}</warning>\n"
+                         )
     );
   }
 

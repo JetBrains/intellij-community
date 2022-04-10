@@ -13,7 +13,6 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.CountingGZIPInputStream;
 import com.intellij.util.io.IoService;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,8 +36,7 @@ public final class NetUtils {
   }
 
   /** @deprecated use {@link InetAddress#getLoopbackAddress()} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static InetAddress getLoopbackAddress() {
     return InetAddress.getLoopbackAddress();
   }
@@ -151,7 +149,6 @@ public final class NetUtils {
    * @deprecated use {@link #copyStreamContent(ProgressIndicator, InputStream, OutputStream, long)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static int copyStreamContent(@Nullable ProgressIndicator indicator,
                                       @NotNull InputStream inputStream,
                                       @NotNull OutputStream outputStream,

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.lang.Language;
@@ -9,7 +9,9 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +62,38 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   final Set<PsiMethod> propagateExceptionsMethods;
 
   private boolean myCheckUnusedParameter;
+  
+  public static JavaChangeInfo generateChangeInfo(PsiMethod method,
+                                                  boolean generateDelegate,
+                                                  @Nullable // null means unchanged
+                                                  @PsiModifier.ModifierConstant String newVisibility,
+                                                  String newName,
+                                                  CanonicalTypes.Type newType,
+                                                  ParameterInfoImpl @NotNull [] parameterInfo,
+                                                  ThrownExceptionInfo[] thrownExceptions,
+                                                  Set<PsiMethod> propagateParametersMethods,
+                                                  Set<PsiMethod> propagateExceptionsMethods) {
+    LOG.assertTrue(method.isValid());
+
+    if (propagateParametersMethods == null) {
+      propagateParametersMethods = new HashSet<>();
+    }
+
+    if (propagateExceptionsMethods == null) {
+      propagateExceptionsMethods = new HashSet<>();
+    }
+
+    if (newVisibility == null) {
+      newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
+    }
+
+    final JavaChangeInfoImpl javaChangeInfo =
+      new JavaChangeInfoImpl(newVisibility, method, newName, newType, parameterInfo, thrownExceptions, generateDelegate,
+                             propagateParametersMethods, propagateExceptionsMethods);
+    javaChangeInfo.setCheckUnusedParameter();
+    return javaChangeInfo;
+  }
+  
 
   /**
    * @param newExceptions null if not changed
@@ -210,7 +244,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     }
     if (!method.isConstructor()){
       try {
-        isReturnTypeChanged = !ChangeSignatureUtil.deepTypeEqual(newReturnType.getType(this.method), this.method.getReturnType());
+        isReturnTypeChanged = !CommonJavaRefactoringUtil.deepTypeEqual(newReturnType.getType(this.method), this.method.getReturnType());
       }
       catch (IncorrectOperationException e) {
         isReturnTypeChanged = true;
@@ -247,7 +281,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     if (!isExceptionSetChanged) {
       for (int i = 0; i < newExceptions.length; i++) {
         try {
-          if (newExceptions[i].getOldIndex() < 0 || !ChangeSignatureUtil.deepTypeEqual(types[i], newExceptions[i].createType(method, method.getManager()))) {
+          if (newExceptions[i].getOldIndex() < 0 || !CommonJavaRefactoringUtil.deepTypeEqual(types[i], newExceptions[i].createType(method, method.getManager()))) {
             isExceptionSetChanged = true;
             break;
           }

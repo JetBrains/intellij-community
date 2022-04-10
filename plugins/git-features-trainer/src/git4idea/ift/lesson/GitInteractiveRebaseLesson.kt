@@ -46,7 +46,7 @@ import javax.swing.JDialog
 import javax.swing.KeyStroke
 
 class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessonsBundle.message("git.interactive.rebase.lesson.name")) {
-  override val existedFile = "git/martian_cat.yml"
+  override val sampleFilePath = "git/martian_cat.yml"
   override val branchName = "fixes"
 
   private var backupRebaseDialogLocation: Point? = null
@@ -93,7 +93,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       text(GitLessonsBundle.message("git.interactive.rebase.open.context.menu"))
       text(GitLessonsBundle.message("git.interactive.rebase.click.commit.tooltip"),
            LearningBalloonConfig(Balloon.Position.above, 0))
-      triggerByUiComponentAndHighlight { ui: ActionMenuItem ->
+      triggerAndFullHighlight().component { ui: ActionMenuItem ->
         ui.text == interactiveRebaseMenuItemText
       }
       showWarningIfGitWindowClosed(restoreTaskWhenResolved = true)
@@ -132,7 +132,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
         }
       }
       text(GitLessonsBundle.message("git.interactive.rebase.select.one.commit"))
-      triggerByUiComponentAndHighlight(false, false) { ui: JBTable ->
+      triggerUI().component { ui: JBTable ->
         if (isInsideRebaseDialog(ui)) {
           movingCommitText = ui.model.getValueAt(4, 1).toString()
           ui.selectedRow == 4
@@ -151,13 +151,13 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     task {
       val moveUpShortcut = CommonShortcuts.MOVE_UP.shortcuts.first() as KeyboardShortcut
       text(GitLessonsBundle.message("git.interactive.rebase.move.commit", LessonUtil.rawKeyStroke(moveUpShortcut.firstKeyStroke)))
-      triggerByPartOfComponent(highlightInside = true, usePulsation = false) { ui: JBTable ->
+      triggerAndFullHighlight().componentPart { ui: JBTable ->
         if (isInsideRebaseDialog(ui)) {
           ui.getCellRect(1, 1, false).apply { height = 1 }
         }
         else null
       }
-      triggerByUiComponentAndHighlight(false, false) { ui: JBTable ->
+      triggerUI().component { ui: JBTable ->
         isInsideRebaseDialog(ui) && ui.model.getValueAt(1, 1).toString() == movingCommitText
       }
       restoreByUi(openRebaseDialogTaskId)
@@ -170,7 +170,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       val fixupShortcut = KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.ALT_DOWN_MASK)
       text(GitLessonsBundle.message("git.interactive.rebase.invoke.fixup", LessonUtil.rawKeyStroke(fixupShortcut),
                                     strong(GitBundle.message("rebase.entry.action.name.fixup"))))
-      triggerByUiComponentAndHighlight { ui: BasicOptionButtonUI.ArrowButton -> isInsideRebaseDialog(ui) }
+      triggerAndFullHighlight().component { ui: BasicOptionButtonUI.ArrowButton -> isInsideRebaseDialog(ui) }
       trigger("git4idea.rebase.interactive.dialog.FixupAction")
       test(waitEditorToBeReady = false) {
         invokeActionViaShortcut("ALT F")
@@ -180,7 +180,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     task {
       text(GitLessonsBundle.message("git.interactive.rebase.select.three.commits", LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT)))
       highlightSubsequentCommitsInRebaseDialog(startRowIncl = 2, endRowExcl = 5)
-      triggerByUiComponentAndHighlight(false, false) { ui: JBTable ->
+      triggerUI().component { ui: JBTable ->
         isInsideRebaseDialog(ui) && ui.similarCommitsSelected()
       }
       test(waitEditorToBeReady = false) {
@@ -197,7 +197,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       val squashShortcut = KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.ALT_DOWN_MASK)
       text(GitLessonsBundle.message("git.interactive.rebase.invoke.squash",
                                     LessonUtil.rawKeyStroke(squashShortcut), strong(GitBundle.message("rebase.entry.action.name.squash"))))
-      triggerByUiComponentAndHighlight { ui: BasicOptionButtonUI.MainButton -> isInsideRebaseDialog(ui) }
+      triggerAndFullHighlight().component { ui: BasicOptionButtonUI.MainButton -> isInsideRebaseDialog(ui) }
       trigger("git4idea.rebase.interactive.dialog.SquashAction")
       restoreState {
         val table = previous.ui as? JBTable ?: return@restoreState false
@@ -209,7 +209,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     }
 
     task {
-      triggerByUiComponentAndHighlight(false, false) { ui: CommitMessage -> isInsideRebaseDialog(ui) }
+      triggerUI().component { ui: CommitMessage -> isInsideRebaseDialog(ui) }
     }
 
     task {
@@ -224,7 +224,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     task {
       val startRebasingButtonText = GitBundle.message("rebase.interactive.dialog.start.rebase")
       text(GitLessonsBundle.message("git.interactive.rebase.start.rebasing", strong(startRebasingButtonText)))
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: JButton ->
+      triggerAndFullHighlight { usePulsation = true }.component { ui: JButton ->
         ui.text?.contains(startRebasingButtonText) == true
       }
       triggerOnNotification {
@@ -256,7 +256,10 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
                                                                    endRowExcl: Int,
                                                                    highlightInside: Boolean = false,
                                                                    usePulsation: Boolean = false) {
-    triggerByPartOfComponent(highlightInside = highlightInside, usePulsation = usePulsation) { ui: JBTable ->
+    triggerAndBorderHighlight {
+      this.highlightInside = highlightInside
+      this.usePulsation = usePulsation
+    }.componentPart { ui: JBTable ->
       if (isInsideRebaseDialog(ui)) {
         val rect = ui.getCellRect(startRowIncl, 1, false)
         rect.height *= endRowExcl - startRowIncl

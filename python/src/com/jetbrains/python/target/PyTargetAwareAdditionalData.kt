@@ -9,6 +9,7 @@ import com.intellij.remote.RemoteSdkPropertiesHolder
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import org.jdom.Element
 
 /**
@@ -96,7 +97,8 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
     @JvmStatic
     fun loadTargetAwareData(sdk: Sdk, element: Element): PyTargetAwareAdditionalData {
       val homePath = sdk.homePath ?: throw IllegalStateException("Home path must not be null")
-      val data = PyTargetAwareAdditionalData(flavor = null)
+      // TODO Python flavor identifier must be stored in `element` and taken from it here
+      val data = PyTargetAwareAdditionalData(flavor = UnixPythonSdkFlavor.getInstance())
       data.interpreterPath = homePath
       data.load(element)
       // TODO [targets] Load `SKELETONS_PATH` for Target-based Python SDK from `Element`

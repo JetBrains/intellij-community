@@ -1,4 +1,5 @@
 // "Remove 'inline' modifier" "false"
+// ERROR: Accessing super members from public-API inline function is deprecated
 // ACTION: Expand boolean expression to 'if else'
 // ACTION: Make 'bar' internal
 // ACTION: Make 'bar' private

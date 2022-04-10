@@ -113,16 +113,6 @@ public final class StdErrorReporter extends ErrorReporter {
       }
       eventContent.putUserData(KEY, null);
     }
-
-    @Override
-    public void contentAdded(@NotNull ContentManagerEvent event) {
-    }
-    @Override
-    public void contentRemoveQuery(@NotNull ContentManagerEvent event) {
-    }
-    @Override
-    public void selectionChanged(@NotNull ContentManagerEvent event) {
-    }
   }
 
   private class CloseListener implements ContentManagerListener {

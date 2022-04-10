@@ -2,6 +2,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ public interface IdePerformanceListener {
    * @deprecated use {{@link #uiFreezeStarted(File)}}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   default void uiFreezeStarted() {
   }
 

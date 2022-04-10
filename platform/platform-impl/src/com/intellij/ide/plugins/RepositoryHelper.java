@@ -47,6 +47,10 @@ public final class RepositoryHelper {
     if (pluginsUrl != null && !"__BUILTIN_PLUGINS_URL__".equals(pluginsUrl)) {
       hosts.add(pluginsUrl);
     }
+    List<CustomPluginRepoContributor> repoContributors = CustomPluginRepoContributor.EP_NAME.getExtensionsIfPointIsRegistered();
+    for (CustomPluginRepoContributor contributor : repoContributors) {
+      hosts.addAll(contributor.getRepoUrls());
+    }
     hosts.add(null);  // main plugin repository
     return hosts;
   }
@@ -56,8 +60,7 @@ public final class RepositoryHelper {
    *
    * @deprecated Please use {@link #loadPlugins(String, BuildNumber, ProgressIndicator)} to get a list of {@link PluginNode}s.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
                                                                 @Nullable ProgressIndicator indicator) throws IOException {
     return new ArrayList<>(loadPlugins(repositoryUrl, null, indicator));

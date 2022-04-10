@@ -4,7 +4,6 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,8 +58,7 @@ public abstract class PopupHandler extends MouseAdapter {
   }
 
   /** @deprecated use {@link #installPopupMenu(JComponent, String, String)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public static void installPopupHandler(@NotNull JComponent component,
                                          @NotNull String groupId,
                                          @NotNull String place) {
@@ -94,9 +92,15 @@ public abstract class PopupHandler extends MouseAdapter {
     return installPopupMenu(component, __ -> group, place, null, null);
   }
 
+  public static @NotNull PopupHandler installPopupMenu(@NotNull JComponent component,
+                                                       @NotNull ActionGroup group,
+                                                       @NotNull String place,
+                                                       @Nullable PopupMenuListener menuListener) {
+    return installPopupMenu(component, __ -> group, place, null, menuListener);
+  }
+
   /** @deprecated use {@link #installPopupMenu(JComponent, ActionGroup, String)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public static @NotNull MouseListener installPopupHandler(@NotNull JComponent component,
                                                            @NotNull ActionGroup group,
                                                            @NotNull String place,
@@ -105,8 +109,7 @@ public abstract class PopupHandler extends MouseAdapter {
   }
 
   /** @deprecated use {@link #installPopupMenu(JComponent, ActionGroup, String)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval (inVersion = "2021.2")
+  @Deprecated(forRemoval = true)
   public static @NotNull MouseListener installPopupHandler(@NotNull JComponent component,
                                                            @NotNull ActionGroup group,
                                                            @NotNull String place,
@@ -150,8 +153,7 @@ public abstract class PopupHandler extends MouseAdapter {
   }
 
   /** @deprecated use {@link #installFollowingSelectionTreePopup(JTree, ActionGroup, String)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull MouseListener installFollowingSelectionTreePopup(@NotNull JTree tree,
                                                                           @NotNull ActionGroup group,
                                                                           @NotNull String place,

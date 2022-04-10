@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -14,12 +14,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.JdomKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UnsyncByteArrayOutputStream;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -88,19 +88,13 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
     final Path crcFile = mavenConfigFile.resolveSibling("configuration.crc");
 
     if (!force) {
-      try {
-        DataInputStream crcInput = new DataInputStream(Files.newInputStream(crcFile, StandardOpenOption.READ));
-        try {
-          final int lastCrc = crcInput.readInt();
-          if (lastCrc == crc) return; // Project had not change since last config generation.
+      try (DataInputStream crcInput = new DataInputStream(Files.newInputStream(crcFile, StandardOpenOption.READ))) {
+        final int lastCrc = crcInput.readInt();
+        if (lastCrc == crc) return; // Project had not changed since last config generation.
 
-          LOG.debug(String.format(
-            "project configuration changed: lastCrc = %d, currentCrc = %d, projectRootModificationCount = %d, mavenConfigCrc = %d",
-            lastCrc, crc, projectRootModificationCount, mavenConfigCrc));
-        }
-        finally {
-          crcInput.close();
-        }
+        LOG.debug(String.format(
+          "project configuration changed: lastCrc = %d, currentCrc = %d, projectRootModificationCount = %d, mavenConfigCrc = %d",
+          lastCrc, crc, projectRootModificationCount, mavenConfigCrc));
       }
       catch (IOException e) {
         LOG.debug("Unable to read or find config file: " + e.getMessage());
@@ -180,14 +174,10 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
         buildManager.clearState(project);
       }
       try {
-        JdomKt.write(element, mavenConfigFile);
-        DataOutputStream crcOutput = new DataOutputStream(
-          new BufferedOutputStream(Files.newOutputStream(crcFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)));
-        try {
+        JDOMUtil.write(element, mavenConfigFile);
+        try (DataOutputStream crcOutput = new DataOutputStream(
+          new BufferedOutputStream(Files.newOutputStream(crcFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)))) {
           crcOutput.writeInt(crc);
-        }
-        finally {
-          crcOutput.close();
         }
       }
       catch (IOException e) {
@@ -221,7 +211,7 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
                                        @NotNull Module module,
                                        @NotNull MavenModuleResourceConfiguration resourceConfig) {
     if (mavenProject.isAggregator()) return;
-    if (Boolean.valueOf(IDEA_MAVEN_DISABLE_MANIFEST)) {
+    if (Boolean.parseBoolean(IDEA_MAVEN_DISABLE_MANIFEST)) {
       resourceConfig.manifest = null;
       return;
     }
@@ -258,14 +248,8 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
     final Properties properties = new Properties();
 
     for (String each : mavenProject.getFilterPropertiesFiles()) {
-      try {
-        FileInputStream in = new FileInputStream(each);
-        try {
-          properties.load(in);
-        }
-        finally {
-          in.close();
-        }
+      try (FileInputStream in = new FileInputStream(each)) {
+        properties.load(in);
       }
       catch (IOException ignored) {
       }

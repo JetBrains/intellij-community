@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,7 +16,7 @@ import java.util.*;
 
 @State(name = "NotificationConfiguration", storages = @Storage("notifications.xml"), category = SettingsCategory.UI)
 public final class NotificationsConfigurationImpl extends NotificationsConfiguration implements PersistentStateComponent<Element>, Disposable {
-  private static final Logger LOG = Logger.getInstance(NotificationsConfiguration.class);
+  private static final Logger LOG = Logger.getInstance(NotificationsConfigurationImpl.class);
   private static final String SHOW_BALLOONS_ATTRIBUTE = "showBalloons";
   private static final String SYSTEM_NOTIFICATIONS_ATTRIBUTE = "systemNotifications";
 
@@ -52,9 +52,8 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
 
   public synchronized NotificationSettings[] getAllSettings() {
     Collection<NotificationSettings> settings = new HashSet<>(myIdToSettingsMap.values());
-    Iterable<NotificationGroup> notificationGroups = NotificationGroup.getAllRegisteredGroups();
-    for (NotificationGroup group : notificationGroups) {
-      if (group.getDisplayId().startsWith(LIGHTWEIGHT_PREFIX)) {
+    for (NotificationGroup group : NotificationGroup.Companion.getAllRegisteredGroups()) {
+      if (group.getDisplayId().startsWith(LIGHTWEIGHT_PREFIX) || group.isHideFromSettings()) {
         continue;
       }
       settings.add(getSettings(group.getDisplayId()));
@@ -147,9 +146,8 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
     }
   }
 
-  public synchronized boolean isRegistered(@NotNull
-                                           final String id) {
-    return myIdToSettingsMap.containsKey(id) || NotificationGroup.findRegisteredGroup(id) != null;
+  public synchronized boolean isRegistered(@NotNull String id) {
+    return myIdToSettingsMap.containsKey(id) || NotificationGroup.isGroupRegistered(id);
   }
 
   @Override

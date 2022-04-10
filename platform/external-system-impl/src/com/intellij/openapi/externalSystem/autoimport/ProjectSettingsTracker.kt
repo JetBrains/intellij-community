@@ -3,8 +3,7 @@ package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType.EXTERNAL
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener.Companion.subscribeOnDocumentsAndVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
@@ -57,7 +56,11 @@ class ProjectSettingsTracker(
 
   fun getModificationType() = status.getModificationType()
 
-  fun getSettingsContext(): ExternalSystemSettingsFilesReloadContext = settingsFilesStatus.get()
+  fun getSettingsContext(): ExternalSystemSettingsFilesReloadContext {
+    val modificationType = getModificationType()
+    val status = settingsFilesStatus.get()
+    return SettingsFilesReloadContext(modificationType, status.updated, status.created, status.deleted)
+  }
 
   private fun createSettingsFilesStatus(
     oldSettingsFilesCRC: Map<String, Long>,
@@ -137,17 +140,24 @@ class ProjectSettingsTracker(
   private data class SettingsFilesStatus(
     val oldCRC: Map<String, Long> = emptyMap(),
     val newCRC: Map<String, Long> = emptyMap(),
-    override val updated: Set<String> = emptySet(),
-    override val created: Set<String> = emptySet(),
-    override val deleted: Set<String> = emptySet()
-  ) : ExternalSystemSettingsFilesReloadContext {
+    val updated: Set<String> = emptySet(),
+    val created: Set<String> = emptySet(),
+    val deleted: Set<String> = emptySet()
+  ) {
     constructor(CRC: Map<String, Long>) : this(oldCRC = CRC)
 
     fun hasChanges() = updated.isNotEmpty() || created.isNotEmpty() || deleted.isNotEmpty()
   }
 
+  private data class SettingsFilesReloadContext(
+    override val modificationType: ExternalSystemModificationType,
+    override val updated: Set<String>,
+    override val created: Set<String>,
+    override val deleted: Set<String>
+  ) : ExternalSystemSettingsFilesReloadContext
+
   private inner class ProjectListener : ExternalSystemProjectListener {
-    private lateinit var settingsFilesCRC: Map<String, Long>
+    private var settingsFilesCRC: Map<String, Long> = emptyMap()
 
     override fun onProjectReloadStart() {
       applyChangesOperation.startTask()
@@ -192,7 +202,7 @@ class ProjectSettingsTracker(
   }
 
   private inner class ProjectSettingsListener : FilesChangesListener {
-    override fun onFileChange(path: String, modificationStamp: Long, modificationType: ModificationType) {
+    override fun onFileChange(path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {
       val operationStamp = currentTime()
       logModificationAsDebug(path, modificationStamp, modificationType)
       status.markModified(operationStamp, modificationType)
@@ -213,7 +223,7 @@ class ProjectSettingsTracker(
       }
     }
 
-    private fun logModificationAsDebug(path: String, modificationStamp: Long, type: ModificationType) {
+    private fun logModificationAsDebug(path: String, modificationStamp: Long, type: ExternalSystemModificationType) {
       if (LOG.isDebugEnabled) {
         val projectPath = projectAware.projectId.externalProjectPath
         val relativePath = FileUtil.getRelativePath(projectPath, path, '/') ?: path

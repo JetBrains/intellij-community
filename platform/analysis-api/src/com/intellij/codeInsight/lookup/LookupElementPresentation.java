@@ -112,7 +112,7 @@ public class LookupElementPresentation {
    * @deprecated Always returns true. To speed up completion by delaying rendering more expensive parts,
    * implement {@link LookupElement#getExpensiveRenderer()}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isReal() {
     return true;
   }

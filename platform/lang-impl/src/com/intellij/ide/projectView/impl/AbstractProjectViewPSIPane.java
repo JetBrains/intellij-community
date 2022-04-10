@@ -32,6 +32,7 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -48,7 +49,7 @@ import java.util.StringTokenizer;
 
 public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane {
   private AsyncProjectViewSupport myAsyncSupport;
-  private JScrollPane myComponent;
+  private JComponent myComponent;
 
   protected AbstractProjectViewPSIPane(@NotNull Project project) {
     super(project);
@@ -66,10 +67,20 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     DefaultTreeModel treeModel = new DefaultTreeModel(rootNode);
     myTree = createTree(treeModel);
     enableDnD();
-    myComponent = ScrollPaneFactory.createScrollPane(myTree);
+    JScrollPane treePaneScroll = ScrollPaneFactory.createScrollPane(myTree);
+    JComponent promoter = createPromoter();
+    if (promoter != null ) {
+      JPanel contentAndPromoter = new JPanel();
+      contentAndPromoter.setLayout(new BoxLayout(contentAndPromoter, BoxLayout.Y_AXIS));
+      contentAndPromoter.add(treePaneScroll);
+      contentAndPromoter.add(promoter);
+      myComponent = contentAndPromoter;
+    } else {
+      myComponent = treePaneScroll;
+    }
     if (Registry.is("error.stripe.enabled")) {
       ErrorStripePainter painter = new ErrorStripePainter(true);
-      Disposer.register(this, new TreeUpdater<>(painter, myComponent, myTree) {
+      Disposer.register(this, new TreeUpdater<>(painter, treePaneScroll, myTree) {
         @Override
         protected void update(ErrorStripePainter painter, int index, Object object) {
           if (object instanceof DefaultMutableTreeNode) {
@@ -254,6 +265,12 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
   @NotNull
   protected abstract ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel);
+
+  @ApiStatus.Internal
+  @Nullable
+  protected JComponent createPromoter() {
+    return null;
+  }
 
   @NotNull
   protected abstract AbstractTreeUpdater createTreeUpdater(@NotNull AbstractTreeBuilder treeBuilder);

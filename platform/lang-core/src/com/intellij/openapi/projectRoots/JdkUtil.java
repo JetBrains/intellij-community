@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.configurations.SimpleJavaParameters;
@@ -125,7 +126,13 @@ public final class JdkUtil {
   public static @NotNull GeneralCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {
     LocalTargetEnvironmentRequest request = new LocalTargetEnvironmentRequest();
     TargetedCommandLineBuilder builder = setupJVMCommandLine(javaParameters, request );
-    LocalTargetEnvironment environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
+    LocalTargetEnvironment environment;
+    try {
+      environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
+    }
+    catch (ExecutionException e) {
+      throw new CantRunException(e.getMessage(), e);
+    }
     return environment.createGeneralCommandLine(builder.build());
   }
 
@@ -150,29 +157,18 @@ public final class JdkUtil {
 
   //<editor-fold desc="Deprecated stuff.">
 
-  /**
-   * @deprecated use {@link SimpleJavaParameters#toCommandLine()}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  public static GeneralCommandLine setupJVMCommandLine(String exePath, SimpleJavaParameters javaParameters, boolean forceDynamicClasspath) {
-    try {
-      javaParameters.setUseDynamicClasspath(forceDynamicClasspath);
-      GeneralCommandLine commandLine = new GeneralCommandLine(exePath);
-      setupCommandLine(commandLine, javaParameters);
-      return commandLine;
-    }
-    catch (CantRunException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   private static void setupCommandLine(GeneralCommandLine commandLine, SimpleJavaParameters javaParameters) throws CantRunException {
     LocalTargetEnvironmentRequest request = new LocalTargetEnvironmentRequest();
     JdkCommandLineSetup setup = new JdkCommandLineSetup(request);
     setup.setupCommandLine(javaParameters);
 
-    LocalTargetEnvironment environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
+    LocalTargetEnvironment environment;
+    try {
+      environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
+    }
+    catch (ExecutionException e) {
+      throw new CantRunException(e.getMessage(), e);
+    }
     GeneralCommandLine generalCommandLine = environment.createGeneralCommandLine(setup.getCommandLine().build());
     commandLine.withParentEnvironmentType(javaParameters.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
     commandLine.getParametersList().addAll(generalCommandLine.getParametersList().getList());

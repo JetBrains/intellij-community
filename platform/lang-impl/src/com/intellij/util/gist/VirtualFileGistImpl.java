@@ -89,7 +89,7 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
                              ((GistManagerImpl)GistManager.getInstance()).getReindexCount(),
                              invalidationCount != null ? invalidationCount.get() : 0);
 
-    try (DataInputStream stream = getFileAttribute(project).readAttribute(file)) {
+    try (DataInputStream stream = getFileAttribute(project).readFileAttribute(file)) {
       if (stream != null && DataInputOutputUtil.readINT(stream) == stamp) {
         Data value = stream.readBoolean() ? myExternalizer.read(stream) : null;
         return () -> value;
@@ -110,7 +110,7 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
   }
 
   private void cacheResult(int modCount, @Nullable Data result, Project project, VirtualFile file) {
-    try (DataOutputStream out = getFileAttribute(project).writeAttribute(file)) {
+    try (DataOutputStream out = getFileAttribute(project).writeFileAttribute(file)) {
       DataInputOutputUtil.writeINT(out, modCount);
       out.writeBoolean(result != null);
       if (result != null) {

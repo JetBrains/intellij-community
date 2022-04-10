@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -23,7 +23,10 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.concurrent.ForkJoinTask
 import java.util.function.Supplier
 
@@ -92,15 +95,21 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       })
     }
+    customizer.getBinariesToSign(buildContext).each {
+      def path = winDistPath.resolve(it)
+      buildContext.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", path.toString()), BuildOptions.WIN_SIGN_STEP) {
+        buildContext.signFile(path, BuildOptions.WIN_SIGN_OPTIONS)
+      }
+    }
   }
 
   @Override
-  void buildArtifacts(@NotNull Path winDistPath) {
-    copyFilesForOsDistribution(winDistPath)
+  void buildArtifacts(@NotNull Path winAndArchSpecificDistPath, @NotNull JvmArchitecture arch) {
+    copyFilesForOsDistribution(winAndArchSpecificDistPath, arch)
 
     ForkJoinTask<Path> zipPathTask = null
     String exePath = null
-    Path jreDir = buildContext.bundledRuntime.extract(BundledRuntime.getProductPrefix(buildContext), OsFamily.WINDOWS, JvmArchitecture.x64)
+    Path jreDir = buildContext.bundledRuntime.extract(BundledRuntime.getProductPrefix(buildContext), OsFamily.WINDOWS, arch)
 
     Path vcRtDll = jreDir.resolve("jbr/bin/msvcp140.dll")
     if (!Files.exists(vcRtDll)) {
@@ -110,7 +119,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         "If DLL was relocated to another place, please correct the path in this code.")
     }
 
-    BuildHelper.copyFileToDir(vcRtDll, winDistPath.resolve("bin"))
+    BuildHelper.copyFileToDir(vcRtDll, winAndArchSpecificDistPath.resolve("bin"))
 
     if (customizer.buildZipArchive) {
       List<Path> jreDirectoryPaths
@@ -120,7 +129,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       else {
         jreDirectoryPaths = List.of()
       }
-      zipPathTask = createBuildWinZipTask(jreDirectoryPaths, ".win", winDistPath, customizer, buildContext).fork()
+      zipPathTask = createBuildWinZipTask(jreDirectoryPaths, ".win", winAndArchSpecificDistPath, customizer, buildContext).fork()
     }
 
     buildContext.executeStep("build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP, new Runnable() {
@@ -128,8 +137,8 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       void run() {
         Path productJsonDir = buildContext.paths.tempDir.resolve("win.dist.product-info.json.exe")
         generateProductJson(productJsonDir, jreDir != null, buildContext)
-        new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", List.of(winDistPath, jreDir), [])
-        exePath = new WinExeInstallerBuilder(buildContext, customizer, jreDir).buildInstaller(winDistPath, productJsonDir, "", buildContext).toString()
+        new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", List.of(winAndArchSpecificDistPath, jreDir), [])
+        exePath = new WinExeInstallerBuilder(buildContext, customizer, jreDir).buildInstaller(winAndArchSpecificDistPath, productJsonDir, "", buildContext).toString()
       }
     })
 
@@ -247,7 +256,10 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       def communityHome = "$buildContext.paths.communityHome"
       String inputPath = "${communityHome}/platform/build-scripts/resources/win/launcher/WinLauncher.exe"
       Path outputPath = winDistPath.resolve("bin/${executableBaseName}.exe")
-      List<JpsModule> resourceModules = List.of(buildContext.findApplicationInfoModule(), buildContext.findModule("intellij.platform.icons"))
+      List<JpsModule> resourceModules = List.of(
+        buildContext.findApplicationInfoModule(),
+        buildContext.findModule("intellij.platform.icons"),
+      )
       buildContext.ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
         sysproperty(key: "java.awt.headless", value: "true")
         arg(value: inputPath)
@@ -257,7 +269,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         arg(value: outputPath.toString())
         classpath {
           pathelement(location: "$communityHome/build/lib/launcher-generator.jar")
-          ["Guava", "JDOM", "commons-imaging"].each {
+          ["Guava", "commons-imaging"].each {
             buildContext.project.libraryCollection.findLibrary(it).getFiles(JpsOrderRootType.COMPILED).each {
               pathelement(location: it.absolutePath)
             }
@@ -269,6 +281,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
             pathelement(location: it)
           }
           pathelement(location: icoFilesDirectory.toString())
+          pathelement(location: buildContext.getModuleOutputDir(buildContext.findRequiredModule("intellij.platform.util.jdom")).toString())
         }
       }
     }

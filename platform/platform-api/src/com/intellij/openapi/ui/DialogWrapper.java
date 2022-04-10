@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -42,7 +42,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import kotlin.Unit;
-import kotlin.jvm.functions.Function0;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
 
@@ -232,6 +231,11 @@ public abstract class DialogWrapper {
     myPeer = parentComponent == null ? createPeer(project, canBeParent, project == null ? IdeModalityType.IDE : ideModalityType)
                                      : createPeer(parentComponent, canBeParent);
     myCreateSouthSection = createSouth;
+    initResizeListener();
+    createDefaultActions();
+  }
+
+  protected final void initResizeListener() {
     Window window = myPeer.getWindow();
     if (window != null) {
       myResizeListener = new ComponentAdapter() {
@@ -247,7 +251,6 @@ public abstract class DialogWrapper {
       };
       window.addComponentListener(myResizeListener);
     }
-    createDefaultActions();
   }
 
   /**
@@ -312,6 +315,16 @@ public abstract class DialogWrapper {
     createDefaultActions();
   }
 
+  protected DialogWrapper(@NotNull PeerFactory peerFactory) {
+    myPeer = peerFactory.createPeer(this);
+    myCreateSouthSection = false;
+    createDefaultActions();
+  }
+
+  public interface PeerFactory {
+    @NotNull DialogWrapperPeer createPeer(@NotNull DialogWrapper dialogWrapper);
+  }
+
   protected @NotNull @NlsContexts.Checkbox String getDoNotShowMessage() {
     return UIBundle.message("dialog.options.do.not.show");
   }
@@ -323,8 +336,7 @@ public abstract class DialogWrapper {
   /**
    * @deprecated Please use setDoNotAskOption(com.intellij.openapi.ui.DoNotAskOption) instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   public void setDoNotAskOption(@Nullable DoNotAskOption doNotAsk) {
     myDoNotAsk = doNotAsk;
   }
@@ -382,11 +394,9 @@ public abstract class DialogWrapper {
     if (vi != null) {
       result.add(vi);
     }
-    for (Function0<ValidationInfo> callback : getValidateCallbacks()) {
-      ValidationInfo callbackInfo = callback.invoke();
-      if (callbackInfo != null) {
-        result.add(callbackInfo);
-      }
+    var dialogPanel = getDialogPanel();
+    if (dialogPanel != null) {
+      result.addAll(dialogPanel.validateAll());
     }
     return result;
   }
@@ -562,7 +572,7 @@ public abstract class DialogWrapper {
     return helpButton;
   }
 
-  public static @NotNull JButton createHelpButton(@NotNull Action action) {
+  private static JButton createHelpButton(@NotNull Action action) {
     JButton helpButton = new JButton(action);
     helpButton.putClientProperty("JButton.buttonType", "help");
     helpButton.setText("");
@@ -625,7 +635,7 @@ public abstract class DialogWrapper {
     JComponent doNotAskCheckbox = createDoNotAskCheckbox();
 
     JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
-    Insets insets = JBUI.emptyInsets();
+    Insets insets = JBInsets.emptyInsets();
 
     if (!rightSideButtons.isEmpty() || !leftSideButtons.isEmpty()) {
       GridBag bag = new GridBag().setDefaultInsets(insets);
@@ -986,10 +996,8 @@ public abstract class DialogWrapper {
   }
 
   private void processDoNotAskOnCancel() {
-    if (myDoNotAsk != null) {
-      if (myDoNotAsk.shouldSaveOptionsOnCancel() && myDoNotAsk.canBeHidden()) {
-        myDoNotAsk.setToBeShown(toBeShown(), CANCEL_EXIT_CODE);
-      }
+    if (myDoNotAsk != null && myDoNotAsk.shouldSaveOptionsOnCancel() && myDoNotAsk.canBeHidden()) {
+      myDoNotAsk.setToBeShown(toBeShown(), CANCEL_EXIT_CODE);
     }
   }
 
@@ -1036,18 +1044,20 @@ public abstract class DialogWrapper {
    */
   protected void doOKAction() {
     if (getOKAction().isEnabled()) {
-      if (myDialogPanel != null) {
-        myDialogPanel.apply();
-      }
+      applyFields();
       close(OK_EXIT_CODE);
     }
   }
 
+  protected void applyFields() {
+    if (myDialogPanel != null) {
+      myDialogPanel.apply();
+    }
+  }
+
   protected void processDoNotAskOnOk(int exitCode) {
-    if (myDoNotAsk != null) {
-      if (myDoNotAsk.canBeHidden()) {
-        myDoNotAsk.setToBeShown(toBeShown(), exitCode);
-      }
+    if (myDoNotAsk != null && myDoNotAsk.canBeHidden()) {
+      myDoNotAsk.setToBeShown(toBeShown(), exitCode);
     }
   }
 
@@ -1436,8 +1446,7 @@ public abstract class DialogWrapper {
   }
 
   /** @deprecated Dialog action buttons should be right-aligned. */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.RIGHT}) int alignment) {
     if (SwingConstants.CENTER != alignment && SwingConstants.RIGHT != alignment) {
       throw new IllegalArgumentException("unknown alignment: " + alignment);
@@ -2052,7 +2061,7 @@ public abstract class DialogWrapper {
     }
 
     private static @NotNull Border createErrorTextBorder(@Nullable Border contentBorder) {
-      Insets contentInsets = contentBorder != null ? contentBorder.getBorderInsets(null) : JBUI.emptyInsets();
+      Insets contentInsets = contentBorder != null ? contentBorder.getBorderInsets(null) : JBInsets.emptyInsets();
       Insets baseInsets = JBInsets.create(16, 13);
 
       //noinspection UseDPIAwareBorders: Insets are already scaled, so use raw version.
@@ -2124,14 +2133,12 @@ public abstract class DialogWrapper {
   /**
    * @deprecated Please use com.intellij.openapi.ui.DoNotAskOption instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   public interface DoNotAskOption extends com.intellij.openapi.ui.DoNotAskOption {
     abstract class Adapter extends com.intellij.openapi.ui.DoNotAskOption.Adapter implements DoNotAskOption {}
   }
 
-  private List<Function0<ValidationInfo>> getValidateCallbacks() {
-    return centerPanel != null && centerPanel instanceof DialogPanel ?
-           ((DialogPanel) centerPanel).getValidateCallbacks() : Collections.emptyList();
+  private @Nullable DialogPanel getDialogPanel() {
+    return centerPanel instanceof DialogPanel ? ((DialogPanel)centerPanel) : null;
   }
 }

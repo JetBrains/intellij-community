@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.Disposable;
@@ -140,6 +140,16 @@ public interface JBPopup extends Disposable, LightweightWindow {
    */
   @NotNull
   JComponent getContent();
+
+  /**
+   * Updates the popup location and size at once.
+   *
+   * @param bounds preferred popup location and size
+   */
+  default void setBounds(@NotNull Rectangle bounds) {
+    setLocation(bounds.getLocation());
+    setSize(bounds.getSize());
+  }
 
   /**
    * Moves popup to the given point. Does nothing if popup is invisible.

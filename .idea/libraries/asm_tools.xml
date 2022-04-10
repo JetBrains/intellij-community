@@ -1,10 +1,10 @@
 <component name="libraryTable">
   <library name="asm-tools" type="repository">
-    <properties maven-id="org.ow2.asm:asm-analysis:7.0" />
+    <properties maven-id="org.ow2.asm:asm-analysis:7.3.1" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/7.0/asm-analysis-7.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/7.0/asm-tree-7.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/7.0/asm-7.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/7.3.1/asm-analysis-7.3.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/7.3.1/asm-tree-7.3.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/7.3.1/asm-7.3.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

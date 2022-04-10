@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.settings
 
 import com.intellij.openapi.components.*
+import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.ApiStatus
 
@@ -20,6 +21,20 @@ class MarkdownExtensionsSettings: SimplePersistentStateComponent<MarkdownExtensi
 
   fun isExtensionEnabled(extensionsId: String): Boolean {
     return state.enabledExtensions[extensionsId] == true
+  }
+
+  @ApiStatus.Experimental
+  fun interface ChangeListener {
+    /**
+     * @param fromSettingsDialog true if extensions state was changed from IDE settings dialog.
+     */
+    fun extensionsSettingsChanged(fromSettingsDialog: Boolean)
+
+    companion object {
+      @Topic.AppLevel
+      @JvmField
+      val TOPIC = Topic.create("MarkdownExtensionsSettingsChanged", ChangeListener::class.java)
+    }
   }
 
   companion object {

@@ -36,8 +36,13 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
 
   @NotNull
   @Override
+  @SuppressWarnings("deprecation") // remove together with EventLogEndpointSubstitutor
   public String getTemplateUrl() {
-    if (ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(EventLogEndpointSubstitutor.EP_NAME.getName())) {
+    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
+    if (externalEventLogSettings != null) {
+      String result = externalEventLogSettings.getTemplateUrl(myRecorderId);
+      return result == null ? getDefaultTemplateUrl() : result;
+    } else if (ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(EventLogEndpointSubstitutor.EP_NAME.getName())) {
       EventLogEndpointSubstitutor validSubstitutor = EventLogEndpointSubstitutor.EP_NAME.findFirstSafe(substitutor -> {
         return PluginInfoDetectorKt.getPluginInfo(substitutor.getClass()).isAllowedToInjectIntoFUS();
       });

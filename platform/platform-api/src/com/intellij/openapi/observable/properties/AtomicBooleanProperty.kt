@@ -3,7 +3,10 @@ package com.intellij.openapi.observable.properties
 
 import java.util.concurrent.atomic.AtomicReference
 
-class AtomicBooleanProperty(initial: Boolean) : AbstractObservableBooleanProperty(), AtomicProperty<Boolean> {
+/**
+ * Atomic implementation of boolean property.
+ */
+class AtomicBooleanProperty(initial: Boolean) : AbstractObservableBooleanProperty(), AtomicMutableProperty<Boolean> {
 
   private val value = AtomicReference(initial)
 

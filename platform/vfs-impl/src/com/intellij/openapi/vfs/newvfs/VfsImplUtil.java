@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.util.io.FileSystemUtil;
@@ -21,6 +22,8 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -463,13 +466,19 @@ public final class VfsImplUtil {
   }
 
   @ApiStatus.Internal
-  public static String getRecordIdPath(int record) {
-    StringBuilder name = new StringBuilder(String.valueOf(record));
-    int parent = FSRecords.getParent(record);
-    while (parent > 0) {
-      name.insert(0, parent + " -> ");
-      parent = FSRecords.getParent(parent);
+  public static int @NotNull [] loadAllChildIds(int record) {
+    IntSet result = new IntOpenHashSet();
+    Queue<Integer> queue = new ArrayDeque<>();
+    queue.add(record);
+    while (!queue.isEmpty()) {
+      int recordId = queue.poll();
+      if (result.add(recordId)) {
+        ProgressManager.checkCanceled();
+        for (int childId : FSRecords.listIds(recordId)) {
+          queue.add(childId);
+        }
+      }
     }
-    return name.toString();
+    return result.toIntArray();
   }
 }

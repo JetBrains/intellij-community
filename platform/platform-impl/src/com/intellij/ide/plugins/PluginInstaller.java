@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -88,7 +88,8 @@ public final class PluginInstaller {
     return false;
   }
 
-  private static void uninstallAfterRestart(@NotNull Path pluginPath) throws IOException {
+  @ApiStatus.Internal
+  public static void uninstallAfterRestart(@NotNull Path pluginPath) throws IOException {
     addActionCommand(new DeleteCommand(pluginPath));
   }
 
@@ -97,7 +98,8 @@ public final class PluginInstaller {
                                                boolean isUpdate) {
     boolean uninstalledWithoutRestart = true;
     if (pluginDescriptor.isEnabled()) {
-      DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions().withDisable(false)
+      DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions()
+        .withDisable(false)
         .withUpdate(isUpdate)
         .withWaitForClassloaderUnload(true);
 
@@ -395,7 +397,8 @@ public final class PluginInstaller {
       return false;
     }
 
-    return DynamicPlugins.INSTANCE.loadPlugin(targetDescriptor);
+    return PluginEnabler.HEADLESS.isDisabled(targetDescriptor.getPluginId()) ||
+           DynamicPlugins.INSTANCE.loadPlugin(targetDescriptor);
   }
 
   private static @NotNull Set<String> findNotInstalledPluginDependencies(@NotNull List<? extends IdeaPluginDependency> dependencies,

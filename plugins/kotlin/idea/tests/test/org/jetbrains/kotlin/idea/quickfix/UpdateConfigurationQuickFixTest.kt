@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
@@ -33,7 +34,6 @@ import org.jetbrains.kotlin.idea.test.configureKotlinFacet
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.projectStructure.findLibrary
 import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
-import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
@@ -91,9 +91,8 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         assertEquals("1.1", KotlinCommonCompilerArgumentsHolder.getInstance(project).settings.languageVersion)
         assertEquals("1.1", KotlinCommonCompilerArgumentsHolder.getInstance(project).settings.apiVersion)
 
-        val actualVersion = getRuntimeLibraryVersion(myFixture.module)
-        val expectedVersionPrefix = kotlinCompilerVersionShort()
-        assertTrue("$actualVersion expected to start with $expectedVersionPrefix", actualVersion?.startsWith(expectedVersionPrefix) == true)
+        val actualVersion = getRuntimeLibraryVersion(myFixture.module)?.kotlinVersion
+        assertEquals(KotlinPluginLayout.instance.standaloneCompilerVersion.kotlinVersion, actualVersion)
     }
 
     fun testIncreaseLangLevelFacet_10() {
@@ -110,8 +109,7 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         assertEquals(LanguageVersion.KOTLIN_1_1, module.languageVersionSettings.languageVersion)
 
         val actualVersion = getRuntimeLibraryVersion(myFixture.module)
-        val expectedVersionPrefix = kotlinCompilerVersionShort()
-        assertTrue("$actualVersion expected to start with $expectedVersionPrefix", actualVersion?.startsWith(expectedVersionPrefix) == true)
+        assertEquals(KotlinPluginLayout.instance.standaloneCompilerVersion.artifactVersion, actualVersion?.artifactVersion)
     }
 
     fun testAddKotlinReflect() {
@@ -136,7 +134,10 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         val kotlinRuntime = module.findLibrary { LibraryJarDescriptor.REFLECT_JAR.findExistingJar(it) != null }
         assertNotNull(kotlinRuntime)
         val sources = kotlinRuntime!!.getFiles(OrderRootType.SOURCES)
-        assertContainsElements(sources.map { it.name }, "kotlin-reflect-${kotlinCompilerVersionShort()}-sources.jar")
+        assertContainsElements(
+            sources.map { it.name },
+            "kotlin-reflect-${KotlinPluginLayout.instance.standaloneCompilerVersion.artifactVersion}-sources.jar"
+        )
     }
 
     private fun configureRuntime(path: String) {
@@ -174,7 +175,7 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { resetProjectSettings(LanguageVersion.LATEST_STABLE) },
+            ThrowableRunnable { resetProjectSettings(KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion) },
             ThrowableRunnable {
                 FacetManager.getInstance(module).getFacetByType(KotlinFacetType.TYPE_ID)?.let {
                     FacetUtil.deleteFacet(it)

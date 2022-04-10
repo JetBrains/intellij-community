@@ -78,13 +78,35 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
     def filterStartTasks(def tasks) {
         def currentProject = getCurrentProject()
         logger.debug("Current Project: ${'$'}{currentProject}")
-    
-        def startTaskNames = gradle.startParameter.taskNames
+        
+        def rootGradle = gradle
+        def compositePathPrefix = []
+        
+        while (rootGradle.getParent() != null) {
+          compositePathPrefix.add(0, gradle.rootProject.name)
+          rootGradle = rootGradle.getParent()
+        }
+        
+        def startTaskNames = rootGradle.startParameter.taskNames
+        logger.debug("Start Tasks Names: ${'$'}{startTaskNames}")
+        
+        if (!compositePathPrefix.isEmpty()) {
+           def compositePathPrefixString = ":" + compositePathPrefix.join(":")
+           logger.debug("composite path prefix string: ${'$'}{compositePathPrefixString}")
+           startTaskNames = startTaskNames.collect {
+              if (it.startsWith(compositePathPrefixString)) {
+                 return it.substring(compositePathPrefixString.length())
+              } else {
+                 return it
+              }
+           }
+        }
+        
+        logger.debug("Start startTaskNames after cleanup: ${'$'}{startTaskNames}")
         if (startTaskNames.isEmpty()) {
             startTaskNames = (currentProject ?: project).defaultTasks
-        }
-        logger.debug("Start Tasks Names: ${'$'}{startTaskNames}")
-    
+        }        
+        
         def tasksMatchStatus = tasks.collect { [it, isMatchedTask(currentProject, it, startTaskNames)] }
         def matchedTasks = tasksMatchStatus.findAll { it[1] == "MATCHED" }.collect { it[0] }
         if (matchedTasks.isEmpty()) {

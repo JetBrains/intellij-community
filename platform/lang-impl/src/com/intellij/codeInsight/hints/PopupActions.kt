@@ -48,7 +48,7 @@ class ShowSettingsWithAddedPattern : AnAction(), UpdateInBackground {
     val offset = editor.caretModel.offset
     val info = getHintInfoFromProvider(offset, file, editor)
     if (info is MethodInfo) {
-      e.presentation.setText(CodeInsightBundle.message("inlay.hints.show.settings", info.getMethodName()), false)
+      e.presentation.setText(info.getDisableHintText(), false)
     }
     else {
       e.presentation.isVisible = false

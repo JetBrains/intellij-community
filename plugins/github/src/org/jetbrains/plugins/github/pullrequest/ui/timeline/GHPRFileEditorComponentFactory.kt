@@ -29,13 +29,14 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRTimelineFileEditor
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHSubmittableTextFieldFactory
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHSubmittableTextFieldModel
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFactory
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldModel
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
@@ -104,11 +105,20 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
     val header = GHPRTitleComponent.create(project, detailsModel, editor.detailsData)
 
+    val suggestedChangesHelper = GHPRSuggestedChangeHelper(project,
+                                                           uiDisposable,
+                                                           editor.repositoryDataService.remoteCoordinates.repository,
+                                                           editor.reviewData,
+                                                           editor.detailsData)
     val timeline = GHPRTimelineComponent(detailsModel,
                                          timelineModel,
-                                         createItemComponentFactory(project, editor.detailsData, editor.commentsData, editor.reviewData,
-                                                                    reviewThreadsModelsProvider,
-                                                                    editor.avatarIconsProvider, editor.securityService.currentUser)).apply {
+                                         createItemComponentFactory(
+                                           project,
+                                           editor.detailsData, editor.commentsData, editor.reviewData,
+                                           reviewThreadsModelsProvider, editor.avatarIconsProvider,
+                                           suggestedChangesHelper,
+                                           editor.securityService.currentUser
+                                         )).apply {
       border = JBUI.Borders.empty(16, 0)
     }
     val errorPanel = GHHtmlErrorPanel.create(errorModel)
@@ -189,10 +199,10 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
   private fun createCommentField(commentService: GHPRCommentsDataProvider,
                                  avatarIconsProvider: GHAvatarIconsProvider,
                                  currentUser: GHUser): JComponent {
-    val model = GHSubmittableTextFieldModel(project) {
+    val model = GHCommentTextFieldModel(project) {
       commentService.addComment(EmptyProgressIndicator(), it)
     }
-    return GHSubmittableTextFieldFactory(model).create(avatarIconsProvider, currentUser)
+    return GHCommentTextFieldFactory(model).create(avatarIconsProvider, currentUser)
   }
 
   private fun createItemComponentFactory(project: Project,
@@ -201,15 +211,19 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                                          reviewDataProvider: GHPRReviewDataProvider,
                                          reviewThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                          avatarIconsProvider: GHAvatarIconsProvider,
+                                         suggestedChangeHelper: GHPRSuggestedChangeHelper,
                                          currentUser: GHUser)
     : GHPRTimelineItemComponentFactory {
 
     val selectInToolWindowHelper = GHPRSelectInToolWindowHelper(project, detailsModel.value)
     val diffFactory = GHPRReviewThreadDiffComponentFactory(project, EditorFactory.getInstance())
     val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
-    return GHPRTimelineItemComponentFactory(project, detailsDataProvider, commentsDataProvider, reviewDataProvider,
-                                            avatarIconsProvider, reviewThreadsModelsProvider, diffFactory,
-                                            eventsFactory,
-                                            selectInToolWindowHelper, currentUser)
+    return GHPRTimelineItemComponentFactory(
+      project,
+      detailsDataProvider, commentsDataProvider, reviewDataProvider, avatarIconsProvider, reviewThreadsModelsProvider,
+      diffFactory,
+      eventsFactory, selectInToolWindowHelper,
+      suggestedChangeHelper, currentUser
+    )
   }
 }

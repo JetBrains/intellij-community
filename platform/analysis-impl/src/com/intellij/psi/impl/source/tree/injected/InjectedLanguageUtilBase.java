@@ -27,7 +27,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,8 +38,7 @@ import java.util.function.Supplier;
 /**
  * @deprecated Use {@link InjectedLanguageManager} instead
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public class InjectedLanguageUtilBase {
   public static final Key<IElementType> INJECTED_FRAGMENT_TYPE = Key.create("INJECTED_FRAGMENT_TYPE");
 
@@ -102,7 +100,7 @@ public class InjectedLanguageUtilBase {
     /**
      * @deprecated Use textAttributesKeys
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public final TextAttributes attributes;
     public final TextAttributesKey @NotNull [] textAttributesKeys;
 
@@ -141,7 +139,7 @@ public class InjectedLanguageUtilBase {
   /**
    * @deprecated use {@link InjectedLanguageManager#enumerate(PsiElement, PsiLanguageInjectionHost.InjectedPsiVisitor)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     PsiFile containingFile = host.getContainingFile();
     PsiUtilCore.ensureValid(containingFile);
@@ -151,7 +149,7 @@ public class InjectedLanguageUtilBase {
   /**
    * @deprecated use {@link InjectedLanguageManager#enumerateEx(PsiElement, PsiFile, boolean, PsiLanguageInjectionHost.InjectedPsiVisitor)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean enumerate(@NotNull PsiElement host,
                                   @NotNull PsiFile containingFile,
                                   boolean probeUp,
@@ -431,8 +429,7 @@ public class InjectedLanguageUtilBase {
    * @deprecated use {@link InjectedLanguageManager#getCachedInjectedDocumentsInRange(PsiFile, TextRange)} instead
    */
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static ConcurrentList<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile) {
     // modification of cachedInjectedDocuments must be under InjectedLanguageManagerImpl.ourInjectionPsiLock only
     List<DocumentWindow> injected = hostPsiFile.getUserData(INJECTED_DOCS_KEY);
@@ -536,12 +533,24 @@ public class InjectedLanguageUtilBase {
   /**
    * @deprecated Use {@link InjectedLanguageManager#getInjectedPsiFiles(PsiElement)} != null instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
     if (!host.isPhysical()) return false;
     final Ref<Boolean> result = Ref.create(false);
     enumerate(host, (injectedPsi, places) -> result.set(true));
     return result.get().booleanValue();
+  }
+
+  public static boolean isInInjectedLanguagePrefixSuffix(@NotNull final PsiElement element) {
+    PsiFile injectedFile = element.getContainingFile();
+    if (injectedFile == null) return false;
+    Project project = injectedFile.getProject();
+    InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(project);
+    if (!languageManager.isInjectedFragment(injectedFile)) return false;
+    TextRange elementRange = element.getTextRange();
+    List<TextRange> edibles = languageManager.intersectWithAllEditableFragments(injectedFile, elementRange);
+    int combinedEdiblesLength = edibles.stream().mapToInt(TextRange::getLength).sum();
+
+    return combinedEdiblesLength != elementRange.getLength();
   }
 }

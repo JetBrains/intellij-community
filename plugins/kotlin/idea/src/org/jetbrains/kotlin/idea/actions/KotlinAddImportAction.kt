@@ -25,9 +25,9 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.completion.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.completion.KotlinStatisticsInfo
 import org.jetbrains.kotlin.idea.completion.isDeprecatedAtCallSite
-import org.jetbrains.kotlin.idea.core.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
+import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -47,6 +48,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.resolve.ImportPath
 import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JPanel
@@ -272,10 +274,12 @@ class KotlinAddImportAction internal constructor(
                         }
 
                         importableFqName?.let {
-                            element.mainReference.bindToFqName(
-                                it,
-                                KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
-                            )
+                            underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread(project, KotlinBundle.message("add.import.for.0", it.asString())) {
+                                element.mainReference.bindToFqName(
+                                    it,
+                                    KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
+                                )
+                            }
                         }
                     }
                 } else {
@@ -291,7 +295,9 @@ internal interface ComparablePriority : Comparable<ComparablePriority>
 internal data class VariantWithPriority(val variant: AutoImportVariant, val priority: ComparablePriority)
 
 private class Prioritizer(private val file: KtFile, private val compareNames: Boolean = true) {
-    private val classifier = ImportableFqNameClassifier(file)
+    private val classifier = ImportableFqNameClassifier(file){
+        ImportInsertHelper.getInstance(file.project).isImportedWithDefault(ImportPath(it, false), file)
+    }
     private val statsManager = StatisticsManager.getInstance()
     private val proximityLocation = ProximityLocation(file, file.module)
 

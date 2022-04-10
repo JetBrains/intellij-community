@@ -1,5 +1,7 @@
 from _typeshed import StrOrBytesPath
-from typing import Optional, Tuple
+from typing import Optional
+
+__all__ = ["netrc", "NetrcParseError"]
 
 class NetrcParseError(Exception):
     filename: str | None
@@ -8,7 +10,7 @@ class NetrcParseError(Exception):
     def __init__(self, msg: str, filename: StrOrBytesPath | None = ..., lineno: int | None = ...) -> None: ...
 
 # (login, account, password) tuple
-_NetrcTuple = Tuple[str, Optional[str], Optional[str]]
+_NetrcTuple = tuple[str, Optional[str], Optional[str]]
 
 class netrc:
     hosts: dict[str, _NetrcTuple]

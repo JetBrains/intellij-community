@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.configurationStore.Scheme_implKt;
@@ -32,6 +32,7 @@ import com.intellij.project.ProjectKt;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
@@ -94,16 +95,17 @@ public class RunConfigurationStorageUi {
 
       myStoreAsFileGearButton.setEnabled(myStoreAsFileCheckBox.isSelected());
       if (myStoreAsFileCheckBox.isSelected()) {
-        manageStorageFileLocation();
+        manageStorageFileLocation(null);
       }
     });
   }
 
   private @NotNull ActionButton createStoreAsFileGearButton() {
+    PopupState<Balloon> state = PopupState.forBalloon();
     AnAction showStoragePathAction = new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        manageStorageFileLocation();
+        if (!state.isRecentlyHidden()) manageStorageFileLocation(state);
       }
     };
     Presentation presentation = new Presentation(ExecutionBundle.message("run.configuration.manage.file.location"));
@@ -122,7 +124,7 @@ public class RunConfigurationStorageUi {
     };
   }
 
-  private void manageStorageFileLocation() {
+  private void manageStorageFileLocation(@Nullable PopupState<Balloon> state) {
     Disposable balloonDisposable = Disposer.newDisposable();
 
     Function<String, String> pathToErrorMessage = path -> getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, path);
@@ -173,6 +175,7 @@ public class RunConfigurationStorageUi {
       }
     });
 
+    if (state != null) state.prepareToShow(balloon);
     balloon.show(RelativePoint.getSouthOf(myStoreAsFileCheckBox), Balloon.Position.below);
   }
 

@@ -48,10 +48,11 @@ object ThinClientSessionInfoFetcher {
           override val compatibleJreName = sessionInfo["compatibleJreName"].asText()
           override val isUnattendedMode = false
           override val compatibleJreUrl = sessionInfo["compatibleJreUrl"].asText()
-          override val hostFeaturesToEnable: Set<String>? = null
-          override val stunTurnServers: List<StunTurnServerInfo>? = null
-          override val turnAllocationServerInfo: StunTurnServerInfo? = null
-          override val downloadPgpPublicKeyUrl: String? = null
+          override val hostFeaturesToEnable: Set<String>
+            get() = throw UnsupportedOperationException("hostFeaturesToEnable field should not be used")
+          override val stunTurnServers: List<StunTurnServerInfo>
+            get() = throw UnsupportedOperationException("stunTurnServers field should not be used")
+          override val downloadPgpPublicKeyUrl: String? = sessionInfo["downloadPgpPublicKeyUrl"]?.asText()
         }
       }
   }

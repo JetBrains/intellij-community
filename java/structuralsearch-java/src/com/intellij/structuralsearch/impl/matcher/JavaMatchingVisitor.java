@@ -713,7 +713,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (typeElement.isInferredType()) {
       // replace inferred type with explicit type if possible
       final PsiType type = typeElement.getType();
-      if (type == PsiType.NULL || type instanceof PsiLambdaParameterType) {
+      if (type == PsiType.NULL || type instanceof PsiLambdaParameterType || type instanceof PsiLambdaExpressionType) {
         return typeElement;
       }
       final String canonicalText = type.getCanonicalText();
@@ -1004,7 +1004,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final PsiTypeElement typeElement1 = var.getTypeElement();
       if (typeElement1 != null) {
         PsiTypeElement typeElement2 = other.getTypeElement();
-        if (typeElement2 == null) { // e.g. lambda parameter without explicit type
+        if (typeElement2 == null) { // e.g., lambda parameter without explicit type
           typeElement2 = JavaPsiFacade.getElementFactory(other.getProject()).createTypeElement(other.getType());
           final MatchingHandler matchingHandler = context.getPattern().getHandler(typeElement1);
           if (matchingHandler instanceof SubstitutionHandler) {
@@ -1737,7 +1737,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   }
 
   private boolean matchAnnotations(@NotNull PsiElement pattern, PsiElement matched) {
-    // can't use PsiAnnotationOwner api because it is not implemented completely yet (see e.g. ClsTypeParameterImpl)
+    // can't use PsiAnnotationOwner api because it is not implemented completely yet (see e.g., ClsTypeParameterImpl)
     final PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(pattern, PsiAnnotation.class);
     if (annotations == null) {
       return true;

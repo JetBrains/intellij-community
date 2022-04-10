@@ -13,7 +13,7 @@ import java.util.Set;
  * @deprecated Use {@link java.util.HashSet}
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+@ApiStatus.ScheduledForRemoval
 public class HashSet<E> extends AbstractSet<E> implements Set<E> {
   private Entry<E>[] table;
   private int capacity;

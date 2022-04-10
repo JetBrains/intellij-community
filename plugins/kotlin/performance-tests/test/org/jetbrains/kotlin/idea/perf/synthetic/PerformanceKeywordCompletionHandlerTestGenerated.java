@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.synthetic;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -26,6 +26,66 @@ public class PerformanceKeywordCompletionHandlerTestGenerated extends AbstractPe
     @TestMetadata("AddCompanionToObject.kt")
     public void testAddCompanionToObject() throws Exception {
         runTest("../completion/tests/testData/handlers/keywords/AddCompanionToObject.kt");
+    }
+
+    @TestMetadata("AutoIndentGetter.kt")
+    public void testAutoIndentGetter() throws Exception {
+        runTest("../completion/tests/testData/handlers/keywords/AutoIndentGetter.kt");
+    }
+
+    @TestMetadata("AutoIndentGetter2.kt")
+    public void testAutoIndentGetter2() throws Exception {
+        runTest("../completion/tests/testData/handlers/keywords/AutoIndentGetter2.kt");
+    }
+
+    @TestMetadata("AutoIndentGetter3.kt")
+    public void testAutoIndentGetter3() throws Exception {
+        runTest("../completion/tests/testData/handlers/keywords/AutoIndentGetter3.kt");
+    }
+
+    @TestMetadata("AutoIndentGetterAndModifier.kt")
+    public void testAutoIndentGetterAndModifier() throws Exception {
+        runTest("../completion/tests/testData/handlers/keywords/AutoIndentGetterAndModifier.kt");
+    }
+
+    @TestMetadata("AutoIndentGetterAndModifier2.kt")
+    public void testAutoIndentGetterAndModifier2() throws Exception {
+        runTest("../completion/tests/testData/handlers/keywords/AutoIndentGetterAndModifier2.kt");
+    }
+
+    @TestMetadata("AutoIndentGetterAndModifier3.kt")
+    public void testAutoIndentGetterAndModifier3() throws Exception {
+        runTest("../completion/tests/testData/handlers/keywords/AutoIndentGetterAndModifier3.kt");
+    }
+
+    @TestMetadata("AutoIndentSetter.kt")
+    public void testAutoIndentSetter() throws Exception {
+        runTest("../completion/tests/testData/handlers/keywords/AutoIndentSetter.kt");
+    }
+
+    @TestMetadata("AutoIndentSetter2.kt")
+    public void testAutoIndentSetter2() throws Exception {
+        runTest("../completion/tests/testData/handlers/keywords/AutoIndentSetter2.kt");
+    }
+
+    @TestMetadata("AutoIndentSetter3.kt")
+    public void testAutoIndentSetter3() throws Exception {
+        runTest("../completion/tests/testData/handlers/keywords/AutoIndentSetter3.kt");
+    }
+
+    @TestMetadata("AutoIndentSetterAndModifier.kt")
+    public void testAutoIndentSetterAndModifier() throws Exception {
+        runTest("../completion/tests/testData/handlers/keywords/AutoIndentSetterAndModifier.kt");
+    }
+
+    @TestMetadata("AutoIndentSetterAndModifier2.kt")
+    public void testAutoIndentSetterAndModifier2() throws Exception {
+        runTest("../completion/tests/testData/handlers/keywords/AutoIndentSetterAndModifier2.kt");
+    }
+
+    @TestMetadata("AutoIndentSetterAndModifier3.kt")
+    public void testAutoIndentSetterAndModifier3() throws Exception {
+        runTest("../completion/tests/testData/handlers/keywords/AutoIndentSetterAndModifier3.kt");
     }
 
     @TestMetadata("Break.kt")

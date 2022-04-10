@@ -316,7 +316,7 @@ public final class PsiImplUtil {
    * @deprecated types should be proceed by the callers themselves
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static PsiType normalizeWildcardTypeByPosition(@NotNull PsiType type, @NotNull PsiExpression expression) {
     PsiUtil.ensureValidType(type);
 

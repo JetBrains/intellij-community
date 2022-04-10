@@ -1,34 +1,35 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.artifacts
 
+import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.io.Decompressor
-import org.jetbrains.kotlin.utils.PathUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import java.io.File
-import java.security.MessageDigest
-import kotlin.io.path.*
 
-const val KOTLINC_DIST_JPS_LIB_XML_NAME = "kotlinc_kotlin_dist.xml"
-
-abstract class KotlinArtifacts(val kotlincDistDir: File) {
+class KotlinArtifacts private constructor(val kotlincDirectory: File) {
     companion object {
+        const val KOTLIN_MAVEN_GROUP_ID = "org.jetbrains.kotlin"
+        const val KOTLIN_DIST_ARTIFACT_ID = "kotlin-dist-for-ide"
+        const val KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
+        val KOTLIN_DIST_LOCATION_PREFIX = File(PathManager.getSystemPath(), KOTLIN_DIST_ARTIFACT_ID)
+
         @get:JvmStatic
         val instance: KotlinArtifacts by lazy {
-            val homePath = PathManager.getHomePath(false)
-            if (homePath != null && File(homePath, ".idea/libraries/$KOTLINC_DIST_JPS_LIB_XML_NAME").exists()) KotlinArtifactsFromSources
-            else ProductionKotlinArtifacts
+            KotlinArtifacts(KotlinPluginLayout.instance.kotlinc)
         }
     }
 
-    val kotlincDirectory = File(kotlincDistDir, "kotlinc")
     val kotlincLibDirectory = File(kotlincDirectory, "lib")
 
     val jetbrainsAnnotations = File(kotlincLibDirectory, KotlinArtifactNames.JETBRAINS_ANNOTATIONS)
     val kotlinStdlib = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB)
     val kotlinStdlibSources = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_SOURCES)
     val kotlinStdlibJdk7 = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK7)
+    val kotlinStdlibJdk7Sources = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK7_SOURCES)
     val kotlinStdlibJdk8 = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK8)
+    val kotlinStdlibJdk8Sources = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK8_SOURCES)
     val kotlinReflect = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_REFLECT)
     val kotlinStdlibJs = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JS)
     val kotlinTest = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_TEST)
@@ -39,6 +40,7 @@ abstract class KotlinArtifacts(val kotlincDistDir: File) {
     val kotlinScriptingCommon = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_COMMON)
     val kotlinScriptingJvm = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_JVM)
     val kotlinCompiler: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_COMPILER)
+    val lombokCompilerPlugin: File = File(kotlincLibDirectory, KotlinArtifactNames.LOMBOK_COMPILER_PLUGIN)
     val kotlinAnnotationsJvm: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_ANNOTATIONS_JVM)
     val trove4j = File(kotlincLibDirectory, KotlinArtifactNames.TROVE4J)
     val kotlinDaemon = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_DAEMON)
@@ -50,43 +52,24 @@ abstract class KotlinArtifacts(val kotlincDistDir: File) {
     val kotlinxSerializationCompilerPlugin = File(kotlincLibDirectory, KotlinArtifactNames.KOTLINX_SERIALIZATION_COMPILER_PLUGIN)
 }
 
-private object ProductionKotlinArtifacts : KotlinArtifacts(run {
-    val pluginJar = PathUtil.getResourcePathForClass(ProductionKotlinArtifacts::class.java).toPath()
-    if (pluginJar.notExists()) throw IllegalStateException("Plugin JAR not found for class ${ProductionKotlinArtifacts::class.java}")
-
-    val libFile = pluginJar.parent.takeIf { it.name == "lib" }
-    if (libFile == null || !libFile.exists()) {
-        // Don't throw exception because someone may want to just try to initialize
-        // KotlinArtifacts but won't actually use it. E.g. KotlinPluginMacros does it
-        File("\"<invalid_kotlinc_path>\"")
-    } else {
-        libFile.parent.toFile()
+fun lazyUnpackJar(jar: File, destination: File): File {
+    val unpackedDistTimestamp = destination.lastModified()
+    val packedDistTimestamp = jar.lastModified()
+    if (unpackedDistTimestamp != 0L && packedDistTimestamp != 0L && unpackedDistTimestamp >= packedDistTimestamp) {
+        return destination
     }
-})
+    destination.deleteRecursively()
 
-private object KotlinArtifactsFromSources : KotlinArtifacts(run {
-    val outDir = File(PathManager.getHomePath(), "out")
-    val kotlincDistDir = outDir.resolve("kotlinc-dist")
-    val hashFile = outDir.resolve("kotlinc-dist/kotlinc-dist.md5")
-    val kotlincJar = findLibrary(
-        RepoLocation.MAVEN_REPOSITORY,
-        KOTLINC_DIST_JPS_LIB_XML_NAME,
-        "org.jetbrains.kotlin",
-        "kotlin-dist-for-ide"
-    )
-    val hash = kotlincJar.md5()
-    if (hashFile.exists() && hashFile.readText() == hash && kotlincDistDir.exists()) {
-        return@run kotlincDistDir
-    }
-    val dirWhereToExtractKotlinc = kotlincDistDir.resolve("kotlinc").also {
-        it.deleteRecursively()
-        it.mkdirs()
-    }
-    hashFile.writeText(hash)
-    Decompressor.Zip(kotlincJar).extract(dirWhereToExtractKotlinc)
-    return@run kotlincDistDir
-})
-
-private fun File.md5(): String {
-    return MessageDigest.getInstance("MD5").digest(readBytes()).joinToString("") { "%02x".format(it) }
+    Decompressor.Zip(jar).extract(destination)
+    check(destination.isDirectory)
+    return destination
 }
+
+fun resolveMavenArtifactInMavenRepo(mavenRepo: File, groupId: String, artifactId: String, version: String) =
+    mavenRepo.resolve(groupId.replace(".", "/"))
+        .resolve(artifactId)
+        .resolve(version)
+        .resolve("$artifactId-$version.jar")
+
+fun getMavenArtifactJarPath(groupId: String, artifactId: String, version: String) =
+    resolveMavenArtifactInMavenRepo(JarRepositoryManager.getLocalRepositoryPath(), groupId, artifactId, version)

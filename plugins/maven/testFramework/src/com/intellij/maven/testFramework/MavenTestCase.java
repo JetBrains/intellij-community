@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
@@ -31,7 +32,6 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import junit.framework.TestCase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +42,7 @@ import org.jetbrains.idea.maven.server.MavenServerConnectorImpl;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.awt.*;
 import java.io.File;
@@ -103,12 +104,15 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
     getMavenGeneralSettings().setAlwaysUpdateSnapshots(true);
 
+    MavenUtil.cleanAllRunnables();
+
     EdtTestUtil.runInEdtAndWait(() -> {
       restoreSettingsFile();
 
       try {
         WriteAction.run(this::setUpInWriteAction);
-      } catch (Throwable e) {
+      }
+      catch (Throwable e) {
         try {
           tearDown();
         }
@@ -137,12 +141,17 @@ public abstract class MavenTestCase extends UsefulTestCase {
     assertTrue(new File(myWSLDistribution.getWindowsPath(myWSLDistribution.getUserHome())).isDirectory());
   }
 
+  protected void waitForMavenUtilRunnablesComplete() {
+    PlatformTestUtil.waitWithEventsDispatching(() -> "Waiting for MavenUtils runnables completed" + MavenUtil.getUncompletedRunnables(),
+                                               () -> MavenUtil.noUncompletedRunnables(), 15);
+  }
+
   @Override
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
       public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
-        if (t.getMessage().contains("The network name cannot be found") && message.contains("Couldn't read shelf information")) {
+        if (StringUtil.notNullize(t.getMessage()).contains("The network name cannot be found") && StringUtil.notNullize(message).contains("Couldn't read shelf information")) {
           return false;
         }
         if ("JDK annotations not found".equals(t.getMessage()) && "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl".equals(category)) {

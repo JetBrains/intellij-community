@@ -33,7 +33,7 @@ public class WslAttachHost implements XAttachHost {
         continue;
       }
       try {
-        int pid = Integer.valueOf(parts.get(0));
+        int pid = Integer.parseInt(parts.get(0));
         String executableName = parts.get(1);
         List<String> command = parts.subList(2, parts.size());
         String commandLine = StringUtil.join(command, " ");

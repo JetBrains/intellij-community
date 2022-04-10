@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, ClassVar
 from typing_extensions import Literal
 
 from .ImageFile import ImageFile
@@ -11,8 +11,8 @@ def isSpiderHeader(t): ...
 def isSpiderImage(filename): ...
 
 class SpiderImageFile(ImageFile):
-    format: str
-    format_description: str
+    format: ClassVar[Literal["SPIDER"]]
+    format_description: ClassVar[str]
     @property
     def n_frames(self): ...
     @property

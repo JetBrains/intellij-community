@@ -39,6 +39,9 @@ import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.error.ErrorType
+import org.jetbrains.kotlin.types.error.ErrorUtils
+import org.jetbrains.kotlin.types.error.ErrorScopeKind
 import org.jetbrains.kotlin.types.typeUtil.*
 import org.jetbrains.kotlin.utils.SmartSet
 
@@ -47,6 +50,7 @@ fun KotlinType.approximateFlexibleTypes(
     preferStarForRaw: Boolean = false
 ): KotlinType {
     if (isDynamic()) return this
+    if (isDefinitelyNotNullType) return this
     return unwrapEnhancement().approximateNonDynamicFlexibleTypes(preferNotNull, preferStarForRaw)
 }
 
@@ -126,11 +130,11 @@ private fun KotlinType.approximateNonDynamicFlexibleTypes(
         return AbbreviatedType(it.expandedType, it.abbreviation.approximateNonDynamicFlexibleTypes(preferNotNull))
     }
     return KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
-        annotations,
+        annotations.toDefaultAttributes(),
         constructor,
         arguments.map { it.substitute { type -> type.approximateFlexibleTypes(preferNotNull = true) } },
         isMarkedNullable,
-        ErrorUtils.createErrorScope("This type is not supposed to be used in member resolution", true)
+        ErrorUtils.createErrorScope(ErrorScopeKind.UNSUPPORTED_TYPE_SCOPE, true, constructor.toString())
     )
 }
 

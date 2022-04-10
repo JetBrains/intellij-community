@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.projectWizard
 
@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.eventLog.events.StringListEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import kotlin.math.abs
 import kotlin.random.Random
 
@@ -23,7 +23,7 @@ class WizardStatsService : CounterUsagesCollector() {
     companion object {
 
         // Collector ID
-        private val GROUP = EventLogGroup("kotlin.ide.new.project", 8)
+        private val GROUP = EventLogGroup("kotlin.ide.new.project", 10)
 
         // Whitelisted values for the events fields
         private val allowedProjectTemplates = listOf( // Modules
@@ -54,6 +54,7 @@ class WizardStatsService : CounterUsagesCollector() {
             "none",
             // AppCode KMM
             "multiplatformMobileApplicationUsingAppleGradlePlugin",
+            "multiplatformMobileApplicationUsingHybridProject",
         )
         private val allowedModuleTemplates = listOf(
             "composeAndroid",
@@ -170,10 +171,6 @@ class WizardStatsService : CounterUsagesCollector() {
                 idToLog = "js.cssSupport"
             ),
             SettingIdWithPossibleValues.Boolean(
-                id = "useStyledComponents",
-                idToLog = "js.useStyledComponents"
-            ),
-            SettingIdWithPossibleValues.Boolean(
                 id = "useReactRouterDom",
                 idToLog = "js.useReactRouterDom"
             ),
@@ -231,7 +228,7 @@ class WizardStatsService : CounterUsagesCollector() {
 
         val moduleTypeField = EventFields.String("module_type", allowedModuleTypes)
 
-        private val pluginInfoField = EventFields.PluginInfo.with(getPluginInfoById(KotlinPluginUtil.KOTLIN_PLUGIN_ID))
+        private val pluginInfoField = EventFields.PluginInfo.with(getPluginInfoById(KotlinIdePlugin.id))
 
         // Events
         private val projectCreatedEvent = GROUP.registerVarargEvent(

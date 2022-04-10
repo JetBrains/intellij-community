@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +32,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
   public static final String DEFAULT_ID = "third.party";
 
   private static final ActionsBuiltInAllowedlist ourAllowedList = ActionsBuiltInAllowedlist.getInstance();
-  private static final Map<AnActionEvent, Stats> ourStats = ContainerUtil.createWeakMap();
+  private static final Map<AnActionEvent, Stats> ourStats = new WeakHashMap<>();
 
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.localCanBeFinal;
 
 import com.intellij.codeInspection.*;
@@ -158,6 +158,9 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
 
       @Override
       public void visitResourceVariable(PsiResourceVariable variable) {
+        if (PsiTreeUtil.getParentOfType(variable, PsiClass.class) != PsiTreeUtil.getParentOfType(body, PsiClass.class)) {
+          return;
+        }
         result.add(variable);
       }
 

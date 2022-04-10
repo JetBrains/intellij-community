@@ -1,40 +1,42 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.model;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
-import org.jdom.filter.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * Methods in this class are copied from {@link com.intellij.openapi.util.JDOMUtil} to avoid dependency on 'intellij.platform.util' module
  * in Maven server classes.
  */
 final class MavenJDOMUtil {
-  public static boolean areElementsEqual(@Nullable Element e1, @Nullable Element e2) {
+  static boolean areElementsEqual(@Nullable Element e1, @Nullable Element e2) {
     if (e1 == null && e2 == null) return true;
     if (e1 == null || e2 == null) return false;
 
-    return Comparing.equal(e1.getName(), e2.getName())
+    return Objects.equals(e1.getName(), e2.getName())
            && isAttributesEqual(e1.getAttributes(), e2.getAttributes())
-           && contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER));
+           && contentListsEqual(e1.content().filter(CONTENT_FILTER), e2.content().filter(CONTENT_FILTER));
   }
-  private static boolean contentListsEqual(final List c1, final List c2) {
+
+  private static boolean contentListsEqual(Stream<Content> c1, Stream<Content> c2) {
     if (c1 == null && c2 == null) return true;
     if (c1 == null || c2 == null) return false;
 
-    Iterator l1 = c1.listIterator();
-    Iterator l2 = c2.listIterator();
+    Iterator<Content> l1 = c1.iterator();
+    Iterator<Content> l2 = c2.iterator();
     while (l1.hasNext() && l2.hasNext()) {
-      if (!contentsEqual((Content)l1.next(), (Content)l2.next())) {
+      if (!contentsEqual(l1.next(), l2.next())) {
         return false;
       }
     }
@@ -62,11 +64,11 @@ final class MavenJDOMUtil {
     return a1.getName().equals(a2.getName()) && a1.getValue().equals(a2.getValue());
   }
 
+  private static final Predicate<Content> CONTENT_FILTER = content -> {
+    return !(content instanceof Text) || !StringUtilRt.isEmptyOrSpaces(((Text)content).getText());
+  };
 
-  private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
-
-
-  public static int getTreeHash(@NotNull Element root) {
+  static int getTreeHash(@NotNull Element root) {
     return addToHash(0, root);
   }
 
@@ -94,12 +96,5 @@ final class MavenJDOMUtil {
 
   private static int addToHash(int i, @NotNull String s) {
     return i * 31 + s.hashCode();
-  }
-
-  private static class EmptyTextFilter implements Filter {
-    @Override
-    public boolean matches(Object obj) {
-      return !(obj instanceof Text) || !StringUtilRt.isEmptyOrSpaces(((Text)obj).getText());
-    }
   }
 }

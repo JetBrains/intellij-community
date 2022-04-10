@@ -724,7 +724,7 @@ class Main {
     }
   }
 
-  void completeness(Day d, I i, I2 i2, I3 i3, AorBorC abc, J1 j) {
+  void completeness(Day d, I i, I2 i2, I3 i3, AorBorC abc, J1 j, II<Integer> ii) {
     // old style switch, no completeness check
     switch (d) {
       case MONDAY, TUESDAY -> System.out.println("ok");
@@ -826,7 +826,7 @@ class Main {
         break;
     }
     str = switch(<error descr="'switch' expression does not cover all possible input values">i</error>) {
-      case I ii && ii != null -> "ok";
+      case I in && in != null -> "ok";
     };
 
     switch (i3) {
@@ -886,6 +886,10 @@ class Main {
     }
     str = switch (<error descr="'switch' expression does not have any case clauses">i2</error>) {
     };
+
+    switch (<error descr="'switch' statement does not cover all possible input values">ii</error>) {
+      case BB b -> {}
+    }
   }
 }
 
@@ -949,3 +953,7 @@ sealed interface J1 {}
 sealed interface J2 extends J1 permits R1 {}
 record R1() implements J1, J2 {}
 record R2() implements J1 {}
+
+sealed interface II<T> {}
+final class AA implements II<String> {}
+final class BB<T> implements II<Object> {}

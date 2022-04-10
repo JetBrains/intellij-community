@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
@@ -17,9 +19,11 @@ import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.io.systemIndependentPath
+import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
+import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.function.Supplier
@@ -67,7 +71,7 @@ private class JpsStorageContentWriter(private val session: ProjectWithModulesSav
   override fun getReplacePathMacroMap(fileUrl: String): PathMacroMap {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
     return if (FileUtil.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
-      ModulePathMacroManager.createInstance(Supplier { filePath }).replacePathMap
+      ModulePathMacroManager.createInstance(project::getProjectFilePath, Supplier { filePath }).replacePathMap
     }
     else {
       ProjectPathMacroManager.getInstance(project).replacePathMap
@@ -115,22 +119,23 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project) : P
     val moduleFileName = FileUtil.getNameWithoutExtension(moduleFilePath.fileName.toString())
     val externalComponents = externalModuleComponents[moduleFileName]
     if (externalComponents != null) {
-      val providerFactory = StreamProviderFactory.EP_NAME.getExtensions(project).firstOrNull()
-      if (providerFactory != null) {
-        val storageSpec = providerFactory.getOrCreateStorageSpec(StoragePathMacros.MODULE_FILE)
-        commitToStorage(storageSpec, externalComponents)
-      }
+      StreamProviderFactory.EP_NAME.computeSafeIfAny(project) {
+        it.getOrCreateStorageSpec(StoragePathMacros.MODULE_FILE)
+      }?.let { commitToStorage(it, externalComponents) }
     }
   }
 }
 
 internal class StorageJpsConfigurationReader(private val project: Project,
-                                             private val baseDirUrl: String) : JpsFileContentReaderWithCache {
+                                             private val configLocation: JpsProjectConfigLocation) : JpsFileContentReaderWithCache {
   @Volatile
   private var fileContentCachingReader: CachingJpsFileContentReader? = null
 
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
+    if (ProjectUtil.isRemotePath(FileUtil.toSystemDependentName(filePath)) && !project.isTrusted()) {
+      throw IOException(ConfigurationStoreBundle.message("error.message.details.configuration.files.from.remote.locations.in.safe.mode"))
+    }
     if (componentName == "") {
       //this is currently used for loading Eclipse project configuration from .classpath file
       val file = VirtualFileManager.getInstance().findFileByUrl(fileUrl)
@@ -159,7 +164,7 @@ internal class StorageJpsConfigurationReader(private val project: Project,
   }
 
   private fun getCachingReader(): CachingJpsFileContentReader {
-    val reader = fileContentCachingReader ?: CachingJpsFileContentReader(baseDirUrl)
+    val reader = fileContentCachingReader ?: CachingJpsFileContentReader(configLocation)
     if (fileContentCachingReader == null) {
       fileContentCachingReader = reader
     }
@@ -189,7 +194,7 @@ fun getProjectStateStorage(filePath: String,
   return store.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>
 }
 
-private fun getStorageSpec(filePath: String, project: Project): Storage? {
+private fun getStorageSpec(filePath: String, project: Project): Storage {
   val collapsedPath: String
   val splitterClass: Class<out StateSplitterEx>
   val fileName = PathUtil.getFileName(filePath)
@@ -209,18 +214,23 @@ private fun getStorageSpec(filePath: String, project: Project): Storage? {
       collapsedPath = parentFileName
       splitterClass = FakeDirectoryBasedStateSplitter::class.java
       if (PathUtil.getFileName(grandParentPath) != Project.DIRECTORY_STORE_FOLDER) {
-        val providerFactory = StreamProviderFactory.EP_NAME.getExtensions(project).firstOrNull() ?: return null
         if (parentFileName == "project") {
           if (fileName == "libraries.xml" || fileName == "artifacts.xml") {
             val inProjectStorage = FileStorageAnnotation(FileUtil.getNameWithoutExtension(fileName), false, splitterClass)
             val componentName = if (fileName == "libraries.xml") "libraryTable" else "ArtifactManager"
-            return providerFactory.getOrCreateStorageSpec(fileName, StateAnnotation(componentName, inProjectStorage))
+            StreamProviderFactory.EP_NAME.computeSafeIfAny(project) {
+              it.getOrCreateStorageSpec(fileName, StateAnnotation(componentName, inProjectStorage))
+            }?.let { return it }
           }
           if (fileName == "modules.xml") {
-            return providerFactory.getOrCreateStorageSpec(fileName)
+            StreamProviderFactory.EP_NAME.computeSafeIfAny(project) {
+              it.getOrCreateStorageSpec(fileName)
+            }?.let { return it }
           }
         }
-        error("$filePath is not under .idea directory and not under external system cache")
+        if (StreamProviderFactory.EP_NAME.hasAnyExtensions(project)) {
+          error("$filePath is not under .idea directory and not under external system cache")
+        }
       }
     }
   }

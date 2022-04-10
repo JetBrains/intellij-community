@@ -1,13 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-
 
 public interface ApplicationActivationListener {
   @Topic.AppLevel
@@ -34,13 +32,5 @@ public interface ApplicationActivationListener {
    * with a delay. See {code app.deactivation.timeout} key in the registry
    */
   default void delayedApplicationDeactivated(@NotNull Window ideFrame) {
-  }
-
-  /**
-   * @deprecated Use {@link ApplicationActivationListener} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  abstract class Adapter implements ApplicationActivationListener {
   }
 }

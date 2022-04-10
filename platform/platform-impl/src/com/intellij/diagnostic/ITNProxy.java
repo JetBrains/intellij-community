@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.errorreport.error.InternalEAPException;
@@ -91,7 +91,7 @@ final class ITNProxy {
   static @NotNull List<Developer> fetchDevelopers(@NotNull ProgressIndicator indicator) throws IOException {
     return HttpRequests.request(DEVELOPERS_LIST_URL).connectTimeout(3000).connect(request -> {
       List<Developer> developers = new ArrayList<>();
-      developers.add(Developer.NULL);
+      developers.add(Developer.Companion.getNULL());
 
       String line;
       while ((line = request.getReader().readLine()) != null) {

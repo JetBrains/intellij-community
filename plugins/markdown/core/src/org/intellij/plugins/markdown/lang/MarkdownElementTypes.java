@@ -8,6 +8,8 @@ import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.OuterLanguageElementType;
 import org.intellij.markdown.flavours.gfm.GFMElementTypes;
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes;
+import org.intellij.plugins.markdown.lang.parser.DefinitionListMarkerProvider;
+import org.jetbrains.annotations.ApiStatus;
 
 import static org.intellij.plugins.markdown.lang.MarkdownElementType.platformType;
 import static org.intellij.plugins.markdown.lang.MarkdownTokenTypes.HTML_BLOCK_CONTENT;
@@ -76,4 +78,17 @@ public interface MarkdownElementTypes {
   org.intellij.markdown.MarkdownElementType COMMENT = new org.intellij.markdown.MarkdownElementType("COMMENT", true);
 
   IElementType LINK_COMMENT = platformType(COMMENT);
+
+
+  @ApiStatus.Experimental
+  IElementType DEFINITION_LIST = platformType(DefinitionListMarkerProvider.DEFINITION_LIST);
+
+  @ApiStatus.Experimental
+  IElementType DEFINITION = platformType(DefinitionListMarkerProvider.DEFINITION);
+
+  @ApiStatus.Experimental
+  IElementType DEFINITION_MARKER = platformType(DefinitionListMarkerProvider.DEFINITION_MARKER);
+
+  @ApiStatus.Experimental
+  IElementType DEFINITION_TERM = platformType(DefinitionListMarkerProvider.TERM);
 }

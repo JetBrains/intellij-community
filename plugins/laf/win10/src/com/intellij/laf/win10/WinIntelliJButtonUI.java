@@ -17,7 +17,7 @@ import static com.intellij.laf.win10.WinIntelliJTextBorder.MINIMUM_HEIGHT;
 /**
  * @author Konstantin Bulenkov
  */
-public class WinIntelliJButtonUI extends DarculaButtonUI {
+public final class WinIntelliJButtonUI extends DarculaButtonUI {
   static final float DISABLED_ALPHA_LEVEL = 0.47f;
 
   private final PropertyChangeListener helpButtonListener = new PropertyChangeListener() {

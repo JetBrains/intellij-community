@@ -15,8 +15,7 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.transfer.TransferCancelledException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
-import org.jetbrains.idea.maven.aether.ProgressConsumer;
+import org.jetbrains.idea.maven.aether.*;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
@@ -51,14 +50,18 @@ import java.util.function.Consumer;
  * so this builder does nothing in normal cases. However it's needed when the build process is started in standalone mode (not from IDE) or
  * if build is triggered before IDE downloads all required dependencies.
  */
-public class DependencyResolvingBuilder extends ModuleLevelBuilder{
+public class DependencyResolvingBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(DependencyResolvingBuilder.class);
   private static final String MAVEN_REPOSITORY_PATH_VAR = "MAVEN_REPOSITORY";
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
 
-  private static final Key<ArtifactRepositoryManager> MANAGER_KEY = Key.create("_artifact_repository_manager_");
+  private static final Key<ArtifactRepositoryManager> MANAGER_KEY = GlobalContextKey.create("_artifact_repository_manager_");
   private static final Key<Exception> RESOLVE_ERROR_KEY = Key.create("_artifact_repository_resolve_error_");
   public static final String RESOLUTION_PARALLELISM_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.parallelism";
+  public static final String RESOLUTION_RETRY_ENABLED_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.enabled";
+  public static final String RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.max.attempts";
+  public static final String RESOLUTION_RETRY_DELAY_MS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.delay.ms";
+  public static final String RESOLUTION_RETRY_BACKOFF_LIMIT_MS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.backoff.limit.ms";
 
   public DependencyResolvingBuilder() {
     super(BuilderCategory.INITIAL);
@@ -281,7 +284,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     return result;
   }
 
-  public static ArtifactRepositoryManager getRepositoryManager(final CompileContext context) {
+  public static synchronized ArtifactRepositoryManager getRepositoryManager(final CompileContext context) {
     ArtifactRepositoryManager manager = MANAGER_KEY.get(context);
     if (manager == null) {
 
@@ -292,6 +295,14 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
           ArtifactRepositoryManager.createRemoteRepository(repo.getId(), repo.getUrl(), obtainAuthenticationData(repo.getUrl()))
         );
       }
+      Retry retry = RetryProvider.disabled();
+      if (SystemProperties.getBooleanProperty(RESOLUTION_RETRY_ENABLED_PROPERTY, false)) {
+        long retryInitialDelay = SystemProperties.getLongProperty(RESOLUTION_RETRY_DELAY_MS_PROPERTY, 1000);
+        long retryBackoffLimit = SystemProperties.getLongProperty(RESOLUTION_RETRY_BACKOFF_LIMIT_MS_PROPERTY, TimeUnit.MINUTES.toMillis(15));
+        int retryMaxAttempts = SystemProperties.getIntProperty(RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY, 10);
+        retry = RetryProvider.withExponentialBackOff(retryInitialDelay, retryBackoffLimit, retryMaxAttempts);
+      }
+
       manager = new ArtifactRepositoryManager(getLocalArtifactRepositoryRoot(context.getProjectDescriptor().getModel().getGlobal()), repositories, new ProgressConsumer() {
         @Override
         public void consume(@NlsSafe String message) {
@@ -302,7 +313,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
         public boolean isCanceled() {
           return context.getCancelStatus().isCanceled();
         }
-      });
+      }, retry);
       // further init manager here
       MANAGER_KEY.set(context, manager);
     }

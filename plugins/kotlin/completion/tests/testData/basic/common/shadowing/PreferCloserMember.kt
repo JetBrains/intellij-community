@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 class C {
     inner class Inner {
         fun foo() {

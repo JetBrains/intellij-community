@@ -96,7 +96,7 @@ public final class NotificationCollector {
     List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
     data.add(NOTIFICATION_PLACE.with(notificationPlace));
     if (action instanceof NotificationAction.Simple) {
-      Object actionInstance = ((NotificationAction.Simple)action).getActionInstance();
+      Object actionInstance = ((NotificationAction.Simple)action).getDelegate();
       PluginInfo info = PluginInfoDetectorKt.getPluginInfo(actionInstance.getClass());
       String actionId = info.isSafeToReport() ? actionInstance.getClass().getName() : ActionsCollectorImpl.DEFAULT_ID;
       data.add(ActionsEventLogGroup.ACTION_ID.with(actionId));

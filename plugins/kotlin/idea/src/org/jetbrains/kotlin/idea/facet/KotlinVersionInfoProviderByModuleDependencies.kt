@@ -6,28 +6,32 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModel
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.platform.tooling
-import org.jetbrains.kotlin.idea.versions.bundledRuntimeVersion
 import org.jetbrains.kotlin.platform.IdePlatformKind
 
 class KotlinVersionInfoProviderByModuleDependencies : KotlinVersionInfoProvider {
-    override fun getCompilerVersion(module: Module) = bundledRuntimeVersion()
+    override fun getCompilerVersion(module: Module) = KotlinPluginLayout.instance.standaloneCompilerVersion
 
     override fun getLibraryVersions(
         module: Module,
         platformKind: IdePlatformKind,
         rootModel: ModuleRootModel?
-    ): Collection<String> {
+    ): Collection<IdeKotlinVersion> {
         if (module.isDisposed) {
             return emptyList()
         }
 
         val versionProvider = platformKind.tooling.getLibraryVersionProvider(module.project)
-        return (rootModel ?: ModuleRootManager.getInstance(module))
-            .orderEntries
-            .asSequence()
-            .filterIsInstance<LibraryOrderEntry>()
-            .mapNotNull { libraryEntry -> libraryEntry.library?.let { versionProvider(it) } }
-            .toList()
+        val orderEntries = (rootModel ?: ModuleRootManager.getInstance(module)).orderEntries
+
+        return mutableListOf<IdeKotlinVersion>().apply {
+            for (orderEntry in orderEntries) {
+                val library = (orderEntry as? LibraryOrderEntry)?.library ?: continue
+                val version = versionProvider(library) ?: continue
+                add(version)
+            }
+        }
     }
 }

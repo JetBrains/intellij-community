@@ -1,13 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.text.Strings
 import org.intellij.lang.annotations.Language
-import org.jdom.Content
 import org.jdom.Element
 import org.jdom.Text
-import org.jdom.input.SAXBuilder
 import org.jdom.output.XMLOutputter
 import training.dsl.LessonUtil
 import training.util.KeymapUtil
@@ -22,7 +21,7 @@ internal object MessageFactory {
     for (message in messageParts) {
       if (message.type == MessagePart.MessageType.LINK && message.runnable == null) {
         val link = message.link
-        if (link == null || link.isEmpty()) {
+        if (link.isNullOrEmpty()) {
           LOG.error("No link specified for ${message.text}")
         }
         else {
@@ -41,20 +40,24 @@ internal object MessageFactory {
 
 
   fun convert(@Language("HTML") text: String): List<MessagePart> {
-    return text.split("\n").map { paragraph ->
-      val wrappedText = "<root><text>$paragraph</text></root>"
-      val textAsElement = SAXBuilder().build(wrappedText.byteInputStream()).rootElement.getChild("text")
-                          ?: throw IllegalStateException("Can't parse as XML:\n$paragraph")
-      convert(textAsElement)
-    }.reduce { acc, item -> acc + MessagePart("\n", MessagePart.MessageType.LINE_BREAK) + item }
+    return text
+      .splitToSequence("\n")
+      .map { paragraph ->
+        val wrappedText = "<root><text>$paragraph</text></root>"
+        val textAsElement = JDOMUtil.load(wrappedText.byteInputStream()).getChild("text")
+                            ?: throw IllegalStateException("Can't parse as XML:\n$paragraph")
+        convert(textAsElement)
+      }
+      .reduce { acc, item -> acc + MessagePart("\n", MessagePart.MessageType.LINE_BREAK) + item }
   }
 
   private fun convert(element: Element?): List<MessagePart> {
     if (element == null) {
       return emptyList()
     }
-    val list: MutableList<MessagePart> = mutableListOf()
-    for (content: Content in element.content) {
+
+    val list = mutableListOf<MessagePart>()
+    for (content in element.content) {
       if (content is Text) {
         var text = content.getValue()
         if (Pattern.matches(" *\\p{IsPunctuation}.*", text)) {
@@ -66,9 +69,8 @@ internal object MessageFactory {
       else if (content is Element) {
         val outputter = XMLOutputter()
         var type = MessagePart.MessageType.TEXT_REGULAR
-        val text: String = StringUtil.unescapeXmlEntities(outputter.outputString(content.content))
-        var textFn = { text }
-        var splitter: (() -> List<IntRange>)? = null
+        val text: String = Strings.unescapeXmlEntities(outputter.outputString(content.content))
+        var textAndSplitFn: (() -> Pair<String, List<IntRange>?>)? = null
         var link: String? = null
         var runnable: Runnable? = null
         when (content.name) {
@@ -98,37 +100,28 @@ internal object MessageFactory {
           "action" -> {
             type = MessagePart.MessageType.SHORTCUT
             link = text
-            val shortcutByActionId = KeymapUtil.getShortcutByActionId(text)
-            val (visualText, split) = if (shortcutByActionId != null) {
-              KeymapUtil.getKeyStrokeData(shortcutByActionId)
-            }
-            else {
-              KeymapUtil.getGotoActionData(text)
-            }
-            textFn = {
-              visualText
-            }
-            splitter = {
-              split
+            textAndSplitFn = {
+              val shortcutByActionId = KeymapUtil.getShortcutByActionId(text)
+              if (shortcutByActionId != null) {
+                KeymapUtil.getKeyStrokeData(shortcutByActionId)
+              }
+              else {
+                KeymapUtil.getGotoActionData(text)
+              }
             }
           }
           "raw_shortcut" -> {
             type = MessagePart.MessageType.SHORTCUT
-            val (visualText, split) = KeymapUtil.getKeyStrokeData(KeyStroke.getKeyStroke(text))
-            textFn = {
-              visualText
-            }
-            splitter = {
-              split
+            textAndSplitFn = {
+              KeymapUtil.getKeyStrokeData(KeyStroke.getKeyStroke(text))
             }
           }
           "ide" -> {
             type = MessagePart.MessageType.TEXT_REGULAR
-            textFn = { LessonUtil.productName }
+            textAndSplitFn = { LessonUtil.productName to null }
           }
         }
-        val message = MessagePart(type, textFn)
-        splitter?.let { message.splitter = it }
+        val message = MessagePart(type, textAndSplitFn ?: { text to null })
         message.link = link
         message.runnable = runnable
         list.add(message)

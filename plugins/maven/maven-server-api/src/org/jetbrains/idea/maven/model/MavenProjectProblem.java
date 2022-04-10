@@ -23,17 +23,20 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 
 public class MavenProjectProblem implements Serializable {
   //todo: this enum values are write-only now
   public enum ProblemType {
-    SYNTAX, STRUCTURE, DEPENDENCY, PARENT, SETTINGS_OR_PROFILES, REPOSITORY_BLOCKED, REPOSITORY
+    SYNTAX, STRUCTURE, DEPENDENCY, PARENT, SETTINGS_OR_PROFILES, REPOSITORY
   }
 
   private final boolean myRecoverable;
   private final String myPath;
   private final String myDescription;
   private final ProblemType myType;
+  @Nullable
+  private final MavenArtifact myMavenArtifact;
 
   public static MavenProjectProblem createStructureProblem(String path, String description, boolean recoverable) {
     return createProblem(path, description, MavenProjectProblem.ProblemType.STRUCTURE, recoverable);
@@ -54,8 +57,22 @@ public class MavenProjectProblem implements Serializable {
     return new MavenProjectProblem(path, description, type, recoverable);
   }
 
+  public static MavenProjectProblem createRepositoryProblem(String path,
+                                                            String description,
+                                                            boolean recoverable,
+                                                            MavenArtifact mavenArtifact) {
+    return new MavenProjectProblem(path, description, ProblemType.REPOSITORY, recoverable, mavenArtifact);
+  }
+
+  public static MavenProjectProblem createUnresolvedArtifactProblem(String path,
+                                                                    String description,
+                                                                    boolean recoverable,
+                                                                    MavenArtifact mavenArtifact) {
+    return new MavenProjectProblem(path, description, ProblemType.DEPENDENCY, recoverable, mavenArtifact);
+  }
+
   public static Collection<MavenProjectProblem> createProblemsList() {
-    return createProblemsList(Collections.<MavenProjectProblem>emptySet());
+    return createProblemsList(Collections.emptySet());
   }
 
   public static Collection<MavenProjectProblem> createProblemsList(Collection<? extends MavenProjectProblem> copyThis) {
@@ -63,10 +80,15 @@ public class MavenProjectProblem implements Serializable {
   }
 
   public MavenProjectProblem(String path, String description, ProblemType type, boolean recoverable) {
+    this(path, description, type, recoverable, null);
+  }
+
+  public MavenProjectProblem(String path, String description, ProblemType type, boolean recoverable, MavenArtifact mavenArtifact) {
     myPath = path;
     myDescription = description;
     myType = type;
     myRecoverable = recoverable;
+    myMavenArtifact = mavenArtifact;
   }
 
   public String getPath() {
@@ -85,6 +107,11 @@ public class MavenProjectProblem implements Serializable {
     return myType;
   }
 
+  @Nullable
+  public MavenArtifact getMavenArtifact() {
+    return myMavenArtifact;
+  }
+
   @Override
   public String toString() {
     return myType + ":" + myDescription + ":" + myPath;
@@ -97,9 +124,9 @@ public class MavenProjectProblem implements Serializable {
 
     MavenProjectProblem that = (MavenProjectProblem)o;
 
-    if (myDescription != null ? !myDescription.equals(that.myDescription) : that.myDescription != null) return false;
+    if (!Objects.equals(myDescription, that.myDescription)) return false;
     if (myType != that.myType) return false;
-    if (myPath != null ? !myPath.equals(that.myPath) : that.myPath != null) return false;
+    if (!Objects.equals(myPath, that.myPath)) return false;
 
     return true;
   }

@@ -53,12 +53,7 @@ public class JavaDocRenderTest extends AbstractEditorTest {
               "}\n", true);
     verifyFoldingState(11, 23);
     executeAction(IdeActions.ACTION_EDITOR_DELETE_LINE);
-    checkResultByText(Registry.is("doc.render.old.backend") ?
-                      "class C {\n" +
-                      "  /** doc */\n" +
-                      "<caret>  int a;\n" +
-                      "}\n" :
-                      "class C {\n" +
+    checkResultByText("class C {\n" +
                       "<caret>  /** doc */\n" +
                       "  int a;\n" +
                       "}\n");
@@ -184,12 +179,7 @@ public class JavaDocRenderTest extends AbstractEditorTest {
               "class C {}", false);
     toggleItem();
     type("  ");
-    checkResultByText(Registry.is("doc.render.old.backend") ?
-                      "/**\n" +
-                      " * doc\n" +
-                      " */\n" +
-                      "  <caret>class C {}" :
-                      "  <caret>/**\n" +
+    checkResultByText("  <caret>/**\n" +
                       " * doc\n" +
                       " */\n" +
                       "class C {}");
@@ -209,21 +199,12 @@ public class JavaDocRenderTest extends AbstractEditorTest {
               "   */\n" +
               "  void m() {}\n" +
               "}", true);
-    Rectangle rendererBounds;
-    if (Registry.is("doc.render.old.backend")) {
-      List<Inlay<?>> inlays = getEditor().getInlayModel().getBlockElementsForVisualLine(1, true);
-      assertSize(1, inlays);
-      rendererBounds = inlays.get(0).getBounds();
-    }
-    else {
-      FoldRegion foldRegion = getEditor().getFoldingModel().getCollapsedRegionAtOffset(10);
-      assertInstanceOf(foldRegion, CustomFoldRegion.class);
-      CustomFoldRegion cfr = (CustomFoldRegion)foldRegion;
-      Point location = cfr.getLocation();
-      assertNotNull(location);
-      rendererBounds = new Rectangle(location, new Dimension(cfr.getWidthInPixels(), cfr.getHeightInPixels()));
-    }
-    assertNotNull(rendererBounds);
+    FoldRegion foldRegion = getEditor().getFoldingModel().getCollapsedRegionAtOffset(10);
+    assertInstanceOf(foldRegion, CustomFoldRegion.class);
+    CustomFoldRegion cfr = (CustomFoldRegion)foldRegion;
+    Point location = cfr.getLocation();
+    assertNotNull(location);
+    Rectangle rendererBounds = new Rectangle(location, new Dimension(cfr.getWidthInPixels(), cfr.getHeightInPixels()));
     assertFalse(rendererBounds.isEmpty());
 
     @NotNull Pair<@NotNull Interval, @Nullable Interval> p = EditorUtil.logicalLineToYRange(getEditor(), 2);
@@ -272,7 +253,7 @@ public class JavaDocRenderTest extends AbstractEditorTest {
     assertNotNull("Item is not found at offset " + startOffset, item);
     assertEquals("Unexpected item start offset", startOffset, item.highlighter.getStartOffset());
     assertEquals("Unexpected item end offset", endOffset, item.highlighter.getEndOffset());
-    Object toCheck = Registry.is("doc.render.old.backend") ? item.inlay : item.foldRegion;
+    Object toCheck = item.foldRegion;
     if (textInContent == null) {
       assertNull("Item in rendered state", toCheck);
     }
@@ -289,8 +270,7 @@ public class JavaDocRenderTest extends AbstractEditorTest {
     for (int i = 0; i < expectedNumberOfCollapsedRegions; i++) {
       FoldRegion region = foldRegions.get(i);
       assertEquals("Unexpected region " + i + " start offset", collapsedRegionOffsets[i * 2], region.getStartOffset());
-      assertEquals("Unexpected region " + i + " end offset",
-                   collapsedRegionOffsets[i * 2 + 1] + (Registry.is("doc.render.old.backend") ? 1 : 0), region.getEndOffset());
+      assertEquals("Unexpected region " + i + " end offset", collapsedRegionOffsets[i * 2 + 1], region.getEndOffset());
     }
   }
 }

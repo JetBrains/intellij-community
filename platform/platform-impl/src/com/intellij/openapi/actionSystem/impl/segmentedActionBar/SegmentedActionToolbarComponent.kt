@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 
 import com.intellij.openapi.actionSystem.*
@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.*
@@ -53,16 +54,15 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
   }
 
   private var isActive = false
-  private var visibleActions: MutableList<out AnAction>? = null
+  private var visibleActions: List<AnAction>? = null
 
   override fun getInsets(): Insets {
-    return JBUI.emptyInsets()
+    return JBInsets.emptyInsets()
   }
 
   override fun setBorder(border: Border?) {
 
   }
-
 
   override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
     if (!isActive) {
@@ -108,7 +108,7 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
     actionButton.setLook(segmentedButtonLook)
   }
 
-  override fun fillToolBar(actions: MutableList<out AnAction>, layoutSecondaries: Boolean) {
+  override fun fillToolBar(actions: List<AnAction>, layoutSecondaries: Boolean) {
     if (!isActive) {
       super.fillToolBar(actions, layoutSecondaries)
       return
@@ -190,23 +190,27 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
     }
   }
 
-  override fun actionsUpdated(forced: Boolean, newVisibleActions: MutableList<out AnAction>) {
+  override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
     visibleActions = newVisibleActions
     update(forced, newVisibleActions)
   }
 
   private var lastIds: List<String> = emptyList()
 
-  private fun update(forced: Boolean, newVisibleActions: MutableList<out AnAction>) {
+  private fun update(forced: Boolean, newVisibleActions: List<AnAction>) {
     val filtered = newVisibleActions.filter { isSuitableAction(it) }
 
     val ides = newVisibleActions.map { ActionManager.getInstance().getId(it) }.toList()
     val filteredIds = filtered.map { ActionManager.getInstance().getId(it) }.toList()
 
-    if(logNeeded() && filteredIds != lastIds) LOG.info("MAIN SLOT new filtered: ${filteredIds}} visible: $ides RunToolbar")
+    traceState(lastIds, filteredIds, ides)
     lastIds = filteredIds
     isActive = filtered.size > 1
     super.actionsUpdated(forced, if (isActive) filtered else newVisibleActions)
+  }
+
+  protected open fun traceState(lastIds: List<String>, filteredIds: List<String>, ides: List<String>) {
+   // if(logNeeded() && filteredIds != lastIds) LOG.info("MAIN SLOT new filtered: ${filteredIds}} visible: $ides RunToolbar")
   }
 
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {

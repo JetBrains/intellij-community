@@ -174,7 +174,7 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
                                         actionItem: PopupFactoryImpl.ActionItem,
                                         isSelected: Boolean) {
           val event = ActionUtil.createEmptyEvent()
-          ActionUtil.performDumbAwareUpdate(true, actionItem.action, event, false)
+          ActionUtil.performDumbAwareUpdate(actionItem.action, event, false)
 
           val description = event.presentation.description
           if (description != null) {

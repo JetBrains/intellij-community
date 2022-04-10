@@ -58,14 +58,14 @@ class RefreshIndexableFilesAction : RecoveryAction {
   private class EventLog : BulkFileListener {
     val loggedEvents: MutableList<Event> = mutableListOf()
 
-    override fun before(events: MutableList<out VFileEvent>) {
+    override fun before(events: List<VFileEvent>) {
       for (event in events) {
         if (event is VFileCreateEvent) continue
         logEvent(event)
       }
     }
 
-    override fun after(events: MutableList<out VFileEvent>) {
+    override fun after(events: List<VFileEvent>) {
       for (event in events) {
         if (event is VFileCreateEvent) {
           logEvent(event)

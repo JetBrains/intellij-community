@@ -110,7 +110,7 @@ final class WinExeInstallerBuilder {
       generator.generateUninstallerFile(nsiConfDir.resolve("unidea_win.nsh").toFile())
     }
     catch (IOException e) {
-      context.messages.error("Failed to generated list of files for NSIS installer: $e")
+      context.messages.error("Failed to generated list of files for NSIS installer: $e", e)
     }
 
     prepareConfigurationFiles(nsiConfDir, winDistPath)

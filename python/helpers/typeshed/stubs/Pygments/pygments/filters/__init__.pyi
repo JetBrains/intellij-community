@@ -1,4 +1,4 @@
-from collections.abc import Iterable, Iterator
+from collections.abc import Generator, Iterable, Iterator
 from typing import Any
 
 from pygments.filter import Filter
@@ -7,7 +7,7 @@ from pygments.token import _TokenType
 
 def find_filter_class(filtername): ...
 def get_filter_by_name(filtername, **options): ...
-def get_all_filters(): ...
+def get_all_filters() -> Generator[str, None, None]: ...
 
 class CodeTagFilter(Filter):
     tag_re: Any

@@ -5,9 +5,6 @@ import com.intellij.application.options.codeStyle.arrangement.ArrangementSetting
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class HtmlCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
   protected HtmlCodeStyleMainPanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(HTMLLanguage.INSTANCE, currentSettings, settings);

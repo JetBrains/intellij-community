@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.assertions
 
 import com.intellij.configurationStore.deserialize
@@ -7,19 +7,17 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.util.io.readText
-import com.intellij.util.isEmpty
 import org.assertj.core.api.AbstractAssert
 import org.assertj.core.internal.Objects
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
-import java.io.File
 import java.nio.file.Path
 
 class JdomAssert(actual: Element?) : AbstractAssert<JdomAssert, Element?>(actual, JdomAssert::class.java) {
   fun isEmpty(): JdomAssert {
     isNotNull
 
-    if (!actual.isEmpty()) {
+    if (!JDOMUtil.isEmpty(actual)) {
       failWithMessage("Expected to be empty but was\n${JDOMUtil.writeElement(actual!!)}")
     }
 

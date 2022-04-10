@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
@@ -21,7 +21,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -58,13 +57,15 @@ public abstract class JavaTestFramework implements TestFramework {
    * Return {@code true} iff {@link #getMarkerClassFQName()} can be found in the resolve scope of {@code clazz} 
    */
   protected boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
+    String markerClassFQName = getMarkerClassFQName();
+    if (markerClassFQName == null) return true;
     return CachedValuesManager.<ConcurrentMap<String, PsiClass>>getCachedValue(clazz, () -> {
       var project = clazz.getProject();
       return new CachedValueProvider.Result<>(
         ConcurrentFactoryMap.createMap(
           markerInterfaceName -> JavaPsiFacade.getInstance(project).findClass(markerInterfaceName, clazz.getResolveScope())),
         ProjectRootManager.getInstance(project));
-    }).get(getMarkerClassFQName()) != null;
+    }).get(markerClassFQName) != null;
   }
   
   @Override
@@ -177,8 +178,7 @@ public abstract class JavaTestFramework implements TestFramework {
   /**
    * @deprecated Mnemonics are not required anymore; frameworks are loaded in the combobox now
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public char getMnemonic() {
     return 0;
   }

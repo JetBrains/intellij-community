@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertyGetterDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertySetterDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
+import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.incremental.KotlinLookupLocation
 import org.jetbrains.kotlin.incremental.components.LookupLocation
@@ -81,7 +82,7 @@ class DebuggerFieldSyntheticScope(val javaSyntheticPropertiesScope: JavaSyntheti
             return false
         }
 
-        return containingFile is KtCodeFragment && containingFile.getCopyableUserData(KtCodeFragment.RUNTIME_TYPE_EVALUATOR) != null
+        return containingFile is KtCodeFragment && containingFile.getCopyableUserData(CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR) != null
     }
 
     private fun getSyntheticPropertiesForClass(clazz: ClassDescriptor): Collection<PropertyDescriptor> {
@@ -183,7 +184,7 @@ class DebuggerFieldSyntheticScope(val javaSyntheticPropertiesScope: JavaSyntheti
             Annotations.EMPTY
         )
 
-        propertyDescriptor.setType(type, emptyList(), null, extensionReceiverParameter)
+        propertyDescriptor.setType(type, emptyList(), null, extensionReceiverParameter, emptyList())
 
         val getter = PropertyGetterDescriptorImpl(
             propertyDescriptor, Annotations.EMPTY, Modality.FINAL,
@@ -234,4 +235,7 @@ internal class DebuggerFieldPropertyDescriptor(
     /*isActual = */false,
     /*isExternal = */false,
     /*isDelegated = */false
-)
+) {
+    override val getter: PropertyGetterDescriptorImpl?
+        get() = null
+}

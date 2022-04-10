@@ -26,6 +26,9 @@ fun testEmptyLoop(x: Int, y: Int) {
     if (y >= x) return
     for(i in <warning descr="'for' range is always empty">x..y</warning>) {
     }
+    var a = 10
+    for(i in 10..0) {}
+    for(i in <warning descr="'for' range is always empty">a..0</warning>) {}
 }
 fun testArray(arr : Array<Int>) {
     for (x in arr) {

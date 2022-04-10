@@ -3,9 +3,9 @@ package org.intellij.plugins.markdown.ui.floating
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -53,7 +53,7 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
     if (hint != null || !canBeShownAtCurrentSelection()) {
       return
     }
-    val toolbar = createActionToolbar(editor.contentComponent)
+    val toolbar = createActionToolbar(editor.contentComponent) ?: return
     buttonSize = toolbar.maxButtonHeight
 
     val newHint = LightweightHint(toolbar.component)
@@ -74,8 +74,8 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
     hint = null
   }
 
-  private fun createActionToolbar(targetComponent: JComponent): ActionToolbar {
-    val group = ActionManager.getInstance().getAction(actionGroupId) as ActionGroup
+  private fun createActionToolbar(targetComponent: JComponent): ActionToolbar? {
+    val group = CustomActionsSchema.getInstance().getCorrectedAction(actionGroupId) as? ActionGroup ?: return null
     val toolbar = object: ActionToolbarImpl(ActionPlaces.EDITOR_TOOLBAR, group, true) {
       override fun addNotify() {
         super.addNotify()

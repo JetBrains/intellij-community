@@ -2,18 +2,21 @@
 package com.intellij.java.ift.lesson.run
 
 import com.intellij.debugger.JavaDebuggerBundle
+import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.icons.AllIcons
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.options.OptionsBundle
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.xdebugger.XDebuggerBundle
-import training.dsl.LessonContext
-import training.dsl.TaskTestContext
-import training.dsl.highlightButtonById
-import training.dsl.restoreChangedSettingsInformer
+import com.intellij.xdebugger.XDebuggerManager
+import training.dsl.*
+import training.learn.CourseManager
 import training.learn.lesson.general.run.CommonDebugLesson
+import training.statistic.LessonStartingWay
 import training.ui.LearningUiManager
+import training.util.isToStringContains
 import javax.swing.JEditorPane
 
 class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
@@ -24,6 +27,7 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
   override val configurationName: String = demoClassName
   override val sample = JavaRunLessonsUtils.demoSample
   override var logicalPosition: LogicalPosition = LogicalPosition(10, 6)
+  private val debugLineNumber = StringUtil.offsetToLineNumber(sample.text, sample.getPosition (2).startOffset)
 
   override val confNameForWatches: String = "Application"
   override val quickEvaluationArgument = "Integer.parseInt"
@@ -32,7 +36,6 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
   override val stepIntoDirectionToRight = true
 
   override fun LessonContext.applyProgramChangeTasks() {
-
     if (isHotSwapDisabled()) {
       task {
         val feature = stateCheck { !isHotSwapDisabled() }
@@ -57,7 +60,7 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
     task("CompileDirty") {
       text(JavaLessonsBundle.message("java.debug.workflow.rebuild", action(it), icon(AllIcons.Actions.Compile)))
       if (isAlwaysHotSwap()) {
-        triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JEditorPane ->
+        triggerUI().component { ui: JEditorPane ->
           ui.text.contains(JavaDebuggerBundle.message("status.hot.swap.completed.stop"))
         }
       }
@@ -82,18 +85,35 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
       }
       proposeModificationRestore(afterFixText)
       test(waitEditorToBeReady = false) {
-        dialog(null) {
+        dialog(JavaDebuggerBundle.message("hotswap.dialog.title.with.session", JavaRunLessonsUtils.demoClassName)) {
           button("Reload").click()
         }
       }
     }
 
-    highlightButtonById("Debugger.PopFrame")
+    task {
+      triggerAndBorderHighlight { usePulsation = true }.listItem { item ->
+        (item as? JavaStackFrame)?.descriptor.isToStringContains("extractNumber")
+      }
+    }
 
-    actionTask("Debugger.PopFrame") {
-      proposeModificationRestore(afterFixText)
-      JavaLessonsBundle.message("java.debug.workflow.drop.frame", code("extractNumber"), code("extractNumber"),
-                                icon(AllIcons.Actions.PopFrame), action(it))
+    task("Debugger.PopFrame") {
+      text(JavaLessonsBundle.message("java.debug.workflow.drop.frame", code("extractNumber"), code("extractNumber"),
+                                icon(AllIcons.Actions.InlineDropFrame), action(it)))
+      stateCheck {
+        val currentSession = XDebuggerManager.getInstance(project).currentSession ?: return@stateCheck false
+        currentSession.currentPosition?.line == logicalPosition.line
+      }
+      proposeRestore {
+        val currentSession = XDebuggerManager.getInstance(project).currentSession
+        val line = currentSession?.currentPosition?.line
+        if (line == null || !(line == debugLineNumber || line == logicalPosition.line)) {
+          TaskContext.RestoreNotification(JavaLessonsBundle.message("java.debug.workflow.invalid.drop")) {
+            CourseManager.instance.openLesson(project, this@JavaDebugLesson, LessonStartingWay.RESTORE_LINK)
+          }
+        } else null
+      }
+      test { actions(it) }
     }
   }
 
@@ -114,5 +134,5 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
     }
   }
 
-  override val fileName: String = "$demoClassName.java"
+  override val sampleFilePath: String = "src/$demoClassName.java"
 }

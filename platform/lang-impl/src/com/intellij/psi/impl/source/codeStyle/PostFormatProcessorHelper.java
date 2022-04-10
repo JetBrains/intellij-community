@@ -20,7 +20,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +35,7 @@ public class PostFormatProcessorHelper {
    * @deprecated Use {@link #PostFormatProcessorHelper(CommonCodeStyleSettings)} first getting correct language settings
    * with {@link CodeStyleSettings#getCommonSettings(Language)}!
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public PostFormatProcessorHelper(final CodeStyleSettings rootSettings) {
     mySettings = rootSettings.getCommonSettings("");
   }

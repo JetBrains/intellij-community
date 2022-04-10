@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.core.CoreBundle;
@@ -7,6 +7,10 @@ import com.intellij.openapi.application.EdtReplacementThread;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
+import com.intellij.openapi.util.NlsContexts.SystemNotificationText;
+import com.intellij.openapi.util.NlsContexts.SystemNotificationTitle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
@@ -38,21 +42,18 @@ public abstract class Task implements TaskInfo, Progressive {
 
   protected final @Nullable Project myProject;
   protected final @Nullable JComponent myParentComponent;
-  /**
-   * @deprecated Please use {@link #getTitle()} property, to be defined private.
-   */
+
+  /** @deprecated please use {@link #getTitle} / {@link #setTitle} instead */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @SuppressWarnings("DeprecatedIsStillUsed")
-  protected @NlsContexts.ProgressTitle @NotNull String myTitle;
+  protected @ProgressTitle @NotNull String myTitle;
 
   private final boolean myCanBeCancelled;
   private @NlsContexts.Button String myCancelText = CoreBundle.message("button.cancel");
   private @NlsContexts.Tooltip String myCancelTooltipText = CoreBundle.message("button.cancel");
 
-  private Task(@Nullable Project project,
-               @Nullable JComponent parentComponent,
-               @NlsContexts.ProgressTitle @NotNull String title,
-               boolean canBeCancelled) {
+  private Task(@Nullable Project project, @Nullable JComponent parentComponent, @ProgressTitle @NotNull String title, boolean canBeCancelled) {
     myProject = project;
     myParentComponent = parentComponent;
     myTitle = title;
@@ -61,7 +62,7 @@ public abstract class Task implements TaskInfo, Progressive {
 
   /**
    * This callback will be invoked on AWT dispatch thread.
-   *
+   * <p>
    * Callback executed when run() throws {@link ProcessCanceledException} or if its {@link ProgressIndicator} was canceled.
    */
   public void onCancel() { }
@@ -71,15 +72,9 @@ public abstract class Task implements TaskInfo, Progressive {
    */
   public void onSuccess() { }
 
-  /**
-   * This callback will be invoked on AWT dispatch thread.
-   * <p>
-   * Callback executed when {@link #run(ProgressIndicator)} throws an exception (except {@link ProcessCanceledException}).
-   *
-   * @deprecated use {@link #onThrowable(Throwable)} instead
-   */
+  /** @deprecated please override {@link #onThrowable(Throwable)} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @SuppressWarnings({"DeprecatedIsStillUsed", "RedundantSuppression"})
   public void onError(@NotNull Exception error) {
     LOG.error(error);
@@ -125,11 +120,11 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   @Override
-  public final @NlsContexts.ProgressTitle @NotNull String getTitle() {
+  public final @ProgressTitle @NotNull String getTitle() {
     return myTitle;
   }
 
-  public final @NotNull Task setTitle(@NlsContexts.ProgressTitle @NotNull String title) {
+  public final @NotNull Task setTitle(@ProgressTitle @NotNull String title) {
     myTitle = title;
     return this;
   }
@@ -145,8 +140,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   /**
-   * Can be used to distinguish this task among other progresses.
-   * @return this task optional id
+   * Optional; may be used to distinguish this task among others.
    */
   @ApiStatus.Experimental
   public @Nullable Object getId() {
@@ -197,22 +191,18 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   public abstract static class Backgroundable extends Task implements PerformInBackgroundOption {
-
     private final @NotNull PerformInBackgroundOption myBackgroundOption;
 
-    public Backgroundable(@Nullable Project project,
-                          @NlsContexts.ProgressTitle @NotNull String title) {
+    public Backgroundable(@Nullable Project project, @ProgressTitle @NotNull String title) {
       this(project, title, true);
     }
 
-    public Backgroundable(@Nullable Project project,
-                          @NlsContexts.ProgressTitle @NotNull String title,
-                          boolean canBeCancelled) {
+    public Backgroundable(@Nullable Project project, @ProgressTitle @NotNull String title, boolean canBeCancelled) {
       this(project, title, canBeCancelled, ALWAYS_BACKGROUND);
     }
 
     public Backgroundable(@Nullable Project project,
-                          @NlsContexts.ProgressTitle @NotNull String title,
+                          @ProgressTitle @NotNull String title,
                           boolean canBeCancelled,
                           @Nullable PerformInBackgroundOption backgroundOption) {
       this(project, null, title, canBeCancelled, backgroundOption);
@@ -220,7 +210,7 @@ public abstract class Task implements TaskInfo, Progressive {
 
     public Backgroundable(@Nullable Project project,
                           @Nullable JComponent parentComponent,
-                          @NlsContexts.ProgressTitle @NotNull String title,
+                          @ProgressTitle @NotNull String title,
                           boolean canBeCancelled,
                           @Nullable PerformInBackgroundOption backgroundOption) {
       super(project, parentComponent, title, canBeCancelled);
@@ -248,21 +238,14 @@ public abstract class Task implements TaskInfo, Progressive {
     public boolean isConditionalModal() {
       return false;
     }
-
  }
 
   public abstract static class Modal extends Task {
-
-    public Modal(@Nullable Project project,
-                 @NlsContexts.DialogTitle @NotNull String title,
-                 boolean canBeCancelled) {
+    public Modal(@Nullable Project project, @DialogTitle @NotNull String title, boolean canBeCancelled) {
       this(project, null, title, canBeCancelled);
     }
 
-    public Modal(@Nullable Project project,
-                 @Nullable JComponent parentComponent,
-                 @NlsContexts.DialogTitle @NotNull String title,
-                 boolean canBeCancelled) {
+    public Modal(@Nullable Project project, @Nullable JComponent parentComponent, @DialogTitle @NotNull String title, boolean canBeCancelled) {
       //noinspection DialogTitleCapitalization
       super(project, parentComponent, title, canBeCancelled);
     }
@@ -274,9 +257,8 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   public abstract static class ConditionalModal extends Backgroundable {
-
     public ConditionalModal(@Nullable Project project,
-                            @NlsContexts.ProgressTitle @NotNull String title,
+                            @ProgressTitle @NotNull String title,
                             boolean canBeCancelled,
                             @NotNull PerformInBackgroundOption backgroundOption) {
       this(project, null, title, canBeCancelled, backgroundOption);
@@ -284,7 +266,7 @@ public abstract class Task implements TaskInfo, Progressive {
 
     public ConditionalModal(@Nullable Project project,
                             @Nullable JComponent parentComponent,
-                            @NlsContexts.ProgressTitle @NotNull String title,
+                            @ProgressTitle @NotNull String title,
                             boolean canBeCancelled,
                             @NotNull PerformInBackgroundOption backgroundOption) {
       super(project, parentComponent, title, canBeCancelled, backgroundOption);
@@ -298,19 +280,19 @@ public abstract class Task implements TaskInfo, Progressive {
 
   public static class NotificationInfo {
     private final String myNotificationName;
-    private final @NlsContexts.SystemNotificationTitle String myNotificationTitle;
-    private final @NlsContexts.SystemNotificationText String myNotificationText;
+    private final @SystemNotificationTitle String myNotificationTitle;
+    private final @SystemNotificationText String myNotificationText;
     private final boolean myShowWhenFocused;
 
     public NotificationInfo(@NotNull String notificationName,
-                            @NotNull @NlsContexts.SystemNotificationTitle String notificationTitle,
-                            @NotNull @NlsContexts.SystemNotificationText String notificationText) {
+                            @NotNull @SystemNotificationTitle String notificationTitle,
+                            @NotNull @SystemNotificationText String notificationText) {
       this(notificationName, notificationTitle, notificationText, false);
     }
 
     public NotificationInfo(@NotNull String notificationName,
-                            @NotNull @NlsContexts.SystemNotificationTitle String notificationTitle,
-                            @NotNull @NlsContexts.SystemNotificationText String notificationText,
+                            @NotNull @SystemNotificationTitle String notificationTitle,
+                            @NotNull @SystemNotificationText String notificationText,
                             final boolean showWhenFocused) {
       myNotificationName = notificationName;
       myNotificationTitle = notificationTitle;
@@ -322,11 +304,11 @@ public abstract class Task implements TaskInfo, Progressive {
       return myNotificationName;
     }
 
-    public @NotNull @NlsContexts.SystemNotificationTitle String getNotificationTitle() {
+    public @NotNull @SystemNotificationTitle String getNotificationTitle() {
       return myNotificationTitle;
     }
 
-    public @NotNull @NlsContexts.SystemNotificationText String getNotificationText() {
+    public @NotNull @SystemNotificationText String getNotificationText() {
       return myNotificationText;
     }
 
@@ -339,16 +321,11 @@ public abstract class Task implements TaskInfo, Progressive {
     private volatile T myResult;
     private volatile Throwable myError;
 
-    public WithResult(@Nullable Project project,
-                      @NlsContexts.DialogTitle @NotNull String title,
-                      boolean canBeCancelled) {
+    public WithResult(@Nullable Project project, @DialogTitle @NotNull String title, boolean canBeCancelled) {
       this(project, null, title, canBeCancelled);
     }
 
-    public WithResult(@Nullable Project project,
-                      @Nullable JComponent component,
-                      @NlsContexts.DialogTitle @NotNull String title,
-                      boolean canBeCancelled) {
+    public WithResult(@Nullable Project project, @Nullable JComponent component, @DialogTitle @NotNull String title, boolean canBeCancelled) {
       super(project, component, title, canBeCancelled);
     }
 

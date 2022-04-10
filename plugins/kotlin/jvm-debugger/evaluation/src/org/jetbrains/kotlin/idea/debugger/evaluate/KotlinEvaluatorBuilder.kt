@@ -227,7 +227,14 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
         val (bindingContext, filesToCompile) = runReadAction {
             val resolutionFacade = getResolutionFacadeForCodeFragment(codeFragment)
-            analyzeInlinedFunctions(resolutionFacade, codeFragment, false, analysisResult.bindingContext)
+            try {
+                val (_, filesToCompile) = analyzeInlinedFunctions(resolutionFacade, codeFragment, false, analysisResult.bindingContext)
+                val inlineFilesAnalysis = resolutionFacade.analyzeWithAllCompilerChecks(filesToCompile)
+                Pair(inlineFilesAnalysis.bindingContext, filesToCompile)
+            } catch (e: IllegalArgumentException) {
+                status.error(EvaluationError.ErrorElementOccurred)
+                evaluationException(e.message ?: e.toString())
+            }
         }
 
         val moduleDescriptor = analysisResult.moduleDescriptor
@@ -319,7 +326,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 ?: error("Can not find class \"$GENERATED_CLASS_NAME\"")
             val mainMethod = mainClassType.methods().single { it.name() == GENERATED_FUNCTION_NAME }
             val returnValue = context.invokeMethod(mainClassType, mainMethod, args)
-            EvaluatorValueConverter(context).unref(returnValue)
+            EvaluatorValueConverter.unref(returnValue)
         }
     }
 
@@ -331,7 +338,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     ): InterpreterResult {
         val mainClassBytecode = compiledData.mainClass.bytes
         val mainClassAsmNode = ClassNode().apply { ClassReader(mainClassBytecode).accept(this, 0) }
-        val mainMethod = mainClassAsmNode.methods.first { it.name == GENERATED_FUNCTION_NAME }
+        val mainMethod = mainClassAsmNode.methods.first { it.name.startsWith(GENERATED_FUNCTION_NAME) }
 
         return runEvaluation(context, compiledData, classLoader ?: context.evaluationContext.classLoader, status) { args ->
             val vm = context.vm.virtualMachine
@@ -385,7 +392,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
     private fun updateLocalVariableValue(converter: EvaluatorValueConverter, ref: VariableFinder.RefWrapper) {
         val frameProxy = converter.context.frameProxy
-        val newValue = converter.unref(ref.wrapper)
+        val newValue = EvaluatorValueConverter.unref(ref.wrapper)
         val variable = frameProxy.safeVisibleVariableByName(ref.localVariableName)
         if (variable != null) {
             try {
@@ -452,7 +459,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     companion object {
         internal val IGNORED_DIAGNOSTICS: Set<DiagnosticFactory<*>> = Errors.INVISIBLE_REFERENCE_DIAGNOSTICS +
                 setOf(
-                    Errors.EXPERIMENTAL_API_USAGE_ERROR,
+                    Errors.OPT_IN_USAGE_ERROR,
                     Errors.MISSING_DEPENDENCY_SUPERCLASS,
                     Errors.IR_WITH_UNSTABLE_ABI_COMPILED_CLASS,
                     Errors.FIR_COMPILED_CLASS,
@@ -485,13 +492,13 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 else -> throw IllegalStateException("Unknown result value produced by eval4j")
             }
 
-            val sharedVar = if ((jdiValue is AbstractValue<*>)) getValueIfSharedVar(jdiValue, context) else null
+            val sharedVar = if ((jdiValue is AbstractValue<*>)) getValueIfSharedVar(jdiValue) else null
             return sharedVar?.value ?: jdiValue.asJdiValue(context.vm.virtualMachine, jdiValue.asmType)
         }
 
-        private fun getValueIfSharedVar(value: Eval4JValue, context: ExecutionContext): VariableFinder.Result? {
+        private fun getValueIfSharedVar(value: Eval4JValue): VariableFinder.Result? {
             val obj = value.obj(value.asmType) as? ObjectReference ?: return null
-            return VariableFinder.Result(EvaluatorValueConverter(context).unref(obj))
+            return VariableFinder.Result(EvaluatorValueConverter.unref(obj))
         }
     }
 }
@@ -562,5 +569,5 @@ internal fun evaluationException(e: Throwable): Nothing = throw EvaluateExceptio
 internal fun getResolutionFacadeForCodeFragment(codeFragment: KtCodeFragment): ResolutionFacade {
     val filesToAnalyze = listOf(codeFragment)
     val kotlinCacheService = KotlinCacheService.getInstance(codeFragment.project)
-    return kotlinCacheService.getResolutionFacade(filesToAnalyze, JvmPlatforms.unspecifiedJvmPlatform)
+    return kotlinCacheService.getResolutionFacadeWithForcedPlatform(filesToAnalyze, JvmPlatforms.unspecifiedJvmPlatform)
 }

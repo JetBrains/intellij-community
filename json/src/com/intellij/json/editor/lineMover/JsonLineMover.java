@@ -96,11 +96,6 @@ public class JsonLineMover extends LineMover {
   }
 
   @Override
-  public void beforeMove(@NotNull Editor editor, @NotNull MoveInfo info, boolean down) {
-
-  }
-
-  @Override
   public void afterMove(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
     int diff = (info.toMove.endLine - info.toMove.startLine) - (info.toMove2.endLine - info.toMove2.startLine);
     switch (myDirection) {

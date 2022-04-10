@@ -43,13 +43,31 @@ public class FileAttribute {
     myShouldEnumerate = shouldEnumerate;
   }
 
+  /**
+   * @deprecated use {@link FileAttribute#readFileAttribute(VirtualFile)}
+   */
+  @Deprecated
   @Nullable
   public DataInputStream readAttribute(@NotNull VirtualFile file) {
     return ManagingFS.getInstance().readAttribute(file, this);
   }
 
+  /**
+   * @deprecated use {@link FileAttribute#writeFileAttribute(VirtualFile)}
+   */
+  @Deprecated
   @NotNull
   public DataOutputStream writeAttribute(@NotNull VirtualFile file) {
+    return ManagingFS.getInstance().writeAttribute(file, this);
+  }
+
+  @Nullable
+  public AttributeInputStream readFileAttribute(@NotNull VirtualFile file) {
+    return ManagingFS.getInstance().readAttribute(file, this);
+  }
+
+  @NotNull
+  public AttributeOutputStream writeFileAttribute(@NotNull VirtualFile file) {
     return ManagingFS.getInstance().writeAttribute(file, this);
   }
 

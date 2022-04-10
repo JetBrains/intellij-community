@@ -83,12 +83,16 @@ public class UnsyncByteArrayOutputStream extends OutputStream {
     myCount = 0;
   }
 
-  public byte[] toByteArray() {
+  public byte @NotNull [] toNewByteArray() {
+    return Arrays.copyOf(myBuffer, myCount);
+  }
+
+  public byte @NotNull [] toByteArray() {
     if (myBuffer.length == myCount) {
       myIsShared = true;
       return myBuffer;
     }
-    return Arrays.copyOf(myBuffer, myCount);
+    return toNewByteArray();
   }
 
   public int size() {

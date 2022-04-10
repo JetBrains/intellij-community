@@ -13,9 +13,6 @@ interface GHPRCommentsDataProvider {
     : CompletableFuture<GithubIssueCommentWithHtml>
 
   @RequiresEdt
-  fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String>
-
-  @RequiresEdt
   fun updateComment(progressIndicator: ProgressIndicator, commentId: String, text: String): CompletableFuture<String>
 
   @RequiresEdt

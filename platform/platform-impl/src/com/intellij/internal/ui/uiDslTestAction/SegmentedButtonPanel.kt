@@ -3,7 +3,8 @@ package com.intellij.internal.ui.uiDslTestAction
 
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.SegmentedButton
+import com.intellij.ui.dsl.builder.actionListener
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.ApiStatus
 
@@ -12,36 +13,52 @@ import org.jetbrains.annotations.ApiStatus
 internal class SegmentedButtonPanel {
 
   val panel = panel {
-    val buttons = listOf("Button 1", "Button 2", "Button Last")
     val propertyGraph = PropertyGraph()
     val property = propertyGraph.graphProperty { "" }
-    val rows = mutableMapOf<String, Row>()
+    lateinit var segmentedButton: SegmentedButton<String>
 
-    row("Segmented Button") {
-      segmentedButton(buttons, property, { s -> s })
-    }
-
-    rows[buttons[0]] = row(buttons[0]) {
-      textField()
-    }
-    rows[buttons[1]] = row(buttons[1]) {
-      checkBox("checkBox")
-    }
-    rows[buttons[2]] = row(buttons[2]) {
-      button("button") {}
+    val segmentedButtonRow = row("Segmented Button:") {
+      segmentedButton = segmentedButton(generateItems(3), { it })
+        .bind(property)
     }
 
-    property.afterChange {
-      for ((key, row) in rows) {
-        row.visible(key == it)
+    row("Property value:") {
+      val textField = textField()
+      property.afterChange {
+        textField.component.text = it
+      }
+      button("Change Property") {
+        property.set(textField.component.text)
       }
     }
-    property.set(buttons[1])
 
-    val property2 = propertyGraph.graphProperty { "" }
-    property2.set(buttons[1])
-    row("Disabled Segmented Button") {
-      segmentedButton(buttons, property2, { s -> s }).enabled(false)
+    row("Options count:") {
+      val textField = textField()
+        .applyToComponent { text = "6" }
+        .component
+      button("rebuild") {
+        textField.text.toIntOrNull()?.let {
+          segmentedButton.items(generateItems(it))
+        }
+      }
     }
+
+    row {
+      checkBox("Enabled")
+        .applyToComponent {
+          isSelected = true
+        }
+        .actionListener { _, component -> segmentedButtonRow.enabled(component.isSelected) }
+    }
+
+    group("Segmented button without binding") {
+      row {
+        segmentedButton(generateItems(5), { it })
+      }
+    }
+  }
+
+  private fun generateItems(count: Int): Collection<String> {
+    return (1..count).map { "Item $it" }
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
@@ -22,7 +23,7 @@ import javax.swing.BoxLayout
 import javax.swing.JButton
 import javax.swing.JPanel
 
-internal class PandocSettingsPanel(private val project: Project): JPanel(GridBagLayout()) {
+internal class PandocSettingsPanel(private val project: Project) : JPanel(GridBagLayout()) {
   private val executablePathSelector = TextFieldWithBrowseButton()
   private val testButton = JButton(MarkdownBundle.message("markdown.settings.pandoc.executable.test"))
   private val infoPanel = JPanel().apply { layout = BoxLayout(this, BoxLayout.Y_AXIS) }
@@ -59,11 +60,8 @@ internal class PandocSettingsPanel(private val project: Project): JPanel(GridBag
     add(imagesPathSelector, gb.next().coverLine().insets(0, 0, 1, 0))
     testButton.addActionListener {
       infoPanel.removeAll()
-      val path = executablePath ?: PandocExecutableDetector.detect()
-      val labelText = when (val detectedVersion = PandocExecutableDetector.obtainPandocVersion(project, path)) {
-        null -> MarkdownBundle.message("markdown.settings.pandoc.executable.error.msg", path)
-        else -> MarkdownBundle.message("markdown.settings.pandoc.executable.success.msg", detectedVersion)
-      }
+
+      val labelText = getLabelText()
       infoPanel.add(JBLabel(labelText).apply { border = IdeBorderFactory.createEmptyBorder(JBUI.insetsBottom(4)) })
     }
     setupFileChooser(
@@ -77,6 +75,20 @@ internal class PandocSettingsPanel(private val project: Project): JPanel(GridBag
       defaultValue = { settings.pathToImages }
     )
     reset()
+  }
+
+  @NlsSafe
+  private fun getLabelText(): String {
+    val path = executablePath ?: PandocExecutableDetector.detect(project)
+
+    if (path == null) {
+      return MarkdownBundle.message("markdown.settings.pandoc.executable.run.in.safe.mode")
+    } else {
+      when (val detectedVersion = PandocExecutableDetector.obtainPandocVersion(project, path)) {
+        null -> return MarkdownBundle.message("markdown.settings.pandoc.executable.error.msg", path)
+        else -> return MarkdownBundle.message("markdown.settings.pandoc.executable.success.msg", detectedVersion)
+      }
+    }
   }
 
   private fun setupFileChooser(browser: TextFieldWithBrowseButton, descriptor: FileChooserDescriptor, defaultValue: () -> String?) {
@@ -108,7 +120,8 @@ internal class PandocSettingsPanel(private val project: Project): JPanel(GridBag
   }
 
   private fun updateExecutablePathSelectorEmptyText() {
-    val detectedPath = PandocExecutableDetector.detect()
+    val detectedPath = PandocExecutableDetector.detect(project) ?: return
+
     if (detectedPath.isNotEmpty()) {
       (executablePathSelector.textField as JBTextField).emptyText.text = MarkdownBundle.message(
         "markdown.settings.pandoc.executable.auto",

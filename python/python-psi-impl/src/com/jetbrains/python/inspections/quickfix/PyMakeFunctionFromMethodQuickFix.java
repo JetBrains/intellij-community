@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -20,7 +21,9 @@ import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenc
 import com.jetbrains.python.inspections.unresolvedReference.SimplePyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -42,27 +45,36 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
     final PyClass containingClass = problemFunction.getContainingClass();
     if (containingClass == null) return;
 
-    final List<UsageInfo> usages = PyPsiIndexUtil.findUsages(problemFunction, false);
-    final PyParameter[] parameters = problemFunction.getParameterList().getParameters();
+    final List<PyReferenceExpression> usages = StreamEx.of(PyPsiIndexUtil.findUsages(problemFunction, false))
+      .map(UsageInfo::getElement)
+      .select(PyReferenceExpression.class)
+      .toList();
+
+    ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(
+      PyPsiBundle.message("refactoring.progress.title.updating.existing.usages"), problemFunction.getProject(), null, (indicator -> {
+        PyFunction function = transformDefinition(problemFunction);
+        for (int i = 0; i < usages.size(); i++) {
+          indicator.checkCanceled();
+          indicator.setFraction((i + 1.0) / usages.size());
+          PyReferenceExpression usage = usages.get(i);
+          PsiFile usageFile = usage.getContainingFile();
+          updateUsage(function, usage, usageFile, !usageFile.equals(containingClass.getContainingFile()));
+        }
+      })
+    );
+  }
+
+  @NotNull
+  private static PyFunction transformDefinition(@NotNull PyFunction method) {
+    PyParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length > 0) {
       parameters[0].delete();
     }
-
-    PsiElement copy = problemFunction.copy();
-    problemFunction.delete();
-    final PsiElement parent = containingClass.getParent();
-    PyClass aClass = PsiTreeUtil.getTopmostParentOfType(containingClass, PyClass.class);
-    if (aClass == null)
-      aClass = containingClass;
-    copy = parent.addBefore(copy, aClass);
-
-    for (UsageInfo usage : usages) {
-      final PsiElement usageElement = usage.getElement();
-      if (usageElement instanceof PyReferenceExpression) {
-        final PsiFile usageFile = usageElement.getContainingFile();
-        updateUsage(copy, (PyReferenceExpression)usageElement, usageFile, !usageFile.equals(parent));
-      }
-    }
+    PyClass topmostClass = PsiTreeUtil.getTopmostParentOfType(method, PyClass.class);
+    assert topmostClass != null;
+    PsiElement copy = method.copy();
+    method.delete();
+    return (PyFunction)topmostClass.getParent().addBefore(copy, topmostClass);
   }
 
   private static void updateUsage(@NotNull final PsiElement finalElement, @NotNull final PyReferenceExpression element,
@@ -143,5 +155,15 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
     if (arguments.length > 0) {
       arguments[0].delete();
     }
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return currentFile;
   }
 }

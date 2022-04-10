@@ -1,4 +1,4 @@
-<warning descr="File 'bodyGlobalWarning.xml' is not properly formatted"><root>
+<weak_warning descr="File 'bodyGlobalWarning.xml' is not properly formatted"><root>
   <head/>
   <body>
     <arm>
@@ -11,4 +11,4 @@
     </leg>
   </body>
 </root>
-</warning>
+</weak_warning>

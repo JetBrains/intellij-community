@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.template
 
 import com.intellij.JavaTestUtil
@@ -25,7 +25,7 @@ class JavaLiveTemplateTest extends LiveTemplateTestCase {
 
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_16
+    return JAVA_LATEST_WITH_LATEST_JDK
   }
 
   final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/"
@@ -161,18 +161,21 @@ class Outer {
   void testElseIf() throws Throwable {
     configure()
     startTemplate("else-if", "Java")
+    WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
     checkResult()
   }
 
   void testElseIf2() throws Throwable {
     configure()
     startTemplate("else-if", "Java")
+    WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
     checkResult()
   }
 
   void testElseIf3() throws Throwable {
     configure()
     startTemplate("else-if", "Java")
+    WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
     checkResult()
   }
 

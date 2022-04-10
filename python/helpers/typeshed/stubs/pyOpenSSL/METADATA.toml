@@ -1,3 +1,2 @@
-version = "21.0.*"
-python2 = true
+version = "22.0.*"
 requires = ["types-cryptography"]

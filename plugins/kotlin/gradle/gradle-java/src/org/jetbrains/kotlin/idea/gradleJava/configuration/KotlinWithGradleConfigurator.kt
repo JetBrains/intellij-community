@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants.GRADLE_PLUGIN_ID
@@ -31,7 +32,7 @@ import org.jetbrains.kotlin.idea.extensions.gradle.getBuildScriptPsiFile
 import org.jetbrains.kotlin.idea.extensions.gradle.getManipulator
 import org.jetbrains.kotlin.idea.extensions.gradle.getTopLevelBuildScriptPsiFile
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
-import org.jetbrains.kotlin.idea.facet.toApiVersion
+import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
 import org.jetbrains.kotlin.idea.gradle.configuration.scope
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
@@ -104,11 +105,11 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         dialog.show()
         if (!dialog.isOK) return
 
-        val collector = configureSilently(project, dialog.modulesToConfigure, dialog.kotlinVersion)
+        val collector = configureSilently(project, dialog.modulesToConfigure, IdeKotlinVersion.get(dialog.kotlinVersion))
         collector.showNotification()
     }
 
-    fun configureSilently(project: Project, modules: List<Module>, version: String): NotificationMessageCollector {
+    fun configureSilently(project: Project, modules: List<Module>, version: IdeKotlinVersion): NotificationMessageCollector {
         return project.executeCommand(KotlinIdeaGradleBundle.message("command.name.configure.kotlin")) {
             val collector = createConfigureKotlinNotificationCollector(project)
             val changedFiles = configureWithVersion(project, modules, version, collector)
@@ -123,7 +124,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
     fun configureWithVersion(
         project: Project,
         modulesToConfigure: List<Module>,
-        kotlinVersion: String,
+        kotlinVersion: IdeKotlinVersion,
         collector: NotificationMessageCollector
     ): HashSet<PsiFile> {
         val filesToOpen = HashSet<PsiFile>()
@@ -153,7 +154,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         module: Module,
         file: PsiFile,
         isTopLevelProjectFile: Boolean,
-        version: String,
+        version: IdeKotlinVersion,
         collector: NotificationMessageCollector,
         filesToOpen: MutableCollection<PsiFile>
     ) {
@@ -163,7 +164,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         }
     }
 
-    protected fun configureModuleBuildScript(file: PsiFile, version: String): Boolean {
+    protected fun configureModuleBuildScript(file: PsiFile, version: IdeKotlinVersion): Boolean {
         val sdk = ModuleUtil.findModuleForPsiElement(file)?.let { ModuleRootManager.getInstance(it).sdk }
         val jvmTarget = getJvmTarget(sdk, version)
         return KotlinGradleFacadeImpl.getManipulator(file).configureModuleBuildScript(
@@ -175,9 +176,9 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         )
     }
 
-    protected open fun getStdlibArtifactName(sdk: Sdk?, version: String) = getStdlibArtifactId(sdk, version)
+    protected open fun getStdlibArtifactName(sdk: Sdk?, version: IdeKotlinVersion) = getStdlibArtifactId(sdk, version)
 
-    protected open fun getJvmTarget(sdk: Sdk?, version: String): String? = null
+    protected open fun getJvmTarget(sdk: Sdk?, version: IdeKotlinVersion): String? = null
 
     protected abstract val kotlinPluginName: String
     protected abstract fun getKotlinPluginExpression(forKotlinDsl: Boolean): String
@@ -185,7 +186,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
     protected open fun addElementsToFile(
         file: PsiFile,
         isTopLevelProjectFile: Boolean,
-        version: String
+        version: IdeKotlinVersion
     ): Boolean {
         if (!isTopLevelProjectFile) {
             var wasModified = KotlinGradleFacadeImpl.getManipulator(file).configureProjectBuildScript(kotlinPluginName, version)
@@ -198,7 +199,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
     private fun configureBuildScript(
         file: PsiFile,
         isTopLevelProjectFile: Boolean,
-        version: String,
+        version: IdeKotlinVersion,
         collector: NotificationMessageCollector
     ): Boolean {
         val isModified = file.project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", file.name), null) {
@@ -222,7 +223,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         requiredStdlibVersion: ApiVersion,
         forTests: Boolean
     ) {
-        val runtimeUpdateRequired = getRuntimeLibraryVersion(module)?.let { ApiVersion.parse(it) }?.let { runtimeVersion ->
+        val runtimeUpdateRequired = getRuntimeLibraryVersion(module)?.apiVersion?.let { runtimeVersion ->
             runtimeVersion < requiredStdlibVersion
         } ?: false
 
@@ -250,7 +251,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
     ) {
         val sinceVersion = feature.sinceApiVersion
 
-        if (state != LanguageFeature.State.DISABLED && getRuntimeLibraryVersion(module).toApiVersion() < sinceVersion) {
+        if (state != LanguageFeature.State.DISABLED && getRuntimeLibraryVersionOrDefault(module).apiVersion < sinceVersion) {
             Messages.showErrorDialog(
                 module.project,
                 KotlinIdeaGradleBundle.message("error.text.support.requires.version", feature.presentableName, sinceVersion),

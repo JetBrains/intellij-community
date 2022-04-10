@@ -32,6 +32,9 @@ public interface ModuleEx extends Module {
     return 0;
   }
 
+  /**
+   * @return true if this module can store settings in its IComponentStore
+   */
   @ApiStatus.Internal
   default boolean canStoreSettings() {
     return true;

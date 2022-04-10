@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -101,7 +101,7 @@ public final class NioFiles {
   }
 
   /**
-   * On POSIX file systems, sets "owner-exec" permission (if not yet set); on others, it does nothing.
+   * On POSIX file systems, the method sets "owner-exec" permission (if not yet set); on others, it does nothing.
    */
   public static void setExecutable(@NotNull Path file) throws IOException {
     PosixFileAttributeView view = Files.getFileAttributeView(file, PosixFileAttributeView.class);

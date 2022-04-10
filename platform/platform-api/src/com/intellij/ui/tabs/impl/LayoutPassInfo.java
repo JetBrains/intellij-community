@@ -30,8 +30,7 @@ public abstract class LayoutPassInfo {
    * @deprecated Will be removed in close future. If you suddenly need this,
    * then your code probably should be realized inside the {@link TabsLayout} implementation.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @Deprecated(forRemoval = true)
   public abstract int getRowCount();
 
   public abstract Rectangle getHeaderRectangle();

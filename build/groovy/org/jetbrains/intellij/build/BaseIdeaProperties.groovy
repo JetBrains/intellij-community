@@ -1,14 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BaseLayout
-import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.util.function.BiConsumer
 
 /**
@@ -80,6 +81,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.ml.models.local",
     "intellij.sh",
     "intellij.vcs.changeReminder",
+    "intellij.vcs.refactoring.detector",
     "intellij.markdown",
     "intellij.webp",
     "intellij.grazie",
@@ -90,6 +92,9 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.platform.tracing.ide",
     "intellij.toml",
     KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
+    "intellij.keymap.eclipse",
+    "intellij.keymap.visualStudio",
+    "intellij.keymap.netbeans",
   )
 
   private static final Map<String, String> BASE_CLASS_VERSIONS = [
@@ -99,6 +104,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "lib/annotations.jar"                                   : "1.6",
     // JAR contains class files for Java 1.8 and 11 (several modules packed into it)
     "lib/util.jar!/com/intellij/serialization/"             : "1.8",
+    "lib/util_rt.jar"                                       : "1.6",
     "lib/external-system-rt.jar"                            : "1.6",
     "plugins/coverage/lib/coverage_rt.jar"                  : "1.6",
     "plugins/javaFX/lib/rt/sceneBuilderBridge.jar"          : "11",
@@ -106,11 +112,11 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/junit/lib/junit5-rt.jar"                       : "1.8",
     "plugins/gradle/lib/gradle-tooling-extension-api.jar"   : "1.6",
     "plugins/gradle/lib/gradle-tooling-extension-impl.jar"  : "1.6",
-    "plugins/maven/lib/maven-server-api.jar"                : "1.6",
-    "plugins/maven/lib/maven2-server.jar"                   : "1.6",
-    "plugins/maven/lib/maven3-server-common.jar"            : "1.6",
-    "plugins/maven/lib/maven30-server.jar"                  : "1.6",
-    "plugins/maven/lib/maven3-server.jar"                   : "1.6",
+    "plugins/maven/lib/maven-server-api.jar"                : "1.8",
+    "plugins/maven/lib/maven2-server.jar"                   : "1.8",
+    "plugins/maven/lib/maven3-server-common.jar"            : "1.8",
+    "plugins/maven/lib/maven30-server.jar"                  : "1.8",
+    "plugins/maven/lib/maven3-server.jar"                   : "1.8",
     "plugins/maven/lib/artifact-resolver-m2.jar"            : "1.6",
     "plugins/maven/lib/artifact-resolver-m3.jar"            : "1.6",
     "plugins/maven/lib/artifact-resolver-m31.jar"           : "1.6",
@@ -171,6 +177,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
     productLayout.compatiblePluginsToIgnore = [
       "intellij.java.plugin",
+      "kotlin.resources-fir",
     ]
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]
@@ -181,9 +188,8 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
   @Override
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
     Path targetDir = Path.of(targetDirectory)
-    Path java8AnnotationsJar = targetDir.resolve("lib/annotations.jar")
-    BuildHelper.moveFile(java8AnnotationsJar, targetDir.resolve("redist/annotations-java8.jar"))
     // for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar
-    BuildHelper.moveFile(targetDir.resolve("lib/annotations-java5.jar"), java8AnnotationsJar)
+    Files.move(targetDir.resolve("lib/annotations-java5.jar"), targetDir.resolve("lib/annotations.jar"),
+               StandardCopyOption.REPLACE_EXISTING)
   }
 }

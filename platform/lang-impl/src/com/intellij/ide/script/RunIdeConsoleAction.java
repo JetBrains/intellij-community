@@ -63,7 +63,7 @@ import java.util.Objects;
 /**
  * @author gregsh
  */
-public final class RunIdeConsoleAction extends DumbAwareAction {
+public final class RunIdeConsoleAction extends DumbAwareAction implements UpdateInBackground {
   private static final Logger LOG = Logger.getInstance(RunIdeConsoleAction.class);
 
   private static final String DEFAULT_FILE_NAME = "ide-scripting";
@@ -74,9 +74,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    IdeScriptEngineManager manager = IdeScriptEngineManager.getInstance();
-    e.getPresentation().setVisible(e.getProject() != null);
-    e.getPresentation().setEnabled(manager.isInitialized() && !manager.getEngineInfos().isEmpty());
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 
   @Override
@@ -223,7 +221,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     int lineStart = document.getLineStartOffset(line);
     int lineEnd = document.getLineEndOffset(line);
 
-    // try detect a non-trivial composite PSI element if there's a PSI file
+    // try to detect a non-trivial composite PSI element if there's a PSI file
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file != null && file.getFirstChild() != null && file.getFirstChild() != file.getLastChild()) {
       PsiElement e1 = file.findElementAt(lineStart);
@@ -370,7 +368,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     }
 
     @Override
-    public void write(char[] cbuf, int off, int len) throws IOException {
+    public void write(char[] cbuf, int off, int len) {
       RunContentDescriptor descriptor = myDescriptor.get();
       ConsoleViewImpl console = ObjectUtils.tryCast(descriptor != null ? descriptor.getExecutionConsole() : null, ConsoleViewImpl.class);
       String text = new String(cbuf, off, len);

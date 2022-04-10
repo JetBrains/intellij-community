@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests
 
-import com.intellij.codeInspection.TestOnlyInspection
+import com.intellij.codeInspection.test.TestOnlyInspection
 
 abstract class TestOnlyInspectionTestBase : UastInspectionTestBase() {
   override val inspection = TestOnlyInspection()

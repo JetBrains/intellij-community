@@ -1,12 +1,7 @@
 import datetime
-import sys
+from typing_extensions import Literal, TypedDict
 
-from dateparser.date import DateDataParser
-
-if sys.version_info >= (3, 8):
-    from typing import Literal, TypedDict
-else:
-    from typing_extensions import Literal, TypedDict
+from .date import DateDataParser, _DetectLanguagesFunction
 
 __version__: str
 
@@ -33,9 +28,10 @@ class _Settings(TypedDict, total=False):
 
 def parse(
     date_string: str,
-    date_formats: list[str] | tuple[str] | set[str] | None = ...,
-    languages: list[str] | tuple[str] | set[str] | None = ...,
-    locales: list[str] | tuple[str] | set[str] | None = ...,
+    date_formats: list[str] | tuple[str, ...] | set[str] | None = ...,
+    languages: list[str] | tuple[str, ...] | set[str] | None = ...,
+    locales: list[str] | tuple[str, ...] | set[str] | None = ...,
     region: str | None = ...,
     settings: _Settings | None = ...,
+    detect_languages_function: _DetectLanguagesFunction | None = ...,
 ) -> datetime.datetime | None: ...

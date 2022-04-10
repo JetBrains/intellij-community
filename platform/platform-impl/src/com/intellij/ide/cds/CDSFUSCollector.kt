@@ -1,40 +1,34 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.cds
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import java.lang.management.ManagementFactory
 
-object CDSFUSCollector {
-  private const val groupId = "intellij.cds"
+class CDSFUSCollector : CounterUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
 
-  private val uptime
-    get() = System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().uptime
+  companion object {
+    private val GROUP = EventLogGroup("intellij.cds", 3)
 
-  fun logCDSStatus(enabled: Boolean,
-                   runningWithArchive: Boolean) {
-    FUCounterUsageLogger.getInstance().logEvent(groupId, "running.with.cds", FeatureUsageData()
-      .addData("running_with_archive", runningWithArchive)
-      .addData("status", if (enabled) "enabled" else "disabled")
-    )
-  }
+    private val STATUS = EventFields.String("status", listOf("success", "cancelled", "terminated-by-user", "plugins-changed", "failed"))
 
-  fun logCDSBuildingStarted() {
-    FUCounterUsageLogger.getInstance()
-      .logEvent(groupId,
-                "building.cds.started",
-                FeatureUsageData().addData("uptime_millis", uptime)
-      )
-  }
+    private val STARTED = GROUP.registerEvent("building.cds.started")
+    private val RUNNING = GROUP.registerEvent("running.with.cds", EventFields.Boolean("status"),
+                                              EventFields.Boolean("running_with_archive"))
+    private val FINISHED = GROUP.registerEvent("building.cds.finished", EventFields.DurationMs, STATUS)
 
-  fun logCDSBuildingCompleted(duration: Long, result: CDSTaskResult) {
-    FUCounterUsageLogger.getInstance()
-      .logEvent(groupId,
-                "building.cds.finished",
-                FeatureUsageData()
-                  .addData("duration", duration)
-                  .addData("uptime_millis", uptime)
-                  .addData("status", result.statusName)
-      )
+    fun logCDSStatus(enabled: Boolean, runningWithArchive: Boolean) {
+      RUNNING.log(enabled, runningWithArchive)
+    }
+
+    fun logCDSBuildingStarted() {
+      STARTED.log()
+    }
+
+    fun logCDSBuildingCompleted(duration: Long, result: CDSTaskResult) {
+      FINISHED.log(duration, result.statusName)
+    }
   }
 }

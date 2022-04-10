@@ -32,6 +32,7 @@ internal class DebugLogConfigureAction : DumbAwareAction() {
 }
 
 private const val TRACE_SUFFIX = ":trace"
+private const val ALL_SUFFIX = ":all"
 private val ALL_POSSIBLE_SEPARATORS = "[\n,;]+".toRegex()
 
 private class DebugLogConfigureDialog(project: Project, categories: List<DebugLogManager.Category>) : DialogWrapper(project, false) {
@@ -43,6 +44,7 @@ private class DebugLogConfigureDialog(project: Project, categories: List<DebugLo
       when (it.level) {
         DebugLogLevel.DEBUG -> it.category
         DebugLogLevel.TRACE -> "${it.category}$TRACE_SUFFIX"
+        DebugLogLevel.ALL -> "${it.category}$ALL_SUFFIX"
       }
     }
     title = IdeBundle.message("dialog.title.custom.debug.log.configuration")
@@ -51,7 +53,8 @@ private class DebugLogConfigureDialog(project: Project, categories: List<DebugLo
 
   override fun getDimensionServiceKey() = "#com.intellij.ide.actions.DebugLogConfigureAction"
 
-  override fun createNorthPanel() = JBLabel(XmlStringUtil.wrapInHtml(IdeBundle.message("label.enable.debug.level", TRACE_SUFFIX)))
+  override fun createNorthPanel() = JBLabel(
+    XmlStringUtil.wrapInHtml(IdeBundle.message("label.enable.debug.level", TRACE_SUFFIX, ALL_SUFFIX)))
 
   override fun createCenterPanel() = ScrollPaneFactory.createScrollPane(myTextArea)
 
@@ -66,6 +69,7 @@ private class DebugLogConfigureDialog(project: Project, categories: List<DebugLo
       .map {
         when {
           it.endsWith(TRACE_SUFFIX, ignoreCase = true) -> DebugLogManager.Category(it.dropLast(TRACE_SUFFIX.length), DebugLogLevel.TRACE)
+          it.endsWith(ALL_SUFFIX, ignoreCase = true) -> DebugLogManager.Category(it.dropLast(ALL_SUFFIX.length), DebugLogLevel.ALL)
           else -> DebugLogManager.Category(it, DebugLogLevel.DEBUG)
         }
       }

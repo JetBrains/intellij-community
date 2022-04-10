@@ -2,25 +2,25 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer.util
 
 import com.intellij.ide.plugins.newui.HorizontalLayout
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.ExternalProject
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.observable.properties.ObservableClearableProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.whenItemSelected
-import com.intellij.openapi.ui.whenMousePressed
+import com.intellij.openapi.observable.util.whenItemSelected
+import com.intellij.openapi.observable.util.whenMousePressed
 import com.intellij.ui.ListUtil
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBList
-import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import javax.swing.*
 
 internal class ExternalProjectSelector(
-  property: ObservableClearableProperty<ExternalProject?>,
-  externalProjects: List<ExternalProject>,
+  property: ObservableMutableProperty<DependencyAnalyzerProject?>,
+  externalProjects: List<DependencyAnalyzerProject>,
   private val iconProvider: ExternalSystemIconProvider
 ) : JPanel() {
   init {
@@ -36,16 +36,16 @@ internal class ExternalProjectSelector(
     add(dropDownLink)
   }
 
-  private fun createPopup(externalProjects: List<ExternalProject>, onChange: (ExternalProject) -> Unit): JBPopup {
+  private fun createPopup(externalProjects: List<DependencyAnalyzerProject>, onChange: (DependencyAnalyzerProject) -> Unit): JBPopup {
     val content = ExternalProjectPopupContent(externalProjects)
       .apply { whenMousePressed { onChange(selectedValue) } }
     return JBPopupFactory.getInstance()
       .createComponentPopupBuilder(content, null)
       .createPopup()
-      .apply { content.whenMousePressed(::closeOk) }
+      .apply { content.whenMousePressed(listener = ::closeOk) }
   }
 
-  private inner class ExternalProjectPopupContent(externalProject: List<ExternalProject>) : JBList<ExternalProject>() {
+  private inner class ExternalProjectPopupContent(externalProject: List<DependencyAnalyzerProject>) : JBList<DependencyAnalyzerProject>() {
     init {
       model = createDefaultListModel(externalProject)
       border = emptyListBorder()
@@ -56,10 +56,10 @@ internal class ExternalProjectSelector(
     }
   }
 
-  private inner class ExternalProjectRenderer : ListCellRenderer<ExternalProject?> {
+  private inner class ExternalProjectRenderer : ListCellRenderer<DependencyAnalyzerProject?> {
     override fun getListCellRendererComponent(
-      list: JList<out ExternalProject?>,
-      value: ExternalProject?,
+      list: JList<out DependencyAnalyzerProject?>,
+      value: DependencyAnalyzerProject?,
       index: Int,
       isSelected: Boolean,
       cellHasFocus: Boolean
@@ -78,9 +78,9 @@ internal class ExternalProjectSelector(
   }
 
   private inner class ExternalProjectDropDownLink(
-    property: ObservableClearableProperty<ExternalProject?>,
-    externalProjects: List<ExternalProject>,
-  ) : DropDownLink<ExternalProject?>(
+    property: ObservableMutableProperty<DependencyAnalyzerProject?>,
+    externalProjects: List<DependencyAnalyzerProject>,
+  ) : DropDownLink<DependencyAnalyzerProject?>(
     property.get(),
     { createPopup(externalProjects, it::selectedItem.setter) }
   ) {
@@ -91,7 +91,7 @@ internal class ExternalProjectSelector(
         .apply { x -= iconProvider.projectIcon.iconWidth }
         .apply { x -= JBUI.scale(ICON_TEXT_GAP) }
 
-    override fun itemToString(item: ExternalProject?): String = when (item) {
+    override fun itemToString(item: DependencyAnalyzerProject?): String = when (item) {
       null -> ExternalSystemBundle.message("external.system.dependency.analyzer.projects.empty")
       else -> item.title
     }

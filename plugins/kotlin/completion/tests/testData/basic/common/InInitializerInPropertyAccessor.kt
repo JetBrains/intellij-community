@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 val testGlobal = 12
 
 val test : Int get() {
@@ -9,3 +10,4 @@ val test : Int get() {
 }
 
 // EXIST: testGlobal, test, testParam
+// FIR_COMPARISON

@@ -18,11 +18,14 @@ package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public final class IdIndexEntry {
+  private static final boolean ourUseStrongerHash =
+    !TrigramIndex.isEnabled() || SystemProperties.getBooleanProperty("idea.id.index.use.stronger.hash", true);
   private final int myWordHashCode;
   
   public IdIndexEntry(@NotNull String word, boolean caseSensitive) {
@@ -64,7 +67,11 @@ public final class IdIndexEntry {
   }
 
   static int getWordHash(@NotNull CharSequence line, int start, int end, boolean caseSensitive) {
-    if (TrigramIndex.isEnabled()) {
+    if (useStrongerHash()) {
+      // use stronger hash
+      return caseSensitive ? StringUtil.stringHashCode(line, start, end) : StringUtil.stringHashCodeInsensitive(line, start, end);
+    }
+    else {
       // use more compact hash
       if (start == end) return 0;
       char firstChar = line.charAt(start);
@@ -75,13 +82,14 @@ public final class IdIndexEntry {
       }
       return (firstChar << 8) + (lastChar << 4) + end - start;
     }
-    else {
-      // use stronger hash
-      return StringUtil.stringHashCode(line, start, end);
-    }
   }
 
   static int getUsedHashAlgorithmVersion() {
-    return TrigramIndex.isEnabled() ? 0 : 1;
+    return useStrongerHash() ? 1 : 0;
+  }
+
+  @ApiStatus.Internal
+  public static boolean useStrongerHash() {
+    return ourUseStrongerHash;
   }
 }

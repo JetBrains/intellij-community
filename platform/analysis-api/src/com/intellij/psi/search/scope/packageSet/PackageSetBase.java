@@ -6,14 +6,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class PackageSetBase implements PackageSet {
   /** @deprecated use {@link PackageSetBase#contains(VirtualFile, Project, NamedScopesHolder)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean contains(@NotNull VirtualFile file, NamedScopesHolder holder) {
     return false;
   }

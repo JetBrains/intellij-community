@@ -1,4 +1,5 @@
-from typing import Any
+from typing import Any, overload
+from typing_extensions import Literal
 
 import sqlalchemy.types as sqltypes
 
@@ -93,6 +94,13 @@ class NTEXT(sqltypes.UnicodeText):
 
 class VARBINARY(sqltypes.VARBINARY, sqltypes.LargeBinary):
     __visit_name__: str
+    filestream: bool
+    @overload
+    def __init__(self, length: Literal["max"] | None, filestream: Literal[True]) -> None: ...
+    @overload
+    def __init__(self, *, filestream: Literal[True]) -> None: ...
+    @overload
+    def __init__(self, length: Any | None = ..., filestream: Literal[False] = ...) -> None: ...
 
 class IMAGE(sqltypes.LargeBinary):
     __visit_name__: str

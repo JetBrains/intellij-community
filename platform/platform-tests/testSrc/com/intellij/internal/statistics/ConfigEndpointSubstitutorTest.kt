@@ -1,4 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DEPRECATION")
+
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogEndpointSubstitutor

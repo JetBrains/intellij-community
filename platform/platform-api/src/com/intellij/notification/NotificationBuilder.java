@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** @deprecated the class is no longer needed, since {@link Notification} itself does implement the builder pattern. */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class NotificationBuilder {
   private final String myGroupId;
   private @NotNull @NlsContexts.NotificationTitle String myTitle;

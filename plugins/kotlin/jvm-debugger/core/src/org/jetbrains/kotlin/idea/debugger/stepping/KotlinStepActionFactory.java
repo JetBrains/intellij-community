@@ -33,6 +33,7 @@ public class KotlinStepActionFactory {
             public @NotNull RequestHint getHint(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, @Nullable RequestHint parentHint) {
                 KotlinStepOverRequestHint hint = new KotlinStepOverRequestHint(stepThread, suspendContext, methodFilter, parentHint);
                 hint.setResetIgnoreFilters(!debugProcess.getSession().shouldIgnoreSteppingFilters());
+                hint.setRestoreBreakpoints(ignoreBreakpoints);
                 try {
                     debugProcess.getSession().setIgnoreStepFiltersFlag(stepThread.frameCount());
                 } catch (EvaluateException e) {

@@ -17,7 +17,7 @@ import training.util.isToStringContains
 
 abstract class FileStructureLesson
   : KLesson("File structure", LessonsBundle.message("file.structure.lesson.name")) {
-  abstract override val existedFile: String
+  abstract override val sampleFilePath: String
   abstract val methodToFindPosition: LogicalPosition
 
   private val searchSubstring: String = "hosa"

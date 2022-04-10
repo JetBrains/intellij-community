@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.roots;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,6 +24,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
@@ -184,6 +184,13 @@ public final class VcsRootProblemNotifier {
     return mySettings.isIgnoredUnregisteredRoot(mapping.getDirectory());
   }
 
+  private boolean conflictsWithExistingMapping(@NotNull VcsDirectoryMapping mapping) {
+    if (mapping.isDefaultMapping()) return false;
+    return exists(myVcsManager.getDirectoryMappings(), it -> {
+      return Objects.equals(mapping.getDirectory(), it.getDirectory());
+    });
+  }
+
   private void expireNotification() {
     if (myNotification != null) {
       final Notification notification = myNotification;
@@ -286,7 +293,8 @@ public final class VcsRootProblemNotifier {
       return error.getType() == UNREGISTERED_ROOT &&
              isUnderOrAboveProjectDir(mapping) &&
              !isIgnoredOrExcludedPath(mapping) &&
-             !isExplicitlyIgnoredPath(mapping);
+             !isExplicitlyIgnoredPath(mapping) &&
+             !conflictsWithExistingMapping(mapping);
     });
   }
 

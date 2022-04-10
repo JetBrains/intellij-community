@@ -39,8 +39,7 @@ public class UnsupportedFeaturesUtil {
 
   private static void fillTestCaseMethods() throws IOException {
     final Logger log = Logger.getInstance(UnsupportedFeaturesUtil.class.getName());
-    final FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/class_method_versions.xml"));
-    try {
+    try (FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/class_method_versions.xml"))) {
       final XMLReader xr = XMLReaderFactory.createXMLReader();
       final ClassMethodsParser parser = new ClassMethodsParser();
       xr.setContentHandler(parser);
@@ -49,15 +48,11 @@ public class UnsupportedFeaturesUtil {
     catch (SAXException e) {
       log.error("Improperly formed \"class_method_versions.xml\". " + e.getMessage());
     }
-    finally {
-      reader.close();
-    }
   }
 
   private static void fillMaps() throws IOException {
     Logger log = Logger.getInstance(UnsupportedFeaturesUtil.class.getName());
-    FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/versions.xml"));
-    try {
+    try (FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/versions.xml"))) {
       XMLReader xr = XMLReaderFactory.createXMLReader();
       VersionsParser parser = new VersionsParser();
       xr.setContentHandler(parser);
@@ -65,9 +60,6 @@ public class UnsupportedFeaturesUtil {
     }
     catch (SAXException e) {
       log.error("Improperly formed \"versions.xml\". " + e.getMessage());
-    }
-    finally {
-      reader.close();
     }
   }
 

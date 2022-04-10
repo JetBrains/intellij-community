@@ -41,7 +41,7 @@ class PythonQuickFixesRefactoringLesson
 
     task {
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.type.new.argument", code("foo"), code("y"), code(", y")))
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { _: JBList<*> ->
+      triggerUI().component { _: JBList<*> ->
         checkEditor(editor)
       }
       proposeMyRestore()
@@ -67,7 +67,7 @@ class PythonQuickFixesRefactoringLesson
     task("ShowIntentionActions") {
       showQuickFixesTaskId = taskId
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.invoke.intentions", action(it)))
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
+      triggerAndBorderHighlight().listItem { item ->
         item.isToStringContains("foo(")
       }
       proposeRestore {
@@ -82,7 +82,7 @@ class PythonQuickFixesRefactoringLesson
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.choose.change.signature",
                                        strong(PyBundle.message("QFIX.NAME.change.signature"))))
 
-      triggerByPartOfComponent { table: JTable ->
+      triggerAndBorderHighlight().componentPart { table: JTable ->
         val model = table.model
         if (model.rowCount >= 2 && (model.getValueAt(1, 0) as? JBTableRow)?.getValueAt(0) == "y") {
           table.getCellRect(1, 0, true)
@@ -99,11 +99,9 @@ class PythonQuickFixesRefactoringLesson
     task {
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.select.new.parameter",
                                        action("EditorTab"), LessonUtil.rawEnter()))
-
-      val selector = { collection: Collection<EditorComponentImpl> ->
+      triggerAndFullHighlight().withSelector { collection: Collection<EditorComponentImpl> ->
         collection.takeIf { it.size > 2 }?.maxByOrNull { it.locationOnScreen.x }
-      }
-      triggerByUiComponentAndHighlight(selector = selector) { editor: EditorComponentImpl ->
+      }.byComponent { editor: EditorComponentImpl ->
         UIUtil.getParentOfType(JDialog::class.java, editor) != null
       }
       restoreByUi()

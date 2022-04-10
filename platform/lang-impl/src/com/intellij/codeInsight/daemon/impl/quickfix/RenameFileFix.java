@@ -66,8 +66,8 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiFile file = descriptor.getPsiElement().getContainingFile();
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    PsiFile file = descriptor.getPsiElement().getContainingFile();
     if (isAvailable(project, null, file)) {
       WriteCommandAction.writeCommandAction(project).run(() -> invoke(project, null, file));
     }
@@ -78,9 +78,9 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
     if (file == null || !file.isValid()) return false;
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) return false;
-    final VirtualFile parent = vFile.getParent();
+    VirtualFile parent = vFile.getParent();
     if (parent == null) return false;
-    final VirtualFile newVFile = parent.findChild(myNewFileName);
+    VirtualFile newVFile = parent.findChild(myNewFileName);
     return newVFile == null || newVFile.equals(vFile);
   }
 

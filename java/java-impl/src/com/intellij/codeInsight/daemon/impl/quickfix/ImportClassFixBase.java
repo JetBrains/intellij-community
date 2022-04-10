@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
@@ -12,7 +12,7 @@ import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
-import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +41,7 @@ import java.util.regex.PatternSyntaxException;
 /**
  * @author peter
  */
-public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiReference> implements HintAction, HighPriorityAction {
+public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiReference> implements HintAction, PriorityAction {
   @NotNull
   private final T myElement;
   @NotNull
@@ -52,6 +52,11 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     myElement = elem;
     myRef = ref;
     myClassesToImport = calcClassesToImport();
+  }
+
+  @Override
+  public @NotNull Priority getPriority() {
+    return PriorityAction.Priority.TOP;
   }
 
   @Override

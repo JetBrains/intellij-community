@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.SuppressionUtil;
@@ -7,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -114,9 +112,6 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   @Override
   public SmartPsiElementPointer<?> getPointer() {
     return myID;
-  }
-
-  public void buildReferences() {
   }
 
   @Override
@@ -254,22 +249,16 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   public synchronized void setInitialized(final boolean initialized) {
     setFlag(initialized, IS_INITIALIZED_MASK);
-    if (initialized) {
-      notifyAll();
-    }
   }
 
   @Override
   public final synchronized void waitForInitialized() {
-    if (!Registry.is("batch.inspections.process.project.usages.in.parallel")) {
+    if (isInitialized()) {
       return;
     }
-    try {
-      while (!isInitialized()) {
-        wait(100);
-      }
-    }
-    catch (InterruptedException ignore) {}
+    initialize();
+    setInitialized(true);
+    getRefManager().fireNodeInitialized(this);
   }
 
   @Override

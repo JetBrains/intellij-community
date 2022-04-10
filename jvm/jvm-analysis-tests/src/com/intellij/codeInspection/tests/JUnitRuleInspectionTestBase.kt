@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests
 
-import com.intellij.codeInspection.JUnitRuleInspection
+import com.intellij.codeInspection.test.junit.JUnitRuleInspection
 
 abstract class JUnitRuleInspectionTestBase : UastInspectionTestBase() {
   override val inspection = JUnitRuleInspection()
@@ -50,7 +50,7 @@ abstract class JUnitRuleInspectionTestBase : UastInspectionTestBase() {
       import org.junit.rules.TestRule;
       import org.junit.ClassRule;
     
-      class SomeTestRule implements TestRule { }
+      public class SomeTestRule implements TestRule { }
   """.trimIndent())
   }
 }

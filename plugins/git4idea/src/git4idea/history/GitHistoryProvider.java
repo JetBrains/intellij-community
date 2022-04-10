@@ -181,11 +181,6 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
     }
 
     @Override
-    public HistoryAsTreeProvider getHistoryAsTreeProvider() {
-      return null;
-    }
-
-    @Override
     public VcsHistorySession copy() {
       return createSession(myFilePath, getRevisionList(), getCurrentRevisionNumber());
     }

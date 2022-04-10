@@ -143,7 +143,7 @@ public final class BuildTargetConfiguration {
     }
     File file = getNonexistentOutputsFile();
     if (nonexistentOutputRoots.isEmpty()) {
-      FileUtil.delete(file);
+      file.delete();
     }
     else {
       FileUtil.writeToFile(file, StringUtil.join(nonexistentOutputRoots, "\n"));

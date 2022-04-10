@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.gradleJava.inspections.getDependencyModules
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.idea.statistics.KotlinIDEGradleActionsFUSCollector
+import org.jetbrains.kotlin.idea.util.CopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.idea.util.PsiPrecedences
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
@@ -76,6 +77,9 @@ var DataNode<out ModuleData>.compilerArgumentsBySourceSet: CompilerArgumentsBySo
     @Suppress("DEPRECATION_ERROR")
     get() = compilerArgumentsBySourceSet()
     set(value) = throw UnsupportedOperationException("Changing of compilerArguments is available only through GradleSourceSetData.")
+
+var DataNode<ModuleData>.kotlinTaskPropertiesBySourceSet
+        by CopyableDataNodeUserDataProperty(Key.create<KotlinTaskPropertiesBySourceSet>("CURRENT_COMPILER_ARGUMENTS"))
 
 @Suppress("TYPEALIAS_EXPANSION_DEPRECATION", "DEPRECATION_ERROR")
 fun DataNode<out ModuleData>.compilerArgumentsBySourceSet(): CompilerArgumentsBySourceSet? =
@@ -369,6 +373,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         if (!useModulePerSourceSet()) {
             super.populateModuleDependencies(gradleModule, ideModule, ideProject)
         }
+        ideModule.kotlinTaskPropertiesBySourceSet = gradleModel.kotlinTaskProperties
 
         addTransitiveDependenciesOnImplementedModules(gradleModule, ideModule, ideProject)
         addImplementedModuleNames(gradleModule, ideModule, ideProject, gradleModel)

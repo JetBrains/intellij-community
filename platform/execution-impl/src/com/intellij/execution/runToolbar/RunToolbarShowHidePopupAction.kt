@@ -10,12 +10,15 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
+import net.miginfocom.swing.MigLayout
 import java.awt.Dimension
 import java.awt.Point
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 
-class RunToolbarShowHidePopupAction : AnAction(ActionsBundle.message("action.RunToolbarShowHidePopupAction.show.popup.text")), CustomComponentAction, DumbAware, RTBarAction {
+class RunToolbarShowHidePopupAction : AnAction(
+  ActionsBundle.message("action.RunToolbarShowHidePopupAction.show.popup.text")), CustomComponentAction, DumbAware, RTBarAction {
 
   override fun actionPerformed(e: AnActionEvent) {
 
@@ -38,7 +41,24 @@ class RunToolbarShowHidePopupAction : AnAction(ActionsBundle.message("action.Run
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return ExtraSlotsActionButton(this, presentation, place)
+    val extraSlotsActionButton = ExtraSlotsActionButton(this@RunToolbarShowHidePopupAction, presentation, place)
+    return object : JPanel(MigLayout("ins 0, gap 0, fill")), PopupControllerComponent {
+      override fun addListener(listener: PopupControllerComponentListener) {
+        extraSlotsActionButton.addListener(listener)
+      }
+
+      override fun removeListener(listener: PopupControllerComponentListener) {
+        extraSlotsActionButton.removeListener(listener)
+      }
+
+      override fun updateIconImmediately(isOpened: Boolean) {
+        extraSlotsActionButton.updateIconImmediately(isOpened)
+      }
+    }.apply {
+      isOpaque = false
+      add(DraggablePane(), "pos 0 0")
+      add(extraSlotsActionButton, "grow")
+    }
   }
 
   private class ExtraSlotsActionButton(action: AnAction,

@@ -11,7 +11,6 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import com.intellij.util.io.VersionUpdatedException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -48,8 +47,7 @@ public final class MavenIndex implements MavenSearchIndex {
   /**
    *  @deprecated not used
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   private final Set<String> myRegisteredRepositoryIds;
 
   private final String myRepositoryPathOrUrl;
@@ -80,10 +78,6 @@ public final class MavenIndex implements MavenSearchIndex {
     myFailureMessage = propertyHolder.failureMessage;
 
     open();
-  }
-
-  public Set<String> getRegisteredRepositoryIds() {
-    return myRegisteredRepositoryIds;
   }
 
   public String getDataDirName() {
@@ -449,6 +443,7 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   private static void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
+    if(key == null || value == null || cache == null) return;
     synchronized (cache) {
       Set<String> values = cache.get(key);
       if (values == null) values = new TreeSet<>();
@@ -662,10 +657,9 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   /**
-   * @deprecated use {@link MavenIndexUtils#normalizePathOrUrl(java.lang.String)}
+   * @deprecated use {@link MavenIndexUtils#normalizePathOrUrl(String)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   @NotNull
   public static String normalizePathOrUrl(@NotNull String pathOrUrl) {
     return MavenIndexUtils.normalizePathOrUrl(pathOrUrl);

@@ -6,8 +6,8 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.imports.canBeAddedToImport
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -76,7 +76,7 @@ class ImportMemberIntention : SelfTargetingOffsetIndependentIntention<KtNameRefe
     private fun target(qualifiedElement: KtElement): DeclarationDescriptor? {
         val nameExpression = qualifiedElement.getQualifiedElementSelector() as? KtNameReferenceExpression ?: return null
         val receiver = nameExpression.getReceiverExpression() ?: return null
-        val bindingContext = qualifiedElement.analyze(BodyResolveMode.PARTIAL)
+        val bindingContext = qualifiedElement.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
         if (bindingContext[BindingContext.QUALIFIER, receiver] == null) return null
 
         val targets = nameExpression.mainReference.resolveToDescriptors(bindingContext)

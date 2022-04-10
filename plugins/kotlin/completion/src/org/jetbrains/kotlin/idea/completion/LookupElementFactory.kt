@@ -1,21 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
 import com.intellij.codeInsight.completion.DeclarativeInsertHandler2
-import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.openapi.editor.Editor
 import com.intellij.ui.JBColor
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.completion.handlers.GenerateLambdaInfo
-import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionCompositeDeclarativeInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionInsertHandler
+import org.jetbrains.kotlin.idea.completion.handlers.createNormalFunctionInsertHandler
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.idea.util.ReceiverType
 import org.jetbrains.kotlin.idea.util.toFuzzyType
@@ -52,6 +53,7 @@ interface AbstractLookupElementFactory {
 data /* we need copy() */
 class LookupElementFactory(
     val basicFactory: BasicLookupElementFactory,
+    private val editor: Editor,
     private val receiverTypes: Collection<ReceiverType>?,
     private val callType: CallType<*>,
     private val inDescriptor: DeclarationDescriptor,
@@ -167,11 +169,6 @@ class LookupElementFactory(
         explicitLambdaParameters: Boolean
     ): LookupElement {
         var lookupElement = createLookupElement(descriptor, useReceiverTypes)
-        val inputTypeArguments = when (val insertHandler = insertHandlerProvider.insertHandler(descriptor)) {
-            is KotlinFunctionInsertHandler.Normal -> insertHandler.inputTypeArguments
-            is KotlinFunctionCompositeDeclarativeInsertHandler -> insertHandler.inputTypeArguments
-            else -> false
-        }
         val lambdaInfo = GenerateLambdaInfo(parameterType, explicitLambdaParameters)
         val lambdaPresentation = if (explicitLambdaParameters)
             LambdaSignatureTemplates.lambdaPresentation(parameterType, LambdaSignatureTemplates.SignaturePresentation.NAMES_OR_TYPES)
@@ -194,8 +191,18 @@ class LookupElementFactory(
                 }
             }
         }
+
         val parametersPresentation =
             parametersRenderer.renderValueParameters(listOf(descriptor.valueParameters.last()), descriptor.hasSynthesizedParameterNames())
+
+        val handler = createNormalFunctionInsertHandler(
+            editor,
+            callType,
+            descriptor.name,
+            insertHandlerProvider.needTypeArguments(descriptor),
+            inputValueArguments = false,
+            lambdaInfo = lambdaInfo,
+        )
 
         lookupElement = object : LookupElementDecorator<LookupElement>(lookupElement) {
             override fun renderElement(presentation: LookupElementPresentation) {
@@ -207,12 +214,7 @@ class LookupElementFactory(
                 basicFactory.appendContainerAndReceiverInformation(descriptor) { presentation.appendTailText(it, true) }
             }
 
-            override fun getDecoratorInsertHandler() = KotlinFunctionInsertHandler.Normal(
-                callType,
-                inputTypeArguments,
-                inputValueArguments = false,
-                lambdaInfo = lambdaInfo,
-            )
+            override fun getDelegateInsertHandler(): InsertHandler<LookupElement> = handler
         }
 
         return lookupElement
@@ -238,13 +240,12 @@ class LookupElementFactory(
         useReceiverTypes: Boolean
     ): LookupElement {
         val lookupElement = createLookupElement(descriptor, useReceiverTypes)
-
-        val needTypeArguments = when (val insertHandler = insertHandlerProvider.insertHandler(descriptor)) {
-            is KotlinFunctionInsertHandler.Normal -> insertHandler.inputTypeArguments
-            is KotlinFunctionCompositeDeclarativeInsertHandler -> insertHandler.inputTypeArguments
-            else -> false
-        }
-        return FunctionCallWithArgumentsLookupElement(lookupElement, descriptor, argumentText, needTypeArguments)
+        return FunctionCallWithArgumentsLookupElement(
+            lookupElement,
+            descriptor,
+            argumentText,
+            insertHandlerProvider.needTypeArguments(descriptor),
+        )
     }
 
     private inner class FunctionCallWithArgumentsLookupElement(

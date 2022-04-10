@@ -17,6 +17,7 @@ import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -28,7 +29,7 @@ import com.intellij.psi.util.parents
 import com.intellij.refactoring.suggested.startOffset
 import kotlinx.coroutines.*
 
-internal class CheckerRunner(val text: TextContent) {
+class CheckerRunner(val text: TextContent) {
   private val sentences by lazy { SRXSentenceTokenizer.tokenize(text.toString()) }
 
   fun run(checkers: List<TextChecker>, consumer: (TextProblem) -> Unit) {
@@ -36,7 +37,7 @@ internal class CheckerRunner(val text: TextContent) {
       val deferred: List<Deferred<Collection<TextProblem>>> = checkers.map { checker ->
         when (checker) {
           is ExternalTextChecker -> async { checker.checkExternally(text) }
-          else -> async(start = CoroutineStart.LAZY) { checker.check(text) }
+          else -> async(start = CoroutineStart.LAZY) { blockingContext { checker.check(text) } }
         }
       }
       launch {
@@ -192,10 +193,9 @@ internal class CheckerRunner(val text: TextContent) {
   }
 
   private fun fileHighlightRanges(problem: TextProblem): List<TextRange> {
-    val contentRangesInFile = text.rangesInFile
     return problem.highlightRanges.asSequence()
       .map { text.textRangeToFile(it) }
-      .flatMap { range -> contentRangesInFile.asSequence().mapNotNull { it.intersection(range) } }
+      .flatMap { range -> text.intersection(range) }
       .filterNot { it.isEmpty }
       .toList()
   }

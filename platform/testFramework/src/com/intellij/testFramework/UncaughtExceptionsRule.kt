@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.util.containers.ContainerUtil
@@ -7,6 +7,9 @@ import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 
+/**
+ * @see UncaughtExceptionsExtension
+ */
 class UncaughtExceptionsRule : TestRule {
 
   private val myExceptions = ContainerUtil.createConcurrentList<Throwable>()

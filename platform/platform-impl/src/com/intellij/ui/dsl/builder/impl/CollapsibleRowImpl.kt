@@ -25,6 +25,14 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
   private val collapsibleTitledSeparator = CollapsibleTitledSeparator(title)
 
   override var expanded by collapsibleTitledSeparator::expanded
+  
+  override fun setText(@NlsContexts.Separator text: String) {
+    collapsibleTitledSeparator.text = text
+  }
+  
+  override fun addExpandedListener(action: (Boolean) -> Unit) {
+    collapsibleTitledSeparator.expandedProperty.afterChange { action(it) }
+  }
 
   init {
     collapsibleTitledSeparator.setLabelFocusable(true)

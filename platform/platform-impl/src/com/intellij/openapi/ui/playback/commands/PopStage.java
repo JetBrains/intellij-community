@@ -3,6 +3,7 @@ package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.StageInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -15,7 +16,7 @@ public class PopStage extends AbstractCommand {
   }
 
   @Override
-  protected Promise<Object> _execute(PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     StageInfo stage = context.popStage();
     if (stage != null) {
       context.test("Test finished OK: " + stage.getName(), getLine());

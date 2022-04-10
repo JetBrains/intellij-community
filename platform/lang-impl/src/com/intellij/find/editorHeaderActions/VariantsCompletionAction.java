@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -49,25 +49,25 @@ public class VariantsCompletionAction extends DumbAwareAction implements LightEd
     final String prefix = myTextField.getText().substring(0, myTextField.getCaretPosition());
     if (StringUtil.isEmpty(prefix)) return;
 
-      final String[] array = calcWords(prefix, editor);
-      if (array.length == 0) {
-        return;
+    final String[] array = calcWords(prefix, editor);
+    if (array.length == 0) {
+      return;
+    }
+
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("find.completion");
+    final JList<String> list = new JBList<>(array) {
+      @Override
+      protected void paintComponent(final Graphics g) {
+        GraphicsUtil.setupAntialiasing(g);
+        super.paintComponent(g);
       }
+    };
+    list.setBackground(new JBColor(new Color(235, 244, 254), new Color(0x4C4F51)));
+    list.setFont(editor.getColorsScheme().getFont(EditorFontType.PLAIN));
 
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("find.completion");
-      final JList<String> list = new JBList<>(array) {
-        @Override
-        protected void paintComponent(final Graphics g) {
-          GraphicsUtil.setupAntialiasing(g);
-          super.paintComponent(g);
-        }
-      };
-      list.setBackground(new JBColor(new Color(235, 244, 254), new Color(0x4C4F51)));
-      list.setFont(editor.getColorsScheme().getFont(EditorFontType.PLAIN));
-
-      Utils.showCompletionPopup(
-        e.getInputEvent() instanceof MouseEvent ? myTextField: null,
-        list, null, myTextField, null, myPopupState);
+    Utils.showCompletionPopup(
+      e.getInputEvent() instanceof MouseEvent ? myTextField: null,
+      list, null, myTextField, null, myPopupState);
   }
 
   private static String[] calcWords(final String prefix, Editor editor) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.copy;
 
 import com.intellij.CommonBundle;
@@ -36,7 +36,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,8 +61,7 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
    *
    * @deprecated use {@link RefactoringDialog#RefactoringDialog(Project, boolean, boolean)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static JCheckBox createOpenInEditorCB() {
     JCheckBox checkBox = new JCheckBox(RefactoringBundle.message("open.copy.in.editor"), PropertiesComponent.getInstance().getBoolean(COPY_OPEN_IN_EDITOR, true));
     checkBox.setMnemonic('o');
@@ -75,8 +73,7 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
    *
    * @deprecated use {@link RefactoringDialog#RefactoringDialog(Project, boolean, boolean)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void saveOpenInEditorState(boolean selected) {
     PropertiesComponent.getInstance().setValue(COPY_OPEN_IN_EDITOR, String.valueOf(selected));
   }
@@ -91,13 +88,14 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
   private final boolean myShowNewNameField;
 
   private PsiDirectory myTargetDirectory;
-  private boolean myFileCopy = false;
+  private final boolean myFileCopy;
 
   public CopyFilesOrDirectoriesDialog(PsiElement[] elements, @Nullable PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
     super(project, true, canBeOpenedInEditor(elements));
     myElements = elements;
     myShowDirectoryField = !doClone;
     myShowNewNameField = elements.length == 1;
+    myFileCopy = elements.length == 1 && elements[0] instanceof PsiFile;
 
     if (doClone && elements.length != 1) {
       throw new IllegalArgumentException("wrong number of elements to clone: " + elements.length);
@@ -129,7 +127,6 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
           selectNameWithoutExtension(dotIdx);
         }
         myTargetDirectory = file.getContainingDirectory();
-        myFileCopy = true;
       }
       else {
         VirtualFile vFile = ((PsiDirectory)elements[0]).getVirtualFile();
@@ -147,7 +144,7 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
       getTargetDirectoryComponent().setText(targetPath);
     }
     validateButtons();
-    getRefactorAction().putValue(Action.NAME, CommonBundle.getOkButtonText());
+    setRefactorButtonText(CommonBundle.getOkButtonText());
   }
 
   private static boolean canBeOpenedInEditor(PsiElement[] elements) {
@@ -157,6 +154,11 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
       }
     }
     return false;
+  }
+
+  @Override
+  protected boolean isOpenInEditorEnabledByDefault() {
+    return myFileCopy;
   }
 
   private void selectNameWithoutExtension(int dotIdx) {

@@ -1,12 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -182,7 +185,10 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
 
   @Nullable
   public static String getBestDocumentation(boolean preferShort, @NotNull final JsonSchemaObject schema) {
-    final String htmlDescription = schema.getHtmlDescription();
+    String htmlDescription = schema.getHtmlDescription();
+    if (htmlDescription != null && hasNonTrustedProjects()) {
+      htmlDescription = htmlDescription.replaceAll("<a[^>]*>", "").replaceAll("</a>", "");
+    }
     final String description = schema.getDescription();
     final String title = schema.getTitle();
     if (preferShort && !StringUtil.isEmptyOrSpaces(title)) {
@@ -197,6 +203,15 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
       return desc;
     }
     return null;
+  }
+
+  private static boolean hasNonTrustedProjects() {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      if (!TrustedProjects.isTrusted(project)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull

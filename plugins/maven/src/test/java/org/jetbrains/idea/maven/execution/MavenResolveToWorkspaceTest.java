@@ -118,8 +118,7 @@ public abstract class MavenResolveToWorkspaceTest extends MavenMultiVersionImpor
   }
 
   private static Properties readProperties(String filePath) throws IOException {
-    InputStream is = new BufferedInputStream(new FileInputStream(filePath));
-    try {
+    try (InputStream is = new BufferedInputStream(new FileInputStream(filePath))) {
       Properties properties = new Properties();
       properties.load(is);
 
@@ -129,9 +128,6 @@ public abstract class MavenResolveToWorkspaceTest extends MavenMultiVersionImpor
       }
 
       return properties;
-    }
-    finally {
-      is.close();
     }
   }
 

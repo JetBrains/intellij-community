@@ -203,11 +203,11 @@ final class PortableCompilationCache {
   /**
    * Publish already uploaded {@link PortableCompilationCache} to {@link RemoteCache}
    */
-  def publish() {
+  void publish() {
     uploader.updateCommitHistory()
   }
 
-  def buildJpsCacheZip() {
+  File buildJpsCacheZip() {
     uploader.buildJpsCacheZip()
   }
 
@@ -215,7 +215,7 @@ final class PortableCompilationCache {
    * Publish already uploaded {@link PortableCompilationCache} to {@link RemoteCache} overriding existing {@link CommitsHistory}.
    * Used in force rebuild and cleanup.
    */
-  def overrideCommitHistory(Set<String> forceRebuiltCommits) {
+  void overrideCommitHistory(Set<String> forceRebuiltCommits) {
     def newCommitHistory = new CommitsHistory([(remoteGitUrl): forceRebuiltCommits])
     uploader.updateCommitHistory(newCommitHistory, true)
   }

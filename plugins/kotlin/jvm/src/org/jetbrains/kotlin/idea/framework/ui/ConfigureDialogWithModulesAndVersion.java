@@ -22,12 +22,11 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinJvmBundle;
-import org.jetbrains.kotlin.idea.KotlinPluginUtil;
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout;
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtilsKt;
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator;
 import org.jetbrains.kotlin.idea.extensions.gradle.RepositoryDescription;
-import org.jetbrains.kotlin.idea.util.VersioningKt;
-import org.jetbrains.kotlin.idea.versions.KotlinRuntimeLibraryUtilKt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -157,17 +156,19 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
         public static Collection<String> loadVersions(String minimumVersion) throws Exception {
         List<String> versions = new ArrayList<>();
 
-        String kotlinCompilerVersionShort = KotlinRuntimeLibraryUtilKt.kotlinCompilerVersionShort();
-        RepositoryDescription repositoryDescription = ConfigureKotlinInProjectUtilsKt.getRepositoryForVersion(kotlinCompilerVersionShort);
+        IdeKotlinVersion kotlinCompilerVersion = KotlinPluginLayout.getInstance().getStandaloneCompilerVersion();
+        String kotlinArtifactVersion = kotlinCompilerVersion.getArtifactVersion();
+
+        RepositoryDescription repositoryDescription = ConfigureKotlinInProjectUtilsKt.getRepositoryForVersion(kotlinCompilerVersion);
         if (repositoryDescription != null && repositoryDescription.getBintrayUrl() != null) {
-            HttpURLConnection eapConnection = HttpConfigurable.getInstance().openHttpConnection(repositoryDescription.getBintrayUrl() + kotlinCompilerVersionShort);
+            HttpURLConnection eapConnection = HttpConfigurable.getInstance().openHttpConnection(repositoryDescription.getBintrayUrl() + kotlinArtifactVersion);
             try {
                 int timeout = (int) TimeUnit.SECONDS.toMillis(30);
                 eapConnection.setConnectTimeout(timeout);
                 eapConnection.setReadTimeout(timeout);
 
                 if (eapConnection.getResponseCode() == 200) {
-                    versions.add(kotlinCompilerVersionShort);
+                    versions.add(kotlinArtifactVersion);
                 }
             }
             finally {
@@ -205,9 +206,8 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
         Collections.sort(versions, VersionComparatorUtil.COMPARATOR.reversed());
 
         // Handle the case when the new version has just been released and the Maven search index hasn't been updated yet
-        if (!VersioningKt.isEap(kotlinCompilerVersionShort) && !KotlinPluginUtil.isSnapshotVersion() &&
-            !kotlinCompilerVersionShort.contains("dev") && !versions.contains(kotlinCompilerVersionShort)) {
-            versions.add(0, kotlinCompilerVersionShort);
+        if (kotlinCompilerVersion.isRelease() && !versions.contains(kotlinArtifactVersion)) {
+            versions.add(0, kotlinArtifactVersion);
         }
 
         return versions;

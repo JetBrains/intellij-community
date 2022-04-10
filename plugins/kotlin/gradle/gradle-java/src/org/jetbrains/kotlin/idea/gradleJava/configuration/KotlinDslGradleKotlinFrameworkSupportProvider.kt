@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.GSK_KOTLIN_VERSION_PROPERTY_NAME
@@ -23,7 +24,6 @@ import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade
 import org.jetbrains.kotlin.idea.gradle.configuration.MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
-import org.jetbrains.kotlin.idea.util.isSnapshot
 import org.jetbrains.kotlin.idea.versions.*
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleFrameworkSupportProvider
@@ -49,9 +49,9 @@ abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
         modifiableModelsProvider: ModifiableModelsProvider,
         buildScriptData: BuildScriptDataBuilder
     ) {
-        var kotlinVersion = kotlinCompilerVersionShort()
+        var kotlinVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
         val additionalRepository = getRepositoryForVersion(kotlinVersion)
-        if (isSnapshot(bundledRuntimeVersion())) {
+        if (KotlinPluginLayout.instance.standaloneCompilerVersion.isSnapshot) {
             kotlinVersion = LAST_SNAPSHOT_VERSION
         }
 
@@ -71,7 +71,7 @@ abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
             }
 
             buildScriptData
-                .addPluginDefinitionInPluginsGroup(getPluginDefinition() + " version \"$kotlinVersion\"")
+                .addPluginDefinitionInPluginsGroup(getPluginDefinition() + " version \"${kotlinVersion.artifactVersion}\"")
         } else {
             if (additionalRepository != null) {
                 val repository = additionalRepository.toKotlinRepositorySnippet()
@@ -85,7 +85,7 @@ abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
                 .addPluginDefinition(getOldSyntaxPluginDefinition())
                 .addBuildscriptRepositoriesDefinition("mavenCentral()")
                 // TODO: in gradle > 4.1 this could be single declaration e.g. 'val kotlin_version: String by extra { "1.1.11" }'
-                .addBuildscriptPropertyDefinition("var $GSK_KOTLIN_VERSION_PROPERTY_NAME: String by extra\n    $GSK_KOTLIN_VERSION_PROPERTY_NAME = \"$kotlinVersion\"")
+                .addBuildscriptPropertyDefinition("var $GSK_KOTLIN_VERSION_PROPERTY_NAME: String by extra\n    $GSK_KOTLIN_VERSION_PROPERTY_NAME = \"${kotlinVersion.artifactVersion}\"")
                 .addBuildscriptDependencyNotation(getKotlinGradlePluginClassPathSnippet())
         }
 
@@ -130,12 +130,12 @@ class KotlinDslGradleKotlinJavaFrameworkSupportProvider :
         buildScriptData: BuildScriptDataBuilder
     ) {
         super.addSupport(projectId, module, rootModel, modifiableModelsProvider, buildScriptData)
-        val jvmTarget = getDefaultJvmTarget(rootModel.sdk, bundledRuntimeVersion())
+        val jvmTarget = getDefaultJvmTarget(rootModel.sdk, KotlinPluginLayout.instance.standaloneCompilerVersion)
         if (jvmTarget != null) {
             addJvmTargetTask(buildScriptData)
         }
 
-        val artifactId = getStdlibArtifactId(rootModel.sdk, bundledRuntimeVersion())
+        val artifactId = getStdlibArtifactId(rootModel.sdk, KotlinPluginLayout.instance.standaloneCompilerVersion)
         buildScriptData.addDependencyNotation(composeDependency(buildScriptData, artifactId))
     }
 

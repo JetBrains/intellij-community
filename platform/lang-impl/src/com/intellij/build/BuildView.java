@@ -129,7 +129,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
                            runContentDescriptor.getExecutionConsole() != this ?
                            runContentDescriptor.getExecutionConsole() : new BuildTextConsoleView(myProject, false,
                                                                                                  myBuildDescriptor.getExecutionFilters());
-      if (runContentDescriptor != null && Disposer.findRegisteredObject(runContentDescriptor, this) == null) {
+      if (runContentDescriptor != null && runContentDescriptor.getExecutionConsole() != this) {
         Disposer.register(this, runContentDescriptor);
       }
     }

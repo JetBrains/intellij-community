@@ -212,9 +212,7 @@ public final class FormsBindingManager extends FormsBuilder {
           return true;
         }
       }
-      catch (IOException ignore) {
-      }
-      catch (AlienFormFileException ignore) {
+      catch (IOException | AlienFormFileException ignore) {
       }
     }
     return false;

@@ -244,7 +244,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
     @NotNull
     @Override
-    public VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails commitDetails, boolean isSelected) {
+    public VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails commitDetails, int column, boolean isSelected) {
       if (isSelected) return VcsCommitStyle.DEFAULT;
 
       if (myCondition == null) {

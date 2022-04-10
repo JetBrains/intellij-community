@@ -88,7 +88,7 @@ private fun disableInputMethdosImpl() {
 
     val frames = WindowManagerEx.getInstanceEx().projectFrameHelpers
       .map { fh -> SwingUtilities.getRoot(fh.frame) }
-      .filter { с -> с != null }
+      .filter { c -> c != null }
 
     ApplicationManager.getApplication().executeOnPooledThread {
       val startMs = System.currentTimeMillis()

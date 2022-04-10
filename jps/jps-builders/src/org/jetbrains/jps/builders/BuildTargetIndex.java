@@ -37,7 +37,7 @@ public interface BuildTargetIndex extends BuildTargetRegistry {
    * @deprecated use {@link #getDependencies(BuildTarget, CompileContext)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   Set<BuildTarget<?>> getDependenciesRecursively(@NotNull BuildTarget<?> target, @NotNull CompileContext context);
 
   @NotNull

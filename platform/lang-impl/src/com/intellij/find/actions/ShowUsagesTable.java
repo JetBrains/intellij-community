@@ -9,10 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SpeedSearchBase;
-import com.intellij.ui.SpeedSearchComparator;
-import com.intellij.ui.TableUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
@@ -30,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.ArrayList;
@@ -43,7 +39,6 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
   final Usage MORE_USAGES_SEPARATOR = new UsageAdapter();
   final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
   final Usage USAGES_FILTERED_OUT_SEPARATOR = new UsageAdapter();
-  private static final int MARGIN = 2;
 
   private final ShowUsagesTableCellRenderer myRenderer;
 
@@ -74,17 +69,12 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
 
   @Override
   public int getRowHeight() {
-    return super.getRowHeight() + 2 * MARGIN;
-  }
-
-  @NotNull
-  @Override
-  public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
-    Component component = super.prepareRenderer(renderer, row, column);
-    if (component instanceof JComponent) {
-      ((JComponent)component).setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
+    if (ExperimentalUI.isNewUI()) {
+      Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
+      return super.getRowHeight() + innerInsets.top + innerInsets.bottom;
     }
-    return component;
+
+    return super.getRowHeight() + 2 * ShowUsagesTableCellRenderer.MARGIN;
   }
 
   @NotNull

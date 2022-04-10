@@ -354,9 +354,8 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
 
   @NotNull
   protected static List<IntentionAction> getIntentionActions(@NotNull Collection<? extends HighlightInfo> infos,
-                                                           @NotNull Editor editor,
-                                                           @NotNull PsiFile file) {
-
+                                                             @NotNull Editor editor,
+                                                             @NotNull PsiFile file) {
     List<IntentionAction> actions = LightQuickFixTestCase.getAvailableActions(editor, file);
 
     final List<IntentionAction> quickFixActions = new ArrayList<>();
@@ -364,7 +363,9 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
       if (info.quickFixActionRanges != null) {
         for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
           IntentionAction action = pair.first.getAction();
-          if (action.isAvailable(file.getProject(), editor, file)) quickFixActions.add(action);
+          if (!actions.contains(action) && action.isAvailable(file.getProject(), editor, file)) {
+            quickFixActions.add(action);
+          }
         }
       }
     }

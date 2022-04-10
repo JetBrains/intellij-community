@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.Disposable;
@@ -8,10 +8,12 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -45,12 +47,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
   private final Project myProject;
   @NotNull private final VirtualFile myFile;
   private final TextEditorImpl myTextEditor;
-  /**
-   * Document to be edited
-   */
-  private final Document myDocument;
-
-  @NotNull private final Editor myEditor;
+  @NotNull private final EditorImpl myEditor;
 
   /**
    * Whether the editor's document is modified or not
@@ -63,19 +60,24 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
 
   private final EditorHighlighterUpdater myEditorHighlighterUpdater;
 
-  TextEditorComponent(@NotNull final Project project, @NotNull final VirtualFile file, @NotNull final TextEditorImpl textEditor) {
+  TextEditorComponent(@NotNull final Project project,
+                      @NotNull final VirtualFile file,
+                      @NotNull final TextEditorImpl textEditor,
+                      @NotNull EditorImpl editor) {
     super(new BorderLayout(), textEditor);
 
     myProject = project;
     myFile = file;
     myTextEditor = textEditor;
+    myEditor = editor;
+    myEditor.getDocument().addDocumentListener(new MyDocumentListener(), this);
+    ((EditorMarkupModel) myEditor.getMarkupModel()).setErrorStripeVisible(true);
+    ((EditorGutterComponentEx) myEditor.getGutterComponentEx()).setForceShowRightFreePaintersArea(true);
+    myEditor.setFile(myFile);
+    myEditor.setContextMenuGroupId(IdeActions.GROUP_EDITOR_POPUP);
+    myEditor.setDropHandler(new FileDropHandler(myEditor));
+    TextEditorProvider.putTextEditor(myEditor, myTextEditor);    myEditor.getComponent().setFocusable(false);
 
-    myDocument = FileDocumentManager.getInstance().getDocument(myFile);
-    LOG.assertTrue(myDocument!=null);
-    myDocument.addDocumentListener(new MyDocumentListener(), this);
-
-    myEditor = createEditor();
-    myEditor.getComponent().setFocusable(false);
     add(myEditor.getComponent(), BorderLayout.CENTER);
     myModified = isModifiedImpl();
     myValid = isEditorValidImpl();
@@ -83,9 +85,9 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
 
     MyVirtualFileListener myVirtualFileListener = new MyVirtualFileListener();
     myFile.getFileSystem().addVirtualFileListener(myVirtualFileListener);
-    Disposer.register(this, ()-> myFile.getFileSystem().removeVirtualFileListener(myVirtualFileListener));
+    Disposer.register(this, () -> myFile.getFileSystem().removeVirtualFileListener(myVirtualFileListener));
 
-    myEditorHighlighterUpdater = new EditorHighlighterUpdater(myProject, this, (EditorEx)myEditor, myFile);
+    myEditorHighlighterUpdater = new EditorHighlighterUpdater(myProject, this, myEditor, myFile);
 
     project.getMessageBus().connect(this).subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
   }
@@ -124,22 +126,6 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
   @NotNull
   Editor getEditor(){
     return myEditor;
-  }
-
-  @NotNull
-  private Editor createEditor(){
-    Editor editor = EditorFactory.getInstance().createEditor(myDocument, myProject, EditorKind.MAIN_EDITOR);
-    ((EditorMarkupModel) editor.getMarkupModel()).setErrorStripeVisible(true);
-    ((EditorEx) editor).getGutterComponentEx().setForceShowRightFreePaintersArea(true);
-
-    ((EditorEx) editor).setFile(myFile);
-
-    ((EditorEx)editor).setContextMenuGroupId(IdeActions.GROUP_EDITOR_POPUP);
-
-    ((EditorImpl) editor).setDropHandler(new FileDropHandler(editor));
-
-    TextEditorProvider.putTextEditor(editor, myTextEditor);
-    return editor;
   }
 
   private void disposeEditor(){

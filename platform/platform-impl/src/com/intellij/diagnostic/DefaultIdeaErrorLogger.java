@@ -107,14 +107,4 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
     return null;
   }
-
-  private static void processMappingFailed(IdeaLoggingEvent event) {
-    if (!ourMappingFailedNotificationPosted && SystemInfo.isWindows && CpuArch.isIntel32()) {
-      ourMappingFailedNotificationPosted = true;
-      String exceptionMessage = event.getThrowable().getMessage();
-      String text = DiagnosticBundle.message("notification.content.0.br.possible.cause.unable.to.allocate.memory", exceptionMessage);
-      Notifications.Bus.notify(new Notification(NotificationGroup.createIdWithTitle("Memory", DiagnosticBundle.message("notification.group.memory")),
-                                                DiagnosticBundle.message("notification.title.memory.mapping.failed"), text, NotificationType.WARNING), null);
-    }
-  }
 }

@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.createNonCoalescingXmlStreamReader
 import com.intellij.util.lang.UrlClassLoader
+import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import org.codehaus.stax2.XMLStreamReader2
-import java.nio.file.Files
 
 internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, val isRunningFromSources: Boolean) : PathResolver {
   override val isFlat: Boolean
@@ -37,7 +36,7 @@ internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, va
                                  dataLoader: DataLoader,
                                  path: String,
                                  readInto: RawPluginDescriptor?): RawPluginDescriptor {
-    var resource: ByteArray?
+    val resource: ByteArray?
     if (classLoader is UrlClassLoader) {
       resource = classLoader.getResourceAsBytes(path, true)
     }
@@ -61,30 +60,15 @@ internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, va
         return descriptor
       }
 
-      if (isRunningFromSources && path.startsWith("intellij.")) {
-        if (dataLoader is LocalFsDataLoader) {
-          try {
-            resource = Files.readAllBytes(dataLoader.basePath.parent.resolve("${path.substring(0, path.length - 4)}/$path"))
-          }
-          catch (e: Exception) {
-            throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). " +
-                                             "Please ensure that project is built (Build -> Build Project).", e)
-          }
-        }
-        else if (dataLoader.emptyDescriptorIfCannotResolve) {
-          Logger.getInstance(ClassPathXmlPathResolver::class.java).warn(
-            "Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). " +
-            "Please ensure that project is built (Build -> Build Project)."
-          )
-          val descriptor = RawPluginDescriptor()
-          descriptor.`package` = "unresolved.${path.removeSuffix(".xml")}"
-          return descriptor
-        }
+      if (isRunningFromSources && path.startsWith("intellij.") && dataLoader.emptyDescriptorIfCannotResolve) {
+        Logger.getInstance(ClassPathXmlPathResolver::class.java)
+          .warn("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). ")
+        val descriptor = RawPluginDescriptor()
+        descriptor.`package` = "unresolved.${path.removeSuffix(".xml")}"
+        return descriptor
       }
 
-      if (resource == null) {
-        throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader)")
-      }
+      throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader)")
     }
 
     return readModuleDescriptor(input = resource,

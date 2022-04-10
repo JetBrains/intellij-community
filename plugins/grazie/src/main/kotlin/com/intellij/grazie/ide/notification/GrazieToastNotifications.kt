@@ -4,7 +4,10 @@ package com.intellij.grazie.ide.notification
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.remote.GrazieRemote
-import com.intellij.notification.*
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.MultiMap
@@ -17,9 +20,8 @@ object GrazieToastNotifications {
 
   private val shownNotifications = MultiMap.createConcurrent<Group, WeakReference<Notification>>()
 
-  private val MISSED_LANGUAGES_GROUP = NotificationGroup("Proofreading missing languages information",
-                                                         NotificationDisplayType.STICKY_BALLOON, true, null, null,
-                                                         msg("grazie.notification.missing-languages.group"))
+  internal val MISSED_LANGUAGES_GROUP = NotificationGroupManager.getInstance()
+    .getNotificationGroup("Proofreading missing languages information")
 
   fun showMissedLanguages(project: Project) {
     val langs = GrazieConfig.get().missedLanguages
@@ -41,6 +43,7 @@ object GrazieToastNotifications {
           notification.expire()
         }
       })
+      .setSuggestionType(true)
       .expireAll(Group.LANGUAGES)
       .notify(project)
   }

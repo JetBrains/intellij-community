@@ -35,7 +35,7 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
   companion object {
 
     @JvmStatic
-    @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Should not be used in new code; only when rolled back to old behaviour, " +
                 "see DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders(). " +
                 "Should be removed once new code proves stable")

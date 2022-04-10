@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build.dependencies
 
 import com.intellij.util.io.Compressor
+import org.hamcrest.BaseMatcher
+import org.hamcrest.Description
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -64,7 +66,19 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
     BuildDependenciesDownloader.extractFileToCacheLocation(
       BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
 
-    thrown.expectMessage("$testArchive: entry name 'top-level2' should start with previously found prefix 'top-level1/'")
+    thrown.expectMessage(object : BaseMatcher<String>() {
+      val prefix = "should start with previously found prefix"
+
+      override fun describeTo(description: Description) {
+        description.appendText(prefix)
+      }
+
+      override fun matches(item: Any?): Boolean {
+        val str = (item as String)
+        return str.contains(prefix)
+      }
+    })
+
     BuildDependenciesDownloader.extractFileToCacheLocation(
       BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive,
       BuildDependenciesExtractOptions.STRIP_ROOT)
@@ -135,18 +149,18 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
   }
 
   private fun assertUpToDate(block: () -> Unit) {
-    val oldValue = BuildDependenciesDownloader.getExtractCount().get()
+    val oldValue = BuildDependenciesDownloader.getExtractCount()
     block()
-    val newValue = BuildDependenciesDownloader.getExtractCount().get()
+    val newValue = BuildDependenciesDownloader.getExtractCount()
     if (oldValue != newValue) {
       Assert.fail("It was expected that archive extraction will be UP-TO-DATE (noop)")
     }
   }
 
   private fun assertSomethingWasExtracted(block: () -> Unit) {
-    val oldValue = BuildDependenciesDownloader.getExtractCount().get()
+    val oldValue = BuildDependenciesDownloader.getExtractCount()
     block()
-    val newValue = BuildDependenciesDownloader.getExtractCount().get()
+    val newValue = BuildDependenciesDownloader.getExtractCount()
     if (oldValue == newValue) {
       Assert.fail("It was expected that archive extraction will take place")
     }

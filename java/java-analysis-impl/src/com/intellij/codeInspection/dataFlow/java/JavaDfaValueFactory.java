@@ -148,12 +148,14 @@ public class JavaDfaValueFactory {
     if (qualifierExpression == null) {
       PsiElement element = refExpr.resolve();
       if (element instanceof PsiMember && !((PsiMember)element).hasModifierProperty(PsiModifier.STATIC)) {
-        PsiClass currentClass;
-        currentClass = ClassUtils.getContainingClass(refExpr);
+        PsiClass currentClass = ClassUtils.getContainingClass(refExpr);
         PsiClass memberClass = ((PsiMember)element).getContainingClass();
         if (memberClass != null && currentClass != null) {
           PsiClass target;
-          if (currentClass == memberClass || InheritanceUtil.isInheritorOrSelf(currentClass, memberClass, true)) {
+          PsiElement refName = refExpr.getReferenceNameElement();
+          if (currentClass == memberClass ||
+              (!(refName instanceof PsiKeyword && ((PsiKeyword)refName).getTokenType() == JavaTokenType.SUPER_KEYWORD) &&
+               InheritanceUtil.isInheritorOrSelf(currentClass, memberClass, true))) {
             target = currentClass;
           }
           else {

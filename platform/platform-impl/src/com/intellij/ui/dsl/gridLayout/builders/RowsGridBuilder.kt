@@ -65,6 +65,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
            resizableColumn: Boolean = false,
            gaps: Gaps = Gaps.EMPTY,
            visualPaddings: Gaps = Gaps.EMPTY,
+           widthGroup: String? = null,
            componentHelper: ComponentHelper? = null): RowsGridBuilder {
     if (y == GRID_EMPTY) {
       y = 0
@@ -74,8 +75,9 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     }
 
     val constraints = Constraints(grid, x, y, width = width, horizontalAlign = horizontalAlign,
-      verticalAlign = verticalAlign, baselineAlign = baselineAlign,
-      gaps = gaps, visualPaddings = visualPaddings, componentHelper = componentHelper)
+                                  verticalAlign = verticalAlign, baselineAlign = baselineAlign,
+                                  gaps = gaps, visualPaddings = visualPaddings, widthGroup = widthGroup,
+                                  componentHelper = componentHelper)
     panel.add(component, constraints)
     return skip(width)
   }
@@ -86,11 +88,19 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
                   baselineAlign: Boolean = defaultBaselineAlign,
                   gaps: Gaps = Gaps.EMPTY,
                   visualPaddings: Gaps = Gaps.EMPTY,
+                  widthGroup: String? = null,
                   componentHelper: ComponentHelper? = null): Constraints {
-    return Constraints(grid, x, if (y == GRID_EMPTY) 0 else y,
-                       width = width, horizontalAlign = horizontalAlign,
-                       verticalAlign = verticalAlign, baselineAlign = baselineAlign,
-                       gaps = gaps, visualPaddings = visualPaddings, componentHelper = componentHelper)
+    if (y == GRID_EMPTY) {
+      y = 0
+    }
+    val result = Constraints(grid, x, y,
+                             width = width, horizontalAlign = horizontalAlign,
+                             verticalAlign = verticalAlign, baselineAlign = baselineAlign,
+                             gaps = gaps, visualPaddings = visualPaddings,
+                             widthGroup = widthGroup,
+                             componentHelper = componentHelper)
+    skip(width)
+    return result
   }
 
   fun subGrid(width: Int = 1,
@@ -167,7 +177,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     return this
   }
 
-  private fun addResizableColumn() {
+  fun addResizableColumn() {
     grid.resizableColumns += x
   }
 

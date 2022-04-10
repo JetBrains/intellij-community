@@ -44,9 +44,19 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    * Called, when it is required to update inlay hints for file in preview
    * Invariant: if previewText == null, this method is not invoked
    *
-   * Note: it is invoked on EDT thread
+   * The method itself is called in read action in background.
+   *
+   * Should not make any visible changes (run in nonBlockingReadAction)
+   *
+   * @return continuation which is run in EDT
    */
-  abstract fun collectAndApply(editor: Editor, file: PsiFile)
+  open fun collectData(editor: Editor, file: PsiFile) : Runnable {
+    return Runnable { collectAndApply(editor, file) }
+  }
+
+  open fun collectAndApply(editor: Editor, file: PsiFile) {
+
+  }
 
   open fun createFile(project: Project, fileType: FileType, document: Document): PsiFile {
     val factory = PsiFileFactory.getInstance(project)
@@ -68,6 +78,8 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    * @param case null for model node
    */
   abstract fun getCasePreview(case: ImmediateConfigurable.Case?): String?
+
+  abstract fun getCasePreviewLanguage(case: ImmediateConfigurable.Case?): Language?
 
   /**
    * Description for given case

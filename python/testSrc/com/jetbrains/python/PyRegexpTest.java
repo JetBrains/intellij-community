@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -14,6 +14,7 @@ import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefiniti
 import com.jetbrains.python.fixtures.PyLexerTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import org.intellij.lang.regexp.inspection.RegExpRedundantEscapeInspection;
+import org.intellij.lang.regexp.inspection.RegExpSimplifiableInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ public class PyRegexpTest extends PyTestCase {
   }
 
   public void testCountedQuantifier() {
+    myFixture.enableInspections(new RegExpSimplifiableInspection());
     doTestHighlighting();
   }
 

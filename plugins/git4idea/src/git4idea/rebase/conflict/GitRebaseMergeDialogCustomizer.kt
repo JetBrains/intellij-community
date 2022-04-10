@@ -76,7 +76,7 @@ private class GitRebaseMergeDialogCustomizer(
   private val baseBranch: String?
 
   init {
-    if (upstream.matches("[a-fA-F0-9]{40}".toRegex())) {
+    if (GitUtil.isHashString(upstream)) {
       basePresentable = VcsLogUtil.getShortHash(upstream)
       baseBranch = null
       baseHash = HashImpl.build(upstream)

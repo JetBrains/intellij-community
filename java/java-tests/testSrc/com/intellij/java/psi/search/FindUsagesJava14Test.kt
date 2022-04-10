@@ -53,10 +53,22 @@ class FindUsagesJava14Test : JavaPsiTestCase() {
     """.trimIndent())
   }
 
+  fun testSeparateFiles() {
+    val record = myJavaFacade.findClass("pack1.MyRecord", GlobalSearchScope.moduleScope(myModule))!!
+    TestCase.assertTrue(record.isRecord)
+    testReferences(record.recordComponents[0], """
+5     String s = s();
+                 ^
+
+8     asd.s();
+      ^^^^^
+    """.trimIndent())
+  }
+
   private fun testReferences(elementToSearch: PsiElement, expectedText: String): Array<out PsiElement> {
     val elements = ReferencesSearch.search(elementToSearch, GlobalSearchScope.moduleScope(myModule), false)
       .mapping { reference: PsiReference -> reference.element }
-      .toArray(PsiElement.EMPTY_ARRAY);
+      .toArray(PsiElement.EMPTY_ARRAY)
     val actualText = elements.sortedBy { it.textRange.startOffset }.joinToString("\n\n") { createSnippet(it) }
     assertEquals(expectedText, actualText)
     return elements

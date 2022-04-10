@@ -5,10 +5,10 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerManagerListener
+import training.featuresSuggester.SuggestingUtils.handleAction
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.DebugProcessStartedAction
 import training.featuresSuggester.actions.DebugProcessStoppedAction
-import training.featuresSuggester.handleAction
 
 class DebuggerListener(val project: Project) : XDebuggerManagerListener {
   private var curSessionListener: XDebugSessionListener? = null

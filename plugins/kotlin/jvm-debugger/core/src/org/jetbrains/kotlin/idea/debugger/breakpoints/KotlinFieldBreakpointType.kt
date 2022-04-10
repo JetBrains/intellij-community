@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.breakpoints
 
@@ -159,7 +159,7 @@ class KotlinFieldBreakpointType :
 
     override fun createProperties(): KotlinPropertyBreakpointProperties = KotlinPropertyBreakpointProperties()
 
-    override fun createCustomPropertiesPanel(): XBreakpointCustomPropertiesPanel<XLineBreakpoint<KotlinPropertyBreakpointProperties>> {
+    override fun createCustomPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XLineBreakpoint<KotlinPropertyBreakpointProperties>> {
         return KotlinFieldBreakpointPropertiesPanel()
     }
 
@@ -168,7 +168,10 @@ class KotlinFieldBreakpointType :
         return kotlinBreakpoint?.description ?: super.getDisplayText(breakpoint)
     }
 
-    override fun getEditorsProvider(): XDebuggerEditorsProvider? = null
+    override fun getEditorsProvider(
+        breakpoint: XLineBreakpoint<KotlinPropertyBreakpointProperties>,
+        project: Project,
+    ): XDebuggerEditorsProvider? = null
 
     override fun createCustomRightPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XLineBreakpoint<KotlinPropertyBreakpointProperties>> {
         return KotlinBreakpointFiltersPanel(project)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
@@ -24,7 +24,7 @@ class KotlinPropertyAccessorsReferenceSearcher : QueryExecutorBase<PsiReference,
             if (SearchScope.isEmptyScope(onlyKotlinFiles)) return@runReadAction null
 
             val propertyNames = propertyNames(method)
-            val function = {
+            ({
                 for (propertyName in propertyNames) {
                     queryParameters.optimizer!!.searchWord(
                         propertyName,
@@ -34,8 +34,7 @@ class KotlinPropertyAccessorsReferenceSearcher : QueryExecutorBase<PsiReference,
                         method
                     )
                 }
-            }
-            function
+            })
         }?.invoke()
     }
 

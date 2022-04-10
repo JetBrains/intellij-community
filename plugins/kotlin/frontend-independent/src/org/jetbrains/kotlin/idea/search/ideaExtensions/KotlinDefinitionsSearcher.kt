@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
@@ -14,15 +14,14 @@ import com.intellij.util.QueryExecutor
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.toFakeLightClass
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedCreateKtFakeLightClass
-import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedToLightClass
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.actualsForExpected
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isExpectDeclaration
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachImplementation
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
-import org.jetbrains.kotlin.idea.search.useScope
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.contains
@@ -77,13 +76,12 @@ class KotlinDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSea
 
     companion object {
 
-        private fun skipDelegatedMethodsConsumer(baseConsumer: Processor<in PsiElement>): Processor<PsiElement> {
-            return Processor { element ->
-                if (isDelegated(element)) {
-                    return@Processor true
-                }
-                baseConsumer.process(element)
+        private fun skipDelegatedMethodsConsumer(baseConsumer: Processor<in PsiElement>): Processor<PsiElement> = Processor { element ->
+            if (isDelegated(element)) {
+                return@Processor true
             }
+
+            baseConsumer.process(element)
         }
 
         private fun isDelegated(element: PsiElement): Boolean = element is KtLightMethod && element.isDelegated
@@ -93,8 +91,7 @@ class KotlinDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSea
         }
 
         private fun processClassImplementations(klass: KtClass, consumer: Processor<PsiElement>): Boolean {
-            val psiClass = runReadAction { klass.providedToLightClass() ?: providedCreateKtFakeLightClass(klass) } as? KtLightClass
-                ?: return false //TODO Implement FIR support for not nullable providedCreateKtFakeLightClass
+            val psiClass = runReadAction { klass.toLightClass() ?: klass.toFakeLightClass() }
 
             val searchScope = runReadAction { psiClass.useScope }
             if (searchScope is LocalSearchScope) {

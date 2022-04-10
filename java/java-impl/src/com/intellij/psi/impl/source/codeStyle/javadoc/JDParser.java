@@ -38,10 +38,12 @@ public class JDParser {
   private final JavaCodeStyleSettings mySettings;
   private final CommonCodeStyleSettings myCommonSettings;
 
+  private final static String SNIPPET_START_REGEXP = "\\{s*@snippet[^\\}]*";
   private final static String HTML_TAG_REGEXP = "\\s*</?\\w+\\s*(\\w+\\s*=.*)?>.*";
   private final static String PRE_TAG_START_REGEXP = "<pre\\s*(\\w+\\s*=.*)?>";
   private final static Pattern HTML_TAG_PATTERN = Pattern.compile(HTML_TAG_REGEXP);
   private final static Pattern PRE_TAG_START_PATTERN = Pattern.compile(PRE_TAG_START_REGEXP);
+  private final static Pattern SNIPPET_START_PATTERN = Pattern.compile(SNIPPET_START_REGEXP);
 
   private final static String[] TAGS_TO_KEEP_INDENTS_AFTER = {"table", "ol", "ul", "div", "dl"};
 
@@ -277,6 +279,8 @@ public class JDParser {
     int firstLineToKeepIndents = -1;
     int minIndentWhitespaces = Integer.MAX_VALUE;
     boolean isInMultilineTodo = false;
+    boolean isInSnippet = false;
+    int snippetBraceBalance = 0;
 
     while (st.hasMoreTokens()) {
       String token = st.nextToken();
@@ -299,7 +303,7 @@ public class JDParser {
       if ("\n".equals(token)) {
         if (!first) {
           list.add("");
-          if (markers != null) markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0 || isInMultilineTodo);
+          if (markers != null) markers.add(preCount > 0 || firstLineToKeepIndents >= 0 || isInMultilineTodo);
         }
         first = false;
       }
@@ -310,16 +314,21 @@ public class JDParser {
         }
         if (p2nl && isParaTag(token) && s.indexOf(P_END_TAG, curPos) < 0) {
           list.add(isSelfClosedPTag(token) ? SELF_CLOSED_P_TAG : P_START_TAG);
-          markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0);
+          markers.add(preCount > 0 || firstLineToKeepIndents >= 0);
           continue;
         }
-        if (preCount == 0 && firstLineToKeepIndents < 0 && !isInMultilineTodo) token = token.trim();
+        if (preCount == 0 && firstLineToKeepIndents < 0 && !isInMultilineTodo && snippetBraceBalance == 0) token = token.trim();
 
         list.add(token);
 
         if (markers != null) {
+          if (snippetBraceBalance == 0) {
+            if (lineHasUnclosedSnippetTag(token)) snippetBraceBalance = 1;
+          } else {
+            snippetBraceBalance += getLineSnippetTagBraceBalance(token);
+          }
           if (lineHasUnclosedPreTag(token)) preCount++;
-          markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0 || isInMultilineTodo);
+          markers.add(preCount > 0 || firstLineToKeepIndents >= 0 || isInMultilineTodo || snippetBraceBalance != 0);
           if (lineHasClosingPreTag(token)) preCount--;
         }
 
@@ -709,6 +718,32 @@ public class JDParser {
     return getOccurenceCount(line, PRE_TAG_START_PATTERN) > StringUtil.getOccurrenceCount(line, PRE_TAG_END);
   }
 
+  private static int getLineSnippetTagBraceBalance(@NotNull String line) {
+    int balance = 0;
+    for (int i = 0; i < line.length(); i++) {
+      var ch = line.charAt(i);
+      if (ch == '}') {
+        balance--;
+      } else if (ch == '{') {
+        balance++;
+      }
+    }
+    return balance;
+  }
+
+  private static boolean lineHasUnclosedSnippetTag(@NotNull String line) {
+    var matcher = SNIPPET_START_PATTERN.matcher(line);
+    var hasResult = false;
+    var lastEnd = -1;
+    do {
+      hasResult = matcher.find();
+      if (hasResult) {
+        lastEnd = matcher.end();
+      }
+    } while (hasResult);
+    return lastEnd == line.length();
+  }
+
   private static boolean lineHasClosingPreTag(@NotNull String line) {
     return StringUtil.getOccurrenceCount(line, PRE_TAG_END) > getOccurenceCount(line, PRE_TAG_START_PATTERN);
   }
@@ -792,12 +827,13 @@ public class JDParser {
       sb.append('\n');
     }
     else {
+      int snippetBraceBalance = 0;
       boolean insidePreTag = false;
       for (int i = 0; i < list.size(); i++) {
         String line = list.get(i);
         if (line.isEmpty() && !mySettings.JD_KEEP_EMPTY_LINES) continue;
         if (i != 0) sb.append(continuationPrefix);
-        if (line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag && !isFollowedByTagLine(list, i)) {
+        if (line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag && !isFollowedByTagLine(list, i) && snippetBraceBalance == 0) {
           sb.append(P_START_TAG);
         }
         else {
@@ -809,6 +845,12 @@ public class JDParser {
           }
           else if (lineHasClosingPreTag(line)) {
             insidePreTag = false;
+          }
+
+          if (snippetBraceBalance == 0) {
+            if (lineHasUnclosedSnippetTag(line)) snippetBraceBalance = 1;
+          } else {
+            snippetBraceBalance += getLineSnippetTagBraceBalance(line);
           }
         }
         sb.append('\n');

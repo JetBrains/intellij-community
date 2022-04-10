@@ -1,14 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import icons.DevkitIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionLocatorKt;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -21,16 +22,19 @@ public final class ExtensionDeclarationRelatedItemLineMarkerProvider extends Dev
     return DevKitBundle.message("gutter.related.extension.declaration");
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
-    return DevkitIcons.Gutter.Plugin;
+  public @NotNull Icon getIcon() {
+    return DevKitIcons.Gutter.Plugin;
   }
 
   @Override
   protected void process(@NotNull PsiElement identifier,
                          @NotNull PsiClass psiClass,
                          @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result) {
+    if (!PsiUtil.isInstantiable(psiClass)) {
+      return;
+    }
+
     List<ExtensionCandidate> targets = ExtensionLocatorKt.locateExtensionsByPsiClass(psiClass);
     if (targets.isEmpty()) {
       return;

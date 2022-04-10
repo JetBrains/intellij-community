@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -172,25 +174,30 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
   }
 
   public static Document @NotNull [] getDocuments(@NotNull FileEditor editor) {
+    Document[] result;
     if (editor instanceof DocumentsEditor) {
       DocumentsEditor documentsEditor = (DocumentsEditor)editor;
-      return documentsEditor.getDocuments();
+      result = documentsEditor.getDocuments();
     }
-
-    if (editor instanceof TextEditor) {
+    else if (editor instanceof TextEditor) {
       Document document = ((TextEditor)editor).getEditor().getDocument();
-      return new Document[]{document};
+      assert document != null : "TextEditor.getDocument() returned null for "+editor+editor.getClass();
+      result = new Document[]{document};
     }
-
-    VirtualFile file = editor.getFile();
-    if (file != null) {
-      Document document = FileDocumentManager.getInstance().getDocument(file);
-      if (document != null) {
-        return new Document[]{document};
+    else {
+      result = Document.EMPTY_ARRAY;
+      VirtualFile file = editor.getFile();
+      if (file != null) {
+        Document document = FileDocumentManager.getInstance().getDocument(file);
+        if (document != null) {
+          result = new Document[]{document};
+        }
       }
     }
-
-    return Document.EMPTY_ARRAY;
+    if (ArrayUtil.contains(null, result)) {
+      LOG.error("FileEditor returned null document for " + editor + " (" + editor.getClass() + "); result='" + Arrays.toString(result) + "'; editor instanceof DocumentsEditor: "+(editor instanceof DocumentsEditor)+"; editor instanceof TextEditor: "+(editor instanceof TextEditor)+"; editor.getFile():"+editor.getFile());
+    }
+    return result;
   }
 
   @ApiStatus.Internal

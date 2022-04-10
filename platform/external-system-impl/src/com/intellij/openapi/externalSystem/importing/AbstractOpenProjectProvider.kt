@@ -13,7 +13,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.apache.commons.lang.StringUtils
@@ -91,7 +91,7 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
     val localFileSystem = LocalFileSystem.getInstance()
     val projectFile = localFileSystem.refreshAndFindFileByPath(projectFilePath)
     if (projectFile == null) {
-      val shortPath = FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(projectFilePath), false)
+      val shortPath = getPresentablePath(projectFilePath)
       throw IllegalArgumentException(ExternalSystemBundle.message("error.project.does.not.exist", systemId.readableName, shortPath))
     }
     linkToExistingProject(projectFile, project)

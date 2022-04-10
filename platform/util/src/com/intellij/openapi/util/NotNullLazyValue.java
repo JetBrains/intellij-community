@@ -1,13 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.SoftReference;
 import java.util.function.Supplier;
 
 /**
  * Compute-once keep-forever lazy value.
+ * Do not extend, but use static factory methods to create instance.
+ * <p/>
  * Clearable version: {@link ClearableLazyValue}.
  */
 @ApiStatus.NonExtendable
@@ -15,7 +18,7 @@ public abstract class NotNullLazyValue<T> implements Supplier<T> {
   private T myValue;
 
   /** @deprecated Use {@link NotNullLazyValue#lazy(Supplier)} */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   protected NotNullLazyValue() { }
@@ -66,6 +69,22 @@ public abstract class NotNullLazyValue<T> implements Supplier<T> {
       @Override
       protected @NotNull T compute() {
         return value.get();
+      }
+    };
+  }
+
+  public static <T> Supplier<T> softLazy(Supplier<? extends T> supplier) {
+    return new Supplier<T>() {
+      private SoftReference<T> ref;
+
+      @Override
+      public T get() {
+        T value = com.intellij.reference.SoftReference.dereference(ref);
+        if (value == null) {
+          value = supplier.get();
+          ref = new SoftReference<T>(value);
+        }
+        return value;
       }
     };
   }

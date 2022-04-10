@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
 import org.junit.platform.engine.FilterResult;
@@ -40,6 +40,10 @@ public class JUnit5AllRunner {
       TestPlan testPlan = launcher.discover(discoveryRequest);
       if (testPlan.containsTests()) {
         launcher.execute(testPlan, new JUnit5Runner.TCExecutionListener());
+      }
+      else {
+        //see org.jetbrains.intellij.build.impl.TestingTasksImpl.NO_TESTS_ERROR
+        System.exit(42);
       }
     }
     finally {

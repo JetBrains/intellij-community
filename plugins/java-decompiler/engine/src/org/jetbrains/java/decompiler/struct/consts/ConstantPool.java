@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.consts;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
 import org.jetbrains.java.decompiler.main.extern.ClassFormatException;
+import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.NewClassNameBuilder;
@@ -217,11 +217,11 @@ public class ConstantPool implements NewClassNameBuilder {
   public String buildNewClassname(String className) {
     VarType vt = new VarType(className, true);
 
-    String newName = interceptor.getName(vt.value);
+    String newName = interceptor.getName(vt.getValue());
     if (newName != null) {
       StringBuilder buffer = new StringBuilder();
-      if (vt.arrayDim > 0) {
-        buffer.append("[".repeat(vt.arrayDim)).append('L').append(newName).append(';');
+      if (vt.getArrayDim() > 0) {
+        buffer.append("[".repeat(vt.getArrayDim())).append('L').append(newName).append(';');
       }
       else {
         buffer.append(newName);

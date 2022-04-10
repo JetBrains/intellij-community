@@ -19,6 +19,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
@@ -1845,7 +1846,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
       elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
     }
     if (elements.length == 0) {
-      final PsiExpression expression = IntroduceVariableBase.getSelectedExpression(project, file, startOffset, endOffset);
+      final PsiExpression expression = IntroduceVariableUtil.getSelectedExpression(project, file, startOffset, endOffset);
       if (expression != null) {
         elements = new PsiElement[]{expression};
       }

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacadeImpl
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
@@ -31,9 +32,6 @@ class KtFileClassProviderImpl(val project: Project) : KtFileClassProvider {
             return PsiClass.EMPTY_ARRAY
         }
 
-        val result = arrayListOf<PsiClass>()
-        file.declarations.filterIsInstance<KtClassOrObject>().map { it.toLightClass() }.filterNotNullTo(result)
-
         val moduleInfo = file.getModuleInfo()
         // prohibit obtaining light classes for non-jvm modules trough KtFiles
         // common files might be in fact compiled to jvm and thus correspond to a PsiClass
@@ -41,34 +39,19 @@ class KtFileClassProviderImpl(val project: Project) : KtFileClassProvider {
         // this also fixes a problem where a Java JUnit run configuration producer would produce run configurations for a common file
         if (!moduleInfo.platform.isJvm()) return emptyArray()
 
+        val result = arrayListOf<PsiClass>()
+        file.declarations.filterIsInstance<KtClassOrObject>().mapNotNullTo(result) { it.toLightClass() }
+
         val jvmClassInfo = JvmFileClassUtil.getFileClassInfoNoResolve(file)
-        val fileClassFqName = file.javaFileFacadeFqName
+        if (!jvmClassInfo.withJvmMultifileClass && !file.hasTopLevelCallables()) return result.toTypedArray()
 
         val kotlinAsJavaSupport = KotlinAsJavaSupport.getInstance(project)
-
-        val facadeClasses = when {
-            file.analysisContext != null && file.hasTopLevelCallables() ->
-                listOf(
-                    KtLightClassForFacade.createForSyntheticFile(
-                        PsiManager.getInstance(
-                            file.project
-                        ), fileClassFqName, file
-                    )
-                )
-
-            jvmClassInfo.withJvmMultifileClass ->
-                kotlinAsJavaSupport.getFacadeClasses(fileClassFqName, moduleInfo.contentScope())
-
-            file.hasTopLevelCallables() ->
-                (kotlinAsJavaSupport as IDEKotlinAsJavaSupport).createLightClassForFileFacade(
-                    fileClassFqName, listOf(file), moduleInfo
-                )
-
-            else -> emptyList<PsiClass>()
-        }
-
-        facadeClasses.filterTo(result) {
-            it is KtLightClassForFacade && file in it.files
+        if (file.analysisContext == null) {
+            kotlinAsJavaSupport
+                .getFacadeClasses(file.javaFileFacadeFqName, moduleInfo.contentScope())
+                .filterTo(result) { it is KtLightClassForFacade && file in it.files }
+        } else {
+            result.add(kotlinAsJavaSupport.createFacadeForSyntheticFile(file.javaFileFacadeFqName, file))
         }
 
         return result.toTypedArray()

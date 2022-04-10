@@ -36,7 +36,7 @@ public abstract class ProjectLocator {
    * @return project which probably contains the file, or null if couldn't guess (for example, there are no open projects).
    */
   @Nullable
-  public abstract Project guessProjectForFile(@Nullable VirtualFile file);
+  public abstract Project guessProjectForFile(@NotNull VirtualFile file);
 
   /**
   * Gets all open projects containing the given file.

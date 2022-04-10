@@ -15,23 +15,20 @@
  */
 package com.intellij.openapi.actionSystem;
 
-import org.jetbrains.annotations.ApiStatus;
-
 /**
  * Identifiers for data items which can be returned from {@link DataContext#getData(String)} and
  * {@link DataProvider#getData(String)}.
  *
  * @deprecated use {@link DataKeys} and {@link DataKey#getData} instead
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+@Deprecated(forRemoval = true)
 public interface DataConstants {
   /**
    * Returns {@link com.intellij.openapi.project.Project}
    *
    * @deprecated use {@link PlatformDataKeys#PROJECT} instead
    */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   String PROJECT = CommonDataKeys.PROJECT.getName();
 
   /**
@@ -39,7 +36,7 @@ public interface DataConstants {
    *
    * @deprecated use {@link PlatformDataKeys#VIRTUAL_FILE} instead
    */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   String VIRTUAL_FILE = CommonDataKeys.VIRTUAL_FILE.getName();
 
   /**
@@ -47,6 +44,6 @@ public interface DataConstants {
    *
    * @deprecated use {@link PlatformDataKeys#EDITOR} instead
    */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   String EDITOR = CommonDataKeys.EDITOR.getName();
 }

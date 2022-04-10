@@ -11,6 +11,7 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.MacHostProperties
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
+import org.jetbrains.intellij.build.tasks.SignKt
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -50,20 +51,37 @@ final class MacDmgBuilder {
     String targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
     Path sitFile = (customizer.publishArchive ? context.paths.artifactDir : context.paths.tempDir).resolve(targetName + ".sit")
 
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
-    buildHelper.prepareMacZip.invokeWithArguments(macZip, sitFile, productJson, additionalDir, zipRoot)
+    SignKt.prepareMacZip(macZip, sitFile, productJson, additionalDir, zipRoot)
 
     boolean signMacArtifacts = !context.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP)
-    if (!signMacArtifacts && isMac()) {
+    if ((!signMacArtifacts || macHostProperties.host == null) && isMac()) {
       buildLocally(sitFile, targetName, jreArchivePath, signMacArtifacts, customizer, context)
-      return
     }
+    else if (!signMacArtifacts) {
+      context.messages.info("Build step '${BuildOptions.MAC_SIGN_STEP}' is disabled")
+    }
+    else if (macHostProperties.host == null ||
+             macHostProperties.userName == null ||
+             macHostProperties.password == null ||
+             macHostProperties.codesignString == null) {
+      context.messages.error("Build step '${BuildOptions.MAC_SIGN_STEP}' is enabled, but machost properties were not provided. " +
+                             "Probably you want to skip BuildOptions.MAC_SIGN_STEP step")
+    }
+    else {
+      buildAndSignWithMacBuilderHost(sitFile, jreArchivePath, macHostProperties, notarize, customizer, context)
+    }
+  }
 
+  private static void buildAndSignWithMacBuilderHost(Path sitFile,
+                                                     Path jreArchivePath,
+                                                     MacHostProperties macHostProperties, boolean notarize,
+                                                     MacDistributionCustomizer customizer,
+                                                     BuildContext context) {
     Path dmgImage = context.options.buildStepsToSkip.contains(BuildOptions.MAC_DMG_STEP)
       ? null
       : Path.of((context.applicationInfo.isEAP ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath)
 
-    buildHelper.signMacApp.invokeWithArguments(
+    SignKt.signMacApp(
       macHostProperties.host, macHostProperties.userName, macHostProperties.password,
       macHostProperties.codesignString, context.fullBuildNumber,
       notarize, customizer.bundleIdentifier,
@@ -114,12 +132,13 @@ final class MacDmgBuilder {
   }
 
   @SuppressWarnings('SpellCheckingInspection')
-  private static void bundleRuntimeAndSignSitLocally(Path targetFile,
-                                                 Path tempDir,
-                                                 Path jreArchivePath,
-                                                 MacDistributionCustomizer customizer,
-                                                 @NotNull BuildContext context) {
-    Files.copy(targetFile, tempDir.resolve(targetFile.fileName))
+  private static void bundleRuntimeAndSignSitLocally(Path sourceFile,
+                                                     Path tempDir,
+                                                     Path jreArchivePath,
+                                                     MacDistributionCustomizer customizer,
+                                                     @NotNull BuildContext context) {
+    Path targetFile = tempDir.resolve(sourceFile.fileName)
+    Files.copy(sourceFile, targetFile)
     if (jreArchivePath != null) {
       Files.copy(jreArchivePath, tempDir.resolve(jreArchivePath.fileName))
     }
@@ -131,13 +150,15 @@ final class MacDmgBuilder {
       "./signapp.sh",
       targetFile.fileName.toString(),
       context.fullBuildNumber,
-      "",
-      "",
-      "",
+      "", // username
+      "", // password
+      "", // codesign
       (jreArchivePath == null ? "no-jdk" : jreArchivePath.fileName.toString()),
-      "no",
+      "no", // notarize
       customizer.bundleIdentifier,
-      ), tempDir)
+      "true", // compress-input
+    ), tempDir)
+    Files.move(targetFile, sourceFile, StandardCopyOption.REPLACE_EXISTING)
   }
 
   @SuppressWarnings("SpellCheckingInspection")
@@ -146,6 +167,7 @@ final class MacDmgBuilder {
     Files.copy(Path.of((context.applicationInfo.isEAP ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath), dmgImageCopy)
     Path scriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
     Files.copy(scriptDir.resolve("makedmg.sh"), tempDir.resolve("makedmg.sh"), StandardCopyOption.COPY_ATTRIBUTES)
+    Files.copy(scriptDir.resolve("makedmg.py"), tempDir.resolve("makedmg.py"), StandardCopyOption.COPY_ATTRIBUTES)
 
     Path artifactDir = Path.of(context.paths.artifacts)
     Files.createDirectories(artifactDir)

@@ -2,7 +2,6 @@
 
 package com.intellij.ide.util.gotoByName;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.BundleBase;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.DataManager;
@@ -537,10 +536,15 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return getFirstGroupName();
     }
 
+    @Nullable
+    public List<ActionGroup> getFirstGroup() {
+      return ContainerUtil.getFirstItem(myPaths);
+    }
+
     @Nls
     @Nullable
     private String getFirstGroupName() {
-      List<ActionGroup> path = ContainerUtil.getFirstItem(myPaths);
+      List<ActionGroup> path = getFirstGroup();
       return path != null ? getPathName(path) : null;
     }
 
@@ -651,6 +655,11 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return myMode;
     }
 
+    @Nullable
+    public GroupMapping getGroupMapping() {
+      return myGroupMapping;
+    }
+
     public int compareWeights(@NotNull ActionWrapper o) {
       int compared = myMode.compareTo(o.getMode());
       if (compared != 0) return compared;
@@ -755,7 +764,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       if (myUseListFont) {
         nameComponent.setFont(list.getFont());
       }
-      nameComponent.setBackground(bg);
+      nameComponent.setOpaque(false);
       panel.add(nameComponent, BorderLayout.CENTER);
 
       if (matchedValue instanceof String) { //...
@@ -825,8 +834,13 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       }
       else if (value instanceof OptionDescription) {
         if (!isSelected && !(value instanceof BooleanOptionDescription)) {
-          Color descriptorBg =
-            StartupUiUtil.isUnderDarcula() ? ColorUtil.brighter(UIUtil.getListBackground(), 1) : LightColors.SLIGHTLY_GRAY;
+          Color descriptorBg;
+          if (StartupUiUtil.isUnderDarcula()) {
+            descriptorBg = ColorUtil.brighter(UIUtil.getListBackground(), 1);
+          }
+          else {
+            descriptorBg = JBUI.CurrentTheme.BigPopup.LIST_SETTINGS_BACKGROUND;
+          }
           panel.setBackground(descriptorBg);
           nameComponent.setBackground(descriptorBg);
         }

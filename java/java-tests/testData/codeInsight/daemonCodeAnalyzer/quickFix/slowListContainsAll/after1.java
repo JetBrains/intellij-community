@@ -1,10 +1,12 @@
-// "Wrap 'list' in 'HashSet' constructor" "true"
+// "Fix all 'Call to 'list.containsAll(collection)' may have poor performance' problems in file" "true"
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
 class Test {
-  boolean check(List<String> list, Collection<String> collection) {
-    return new HashSet<>(list).containsAll(collection);
+  void check(List<String> list1, List<String> list2, Collection<String> collection) {
+    new HashSet<>(list1).containsAll(collection);
+    new HashSet<>(list1).containsAll(collection);
+    new HashSet<>(Math.random() > 0.5 ? list1 : list2).containsAll(collection);
   }
 }

@@ -33,11 +33,11 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.KotlinTypeFactory
 import org.jetbrains.kotlin.types.isFlexible
+import org.jetbrains.kotlin.types.toDefaultAttributes
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.OperatorChecks
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun KtContainerNode.description(): String? {
     when (node.elementType) {
@@ -109,15 +109,6 @@ fun KtExpression.negate(reformat: Boolean = true): KtExpression {
     val specialNegation = specialNegation(reformat)
     if (specialNegation != null) return specialNegation
     return KtPsiFactory(this).createExpressionByPattern("!$0", this, reformat = reformat)
-}
-
-fun KtExpression.resultingWhens(): List<KtWhenExpression> = when (this) {
-    is KtWhenExpression -> listOf(this) + entries.map { it.expression?.resultingWhens() ?: listOf() }.flatten()
-    is KtIfExpression -> (then?.resultingWhens() ?: listOf()) + (`else`?.resultingWhens() ?: listOf())
-    is KtBinaryExpression -> (left?.resultingWhens() ?: listOf()) + (right?.resultingWhens() ?: listOf())
-    is KtUnaryExpression -> this.baseExpression?.resultingWhens() ?: listOf()
-    is KtBlockExpression -> statements.lastOrNull()?.resultingWhens() ?: listOf()
-    else -> listOf()
 }
 
 fun KtExpression?.hasResultingIfWithoutElse(): Boolean = when (this) {
@@ -357,7 +348,7 @@ fun KotlinType.reflectToRegularFunctionType(): KotlinType {
     val parameterCount = if (isTypeAnnotatedWithExtensionFunctionType) arguments.size - 2 else arguments.size - 1
     val classDescriptor =
         if (isKSuspendFunctionType) builtIns.getSuspendFunction(parameterCount) else builtIns.getFunction(parameterCount)
-    return KotlinTypeFactory.simpleNotNullType(annotations, classDescriptor, arguments)
+    return KotlinTypeFactory.simpleNotNullType(annotations.toDefaultAttributes(), classDescriptor, arguments)
 }
 
 private val KOTLIN_BUILTIN_ENUM_FUNCTIONS = listOf(FqName("kotlin.enumValues"), FqName("kotlin.enumValueOf"))
@@ -408,13 +399,29 @@ fun BuilderByPattern<KtExpression>.appendCallOrQualifiedExpression(
     val callOrQualified = call.getQualifiedExpressionForSelector() ?: call
     if (callOrQualified is KtQualifiedExpression) {
         appendExpression(callOrQualified.receiverExpression)
+        if (callOrQualified is KtSafeQualifiedExpression) appendFixedText("?")
         appendFixedText(".")
     }
     appendNonFormattedText(newFunctionName)
     call.valueArgumentList?.let { appendNonFormattedText(it.text) }
-    call.lambdaArguments.firstOrNull()?.let { appendNonFormattedText(it.text) }
+    call.lambdaArguments.firstOrNull()?.let {
+        if (it.getArgumentExpression() is KtLabeledExpression) appendFixedText(" ")
+        appendNonFormattedText(it.text)
+    }
 }
 
 fun KtCallExpression.singleLambdaArgumentExpression(): KtLambdaExpression? {
-    return lambdaArguments.singleOrNull()?.getArgumentExpression().safeAs() ?: getLastLambdaExpression()
+    return lambdaArguments.singleOrNull()?.getArgumentExpression()?.unpackFunctionLiteral() ?: getLastLambdaExpression()
+}
+
+private val rangeTypes = setOf(
+    "kotlin.ranges.IntRange",
+    "kotlin.ranges.CharRange",
+    "kotlin.ranges.LongRange",
+    "kotlin.ranges.UIntRange",
+    "kotlin.ranges.ULongRange"
+)
+
+fun ClassDescriptor.isRange(): Boolean {
+    return rangeTypes.any { this.fqNameUnsafe.asString() == it }
 }

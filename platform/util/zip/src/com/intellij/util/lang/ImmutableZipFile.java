@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -172,21 +172,28 @@ public final class ImmutableZipFile implements ZipFile {
   @Override
   public @Nullable ZipResource getResource(String path) {
     int index = getIndex(path);
-    return index < 0 ? null : new MyZipResource(index, ikv);
+    return index < 0 ? null : new MyZipResource(index, ikv, path);
   }
 
   private static final class MyZipResource implements ZipResource {
     private final int index;
     private final Ikv.SizeAwareIkv<String> ikv;
+    private final String path;
 
-    MyZipResource(int index, Ikv.SizeAwareIkv<String> ikv) {
+    MyZipResource(int index, Ikv.SizeAwareIkv<String> ikv, String path) {
       this.index = index;
       this.ikv = ikv;
+      this.path = path;
     }
 
     @Override
     public int getUncompressedSize() {
       return ikv.getSizeAt(index);
+    }
+
+    @Override
+    public @NotNull String getPath() {
+      return path;
     }
 
     @Override

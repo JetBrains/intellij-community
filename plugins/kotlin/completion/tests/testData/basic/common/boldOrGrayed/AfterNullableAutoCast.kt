@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 fun String?.forNullableString(){}
 fun Any?.forNullableAny(){}
 fun String.forString(){}

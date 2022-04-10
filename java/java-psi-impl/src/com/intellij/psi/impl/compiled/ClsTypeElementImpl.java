@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -9,6 +9,7 @@ import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import one.util.streamex.StreamEx;
@@ -101,11 +102,8 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   @Override
   public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.TYPE);
-
-    ClsElementImpl child = myChild.getValue();
-    if (child != null) {
-      child.setMirror(element.getFirstChildNode());
-    }
+    PsiTypeElement mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
+    setMirrorIfPresent(getInnermostComponentReferenceElement(), mirror.getInnermostComponentReferenceElement());
   }
 
   private boolean isArray() {
@@ -124,7 +122,12 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
 
   @Override
   public PsiJavaCodeReferenceElement getInnermostComponentReferenceElement() {
-    return null;
+    ClsElementImpl child = myChild.getValue();
+    if (child instanceof ClsTypeElementImpl) {
+      return ((ClsTypeElementImpl)child).getInnermostComponentReferenceElement();
+    } else {
+      return (PsiJavaCodeReferenceElement) child;
+    }
   }
 
   private ClsElementImpl calculateChild() {

@@ -45,7 +45,6 @@ public final class ProjectDescriptor {
   private final ProjectStamps myProjectStamps;
   public final BuildDataManager dataManager;
   private final BuildLoggingManager myLoggingManager;
-  private final BuildTargetsState myTargetsState;
   private final ModuleExcludeIndex myModuleExcludeIndex;
   private int myUseCounter = 1;
   private final Set<JpsSdk<?>> myProjectJavaSdks;
@@ -60,7 +59,6 @@ public final class ProjectDescriptor {
                            BuildDataManager dataManager,
                            BuildLoggingManager loggingManager,
                            final ModuleExcludeIndex moduleExcludeIndex,
-                           final BuildTargetsState targetsState,
                            final BuildTargetIndex buildTargetIndex, final BuildRootIndex buildRootIndex, IgnoredFileIndex ignoredFileIndex) {
     myModel = model;
     myIgnoredFileIndex = ignoredFileIndex;
@@ -80,7 +78,6 @@ public final class ProjectDescriptor {
         myProjectJavaSdks.add(sdk);
       }
     }
-    myTargetsState = targetsState;
   }
 
   public BuildRootIndex getBuildRootIndex() {
@@ -96,7 +93,7 @@ public final class ProjectDescriptor {
   }
 
   public BuildTargetsState getTargetsState() {
-    return myTargetsState;
+    return dataManager.getTargetsState();
   }
 
   public CompilerEncodingConfiguration getEncodingConfiguration() {

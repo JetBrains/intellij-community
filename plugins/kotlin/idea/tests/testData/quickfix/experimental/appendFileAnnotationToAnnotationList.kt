@@ -1,5 +1,5 @@
-// "Add '@OptIn(A::class)' annotation to containing file 'appendFileAnnotationToAnnotationList.kt'" "true"
-// COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
+// "Opt in for 'A' in containing file 'appendFileAnnotationToAnnotationList.kt'" "true"
+// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 @file:[
     JvmName("Foo")

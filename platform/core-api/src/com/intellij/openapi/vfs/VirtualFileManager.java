@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.Disposable;
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.*;
@@ -19,7 +20,7 @@ import java.nio.file.Path;
  */
 public abstract class VirtualFileManager implements ModificationTracker {
   @Topic.AppLevel
-  public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<>(BulkFileListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
+  public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<>(BulkFileListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
 
   public static final @NotNull ModificationTracker VFS_STRUCTURE_MODIFICATIONS = () -> getInstance().getStructureModificationCount();
 
@@ -182,10 +183,18 @@ public abstract class VirtualFileManager implements ModificationTracker {
     return URLUtil.extractPath(url);
   }
 
+  /**
+   * @deprecated Use {@link #addVirtualFileManagerListener(VirtualFileManagerListener, Disposable)}
+   */
+  @Deprecated
   public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
 
   public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable);
 
+  /**
+   * @deprecated Use {@link #addVirtualFileManagerListener(VirtualFileManagerListener, Disposable)}
+   */
+  @Deprecated
   public abstract void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
 
   public abstract void notifyPropertyChanged(@NotNull VirtualFile virtualFile,
@@ -208,8 +217,14 @@ public abstract class VirtualFileManager implements ModificationTracker {
    */
   public abstract long getStructureModificationCount();
 
+  @ApiStatus.Internal
   public VirtualFile findFileById(int id) {
     return null;
+  }
+
+  @ApiStatus.Internal
+  public int[] listAllChildIds(int id) {
+    return ArrayUtil.EMPTY_INT_ARRAY;
   }
 
   @ApiStatus.Internal

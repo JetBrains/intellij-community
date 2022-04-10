@@ -51,9 +51,6 @@ import java.util.*;
 
 import static java.util.Arrays.stream;
 
-/**
- * @author Rustam Vishnyakov
- */
 public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPanel {
   private CodeStyleAbstractPanel myActiveTab;
   private List<CodeStyleAbstractPanel> myTabs;

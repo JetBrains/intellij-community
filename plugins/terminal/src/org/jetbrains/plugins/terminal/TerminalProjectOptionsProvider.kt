@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.wsl.WslPath
+import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -77,11 +78,9 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
   var shellPath: String
     get() {
       val workingDirectoryLazy : Lazy<String?> = lazy { startingDirectory }
-      val shellPath = if (isProjectLevelShellPath(workingDirectoryLazy::value)) {
-        state.shellPath
-      }
-      else {
-        TerminalOptionsProvider.instance.shellPath
+      val shellPath = when {
+        isProjectLevelShellPath(workingDirectoryLazy::value) && project.isTrusted() -> state.shellPath
+        else -> TerminalOptionsProvider.instance.shellPath
       }
       if (shellPath.isNullOrBlank()) {
         return findDefaultShellPath(workingDirectoryLazy::value)

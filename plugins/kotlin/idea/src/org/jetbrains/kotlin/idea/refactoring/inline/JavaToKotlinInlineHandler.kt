@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.inline
 
@@ -14,13 +14,13 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.codeInliner.unwrapSpecialUsageOrNull
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.inspections.findExistingEditor
 import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.refactoring.inline.J2KInlineCache.Companion.findOrCreateUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.J2KInlineCache.Companion.findUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -99,8 +99,6 @@ private fun NewJavaToKotlinConverter.convertToKotlinNamedDeclaration(
     var fakeFile: KtFile? = null
     object : Task.Modal(project, KotlinBundle.message("action.j2k.name"), false) {
         override fun run(indicator: ProgressIndicator) {
-            indicator.isIndeterminate = false
-
             val converterExtension = J2kConverterExtension.extension(useNewJ2k = true)
             val postProcessor = converterExtension.createPostProcessor(formatCode = true)
             val processor = converterExtension.createWithProgressProcessor(

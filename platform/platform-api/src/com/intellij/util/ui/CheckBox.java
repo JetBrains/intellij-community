@@ -11,7 +11,6 @@ import javax.swing.*;
 import java.awt.event.ItemEvent;
 
 public class CheckBox extends JCheckBox {
-
   public CheckBox(@NotNull @NlsContexts.Checkbox String label, @NotNull InspectionProfileEntry owner, @NonNls String property) {
     this(label, (Object)owner, property);
   }
@@ -20,13 +19,15 @@ public class CheckBox extends JCheckBox {
    * @param property field must be non-private (or ensure that it won't be scrambled by other means)
    */
   public CheckBox(@NotNull @NlsContexts.Checkbox String label, @NotNull Object owner, @NonNls String property) {
-    super(label, getPropertyValue(owner, property));
+    super(label, getBooleanPropertyValue(owner, property));
     addItemListener(e -> ReflectionUtil.setField(owner.getClass(), owner, boolean.class, property, e.getStateChange() == ItemEvent.SELECTED));
   }
 
-  private static boolean getPropertyValue(Object owner, String property) {
-    final Boolean value = ReflectionUtil.getField(owner.getClass(), owner, boolean.class, property);
-    assert value != null;
+  private static boolean getBooleanPropertyValue(@NotNull Object owner, @NotNull String property) {
+    Boolean value = ReflectionUtil.getField(owner.getClass(), owner, boolean.class, property);
+    if (value == null) {
+      throw new IllegalArgumentException("Property '" + property + "' not found in " + owner + " (" + owner.getClass() + ")");
+    }
     return value;
   }
 }

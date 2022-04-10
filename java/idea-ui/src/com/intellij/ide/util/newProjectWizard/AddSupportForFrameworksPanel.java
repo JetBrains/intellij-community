@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.newProjectWizard;
 
@@ -33,6 +33,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -163,7 +164,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   private static void addAssociatedFrameworkComponent(JPanel component, JPanel panel) {
     panel.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+                                                GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
   }
 
   protected void onFrameworkStateChanged() {}

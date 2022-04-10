@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile
     level = DeprecationLevel.ERROR
 )
 fun getResolvedKotlinGradleVersion(file: PsiFile): String? {
-    return org.jetbrains.kotlin.idea.groovy.inspections.getResolvedKotlinGradleVersion(file)
+    return org.jetbrains.kotlin.idea.groovy.inspections.findResolvedKotlinGradleVersion(file)?.rawVersion
 }
 
 @Deprecated(
@@ -19,5 +19,5 @@ fun getResolvedKotlinGradleVersion(file: PsiFile): String? {
     level = DeprecationLevel.ERROR
 )
 fun getResolvedKotlinGradleVersion(module: Module): String? {
-    return org.jetbrains.kotlin.idea.groovy.inspections.getResolvedKotlinGradleVersion(module)
+    return org.jetbrains.kotlin.idea.groovy.inspections.findResolvedKotlinGradleVersion(module)?.rawVersion
 }

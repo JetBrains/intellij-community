@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +96,7 @@ public class MavenIndices implements Disposable {
       closeIndices(getOldIndices(localDiff, remoteDiff));
       updateDependencySearchProviders(project);
     }
-    catch (AlreadyDisposedException e) {
+    catch (AlreadyDisposedException | IncorrectOperationException e) {
       myIndexHolder = new MavenIndexHolder(Collections.emptyList(), null);
     }
     finally {

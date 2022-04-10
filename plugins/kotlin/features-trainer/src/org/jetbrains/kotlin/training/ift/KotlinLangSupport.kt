@@ -8,7 +8,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.PlatformProjectOpenProcessor
 import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator
 import org.jetbrains.kotlin.idea.configuration.createConfigureKotlinNotificationCollector
@@ -22,11 +21,11 @@ class KotlinLangSupport : JavaBasedLangSupport() {
     override val contentRootDirectoryName = "KotlinLearningProject"
 
     override val primaryLanguage: String = "kotlin"
-    override val filename: String = "Learning.kt"
-
-    override val projectSandboxRelativePath: String = "Sample.kt"
+    override val scratchFileName: String = "Learning.kt"
 
     private val sourcesDirectoryName = "src"
+
+    override val sampleFilePath: String = "$sourcesDirectoryName/Sample.kt"
 
     override fun installAndOpenLearningProject(
         contentRoot: Path,
@@ -66,9 +65,5 @@ class KotlinLangSupport : JavaBasedLangSupport() {
         super.applyToProjectAfterConfigure().invoke(project)
         ProjectCodeStyleImporter.apply(project, KotlinStyleGuideCodeStyle.INSTANCE)
         invokeLater { ProjectUtils.markDirectoryAsSourcesRoot(project, sourcesDirectoryName) }
-    }
-
-    override fun blockProjectFileModification(project: Project, file: VirtualFile): Boolean {
-        return file.name != projectSandboxRelativePath
     }
 }

@@ -84,7 +84,7 @@ class DelayedProjectSynchronizerTest {
   private fun checkSerializersConsistency(project: Project) {
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
     val serializers = JpsProjectModelSynchronizer.getInstance(project)!!.getSerializers()
-    serializers.checkConsistency(getJpsProjectConfigLocation(project)!!.baseDirectoryUrlString, storage, VirtualFileUrlManager.getInstance(project))
+    serializers.checkConsistency(getJpsProjectConfigLocation(project)!!, storage, VirtualFileUrlManager.getInstance(project))
   }
 
   @Test
@@ -123,7 +123,7 @@ class DelayedProjectSynchronizerTest {
       LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary("foo")
     }
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
-    JpsProjectModelSynchronizer.getInstance(project)!!.getSerializers().saveAllEntities(storage, projectData.projectDir)
+    JpsProjectModelSynchronizer.getInstance(project)!!.getSerializers().saveAllEntities(storage, projectData.configLocation)
     val librariesFolder = projectData.projectDir.toPath().resolve(".idea/libraries/")
     val librariesPaths = Files.list(librariesFolder).sorted().toList()
     assertEquals(4, librariesPaths.size)
@@ -144,7 +144,7 @@ class DelayedProjectSynchronizerTest {
     val configLocation = toConfigLocation(projectData.projectDir.toPath(), virtualFileManager)
     val serializers = loadProject(configLocation, originalBuilder, virtualFileManager, fileInDirectorySourceNames) as JpsProjectSerializersImpl
     val loadedProjectData = LoadedProjectData(originalBuilder.toStorage(), serializers, configLocation, projectFile)
-    serializers.checkConsistency(loadedProjectData.projectDirUrl, loadedProjectData.storage, virtualFileManager)
+    serializers.checkConsistency(configLocation, loadedProjectData.storage, virtualFileManager)
 
     assertThat(projectData.storage.entities(ModuleEntity::class.java).map {
       assertTrue(it.entitySource is JpsFileEntitySource.FileInDirectory)
@@ -212,6 +212,7 @@ class DelayedProjectSynchronizerTest {
     Disposer.register(disposableRule.disposable, Disposable {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     })
+    DelayedProjectSynchronizer.backgroundPostStartupProjectLoading(project)
     return project
   }
 

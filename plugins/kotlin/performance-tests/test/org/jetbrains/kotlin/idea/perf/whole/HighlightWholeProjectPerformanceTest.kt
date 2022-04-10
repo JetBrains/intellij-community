@@ -15,10 +15,11 @@ import org.jetbrains.kotlin.idea.perf.suite.DefaultProfile
 import org.jetbrains.kotlin.idea.perf.suite.EmptyProfile
 import org.jetbrains.kotlin.idea.perf.suite.suite
 import org.jetbrains.kotlin.idea.perf.util.*
+import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
-import org.jetbrains.kotlin.idea.testFramework.relativePath
+import org.jetbrains.kotlin.idea.performance.tests.utils.relativePath
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
 import java.io.File
 import java.nio.file.Files
@@ -152,14 +153,18 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
     }
 
     private fun projectSpecs(): List<ProjectSpec> {
-        val projects = System.getProperty("performanceProjects") ?: return emptyList()
-        return projects.split(",").map {
+        val projects = System.getProperty("performanceProjects")
+        val specs = projects?.split(",")?.map {
             val idx = it.indexOf("=")
             if (idx <= 0) ProjectSpec(it, "../$it") else ProjectSpec(it.substring(0, idx), it.substring(idx + 1))
-        }.filter {
+        } ?: emptyList()
+
+        specs.forEach {
             val path = File(it.path)
-            path.exists() && path.isDirectory
+            check(path.exists() && path.isDirectory) { "Project `${it.name}` path ${path.absolutePath} does not exist or it is not a directory" }
         }
+
+        return specs.takeIf { it.isNotEmpty() } ?: error("No projects specified, use `-DperformanceProjects=projectName`")
     }
 
     private data class ProjectSpec(val name: String, val path: String)

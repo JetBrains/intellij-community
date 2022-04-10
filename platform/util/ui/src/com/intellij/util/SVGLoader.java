@@ -402,7 +402,7 @@ public final class SVGLoader {
         if (!Strings.isEmpty(color)) {
           int alpha = 255;
           try {
-            alpha = (int)Math.ceil(255f * Float.valueOf(opacity));
+            alpha = (int)Math.ceil(255f * Float.parseFloat(opacity));
           }catch (Exception ignore){}
           String newColor = null;
           String key = toCanonicalColor(color);

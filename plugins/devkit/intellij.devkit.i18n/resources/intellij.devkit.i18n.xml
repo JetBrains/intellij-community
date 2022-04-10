@@ -1,0 +1,33 @@
+<idea-plugin package="org.jetbrains.idea.devkit.i18n">
+  <dependencies>
+    <module name="intellij.devkit.core"/>
+    <plugin id="com.intellij.java-i18n"/>
+  </dependencies>
+
+  <resource-bundle>messages.DevKitI18nBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij.java-i18n">
+    <resourceBundleManager implementation="org.jetbrains.idea.devkit.i18n.IntelliJProjectResourceBundleManager"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection language="XML" applyToDialects="false"
+                     groupBundle="messages.DevKitBundle" groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.i18n.PluginXmlI18nInspection"
+                     key="inspection.plugin.xml.i18n.display.name"/>
+    <localInspection language="XML" shortName="PluginXmlCapitalization" applyToDialects="false"
+                     groupBundle="messages.DevKitBundle" groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.i18n.PluginXmlCapitalizationInspection"
+                     key="inspection.plugin.xml.capitalization.display.name"/>
+
+    <!--suppress PluginXmlCapitalization -->
+    <localInspection language="Properties"
+                     groupBundle="messages.DevKitBundle" groupKey="inspections.group.name"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.i18n.DevKitPropertiesQuotesValidationInspection"
+                     key="inspection.dev.kit.properties.quotes.validation.display.name"/>
+    <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.i18n.IntentionsImplicitPropertyUsageProvider"/>
+  </extensions>
+</idea-plugin>

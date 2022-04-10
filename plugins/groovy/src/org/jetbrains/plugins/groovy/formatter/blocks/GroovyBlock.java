@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.formatter.blocks;
 
@@ -51,6 +51,9 @@ public class GroovyBlock implements Block, ASTBlock {
 
   protected List<Block> mySubBlocks = null;
 
+  /**
+   * Consider using {@link FormattingContext#createBlock(ASTNode, Indent, Wrap)}
+   */
   public GroovyBlock(@NotNull final ASTNode node,
                      @NotNull final Indent indent,
                      @Nullable final Wrap wrap,
@@ -90,7 +93,7 @@ public class GroovyBlock implements Block, ASTBlock {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public Indent getIndent() {
     return myIndent;
   }
@@ -110,7 +113,6 @@ public class GroovyBlock implements Block, ASTBlock {
    *
    * @param child1 left element
    * @param child2 right element
-   * @return
    */
   @Override
   @Nullable

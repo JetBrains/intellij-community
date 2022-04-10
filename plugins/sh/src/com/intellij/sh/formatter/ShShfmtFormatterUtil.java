@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.sh.ShLanguage;
+import com.intellij.sh.ShNotificationDisplayIds;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
@@ -40,6 +41,7 @@ import java.util.List;
 
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShBundle.messagePointer;
+import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP;
 import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
 import static com.intellij.sh.statistics.ShCounterUsagesCollector.EXTERNAL_FORMATTER_DOWNLOADED_EVENT_ID;
 
@@ -184,18 +186,22 @@ public final class ShShfmtFormatterUtil {
   private static void checkForUpdateInBackgroundThread(@NotNull Project project) {
     if (ApplicationManager.getApplication().isDispatchThread()) LOG.error("Must not be in event-dispatch thread");
     if (!isNewVersionAvailable()) return;
-    Notification notification = new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"), message("sh.fmt.update.question"),
+    Notification notification = NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.fmt.update.question"),
                                                  NotificationType.INFORMATION);
+    notification.setSuggestionType(true);
+    notification.setDisplayId(ShNotificationDisplayIds.UPDATE_FORMATTER);
     notification.addAction(
       NotificationAction.createSimple(messagePointer("sh.update"), () -> {
         notification.expire();
         download(project,
                  () -> Notifications.Bus
-                   .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"), message("sh.fmt.success.update"),
-                                            NotificationType.INFORMATION)),
+                   .notify(NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.fmt.success.update"),
+                                            NotificationType.INFORMATION)
+                             .setDisplayId(ShNotificationDisplayIds.UPDATE_FORMATTER_SUCCESS)),
                  () -> Notifications.Bus
-                   .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"), message("sh.fmt.cannot.update"),
-                                            NotificationType.ERROR)),
+                   .notify(NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.fmt.cannot.update"),
+                                            NotificationType.ERROR)
+                             .setDisplayId(ShNotificationDisplayIds.UPDATE_FORMATTER_ERROR)),
                  true);
       }));
     notification.addAction(NotificationAction.createSimple(messagePointer("sh.skip.version"), () -> {

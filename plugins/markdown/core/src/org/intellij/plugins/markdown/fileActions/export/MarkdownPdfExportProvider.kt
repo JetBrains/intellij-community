@@ -5,11 +5,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.cef.misc.CefPdfPrintSettings
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.MarkdownNotifier
 import org.intellij.plugins.markdown.fileActions.MarkdownFileActionFormat
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownFileEditorUtils
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils.notifyAndRefreshIfExportSuccess
+import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 import org.intellij.plugins.markdown.ui.preview.jcef.MarkdownJCEFHtmlPanel
 import java.io.File
@@ -29,9 +29,10 @@ internal class MarkdownPdfExportProvider : MarkdownExportProvider {
           notifyAndRefreshIfExportSuccess(File(path), project)
         }
         else {
-          MarkdownNotifier.showErrorNotification(
+          MarkdownNotifications.showError(
             project,
-            MarkdownBundle.message("markdown.export.failure.msg", File(path).name)
+            id = MarkdownExportProvider.Companion.NotificationIds.exportFailed,
+            message = MarkdownBundle.message("markdown.export.failure.msg", File(path).name)
           )
         }
       }

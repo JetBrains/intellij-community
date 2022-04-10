@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.commandLine
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.formatting.service.CoreFormattingService
 import com.intellij.formatting.service.FormattingServiceUtil
-import com.intellij.ide.impl.OpenProjectTask.Companion.newProject
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.lang.LanguageFormatting
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
@@ -23,6 +24,7 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.util.LocalTimeCounter
 import com.intellij.util.PlatformUtils
 import org.jetbrains.jps.model.serialization.PathMacroUtil
@@ -46,11 +48,12 @@ private const val RESULT_MESSAGE_DRY_FAIL = "Needs reformatting"
 
 
 class FileSetFormatter(
-  codeStyleSettings: CodeStyleSettings,
   messageOutput: MessageOutput,
   isRecursive: Boolean,
-  charset: Charset? = null
-) : FileSetCodeStyleProcessor(codeStyleSettings, messageOutput, isRecursive, charset) {
+  charset: Charset? = null,
+  primaryCodeStyle: CodeStyleSettings? = null,
+  defaultCodeStyle: CodeStyleSettings? = null
+) : FileSetCodeStyleProcessor(messageOutput, isRecursive, charset, primaryCodeStyle, defaultCodeStyle) {
 
   override val operationContinuous = "Formatting"
   override val operationPerfect = "formatted"
@@ -112,11 +115,12 @@ class FileSetFormatter(
 
 
 class FileSetFormatValidator(
-  codeStyleSettings: CodeStyleSettings,
   messageOutput: MessageOutput,
   isRecursive: Boolean,
-  charset: Charset? = null
-) : FileSetCodeStyleProcessor(codeStyleSettings, messageOutput, isRecursive, charset) {
+  charset: Charset? = null,
+  primaryCodeStyle: CodeStyleSettings? = null,
+  defaultCodeStyle: CodeStyleSettings? = null
+) : FileSetCodeStyleProcessor(messageOutput, isRecursive, charset, primaryCodeStyle, defaultCodeStyle) {
 
   override val operationContinuous = "Checking"
   override val operationPerfect = "checked"
@@ -165,7 +169,7 @@ class FileSetFormatValidator(
 
     val originalPsi = PsiManager.getInstance(project).findFile(originalFile)
     if (originalPsi != null) {
-        psiCopy.putUserData(PsiFileFactory.ORIGINAL_FILE, originalPsi)
+      psiCopy.putUserData(PsiFileFactory.ORIGINAL_FILE, originalPsi)
     }
 
     return psiCopy
@@ -173,16 +177,16 @@ class FileSetFormatValidator(
 
 }
 
-
 abstract class FileSetCodeStyleProcessor(
-  val codeStyleSettings: CodeStyleSettings,
   messageOutput: MessageOutput,
   isRecursive: Boolean,
-  charset: Charset? = null
+  charset: Charset? = null,
+  val primaryCodeStyle: CodeStyleSettings? = null,
+  val defaultCodeStyle: CodeStyleSettings? = null
 ) : FileSetProcessor(messageOutput, isRecursive, charset), Closeable {
 
   private val projectUID = UUID.randomUUID().toString()
-  protected val project = createProject(projectUID, codeStyleSettings)
+  protected val project = createProject(projectUID)
 
   abstract val operationContinuous: String
   abstract val operationPerfect: String
@@ -198,21 +202,42 @@ abstract class FileSetCodeStyleProcessor(
   open fun isResultSuccessful() = true
 
   override fun close() {
-    ProjectManagerEx.getInstanceEx().closeAndDispose(project)
+    ProjectManager.getInstance().closeAndDispose(project)
   }
 
-  override fun processVirtualFile(virtualFile: VirtualFile) {
+  override fun processVirtualFile(virtualFile: VirtualFile, projectSettings: CodeStyleSettings?) {
     messageOutput.info("$operationContinuous ${virtualFile.canonicalPath}...")
 
-    VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile)
-    val resultMessage =
-      if (virtualFile.fileType.isBinary) {
-        RESULT_MESSAGE_BINARY_FILE
-      }
-      else {
-        processFileInternal(virtualFile)
-      }
-    messageOutput.info("$resultMessage\n")
+    val style = listOfNotNull(primaryCodeStyle, projectSettings, defaultCodeStyle).firstOrNull()
+
+    if (style == null) {
+      messageOutput.error("No style for ${virtualFile.canonicalPath}, skipping...")
+      statistics.fileProcessed(true)
+      return
+    }
+
+    withStyleSettings(style) {
+      VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile)
+      val resultMessage =
+        if (virtualFile.fileType.isBinary) {
+          RESULT_MESSAGE_BINARY_FILE
+        }
+        else {
+          processFileInternal(virtualFile)
+        }
+      messageOutput.info("$resultMessage\n")
+    }
+  }
+
+  private fun <T> withStyleSettings(style: CodeStyleSettings, body: () -> T): T {
+    val cssManager = CodeStyleSettingsManager.getInstance(project)
+    val tmp = cssManager.mainProjectCodeStyle!!
+    try {
+      CodeStyle.setMainProjectSettings(project, style)
+      return body()
+    } finally {
+      CodeStyle.setMainProjectSettings(project, tmp)
+    }
   }
 
 }
@@ -227,10 +252,12 @@ private fun createProjectDir(projectUID: String) = FileUtil
   .resolve(PathMacroUtil.DIRECTORY_STORE_NAME)
   .also { Files.createDirectories(it) }
 
-private fun createProject(projectUID: String, codeStyleSettings: CodeStyleSettings) =
+private fun createProject(projectUID: String) =
   ProjectManagerEx.getInstanceEx()
-    .openProject(createProjectDir(projectUID), newProject())
-    ?.also { CodeStyle.setMainProjectSettings(it, codeStyleSettings) }
+    .openProject(createProjectDir(projectUID), OpenProjectTask(isNewProject = true))
+    ?.also {
+      CodeStyle.setMainProjectSettings(it, CodeStyleSettingsManager.getInstance().createSettings())
+    }
   ?: throw RuntimeException("Failed to create temporary project $projectUID")
 
 private fun PsiFile.isFormattingSupported(): Boolean {

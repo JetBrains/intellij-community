@@ -1,18 +1,4 @@
-/*
- * Copyright 2011-2017 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -31,6 +17,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+/**
+ * @author Bas Leijdekkers
+ */
 public final class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
   private static final Set<IElementType> binaryPromotionOperators = Set.of(
     JavaTokenType.ASTERISK,
@@ -129,13 +118,27 @@ public final class UnnecessaryExplicitNumericCastInspection extends BaseInspecti
     if (!ClassUtils.isPrimitiveNumericType(operandType)) {
       return false;
     }
-    if (castType.equals(operandType)) {
-      // cast to the same type is caught by "Redundant type cast" inspection
-      return false;
-    }
     PsiElement parent = expression.getParent();
     while (parent instanceof PsiParenthesizedExpression) {
       parent = parent.getParent();
+    }
+    if (parent instanceof PsiPrefixExpression) {
+      // JLS 5.6 Numeric Contexts
+      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parent;
+      final IElementType tokenType = prefixExpression.getOperationTokenType();
+      if (JavaTokenType.MINUS == tokenType || JavaTokenType.PLUS == tokenType || JavaTokenType.TILDE == tokenType) {
+        if (TypeUtils.isNarrowingConversion(operandType, castType)) {
+          return false;
+        }
+        if (PsiType.INT.equals(castType)) {
+          return !PsiType.LONG.equals(operandType) && !PsiType.FLOAT.equals(operandType) && !PsiType.DOUBLE.equals(operandType);
+        }
+      }
+      return false;
+    }
+    if (castType.equals(operandType)) {
+      // cast to the same type is caught by "Redundant type cast" inspection
+      return false;
     }
     if (parent instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;

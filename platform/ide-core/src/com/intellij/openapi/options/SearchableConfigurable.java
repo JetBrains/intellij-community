@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,17 +45,6 @@ public interface SearchableConfigurable extends ConfigurableWithId {
   interface Parent extends SearchableConfigurable, Composite {
     default boolean hasOwnContent() {
       return false;
-    }
-
-    /**
-     * @deprecated use {@link ConfigurableProvider#canCreateConfigurable()} instead
-     *             to specify configurables which should not be visible
-     *             (a provider usually does not instantiate a configurable and related classes)
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-    default boolean isVisible() {
-      return true;
     }
 
     abstract class Abstract implements Parent {

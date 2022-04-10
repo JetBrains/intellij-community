@@ -116,6 +116,12 @@ interface ScriptConfigurationManager {
         fun getInstance(project: Project): ScriptConfigurationManager = project.service()
 
         @JvmStatic
+        fun allExtraRoots(project: Project): Collection<VirtualFile> {
+            val manager = getInstance(project)
+            return manager.getAllScriptsDependenciesClassFiles() + manager.getAllScriptDependenciesSources()
+        }
+
+        @JvmStatic
         fun compositeScriptConfigurationManager(project: Project) =
             getInstance(project).cast<CompositeScriptConfigurationManager>()
 

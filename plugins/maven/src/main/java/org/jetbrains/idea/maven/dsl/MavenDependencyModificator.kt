@@ -13,6 +13,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.childrenOfType
@@ -199,12 +200,12 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     } ?: return
 
     updateValueIfNeeded(model = model, domDependency = domDependency, domValue = domDependency.version,
-      managedDomValue = managedDependency.version, newValue = newMavenId.version,
-      siblingsBeforeTag = elementsBeforeDependencyVersion)
+                        managedDomValue = managedDependency.version, newValue = newMavenId.version,
+                        siblingsBeforeTag = elementsBeforeDependencyVersion)
 
     updateValueIfNeeded(model = model, domDependency = domDependency, domValue = domDependency.scope,
-      managedDomValue = managedDependency.scope, newValue = newScope,
-      siblingsBeforeTag = elementsBeforeDependencyScope)
+                        managedDomValue = managedDependency.scope, newValue = newScope,
+                        siblingsBeforeTag = elementsBeforeDependencyScope)
   }
 
   private fun updateValueIfNeeded(model: MavenDomProjectModel,
@@ -219,6 +220,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
         addTagIfNotExists(tagName = domValue.xmlElementName, parentElement = domDependency, siblingsBeforeTag = siblingsBeforeTag)
         updateVariableOrValue(model, domValue, newValue)
       }
+
       else -> domValue.xmlTag?.delete()
     }
   }
@@ -395,8 +397,26 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     val directVersion = dependency.version.stringValue
     if (directVersion != null) return directVersion
 
-    val managingDependency = MavenDomProjectProcessorUtils.searchManagingDependency(dependency, project)
-    return managingDependency?.version?.stringValue
+    val groupId = dependency.groupId.stringValue;
+    val artifactId = dependency.artifactId.stringValue;
+
+    val domModel = dependency.getParentOfType(MavenDomProjectModel::class.java, false) ?: return null
+    val ref = Ref<String>()
+    if (MavenDomProjectProcessorUtils.processDependenciesInDependencyManagement(domModel,
+                                                                                {
+                                                                                  if (groupId == it.groupId.stringValue
+                                                                                      && artifactId == it.artifactId.stringValue
+                                                                                      && !it.version.stringValue.isNullOrBlank()
+                                                                                  ) {
+                                                                                    ref.set(it.version.stringValue)
+                                                                                    return@processDependenciesInDependencyManagement true
+                                                                                  }
+                                                                                  false
+                                                                                }, project)) {
+      return ref.get()
+
+    }
+    return null
 
   }
 

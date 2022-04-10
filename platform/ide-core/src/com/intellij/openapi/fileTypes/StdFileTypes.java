@@ -4,7 +4,6 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,15 +29,13 @@ public final class StdFileTypes extends FileTypes {
   /**
    * @deprecated use {@link com.intellij.jsp.highlighter.NewJspFileType#INSTANCE} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static volatile LanguageFileType JSP = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("JSP");
 
   /**
    * @deprecated use {@link com.intellij.jsp.highlighter.JspxFileType#INSTANCE} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static volatile LanguageFileType JSPX = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("JSPX");
 
   /**
@@ -50,8 +47,7 @@ public final class StdFileTypes extends FileTypes {
   /**
    * @deprecated use {@link com.intellij.ide.highlighter.DTDFileType#INSTANCE} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static volatile LanguageFileType DTD = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("DTD");
 
   /**
@@ -63,8 +59,7 @@ public final class StdFileTypes extends FileTypes {
   /**
    * @deprecated use {@link com.intellij.ide.highlighter.XHtmlFileType#INSTANCE} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static volatile LanguageFileType XHTML = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("XHTML");
 
   /**
@@ -77,36 +72,31 @@ public final class StdFileTypes extends FileTypes {
   /**
    * @deprecated use {@link com.intellij.lang.properties.PropertiesFileType#INSTANCE} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static volatile LanguageFileType PROPERTIES = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("Properties");
 
   /**
    * @deprecated use {@link com.intellij.uiDesigner.GuiFormFileType#INSTANCE} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static volatile FileType GUI_DESIGNER_FORM = FileTypeManager.getInstance().getStdFileType("GUI_DESIGNER_FORM");
 
   /**
    * @deprecated use {@link WorkspaceFileType#INSTANCE} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static volatile FileType IDEA_WORKSPACE = FileTypeManager.getInstance().getStdFileType("IDEA_WORKSPACE");
 
   /**
    * @deprecated use {@link ProjectFileType#INSTANCE} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static volatile FileType IDEA_PROJECT = FileTypeManager.getInstance().getStdFileType("IDEA_PROJECT");
 
   /**
    * @deprecated use {@link ModuleFileType#INSTANCE} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static volatile FileType IDEA_MODULE = FileTypeManager.getInstance().getStdFileType("IDEA_MODULE");
 
 

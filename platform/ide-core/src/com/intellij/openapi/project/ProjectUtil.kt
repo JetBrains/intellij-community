@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProjectUtil")
 package com.intellij.openapi.project
 
@@ -85,7 +85,7 @@ fun guessProjectForContentFile(file: VirtualFile,
 
 fun isProjectOrWorkspaceFile(file: VirtualFile): Boolean = ProjectCoreUtil.isProjectOrWorkspaceFile(file)
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "This method is an unreliable hack, find another way to locate a project instance.")
 fun guessCurrentProject(component: JComponent?): Project {
   var project: Project? = null
@@ -291,5 +291,5 @@ inline fun processOpenedProjects(processor: (Project) -> Unit) {
 }
 
 fun isNotificationSilentMode(project: Project?): Boolean {
-  return ApplicationManager.getApplication().isHeadlessEnvironment || NOTIFICATIONS_SILENT_MODE[project, false]
+  return ApplicationManager.getApplication().isHeadlessEnvironment || NOTIFICATIONS_SILENT_MODE.get(project, false)
 }

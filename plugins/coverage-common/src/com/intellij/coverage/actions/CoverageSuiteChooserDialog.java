@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.actions;
 
 import com.intellij.CommonBundle;
@@ -276,63 +276,65 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final VirtualFile file =
-        FileChooser.chooseFile(new FileChooserDescriptor(true, false, false, false, false, false) {
+      final VirtualFile[] files =
+        FileChooser.chooseFiles(new FileChooserDescriptor(true, false, false, false, false, true) {
           @Override
           public boolean isFileSelectable(@Nullable VirtualFile file) {
             return file != null && getCoverageRunner(file) != null;
           }
         }, myProject, null);
-      if (file != null) {
+      if (files.length > 0) {
         //ensure timestamp in vfs is updated
-        VfsUtil.markDirtyAndRefresh(false, false, false, file);
+        VfsUtil.markDirtyAndRefresh(false, false, false, files);
 
-        final CoverageRunner coverageRunner = getCoverageRunner(file);
-        if (coverageRunner == null) {
-          Messages.showErrorDialog(myProject, CoverageBundle.message("no.coverage.runner.available.for", file.getName()), CommonBundle.getErrorTitle());
-          return;
-        }
+        for (VirtualFile file : files) {
+          final CoverageRunner coverageRunner = getCoverageRunner(file);
+          if (coverageRunner == null) {
+            Messages.showErrorDialog(myProject, CoverageBundle.message("no.coverage.runner.available.for", file.getName()), CommonBundle.getErrorTitle());
+            continue;
+          }
 
-        final CoverageSuite coverageSuite = myCoverageManager
-          .addExternalCoverageSuite(file.getName(), file.getTimeStamp(), coverageRunner,
-                                    new DefaultCoverageFileProvider(file.getPath()));
+          final CoverageSuite coverageSuite = myCoverageManager
+            .addExternalCoverageSuite(file.getName(), file.getTimeStamp(), coverageRunner,
+                                      new DefaultCoverageFileProvider(file.getPath()));
 
-        final String coverageRunnerTitle = getCoverageRunnerTitle(coverageRunner);
-        DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(myRootNode, coverageRunnerTitle);
-        if (node == null) {
-          node = new DefaultMutableTreeNode(coverageRunnerTitle);
-          myRootNode.add(node);
-        }
-        if (node.getChildCount() > 0) {
-          final TreeNode childNode = node.getChildAt(0);
-          if (!(childNode instanceof CheckedTreeNode)) {
-            if (LOCAL.equals(((DefaultMutableTreeNode)childNode).getUserObject())) {
-              node = (DefaultMutableTreeNode)childNode;
-            }
-            else {
-              final DefaultMutableTreeNode localNode = new DefaultMutableTreeNode(LOCAL);
-              node.add(localNode);
-              node = localNode;
+          final String coverageRunnerTitle = getCoverageRunnerTitle(coverageRunner);
+          DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(myRootNode, coverageRunnerTitle);
+          if (node == null) {
+            node = new DefaultMutableTreeNode(coverageRunnerTitle);
+            myRootNode.add(node);
+          }
+          if (node.getChildCount() > 0) {
+            final TreeNode childNode = node.getChildAt(0);
+            if (!(childNode instanceof CheckedTreeNode)) {
+              if (LOCAL.equals(((DefaultMutableTreeNode)childNode).getUserObject())) {
+                node = (DefaultMutableTreeNode)childNode;
+              }
+              else {
+                final DefaultMutableTreeNode localNode = new DefaultMutableTreeNode(LOCAL);
+                node.add(localNode);
+                node = localNode;
+              }
             }
           }
-        }
-        final CheckedTreeNode suiteNode = new CheckedTreeNode(coverageSuite);
-        suiteNode.setChecked(true);
-        node.add(suiteNode);
-        TreeUtil.sort(node, (o1, o2) -> {
-          if (o1 instanceof CheckedTreeNode && o2 instanceof CheckedTreeNode) {
-            final Object userObject1 = ((CheckedTreeNode)o1).getUserObject();
-            final Object userObject2 = ((CheckedTreeNode)o2).getUserObject();
-            if (userObject1 instanceof CoverageSuite && userObject2 instanceof CoverageSuite) {
-              final String presentableName1 = ((CoverageSuite)userObject1).getPresentableName();
-              final String presentableName2 = ((CoverageSuite)userObject2).getPresentableName();
-              return presentableName1.compareToIgnoreCase(presentableName2);
+          final CheckedTreeNode suiteNode = new CheckedTreeNode(coverageSuite);
+          suiteNode.setChecked(true);
+          node.add(suiteNode);
+          TreeUtil.sort(node, (o1, o2) -> {
+            if (o1 instanceof CheckedTreeNode && o2 instanceof CheckedTreeNode) {
+              final Object userObject1 = ((CheckedTreeNode)o1).getUserObject();
+              final Object userObject2 = ((CheckedTreeNode)o2).getUserObject();
+              if (userObject1 instanceof CoverageSuite && userObject2 instanceof CoverageSuite) {
+                final String presentableName1 = ((CoverageSuite)userObject1).getPresentableName();
+                final String presentableName2 = ((CoverageSuite)userObject2).getPresentableName();
+                return presentableName1.compareToIgnoreCase(presentableName2);
+              }
             }
-          }
-          return 0;
-        });
-        updateTree();
-        TreeUtil.selectNode(mySuitesTree, suiteNode);
+            return 0;
+          });
+          updateTree();
+          TreeUtil.selectNode(mySuitesTree, suiteNode);
+        }
       }
     }
   }

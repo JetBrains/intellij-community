@@ -6,7 +6,8 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.services.MavenRepositoryServicesManager;
-import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
@@ -59,7 +60,6 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -87,6 +87,8 @@ public final class JarRepositoryManager {
     static final ExecutorService INSTANCE = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("RemoteLibraryDownloader",
                                                                                                            ProcessIOExecutorService.INSTANCE);
   }
+
+  public static NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Repository");
 
   public static boolean hasRunningTasks() {
     return ourTasksInProgress.get() > 0;   // todo: count tasks on per-project basis?
@@ -341,7 +343,7 @@ public final class JarRepositoryManager {
       sb.append(root.getFile().getName());
     }
     @NlsSafe final String content = sb.toString();
-    Notifications.Bus.notify(new Notification("Repository", title, content, NotificationType.INFORMATION), project);
+    Notifications.Bus.notify(GROUP.createNotification(title, content, NotificationType.INFORMATION), project);
   }
 
   public static void searchArtifacts(Project project,
@@ -463,7 +465,7 @@ public final class JarRepositoryManager {
   }
 
   @NotNull
-  private static <T> Promise<T> submitBackgroundJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
+  public static <T> Promise<T> submitBackgroundJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
     ModalityState startModality = ModalityState.defaultModalityState();
     AsyncPromise<T> promise = new AsyncPromise<>();
     JobExecutor.INSTANCE.execute(() -> {

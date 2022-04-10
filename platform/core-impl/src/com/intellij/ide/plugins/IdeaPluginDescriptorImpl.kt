@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.ide.plugins
 
@@ -361,7 +361,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   @ApiStatus.Internal
   fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>,
                          containerDescriptor: ContainerDescriptor,
-                         listenerCallbacks: List<Runnable>?) {
+                         listenerCallbacks: MutableList<in Runnable>?) {
     containerDescriptor.extensions?.let {
       if (!it.isEmpty()) {
         @Suppress("JavaMapForEach")
@@ -409,7 +409,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   private fun doRegisterExtensions(unsortedMap: Map<String, MutableList<ExtensionDescriptor>>,
                                    nameToPoint: Map<String, ExtensionPointImpl<*>>,
-                                   listenerCallbacks: List<Runnable>?): Int {
+                                   listenerCallbacks: MutableList<in Runnable>?): Int {
     var registeredCount = 0
     for (entry in unsortedMap) {
       val point = nameToPoint.get(entry.key) ?: continue
@@ -429,7 +429,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     result = (resourceBundleBaseName?.let { baseName ->
       try {
         AbstractBundle.messageOrDefault(
-          DynamicBundle.INSTANCE.getResourceBundle(baseName, classLoader),
+          DynamicBundle.getResourceBundle(classLoader, baseName),
           "plugin.$id.description",
           descriptionChildText ?: "",
         )

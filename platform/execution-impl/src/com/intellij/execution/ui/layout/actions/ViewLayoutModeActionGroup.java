@@ -1,16 +1,14 @@
 package com.intellij.execution.ui.layout.actions;
 
-import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.custom.options.CustomContentLayoutOptions;
 import com.intellij.ui.content.custom.options.CustomContentLayoutOption;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
 
 public class ViewLayoutModeActionGroup extends DefaultActionGroup implements ViewLayoutModificationAction {
 
@@ -18,15 +16,12 @@ public class ViewLayoutModeActionGroup extends DefaultActionGroup implements Vie
   private final Content myContent;
 
   public ViewLayoutModeActionGroup(
-    @NotNull RunnerContentUi ui,
-    @NotNull Content content) {
-    super(content.getDisplayName(), true);
+    @NotNull Content content,
+    @NotNull CustomContentLayoutOptions customContentLayoutOptions) {
+    super(customContentLayoutOptions.getDisplayName(), true);
 
-    CustomContentLayoutOptions customLayoutOptions = content.getUserData(CustomContentLayoutOptions.KEY);
-    assert customLayoutOptions != null;
-
-    add(new ViewLayoutModeAction(new HideContentLayoutModeOption(content, ui, customLayoutOptions)));
-    for (CustomContentLayoutOption option : customLayoutOptions.getAvailableOptions()) {
+    add(new ViewLayoutModeAction(new HideContentLayoutModeOption(content, customContentLayoutOptions)));
+    for (CustomContentLayoutOption option : customContentLayoutOptions.getAvailableOptions()) {
       add(new ViewLayoutModeAction(option));
     }
 
@@ -79,29 +74,26 @@ public class ViewLayoutModeActionGroup extends DefaultActionGroup implements Vie
   public static class HideContentLayoutModeOption implements CustomContentLayoutOption {
 
     private final Content myContent;
-    private final RunnerContentUi myUi;
     private final CustomContentLayoutOptions myOptions;
 
-    public HideContentLayoutModeOption(Content content, RunnerContentUi ui, CustomContentLayoutOptions options) {
+    public HideContentLayoutModeOption(Content content, CustomContentLayoutOptions options) {
       myContent = content;
-      myUi = ui;
       myOptions = options;
     }
 
     @Override
     public boolean isSelected() {
-      return !myContent.isValid() || Objects.requireNonNull(myContent.getManager()).getIndexOfContent(myContent) == -1;
+      return myOptions.isHidden();
     }
 
     @Override
     public void select() {
-      myUi.minimize(myContent, null);
       myOptions.onHide();
     }
 
     @Override
     public boolean isEnabled() {
-      return isSelected() || myUi.getContentManager().getContents().length > 1;
+      return myOptions.isHideOptionVisible();
     }
 
     @Override

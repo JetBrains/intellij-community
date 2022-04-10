@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui
 
 import com.intellij.ide.DefaultTreeExpander
@@ -159,9 +159,9 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   }
   val openInPreviewTab = object : Option {
     override fun isEnabled() = isVertical || !state.showPreview
-    override fun isSelected() = UISettings.instance.openInPreviewTabIfPossible
+    override fun isSelected() = UISettings.getInstance().openInPreviewTabIfPossible
     override fun setSelected(selected: Boolean) {
-      UISettings.instance.openInPreviewTabIfPossible = selected
+      UISettings.getInstance().openInPreviewTabIfPossible = selected
       selectionAlarm.cancelAndRequest()
     }
   }

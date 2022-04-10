@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -307,7 +307,6 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   }
 
   private void markEnumUsedIfValuesMethod(PsiMethod psiWhat, UExpression expression) {
-    LOG.assertTrue(isInitialized());
     //TODO support kotlin enums
     final PsiClass containingClass = psiWhat.getContainingClass();
     if (containingClass != null && containingClass.isEnum() && "values".equals(psiWhat.getName())) {

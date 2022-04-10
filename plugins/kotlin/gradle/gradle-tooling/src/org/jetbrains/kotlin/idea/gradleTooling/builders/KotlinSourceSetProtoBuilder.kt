@@ -2,18 +2,44 @@
 package org.jetbrains.kotlin.idea.gradleTooling.builders
 
 import org.gradle.api.Named
+import org.gradle.api.Project
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinLanguageSettingsReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinTargetReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId
 import org.jetbrains.plugins.gradle.model.DefaultExternalLibraryDependency
 import org.jetbrains.plugins.gradle.model.DefaultFileCollectionDependency
 import java.io.File
 
-class KotlinSourceSetProtoBuilder(val androidDeps: Map<String, List<Any>>?) :
-    KotlinMultiplatformComponentBuilderBase<KotlinSourceSetProto> {
+class KotlinSourceSetProtoBuilder(
+    val androidDeps: Map<String, List<Any>>?,
+    val project: Project
+) : KotlinMultiplatformComponentBuilderBase<KotlinSourceSetProto> {
+    private val sourceSetsWithoutNeedOfBuildingDependenciesMetadata: Set<Named> by lazy {
+        val isHMPPEnabled = project.getProperty(GradleImportProperties.IS_HMPP_ENABLED)
+        if (!isHMPPEnabled) return@lazy emptySet()
+
+        val sourceSetPlatforms = mutableMapOf<Named, MutableSet<KotlinPlatform>>()
+        val targets = project.getTargets().orEmpty().map(::KotlinTargetReflection)
+
+        for (target in targets) {
+            val platform = target.platformType?.let { KotlinPlatform.byId(it) } ?: continue
+            for (compilation in target.compilations.orEmpty()) {
+                for (sourceSet in compilation.allSourceSets.orEmpty()) {
+                    sourceSetPlatforms.getOrPut(sourceSet) { mutableSetOf() }.add(platform)
+                }
+            }
+        }
+
+        sourceSetPlatforms
+            .filterValues { it.singleOrNull() == KotlinPlatform.ANDROID }
+            .keys
+    }
+
     override fun buildComponent(origin: Any, importingContext: MultiplatformModelImportingContext): KotlinSourceSetProto? {
         val gradleSourceSet = origin as Named
 
@@ -28,9 +54,16 @@ class KotlinSourceSetProtoBuilder(val androidDeps: Map<String, List<Any>>?) :
             ?.mapTo(LinkedHashSet()) { it.name }
             ?: emptySet<String>()
 
-
         val sourceSetDependenciesBuilder: () -> Array<KotlinDependencyId> = {
-            buildSourceSetDependencies(gradleSourceSet, importingContext, androidDeps)
+            val androidDependenciesForSourceSet = buildAndroidSourceSetDependencies(androidDeps, gradleSourceSet)
+            val includeAndroidDependencies = importingContext.getProperty(GradleImportProperties.INCLUDE_ANDROID_DEPENDENCIES)
+
+            val dependencies = when {
+                !includeAndroidDependencies && gradleSourceSet in sourceSetsWithoutNeedOfBuildingDependenciesMetadata -> emptyList()
+                else -> buildMetadataDependencies(gradleSourceSet, importingContext) + androidDependenciesForSourceSet
+            }
+
+            dependencies
                 .map { importingContext.dependencyMapper.getId(it) }
                 .distinct()
                 .toTypedArray()
@@ -83,18 +116,15 @@ class KotlinSourceSetProtoBuilder(val androidDeps: Map<String, List<Any>>?) :
             override val scope: String = "COMPILE"
         }
 
-        private fun buildSourceSetDependencies(
+        private fun buildMetadataDependencies(
             gradleSourceSet: Named,
-            importingContext: MultiplatformModelImportingContext,
-            androidDeps: Map<String, List<Any>>?
+            importingContext: MultiplatformModelImportingContext
         ): List<KotlinDependency> {
             return ArrayList<KotlinDependency>().apply {
                 this += apiMetadataDependenciesBuilder.buildComponent(gradleSourceSet, importingContext)
                 this += implementationMetadataDependenciesBuilder.buildComponent(gradleSourceSet, importingContext)
                 this += compileOnlyMetadataDependenciesBuilder.buildComponent(gradleSourceSet, importingContext)
                 this += runtimeOnlyMetadataDependenciesBuilder.buildComponent(gradleSourceSet, importingContext).onlyNewDependencies(this)
-
-                this += buildAndroidSourceSetDependencies(androidDeps, gradleSourceSet)
             }
         }
 

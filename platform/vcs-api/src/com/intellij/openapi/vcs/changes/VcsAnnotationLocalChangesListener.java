@@ -18,14 +18,39 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * @see com.intellij.openapi.vcs.changes.VcsAnnotationRefresher
+ */
 public interface VcsAnnotationLocalChangesListener {
-  // annotations for already committed revisions should not register with this method - they are not subject to refresh
-  void registerAnnotation(VirtualFile file, FileAnnotation annotation);
+  void registerAnnotation(@NotNull FileAnnotation annotation);
 
-  void unregisterAnnotation(VirtualFile file, FileAnnotation annotation);
+  void unregisterAnnotation(@NotNull FileAnnotation annotation);
+
+  /**
+   * @deprecated Use {@link #registerAnnotation(FileAnnotation)}
+   */
+  @Deprecated
+  default void registerAnnotation(@NotNull VirtualFile file, @NotNull FileAnnotation annotation) {
+    registerAnnotation(annotation);
+  }
+
+  /**
+   * @deprecated Use {@link #unregisterAnnotation(FileAnnotation)}
+   */
+  @Deprecated
+  default void unregisterAnnotation(@NotNull VirtualFile file, @NotNull FileAnnotation annotation) {
+    unregisterAnnotation(annotation);
+  }
 
   void reloadAnnotations();
 
-  void reloadAnnotationsForVcs(VcsKey key);
+  void reloadAnnotationsForVcs(@NotNull VcsKey key);
+
+  /**
+   * @param vcsKey pass 'null' to refresh annotations for all vcses
+   */
+  void invalidateAnnotationsFor(@NotNull VirtualFile file, @Nullable VcsKey vcsKey);
 }

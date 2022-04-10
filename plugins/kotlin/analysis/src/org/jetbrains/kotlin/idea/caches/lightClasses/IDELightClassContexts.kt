@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.stubindex.KotlinOverridableInternalMembersShortNameIndex
 import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
+import org.jetbrains.kotlin.incremental.components.InlineConstTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -61,7 +62,8 @@ import org.jetbrains.kotlin.resolve.lazy.declarations.FileBasedDeclarationProvid
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.storage.StorageManager
-import org.jetbrains.kotlin.types.ErrorUtils
+import org.jetbrains.kotlin.types.error.ErrorUtils
+import org.jetbrains.kotlin.types.error.ErrorTypeKind
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.WrappedTypeFactory
@@ -379,6 +381,7 @@ internal object IDELightClassContexts {
             useInstance(GlobalSearchScope.EMPTY_SCOPE)
             useInstance(LookupTracker.DO_NOTHING)
             useInstance(ExpectActualTracker.DoNothing)
+            useInstance(InlineConstTracker.DoNothing)
             useImpl<FileScopeProviderImpl>()
             useInstance(FileBasedDeclarationProviderFactory(sm, files))
 
@@ -390,7 +393,7 @@ internal object IDELightClassContexts {
 
                 override fun createRecursionIntolerantDeferredType(trace: BindingTrace, computation: () -> KotlinType) = errorType()
 
-                private fun errorType() = ErrorUtils.createErrorType("Error type in ad hoc resolve for lighter classes")
+                private fun errorType() = ErrorUtils.createErrorType(ErrorTypeKind.AD_HOC_ERROR_TYPE_FOR_LIGHTER_CLASSES_RESOLVE)
             })
 
             IdeaEnvironment.configure(this)
@@ -400,7 +403,12 @@ internal object IDELightClassContexts {
 
 
         val resolveSession = container.get<ResolveSession>()
-        moduleDescriptor.initialize(CompositePackageFragmentProvider(listOf(resolveSession.packageFragmentProvider)))
+        moduleDescriptor.initialize(
+            CompositePackageFragmentProvider(
+                listOf(resolveSession.packageFragmentProvider),
+                "CompositeProvider@IDELightClassContexts for $moduleDescriptor"
+            )
+        )
         return resolveSession
     }
 

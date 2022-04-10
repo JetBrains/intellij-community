@@ -8,6 +8,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.AsyncDescriptionSupplier
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
@@ -57,10 +58,14 @@ internal class HighlightingProblem(
   }
 
   override val icon: Icon
-    get() = HighlightDisplayLevel.find(info?.severity)?.icon
-           ?: getIcon(HighlightDisplayLevel.ERROR)
-           ?: getIcon(HighlightDisplayLevel.WARNING)
-           ?: HighlightDisplayLevel.WEAK_WARNING.icon
+    get() {
+      val highlightInfo = info
+      val severity = if (highlightInfo == null) HighlightSeverity.INFORMATION else highlightInfo.severity
+      return HighlightDisplayLevel.find(severity)?.icon
+             ?: getIcon(HighlightDisplayLevel.ERROR)
+             ?: getIcon(HighlightDisplayLevel.WARNING)
+             ?: HighlightDisplayLevel.WEAK_WARNING.icon
+    }
 
   override val text: String
     get() {

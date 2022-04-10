@@ -130,7 +130,7 @@ class FilePartNode {
 
   @Override
   public String toString() {
-    return getName() + (children.length == 0 ? "" : " -> "+children.length);
+    return "FilePartNode: '" + getName() + "'; children: " + children.length + "; fs=" + myFS + "; myFileOrUrl=" + myFileOrUrl +"; "+myFileOrUrl.getClass();
   }
 
   static int getNameId(@NotNull VirtualFile file) {

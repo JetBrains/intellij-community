@@ -162,7 +162,7 @@ open class CommonInjectedFileChangesHandler(
   }
 
   @Deprecated("use updateHostElement", ReplaceWith("updateHostElement"))
-  @ApiStatus.ScheduledForRemoval(inVersion =  "2021.3")
+  @ApiStatus.ScheduledForRemoval
   protected fun updateInjectionHostElement(host: PsiLanguageInjectionHost,
                                            insideHost: ProperTextRange,
                                            content: String): PsiLanguageInjectionHost? {

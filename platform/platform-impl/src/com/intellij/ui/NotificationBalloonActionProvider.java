@@ -100,7 +100,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
         final int modifiers = event.getModifiers();
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> {
-          if ((modifiers & InputEvent.ALT_MASK) != 0) {
+          if ((modifiers & InputEvent.ALT_MASK) != 0 && myLayoutData.closeAll != null) {
             myLayoutData.closeAll.run();
           }
           else {

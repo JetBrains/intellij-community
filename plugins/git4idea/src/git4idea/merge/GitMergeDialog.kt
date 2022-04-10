@@ -23,7 +23,6 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBranchUtil.equalBranches
 import git4idea.commands.Git
@@ -71,8 +70,8 @@ internal fun createSouthPanelWithOptionsDropDown(southPanel: JComponent, optionD
   }
 }
 
-internal fun validateBranchField(branchField: ComboBoxWithAutoCompletion<String>,
-                                 @PropertyKey(resourceBundle = GitBundle.BUNDLE) emptyFieldMessage: String): ValidationInfo? {
+internal fun validateBranchExists(branchField: ComboBoxWithAutoCompletion<String>,
+                                  @PropertyKey(resourceBundle = GitBundle.BUNDLE) emptyFieldMessage: String): ValidationInfo? {
   val value = branchField.getText()
   if (value.isNullOrEmpty()) {
     return ValidationInfo(GitBundle.message(emptyFieldMessage), branchField)
@@ -131,7 +130,7 @@ class GitMergeDialog(private val project: Project,
 
   override fun getPreferredFocusedComponent() = branchField
 
-  override fun doValidateAll() = listOf(::validateBranchField).mapNotNull { it() }
+  override fun doValidateAll(): List<ValidationInfo> = listOf(::validateBranchField).mapNotNull { it() }
 
   override fun createSouthPanel() = createSouthPanelWithOptionsDropDown(super.createSouthPanel(), createOptionsDropDown())
 
@@ -184,22 +183,28 @@ class GitMergeDialog(private val project: Project,
           }
 
           sortedRoots.forEach { root ->
-            loadUnmergedBranches(root)?.let { branches ->
+            loadUnmergedBranchesForRoot(root)?.let { branches ->
               unmergedBranches[getRepository(root)] = branches
-
-              invokeLaterIfNeeded {
-                if (getSelectedRoot() == root) {
-                  updateBranchesField()
-                }
-              }
             }
           }
         }
       })
   }
 
+  /**
+   * ```
+   * $ git branch --all
+   * |  master
+   * |  feature
+   * |* checked-out
+   * |+ checked-out-by-worktree
+   * |  remotes/origin/master
+   * |  remotes/origin/feature
+   * |  remotes/origin/HEAD -> origin/master
+   * ```
+   */
   @RequiresBackgroundThread
-  private fun loadUnmergedBranches(root: VirtualFile): List<@NlsSafe String>? {
+  private fun loadUnmergedBranchesForRoot(root: VirtualFile): List<@NlsSafe String>? {
     var result: List<String>? = null
 
     val handler = GitLineHandler(project, root, GitCommand.BRANCH).apply {
@@ -208,8 +213,14 @@ class GitMergeDialog(private val project: Project,
     try {
       result = Git.getInstance().runCommand(handler).getOutputOrThrow()
         .lines()
-        .filter { branch -> !LINK_REF_REGEX.matcher(branch).matches() }
-        .map { it.trim() }
+        .filter { line -> !LINK_REF_REGEX.matcher(line).matches() }
+        .mapNotNull { line ->
+          val matcher = BRANCH_NAME_REGEX.matcher(line)
+          when {
+            matcher.matches() -> matcher.group(1)
+            else -> null
+          }
+        }
     }
     catch (e: Exception) {
       LOG.warn("Failed to load unmerged branches for root: ${root}", e)
@@ -218,7 +229,23 @@ class GitMergeDialog(private val project: Project,
     return result
   }
 
-  private fun validateBranchField() = validateBranchField(branchField, "merge.no.branch.selected.error")
+  private fun validateBranchField(): ValidationInfo? {
+    val validationInfo = validateBranchExists(branchField, GitBundle.message("merge.no.branch.selected.error"))
+    if (validationInfo != null) return validationInfo
+
+    val selectedBranch = branchField.getText()
+    if (selectedBranch.isNullOrBlank()) return null
+
+    val selectedRepository = getSelectedRepository()
+    val unmergedBranches = unmergedBranches[selectedRepository] ?: return null
+    val selectedBranchMerged = unmergedBranches.none { equalBranches(it, selectedBranch) }
+
+    if (selectedBranchMerged) {
+      return ValidationInfo(GitBundle.message("merge.branch.already.merged", selectedBranch), branchField)
+    }
+
+    return null
+  }
 
   private fun updateBranchesField() {
     var branchToSelect = branchField.item
@@ -233,10 +260,6 @@ class GitMergeDialog(private val project: Project,
       val currentRemoteBranch = repository.currentBranch?.findTrackedBranch(repository)?.nameForRemoteOperations
 
       branchToSelect = branches.find { branch -> branch == currentRemoteBranch } ?: branches.getOrElse(0) { "" }
-    }
-
-    if (branchToSelect.isEmpty()) {
-      startTrackingValidation()
     }
 
     branchField.item = branchToSelect
@@ -261,7 +284,7 @@ class GitMergeDialog(private val project: Project,
 
   private fun getBranches(): List<@NlsSafe String> {
     val repository = getSelectedRepository()
-    return unmergedBranches[repository] ?: allBranches[repository] ?: emptyList()
+    return allBranches[repository] ?: emptyList()
   }
 
   private fun getRepository(root: VirtualFile) = repositories.find { repo -> repo.root == root }
@@ -418,7 +441,8 @@ class GitMergeDialog(private val project: Project,
 
   companion object {
     private val LOG = logger<GitMergeDialog>()
-    private val LINK_REF_REGEX = Pattern.compile(".+\\s->\\s.+")
+    private val LINK_REF_REGEX = Pattern.compile(".+\\s->\\s.+") // aka 'symrefs'
+    private val BRANCH_NAME_REGEX = Pattern.compile(". (\\S+)\\s*")
 
     @NlsSafe
     private const val REMOTE_REF = "remotes/"

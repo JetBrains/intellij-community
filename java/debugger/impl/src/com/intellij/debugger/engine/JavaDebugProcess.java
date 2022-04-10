@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.actions.JvmDropFrameActionHandler;
 import com.intellij.debugger.actions.JvmSmartStepIntoActionHandler;
 import com.intellij.debugger.engine.dfaassist.DfaAssist;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -45,6 +46,7 @@ import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.frame.XDropFrameHandler;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
@@ -58,6 +60,7 @@ import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.LocatableEvent;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
@@ -68,13 +71,15 @@ public class JavaDebugProcess extends XDebugProcess {
   private volatile XBreakpointHandler<?>[] myBreakpointHandlers;
   private final NodeManagerImpl myNodeManager;
   private final JvmSmartStepIntoActionHandler mySmartStepIntoActionHandler;
+  private final JvmDropFrameActionHandler myDropFrameActionActionHandler;
 
   private static final JavaBreakpointHandlerFactory[] ourDefaultBreakpointHandlerFactories = {
     process -> new JavaBreakpointHandler.JavaLineBreakpointHandler(process),
     process -> new JavaBreakpointHandler.JavaExceptionBreakpointHandler(process),
     process -> new JavaBreakpointHandler.JavaFieldBreakpointHandler(process),
     process -> new JavaBreakpointHandler.JavaMethodBreakpointHandler(process),
-    process -> new JavaBreakpointHandler.JavaWildcardBreakpointHandler(process)
+    process -> new JavaBreakpointHandler.JavaWildcardBreakpointHandler(process),
+    process -> new JavaBreakpointHandler.JavaCollectionBreakpointHandler(process)
   };
 
   public static JavaDebugProcess create(@NotNull final XDebugSession session, @NotNull final DebuggerSession javaSession) {
@@ -197,6 +202,7 @@ public class JavaDebugProcess extends XDebugProcess {
     }
 
     mySmartStepIntoActionHandler = new JvmSmartStepIntoActionHandler(javaSession);
+    myDropFrameActionActionHandler = new JvmDropFrameActionHandler(javaSession);
   }
 
   private void unsetPausedIfNeeded(DebuggerContextImpl context) {
@@ -539,5 +545,11 @@ public class JavaDebugProcess extends XDebugProcess {
   @Override
   public XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
     return mySmartStepIntoActionHandler;
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public @Nullable XDropFrameHandler getDropFrameHandler() {
+    return myDropFrameActionActionHandler;
   }
 }

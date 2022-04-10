@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.maven.model;
 
@@ -24,11 +10,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static org.jetbrains.idea.maven.model.MavenId.append;
 
-public class MavenPlugin implements Serializable {
-
+public final class MavenPlugin implements Serializable {
   static final long serialVersionUID = -6113607480882347420L;
 
   private final String myGroupId;
@@ -157,12 +143,12 @@ public class MavenPlugin implements Serializable {
 
     if (myDefault != that.myDefault) return false;
     if (myExtensions != that.myExtensions) return false;
-    if (myGroupId != null ? !myGroupId.equals(that.myGroupId) : that.myGroupId != null) return false;
-    if (myArtifactId != null ? !myArtifactId.equals(that.myArtifactId) : that.myArtifactId != null) return false;
-    if (myVersion != null ? !myVersion.equals(that.myVersion) : that.myVersion != null) return false;
+    if (!Objects.equals(myGroupId, that.myGroupId)) return false;
+    if (!Objects.equals(myArtifactId, that.myArtifactId)) return false;
+    if (!Objects.equals(myVersion, that.myVersion)) return false;
     if (!MavenJDOMUtil.areElementsEqual(myConfiguration, that.myConfiguration)) return false;
-    if (myExecutions != null ? !myExecutions.equals(that.myExecutions) : that.myExecutions != null) return false;
-    if (myDependencies != null ? !myDependencies.equals(that.myDependencies) : that.myDependencies != null) return false;
+    if (!Objects.equals(myExecutions, that.myExecutions)) return false;
+    if (!Objects.equals(myDependencies, that.myDependencies)) return false;
 
     return true;
   }
@@ -180,7 +166,7 @@ public class MavenPlugin implements Serializable {
     return result;
   }
 
-  public static class Execution implements Serializable {
+  public static final class Execution implements Serializable {
     private final List<String> myGoals;
     private final Element myConfiguration;
     private final String myExecutionId;
@@ -191,7 +177,7 @@ public class MavenPlugin implements Serializable {
     }
 
     public Execution(String executionId, String phase, List<String> goals, Element configuration) {
-      myGoals = goals == null ? Collections.<String>emptyList() : new ArrayList<String>(goals);
+      myGoals = goals == null ? Collections.emptyList() : new ArrayList<>(goals);
       myConfiguration = configuration;
       myExecutionId = executionId;
       myPhase = phase;
@@ -222,8 +208,8 @@ public class MavenPlugin implements Serializable {
       Execution that = (Execution)o;
 
       if (!myGoals.equals(that.myGoals)) return false;
-      if (myExecutionId != null ? !myExecutionId.equals(that.myExecutionId) : that.myExecutionId != null) return false;
-      if (myPhase != null ? !myPhase.equals(that.myPhase) : that.myPhase != null) return false;
+      if (!Objects.equals(myExecutionId, that.myExecutionId)) return false;
+      if (!Objects.equals(myPhase, that.myPhase)) return false;
       if (!MavenJDOMUtil.areElementsEqual(myConfiguration, that.myConfiguration)) return false;
 
       return true;

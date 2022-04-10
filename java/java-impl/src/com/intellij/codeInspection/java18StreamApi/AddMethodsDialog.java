@@ -1,6 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18StreamApi;
-
 
 import com.intellij.codeInsight.intention.impl.config.ActionUsagePanel;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -36,7 +35,7 @@ import java.util.*;
 /**
  * @author Dmitry Batkovich
  */
-public class AddMethodsDialog extends DialogWrapper {
+public final class AddMethodsDialog extends DialogWrapper {
   public static final @NlsSafe String OR_ELSE_DEFAULT_VALUE = ".orElseGet(() -> defaultValue)";
   private static final @NlsSafe String STREAM_PREFIX = "stream.";
   private final static Logger LOG = Logger.getInstance(AddMethodsDialog.class);
@@ -51,7 +50,7 @@ public class AddMethodsDialog extends DialogWrapper {
   private JPanel myExamplePanel;
 
   @SuppressWarnings("unchecked")
-  protected AddMethodsDialog(@NotNull final Project project, @NotNull final Component parent, boolean canBeParent) {
+  AddMethodsDialog(@NotNull final Project project, @NotNull final Component parent, boolean canBeParent) {
     super(parent, canBeParent);
     myProject = project;
     myTemplatesCombo.setEnabled(false);
@@ -67,7 +66,7 @@ public class AddMethodsDialog extends DialogWrapper {
         }
         append(STREAM_PREFIX);
         final String streamApiMethodName = template.getStreamApiMethodName();
-        if (StreamApiConstants.STREAM_STREAM_API_METHODS.getValue().contains(streamApiMethodName)) {
+        if (StreamApiConstants.STREAM_STREAM_API_METHODS.get().contains(streamApiMethodName)) {
           append(streamApiMethodName + "()", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
         else {
@@ -95,7 +94,7 @@ public class AddMethodsDialog extends DialogWrapper {
         }
       }
     });
-    myMethodNameCombo.setModel(new DefaultComboBoxModel());
+    myMethodNameCombo.setModel(new DefaultComboBoxModel<>());
     myMethodNameCombo.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {

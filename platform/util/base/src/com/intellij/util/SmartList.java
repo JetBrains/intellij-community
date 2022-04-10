@@ -9,6 +9,9 @@ import java.util.function.Consumer;
 /**
  * A List which is optimised for the sizes of 0 and 1,
  * in which cases it would not allocate array at all.
+ *
+ * The tradeoff is the following: this list is slower than {@link ArrayList} but occupies less memory in case of 0 or 1 elements.
+ * Please use it only if your code contains many near-empty lists outside the very hot loops.
  */
 public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   private int mySize;

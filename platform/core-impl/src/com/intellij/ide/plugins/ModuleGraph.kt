@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package com.intellij.ide.plugins
@@ -204,8 +204,13 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
         result.add(dep)
       }
     }
-    
-    if (rootDescriptor.pluginId.idString in knownNotFullyMigratedPluginIds) {
+
+    if (rootDescriptor.pluginId == PluginManagerCore.JAVA_PLUGIN_ID) {
+        idMap.get(PluginManagerCore.CORE_ID.idString)!!.content.modules.firstOrNull { it.name == "intellij.platform.feedback" }?.let {
+        result.add(it.requireDescriptor())
+      }
+    }
+    else if (knownNotFullyMigratedPluginIds.contains(rootDescriptor.pluginId.idString)) {
       idMap.get(PluginManagerCore.CORE_ID.idString)!!.content.modules.mapTo(result) { it.requireDescriptor() }
     }
 

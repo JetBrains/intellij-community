@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -29,7 +29,10 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import net.miginfocom.swing.MigLayout;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -110,7 +113,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     return ContainerUtil.map(pushActions, action -> new ActionWrapper(myProject, this, action));
   }
 
-  private void customizeDialog(@NotNull PushActionBase simplePushAction) {
+  private void customizeDialog(@NotNull SimplePushAction simplePushAction) {
     List<PushDialogCustomizer> customizers = PUSH_DIALOG_CUSTOMIZER_EP.getExtensionList();
     if (!customizers.isEmpty()) {
       if (customizers.size() == 1) {
@@ -123,8 +126,9 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     }
   }
 
-  private void customizeDialog(@NotNull PushDialogCustomizer customizer, @NotNull PushActionBase simplePushAction) {
+  private void customizeDialog(@NotNull PushDialogCustomizer customizer, @NotNull SimplePushAction simplePushAction) {
     simplePushAction.getTemplatePresentation().setText(customizer.getNameForSimplePushAction(this));
+    simplePushAction.setCondition(customizer.getCondition());
   }
 
   @Nullable

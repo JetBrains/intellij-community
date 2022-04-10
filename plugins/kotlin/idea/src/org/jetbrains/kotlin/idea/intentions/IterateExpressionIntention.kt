@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.chooseApplicableComponentFunctions
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.suggestNamesForComponent
@@ -47,7 +48,7 @@ class IterateExpressionIntention : SelfTargetingIntention<KtExpression>(
 
     private fun data(expression: KtExpression): Data? {
         val resolutionFacade = expression.getResolutionFacade()
-        val bindingContext = resolutionFacade.analyze(expression, BodyResolveMode.PARTIAL)
+        val bindingContext = expression.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL)
         val type = bindingContext.getType(expression) ?: return null
         if (KotlinBuiltIns.isNothing(type)) return null
         val scope = expression.getResolutionScope(bindingContext, resolutionFacade)
@@ -77,7 +78,7 @@ class IterateExpressionIntention : SelfTargetingIntention<KtExpression>(
                     listOf(KotlinNameSuggester.suggestIterationVariableNames(element, elementType, bindingContext, nameValidator, "e"))
                 }
 
-                val paramPattern = (names.asSequence().singleOrNull()?.first()
+                val paramPattern = (names.singleOrNull()?.first()
                     ?: psiFactory.createDestructuringParameter(names.indices.joinToString(prefix = "(", postfix = ")") { "p$it" }))
                 var forExpression = psiFactory.createExpressionByPattern("for($0 in $1) {\nx\n}", paramPattern, element) as KtForExpression
                 forExpression = element.replaced(forExpression)

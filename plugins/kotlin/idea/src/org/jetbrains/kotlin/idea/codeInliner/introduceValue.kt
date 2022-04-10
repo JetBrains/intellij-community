@@ -2,12 +2,14 @@
 
 package org.jetbrains.kotlin.idea.codeInliner
 
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.analysis.computeTypeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.core.setType
+import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.util.getAllAccessibleVariables
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.name.Name
@@ -21,7 +23,7 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
-import org.jetbrains.kotlin.types.ErrorUtils
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.KotlinType
 
 /**
@@ -71,9 +73,12 @@ internal fun MutableCodeToInline.introduceValue(
 
     if (!safeCall) {
         if (usages.isNotEmpty()) {
-            val resolutionScope = expressionToBeReplaced.getResolutionScope(bindingContext, expressionToBeReplaced.getResolutionFacade())
+            val resolutionFacade = expressionToBeReplaced.getResolutionFacade()
+            val resolutionScope = expressionToBeReplaced.getResolutionScope(bindingContext, resolutionFacade)
 
-            val name = suggestName { name -> !name.nameHasConflictsInScope(resolutionScope) && !isNameUsed(name) }
+            val name = suggestName { name ->
+                !name.nameHasConflictsInScope(resolutionScope, resolutionFacade.getLanguageVersionSettings()) && !isNameUsed(name)
+            }
 
             val declaration = psiFactory.createDeclarationByPattern<KtVariableDeclaration>("val $0 = $1", name, value)
             statementsBefore.add(0, declaration)
@@ -114,8 +119,10 @@ internal fun MutableCodeToInline.introduceValue(
     }
 }
 
-fun String.nameHasConflictsInScope(lexicalScope: LexicalScope): Boolean = lexicalScope.getAllAccessibleVariables(Name.identifier(this)).any {
-    !it.isExtension && it.isVisible(lexicalScope.ownerDescriptor)
+fun String.nameHasConflictsInScope(lexicalScope: LexicalScope, languageVersionSettings: LanguageVersionSettings): Boolean {
+    return lexicalScope.getAllAccessibleVariables(Name.identifier(this)).any {
+        !it.isExtension && it.isVisible(lexicalScope.ownerDescriptor, languageVersionSettings)
+    }
 }
 
 private fun variableNeedsExplicitType(

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.java;
 
 import com.intellij.core.JavaPsiBundle;
@@ -37,12 +37,16 @@ public enum LanguageLevel {
   JDK_14(JavaPsiBundle.messagePointer("jdk.14.language.level.description"), 14),
   JDK_15(JavaPsiBundle.messagePointer("jdk.15.language.level.description"), 15),
   JDK_16(JavaPsiBundle.messagePointer("jdk.16.language.level.description"), 16),
-  JDK_16_PREVIEW(JavaPsiBundle.messagePointer("jdk.16.preview.language.level.description"), 16),
   JDK_17(JavaPsiBundle.messagePointer("jdk.17.language.level.description"), 17),
   JDK_17_PREVIEW(JavaPsiBundle.messagePointer("jdk.17.preview.language.level.description"), 17),
-  JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 18);
+  JDK_18(JavaPsiBundle.messagePointer("jdk.18.language.level.description"), 18),
+  JDK_18_PREVIEW(JavaPsiBundle.messagePointer("jdk.18.preview.language.level.description"), 18),
+  JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 19);
 
-  public static final LanguageLevel HIGHEST = JDK_17;
+  /**
+   * Should point to the last released JDK.
+   */
+  public static final LanguageLevel HIGHEST = JDK_18;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
 
   private final Supplier<@Nls String> myPresentableText;

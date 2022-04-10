@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -133,7 +134,15 @@ public class CopyAbstractMethodImplementationHandler {
         ChangeContextUtil.encodeContextInfo(sourceBody, true);
         final PsiElement newBody = body.replace(sourceBody.copy());
         ChangeContextUtil.decodeContextInfo(newBody, psiClass, null);
-
+        final PsiDocComment docComment = overriddenMethod.getDocComment();
+        if (docComment != null) {
+          try {
+            docComment.delete();
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        }
         PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(mySourceClass, psiClass, PsiSubstitutor.EMPTY);
         PsiElement anchor = OverrideImplementUtil.getDefaultAnchorToOverrideOrImplement(psiClass, sourceMethod, substitutor);
         try {

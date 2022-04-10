@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.ui.search.ConfigurableHit;
@@ -19,6 +19,7 @@ import com.intellij.ui.LightColors;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,8 +45,10 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
   private Configurable myLastSelected;
 
   private volatile SearchableOptionsRegistrar searchableOptionRegistrar;
+  private final Alarm myUpdatingAlarm;
 
   SettingsFilter(@Nullable Project project, @NotNull List<? extends ConfigurableGroup> groups, SearchTextField search) {
+    myUpdatingAlarm = new Alarm(project != null ? project : ApplicationManager.getApplication());
     SearchableOptionsRegistrarImpl optionRegistrar =
       (SearchableOptionsRegistrarImpl)ApplicationManager.getApplication().getServiceIfCreated(SearchableOptionsRegistrar.class);
     if (optionRegistrar == null || !optionRegistrar.isInitialized()) {
@@ -56,7 +59,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
         // must be set only after initializing (to avoid concurrent modifications)
         searchableOptionRegistrar = r;
         ApplicationManager.getApplication().invokeLater(() -> {
-           update(r, DocumentEvent.EventType.CHANGE, false, true);
+           update(DocumentEvent.EventType.CHANGE, false, true);
         }, ModalityState.any(), project == null ? ApplicationManager.getApplication().getDisposed() : project.getDisposed());
       });
     }
@@ -70,10 +73,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     mySearch.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent event) {
-        SearchableOptionsRegistrar registrar = searchableOptionRegistrar;
-        if (registrar != null) {
-          update(registrar, event.getType(), true, false);
-        }
+        update(event.getType(), true, false);
         // request focus if needed on changing the filter text
         IdeFocusManager manager = IdeFocusManager.findInstanceByComponent(mySearch);
         if (manager.getFocusedDescendantFor(mySearch) == null) {
@@ -129,13 +129,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
 
   String getFilterText() {
     String text = mySearch.getText();
-    if (text != null) {
-      text = text.trim();
-      if (1 < text.length()) {
-        return text;
-      }
-    }
-    return "";
+    return text == null ? "" : text.trim();
   }
 
   private void setHoldingFilter(boolean holding) {
@@ -155,11 +149,15 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     finally {
       myUpdateRejected = false;
     }
+    update(DocumentEvent.EventType.CHANGE, false, true);
+  }
 
-    SearchableOptionsRegistrar registrar = searchableOptionRegistrar;
-    if (registrar != null) {
-      update(registrar, DocumentEvent.EventType.CHANGE, false, true);
-    }
+  private void update(@NotNull DocumentEvent.EventType type, boolean adjustSelection, boolean now) {
+    myUpdatingAlarm.cancelAllRequests();
+    myUpdatingAlarm.addRequest(() -> {
+      SearchableOptionsRegistrar registrar = searchableOptionRegistrar;
+      if (registrar != null) update(registrar, type, adjustSelection, now);
+    }, 100, ModalityState.any());
   }
 
   private void update(@NotNull SearchableOptionsRegistrar optionRegistrar, @NotNull DocumentEvent.EventType type, boolean adjustSelection, boolean now) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui
 
 import com.intellij.feedback.FEEDBACK_REPORT_ID_KEY
@@ -154,7 +154,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
   val technicalIssuesOption = feedbackOption("technical_issues", LearnBundle.message("onboarding.feedback.option.technical.issues"))
   val unusefulOption = feedbackOption("useless", LearnBundle.message("onboarding.feedback.option.tour.is.useless"))
   val header = JLabel(LearnBundle.message("onboarding.feedback.option.form.header")).also {
-    it.font = UISettings.instance.getFont(5).deriveFont(Font.BOLD)
+    it.font = UISettings.getInstance().getFont(5).deriveFont(Font.BOLD)
     it.border = JBUI.Borders.empty(24 - UIUtil.DEFAULT_VGAP, 0, 20 - UIUtil.DEFAULT_VGAP, 0)
   }
   val wholePanel = FormBuilder.createFormBuilder()

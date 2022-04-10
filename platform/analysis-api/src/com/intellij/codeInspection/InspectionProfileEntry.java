@@ -428,8 +428,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    * @return serialization filter.
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected @Nullable SerializationFilter getSerializationFilter() {
     return XmlSerializer.getJdomSerializer().getDefaultSerializationFilter();
   }

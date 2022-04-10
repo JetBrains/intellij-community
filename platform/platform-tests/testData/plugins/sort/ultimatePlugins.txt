@@ -4,6 +4,7 @@
 + -org-jetbrains-plugins-textmate-
 + -org-jetbrains-plugins-terminal-
 + -org-jetbrains-plugins-go-template-
++ -org-jetbrains-plugins-clangConfig-
 + -org-editorconfig-editorconfigjetbrains-
 + -hg4idea-
 + -gherkin-
@@ -30,7 +31,6 @@
 + -org-jetbrains-debugger-streams-
 + -com-intellij-swagger-
 + -com-intellij-reactivestreams-
-+ -com-intellij-microservices-config-
 + -com-intellij-micronaut-
 + -com-intellij-java-ide-
 + -com-intellij-java-i18n-

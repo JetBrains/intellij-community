@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
@@ -24,6 +25,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lookAndFeelFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.onEach
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
@@ -33,6 +35,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
+import kotlin.coroutines.CoroutineContext
 
 internal fun ToolWindow.initialize(project: Project) {
     title = PackageSearchBundle.message("toolwindow.stripe.Dependencies")
@@ -131,4 +134,12 @@ internal fun ContentManager.addTab(
             }
         }
     )
+}
+
+@Suppress("unused")
+internal fun Dispatchers.toolWindowManager(project: Project): CoroutineDispatcher = object : CoroutineDispatcher() {
+
+    private val executor = ToolWindowManager.getInstance(project)
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) = executor.invokeLater(block)
 }

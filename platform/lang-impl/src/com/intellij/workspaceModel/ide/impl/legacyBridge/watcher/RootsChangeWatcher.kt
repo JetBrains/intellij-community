@@ -61,7 +61,7 @@ internal class RootsChangeWatcher(val project: Project) {
       private val changedUrlsList = ContainerUtil.createConcurrentList<Pair<String, String>>()
       private val changedModuleStorePaths = ContainerUtil.createConcurrentList<Pair<Module, Path>>()
 
-      override fun prepareChange(events: MutableList<out VFileEvent>): AsyncFileListener.ChangeApplier {
+      override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier {
         val entityChanges = EntityChangeStorage()
         changedUrlsList.clear()
         changedModuleStorePaths.clear()

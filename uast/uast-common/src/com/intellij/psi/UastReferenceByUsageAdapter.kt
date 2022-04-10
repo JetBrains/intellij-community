@@ -150,7 +150,7 @@ private fun findDirectVariableUsages(variablePsi: PsiElement): Iterable<PsiEleme
   return ContainerUtil.concat(localUsages, nonLocalUsages)
 }
 
-private fun findVariableUsages(variablePsi: PsiElement, variableName: String, files: Array<PsiFile>): Collection<PsiElement> {
+private fun findVariableUsages(variablePsi: PsiElement, variableName: String, files: Array<PsiFile>): List<PsiElement> {
   if (files.isEmpty()) return emptyList()
 
   return SearchService.getInstance()

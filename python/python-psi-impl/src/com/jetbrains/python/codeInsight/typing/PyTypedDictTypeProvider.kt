@@ -38,6 +38,11 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
   companion object {
     val nameIsTypedDict = { name: String? -> name == TYPED_DICT || name == TYPED_DICT_EXT }
 
+    fun isGetMethodToOverride(call: PyCallExpression, context: TypeEvalContext): Boolean {
+      val callee = call.callee
+      return callee != null && resolveToQualifiedNames(callee, context).any { it == "dict.get" /* py3 */ || it == MAPPING_GET /* py2 */ }
+    }
+
     fun isTypedDict(expression: PyExpression, context: TypeEvalContext): Boolean {
       return resolveToQualifiedNames(expression, context).any(nameIsTypedDict)
     }
@@ -74,7 +79,7 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       val type = context.getType(receiver)
       if (type !is PyTypedDictType || type.isInferred()) return null
 
-      if (resolveToQualifiedNames(callExpression.callee!!, context).contains(MAPPING_GET)) {
+      if (isGetMethodToOverride(callExpression, context)) {
         val parameters = mutableListOf<PyCallableParameter>()
         val builtinCache = PyBuiltinCache.getInstance(referenceTarget)
         val elementGenerator = PyElementGenerator.getInstance(referenceTarget.project)

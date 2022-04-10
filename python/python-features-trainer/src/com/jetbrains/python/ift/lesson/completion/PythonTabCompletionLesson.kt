@@ -34,7 +34,7 @@ class PythonTabCompletionLesson
         task("CodeCompletion") {
           text(PythonLessonsBundle.message("python.tab.completion.start.completion",
                                            code("current"), code("total"), action(it)))
-          triggerByListItemAndHighlight(checkList = { ui -> isTotalItem(ui) })
+          triggerAndBorderHighlight().listItem { ui -> isTotalItem(ui) }
           proposeRestoreMe()
           test { actions(it) }
         }

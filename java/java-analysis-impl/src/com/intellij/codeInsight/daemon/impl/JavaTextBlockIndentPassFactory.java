@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -17,9 +16,9 @@ public class JavaTextBlockIndentPassFactory implements TextEditorHighlightingPas
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     PsiJavaFile javaFile = ObjectUtils.tryCast(file, PsiJavaFile.class);
-    if (javaFile == null || !HighlightingFeature.TEXT_BLOCKS.isAvailable(file)) return null;
+    if (javaFile == null) return null;
     if (!StringContentIndentUtil.isDocumentUpdated(editor)) return null;
-    return new JavaTextBlockIndentPass(file.getProject(), editor, (PsiJavaFile)file);
+    return new JavaTextBlockIndentPass(file.getProject(), editor, javaFile);
   }
 
   @Override

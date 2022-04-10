@@ -243,10 +243,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     try {
       data = mapInput(inputId, content);
     }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (MapReduceIndexMappingException e) {
+    catch (ProcessCanceledException | MapReduceIndexMappingException e) {
       throw e;
     }
     catch (Exception e) {

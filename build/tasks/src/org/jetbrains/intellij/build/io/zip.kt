@@ -123,9 +123,14 @@ internal fun compressDir(startDir: Path, archiver: ZipArchiver, excludes: List<P
   }
 }
 
-internal fun copyZipRaw(sourceFile: Path, packageIndexBuilder: PackageIndexBuilder, zipCreator: ZipFileWriter) {
+internal fun copyZipRaw(sourceFile: Path,
+                        packageIndexBuilder: PackageIndexBuilder,
+                        zipCreator: ZipFileWriter,
+                        filter: (entryName: String) -> Boolean = { true }) {
   readZipFile(sourceFile) { name, entry ->
-    packageIndexBuilder.addFile(name)
-    zipCreator.uncompressedData(name, entry.getByteBuffer())
+    if (filter(name)) {
+      packageIndexBuilder.addFile(name)
+      zipCreator.uncompressedData(name, entry.getByteBuffer())
+    }
   }
 }

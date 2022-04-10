@@ -7,14 +7,14 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.operations.ObservableOperationTrace
-import com.intellij.openapi.observable.properties.ObservableClearableProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.ui.CardLayoutPanel
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.components.JBLoadingPanel
-import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
@@ -54,7 +54,7 @@ internal fun label(text: @Nls String) =
   JLabel(text)
     .apply { border = JBUI.Borders.empty(BORDER) }
 
-internal fun label(property: ObservableClearableProperty<@Nls String>) =
+internal fun label(property: ObservableProperty<@Nls String>) =
   label(property.get())
     .bind(property)
 
@@ -107,7 +107,7 @@ internal fun <C : JBLoadingPanel> C.bindLoadingText(property: ObservableProperty
   property.afterChange { setLoadingText(it) }
 }
 
-internal fun toggleAction(property: ObservableClearableProperty<Boolean>): ToggleAction =
+internal fun toggleAction(property: ObservableMutableProperty<Boolean>): ToggleAction =
   object : ToggleAction(), DumbAware {
     override fun isSelected(e: AnActionEvent) = property.get()
     override fun setSelected(e: AnActionEvent, state: Boolean) = property.set(state)

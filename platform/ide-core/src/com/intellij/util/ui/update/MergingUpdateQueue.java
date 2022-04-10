@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -14,7 +14,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.AlarmFactory;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -27,8 +27,7 @@ import java.util.concurrent.TimeoutException;
  * Use this class to postpone task execution and optionally merge identical tasks. This is needed e.g. to reflect in UI status of some
  * background activity: it doesn't make sense and would be inefficient to update UI 1000 times per second, so it's better to postpone 'update UI'
  * task execution for e.g. 500ms and if new updates are added during this period they can be simply ignored.
- *
- * <p/>
+ * <p>
  * Create instance of this class and use {@link #queue(Update)} method to add new tasks.
  */
 public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
@@ -259,7 +258,6 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     final Runnable toRun = () -> {
       try {
         final List<Update> all;
-
         synchronized (myScheduledUpdates) {
           all = getAllScheduledUpdates();
           myScheduledUpdates.clear();
@@ -281,7 +279,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     };
 
     if (myExecuteInDispatchThread) {
-      UIUtil.invokeAndWaitIfNeeded(toRun);
+      EdtInvocationManager.invokeAndWaitIfNeeded(toRun);
     }
     else {
       toRun.run();
@@ -293,8 +291,9 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   protected boolean isModalityStateCorrect() {
-    if (!myExecuteInDispatchThread) return true;
-    if (myModalityStateComponent == ANY_COMPONENT) return true;
+    if (!myExecuteInDispatchThread || myModalityStateComponent == ANY_COMPONENT) {
+      return true;
+    }
 
     ModalityState current = ApplicationManager.getApplication().getCurrentModalityState();
     final ModalityState modalityState = getModalityState();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Agreements")
 package com.intellij.ide.gdpr
 
@@ -58,7 +58,7 @@ private fun applyUserAgreement(ui: AgreementUi, agreement: EndUserAgreement.Docu
     commonUserAgreement
       .setAcceptButton(bundle.getString("userAgreement.dialog.continue"), false) { dialogWrapper: DialogWrapper ->
         EndUserAgreement.setAccepted(agreement)
-        if (AppUIUtil.needToShowUsageStatsConsent()) {
+        if (ConsentOptions.needToShowUsageStatsConsent()) {
           applyDataSharing(ui, bundle)
         }
         else {

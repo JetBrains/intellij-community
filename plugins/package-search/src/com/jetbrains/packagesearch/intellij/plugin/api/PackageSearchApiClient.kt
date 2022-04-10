@@ -11,7 +11,6 @@ import kotlinx.serialization.json.Json
 import org.apache.commons.httpclient.util.URIUtil
 
 internal object ServerURLs {
-
     const val base = "https://package-search.services.jetbrains.com/api"
 }
 
@@ -23,7 +22,7 @@ private val contentType by lazy {
     }
 }
 
-private val emptyStandardV2PackagesWithRepos: ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion> = ApiPackagesResponse(
+private val emptyStandardV2PackagesWithRepos = ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>(
     packages = emptyList(),
     repositories = emptyList()
 )
@@ -36,7 +35,6 @@ internal class PackageSearchApiClient(
         Pair("JB-IDE-Version", PluginEnvironment.ideVersion)
     )
 ) {
-
     private val maxRequestResultsCount = 25
     private val maxMavenCoordinatesParts = 3
 
@@ -96,7 +94,8 @@ internal class PackageSearchApiClient(
             .let { json.decodeFromString(it) }
     }
 
-    suspend fun repositories(): ApiRepositoriesResponse =
-        requestString("$baseUrl/repositories", contentType.standard, timeoutInSeconds, headers)
+    suspend fun repositories(): ApiRepositoriesResponse {
+        return requestString("$baseUrl/repositories", contentType.standard, timeoutInSeconds, headers)
             .let { json.decodeFromString(it) }
+    }
 }

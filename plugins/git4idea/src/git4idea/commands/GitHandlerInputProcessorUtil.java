@@ -68,11 +68,8 @@ public final class GitHandlerInputProcessorUtil {
   @NotNull
   public static ThrowableConsumer<OutputStream, IOException> redirectStream(@NotNull InputStream stream) {
     return outputStream -> {
-      try {
+      try (outputStream) {
         FileUtil.copy(stream, outputStream);
-      }
-      finally {
-        outputStream.close();
       }
     };
   }

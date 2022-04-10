@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.gradleJava
 
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.annotationBased.AnnotationBasedPluginProjectResolverExtension
+import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AnnotationBasedPluginProjectResolverExtension
 import org.jetbrains.kotlin.idea.gradleTooling.model.samWithReceiver.SamWithReceiverModel
 
 class SamWithReceiverProjectResolverExtension : AnnotationBasedPluginProjectResolverExtension<SamWithReceiverModel>() {

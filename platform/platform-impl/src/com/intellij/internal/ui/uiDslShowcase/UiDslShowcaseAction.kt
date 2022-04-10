@@ -37,19 +37,19 @@ val DEMOS = arrayOf(
   ::demoTips
 )
 
-class UiDslShowcaseAction : DumbAwareAction("UI DSL Showcase") {
+class UiDslShowcaseAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    UiDslShowcaseDialog(e.project).show()
+    UiDslShowcaseDialog(e.project, templatePresentation.text).show()
   }
 }
 
 @Suppress("DialogTitleCapitalization")
-private class UiDslShowcaseDialog(val project: Project?) :
+private class UiDslShowcaseDialog(val project: Project?, dialogTitle: String) :
   DialogWrapper(project, null, true, IdeModalityType.MODELESS, false) {
 
   init {
-    title = "UI DSL Showcase"
+    title = dialogTitle
     init()
   }
 

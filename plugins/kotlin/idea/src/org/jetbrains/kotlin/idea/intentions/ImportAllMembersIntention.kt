@@ -6,7 +6,7 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.idea.imports.importableFqName
@@ -71,7 +71,7 @@ class ImportAllMembersIntention : SelfTargetingIntention<KtElement>(
         }
 
         private fun target(qualifiedElement: KtElement, receiverExpression: KtExpression): DeclarationDescriptor? {
-            val bindingContext = qualifiedElement.analyze(BodyResolveMode.PARTIAL)
+            val bindingContext = qualifiedElement.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
             if (bindingContext[BindingContext.QUALIFIER, receiverExpression] !is ClassQualifier) {
                 return null
             }

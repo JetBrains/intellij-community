@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.icons.AllIcons
@@ -6,6 +6,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
@@ -50,7 +51,7 @@ import javax.swing.text.html.HTMLDocument
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.StyleSheet
 
-@Service
+@Service(Service.Level.APP)
 class GotItTooltipService {
   val isFirstRun = checkFirstRun()
 
@@ -78,8 +79,7 @@ class GotItTooltipService {
  */
 class GotItTooltip(@NonNls val id: String,
                    @Nls val text: String,
-                   private val parentDisposable: Disposable? = null) : ToolbarActionTracker<Balloon>() {
-
+                   parentDisposable: Disposable? = null) : ToolbarActionTracker<Balloon>() {
   @Nls
   private var header: String = ""
 
@@ -310,9 +310,9 @@ class GotItTooltip(@NonNls val id: String,
 
   private fun showImpl(component: JComponent, pointProvider: (Component, Balloon) -> Point) {
     if (canShow()) {
-      val balloonProperty = UIUtil.getClientProperty(component, BALLOON_PROPERTY)
+      val balloonProperty = ClientProperty.get(component, BALLOON_PROPERTY)
       if (balloonProperty == null) {
-        balloon = createAndShow(component, pointProvider).also { UIUtil.putClientProperty(component, BALLOON_PROPERTY, it) }
+        balloon = createAndShow(component, pointProvider).also { ClientProperty.put(component, BALLOON_PROPERTY, it) }
       }
       else if (balloonProperty is BalloonImpl && balloonProperty.isVisible) {
         balloonProperty.revalidate()
@@ -353,7 +353,7 @@ class GotItTooltip(@NonNls val id: String,
 
         override fun onClosed(event: LightweightWindowEvent) {
           HelpTooltip.setMasterPopupOpenCondition(tracker.component, null)
-          UIUtil.putClientProperty(tracker.component as JComponent, BALLOON_PROPERTY, null)
+          ClientProperty.put(tracker.component as JComponent, BALLOON_PROPERTY, null)
           Disposer.dispose(dispatcherDisposable)
 
           if (event.isOk) {
@@ -597,26 +597,8 @@ class GotItTooltip(@NonNls val id: String,
 
     private val PANEL_MARGINS = JBUI.Borders.empty(7, 4, 9, 9)
 
-    private val iconClasses = hashMapOf<String, Class<*>>()
-
     internal fun findIcon(src: String): Icon? {
-      val iconClassName = src.split(".")[0]
-      val iconClass = iconClasses[iconClassName] ?: AllIcons::class.java
-      return IconLoader.findIcon(src, iconClass)
-    }
-
-    /**
-     * Register icon class that's used for resolving icons from icon tags.
-     * parentDisposable should be disposed on plugin removal.
-     * AllIcons is used by default if corresponding icons class hasn't been registered or found so
-     * there is not need to explicitly register it.
-     */
-    fun registerIconClass(iconClass: Class<*>, parentDisposable: Disposable) {
-      iconClasses[iconClass.simpleName] = iconClass
-
-      Disposer.register(parentDisposable) {
-        iconClasses.remove(iconClass.simpleName)
-      }
+      return IconLoader.findIcon(src, GotItTooltip::class.java.classLoader)
     }
 
     // Frequently used point providers
@@ -640,7 +622,7 @@ class GotItTooltip(@NonNls val id: String,
   }
 }
 
-private class LimitedWidthLabel(htmlBuilder: HtmlBuilder, limit: Int) : JLabel() {
+private class LimitedWidthLabel (htmlBuilder: HtmlBuilder, limit: Int) : JLabel() {
   val htmlView: View
 
   init {
@@ -683,7 +665,7 @@ private class LimitedWidthLabel(htmlBuilder: HtmlBuilder, limit: Int) : JLabel()
     val editorKit = GotItEditorKit()
 
     private fun createHTMLView(component: JComponent, html: String): View {
-      val document = editorKit.createDocument(component.font, component.foreground)
+      val document = editorKit.createDocument(component.font, component.foreground ?: UIUtil.getLabelForeground())
       StringReader(html).use { editorKit.read(it, document, 0) }
 
       val factory = editorKit.viewFactory

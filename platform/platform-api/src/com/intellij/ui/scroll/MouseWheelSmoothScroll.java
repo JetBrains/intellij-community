@@ -2,17 +2,15 @@
 package com.intellij.ui.scroll;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.util.ui.TimerUtil;
+import com.intellij.util.animation.Animation;
+import com.intellij.util.animation.JBAnimator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseWheelEvent;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -114,22 +112,24 @@ public final class MouseWheelSmoothScroll {
     return delta == 0 ? rotation : delta;
   }
 
-  static class InertialAnimator implements ActionListener {
+  static class InertialAnimator {
 
-    private final static int REFRESH_TIME = 1000 / 250;
     private double myInitValue = Double.NaN, myCurrentValue = Double.NaN, myTargetValue = Double.NaN;
     private long myStartEventTime = -1, myLastEventTime = -1, myDuration = -1;
     private AnimationSettings mySettings;
+    private long animationId = -1;
 
     private final Consumer<? super Integer> BLACK_HOLE = (x) -> {};
     private @NotNull Consumer<? super Integer> myConsumer = BLACK_HOLE;
     private final Predicate<? super Integer> FALSE_PREDICATE = (value) -> false;
     private @NotNull Predicate<? super Integer> myShouldStop = FALSE_PREDICATE;
 
-    private final Timer myTimer = TimerUtil.createNamedTimer("Inertial Animation Timer", REFRESH_TIME, this);
+    private final JBAnimator myTimer = new JBAnimator();
 
     InertialAnimator() {
-      myTimer.setInitialDelay(0);
+      myTimer.setPeriod(2);
+      myTimer.setCyclic(true);
+      myTimer.setName("Inertial Animation Timer");
     }
 
     public final void start(int initValue, int targetValue,
@@ -145,7 +145,7 @@ public final class MouseWheelSmoothScroll {
       }
 
       boolean isSameDirection = (myTargetValue - myInitValue) * (targetValue - initValue) > 0;
-      if (isSameDirection && myTimer.isRunning()) {
+      if (isSameDirection && myTimer.isRunning(animationId)) {
         myTargetValue += (targetValue - initValue);
         myDuration = (long)duration + max(myLastEventTime - myStartEventTime, 0);
         myInitValue = myCurrentValue;
@@ -160,11 +160,21 @@ public final class MouseWheelSmoothScroll {
       myConsumer = Objects.requireNonNull(consumer);
       myShouldStop = shouldStop == null ? FALSE_PREDICATE : shouldStop;
       myCurrentValue = initValue;
-      myTimer.start();
+      if (!myTimer.isRunning(animationId)) {
+        animationId = myTimer.animate(
+          new Animation(this::run)
+            .setDuration(Integer.MAX_VALUE) // will not end without calling #stop()
+            .setEasing(com.intellij.util.animation.Easing.LINEAR)
+        );
+      }
     }
 
-    @Override
-    public final void actionPerformed(ActionEvent e) {
+    private void run(double value) {
+      if (value == 1.0) { // should happen only if animator doesn't play animations
+        myConsumer.accept((int) round(myTargetValue));
+        stop();
+        return;
+      }
       if (myShouldStop.test((int)round(myCurrentValue))) {
         stop();
         return;
@@ -245,40 +255,24 @@ public final class MouseWheelSmoothScroll {
 
   static class CubicBezierEasing implements Easing {
 
-    private final double[] xs;
-    private final double[] ys;
+    private final com.intellij.util.animation.CubicBezierEasing delegate;
 
-   CubicBezierEasing(double c1x, double c1y, double c2x, double c2y, int size) {
-      xs = new double[size];
-      ys = new double[size];
-      update(c1x, c1y, c2x, c2y);
+    CubicBezierEasing(double c1x, double c1y, double c2x, double c2y, int size) {
+      delegate = new com.intellij.util.animation.CubicBezierEasing(c1x, c1y, c2x, c2y, size);
     }
 
     public void update(double c1x, double c1y, double c2x, double c2y) {
-      for (int i = 0; i < xs.length; i++) {
-        xs[i] = bezier(i * 1. / xs.length, c1x, c2x);
-        ys[i] = bezier(i * 1. / xs.length, c1y, c2y);
-      }
+      delegate.update(c1x, c1y, c2x, c2y);
     }
 
     public int getSize() {
-      assert xs.length == ys.length;
-      return xs.length;
+      return delegate.getSize();
     }
 
     @Override
     public double calc(double t, double b, double c, double d) {
       double x = t / d;
-      int res = Arrays.binarySearch(xs, x);
-      if (res < 0) {
-        res = -res - 1;
-      }
-      return c * ys[min(res, ys.length - 1)] + b;
-    }
-
-    private static double bezier(double t, double u1, double u2) {
-      double v = 1 - t;
-      return 3 * u1 * v * v * t + 3 * u2 * v * t * t + t * t * t;
+      return c * delegate.calc(x) + b;
     }
   }
 

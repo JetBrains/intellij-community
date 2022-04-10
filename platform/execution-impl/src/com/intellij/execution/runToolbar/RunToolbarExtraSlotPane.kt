@@ -1,6 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
+import com.intellij.execution.runToolbar.data.RWActiveListener
+import com.intellij.execution.runToolbar.data.RWSlotListener
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.lang.LangBundle
@@ -8,12 +10,12 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
 import java.awt.Dimension
 import java.awt.Font
@@ -24,7 +26,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
-class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): ActiveListener {
+class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): RWActiveListener {
   private val manager = RunToolbarSlotManager.getInstance(project)
   val slotPane = JPanel(VerticalLayout(JBUI.scale(3))).apply {
     isOpaque = false
@@ -33,7 +35,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
 
   private val components = mutableListOf<SlotComponent>()
 
-  private val managerListener = object : SlotListener {
+  private val managerListener = object : RWSlotListener {
     override fun slotAdded() {
       addSingleSlot()
     }
@@ -53,15 +55,19 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
   }
 
   init {
-    manager.addListener(this)
+    manager.activeListener.addListener(this)
+  }
+
+  fun clear() {
+    manager.activeListener.removeListener(this)
   }
 
   override fun enabled() {
-    manager.addListener(managerListener)
+    manager.slotListeners.addListener(managerListener)
   }
 
   override fun disabled() {
-    manager.removeListener(managerListener)
+    manager.slotListeners.removeListener(managerListener)
   }
 
   private var added = false
@@ -88,6 +94,16 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
       added = false
       super.removeNotify()
     }
+
+/*    override fun getPreferredSize(): Dimension {
+      val d = super.getPreferredSize()
+      return baseWidth()?.let {
+        val w = it + insets.left + insets.right
+        println("getPreferredSize: $it ${w}")
+        return Dimension(w, d.height)
+      } ?: d
+
+    }*/
   }.apply {
     border = JBUI.Borders.empty(3, 0, 0, 3)
     background = JBColor.namedColor("Panel.background", Gray.xCD)
@@ -177,7 +193,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
     components.add(slot)
   }
 
-  private fun pack() {
+  fun pack() {
     newSlotDetails.isVisible = manager.slotsCount() == 0
 
     slotPane.revalidate()
@@ -185,7 +201,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
 
     slotPane.repaint()
     pane.repaint()
-    UIUtil.getWindow(pane)?.let {
+    ComponentUtil.getWindow(pane)?.let {
       if (it.isShowing) {
         it.pack()
       }
@@ -226,12 +242,9 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
     val runToolbarActionsGroup = ActionManager.getInstance().getAction(
       "RunToolbarActionsGroup") as DefaultActionGroup
 
-    val dataContext = DataManager.getInstance().getDataContext(bar)
-    val event = AnActionEvent.createFromDataContext("RunToolbarActionsGroup", null, dataContext)
-
-    for (action in runToolbarActionsGroup.getChildren(event)) {
+    for (action in runToolbarActionsGroup.getChildren(null)) {
       if (action is ActionGroup && !action.isPopup) {
-        group.addAll(*action.getChildren(event))
+        group.addAll(*action.getChildren(null))
       }
       else {
         group.addAction(action)

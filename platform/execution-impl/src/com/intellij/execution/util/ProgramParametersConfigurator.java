@@ -6,9 +6,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
-import com.intellij.ide.macro.Macro;
-import com.intellij.ide.macro.MacroManager;
-import com.intellij.ide.macro.PromptingMacro;
+import com.intellij.ide.macro.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -55,18 +53,19 @@ public class ProgramParametersConfigurator {
     Project project = configuration.getProject();
     Module module = getModule(configuration);
 
-    String parametersString = expandPathAndMacros(configuration.getProgramParameters(), module, project);
-    parameters.getProgramParametersList().addParametersString(parametersString);
-
-    parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
-
     Map<String, String> envs = new HashMap<>(configuration.getEnvs());
     EnvironmentUtil.inlineParentOccurrences(envs);
     for (Map.Entry<String, String> each : envs.entrySet()) {
       each.setValue(expandPath(each.getValue(), module, project));
     }
-
     parameters.setEnv(envs);
+
+    parameters.getProgramParametersList().patchMacroWithEnvs(envs);
+
+    String parametersString = expandPathAndMacros(configuration.getProgramParameters(), module, project);
+    parameters.getProgramParametersList().addParametersString(parametersString);
+
+    parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
     parameters.setPassParentEnvs(configuration.isPassParentEnvs());
   }
 
@@ -116,15 +115,33 @@ public class ProgramParametersConfigurator {
     }
 
     for (Macro macro : MacroManager.getInstance().getMacros()) {
-      String template = "$" + macro.getName() + "$";
+      boolean paramsMacro = macro instanceof MacroWithParams;
+      String template = "$" + macro.getName() + (paramsMacro ? "(" : "$");
       for (int index = path.indexOf(template);
            index != -1 && index < path.length() + template.length();
            index = path.indexOf(template, index)) {
-        String value = StringUtil.notNullize(previewOrExpandMacro(macro, dataContext));
+        String value;
+        int tailIndex;
+        if (paramsMacro) {
+          int endIndex = path.indexOf(")$", index + template.length());
+          if (endIndex != -1) {
+            value = StringUtil.notNullize(previewOrExpandMacro(macro, dataContext, path.substring(index + template.length(), endIndex)));
+            tailIndex = endIndex + 2;
+          }
+          else {
+            //noinspection AssignmentToForLoopParameter
+            index += template.length();
+            continue;
+          }
+        }
+        else {
+          tailIndex = index + template.length();
+          value = StringUtil.notNullize(previewOrExpandMacro(macro, dataContext));
+        }
         if (applyParameterEscaping) {
           value = ParametersListUtil.escape(value);
         }
-        path = path.substring(0, index) + value + path.substring(index + template.length());
+        path = path.substring(0, index) + value + path.substring(tailIndex);
         //noinspection AssignmentToForLoopParameter
         index += value.length();
       }
@@ -132,14 +149,14 @@ public class ProgramParametersConfigurator {
     return path;
   }
 
-  private static @Nullable String previewOrExpandMacro(Macro macro, DataContext dataContext) {
+  private static @Nullable String previewOrExpandMacro(Macro macro, DataContext dataContext, String @NotNull ... args) {
     try {
-      if (macro instanceof PromptingMacro) {
+      if (macro instanceof PromptingMacro || macro instanceof MacroWithParams) {
         Boolean mode = VALIDATION_MODE.getData(dataContext);
         if (mode != null && mode) {
           throw new IncorrectOperationException();
         }
-        return macro.expand(dataContext);
+        return macro.expand(dataContext, args);
       }
       return macro.preview();
     }

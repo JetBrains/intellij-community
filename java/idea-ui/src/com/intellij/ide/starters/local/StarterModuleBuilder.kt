@@ -1,6 +1,7 @@
 package com.intellij.ide.starters.local
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.projectWizard.ProjectSettingsStep
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.StarterModuleImporter
@@ -14,6 +15,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.SettingsStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
@@ -28,6 +30,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkType
@@ -58,8 +61,8 @@ import javax.swing.Icon
 abstract class StarterModuleBuilder : ModuleBuilder() {
 
   companion object {
-    @JvmStatic
-    private val INVALID_PACKAGE_NAME_SYMBOL_PATTERN: Regex = Regex("[^a-zA-Z0-9_.]")
+    @JvmField
+    val INVALID_PACKAGE_NAME_SYMBOL_PATTERN: Regex = Regex("[^a-zA-Z\\d_.]")
 
     @JvmStatic
     private val IMPORTER_EP_NAME: ExtensionPointName<StarterModuleImporter> =
@@ -305,7 +308,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
     val starter = starterContext.starter ?: throw IllegalStateException("Starter is not set")
     val dependencyConfig = starterContext.starterDependencyConfig ?: error("Starter dependency config is not set")
-    val sdk = ModuleRootManager.getInstance(module).sdk
+    val sdk = moduleJdk
 
     val rootPackage = suggestPackageName(starterContext.group, starterContext.artifact)
 
@@ -354,6 +357,12 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
           ReformatCodeProcessor(module.project, module, false).run()
           // import of module may dispose it and create another, open files first
           openSampleFiles(module, getFilePathsToOpen())
+
+          if (starterContext.gitIntegration) {
+            runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
+              GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot, true)
+            }
+          }
 
           importModule(module)
         })

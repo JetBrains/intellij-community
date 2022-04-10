@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.jps
 
-import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.compiler.CompileContext
 import com.intellij.openapi.compiler.CompileTask
 import com.intellij.openapi.compiler.CompilerMessageCategory
@@ -10,17 +9,17 @@ import com.intellij.project.stateStore
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.KotlinPluginMacros
-import org.jetbrains.kotlin.idea.KotlinVersionVerbose
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 
 class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
     override fun execute(context: CompileContext): Boolean {
-        val version = KotlinJpsPluginSettings.getInstance(context.project).settings.version
+        val version = KotlinJpsPluginSettings.getInstance(context.project)?.settings?.version ?: return true
 
-        val parsed = KotlinVersionVerbose.parse(version)
+        val parsed = IdeKotlinVersion.opt(version)
         if (parsed == null) {
             context.addErrorWithReferenceToKotlincXml(
                 KotlinBundle.message(
@@ -31,7 +30,7 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
             )
             return false
         }
-        if (parsed.plainVersion < jpsMinimumSupportedVersion) {
+        if (parsed.kotlinVersion < jpsMinimumSupportedVersion) {
             context.addErrorWithReferenceToKotlincXml(
                 KotlinBundle.message(
                     "kotlin.jps.compiler.minimum.supported.version.not.satisfied",
@@ -42,30 +41,27 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
             return false
         }
 
-        val jpsPluginClassPathJar = KotlinPathsProvider.lazyDownloadMavenArtifact(
+        val jpsPluginClassPathJar = KotlinArtifactsDownloader.lazyDownloadMavenArtifact(
             context.project,
-            KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
+            KotlinArtifacts.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
             version,
             context.progressIndicator,
-            beforeDownload = { context.progressIndicator.text = KotlinBundle.message("progress.text.downloading.kotlin.jps.plugin") },
+            KotlinBundle.message("progress.text.downloading.kotlin.jps.plugin"),
             onError = { context.addError(it) }
         )
         if (jpsPluginClassPathJar == null) {
             return false
         }
 
-        val unpackedKotlinc = KotlinPathsProvider.lazyDownloadAndUnpackKotlincDist(
+        val unpackedKotlinc = KotlinArtifactsDownloader.lazyDownloadAndUnpackKotlincDist(
             context.project,
             version,
             context.progressIndicator,
-            beforeDownload = { context.progressIndicator.text = KotlinBundle.message("progress.text.downloading.kotlinc.dist") },
             onError = { context.addError(it) },
         )
         if (unpackedKotlinc == null) {
             return false
         }
-
-        PathMacros.getInstance().setMacro(KotlinPluginMacros.KOTLIN_BUNDLED_PATH_VARIABLE, unpackedKotlinc.canonicalPath)
 
         return true
     }
@@ -80,13 +76,7 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
     }
 
     companion object {
-        const val KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
-
         @JvmStatic
-        val jpsMinimumSupportedVersion
-            get() = KotlinVersionVerbose.parse("1.5.10").let { it ?: error("JPS Minimum version is not valid") }.plainVersion
-
-        fun getKotlinJpsClasspathLocation(version: String) =
-            KotlinPathsProvider.getExpectedMavenArtifactJarPath(KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID, version)
+        val jpsMinimumSupportedVersion = IdeKotlinVersion.get("1.5.10").kotlinVersion
     }
 }

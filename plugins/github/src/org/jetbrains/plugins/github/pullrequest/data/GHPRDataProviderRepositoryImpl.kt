@@ -62,7 +62,7 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
     })
     Disposer.register(parentDisposable, messageBus)
 
-    val detailsData = GHPRDetailsDataProviderImpl(detailsService, commentService, id, messageBus).apply {
+    val detailsData = GHPRDetailsDataProviderImpl(detailsService, id, messageBus).apply {
       addDetailsLoadedListener(parentDisposable) {
         loadedDetails?.let { providerDetailsLoadedEventDispatcher.multicaster.onDetailsLoaded(it) }
       }
@@ -76,7 +76,7 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
     val changesData = GHPRChangesDataProviderImpl(changesService, id, detailsData).also {
       Disposer.register(parentDisposable, it)
     }
-    val reviewData = GHPRReviewDataProviderImpl(commentService, reviewService, id, messageBus).also {
+    val reviewData = GHPRReviewDataProviderImpl(reviewService, id, messageBus).also {
       Disposer.register(parentDisposable, it)
     }
     val viewedStateData = GHPRViewedStateDataProviderImpl(filesService, id).also {

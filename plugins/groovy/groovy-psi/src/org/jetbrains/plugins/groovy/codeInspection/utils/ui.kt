@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GrInspectionUIUtil")
 package org.jetbrains.plugins.groovy.codeInspection.utils
 
@@ -10,17 +10,11 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.ui.SeparatorFactory
 import com.intellij.ui.components.JBCheckBox
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.codeInspection.FileTypeAwareInspection
 import org.jetbrains.plugins.groovy.codeInspection.getDisableableFileTypes
 import java.awt.event.ItemEvent
 import javax.swing.JComponent
 
-internal fun <T> enhanceInspectionToolPanel(tool: T, actualPanel: JComponent?): JComponent?
-  where T : LocalInspectionTool, T : FileTypeAwareInspection {
-  return doEnhanceInspectionToolPanel(tool, tool.getDisableableFileTypeNamesContainer(), actualPanel)
-}
-
-private fun doEnhanceInspectionToolPanel(tool: LocalInspectionTool, container: MutableSet<String>, actualPanel: JComponent?): JComponent? {
+internal fun enhanceInspectionToolPanel(tool: LocalInspectionTool, container: MutableSet<String>, actualPanel: JComponent?): JComponent? {
   val disableableFileTypes = getDisableableFileTypes(tool.javaClass)
   if (actualPanel == null && disableableFileTypes.isEmpty()) {
     return null
@@ -44,13 +38,11 @@ private fun doEnhanceInspectionToolPanel(tool: LocalInspectionTool, container: M
   return component
 }
 
-internal fun <T> checkInspectionEnabledByFileType(tool: T, element: PsiElement) : Boolean
-  where T : FileTypeAwareInspection, T: LocalInspectionTool {
+internal fun checkInspectionEnabledByFileType(tool: LocalInspectionTool, element: PsiElement, explicitlyAllowedFileTypes: Set<String>) : Boolean {
   val disableableFileTypes = getDisableableFileTypes(tool.javaClass)
   if (disableableFileTypes.isEmpty()) {
     return true
   }
-  val explicitlyAllowedFileTypes = tool.getDisableableFileTypeNamesContainer()
   val forbiddenFileTypes = disableableFileTypes.filter { it.name !in explicitlyAllowedFileTypes }
   val virtualFile = PsiUtilCore.getVirtualFile(element) ?: return true
   val registry = FileTypeRegistry.getInstance()

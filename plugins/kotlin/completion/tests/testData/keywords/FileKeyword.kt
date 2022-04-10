@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 @<caret>[]
 
 // EXIST: { itemText: "file:" }

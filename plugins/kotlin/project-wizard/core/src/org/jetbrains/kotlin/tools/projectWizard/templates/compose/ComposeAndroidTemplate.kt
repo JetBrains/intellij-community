@@ -133,8 +133,8 @@ class ComposeCommonAndroidTemplate : Template() {
                 && module.kind == ModuleKind.singlePlatformAndroid
 
     override fun Reader.updateBuildFileIRs(irs: List<BuildSystemIR>): List<BuildSystemIR> {
-        val androidIR = irs.firstNotNullOfOrNull { ir-> ir.takeIf { ir is AndroidConfigIR } }
-        if (androidIR != null && androidIR is AndroidConfigIR) {
+        val androidIR = irs.firstNotNullOfOrNull { it as? AndroidConfigIR }
+        if (androidIR != null) {
             androidIR.androidSdkVersion = "31"
         }
         return irs.filterNot {

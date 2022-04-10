@@ -34,6 +34,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testUnboxingBoxingInLambdaReturn() { doTest(); }
   public void testUnboxingInMethodReferences() { doTest(); }
   public void testMethodReferenceOnNullable() { doTest(); }
+  public void testObjectsNonNullWithUnknownNullable() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTestWith(insp -> insp.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
+  }
   public void testNullableVoidLambda() { doTest(); }
   public void testNullableForeachVariable() { doTestWithCustomAnnotations(); }
   public void testGenericParameterNullity() { doTestWithCustomAnnotations(); }
@@ -206,9 +210,14 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("foo", myFixture);
     doTest();
   }
+  public void testStreamFindFirstExpectNotNull() { doTest(); }
   public void testStreamAnyMatchIsNull() { doTest(); }
   public void testStreamCustomSumMethod() { doTest(); }
   public void testStreamReduceLogicalAnd() { doTest(); }
+  public void testStreamSingleElementReduce() { doTest(); }
+  public void testRequireNonNullMethodRef() {
+    doTestWith(dfa -> dfa.SUGGEST_NULLABLE_ANNOTATIONS = true);
+  }
 
   public void testMapGetWithValueNullability() { doTestWithCustomAnnotations(); }
   public void testInferNestedForeachNullability() { doTestWithCustomAnnotations(); }
@@ -350,9 +359,11 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testReturnOrElseNull() { doTestWith(insp -> insp.REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true); }
   public void testArrayIntersectionType() { doTest(); }
   public void testFunctionType() { doTest(); }
+  public void testIteratorHasNextModifiesPrivateField() { doTest(); }
   public void testJsr305TypeUseNoLocal() {
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     doTest();
   }
+  public void testConstructorMethodReferenceNullability() { doTest(); }
 }

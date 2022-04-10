@@ -1,10 +1,7 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiRecordComponent;
-import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -20,7 +17,16 @@ public class MissingClassBodyFixer implements Fixer {
     PsiClass psiClass = (PsiClass) psiElement;
 
     if (psiClass.getLBrace() == null) {
+      PsiElement lastChild = psiClass.getLastChild();
       int offset = psiClass.getTextRange().getEndOffset();
+      if (lastChild instanceof PsiErrorElement) {
+        PsiElement previous = lastChild.getPrevSibling();
+        if (previous instanceof PsiWhiteSpace) {
+          offset = previous.getTextRange().getStartOffset();
+        } else {
+          offset = lastChild.getTextRange().getStartOffset();
+        }
+      }
       if (psiClass.isRecord() && psiClass.getRecordHeader() == null) {
         editor.getDocument().insertString(offset, "() {}");
         editor.getCaretModel().moveToOffset(offset + 1);

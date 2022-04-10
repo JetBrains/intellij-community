@@ -1,14 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.idea.Main;
 import com.intellij.openapi.diagnostic.*;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.Level;
-import org.apache.log4j.spi.LoggingEvent;
-import org.apache.log4j.spi.ThrowableInformation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -17,9 +13,12 @@ import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.stream.Stream;
 
-public final class DialogAppender extends AppenderSkeleton {
+public final class DialogAppender extends Handler {
   private static final ErrorLogger[] LOGGERS = {new DefaultIdeaErrorLogger()};
   private static final int MAX_EARLY_LOGGING_EVENTS = 5;
   private static final int MAX_ASYNC_LOGGING_EVENTS = 5;
@@ -29,20 +28,20 @@ public final class DialogAppender extends AppenderSkeleton {
   private volatile Runnable myDialogRunnable;
 
   @Override
-  protected synchronized void append(@NotNull LoggingEvent event) {
-    if (!event.getLevel().isGreaterOrEqual(Level.ERROR) || Main.isCommandLine()) {
+  public synchronized void publish(LogRecord event) {
+    if (event.getLevel().intValue() < Level.SEVERE.intValue() || Main.isCommandLine()) {
       return;  // the dialog appender doesn't deal with non-critical errors and is meaningless when there is no frame to show an error icon
     }
 
     IdeaLoggingEvent ideaEvent;
-    Object messageObject = event.getMessage();
-    if (messageObject instanceof IdeaLoggingEvent) {
-      ideaEvent = (IdeaLoggingEvent)messageObject;
+    Object[] parameters = event.getParameters();
+    if (parameters != null && parameters.length > 0 && parameters[0] instanceof IdeaLoggingEvent) {
+      ideaEvent = (IdeaLoggingEvent)parameters[0];
     }
     else {
-      ThrowableInformation info = event.getThrowableInformation();
-      if (info == null || info.getThrowable() == null) return;
-      ideaEvent = extractLoggingEvent(messageObject, info.getThrowable());
+      Throwable thrown = event.getThrown();
+      if (thrown == null) return;
+      ideaEvent = extractLoggingEvent(event.getMessage(), thrown);
     }
 
     if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
@@ -98,13 +97,6 @@ public final class DialogAppender extends AppenderSkeleton {
   }
 
   private static IdeaLoggingEvent extractLoggingEvent(Object messageObject, Throwable throwable) {
-    Throwable rootCause = ExceptionUtil.getRootCause(throwable);
-    //noinspection deprecation
-    if (rootCause instanceof LogEventException) {
-      //noinspection deprecation
-      return ((LogEventException)rootCause).getLogMessage();
-    }
-
     String message = null;
     List<ExceptionWithAttachments> withAttachments = ExceptionUtil.findCauseAndSuppressed(throwable, ExceptionWithAttachments.class);
     if (!withAttachments.isEmpty() && withAttachments.get(0) instanceof RuntimeExceptionWithAttachments) {
@@ -129,8 +121,7 @@ public final class DialogAppender extends AppenderSkeleton {
   }
 
   @Override
-  public boolean requiresLayout() {
-    return false;
+  public void flush() {
   }
 
   @Override

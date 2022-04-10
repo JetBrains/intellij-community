@@ -13,7 +13,6 @@ interface AccountsListModel<A: Account, Cred> {
   val newCredentials: Map<A, Cred>
 
   val accountsListModel: ListModel<A>
-  val busyStateModel: SingleValueModel<Boolean>
 
   fun addAccount(parentComponent: JComponent, point: RelativePoint? = null)
   fun editAccount(parentComponent: JComponent, account: A)

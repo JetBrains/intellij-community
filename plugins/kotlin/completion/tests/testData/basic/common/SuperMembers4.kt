@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 open class B {
     open fun foo() {}
     open fun bar() {}

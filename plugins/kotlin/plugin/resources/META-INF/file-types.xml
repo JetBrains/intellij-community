@@ -19,7 +19,7 @@
     <fileType name="KJSM" fieldName="INSTANCE" extensions="kjsm"
               implementationClass="org.jetbrains.kotlin.idea.decompiler.js.KotlinJavaScriptMetaFileType"/>
     <fileType name="kotlin_builtins" fieldName="INSTANCE" extensions="kotlin_builtins;kotlin_metadata"
-              implementationClass="org.jetbrains.kotlin.idea.decompiler.builtIns.KotlinBuiltInFileType"/>
+              implementationClass="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType"/>
     <fileType name="kotlin_module" fieldName="INSTANCE" extensions="kotlin_module"
               implementationClass="org.jetbrains.kotlin.idea.KotlinModuleFileType"/>
 
@@ -31,13 +31,22 @@
 
     <fileTypeUsageSchemaDescriptor
             schema="Kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.completion.KotlinFileTypeSchemaDetector"/>
+            implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinFileTypeSchemaDetector"/>
     <fileTypeUsageSchemaDescriptor
             schema="Kotlin Script"
-            implementationClass="org.jetbrains.kotlin.idea.completion.KotlinScriptFileTypeSchemaDetector"/>
+            implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinScriptFileTypeSchemaDetector"/>
     <fileTypeUsageSchemaDescriptor
             schema="Gradle Script"
-            implementationClass="org.jetbrains.kotlin.idea.core.script.KotlinGradleScriptFileTypeSchemaDetector"/>
+            implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinGradleScriptFileTypeSchemaDetector"/>
+    <fileTypeUsageSchemaDescriptor
+            schema="Main Script"
+            implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinMainScriptFileTypeSchemaDetector"/>
+    <fileTypeUsageSchemaDescriptor
+            schema="Space Script"
+            implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinSpaceScriptFileTypeSchemaDetector"/>
+    <fileTypeUsageSchemaDescriptor
+            schema="Custom Script"
+            implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinCustomScriptFileTypeSchemaDetector"/>
 
     <internalFileTemplate name="Kotlin File"/>
     <internalFileTemplate name="Kotlin Class"/>

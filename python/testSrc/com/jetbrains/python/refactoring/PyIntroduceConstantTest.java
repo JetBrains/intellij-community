@@ -119,6 +119,11 @@ public class PyIntroduceConstantTest extends PyIntroduceTestCase {
     doTestThrowsRefactoringErrorHintException();
   }
 
+  // PY-33843
+  public void testStringLiteralArgumentInComprehension() {
+    doTest();
+  }
+
   private void doTestThrowsRefactoringErrorHintException() {
     assertThrows(CommonRefactoringUtil.RefactoringErrorHintException.class, () -> doTest());
   }

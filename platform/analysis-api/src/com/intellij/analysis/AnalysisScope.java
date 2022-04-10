@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.analysis;
 
@@ -559,11 +559,6 @@ public class AnalysisScope {
   }
 
   public int getFileCount() {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) { //clear text after building analysis scope set
-      indicator.setText("");
-      indicator.setText2("");
-    }
     return getFileSet().size();
   }
 
@@ -574,9 +569,7 @@ public class AnalysisScope {
       files.freeze();
       myVFiles = files;
     }
-    else {
-      myFilesSet = null;
-    }
+    myFilesSet = null;
   }
 
   public boolean containsSources(boolean isTest) {

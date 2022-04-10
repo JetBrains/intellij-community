@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -45,6 +45,7 @@ final class PsiCommentInlineDocumentation implements InlineDocumentation {
     return DocumentationManager.getProviderFromElement(myComment).generateRenderedDoc(myComment);
   }
 
+  @SuppressWarnings("TestOnlyProblems") // KTIJ-19938
   @Override
   public DocumentationTarget getOwnerTarget() {
     PsiElement context = getContext();

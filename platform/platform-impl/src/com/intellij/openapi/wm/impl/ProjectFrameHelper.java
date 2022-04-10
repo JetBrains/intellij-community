@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.notification.ActionCenter;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.notification.impl.NotificationsManagerImpl;
@@ -35,7 +36,6 @@ import com.intellij.ui.*;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +59,7 @@ import java.util.Objects;
  * @author Vladimir Kondratyev
  */
 public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor, DataProvider, Disposable {
-  private static final Logger LOG = Logger.getInstance(IdeFrameImpl.class);
+  private static final Logger LOG = Logger.getInstance(ProjectFrameHelper.class);
 
   private boolean isUpdatingTitle;
 
@@ -78,6 +78,10 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   private volatile Image selfie;
 
   private IdeFrameImpl frame;
+
+  // frame can be activated before project is assigned to it,
+  // so we remember the activation time and report it against the assgned project later
+  private Long myActivationTimestamp;
 
   public ProjectFrameHelper(@NotNull IdeFrameImpl frame, @Nullable Image selfie) {
     this.frame = frame;
@@ -144,11 +148,6 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       }
 
       @Override
-      public void updateView() {
-        ProjectFrameHelper.this.updateView();
-      }
-
-      @Override
       public @Nullable Project getProject() {
         return project;
       }
@@ -174,7 +173,9 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     myBalloonLayout = ActionCenter.isEnabled()
                       ? new ActionCenterBalloonLayout(myRootPane, JBUI.insets(8))
                       : new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
-    frame.setBackground(UIUtil.getPanelBackground());
+    frame.setBackground(JBColor.PanelBackground);
+
+    myRootPane.prepareToolbar();
   }
 
   protected @NotNull IdeRootPane createIdeRootPane() {
@@ -323,9 +324,10 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   public void updateView() {
-    myRootPane.updateToolbar();
-    myRootPane.updateMainMenuActions();
-    myRootPane.updateNorthComponents();
+    IdeRootPane rootPane = myRootPane;
+    rootPane.updateToolbar();
+    rootPane.updateMainMenuActions();
+    rootPane.updateNorthComponents();
   }
 
   @Override
@@ -380,13 +382,6 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       StatusBar statusBar = myRootPane.getStatusBar();
       if (statusBar != null) {
         project.getMessageBus().connect().subscribe(StatusBar.Info.TOPIC, statusBar);
-
-        if (ExperimentalUI.isNewUI()) {
-          var navBar = myRootPane.findByName(IdeStatusBarImpl.NAVBAR_WIDGET_KEY);
-          if (navBar instanceof StatusBarCentralWidget) {
-            statusBar.setCentralWidget((StatusBarCentralWidget)navBar);
-          }
-        }
       }
     }
 
@@ -401,12 +396,20 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     if (myFrameDecorator != null) {
       myFrameDecorator.setProject();
     }
+    if (myActivationTimestamp != null) {
+      RecentProjectsManagerBase.getInstanceEx().setActivationTimestamp(project, myActivationTimestamp);
+    }
   }
 
   protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
     project.getService(StatusBarWidgetsManager.class).installPendingWidgets();
     IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
     PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE);
+
+    var navBar = myRootPane.findByName(IdeStatusBarImpl.NAVBAR_WIDGET_KEY);
+    if (navBar instanceof StatusBarCentralWidget) {
+      statusBar.setCentralWidget((StatusBarCentralWidget)navBar);
+    }
   }
 
   @Override
@@ -437,7 +440,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   private static boolean isTemporaryDisposed(@Nullable RootPaneContainer frame) {
-    return UIUtil.isClientPropertyTrue(frame == null ? null : frame.getRootPane(), ScreenUtil.DISPOSE_TEMPORARY);
+    return ClientProperty.isTrue(frame == null ? null : frame.getRootPane(), ScreenUtil.DISPOSE_TEMPORARY);
   }
 
   public @Nullable IdeFrameImpl getFrame() {
@@ -467,7 +470,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   @ApiStatus.Internal
-  @Nullable IdeRootPane getRootPane() {
+  public @Nullable IdeRootPane getRootPane() {
     return myRootPane;
   }
 
@@ -518,5 +521,13 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     }
 
     return false;
+  }
+
+  @Override
+  public void notifyProjectActivation() {
+    myActivationTimestamp = System.currentTimeMillis();
+    if (project != null) {
+      RecentProjectsManagerBase.getInstanceEx().setActivationTimestamp(project, myActivationTimestamp);
+    }
   }
 }

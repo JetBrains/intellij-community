@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.search
 
 import com.intellij.openapi.module.JavaModuleType
@@ -12,7 +12,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.search.useScope
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import kotlin.test.assertNotEquals
@@ -143,7 +143,6 @@ class KotlinUseScopeTest : JavaCodeInsightFixtureTestCase() {
             global:
             A/one/JavaClass.java,
             A/one/PrivateK.kt,
-            A/two/OtherJavaClass.java,
         """.trimIndent()
 
         assertNotEquals(moduleAScope, privateJvmModuleAScope)
@@ -232,7 +231,6 @@ class KotlinUseScopeTest : JavaCodeInsightFixtureTestCase() {
 
         val privateJvmModuleBScope = """
             global:
-            B/one/JavaModB.java,
             B/two/JavaModBTwo.java,
             B/two/PrivateInterface.kt,
         """.trimIndent()

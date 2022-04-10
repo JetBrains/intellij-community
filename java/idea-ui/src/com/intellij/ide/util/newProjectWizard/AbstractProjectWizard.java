@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.newProjectWizard;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.projectWizard.NewProjectWizardCollector;
@@ -259,7 +258,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     super.doNextAction();
     if (isNewWizard()) {
       NewProjectWizardCollector.logNext(myWizardContext, -1);
-      NewProjectWizardCollector.logScreen(myWizardContext, 2);
+      myWizardContext.setScreen(2);
     }
   }
 
@@ -380,8 +379,8 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   }
 
   @Override
-  protected void helpAction() {
-    super.helpAction();
+  protected void doHelpAction() {
+    super.doHelpAction();
     if (isNewWizard()) {
       NewProjectWizardCollector.logHelpNavigation(myWizardContext);
     }

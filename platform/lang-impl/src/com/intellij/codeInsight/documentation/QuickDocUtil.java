@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.DocPreviewUtil;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.DocumentationResult;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.EditorMouseHoverPopupManager;
@@ -37,6 +38,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class QuickDocUtil {
 
+  /**
+   * @deprecated No op in v2 implementation.
+   * Use {@link DocumentationResult#asyncDocumentation} or {@link DocumentationResult.Data#updates} for async updates.
+   */
+  @Deprecated
   public static void updateQuickDoc(@NotNull final Project project, @NotNull final PsiElement element, @Nullable @Nls final String documentation) {
     if (StringUtil.isEmpty(documentation)) return;
     // modal dialogs with fragment editors fix: can't guess proper modality state here
@@ -48,6 +54,11 @@ public final class QuickDocUtil {
     });
   }
 
+  /**
+   * @deprecated Returns `null` in v2 implementation.
+   * Use {@link  DocumentationResult#asyncDocumentation} or {@link DocumentationResult.Data#updates} for async updates.
+   */
+  @Deprecated
   @Nullable
   public static DocumentationComponent getActiveDocComponent(@NotNull Project project) {
     DocumentationManager documentationManager = DocumentationManager.getInstance(project);
@@ -84,6 +95,10 @@ public final class QuickDocUtil {
 
   public static final Object CUT_AT_CMD = ObjectUtils.sentinel("CUT_AT_CMD");
 
+  /**
+   * @deprecated No op in v2 implementation.
+   */
+  @Deprecated
   public static void updateQuickDocAsync(@NotNull PsiElement element,
                                          @NotNull CharSequence prefix,
                                          @NotNull Consumer<Consumer<Object>> provider) {

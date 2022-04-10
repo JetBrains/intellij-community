@@ -32,8 +32,9 @@ private val BRANCH_BACKGROUND_INSETS = insets(1, 0)
 private fun getBranchLabelAttributes(background: Color) =
   SimpleTextAttributes(getBranchPresentationBackground(background), TEXT_COLOR, null, STYLE_OPAQUE)
 
-class RepositoryChangesBrowserNode(repository: Repository,
-                                   private val colorManager: VcsLogColorManager = getColorManager(repository.project)) : ChangesBrowserNode<Repository>(repository) {
+open class RepositoryChangesBrowserNode(repository: Repository,
+                                        private val colorManager: VcsLogColorManager = getColorManager(repository.project))
+  : ChangesBrowserNode<Repository>(repository) {
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     renderer.icon = getRepositoryIcon(getUserObject(), colorManager)

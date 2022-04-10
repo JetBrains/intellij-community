@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.openapi.Disposable;
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.MacFileSaverDialog;
 import com.intellij.ui.mac.MacPathChooserDialog;
 import com.intellij.ui.win.WinPathChooserDialog;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
     else if (useNativeWinChooser(descriptor)) {
       return new WinPathChooserDialog(descriptor, parent, project);
     }
-    else if (useNewChooser()) {
+    else if (useNewChooser(descriptor)) {
       return new NewFileChooserDialogImpl(descriptor, parent, project);
     }
     else if (parent != null) {
@@ -69,7 +70,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
     if (chooser != null) {
       return chooser;
     }
-    else if (useNewChooser()) {
+    else if (useNewChooser(descriptor)) {
       return new NewFileChooserDialogImpl(descriptor, parent, project);
     }
     else if (parent != null) {
@@ -80,8 +81,9 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
     }
   }
 
-  private static boolean useNewChooser() {
-    return Registry.is("ide.ui.new.chooser");
+  private static boolean useNewChooser(FileChooserDescriptor descriptor) {
+    return Registry.is("ide.ui.new.file.chooser") &&
+           ContainerUtil.and(descriptor.getRoots(), f -> f.isInLocalFileSystem());
   }
 
   private static boolean useNativeWinChooser(FileChooserDescriptor descriptor) {
@@ -100,7 +102,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   @NotNull
   @Override
   public FileTextField createFileTextField(@NotNull FileChooserDescriptor descriptor, boolean showHidden, @Nullable Disposable parent) {
-    return new FileTextFieldImpl.Vfs(new JTextField(), getMacroMap(), parent, new LocalFsFinder.FileChooserFilter(descriptor, showHidden));
+    return new FileTextFieldImpl(new JTextField(), new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(descriptor, showHidden), getMacroMap(), parent);
   }
 
   @Override
@@ -109,7 +111,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
                                     boolean showHidden,
                                     @Nullable Disposable parent) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      new FileTextFieldImpl.Vfs(field, getMacroMap(), parent, new LocalFsFinder.FileChooserFilter(descriptor, showHidden));
+      new FileTextFieldImpl(field, new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(descriptor, showHidden), getMacroMap(), parent);
     }
   }
 

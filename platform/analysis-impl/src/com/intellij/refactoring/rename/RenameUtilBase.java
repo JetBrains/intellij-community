@@ -87,7 +87,7 @@ public final class RenameUtilBase {
     }
   }
 
-  static void rename(UsageInfo info, String newName) {
+  public static void rename(UsageInfo info, String newName) {
     if (info.getElement() == null) return;
     PsiReference ref = info.getReference();
     if (ref == null) return;

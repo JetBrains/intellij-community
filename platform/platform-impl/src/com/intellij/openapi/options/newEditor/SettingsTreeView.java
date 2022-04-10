@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
@@ -187,6 +187,11 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private Icon getIcon(@Nullable DefaultMutableTreeNode node, boolean selected) {
     if (myControl == null) myControl = new MyControl();
     if (node == null || 0 == node.getChildCount()) return myControl.empty;
+    if (selected
+        && !ColorUtil.isDark(JBUI.CurrentTheme.Tree.BACKGROUND)
+        && !ColorUtil.isDark(RenderingUtil.getSelectionBackground(myTree))) {
+      selected = false; // do not use selected icon on light theme
+    }
     return myTree.isExpanded(new TreePath(node.getPath())) ? myControl.expanded.apply(selected) : myControl.collapsed.apply(selected);
   }
 

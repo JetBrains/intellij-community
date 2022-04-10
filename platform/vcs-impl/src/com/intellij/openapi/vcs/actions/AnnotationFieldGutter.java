@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -112,5 +113,10 @@ public abstract class AnnotationFieldGutter implements ActiveAnnotationGutter {
 
   public @NlsContexts.ListItem @Nullable String getDisplayName() {
     return null;
+  }
+
+  @Override
+  public int getLeftMargin() {
+    return ExperimentalUI.isNewUI() ? 0 : ActiveAnnotationGutter.super.getLeftMargin();
   }
 }

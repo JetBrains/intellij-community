@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.analysis.AnalysisScope;
@@ -12,6 +11,7 @@ import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -131,6 +131,13 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     if (refElement instanceof RefParameter) return null;
     if (refElement.isSyntheticJSP()) return null;
 
+    if (refElement instanceof RefElementImpl) {
+      PsiFile containingFile = ((RefElementImpl)refElement).getContainingFile();
+      if (containingFile == null || !containingFile.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+        return null;
+      }
+    }
+
     if (!SUGGEST_FOR_CONSTANTS && refEntity instanceof RefField) {
       RefField refField = (RefField)refEntity;
       if (refField.isFinal() && refField.isStatic() && refField.isOnlyAssignedInInitializer()) {
@@ -138,31 +145,18 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       }
     }
 
-    @EntryPointWithVisibilityLevel.VisibilityLevelResult
-    int minLevel = getMinVisibilityLevel(refElement);
-    //ignore entry points.
-    if (refElement.isEntry()) {
-      if (minLevel == EntryPointWithVisibilityLevel.ACCESS_LEVEL_INVALID) return null;
-    }
-
     if (refElement instanceof RefField) {
-      Boolean implicitlyWritten = refElement.getUserData(RefField.IMPLICITLY_WRITTEN);
-      if (implicitlyWritten != null && implicitlyWritten) {
+      final RefField refField = (RefField)refElement;
+      if (refField.isImplicitlyWritten() || refField.isImplicitlyRead()) {
         return null;
       }
-      Boolean implicitlyRead = refElement.getUserData(RefField.IMPLICITLY_READ);
-      if (implicitlyRead != null && implicitlyRead) {
+      if (refField.isEnumConstant()) {
         return null;
       }
     }
 
     //ignore implicit constructors. User should not be able to see them.
     if (refElement instanceof RefImplicitConstructor) return null;
-
-    if (refElement instanceof RefField) {
-      final Boolean isEnumConstant = refElement.getUserData(RefField.ENUM_CONSTANT);
-      if (isEnumConstant != null && isEnumConstant.booleanValue()) return null;
-    }
 
     //ignore library override methods.
     if (refElement instanceof RefMethod) {
@@ -177,9 +171,21 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
         return null;
       }
     }
+    //ignore interface members. They always have public access modifier.
+    if (refElement.getOwner() instanceof RefClass) {
+      RefClass refClass = (RefClass) refElement.getOwner();
+      if (refClass.isInterface()) return null;
+    }
 
     if (keepVisibilityLevel(refElement)) {
       return null;
+    }
+
+    @EntryPointWithVisibilityLevel.VisibilityLevelResult
+    int minLevel = getMinVisibilityLevel(refElement);
+    //ignore entry points.
+    if (refElement.isEntry()) {
+      if (minLevel == EntryPointWithVisibilityLevel.ACCESS_LEVEL_INVALID) return null;
     }
 
     //ignore unreferenced code. They could be a potential entry points.
@@ -198,11 +204,6 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       if (isTopLevelClass(refElement) && minLevel <= 0 && !SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES) return null;
     }
 
-    //ignore interface members. They always have public access modifier.
-    if (refElement.getOwner() instanceof RefClass) {
-      RefClass refClass = (RefClass) refElement.getOwner();
-      if (refClass.isInterface()) return null;
-    }
     String access = getPossibleAccess(refElement, minLevel <= 0 ? PsiUtil.ACCESS_LEVEL_PRIVATE : minLevel);
     if (access != refElement.getAccessModifier()) {
       return createDescriptions(refElement, access, manager, globalContext);
@@ -609,6 +610,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   }
 
   private static final class AcceptSuggestedAccess implements LocalQuickFix{
+    @SafeFieldForPreview
     private final RefManager myManager;
     @PsiModifier.ModifierConstant private final String myHint;
     private final @IntentionName String myName;

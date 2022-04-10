@@ -6,7 +6,6 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,8 +65,7 @@ public abstract class TextProblem {
    * @return the range in {@link #getText()} to be highlighted
    * @deprecated use {@link #getHighlightRanges()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   public final @NotNull TextRange getHighlightRange() {
     return new TextRange(highlightRanges.get(0).getStartOffset(), ContainerUtil.getLastItem(highlightRanges).getEndOffset());
   }

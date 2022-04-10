@@ -3,7 +3,10 @@ package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ReportValue;
+import com.intellij.openapi.components.SettingsCategory;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @State(name = "DefaultFont", storages = {
-  @Storage(value = "editor-font.xml", roamingType = RoamingType.DISABLED),
+  @Storage(value = "editor-font.xml"),
   @Storage(value = "editor.xml", deprecated = true)
 }, category = SettingsCategory.UI)
 public final class AppEditorFontOptions extends AppFontOptions<AppEditorFontOptions.PersistentFontPreferences> {
@@ -31,6 +34,8 @@ public final class AppEditorFontOptions extends AppFontOptions<AppEditorFontOpti
 
     @ReportValue
     public                    int    FONT_SIZE   = FontPreferences.DEFAULT_FONT_SIZE;
+    @ReportValue
+    public                    float  FONT_SIZE_2D   = FontPreferences.DEFAULT_FONT_SIZE;
     @ReportValue
     public @NlsSafe @NotNull  String FONT_FAMILY = FontPreferences.DEFAULT_FONT_NAME;
     @ReportValue
@@ -57,6 +62,7 @@ public final class AppEditorFontOptions extends AppFontOptions<AppEditorFontOpti
       FONT_REGULAR_SUB_FAMILY = fontPreferences.getRegularSubFamily();
       FONT_BOLD_SUB_FAMILY = fontPreferences.getBoldSubFamily();
       FONT_SIZE = fontPreferences.getSize(FONT_FAMILY);
+      FONT_SIZE_2D = fontPreferences.getSize2D(FONT_FAMILY);
       FONT_SCALE = UISettings.getDefFontScale();
       LINE_SPACING = fontPreferences.getLineSpacing();
       USE_LIGATURES = fontPreferences.useLigatures();

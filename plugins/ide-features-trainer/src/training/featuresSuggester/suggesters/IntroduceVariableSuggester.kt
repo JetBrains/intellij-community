@@ -2,7 +2,11 @@ package training.featuresSuggester.suggesters
 
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.psi.PsiElement
-import training.featuresSuggester.*
+import training.featuresSuggester.FeatureSuggesterBundle
+import training.featuresSuggester.NoSuggestion
+import training.featuresSuggester.SuggesterSupport
+import training.featuresSuggester.SuggestingUtils.asString
+import training.featuresSuggester.Suggestion
 import training.featuresSuggester.actions.*
 import training.util.WeakReferenceDelegator
 import java.awt.datatransfer.DataFlavor
@@ -14,6 +18,7 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
   override val message = FeatureSuggesterBundle.message("introduce.variable.message")
   override val suggestingActionId = "IntroduceVariable"
   override val suggestingTipFileName = "IntroduceVariable.html"
+  override val minSuggestingIntervalDays = 14
 
   override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
@@ -30,7 +35,9 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
     }
 
     fun getDeclarationText(): String? {
-      return declaration?.text
+      return declaration?.let {
+        if (it.isValid) it.text else null
+      }
     }
   }
 
@@ -38,7 +45,7 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
 
   override fun getSuggestion(action: Action): Suggestion {
     val language = action.language ?: return NoSuggestion
-    val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
+    val langSupport = SuggesterSupport.getForLanguage(language) ?: return NoSuggestion
     when (action) {
       is BeforeEditorTextRemovedAction -> {
         with(action) {
@@ -112,11 +119,11 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
     }
   }
 
-  private fun LanguageSupport.isVariableDeclarationAdded(action: ChildReplacedAction): Boolean {
+  private fun SuggesterSupport.isVariableDeclarationAdded(action: ChildReplacedAction): Boolean {
     return isExpressionStatement(action.oldChild) && isVariableDeclaration(action.newChild)
   }
 
-  private fun LanguageSupport.isVariableDeclarationAdded(action: ChildAddedAction): Boolean {
+  private fun SuggesterSupport.isVariableDeclarationAdded(action: ChildAddedAction): Boolean {
     return isCodeBlock(action.parent) && isVariableDeclaration(action.newChild)
   }
 
@@ -128,12 +135,12 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
     }
   }
 
-  private fun LanguageSupport.isVariableInserted(action: ChildReplacedAction): Boolean {
+  private fun SuggesterSupport.isVariableInserted(action: ChildReplacedAction): Boolean {
     if (extractedExprData == null) return false
     with(extractedExprData!!) {
-      return variableEditingFinished && declaration != null &&
-             action.newChild.text == getVariableName(declaration!!) &&
-             changedStatement === getTopmostStatementWithText(action.newChild, "")
+      return variableEditingFinished
+             && declaration.let { it != null && it.isValid && action.newChild.text == getVariableName(it) }
+             && changedStatement === getTopmostStatementWithText(action.newChild, "")
     }
   }
 }

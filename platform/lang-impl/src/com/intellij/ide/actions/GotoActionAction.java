@@ -17,7 +17,6 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +35,6 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
 
   /** @deprecated please use {@link #openOptionOrPerformAction(Object, String, Project, Component, int)} instead */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static void openOptionOrPerformAction(@NotNull Object element,
                                                String enteredText,
                                                @Nullable Project project,
@@ -101,7 +99,8 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
       if (action instanceof ActionGroup &&
           !(event.getPresentation().isPerformGroup() || ((ActionGroup)action).canBePerformed(context))) {
         ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-          event.getPresentation().getText(), (ActionGroup)action, context, false, null, -1);
+          event.getPresentation().getText(), (ActionGroup)action, context,
+          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, null, -1, null, ActionPlaces.ACTION_SEARCH_INDUCED_POPUP);
         Window window = SwingUtilities.getWindowAncestor(component);
         if (window != null) {
           popup.showInCenterOf(window);

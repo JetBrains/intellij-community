@@ -1,6 +1,6 @@
 import sys
 from _typeshed import Self
-from typing import Any, Iterator, Sequence, Text, Type
+from typing import Any, Iterator, Sequence, Text
 
 if sys.version_info >= (3, 0):
     from configparser import ConfigParser
@@ -42,7 +42,7 @@ class EntryPoint:
     ) -> None: ...
     def load(self) -> Any: ...
     @classmethod
-    def from_string(cls: Type[Self], epstr: Text, name: Text, distro: Distribution | None = ...) -> Self: ...
+    def from_string(cls: type[Self], epstr: Text, name: Text, distro: Distribution | None = ...) -> Self: ...
 
 class Distribution:
     name: Text

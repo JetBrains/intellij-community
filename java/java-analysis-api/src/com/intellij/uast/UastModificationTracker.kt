@@ -6,11 +6,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiManager
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UastLanguagePlugin
 
 @Service
-@ApiStatus.Experimental
 class UastModificationTracker internal constructor(val project: Project) : ModificationTracker, Disposable {
   private var languageTrackers: List<ModificationTracker>
 
@@ -32,7 +30,6 @@ class UastModificationTracker internal constructor(val project: Project) : Modif
 
   companion object {
     @JvmStatic
-    @ApiStatus.Experimental
     fun getInstance(project: Project): UastModificationTracker {
       return project.getService(UastModificationTracker::class.java)
     }

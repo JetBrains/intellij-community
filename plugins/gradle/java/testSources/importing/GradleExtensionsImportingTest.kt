@@ -91,7 +91,8 @@ class GradleExtensionsImportingTest : GradleImportingTestCase() {
                                "sourceSets" to "org.gradle.api.tasks.SourceSetContainer",
                                "java" to "org.gradle.api.plugins.internal.DefaultJavaPluginExtension",
                                "javaToolchains" to "org.gradle.jvm.toolchain.internal.DefaultJavaToolchainService")
-      else ->
+
+      isGradleOlderThan("7.4")  ->
         mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
                                "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
                                "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
@@ -100,6 +101,16 @@ class GradleExtensionsImportingTest : GradleImportingTestCase() {
                                "java" to "org.gradle.api.plugins.internal.DefaultJavaPluginExtension",
                                "javaToolchains" to "org.gradle.jvm.toolchain.internal.DefaultJavaToolchainService",
                                "base" to "org.gradle.api.plugins.internal.DefaultBasePluginExtension")
+      else ->
+        mapOf<String, String?>("ext" to extraPropertiesExtensionFqn,
+                               "idea" to "org.gradle.plugins.ide.idea.model.IdeaModel",
+                               "defaultArtifacts" to "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet",
+                               "reporting" to "org.gradle.api.reporting.ReportingExtension",
+                               "sourceSets" to "org.gradle.api.tasks.SourceSetContainer",
+                               "java" to "org.gradle.api.plugins.internal.DefaultJavaPluginExtension",
+                               "javaToolchains" to "org.gradle.jvm.toolchain.internal.DefaultJavaToolchainService",
+                               "base" to "org.gradle.api.plugins.internal.DefaultBasePluginExtension",
+                               "testing" to "org.gradle.testing.base.internal.DefaultTestingExtension")
     }
 
     assertThat(extensionsMap).containsExactlyInAnyOrderEntriesOf(expectedExtensions)

@@ -1,0 +1,4 @@
+package simple
+
+import some.SomeClass as CustomName
+

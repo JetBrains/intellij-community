@@ -34,10 +34,10 @@ class SuggestedRefactoringChangeCollector(
     UndoManager.getInstance(project).undoableActionPerformed(EditingStartedUndoableAction(document, project))
   }
 
-  override fun nextSignature(declaration: PsiElement, refactoringSupport: SuggestedRefactoringSupport) {
+  override fun nextSignature(anchor: PsiElement, refactoringSupport: SuggestedRefactoringSupport) {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    require(declaration.isValid)
-    state = state?.let { refactoringSupport.stateChanges.updateState(it, declaration) }
+    require(anchor.isValid)
+    state = state?.let { refactoringSupport.stateChanges.updateState(it, anchor) }
     updateAvailabilityIndicator()
     amendStateInBackground()
   }
@@ -66,8 +66,8 @@ class SuggestedRefactoringChangeCollector(
     var initialState = state ?: return
     val stateLock = Any()
     require(initialState.errorLevel != ErrorLevel.INCONSISTENT)
-    val psiFile = initialState.declaration.containingFile
-    val project = initialState.declaration.project
+    val psiFile = initialState.anchor.containingFile
+    val project = psiFile.project
     val psiDocumentManager = PsiDocumentManager.getInstance(project)
     val document = psiDocumentManager.getDocument(psiFile)!!
 
@@ -102,7 +102,7 @@ class SuggestedRefactoringChangeCollector(
     }
 
     val refactoringSupport = state.refactoringSupport
-    if (!state.declaration.isValid || refactoringSupport.nameRange(state.declaration) == null) {
+    if (!state.anchor.isValid || refactoringSupport.nameRange(state.anchor) == null) {
       availabilityIndicator.disable()
       return
     }
@@ -111,7 +111,7 @@ class SuggestedRefactoringChangeCollector(
       refactoringSupport.availability.detectAvailableRefactoring(state)
     else
       null
-    availabilityIndicator.update(state.declaration, refactoringData, refactoringSupport)
+    availabilityIndicator.update(state.anchor, refactoringData, refactoringSupport)
   }
 
   @set:TestOnly

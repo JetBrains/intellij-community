@@ -1,4 +1,5 @@
 // "Specify supertype" "true"
+// SHOULD_DIFFER_FROM_FE10
 package a.b.c
 
 interface X {}

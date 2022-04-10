@@ -51,7 +51,6 @@ import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.impl.cache.impl.id.IdIndexImpl
-import com.intellij.psi.impl.cache.impl.todo.TodoIndex
 import com.intellij.psi.impl.file.impl.FileManagerImpl
 import com.intellij.psi.impl.java.JavaFunctionalExpressionIndex
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
@@ -102,7 +101,10 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       // should add file to test dire as soon as possible
       String otherRoot = myFixture.getTempDirPath() + "/otherRoot"
       assertTrue(new File(otherRoot).mkdirs())
-      assertTrue(new File(otherRoot, "intellij.exe").createNewFile())
+
+      def exe = new File(otherRoot, "intellij.exe")
+      assertTrue(exe.createNewFile())
+      FileUtil.writeToFile(exe, new byte[]{1,2,3,22}) // convince IDEA it's binary
       moduleBuilder.addSourceContentRoot(otherRoot)
     }
   }
@@ -1032,7 +1034,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     TodoPattern[] newPatterns = [pattern]
     TodoConfiguration.getInstance().setTodoPatterns(newPatterns)
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-    FileBasedIndex.instance.ensureUpToDate(TodoIndex.NAME, project, GlobalSearchScope.allScope(project))
+    FileBasedIndex.instance.ensureUpToDate(IdIndex.NAME, project, GlobalSearchScope.allScope(project))
     myFixture.addFileToProject("Foo.txt", "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 
     try {
@@ -1050,7 +1052,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
         {
           try {
             progressStarted.countDown()
-            FileBasedIndex.instance.ensureUpToDate(TodoIndex.NAME, project, GlobalSearchScope.allScope(project))
+            FileBasedIndex.instance.ensureUpToDate(IdIndex.NAME, project, GlobalSearchScope.allScope(project))
           }
           catch (ProcessCanceledException ignore) {
             canceled[0] = true
@@ -1144,15 +1146,14 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   void "test indexed state for file without content requiring indices"() {
     def scope = GlobalSearchScope.allScope(getProject())
-    FileBasedIndex.instance.ensureUpToDate(FilenameIndex.NAME, project, scope)
+    FileBasedIndex.instance.ensureUpToDate(FileTypeIndex.NAME, project, scope)
 
     def files = FilenameIndex.getFilesByName(getProject(), "intellij.exe", scope)
     def file = assertOneElement(files).virtualFile
-    assertTrue(file.getFileType().isBinary())
     assertTrue(((VirtualFileSystemEntry)file).isFileIndexed())
 
     WriteCommandAction.runWriteCommandAction(getProject(), { file.rename(this, 'intellij2.exe') })
-    FileBasedIndex.instance.ensureUpToDate(FilenameIndex.NAME, project, scope)
+    FileBasedIndex.instance.ensureUpToDate(FileTypeIndex.NAME, project, scope)
     assertTrue(((VirtualFileSystemEntry)file).isFileIndexed())
   }
 

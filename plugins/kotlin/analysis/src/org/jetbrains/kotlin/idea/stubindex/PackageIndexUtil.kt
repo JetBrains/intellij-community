@@ -4,59 +4,64 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StubIndex
+import com.intellij.util.indexing.FileBasedIndex
+import org.jetbrains.kotlin.idea.vfilefinder.KotlinPartialPackageNamesIndex
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 
-
 object PackageIndexUtil {
-    @JvmStatic
     fun getSubPackageFqNames(
         packageFqName: FqName,
         scope: GlobalSearchScope,
-        project: Project,
         nameFilter: (Name) -> Boolean
-    ): Collection<FqName> {
-        return SubpackagesIndexService.getInstance(project).getSubpackages(packageFqName, scope, nameFilter)
-    }
+    ): Collection<FqName> = getSubpackages(packageFqName, scope, nameFilter)
 
-    @JvmStatic
     fun findFilesWithExactPackage(
         packageFqName: FqName,
         searchScope: GlobalSearchScope,
         project: Project
-    ): Collection<KtFile> {
-        return KotlinExactPackagesIndex.getInstance().get(packageFqName.asString(), project, searchScope)
-    }
+    ): Collection<KtFile> = KotlinExactPackagesIndex.getInstance().get(packageFqName.asString(), project, searchScope)
 
-    @JvmStatic
+    /**
+     * Return true if exists package with exact [fqName] OR there are some subpackages of [fqName]
+     */
+    fun packageExists(fqName: FqName, project: Project): Boolean =
+        packageExists(fqName, GlobalSearchScope.allScope(project))
+
+    /**
+     * Return true if package [packageFqName] exists or some subpackages of [packageFqName] exist in [searchScope]
+     */
     fun packageExists(
         packageFqName: FqName,
-        searchScope: GlobalSearchScope,
-        project: Project
-    ): Boolean {
+        searchScope: GlobalSearchScope
+    ): Boolean = !FileBasedIndex.getInstance().processValues(
+        KotlinPartialPackageNamesIndex.KEY,
+        packageFqName,
+        null,
+        FileBasedIndex.ValueProcessor { _, _ -> false },
+        searchScope
+    )
 
-        val subpackagesIndex = SubpackagesIndexService.getInstance(project)
-        if (!subpackagesIndex.packageExists(packageFqName)) {
-            return false
-        }
+    /**
+     * Return all direct subpackages of package [fqName].
+     *
+     * I.e. if there are packages `a.b`, `a.b.c`, `a.c`, `a.c.b` for `fqName` = `a` it returns
+     * `a.b` and `a.c`
+     *
+     * Follow the contract of [com.intellij.psi.PsiElementFinder#getSubPackages]
+     */
+    fun getSubpackages(fqName: FqName, scope: GlobalSearchScope, nameFilter: (Name) -> Boolean): Collection<FqName> {
+        val result = hashSetOf<FqName>()
 
-        return containsFilesWithExactPackage(packageFqName, searchScope, project) ||
-                subpackagesIndex.hasSubpackages(packageFqName, searchScope)
-    }
+        FileBasedIndex.getInstance().processValues(KotlinPartialPackageNamesIndex.KEY, fqName, null,
+                                                   FileBasedIndex.ValueProcessor { _, subPackageName ->
+                                                       if (subPackageName != null && nameFilter(subPackageName)) {
+                                                           result.add(fqName.child(subPackageName))
+                                                       }
+                                                       true
+                                                   }, scope)
 
-    @JvmStatic
-    fun containsFilesWithExactPackage(
-        packageFqName: FqName,
-        searchScope: GlobalSearchScope,
-        project: Project
-    ): Boolean {
-        return StubIndex.getInstance().getContainingFiles(
-            KotlinExactPackagesIndex.getInstance().key,
-            packageFqName.asString(),
-            project,
-            searchScope
-        ).hasNext()
+        return result
     }
 }

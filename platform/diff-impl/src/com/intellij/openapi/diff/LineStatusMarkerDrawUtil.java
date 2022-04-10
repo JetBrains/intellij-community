@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.editor.Editor;
@@ -16,6 +16,7 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IntPair;
+import com.intellij.util.ui.JBUI;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -190,7 +191,7 @@ public class LineStatusMarkerDrawUtil {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     int x = gutter.getLineMarkerFreePaintersAreaOffset() + 1; // leave 1px for brace highlighters
     if (ExperimentalUI.isNewUI()) {
-      return new IntPair(x, x + (int)(JBUIScale.scale(5 * getEditorScale(editor))));
+      return new IntPair(x, x + (int)(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", 4) * getEditorScale(editor))));
     }
     int endX = gutter.getWhitespaceSeparatorOffset();
     return new IntPair(x, endX);
@@ -198,7 +199,7 @@ public class LineStatusMarkerDrawUtil {
 
   public static boolean isInsideMarkerArea(@NotNull MouseEvent e) {
     final EditorGutterComponentEx gutter = (EditorGutterComponentEx)e.getComponent();
-    return e.getX() > gutter.getLineMarkerFreePaintersAreaOffset();
+    return gutter.isInsideMarkerArea(e);
   }
 
   public static void paintRect(@NotNull Graphics2D g, @Nullable Color color, @Nullable Color borderColor,
@@ -207,7 +208,11 @@ public class LineStatusMarkerDrawUtil {
       if (color != null) {
         g.setColor(color);
         double width = x2 - x1;
-        RectanglePainter2D.FILL.paint(g, x1, y1, width, y2 - y1, width);
+        RectanglePainter2D.FILL.paint(g, x1, y1 + 1, width, y2 - y1 - 2, width);
+      } else if (borderColor != null) {
+        g.setColor(borderColor);
+        double width = x2 - x1;
+        RectanglePainter2D.DRAW.paint(g, x1, y1 + 1, width, y2 - y1 - 2, width);
       }
       return;
     }
@@ -235,7 +240,7 @@ public class LineStatusMarkerDrawUtil {
       if (color != null) {
         g.setColor(color);
         double width = x2 - x1;
-        RectanglePainter2D.FILL.paint(g, x1, y - size, width, 2 * size, width);
+        RectanglePainter2D.FILL.paint(g, x1, y - size + 1, width, 2 * size - 2, width);
       }
       return;
     }

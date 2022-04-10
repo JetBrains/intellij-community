@@ -9,7 +9,6 @@ import training.featuresSuggester.NoSuggestion
 import training.featuresSuggester.Suggestion
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.EditorTextInsertedAction
-import training.util.WeakReferenceDelegator
 import java.lang.ref.WeakReference
 import java.util.*
 import kotlin.math.abs
@@ -21,9 +20,11 @@ class LineCommentingSuggester : AbstractFeatureSuggester() {
   override val message = FeatureSuggesterBundle.message("line.commenting.message")
   override val suggestingActionId = "CommentByLineComment"
   override val suggestingTipFileName = "CommentCode.html"
+  override val minSuggestingIntervalDays = 14
 
   private data class DocumentLine(val startOffset: Int, val endOffset: Int, val text: String)
   private data class CommentData(val lineNumber: Int, val documentRef: WeakReference<Document>, val timeMillis: Long)
+  private data class CommentSymbolPlace(val offset: Int, val filePath: String)
 
   override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
@@ -32,16 +33,15 @@ class LineCommentingSuggester : AbstractFeatureSuggester() {
 
   @Suppress("UnstableApiUsage")
   private val commentsHistory: Queue<CommentData> = EvictingQueue.create(numberOfCommentsToGetSuggestion)
-  private var firstSlashAddedAction: EditorTextInsertedAction? by WeakReferenceDelegator(null)
+  private var prevCommentSymbolPlace: CommentSymbolPlace? = null
 
   override fun getSuggestion(action: Action): Suggestion {
     if (action is EditorTextInsertedAction) {
       if (isCommentSymbolAdded(action, '/')) {
-        firstSlashAddedAction = action
+        val fileName = action.psiFile?.virtualFile?.path ?: return NoSuggestion
+        prevCommentSymbolPlace = CommentSymbolPlace(action.caretOffset, fileName)
       }
-      else if (firstSlashAddedAction != null && isSecondSlashAdded(action, firstSlashAddedAction!!) ||
-               isCommentSymbolAdded(action, '#')
-      ) {
+      else if (prevCommentSymbolPlace?.let { isSecondSlashAdded(action, it) } == true || isCommentSymbolAdded(action, '#')) {
         val document = action.document
         val commentData = CommentData(
           lineNumber = document.getLineNumber(action.caretOffset),
@@ -49,7 +49,7 @@ class LineCommentingSuggester : AbstractFeatureSuggester() {
           timeMillis = action.timeMillis
         )
         commentsHistory.add(commentData)
-        firstSlashAddedAction = null
+        prevCommentSymbolPlace = null
 
         if (commentsHistory.size == numberOfCommentsToGetSuggestion &&
             commentsHistory.isLinesCommentedInARow()
@@ -74,16 +74,10 @@ class LineCommentingSuggester : AbstractFeatureSuggester() {
     }
   }
 
-  private fun isSecondSlashAdded(curAction: EditorTextInsertedAction, prevAction: EditorTextInsertedAction): Boolean {
-    if (curAction.project != prevAction.project) return false
-    val curPsiFile = curAction.psiFile ?: return false
-    val prevPsiFile = prevAction.psiFile ?: return false
-    val curDocument = curAction.document
-    val prevDocument = prevAction.document
-    if (curPsiFile !== prevPsiFile || curDocument !== prevDocument) return false
-    return curAction.text == "/" &&
-           abs(curAction.caretOffset - prevAction.caretOffset) == 1 &&
-           curDocument.getLineNumber(curAction.caretOffset) == prevDocument.getLineNumber(prevAction.caretOffset)
+  private fun isSecondSlashAdded(curAction: EditorTextInsertedAction, prevSymbol: CommentSymbolPlace): Boolean {
+    return curAction.text == "/"
+           && abs(curAction.caretOffset - prevSymbol.offset) == 1
+           && curAction.psiFile?.virtualFile?.path == prevSymbol.filePath
   }
 
   private fun Queue<CommentData>.isLinesCommentedInARow(): Boolean {

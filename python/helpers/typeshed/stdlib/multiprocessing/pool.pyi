@@ -1,12 +1,14 @@
 import sys
 from _typeshed import Self
-from contextlib import AbstractContextManager
-from typing import Any, Callable, Generic, Iterable, Iterator, List, Mapping, TypeVar
+from types import TracebackType
+from typing import Any, Callable, Generic, Iterable, Iterator, Mapping, TypeVar
+from typing_extensions import Literal
 
 if sys.version_info >= (3, 9):
     from types import GenericAlias
 
-_PT = TypeVar("_PT", bound=Pool)
+__all__ = ["Pool", "ThreadPool"]
+
 _S = TypeVar("_S")
 _T = TypeVar("_T")
 
@@ -22,6 +24,7 @@ class ApplyResult(Generic[_T]):
             callback: Callable[[_T], None] | None,
             error_callback: Callable[[BaseException], None] | None,
         ) -> None: ...
+
     def get(self, timeout: float | None = ...) -> _T: ...
     def wait(self, timeout: float | None = ...) -> None: ...
     def ready(self) -> bool: ...
@@ -32,7 +35,7 @@ class ApplyResult(Generic[_T]):
 # alias created during issue #17805
 AsyncResult = ApplyResult
 
-class MapResult(ApplyResult[List[_T]]):
+class MapResult(ApplyResult[list[_T]]):
     if sys.version_info >= (3, 8):
         def __init__(
             self,
@@ -57,13 +60,14 @@ class IMapIterator(Iterator[_T]):
         def __init__(self, pool: Pool) -> None: ...
     else:
         def __init__(self, cache: dict[int, IMapIterator[Any]]) -> None: ...
-    def __iter__(self: _S) -> _S: ...
+
+    def __iter__(self: Self) -> Self: ...
     def next(self, timeout: float | None = ...) -> _T: ...
     def __next__(self, timeout: float | None = ...) -> _T: ...
 
 class IMapUnorderedIterator(IMapIterator[_T]): ...
 
-class Pool(AbstractContextManager[Pool]):
+class Pool:
     def __init__(
         self,
         processes: int | None = ...,
@@ -107,19 +111,22 @@ class Pool(AbstractContextManager[Pool]):
     def terminate(self) -> None: ...
     def join(self) -> None: ...
     def __enter__(self: Self) -> Self: ...
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+    ) -> None: ...
 
-class ThreadPool(Pool, AbstractContextManager[ThreadPool]):
+class ThreadPool(Pool):
     def __init__(
         self, processes: int | None = ..., initializer: Callable[..., Any] | None = ..., initargs: Iterable[Any] = ...
     ) -> None: ...
 
 # undocumented
 if sys.version_info >= (3, 8):
-    INIT: str
-    RUN: str
-    CLOSE: str
-    TERMINATE: str
+    INIT: Literal["INIT"]
+    RUN: Literal["RUN"]
+    CLOSE: Literal["CLOSE"]
+    TERMINATE: Literal["TERMINATE"]
 else:
-    RUN: int
-    CLOSE: int
-    TERMINATE: int
+    RUN: Literal[0]
+    CLOSE: Literal[1]
+    TERMINATE: Literal[2]

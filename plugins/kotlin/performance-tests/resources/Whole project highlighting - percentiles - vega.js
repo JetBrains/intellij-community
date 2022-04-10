@@ -4,6 +4,7 @@
  */
 
 {
+  "note": "May https://vega.github.io/vega/docs/ be with you",
   "$schema": "https://vega.github.io/schema/vega/v4.3.0.json",
   "description": "Whole project highlighting - percentiles",
   "title": "Whole project highlighting - percentiles",
@@ -526,14 +527,27 @@
         },
         {
           "type": "formula",
+          "as": "projectName",
+          "expr": "replace(datum.benchmark, /allKtFilesIn(-emptyProfile)?-?(\\w+)/, '$2$1') + ' [' + datum.branch + '] '"
+        },
+        {
+          "type": "formula",
           "as": "benchmark",
-          "expr": "replace(datum.benchmark, /allKtFilesIn(-emptyProfile)?-?(\\w+)/, '$2$1') + ' [' + datum.branch + '] ' + datum.timestamp"
+          "expr": "replace(datum.benchmark, /allKtFilesIn(-emptyProfile)?-?(\\w+)/, '$2') + ' [' + datum.branch + '] ' + datum.timestamp"
         },
         {"type": "collect","sort": {"field": "benchmark"}}
       ]
     },
     {
       "name": "selected",      "on": [
+        {"trigger": "clear", "remove": true},
+        {"trigger": "!shift", "remove": true},
+        {"trigger": "!shift && clicked", "insert": "clicked"},
+        {"trigger": "shift && clicked", "toggle": "clicked"}
+      ]
+    },
+    {
+      "name": "selectedProject",      "on": [
         {"trigger": "clear", "remove": true},
         {"trigger": "!shift", "remove": true},
         {"trigger": "!shift && clicked", "insert": "clicked"},
@@ -569,9 +583,15 @@
       "nice": true
     },
     {
-      "name": "color",
+      "name": "caseColor",
       "type": "ordinal",
       "domain": {"data": "table", "field": "benchmark"},
+      "range": {"scheme": "category10"}
+    },
+    {
+      "name": "projectColor",
+      "type": "ordinal",
+      "domain": {"data": "table", "field": "projectName"},
       "range": {"scheme": "category10"}
     },
     {
@@ -588,8 +608,50 @@
   ],
   "legends": [
     {
-      "title": "Projects",
-      "stroke": "color",
+      "title": "Project",
+      "stroke": "projectColor",
+      "strokeColor": "#ccc",
+      "padding": 8,
+      "cornerRadius": 4,
+      "symbolLimit": 50,
+      "labelLimit": 300,
+      "encode": {
+        "symbols": {
+          "name": "legendSymbol",
+          "interactive": true,
+          "update": {
+            "fill": {"value": "transparent"},
+            "strokeWidth": {"value": 2},
+            "opacity": [
+              {
+                "comment": "here `datum` is `selectedProject` data set",
+                "test": "!length(data('selectedProject')) || indata('selectedProject', 'value', datum.value)",
+                "value": 0.7
+              },
+              {"value": 0.15}
+            ],
+            "size": {"value": 64}
+          }
+        },
+        "labels": {
+          "name": "legendLabel",
+          "interactive": true,
+          "update": {
+            "opacity": [
+              {
+                "comment": "here `datum` is `selectedProject` data set",
+                "test": "!length(data('selectedProject')) || indata('selectedProject', 'value', datum.value)",
+                "value": 1
+              },
+              {"value": 0.25}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Cases",
+      "stroke": "caseColor",
       "strokeColor": "#ccc",
       "padding": 8,
       "cornerRadius": 4,
@@ -673,10 +735,10 @@
               "width": {"scale": "pos", "band": 1},
               "y": {"scale": "yscale", "field": "value"},
               "y2": {"scale": "yscale", "value": 0},
-              "fill": {"scale": "color", "field": "benchmark"},
+              "fill": {"scale": "caseColor", "field": "benchmark"},
               "opacity": [
                 {
-                  "test": "(!length(data('selected')) || indata('selected', 'value', datum.benchmark))",
+                  "test": "(!length(data('selectedProject')) || indata('selectedProject', 'value', datum.projectName))",
                   "value": 0.95
                 },
                 {"value": 0.15}
@@ -685,7 +747,7 @@
             "update": {
   "opacity": [
                 {
-                  "test": "(!length(data('selected')) || indata('selected', 'value', datum.benchmark))",
+                  "test": "(!length(data('selectedProject')) || indata('selectedProject', 'value', datum.projectName))",
                   "value": 0.95
                 },
                 {"value": 0.15}

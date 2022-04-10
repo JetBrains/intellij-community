@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -16,6 +16,7 @@ import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.SafeWriteRequestor
@@ -136,7 +137,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
       else {
         val classLoader = pluginDescriptor.classLoader
-        bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), classLoader)
+        bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), classLoader, true)
         if (bytes == null) {
           LOG.error("Cannot found scheme $resourceName in $classLoader")
           return
@@ -390,7 +391,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     var externalInfo: ExternalInfo? = schemeToInfo.get(scheme)
     val currentFileNameWithoutExtension = externalInfo?.fileNameWithoutExtension
     val element = processor.writeScheme(scheme)?.let { it as? Element ?: (it as Document).detachRootElement() }
-    if (element.isEmpty()) {
+    if (JDOMUtil.isEmpty(element)) {
       externalInfo?.scheduleDelete(filesToDelete, "empty")
       return
     }

@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
@@ -40,17 +41,17 @@ class MavenProjectsAware(
     FileDocumentManager.getInstance().saveAllDocuments()
     val settingsFilesContext = context.settingsFilesContext
     if (context.hasUndefinedModifications) {
-      manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+      manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec(true, true, context.isExplicitReload))
     }
     else {
       submitSettingsFilesPartition(settingsFilesContext) { (filesToUpdate, filesToDelete) ->
         val updated = settingsFilesContext.created + settingsFilesContext.updated
         val deleted = settingsFilesContext.deleted
         if (updated.size == filesToUpdate.size && deleted.size == filesToDelete.size) {
-          watcher.scheduleUpdate(filesToUpdate, filesToDelete, false, true)
+          watcher.scheduleUpdate(filesToUpdate, filesToDelete, MavenImportSpec(false, true, context.isExplicitReload))
         }
         else {
-          manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+          manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec(false, true, context.isExplicitReload))
         }
       }
     }

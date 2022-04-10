@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.application.options.RegistryManager;
@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,11 +69,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-/**
- * @author Alexander Lobas
- */
 public final class PluginManagerConfigurable
   implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
 
@@ -84,10 +79,9 @@ public final class PluginManagerConfigurable
   public static final String SELECTION_TAB_KEY = "PluginConfigurable.selectionTab";
 
   @SuppressWarnings("UseJBColor") public static final Color MAIN_BG_COLOR =
-    JBColor.namedColor("Plugins.background", new JBColor(() -> JBColor.isBright() ? UIUtil.getListBackground() : new Color(0x313335)));
+    JBColor.namedColor("Plugins.background", JBColor.lazy(() -> JBColor.isBright() ? UIUtil.getListBackground() : new Color(0x313335)));
   public static final Color SEARCH_BG_COLOR = JBColor.namedColor("Plugins.SearchField.background", MAIN_BG_COLOR);
-  public static final Color SEARCH_FIELD_BORDER_COLOR =
-    JBColor.namedColor("Plugins.SearchField.borderColor", new JBColor(0xC5C5C5, 0x515151));
+  public static final Color SEARCH_FIELD_BORDER_COLOR = JBColor.border();
 
   private static final int MARKETPLACE_TAB = 0;
   private static final int INSTALLED_TAB = 1;
@@ -148,8 +142,7 @@ public final class PluginManagerConfigurable
   /**
    * @deprecated use {@link PluginManagerConfigurable}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public PluginManagerConfigurable(PluginManagerUISettings uiSettings) {
     this();
   }
@@ -824,7 +817,8 @@ public final class PluginManagerConfigurable
           PluginsGroup downloaded = new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
           downloaded.descriptors.addAll(InstalledPluginsState.getInstance().getInstalledPlugins());
 
-          Map<Boolean, List<IdeaPluginDescriptorImpl>> visiblePlugins = getVisiblePlugins()
+          Map<Boolean, List<IdeaPluginDescriptorImpl>> visiblePlugins = PluginManager
+            .getVisiblePlugins(RegistryManager.getInstance().is("plugins.show.implementation.details"))
             .collect(Collectors.partitioningBy(IdeaPluginDescriptorImpl::isBundled));
 
           List<IdeaPluginDescriptorImpl> nonBundledPlugins = visiblePlugins.get(Boolean.FALSE);
@@ -1359,10 +1353,6 @@ public final class PluginManagerConfigurable
         else if (tags == null) {
           return List.of(Tags.Paid.name());
         }
-        else if (!tags.contains(Tags.Paid.name())) {
-          tags = new ArrayList<>(tags);
-          tags.add(Tags.Paid.name());
-        }
       }
     }
     else if (productCode != null && !plugin.isBundled() && !LicensePanel.isEA2Product(productCode)) {
@@ -1373,7 +1363,7 @@ public final class PluginManagerConfigurable
           return List.of(stamp.startsWith("eval:") ? Tags.Trial.name() : Tags.Purchased.name());
         }
       }
-      return List.of(Tags.Paid.name());
+      return plugin.isLicenseOptional() ? List.of(Tags.Freemium.name()) : List.of(Tags.Paid.name());
     }
     if (ContainerUtil.isEmpty(tags)) {
       return List.of();
@@ -1386,6 +1376,9 @@ public final class PluginManagerConfigurable
       }
       if (tags.remove(Tags.Paid.name())) {
         tags.add(0, Tags.Paid.name());
+      }
+      if (tags.remove(Tags.Freemium.name())) {
+        tags.add(0, Tags.Freemium.name());
       }
     }
 
@@ -1447,18 +1440,6 @@ public final class PluginManagerConfigurable
     return IdeBundle.message("ide.restart.required.message",
                              action,
                              ApplicationNamesInfo.getInstance().getFullProductName());
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull Stream<IdeaPluginDescriptorImpl> getVisiblePlugins() {
-    ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
-    boolean showImplementationDetails = RegistryManager.getInstance().is("plugins.show.implementation.details");
-
-    return PluginManagerCore.getPluginSet()
-      .allPlugins
-      .stream()
-      .filter(descriptor -> !applicationInfo.isEssentialPlugin(descriptor.getPluginId()))
-      .filter(descriptor -> showImplementationDetails || !descriptor.isImplementationDetail());
   }
 
   /**

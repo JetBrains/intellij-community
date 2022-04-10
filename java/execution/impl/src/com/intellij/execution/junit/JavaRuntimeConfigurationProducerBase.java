@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @deprecated Use {@link JavaRunConfigurationProducerBase} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfigurationProducer {
   protected JavaRuntimeConfigurationProducerBase(@NotNull ConfigurationType configurationType) {
     super(configurationType);

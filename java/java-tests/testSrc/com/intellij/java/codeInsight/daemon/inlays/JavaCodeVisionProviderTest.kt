@@ -90,16 +90,19 @@ class B2 implements A {
   fun testEnumMembers() {
     doTest("""
 class A {
-<# block [   6 usages] #>
+<# block [   12 usages] #>
   enum E { 
-<# block [     1 usage] #>
+<# block [     4 usages] #>
     E1, E2, E3, E4
   }
 
   E foo() {
     bar(E.E1, E.E2, E.E3, E.E4);
+    bar(E.E1, E.E2, E.E3);
+    bar(E.E1, E.E2);
+    bar(E.E1);
   }
-<# block [   1 usage] #>
+<# block [   4 usages] #>
   void bar(E... e) {}
 }
     """.trimIndent())

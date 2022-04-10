@@ -7,12 +7,11 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
 import org.jetbrains.kotlin.idea.caches.project.isMPPModule
 import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
@@ -30,7 +29,6 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
     override fun getMetrics(project: Project): Set<MetricEvent> {
         val metrics = mutableSetOf<MetricEvent>()
         val modulesWithFacet = ProjectFacetManager.getInstance(project).getModulesWithFacet(KotlinFacetType.TYPE_ID)
-        val pluginInfo = getPluginInfoById(KotlinPluginUtil.KOTLIN_PLUGIN_ID)
 
         if (modulesWithFacet.isNotEmpty()) {
             modulesWithFacet.forEach {
@@ -42,7 +40,7 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
                         systemField.with(buildSystem),
                         platformField.with(platform),
                         isMPPBuild.with(it.isMPPModule || it.isNewMPPModule),
-                        pluginInfoField.with(pluginInfo)
+                        pluginInfoField.with(KotlinIdePlugin.getPluginInfo())
                     )
                 )
             }
@@ -76,7 +74,7 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
     }
 
     companion object {
-        private val GROUP = EventLogGroup("kotlin.project.configuration", 5)
+        private val GROUP = EventLogGroup("kotlin.project.configuration", 6)
 
         private val systemField = EventFields.String("system", listOf("JPS", "Maven", "Gradle", "unknown"))
         private val platformField = EventFields.String("platform", composePlatformFields())

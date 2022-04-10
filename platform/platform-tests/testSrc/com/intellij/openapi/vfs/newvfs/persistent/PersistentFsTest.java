@@ -339,7 +339,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
     FileAttribute attribute = new FileAttribute("test.attribute", 1, true);
     WriteAction.runAndWait(() -> {
-      try(DataOutputStream output = attribute.writeAttribute(vFile)) {
+      try(DataOutputStream output = attribute.writeFileAttribute(vFile)) {
         DataInputOutputUtil.writeINT(output, 1);
       }
     });

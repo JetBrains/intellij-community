@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.Base64
 import com.intellij.util.io.HttpRequests
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.MarkdownNotifier
+import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
@@ -61,7 +61,11 @@ class HtmlExporter(htmlSource: String,
     }
     catch (exception: IOException) {
       val name = File(url).name
-      MarkdownNotifier.showWarningNotification(project, MarkdownBundle.message("markdown.export.style.not.found.msg", name))
+      MarkdownNotifications.showWarning(
+        project,
+        id = "markdown.export.html.missing.style",
+        message = MarkdownBundle.message("markdown.export.style.not.found.msg", name)
+      )
       null
     }
   }
@@ -112,7 +116,11 @@ class HtmlExporter(htmlSource: String,
     }
     catch (exception: IOException) {
       val name = File(url).name
-      MarkdownNotifier.showWarningNotification(project, MarkdownBundle.message("markdown.export.images.not.found.msg", name))
+      MarkdownNotifications.showWarning(
+        project,
+        id = "markdown.export.html.missing.image",
+        message = MarkdownBundle.message("markdown.export.images.not.found.msg", name)
+      )
       null
     }
 

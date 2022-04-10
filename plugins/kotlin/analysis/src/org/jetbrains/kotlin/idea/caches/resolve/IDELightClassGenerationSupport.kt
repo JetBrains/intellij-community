@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.JvmCodegenUtil
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
@@ -31,8 +30,6 @@ import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
-import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
-import org.jetbrains.kotlin.idea.util.safeAnalyzeWithContentNonSourceRootCode
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.platform.subplatformsOfType
@@ -51,9 +48,6 @@ class IDELightClassGenerationSupport(project: Project) : LightClassGenerationSup
 
         override val languageVersionSettings: LanguageVersionSettings
             get() = module?.languageVersionSettings ?: KotlinTypeMapper.LANGUAGE_VERSION_SETTINGS_DEFAULT
-
-        override val isReleasedCoroutine
-            get() = languageVersionSettings.supportsFeature(LanguageFeature.ReleaseCoroutines) ?: true
 
         private val resolutionFacade get() = element.getResolutionFacade()
 

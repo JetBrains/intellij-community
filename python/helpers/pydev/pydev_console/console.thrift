@@ -21,6 +21,7 @@ struct DebugValue {
   7: bool isReturnedValue,
   8: bool isIPythonHidden,
   9: bool isErrorOnEval,
+  10: string typeRendererId
 }
 
 typedef list<DebugValue> GetFrameResponse
@@ -160,6 +161,11 @@ service PythonConsoleBackendService {
    * Parameter is a full path in a variables tree from the top-level parent to the debug value.
    **/
   DebugValues getVariable(1: string variable) throws (1: PythonUnhandledException unhandledException),
+
+  /**
+     * Parameter is a serialized user type renderers.
+     **/
+    bool setUserTypeRenderers(1: string renderers) throws (1: PythonUnhandledException unhandledException),
 
   /**
    * Changes the variable value asynchronously.

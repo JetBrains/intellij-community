@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
 import com.intellij.openapi.Disposable
@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.WindowWrapper
 import com.intellij.openapi.ui.WindowWrapperBuilder
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
@@ -31,6 +32,7 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsLogManager
+import com.intellij.vcs.log.impl.VcsLogTabLocation
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.collection
@@ -62,7 +64,7 @@ class GitShowExternalLogAction : DumbAwareAction() {
     }
     val window = getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
     if (project.isDefault || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss() || window == null) {
-      ProgressManager.getInstance().run(ShowLogInDialogTask(project, roots, vcs))
+      showExternalGitLogInDialog(project, vcs, roots, GitBundle.message("git.log.external.window.title"))
       return
     }
     val showContent = {
@@ -88,6 +90,10 @@ class GitShowExternalLogAction : DumbAwareAction() {
   }
 }
 
+fun showExternalGitLogInDialog(project: Project, vcs: GitVcs, roots: List<VirtualFile>, dialogTitle: @DialogTitle String) {
+  ProgressManager.getInstance().run(ShowLogInDialogTask(project, roots, vcs, dialogTitle))
+}
+
 private class MyContentComponent(actualComponent: JComponent,
                                  val roots: Collection<VirtualFile>,
                                  val disposable: Disposable) : JPanel(BorderLayout()) {
@@ -97,7 +103,7 @@ private class MyContentComponent(actualComponent: JComponent,
   }
 }
 
-private class ShowLogInDialogTask(project: Project, val roots: List<VirtualFile>, val vcs: GitVcs) :
+private class ShowLogInDialogTask(project: Project, val roots: List<VirtualFile>, val vcs: GitVcs, @DialogTitle val dialogTitle: String) :
   Backgroundable(project, @Suppress("DialogTitleCapitalization") GitBundle.message("git.log.external.loading.process"), true) {
   override fun run(indicator: ProgressIndicator) {
     if (!GitExecutableManager.getInstance().testGitExecutableVersionValid(project)) {
@@ -110,7 +116,7 @@ private class ShowLogInDialogTask(project: Project, val roots: List<VirtualFile>
       val content = createManagerAndContent(project, vcs, roots, false)
       val window = WindowWrapperBuilder(WindowWrapper.Mode.FRAME, content)
         .setProject(project)
-        .setTitle(GitBundle.message("git.log.external.window.title"))
+        .setTitle(dialogTitle)
         .setPreferredFocusedComponent(content)
         .setDimensionServiceKey(GitShowExternalLogAction::class.java.name)
         .build()
@@ -136,7 +142,7 @@ private fun createManagerAndContent(project: Project,
                               roots.map { VcsRoot(vcs, it) })
   Disposer.register(disposable, Disposable { manager.dispose { roots.forEach { repositoryManager.removeExternalRepository(it) } } })
   val ui = manager.createLogUi(calcLogId(roots),
-                               if (isToolWindowTab) VcsLogManager.LogWindowKind.TOOL_WINDOW else VcsLogManager.LogWindowKind.STANDALONE)
+                               if (isToolWindowTab) VcsLogTabLocation.TOOL_WINDOW else VcsLogTabLocation.STANDALONE)
   Disposer.register(disposable, ui)
   return MyContentComponent(VcsLogPanel(manager, ui), roots, disposable)
 }

@@ -128,6 +128,8 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       }
     }
 
+    showInvalidDebugLayoutWarning()
+
     if (needToRun) {
       // Normally this step should not be shown!
       task {
@@ -204,8 +206,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
   private fun LessonContext.evaluateExpressionTasks() {
     task {
-      triggerByUiComponentAndHighlight(highlightInside = false,
-                                       usePulsation = true) { ui: XDebuggerEmbeddedComboBox<XExpression> -> ui.isEditable }
+      triggerAndBorderHighlight { usePulsation = true }.component { ui: XDebuggerEmbeddedComboBox<XExpression> -> ui.isEditable }
     }
 
     val position = sample.getPosition(1)
@@ -215,7 +216,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
     task {
       text(LessonsBundle.message("debug.workflow.evaluate.expression"))
-      triggerByUiComponentAndHighlight(false, false) { ui: EditorComponentImpl ->
+      triggerUI().component { ui: EditorComponentImpl ->
         ui.editor.document.text == needToEvaluate
       }
       proposeSelectionChangeRestore(position)
@@ -232,7 +233,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
     task {
       text(LessonsBundle.message("debug.workflow.evaluate.it", LessonUtil.rawEnter()))
-      triggerByUiComponentAndHighlight(false, false) l@{ ui: XDebuggerTree ->
+      triggerUI().component l@{ ui: XDebuggerTree ->
         val resultNode = ui.root.getChildAt(0) as? WatchNodeImpl ?: return@l false
         resultNode.expression.expression == needToEvaluate
       }
@@ -258,7 +259,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       text(LessonsBundle.message("debug.workflow.use.watches.shortcut", action(it),
                                  strong(TaskBundle.message("debugger.watches")), shortcut))
       val addToWatchActionText = ActionsBundle.actionText(it)
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: ActionButton ->
+      triggerAndFullHighlight { usePulsation = true }.component { ui: ActionButton ->
         ui.action.templatePresentation.text == addToWatchActionText
       }
       stateCheck {
@@ -394,8 +395,13 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
   private fun LessonContext.stopTask() {
     highlightButtonById("Stop")
 
-    actionTask("Stop") {
-      LessonsBundle.message("debug.workflow.stop.debug", action(it), icon(AllIcons.Actions.Suspend))
+    task("Stop") {
+      text(LessonsBundle.message("debug.workflow.stop.debug",
+                                 action(it), icon(AllIcons.Actions.Suspend)))
+      stateCheck {
+        XDebuggerManager.getInstance(project).currentSession == null
+      }
+      test { actions(it) }
     }
   }
 
@@ -433,7 +439,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
   private fun LessonContext.highlightLineNumberByOffset(offset: Int) {
     task {
-      triggerByPartOfComponent<EditorGutterComponentEx> l@{ ui ->
+      triggerAndBorderHighlight().componentPart l@{ ui: EditorGutterComponentEx ->
         if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
         val line = editor.offsetToVisualLine(offset, true)
         val y = editor.visualLineToY(line)
@@ -518,6 +524,7 @@ fun LessonContext.toggleBreakpointTask(sample: LessonSample?,
   highlightBreakpointGutter(breakpointXRange, logicalPosition)
 
   task {
+    transparentRestore = true
     textContent()
     stateCheck {
       lineWithBreakpoints() == setOf(logicalPosition().line)

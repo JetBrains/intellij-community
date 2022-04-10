@@ -9,7 +9,7 @@ public class ExTest {
         try {
             a = new String[]{maybeThrow("")};
         } catch (Ex e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
         System.out.println(a);
     }

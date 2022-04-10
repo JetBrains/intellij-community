@@ -80,12 +80,14 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsRenameVariablesInplace;
   private Boolean myIsRefrainFromScrolling;
   private Boolean myUseSoftWraps;
+  private boolean myPaintSoftWraps = true;
   private Boolean myUseCustomSoftWrapIndent;
   private Integer myCustomSoftWrapIndent;
   private Boolean myRenamePreselect;
   private Boolean myWrapWhenTypingReachesRightMargin;
   private Boolean myShowIntentionBulb;
   private Boolean myShowingSpecialCharacters;
+  private Boolean myShowVisualFormattingLayer;
 
   private List<Integer> mySoftMargins;
 
@@ -687,6 +689,16 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Override
+  public boolean isPaintSoftWraps() {
+    return myPaintSoftWraps;
+  }
+
+  @Override
+  public void setPaintSoftWraps(boolean val) {
+    myPaintSoftWraps = val;
+  }
+
+  @Override
   public boolean isUseCustomSoftWrapIndent() {
     return myUseCustomSoftWrapIndent == null ? EditorSettingsExternalizable.getInstance().isUseCustomSoftWrapIndent()
                                              : myUseCustomSoftWrapIndent;
@@ -770,4 +782,16 @@ public class SettingsImpl implements EditorSettings {
       fireEditorRefresh();
     }
   }
+
+  @Override
+  @Nullable
+  public Boolean isShowVisualFormattingLayer() {
+    return myShowVisualFormattingLayer;
+  }
+
+  @Override
+  public void setShowVisualFormattingLayer(@Nullable Boolean showVisualFormattingLayer) {
+    myShowVisualFormattingLayer = showVisualFormattingLayer;
+  }
+
 }

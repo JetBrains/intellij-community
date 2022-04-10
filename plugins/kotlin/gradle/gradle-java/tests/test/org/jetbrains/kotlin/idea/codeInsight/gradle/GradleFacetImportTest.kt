@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.caches.project.productionSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.testSourceInfo
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
 import org.jetbrains.kotlin.idea.configuration.ModuleSourceRootMap
 import org.jetbrains.kotlin.idea.configuration.allConfigurators
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Ignore
 import org.junit.Test
@@ -66,7 +68,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("1.3", apiLevel!!.versionString)
             assertFalse(compilerArguments!!.autoAdvanceLanguageVersion)
             assertFalse(compilerArguments!!.autoAdvanceApiVersion)
-            assertEquals(JvmPlatforms.jvm18, targetPlatform)
+            assertEquals(JvmPlatforms.jvm8, targetPlatform)
             assertEquals("1.7", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             assertEquals(
                 "-Xallow-no-source-files -Xdump-declarations-to=tmp -Xsingle-module",
@@ -79,13 +81,15 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("1.0", apiLevel!!.versionString)
             assertFalse(compilerArguments!!.autoAdvanceLanguageVersion)
             assertFalse(compilerArguments!!.autoAdvanceApiVersion)
-            assertEquals(JvmPlatforms.jvm16, targetPlatform)
+            assertEquals(JvmPlatforms.jvm6, targetPlatform)
             assertEquals("1.6", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             assertEquals(
                 "-Xallow-no-source-files -Xdump-declarations-to=tmpTest",
                 compilerSettings!!.additionalArguments
             )
         }
+
+        assertEquals("1.3.72", KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
 
         assertAllModulesConfigured()
 
@@ -124,7 +128,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         with(facetSettings("project.myMain")) {
             assertEquals("1.3", languageLevel!!.versionString)
             assertEquals("1.3", apiLevel!!.versionString)
-            assertEquals(JvmPlatforms.jvm18, targetPlatform)
+            assertEquals(JvmPlatforms.jvm8, targetPlatform)
             assertEquals("1.7", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             assertEquals(
                 "-Xallow-no-source-files -Xdump-declarations-to=tmp -Xsingle-module",
@@ -135,7 +139,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         with(facetSettings("project.myTest")) {
             assertEquals("1.3", languageLevel!!.versionString)
             assertEquals("1.0", apiLevel!!.versionString)
-            assertEquals(JvmPlatforms.jvm16, targetPlatform)
+            assertEquals(JvmPlatforms.jvm6, targetPlatform)
             assertEquals("1.6", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             assertEquals(
                 "-Xallow-no-source-files -Xdump-declarations-to=tmpTest",
@@ -162,6 +166,27 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             ),
             getSourceRootInfos("project.test")
         )
+    }
+
+    @Test
+    @TargetVersions("6.0.1") // Gradle 4.9 isn't able to import 1.4 KGP
+    fun testJpsCompilerMultiModule() {
+        configureByFiles()
+        importProject()
+
+        with(facetSettings("project.module1.main")) {
+            assertEquals("1.3", languageLevel!!.versionString)
+            assertEquals("1.3", apiLevel!!.versionString)
+        }
+
+        with(facetSettings("project.module2.main")) {
+            assertEquals("1.4", languageLevel!!.versionString)
+            assertEquals("1.4", apiLevel!!.versionString)
+        }
+
+        assertEquals("1.4.20", KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
+
+        assertAllModulesConfigured()
     }
 
     @Test
@@ -338,7 +363,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         with(facetSettings) {
             assertEquals("1.3", languageLevel!!.versionString)
             assertEquals("1.3", apiLevel!!.versionString)
-            assertEquals(JvmPlatforms.jvm16, targetPlatform)
+            assertEquals(JvmPlatforms.jvm6, targetPlatform)
         }
 
         assertEquals(
@@ -436,8 +461,10 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         with(facetSettings) {
             assertEquals("1.3", languageLevel!!.versionString)
             assertEquals("1.3", apiLevel!!.versionString)
-            assertEquals(JvmPlatforms.jvm16, targetPlatform)
+            assertEquals(JvmPlatforms.jvm6, targetPlatform)
         }
+
+        assertEquals("1.3.72", KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
 
         assertEquals(
             listOf(
@@ -468,6 +495,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("1.3", apiLevel!!.versionString)
             assertTrue(targetPlatform.isJs())
         }
+
+        assertEquals("1.3.50", KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
 
         assertEquals(
             listOf(
@@ -708,6 +737,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("my/test/classpath", (compilerArguments as K2MetadataCompilerArguments).classpath)
             assertEquals("my/test/destination", (compilerArguments as K2MetadataCompilerArguments).destination)
         }
+
+        assertEquals("1.3.72", KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
 
         val rootManager = ModuleRootManager.getInstance(getModule("project.main"))
         val stdlib = rootManager.orderEntries.filterIsInstance<LibraryOrderEntry>().single().library

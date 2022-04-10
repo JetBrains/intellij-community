@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Functions;
 import com.intellij.util.ObjectUtils;
@@ -31,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 
@@ -209,9 +209,8 @@ class FindPopupScopeUIImpl implements FindPopupScopeUI {
   }
 
   private static JComponent shrink(JComponent toShrink) {
-    JPanel wrapper = new JPanel(new BorderLayout());
-    wrapper.add(toShrink, BorderLayout.WEST);
-    wrapper.add(Box.createHorizontalGlue(), BorderLayout.CENTER);
+    JPanel wrapper = new JPanel();
+    new RowBuilder(wrapper).add(toShrink);
     return wrapper;
   }
 

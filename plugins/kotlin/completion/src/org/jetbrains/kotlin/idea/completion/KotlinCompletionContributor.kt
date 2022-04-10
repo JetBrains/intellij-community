@@ -4,30 +4,22 @@ package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementDecorator
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiJavaPatterns.elementType
 import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.psi.*
-import com.intellij.psi.search.PsiElementProcessor
-import com.intellij.psi.tree.TokenSet
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.elementType
 import com.intellij.util.ProcessingContext
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletion
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletionSession
+import org.jetbrains.kotlin.idea.completion.stringTemplates.InsertStringTemplateBracesLookupElementDecorator
+import org.jetbrains.kotlin.idea.completion.stringTemplates.StringTemplateCompletion
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.resolve.bindingContextUtil.getReferenceTargets
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import kotlin.math.max
 
 class KotlinCompletionContributor : CompletionContributor() {
@@ -57,45 +49,23 @@ class KotlinCompletionContributor : CompletionContributor() {
     }
 
     override fun beforeCompletion(context: CompletionInitializationContext) {
+        val offset = context.startOffset
         val psiFile = context.file
-        if (psiFile !is KtFile) return
+        val tokenBefore = psiFile.findElementAt(max(0, offset - 1))
 
         // this code will make replacement offset "modified" and prevents altering it by the code in CompletionProgressIndicator
         context.replacementOffset = context.replacementOffset
 
-        val offset = context.startOffset
-        val tokenBefore = psiFile.findElementAt(max(0, offset - 1))
-
-        if (offset > 0 && tokenBefore!!.node.elementType == KtTokens.REGULAR_STRING_PART && tokenBefore.text.startsWith(".")) {
-            val prev = tokenBefore.parent.prevSibling
-            if (prev != null && prev is KtSimpleNameStringTemplateEntry) {
-                val expression = prev.expression
-                if (expression != null) {
-                    val prefix = tokenBefore.text.substring(0, offset - tokenBefore.startOffset)
-                    context.dummyIdentifier = "{" + expression.text + prefix + CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED + "}"
-                    context.offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, expression.startOffset)
-                    return
-                }
-            }
+        val dummyIdentifierCorrected = service<CompletionDummyIdentifierProviderService>().correctPositionForStringTemplateEntry(context)
+        if (dummyIdentifierCorrected) {
+            return
         }
-
         context.dummyIdentifier = when {
             context.completionType == CompletionType.SMART -> DEFAULT_DUMMY_IDENTIFIER
 
             PackageDirectiveCompletion.ACTIVATION_PATTERN.accepts(tokenBefore) -> PackageDirectiveCompletion.DUMMY_IDENTIFIER
 
-            isInClassHeader(tokenBefore) -> CompletionUtilCore.DUMMY_IDENTIFIER // do not add '$' to not interrupt class declaration parsing
-
-            isInUnclosedSuperQualifier(tokenBefore) -> CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED + ">"
-
-            isInSimpleStringTemplate(tokenBefore) -> CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED
-
-            else -> specialLambdaSignatureDummyIdentifier(tokenBefore)
-                ?: specialExtensionReceiverDummyIdentifier(tokenBefore)
-                ?: specialInTypeArgsDummyIdentifier(tokenBefore)
-                ?: specialInArgumentListDummyIdentifier(tokenBefore)
-                ?: specialInBinaryExpressionDummyIdentifier(tokenBefore)
-                ?: DEFAULT_DUMMY_IDENTIFIER
+            else -> service<CompletionDummyIdentifierProviderService>().provideDummyIdentifier(context)
         }
 
         val tokenAt = psiFile.findElementAt(max(0, offset))
@@ -160,99 +130,17 @@ class KotlinCompletionContributor : CompletionContributor() {
         return expression.textRange!!.endOffset
     }
 
-    private fun isInClassHeader(tokenBefore: PsiElement?): Boolean {
-        val classOrObject = tokenBefore?.parents?.firstIsInstanceOrNull<KtClassOrObject>() ?: return false
-        val name = classOrObject.nameIdentifier ?: return false
-        val headerEnd = classOrObject.body?.startOffset ?: classOrObject.endOffset
-        val offset = tokenBefore.startOffset
-        return name.endOffset <= offset && offset <= headerEnd
-    }
-
-    private fun specialLambdaSignatureDummyIdentifier(tokenBefore: PsiElement?): String? {
-        var leaf = tokenBefore
-        while (leaf is PsiWhiteSpace || leaf is PsiComment) {
-            leaf = leaf.prevLeaf(true)
-        }
-
-        val lambda = leaf?.parents?.firstOrNull { it is KtFunctionLiteral } ?: return null
-
-        val lambdaChild = leaf.parents.takeWhile { it != lambda }.lastOrNull()
-
-        return if (lambdaChild is KtParameterList)
-            CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED
-        else
-            null
-
-    }
-
-    private val declarationKeywords = TokenSet.create(KtTokens.FUN_KEYWORD, KtTokens.VAL_KEYWORD, KtTokens.VAR_KEYWORD)
-    private val declarationTokens = TokenSet.orSet(
-        TokenSet.create(
-            KtTokens.IDENTIFIER, KtTokens.LT, KtTokens.GT,
-            KtTokens.COMMA, KtTokens.DOT, KtTokens.QUEST, KtTokens.COLON,
-            KtTokens.IN_KEYWORD, KtTokens.OUT_KEYWORD,
-            KtTokens.LPAR, KtTokens.RPAR, KtTokens.ARROW,
-            TokenType.ERROR_ELEMENT
-        ),
-        KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET
-    )
-
-    private fun specialExtensionReceiverDummyIdentifier(tokenBefore: PsiElement?): String? {
-        var token = tokenBefore ?: return null
-        var ltCount = 0
-        var gtCount = 0
-        val builder = StringBuilder()
-        while (true) {
-            val tokenType = token.node!!.elementType
-            if (tokenType in declarationKeywords) {
-                val balance = ltCount - gtCount
-                if (balance < 0) return null
-                builder.append(token.text!!.reversed())
-                builder.reverse()
-
-                var tail = "X" + ">".repeat(balance) + ".f"
-                if (tokenType == KtTokens.FUN_KEYWORD) {
-                    tail += "()"
-                }
-                builder.append(tail)
-
-                val text = builder.toString()
-                val file = KtPsiFactory(tokenBefore.project).createFile(text)
-                val declaration = file.declarations.singleOrNull() ?: return null
-                if (declaration.textLength != text.length) return null
-                val containsErrorElement = !PsiTreeUtil.processElements(file, PsiElementProcessor { it !is PsiErrorElement })
-                return if (containsErrorElement) null else "$tail$"
-            }
-            if (tokenType !in declarationTokens) return null
-            if (tokenType == KtTokens.LT) ltCount++
-            if (tokenType == KtTokens.GT) gtCount++
-            builder.append(token.text!!.reversed())
-            token = PsiTreeUtil.prevLeaf(token) ?: return null
-        }
-    }
 
     private fun performCompletion(parameters: CompletionParameters, result: CompletionResultSet) {
         val position = parameters.position
         val parametersOriginFile = parameters.originalFile
         if (position.containingFile !is KtFile || parametersOriginFile !is KtFile) return
 
-        if (position.node.elementType == KtTokens.LONG_TEMPLATE_ENTRY_START) {
-            val expression = (position.parent as? KtBlockStringTemplateEntry)?.expression
-            if (expression is KtDotQualifiedExpression) {
-                val correctedPosition = (expression.selectorExpression as? KtNameReferenceExpression)?.firstChild
-                if (correctedPosition != null) {
-                    // Workaround for KT-16848
-                    // ex:
-                    // expression: some.IntellijIdeaRulezzz
-                    // correctedOffset: ^
-                    // expression: some.funcIntellijIdeaRulezzz
-                    // correctedOffset      ^
-                    val correctedOffset = correctedPosition.endOffset - CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED.length
-                    val correctedParameters = parameters.withPosition(correctedPosition, correctedOffset)
-                    doComplete(correctedParameters, result) { wrapLookupElementForStringTemplateAfterDotCompletion(it) }
-                    return
-                }
-            }
+        val toFromOriginalFileMapper = ToFromOriginalFileMapper.create(parameters)
+
+        StringTemplateCompletion.correctParametersForInStringTemplateCompletion(parameters)?.let { correctedParameters ->
+            doComplete(correctedParameters, result) { InsertStringTemplateBracesLookupElementDecorator(it) }
+            return
         }
 
         doComplete(parameters, result)
@@ -325,26 +213,6 @@ class KotlinCompletionContributor : CompletionContributor() {
         }
     }
 
-    private fun wrapLookupElementForStringTemplateAfterDotCompletion(lookupElement: LookupElement): LookupElement =
-        LookupElementDecorator.withDelegateInsertHandler(lookupElement) { context, element ->
-            val document = context.document
-            val startOffset = context.startOffset
-
-            val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
-            psiDocumentManager.commitDocument(document)
-
-            val token = getToken(context.file, document.charsSequence, startOffset)
-            val nameRef = token.parent as KtNameReferenceExpression
-
-            document.insertString(nameRef.startOffset, "{")
-
-            val tailOffset = context.tailOffset
-            document.insertString(tailOffset, "}")
-            context.tailOffset = tailOffset
-
-            element.handleInsert(context)
-        }
-
     private fun shouldSuppressCompletion(parameters: CompletionParameters, prefixMatcher: PrefixMatcher): Boolean {
         val position = parameters.position
         val invocationCount = parameters.invocationCount
@@ -369,100 +237,6 @@ class KotlinCompletionContributor : CompletionContributor() {
         }
         return true
     }
-
-    private fun specialInTypeArgsDummyIdentifier(tokenBefore: PsiElement?): String? {
-        if (tokenBefore == null) return null
-
-        if (tokenBefore.getParentOfType<KtTypeArgumentList>(true) != null) { // already parsed inside type argument list
-            return CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED // do not insert '$' to not break type argument list parsing
-        }
-
-        val pair = unclosedTypeArgListNameAndBalance(tokenBefore) ?: return null
-        val (nameToken, balance) = pair
-        assert(balance > 0)
-
-        val nameRef = nameToken.parent as? KtNameReferenceExpression ?: return null
-        val bindingContext = nameRef.getResolutionFacade().analyze(nameRef, BodyResolveMode.PARTIAL)
-        val targets = nameRef.getReferenceTargets(bindingContext)
-        return if (targets.isNotEmpty() && targets.all { it is FunctionDescriptor || it is ClassDescriptor && it.kind == ClassKind.CLASS }) {
-            CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED + ">".repeat(balance) + "$"
-        } else {
-            null
-        }
-    }
-
-    private fun unclosedTypeArgListNameAndBalance(tokenBefore: PsiElement): Pair<PsiElement, Int>? {
-        val nameToken = findCallNameTokenIfInTypeArgs(tokenBefore) ?: return null
-        val pair = unclosedTypeArgListNameAndBalance(nameToken)
-        return if (pair == null) {
-            Pair(nameToken, 1)
-        } else {
-            Pair(pair.first, pair.second + 1)
-        }
-    }
-
-    private val callTypeArgsTokens = TokenSet.orSet(
-        TokenSet.create(
-            KtTokens.IDENTIFIER, KtTokens.LT, KtTokens.GT,
-            KtTokens.COMMA, KtTokens.DOT, KtTokens.QUEST, KtTokens.COLON,
-            KtTokens.LPAR, KtTokens.RPAR, KtTokens.ARROW
-        ),
-        KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET
-    )
-
-    // if the leaf could be located inside type argument list of a call (if parsed properly)
-    // then it returns the call name reference this type argument list would belong to
-    private fun findCallNameTokenIfInTypeArgs(leaf: PsiElement): PsiElement? {
-        var current = leaf
-        while (true) {
-            val tokenType = current.node!!.elementType
-            if (tokenType !in callTypeArgsTokens) return null
-
-            if (tokenType == KtTokens.LT) {
-                val nameToken = current.prevLeaf(skipEmptyElements = true) ?: return null
-                if (nameToken.node!!.elementType != KtTokens.IDENTIFIER) return null
-                return nameToken
-            }
-
-            if (tokenType == KtTokens.GT) { // pass nested type argument list
-                val prev = current.prevLeaf(skipEmptyElements = true) ?: return null
-                val typeRef = findCallNameTokenIfInTypeArgs(prev) ?: return null
-                current = typeRef
-                continue
-            }
-
-            current = current.prevLeaf(skipEmptyElements = true) ?: return null
-        }
-    }
-
-    private fun specialInArgumentListDummyIdentifier(tokenBefore: PsiElement?): String? {
-        // If we insert $ in the argument list of a delegation specifier, this will break parsing
-        // and the following block will not be attached as a body to the constructor. Therefore
-        // we need to use a regular identifier.
-        val argumentList = tokenBefore?.getNonStrictParentOfType<KtValueArgumentList>() ?: return null
-        if (argumentList.parent is KtConstructorDelegationCall) return CompletionUtil.DUMMY_IDENTIFIER_TRIMMED
-        return null
-    }
-
-    private fun specialInBinaryExpressionDummyIdentifier(tokenBefore: PsiElement?): String? {
-        if (tokenBefore.elementType == KtTokens.IDENTIFIER && tokenBefore?.context?.context is KtBinaryExpression)
-            return CompletionUtilCore.DUMMY_IDENTIFIER
-        return null
-    }
-
-    private fun isInUnclosedSuperQualifier(tokenBefore: PsiElement?): Boolean {
-        if (tokenBefore == null) return false
-        val tokensToSkip = TokenSet.orSet(TokenSet.create(KtTokens.IDENTIFIER, KtTokens.DOT), KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET)
-        val tokens = generateSequence(tokenBefore) { it.prevLeaf() }
-        val ltToken = tokens.firstOrNull { it.node.elementType !in tokensToSkip } ?: return false
-        if (ltToken.node.elementType != KtTokens.LT) return false
-        val superToken = ltToken.prevLeaf { it !is PsiWhiteSpace && it !is PsiComment }
-        return superToken?.node?.elementType == KtTokens.SUPER_KEYWORD
-    }
-
-    private fun isInSimpleStringTemplate(tokenBefore: PsiElement?): Boolean {
-        return tokenBefore?.parents?.firstIsInstanceOrNull<KtStringTemplateExpression>()?.isPlain() ?: false
-    }
 }
 
 abstract class KotlinCompletionExtension {
@@ -471,13 +245,4 @@ abstract class KotlinCompletionExtension {
     companion object {
         val EP_NAME: ExtensionPointName<KotlinCompletionExtension> = ExtensionPointName.create("org.jetbrains.kotlin.completionExtension")
     }
-}
-
-private fun getToken(file: PsiFile, charsSequence: CharSequence, startOffset: Int): PsiElement {
-    assert(startOffset > 1 && charsSequence[startOffset - 1] == '.')
-    val token = file.findElementAt(startOffset - 2)!!
-    return if (token.node.elementType == KtTokens.IDENTIFIER || token.node.elementType == KtTokens.THIS_KEYWORD)
-        token
-    else
-        getToken(file, charsSequence, token.startOffset + 1)
 }

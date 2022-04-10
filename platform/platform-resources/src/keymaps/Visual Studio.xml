@@ -274,6 +274,8 @@
   <action id="SurroundWithLiveTemplate">
     <keyboard-shortcut first-keystroke="control E" second-keystroke="U"/>
     <keyboard-shortcut first-keystroke="control E" second-keystroke="control U"/>
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="S"/><!--Edit.SurroundWith-->
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="control S"/>
   </action>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control H"/>

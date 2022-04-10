@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION")
 
 package com.intellij.lang.documentation.ide.impl
@@ -6,7 +6,6 @@ package com.intellij.lang.documentation.ide.impl
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
-import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.impl.documentationRequest
@@ -26,7 +25,6 @@ import com.intellij.psi.util.PsiUtilBase
 import com.intellij.ui.popup.AbstractPopup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import javax.swing.JComponent
 
 internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, hostOffset: Int): DocumentationHoverInfo? {
@@ -50,18 +48,24 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
         return@runBlockingCancellable null
       }
     }
-    val (browser, browseJob) = DocumentationBrowser.createBrowserAndGetJob(project, request)
-    withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
-      // to avoid flickering: wait a bit before showing the hover popup,
-      // otherwise, the popup will be shown with "Fetching..." message,
-      // which will immediately get replaced with loaded docs
-      browseJob.join()
+    val browser = DocumentationBrowser.createBrowser(project, request)
+    val documentationUI = withContext(Dispatchers.EDT) {
+      DocumentationUI(project, browser)
     }
-    DocumentationTargetHoverInfo(browser)
+    // to avoid flickering: wait a bit before showing the hover popup
+    val emptyContent = documentationUI.waitForContentUpdate()
+    if (emptyContent) {
+      // If we are sure that there is nothing to show, then return `null`.
+      return@runBlockingCancellable null
+    }
+    // Other two possibilities:
+    // - we don't know yet because DEFAULT_UI_RESPONSE_TIMEOUT wasn't enough to compute the doc, or
+    // - we do know that there is something to show.
+    DocumentationTargetHoverInfo(documentationUI)
   }
 }
 
-private fun <X : Any> injectedThenHost(project: Project, hostEditor: Editor, hostOffset: Int, f: (Editor, PsiFile, Int) -> X?): X? {
+fun <X : Any> injectedThenHost(project: Project, hostEditor: Editor, hostOffset: Int, f: (Editor, PsiFile, Int) -> X?): X? {
   val hostFile = PsiUtilBase.getPsiFileInEditor(hostEditor, project)
                  ?: return null
   return tryInjected(project, hostFile, hostEditor, hostOffset, f)
@@ -85,14 +89,13 @@ private fun <X : Any> tryInjected(
 }
 
 private class DocumentationTargetHoverInfo(
-  private val browser: DocumentationBrowser,
+  private val documentationUI: DocumentationUI,
 ) : DocumentationHoverInfo {
 
   override fun showInPopup(project: Project): Boolean = true
 
   override fun createQuickDocComponent(editor: Editor, jointPopup: Boolean, bridge: PopupBridge): JComponent {
     val project = editor.project!!
-    val documentationUI = DocumentationUI(project, browser)
     val popupUI = DocumentationPopupUI(project, documentationUI)
     if (jointPopup) {
       popupUI.jointHover()
@@ -101,6 +104,7 @@ private class DocumentationTargetHoverInfo(
       popupUI.setPopup(popup)
       popupUI.updatePopup {
         resizePopup(popup)
+        bridge.updateLocation()
       }
     }
     EditorUtil.disposeWithEditor(editor, popupUI)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -78,7 +78,7 @@ public final class ActionPanel extends NonOpaquePanel {
   public void paint(Graphics g) {
     boolean isHovered = myTabs.isHoveredTab(myTabs.myInfo2Label.get(myInfo));
     boolean isSelected = myTabs.getSelectedInfo() == myInfo;
-    if (ExperimentalUI.isNewEditorTabs() && myTabs instanceof JBEditorTabs && !isSelected && !isHovered) {
+    if (ExperimentalUI.isNewEditorTabs() && myTabs instanceof JBEditorTabs && !isSelected && !isHovered && !myInfo.isPinned()) {
       return;
     }
     super.paint(g);

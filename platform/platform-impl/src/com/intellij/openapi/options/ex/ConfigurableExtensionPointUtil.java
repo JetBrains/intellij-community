@@ -2,7 +2,7 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.BundleBase;
-import com.intellij.ide.actions.ConfigurablesModificator;
+import com.intellij.ide.actions.ConfigurablesPatcher;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,15 +27,15 @@ public final class ConfigurableExtensionPointUtil {
 
   public static @NotNull List<Configurable> buildConfigurablesList(@NotNull List<? extends ConfigurableEP<Configurable>> extensions, @Nullable ConfigurableFilter filter) {
     final List<Configurable> result = new ArrayList<>();
-    final Map<String, HierarchableConfigurable> idToConfigurable = new HashMap<>();
+    final Map<String, HierarchicalConfigurable> idToConfigurable = new HashMap<>();
     List<String> idsInEpOrder = new ArrayList<>();
     for (ConfigurableEP<Configurable> ep : extensions) {
       Configurable configurable = ConfigurableWrapper.wrapConfigurable(ep);
       if (isSuppressed(configurable, filter)) {
         continue;
       }
-      if (configurable instanceof HierarchableConfigurable) {
-        HierarchableConfigurable wrapper = (HierarchableConfigurable)configurable;
+      if (configurable instanceof HierarchicalConfigurable) {
+        HierarchicalConfigurable wrapper = (HierarchicalConfigurable)configurable;
         idToConfigurable.put(wrapper.getId(), wrapper);
         idsInEpOrder.add(wrapper.getId());
       }
@@ -57,7 +57,7 @@ public final class ConfigurableExtensionPointUtil {
     }
     // add roots only (i.e. configurables without parents)
     for (String id : idsInEpOrder) {
-      HierarchableConfigurable wrapper = idToConfigurable.get(id);
+      HierarchicalConfigurable wrapper = idToConfigurable.get(id);
       String parentId = wrapper.getParentId();
       if (parentId == null || !idToConfigurable.containsKey(parentId)) {
         result.add(wrapper);
@@ -67,11 +67,11 @@ public final class ConfigurableExtensionPointUtil {
     return result;
   }
 
-  private static @NotNull HierarchableConfigurable addChildrenRec(@NotNull String id,
-                                                                  @NotNull Map<String, HierarchableConfigurable> idToConfigurable,
+  private static @NotNull HierarchicalConfigurable addChildrenRec(@NotNull String id,
+                                                                  @NotNull Map<String, HierarchicalConfigurable> idToConfigurable,
                                                                   @NotNull Set<? super String> visited,
                                                                   @NotNull Map<String, List<String>> idTree) {
-    HierarchableConfigurable wrapper = idToConfigurable.get(id);
+    HierarchicalConfigurable wrapper = idToConfigurable.get(id);
     if (visited.contains(id)) {
       return wrapper;
     }
@@ -79,7 +79,7 @@ public final class ConfigurableExtensionPointUtil {
     List<String> childIds = idTree.get(id);
     if (childIds != null) {
       for (String childId : childIds) {
-        HierarchableConfigurable childWrapper = addChildrenRec(childId, idToConfigurable, visited, idTree);
+        HierarchicalConfigurable childWrapper = addChildrenRec(childId, idToConfigurable, visited, idTree);
         wrapper = wrapper.addChild(childWrapper);
       }
       idToConfigurable.put(id, wrapper);
@@ -87,16 +87,16 @@ public final class ConfigurableExtensionPointUtil {
     return wrapper;
   }
 
-  private static @NotNull Map<String, List<String>> buildIdTree(@NotNull Map<String, HierarchableConfigurable> idToConfigurable,
+  private static @NotNull Map<String, List<String>> buildIdTree(@NotNull Map<String, HierarchicalConfigurable> idToConfigurable,
                                                                 @NotNull List<String> idsInEpOrder) {
     Map<String, List<String>> tree = new HashMap<>();
     for (String id : idsInEpOrder) {
-      HierarchableConfigurable wrapper = idToConfigurable.get(id);
-      String parentId = wrapper.getParentId();
+      HierarchicalConfigurable hierarchical = idToConfigurable.get(id);
+      String parentId = hierarchical.getParentId();
       if (parentId != null) {
-        HierarchableConfigurable parent = idToConfigurable.get(parentId);
+        HierarchicalConfigurable parent = idToConfigurable.get(parentId);
         if (parent == null) {
-          LOG.warn("Can't find parent for " + parentId + " (" + wrapper + ")");
+          LOG.warn("Can't find parent for " + parentId + " (" + hierarchical + ")");
           continue;
         }
         tree.computeIfAbsent(parentId, k -> new ArrayList<>(5)).add(id);
@@ -116,8 +116,8 @@ public final class ConfigurableExtensionPointUtil {
       targetProject,
       () -> {
         List<Configurable> configurables = getConfigurables(targetProject, withIdeSettings);
-        List<ConfigurablesModificator> modificators = ConfigurablesModificator.EP_NAME.getExtensionList();
-        for (ConfigurablesModificator modificator : modificators) {
+        List<ConfigurablesPatcher> modificators = ConfigurablesPatcher.EP_NAME.getExtensionList();
+        for (ConfigurablesPatcher modificator : modificators) {
           modificator.modifyOriginalConfigurablesList(configurables, targetProject);
         }
         return getConfigurableGroup(configurables, targetProject);
@@ -259,17 +259,17 @@ public final class ConfigurableExtensionPointUtil {
    * @return the map of different groups of settings
    */
   public static @NotNull Map<String, List<Configurable>> groupConfigurables(@NotNull List<? extends Configurable> configurables) {
-    Map<String, Node<HierarchableConfigurable>> tree = new HashMap<>();
+    Map<String, Node<HierarchicalConfigurable>> tree = new HashMap<>();
     for (Configurable configurable : configurables) {
-      if (!(configurable instanceof HierarchableConfigurable)) {
+      if (!(configurable instanceof HierarchicalConfigurable)) {
         Node.add(tree, "other", configurable);
         continue;
       }
 
-      HierarchableConfigurable hierarchable = (HierarchableConfigurable)configurable;
+      HierarchicalConfigurable hierarchical = (HierarchicalConfigurable)configurable;
       String id;
       try {
-        id = hierarchable.getId();
+        id = hierarchical.getId();
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -279,16 +279,16 @@ public final class ConfigurableExtensionPointUtil {
         continue;
       }
 
-      Node<HierarchableConfigurable> node = Node.get(tree, id);
+      Node<HierarchicalConfigurable> node = Node.get(tree, id);
       if (node.myValue != null) {
         LOG.warn("ignore configurable with duplicated id: " + id);
         continue;
       }
 
-      String parentId = hierarchable.getParentId();
+      String parentId = hierarchical.getParentId();
 
-      if (hierarchable instanceof ConfigurableWrapper) {
-        String groupId = ((ConfigurableWrapper)hierarchable).getExtensionPoint().groupId;
+      if (hierarchical instanceof ConfigurableWrapper) {
+        String groupId = ((ConfigurableWrapper)hierarchical).getExtensionPoint().groupId;
         if (groupId != null) {
           if (parentId != null) {
             LOG.warn("ignore deprecated groupId: " + groupId + " for id: " + id);
@@ -302,12 +302,12 @@ public final class ConfigurableExtensionPointUtil {
 
       parentId = Node.cyclic(tree, parentId, "other", id, node);
       node.myParent = Node.add(tree, parentId, node);
-      node.myValue = hierarchable;
+      node.myValue = hierarchical;
     }
 
     Map<String, List<Configurable>> map = new HashMap<>();
     for (String id : ArrayUtilRt.toStringArray(tree.keySet())) {
-      Node<HierarchableConfigurable> node = tree.get(id);
+      Node<HierarchicalConfigurable> node = tree.get(id);
       if (node != null) {
         List<Configurable> list = getConfigurables(tree, node);
         if (list != null) {
@@ -324,8 +324,8 @@ public final class ConfigurableExtensionPointUtil {
    * @param node a current node to process children recursively
    * @return the list of settings for a group or {@code null} for internal node
    */
-  private static List<Configurable> getConfigurables(Map<String, Node<HierarchableConfigurable>> tree,
-                                                     Node<HierarchableConfigurable> node) {
+  private static List<Configurable> getConfigurables(Map<String, Node<HierarchicalConfigurable>> tree,
+                                                     Node<HierarchicalConfigurable> node) {
     if (node.myChildren == null) {
       if (node.myValue == null) {
         // for group only
@@ -342,7 +342,7 @@ public final class ConfigurableExtensionPointUtil {
       }
       else {
         @SuppressWarnings("unchecked") // expected type
-        Node<HierarchableConfigurable> value = (Node<HierarchableConfigurable>)child;
+        Node<HierarchicalConfigurable> value = (Node<HierarchicalConfigurable>)child;
         if (getConfigurables(tree, value) != null) {
           throw new IllegalStateException("unexpected algorithm state");
         }

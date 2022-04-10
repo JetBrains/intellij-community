@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,11 +11,26 @@ import java.util.EventObject;
 public final class FileEditorManagerEvent extends EventObject {
   private final VirtualFile myOldFile;
   private final FileEditor myOldEditor;
+  private final FileEditorProvider myOldProvider;
   private final VirtualFile myNewFile;
   private final FileEditor myNewEditor;
-  private final FileEditorProvider myOldProvider;
   private final FileEditorProvider myNewProvider;
 
+  public FileEditorManagerEvent(@NotNull FileEditorManager source,
+                                @Nullable FileEditorWithProvider oldEditorWithProvider,
+                                @Nullable FileEditorWithProvider newEditorWithProvider) {
+    this(source, oldEditorWithProvider != null ? oldEditorWithProvider.getFileEditor().getFile() : null,
+         oldEditorWithProvider != null ? oldEditorWithProvider.getFileEditor() : null,
+         oldEditorWithProvider != null ? oldEditorWithProvider.getProvider() : null,
+         newEditorWithProvider != null ? newEditorWithProvider.getFileEditor().getFile() : null,
+         newEditorWithProvider != null ? newEditorWithProvider.getFileEditor() : null,
+         newEditorWithProvider != null ? newEditorWithProvider.getProvider() : null);
+  }
+
+  /**
+   * @deprecated Use constructor accepting {@link FileEditorWithProvider}
+   */
+  @Deprecated
   public FileEditorManagerEvent(@NotNull FileEditorManager source,
                                 @Nullable VirtualFile oldFile,
                                 @Nullable FileEditor oldEditor,
@@ -23,6 +39,10 @@ public final class FileEditorManagerEvent extends EventObject {
     this(source, oldFile, oldEditor, null, newFile, newEditor, null);
   }
 
+  /**
+   * @deprecated Use constructor accepting {@link FileEditorWithProvider}
+   */
+  @Deprecated
   public FileEditorManagerEvent(@NotNull FileEditorManager source,
                                 @Nullable VirtualFile oldFile,
                                 @Nullable FileEditor oldEditor,

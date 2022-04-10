@@ -36,13 +36,6 @@ class GradleNativeLibrariesInIDENamingTest15 : TestCaseWithFakeKotlinNative() {
     override fun getExternalSystemConfigFileName() = GradleConstants.KOTLIN_DSL_SCRIPT_NAME
 
     override fun testDataDirName() = "nativeLibraries"
-
-    companion object {
-        @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
-        @Throws(Throwable::class)
-        @JvmStatic
-        fun data() = listOf(arrayOf("4.10.2"))
-    }
 }
 
 private val NATIVE_LIBRARY_NAME_REGEX = Regex("^Kotlin/Native ([\\d\\w.-]+) - ([\\w\\d]+)( \\| \\[?([\\w\\d_]+)]?)?$")

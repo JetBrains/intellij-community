@@ -257,6 +257,7 @@ final class RefreshSessionImpl extends RefreshSession {
 
   @Override
   public String toString() {
-    return myWorkQueue.size() <= 1 ? "" : myWorkQueue.size() + " roots in the queue.";
+    int size = myWorkQueue.size();
+    return "RefreshSessionImpl: " + size + " roots in the queue" + (size == 0 ? "" : ": "+ContainerUtil.getFirstItem(myWorkQueue)) + (size>=2 ? ", ..." : "");
   }
 }

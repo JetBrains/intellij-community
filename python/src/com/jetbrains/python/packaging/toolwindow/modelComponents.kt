@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.toolwindow
 
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.packaging.PyPackage
+import com.jetbrains.python.packaging.repository.PyPackageRepository
 
 sealed class DisplayablePackage(@NlsSafe val name: String, val repository: PyPackageRepository)
 class InstalledPackage(val instance: PyPackage, repository: PyPackageRepository) : DisplayablePackage(instance.name, repository)
@@ -11,5 +12,5 @@ class ExpandResultNode(var more: Int, repository: PyPackageRepository) : Display
 
 class PackageInfo(val documentationUrl: String?, @NlsSafe val description: String, val availableVersions: List<String>)
 
-class PyPackagesViewData(@NlsSafe val repoUrl: String, val packages: List<DisplayablePackage>, val exactMatch: Int = -1, val moreItems: Int = 0)
-class PyPackageRepository(@NlsSafe val url: String)
+open class PyPackagesViewData(@NlsSafe val repository: PyPackageRepository, val packages: List<DisplayablePackage>, val exactMatch: Int = -1, val moreItems: Int = 0)
+class PyInvalidRepositoryViewData(repository: PyPackageRepository) : PyPackagesViewData(repository, emptyList())

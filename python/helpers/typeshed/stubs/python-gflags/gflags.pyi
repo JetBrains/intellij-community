@@ -70,7 +70,6 @@ class FlagValues:
     def RegisteredFlags(self) -> list[str]: ...
     def flag_values_dict(self) -> dict[str, Any]: ...
     FlagValuesDict = flag_values_dict
-    def __str__(self) -> str: ...
     def GetHelp(self, prefix: str = ...) -> str: ...
     def module_help(self, module: ModuleType | str) -> str: ...
     ModuleHelp = module_help
@@ -101,11 +100,11 @@ class Flag:
     value: Any
     help: str
     short_name: str
-    boolean = False
-    present = False
+    boolean: bool
+    present: bool
     parser: ArgumentParser
     serializer: ArgumentSerializer
-    allow_override = False
+    allow_override: bool
     def __init__(
         self,
         parser: ArgumentParser,

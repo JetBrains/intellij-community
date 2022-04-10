@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -14,7 +14,6 @@ import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.rules.checkDefaultProjectAsTemplate
 import com.intellij.testFramework.use
 import com.intellij.util.io.getDirectoryTree
-import com.intellij.util.isEmpty
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -65,7 +64,7 @@ internal class DefaultProjectStoreTest {
 
     val tempDir = fsRule.fs.getPath("")
     normalizeDefaultProjectElement(ProjectManager.getInstance().defaultProject, element, tempDir)
-    assertThat(element.isEmpty()).isTrue()
+    assertThat(JDOMUtil.isEmpty(element)).isTrue()
 
     val directoryTree = tempDir.getDirectoryTree()
     assertThat(directoryTree).toMatchSnapshot(testData.resolve("testData1.txt"))

@@ -18,6 +18,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -94,30 +95,32 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
       return;
     }
 
-    myProvider.filterElements(pattern, element -> {
-      if (progressIndicator.isCanceled()) return false;
+    ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      myProvider.filterElements(pattern, element -> {
+        if (progressIndicator.isCanceled()) return false;
 
-      if (element == null) {
-        LOG.error("Null action has been returned from model");
-        return true;
-      }
+        if (element == null) {
+          LOG.error("Null action has been returned from model");
+          return true;
+        }
 
-      final boolean isActionWrapper = element.value instanceof GotoActionModel.ActionWrapper;
-      if (!myDisabledActions && isActionWrapper && !((GotoActionModel.ActionWrapper)element.value).isAvailable()) {
-        return true;
-      }
+        final boolean isActionWrapper = element.value instanceof GotoActionModel.ActionWrapper;
+        if (!myDisabledActions && isActionWrapper && !((GotoActionModel.ActionWrapper)element.value).isAvailable()) {
+          return true;
+        }
 
-      final FoundItemDescriptor<GotoActionModel.MatchedValue> descriptor;
-      SearchEverywhereMlService mlService = SearchEverywhereMlService.getInstance();
-      if (mlService != null && mlService.shouldOrderByMl(this.getClass().getSimpleName())) {
-        descriptor = getMLWeightedItemDescriptor(mlService, element);
-      }
-      else {
-        descriptor = new FoundItemDescriptor<>(element, element.getMatchingDegree());
-      }
+        final FoundItemDescriptor<GotoActionModel.MatchedValue> descriptor;
+        SearchEverywhereMlService mlService = SearchEverywhereMlService.getInstance();
+        if (mlService != null && mlService.shouldOrderByMl(this.getClass().getSimpleName())) {
+          descriptor = getMLWeightedItemDescriptor(mlService, element);
+        }
+        else {
+          descriptor = new FoundItemDescriptor<>(element, element.getMatchingDegree());
+        }
 
-      return consumer.process(descriptor);
-    });
+        return consumer.process(descriptor);
+      });
+    }, progressIndicator);
   }
 
   @NotNull

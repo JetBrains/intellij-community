@@ -42,7 +42,7 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
 
   private boolean skipIndices() {
     DumbService dumbService = DumbService.getInstance(myProject);
-    return dumbService.isDumb() && dumbService.isAlternativeResolveEnabled();
+    return dumbService.isAlternativeResolveEnabled();
   }
 
   @Override

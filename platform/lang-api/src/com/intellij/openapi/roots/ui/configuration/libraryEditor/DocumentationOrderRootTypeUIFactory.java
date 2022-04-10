@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class DocumentationOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
   @Override

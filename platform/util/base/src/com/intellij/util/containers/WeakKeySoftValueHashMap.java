@@ -9,7 +9,7 @@ import java.util.Map;
 
 final class WeakKeySoftValueHashMap<K,V> extends RefKeyRefValueHashMap<K,V> implements Map<K,V>{
   WeakKeySoftValueHashMap() {
-    super((RefHashMap<K, ValueReference<K, V>>)CollectionFactory.<K, ValueReference<K, V>>createWeakMap());
+    super(new WeakHashMap<>(4, 0.8f, HashingStrategy.canonical()));
   }
 
   private static final class SoftValueReference<K,V> extends SoftReference<V> implements ValueReference<K,V> {

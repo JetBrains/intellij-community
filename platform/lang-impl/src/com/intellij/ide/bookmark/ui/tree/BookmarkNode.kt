@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui.tree
 
 import com.intellij.ide.bookmark.Bookmark
@@ -7,15 +7,12 @@ import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.ProjectViewSettings.Immutable.DEFAULT
-import com.intellij.ide.projectView.impl.CompoundIconProvider.findIcon
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.presentation.FilePresentationService
-import com.intellij.psi.util.PsiUtilCore
 import com.intellij.ui.BackgroundSupplier
 import com.intellij.ui.IconManager
 import com.intellij.ui.SimpleTextAttributes
@@ -56,13 +53,17 @@ abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B)
 
   override fun update(presentation: PresentationData) {
     val file = virtualFile ?: return
-    presentation.setIcon(wrapIcon(findIcon(PsiUtilCore.findFileSystemItem(project, file), 0)))
+    presentation.setIcon(wrapIcon(findFileIcon()))
     addTextTo(presentation, file)
   }
 
   protected fun addTextTo(presentation: PresentationData, file: VirtualFile, line: Int = 0) {
     val name = file.presentableName
     val location = file.parent?.let { getRelativePath(it) }
+    addTextTo(presentation, name, location, line)
+  }
+
+  protected fun addTextTo(presentation: PresentationData, name: @NlsSafe String, location: @NlsSafe String? = null, line: Int = 0) {
     val description = bookmarkDescription
     if (description == null) {
       presentation.presentableText = name // configure speed search
@@ -83,7 +84,7 @@ abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B)
     val project = project ?: return null
     if (project.isDisposed) return null
     val index = ProjectFileIndex.getInstance(project)
-    index.getModuleForFile(file, false) ?: return FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
+    index.getModuleForFile(file, false) ?: return computeExternalLocation(file)
     var root = file
     while (true) {
       val parent = root.parent ?: break

@@ -34,7 +34,6 @@ public abstract class JBProtocolCommand {
 
   /** @deprecated please implement {@link #perform(String, Map, String)} instead */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   @SuppressWarnings("unused")
   public void perform(String target, @NotNull Map<String, String> parameters) {
     throw PluginException.createByClass(new UnsupportedOperationException(), getClass());

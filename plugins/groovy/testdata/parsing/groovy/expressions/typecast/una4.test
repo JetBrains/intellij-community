@@ -1,9 +1,9 @@
 (double [][] 3
 -----
 Groovy script
-  Call expression
-    Parenthesized expression
-      PsiElement(()('(')
+  Parenthesized expression
+    PsiElement(()('(')
+    Call expression
       Property by index
         Property by index
           builtin type class expression
@@ -15,9 +15,9 @@ Groovy script
         Arguments
           PsiElement([)('[')
           PsiElement(])(']')
-      PsiErrorElement:')' expected, got '3'
-        <empty list>
-    PsiWhiteSpace(' ')
-    Command arguments
-      Literal
-        PsiElement(Integer)('3')
+      PsiWhiteSpace(' ')
+      Command arguments
+        Literal
+          PsiElement(Integer)('3')
+    PsiErrorElement:')' or ',' expected
+      <empty list>

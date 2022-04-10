@@ -1,15 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +26,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-class OverrideFileTypeAction extends AnAction {
+class OverrideFileTypeAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     VirtualFile[] files = getContextFiles(e, file -> OverrideFileTypeManager.getInstance().getFileValue(file) == null);
@@ -74,7 +80,7 @@ class OverrideFileTypeAction extends AnAction {
       .toArray(count -> VirtualFile.ARRAY_FACTORY.create(count));
   }
 
-  private static class ChangeToThisFileTypeAction extends AnAction {
+  private static class ChangeToThisFileTypeAction extends DumbAwareAction {
     private final @NotNull VirtualFile @NotNull [] myFiles;
     private final FileType myType;
 
@@ -89,7 +95,7 @@ class OverrideFileTypeAction extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       for (VirtualFile file : myFiles) {
-        if (file.isValid() && !file.isDirectory() && OverrideFileTypeManager.isOverridable(file.getFileType())) {
+        if (isOverridableFile(file)) {
           OverrideFileTypeManager.getInstance().addFile(file, myType);
         }
       }
@@ -97,8 +103,14 @@ class OverrideFileTypeAction extends AnAction {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean enabled = ContainerUtil.exists(myFiles, file -> file.isValid() && !file.isDirectory() && OverrideFileTypeManager.isOverridable(file.getFileType()));
+      boolean enabled = ContainerUtil.exists(myFiles, file -> isOverridableFile(file));
       e.getPresentation().setEnabled(enabled);
+    }
+    private static boolean isOverridableFile(@NotNull VirtualFile file) {
+      return file.isValid()
+             && !file.isDirectory()
+             && (file instanceof VirtualFileWithId)
+             && OverrideFileTypeManager.isOverridable(file.getFileType());
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -104,6 +104,7 @@ import static com.intellij.openapi.util.text.HtmlChunk.html;
  */
 public class HelpTooltip {
   private static final Color INFO_COLOR = JBColor.namedColor("ToolTip.infoForeground", UIUtil.getContextHelpForeground());
+  private static final Color LINK_COLOR = JBColor.namedColor("ToolTip.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
 
   private static final JBValue MAX_WIDTH = new JBValue.UIInteger("HelpTooltip.maxWidth", 250);
   private static final JBValue X_OFFSET = new JBValue.UIInteger("HelpTooltip.xOffset", 0);
@@ -459,6 +460,7 @@ public class HelpTooltip {
     }
 
     if (link != null) {
+      link.setForeground(LINK_COLOR);
       link.setFont(deriveDescriptionFont(link.getFont(), hasTitle));
       tipPanel.add(link, VerticalLayout.TOP);
     }

@@ -2,10 +2,10 @@
 // OPTIONS: usages
 // FIND_BY_REF
 // WITH_FILE_NAME
-// FIR_IGNORE
 
 package usages
 
 fun test() {
     val f = mapOf(Pair("1", "2")).keys.<caret>single({ true })
 }
+// FIR_COMPARISON

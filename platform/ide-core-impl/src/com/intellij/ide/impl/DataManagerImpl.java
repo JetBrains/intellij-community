@@ -5,14 +5,17 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -20,10 +23,9 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FloatingDecoratorMarker;
 import com.intellij.util.KeyedLazyInstance;
-import com.intellij.util.KeyedLazyInstanceEP;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,35 +34,43 @@ import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class DataManagerImpl extends DataManager {
   private static final Logger LOG = Logger.getInstance(DataManagerImpl.class);
 
   private static final ThreadLocal<int[]> ourGetDataLevel = ThreadLocal.withInitial(() -> new int[1]);
 
-  private final KeyedExtensionCollector<GetDataRule, String> myDataRuleCollector = new KeyedExtensionCollector<>(GetDataRule.EP_NAME);
-
-  private static class GetDataRuleBean extends KeyedLazyInstanceEP<GetDataRule> {
-    @Attribute("injectedContext")
-    public boolean injectedContext;
-  }
+  private final Map<Pair<String, GetDataRuleType>, GetDataRule> myRulesCache = ConcurrentFactoryMap.createMap(o -> getDataRule(o.first, o.second));
 
   public DataManagerImpl() {
+    Application app = ApplicationManager.getApplication();
+    ExtensionPoint<KeyedLazyInstance<GetDataRule>> dataRuleEP = app.getExtensionArea()
+      .getExtensionPointIfRegistered(GetDataRule.EP_NAME.getName());
+    if (dataRuleEP != null) {
+      dataRuleEP.addChangeListener(() -> myRulesCache.clear(), app);
+    }
   }
 
   @ApiStatus.Internal
-  public @Nullable Object getDataFromProvider(final @NotNull DataProvider provider, @NotNull String dataId, @Nullable Set<String> alreadyComputedIds) {
-    return getDataFromProvider(provider, dataId, alreadyComputedIds, getDataRule(dataId));
+  public @Nullable Object getDataFromProviderAndRules(@NotNull String dataId,
+                                                      @Nullable GetDataRuleType ruleType,
+                                                      @NotNull DataProvider provider) {
+    return getDataFromProviderInner(ruleType, dataId, null, provider);
   }
 
   @ApiStatus.Internal
-  public @Nullable Object getDataFromProvider(@NotNull DataProvider provider,
-                                               @NotNull String dataId,
-                                               @Nullable Set<String> alreadyComputedIds,
-                                               @Nullable GetDataRule dataRule) {
+  public @Nullable Object getDataFromRules(@NotNull String dataId,
+                                           @NotNull GetDataRuleType ruleType,
+                                           @NotNull DataProvider provider) {
+    return getDataFromRulesInner(dataId, ruleType, new HashSet<>(), provider);
+  }
+
+  private @Nullable Object getDataFromProviderInner(@Nullable GetDataRuleType ruleType,
+                                                    @NotNull String dataId,
+                                                    @Nullable Set<String> alreadyComputedIds,
+                                                    @NotNull DataProvider provider) {
     ProgressManager.checkCanceled();
     if (alreadyComputedIds != null && alreadyComputedIds.contains(dataId)) {
       return null;
@@ -70,20 +80,29 @@ public class DataManagerImpl extends DataManager {
       depth[0]++;
       Object data = provider.getData(dataId);
       if (data != null) return DataValidators.validOrNull(data, dataId, provider);
-
-      if (dataRule != null) {
-        final Set<String> ids = alreadyComputedIds == null ? new HashSet<>() : alreadyComputedIds;
-        ids.add(dataId);
-        data = dataRule.getData(id -> getDataFromProvider(provider, id, ids));
-
-        if (data != null) return DataValidators.validOrNull(data, dataId, dataRule);
-      }
-
-      return null;
+      return ruleType == null ? null : getDataFromRulesInner(dataId, ruleType, alreadyComputedIds, provider);
     }
     finally {
       depth[0]--;
       if (alreadyComputedIds != null) alreadyComputedIds.remove(dataId);
+    }
+  }
+
+  private @Nullable Object getDataFromRulesInner(@NotNull String dataId,
+                                                 @NotNull GetDataRuleType ruleType,
+                                                 @Nullable Set<String> alreadyComputedIds,
+                                                 @NotNull DataProvider provider) {
+    int[] depth = ourGetDataLevel.get();
+    try {
+      GetDataRule rule = myRulesCache.get(Pair.create(dataId, ruleType));
+      if (rule == null) return null;
+      Set<String> ids = alreadyComputedIds == null ? new HashSet<>() : alreadyComputedIds;
+      ids.add(dataId);
+      Object data = rule.getData(id -> getDataFromProviderInner(ruleType, id, ids, provider));
+      return data == null ? null : DataValidators.validOrNull(data, dataId, rule);
+    }
+    finally {
+      depth[0]--;
     }
   }
 
@@ -116,14 +135,38 @@ public class DataManagerImpl extends DataManager {
     }
   }
 
-  public @Nullable GetDataRule getDataRule(@NotNull String dataId) {
+  @ApiStatus.Internal
+  public @Nullable Object getDataSimple(@NotNull String dataId, @NotNull DataProvider provider) {
+    Object result = getDataFromProviderAndRules(dataId, GetDataRuleType.PROVIDER, provider);
+    if (result != null) return result;
+    Set<String> computedIds = new HashSet<>();
+    return getDataFromRulesInner(dataId, GetDataRuleType.CONTEXT, computedIds, id -> {
+      Object r = getDataFromProviderAndRules(id, GetDataRuleType.FAST, provider);
+      return r != null ? r : getDataFromRulesInner(id, GetDataRuleType.PROVIDER, computedIds, provider);
+    });
+  }
+
+  private static @Nullable GetDataRule getDataRule(@NotNull String dataId, @NotNull GetDataRuleType ruleType) {
+    switch (ruleType) {
+      case FAST:
+        List<GetDataRule> rules = rulesForKey(dataId, GetDataRuleType.FAST);
+        return rules == null ? null : rules.size() == 1 ? rules.get(0) : dataProvider -> getRulesData(dataId, rules, dataProvider);
+      case PROVIDER:
+        return getDataRuleInner(dataId, GetDataRuleType.PROVIDER);
+      case CONTEXT:
+        return getDataRuleInner(dataId, GetDataRuleType.CONTEXT);
+    }
+    throw new AssertionError("unknown type: " + ruleType);
+  }
+
+  private static @Nullable GetDataRule getDataRuleInner(@NotNull String dataId, @NotNull GetDataRuleType ruleType) {
     String uninjectedId = InjectedDataKeys.uninjectedId(dataId);
-    GetDataRule slowRule = dataProvider -> getSlowData(dataId, dataProvider);
-    List<GetDataRule> rules1 = ContainerUtil.nullize(myDataRuleCollector.forKey(dataId));
-    List<GetDataRule> rules2 = uninjectedId == null ? null : ContainerUtil.nullize(myDataRuleCollector.forKey(uninjectedId));
+    GetDataRule slowRule = ruleType == GetDataRuleType.PROVIDER ? dataProvider -> getSlowData(dataId, dataProvider) : null;
+    List<GetDataRule> rules1 = rulesForKey(dataId, ruleType);
+    List<GetDataRule> rules2 = uninjectedId == null ? null : rulesForKey(uninjectedId, ruleType);
     if (rules1 == null && rules2 == null) return slowRule;
     return dataProvider -> {
-      Object data = slowRule.getData(dataProvider);
+      Object data = slowRule == null ? null : slowRule.getData(dataProvider);
       data = data != null ? data : rules1 == null ? null : getRulesData(dataId, rules1, dataProvider);
       data = data != null ? data : rules2 == null ? null : getRulesData(dataId, rules2, id -> {
         String injectedId = InjectedDataKeys.injectedId(id);
@@ -131,6 +174,21 @@ public class DataManagerImpl extends DataManager {
       });
       return data;
     };
+  }
+
+  private static @Nullable List<GetDataRule> rulesForKey(@NotNull String dataId, @NotNull GetDataRuleType ruleType) {
+    boolean includeFast = ruleType == GetDataRuleType.PROVIDER;
+    List<GetDataRule> result = null;
+    for (KeyedLazyInstance<GetDataRule> bean : GetDataRule.EP_NAME.getExtensionsIfPointIsRegistered()) {
+      if (!Objects.equals(dataId, bean.getKey())) continue;
+      GetDataRuleType type = ((GetDataRuleBean)bean).type;
+      if (type != ruleType && !(includeFast && type == GetDataRuleType.FAST)) continue;
+      GetDataRule rule = KeyedExtensionCollector.instantiate(bean);
+      if (rule == null) continue;
+      if (result == null) result = new SmartList<>();
+      result.add(rule);
+    }
+    return result;
   }
 
   private static @Nullable Object getRulesData(@NotNull String dataId, @NotNull List<GetDataRule> rules, @NotNull DataProvider provider) {
@@ -163,11 +221,9 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public @NotNull DataContext getDataContext(Component component) {
-    if (Registry.is("actionSystem.dataContextAssertions")) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      if (ourGetDataLevel.get()[0] > 0) {
-        LOG.error("DataContext shall not be created and queried inside another getData() call.");
-      }
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (ourGetDataLevel.get()[0] > 0) {
+      LOG.error("DataContext shall not be created and queried inside another getData() call.");
     }
     return IdeUiService.getInstance().createUiDataContext(component);
   }

@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.ui.*;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -70,7 +69,12 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment =
       new SettingsEditorFragment<>("mainClass", ExecutionBundle.message("application.configuration.main.class"), null, mainClass, 20,
                                    (configuration, component) -> component.setText(getQName(configuration.getMainClassName())),
-                                   (configuration, component) -> configuration.setMainClassName(getJvmName(component.getText())),
+                                   (configuration, component) -> {
+                                     String className = component.getText();
+                                     if (!className.equals(configuration.getMainClassName())) {
+                                       configuration.setMainClassName(getJvmName(className));
+                                     }
+                                   },
                                    configuration -> true);
     mainClassFragment.setHint(ExecutionBundle.message("application.configuration.main.class.hint"));
     mainClassFragment.setRemovable(false);
@@ -79,7 +83,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
       return editor == null ? field : editor.getContentComponent();
     });
     mainClassFragment.setValidation((configuration) ->
-      Collections.singletonList(RuntimeConfigurationException.validate(mainClass, () -> ReadAction.run(() -> configuration.checkClass()))));
+      Collections.singletonList(RuntimeConfigurationException.validate(mainClass, () -> configuration.checkClass())));
     return mainClassFragment;
   }
 

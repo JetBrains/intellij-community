@@ -2,7 +2,6 @@
 
 package com.intellij.codeInsight.template.actions;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.OffsetKey;
 import com.intellij.codeInsight.completion.OffsetsInFile;
@@ -29,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 

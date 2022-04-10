@@ -75,8 +75,6 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singletonMap").parameterCount(2));
   private static final CallMatcher COLLECTION_ADD_ALL =
     instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "addAll").parameterTypes(CommonClassNames.JAVA_UTIL_COLLECTION);
-  private static final CallMatcher COLLECTIONS_SINGLETON =
-    staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singleton").parameterCount(1);
 
   private static final CallMapper<RedundantCollectionOperationHandler> HANDLERS =
     new CallMapper<RedundantCollectionOperationHandler>()
@@ -90,7 +88,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       .register(AS_LIST, RedundantSortAsListHandler::handler)
       .register(ITERABLE_ITERATOR, RedundantEmptyIteratorHandler::handler)
       .register(MAP_PUT_ALL, call -> ReplaceNestedCallHandler.handler(call, MAP_OF, "put"))
-      .register(COLLECTION_ADD_ALL, call -> ReplaceNestedCallHandler.handler(call, COLLECTIONS_SINGLETON, "add"));
+      .register(COLLECTION_ADD_ALL, call -> ReplaceNestedCallHandler.handler(call, SINGLETON, "add"));
 
   @NotNull
   @Override

@@ -110,7 +110,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
 
         val problems = data.unusedImports.map {
             val fixes = arrayListOf<LocalQuickFix>()
-            fixes.add(OptimizeImportsQuickFix(file))
+            fixes.add(KotlinOptimizeImportsQuickFix(file))
             if (!KotlinCodeInsightWorkspaceSettings.getInstance(file.project).optimizeImportsOnTheFly) {
                 fixes.add(EnableOptimizeImportsOnTheFlyFix(file))
             }
@@ -212,16 +212,6 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
         DocumentUtil.writeInRunUndoTransparentAction {
             KotlinImportOptimizer.replaceImports(file, optimizedImports)
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc)
-        }
-    }
-
-    private class OptimizeImportsQuickFix(file: KtFile) : LocalQuickFixOnPsiElement(file) {
-        override fun getText() = KotlinBundle.message("optimize.imports")
-
-        override fun getFamilyName() = name
-
-        override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-            OptimizeImportsProcessor(project, file).run()
         }
     }
 

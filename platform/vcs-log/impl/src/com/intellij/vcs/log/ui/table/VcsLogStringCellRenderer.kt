@@ -3,7 +3,7 @@ package com.intellij.vcs.log.ui.table
 
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.speedSearch.SpeedSearchUtil
-import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer.BorderlessTableCellState
+import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer.VcsLogTableCellState
 import com.intellij.vcs.log.util.VcsLogUiUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Font
@@ -22,7 +22,7 @@ class VcsLogStringCellRenderer internal constructor(
                                                                           contentSampleProvider = contentSampleProvider)
 
   init {
-    cellState = BorderlessTableCellState()
+    cellState = VcsLogTableCellState()
   }
 
   override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {

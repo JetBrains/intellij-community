@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.fasterxml.jackson.jr.ob.JSON
@@ -52,7 +52,8 @@ final class PluginsCollector {
       if (availableModulesAndPlugins.contains(requiredDependency)) {
         continue
       }
-      def requiredPlugin = nonCheckedModules.get(requiredDependency)
+
+      PluginDescriptor requiredPlugin = nonCheckedModules.get(requiredDependency)
       if (requiredPlugin != null && isPluginCompatible(requiredPlugin, availableModulesAndPlugins, nonCheckedModules)) {
         continue
       }

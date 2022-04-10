@@ -27,9 +27,6 @@ import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
-import org.jetbrains.kotlin.config.ExternalSystemNativeMainRunTask
-import org.jetbrains.kotlin.config.ExternalSystemRunTask
-import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.PlatformVersion
 import org.jetbrains.kotlin.idea.gradle.configuration.*
@@ -41,8 +38,10 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.createKotlinMppPop
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.getCompilations
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDependenciesByCompilations
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDependenciesBySourceSetVisibilityGraph
-import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.fullName
-import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getKotlinModuleId
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.calculateRunTasks
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getKotlinModuleId
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.fullName
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getGradleModuleQualifiedName
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
@@ -50,8 +49,11 @@ import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedSerializedArgsInf
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
+import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
-import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
+import org.jetbrains.kotlin.util.firstNotNullResult
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -126,6 +128,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             }
         }
         populateContentRoots(gradleModule, ideModule, resolverCtx)
+        populateExternalSystemRunTasks(gradleModule, ideModule, resolverCtx)
     }
 
     override fun populateModuleCompileOutputSettings(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
@@ -289,6 +292,33 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             }
         }
 
+        private fun populateExternalSystemRunTasks(
+            gradleModule: IdeaModule,
+            mainModuleNode: DataNode<ModuleData>,
+            resolverCtx: ProjectResolverContext
+        ) {
+            val mppModel = resolverCtx.getMppModel(gradleModule) ?: return
+            val sourceSetToRunTasks = calculateRunTasks(mppModel, gradleModule, resolverCtx)
+            val allKotlinSourceSets =
+                ExternalSystemApiUtil.findAllRecursively(mainModuleNode, KotlinSourceSetData.KEY).mapNotNull { it?.data?.sourceSetInfo } +
+                        ExternalSystemApiUtil.find(mainModuleNode, KotlinAndroidSourceSetData.KEY)?.data?.sourceSetInfos.orEmpty()
+
+            val allKotlinSourceSetsDataWithRunTasks = allKotlinSourceSets
+                .associateWith {
+                    when (val component = it.kotlinComponent) {
+                        is KotlinCompilation -> component
+                            .declaredSourceSets
+                            .firstNotNullResult { sourceSetToRunTasks[it] }
+                            .orEmpty()
+                        is KotlinSourceSet -> sourceSetToRunTasks[component]
+                            .orEmpty()
+                        //TODO(chernyshevj) KotlinComponent: interface -> sealed interface
+                        else -> error("Unsupported KotlinComponent: $component")
+                    }
+                }
+            allKotlinSourceSetsDataWithRunTasks.forEach { (sourceSetInfo, runTasks) -> sourceSetInfo.externalSystemRunTasks = runTasks }
+        }
+
         private fun populateSourceSetInfos(
             gradleModule: IdeaModule,
             mainModuleNode: DataNode<ModuleData>,
@@ -313,8 +343,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             } else null
 
             val sourceSetMap = projectDataNode.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS)!!
-
-            val sourceSetToRunTasks = calculateRunTasks(mppModel, gradleModule, resolverCtx)
 
             val sourceSetToCompilationData = LinkedHashMap<String, MutableSet<GradleSourceSetData>>()
             for (target in mppModel.targets) {
@@ -369,8 +397,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                         gradleModule,
                         resolverCtx
                     ) ?: continue
-                    kotlinSourceSet.externalSystemRunTasks =
-                        compilation.declaredSourceSets.firstNotNullResult { sourceSetToRunTasks[it] } ?: emptyList()
 
                     /*if (compilation.platform == KotlinPlatform.JVM || compilation.platform == KotlinPlatform.ANDROID) {
                         compilationData.targetCompatibility = (kotlinSourceSet.compilerArguments as? K2JVMCompilerArguments)?.jvmTarget
@@ -455,7 +481,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 }
 
                 val kotlinSourceSet = createSourceSetInfo(mppModel, sourceSet, gradleModule, resolverCtx) ?: continue
-                kotlinSourceSet.externalSystemRunTasks = sourceSetToRunTasks[sourceSet] ?: emptyList()
 
                 val sourceSetDataNode =
                     (existingSourceSetDataNode ?: mainModuleNode.createChild(GradleSourceSetData.KEY, sourceSetData)).also {
@@ -508,54 +533,10 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 kotlinNativeHome = mppModel.kotlinNativeHome
                 coroutines = mppModel.extraFeatures.coroutinesState
                 isHmpp = mppModel.extraFeatures.isHMPPEnabled
+                kotlinImportingDiagnosticsContainer = mppModel.kotlinImportingDiagnostics
                 mainModuleNode.createChild(KotlinGradleProjectData.KEY, this)
             }
             //TODO improve passing version of used multiplatform
-        }
-
-        private fun calculateRunTasks(
-            mppModel: KotlinMPPGradleModel,
-            gradleModule: IdeaModule,
-            resolverCtx: ProjectResolverContext
-        ): Map<KotlinSourceSet, Collection<ExternalSystemRunTask>> {
-            val sourceSetToRunTasks: MutableMap<KotlinSourceSet, MutableCollection<ExternalSystemRunTask>> = HashMap()
-            val dependsOnReverseGraph: MutableMap<String, MutableSet<KotlinSourceSet>> = HashMap()
-            mppModel.targets.forEach { target ->
-                target.compilations.forEach { compilation ->
-                    val testRunTasks = target.testTasksFor(compilation)
-                        .map {
-                            ExternalSystemTestRunTask(
-                                it.taskName,
-                                gradleModule.gradleProject.path,
-                                target.name
-                            )
-                        }
-                    val nativeMainRunTasks = target.nativeMainRunTasks
-                        .filter { task -> task.compilationName == compilation.name }
-                        .map {
-                            ExternalSystemNativeMainRunTask(
-                                it.taskName,
-                                getKotlinModuleId(gradleModule, compilation, resolverCtx),
-                                target.name,
-                                it.entryPoint,
-                                it.debuggable
-                            )
-                        }
-                    val allRunTasks = testRunTasks + nativeMainRunTasks
-                    compilation.declaredSourceSets.forEach { sourceSet ->
-                        sourceSetToRunTasks.getOrPut(sourceSet) { LinkedHashSet() } += allRunTasks
-                        mppModel.resolveAllDependsOnSourceSets(sourceSet).forEach { dependentModule ->
-                            dependsOnReverseGraph.getOrPut(dependentModule.name) { LinkedHashSet() } += sourceSet
-                        }
-                    }
-                }
-            }
-            mppModel.sourceSetsByName.forEach { (sourceSetName, sourceSet) ->
-                dependsOnReverseGraph[sourceSetName]?.forEach { dependingSourceSet ->
-                    sourceSetToRunTasks.getOrPut(sourceSet) { LinkedHashSet() } += sourceSetToRunTasks[dependingSourceSet] ?: emptyList()
-                }
-            }
-            return sourceSetToRunTasks
         }
 
         fun populateContentRoots(
@@ -690,10 +671,12 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         private fun gradlePathToQualifiedName(
             rootName: String,
             gradlePath: String
-        ): String = ((if (gradlePath.startsWith(":")) "$rootName." else "")
-                + Arrays.stream(gradlePath.split(":".toRegex()).toTypedArray())
-            .filter { s: String -> s.isNotEmpty() }
-            .collect(Collectors.joining(".")))
+        ): String? {
+            return ((if (gradlePath.startsWith(":")) "$rootName." else "")
+                    + Arrays.stream(gradlePath.split(":".toRegex()).toTypedArray())
+                .filter { s: String -> s.isNotEmpty() }
+                .collect(Collectors.joining(".")))
+        }
 
         private fun getInternalModuleName(
             gradleModule: IdeaModule,
@@ -814,9 +797,25 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 info.additionalVisible = sourceSet.additionalVisibleSourceSets.map { additionalVisibleSourceSetName ->
                     getGradleModuleQualifiedName(resolverCtx, gradleModule, additionalVisibleSourceSetName)
                 }.toSet()
-                //TODO(auskov): target flours are lost here
+
+                // More precise computation of KotlinPlatform is required in the case of projects
+                // with enabled HMPP and Android + JVM targets.
+                // Early, for common source set in such project the K2MetadataCompilerArguments instance
+                // was creating, since `sourceSet.actualPlatforms.platforms` contains more then 1 KotlinPlatform.
+                val platformKinds = sourceSet.actualPlatforms.platforms
+                    .map { IdePlatformKindTooling.getTooling(it).kind }
+                    .toSet()
+                val compilerArgumentsPlatform = platformKinds.singleOrNull()?.let {
+                    when (it) {
+                        is JvmIdePlatformKind -> KotlinPlatform.JVM
+                        is JsIdePlatformKind -> KotlinPlatform.JS
+                        is NativeIdePlatformKind -> KotlinPlatform.NATIVE
+                        else -> KotlinPlatform.COMMON
+                    }
+                } ?: KotlinPlatform.COMMON
+
                 info.lazyCompilerArguments = lazy {
-                    createCompilerArguments(emptyList(), sourceSet.actualPlatforms.singleOrNull() ?: KotlinPlatform.COMMON).also {
+                    createCompilerArguments(emptyList(), compilerArgumentsPlatform).also {
                         it.multiPlatform = true
                         it.languageVersion = languageSettings.languageVersion
                         it.apiVersion = languageSettings.apiVersion
@@ -917,12 +916,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             return compilerArguments
         }
 
-        internal fun getGradleModuleQualifiedName(
-            resolverCtx: ProjectResolverContext,
-            gradleModule: IdeaModule,
-            simpleName: String
-        ): String = getModuleId(resolverCtx, gradleModule) + ":" + simpleName
-
         private fun ExternalProject.notImportedCommonSourceSets() =
             GradlePropertiesFileFacade.forExternalProject(this).readProperty(KOTLIN_NOT_IMPORTED_COMMON_SOURCE_SETS_SETTING)?.equals(
                 "true",
@@ -937,13 +930,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
         internal fun shouldDelegateToOtherPlugin(kotlinSourceSet: KotlinSourceSet): Boolean =
             kotlinSourceSet.actualPlatforms.platforms.singleOrNull() == KotlinPlatform.ANDROID
-    }
-}
-
-private fun KotlinTarget.testTasksFor(compilation: KotlinCompilation) = testRunTasks.filter { task ->
-    when (name) {
-        "android" -> task.taskName.endsWith(compilation.name, true)
-        else -> task.compilationName == compilation.name
     }
 }
 
@@ -964,3 +950,4 @@ fun ProjectResolverContext.getMppModel(gradleModule: IdeaModule): KotlinMPPGradl
         mppModel
     }
 }
+

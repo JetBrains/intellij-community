@@ -1,8 +1,8 @@
 <component name="libraryTable">
   <library name="jmh-generator-annprocess" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.openjdk.jmh:jmh-generator-annprocess:1.33" />
+    <properties include-transitive-deps="false" maven-id="org.openjdk.jmh:jmh-generator-annprocess:1.35" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/openjdk/jmh/jmh-generator-annprocess/1.33/jmh-generator-annprocess-1.33.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/openjdk/jmh/jmh-generator-annprocess/1.35/jmh-generator-annprocess-1.35.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

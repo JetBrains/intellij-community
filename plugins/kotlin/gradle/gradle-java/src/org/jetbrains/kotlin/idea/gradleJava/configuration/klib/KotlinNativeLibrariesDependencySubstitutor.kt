@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
 import org.gradle.tooling.model.idea.IdeaModule
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.gradle.configuration.buildClasspathData
@@ -23,7 +24,7 @@ import java.io.File
 
 // KT-29613, KT-29783
 internal class KotlinNativeLibrariesDependencySubstitutor(
-    val mppModel: KotlinMPPGradleModel,
+    private val mppModel: KotlinMPPGradleModel,
     private val gradleModule: IdeaModule,
     private val resolverCtx: ProjectResolverContext
 ) : KotlinDependenciesPreprocessor {
@@ -70,7 +71,7 @@ internal class KotlinNativeLibrariesDependencySubstitutor(
             KlibInfoProvider.create(kotlinNativeHome = kotlinNativeHome)
     }
 
-    private val kotlinVersion: String? by lazy {
+    private val kotlinVersion: IdeKotlinVersion? by lazy {
         // first, try to figure out Kotlin plugin version by classpath (the default approach)
         val classpathData = buildClasspathData(gradleModule, resolverCtx)
         val versionFromClasspath = KotlinGradleFacadeImpl.findKotlinPluginVersion(classpathData)
@@ -82,6 +83,7 @@ internal class KotlinNativeLibrariesDependencySubstitutor(
                 .flatMap { it.compilations.asSequence() }
                 .mapNotNull { it.kotlinTaskProperties.pluginVersion?.takeIf(String::isNotBlank) }
                 .firstOrNull()
+                ?.let(IdeKotlinVersion::opt) // Wasn't moved inside 'mapNotNull()' intentionally to get more stable behavior
 
             if (versionFromModel == null) {
                 LOG.warn(
@@ -143,10 +145,10 @@ private sealed class DependencySubstitute {
  * Library Name formatted for the IDE.
  */
 @IntellijInternalApi
-fun KlibInfo.ideName(kotlinVersion: String? = null): String = buildString {
+fun KlibInfo.ideName(kotlinVersion: IdeKotlinVersion? = null): String = buildString {
     if (isFromNativeDistribution) {
         append(KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX)
-        if (kotlinVersion != null) append(" $kotlinVersion - ") else append(" ")
+        if (kotlinVersion != null) append(" ${kotlinVersion.rawVersion} - ") else append(" ")
     }
 
     append(libraryName)

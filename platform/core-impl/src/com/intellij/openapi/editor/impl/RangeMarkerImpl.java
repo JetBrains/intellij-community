@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,8 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   private final long myId;
   private static final StripedIDGenerator counter = new StripedIDGenerator();
 
-  RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register, boolean forceDocumentStrongReference) {
+  @ApiStatus.Internal
+  public RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register, boolean forceDocumentStrongReference) {
     this(forceDocumentStrongReference ? document : ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(document), document),
          document.getTextLength(), start, end, register, false, false);
   }
@@ -52,14 +54,8 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
                           boolean register,
                           boolean greedyToLeft,
                           boolean greedyToRight) {
-    if (start < 0) {
-      throw new IllegalArgumentException("Wrong start: " + start+"; end="+end);
-    }
-    if (end > documentTextLength) {
-      throw new IllegalArgumentException("Wrong end: " + end + "; document length=" + documentTextLength + "; start=" + start);
-    }
-    if (start > end) {
-      throw new IllegalArgumentException("start > end: start=" + start+"; end="+end);
+    if (start < 0 || end > documentTextLength || start > end) {
+      throw new IllegalArgumentException("Wrong offsets: start=" +start+ "; end=" + end + "; document length=" + documentTextLength);
     }
 
     myDocumentOrFile = documentOrFile;
@@ -71,7 +67,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   static int estimateDocumentLength(@NotNull VirtualFile virtualFile) {
     Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
-    return document == null ? (int)virtualFile.getLength() : document.getTextLength();
+    return document == null ? Math.max(0, (int)virtualFile.getLength()) : document.getTextLength();
   }
 
   protected void registerInTree(int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
@@ -320,7 +316,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       return new ProperTextRange(offset + newLength, intervalEnd + newLength - oldLength);
     }
 
-    if (intervalEnd >= offset && intervalEnd <= offset + oldLength && intervalStart < offset) {
+    if (intervalEnd <= offset + oldLength && intervalStart < offset) {
       return new UnfairTextRange(intervalStart, offset);
     }
 

@@ -16,14 +16,12 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseListener;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isTableCellEditor;
 import static com.intellij.laf.win10.WinIntelliJTextBorder.MINIMUM_HEIGHT;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
+public final class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   public static final String HOVER_PROPERTY = "JTextField.hover";
 
   private MouseListener hoverListener;

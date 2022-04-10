@@ -3,6 +3,8 @@ package com.intellij.ui.content.custom.options
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.content.Content
+import com.intellij.ui.content.ContentManager
+import java.util.*
 
 abstract class PersistentContentCustomLayoutOptions(private val content: Content,
                                                     private val selectedOptionKey: String) : CustomContentLayoutOptions {
@@ -55,6 +57,19 @@ abstract class PersistentContentCustomLayoutOptions(private val content: Content
   override fun onHide() {
     saveOption(HIDE_OPTION_KEY)
   }
+
+  override fun getDisplayName(): String = content.displayName
+
+  override fun isHidden(): Boolean = getCurrentOption() == null
+
+  override fun isHideOptionVisible(): Boolean {
+    if (isHidden) {
+      return true
+    }
+
+    val contentManager: ContentManager = content.manager ?: return false
+    return contentManager.contents.size > 1
+  }
 }
 
 abstract class PersistentContentCustomLayoutOption(private val options: PersistentContentCustomLayoutOptions) : CustomContentLayoutOption {
@@ -67,5 +82,5 @@ abstract class PersistentContentCustomLayoutOption(private val options: Persiste
 
   abstract fun getOptionKey(): @NlsSafe String
 
-  protected abstract fun isThisOptionSelected(): Boolean
+  protected fun isThisOptionSelected(): Boolean = this == options.getCurrentOption()
 }

@@ -1,12 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.TextEditorWithPreview;
 import com.intellij.openapi.project.ProjectUtil;
@@ -14,16 +17,16 @@ import com.intellij.openapi.util.Key;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class MarkdownEditorWithPreview extends TextEditorWithPreview {
+public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
   public static final Key<MarkdownEditorWithPreview> PARENT_SPLIT_EDITOR_KEY = Key.create("parentSplit");
   private boolean myAutoScrollPreview;
   private final List<SplitLayoutListener> myLayoutListeners = new ArrayList<>();
@@ -47,19 +50,24 @@ public class MarkdownEditorWithPreview extends TextEditorWithPreview {
     myAutoScrollPreview = settings.isAutoScrollEnabled();
 
     final var settingsChangedListener = new MarkdownSettings.ChangeListener() {
+      private boolean wasVerticalSplitBefore = settings.isVerticalSplit();
+
       @Override
-      public void beforeSettingsChanged(@NotNull MarkdownSettings settings) {}
+      public void beforeSettingsChanged(@NotNull MarkdownSettings settings) {
+        wasVerticalSplitBefore = settings.isVerticalSplit();
+      }
 
       @Override
       public void settingsChanged(@NotNull MarkdownSettings settings) {
         setAutoScrollPreview(settings.isAutoScrollEnabled());
-        handleLayoutChange(!settings.isVerticalSplit());
+        if (wasVerticalSplitBefore != settings.isVerticalSplit()) {
+          handleLayoutChange(!settings.isVerticalSplit());
+        }
       }
     };
     project.getMessageBus().connect(this).subscribe(MarkdownSettings.ChangeListener.TOPIC, settingsChangedListener);
     getTextEditor().getEditor().getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener());
   }
-
 
   public void addLayoutListener(SplitLayoutListener listener) {
     myLayoutListeners.add(listener);
@@ -84,8 +92,38 @@ public class MarkdownEditorWithPreview extends TextEditorWithPreview {
   }
 
   @Override
-  protected @Nullable ActionGroup createLeftToolbarActionGroup() {
-    return null;
+  public void setLayout(@NotNull Layout layout) {
+    super.setLayout(layout);
+  }
+
+  @Override
+  public void setState(@NotNull FileEditorState state) {
+    if (state instanceof MarkdownEditorWithPreviewState) {
+      final var actualState = ((MarkdownEditorWithPreviewState)state);
+      super.setState(actualState.getUnderlyingState());
+      setVerticalSplit(actualState.isVerticalSplit());
+    }
+  }
+
+  @Override
+  public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
+    final var underlyingState = super.getState(level);
+    return new MarkdownEditorWithPreviewState(underlyingState, isVerticalSplit());
+  }
+
+  @Override
+  protected @NotNull ToggleAction getShowEditorAction() {
+    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("Markdown.Layout.EditorOnly"));
+  }
+
+  @Override
+  protected @NotNull ToggleAction getShowEditorAndPreviewAction() {
+    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("Markdown.Layout.EditorAndPreview"));
+  }
+
+  @Override
+  protected @NotNull ToggleAction getShowPreviewAction() {
+    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("Markdown.Layout.PreviewOnly"));
   }
 
   public interface SplitLayoutListener extends EventListener {

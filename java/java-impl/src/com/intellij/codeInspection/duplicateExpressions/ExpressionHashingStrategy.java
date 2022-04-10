@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Pavel.Dolgov
- */
+ */ 
 final class ExpressionHashingStrategy implements HashingStrategy<PsiExpression> {
   private static final EquivalenceChecker EQUIVALENCE_CHECKER = new NoSideEffectExpressionEquivalenceChecker();
 
@@ -44,7 +44,16 @@ final class ExpressionHashingStrategy implements HashingStrategy<PsiExpression> 
     if (e instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression call = (PsiMethodCallExpression)e;
       PsiReferenceExpression ref = call.getMethodExpression();
-      return hashCode(ref.getReferenceName(), ref.getQualifierExpression(), call.getArgumentList().getExpressions());
+      String name = ref.getReferenceName();
+      PsiExpression qualifier = ref.getQualifierExpression();
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      if (qualifier != null) {
+        if ("get".equals(name) && (qualifier.textMatches("Paths") || qualifier.textMatches("java.nio.file.Paths")) ||
+            "of".equals(name) && qualifier.textMatches("java.nio.file.Path")) {
+          return hashCode("of", "Path", args); 
+        }
+      }
+      return hashCode(name, qualifier, args);
     }
     if (e instanceof PsiReferenceExpression) {
       PsiReferenceExpression ref = (PsiReferenceExpression)e;
@@ -88,6 +97,15 @@ final class ExpressionHashingStrategy implements HashingStrategy<PsiExpression> 
       hash = hash * 31 + hashCode(operand);
     }
     return hash;
+  }
+
+  private int hashCode(@Nullable String name, @NotNull String qualifier, PsiExpression @NotNull ... operands) {
+    int hash = name != null ? name.hashCode() : 0;
+    hash = hash * 31 + qualifier.hashCode() * 31;
+    for (PsiExpression operand : operands) {
+      hash = hash * 31 + hashCode(operand);
+    }
+    return hash; 
   }
 
   @Contract("null -> null")

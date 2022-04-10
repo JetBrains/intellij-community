@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +22,9 @@ public class StatusTextAction extends DumbAwareAction implements CustomComponent
     JLabel label = (JLabel)e.getPresentation().getClientProperty(COMPONENT_KEY);
     if (label == null) return;
     label.setText(search == null ? "" : search.getComponent().getStatusText());
-    label.setForeground(search == null ? UIUtil.getLabelForeground() : search.getComponent().getStatusColor());
+    label.setForeground(search == null ?
+                        ExperimentalUI.isNewUI() ? UIUtil.getLabelInfoForeground() : UIUtil.getLabelForeground() :
+                        search.getComponent().getStatusColor());
   }
 
   @Override

@@ -20,6 +20,7 @@ from .webkitgtk.options import Options as WebKitGTKOptions
 from .webkitgtk.webdriver import WebDriver as WebKitGTK
 
 # We need an explicit __all__ because some of the above won't otherwise be exported.
+# This could also be fixed using assignments
 __all__ = [
     "Firefox",
     "FirefoxProfile",

@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.autolink.ExternalSystemProjectLinkLis
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,7 +37,7 @@ class AntUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
     val localFileSystem = LocalFileSystem.getInstance()
     val externalProjectDir = localFileSystem.findFileByPath(externalProjectPath)
     if (externalProjectDir == null) {
-      val shortPath = FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(externalProjectPath), false)
+      val shortPath = getPresentablePath(externalProjectPath)
       throw IllegalArgumentException(ExternalSystemBundle.message("error.project.does.not.exist", systemId.readableName, shortPath))
     }
     val antConfiguration = AntConfigurationBase.getInstance(project)

@@ -41,6 +41,17 @@ object StatisticsEventLogProviderUtil {
     return EmptyStatisticsEventLoggerProvider(recorderId)
   }
 
+  @JvmStatic
+  fun getExternalEventLogSettings(): ExternalEventLogSettings? {
+    if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(ExternalEventLogSettings.EP_NAME)) {
+      val externalEventLogSettings = ExternalEventLogSettings.EP_NAME.findFirstSafe { settings: ExternalEventLogSettings ->
+        getPluginInfo(settings.javaClass).isAllowedToInjectIntoFUS()
+      }
+      return externalEventLogSettings
+    }
+    return null
+  }
+
   private fun isJetBrainsProduct(): Boolean {
     val appInfo = ApplicationInfo.getInstance()
     if (appInfo == null || StringUtil.isEmpty(appInfo.shortCompanyName)) {

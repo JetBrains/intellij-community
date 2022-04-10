@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -30,11 +30,6 @@ public abstract class GradleConfigureProjectByChangingFileTestGenerated extends 
             runTest("../../../idea/tests/testData/configuration/gradle/default/");
         }
 
-        @TestMetadata("eapVersion")
-        public void testEapVersion() throws Exception {
-            runTest("../../../idea/tests/testData/configuration/gradle/eapVersion/");
-        }
-
         @TestMetadata("jreLib")
         public void testJreLib() throws Exception {
             runTest("../../../idea/tests/testData/configuration/gradle/jreLib/");
@@ -45,9 +40,9 @@ public abstract class GradleConfigureProjectByChangingFileTestGenerated extends 
             runTest("../../../idea/tests/testData/configuration/gradle/js/");
         }
 
-        @TestMetadata("m04Version")
-        public void testM04Version() throws Exception {
-            runTest("../../../idea/tests/testData/configuration/gradle/m04Version/");
+        @TestMetadata("milestoneVersion")
+        public void testMilestoneVersion() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gradle/milestoneVersion/");
         }
 
         @TestMetadata("missedLibrary")
@@ -78,19 +73,14 @@ public abstract class GradleConfigureProjectByChangingFileTestGenerated extends 
             KotlinTestUtils.runTest(this::doTestGradle, this, testDataFilePath);
         }
 
-        @TestMetadata("eap11Version")
-        public void testEap11Version() throws Exception {
-            runTest("../../../idea/tests/testData/configuration/gsk/eap11Version/");
-        }
-
-        @TestMetadata("eapVersion")
-        public void testEapVersion() throws Exception {
-            runTest("../../../idea/tests/testData/configuration/gsk/eapVersion/");
-        }
-
         @TestMetadata("helloWorld")
         public void testHelloWorld() throws Exception {
             runTest("../../../idea/tests/testData/configuration/gsk/helloWorld/");
+        }
+
+        @TestMetadata("milestoneVersion")
+        public void testMilestoneVersion() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gsk/milestoneVersion/");
         }
 
         @TestMetadata("missedLibrary")

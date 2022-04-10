@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -49,6 +49,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
                                      boolean ignoreInSameOutermostClass,
                                      @NotNull ProblemsHolder holder,
                                      boolean forRemoval,
+                                     boolean ignoreApiDeclaredInThisProject, 
                                      @NotNull ProblemHighlightType highlightType) {
     if (PsiImplUtil.isDeprecated(element)) {
       if (forRemoval != isForRemovalAttributeSet(element)) {
@@ -60,12 +61,14 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
         PsiClass containingClass = element instanceof PsiMember ? ((PsiMember)element).getContainingClass() : null;
         if (containingClass != null) {
           checkDeprecated(containingClass, elementToHighlight, rangeInElement, ignoreInsideDeprecated, ignoreImportStatements,
-                          false, ignoreInSameOutermostClass, holder, forRemoval, highlightType);
+                          false, ignoreInSameOutermostClass, holder, forRemoval, ignoreApiDeclaredInThisProject, highlightType);
         }
       }
       return;
     }
 
+    if (ignoreApiDeclaredInThisProject && element.getManager().isInProject(element)) return;
+    
     if (ignoreInSameOutermostClass && areElementsInSameOutermostClass(element, elementToHighlight)) return;
 
     if (ignoreInsideDeprecated && isElementInsideDeprecated(elementToHighlight)) return;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.searcheverywhere
 
@@ -10,6 +10,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInf
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
@@ -26,7 +27,7 @@ class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
     ): SEEqualElementsActionType {
         val newPsiElement = newItem.toPsi() ?: return DoNothing
         val result = compareElements(newPsiElement) {
-            alreadyFoundItems.asSequence().mapNotNull { it.toPsi() }
+            alreadyFoundItems.asSequence().map { it.toPsi() }
         }
 
         return when (result) {
@@ -45,7 +46,7 @@ class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
          */
         fun compareElements(
             newItem: PsiElement,
-            alreadyFoundItems: () -> Sequence<PsiElement>,
+            alreadyFoundItems: () -> Sequence<PsiElement?>,
         ): Int? {
             fun <T> reduce(
                 transformation: PsiElement.() -> T?,
@@ -53,8 +54,8 @@ class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
                 shouldBeReplaced: (new: T, old: T) -> Boolean,
             ): Int? {
                 val transformedNewItem = newItem.transformation() ?: return null
-                return alreadyFoundItems().mapIndexedNotNull(fun(index: Int, alreadyFoundItem: PsiElement): Int? {
-                    val transformedOldItem = alreadyFoundItem.transformation() ?: return null
+                return alreadyFoundItems().mapIndexedNotNull(fun(index: Int, alreadyFoundItem: PsiElement?): Int? {
+                    val transformedOldItem = alreadyFoundItem?.transformation() ?: return null
                     if (!shouldBeProcessed(transformedNewItem, transformedOldItem)) return null
                     return if (shouldBeReplaced(transformedNewItem, transformedOldItem)) index else -1
                 }).firstOrNull()
@@ -84,9 +85,12 @@ private fun getGroupLeader(element: PsiElement): KtFile? {
     }
 
     if (element is KtLightClassForFacade &&
-        element.fqName.shortName().asString().removeSuffix("Kt") == element.containingFile.virtualFile.nameWithoutExtension
+        element.facadeClassFqName.shortName().asString().removeSuffix("Kt") == element.containingFile.virtualFile.nameWithoutExtension
     ) {
-        return element.containingFile.ktFile
+        return when (val containingFile = element.containingFile) {
+            is FakeFileForLightClass -> containingFile.ktFile
+            else -> containingFile as? KtFile
+        }
     }
 
     if (element is KtClass && element.isTopLevel()) {

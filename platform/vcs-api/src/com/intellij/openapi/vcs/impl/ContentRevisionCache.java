@@ -166,6 +166,13 @@ public class ContentRevisionCache {
     }
   }
 
+  public static byte @NotNull [] loadAsBytes(@NotNull FilePath path,
+                                             Throwable2Computable<byte @NotNull [], ? extends VcsException, ? extends IOException> loader)
+    throws VcsException, IOException {
+    checkLocalFileSize(path);
+    return loader.compute();
+  }
+
   public static byte @NotNull [] getOrLoadAsBytes(final Project project, FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey,
                                                   @NotNull UniqueType type, final Throwable2Computable<byte @NotNull [], ? extends VcsException, ? extends IOException> loader)
     throws VcsException, IOException {
@@ -185,7 +192,7 @@ public class ContentRevisionCache {
     return bytes;
   }
 
-  private static void checkLocalFileSize(FilePath path) throws VcsException {
+  private static void checkLocalFileSize(@NotNull FilePath path) throws VcsException {
     File ioFile = path.getIOFile();
     if (ioFile.exists()) {
       checkContentsSize(ioFile.getPath(), ioFile.length());

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.ide.IdeBundle;
@@ -99,6 +99,14 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   public abstract boolean canMergeWith(@NotNull MergeableLineMarkerInfo<?> info);
 
   public abstract Icon getCommonIcon(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos);
+  
+  @NotNull
+  public static List<? extends MergeableLineMarkerInfo<?>> getMergedMarkers(LineMarkerInfo<?> info) {
+    if (info instanceof MyLineMarkerInfo) {
+      return ((MyLineMarkerInfo)info).getInfos();
+    }
+    return Collections.emptyList();
+  }
 
   @NotNull
   public Function<? super PsiElement, String> getCommonTooltip(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
@@ -162,6 +170,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
   private static final class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     private final DefaultActionGroup myCommonActionGroup;
+    private final List<? extends MergeableLineMarkerInfo<?>> myMarkers;
 
     private MyLineMarkerInfo(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
       this(markers, markers.get(0));
@@ -173,6 +182,12 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
             getCommonAccessibleNameProvider(markers), template.getCommonTooltip(markers),
             getCommonNavigationHandler(markers), template.getCommonIconAlignment(markers));
       myCommonActionGroup = getCommonActionGroup(markers);
+      myMarkers = markers;
+    }
+    
+    @NotNull
+    public List<? extends MergeableLineMarkerInfo<?>> getInfos() {
+      return myMarkers;
     }
 
     private static DefaultActionGroup getCommonActionGroup(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {

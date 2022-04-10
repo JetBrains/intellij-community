@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector;
 
 import com.google.common.base.MoreObjects;
@@ -44,12 +44,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.openapi.wm.impl.StripeButton;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.toolWindow.StripeButton;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.border.CustomLineBorder;
@@ -102,7 +102,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   private static final String RENDERER_BOUNDS = "clicked renderer";
   private static final int MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME = 8;
 
-  private static final Key<List<PropertyBean>> CLICK_INFO = Key.create("CLICK_INFO");
+  private static final Key<Pair<List<PropertyBean>, Component>> CLICK_INFO = Key.create("CLICK_INFO");
   private static final Key<Point> CLICK_INFO_POINT = Key.create("CLICK_INFO_POINT");
   private static final Key<Throwable> ADDED_AT_STACKTRACE = Key.create("uiInspector.addedAt");
 
@@ -493,7 +493,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         color = JBColor.BLUE;
       }
 
-      Insets insets = component instanceof JComponent ? ((JComponent)component).getInsets() : JBUI.emptyInsets();
+      Insets insets = component instanceof JComponent ? ((JComponent)component).getInsets() : JBInsets.emptyInsets();
       HighlightComponent highlightComponent = new HighlightComponent(color, insets);
       highlightComponent.setBounds(bounds);
 
@@ -536,8 +536,10 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
                                       boolean hasFocus) {
       Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
       Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : null;
+      boolean isRenderer = false;
       if (value instanceof HierarchyTree.ComponentNode) {
         HierarchyTree.ComponentNode componentNode = (HierarchyTree.ComponentNode)value;
+        isRenderer = componentNode.getUserObject() instanceof List<?>;
         Component component = componentNode.getComponent();
 
         if (component != null && !selected) {
@@ -599,8 +601,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           setIcon(UiInspectorIcons.findIconFor(component));
         }
       }
-      if (value instanceof HierarchyTree.ClickInfoNode) {
-        append(value.toString());
+      if (isRenderer) {
         setIcon(AllIcons.Ide.Rating);
       }
       setForeground(foreground);
@@ -743,7 +744,13 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
       List<List<PropertyBean>> clickInfos = ContainerUtil.mapNotNull(paths, path -> {
         Object node = path.getLastPathComponent();
-        if (node instanceof ClickInfoNode) return ((ClickInfoNode)node).getInfo();
+        if (node instanceof ComponentNode) {
+          if (((ComponentNode)node).getUserObject() instanceof List<?>)
+            //it's renderer and we present it as ComponentNode instead of outdated ClickInfoNode
+            //noinspection unchecked
+            return (List<PropertyBean>)((ComponentNode)node).getUserObject();
+        }
+        //if (node instanceof ClickInfoNode) return ((ClickInfoNode)node).getInfo();
         return null;
       });
       if (!clickInfos.isEmpty()) {
@@ -857,9 +864,14 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         }
 
         if (parent instanceof JComponent) {
-          List<PropertyBean> o = UIUtil.getClientProperty(parent, CLICK_INFO);
+          Pair<List<PropertyBean>, Component> o = UIUtil.getClientProperty(parent, CLICK_INFO);
           if (o != null) {
-            result.add(new ClickInfoNode(o));
+            //result.add(new ClickInfoNode(o.first));
+            //We present clicked renderer as ComponentNode instead of ClickInfoNode to see inner structure of renderer
+            ComponentNode node = new ComponentNode(o.second, false);
+            o.second.doLayout();
+            node.setUserObject(o.first);
+            result.add(node);
           }
         }
         if (parent instanceof Container) {
@@ -879,27 +891,27 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       }
     }
 
-    private static class ClickInfoNode extends DefaultMutableTreeNode {
-      private final List<PropertyBean> myInfo;
-
-      ClickInfoNode(List<PropertyBean> info) {
-        myInfo = info;
-      }
-
-      @Override
-      public String toString() {
-        return "Clicked Info";
-      }
-
-      public List<PropertyBean> getInfo() {
-        return myInfo;
-      }
-
-      @Override
-      public boolean isLeaf() {
-        return true;
-      }
-    }
+    //private static class ClickInfoNode extends DefaultMutableTreeNode {
+    //  private final List<PropertyBean> myInfo;
+    //
+    //  ClickInfoNode(List<PropertyBean> info) {
+    //    myInfo = info;
+    //  }
+    //
+    //  @Override
+    //  public String toString() {
+    //    return "Clicked Info";
+    //  }
+    //
+    //  public List<PropertyBean> getInfo() {
+    //    return myInfo;
+    //  }
+    //
+    //  @Override
+    //  public boolean isLeaf() {
+    //    return true;
+    //  }
+    //}
   }
 
   private static final class HighlightComponent extends JComponent {
@@ -1344,6 +1356,12 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       sb.append(StringUtil.toUpperCase(hex));
 
       if (value instanceof UIResource) sb.append(" UIResource");
+      if (value instanceof JBColor) {
+        String name = ((JBColor)value).getName();
+        if (!StringUtil.isEmpty(name)) {
+          sb.append(" name: ").append(name);
+        }
+      }
       setText(sb.toString());
       setIcon(createColorIcon(value));
     }
@@ -1785,7 +1803,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
     private void addToolWindowInfo(Object component) {
       if (component instanceof StripeButton) {
-        ToolWindowImpl window = ((StripeButton)component).getToolWindow();
+        ToolWindowImpl window = ((StripeButton)component).getToolWindow$intellij_platform_ide_impl();
         myProperties.add(new PropertyBean("Tool Window ID", window.getId(), true));
         myProperties.add(new PropertyBean("Tool Window Icon", window.getIcon()));
 
@@ -2311,7 +2329,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       }
     }
 
-    private static List<PropertyBean> getClickInfo(MouseEvent me, Component component) {
+    private static Pair<List<PropertyBean>, Component> getClickInfo(MouseEvent me, Component component) {
       if (me.getComponent() == null) return null;
       me = SwingUtilities.convertMouseEvent(me.getComponent(), me, component);
       List<PropertyBean> clickInfo = new ArrayList<>();
@@ -2324,10 +2342,11 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           Component rendererComponent = list.getCellRenderer()
             .getListCellRendererComponent(list, list.getModel().getElementAt(row), row, list.getSelectionModel().isSelectedIndex(row),
                                           list.hasFocus());
+          rendererComponent.setBounds(list.getCellBounds(row, row));
           clickInfo.addAll(findActionsFor(list.getModel().getElementAt(row)));
           clickInfo.add(new PropertyBean(RENDERER_BOUNDS, list.getUI().getCellBounds(list, row, row)));
           clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);
-          return clickInfo;
+          return Pair.create(clickInfo, rendererComponent);
         }
       }
       if (component instanceof JTable) {
@@ -2338,9 +2357,10 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           Component rendererComponent = table.getCellRenderer(row, column)
             .getTableCellRendererComponent(table, table.getValueAt(row, column), table.getSelectionModel().isSelectedIndex(row),
                                            table.hasFocus(), row, column);
+          rendererComponent.setBounds(table.getCellRect(row, column, false));
           clickInfo.add(new PropertyBean(RENDERER_BOUNDS, table.getCellRect(row, column, true)));
           clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);
-          return clickInfo;
+          return Pair.create(clickInfo, rendererComponent);
         }
       }
       if (component instanceof JTree) {
@@ -2353,9 +2373,10 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
               tree.isExpanded(path),
               tree.getModel().isLeaf(object),
               tree.getRowForPath(path), tree.hasFocus());
+          rendererComponent.setBounds(tree.getPathBounds(path));
           clickInfo.add(new PropertyBean(RENDERER_BOUNDS, tree.getPathBounds(path)));
           clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);
-          return clickInfo;
+          return Pair.create(clickInfo, rendererComponent);
         }
       }
       return null;
@@ -2455,7 +2476,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     }
 
     private static @NotNull Icon load(@NotNull String path, Class<?> cls) {
-      Icon icon = IconLoader.getIcon("com/intellij/internal/inspector/icons/" + path, UiInspectorAction.class);
+      Icon icon = IconLoader.getIcon("com/intellij/internal/inspector/icons/" + path, UiInspectorAction.class.getClassLoader());
       if (cls != null) {
         COMPONENT_MAPPING.put(cls, icon);
       }

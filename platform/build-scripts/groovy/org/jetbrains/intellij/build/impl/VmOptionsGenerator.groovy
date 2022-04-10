@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
@@ -9,6 +9,7 @@ final class VmOptionsGenerator {
   @SuppressWarnings('SpellCheckingInspection')
   static final List<String> COMMON_VM_OPTIONS = List.of(
     '-XX:+IgnoreUnrecognizedVMOptions',
+    '--jbr-illegal-access',
     '-XX:+UseG1GC',
     '-XX:SoftRefLRUPolicyMSPerMB=50',
     '-XX:CICompilerCount=2',
@@ -29,7 +30,7 @@ final class VmOptionsGenerator {
   static List<String> computeVmOptions(boolean isEAP, ProductProperties productProperties) {
     List<String> result = new ArrayList<>()
 
-    Map<String, String> memory =  new LinkedHashMap<>()
+    Map<String, String> memory = new LinkedHashMap<>()
     memory.putAll(MEMORY_OPTIONS)
     memory.putAll(productProperties.customJvmMemoryOptions)
     memory.each { k, v -> result.add(k + v) }

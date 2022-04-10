@@ -16,7 +16,7 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 
-class MacEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
+final class MacEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
   MacEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
     super(editorTextField, editor);
   }

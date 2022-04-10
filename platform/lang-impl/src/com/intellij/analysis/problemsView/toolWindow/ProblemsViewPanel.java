@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.codeInsight.daemon.impl.IntentionsUI;
@@ -90,8 +90,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     Root root = myTreeModel.getRoot();
     int count = root == null ? 0 : root.getProblemCount();
     content.setDisplayName(getName(count));
-    Icon icon = getToolWindowIcon(count);
-    if (icon != null) window.setIcon(icon);
+    ProblemsViewIconUpdater.update(getProject());
   }, 50, stateForComponent(this), this);
 
   private final Option myAutoscrollToSource = new Option() {
@@ -219,7 +218,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
 
     myPanel = new JPanel(new BorderLayout());
     JScrollPane scrollPane = createScrollPane(myTree, true);
-    if (ExperimentalUI.isNewToolWindowsStripes()) {
+    if (ExperimentalUI.isNewUI()) {
       scrollPane.getHorizontalScrollBar().addAdjustmentListener(event -> {
         Border border = event.getAdjustable().getValue() != 0 ? new CustomLineBorder(myToolbarInsets) : JBUI.Borders.empty(myToolbarInsets);
         myToolbar.getComponent().setBorder(border);
@@ -287,10 +286,6 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     myUpdateAlarm.cancelAndRequest();
   }
 
-  public @Nullable Icon getToolWindowIcon(int count) {
-    return null;
-  }
-
   @Override
   public @NotNull @NlsContexts.TabTitle String getName(int count) {
     String name = myName.get();
@@ -352,7 +347,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
       ToolWindow window = ProblemsView.getToolWindow(getProject());
       if (window instanceof ToolWindowEx) {
         ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("ProblemsView.ToolWindow.SecondaryActions");
-        ((ToolWindowEx)window).setAdditionalGearActions(group);
+        window.setAdditionalGearActions(group);
       }
     }
     visibilityChangedTo(selected);

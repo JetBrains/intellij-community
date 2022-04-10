@@ -19,6 +19,7 @@ import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -935,15 +936,17 @@ public class PyBlock implements ASTBlock {
   }
 
   private boolean needLineBreakInStatement() {
-    if (myNode.getPsi() instanceof PyStatementListContainer) {
-      final PyStatement statement = PsiTreeUtil.getParentOfType(myNode.getPsi(), PyStatement.class);
+    final PsiElement psiElement = myNode.getPsi();
+    final boolean isInStubFile = PyiUtil.isInsideStub(psiElement);
+    if (psiElement instanceof PyStatementListContainer) {
+      final PyStatement statement = PsiTreeUtil.getParentOfType(psiElement, PyStatement.class);
       if (statement != null) {
         final Collection<PyStatementPart> parts = PsiTreeUtil.collectElementsOfType(statement, PyStatementPart.class);
-        return (parts.size() == 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON) ||
+        return (parts.size() == 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON && !isInStubFile) ||
                (parts.size() > 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON_MULTI_CLAUSE);
       }
       else {
-        return myContext.getPySettings().NEW_LINE_AFTER_COLON;
+        return myContext.getPySettings().NEW_LINE_AFTER_COLON && !isInStubFile;
       }
     }
     return false;

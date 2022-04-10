@@ -11,11 +11,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.JavaPsiPatternUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.psi.util.*;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
@@ -88,7 +85,7 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     if (switchExpression == null) {
       return;
     }
-    final PsiType switchExpressionType = RefactoringUtil.getTypeByExpressionWithExpectedType(switchExpression);
+    final PsiType switchExpressionType = CommonJavaRefactoringUtil.getTypeByExpressionWithExpectedType(switchExpression);
     if (switchExpressionType == null) {
       return;
     }
@@ -305,9 +302,12 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
       }
       firstCaseValue = false;
       if (caseElement instanceof PsiExpression) {
-        PsiExpression caseExpression = (PsiExpression)caseElement;
+        PsiExpression caseExpression = PsiUtil.skipParenthesizedExprDown((PsiExpression)caseElement);
         String caseValue = getCaseValueText(caseExpression, commentTracker);
         if (useEquals && !ExpressionUtils.isNullLiteral(caseExpression)) {
+          if (PsiPrecedenceUtil.getPrecedence(caseExpression) > PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE) {
+            caseValue = "(" + caseValue + ")";
+          }
           out.append(caseValue).append(".equals(").append(expressionText).append(')');
         }
         else if (caseValue.equals("true")) {
@@ -363,8 +363,7 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     return expressionText + " instanceof " + typeText + " " + variableName;
   }
 
-  private static String getCaseValueText(PsiExpression value, CommentTracker commentTracker) {
-    value = PsiUtil.skipParenthesizedExprDown(value);
+  private static @NotNull String getCaseValueText(@Nullable PsiExpression value, @NotNull CommentTracker commentTracker) {
     if (value == null) {
       return "";
     }

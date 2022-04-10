@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -20,6 +20,16 @@ public class JavaRequiresAutoModuleInspection extends AbstractBaseJavaLocalInspe
   @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.requires.auto.module.option"), this, "TRANSITIVE_ONLY");
+  }
+
+  @Override
+  public @Nullable String getAlternativeID() {
+    return "JavaRequiresAutoModule";
+  }
+
+  @Override
+  public @NotNull String getID() {
+    return "requires-transitive-automatic";
   }
 
   @NotNull

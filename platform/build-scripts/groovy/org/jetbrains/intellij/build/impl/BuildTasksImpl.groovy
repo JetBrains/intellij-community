@@ -1,12 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ArrayNode
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.util.text.Strings
+import com.intellij.util.io.Decompressor
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.system.CpuArch
 import groovy.io.FileType
 import groovy.transform.CompileStatic
+import groovy.transform.Immutable
 import groovy.transform.TypeCheckingMode
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -14,6 +21,7 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.Scope
+import org.eclipse.aether.repository.RemoteRepository
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.idea.maven.aether.ArtifactKind
@@ -39,8 +47,8 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.ForkJoinTask
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
-import java.util.function.Function
 import java.util.function.Supplier
 
 import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
@@ -83,7 +91,6 @@ final class BuildTasksImpl extends BuildTasks {
   }
 
   @Override
-  @CompileStatic(TypeCheckingMode.SKIP)
   void zipSourcesOfModules(Collection<String> modules, Path targetFile, boolean includeLibraries) {
     buildContext.executeStep(spanBuilder("build module sources archives")
                                .setAttribute("path", buildContext.paths.buildOutputDir.relativize(targetFile).toString())
@@ -91,13 +98,6 @@ final class BuildTasksImpl extends BuildTasks {
                              BuildOptions.SOURCES_ARCHIVE_STEP) {
       Files.createDirectories(targetFile.parent)
       Files.deleteIfExists(targetFile)
-
-      String sourceFilesId = "source.files.only"
-      buildContext.ant.patternset(id: sourceFilesId) {
-        ["java", "groovy", "kt"].each {
-          include(name: "**/*.$it")
-        }
-      }
 
       def includedLibraries = new LinkedHashSet<JpsLibrary>()
       if (includeLibraries) {
@@ -120,7 +120,7 @@ final class BuildTasksImpl extends BuildTasks {
           }
         if (!librariesWithMissingSources.isEmpty()) {
           buildContext.messages.debug("Download missing sources for ${librariesWithMissingSources.size()} libraries")
-          def repositories = JpsRemoteRepositoryService.instance.getRemoteRepositoriesConfiguration(buildContext.project)?.repositories?.collect {
+          List<RemoteRepository> repositories = JpsRemoteRepositoryService.instance.getRemoteRepositoriesConfiguration(buildContext.project)?.repositories?.collect {
             ArtifactRepositoryManager.createRemoteRepository(it.id, it.url)
           } ?: []
           def repositoryManager = new ArtifactRepositoryManager(getLocalArtifactRepositoryRoot(buildContext.projectModel.global), repositories, ProgressConsumer.DEAF)
@@ -136,45 +136,75 @@ final class BuildTasksImpl extends BuildTasks {
         }
       }
 
-      buildContext.ant.zip(destfile: targetFile.toString()) {
-        for (String moduleName in modules) {
-          buildContext.messages.debug(" include module $moduleName")
-          JpsModule module = buildContext.findRequiredModule(moduleName)
-          for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> root in module.getSourceRoots(JavaSourceRootType.SOURCE)) {
-            buildContext.ant.zipfileset(dir: root.file.absolutePath,
-                                        prefix: root.properties.packagePrefix.replace('.', '/'), erroronmissingdir: false) {
-              patternset(refid: sourceFilesId)
+      Map<Path, String> zipFileMap = new LinkedHashMap<Path, String>()
+      for (String moduleName in modules) {
+        buildContext.messages.debug(" include module $moduleName")
+        JpsModule module = buildContext.findRequiredModule(moduleName)
+        for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> root in module.getSourceRoots(JavaSourceRootType.SOURCE)) {
+          if (root.file.absoluteFile.exists()) {
+            Path sourceFiles = filterSourceFilesOnly(root.file.name) {
+              FileUtil.copyDirContent(root.file.absoluteFile, it.toFile())
             }
-          }
-          for (JpsTypedModuleSourceRoot<JavaResourceRootProperties> root in module.getSourceRoots(JavaResourceRootType.RESOURCE)) {
-            buildContext.ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.relativeOutputPath, erroronmissingdir: false) {
-              patternset(refid: sourceFilesId)
-            }
+            zipFileMap[sourceFiles] = root.properties.packagePrefix.replace('.', '/')
           }
         }
-        def libraryRootUrls = includedLibraries.collectMany { it.getRootUrls(JpsOrderRootType.SOURCES) }
-        buildContext.messages.debug(" include ${libraryRootUrls.size()} roots from ${includedLibraries.size()} libraries:")
-        for (url in libraryRootUrls) {
-          if (url.startsWith(JpsPathUtil.JAR_URL_PREFIX) && url.endsWith(JpsPathUtil.JAR_SEPARATOR)) {
-            def file = JpsPathUtil.urlToFile(url)
-            if (file.isFile()) {
-              buildContext.messages.debug("  $file.absolutePath, ${Formats.formatFileSize(file.length())}, ${file.length().toString().padLeft(9, "0")} bytes")
-              buildContext.ant.zipfileset(src: file.absolutePath) {
-                patternset(refid: sourceFilesId)
-              }
+        for (JpsTypedModuleSourceRoot<JavaResourceRootProperties> root in module.getSourceRoots(JavaResourceRootType.RESOURCE)) {
+          if (root.file.absoluteFile.exists()) {
+            Path sourceFiles = filterSourceFilesOnly(root.file.name) {
+              FileUtil.copyDirContent(root.file.absoluteFile, it.toFile())
             }
-            else {
-              buildContext.messages.debug("  skipped root $file: file doesn't exist")
-            }
-          }
-          else {
-            buildContext.messages.debug("  skipped root $url: not a jar file")
+            zipFileMap[sourceFiles] = root.properties.relativeOutputPath
           }
         }
       }
-
-      buildContext.notifyArtifactBuilt(targetFile)
+      List<String> libraryRootUrls = includedLibraries.collectMany {
+        it.getRootUrls(JpsOrderRootType.SOURCES) as Collection<String>
+      }
+      buildContext.messages.debug(" include ${libraryRootUrls.size()} roots from ${includedLibraries.size()} libraries:")
+      for (url in libraryRootUrls) {
+        if (url.startsWith(JpsPathUtil.JAR_URL_PREFIX) && url.endsWith(JpsPathUtil.JAR_SEPARATOR)) {
+          File file = JpsPathUtil.urlToFile(url).absoluteFile
+          if (file.isFile()) {
+            buildContext.messages.debug("  $file, ${Formats.formatFileSize(file.length())}, ${file.length().toString().padLeft(9, "0")} bytes")
+            Path sourceFiles = filterSourceFilesOnly(file.name) {
+              new Decompressor.Zip(file)
+                .filter { isSourceFile(it) }
+                .extract(it)
+            }
+            zipFileMap[sourceFiles] = ""
+          }
+          else {
+            buildContext.messages.debug("  skipped root $file: file doesn't exist")
+          }
+        }
+        else {
+          buildContext.messages.debug("  skipped root $url: not a jar file")
+        }
+      }
+      BuildHelper.zipWithPrefixes(buildContext, targetFile, zipFileMap, true)
+      buildContext.notifyArtifactWasBuilt(targetFile)
     }
+  }
+
+  private static Boolean isSourceFile(String path) {
+    return path.endsWith(".java") ||
+           path.endsWith(".groovy") ||
+           path.endsWith(".kt")
+  }
+
+  private Path filterSourceFilesOnly(String name, Consumer<Path> configure) {
+    Path sourceFiles = buildContext.paths.tempDir.resolve("${name}-${UUID.randomUUID()}")
+    FileUtil.delete(sourceFiles)
+    Files.createDirectories(sourceFiles)
+    configure.accept(sourceFiles)
+    Files.walk(sourceFiles).withCloseable { stream ->
+      stream.forEach {
+        if (!Files.isDirectory(it) && !isSourceFile(it.toString())) {
+          Files.delete(it)
+        }
+      }
+    }
+    return sourceFiles
   }
 
   //todo replace by DependencyResolvingBuilder#getLocalArtifactRepositoryRoot call after next update of jps-build-script-dependencies-bootstrap
@@ -201,16 +231,18 @@ final class BuildTasksImpl extends BuildTasks {
           Files.deleteIfExists(targetFile)
           // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
           BuildHelper.runApplicationStarter(context, context.paths.tempDir.resolve("builtinModules"), modules,
-                                            List.of("listBundledPlugins", targetFile.toString()))
+                                            List.of("listBundledPlugins", targetFile.toString()), Collections.emptyMap(),
+                                            null, TimeUnit.MINUTES.toMillis(10L), context.classpathCustomizer)
           if (Files.notExists(targetFile)) {
             context.messages.error("Failed to build provided modules list: $targetFile doesn't exist")
           }
+          context.productProperties.customizeBuiltinModules(context, targetFile)
           context.notifyArtifactWasBuilt(targetFile)
         }
       })
   }
 
-  private Path patchIdeaPropertiesFile() {
+  static Path patchIdeaPropertiesFile(BuildContext buildContext) {
     StringBuilder builder = new StringBuilder(Files.readString(buildContext.paths.communityHomeDir.resolve("bin/idea.properties")))
 
     buildContext.productProperties.additionalIDEPropertiesFilePaths.each {
@@ -251,8 +283,6 @@ idea.fatal.error.notification=disabled
     buildContext.messages.block("copy files shared among all distributions", new Supplier<Void>() {
       @Override
       Void get() {
-        copyLogXml(buildContext)
-
         Path licenseOutDir = buildContext.paths.distAllDir.resolve("license")
         BuildHelper buildHelper = BuildHelper.getInstance(buildContext)
         buildHelper.copyDir(buildContext.paths.communityHomeDir.resolve("license"), licenseOutDir)
@@ -298,39 +328,36 @@ idea.fatal.error.notification=disabled
     return null
   }
 
-  private static void copyLogXml(BuildContext buildContext) {
-    Path src = buildContext.paths.communityHomeDir.resolve("bin/log.xml")
-    Path dst = buildContext.paths.distAllDir.resolve("bin/log.xml")
-    Files.createDirectories(dst.parent)
-
-    String text = Files.readAllLines(src)
-      .findAll { String line -> !line.contains('appender-ref ref="CONSOLE-WARN"') }
-      .join("\n")
-    Files.writeString(dst, text)
+  @NotNull
+  private static BuildTaskRunnable createDistributionForOsTask(@NotNull OsFamily os,
+                                                               @NotNull JvmArchitecture arch,
+                                                               @NotNull Map<Pair<OsFamily, JvmArchitecture>, Path> result,
+                                                               @NotNull Path ideaProperties) {
+    createDistributionForOsTask(os, arch) { context ->
+      OsSpecificDistributionBuilder builder = context.getOsDistributionBuilder(os, ideaProperties)
+      if (builder != null) {
+        Path osAndArchSpecificDistDirectory = DistributionJARsBuilder.getOsAndArchSpecificDistDirectory(os, arch, context)
+        builder.buildArtifacts(osAndArchSpecificDistDirectory, arch)
+        result.put(new Pair(os, arch), osAndArchSpecificDistDirectory)
+      }
+    }
   }
 
   @NotNull
   private static BuildTaskRunnable createDistributionForOsTask(@NotNull OsFamily os,
-                                                               @NotNull Map<OsFamily, Path> result,
-                                                               @NotNull Function<BuildContext, OsSpecificDistributionBuilder> factory) {
-    return BuildTaskRunnable.task(os.osId, new Consumer<BuildContext>() {
+                                                               @NotNull JvmArchitecture arch,
+                                                               @NotNull Consumer<BuildContext> buildAction) {
+    return BuildTaskRunnable.task("${os.osId} ${arch.name()}", new Consumer<BuildContext>() {
       @Override
       void accept(BuildContext context) {
         if (!context.shouldBuildDistributionForOS(os.osId)) {
           return
         }
 
-        OsSpecificDistributionBuilder builder = factory.apply(context)
-        if (builder == null) {
-          return
-        }
-
-        context.messages.block("build ${os.osName} distribution", new Supplier<Void>() {
+        context.messages.block("build ${os.osName} ${arch.name()} distribution", new Supplier<Void>() {
           @Override
           Void get() {
-            Path osSpecificDistDirectory = DistributionJARsBuilder.getOsSpecificDistDirectory(builder.targetOs, context)
-            builder.buildArtifacts(osSpecificDistDirectory)
-            result.put(os, osSpecificDistDirectory)
+            buildAction.accept(context)
             return null
           }
         })
@@ -361,6 +388,7 @@ idea.fatal.error.notification=disabled
     toCompile.addAll(context.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: Collections.<String>emptyList())
     toCompile.addAll(productLayout.mainModules)
     toCompile.addAll(mavenArtifacts.additionalModules)
+    toCompile.addAll(mavenArtifacts.squashedModules)
     toCompile.addAll(mavenArtifacts.proprietaryModules)
     toCompile.addAll(productProperties.modulesToCompileTests)
     compileModules(toCompile)
@@ -383,7 +411,8 @@ idea.fatal.error.notification=disabled
 
   private DistributionJARsBuilder compilePlatformAndPluginModules(@NotNull Set<PluginLayout> pluginsToPublish) {
     DistributionJARsBuilder distBuilder = new DistributionJARsBuilder(buildContext, pluginsToPublish)
-    compileModules(distBuilder.getModulesForPluginsToPublish())
+    compileModules(distBuilder.getModulesForPluginsToPublish()
+                     + ["intellij.idea.community.build.tasks", "intellij.platform.images.build"])
 
     // we need this to ensure that all libraries which may be used in the distribution are resolved,
     // even if product modules don't depend on them (e.g. JUnit5)
@@ -404,7 +433,11 @@ idea.fatal.error.notification=disabled
       span.recordException(e)
       span.setStatus(StatusCode.ERROR, e.message)
 
-      TracerManager.finish()
+      try {
+        TracerManager.finish()
+      }
+      catch (Throwable ignore) {
+      }
       throw e
     }
     finally {
@@ -416,7 +449,6 @@ idea.fatal.error.notification=disabled
   private void doBuildDistributions(BuildContext context) {
     checkProductProperties()
     copyDependenciesFile(context)
-    setupBundledMaven()
 
     logFreeDiskSpace("before compilation")
 
@@ -427,7 +459,7 @@ idea.fatal.error.notification=disabled
     logFreeDiskSpace("after compilation")
 
     MavenArtifactsProperties mavenArtifacts = context.productProperties.mavenArtifacts
-    if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty() || !mavenArtifacts.proprietaryModules.isEmpty()) {
+    if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty() || !mavenArtifacts.squashedModules.isEmpty() || !mavenArtifacts.proprietaryModules.isEmpty()) {
       context.executeStep("generate maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP, new Runnable() {
         @Override
         void run() {
@@ -440,10 +472,10 @@ idea.fatal.error.notification=disabled
           }
           moduleNames.addAll(mavenArtifacts.additionalModules)
           if (!moduleNames.isEmpty()) {
-            mavenArtifactsBuilder.generateMavenArtifacts(moduleNames, 'maven-artifacts')
+            mavenArtifactsBuilder.generateMavenArtifacts(moduleNames, mavenArtifacts.squashedModules, 'maven-artifacts')
           }
           if (!mavenArtifacts.proprietaryModules.isEmpty()) {
-            mavenArtifactsBuilder.generateMavenArtifacts(mavenArtifacts.proprietaryModules, 'proprietary-maven-artifacts')
+            mavenArtifactsBuilder.generateMavenArtifacts(mavenArtifacts.proprietaryModules, Collections.emptyList(), 'proprietary-maven-artifacts')
           }
         }
       })
@@ -459,7 +491,7 @@ idea.fatal.error.notification=disabled
         else {
           Span.current().addEvent("skip building product distributions because " +
                                   "\"intellij.build.target.os\" property is set to \"$BuildOptions.OS_NONE\"")
-          DistributionJARsBuilder.buildSearchableOptions(context, distributionJARsBuilder.getModulesForPluginsToPublish())
+          DistributionJARsBuilder.buildSearchableOptions(context, distributionJARsBuilder.getModulesForPluginsToPublish(), context.classpathCustomizer)
           distributionJARsBuilder.createBuildNonBundledPluginsTask(pluginsToPublish, true, null, context)?.fork()?.join()
         }
         return null
@@ -468,35 +500,7 @@ idea.fatal.error.notification=disabled
 
     if (context.shouldBuildDistributions()) {
       layoutShared(context)
-
-      Path propertiesFile = patchIdeaPropertiesFile()
-      Map<OsFamily, Path> distDirs = Collections.synchronizedMap(new HashMap<OsFamily, Path>(3))
-      runInParallel(List.of(
-        createDistributionForOsTask(OsFamily.MACOS, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
-          @Override
-          OsSpecificDistributionBuilder apply(BuildContext customContext) {
-            return customContext.macDistributionCustomizer?.with {
-              new MacDistributionBuilder(customContext, it, propertiesFile)
-            }
-          }
-        }),
-        createDistributionForOsTask(OsFamily.WINDOWS, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
-          @Override
-          OsSpecificDistributionBuilder apply(BuildContext customContext) {
-            return customContext.windowsDistributionCustomizer?.with {
-              new WindowsDistributionBuilder(customContext, it, propertiesFile, customContext.applicationInfo.getAppInfoXml())
-            }
-          }
-        }),
-        createDistributionForOsTask(OsFamily.LINUX, distDirs, new Function<BuildContext, OsSpecificDistributionBuilder>() {
-          @Override
-          OsSpecificDistributionBuilder apply(BuildContext customContext) {
-            return customContext.linuxDistributionCustomizer?.with {
-              new LinuxDistributionBuilder(customContext, it, propertiesFile)
-            }
-          }
-        })
-      ).findAll { it != null }, context)
+      def distDirs = buildOsSpecificDistributions(context)
       if (Boolean.getBoolean("intellij.build.toolbox.litegen")) {
         if (context.buildNumber == null) {
           context.messages.warning("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
@@ -514,17 +518,15 @@ idea.fatal.error.notification=disabled
                 context.messages.error("Toolbox Lite-Gen version is not specified!")
               }
               else {
-                String[] liteGenArgs = [
-                  'runToolboxLiteGen',
-                  "-Pintellij.build.toolbox.litegen.version=${toolboxLiteGenVersion}",
-                  //NOTE[jo]: right now we assume all installer files are created under the same path
-                  "-Pintellij.build.artifacts=${context.paths.artifacts}",
-                  "-Pintellij.build.productCode=${context.applicationInfo.productCode}",
-                  "-Pintellij.build.isEAP=${context.applicationInfo.isEAP}",
-                  "-Pintellij.build.output=${context.paths.buildOutputRoot}/toolbox-lite-gen",
-                ]
-
-                context.gradle.run('Run Toolbox LiteGen', liteGenArgs)
+                ToolboxLiteGen.runToolboxLiteGen(
+                  context.paths.buildDependenciesCommunityRoot,
+                  context.messages,
+                  toolboxLiteGenVersion,
+                  "/artifacts-dir=${context.paths.artifacts}",
+                  "/product-code=${context.applicationInfo.productCode}",
+                  "/isEAP=${context.applicationInfo.isEAP}",
+                  "/output-dir=${context.paths.buildOutputRoot}/toolbox-lite-gen"
+                )
               }
             }
           })
@@ -532,7 +534,7 @@ idea.fatal.error.notification=disabled
       }
 
       if (context.productProperties.buildCrossPlatformDistribution) {
-        if (distDirs.size() == 3) {
+        if (distDirs.size() == SUPPORTED_DISTRIBUTIONS.size()) {
           context.executeStep("build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP, new Runnable() {
             @Override
             void run() {
@@ -541,11 +543,73 @@ idea.fatal.error.notification=disabled
           })
         }
         else {
-          Span.current().addEvent("skip building cross-platform distribution because some OS-specific distributions were skipped")
+          Span.current().addEvent("skip building cross-platform distribution because some OS/arch-specific distributions were skipped")
         }
       }
     }
     logFreeDiskSpace("after building distributions")
+  }
+
+  private static List<SupportedDistribution> SUPPORTED_DISTRIBUTIONS = [
+    new SupportedDistribution(os: OsFamily.MACOS, arch: JvmArchitecture.x64),
+    new SupportedDistribution(os: OsFamily.MACOS, arch: JvmArchitecture.aarch64),
+    new SupportedDistribution(os: OsFamily.WINDOWS, arch: JvmArchitecture.x64),
+    new SupportedDistribution(os: OsFamily.LINUX, arch: JvmArchitecture.x64),
+  ]
+
+  @Immutable
+  private static final class SupportedDistribution {
+    final OsFamily os
+    final JvmArchitecture arch
+  }
+
+  private Map<Pair<OsFamily, JvmArchitecture>, Path> buildOsSpecificDistributions(BuildContext context) {
+    Path propertiesFile = patchIdeaPropertiesFile(buildContext)
+    Map<Pair<OsFamily, JvmArchitecture>, Path> distDirs = Collections.synchronizedMap(new HashMap<Pair<OsFamily, JvmArchitecture>, Path>(SUPPORTED_DISTRIBUTIONS.size()))
+    buildContext.executeStep("Building OS-specific distributions", BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP) {
+      List<BuildTaskRunnable> createDistTasks = List.of(
+        createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.x64, distDirs, propertiesFile),
+        createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.aarch64, distDirs, propertiesFile),
+        createDistributionForOsTask(OsFamily.WINDOWS, JvmArchitecture.x64, distDirs, propertiesFile),
+        createDistributionForOsTask(OsFamily.LINUX, JvmArchitecture.x64, distDirs, propertiesFile)
+      )
+      runInParallel(createDistTasks.findAll { it != null }, context)
+    }
+    return distDirs
+  }
+
+  private static Path findMacZip(Path directory, JvmArchitecture arch, BuildContext context) {
+    Files.walk(directory).withCloseable { stream ->
+      def suffix = "${arch.name()}.zip"
+      stream.filter { "${it.fileName}".endsWith(suffix) }.findFirst().orElseGet {
+        context.messages.error("No file with suffix $suffix is found in $directory")
+      }
+    }
+  }
+
+  @Override
+  void buildDmg(Path macZipDir) {
+    List<BuildTaskRunnable> createDistTasks = List.of(
+      createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.x64, new Consumer<BuildContext>() {
+        @Override
+        void accept(BuildContext context) {
+          context.macDistributionCustomizer?.with {
+            Path macZip = findMacZip(macZipDir, JvmArchitecture.x64, context)
+            (context.getOsDistributionBuilder(OsFamily.MACOS) as MacDistributionBuilder)
+              ?.buildAndSignDmgFromZip(macZip, JvmArchitecture.x64)
+          }
+        }
+      }),
+      createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.aarch64, new Consumer<BuildContext>() {
+        @Override
+        void accept(BuildContext context) {
+          Path macZip = findMacZip(macZipDir, JvmArchitecture.aarch64, context)
+          (context.getOsDistributionBuilder(OsFamily.MACOS) as MacDistributionBuilder)
+            ?.buildAndSignDmgFromZip(macZip, JvmArchitecture.aarch64)
+        }
+      })
+    )
+    runInParallel(createDistTasks.findAll { it != null }, buildContext)
   }
 
   @Override
@@ -562,17 +626,6 @@ idea.fatal.error.notification=disabled
   @Override
   void generateProjectStructureMapping(File targetFile) {
     new DistributionJARsBuilder(buildContext).generateProjectStructureMapping(targetFile.toPath(), buildContext)
-  }
-
-  private void setupBundledMaven() {
-    buildContext.executeStep("set-up bundled maven", BuildOptions.SETUP_BUNDLED_MAVEN, new Runnable() {
-      @Override
-      void run() {
-        logFreeDiskSpace("before downloading Maven")
-        buildContext.gradle.runOneTask("setupBundledMaven")
-        logFreeDiskSpace("after downloading Maven")
-      }
-    })
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
@@ -651,6 +704,7 @@ idea.fatal.error.notification=disabled
     }
 
     checkModules(properties.mavenArtifacts.additionalModules, "productProperties.mavenArtifacts.additionalModules")
+    checkModules(properties.mavenArtifacts.squashedModules, "productProperties.mavenArtifacts.squashedModules")
     if (buildContext.productProperties.scrambleMainJar) {
       checkModules(buildContext.proprietaryBuildTools.scrambleTool?.namesOfModulesRequiredToBeScrambled,
                    "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled")
@@ -937,44 +991,42 @@ idea.fatal.error.notification=disabled
   @Override
   void runTestBuild() {
     checkProductProperties()
-    setupBundledMaven()
-    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(buildContext)
-    distributionJARsBuilder.buildJARs(buildContext)
-    layoutShared(buildContext)
-    Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
+
+    BuildContext context = buildContext
+
+    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(context)
+    ProjectStructureMapping projectStructureMapping = distributionJARsBuilder.buildJARs(context)
+    layoutShared(context)
+    Map<String, String> checkerConfig = context.productProperties.versionCheckerConfig
     if (checkerConfig != null) {
-      ClassVersionChecker.checkVersions(checkerConfig, buildContext, buildContext.paths.distAllDir)
+      ClassVersionChecker.checkVersions(checkerConfig, context, context.paths.distAllDir)
     }
+
+    if (context.productProperties.buildSourcesArchive) {
+      DistributionJARsBuilder.buildSourcesArchive(projectStructureMapping, context)
+    }
+    buildOsSpecificDistributions(buildContext)
   }
 
   @Override
   void buildUnpackedDistribution(@NotNull Path targetDirectory, boolean includeBinAndRuntime) {
     BuildContext buildContext = buildContext
-    def currentOs = OsFamily.currentOs
+    OsFamily currentOs = OsFamily.currentOs
 
     buildContext.paths.distAllDir = targetDirectory.toAbsolutePath().normalize()
     buildContext.options.targetOS = currentOs.osId
     buildContext.options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
 
-    setupBundledMaven()
+    BundledMavenDownloader.downloadMavenCommonLibs(buildContext.paths.buildDependenciesCommunityRoot)
+    BundledMavenDownloader.downloadMavenDistribution(buildContext.paths.buildDependenciesCommunityRoot)
+
     compileModulesForDistribution(buildContext).buildJARs(buildContext, true)
     JvmArchitecture arch = CpuArch.isArm64() ? JvmArchitecture.aarch64 : JvmArchitecture.x64
     layoutShared(buildContext)
 
     if (includeBinAndRuntime) {
-      Path propertiesFile = patchIdeaPropertiesFile()
-      OsSpecificDistributionBuilder builder
-      switch (currentOs) {
-        case OsFamily.WINDOWS:
-          builder = new WindowsDistributionBuilder(buildContext, buildContext.windowsDistributionCustomizer, propertiesFile, "$buildContext.applicationInfo")
-          break
-        case OsFamily.LINUX:
-          builder = new LinuxDistributionBuilder(buildContext, buildContext.linuxDistributionCustomizer, propertiesFile)
-          break
-        case OsFamily.MACOS:
-          builder = new MacDistributionBuilder(buildContext, buildContext.macDistributionCustomizer, propertiesFile)
-          break
-      }
+      Path propertiesFile = patchIdeaPropertiesFile(buildContext)
+      OsSpecificDistributionBuilder builder = buildContext.getOsDistributionBuilder(currentOs, propertiesFile)
       builder.copyFilesForOsDistribution(targetDirectory, arch)
       buildContext.bundledRuntime.extractTo(BundledRuntime.getProductPrefix(buildContext), currentOs, targetDirectory.resolve("jbr"), arch)
 
@@ -988,7 +1040,7 @@ idea.fatal.error.notification=disabled
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private void updateExecutablePermissions(Path targetDirectory, List<String> executableFilesPatterns) {
+  void updateExecutablePermissions(Path targetDirectory, List<String> executableFilesPatterns) {
     buildContext.ant.chmod(perm: "755") {
       fileset(dir: targetDirectory.toString()) {
         for (String pattern in executableFilesPatterns) {
@@ -1015,5 +1067,51 @@ idea.fatal.error.notification=disabled
       Files.move(distBinDir.resolve("inspect.sh"), targetPath, StandardCopyOption.REPLACE_EXISTING)
       buildContext.patchInspectScript(targetPath)
     }
+  }
+
+  private static void setArrayNodeElementsInBuiltinModules(@NotNull BuildContext context, @NotNull Path file, @NotNull JsonNode root, @NotNull String sectionName, @NotNull List<String> valuesList) {
+    ArrayNode node = root.get(sectionName) as ArrayNode
+    if (node == null) {
+      context.messages.error("'$sectionName' was not found in $file:\n" + Files.readString(file))
+    }
+
+    List<String> existingValues = node.toList().collect { it.asText() }
+    node.removeAll()
+    for (String value : valuesList) {
+      if (!existingValues.contains(value)) {
+        context.messages.error("Value '$value' in '$sectionName' was not found across existing values in $file:\n" +
+                               Files.readString(file))
+      }
+      node.add(value)
+    }
+  }
+
+  static void customizeBuiltinModulesAllowOnlySpecified(
+    @NotNull BuildContext context,
+    @NotNull Path builtinModulesFile,
+    @Nullable List<String> moduleNames,
+    @Nullable List<String> pluginNames,
+    @Nullable List<String> fileExtensions
+  ) {
+    context.messages.info("File $builtinModulesFile before modification:\n" + Files.readString(builtinModulesFile))
+
+    ObjectMapper objectMapper = new ObjectMapper()
+    JsonNode root = objectMapper.readTree(builtinModulesFile.toFile())
+
+    if (moduleNames != null) {
+      setArrayNodeElementsInBuiltinModules(context, builtinModulesFile, root, "modules", moduleNames)
+    }
+
+    if (pluginNames != null) {
+      setArrayNodeElementsInBuiltinModules(context, builtinModulesFile, root, "plugins", pluginNames)
+    }
+
+    if (fileExtensions != null) {
+      setArrayNodeElementsInBuiltinModules(context, builtinModulesFile, root, "extensions", fileExtensions)
+    }
+
+    Files.write(builtinModulesFile, objectMapper.writeValueAsBytes(root))
+
+    context.messages.info("File $builtinModulesFile AFTER modification:\n" + Files.readString(builtinModulesFile))
   }
 }

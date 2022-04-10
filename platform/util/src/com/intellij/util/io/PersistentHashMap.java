@@ -88,15 +88,6 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     force();
   }
 
-  /**
-   * @deprecated Please use an utility function directly, not this method
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  public static void deleteFilesStartingWith(@NotNull File prefixFile) {
-    IOUtil.deleteAllFilesStartingWith(prefixFile);
-  }
-
   @Override
   public final void put(Key key, Value value) throws IOException {
     myImpl.put(key, value);
@@ -105,7 +96,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   /**
    * @deprecated please use {@link AppendablePersistentMap.ValueDataAppender}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public interface ValueDataAppender extends AppendablePersistentMap.ValueDataAppender {
@@ -114,7 +105,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   /**
    * @deprecated please use {@link AppendablePersistentMap.ValueDataAppender} as the second parameter
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public final void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {

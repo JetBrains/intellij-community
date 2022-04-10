@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
@@ -37,6 +38,7 @@ public class TargetLevelPluginQuickFix extends LanguageLevelQuickFix{
       .orElse(option);
 
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+    FileDocumentManager.getInstance().saveDocument(document);
 
     tag = MavenProjectModelModifier.getCompilerPlugin(model).getConfiguration().ensureTagExists();
     Template template = getTemplate(tag, prevTargetValue, targetValue);

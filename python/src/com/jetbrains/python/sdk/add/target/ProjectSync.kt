@@ -2,7 +2,7 @@
 package com.jetbrains.python.sdk.add.target
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Panel
 
 /**
  * Allows to extend the target configuration with additional synchronization options.
@@ -10,7 +10,7 @@ import com.intellij.ui.layout.*
  * The class is stateful.
  */
 interface ProjectSync {
-  fun extendDialogPanelWithOptionalFields(layoutBuilder: LayoutBuilder)
+  fun extendDialogPanelWithOptionalFields(panel: Panel)
 
   fun apply(configuration: TargetEnvironmentConfiguration)
 }

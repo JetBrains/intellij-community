@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore;
 
 import com.intellij.openapi.components.RoamingType;
@@ -11,8 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.annotation.Annotation;
 
 @SuppressWarnings("ClassExplicitlyAnnotation")
-class StorageImpl implements Storage {
-
+final class StorageImpl implements Storage {
   private final String myValue;
   private final String myFile;
   private final boolean myDeprecated;
@@ -99,6 +98,11 @@ class StorageImpl implements Storage {
   @Override
   public boolean exportable() {
     return myExportable;
+  }
+
+  @Override
+  public boolean usePathMacroManager() {
+    return true;
   }
 
   @Override

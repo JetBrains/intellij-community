@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.lang.java.beans.PropertyKind;
@@ -62,6 +62,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.api.*;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
+import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineASTTransformationPerformer;
+import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineTransformationUtilKt;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -192,6 +194,8 @@ public final class ResolveUtil {
 
     if (scope instanceof GrStatementOwner) {
       if (!GdkMethodUtil.processMixinToMetaclass((GrStatementOwner)scope, processor, state, lastParent, place)) return false;
+      GroovyInlineASTTransformationPerformer performer = GroovyInlineTransformationUtilKt.getHierarchicalInlineTransformationPerformer(scope);
+      if (performer != null && !performer.processResolve(processor, state, place)) return false;
     }
 
     return true;
@@ -538,6 +542,11 @@ public final class ResolveUtil {
         //method1 is more general than method2
         return t1.isAssignableFrom(t2);
       }
+    }
+
+    if (GdkMethodUtil.isMacro(method1)) {
+      // macro expansion happens during compilation, so macros always win overload resolution
+      return false;
     }
 
     return true;

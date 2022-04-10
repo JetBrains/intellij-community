@@ -7,6 +7,7 @@ import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -22,10 +23,9 @@ import org.jetbrains.kotlin.idea.core.script.configuration.loader.DefaultScriptC
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoader
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoadingContext
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptOutsiderFileConfigurationLoader
-import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
-import org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.*
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
 import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -538,11 +538,7 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
         UIUtil.dispatchAllInvocationEvents()
     }
 
-    fun collectConfigurations(builder: ScriptClassRootsBuilder) {
-        // todo: drop the hell below
-        // keep this one only:
-        // cache.allApplied().forEach { (vFile, configuration) -> builder.add(vFile, configuration) }
-
+    private fun collectConfigurationsWithCache(builder: ScriptClassRootsBuilder) {
         // own builder for saving to storage
         val rootsStorage = ScriptClassRootsStorage.getInstance(project)
         val storageBuilder = ScriptClassRootsBuilder.fromStorage(project, rootsStorage)
@@ -559,7 +555,17 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
 
         builder.add(ownBuilder)
     }
+
+    fun collectConfigurations(builder: ScriptClassRootsBuilder) {
+        if (isFSRootsStorageEnabled()) {
+            collectConfigurationsWithCache(builder)
+        } else {
+            cache.allApplied().forEach { (vFile, configuration) -> builder.add(vFile, configuration) }
+        }
+    }
 }
+
+internal fun isFSRootsStorageEnabled(): Boolean = Registry.`is`("kotlin.scripting.fs.roots.storage.enabled")
 
 object DefaultScriptConfigurationManagerExtensions {
     val LOADER: ProjectExtensionPointName<ScriptConfigurationLoader> =

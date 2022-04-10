@@ -5,7 +5,6 @@ import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -57,11 +56,6 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   @Override
   protected boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     return false;
-  }
-
-  @Override
-  protected boolean isAvailableForLanguage(Language language) {
-    return true;
   }
 
   @Override

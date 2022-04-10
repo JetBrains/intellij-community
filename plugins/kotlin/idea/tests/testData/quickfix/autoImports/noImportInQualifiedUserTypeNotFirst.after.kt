@@ -1,6 +1,7 @@
-// "class org.jetbrains.kotlin.idea.quickfix.ImportFix" "false"
+// "Import" "false"
 // ERROR: Unresolved reference: SomeTest
 
 package testing
 
 class Some: testing.<caret>SomeTest
+/* IGNORE_FIR */

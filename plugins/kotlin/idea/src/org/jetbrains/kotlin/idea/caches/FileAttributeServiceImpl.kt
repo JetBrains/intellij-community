@@ -6,6 +6,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.util.io.DataInputOutputUtil
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.CachedAttributeData
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.FileAttributeService
 import java.io.DataInput
 import java.io.DataOutput
 import java.util.concurrent.ConcurrentHashMap
@@ -42,7 +44,7 @@ class FileAttributeServiceImpl : FileAttributeService {
 
         val data = CachedAttributeData(value, timeStamp = file.timeStamp)
 
-        attribute.writeAttribute(file).use {
+        attribute.writeFileAttribute(file).use {
             DataInputOutputUtil.writeTIME(it, data.timeStamp)
             writeValueFun(it, value)
         }
@@ -55,8 +57,7 @@ class FileAttributeServiceImpl : FileAttributeService {
         if (file !is VirtualFileWithId) return null
         if (!file.isValid) return null
 
-        val stream = attribute.readAttribute(file) ?: return null
-        return stream.use {
+        return attribute.readFileAttribute(file)?.use {
             val timeStamp = DataInputOutputUtil.readTIME(it)
             val value = readValueFun(it)
 

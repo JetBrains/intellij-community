@@ -1,0 +1,89 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.plugins.auth
+
+import com.google.common.net.UrlEscapers
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.io.HttpRequests
+import org.jetbrains.annotations.NotNull
+import java.net.URI
+import java.util.*
+
+/**
+ * Collects custom auth headers from EPs and validates them
+ *
+ * This service keeps track of [PluginRepositoryAuthProvider] injected headers to ensure that:
+ * - each contributor handles only 1 domain
+ * - each domain has no more than 1 contributor
+ */
+@Service(Service.Level.APP)
+class PluginRepositoryAuthService {
+  private val contributorToDomainCache = Collections.synchronizedMap(WeakHashMap<PluginRepositoryAuthProvider, String>())
+
+  val connectionTuner = HttpRequests.ConnectionTuner { connection ->
+    try {
+      getAllCustomHeaders(connection.url.toString())
+        .forEach { (k, v) -> connection.addRequestProperty(k, v) }
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+    }
+  }
+
+  @NotNull
+  fun getAllCustomHeaders(@NotNull url: String): Map<String, String> {
+    val allContributors = PluginRepositoryAuthProvider.EP_NAME.extensionsIfPointIsRegistered
+
+    val domain = getDomainFromUrl(url) ?: return cancelWithWarning("Can't get domain from url: $url")
+
+    val domainMatchingContributors = allContributors.filter { it.canHandleSafe(domain) }
+
+    if (domainMatchingContributors.isEmpty())
+      return emptyMap()
+    if (domainMatchingContributors.size > 1)
+      return cancelWithWarning("Multiple contributors found for domain: $domain")
+
+    val primeCandidate = domainMatchingContributors.first()
+
+    if (!handlesSingleDomain(primeCandidate, domain))
+      return cancelWithWarning("Contributor $primeCandidate tried to inject into multiple domains")
+
+    return primeCandidate
+             .also { contributor -> updateCaches(domain, contributor) }
+             .getCustomHeadersSafe(url)
+  }
+
+  private fun handlesSingleDomain(@NotNull contributor: PluginRepositoryAuthProvider, @NotNull domain: String): Boolean {
+    val lastKnownDomain = contributorToDomainCache[contributor]
+    return domain == lastKnownDomain || lastKnownDomain == null
+  }
+
+  private fun getDomainFromUrl(url: String): String? = URI(UrlEscapers.urlFragmentEscaper().escape(url)).host
+
+  private fun updateCaches(@NotNull url: String, @NotNull contributor: PluginRepositoryAuthProvider) {
+    contributorToDomainCache[contributor] = url
+  }
+
+  private fun cancelWithWarning(message: String): Map<String, String> {
+    LOG.warn(message)
+    return emptyMap()
+  }
+}
+
+private val LOG = logger<PluginRepositoryAuthService>()
+
+private fun PluginRepositoryAuthProvider.canHandleSafe(domain: String): Boolean = withLogging(false) { canHandle(domain) }
+
+private fun PluginRepositoryAuthProvider.getCustomHeadersSafe(url: String): Map<String, String> {
+  return withLogging(emptyMap()) { getAuthHeaders(url) }
+}
+
+private inline fun <T> withLogging(default: T, f: () -> T): T {
+  return try {
+    f()
+  }
+  catch (e: Exception) {
+    LOG.error(e)
+    default
+  }
+}

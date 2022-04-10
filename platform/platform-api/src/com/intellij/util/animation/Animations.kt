@@ -34,7 +34,7 @@ fun makeSequent(vararg animations: Animation): Collection<Animation> {
  *
  * May be used as an anchor frame for any of [Animation.runWhenScheduled], [Animation.runWhenUpdated] or [Animation.runWhenExpired] methods.
  */
-fun animation(): Animation = animation {}
+fun animation(): Animation = Animation {}
 
 /**
  * Very common animation.
@@ -58,8 +58,11 @@ fun animation(from: Long, to: Long, consumer: LongConsumer): Animation {
 }
 
 fun animation(from: Float, to: Float, consumer: FloatConsumer): Animation {
-  return Animation(DoubleConsumer { value ->
-    consumer.accept(from + (value * (to - from)).toFloat())
+  // To prevent precision lost, convert values into double.
+  // Example of precision lost is:
+  // 0.9f + (1.0f * (0.1f - 0.9f)) == 0.100000024
+  return animation(from.toDouble(), to.toDouble(), DoubleConsumer {
+    consumer.accept(it.toFloat())
   })
 }
 

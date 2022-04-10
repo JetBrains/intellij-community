@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 val testExternal
 
 class Some(testParam : Int) {
@@ -10,3 +11,4 @@ class Some(testParam : Int) {
 }
 
 // EXIST: testParam, testExternal, testing
+// FIR_COMPARISON

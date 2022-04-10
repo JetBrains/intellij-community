@@ -5,6 +5,7 @@ fun test(x: Int, b: Boolean) {
             if (b) 1 else {
                 2 // comment
             }
+
         else ->
             0
     }

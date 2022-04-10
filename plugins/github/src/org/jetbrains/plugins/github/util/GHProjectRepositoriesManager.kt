@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.util
 
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
@@ -14,10 +14,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.EventDispatcher
+import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.messages.Topic
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
@@ -26,20 +25,20 @@ import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
-import com.intellij.collaboration.ui.SimpleEventListener
-import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
+import kotlin.properties.Delegates.observable
 
 @Service
 class GHProjectRepositoriesManager(private val project: Project) : Disposable {
-
-  private val updateQueue = MergingUpdateQueue("GitHub repositories update", 50, true, null, this, null, true)
-    .usePassThroughInUnitTestMode()
-  private val eventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
+  private val updateAlarm = SingleAlarm(task = ::doUpdateRepositories, delay = 50, parentDisposable = this)
 
   private val accountManager: GHAccountManager
     get() = service()
 
-  var knownRepositories by observableField(emptySet<GHGitRepositoryMapping>(), eventDispatcher)
+  var knownRepositories by observable(emptySet<GHGitRepositoryMapping>()) { _, oldValue, newValue ->
+    if (oldValue != newValue) {
+      ApplicationManager.getApplication().messageBus.syncPublisher(LIST_CHANGES_TOPIC).repositoryListChanged(newValue, project)
+    }
+  }
     private set
 
   private val serversFromDiscovery = HashSet<GithubServerPath>()
@@ -53,13 +52,20 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     updateRepositories()
   }
 
-  fun findKnownRepositories(repository: GitRepository) = knownRepositories.filter {
-    it.gitRemoteUrlCoordinates.repository == repository
+  fun findKnownRepositories(repository: GitRepository): List<GHGitRepositoryMapping> {
+    return knownRepositories.filter {
+      it.gitRemoteUrlCoordinates.repository == repository
+    }
   }
 
   @CalledInAny
   private fun updateRepositories() {
-    updateQueue.queue(Update.create(UPDATE_IDENTITY, ::doUpdateRepositories))
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      doUpdateRepositories()
+    }
+    else {
+      updateAlarm.request()
+    }
   }
 
   //TODO: execute on pooled thread - need to make GithubAccountManager ready
@@ -92,7 +98,9 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     val repositories = HashSet<GHGitRepositoryMapping>()
     for (remote in remotes) {
       val repository = servers.find { it.matches(remote.url) }?.let { GHGitRepositoryMapping.create(it, remote) }
-      if (repository != null) repositories.add(repository)
+      if (repository != null) {
+        repositories.add(repository)
+      }
       else {
         scheduleEnterpriseServerDiscovery(remote)
       }
@@ -101,7 +109,9 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     knownRepositories = repositories
 
     for (server in authenticatedServers) {
-      if (server.isGithubDotCom) continue
+      if (server.isGithubDotCom) {
+        continue
+      }
       service<GHEnterpriseServerMetadataLoader>().loadMetadata(server).successOnEdt {
         GHPRStatisticsCollector.logEnterpriseServerMeta(project, server, it)
       }
@@ -144,18 +154,27 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     }
   }
 
-  fun addRepositoryListChangedListener(disposable: Disposable, listener: () -> Unit) =
-    SimpleEventListener.addDisposableListener(eventDispatcher, disposable, listener)
+  fun addRepositoryListChangedListener(disposable: Disposable, listener: () -> Unit) {
+    ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(LIST_CHANGES_TOPIC, object : ListChangeListener {
+      override fun repositoryListChanged(newList: Set<GHGitRepositoryMapping>, project: Project) = listener()
+    })
+  }
 
-  class RemoteUrlsListener(private val project: Project) : VcsRepositoryMappingListener, GitRepositoryChangeListener {
+  internal class RemoteUrlsListener(private val project: Project) : VcsRepositoryMappingListener, GitRepositoryChangeListener {
     override fun mappingChanged() = runInEdt(project) { updateRepositories(project) }
     override fun repositoryChanged(repository: GitRepository) = runInEdt(project) { updateRepositories(project) }
+  }
+
+  interface ListChangeListener {
+    fun repositoryListChanged(newList: Set<GHGitRepositoryMapping>, project: Project)
   }
 
   companion object {
     private val LOG = logger<GHProjectRepositoriesManager>()
 
-    private val UPDATE_IDENTITY = Any()
+    @JvmField
+    @Topic.AppLevel
+    val LIST_CHANGES_TOPIC = Topic(ListChangeListener::class.java, Topic.BroadcastDirection.NONE)
 
     private inline fun runInEdt(project: Project, crossinline runnable: () -> Unit) {
       val application = ApplicationManager.getApplication()
@@ -165,7 +184,9 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
 
     private fun updateRepositories(project: Project) {
       try {
-        if (!project.isDisposed) project.service<GHProjectRepositoriesManager>().updateRepositories()
+        if (!project.isDisposed) {
+          project.service<GHProjectRepositoriesManager>().updateRepositories()
+        }
       }
       catch (e: Exception) {
         LOG.info("Error occurred while updating repositories", e)

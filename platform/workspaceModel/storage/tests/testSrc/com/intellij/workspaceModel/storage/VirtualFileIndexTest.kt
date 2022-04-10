@@ -1,15 +1,26 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.ApplicationRule
 import com.intellij.workspaceModel.storage.entities.*
+import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert.*
+import org.junit.Assume
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 class VirtualFileIndexTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
+
+  @Rule
+  @JvmField
+  var application = ApplicationRule()
+
   @Before
   fun setUp() {
     virtualFileManager = VirtualFileUrlManagerImpl()
@@ -158,5 +169,27 @@ class VirtualFileIndexTest {
     assertEquals(fileUrlC, virtualFile.first().url)
     assertNotEquals(fileUrlB, entityB.fileProperty.url)
     assertEquals(entityB.fileProperty, virtualFile.first())
+  }
+
+  @Test
+  fun `check case sensitivity`() {
+    Assume.assumeFalse(SystemInfo.isFileSystemCaseSensitive)
+    Registry.get("ide.new.project.model.index.case.sensitivity").setValue(true)
+    virtualFileManager = VirtualFileUrlManagerImpl()
+
+    val fileUrlA = "/user/opt/app/a.txt"
+    val fileUrlB = "/user/opt/App/a.txt"
+    val fileUrlC = "/user/opt/app/c.txt"
+    val builder = createEmptyBuilder()
+    val entityA = builder.addVFUEntity("bar", fileUrlA, virtualFileManager)
+    val entityB = builder.addVFUEntity("foo", fileUrlB, virtualFileManager)
+    builder.addVFUEntity("baz", fileUrlC, virtualFileManager)
+    builder.assertConsistency()
+    assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityA.id).first())
+    assertEquals(entityB.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles(entityB.id).first())
+    assertTrue(entityA.fileProperty === entityB.fileProperty)
+
+    assertEquals(fileUrlA, entityA.fileProperty.url)
+    assertEquals(fileUrlA, entityB.fileProperty.url)
   }
 }

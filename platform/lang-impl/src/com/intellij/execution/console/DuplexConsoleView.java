@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> extends JPanel implements ConsoleView,
                                                                                                        ObservableConsoleView,
@@ -51,6 +52,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   @NotNull
   private final SwitchDuplexConsoleViewAction mySwitchConsoleAction;
   private boolean myDisableSwitchConsoleActionOnProcessEnd = true;
+  private final Collection<DuplexConsoleListener> myListeners = new CopyOnWriteArraySet<>();
 
   public DuplexConsoleView(@NotNull S primaryConsoleView, @NotNull T secondaryConsoleView) {
     this(primaryConsoleView, secondaryConsoleView, null);
@@ -105,6 +107,15 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getSubConsoleView(primary).getComponent(), true));
 
     myPrimary = primary;
+
+    for (DuplexConsoleListener listener : myListeners) {
+      listener.consoleEnabled(primary);
+    }
+  }
+
+  public void addSwitchListener(@NotNull DuplexConsoleListener listener, @NotNull Disposable parent) {
+    myListeners.add(listener);
+    Disposer.register(parent, () -> myListeners.remove(listener));
   }
 
   public boolean isPrimaryConsoleEnabled() {

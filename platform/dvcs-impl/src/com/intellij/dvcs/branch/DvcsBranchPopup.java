@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.branch;
 
+import com.intellij.dvcs.DvcsNotificationIdsHolder;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.Repository;
@@ -54,8 +55,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     myMultiRootBranchConfig = multiRootBranchConfig;
     myInSpecificRepository = myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC;
     String title = buildTitle(currentRepository);
-    myPopup = new BranchActionGroupPopup(title, myProject, preselectActionCondition,
-                                         ActionGroupUtil.forceRecursiveUpdateInBackground(createActions()), dimensionKey, dataContext);
+    myPopup = new BranchActionGroupPopup(title, myProject, preselectActionCondition, createActions(), dimensionKey, dataContext);
     initBranchSyncPolicyIfNotInitialized();
     warnThatBranchesDivergedIfNeeded();
     if (myRepositoryManager.moreThanOneRoot()) {
@@ -94,7 +94,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     VcsNotifier.getInstance(myProject).notify(
       STANDARD_NOTIFICATION
         .createNotification(DvcsBundle.message("notification.message.branch.operations.are.executed.on.all.roots"), NotificationType.INFORMATION)
-        .setDisplayId("vcs.branch.operations.are.executed.on.all.roots")
+        .setDisplayId(DvcsNotificationIdsHolder.BRANCH_OPERATIONS_ON_ALL_ROOTS)
         .addAction(
           NotificationAction.create(DvcsBundle.message("action.NotificationAction.DvcsBranchPopup.text.disable"), (event, notification) -> {
             ShowSettingsUtil.getInstance().showSettingsDialog(myProject, myVcs.getDisplayName());

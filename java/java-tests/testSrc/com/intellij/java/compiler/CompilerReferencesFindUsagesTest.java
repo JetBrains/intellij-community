@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
@@ -32,13 +31,10 @@ import java.util.Collection;
 @SkipSlowTestLocally
 public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
   //TODO merge tests
-  private boolean myDefaultEnableState;
   private CompilerTester myCompilerTester;
 
   @Override
   public void setUp() throws Exception {
-    myDefaultEnableState = CompilerReferenceService.IS_ENABLED_KEY.asBoolean();
-    CompilerReferenceService.IS_ENABLED_KEY.setValue(true);
     super.setUp();
     myCompilerTester = new CompilerTester(myModule);
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_8);
@@ -47,7 +43,6 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
   @Override
   public void tearDown() throws Exception {
     try {
-      CompilerReferenceService.IS_ENABLED_KEY.setValue(myDefaultEnableState);
       myCompilerTester.tearDown();
     }
     catch (Throwable e) {

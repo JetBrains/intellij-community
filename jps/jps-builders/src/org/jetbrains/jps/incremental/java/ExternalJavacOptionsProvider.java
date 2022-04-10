@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.java;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 
@@ -29,6 +30,7 @@ public interface ExternalJavacOptionsProvider {
    * @deprecated Use {@link #getOptions(JavaCompilingTool, int)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   default Collection<String> getOptions(@NotNull JavaCompilingTool tool) {
     return Collections.emptyList();

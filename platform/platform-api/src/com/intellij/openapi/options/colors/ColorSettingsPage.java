@@ -43,6 +43,9 @@ public interface ColorSettingsPage extends ColorAndFontDescriptorsProvider {
    * surrounded by XML-like tags, for example: {@code <class>MyClass</class>}.
    * The mapping between the names of the tags and the text attribute keys used for highlighting
    * is defined by the {@link #getAdditionalHighlightingTagToDescriptorMap()} method.
+   * <p>The returned text <strong>must use {@code \n} as a line separator</strong>, so if you read it from a file make sure to adjust it via 
+   * {@link com.intellij.openapi.util.text.StringUtil#convertLineSeparators(String)}.
+   * </p>
    *
    * @return the text to show in the preview pane or empty text to hide it.
    */

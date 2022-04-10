@@ -17,13 +17,23 @@ abstract class AccountsListModelBase<A : Account, Cred> : AccountsListModel<A, C
   override val newCredentials = mutableMapOf<A, Cred>()
 
   override val accountsListModel = CollectionListModel<A>()
-  override val busyStateModel = SingleValueModel(false)
 
   private val credentialsChangesListeners = CopyOnWriteArrayList<(A) -> Unit>()
 
   override fun clearNewCredentials() = newCredentials.clear()
 
-  protected fun notifyCredentialsChanged(account: A) {
+  protected fun add(account: A, cred: Cred) {
+    accountsListModel.add(account)
+    newCredentials[account] = cred
+    notifyCredentialsChanged(account)
+  }
+
+  protected fun update(account: A, cred: Cred) {
+    newCredentials[account] = cred
+    notifyCredentialsChanged(account)
+  }
+
+  private fun notifyCredentialsChanged(account: A) {
     credentialsChangesListeners.forEach { it(account) }
     accountsListModel.contentsChanged(account)
   }

@@ -9,7 +9,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.pom.PomTargetPsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,8 +42,7 @@ public class DomPatterns {
   }
 
   /** @deprecated use {@link #tagWithDom(String, ElementPattern)} and {@link #attributeWithDom(String, ElementPattern)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static XmlElementPattern.Capture withDom(ElementPattern<? extends DomElement> pattern) {
     return new XmlElementPattern.Capture().with(new PatternCondition<>("tagWithDom") {

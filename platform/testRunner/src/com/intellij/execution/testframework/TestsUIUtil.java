@@ -1,11 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -27,7 +30,7 @@ import java.awt.*;
 import java.util.List;
 
 public final class TestsUIUtil {
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Test Runner");
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Test Runner");
 
   public static final Color PASSED_COLOR = new Color(0, 128, 0);
   private static final @NonNls String TESTS = "tests";
@@ -48,6 +51,11 @@ public final class TestsUIUtil {
           return true;
         }
       }
+      return false;
+    }
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    if (editor != null && !editor.getSelectionModel().hasSelection() && editor.getCaretModel().getCaretCount() < 2) {
+      return true;
     }
     return false;
   }

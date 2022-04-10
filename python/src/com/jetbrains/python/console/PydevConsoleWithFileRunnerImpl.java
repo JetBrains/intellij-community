@@ -53,11 +53,6 @@ public class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
     }
 
     @Override
-    public String getWorkingDirectory() {
-      return super.getWorkingDirectory();
-    }
-
-    @Override
     public String getInterpreterOptions() {
       return myConfig.getInterpreterOptions();
     }

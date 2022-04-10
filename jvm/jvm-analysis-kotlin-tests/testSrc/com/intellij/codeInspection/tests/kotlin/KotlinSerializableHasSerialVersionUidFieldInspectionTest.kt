@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.codeInspection.tests.SerializableHasSerialVersionUidFieldInspectionTestBase
+import com.intellij.codeInspection.tests.ULanguage
 import com.intellij.pom.java.LanguageLevel
 
 class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHasSerialVersionUidFieldInspectionTestBase() {

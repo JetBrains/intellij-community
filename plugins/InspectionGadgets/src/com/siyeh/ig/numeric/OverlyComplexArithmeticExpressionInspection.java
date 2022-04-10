@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractMethodFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,11 +31,9 @@ import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public class OverlyComplexArithmeticExpressionInspection
-  extends BaseInspection {
+public class OverlyComplexArithmeticExpressionInspection extends BaseInspection {
 
-  protected static final Set<IElementType> arithmeticTokens =
-    new HashSet<>(5);
+  private static final Set<IElementType> arithmeticTokens = new HashSet<>(5);
   private static final int TERM_LIMIT = 6;
 
   static {
@@ -53,8 +52,7 @@ public class OverlyComplexArithmeticExpressionInspection
   @Override
   public JComponent createOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "overly.complex.arithmetic.expression.max.number.option"),
+      InspectionGadgetsBundle.message("overly.complex.arithmetic.expression.max.number.option"),
       this, "m_limit");
   }
 
@@ -66,8 +64,7 @@ public class OverlyComplexArithmeticExpressionInspection
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "overly.complex.arithmetic.expression.problem.descriptor");
+    return InspectionGadgetsBundle.message("overly.complex.arithmetic.expression.problem.descriptor");
   }
 
   @Override
@@ -80,8 +77,7 @@ public class OverlyComplexArithmeticExpressionInspection
     return new OverlyComplexArithmeticExpressionVisitor();
   }
 
-  private class OverlyComplexArithmeticExpressionVisitor
-    extends BaseInspectionVisitor {
+  private class OverlyComplexArithmeticExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitPolyadicExpression(PsiPolyadicExpression expression) {
@@ -90,28 +86,30 @@ public class OverlyComplexArithmeticExpressionInspection
     }
 
     @Override
-    public void visitPrefixExpression(
-      @NotNull PsiPrefixExpression expression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitParenthesizedExpression(
-      PsiParenthesizedExpression expression) {
+    public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
       super.visitParenthesizedExpression(expression);
       checkExpression(expression);
     }
 
     private void checkExpression(PsiExpression expression) {
-      if (isParentArithmetic(expression)) {
+      if (!isArithmetic(expression)) {
         return;
       }
-      if (!isArithmetic(expression)) {
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof PsiExpression && isArithmetic((PsiExpression)parent)) {
         return;
       }
       final int numTerms = countTerms(expression);
       if (numTerms <= m_limit) {
+        return;
+      }
+      if (ExpressionUtils.isOnlyExpressionInMethod(expression)) {
         return;
       }
       registerError(expression);
@@ -130,23 +128,16 @@ public class OverlyComplexArithmeticExpressionInspection
         return count;
       }
       else if (expression instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression =
-          (PsiPrefixExpression)expression;
+        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
         final PsiExpression operand = prefixExpression.getOperand();
         return countTerms(operand);
       }
       else if (expression instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression =
-          (PsiParenthesizedExpression)expression;
+        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
         final PsiExpression contents = parenthesizedExpression.getExpression();
         return countTerms(contents);
       }
       return 1;
-    }
-
-    private boolean isParentArithmetic(PsiExpression expression) {
-      final PsiElement parent = expression.getParent();
-      return parent instanceof PsiExpression && isArithmetic((PsiExpression)parent);
     }
 
     private boolean isArithmetic(PsiExpression expression) {
@@ -159,15 +150,12 @@ public class OverlyComplexArithmeticExpressionInspection
         return arithmeticTokens.contains(binaryExpression.getOperationTokenType());
       }
       else if (expression instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression =
-          (PsiPrefixExpression)expression;
+        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
         return arithmeticTokens.contains(prefixExpression.getOperationTokenType());
       }
       else if (expression instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression =
-          (PsiParenthesizedExpression)expression;
-        final PsiExpression contents =
-          parenthesizedExpression.getExpression();
+        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+        final PsiExpression contents = parenthesizedExpression.getExpression();
         return isArithmetic(contents);
       }
       return false;

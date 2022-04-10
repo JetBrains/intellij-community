@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -122,7 +121,7 @@ class TBPanelActionGroup extends TBPanel {
 
       final boolean result;
       try {
-        result = !ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, false);
+        result = !ActionUtil.performDumbAwareUpdate(action, event, false);
       } catch (Throwable exc) {
         continue;
       }
@@ -434,12 +433,11 @@ class TBPanelActionGroup extends TBPanel {
     if (!DISABLE_ASYNC_UPDATE && Utils.isAsyncDataContext(dataContext)) {
       if (myLastUpdate != null) myLastUpdate.cancel();
       myLastUpdate = Utils.expandActionGroupAsync(
-          LaterInvocator.isInModalContext(), myActionGroup, myFactory, dataContext, ActionPlaces.TOUCHBAR_GENERAL);
+          myActionGroup, myFactory, dataContext, ActionPlaces.TOUCHBAR_GENERAL);
       myLastUpdate.onSuccess(actions -> _applyPresentationChanges(actions)).onProcessed(__ -> myLastUpdate = null);
     }
     else {
       List<AnAction> actions = Utils.expandActionGroupWithTimeout(
-        LaterInvocator.isInModalContext(),
         myActionGroup,
         myFactory, dataContext,
         ActionPlaces.TOUCHBAR_GENERAL,

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.intention.*;
@@ -15,11 +15,12 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.Label;
 import com.intellij.openapi.util.NlsContexts.LinkLabel;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,6 +29,7 @@ import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
@@ -111,6 +113,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     mySchemeSupplier = editor != null ? () -> editor.getColorsScheme() : GLOBAL_SCHEME_SUPPLIER;
     myBackgroundColor = backgroundColor;
     myBackgroundColorKey = backgroundColorKey != null ? backgroundColorKey : EditorColors.NOTIFICATION_BACKGROUND;
+    putClientProperty(FileEditorManager.SEPARATOR_COLOR, JBUI.CurrentTheme.Editor.BORDER_COLOR);
 
     JPanel panel = new NonOpaquePanel(new BorderLayout());
     panel.add(BorderLayout.CENTER, myLabel);
@@ -120,7 +123,8 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
     add(BorderLayout.CENTER, panel);
     add(BorderLayout.EAST, myGearLabel);
-    setBorder(JBUI.Borders.empty(0, 10));
+    JBInsets defaultInsets = ExperimentalUI.isNewUI() && editor != null ? JBInsets.create(9, 16) : JBInsets.create(0, 10);
+    setBorder(JBUI.Borders.empty(JBUI.insets("Editor.Notification.borderInsets", defaultInsets)));
     setOpaque(true);
 
     myLabel.setForeground(mySchemeSupplier.get().getDefaultForeground());
@@ -175,16 +179,16 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return UIUtil.getPanelBackground();
   }
 
-  public void setText(@LinkLabel String text) {
+  public void setText(@NotNull @Label String text) {
     myLabel.setText(text);
   }
 
-  public EditorNotificationPanel text(@NotNull @NlsContexts.Label String text) {
+  public EditorNotificationPanel text(@NotNull @Label String text) {
     myLabel.setText(text);
     return this;
   }
 
-  public @NotNull String getText() {
+  public @NotNull @Label String getText() {
     return myLabel.getText();
   }
 

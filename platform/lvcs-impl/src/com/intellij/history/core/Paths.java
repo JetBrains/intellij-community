@@ -62,8 +62,8 @@ public final class Paths {
       return Collections.singleton(root);
     }
 
-    Iterable<String> tail = splitInner(path.substring(root.length()));
-    return ContainerUtil.concat(Collections.singleton(root), tail);
+    List<String> tail = splitInner(path.substring(root.length()));
+    return ContainerUtil.concat(Collections.singletonList(root), tail);
   }
 
   @NotNull

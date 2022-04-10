@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -54,12 +53,7 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
     }
 
     Caret caret = fileAndEditor.getSecond().getCaretModel().getCurrentCaret();
-    final Couple<PsiElement> elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(fileAndEditor.getFirst(), caret);
-
-    if (elements == null) {
-      e.getPresentation().setEnabled(false);
-      return;
-    }
+    final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(fileAndEditor.getFirst(), caret);
 
     PsiElement parentLink =
       MarkdownActionUtil.getCommonParentOfTypes(elements.getFirst(), elements.getSecond(), MarkdownTokenTypeSets.LINKS);
@@ -83,8 +77,7 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
     final PsiFile file = fileAndEditor.getFirst();
 
     Caret caret = editor.getCaretModel().getCurrentCaret();
-    Couple<PsiElement> elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(file, caret);
-    assert elements != null;
+    final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(file, caret);
 
     PsiElement link =
       MarkdownActionUtil.getCommonTopmostParentOfTypes(elements.getFirst(), elements.getSecond(), MarkdownTokenTypeSets.LINKS);
@@ -94,7 +87,7 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
     }
 
     Project project = link.getProject();
-    WriteCommandAction.runWriteCommandAction(file.getProject(), () -> {
+    WriteCommandAction.runWriteCommandAction(file.getProject(), null, null, () -> {
       //disable postprocess reformatting, cause otherwise we will lose psi pointers after [doPostponedOperationsAndUnblockDocument]
       PostprocessReformattingAspect.getInstance(file.getProject()).disablePostprocessFormattingInside(
         () -> {
@@ -159,7 +152,7 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
   }
 
   public static void replaceDuplicate(@NotNull PsiElement match, @NotNull String referenceText) {
-    WriteCommandAction.runWriteCommandAction(match.getProject(), () -> {
+    WriteCommandAction.runWriteCommandAction(match.getProject(), null, null, () -> {
       PsiFile file = match.getContainingFile();
       if (!file.isValid()) {
         return;
@@ -215,9 +208,11 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
       url = link.getText();
     }
     else if (type == INLINE_LINK) {
-      SyntaxTraverser<PsiElement> syntaxTraverser = SyntaxTraverser.psiTraverser();
-
-      url = syntaxTraverser.children(link).find(child -> PsiUtilCore.getElementType(child) == LINK_DESTINATION).getText();
+      final var syntaxTraverser = SyntaxTraverser.psiTraverser();
+      final var child = syntaxTraverser.children(link).find(it -> PsiUtilCore.getElementType(it) == LINK_DESTINATION);
+      if (child != null) {
+        url = child.getText();
+      }
     }
 
     return url;
@@ -339,30 +334,22 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
                                                    //generated link
                                                    && PsiTreeUtil.findFirstParent(element, element1 -> PsiUtilCore.getElementType(element1) == FULL_REFERENCE_LINK) == null);
 
-      boolean showWarning =
-        !Arrays.stream(duplicatedLinks)
-          .allMatch(link -> {
-            PsiElement[] children = link.getChildren();
-            return (children.length == 0 && myTitleText == null) ||
-                   (children.length == 3
-                    && PsiUtilCore.getElementType(children[2]) == LINK_TITLE
-                    && children[2].getText().equals(myTitleText));
-          });
-
+      final var showWarning = !ContainerUtil.and(duplicatedLinks, link -> {
+        final var children = link.getChildren();
+        return (children.length == 0 && myTitleText == null) ||
+               (children.length == 3
+                && PsiUtilCore.getElementType(children[2]) == LINK_TITLE
+                && children[2].getText().equals(myTitleText));
+      });
       if (duplicatedLinks.length > 0) {
-        List<SmartPsiElementPointer<PsiElement>> duplicates =
-          ContainerUtil.map(duplicatedLinks, link -> SmartPointerManager.createPointer(link));
-
+        final var duplicates = ContainerUtil.map(duplicatedLinks, link -> SmartPointerManager.createPointer(link));
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           replaceDuplicates(myFile, myEditor, duplicates, referenceText, showWarning);
           PsiDocumentManager.getInstance(myFile.getProject()).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
-
           Document document = myEditor.getDocument();
           document.setText(document.getText() + "\nTitles Warning: " + showWarning);
-        }
-        else {
-          ApplicationManager.getApplication().invokeLater(
-            () -> replaceDuplicates(myFile, myEditor, duplicates, referenceText, showWarning));
+        } else {
+          ApplicationManager.getApplication().invokeLater(() -> replaceDuplicates(myFile, myEditor, duplicates, referenceText, showWarning));
         }
       }
     }

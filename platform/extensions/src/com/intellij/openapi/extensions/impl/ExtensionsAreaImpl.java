@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.Disposable;
@@ -58,8 +58,6 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
           throw componentManager.createError("'name' attribute not specified for extension point in '" + pluginDescriptor + "' plugin",
                                              pluginDescriptor.getPluginId());
         }
-
-        assert pluginDescriptor.getPluginId() != null;
         pointName = pluginDescriptor.getPluginId().getIdString() + '.' + name;
       }
 
@@ -83,15 +81,14 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   public boolean unregisterExtensions(@NotNull String extensionPointName,
                                       @NotNull PluginDescriptor pluginDescriptor,
-                                      @NotNull List<ExtensionDescriptor> elements,
-                                      @NotNull List<Runnable> priorityListenerCallbacks,
-                                      @NotNull List<Runnable> listenerCallbacks) {
+                                      @NotNull List<? super Runnable> priorityListenerCallbacks,
+                                      @NotNull List<? super Runnable> listenerCallbacks) {
     ExtensionPointImpl<?> point = getExtensionPointIfRegistered(extensionPointName);
     if (point == null) {
       return false;
     }
 
-    point.unregisterExtensions(componentManager, pluginDescriptor, elements, priorityListenerCallbacks, listenerCallbacks);
+    point.unregisterExtensions(componentManager, pluginDescriptor, priorityListenerCallbacks, listenerCallbacks);
     return true;
   }
 
@@ -109,7 +106,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   /**
-   * You must call {@link #resetExtensionPoints} before otherwise event ExtensionEvent.REMOVED will be not fired.
+   * You must call {@link #resetExtensionPoints} before otherwise event `ExtensionEvent.REMOVED` will be not fired.
    */
   public void unregisterExtensionPoints(@NotNull List<ExtensionPointDescriptor> descriptors,
                                         @NotNull PluginDescriptor pluginDescriptor) {
@@ -208,7 +205,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   // _only_ for CoreApplicationEnvironment
-  public void registerExtensionPoints(@NotNull List<? extends ExtensionPointDescriptor> points, @NotNull PluginDescriptor pluginDescriptor) {
+  public void registerExtensionPoints(@NotNull List<ExtensionPointDescriptor> points, @NotNull PluginDescriptor pluginDescriptor) {
     Map<String, ExtensionPointImpl<?>> map = new HashMap<>(extensionPoints);
     createExtensionPoints(points, componentManager, map, pluginDescriptor);
     extensionPoints = map;
@@ -219,7 +216,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @ApiStatus.Internal
-  public static void createExtensionPoints(@NotNull List<? extends ExtensionPointDescriptor> points,
+  public static void createExtensionPoints(@NotNull List<ExtensionPointDescriptor> points,
                                            @NotNull ComponentManager componentManager,
                                            @NotNull Map<? super String, ExtensionPointImpl<?>> result,
                                            @NotNull PluginDescriptor pluginDescriptor) {

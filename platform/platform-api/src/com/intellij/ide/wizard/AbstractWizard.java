@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard;
 
 import com.intellij.CommonBundle;
@@ -20,11 +20,10 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +36,6 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.*;
-import java.util.function.Supplier;
 
 public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(AbstractWizard.class);
@@ -80,7 +78,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     myPreviousButton = new JButton(IdeBundle.message("button.wizard.previous"));
     myNextButton = new JButton(IdeBundle.message("button.wizard.next"));
     myCancelButton = new JButton(CommonBundle.getCancelButtonText());
-    myHelpButton = isNewWizard() ? createHelpButton(JBUI.emptyInsets()) : new JButton(CommonBundle.getHelpButtonText());
+    myHelpButton = isNewWizard() ? createHelpButton(JBInsets.emptyInsets()) : new JButton(CommonBundle.getHelpButtonText());
     myContentPanel = new JPanel(new JBCardLayout());
 
     myIcon = new TallImageComponent(null);
@@ -495,7 +493,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     updateButtons();
 
-    requestFocusToPreferredFocusedComponent();
+    UiNotifyConnector.doWhenFirstShown(myCurrentStepComponent, () -> {
+      requestFocusTo(getPreferredFocusedComponent());
+    });
   }
 
   @Override
@@ -505,18 +505,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return ObjectUtils.chooseNotNull(component, myNextButton);
   }
 
-  public void requestFocusToPreferredFocusedComponent() {
-    requestFocusTo(this::getPreferredFocusedComponent);
-  }
-
-  public void requestFocusTo(@NotNull Supplier<? extends @Nullable JComponent> supplier) {
-    UiNotifyConnector.doWhenFirstShown(myContentPanel, () -> {
-      var component = supplier.get();
-      if (component != null) {
+  private static void requestFocusTo(@Nullable JComponent component) {
+    if (component != null) {
+      UiNotifyConnector.doWhenFirstShown(component, () -> {
         var focusManager = IdeFocusManager.findInstanceByComponent(component);
         focusManager.requestFocus(component, false);
-      }
-    });
+      });
+    }
   }
 
   protected boolean canGoNext() {
@@ -594,8 +589,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   /**
    * @deprecated unused
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected JButton getFinishButton() {
     return new JButton();
   }

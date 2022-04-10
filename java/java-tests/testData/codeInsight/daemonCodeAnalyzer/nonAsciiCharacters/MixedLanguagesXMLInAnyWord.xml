@@ -1,0 +1,6 @@
+<x<warning descr="Mixed languages: CYRILLIC symbols found in LATIN word">Ш</warning>>
+  блабла
+  <t<warning descr="Mixed languages: CYRILLIC symbols found in LATIN word">Ы</warning> attr="ИИИИ23" attr2="<warning descr="Mixed languages: CYRILLIC symbols found in LATIN word">ИИИ</warning>foo">
+    <warning descr="Mixed languages: CYRILLIC symbols found in LATIN word">бла</warning>foo
+  </t<warning descr="Mixed languages: CYRILLIC symbols found in LATIN word">Ы</warning>>
+</x<warning descr="Mixed languages: CYRILLIC symbols found in LATIN word">Ш</warning>>

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -7,10 +7,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class ArrayExprent extends Exprent {
   private Exprent array;
@@ -72,9 +69,9 @@ public class ArrayExprent extends Exprent {
     }
 
     VarType arrType = array.getExprType();
-    if (arrType.arrayDim == 0) {
+    if (arrType.getArrayDim() == 0) {
       VarType objArr = VarType.VARTYPE_OBJECT.resizeArrayDim(1); // type family does not change
-      res.enclose("((" + ExprProcessor.getCastTypeName(objArr) + ")", ")");
+      res.enclose("((" + ExprProcessor.getCastTypeName(objArr, Collections.emptyList()) + ")", ")");
     }
 
     tracer.addMapping(bytecode);

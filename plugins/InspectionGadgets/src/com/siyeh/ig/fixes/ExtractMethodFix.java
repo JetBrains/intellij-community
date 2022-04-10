@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.siyeh.InspectionGadgetsBundle;
@@ -26,6 +27,11 @@ public class ExtractMethodFix extends RefactoringInspectionGadgetsFix {
   @NotNull
   public String getFamilyName() {
     return InspectionGadgetsBundle.message("extract.method.quickfix");
+  }
+
+  @Override
+  public PsiElement getElementToRefactor(PsiElement element) {
+    return element;
   }
 
   @NotNull

@@ -223,13 +223,13 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
     PsiElement parent = myElement.getParent();
     if (completion instanceof PsiMethod && parent instanceof PsiMethodReferenceExpression) {
       PsiType matchingType = ContainerUtil.find(myExpectedGroundTypes.getValue(), candidate ->
-        hasSuitableType((PsiMethodReferenceExpression)parent, (PsiMethod)completion, candidate));
+        candidate != null && hasSuitableType((PsiMethodReferenceExpression)parent, (PsiMethod)completion, candidate));
       return matchingType != null ? matchingType : new PsiMethodReferenceType((PsiMethodReferenceExpression)parent);
     }
     return null;
   }
 
-  private static boolean hasSuitableType(PsiMethodReferenceExpression refPlace, PsiMethod method, PsiType expectedType) {
+  private static boolean hasSuitableType(PsiMethodReferenceExpression refPlace, PsiMethod method, @NotNull PsiType expectedType) {
     PsiMethodReferenceExpression referenceExpression = createMethodReferenceExpression(method, refPlace);
     return LambdaUtil.performWithTargetType(referenceExpression, expectedType, () -> {
       JavaResolveResult result = referenceExpression.advancedResolve(false);

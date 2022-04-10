@@ -11,7 +11,6 @@ import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
-import java.nio.file.Path
 
 sealed abstract class MavenImportContext(val project: Project, val indicator: MavenProgressIndicator)
 
@@ -46,7 +45,7 @@ class MavenResolvedContext internal constructor(project: Project,
 }
 
 class MavenPluginResolvedContext internal constructor(project: Project,
-                                                      val unresolvedPlugins: Map<MavenPlugin, Path?>,
+                                                      val unresolvedPlugins: Set<MavenPlugin>,
                                                       val resolvedContext: MavenResolvedContext) : MavenImportContext(project,
                                                                                                                       resolvedContext.indicator)
 
@@ -55,10 +54,10 @@ class MavenSourcesGeneratedContext internal constructor(val resolvedContext: Mav
   resolvedContext.project, resolvedContext.indicator)
 
 class MavenImportedContext internal constructor(project: Project,
-                                                val modulesCreated: MutableList<Module>,
-                                                val postImportTasks: MutableList<MavenProjectsProcessorTask>?,
-                                                val initialContext: MavenInitialImportContext) : MavenImportContext(project,
-                                                                                                                    initialContext.indicator)
+                                                val modulesCreated: List<Module>,
+                                                val postImportTasks: List<MavenProjectsProcessorTask>?,
+                                                val readContext: MavenReadContext) : MavenImportContext(project,
+                                                                                                        readContext.indicator)
 
 class MavenImportFinishedContext internal constructor(val context: MavenImportedContext?,
                                                       val error: Throwable?,

@@ -1,12 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased
 
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.openapi.project.ex.ProjectEx
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiDocumentManagerImpl
@@ -25,21 +24,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.isWhiteSpaceOrNewLine
 @SkipSlowTestLocally
 class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
 
-  override fun tearDown() {
-    try {
-      Disposer.dispose((myProject as ProjectEx).earlyDisposable)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
-  }
-
   override fun setUp() {
     super.setUp()
     (PsiDocumentManager.getInstance(myProject) as PsiDocumentManagerImpl).disableBackgroundCommit(testRootDisposable)
+    TemplateManagerImpl.setTemplateTesting(testRootDisposable)
   }
 
   fun testInlineExtractMethodCompilation() {

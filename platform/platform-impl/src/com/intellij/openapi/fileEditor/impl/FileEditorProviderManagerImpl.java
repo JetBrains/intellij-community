@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -35,6 +35,10 @@ import java.util.*;
 )
 public class FileEditorProviderManagerImpl extends FileEditorProviderManager
   implements PersistentStateComponent<FileEditorProviderManagerImpl> {
+
+  public static @NotNull FileEditorProviderManagerImpl getInstanceImpl() {
+    return (FileEditorProviderManagerImpl)getInstance();
+  }
 
   private static final @NotNull Logger LOG = Logger.getInstance(FileEditorProviderManagerImpl.class);
 
@@ -76,7 +80,7 @@ public class FileEditorProviderManagerImpl extends FileEditorProviderManager
 
     // Sort editors according policies
     sharedProviders.sort(MyComparator.ourInstance);
-    return sharedProviders.toArray(new FileEditorProvider[0]);
+    return sharedProviders.toArray(FileEditorProvider.EMPTY_ARRAY);
   }
 
   @Override
@@ -105,22 +109,22 @@ public class FileEditorProviderManagerImpl extends FileEditorProviderManager
   private final Map<String, String> mySelectedProviders = new HashMap<>();
 
   void providerSelected(@NotNull EditorComposite composite) {
-    FileEditorProvider[] providers = composite.getProviders();
-    if (providers.length < 2) return;
-    mySelectedProviders.put(computeKey(providers),
-                            composite.getSelectedWithProvider().getProvider().getEditorTypeId());
+    List<FileEditorProvider> providers = composite.getAllProviders();
+    if (providers.size() < 2) return;
+    mySelectedProviders.put(computeKey(providers), composite.getSelectedWithProvider().getProvider().getEditorTypeId());
   }
 
-  private static @NotNull String computeKey(FileEditorProvider[] providers) {
+  private static @NotNull String computeKey(List<FileEditorProvider> providers) {
     return StringUtil.join(ContainerUtil.map(providers, FileEditorProvider::getEditorTypeId), ",");
   }
 
   @Nullable
-  FileEditorProvider getSelectedFileEditorProvider(@NotNull EditorHistoryManager editorHistoryManager,
-                                                   @NotNull VirtualFile file,
-                                                   FileEditorProvider @NotNull [] providers) {
-    FileEditorProvider provider = editorHistoryManager.getSelectedProvider(file);
-    if (provider != null || providers.length < 2) {
+  FileEditorProvider getSelectedFileEditorProvider(EditorComposite composite) {
+    EditorHistoryManager editorHistoryManager = EditorHistoryManager.getInstance(composite.getProject());
+    FileEditorProvider provider = editorHistoryManager.getSelectedProvider(composite.getFile());
+
+    List<FileEditorProvider> providers = composite.getAllProviders();
+    if (provider != null || providers.size() < 2) {
       return provider;
     }
     String id = mySelectedProviders.get(computeKey(providers));

@@ -60,8 +60,8 @@ import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 
@@ -206,14 +206,14 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                                 configurator.editor,
                                 TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED or TargetElementUtil.getInstance().referenceSearchFlags,
                             )
-                        }!!
+                        }
                     }
 
                     isFindFileUsages -> configurator.file
                     else -> configurator.elementAtCaret
                 }
 
-                UsefulTestCase.assertInstanceOf(caretElement, caretElementClass)
+                UsefulTestCase.assertInstanceOf(caretElement!!, caretElementClass)
 
                 val containingFile = caretElement.containingFile
                 val project = configurator.project
@@ -363,6 +363,9 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
 
         val usageChunks = ArrayList<TextChunk>()
         usageChunks.addAll(usageAdapter.presentation.text.asList())
+        if (usageChunks.isNotEmpty()) {
+            usageChunks[1] = TextChunk(usageChunks[1] .attributes, usageChunks[1].text.trimIndent())
+        }
         usageChunks.add(1, TextChunk(TextAttributes(), " ")) // add space after line number
 
         buildString {

@@ -114,7 +114,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new FlushFieldsInstruction());
   }
 
-  private @Nullable ControlFlow buildControlFlow() {
+  @Nullable ControlFlow buildControlFlow() {
     myCurrentFlow = new ControlFlow(myFactory, myCodeFragment);
     addInstruction(new FinishElementInstruction(null)); // to initialize LVA
     try {
@@ -2011,6 +2011,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private @Nullable PsiMethod pushConstructorArguments(PsiConstructorCall call) {
     PsiExpressionList args = call.getArgumentList();
     PsiMethod ctr = call.resolveConstructor();
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    if (call instanceof PsiNewExpression) {
+      substitutor = call.resolveMethodGenerics().getSubstitutor();
+    }
     if (args != null) {
       PsiExpression[] arguments = args.getExpressions();
       PsiParameter[] parameters = ctr == null ? null : ctr.getParameterList().getParameters();
@@ -2018,7 +2022,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         PsiExpression argument = arguments[i];
         argument.accept(this);
         if (parameters != null && i < parameters.length) {
-          generateBoxingUnboxingInstructionFor(argument, parameters[i].getType());
+          generateBoxingUnboxingInstructionFor(argument, substitutor.substitute(parameters[i].getType()));
         }
       }
       foldVarArgs(call, parameters);
@@ -2060,6 +2064,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new DupInstruction());
       processIncrementDecrement(expression, operand);
       addInstruction(new PopInstruction());
+      addInstruction(new ResultOfInstruction(new JavaExpressionAnchor(expression)));
     } else {
       pushUnknown();
     }
@@ -2120,6 +2125,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
             pushUnknown();
             addInstruction(new AssignInstruction(operand, null, JavaDfaValueFactory.getExpressionDfaValue(myFactory, operand)));
           }
+          addInstruction(new ResultOfInstruction(new JavaExpressionAnchor(expression)));
         }
         else {
           PsiType type = expression.getType();
@@ -2312,11 +2318,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return ContainerUtil.exists(INLINERS, inliner -> inliner.mayInferPreciseType(expression));
   }
 
-  @Nullable
-  public static ControlFlow buildFlow(@NotNull PsiElement psiBlock, DfaValueFactory targetFactory) {
-    return buildFlow(psiBlock, targetFactory, true);
-  }
-
   /**
    * Create control flow for given PSI block (method body, lambda expression, etc.) and return it. May return cached block.
    * It's prohibited to change the resulting control flow (e.g. add instructions, update their indices, update flush variable lists, etc.)
@@ -2327,19 +2328,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    * @return resulting control flow; null if it cannot be built (e.g. if the code block contains unrecoverable errors)
    */
   @Nullable
-  public static ControlFlow buildFlow(@NotNull PsiElement psiBlock, DfaValueFactory targetFactory, boolean useInliners) {
+  public static ControlFlow buildFlow(@NotNull PsiElement psiBlock, @NotNull DfaValueFactory targetFactory, boolean useInliners) {
     if (!useInliners) {
       return new ControlFlowAnalyzer(targetFactory, psiBlock, false).buildControlFlow();
     }
-    PsiFile file = psiBlock.getContainingFile();
-    ConcurrentHashMap<PsiElement, Optional<ControlFlow>> fileMap =
-      CachedValuesManager.getCachedValue(file, () ->
-        CachedValueProvider.Result.create(new ConcurrentHashMap<>(), PsiModificationTracker.MODIFICATION_COUNT));
-    return fileMap.computeIfAbsent(psiBlock, psi -> {
-      DfaValueFactory factory = new DfaValueFactory(file.getProject());
-      ControlFlow flow = new ControlFlowAnalyzer(factory, psiBlock, true).buildControlFlow();
-      return Optional.ofNullable(flow);
-    }).map(flow -> new ControlFlow(flow, targetFactory)).orElse(null);
+    return DataFlowIRProvider.forElement(psiBlock, targetFactory);
   }
 
   private static class CannotAnalyzeException extends RuntimeException {
@@ -2390,7 +2383,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private static final CallInliner[] INLINERS = {
-    new OptionalChainInliner(), new LambdaInliner(),
+    new OptionalChainInliner(), new LambdaInliner(), new CollectionUpdateInliner(),
     new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner(), new ClassMethodsInliner(),
     new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(),
     new TransformInliner(), new EnumCompareInliner(), new IndexOfInliner()

@@ -23,7 +23,7 @@ class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
   }
 
   override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
-    if (Registry.`is`("maven.new.import")) {
+    if (MavenUtil.isLinearImportEnabled()) {
       MavenImportingManager.getInstance(project).linkAndImportFile(projectFile)
       return;
     }

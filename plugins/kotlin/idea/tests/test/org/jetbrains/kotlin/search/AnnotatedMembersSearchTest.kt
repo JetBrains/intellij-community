@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.caches.lightClasses.IDELightClassConstructionCo
 import org.jetbrains.kotlin.idea.completion.test.withServiceRegistered
 import org.jetbrains.kotlin.idea.search.PsiBasedClassResolver
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.junit.Assert
 
 abstract class AbstractAnnotatedMembersSearchTest : AbstractSearcherTest() {

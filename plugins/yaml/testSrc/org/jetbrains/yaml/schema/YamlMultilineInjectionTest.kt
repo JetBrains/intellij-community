@@ -583,7 +583,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |  #language=XML
       |  xml: |
       |    <xml>
-      |        <tag>   </tag>
+      |        <tag></tag>
       |    </xml>
       |  #language=YAML
       |  yaml: |
@@ -593,7 +593,8 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |  #language=Java
       |  after: |
       |    class B {
-      |        void foo(){}
+      |        void foo() {
+      |        }
       |    }
       |  #language=Properties
       |  prop: |

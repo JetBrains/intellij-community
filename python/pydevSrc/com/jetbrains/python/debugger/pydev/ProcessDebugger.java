@@ -123,6 +123,8 @@ public interface ProcessDebugger {
 
   void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line);
 
+  void setUserTypeRenderers(@NotNull List<@NotNull PyUserTypeRenderer> renderers);
+
   void setShowReturnValues(boolean isShowReturnValues);
 
   void setUnitTestDebuggingMode();

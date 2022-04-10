@@ -5,27 +5,22 @@ import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.codereview.avatar.CachingAvatarIconsProvider
-import com.intellij.ui.ScalingAsyncImageIcon
+import com.intellij.collaboration.ui.codereview.avatar.AvatarIconsProvider
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.*
-import java.util.concurrent.CompletableFuture
 import javax.swing.*
 
-class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
+internal class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
   private val listModel: AccountsListModel<A, *>,
   private val detailsProvider: AccountsDetailsProvider<A, D>,
-  private val defaultAvatarIcon: Icon
+  private val avatarIconsProvider: AvatarIconsProvider<A>
 ) : ListCellRenderer<A>, JPanel() {
-
-  private val avatarIcons = mutableMapOf<A, Icon>()
 
   private val accountName = JLabel()
 
@@ -85,7 +80,7 @@ class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
       foreground = secondaryTextColor
     }
     profilePicture.apply {
-      icon = getAvatarIcon(account)
+      icon = avatarIconsProvider.getIcon(account, 40)
     }
     fullName.apply {
       text = getDetails(account)?.name
@@ -106,28 +101,10 @@ class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
     return this
   }
 
-  private fun getAvatarIcon(account: A): Icon {
-    val image = getAvatarImage(account)
-    val iconSize = 40
-    if (image == null) return IconUtil.resizeSquared(defaultAvatarIcon, iconSize)
-    return avatarIcons.getOrPut(account) {
-      ScalingAsyncImageIcon(
-        iconSize,
-        defaultAvatarIcon,
-        imageLoader = {
-          CompletableFuture<Image?>().completeAsync({
-            getAvatarImage(account)
-          }, CachingAvatarIconsProvider.avatarLoadingExecutor)
-        }
-      )
-    }
-  }
-
   private fun isDefault(account: A): Boolean = (listModel is AccountsListModel.WithDefault) && account == listModel.defaultAccount
   private fun editAccount(parentComponent: JComponent, account: A) = listModel.editAccount(parentComponent, account)
 
   private fun getDetails(account: A): D? = detailsProvider.getDetails(account)
-  private fun getAvatarImage(account: A): Image? = detailsProvider.getAvatarImage(account)
 
   @Nls
   private fun getError(account: A): String? = detailsProvider.getErrorText(account)

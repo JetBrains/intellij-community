@@ -3,9 +3,10 @@
 package org.jetbrains.kotlin.idea.groovy.inspections
 
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.groovy.KotlinGroovyBundle
 import org.jetbrains.kotlin.idea.inspections.PluginVersionDependentInspection
-import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
@@ -27,7 +28,7 @@ class DifferentKotlinGradleVersionInspection : BaseInspection(), PluginVersionDe
         KotlinGroovyBundle.message("error.text.different.kotlin.gradle.version", args[0], args[1])
 
     private abstract class VersionFinder : KotlinGradleInspectionVisitor() {
-        protected abstract fun onFound(kotlinPluginVersion: String, kotlinPluginStatement: GrCallExpression)
+        protected abstract fun onFound(kotlinPluginVersion: IdeKotlinVersion, kotlinPluginStatement: GrCallExpression)
 
         override fun visitClosure(closure: GrClosableBlock) {
             super.visitClosure(closure)
@@ -42,34 +43,33 @@ class DifferentKotlinGradleVersionInspection : BaseInspection(), PluginVersionDe
                 it.text.contains(KOTLIN_PLUGIN_CLASSPATH_MARKER)
             } ?: return
 
-            val kotlinPluginVersion =
-                GradleHeuristicHelper.getHeuristicVersionInBuildScriptDependency(kotlinPluginStatement) ?: getResolvedKotlinGradleVersion(
-                    closure.containingFile
-                ) ?: return
+            val kotlinPluginVersion = GradleHeuristicHelper.getHeuristicVersionInBuildScriptDependency(kotlinPluginStatement)
+                ?: findResolvedKotlinGradleVersion(closure.containingFile)
+                ?: return
 
             onFound(kotlinPluginVersion, kotlinPluginStatement)
         }
     }
 
     private inner class MyVisitor : VersionFinder() {
-        private val idePluginVersion by lazy { kotlinCompilerVersionShort() }
+        override fun onFound(kotlinPluginVersion: IdeKotlinVersion, kotlinPluginStatement: GrCallExpression) {
+            val bundledCompilerVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
 
-        override fun onFound(kotlinPluginVersion: String, kotlinPluginStatement: GrCallExpression) {
-            if (kotlinPluginVersion != idePluginVersion) {
-                registerError(kotlinPluginStatement, kotlinPluginVersion, testVersionMessage ?: idePluginVersion)
+            if (kotlinPluginVersion.artifactVersion != bundledCompilerVersion.artifactVersion) {
+                registerError(kotlinPluginStatement, kotlinPluginVersion, testVersionMessage ?: bundledCompilerVersion)
             }
         }
     }
 
     companion object {
-        fun getKotlinPluginVersion(gradleFile: GroovyFileBase): String? {
-            var version: String? = null
+        fun getKotlinPluginVersion(gradleFile: GroovyFileBase): IdeKotlinVersion? {
+            var version: IdeKotlinVersion? = null
             val visitor = object : VersionFinder() {
                 override fun visitElement(element: GroovyPsiElement) {
                     element.acceptChildren(this)
                 }
 
-                override fun onFound(kotlinPluginVersion: String, kotlinPluginStatement: GrCallExpression) {
+                override fun onFound(kotlinPluginVersion: IdeKotlinVersion, kotlinPluginStatement: GrCallExpression) {
                     version = kotlinPluginVersion
                 }
             }

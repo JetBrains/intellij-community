@@ -50,12 +50,12 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
                              int passIdToShowIntentionsFor,
                              int offset) {
     Project project = hostFile.getProject();
-    final PsiElement psiElement = hostFile.findElementAt(offset);
+    PsiElement psiElement = hostFile.findElementAt(offset);
     if (HighlightingLevelManager.getInstance(project).shouldInspect(hostFile)) {
       PsiElement intentionElement = psiElement;
       int intentionOffset = offset;
       if (psiElement instanceof PsiWhiteSpace && offset == psiElement.getTextRange().getStartOffset() && offset > 0) {
-        final PsiElement prev = hostFile.findElementAt(offset - 1);
+        PsiElement prev = hostFile.findElementAt(offset - 1);
         if (prev != null && prev.isValid()) {
           intentionElement = prev;
           intentionOffset = offset - 1;
@@ -71,11 +71,11 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
   /**
    * Can be invoked in EDT, each inspection should be fast
    */
-  private static void collectIntentionsFromDoNotShowLeveledInspections(final @NotNull Project project,
-                                                                       final @NotNull PsiFile hostFile,
+  private static void collectIntentionsFromDoNotShowLeveledInspections(@NotNull Project project,
+                                                                       @NotNull PsiFile hostFile,
                                                                        @NotNull PsiElement psiElement,
-                                                                       final int offset,
-                                                                       final @NotNull ShowIntentionsPass.IntentionsInfo outIntentions) {
+                                                                       int offset,
+                                                                       @NotNull ShowIntentionsPass.IntentionsInfo outIntentions) {
     if (!psiElement.isPhysical()) {
       VirtualFile virtualFile = hostFile.getVirtualFile();
       String text = hostFile.getText();
@@ -95,7 +95,7 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
         toolWrapper = ((GlobalInspectionToolWrapper)toolWrapper).getSharedLocalInspectionToolWrapper();
       }
       if (toolWrapper instanceof LocalInspectionToolWrapper && !((LocalInspectionToolWrapper)toolWrapper).isUnfair()) {
-        final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
+        HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
         if (profile.isToolEnabled(key, hostFile) &&
             HighlightDisplayLevel.DO_NOT_SHOW.equals(profile.getErrorLevel(key, hostFile))) {
           intentionTools.add((LocalInspectionToolWrapper)toolWrapper);
@@ -128,7 +128,7 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
       String shortName = entry.getKey().getShortName();
       for (ProblemDescriptor problemDescriptor : descriptors) {
         if (problemDescriptor instanceof ProblemDescriptorBase) {
-          final TextRange range = ((ProblemDescriptorBase)problemDescriptor).getTextRange();
+          TextRange range = ((ProblemDescriptorBase)problemDescriptor).getTextRange();
           if (range != null && range.containsOffset(offset)) {
             QuickFix[] fixes = problemDescriptor.getFixes();
             if (fixes != null) {

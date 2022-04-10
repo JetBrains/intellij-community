@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,11 @@
  */
 package com.siyeh.ig.internationalization;
 
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +28,10 @@ public class SimpleDateFormatWithoutLocaleInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("instantiating.simpledateformat.without.locale.problem.descriptor");
+    boolean constructorCall = (boolean)infos[0];
+    return constructorCall
+           ? InspectionGadgetsBundle.message("instantiating.simpledateformat.without.locale.problem.descriptor")
+           : InspectionGadgetsBundle.message("instantiating.datetimeformatter.without.locale.problem.descriptor");
   }
 
   @Override
@@ -38,6 +40,9 @@ public class SimpleDateFormatWithoutLocaleInspection extends BaseInspection {
   }
 
   private static class SimpleDateFormatWithoutLocaleVisitor extends BaseInspectionVisitor {
+
+    private static final CallMatcher.Simple MATCHER =
+      CallMatcher.staticCall("java.time.format.DateTimeFormatter", "ofPattern").parameterTypes(CommonClassNames.JAVA_LANG_STRING);
 
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
@@ -55,7 +60,15 @@ public class SimpleDateFormatWithoutLocaleInspection extends BaseInspection {
           return;
         }
       }
-      registerNewExpressionError(expression);
+      registerNewExpressionError(expression, Boolean.TRUE);
+    }
+
+    @Override
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (MATCHER.matches(expression)) {
+        registerMethodCallError(expression, Boolean.FALSE);
+      }
     }
   }
 }

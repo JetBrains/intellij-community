@@ -60,7 +60,7 @@ public interface NavigationTarget {
    * Please define your own interface if you need this method in your implementation.
    */
   @Deprecated
-  @ScheduledForRemoval(inVersion = "2022.1")
+  @ScheduledForRemoval
   default @NotNull Navigatable getNavigatable() {
     return EmptyNavigatable.INSTANCE;
   }

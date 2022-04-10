@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.openapi.diagnostic.logger
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.JBColor
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextAware
 import com.intellij.util.IconUtil
@@ -20,16 +19,11 @@ import com.intellij.util.ui.*
 import org.imgscalr.Scalr
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.Color
-import java.awt.Component
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.image.BufferedImage
 import java.net.MalformedURLException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.*
 import javax.swing.Icon
-import kotlin.collections.HashMap
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 import kotlin.math.max
@@ -40,7 +34,7 @@ internal class RecentProjectIconHelper {
   companion object {
     private const val ideaDir = Project.DIRECTORY_STORE_FOLDER
 
-    fun getDotIdeaPath(path: Path): Path {
+    private fun getDotIdeaPath(path: Path): Path {
       if (path.isDirectory() || path.parent == null) return path.resolve(ideaDir)
 
       val fileName = path.fileName.toString()
@@ -51,11 +45,13 @@ internal class RecentProjectIconHelper {
       return path.parent.resolve("$ideaDir/$ideaDir.$fileNameWithoutExt/$ideaDir")
     }
 
-    fun getDotIdeaPath(path: String): Path? = try {
-      getDotIdeaPath(Path.of(path))
-    }
-    catch (e: InvalidPathException) {
-      null
+    fun getDotIdeaPath(path: String): Path? {
+      return try {
+        getDotIdeaPath(Path.of(path))
+      }
+      catch (e: InvalidPathException) {
+        null
+      }
     }
 
     @JvmStatic
@@ -64,7 +60,6 @@ internal class RecentProjectIconHelper {
         if ("svg" == file.extension.lowercase(Locale.ENGLISH)) {
           return IconDeferrer.getInstance().defer(EmptyIcon.create(projectIconSize()), Pair(file.toAbsolutePath(), StartupUiUtil.isUnderDarcula())) {
             val icon = IconLoader.findIcon(file.toUri().toURL(), false) ?: return@defer null
-
             if (icon is ScaleContextAware) {
               icon.updateScaleContext(ScaleContext.create())
             }
@@ -76,7 +71,7 @@ internal class RecentProjectIconHelper {
         }
         val image = ImageLoader.loadFromUrl(file.toUri().toURL()) ?: return null
         val targetSize = if (UIUtil.isRetina()) 32 else JBUI.pixScale(16f).toInt()
-        return toRetinaAwareIcon(Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, targetSize))
+        return IconUtil.toRetinaAwareIcon(Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, targetSize))
       }
       catch (e: MalformedURLException) {
         LOG.debug(e)
@@ -172,35 +167,7 @@ internal class RecentProjectIconHelper {
 
 private data class MyIcon(val icon: Icon, val timestamp: Long?)
 
-private fun toRetinaAwareIcon(image: BufferedImage): Icon {
-  return object : Icon {
-    override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
-      // [tav] todo: the icon is created in def screen scale
-      if (UIUtil.isJreHiDPI()) {
-        val newG = g.create(x, y, image.width, image.height) as Graphics2D
-        val s = JBUIScale.sysScale()
-        newG.scale((1 / s).toDouble(), (1 / s).toDouble())
-        newG.drawImage(image, (x / s).toInt(), (y / s).toInt(), null)
-        newG.scale(1.0, 1.0)
-        newG.dispose()
-      }
-      else {
-        g.drawImage(image, x, y, null)
-      }
-    }
-
-    override fun getIconWidth(): Int {
-      return if (UIUtil.isJreHiDPI()) (image.width / JBUIScale.sysScale()).toInt() else image.width
-    }
-
-    override fun getIconHeight(): Int {
-      return if (UIUtil.isJreHiDPI()) (image.height / JBUIScale.sysScale()).toInt() else image.height
-    }
-  }
-}
-
-object ProjectIconPalette : ColorPalette() {
-
+private object ProjectIconPalette : ColorPalette() {
   override val gradients: Array<kotlin.Pair<Color, Color>>
     get() = arrayOf(
       JBColor(0xDB3D3C, 0xCE443C) to JBColor(0xFF8E42, 0xE77E41),

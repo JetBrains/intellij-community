@@ -11,6 +11,7 @@ import org.intellij.markdown.parser.MarkerProcessor
 import org.intellij.markdown.parser.MarkerProcessorFactory
 import org.intellij.markdown.parser.ProductionHolder
 import org.intellij.markdown.parser.constraints.MarkdownConstraints
+import org.intellij.markdown.parser.constraints.getCharsEaten
 import org.intellij.markdown.parser.markerblocks.MarkerBlockProvider
 import org.intellij.markdown.parser.markerblocks.providers.AtxHeaderProvider
 import org.intellij.markdown.parser.markerblocks.providers.LinkReferenceDefinitionProvider
@@ -24,9 +25,11 @@ class GFMCommentAwareMarkerProcessor(productionHolder: ProductionHolder, constra
     .filterNot { it is AtxHeaderProvider }
     .filterNot { it is LinkReferenceDefinitionProvider }
     .plus(listOf(
+      DefinitionListMarkerProvider(),
       GitHubTableMarkerProvider(),
-      AtxHeaderProvider(false),
-      CommentAwareLinkReferenceDefinitionProvider()))
+      AtxHeaderProvider(),
+      CommentAwareLinkReferenceDefinitionProvider()
+    ))
 
   override fun populateConstraintsTokens(pos: LookaheadText.Position,
                                          constraints: MarkdownConstraints,
@@ -46,13 +49,11 @@ class GFMCommentAwareMarkerProcessor(productionHolder: ProductionHolder, constra
       return
     }
 
-    val type = when (constraints.getLastType()) {
-      '>' ->
-        MarkdownTokenTypes.BLOCK_QUOTE
-      '.', ')' ->
-        MarkdownTokenTypes.LIST_NUMBER
-      else ->
-        MarkdownTokenTypes.LIST_BULLET
+    check(constraints.types.isNotEmpty())
+    val type = when (constraints.types.last()) {
+      '>' -> MarkdownTokenTypes.BLOCK_QUOTE
+      '.', ')' -> MarkdownTokenTypes.LIST_NUMBER
+      else -> MarkdownTokenTypes.LIST_BULLET
     }
     val middleOffset = pos.offset - pos.offsetInCurrentLine + offset
     val endOffset = min(pos.offset - pos.offsetInCurrentLine + constraints.getCharsEaten(pos.currentLine),

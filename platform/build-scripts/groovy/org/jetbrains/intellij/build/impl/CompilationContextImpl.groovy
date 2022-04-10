@@ -11,6 +11,9 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
+import org.jetbrains.intellij.build.dependencies.Jdk11Downloader
+import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.JpsElementFactory
@@ -36,7 +39,6 @@ import java.util.function.BiFunction
 @CompileStatic
 final class CompilationContextImpl implements CompilationContext {
   final AntBuilder ant
-  final GradleRunner gradle
   final BuildOptions options
   final BuildMessages messages
   final BuildPaths paths
@@ -60,27 +62,27 @@ final class CompilationContextImpl implements CompilationContext {
 
   static CompilationContextImpl create(String communityHome, String projectHome,
                                        BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
-    // ensure TracerManager is initialized before all other thing since only it can configure GlobalOpenTelemetry correctly
-    TracerManager.spanBuilder("x")
+    // This is not a proper place to initialize tracker for downloader
+    // but this is the only place which is called in most build scripts
+    BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
 
     AntBuilder ant = new AntBuilder()
-    def messages = BuildMessagesImpl.create(ant.project)
+    BuildMessagesImpl messages = BuildMessagesImpl.create(ant.project)
     communityHome = toCanonicalPath(communityHome)
-    if (["platform/build-scripts", "bin/log.xml", "build.txt"].any { !new File(communityHome, it).exists() }) {
+    if (["platform/build-scripts", "bin/idea.properties", "build.txt"].any { !new File(communityHome, it).exists() }) {
       messages.error("communityHome ($communityHome) doesn't point to a directory containing IntelliJ Community sources")
     }
+
+    printEnvironmentDebugInfo()
 
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
     def kotlinBinaries = new KotlinBinaries(communityHome, options, messages)
-    kotlinBinaries.setUpCompilerIfRequired(ant)
     def model = loadProject(projectHome, kotlinBinaries, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
 
-    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, options)
-
     projectHome = toCanonicalPath(projectHome)
-    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, messages, oldToNewModuleName,
+    CompilationContextImpl context = new CompilationContextImpl(ant, model, communityHome, projectHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     defineJavaSdk(context)
     context.prepareForBuild()
@@ -89,12 +91,17 @@ final class CompilationContextImpl implements CompilationContext {
     // (see createCopyForProduct)
     JaegerJsonSpanExporter.setOutput(context.paths.logDir.resolve("trace.json"))
     messages.debugLogPath = context.paths.logDir.resolve("debug.log")
+
+    // This is not a proper place to initialize logging
+    // but this is the only place which is called in most build scripts
+    BuildMessagesHandler.initLogging(messages)
+
     return context
   }
 
   private static void defineJavaSdk(CompilationContext context) {
-    def homePath = context.bundledRuntime.getHomeForCurrentOsAndArch()
-    def jbrHome = toCanonicalPath(homePath.toString())
+    Path homePath = Jdk11Downloader.getJdkHome(context.paths.buildDependenciesCommunityRoot)
+    String jbrHome = toCanonicalPath(homePath.toString())
     def jbrVersionName = "11"
 
     JdkUtils.defineJdk(context.projectModel.global, jbrVersionName, jbrHome, context.messages)
@@ -146,12 +153,11 @@ final class CompilationContextImpl implements CompilationContext {
     return mapping
   }
 
-  private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsModel model, String communityHome,
+  private CompilationContextImpl(AntBuilder ant, JpsModel model, String communityHome,
                                  String projectHome, BuildMessages messages,
                                  Map<String, String> oldToNewModuleName,
                                  BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
     this.ant = ant
-    this.gradle = gradle
     this.projectModel = model
     this.project = model.project
     this.global = model.global
@@ -178,7 +184,7 @@ final class CompilationContextImpl implements CompilationContext {
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
-    CompilationContextImpl copy = new CompilationContextImpl(ant, gradle, projectModel, paths.communityHome, paths.projectHome,
+    CompilationContextImpl copy = new CompilationContextImpl(ant, projectModel, paths.communityHome, paths.projectHome,
                                                              messages, oldToNewModuleName, buildOutputRootEvaluator, options)
     copy.compilationData = compilationData
     return copy
@@ -186,7 +192,6 @@ final class CompilationContextImpl implements CompilationContext {
 
   private CompilationContextImpl(AntBuilder ant, BuildMessages messages, CompilationContextImpl context) {
     this.ant = ant
-    this.gradle = gradle
     this.projectModel = context.projectModel
     this.project = context.project
     this.global = context.global
@@ -209,7 +214,9 @@ final class CompilationContextImpl implements CompilationContext {
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
     if (kotlinBinaries.isCompilerRequired()) {
-      pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinBinaries.kotlinCompilerHome/kotlinc")
+      def kotlinCompilerHome = kotlinBinaries.kotlinCompilerHome
+      System.setProperty("jps.kotlin.home", kotlinCompilerHome.toFile().absolutePath)
+      pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "${kotlinCompilerHome}")
     }
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtilRt.toSystemIndependentName(new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
 
@@ -279,12 +286,15 @@ final class CompilationContextImpl implements CompilationContext {
     JpsJavaExtensionService.instance.getOrCreateProjectExtension(project).outputUrl = url
   }
 
-
   void exportModuleOutputProperties() {
+    // defines Ant properties which are used by jetbrains.antlayout.datatypes.IdeaModuleBase class to locate module outputs 
     for (JpsModule module : project.modules) {
       for (boolean test : [true, false]) {
-        [module.name, getOldModuleName(module.name)].findAll { it != null}.each {
-          ant.project.setProperty("module.${it}.output.${test ? "test" : "main"}", getOutputPath(module, test))
+        [module.name, getOldModuleName(module.name)].findAll { it != null }.each {
+          def outputPath = getOutputPath(module, test)
+          if (outputPath != null) {
+            ant.project.setProperty("module.${it}.output.${test ? "test" : "main"}", outputPath)
+          }
         }
       }
     }
@@ -368,9 +378,9 @@ final class CompilationContextImpl implements CompilationContext {
   private String getOutputPath(JpsModule module, boolean forTests) {
     File outputDirectory = JpsJavaExtensionService.instance.getOutputDirectory(module, forTests)
     if (outputDirectory == null) {
-      messages.error("Output directory for '$module.name' isn't set")
+      messages.warning("Output directory for '$module.name' isn't set")
     }
-    return outputDirectory.absolutePath
+    return outputDirectory?.absolutePath
   }
 
   @Override
@@ -397,30 +407,6 @@ final class CompilationContextImpl implements CompilationContext {
     }
 
     boolean isRegularFile = Files.isRegularFile(file)
-    if (isRegularFile) {
-      //temporary workaround until TW-54541 is fixed: if build is going to produce big artifacts and we have lack of free disk space it's better not to send 'artifactBuilt' message to avoid "No space left on device" errors
-      long fileSize = Files.size(file)
-      if (fileSize > 1_000_000) {
-        long producedSize = totalSizeOfProducedArtifacts.addAndGet(fileSize)
-        boolean willBePublishedWhenBuildFinishes = FileUtil.isAncestor(paths.artifactDir.toString(), file.toString(), true)
-
-        long oneGb = 1024L * 1024 * 1024
-        long requiredAdditionalSpace = oneGb * 6
-        long requiredSpaceForArtifacts = oneGb * 9
-        long availableSpace = Files.getFileStore(file).getUsableSpace()
-        //heuristics: a build publishes at most 9Gb of artifacts and requires some additional space for compiled classes, dependencies, temp files, etc.
-        // So we'll publish an artifact earlier only if there will be enough space for its copy.
-        def skipPublishing = willBePublishedWhenBuildFinishes && availableSpace < (requiredSpaceForArtifacts - producedSize) + requiredAdditionalSpace + fileSize
-        messages.debug("Checking free space before publishing $file (${Formats.formatFileSize(fileSize)}): ")
-        messages.debug(" total produced: ${Formats.formatFileSize(producedSize)}")
-        messages.debug(" available space: ${Formats.formatFileSize(availableSpace)}")
-        messages.debug(" ${skipPublishing ? "will be" : "won't be"} skipped")
-        if (skipPublishing) {
-          messages.info("Artifact $file won't be published early to avoid caching on agent (workaround for TW-54541)")
-          return
-        }
-      }
-    }
 
     String targetDirectoryPath = ""
     if (file.parent.startsWith(paths.artifactDir)) {
@@ -445,6 +431,20 @@ final class CompilationContextImpl implements CompilationContext {
   static void logFreeDiskSpace(BuildMessages buildMessages, String directoryPath, String phase) {
     Path dir = Path.of(directoryPath)
     buildMessages.debug("Free disk space $phase: ${Formats.formatFileSize(Files.getFileStore(dir).getUsableSpace())} (on disk containing $dir)")
+  }
+
+  static void printEnvironmentDebugInfo() {
+    // print it to the stdout since TeamCity will remove any sensitive fields from build log automatically
+    // don't write it to debug log file!
+    def env = System.getenv()
+    for (String key : env.keySet().toSorted()) {
+      println("ENV $key = ${env.get(key)}")
+    }
+
+    def properties = System.getProperties()
+    for (String propertyName : properties.keySet().toSorted()) {
+      println("PROPERTY $propertyName = ${properties.get(propertyName)}")
+    }
   }
 }
 

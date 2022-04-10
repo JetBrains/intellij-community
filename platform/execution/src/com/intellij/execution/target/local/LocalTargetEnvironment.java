@@ -93,7 +93,7 @@ public class LocalTargetEnvironment extends TargetEnvironment implements TargetE
   }
 
   private static @NotNull ResolvedPortBinding getResolvedPortBinding(int port) {
-    HostPort hostPort = new HostPort("localhost", port);
+    HostPort hostPort = new HostPort("127.0.0.1", port);
     return new ResolvedPortBinding(hostPort, hostPort);
   }
 

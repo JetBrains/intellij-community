@@ -10,7 +10,7 @@ class C {
             try {
                 in = new FileInputStream("");
             } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
         }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui
 
 import com.intellij.ide.ui.UISettings
@@ -24,6 +24,6 @@ class BookmarksViewState : BaseState() {
 @State(name = "BookmarksViewState", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE))])
 internal class BookmarksViewStateComponent : SimplePersistentStateComponent<BookmarksViewState>(BookmarksViewState()) {
   override fun noStateLoaded() {
-    state.autoscrollToSource = UISettings.instance.state.defaultAutoScrollToSource
+    state.autoscrollToSource = UISettings.getInstance().state.defaultAutoScrollToSource
   }
 }

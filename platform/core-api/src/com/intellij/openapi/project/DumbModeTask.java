@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
@@ -30,7 +30,7 @@ public abstract class DumbModeTask implements Disposable {
    *
    * @deprecated Consider using {@link DumbModeTask()} and overwriting {@link DumbModeTask#tryMergeWith(DumbModeTask)} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public DumbModeTask(@NotNull Object equivalenceObject) {
     myEquivalenceObject = Pair.create(getClass(), equivalenceObject);
@@ -43,11 +43,11 @@ public abstract class DumbModeTask implements Disposable {
   }
 
   /**
-   * Allows to merge tasks waiting in queue for execution.
+   * Allows merging tasks waiting in queue for execution.
    *
-   * @return {@code null} if current task has nothing to do with {@code taskFromQueue};
-   * {@code this} if you want to remove {@code taskFromQueue} from the queue and add current one;
-   * some other task - then it would be added to the queue, and {@code taskFromQueue} would be removed.
+   * @return {@code null} - if current task has nothing to do with {@code taskFromQueue}; <p>
+   *         {@code this} - if you want to remove {@code taskFromQueue} from the queue and add current one;  <p>
+   *         some other task - then it would be added to the queue, and {@code taskFromQueue} would be removed.
    */
   @Nullable
   public DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {

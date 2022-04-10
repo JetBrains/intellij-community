@@ -1,12 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.util.ArrayUtil
+import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SystemProperties
-import com.intellij.util.isEmpty
 import net.jpountz.lz4.LZ4FrameInputStream
 import net.jpountz.lz4.LZ4FrameOutputStream
 import org.jdom.Element
@@ -16,7 +17,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray
 
 private fun archiveState(state: Element): BufferExposingByteArrayOutputStream {
   val byteOut = BufferExposingByteArrayOutputStream()
-  LZ4FrameOutputStream(byteOut, LZ4FrameOutputStream.BLOCKSIZE.SIZE_256KB).use {
+  LZ4FrameOutputStream(byteOut, LZ4FrameOutputStream.BLOCKSIZE.SIZE_4MB).use {
     serializeElementToBinary(state, it)
   }
   return byteOut
@@ -61,12 +62,12 @@ private fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray)
   return newBytes
 }
 
-fun stateToElement(key: String, state: Any?, newLiveStates: Map<String, Element>? = null): Element? {
-  if (state is Element) {
-    return state.clone()
+private fun stateToElement(key: String, state: Any?, newLiveStates: Map<String, Element>? = null): Element? {
+  return if (state is Element) {
+    state.clone()
   }
   else {
-    return newLiveStates?.get(key) ?: (state as? ByteArray)?.let(::unarchiveState)
+    newLiveStates?.get(key) ?: (state as? ByteArray)?.let(::unarchiveState)
   }
 }
 
@@ -74,7 +75,7 @@ class StateMap private constructor(private val names: Array<String>, private val
   override fun toString() = if (this == EMPTY) "EMPTY" else states.toString()
 
   companion object {
-    internal val EMPTY = StateMap(ArrayUtil.EMPTY_STRING_ARRAY, AtomicReferenceArray(0))
+    internal val EMPTY = StateMap(ArrayUtilRt.EMPTY_STRING_ARRAY, AtomicReferenceArray(0))
 
     fun fromMap(map: Map<String, Any>): StateMap {
       if (map.isEmpty()) {
@@ -177,7 +178,7 @@ class StateMap private constructor(private val names: Array<String>, private val
 
 fun setStateAndCloneIfNeeded(key: String, newState: Element?, oldStates: StateMap, newLiveStates: MutableMap<String, Element>? = null): MutableMap<String, Any>? {
   val oldState = oldStates.get(key)
-  if (newState == null || newState.isEmpty()) {
+  if (newState == null || JDOMUtil.isEmpty(newState)) {
     if (oldState == null) {
       return null
     }

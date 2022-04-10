@@ -12,6 +12,7 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl.DO_NOT_ADD_CUSTOMIZATION_HANDLER
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomPanel
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -24,6 +25,7 @@ import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.Font
 import java.beans.PropertyChangeEvent
@@ -92,6 +94,10 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
         override fun getFont(): Font {
           return UIUtil.getToolbarFont()
         }
+
+        override fun getForeground(): Color {
+          return UIUtil.getLabelForeground()
+        }
       }
 
       private val arrow = ComboBoxArrowComponent().getView()
@@ -99,19 +105,23 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
       init {
         MouseListenerHelper.addListener(this, { doClick() }, { doShiftClick() }, { doRightClick() })
         fill()
-
+        putClientProperty(DO_NOT_ADD_CUSTOMIZATION_HANDLER, true)
         background = JBColor.namedColor("ComboBoxButton.background", Gray.xDF)
       }
 
       override fun presentationChanged(event: PropertyChangeEvent) {
         setting.icon = presentation.icon
         setting.text = presentation.text
+        setting.putClientProperty(DO_NOT_ADD_CUSTOMIZATION_HANDLER, true)
+
 
         isEnabled = presentation.isEnabled
         setting.isEnabled = isEnabled
         arrow.isVisible = isEnabled
 
         toolTipText = presentation.description
+        setting.toolTipText = presentation.description
+        arrow.toolTipText = presentation.description
       }
 
       private fun fill() {
@@ -183,7 +193,10 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
       e.project?.let {
         e.runToolbarData()?.clear()
         e.setConfiguration(configuration)
-        RunToolbarSlotManager.getInstance(it).saveSlotsConfiguration()
+        e.id()?.let {id ->
+          RunToolbarSlotManager.getInstance(it).configurationChanged(id, configuration)
+        }
+
         updatePresentation(ExecutionTargetManager.getActiveTarget(project),
                            configuration,
                            project,

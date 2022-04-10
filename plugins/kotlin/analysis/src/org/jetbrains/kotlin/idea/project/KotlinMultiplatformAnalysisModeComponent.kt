@@ -45,5 +45,9 @@ object KotlinMultiplatformAnalysisModeComponent {
     }
 }
 
+/**
+ * Note that Kotlin Resolution can work in a mode, when some operations are performed in COMPOSITE mode, and some in SEPARATE.
+ * This specific property only shows global project-wide setting, so use it with a lot of caution.
+ */
 val Project.useCompositeAnalysis: Boolean
     get() = KotlinMultiplatformAnalysisModeComponent.getMode(this) == KotlinMultiplatformAnalysisModeComponent.Mode.COMPOSITE

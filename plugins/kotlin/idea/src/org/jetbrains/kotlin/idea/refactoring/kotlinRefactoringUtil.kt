@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring
 
@@ -51,6 +51,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.getAccessorLightMethods
+import org.jetbrains.kotlin.asJava.isSyntheticValuesOrValueOfMethod
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.*
@@ -91,7 +92,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.*
-import org.jetbrains.kotlin.resolve.calls.callUtil.getCallWithAssert
+import org.jetbrains.kotlin.resolve.calls.util.getCallWithAssert
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.source.getPsi
@@ -664,6 +665,8 @@ fun createJavaClass(klass: KtClass, targetClass: PsiClass?, forcePlainClass: Boo
     }
 
     for (method in template.methods) {
+        if (isSyntheticValuesOrValueOfMethod(method)) continue
+
         val hasParams = method.parameterList.parametersCount > 0
         val needSuperCall = !template.isEnum &&
                 (template.superClass?.constructors ?: PsiMethod.EMPTY_ARRAY).all {
@@ -803,9 +806,7 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
         }
     }
 
-    if (commonCount == 0) return originalList.listReplacer(newList)
-
-    val lastOriginalParameter = oldParameters.last()
+    if (commonCount == 0 && !keepComments) return originalList.listReplacer(newList)
 
     if (oldCount > commonCount) {
         if (keepComments) {
@@ -820,9 +821,10 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
                 oldParameter.delete()
             }
         } else {
-            originalList.deleteChildRange(oldParameters[commonCount - 1].nextSibling, lastOriginalParameter)
+            originalList.deleteChildRange(oldParameters[commonCount - 1].nextSibling, oldParameters.last())
         }
     } else if (newCount > commonCount) {
+        val lastOriginalParameter = oldParameters.last()
         val psiBeforeLastParameter = lastOriginalParameter.prevSibling
         val withMultiline =
             (psiBeforeLastParameter is PsiWhiteSpace || psiBeforeLastParameter is PsiComment) && psiBeforeLastParameter.textContains('\n')
@@ -1013,7 +1015,6 @@ fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?)
 fun checkSuperMethodsWithPopup(
     declaration: KtNamedDeclaration,
     deepestSuperMethods: List<PsiElement>,
-    actionStringPrefixKey: String,
     editor: Editor,
     action: (List<PsiElement>) -> Unit
 ) {
@@ -1045,10 +1046,10 @@ fun checkSuperMethodsWithPopup(
         else -> kindIndex
     }
 
-    val renameBase = KotlinBundle.message("$actionStringPrefixKey.base.0", superKindIndex + (if (deepestSuperMethods.size > 1) 10 else 0))
-    val renameCurrent = KotlinBundle.message("$actionStringPrefixKey.only.current.0", kindIndex)
+    val renameBase = KotlinBundle.message("rename.base.0", superKindIndex + (if (deepestSuperMethods.size > 1) 10 else 0))
+    val renameCurrent = KotlinBundle.message("rename.only.current.0", kindIndex)
     val title = KotlinBundle.message(
-        "$actionStringPrefixKey.declaration.title.0.implements.1.2.of.3",
+        "rename.declaration.title.0.implements.1.2.of.3",
         declaration.name ?: "",
         if (isAbstract) 1 else 2,
         ElementDescriptionUtil.getElementDescription(superMethod, UsageViewTypeLocation.INSTANCE),

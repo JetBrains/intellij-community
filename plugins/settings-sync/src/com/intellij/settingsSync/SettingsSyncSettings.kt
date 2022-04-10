@@ -1,27 +1,34 @@
 package com.intellij.settingsSync
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.util.EventDispatcher
+import com.intellij.settingsSync.SettingsSyncSettings.Companion.FILE_SPEC
 import java.util.*
 
-@State(name = "SettingsSyncSettings", storages = [Storage("settingsSync.xml")])
+internal interface SettingsSyncEnabledStateListener : EventListener {
+  fun enabledStateChanged(syncEnabled: Boolean)
+}
+
+@State(name = "SettingsSyncSettings", storages = [Storage(FILE_SPEC)])
 internal class SettingsSyncSettings : SimplePersistentStateComponent<SettingsSyncSettings.SettingsSyncSettingsState>(
   SettingsSyncSettingsState()) {
 
   companion object {
     fun getInstance() = ApplicationManager.getApplication().getService(SettingsSyncSettings::class.java)
-  }
 
-  private val evenDispatcher = EventDispatcher.create(Listener::class.java)
+    const val FILE_SPEC = "settingsSync.xml"
+  }
 
   var syncEnabled
     get() = state.syncEnabled
     set(value) {
       state.syncEnabled = value
-      evenDispatcher.multicaster.settingsChanged()
+      fireSettingsStateChanged(value)
     }
+
+  private fun fireSettingsStateChanged(syncEnabled: Boolean) {
+    SettingsSyncEvents.getInstance().fireEnabledStateChanged(syncEnabled)
+  }
 
   fun isCategoryEnabled(category: SettingsCategory) = !state.disabledCategories.contains(category)
 
@@ -72,13 +79,5 @@ internal class SettingsSyncSettings : SimplePersistentStateComponent<SettingsSyn
 
     var disabledCategories by list<SettingsCategory>()
     var disabledSubcategories by map<SettingsCategory, ArrayList<String>>()
-  }
-
-  interface Listener : EventListener {
-    fun settingsChanged()
-  }
-
-  fun addListener(listener: Listener, disposable: Disposable) {
-    evenDispatcher.addListener(listener, disposable)
   }
 }

@@ -66,8 +66,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   @Nullable private final Project myProject;
   private final DirDiffSettings mySettings;
 
-  private DiffElement mySource;
-  private DiffElement myTarget;
+  protected DiffElement mySource;
+  protected DiffElement myTarget;
   private DTree myTree;
   private final List<DirDiffElementImpl> myElements = new ArrayList<>();
   private final AtomicBoolean myUpdating = new AtomicBoolean(false);
@@ -662,7 +662,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
-  private void refreshElementAfterCopyTo(DiffElement<?> newElement, DirDiffElementImpl element) {
+  protected void refreshElementAfterCopyTo(DiffElement<?> newElement, DirDiffElementImpl element) {
     if (newElement != null) {
       DTree node = element.getNode();
       node.setType(DiffType.EQUAL);
@@ -771,9 +771,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       return;
     }
     rememberSelection();
-    for (DirDiffElementImpl element : selectedElements) {
-      syncElement(element);
-    }
+    sync(selectedElements);
     restoreSelection();
  }
 
@@ -788,10 +786,14 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     if (!checkCanDelete(elements)) {
       return;
     }
+    sync(elements);
+    selectFirstRow();
+  }
+
+  protected void sync(List<DirDiffElementImpl> elements) {
     for (DirDiffElementImpl element : elements) {
       syncElement(element);
     }
-    selectFirstRow();
   }
 
   private boolean checkCanDelete(List<DirDiffElementImpl> elements) {
@@ -846,7 +848,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       .ask(myProject);
   }
 
-  private void syncElement(DirDiffElementImpl element) {
+  protected void syncElement(DirDiffElementImpl element) {
     final DirDiffOperation operation = element.getOperation();
     if (operation == null) return;
     switch (operation) {

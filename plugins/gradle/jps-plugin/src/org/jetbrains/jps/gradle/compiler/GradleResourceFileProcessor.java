@@ -1,13 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.gradle.compiler;
 
 import com.intellij.openapi.util.Ref;
 import org.apache.tools.ant.util.ReaderInputStream;
 import org.jetbrains.jps.gradle.GradleJpsBundle;
-import org.jetbrains.jps.gradle.model.impl.GradleModuleResourceConfiguration;
-import org.jetbrains.jps.gradle.model.impl.GradleProjectConfiguration;
-import org.jetbrains.jps.gradle.model.impl.ResourceRootConfiguration;
-import org.jetbrains.jps.gradle.model.impl.ResourceRootFilter;
+import org.jetbrains.jps.gradle.model.impl.*;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -26,7 +23,7 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleResourceFileProcessor {
+public class GradleResourceFileProcessor implements ResourceFileProcessor {
   private static final int FILTERING_SIZE_LIMIT = 10 * 1024 * 1024 /*10 mb*/;
   protected final JpsEncodingProjectConfiguration myEncodingConfig;
   protected final GradleProjectConfiguration myProjectConfig;
@@ -39,6 +36,7 @@ public class GradleResourceFileProcessor {
     myModuleConfiguration = moduleConfiguration;
   }
 
+  @Override
   public void copyFile(File file, Ref<File> targetFileRef, ResourceRootConfiguration rootConfiguration, CompileContext context,
                        FileFilter filteringFilter) throws IOException {
     boolean shouldFilter = rootConfiguration.isFiltered && !rootConfiguration.filters.isEmpty() && filteringFilter.accept(file);

@@ -23,6 +23,7 @@ import kotlin.reflect.KMutableProperty0
 private const val EXTENSION_POINT_NAME = "com.intellij.codeInsight.inlayProvider"
 
 enum class InlayGroup(val key: String) {
+  CODE_VISION_GROUP_NEW("settings.hints.new.group.code.vision"),
   CODE_VISION_GROUP("settings.hints.group.code.vision"),
   PARAMETERS_GROUP("settings.hints.group.parameters"),
   TYPES_GROUP("settings.hints.group.types"),
@@ -107,6 +108,7 @@ interface InlayHintsProvider<T : Any> {
 
   @JvmDefault
   val description: String?
+    @Nls
     get() {
       return getProperty("inlay." + key.id + ".description")
     }
@@ -135,6 +137,16 @@ interface InlayHintsProvider<T : Any> {
   @Nls
   @JvmDefault
   fun getProperty(key: String): String? = null
+
+  @JvmDefault
+  fun preparePreview(editor: Editor, file: PsiFile, settings: T) {
+  }
+
+  @Nls
+  @JvmDefault
+  fun getCaseDescription(case: ImmediateConfigurable.Case): String? {
+    return getProperty("inlay." + this.key.id + "." + case.id)
+  }
 
   val isVisibleInSettings: Boolean
     get() = true

@@ -14,7 +14,6 @@ import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.ServiceContainerUtil;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +21,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
@@ -195,7 +195,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
   public void testPresentation() {
     ActionManager manager = ActionManager.getInstance();
 
-    List<String> failures = new SmartList<>();
+    List<String> failures = new ArrayList<>();
     for (String id : manager.getActionIdList("")) {
       if (ACTION_WITHOUT_TEXT_AND_DESCRIPTION.equals(id)) {
         continue;
@@ -204,7 +204,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
       try {
         AnAction stub = manager.getActionOrStub(id);
         AnAction action = manager.getAction(id);
-        String actionIdAndClass = id + " (" + action.getClass().getName() + ")";
+        String actionIdAndClass = "'"+id + "' (" + action.getClass() + ")";
         if (stub != action) {
           Presentation before = stub.getTemplatePresentation();
           Presentation after = action.getTemplatePresentation();
@@ -229,7 +229,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
   }
 
   private static void checkPresentationProperty(String name, String message, Object expected, Object actual) {
-    if (!(expected == null ? actual == null : expected.equals(actual))) {
+    if (!Objects.equals(expected, actual)) {
       LOG.debug(name + " updated: "+ message + "; old:" + expected + "; new:" + actual);
     }
   }

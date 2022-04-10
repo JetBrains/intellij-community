@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diff.DiffContentFactory;
@@ -71,8 +71,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
 
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
-    return e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY) != null ||
-           e.getData(ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY) != null;
+    return e.getData(ShelvedChangesViewManager.SHELVED_CHANGES_TREE) != null;
   }
 
   @Override
@@ -114,19 +113,42 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
 
     ListSelection<ShelvedWrapper> wrappers = ShelvedChangesViewManager.getSelectedChangesOrAll(dc);
 
-    final ApplyPatchContext patchContext = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
+    ApplyPatchContext patchContext = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
 
     return wrappers.map(s -> {
-      ShelvedChange textChange = s.getShelvedChange();
-      if (textChange != null) {
-        return processTextChange(project, base, patchContext, textChange, withLocal);
-      }
-      ShelvedBinaryFile binaryChange = s.getBinaryFile();
-      if (binaryChange != null) {
-        return processBinaryChange(project, base, binaryChange);
-      }
-      return null;
+      return createDiffProducer(project, base, patchContext, s, withLocal);
     });
+  }
+
+  public static @Nullable ChangeDiffRequestChain.Producer createDiffProducer(@NotNull Project project,
+                                                                             @NotNull ShelvedWrapper shelvedWrapper,
+                                                                             boolean withLocal) {
+    if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return null;
+
+    String base = project.getBasePath();
+    if (base == null) {
+      LOG.error("No base path for project " + project);
+      return null;
+    }
+
+    ApplyPatchContext patchContext = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
+    return createDiffProducer(project, base, patchContext, shelvedWrapper, withLocal);
+  }
+
+  private static @Nullable ChangeDiffRequestChain.Producer createDiffProducer(@NotNull Project project,
+                                                                              @NotNull String base,
+                                                                              @NotNull ApplyPatchContext patchContext,
+                                                                              @NotNull ShelvedWrapper shelvedWrapper,
+                                                                              boolean withLocal) {
+    ShelvedChange textChange = shelvedWrapper.getShelvedChange();
+    if (textChange != null) {
+      return processTextChange(project, base, patchContext, textChange, withLocal);
+    }
+    ShelvedBinaryFile binaryChange = shelvedWrapper.getBinaryFile();
+    if (binaryChange != null) {
+      return processBinaryChange(project, base, binaryChange);
+    }
+    return null;
   }
 
   public static void showShelvedChangesDiff(@NotNull DataContext dc, boolean withLocal) {

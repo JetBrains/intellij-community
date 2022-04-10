@@ -41,8 +41,6 @@ class StructurePlugin(context: Context) : Plugin(context) {
                     KotlinNewProjectWizardBundle.message("plugin.structure.setting.location.error.is.not.empty")
                 }
             }
-
-            tooltipText = KotlinNewProjectWizardBundle.message("plugin.structure.setting.location.tooltip")
         }
         val name by stringSetting(
             KotlinNewProjectWizardBundle.message("plugin.structure.setting.name"),
@@ -50,7 +48,6 @@ class StructurePlugin(context: Context) : Plugin(context) {
         ) {
             shouldNotBeBlank()
             validate(StringValidators.shouldBeValidIdentifier(title, Module.ALLOWED_SPECIAL_CHARS_IN_MODULE_NAMES))
-            tooltipText = KotlinNewProjectWizardBundle.message("plugin.structure.setting.name.tooltip")
         }
 
         val groupId by stringSetting(

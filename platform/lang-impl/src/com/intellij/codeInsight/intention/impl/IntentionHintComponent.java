@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.*;
+import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
@@ -13,6 +14,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.DynamicPlugins;
 import com.intellij.internal.statistic.IntentionsCollector;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -29,7 +31,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -48,13 +50,14 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
@@ -73,23 +76,17 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public final class IntentionHintComponent implements Disposable, ScrollAwareHint {
-  public interface Popup extends Disposable {
-    boolean isVisible();
-
-    void show(@NotNull IntentionHintComponent bulb, @Nullable RelativePoint positionHint);
-
-    void close();
-  }
-
-  static class IntentionPopup implements Popup, Disposable.Parent {
+  static class IntentionPopup implements Disposable.Parent {
+    @NotNull
     private final CachedIntentions myCachedIntentions;
+    @NotNull
     private final Editor myEditor;
     private final PsiFile myFile;
     private final Project myProject;
     private final IntentionPreviewPopupUpdateProcessor myPreviewPopupUpdateProcessor;
     private PopupMenuListener myOuterComboboxPopupListener;
     private IntentionHintComponent myHint;
-    private ListPopup myPopup;
+    private ListPopup myListPopup;
     private boolean myDisposed;
     private boolean myPopupShown;
 
@@ -104,16 +101,14 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       myPreviewPopupUpdateProcessor = new IntentionPreviewPopupUpdateProcessor(project, myFile, myEditor);
     }
 
-    @Override
-    public boolean isVisible() {
-      return myPopup != null && SwingUtilities.getWindowAncestor(myPopup.getContent()) != null;
+    private boolean isVisible() {
+      return myListPopup != null && SwingUtilities.getWindowAncestor(myListPopup.getContent()) != null;
     }
 
-    @Override
-    public void show(@NotNull IntentionHintComponent component, @Nullable RelativePoint positionHint) {
-      if (myDisposed || myEditor.isDisposed() || (myPopup != null && myPopup.isDisposed()) || myPopupShown) return;
+    private void show(@NotNull IntentionHintComponent component, @Nullable RelativePoint positionHint) {
+      if (myDisposed || myEditor.isDisposed() || (myListPopup != null && myListPopup.isDisposed()) || myPopupShown) return;
 
-      if (myPopup == null) {
+      if (myListPopup == null) {
         assert myHint == null;
         myHint = component;
         recreateMyPopup(this, new IntentionListStep(this, myEditor, myFile, myProject, myCachedIntentions));
@@ -123,29 +118,28 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       }
 
       if (positionHint != null) {
-        myPopup.show(positionHint);
+        myListPopup.show(positionHint);
       }
       else {
-        myPopup.showInBestPositionFor(myEditor);
+        myListPopup.showInBestPositionFor(myEditor);
       }
 
       if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
         ApplicationManager.getApplication().invokeLater(() -> showPreview(this));
       }
 
-      IntentionsCollector.reportShownIntentions(myFile.getProject(), myPopup, myFile.getLanguage());
+      IntentionsCollector.reportShownIntentions(myFile.getProject(), myListPopup, myFile.getLanguage());
       myPopupShown = true;
     }
 
-    @Override
-    public void close() {
-      myPopup.cancel();
+    private void close() {
+      myListPopup.cancel();
       myPopupShown = false;
     }
 
-    public void cancelled(IntentionListStep step) {
+    void cancelled(@NotNull IntentionListStep step) {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      if (myPopup.getListStep() == step && !myDisposed) {
+      if (myListPopup.getListStep() == step && !myDisposed) {
         // Root canceled. Create new popup. This one cannot be reused.
         recreateMyPopup(this, step);
       }
@@ -183,10 +177,10 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   @TestOnly
   public CachedIntentions getCachedIntentions() {
-    return ((IntentionPopup)myPopup).myCachedIntentions;
+    return myPopup.myCachedIntentions;
   }
 
-  private final Popup myPopup;
+  private final IntentionPopup myPopup;
 
   private static Border createActiveBorder() {
     return BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(getBorderColor(), 1), BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1));
@@ -242,11 +236,10 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
                                                          @NotNull PsiFile file,
                                                          @NotNull Editor editor,
                                                          boolean showExpanded,
-                                                         @NotNull Icon icon,
-                                                         @NotNull IntentionHintComponent.Popup popup) {
-
+                                                         @NotNull CachedIntentions cachedIntentions) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final IntentionHintComponent component = new IntentionHintComponent(project, file, editor, icon, popup);
+    IntentionPopup intentionPopup = new IntentionPopup(project, editor, file, cachedIntentions);
+    IntentionHintComponent component = new IntentionHintComponent(project, file, editor, getIcon(cachedIntentions), intentionPopup);
 
     if (editor.getSettings().isShowIntentionBulb()) {
       component.showIntentionHintImpl(!showExpanded);
@@ -260,16 +253,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
 
     return component;
-  }
-
-  @NotNull
-  public static IntentionHintComponent showIntentionHint(@NotNull Project project,
-                                                         @NotNull PsiFile file,
-                                                         @NotNull Editor editor,
-                                                         boolean showExpanded,
-                                                         @NotNull CachedIntentions cachedIntentions) {
-    return showIntentionHint(project, file, editor, showExpanded, getIcon(cachedIntentions),
-                             new IntentionPopup(project, editor, file, cachedIntentions));
   }
 
   public boolean isDisposed() {
@@ -289,23 +272,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     closePopup();
   }
 
-  @Nullable
-  @TestOnly
-  public IntentionAction getAction(int index) {
-    IntentionPopup that = (IntentionPopup)myPopup;
-    if (that.myPopup == null || that.myPopup.isDisposed()) {
-      return null;
-    }
-    List<IntentionActionWithTextCaching> values = that.myCachedIntentions.getAllActions();
-    if (values.size() <= index) {
-      return null;
-    }
-    return values.get(index).getAction();
-  }
-
-
-  private void showIntentionHintImpl(final boolean delay) {
-    final int offset = myEditor.getCaretModel().getOffset();
+  private void showIntentionHintImpl(boolean delay) {
+    int offset = myEditor.getCaretModel().getOffset();
 
     myComponentHint.setShouldDelay(delay);
 
@@ -335,17 +303,17 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   private Point getHintPosition() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return new Point();
     Editor editor = myEditor;
-    final int offset = editor.getCaretModel().getOffset();
-    final VisualPosition pos = editor.offsetToVisualPosition(offset);
+    int offset = editor.getCaretModel().getOffset();
+    VisualPosition pos = editor.offsetToVisualPosition(offset);
     int line = pos.line;
 
-    final Point position = editor.visualPositionToXY(new VisualPosition(line, 0));
+    Point position = editor.visualPositionToXY(new VisualPosition(line, 0));
     LOG.assertTrue(editor.getComponent().isDisplayable());
 
     JComponent convertComponent = editor.getContentComponent();
 
     Point realPoint;
-    final boolean oneLineEditor = editor.isOneLineMode();
+    boolean oneLineEditor = editor.isOneLineMode();
     if (oneLineEditor) {
       // place bulb at the corner of the surrounding component
       Container ancestor = findAncestorCombo(myEditor);
@@ -375,7 +343,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         yShift = editor.getLineHeight() - NORMAL_BORDER_SIZE;
       }
 
-      final int xShift = AllIcons.Actions.RealIntentionBulb.getIconWidth();
+      int xShift = AllIcons.Actions.RealIntentionBulb.getIconWidth();
 
       realPoint = new Point(Math.max(0,visibleArea.x - xShift), position.y + yShift);
     }
@@ -387,21 +355,21 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   private static boolean canPlaceBulbOnTheSameLine(Editor editor) {
     if (ApplicationManager.getApplication().isUnitTestMode() || editor.isOneLineMode()) return false;
     if (Registry.is("always.show.intention.above.current.line", false)) return false;
-    final int offset = editor.getCaretModel().getOffset();
-    final VisualPosition pos = editor.offsetToVisualPosition(offset);
+    int offset = editor.getCaretModel().getOffset();
+    VisualPosition pos = editor.offsetToVisualPosition(offset);
     int line = pos.line;
 
-    final int firstNonSpaceColumnOnTheLine = EditorActionUtil.findFirstNonSpaceColumnOnTheLine(editor, line);
+    int firstNonSpaceColumnOnTheLine = EditorActionUtil.findFirstNonSpaceColumnOnTheLine(editor, line);
     if (firstNonSpaceColumnOnTheLine == -1) return false;
-    final Point point = editor.visualPositionToXY(new VisualPosition(line, firstNonSpaceColumnOnTheLine));
+    Point point = editor.visualPositionToXY(new VisualPosition(line, firstNonSpaceColumnOnTheLine));
     return point.x > AllIcons.Actions.RealIntentionBulb.getIconWidth() + (editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE) * 2;
   }
 
   private IntentionHintComponent(@NotNull Project project,
                                  @NotNull PsiFile file,
-                                 @NotNull final Editor editor,
+                                 @NotNull Editor editor,
                                  @NotNull Icon smartTagIcon,
-                                 @NotNull IntentionHintComponent.Popup popup) {
+                                 @NotNull IntentionPopup popup) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myEditor = editor;
     myPopup = popup;
@@ -454,7 +422,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     Disposer.dispose(this);
   }
 
-  private void onMouseExit(final boolean small) {
+  private void onMouseExit(boolean small) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myPopup.isVisible()) {
       myIconLabel.setIcon(myInactiveIcon);
@@ -462,7 +430,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   }
 
-  private void onMouseEnter(final boolean small) {
+  private void onMouseEnter(boolean small) {
     myIconLabel.setIcon(myHighlightedIcon);
     myPanel.setBorder(small ? createActiveBorderSmall() : createActiveBorder());
 
@@ -487,8 +455,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     ApplicationManager.getApplication().assertIsDispatchThread();
     RelativePoint positionHint = null;
     if (mouseClick && myPanel.isShowing()) {
-      final RelativePoint swCorner = RelativePoint.getSouthWestOf(myPanel);
-      final int yOffset = canPlaceBulbOnTheSameLine(myEditor) ? 0 : myEditor.getLineHeight() - (myEditor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE);
+      RelativePoint swCorner = RelativePoint.getSouthWestOf(myPanel);
+      int yOffset = canPlaceBulbOnTheSameLine(myEditor) ? 0 : myEditor.getLineHeight() - (myEditor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE);
       positionHint = new RelativePoint(swCorner.getComponent(), new Point(swCorner.getPoint().x, swCorner.getPoint().y + yOffset));
     }
     myPopup.show(this, positionHint);
@@ -496,77 +464,113 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   private static void recreateMyPopup(@NotNull IntentionPopup that, @NotNull ListPopupStep<IntentionActionWithTextCaching> step) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (that.myPopup != null) {
-      Disposer.dispose(that.myPopup);
+    if (that.myListPopup != null) {
+      Disposer.dispose(that.myListPopup);
     }
     if (that.myDisposed || that.myEditor.isDisposed()) {
-      that.myPopup = null;
+      that.myListPopup = null;
       return;
     }
-    that.myPopup = JBPopupFactory.getInstance().createListPopup(step);
-    if (that.myPopup instanceof WizardPopup) {
+    that.myListPopup = JBPopupFactory.getInstance().createListPopup(step);
+    if (that.myListPopup instanceof WizardPopup) {
       Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS).getShortcuts();
       for (Shortcut shortcut : shortcuts) {
         if (shortcut instanceof KeyboardShortcut) {
           KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
           if (keyboardShortcut.getSecondKeyStroke() == null) {
-            ((WizardPopup)that.myPopup).registerAction("activateSelectedElement", keyboardShortcut.getFirstKeyStroke(), new AbstractAction() {
+            ((WizardPopup)that.myListPopup).registerAction("activateSelectedElement", keyboardShortcut.getFirstKeyStroke(), new AbstractAction() {
               @Override
               public void actionPerformed(ActionEvent e) {
-                that.myPopup.handleSelect(true);
+                that.myListPopup.handleSelect(true);
               }
             });
           }
         }
       }
+
+      registerIntentionShortcuts(that);
       registerShowPreviewAction(that);
     }
 
     boolean committed = PsiDocumentManager.getInstance(that.myFile.getProject()).isCommitted(that.myEditor.getDocument());
-    final PsiFile injectedFile = committed ? InjectedLanguageUtil.findInjectedPsiNoCommit(that.myFile, that.myEditor.getCaretModel().getOffset()) : null;
-    final Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(that.myEditor, injectedFile);
+    PsiFile injectedFile = committed ? InjectedLanguageUtil.findInjectedPsiNoCommit(that.myFile, that.myEditor.getCaretModel().getOffset()) : null;
+    Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(that.myEditor, injectedFile);
 
-    final ScopeHighlighter highlighter = new ScopeHighlighter(that.myEditor);
-    final ScopeHighlighter injectionHighlighter = new ScopeHighlighter(injectedEditor);
+    ScopeHighlighter highlighter = new ScopeHighlighter(that.myEditor);
+    ScopeHighlighter injectionHighlighter = new ScopeHighlighter(injectedEditor);
 
-    that.myPopup.addListener(new JBPopupListener() {
+    JList<?> list = that.myListPopup instanceof ListPopupImpl ? ((ListPopupImpl)that.myListPopup).getList() : null;
+
+    var selectionListener = new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        Object source = e.getSource();
+        highlighter.dropHighlight();
+        injectionHighlighter.dropHighlight();
+
+        if (source instanceof DataProvider) {
+          Object selectedItem = PlatformCoreDataKeys.SELECTED_ITEM.getData((DataProvider)source);
+          if (selectedItem instanceof IntentionActionWithTextCaching) {
+            IntentionAction action = IntentionActionDelegate.unwrap(((IntentionActionWithTextCaching)selectedItem).getAction());
+            if (list != null) {
+              updatePreviewPopup(that, action, list.getSelectedIndex());
+            }
+            highlightOnHover(selectedItem);
+          }
+        }
+      }
+
+      private void highlightOnHover(Object selectedItem) {
+        if (!(selectedItem instanceof IntentionActionWithTextCaching)) return;
+
+        IntentionAction action = IntentionActionDelegate.unwrap(((IntentionActionWithTextCaching)selectedItem).getAction());
+        if (action instanceof SuppressIntentionActionFromFix) {
+          if (injectedFile != null && ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
+            PsiElement at = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
+            PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
+            if (container != null) {
+              injectionHighlighter.highlight(container, Collections.singletonList(container));
+            }
+          }
+          else {
+            PsiElement at = that.myFile.findElementAt(that.myEditor.getCaretModel().getOffset());
+            PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
+            if (container != null) {
+              highlighter.highlight(container, Collections.singletonList(container));
+            }
+          }
+        }
+        else if (action instanceof CustomizableIntentionAction) {
+          var ranges = ((CustomizableIntentionAction)action).getRangesToHighlight(that.myEditor, that.myFile);
+          for (var range : ranges) {
+            TextRange rangeInFile = range.getRangeInFile();
+            PsiFile file = range.getContainingFile();
+            if (injectedFile != null && file.getViewProvider() == injectedFile.getViewProvider()) {
+              injectionHighlighter.addHighlights(List.of(rangeInFile), range.getHighlightKey());
+            }
+            else if (!InjectedLanguageManager.getInstance(that.myProject).isInjectedFragment(file)) {
+              highlighter.addHighlights(List.of(rangeInFile), range.getHighlightKey());
+            }
+          }
+        }
+      }
+    };
+    that.myListPopup.addListSelectionListener(selectionListener);
+
+    that.myListPopup.addListener(new JBPopupListener() {
+      @Override
+      public void beforeShown(@NotNull LightweightWindowEvent event) {
+        if (list != null) {
+          selectionListener.highlightOnHover(list.getSelectedValue());
+        }
+      }
+
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
         highlighter.dropHighlight();
         injectionHighlighter.dropHighlight();
         that.myPreviewPopupUpdateProcessor.hide();
         that.myPopupShown = false;
-      }
-    });
-    that.myPopup.addListSelectionListener(e -> {
-      final Object source = e.getSource();
-      highlighter.dropHighlight();
-      injectionHighlighter.dropHighlight();
-
-      if (source instanceof DataProvider) {
-        final Object selectedItem = PlatformCoreDataKeys.SELECTED_ITEM.getData((DataProvider)source);
-        if (selectedItem instanceof IntentionActionWithTextCaching) {
-          IntentionAction action = IntentionActionDelegate.unwrap(((IntentionActionWithTextCaching)selectedItem).getAction());
-          if (that.myPopup instanceof ListPopupImpl) {
-            updatePreviewPopup(that, action, ((ListPopupImpl)that.myPopup).getList().getSelectedIndex());
-          }
-          if (action instanceof SuppressIntentionActionFromFix) {
-            if (injectedFile != null && ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
-              final PsiElement at = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
-              final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
-              if (container != null) {
-                injectionHighlighter.highlight(container, Collections.singletonList(container));
-              }
-            }
-            else {
-              final PsiElement at = that.myFile.findElementAt(that.myEditor.getCaretModel().getOffset());
-              final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
-              if (container != null) {
-                highlighter.highlight(container, Collections.singletonList(container));
-              }
-            }
-          }
-        }
       }
     });
 
@@ -585,8 +589,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       }
     }
 
-    Disposer.register(that, that.myPopup);
-    Disposer.register(that.myPopup, ApplicationManager.getApplication()::assertIsDispatchThread);
+    Disposer.register(that, that.myListPopup);
+    Disposer.register(that.myListPopup, ApplicationManager.getApplication()::assertIsDispatchThread);
   }
 
   private static JComboBox<?> findAncestorCombo(Editor editor) {
@@ -599,8 +603,37 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   private static void updatePreviewPopup(@NotNull IntentionHintComponent.IntentionPopup that, @NotNull IntentionAction action, int index) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    that.myPreviewPopupUpdateProcessor.setup(that.myPopup, index);
+    that.myPreviewPopupUpdateProcessor.setup(that.myListPopup, index);
     that.myPreviewPopupUpdateProcessor.updatePopup(action);
+  }
+
+  /** Add all intention shortcuts to also be available as actions in the popover */
+  private static void registerIntentionShortcuts(@NotNull IntentionPopup that) {
+    for (Object object : that.myListPopup.getListStep().getValues()) {
+      if (object instanceof IntentionActionDelegate) {
+        registerIntentionShortcut(that, ((IntentionActionDelegate)object).getDelegate());
+      }
+    }
+  }
+
+  private static void registerIntentionShortcut(@NotNull IntentionPopup that, @NotNull IntentionAction intention) {
+    var shortcuts = IntentionShortcutManager.getInstance().getShortcutSet(intention);
+    if (shortcuts == null) return;
+
+    for (var shortcut : shortcuts.getShortcuts()) {
+      if (shortcut instanceof KeyboardShortcut) {
+        KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
+        ((WizardPopup)that.myListPopup).registerAction(IntentionShortcutUtils.getWrappedActionId(intention),
+                                                       keyboardShortcut.getFirstKeyStroke(),
+                                                       new AbstractAction() {
+                                                     @Override
+                                                     public void actionPerformed(ActionEvent e) {
+                                                       that.close();
+                                                       IntentionShortcutUtils.invokeAsAction(intention, that.myEditor, that.myFile);
+                                                     }
+                                                   });
+      }
+    }
   }
 
   private static void registerShowPreviewAction(@NotNull IntentionHintComponent.IntentionPopup that) {
@@ -620,13 +653,13 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         }
       }
     };
-    ((WizardPopup)that.myPopup).registerAction("showIntentionPreview",
-            KeymapUtil.getKeyStroke(IntentionPreviewPopupUpdateProcessor.Companion.getShortcutSet()), action);
+    ((WizardPopup)that.myListPopup).registerAction("showIntentionPreview",
+                                                   KeymapUtil.getKeyStroke(IntentionPreviewPopupUpdateProcessor.Companion.getShortcutSet()), action);
     advertisePopup(that, true);
   }
 
   private static void advertisePopup(@NotNull IntentionPopup that, boolean show) {
-    ListPopup popup = that.myPopup;
+    ListPopup popup = that.myListPopup;
     if (!popup.isDisposed()) {
       popup.setAdText(CodeInsightBundle.message(
         show ? "intention.preview.adv.show.text" : "intention.preview.adv.hide.text",
@@ -636,8 +669,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   private static void showPreview(@NotNull IntentionHintComponent.IntentionPopup that) {
     that.myPreviewPopupUpdateProcessor.show();
-    if (that.myPopup instanceof ListPopupImpl) {
-      JList<?> list = ((ListPopupImpl)that.myPopup).getList();
+    if (that.myListPopup instanceof ListPopupImpl) {
+      JList<?> list = ((ListPopupImpl)that.myListPopup).getList();
       int selectedIndex = list.getSelectedIndex();
       Object selectedValue = list.getSelectedValue();
       if (selectedValue instanceof IntentionActionWithTextCaching) {
@@ -656,10 +689,10 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
 
     @Override
-    public void show(@NotNull final JComponent parentComponent,
-                     final int x,
-                     final int y,
-                     final JComponent focusBackComponent,
+    public void show(@NotNull JComponent parentComponent,
+                     int x,
+                     int y,
+                     JComponent focusBackComponent,
                      @NotNull HintHint hintHint) {
       myVisible = true;
       if (myShouldDelay) {
@@ -691,5 +724,11 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     private void setShouldDelay(boolean shouldDelay) {
       myShouldDelay = shouldDelay;
     }
+  }
+
+  public boolean hasVisibleLightBulbOrPopup() {
+    return !isDisposed()
+           && isVisible()
+           && (myComponentHint.isVisible() || myPopup.isVisible() || ApplicationManager.getApplication().isUnitTestMode());
   }
 }

@@ -23,4 +23,6 @@ public interface UpdateSession {
   @NotNull Presentation presentation(@NotNull AnAction action);
 
   @NotNull <T> T sharedData(@NotNull Key<T> key, @NotNull Supplier<? extends T> provider);
+
+  @NotNull <T> T computeOnEdt(@NotNull String operationName, @NotNull Supplier<T> supplier);
 }

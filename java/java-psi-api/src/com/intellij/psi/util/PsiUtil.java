@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.core.JavaPsiBundle;
@@ -810,6 +810,10 @@ public final class PsiUtil extends PsiUtilCore {
     return null;
   }
 
+  /**
+   * @param element element to get the associated type from (return type for method, or variable type for variable)
+   * @return the associated type, might be null
+   */
   @Nullable
   public static PsiType getTypeByPsiElement(@NotNull PsiElement element) {
     if (element instanceof PsiVariable) {
@@ -866,7 +870,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static boolean isInsideJavadocComment(PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiDocComment.class, true) != null;
+    return PsiTreeUtil.getParentOfType(element, PsiDocComment.class, true, PsiMember.class) != null;
   }
 
   @NotNull
@@ -1050,6 +1054,10 @@ public final class PsiUtil extends PsiUtilCore {
 
   public static boolean isLanguageLevel17OrHigher(@NotNull PsiElement element) {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_17);
+  }
+
+  public static boolean isLanguageLevel18OrHigher(@NotNull PsiElement element) {
+    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_18);
   }
 
   @NotNull

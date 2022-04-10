@@ -390,13 +390,20 @@
       <keyboard-shortcut first-keystroke="SPACE" keymap="$default"/>
     </action>
 
-    <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
+    <action id="ViewNavigationBar" class="com.intellij.ide.actions.navbar.ViewNavigationBarAction">
       <add-to-group group-id="ViewToolbarActionsGroup" anchor="after" relative-to-action="ViewToolBar"/>
       <override-text place="NavBar"/>
     </action>
 
+    <group id="NavbarLocationGroup" popup="true" class="com.intellij.ide.actions.navbar.NavBarLocationGroup">
+      <add-to-group group-id="ViewToolbarActionsGroup" anchor="after" relative-to-action="ViewNavigationBar"/>
+      <action id="NavBarLocationTop" class="com.intellij.ide.actions.navbar.NavBarTopLocationAction"/>
+      <action id="NavBarLocationBottom" class="com.intellij.ide.actions.navbar.NavBarBottomLocationAction"/>
+      <action id="NavBarLocationHide" class="com.intellij.ide.actions.navbar.HideNavBarAction"/>
+    </group>
+
     <action id="ViewMembersInNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarMembersAction">
-      <add-to-group group-id="UIToggleActions" relative-to-action="ViewNavigationBar" anchor="after"/>
+      <add-to-group group-id="UIToggleActions" relative-to-action="NavbarLocationGroup" anchor="after"/>
       <override-text place="NavBar"/>
     </action>
 
@@ -416,6 +423,7 @@
       <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction">
         <override-text place="MainMenu"/>
       </action>
+      <action id="TextSearchAction" class="com.intellij.find.impl.TextSearchContributor$Companion$TextSearchAction"/>
 
       <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="GotoLine"/>
 
@@ -717,37 +725,24 @@
       <reference ref="SettingsEntryPoint"/>
     </group>
 
-    <action id="SmallSpacer" class="com.intellij.ide.navigationToolbar.experimental.SmallSpacerAction"/>
-    <action id="BigSpacer" class="com.intellij.ide.navigationToolbar.experimental.BigSpacerAction"/>
-    <action id="TinySpacer" class="com.intellij.ide.navigationToolbar.experimental.TinySpacerAction"/>
-
     <group id="NewToolbarActions">
       <group id="LeftToolbarSideGroup">
         <reference id="Back"/>
         <reference id="Forward"/>
-        <reference id="BigSpacer"/>
         <action id="SegmentedVcsControlAction" class="com.intellij.execution.segmentedVcsWidget.SegmentedVcsControlAction"/>
-        <reference id="SmallSpacer"/>
         <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction"/>
       </group>
-      <group id="CenterToolbarSideGroup">
-        <group id="CustomActions"/>
-      </group>
       <group id="RightToolbarSideGroup">
-        <reference id="TinySpacer"/>
-        <reference id="BigSpacer"/>
         <reference id="RunToolbarWidgetAction"/>
-        <reference id="SmallSpacer"/>
         <reference id="SettingsEntryPoint"/>
       </group>
     </group>
 
     <group id="NewToolbarActionsWithoutRight">
       <reference ref="LeftToolbarSideGroup"/>
-      <reference ref="CenterToolbarSideGroup"/>
       <group id="RightToolbarSideGroupNoRunWidget">
         <reference id="ToolbarRunGroup"/>
-        <reference id="SmallSpacer"/>
+        <!-- 6px -->
         <reference id="SettingsEntryPoint"/>
       </group>
     </group>
@@ -1000,6 +995,7 @@
 
     <group id="EditorTabPopupMenuEx" searchable="false">
       <separator/>
+      <reference ref="Scratch.ChangeLanguage"/>
       <reference ref="AssociateWithFileType"/>
       <reference ref="MarkFileAs"/>
       <reference ref="AddToFavorites"/>
@@ -1138,7 +1134,6 @@
       <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
 
       <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction">
-        <override-text place="XDebuggerTreeInlayPopup"/>
       </action>
       <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction" use-shortcut-of="$Copy"/>
       <action id="XDebugger.CompareValueWithClipboard" class="com.intellij.xdebugger.impl.ui.tree.actions.XCompareWithClipboardAction"/>
@@ -1286,16 +1281,10 @@
       <reference ref="XDebugger.MoveWatchUp"/>
       <reference ref="XDebugger.MoveWatchDown"/>
       <reference ref="XDebugger.CopyWatch"/>
-      <group id="XDebugger.Watches.Presentation" icon="AllIcons.General.InspectionsEye" popup="true">
-        <reference ref="XDebugger.ToggleEvaluateExpressionField"/>
-        <reference ref="XDebugger.SwitchWatchesInVariables"/>
-      </group>
     </group>
 
     <group id="XDebugger.Watches.Inline.Popup" popup="true">
-      <reference ref="XDebugger.SetValue"/>
     </group>
-
 
     <group id="XDebugger.Inspect.Tree.Popup">
       <reference ref="XDebugger.ValueGroup"/>
@@ -1318,6 +1307,7 @@
     </group>
 
     <group id="RunnerLayoutActions">
+      <action id="Runner.ToggleTabLabels" class="com.intellij.execution.ui.layout.actions.ToggleShowTabLabelsAction"/>
       <group id="Runner.Layout">
         <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"
                 icon="AllIcons.Debugger.RestoreLayout"/>
@@ -1456,6 +1446,8 @@
     </group>
 
     <action id="SeverityEditorDialog" class="com.intellij.codeInspection.ex.SeverityEditorDialogAction"/>
+
+    <action class="com.intellij.codeInsight.codeVision.ShowCodeVisionPopupAction" id="CodeVision.ShowMore" />
 
     <group id="InspectionToolWindow.TreePopup" compact="true">
       <reference ref="EditSource"/>
@@ -1649,8 +1641,7 @@
     </action>
     <group id="TodoMainGroup">
       <add-to-group group-id="Other.KeymapGroup"/>
-      <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup" icon="AllIcons.Actions.GroupBy"
-             popup="true">
+      <group id="TodoViewGroupByGroup" icon="AllIcons.Actions.GroupBy" popup="true">
         <separator text="Group By"/>
         <action class="com.intellij.ide.todo.TodoPanel$MyShowModulesAction" id="TodoViewGroupByShowModules"/>
         <action class="com.intellij.ide.todo.TodoPanel$MyShowPackagesAction" id="TodoViewGroupByShowPackages"/>

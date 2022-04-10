@@ -31,6 +31,6 @@ public interface PsiClassStub<T extends PsiClass> extends PsiMemberStub<T> {
 
   /** @deprecated use {@link PsiJavaFileStub#getLanguageLevel()}; do not override */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   default LanguageLevel getLanguageLevel() { return null; }
 }

@@ -17,7 +17,7 @@ import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
+import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
 import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
@@ -32,9 +32,9 @@ import java.util.Collection;
 public abstract class CompilingEvaluator implements ExpressionEvaluator {
   @NotNull protected final Project myProject;
   @NotNull protected final PsiElement myPsiContext;
-  @NotNull protected final ExtractLightMethodObjectHandler.ExtractedData myData;
+  @NotNull protected final LightMethodObjectExtractedData myData;
 
-  public CompilingEvaluator(@NotNull Project project, @NotNull PsiElement context, @NotNull ExtractLightMethodObjectHandler.ExtractedData data) {
+  public CompilingEvaluator(@NotNull Project project, @NotNull PsiElement context, @NotNull LightMethodObjectExtractedData data) {
     myProject = project;
     myPsiContext = context;
     myData = data;

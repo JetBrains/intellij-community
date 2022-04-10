@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.integration;
 
+import com.intellij.openapi.diagnostic.LogLevel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.RequestFailedException;
@@ -13,11 +15,17 @@ import com.intellij.tasks.youtrack.YouTrackIntellisense.CompletionItem;
 import com.intellij.tasks.youtrack.YouTrackIntellisense.HighlightRange;
 import com.intellij.tasks.youtrack.YouTrackRepository;
 import com.intellij.tasks.youtrack.YouTrackRepositoryType;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.log4j.Level;
+import org.jetbrains.annotations.NotNull;
+import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.*;
 
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class YouTrackIntegrationTest extends TaskManagerTestCase {
   private static final String APPLICATION_PASSWORD = System.getProperty("tasks.tests.youtrack.application.password");
   private static final String SERVER_URL = "https://yt-ij-integration-tests.myjetbrains.com/youtrack";
@@ -41,8 +49,8 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
     myRepository.setUsername("root");
     myRepository.setPassword(APPLICATION_PASSWORD);
 
-    Logger.getInstance(TaskResponseUtil.class).setLevel(Level.DEBUG);
-    Logger.getInstance("org.apache.http").setLevel(Level.DEBUG);
+    Logger.getInstance(TaskResponseUtil.class).setLevel(LogLevel.DEBUG);
+    Logger.getInstance("org.apache.http").setLevel(LogLevel.DEBUG);
   }
 
   public void testDefaultQueryResults() throws Exception {
@@ -227,5 +235,18 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
     assertContainsElements(variants,"Bug", "Task", "Feature");
     CompletionItem bugState = ContainerUtil.find(completionItems, item -> item.getOption().equals("Bug"));
     assertTrue(bugState.getDescription().contains("Type in"));
+  }
+
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    try {
+      super.runTestRunnable(testRunnable);
+    }
+    catch (Throwable e) {
+      if (ExceptionUtil.causedBy(e, IOException.class)) {
+        ExternalResourcesChecker.reportUnavailability(SERVER_URL, e);
+      }
+      throw e;
+    }
   }
 }

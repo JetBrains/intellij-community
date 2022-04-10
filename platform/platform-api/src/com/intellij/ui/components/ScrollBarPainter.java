@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
@@ -169,18 +169,18 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
   }
 
   static Color getColor(@NotNull Supplier<? extends Component> supplier, @NotNull ColorKey key) {
-    return new JBColor(() -> getColor(supplier.get(), key));
+    return JBColor.lazy(() -> getColor(supplier.get(), key));
   }
 
   static Color getColor(@NotNull Supplier<? extends Component> supplier, @NotNull ColorKey transparent, @NotNull ColorKey opaque) {
-    return new JBColor(() -> {
+    return JBColor.lazy(() -> {
       Component component = supplier.get();
       return getColor(component, component != null && DefaultScrollBarUI.isOpaque(component) ? opaque : transparent);
     });
   }
 
   static void setBackground(@NotNull Component component) {
-    component.setBackground(new JBColor(() -> getColor(component, BACKGROUND)));
+    component.setBackground(JBColor.lazy(() -> getColor(component, BACKGROUND)));
   }
 
   static final class Track extends ScrollBarPainter {

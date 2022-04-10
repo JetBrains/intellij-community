@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.components.PathMacroManager
@@ -34,7 +34,7 @@ object JpsProjectEntitiesLoader {
                   externalStoragePath: Path, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager,
                   fileInDirectorySourceNames: FileInDirectorySourceNames = FileInDirectorySourceNames.empty(),
                   externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null): JpsProjectSerializers {
-    val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
+    val reader = CachingJpsFileContentReader(configLocation)
     val data = createProjectEntitiesSerializers(configLocation, reader, externalStoragePath, true, virtualFileManager,
                                                 externalStorageConfigurationManager = externalStorageConfigurationManager,
                                                 fileInDirectorySourceNames = fileInDirectorySourceNames)
@@ -54,7 +54,7 @@ object JpsProjectEntitiesLoader {
                           builder: WorkspaceEntityStorageBuilder,
                           errorReporter: ErrorReporter,
                           virtualFileManager: VirtualFileUrlManager) {
-    val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
+    val reader = CachingJpsFileContentReader(configLocation)
     val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), null, source,
                                                                              virtualFileManager)
     serializer.loadEntities(builder, reader, errorReporter, virtualFileManager)
@@ -176,6 +176,6 @@ internal fun loadStorageFile(xmlFile: Path, pathMacroManager: PathMacroManager):
     }
     rootElement.addContent(optionElement)
   }
-  return FileStorageCoreUtil.load(rootElement, pathMacroManager, true)
+  return FileStorageCoreUtil.load(rootElement, pathMacroManager)
 }
 

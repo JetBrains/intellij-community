@@ -19,5 +19,6 @@
     <orderEntry type="library" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.java.langInjection.jps" />
     <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
   </component>
 </module>

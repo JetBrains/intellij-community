@@ -1,3 +1,4 @@
 musl
 *.tgz
 wsploxy
+wslhash

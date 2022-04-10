@@ -1,9 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea
 
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.text.nullize
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 
 object KotlinPluginCompatibilityVerifier {
     @JvmStatic
@@ -16,38 +18,6 @@ object KotlinPluginCompatibilityVerifier {
                 KotlinBundle.message("plugin.verifier.compatibility.issue.message", kotlinVersion, platformVersion),
                 KotlinBundle.message("plugin.verifier.compatibility.issue.title")
             )
-        }
-    }
-}
-
-data class KotlinVersionVerbose(val plainVersion: KotlinVersion, val milestone: KotlinVersionMilestone?, val buildNumber: Int?) {
-    @Suppress("EnumEntryName")
-    enum class KotlinVersionMilestone {
-        dev, M1, M2, RC, RC2, release;
-    }
-
-    companion object {
-        const val REGEX =
-            "(\\d+)\\." +
-                    "(\\d+)\\." +
-                    "(\\d+)" +
-                    "(?:-([A-Za-z]+\\d?))?" +
-                    "(?:-(\\d+))?"
-
-        @JvmStatic
-        fun parse(version: String): KotlinVersionVerbose? {
-            val (major, minor, patch, milestone, buildNumber) = REGEX.toRegex().matchEntire(version)
-                .let { it ?: return null }.destructured
-            return fromRawArgs(major, minor, patch, milestone, buildNumber)
-        }
-
-        internal fun fromRawArgs(major: String, minor: String, patch: String, milestone: String?, buildNumber: String?): KotlinVersionVerbose? {
-            val enumMilestone = KotlinVersionMilestone.values().singleOrNull { it.name.equals(milestone, ignoreCase = true) }
-            val intBuildNumber = buildNumber?.toIntOrNull()
-            if (intBuildNumber != null && enumMilestone == null) {
-                return null
-            }
-            return KotlinVersionVerbose(KotlinVersion(major.toInt(), minor.toInt(), patch.toInt()), enumMilestone, intBuildNumber)
         }
     }
 }
@@ -66,39 +36,49 @@ interface KotlinPluginVersion {
             return OldKotlinPluginVersion.parse(version) ?: NewKotlinPluginVersion.parse(version)
         }
 
-        fun getCurrent(): KotlinPluginVersion? = parse(KotlinPluginUtil.getPluginVersion())
+        fun getCurrent(): KotlinPluginVersion? = parse(KotlinIdePlugin.version)
     }
 }
 
 data class NewKotlinPluginVersion(
-    val kotlinVersionVerbose: KotlinVersionVerbose,
+    val kotlinCompilerVersion: IdeKotlinVersion,
     override val buildNumber: String?, // 53
     override val platformVersion: PlatformVersion,
     val patchNumber: String?
 ) : KotlinPluginVersion {
     override val kotlinVersion: String
-        get() = kotlinVersionVerbose.plainVersion.toString()
+        get() = kotlinCompilerVersion.kotlinVersion.toString()
 
     override val status: String?
-        get() = kotlinVersionVerbose.milestone?.name
+        get() = kotlinCompilerVersion.kind.artifactSuffix
 
     companion object {
-        //203-1.4.20-dev-4575-IJ1234.45-1
-        private const val KID_KOTLIN_VERSION_REGEX_STRING =
-            "^(\\d{3})" +                               // IDEA_VERSION_ID, like '202'
-                    "-${KotlinVersionVerbose.REGEX}" +  // Kotlin Compiler version
-                    "-([A-Z]{2})" +                     // Platform kind, like 'IJ'
+        // typical version is `203-1.4.20-dev-4575-IJ1234.45-1`.
+        // But the regex covers remainder after compiler substring version: `-IJ1234.45-1`
+        private const val PLATFORM_SPECIFICATION_SUBSTRING_REGEX_STRING =
+            "-([A-Z]{2})" +                     // Platform kind, like 'IJ'
                     "(?:(\\d+)\\.)?" +                  // (Optional) BRANCH_SUFFIX, like '1234'
                     "(\\d*)" +                          // Build number, like '45'
                     "(?:-(\\d+))?"                      // (Optional) Tooling update, like '-1'
 
-        private val KID_KOTLIN_VERSION_REGEX = KID_KOTLIN_VERSION_REGEX_STRING.toRegex()
+        private val PLATFORM_SPECIFICATION_REGEX = PLATFORM_SPECIFICATION_SUBSTRING_REGEX_STRING.toRegex()
 
         fun parse(version: String): NewKotlinPluginVersion? {
-            val matchResult = KID_KOTLIN_VERSION_REGEX.matchEntire(version) ?: return null
-            val (ideaVersionId, major, minor, patch,
-                kotlinMilestone, kotlinBuildNumber, ideaKind,
-                branchSuffix, buildNumber, update) = matchResult.destructured
+            if (!version.contains("-")) return null
+            val ideaVersionId = version.substringBefore("-")
+            val remainingVersion = version.substringAfter("-")
+
+            val compilerVersionAndPlatformSpecificationIndexSplitter = remainingVersion.indices.reversed()
+                .asSequence()
+                .filter { remainingVersion[it] == '-' }
+                .firstOrNull { IdeKotlinVersion.opt(remainingVersion.substring(0, it)) != null }
+                ?: return null
+
+            val compilerVersion = IdeKotlinVersion.get(remainingVersion.substring(0, compilerVersionAndPlatformSpecificationIndexSplitter))
+            val platformSpecification = remainingVersion.substring(compilerVersionAndPlatformSpecificationIndexSplitter)
+
+            val matchResult = PLATFORM_SPECIFICATION_REGEX.matchEntire(platformSpecification) ?: return null
+            val (ideaKind, branchSuffix, buildNumber, update) = matchResult.destructured
 
             val platformVersionString = buildString {
                 append(ideaKind)
@@ -110,12 +90,7 @@ data class NewKotlinPluginVersion(
             }
             val platformVersion = PlatformVersion.parse(platformVersionString) ?: return null
 
-            return NewKotlinPluginVersion(
-                KotlinVersionVerbose.fromRawArgs(major, minor, patch, kotlinMilestone, kotlinBuildNumber) ?: return null,
-                buildNumber.nullize(),
-                platformVersion,
-                update.nullize()
-            )
+            return NewKotlinPluginVersion(compilerVersion, buildNumber.nullize(), platformVersion, update.nullize())
         }
     }
 }

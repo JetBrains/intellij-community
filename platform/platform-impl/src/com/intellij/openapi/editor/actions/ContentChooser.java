@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.CommonBundle;
@@ -111,8 +111,8 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     if (myUseIdeaEditor) {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       myList.setFont(scheme.getFont(EditorFontType.PLAIN));
-      Color fg = ObjectUtils.chooseNotNull(scheme.getDefaultForeground(), new JBColor(UIUtil::getListForeground));
-      Color bg = ObjectUtils.chooseNotNull(scheme.getDefaultBackground(), new JBColor(UIUtil::getListBackground));
+      Color fg = ObjectUtils.chooseNotNull(scheme.getDefaultForeground(), JBColor.lazy(UIUtil::getListForeground));
+      Color bg = ObjectUtils.chooseNotNull(scheme.getDefaultBackground(), JBColor.lazy(UIUtil::getListBackground));
       myList.setForeground(fg);
       myList.setBackground(bg);
     }

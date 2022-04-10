@@ -33,7 +33,7 @@ import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public abstract class BaseInspection extends LocalInspectionTool implements FileTypeAwareInspection {
+public abstract class BaseInspection extends LocalInspectionTool {
 
   public @NotNull Set<String> explicitlyEnabledFileTypes = new HashSet<>();
 
@@ -50,7 +50,7 @@ public abstract class BaseInspection extends LocalInspectionTool implements File
   @Override
   public final @Nullable JComponent createOptionsPanel() {
     JComponent actualPanel = createGroovyOptionsPanel();
-    return GrInspectionUIUtil.enhanceInspectionToolPanel(this, actualPanel);
+    return GrInspectionUIUtil.enhanceInspectionToolPanel(this, explicitlyEnabledFileTypes, actualPanel);
   }
 
   protected @Nullable JComponent createGroovyOptionsPanel() {
@@ -72,7 +72,7 @@ public abstract class BaseInspection extends LocalInspectionTool implements File
     return new GroovyPsiElementVisitor(visitor) {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (GrInspectionUIUtil.checkInspectionEnabledByFileType(BaseInspection.this, element)) {
+        if (GrInspectionUIUtil.checkInspectionEnabledByFileType(BaseInspection.this, element, explicitlyEnabledFileTypes)) {
           super.visitElement(element);
         }
       }
@@ -85,11 +85,5 @@ public abstract class BaseInspection extends LocalInspectionTool implements File
   @Nls(capitalization = Nls.Capitalization.Sentence)
   public static String getProbableBugs() {
     return GroovyBundle.message("inspection.bugs");
-  }
-
-  @NotNull
-  @Override
-  public Set<String> getDisableableFileTypeNamesContainer() {
-    return explicitlyEnabledFileTypes;
   }
 }

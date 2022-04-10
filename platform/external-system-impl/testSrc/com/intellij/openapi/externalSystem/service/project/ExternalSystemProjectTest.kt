@@ -9,10 +9,7 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
 import com.intellij.openapi.externalSystem.model.project.LibraryLevel
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemProjectTestCase
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase.collectRootsInside
 import com.intellij.openapi.externalSystem.test.javaProject
-import com.intellij.platform.externalSystem.testFramework.toDataNode
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -24,6 +21,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemProjectTestCase
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase.collectRootsInside
+import com.intellij.platform.externalSystem.testFramework.toDataNode
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
@@ -126,6 +126,7 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
   fun `test optimized method for getting modules libraries order entries`() {
     val libBinPath = File(projectPath, "bin_path")
     val libSrcPath = File(projectPath, "source_path")
+    val namedlibPath = File(projectPath, "named_lib")
 
     FileUtil.createDirectory(libBinPath)
     FileUtil.createDirectory(libSrcPath)
@@ -137,6 +138,9 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
         }
         lib("", level = LibraryLevel.MODULE) {
           roots(LibraryPathType.BINARY, libSrcPath.absolutePath)
+        }
+        lib("named", level = LibraryLevel.MODULE) {
+          roots(LibraryPathType.BINARY, namedlibPath.absolutePath)
         }
       }
     }
@@ -156,7 +160,7 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
       .map { it.data }
 
     val libraryOrderEntries = modelsProvider.findIdeModuleLibraryOrderEntries(moduleNode.data, libraryDependencyDataList)
-    assertThat(libraryOrderEntries).hasSize(2)
+    assertThat(libraryOrderEntries).hasSize(3)
 
     for ((libraryEntry, libraryData) in libraryOrderEntries) {
       val expected = libraryData.target.getPaths(LibraryPathType.BINARY).map(PathUtil::getLocalPath)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -59,6 +59,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -81,6 +82,7 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ItemEvent;
@@ -660,7 +662,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   private static InplaceButton createSettingsButton(@NotNull Project project,
                                                     @NotNull Runnable cancelAction,
                                                     @NotNull Runnable showDialogAndFindUsagesRunnable) {
-    KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
+    KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
     String tooltip = shortcut == null
                      ? FindBundle.message("show.usages.settings.tooltip")
                      : FindBundle.message("show.usages.settings.tooltip.shortcut", KeymapUtil.getShortcutText(shortcut));
@@ -723,7 +725,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     Disposable contentDisposable = Disposer.newDisposable();
     AtomicReference<AbstractPopup> popupRef = new AtomicReference<>();
 
-    KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
+    KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
     if (shortcut != null) {
       new DumbAwareAction() {
         @Override
@@ -789,27 +791,15 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     toolbarComponent.setOpaque(false);
     northPanel.add(toolbarComponent, gc.next());
 
-    ScopeChooserCombo scopeChooserCombo = new ScopeChooserCombo();
-    scopeChooserCombo.initialize(project, false, false, actionHandler.getSelectedScope().getDisplayName(), null)
-      .onSuccess(__ -> {
-        var scopeComboBox = scopeChooserCombo.getComboBox();
-        scopeComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(200));
-        scopeComboBox.addItemListener(event -> {
-          if (event.getStateChange() == ItemEvent.SELECTED) {
-            SearchScope scope = scopeChooserCombo.getSelectedScope();
-            if (scope != null) {
-              UsageViewStatisticsCollector.logScopeChanged(project, actionHandler.getSelectedScope(), scope,
-                                                           actionHandler.getTargetClass());
-              cancel(popupRef.get());
-              showElementUsages(parameters, actionHandler.withScope(scope));
-            }
-          }
-        });
-        scopeComboBox.putClientProperty("JComboBox.isBorderless", Boolean.TRUE);
+    if (!(actionHandler.getMaximalScope() instanceof LocalSearchScope)) {
+      ScopeChooserCombo scopeChooserCombo = scopeChooser(project, actionHandler.getSelectedScope(), scope -> {
+        UsageViewStatisticsCollector.logScopeChanged(project, actionHandler.getSelectedScope(), scope, actionHandler.getTargetClass());
+        cancel(popupRef.get());
+        showElementUsages(parameters, actionHandler.withScope(scope));
       });
-    Disposer.register(contentDisposable, scopeChooserCombo);
-    scopeChooserCombo.setButtonVisible(false);
-    northPanel.add(scopeChooserCombo, gc.next());
+      Disposer.register(contentDisposable, scopeChooserCombo);
+      northPanel.add(scopeChooserCombo, gc.next());
+    }
 
     northPanel.add(new Box.Filler(JBUI.size(10, 0), JBUI.size(10, 0), JBUI.size(Short.MAX_VALUE, 0)), gc.next().weightx(1.0).fillCellHorizontally());
 
@@ -930,6 +920,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     JComponent content = popup.getContent();
     Disposer.register(popup, contentDisposable);
 
+    if (ExperimentalUI.isNewUI()) {
+      Insets insets = JBUI.CurrentTheme.Popup.headerInsets();
+      //noinspection UseDPIAwareBorders
+      statusPanel.getLabel().setBorder(new EmptyBorder(insets.top, 0, insets.bottom, JBUI.scale(10)));
+    }
+
     // Set title text alignment
     CaptionPanel caption = popup.getTitle();
     if (caption instanceof TitlePanel) {
@@ -961,6 +957,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     popupRef.set(popup);
     return popup;
   }
+
 
   @NotNull
   private static ActionToolbar createActionToolbar(@NotNull JTable table, @NotNull DefaultActionGroup group) {
@@ -1012,6 +1009,33 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     if (popup != null) {
       popup.cancel();
     }
+  }
+
+  private static @NotNull ScopeChooserCombo scopeChooser(
+    @NotNull Project project,
+    @NotNull SearchScope initialScope,
+    @NotNull Consumer<? super SearchScope> scopeConsumer
+  ) {
+    ScopeChooserCombo scopeChooserCombo = new ScopeChooserCombo();
+    scopeChooserCombo
+      .initialize(project, false, false, initialScope.getDisplayName(), null)
+      .onSuccess(__ -> {
+        var scopeComboBox = scopeChooserCombo.getComboBox();
+        scopeComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(200));
+        scopeComboBox.addItemListener(event -> {
+          if (event.getStateChange() != ItemEvent.SELECTED) {
+            return;
+          }
+          SearchScope scope = scopeChooserCombo.getSelectedScope();
+          if (scope == null) {
+            return;
+          }
+          scopeConsumer.accept(scope);
+        });
+        scopeComboBox.putClientProperty("JComboBox.isBorderless", Boolean.TRUE);
+      });
+    scopeChooserCombo.setButtonVisible(false);
+    return scopeChooserCombo;
   }
 
   private static @Nls @NotNull String getStatusString(boolean findUsagesInProgress, boolean hasMore, int visibleCount, int totalCount) {
@@ -1174,7 +1198,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     Insets contentInsets = popup.getContent().getInsets();
     JBInsets.removeFrom(d, contentInsets);
 
-    Component toolbarComponent = ((BorderLayout)popup.getContent().getLayout()).getLayoutComponent(BorderLayout.NORTH);
+    Component toolbarComponent = ((BorderLayout)popup.getComponent().getLayout()).getLayoutComponent(BorderLayout.NORTH);
     Dimension toolbarSize = toolbarComponent != null ? toolbarComponent.getPreferredSize() : JBUI.emptySize();
     Dimension headerSize = popup.getHeaderPreferredSize();
 
@@ -1364,7 +1388,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       return new ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
         @Override
         protected @Nullable String getShortcutText() {
-          KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
+          KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
           return shortcut != null ? KeymapUtil.getShortcutText(shortcut) : null;
         }
       };

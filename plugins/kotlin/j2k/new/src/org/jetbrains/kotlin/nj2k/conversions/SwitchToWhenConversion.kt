@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
@@ -7,7 +7,6 @@ import com.intellij.psi.controlFlow.ControlFlowFactory
 import com.intellij.psi.controlFlow.ControlFlowUtil
 import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.asStatement
 import org.jetbrains.kotlin.nj2k.blockStatement
 import org.jetbrains.kotlin.nj2k.runExpression
 import org.jetbrains.kotlin.nj2k.tree.*
@@ -34,7 +33,7 @@ class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplica
     }
 
     private fun List<JKKtWhenCase>.moveElseCaseToTheEnd(): List<JKKtWhenCase> =
-        sortedBy { it.labels.any { it is JKKtElseWhenLabel } }
+        sortedBy { case -> case.labels.any { it is JKKtElseWhenLabel } }
 
     private fun switchCasesToWhenCases(cases: List<JKJavaSwitchCase>): List<JKKtWhenCase> {
         if (cases.isEmpty()) return emptyList()
@@ -43,7 +42,7 @@ class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplica
             cases
                 .takeWhileInclusive { it.statements.fallsThrough() }
                 .flatMap { it.statements }
-                .takeWhileInclusive { it.singleListOrBlockStatements().none { isSwitchBreakOrYield(it) } }
+                .takeWhileInclusive { statement -> statement.singleListOrBlockStatements().none { isSwitchBreakOrYield(it) } }
                 .mapNotNull { statement ->
                     when (statement) {
                       is JKBlockStatement -> blockStatement(

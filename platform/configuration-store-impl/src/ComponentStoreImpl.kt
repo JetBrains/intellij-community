@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.configurationStore
 
@@ -334,7 +334,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           state = (info.component as PersistentStateComponent<*>).state
         }
 
-        if (modificationCountChanged && state != null && isReportStatisticAllowed(stateSpec)) {
+        if (modificationCountChanged && state != null && isReportStatisticAllowed(stateSpec, storageSpec)) {
           LOG.runAndLogException {
             FeatureUsageSettingsEvents.logConfigurationChanged(effectiveComponentName, state, project)
           }
@@ -428,7 +428,7 @@ abstract class ComponentStoreImpl : IComponentStore {
             state = deserializeState(Element("state"), stateClass, null)!!
           }
           else {
-            if (isReportStatisticAllowed(stateSpec) && !storageSpec.deprecated) {
+            if (isReportStatisticAllowed(stateSpec, storageSpec)) {
               FeatureUsageSettingsEvents.logDefaultConfigurationState(name, stateClass, project)
             }
             continue
@@ -440,7 +440,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         }
         component.loadState(state)
         val stateAfterLoad = stateGetter.archiveState()
-        if (isReportStatisticAllowed(stateSpec)) {
+        if (isReportStatisticAllowed(stateSpec, storageSpec)) {
           LOG.runAndLogException {
             FeatureUsageSettingsEvents.logConfigurationState(name, stateAfterLoad ?: state, project)
           }
@@ -469,7 +469,11 @@ abstract class ComponentStoreImpl : IComponentStore {
     return true
   }
 
-  protected open fun isReportStatisticAllowed(stateSpec: State) = stateSpec.reportStatistic
+  protected open fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean {
+    return !storageSpec.deprecated &&
+           stateSpec.reportStatistic &&
+           storageSpec.value != StoragePathMacros.CACHE_FILE
+  }
 
   private fun isStorageChanged(changedStorages: Set<StateStorage>, storage: StateStorage): Boolean {
     return changedStorages.contains(storage) || storage is ExternalStorageWithInternalPart && changedStorages.contains(storage.internalStorage)

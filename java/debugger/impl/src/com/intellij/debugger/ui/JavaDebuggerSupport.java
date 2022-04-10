@@ -5,14 +5,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import org.jetbrains.annotations.ApiStatus;
 
 import static com.intellij.openapi.project.ProjectCoreUtil.theOnlyOpenProject;
 
 public class JavaDebuggerSupport {
   /** @deprecated This method is an unreliable hack, find another way to locate a project instance. */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static Project getContextProjectForEditorFieldsInDebuggerConfigurables() {
     //todo[nik] improve
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();

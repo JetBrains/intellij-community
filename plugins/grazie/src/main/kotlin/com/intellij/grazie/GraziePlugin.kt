@@ -10,7 +10,7 @@ internal object GraziePlugin {
   const val id = "tanvd.grazi"
 
   object LanguageTool {
-    const val version = "5.5"
+    const val version = "5.6"
     const val url = "https://resources.jetbrains.com/grazie/model/language-tool"
   }
 
@@ -20,8 +20,8 @@ internal object GraziePlugin {
   val group: String
     get() = GrazieBundle.message("grazie.group.name")
 
-  val name: String
-    get() = GrazieBundle.message("grazie.name")
+  val settingsPageName: String
+    get() = GrazieBundle.message("grazie.settings.page.name")
 
   val isBundled: Boolean
     get() = descriptor.isBundled

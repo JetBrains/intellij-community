@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.extractMarkerOffset
 import org.jetbrains.kotlin.idea.test.findFileWithCaret
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.util.slashedPath
+import org.jetbrains.kotlin.idea.test.util.slashedPath
 import java.io.File
 
 abstract class AbstractMultiPlatformCompletionTest : AbstractMultiModuleTest() {

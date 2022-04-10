@@ -25,6 +25,7 @@ private fun pair(a: Int, b: Int, c: Int): Pair<Int, Int> {
         a > 0 -> {
             b1 += a
         }
+
         else -> {
             c1 -= a
         }

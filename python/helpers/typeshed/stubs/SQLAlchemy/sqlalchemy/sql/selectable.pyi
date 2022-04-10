@@ -18,7 +18,7 @@ from .elements import (
     literal_column as literal_column,
 )
 
-class _OffsetLimitParam(BindParameter):
+class _OffsetLimitParam(BindParameter[Any]):
     inherit_cache: bool
 
 def subquery(alias, *args, **kwargs): ...

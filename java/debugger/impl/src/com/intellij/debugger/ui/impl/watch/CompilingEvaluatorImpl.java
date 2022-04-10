@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -31,6 +31,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
+import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.frame.XSuspendContext;
@@ -53,7 +54,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
 
   public CompilingEvaluatorImpl(@NotNull Project project,
                                 @NotNull PsiElement context,
-                                @NotNull ExtractLightMethodObjectHandler.ExtractedData data) {
+                                @NotNull LightMethodObjectExtractedData data) {
     super(project, context, data);
     Module module = ModuleUtilCore.findModuleForPsiElement(context);
     myModule = module;
@@ -159,7 +160,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
           XDebugSession currentSession = XDebuggerManager.getInstance(project).getCurrentSession();
           JavaSdkVersion javaVersion = getJavaVersion(currentSession);
           PsiElement physicalContext = findPhysicalContext(psiContext);
-          ExtractLightMethodObjectHandler.ExtractedData data = ExtractLightMethodObjectHandler.extractLightMethodObject(
+          LightMethodObjectExtractedData data = ExtractLightMethodObjectHandler.extractLightMethodObject(
             project,
             physicalContext != null ? physicalContext : psiContext,
             fragmentFactory.apply(psiContext),

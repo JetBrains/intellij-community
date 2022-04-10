@@ -1,8 +1,8 @@
 // FILE: first.before.kt
-// "Add '@OptIn(Ann::class)' annotation to 'test'" "true"
-// COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
+// "Opt in for 'Ann' on 'test'" "true"
+// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
-// ERROR: This declaration is experimental and its usage must be marked with '@fun.optin.Ann' or '@OptIn(fun.optin.Ann::class)'
+// ERROR: This declaration needs opt-in. Its usage must be marked with '@fun.optin.Ann' or '@OptIn(fun.optin.Ann::class)'
 import `fun`.optin.C
 
 fun test(c: C<caret>) {
@@ -20,10 +20,10 @@ class C
 
 
 // FILE: first.after.kt
-// "Add '@OptIn(Ann::class)' annotation to 'test'" "true"
-// COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
+// "Opt in for 'Ann' on 'test'" "true"
+// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
-// ERROR: This declaration is experimental and its usage must be marked with '@fun.optin.Ann' or '@OptIn(fun.optin.Ann::class)'
+// ERROR: This declaration needs opt-in. Its usage must be marked with '@fun.optin.Ann' or '@OptIn(fun.optin.Ann::class)'
 import `fun`.optin.Ann
 import `fun`.optin.C
 

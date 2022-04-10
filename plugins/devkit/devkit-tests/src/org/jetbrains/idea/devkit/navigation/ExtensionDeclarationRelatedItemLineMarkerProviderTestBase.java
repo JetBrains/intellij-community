@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -12,10 +12,11 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
-import icons.DevkitIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitIcons;
 
 public abstract class ExtensionDeclarationRelatedItemLineMarkerProviderTestBase extends JavaCodeInsightFixtureTestCase {
+
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     String extensionsJar = PathUtil.getJarPathForClass(ExtensionPointName.class);
@@ -38,7 +39,7 @@ public abstract class ExtensionDeclarationRelatedItemLineMarkerProviderTestBase 
                              "<font color=\"" + color + "\">[" + module.getName() + "]</font><br></body></html>";
 
     GutterMark gutter = myFixture.findGutter(file);
-    DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, DevkitIcons.Gutter.Plugin, "myEp");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, DevKitIcons.Gutter.Plugin, "myEp");
   }
 
   protected void doTestInvalidExtension(@NotNull String file) {

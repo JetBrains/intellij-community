@@ -38,11 +38,13 @@ internal class DefaultCodeFenceGeneratingProvider(
     return processCodeBlock(codeFenceRawContent, language) + html
   }
 
-  private fun processCodeBlock(codeFenceRawContent: String, language: String): String =
-    CommandRunnerExtension.getRunnerByFile(file)?.processCodeBlock(codeFenceRawContent, language) ?: ""
+  private fun processCodeBlock(codeFenceRawContent: String, language: String): String {
+    return file?.let(CommandRunnerExtension::getRunnerByFile)?.processCodeBlock(codeFenceRawContent, language) ?: ""
+  }
 
-  private fun processCodeLine(rawCodeLine: String): String =
-    CommandRunnerExtension.getRunnerByFile(file)?.processCodeLine(rawCodeLine, true) ?: ""
+  private fun processCodeLine(rawCodeLine: String): String {
+    return file?.let(CommandRunnerExtension::getRunnerByFile)?.processCodeLine(rawCodeLine, true) ?: ""
+  }
 
   override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
     val indentBefore = node.getTextInNode(text).commonPrefixWith(" ".repeat(10)).length
