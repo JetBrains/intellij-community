@@ -38,11 +38,12 @@ class LinuxDistributionBuilder(private val context: BuildContext,
         when (arch) {
           JvmArchitecture.aarch64 -> listOf(
             "fsnotifier-aarch64",
+            "libdbm-aarch64.so",
             "restart.py",
           )
           JvmArchitecture.x64 -> listOf(
             "fsnotifier",
-            "libdbm64.so",
+            "libdbm-x86_64.so",
             "restart.py",
           )
         }

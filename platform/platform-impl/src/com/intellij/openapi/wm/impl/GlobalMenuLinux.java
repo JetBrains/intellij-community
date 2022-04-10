@@ -26,6 +26,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.system.CpuArch;
 import com.intellij.util.ui.ImageUtil;
 import com.sun.jna.Callback;
 import com.sun.jna.Library;
@@ -800,7 +801,20 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
 
     try {
-      Path lib = PathManager.findBinFile("libdbm64.so");
+      String libName;
+      if (CpuArch.isIntel64()) {
+        libName = "libdbm-x86_64.so";
+      }
+      else if (CpuArch.isArm64()) {
+        libName = "libdbm-aarch64.so";
+      }
+      else {
+        String msg = "No DBM library for current arch (" + CpuArch.CURRENT + ") found";
+        assert false : msg;
+        LOG.warn(msg);
+        return null;
+      }
+      Path lib = PathManager.findBinFile(libName);
       assert lib != null : "DBM lib missing; bin=" + Arrays.toString(new File(PathManager.getBinPath()).list());
       return Native.load(lib.toString(), GlobalMenuLib.class, Collections.singletonMap("jna.encoding", "UTF8"));
     }
