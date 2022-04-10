@@ -691,9 +691,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   private void registerAction(String actionID, Supplier<? extends AnAction> actionSupplier) {
-    Optional.ofNullable(ActionManager.getInstance().getAction(actionID))
-      .map(a -> a.getShortcutSet())
-      .ifPresent(shortcuts -> actionSupplier.get().registerCustomShortcutSet(shortcuts, this, this));
+    AnAction anAction = ActionManager.getInstance().getAction(actionID);
+    if (anAction == null) return;
+    ShortcutSet shortcuts = anAction.getShortcutSet();
+    actionSupplier.get().registerCustomShortcutSet(shortcuts, this, this);
   }
 
   private void registerAction(String actionID, Consumer<? super AnActionEvent> action) {
