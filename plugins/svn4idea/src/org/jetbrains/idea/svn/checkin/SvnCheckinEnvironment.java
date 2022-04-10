@@ -236,14 +236,12 @@ public final class SvnCheckinEnvironment implements CheckinEnvironment {
   private class KeepLocksComponent implements RefreshableOnComponent {
 
     @NotNull private final JCheckBox myKeepLocksBox;
-    private boolean myIsKeepLocks;
     @NotNull private final JPanel myPanel;
     @NotNull private final JCheckBox myAutoUpdate;
 
     KeepLocksComponent() {
       myPanel = new JPanel(new BorderLayout());
       myKeepLocksBox = new JCheckBox(SvnBundle.message("checkbox.checkin.keep.files.locked"));
-      myKeepLocksBox.setSelected(myIsKeepLocks);
       myAutoUpdate = new JCheckBox(SvnBundle.message("checkbox.checkin.auto.update.after.commit"));
 
       myPanel.add(myAutoUpdate, BorderLayout.NORTH);
@@ -273,7 +271,7 @@ public final class SvnCheckinEnvironment implements CheckinEnvironment {
     @Override
     public void restoreState() {
       final SvnConfiguration configuration = mySvnVcs.getSvnConfiguration();
-      myIsKeepLocks = configuration.isKeepLocks();
+      myKeepLocksBox.setSelected(configuration.isKeepLocks());
       myAutoUpdate.setSelected(configuration.isAutoUpdateAfterCommit());
     }
   }
