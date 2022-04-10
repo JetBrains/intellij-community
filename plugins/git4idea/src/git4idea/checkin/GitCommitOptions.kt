@@ -78,9 +78,8 @@ class GitCommitOptionsUi(
 
   private val panel = JPanel(GridBagLayout())
   private val authorField = VcsUserEditor(project, getKnownCommitAuthors())
-  private val signOffCommit = JBCheckBox(GitBundle.message("commit.options.sign.off.commit.checkbox"), settings.shouldSignOffCommit()).apply {
-    mnemonic = VK_G
-
+  private val signOffCommit = JBCheckBox(GitBundle.message("commit.options.sign.off.commit.checkbox"),
+                                         settings.shouldSignOffCommit()).apply {
     val user = commitPanel.roots.mapNotNull { userRegistry.getUser(it) }.firstOrNull()
     val signature = user?.let { escapeXmlEntities(VcsUserUtil.toExactString(it)) }.orEmpty()
     toolTipText = XmlStringUtil.wrapInHtml(GitBundle.message("commit.options.sign.off.commit.message.line", signature))
