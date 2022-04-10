@@ -149,9 +149,12 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     if (CommonDataKeys.PSI_FILE.is(dataId) && element instanceof PsiFile) {
       return element;
     }
+    return super.getDataForItem(element, dataId);
+  }
 
-    if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId)
-        && (element instanceof PsiFile || element instanceof PsiDirectory)) {
+  @Override
+  public @Nullable String getItemDescription(@NotNull Object element) {
+    if ((element instanceof PsiFile || element instanceof PsiDirectory) && ((PsiFileSystemItem)element).isValid()) {
       String path = ((PsiFileSystemItem)element).getVirtualFile().getPath();
       path = FileUtil.toSystemIndependentName(path);
       if (myProject != null) {
@@ -162,8 +165,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
       }
       return path;
     }
-
-    return super.getDataForItem(element, dataId);
+    return super.getItemDescription(element);
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<Object> {

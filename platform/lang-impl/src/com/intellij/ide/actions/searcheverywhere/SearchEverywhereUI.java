@@ -13,16 +13,14 @@ import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader.SETab;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.Experiments;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -62,6 +60,7 @@ import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.MatcherHolder;
@@ -672,12 +671,22 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       return;
     }
 
-    SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(index);
-    //noinspection ConstantConditions
-    Object data = contributor.getDataForItem(
-      myListModel.getElementAt(index), SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.getName());
-    if (data instanceof String) {
-      ActionMenu.showDescriptionInStatusBar(true, myResultsList, (String)data);
+    if (UISettings.getInstance().getShowStatusBar()) {
+      SearchEverywhereContributor<Object> contributor = myListModel.getContributorForIndex(index);
+      Object element = myListModel.getElementAt(index);
+
+      ReadAction.nonBlocking(() -> {
+          //noinspection ConstantConditions
+          return contributor.getItemDescription(element);
+        })
+        .expireWith(this)
+        .coalesceBy(this)
+        .finishOnUiThread(ModalityState.any(), (@NlsSafe var data) -> {
+          if (data != null) {
+            ActionMenu.showDescriptionInStatusBar(true, myResultsList, data);
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
   }
 

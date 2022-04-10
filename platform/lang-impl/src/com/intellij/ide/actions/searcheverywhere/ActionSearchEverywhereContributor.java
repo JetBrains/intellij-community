@@ -159,23 +159,21 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
   @Override
   public Object getDataForItem(@NotNull GotoActionModel.MatchedValue element, @NotNull String dataId) {
-    if (SetShortcutAction.SELECTED_ACTION.is(dataId)) {
-      return getAction(element);
-    }
+    return SetShortcutAction.SELECTED_ACTION.is(dataId) ? getAction(element) : null;
+  }
 
-    if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId)) {
-      AnAction action = getAction(element);
-      if (action != null) {
-        String description = action.getTemplatePresentation().getDescription();
-        if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
-          String presentableId = StringUtil.notNullize(ActionManager.getInstance().getId(action), "class: " + action.getClass().getName());
-          return String.format("[%s] %s", presentableId, StringUtil.notNullize(description));
-        }
-        return description;
-      }
+  @Override
+  public @Nullable String getItemDescription(@NotNull GotoActionModel.MatchedValue element) {
+    AnAction action = getAction(element);
+    if (action == null) {
+      return null;
     }
-
-    return null;
+    String description = action.getTemplatePresentation().getDescription();
+    if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
+      String presentableId = StringUtil.notNullize(ActionManager.getInstance().getId(action), "class: " + action.getClass().getName());
+      return String.format("[%s] %s", presentableId, StringUtil.notNullize(description));
+    }
+    return description;
   }
 
   @Override
