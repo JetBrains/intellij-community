@@ -106,6 +106,13 @@ class GitCommitOptionsUi(
         }
       }
     })
+    if (commitPanel.isNonModalCommit) {
+      commitPanel.commitAuthorTracker?.addCommitAuthorListener(this, this)
+
+      panel.addHierarchyListener { e ->
+        if (e.isParentChanged && panel == e.changed && panel.parent != null) beforeShow()
+      }
+    }
 
     buildLayout()
 
@@ -136,14 +143,6 @@ class GitCommitOptionsUi(
   override fun getComponent(): JComponent = panel
 
   override fun restoreState() {
-    if (commitPanel.isNonModalCommit) {
-      commitPanel.commitAuthorTracker?.addCommitAuthorListener(this, this)
-
-      panel.addHierarchyListener { e ->
-        if (e.isParentChanged && panel == e.changed && panel.parent != null) beforeShow()
-      }
-    }
-
     refresh(null)
     commitAuthorChanged()
     commitAuthorDateChanged()
