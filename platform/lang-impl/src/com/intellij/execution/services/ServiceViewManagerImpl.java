@@ -179,9 +179,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
         if (active) {
           myActiveToolWindowIds.add(toolWindowId);
         }
-        else {
-          toolWindow.setShowStripeButton(false);
-        }
+        toolWindow.setShowStripeButton(true);
       }
       finally {
         myRegisteringToolWindowAvailable = false;
@@ -210,7 +208,6 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       else if (myActiveToolWindowIds.remove(toolWindowId)) {
         // Hide tool window only if model roots became empty and there were some services shown before update.
         toolWindow.hide();
-        toolWindow.setShowStripeButton(false);
       }
     }, ModalityState.NON_MODAL, myProject.getDisposed());
   }
