@@ -122,15 +122,17 @@ public final class DiffUtil {
   public static final JBValue TITLE_GAP = new JBValue.Float(2);
 
   public static final NotNullLazyValue<List<Image>> DIFF_FRAME_ICONS = NotNullLazyValue.createValue(() -> {
-    return Arrays.asList(
-      iconToImage(PlatformDiffImplIcons.Diff_frame32),
-      iconToImage(PlatformDiffImplIcons.Diff_frame64),
-      iconToImage(PlatformDiffImplIcons.Diff_frame128)
+    return ContainerUtil.skipNulls(
+      Arrays.asList(
+        iconToImage(PlatformDiffImplIcons.Diff_frame32),
+        iconToImage(PlatformDiffImplIcons.Diff_frame64),
+        iconToImage(PlatformDiffImplIcons.Diff_frame128)
+      )
     );
   });
 
-  private static Image iconToImage(@NotNull Icon icon) {
-    return ((IconLoader.CachedImageIcon)icon).getRealIcon().getImage();
+  private static @Nullable Image iconToImage(@NotNull Icon icon) {
+    return IconLoader.toImage(icon, null);
   }
 
   //
