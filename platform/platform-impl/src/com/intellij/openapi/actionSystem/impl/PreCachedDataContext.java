@@ -166,12 +166,18 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     boolean rulesAllowed = myMissedKeysIfFrozen == null && !CommonDataKeys.PROJECT.is(dataId) && keyIndex < myDataKeysCount && !rulesSuppressed;
     Object answer = getDataInner(dataId, keyIndex, rulesAllowed);
 
-    if (answer == null && rulesAllowed) {
-      answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, o -> getDataInner(o, keyIndex, true));
+    ProviderData map = myCachedData.get(0);
+    if (answer == null && rulesAllowed && !map.nullsByContextRules.get(keyIndex)) {
+      answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, id -> {
+        Object o = getDataInner(id, keyIndex, true);
+        return o == ourExplicitNull ? null : o;
+      });
       if (answer != null) {
-        ProviderData map = myCachedData.get(0);
         map.nullsByRules.clear(keyIndex);
         map.put(dataId, answer);
+      }
+      else {
+        map.nullsByContextRules.set(keyIndex);
       }
     }
     if (answer == null && myMissedKeysIfFrozen != null) {
@@ -205,8 +211,8 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       }
       if (!rulesAllowed || map.nullsByRules.get(keyIndex)) continue;
 
-      answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.PROVIDER, dataId2 -> {
-        Object o = Objects.equals(dataId2, dataId) ? null : map.get(dataId2);
+      answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.PROVIDER, id -> {
+        Object o = Objects.equals(id, dataId) ? null : map.get(id);
         return o == ourExplicitNull ? null : o;
       });
 
@@ -337,6 +343,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
 
   private static class ProviderData extends ConcurrentHashMap<String, Object> {
     final ConcurrentBitSet nullsByRules = ConcurrentBitSet.create();
+    final ConcurrentBitSet nullsByContextRules = ConcurrentBitSet.create();
   }
 
   private static class ComponentRef {

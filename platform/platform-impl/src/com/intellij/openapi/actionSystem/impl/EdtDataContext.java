@@ -108,12 +108,15 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
     }
     Object answer = getDataInner(dataId, cacheable);
     if (answer == null) {
-      answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, id -> getDataInner(id, cacheable));
-      if (answer != null && cacheable) {
-        myCachedData.put(dataId, answer);
+      answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, id -> {
+        Object o = getDataInner(id, cacheable);
+        return o == ourExplicitNull ? null : o;
+      });
+      if (cacheable) {
+        myCachedData.put(dataId, answer == null ? ourExplicitNull : answer);
       }
     }
-    return answer;
+    return answer == ourExplicitNull ? null : answer;
   }
 
   private @Nullable Object getDataInner(@NotNull String dataId, boolean cacheable) {
@@ -129,16 +132,16 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
     }
     Object answer = cacheable ? myCachedData.get(dataId) : null;
     if (answer != null) {
-      return answer != ourExplicitNull ? answer : null;
+      return answer;
     }
-    Object data = calcData(dataId, component);
+    answer = calcData(dataId, component);
     if (CommonDataKeys.EDITOR.is(dataId) || CommonDataKeys.HOST_EDITOR.is(dataId) || InjectedDataKeys.EDITOR.is(dataId)) {
-      data = validateEditor((Editor)data, component);
+      answer = validateEditor((Editor)answer, component);
     }
     if (cacheable) {
-      myCachedData.put(dataId, data == null ? ourExplicitNull : data);
+      myCachedData.put(dataId, answer == null ? ourExplicitNull : answer);
     }
-    return data;
+    return answer;
   }
 
   private @Nullable Object calcData(@NotNull String dataId, @Nullable Component component) {
