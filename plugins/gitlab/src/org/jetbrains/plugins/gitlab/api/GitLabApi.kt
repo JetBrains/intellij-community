@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.api
 
-import com.intellij.collaboration.api.HttpClientFactory
-import com.intellij.collaboration.api.HttpRequestConfigurer
+import com.intellij.collaboration.api.httpclient.HttpClientFactory
+import com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest

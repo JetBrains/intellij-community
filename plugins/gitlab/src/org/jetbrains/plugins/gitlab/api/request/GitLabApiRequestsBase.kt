@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.introspect.VisibilityChecker
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.intellij.collaboration.api.HttpClientUtil
+import com.intellij.collaboration.api.httpclient.HttpClientUtil
 import com.intellij.collaboration.api.dto.GraphQLErrorDTO
 import com.intellij.collaboration.api.dto.GraphQLRequestDTO
 import com.intellij.collaboration.api.dto.GraphQLResponseDTO
