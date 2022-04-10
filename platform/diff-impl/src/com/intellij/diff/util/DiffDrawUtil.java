@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -72,6 +73,11 @@ public final class DiffDrawUtil {
 
   @NotNull
   public static Color getDividerColor(@Nullable Editor editor) {
+    EditorGutter gutter = editor != null ? editor.getGutter() : null;
+    if (gutter instanceof EditorGutterComponentEx) {
+      return ((EditorGutterComponentEx)gutter).getBackground();
+    }
+
     return getDividerColorFromScheme(editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme());
   }
 
