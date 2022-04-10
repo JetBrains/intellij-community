@@ -6,6 +6,7 @@ import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 
@@ -181,20 +182,20 @@ final class PluginLayout extends BaseLayout {
       public List<OsFamily> supportedOs = OsFamily.ALL
 
       /**
+       * Change this value if the plugin works on some architectures only and
+       * therefore don't need to be bundled with distributions for other architectures.
+       */
+      public List<JvmArchitecture> supportedArch = JvmArchitecture.ALL
+
+      /**
        * Set to {@code true} if the plugin should be included in distribution for EAP builds only.
        */
       public boolean includeInEapOnly
 
       PluginBundlingRestrictions build() {
-        if (supportedOs == OsFamily.ALL && !includeInEapOnly) {
-          return PluginBundlingRestrictions.NONE
-        }
-        else {
-          return new PluginBundlingRestrictions(supportedOs, includeInEapOnly)
-        }
+        return new PluginBundlingRestrictions(supportedOs, supportedArch, includeInEapOnly)
       }
     }
-
 
     PluginLayoutSpec(PluginLayout layout) {
       super(layout)

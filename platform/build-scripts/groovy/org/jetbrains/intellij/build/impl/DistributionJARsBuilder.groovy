@@ -596,7 +596,7 @@ final class DistributionJARsBuilder {
       .filter(new Predicate<PluginLayout>() {
         @Override
         boolean test(PluginLayout plugin) {
-          return satisfiesBundlingRequirements(plugin, null, context)
+          return satisfiesBundlingRequirements(plugin, null, null, context)
         }
       })
       .forEach(new Consumer<PluginLayout>() {
@@ -700,7 +700,7 @@ final class DistributionJARsBuilder {
         List<DistributionFileEntry> get() {
           List<PluginLayout> pluginsToBundle = new ArrayList<PluginLayout>(plugins.size())
           for (PluginLayout plugin : plugins) {
-            if (satisfiesBundlingRequirements(plugin, null, context) && !pluginDirectoriesToSkip.contains(plugin.directoryName)) {
+            if (satisfiesBundlingRequirements(plugin, null, null, context) && !pluginDirectoriesToSkip.contains(plugin.directoryName)) {
               pluginsToBundle.add(plugin)
             }
           }
@@ -716,14 +716,30 @@ final class DistributionJARsBuilder {
     )
   }
 
-  private static boolean satisfiesBundlingRequirements(PluginLayout plugin, @Nullable OsFamily osFamily, @NotNull BuildContext context) {
+  private static boolean satisfiesBundlingRequirements(PluginLayout plugin, @Nullable OsFamily osFamily, @Nullable JvmArchitecture arch, @NotNull BuildContext context) {
     PluginBundlingRestrictions bundlingRestrictions = plugin.bundlingRestrictions
+
     if (bundlingRestrictions.includeInEapOnly && !context.applicationInfo.isEAP) {
       return false
     }
-    return osFamily == null
-      ? bundlingRestrictions.supportedOs == OsFamily.ALL
-      : bundlingRestrictions.supportedOs != OsFamily.ALL && bundlingRestrictions.supportedOs.contains(osFamily)
+
+    if (osFamily == null && bundlingRestrictions.supportedOs != OsFamily.ALL) {
+      return false
+    }
+
+    if (osFamily != null && (bundlingRestrictions.supportedOs == OsFamily.ALL || !bundlingRestrictions.supportedOs.contains(osFamily))) {
+      return false
+    }
+
+    if (arch == null && bundlingRestrictions.supportedArch != JvmArchitecture.ALL) {
+      return false
+    }
+
+    if (arch != null && (bundlingRestrictions.supportedArch == JvmArchitecture.ALL || !bundlingRestrictions.supportedArch.contains(arch))) {
+      return false
+    }
+
+    return true
   }
 
   private ForkJoinTask<List<DistributionFileEntry>> createBuildOsSpecificBundledPluginsTask(@NotNull Set<PluginLayout> pluginLayouts,
@@ -748,7 +764,7 @@ final class DistributionJARsBuilder {
 
           List<PluginLayout> osSpecificPlugins = new ArrayList<PluginLayout>()
           for (PluginLayout pluginLayout : pluginLayouts) {
-            if (satisfiesBundlingRequirements(pluginLayout, osFamily, context)) {
+            if (satisfiesBundlingRequirements(pluginLayout, osFamily, arch, context)) {
               osSpecificPlugins.add(pluginLayout)
             }
           }
@@ -975,7 +991,7 @@ final class DistributionJARsBuilder {
         }
 
         int result = layout.mainModule.hashCode()
-        result = 31 * result + layout.bundlingRestrictions.supportedOs.hashCode()
+        result = 31 * result + layout.bundlingRestrictions.hashCode()
         return result
       }
 
@@ -987,7 +1003,7 @@ final class DistributionJARsBuilder {
         if (a == null || b == null) {
           return false
         }
-        return a.mainModule == b.mainModule && a.bundlingRestrictions.supportedOs == b.bundlingRestrictions.supportedOs
+        return a.mainModule == b.mainModule && a.bundlingRestrictions == b.bundlingRestrictions
       }
     })
     for (String moduleName : modules) {
