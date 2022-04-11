@@ -30,7 +30,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
     ((RefElementImpl)refElement).setFlag(true, CAN_BE_FINAL_MASK);
   }
 
-  private void mark(RefElement refElement) {
+  private static void mark(RefElement refElement) {
     if (refElement instanceof RefClass) {
       final RefClass refClass = (RefClass)refElement;
       if (refClass.isEntry()) {
@@ -59,10 +59,10 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
         ((RefMethodImpl)superMethod).setFlag(false, CAN_BE_FINAL_MASK);
       }
     }
-    else if (refElement instanceof RefField) {
-      final PsiElement element = refElement.getPsiElement();
-      if (RefUtil.isImplicitWrite(element)) {
-        ((RefElementImpl)refElement).setFlag(false, CAN_BE_FINAL_MASK);
+    else if (refElement instanceof RefFieldImpl) {
+      final RefFieldImpl field = (RefFieldImpl)refElement;
+      if (field.isImplicitlyWritten()) {
+        field.setFlag(false, CAN_BE_FINAL_MASK);
       }
     }
   }
