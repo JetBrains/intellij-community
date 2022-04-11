@@ -31,7 +31,7 @@ interface SampleEntity2 : WorkspaceEntity {
       override var optionalData: String?
   }
   
-  companion object: Type<SampleEntity2, Builder>(76)
+  companion object: Type<SampleEntity2, Builder>(32)
   //@formatter:on
   //endregion
 
@@ -52,7 +52,7 @@ interface VFUEntity2 : WorkspaceEntity {
       override var notNullRoots: List<VirtualFileUrl>
   }
   
-  companion object: Type<VFUEntity2, Builder>(77)
+  companion object: Type<VFUEntity2, Builder>(33)
   //@formatter:on
   //endregion
 
