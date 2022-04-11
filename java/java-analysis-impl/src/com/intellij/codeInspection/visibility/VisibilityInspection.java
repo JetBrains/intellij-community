@@ -263,9 +263,11 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
 
   @EntryPointWithVisibilityLevel.VisibilityLevelResult
   private int getMinVisibilityLevel(@NotNull RefJavaElement refElement) {
-    PsiElement element = refElement.getPsiElement();
-    if (element instanceof PsiMember) {
-      return getMinVisibilityLevel((PsiMember)element);
+    if (refElement.isEntry()) {
+      PsiElement element = refElement.getPsiElement();
+      if (element instanceof PsiMember) {
+        return getMinVisibilityLevel((PsiMember)element);
+      }
     }
     return EntryPointWithVisibilityLevel.ACCESS_LEVEL_INVALID;
   }
