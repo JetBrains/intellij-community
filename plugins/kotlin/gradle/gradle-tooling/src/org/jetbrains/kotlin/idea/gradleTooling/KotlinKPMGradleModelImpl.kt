@@ -43,13 +43,13 @@ internal class KotlinVariantImpl(
     override val compilationOutputs: KotlinCompilationOutput?
 ) : KotlinVariant, KotlinFragment by fragment
 
-class KotlinModuleImpl(
+class KotlinKPMModuleImpl(
     override val moduleIdentifier: KotlinModuleIdentifier,
     override val fragments: Collection<KotlinFragment>,
-) : KotlinModule
+) : KotlinKPMModule
 
 class KotlinKPMGradleModelImpl(
-    override val kpmModules: Collection<KotlinModule>,
+    override val kpmModules: Collection<KotlinKPMModule>,
     override val settings: KotlinProjectModelSettings,
     override val kotlinNativeHome: String,
 ) : KotlinKPMGradleModel

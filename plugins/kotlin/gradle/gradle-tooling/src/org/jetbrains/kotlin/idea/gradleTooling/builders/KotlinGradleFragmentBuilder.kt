@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.KotlinVariantImpl
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinFragmentReflection
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinVariantReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinFragment
-import org.jetbrains.kotlin.idea.projectModel.KotlinModule.Companion.TEST_MODULE_NAME
+import org.jetbrains.kotlin.idea.projectModel.KotlinKPMModule.Companion.TEST_MODULE_NAME
 import java.io.File
 
 internal object KotlinGradleFragmentBuilder : KotlinProjectModelComponentBuilder<KotlinFragmentReflection, KotlinFragment> {

@@ -5,8 +5,24 @@ import java.io.Serializable
 
 typealias KotlinDependencyId = Long
 
-interface KotlinComponent : Serializable {
+@Deprecated(level = DeprecationLevel.ERROR, message = "Use org.jetbrains.kotlin.gradle.KotlinComponent instead")
+interface KotlinModule : Serializable {
     val name: String
     val dependencies: Array<KotlinDependencyId>
+
+    @Deprecated(level = DeprecationLevel.WARNING, message = "Use org.jetbrains.kotlin.gradle.KotlinComponent#isTestComponent instead")
+    val isTestModule: Boolean
+}
+
+@Suppress("DEPRECATION_ERROR")
+interface KotlinComponent : KotlinModule {
     val isTestComponent: Boolean
+
+    @Deprecated(
+        "Use org.jetbrains.kotlin.gradle.KotlinComponent#isTestComponent instead", level = DeprecationLevel.WARNING,
+        replaceWith = ReplaceWith("isTestComponent")
+    )
+    @Suppress("OverridingDeprecatedMember")
+    override val isTestModule: Boolean
+        get() = isTestComponent
 }

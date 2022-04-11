@@ -94,11 +94,11 @@ class KotlinSourceSetGraphUtilTest {
     fun `infer default test to production edges`() {
         val sourceSetsByName = mapOf(
             createKotlinSourceSetPair(COMMON_MAIN_SOURCE_SET_NAME),
-            createKotlinSourceSetPair(COMMON_TEST_SOURCE_SET_NAME, isTestModule = true),
+            createKotlinSourceSetPair(COMMON_TEST_SOURCE_SET_NAME, isTestComponent = true),
             createKotlinSourceSetPair("main"),
-            createKotlinSourceSetPair("test", isTestModule = true),
+            createKotlinSourceSetPair("test", isTestComponent = true),
             createKotlinSourceSetPair("abcMain"),
-            createKotlinSourceSetPair("abcTest", isTestModule = true)
+            createKotlinSourceSetPair("abcTest", isTestComponent = true)
         )
 
         val graph = GraphBuilder.directed().build<KotlinSourceSet>()
@@ -119,9 +119,9 @@ class KotlinSourceSetGraphUtilTest {
     fun `depends on graph will automatically infer missing dependsOn edges for Android source sets`() {
         val sourceSetsByName = mapOf(
             createKotlinSourceSetPair(COMMON_MAIN_SOURCE_SET_NAME),
-            createKotlinSourceSetPair(COMMON_TEST_SOURCE_SET_NAME, isTestModule = true),
+            createKotlinSourceSetPair(COMMON_TEST_SOURCE_SET_NAME, isTestComponent = true),
             createKotlinSourceSetPair("androidMain", platforms = setOf(KotlinPlatform.ANDROID)),
-            createKotlinSourceSetPair("androidTest", platforms = setOf(KotlinPlatform.ANDROID), isTestModule = true)
+            createKotlinSourceSetPair("androidTest", platforms = setOf(KotlinPlatform.ANDROID), isTestComponent = true)
         )
 
         assertEquals(
@@ -137,7 +137,7 @@ class KotlinSourceSetGraphUtilTest {
     fun `depends on graph when commonMain or commonTest are marked as KotlinPlatform ANDROID will still be empty`() {
         val sourceSetsByName = mapOf(
             createKotlinSourceSetPair(COMMON_MAIN_SOURCE_SET_NAME, platforms = setOf(KotlinPlatform.ANDROID)),
-            createKotlinSourceSetPair(COMMON_TEST_SOURCE_SET_NAME, platforms = setOf(KotlinPlatform.ANDROID), isTestModule = true),
+            createKotlinSourceSetPair(COMMON_TEST_SOURCE_SET_NAME, platforms = setOf(KotlinPlatform.ANDROID), isTestComponent = true),
         )
 
         assertEquals(
@@ -170,7 +170,7 @@ private fun createKotlinSourceSetPair(
     declaredDependsOnSourceSets: Set<String> = emptySet(),
     allDependsOnSourceSets: Set<String> = declaredDependsOnSourceSets,
     platforms: Set<KotlinPlatform> = emptySet(),
-    isTestModule: Boolean = false,
+    isTestComponent: Boolean = false,
 ): Pair<String, KotlinSourceSet> = name to KotlinSourceSetImpl(
     name = name,
     languageSettings = KotlinLanguageSettingsImpl(
@@ -191,7 +191,7 @@ private fun createKotlinSourceSetPair(
     allDependsOnSourceSets = allDependsOnSourceSets,
     additionalVisibleSourceSets = emptySet(),
     actualPlatforms = KotlinPlatformContainerImpl().apply { pushPlatforms(platforms) },
-    isTestModule = isTestModule
+    isTestComponent = isTestComponent
 )
 
 private fun Graph<KotlinSourceSet>.nameEdges() = edges()

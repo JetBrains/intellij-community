@@ -54,7 +54,7 @@ class KotlinSourceSetImpl(
     override val allDependsOnSourceSets: Set<String>,
     override val additionalVisibleSourceSets: Set<String>,
     actualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
-    isTestModule: Boolean = false
+    isTestComponent: Boolean = false
 ) : KotlinSourceSet {
 
     override val dependencies: Array<KotlinDependencyId> = regularDependencies + intransitiveDependencies
@@ -78,7 +78,7 @@ class KotlinSourceSetImpl(
     override var actualPlatforms: KotlinPlatformContainer = actualPlatforms
         internal set
 
-    override var isTestComponent: Boolean = isTestModule
+    override var isTestComponent: Boolean = isTestComponent
         internal set
 
     override fun toString() = name

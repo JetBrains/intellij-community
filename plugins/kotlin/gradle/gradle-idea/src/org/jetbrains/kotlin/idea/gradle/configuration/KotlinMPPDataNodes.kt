@@ -16,10 +16,7 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.ExternalSystemRunTask
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinImportingDiagnosticsContainer
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinPlatformContainerImpl
-import org.jetbrains.kotlin.idea.projectModel.KonanArtifactModel
-import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
-import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
-import org.jetbrains.kotlin.idea.projectModel.KotlinPlatformContainer
+import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.idea.util.CopyableDataNodeUserDataProperty
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
@@ -40,7 +37,15 @@ val DataNode<out ModuleData>.kotlinSourceSetData: KotlinSourceSetData?
 val DataNode<out ModuleData>.kotlinAndroidSourceSets: List<KotlinSourceSetInfo>?
     get() = ExternalSystemApiUtil.getChildren(this, KotlinAndroidSourceSetData.KEY).firstOrNull()?.data?.sourceSetInfos
 
-class KotlinSourceSetInfo @PropertyMapping("kotlinModule") constructor(val kotlinComponent: KotlinComponent) : Serializable {
+class KotlinSourceSetInfo @PropertyMapping("kotlinComponent") constructor(val kotlinComponent: KotlinComponent) : Serializable {
+    @Suppress("DEPRECATION_ERROR")
+    @Deprecated(
+        level = DeprecationLevel.WARNING,
+        message = "Use KotlinSourceSetInfo#kotlinComponent instead",
+        replaceWith = ReplaceWith("kotlinComponent")
+    )
+    val kotlinModule: KotlinModule
+        get() = kotlinComponent
     var moduleId: String? = null
     var gradleModuleId: String = ""
 
