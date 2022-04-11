@@ -2174,6 +2174,59 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/castDueToProgressionResolveChange")
+    public static class CastDueToProgressionResolveChange extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("constructorArgument.kt")
+        public void testConstructorArgument() throws Exception {
+            runTest("testData/quickfix/castDueToProgressionResolveChange/constructorArgument.kt");
+        }
+
+        @TestMetadata("functionArgumentAsChar.kt")
+        public void testFunctionArgumentAsChar() throws Exception {
+            runTest("testData/quickfix/castDueToProgressionResolveChange/functionArgumentAsChar.kt");
+        }
+
+        @TestMetadata("functionArgumentAsInt.kt")
+        public void testFunctionArgumentAsInt() throws Exception {
+            runTest("testData/quickfix/castDueToProgressionResolveChange/functionArgumentAsInt.kt");
+        }
+
+        @TestMetadata("functionArgumentAsInt2.kt")
+        public void testFunctionArgumentAsInt2() throws Exception {
+            runTest("testData/quickfix/castDueToProgressionResolveChange/functionArgumentAsInt2.kt");
+        }
+
+        @TestMetadata("functionArgumentAsLong.kt")
+        public void testFunctionArgumentAsLong() throws Exception {
+            runTest("testData/quickfix/castDueToProgressionResolveChange/functionArgumentAsLong.kt");
+        }
+
+        @TestMetadata("functionArgumentAsUInt.kt")
+        public void testFunctionArgumentAsUInt() throws Exception {
+            runTest("testData/quickfix/castDueToProgressionResolveChange/functionArgumentAsUInt.kt");
+        }
+
+        @TestMetadata("functionArgumentAsULong.kt")
+        public void testFunctionArgumentAsULong() throws Exception {
+            runTest("testData/quickfix/castDueToProgressionResolveChange/functionArgumentAsULong.kt");
+        }
+
+        @TestMetadata("functionArgumentRangeTo.kt")
+        public void testFunctionArgumentRangeTo() throws Exception {
+            runTest("testData/quickfix/castDueToProgressionResolveChange/functionArgumentRangeTo.kt");
+        }
+
+        @TestMetadata("genericFunctionArgument.kt")
+        public void testGenericFunctionArgument() throws Exception {
+            runTest("testData/quickfix/castDueToProgressionResolveChange/genericFunctionArgument.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/changeObjectToClass")
     public static class ChangeObjectToClass extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
