@@ -236,10 +236,20 @@ class InlineStackFrameVariableHolder private constructor(
         }
 
         // Returns a list of all visible variables without shadowing.
-        private fun StackFrameProxyImpl.allVisibleVariables(): List<LocalVariableProxyImpl> =
-            location().method().safeVariables()?.mapNotNull { variable ->
-                if (variable.isVisible(stackFrame)) LocalVariableProxyImpl(this, variable) else null
+        private fun StackFrameProxyImpl.allVisibleVariables(): List<LocalVariableProxyImpl> {
+            val method = location().method()
+            // Can be true for artificial stack frames
+            if (stackFrame.location().method() != method) {
+                return listOf()
+            }
+
+            return method.safeVariables()?.mapNotNull { variable ->
+                if (variable.isVisible(stackFrame))
+                    LocalVariableProxyImpl(this, variable)
+                else
+                    null
             } ?: listOf()
+        }
     }
 }
 
