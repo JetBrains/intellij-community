@@ -34,7 +34,22 @@ class LinuxDistributionBuilder(private val context: BuildContext,
   override fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
     spanBuilder("copy files for os distribution").setAttribute("os", targetOs.osName).setAttribute("arch", arch.name).useWithScope {
       val distBinDir = targetPath.resolve("bin")
-      copyDir(context.paths.communityHomeDir.resolve("bin/linux"), distBinDir)
+      val bins =
+        when (arch) {
+          JvmArchitecture.aarch64 -> listOf(
+            "fsnotifier-aarch64",
+            "restart.py",
+          )
+          JvmArchitecture.x64 -> listOf(
+            "fsnotifier",
+            "libdbm64.so",
+            "restart.py",
+          )
+        }
+      val sourceBinDir = context.paths.communityHomeDir.resolve("bin/linux")
+      bins.forEach { bin ->
+        copyFileToDir(sourceBinDir.resolve(bin), distBinDir)
+      }
       unpackPty4jNative(context, targetPath, "linux")
       generateBuildTxt(context, targetPath)
       copyDistFiles(context, targetPath)
