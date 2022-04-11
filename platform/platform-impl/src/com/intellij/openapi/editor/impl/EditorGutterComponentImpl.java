@@ -451,7 +451,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           g.fillRect(x, 0, area.width(), getHeight());
           g.setPaint(myEditor.getColorsScheme().getColor(EditorColors.LINE_NUMBERS_COLOR));
           g.setFont(JBUI.Fonts.smallFont().lessOn(2f));
-          g.drawString(String.valueOf(area.width()), x, p.y - 10);
+          int y = SwingUtilities.convertPoint(myEditor.getComponent(), p, myEditor.getScrollPane()).y;
+          g.drawString(String.valueOf(area.width()), x, y + g.getClipBounds().y - 10);
           break;
         }
       }
