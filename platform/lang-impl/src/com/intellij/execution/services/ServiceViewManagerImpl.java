@@ -199,7 +199,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       }
 
       if (active) {
-        boolean doShow = show && !myActiveToolWindowIds.contains(toolWindowId) && !toolWindow.isShowStripeButton();
+        boolean doShow = show && !myActiveToolWindowIds.contains(toolWindowId);
         myActiveToolWindowIds.add(toolWindowId);
         if (doShow) {
           toolWindow.show();
