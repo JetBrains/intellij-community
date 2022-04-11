@@ -2,7 +2,6 @@ package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import org.jetbrains.deft.IntellijWs.IntellijWs
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
@@ -11,7 +10,7 @@ import org.jetbrains.deft.impl.fields.Field
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import org.jetbrains.deft.TestEntities.TestEntities
+
 import org.jetbrains.deft.Type
 
 

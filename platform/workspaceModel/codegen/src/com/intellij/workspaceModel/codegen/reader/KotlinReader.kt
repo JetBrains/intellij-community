@@ -41,6 +41,8 @@ class KotlinReader(val file: KtFile) {
                     imports.add(imprt.trim())
                 }
                 c.isWhitespace() -> skipSpaces()
+                c == '/' && preview() == '/' -> lineComment()
+                c == '/' && preview() == '*' -> blockComment()
                 else -> break
             }
         }

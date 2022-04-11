@@ -10,7 +10,6 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import org.jetbrains.deft.IntellijWs.IntellijWs
 import org.jetbrains.deft.Type
 
 

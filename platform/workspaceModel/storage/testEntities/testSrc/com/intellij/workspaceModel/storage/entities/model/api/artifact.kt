@@ -1,3 +1,6 @@
+/*
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.workspaceModel.storage.entities.model.api
 
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -8,11 +11,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.annotations.Open
 import org.jetbrains.deft.annotations.Abstract
-import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.impl.*
-import org.jetbrains.deft.impl.fields.*
-import org.jetbrains.deft.IntellijWs.IntellijWs
 import org.jetbrains.deft.Type
 
 

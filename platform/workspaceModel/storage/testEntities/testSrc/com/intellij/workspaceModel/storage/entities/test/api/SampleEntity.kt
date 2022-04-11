@@ -10,7 +10,7 @@ import com.intellij.workspaceModel.storage.EntitySource
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import org.jetbrains.deft.TestEntities.TestEntities
+
 import org.jetbrains.deft.Type
 
 

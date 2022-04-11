@@ -6,7 +6,6 @@ import org.jetbrains.deft.codegen.ijws.fields.wsCode
 import org.jetbrains.deft.codegen.model.KtObjModule
 import org.jetbrains.deft.codegen.utils.fileContents
 import org.jetbrains.deft.codegen.utils.fqn
-import org.jetbrains.deft.impl.ObjModule
 
 fun KtObjModule.Built.wsModuleCode(): String = fileContents(
     src.id.javaPackage,

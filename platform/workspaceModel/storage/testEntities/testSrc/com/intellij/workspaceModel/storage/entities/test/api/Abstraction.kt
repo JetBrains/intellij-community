@@ -11,7 +11,6 @@ import org.jetbrains.deft.impl.fields.Field
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.*
-import org.jetbrains.deft.TestEntities.TestEntities
 import org.jetbrains.deft.Type
 
 
