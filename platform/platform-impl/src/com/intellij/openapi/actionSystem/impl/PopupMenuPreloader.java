@@ -26,11 +26,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.function.Supplier;
 
-public final class PopupMenuPreloader implements Runnable {
+public final class PopupMenuPreloader implements Runnable, HierarchyListener {
   private static final Logger LOG = Logger.getInstance(PopupMenuPreloader.class);
 
   private static int ourEditorContextMenuPreloadCount;
@@ -39,6 +41,7 @@ public final class PopupMenuPreloader implements Runnable {
   private final String myPlace;
   private final WeakReference<JComponent> myComponentRef;
   private final WeakReference<PopupHandler> myPopupHandlerRef;
+  private final long myStarted = System.nanoTime();
   private int myRetries;
   private boolean myDisposed;
 
@@ -60,6 +63,7 @@ public final class PopupMenuPreloader implements Runnable {
     };
     UiNotifyConnector.doWhenFirstShown(component, runnable);
     if (component instanceof JMenuBar) return;
+    // second-time preloading for a hopefully non-trivial selection
     component.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
@@ -78,6 +82,14 @@ public final class PopupMenuPreloader implements Runnable {
 
     myGroupSupplier = groupSupplier;
     myPlace = actionPlace;
+    component.addHierarchyListener(this);
+  }
+
+  @Override
+  public void hierarchyChanged(HierarchyEvent e) {
+    LOG.assertTrue(!myDisposed, "already disposed");
+    if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) <= 0) return;
+    dispose(-1);
   }
 
   @Override
@@ -111,15 +123,21 @@ public final class PopupMenuPreloader implements Runnable {
   private void dispose(long millis) {
     if (myDisposed) return;
     myDisposed = true;
+    JComponent component = myComponentRef.get();
     IdeEventQueue.getInstance().removeIdleListener(this);
-    if (millis != -1) {
-      if (myComponentRef.get() instanceof EditorComponentImpl) {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourEditorContextMenuPreloadCount ++;
-      }
-      ActionGroup group = myGroupSupplier.get();
-      String text = group == null ? null : group.getTemplateText();
-      LOG.info("Popup menu " + (text == null ? "" : "'" + text + "' ") + "preloaded at '" + myPlace + "' in " + millis + " ms");
+    if (component != null) {
+      component.removeHierarchyListener(this);
     }
+    if (millis == -1) {
+      return;
+    }
+    if (component instanceof EditorComponentImpl) {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      ourEditorContextMenuPreloadCount ++;
+    }
+    ActionGroup group = myGroupSupplier.get();
+    String text = group == null ? null : group.getTemplateText();
+    LOG.info(TimeoutUtil.getDurationMillis(myStarted) + " ms since showing to preload popup menu " +
+             (text == null ? "" : "'" + text + "' ") + "at '" + myPlace + "' in " + millis + " ms");
   }
 }
