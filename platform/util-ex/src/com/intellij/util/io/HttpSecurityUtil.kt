@@ -20,4 +20,9 @@ object HttpSecurityUtil {
     val encodedCredentials = Base64.getEncoder().encode(stream.toByteArray())
     return String(encodedCredentials)
   }
+
+  @JvmStatic
+  fun createBearerAuthHeaderValue(token: String): String {
+    return "Bearer $token"
+  }
 }
