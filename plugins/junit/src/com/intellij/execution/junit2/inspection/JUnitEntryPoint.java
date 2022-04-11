@@ -25,7 +25,7 @@ import java.util.Collection;
 
 public final class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
   private static final Collection<String> FIELD_ANNOTATIONS = Arrays.asList(JUnitUtil.PARAMETRIZED_PARAMETER_ANNOTATION_NAME, 
-                                                                            "org.junit.jupiter.api.extension.RegisterExtension");
+                                                                            JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION);
   public boolean ADD_JUNIT_TO_ENTRIES = true;
 
   @Override
