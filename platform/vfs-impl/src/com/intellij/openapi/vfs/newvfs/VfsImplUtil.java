@@ -144,18 +144,18 @@ public final class VfsImplUtil {
       return null;
     }
 
-    String basePath = vfs.extractRootPath(normalizedPath);
-    if (basePath.isBlank() || basePath.length() > normalizedPath.length()) {
-      LOG.warn(vfs + " has extracted incorrect root '" + basePath + "' from '" + normalizedPath + "' (original '" + path + "')");
+    String rootPath = vfs.extractRootPath(normalizedPath);
+    if (rootPath.isBlank() || rootPath.length() > normalizedPath.length()) {
+      LOG.warn(vfs + " has extracted incorrect root '" + rootPath + "' from '" + normalizedPath + "' (original '" + path + "')");
       return null;
     }
 
-    NewVirtualFile root = ManagingFS.getInstance().findRoot(basePath, vfs);
+    NewVirtualFile root = ManagingFS.getInstance().findRoot(rootPath, vfs);
     if (root == null || !root.exists()) {
       return null;
     }
 
-    return pair(root, normalizedPath.substring(basePath.length()));
+    return pair(root, normalizedPath.substring(rootPath.length()));
   }
 
   public static void refresh(@NotNull NewVirtualFileSystem vfs, boolean asynchronous) {

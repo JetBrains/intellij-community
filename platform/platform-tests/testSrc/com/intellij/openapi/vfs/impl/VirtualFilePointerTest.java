@@ -426,6 +426,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     VirtualFilePointer[] pointersToWatch = {jarParentPointer, jarPointer};
     assertTrue(jarParentPointer.isValid());
     assertTrue(jarPointer.isValid());
+    assertEquals(jarUrl, jarPointer.getUrl());
+    assertEquals("x.jar", jarPointer.getFileName());
 
     assertTrue(jar.delete());
     assertTrue(jarParent.delete());
@@ -1270,5 +1272,13 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
   private VirtualFile myDir() {
     return tempDir.getVirtualFileRoot();
+  }
+
+  @Test
+  public void testIncorrectRelativeUrlMustNotCrashVirtualPointers() {
+    String path = "$KOTLIN_BUNDLED$/lib/allopen-compiler-plugin.jar!/";
+    VirtualFilePointer pointer = myVirtualFilePointerManager.create("jar://" + path, disposable, null);
+    assertTrue(pointer.getUrl(), pointer.getUrl().endsWith(path));
+    assertEquals("allopen-compiler-plugin.jar", pointer.getFileName());
   }
 }

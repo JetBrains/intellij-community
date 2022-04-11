@@ -340,9 +340,14 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     assert fs == fsFromFile : "fs=" + fs + "; file.fs=" + fsFromFile+"; url='"+url+"'; file="+file;
 
     FilePartNodeRoot root = getRoot(fs);
-    NodeToUpdate toUpdate = file == null ?
-        root.findOrCreateByPath(fs instanceof ArchiveFileSystem && !path.contains(JarFileSystem.JAR_SEPARATOR) ? path + JarFileSystem.JAR_SEPARATOR : path, fs)
-        : root.findOrCreateByFile(file);
+    NodeToUpdate toUpdate;
+    if (file == null) {
+      String normPath = fs instanceof ArchiveFileSystem && !path.contains(JarFileSystem.JAR_SEPARATOR) ? path + JarFileSystem.JAR_SEPARATOR : path;
+      toUpdate = root.findOrCreateByPath(normPath, fs);
+    }
+    else {
+      toUpdate = root.findOrCreateByFile(file);
+    }
     FilePartNode node = toUpdate.node;
     if (fs != node.myFS && url != null && (IS_UNDER_UNIT_TEST || IS_INTERNAL)) {
       throw new IllegalArgumentException("Invalid url: '" + url + "'. " +
