@@ -238,11 +238,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/nullableBooleanElvis/inspectionData/inspections.test");
         }
 
-        @TestMetadata("overridingDeprecatedMember/inspectionData/inspections.test")
-        public void testOverridingDeprecatedMember_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/overridingDeprecatedMember/inspectionData/inspections.test");
-        }
-
         @TestMetadata("protectedInFinal/inspectionData/inspections.test")
         public void testProtectedInFinal_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/protectedInFinal/inspectionData/inspections.test");
