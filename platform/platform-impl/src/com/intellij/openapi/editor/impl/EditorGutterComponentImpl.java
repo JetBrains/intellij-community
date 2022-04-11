@@ -449,6 +449,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         if (off >= p.x) {
           g.setPaint(ColorUtil.withAlpha(JBColor.GREEN, 0.15));
           g.fillRect(x, 0, area.width(), getHeight());
+          g.setPaint(Color.BLACK);
+          g.setFont(JBUI.Fonts.smallFont().lessOn(2f));
+          g.drawString(area.width() + "", x, p.y - 10);
           break;
         }
       }
