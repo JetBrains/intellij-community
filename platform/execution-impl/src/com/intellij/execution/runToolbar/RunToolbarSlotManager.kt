@@ -151,9 +151,10 @@ class RunToolbarSlotManager(val project: Project) {
   }
 
   private fun clear() {
-    mainSlotData.clear()
     dataIds.clear()
+
     slotsData.clear()
+    slotsData[mainSlotData.id] = mainSlotData
 
     activeProcesses.clear()
     state = RWSlotManagerState.INACTIVE
