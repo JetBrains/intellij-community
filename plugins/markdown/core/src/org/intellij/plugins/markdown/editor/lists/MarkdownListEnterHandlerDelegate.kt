@@ -99,7 +99,8 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
       caretOffset.set(markerElement.endOffset)
     }
 
-    emptyItem = document.getLineIndentSpaces(itemLine) + item.normalizedMarker
+    val indentSpaces = document.getLineIndentSpaces(itemLine, file) ?: ""
+    emptyItem = indentSpaces + item.normalizedMarker
     return EnterHandlerDelegate.Result.Default
   }
 
