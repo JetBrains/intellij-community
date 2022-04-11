@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.configuration.notifications.LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME
-import org.jetbrains.kotlin.idea.configuration.notifications.checkExternalKotlinCompilerVersion
+import org.jetbrains.kotlin.idea.configuration.notifications.showNewKotlinCompilerAvailableNotificationIfNeeded
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinJsGradleModuleConfigurator
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinWithGradleConfigurator
@@ -49,7 +49,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         val kotlinVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
         val notificationText = KotlinBundle.message(
             "kotlin.external.compiler.updates.notification.content.0",
-            kotlinVersion.rawVersion,
+            kotlinVersion.kotlinVersion
         )
 
         val counter = AtomicInteger(0)
@@ -88,18 +88,18 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
 
             assertEquals(
                 IdeKotlinVersion.get("1.3.70"),
-                myProject.findAnyExternalKotlinCompilerVersion(),
+                findLatestExternalKotlinCompilerVersion(myProject)
             )
 
             val expectedCountAfter = if (kotlinVersion.isRelease) 1 else 0
             connection.deliverImmediately() // the first notification from import action
             assertEquals(expectedCountAfter, counter.get())
 
-            checkExternalKotlinCompilerVersion(myProject)
+            showNewKotlinCompilerAvailableNotificationIfNeeded(myProject)
             connection.deliverImmediately()
 
-            checkExternalKotlinCompilerVersion(myProject)
-            checkExternalKotlinCompilerVersion(myProject)
+            showNewKotlinCompilerAvailableNotificationIfNeeded(myProject)
+            showNewKotlinCompilerAvailableNotificationIfNeeded(myProject)
             connection.deliverImmediately()
             assertEquals(expectedCountAfter, counter.get())
 

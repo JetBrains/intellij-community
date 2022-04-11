@@ -7,6 +7,8 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.runInEdtAndWait
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.configuration.notifications.disableNewKotlinCompilerAvailableNotification
 import org.jetbrains.kotlin.idea.notification.catchNotificationText
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
@@ -61,6 +63,13 @@ class GradleMigrateTest : GradleImportingTestCase() {
     private fun doMigrationTest(beforeText: String, afterText: String): String? = catchNotificationText(myProject) {
         createProjectSubFile("settings.gradle", "include ':app'")
         val gradleFile = createProjectSubFile("app/build.gradle", beforeText.trimIndent())
+
+        runInEdtAndWait {
+            runWriteAction {
+                disableNewKotlinCompilerAvailableNotification(KotlinPluginLayout.instance.standaloneCompilerVersion.kotlinVersion)
+            }
+        }
+
         importProject()
 
         val document = runReadAction {
@@ -68,7 +77,12 @@ class GradleMigrateTest : GradleImportingTestCase() {
             PsiDocumentManager.getInstance(myProject).getDocument(gradlePsiFile) ?: error("Can't find document for gradle file")
         }
 
-        runInEdtAndWait { runWriteAction { document.setText(afterText.trimIndent()) } }
+        runInEdtAndWait {
+            runWriteAction {
+                document.setText(afterText.trimIndent())
+            }
+        }
+
         importProject()
     }
 }

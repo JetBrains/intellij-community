@@ -11,51 +11,58 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.configuration.findAnyExternalKotlinCompilerVersion
+import org.jetbrains.kotlin.idea.configuration.findLatestExternalKotlinCompilerVersion
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils
 
 @VisibleForTesting
 const val LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME = "kotlin.updates.whats.new.shown.for"
 
 class ExternalKotlinCompilerProjectDataImportListener(private val project: Project) : ProjectDataImportListener {
     override fun onImportFinished(projectPath: String?) {
-        checkExternalKotlinCompilerVersion(project)
+        ProgressIndicatorUtils.runUnderDisposeAwareIndicator(KotlinPluginDisposable.getInstance(project)) {
+            showNewKotlinCompilerAvailableNotificationIfNeeded(project)
+        }
     }
 }
 
-fun checkExternalKotlinCompilerVersion(project: Project) {
-    val bundledKotlinCompilerVersion = bundledCompilerVersionIfReleased() ?: return
-    if (!newExternalKotlinCompilerShouldBePromoted(bundledKotlinCompilerVersion, project::findExternalCompilerVersion)) return
+@RequiresBackgroundThread
+fun showNewKotlinCompilerAvailableNotificationIfNeeded(project: Project) {
+    val bundledCompilerVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
+    if (!bundledCompilerVersion.isRelease) return
+
+    fun findExternalVersion() =
+        (findLatestExternalKotlinCompilerVersion(project) ?: KotlinPluginLayout.instance.standaloneCompilerVersion).kotlinVersion
+
+    val bundledKotlinVersion = bundledCompilerVersion.kotlinVersion
+    if (!newExternalKotlinCompilerShouldBePromoted(bundledKotlinVersion, ::findExternalVersion)) return
 
     invokeLater {
-        bundledKotlinCompilerVersion.disableNewNotifications()
+        // Show the notification once for a project&version (checked in 'newExternalKotlinCompilerShouldBePromoted()')
+        disableNewKotlinCompilerAvailableNotification(bundledKotlinVersion)
     }
 
     NotificationGroupManager.getInstance()
         .getNotificationGroup("kotlin.external.compiler.updates")
         .createNotification(
-            KotlinBundle.message("kotlin.external.compiler.updates.notification.content.0", bundledKotlinCompilerVersion),
+            KotlinBundle.message("kotlin.external.compiler.updates.notification.content.0", bundledKotlinVersion),
             NotificationType.INFORMATION,
         )
         .setSuggestionType(true)
-        .addAction(createWhatIsNewAction(bundledKotlinCompilerVersion))
+        .addAction(createWhatIsNewAction(bundledKotlinVersion))
         .setIcon(KotlinIcons.SMALL_LOGO)
         .setImportant(true)
         .notify(project)
 }
 
-private fun Project.findExternalCompilerVersion(): KotlinVersion? = runReadAction { findAnyExternalKotlinCompilerVersion() }?.kotlinVersion
-
-private fun bundledCompilerVersionIfReleased(): KotlinVersion? {
-    return KotlinPluginLayout.instance.standaloneCompilerVersion.takeIf { it.isRelease }?.kotlinVersion
-}
-
-private fun KotlinVersion.disableNewNotifications(): Unit = runWriteAction {
-    PropertiesComponent.getInstance().setValue(LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME, toString())
+fun disableNewKotlinCompilerAvailableNotification(version: KotlinVersion): Unit = runWriteAction {
+    PropertiesComponent.getInstance().setValue(LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME, version.toString())
 }
 
 @get:VisibleForTesting

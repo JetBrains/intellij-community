@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.ui.EmptyClipboardOwner
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
-import org.jetbrains.kotlin.idea.configuration.findExternalKotlinCompilerVersion
+import org.jetbrains.kotlin.idea.configuration.findExternalKotlinCompilerVersions
 import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
 import org.jetbrains.kotlin.idea.configuration.hasKotlinFilesInSources
 import org.jetbrains.kotlin.idea.configuration.hasKotlinFilesOnlyInTests
@@ -33,7 +33,7 @@ class CopyKotlinProjectOverviewAction : AnAction() {
                 ${KotlinIdePlugin.version}
                 Kotlin Presence: ${prepareInfo(getKotlinStateInModules(project), "Absent")}
                 Build: ${prepareInfo(getModuleBuildSystems(project))}
-                Build Versions: ${prepareInfo(getModuleBuildVersions(project), "Unknown")}
+                Build Versions: ${prepareInfo(getUsedKotlinCompilerVersions(project), "Unknown")}
             """.trimIndent()
 
             val clipboard = Toolkit.getDefaultToolkit().systemClipboard
@@ -94,13 +94,7 @@ class CopyKotlinProjectOverviewAction : AnAction() {
         }
     }
 
-    private fun getModuleBuildVersions(project: Project): Sequence<String?> {
-        val modules = ModuleManager.getInstance(project).modules
-        return sequence {
-            for (module in modules) {
-                val compilerVersion = module.findExternalKotlinCompilerVersion()
-                yield(compilerVersion?.rawVersion)
-            }
-        }
+    private fun getUsedKotlinCompilerVersions(project: Project): Sequence<String> {
+        return findExternalKotlinCompilerVersions(project).asSequence().map { it.rawVersion }
     }
 }
