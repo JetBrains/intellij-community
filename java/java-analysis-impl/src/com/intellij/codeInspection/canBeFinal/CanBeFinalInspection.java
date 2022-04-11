@@ -88,30 +88,29 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
       if (refElement.isFinal()) return null;
       if (!((RefElementImpl)refElement).checkFlag(CanBeFinalAnnotator.CAN_BE_FINAL_MASK)) return null;
 
-      final PsiMember psiMember = ObjectUtils.tryCast(refElement.getPsiElement(), PsiMember.class);
-      if (psiMember == null || !CanBeFinalHandler.allowToBeFinal(psiMember)) return null;
-
-      PsiIdentifier psiIdentifier = null;
       if (refElement instanceof RefClass) {
+        if (!isReportClasses()) return null;
         RefClass refClass = (RefClass)refElement;
         if (refClass.isInterface() || refClass.isAnonymous() || refClass.isAbstract()) return null;
-        if (!isReportClasses()) return null;
-        psiIdentifier = ((PsiClass)psiMember).getNameIdentifier();
       }
       else if (refElement instanceof RefMethod) {
+        if (!isReportMethods()) return null;
         RefMethod refMethod = (RefMethod)refElement;
         RefClass ownerClass = refMethod.getOwnerClass();
         if (ownerClass == null || ownerClass.isFinal()) return null;
-        if (psiMember.hasModifierProperty(PsiModifier.PRIVATE)) return null;
-        if (!isReportMethods()) return null;
-        psiIdentifier = ((PsiMethod)psiMember).getNameIdentifier();
+        if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return null;
       }
       else if (refElement instanceof RefField) {
-        if (!((RefField)refElement).isUsedForWriting()) return null;
         if (!isReportFields()) return null;
-        psiIdentifier = ((PsiField)psiMember).getNameIdentifier();
+        if (!((RefField)refElement).isUsedForWriting()) return null;
+      }
+      else {
+        return null;
       }
 
+      final PsiMember psiMember = ObjectUtils.tryCast(refElement.getPsiElement(), PsiMember.class);
+      if (psiMember == null || !CanBeFinalHandler.allowToBeFinal(psiMember)) return null;
+      PsiElement psiIdentifier = ((PsiNameIdentifierOwner)psiMember).getNameIdentifier();
       if (psiIdentifier != null) {
         return new ProblemDescriptor[]{manager.createProblemDescriptor(psiIdentifier, JavaAnalysisBundle.message(
           "inspection.export.results.can.be.final.description"), new AcceptSuggested(globalContext.getRefManager()),
