@@ -2032,7 +2032,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
 
     info.isShowStripeButton = value
+    if (!value) {
+      entry.removeStripeButton()
+    }
     entry.applyWindowInfo(info.copy())
+    if (value && entry.stripeButton == null) {
+      entry.stripeButton = buttonManager.createStripeButton(entry.toolWindow, entry.readOnlyWindowInfo, task = null)
+    }
     fireStateChanged()
   }
 
