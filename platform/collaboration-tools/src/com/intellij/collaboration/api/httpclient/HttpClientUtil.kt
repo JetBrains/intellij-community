@@ -2,10 +2,15 @@
 package com.intellij.collaboration.api.httpclient
 
 import com.intellij.collaboration.api.HttpStatusErrorException
+import com.intellij.collaboration.api.httpclient.response.CancellableWrappingBodyHandler
 import com.intellij.collaboration.api.httpclient.response.InflatingInputStreamBodyHandler
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.text.nullize
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.future.await
 import java.io.InputStream
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.net.http.HttpResponse.BodyHandler
 
@@ -34,4 +39,15 @@ object HttpClientUtil {
   }
 
   fun inflatedInputStreamBodyHandler(): BodyHandler<InputStream> = InflatingInputStreamBodyHandler()
+}
+
+suspend fun <T> HttpClient.sendAndAwaitCancellable(request: HttpRequest, bodyHandler: BodyHandler<T>): HttpResponse<T> {
+  val cancellableBodyHandler = CancellableWrappingBodyHandler(bodyHandler)
+  return try {
+    sendAsync(request, cancellableBodyHandler).await()
+  }
+  catch (ce: CancellationException) {
+    cancellableBodyHandler.cancel()
+    throw ce
+  }
 }

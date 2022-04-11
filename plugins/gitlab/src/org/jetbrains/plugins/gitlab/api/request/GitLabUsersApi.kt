@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.api.request
 
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.checkResponse
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.inflatedInputStreamBodyHandler
+import com.intellij.collaboration.api.httpclient.sendAndAwaitCancellable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
@@ -21,7 +22,7 @@ object GitLabUsersApi : GitLabApiRequestsBase() {
   }
 
   suspend fun GitLabApi.loadImage(uri: String): Image? {
-    val response = client.sendAsync(request(uri).GET().build(), inflatedInputStreamBodyHandler()).await()
+    val response = client.sendAndAwaitCancellable(request(uri).GET().build(), inflatedInputStreamBodyHandler())
     return withContext(Dispatchers.IO) {
       checkResponse(response)
       response.body().use(ImageIO::read)

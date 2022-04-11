@@ -14,8 +14,8 @@ import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_TYPE_HEA
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_TYPE_JSON
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.checkResponse
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.inflatedInputStreamBodyHandler
+import com.intellij.collaboration.api.httpclient.sendAndAwaitCancellable
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQueryLoader
@@ -42,7 +42,7 @@ abstract class GitLabApiRequestsBase {
   }
 
   suspend inline fun <reified T> GitLabApi.loadRestJson(request: HttpRequest): T {
-    val response = client.sendAsync(request, inflatedInputStreamBodyHandler()).await()
+    val response = client.sendAndAwaitCancellable(request, inflatedInputStreamBodyHandler())
     checkResponse(response)
     return response.body().use {
       restJackson.readValue(it, T::class.java)!!
@@ -50,7 +50,7 @@ abstract class GitLabApiRequestsBase {
   }
 
   suspend inline fun <reified T> GitLabApi.loadGQLResponse(request: HttpRequest, vararg pathFromData: String): T? {
-    val response = client.sendAsync(request, inflatedInputStreamBodyHandler()).await()
+    val response = client.sendAndAwaitCancellable(request, inflatedInputStreamBodyHandler())
     return withContext(Dispatchers.IO) {
       checkResponse(response)
       val responseType = gqlJackson.typeFactory
