@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.entities.model.api.ArtifactEntity
 import com.intellij.workspaceModel.storage.entities.model.api.ArtifactOutputPackagingElementEntity
 import com.intellij.workspaceModel.storage.entities.model.api.ArtifactPropertiesEntity
 import com.intellij.workspaceModel.storage.entities.model.api.ArtifactRootElementEntity
-import com.intellij.workspaceModel.storage.entities.model.api.CompositePackagingElementEntity
 import com.intellij.workspaceModel.storage.entities.model.api.ContentRootEntity
 import com.intellij.workspaceModel.storage.entities.model.api.CustomPackagingElementEntity
 import com.intellij.workspaceModel.storage.entities.model.api.CustomSourceRootPropertiesEntity
@@ -29,54 +28,11 @@ import com.intellij.workspaceModel.storage.entities.model.api.ModuleGroupPathEnt
 import com.intellij.workspaceModel.storage.entities.model.api.ModuleOutputPackagingElementEntity
 import com.intellij.workspaceModel.storage.entities.model.api.ModuleSourcePackagingElementEntity
 import com.intellij.workspaceModel.storage.entities.model.api.ModuleTestOutputPackagingElementEntity
-import com.intellij.workspaceModel.storage.entities.model.api.PackagingElementEntity
 import com.intellij.workspaceModel.storage.entities.model.api.SdkEntity
 import com.intellij.workspaceModel.storage.entities.model.api.SourceRootEntity
 import com.intellij.workspaceModel.storage.entities.model.api.SourceRootOrderEntity
-import org.jetbrains.deft.impl.ObjModule
 
 import org.jetbrains.deft.impl.* 
-                        
-object IntellijWs: ObjModule(ObjModule.Id("org.jetbrains.deft.IntellijWs")) {
-    @InitApi
-    override fun init() {            
-        
-                    
-        beginInit(48)
-        add(ContentRootEntity)
-        add(SourceRootEntity)
-        add(SourceRootOrderEntity)
-        add(CustomSourceRootPropertiesEntity)
-        add(JavaSourceRootEntity)
-        add(JavaResourceRootEntity)
-        add(ArtifactEntity)
-        add(ArtifactPropertiesEntity)
-        add(PackagingElementEntity)
-        add(CompositePackagingElementEntity)
-        add(DirectoryPackagingElementEntity)
-        add(ArchivePackagingElementEntity)
-        add(ArtifactRootElementEntity)
-        add(ArtifactOutputPackagingElementEntity)
-        add(ModuleOutputPackagingElementEntity)
-        add(LibraryFilesPackagingElementEntity)
-        add(ModuleSourcePackagingElementEntity)
-        add(ModuleTestOutputPackagingElementEntity)
-        add(FileOrDirectoryPackagingElementEntity)
-        add(DirectoryCopyPackagingElementEntity)
-        add(ExtractedDirectoryPackagingElementEntity)
-        add(FileCopyPackagingElementEntity)
-        add(CustomPackagingElementEntity)
-        add(FacetEntity)
-        add(ModuleEntity)
-        add(ModuleCustomImlDataEntity)
-        add(ModuleGroupPathEntity)
-        add(JavaModuleSettingsEntity)
-        add(ExternalSystemModuleOptionsEntity)
-        add(LibraryEntity)
-        add(LibraryPropertiesEntity)
-        add(SdkEntity)
-    }
-}
 
 
 

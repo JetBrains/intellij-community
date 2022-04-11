@@ -12,16 +12,6 @@ fun KtObjModule.Built.wsModuleCode(): String = fileContents(
     src.id.javaPackage,
     """
 import org.jetbrains.deft.impl.* 
-                        
-object ${src.id.objName}: ${ObjModule::class.fqn}(${ObjModule.Id::class.fqn}("${src.id.notation}")) {
-    @InitApi
-    override fun init() {            
-        ${src.dependencies.lines("        ") { "requireDependency(${fqn(id.javaPackage, id.objName)})" }}
-                    
-        beginInit(${src.lastId})
-        ${typeDefs.lines("        ") { "add(${fqn(packageName, name)})" }}
-    }
-}
 
 ${extFields.lines { wsCode }}
 

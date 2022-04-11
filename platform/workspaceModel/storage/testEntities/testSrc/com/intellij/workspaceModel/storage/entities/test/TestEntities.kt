@@ -10,15 +10,12 @@ import com.intellij.workspaceModel.storage.entities.test.api.AttachedEntityParen
 import com.intellij.workspaceModel.storage.entities.test.api.AttachedEntityParentListImpl
 import com.intellij.workspaceModel.storage.entities.test.api.AttachedEntityToParent
 import com.intellij.workspaceModel.storage.entities.test.api.AttachedEntityToParentImpl
-import com.intellij.workspaceModel.storage.entities.test.api.BaseEntity
-import com.intellij.workspaceModel.storage.entities.test.api.ChildAbstractBaseEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ChildEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ChildFirstEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ChildMultipleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ChildNullableEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ChildSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ChildSecondEntity
-import com.intellij.workspaceModel.storage.entities.test.api.ChildSingleAbstractBaseEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ChildSingleFirstEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ChildSingleSecondEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ChildSourceEntity
@@ -26,8 +23,6 @@ import com.intellij.workspaceModel.storage.entities.test.api.ChildSubEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ChildSubSubEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ComposedIdSoftRefEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ComposedLinkEntity
-import com.intellij.workspaceModel.storage.entities.test.api.CompositeAbstractEntity
-import com.intellij.workspaceModel.storage.entities.test.api.CompositeBaseEntity
 import com.intellij.workspaceModel.storage.entities.test.api.CompositeChildAbstractEntity
 import com.intellij.workspaceModel.storage.entities.test.api.EntityWithSoftLinks
 import com.intellij.workspaceModel.storage.entities.test.api.FirstEntityWithPId
@@ -68,7 +63,6 @@ import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity2
 import com.intellij.workspaceModel.storage.entities.test.api.SecondEntityWithPId
 import com.intellij.workspaceModel.storage.entities.test.api.SecondSampleEntity
-import com.intellij.workspaceModel.storage.entities.test.api.SimpleAbstractEntity
 import com.intellij.workspaceModel.storage.entities.test.api.SimpleChildAbstractEntity
 import com.intellij.workspaceModel.storage.entities.test.api.SourceEntity
 import com.intellij.workspaceModel.storage.entities.test.api.VFUEntity
@@ -87,89 +81,8 @@ import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.referrersx
 import com.intellij.workspaceModel.storage.referrersy
 import org.jetbrains.deft.annotations.Child
-import org.jetbrains.deft.impl.ObjModule
 
 import org.jetbrains.deft.impl.* 
-                        
-object TestEntities: ObjModule(ObjModule.Id("org.jetbrains.deft.TestEntities")) {
-    @InitApi
-    override fun init() {            
-        
-                    
-        beginInit(92)
-        add(MainEntityParentList)
-        add(AttachedEntityParentList)
-        add(LinkedListEntity)
-        add(SampleEntity2)
-        add(VFUEntity2)
-        add(OneEntityWithPersistentId)
-        add(EntityWithSoftLinks)
-        add(MainEntityToParent)
-        add(AttachedEntityToParent)
-        add(NamedEntity)
-        add(NamedChildEntity)
-        add(WithSoftLinkEntity)
-        add(ComposedLinkEntity)
-        add(WithListSoftLinksEntity)
-        add(ComposedIdSoftRefEntity)
-        add(MainEntity)
-        add(AttachedEntity)
-        add(OoParentEntity)
-        add(OoChildEntity)
-        add(OoChildWithNullableParentEntity)
-        add(OoParentWithPidEntity)
-        add(OoChildForParentWithPidEntity)
-        add(OoChildAlsoWithPidEntity)
-        add(OoParentWithoutPidEntity)
-        add(OoChildWithPidEntity)
-        add(ParentSingleAbEntity)
-        add(ChildSingleAbstractBaseEntity)
-        add(ChildSingleFirstEntity)
-        add(ChildSingleSecondEntity)
-        add(ParentEntity)
-        add(ChildEntity)
-        add(ParentNullableEntity)
-        add(ChildNullableEntity)
-        add(MainEntityList)
-        add(AttachedEntityList)
-        add(XParentEntity)
-        add(XChildEntity)
-        add(XChildWithOptionalParentEntity)
-        add(XChildChildEntity)
-        add(ParentChainEntity)
-        add(SimpleAbstractEntity)
-        add(CompositeAbstractEntity)
-        add(CompositeChildAbstractEntity)
-        add(SimpleChildAbstractEntity)
-        add(VFUEntity)
-        add(VFUWithTwoPropertiesEntity)
-        add(NullableVFUEntity)
-        add(ListVFUEntity)
-        add(ParentAbEntity)
-        add(ChildAbstractBaseEntity)
-        add(ChildFirstEntity)
-        add(ChildSecondEntity)
-        add(AssertConsistencyEntity)
-        add(ParentSubEntity)
-        add(ChildSubEntity)
-        add(ChildSubSubEntity)
-        add(BaseEntity)
-        add(CompositeBaseEntity)
-        add(MiddleEntity)
-        add(LeftEntity)
-        add(RightEntity)
-        add(SampleEntity)
-        add(ChildSampleEntity)
-        add(SecondSampleEntity)
-        add(SourceEntity)
-        add(ChildSourceEntity)
-        add(PersistentIdEntity)
-        add(FirstEntityWithPId)
-        add(SecondEntityWithPId)
-        add(ParentMultipleEntity)
-        add(ChildMultipleEntity)
-    }
-}
 
 var AttachedEntityParentList.Builder.ref: MainEntityParentList?
     get() {
