@@ -51,7 +51,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -174,7 +173,12 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private SwitchAction mySwitchAction;
   private final ArrayList<JComponent> myComponentsWithEditorBackground = new ArrayList<>();
   private JComponent mySearchWrapper;
+  private JBCheckBox myInjected;
+  private JBCheckBox myMatchCase;
   private JComponent myReplaceWrapper;
+  private JBCheckBox myShortenFqn;
+  private JBCheckBox myStaticImport;
+  private JBCheckBox myReformat;
 
   public StructuralSearchDialog(@NotNull SearchContext searchContext, boolean replace) {
     this(searchContext, replace, false);
@@ -420,6 +424,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myMainSplitter.setSecondComponent(centerPanel);
 
     updateColors();
+    updateOptions();
     return myMainSplitter;
   }
 
@@ -560,20 +565,17 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     searchTargetLabel.setLabelFor(myTargetComboBox);
     myTargetComboBox.setMnemonic(TextWithMnemonic.parse(text).getMnemonicCode());
 
-    final JBCheckBox injected = new JBCheckBox(SSRBundle.message("search.in.injected.checkbox"));
-    injected.setOpaque(false);
-    injected.setSelected(myConfiguration.getMatchOptions().isSearchInjectedCode());
-    injected.setVisible(!myEditConfigOnly);
-    injected.addActionListener(e -> {
-      myConfiguration.getMatchOptions().setSearchInjectedCode(injected.isSelected());
+    myInjected = new JBCheckBox(SSRBundle.message("search.in.injected.checkbox"));
+    myInjected.setOpaque(false);
+    myInjected.addActionListener(e -> {
+      myConfiguration.getMatchOptions().setSearchInjectedCode(myInjected.isSelected());
       initValidation();
     });
 
-    final JBCheckBox matchCase = new JBCheckBox(FindBundle.message("find.popup.case.sensitive"));
-    matchCase.setOpaque(false);
-    matchCase.setSelected(myConfiguration.getMatchOptions().isCaseSensitiveMatch());
-    matchCase.addActionListener(e -> {
-      myConfiguration.getMatchOptions().setCaseSensitiveMatch(matchCase.isSelected());
+    myMatchCase = new JBCheckBox(FindBundle.message("find.popup.case.sensitive"));
+    myMatchCase.setOpaque(false);
+    myMatchCase.addActionListener(e -> {
+      myConfiguration.getMatchOptions().setCaseSensitiveMatch(myMatchCase.isSelected());
       initValidation();
     });
 
@@ -591,8 +593,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     searchEditorPanel.add(mySearchCriteriaEdit, searchConstraint.width(5).fillXY().growXY().get());
     searchEditorPanel.add(searchTargetLabel, searchConstraint.newLine().noFill().noGrow().width(1).insets(10, DEFAULT_HGAP, 10, 0).get());
     searchEditorPanel.add(myTargetComboBox, searchConstraint.get());
-    searchEditorPanel.add(injected, searchConstraint.get());
-    searchEditorPanel.add(matchCase, searchConstraint.insets(10, DEFAULT_HGAP, 10, DEFAULT_HGAP).get());
+    searchEditorPanel.add(myInjected, searchConstraint.get());
+    searchEditorPanel.add(myMatchCase, searchConstraint.insets(10, DEFAULT_HGAP, 10, DEFAULT_HGAP).get());
 
     mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
     myComponentsWithEditorBackground.add(myFilterPanel.getTable());
@@ -608,34 +610,22 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private @NotNull JComponent createReplacePanel() {
     final JBLabel replacementTemplateLabel = new JBLabel(SSRBundle.message("replacement.template.label"));
 
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
-    final TriConsumer<JBCheckBox, Boolean, Boolean> initReplaceCheckbox = (checkBox, enabledAndVisible, selected) -> {
-      checkBox.setOpaque(false);
-      checkBox.setEnabled(enabledAndVisible); checkBox.setVisible(enabledAndVisible);
-      checkBox.setSelected(selected);
-    };
-
-    final JBCheckBox shortenFqn = new JBCheckBox(SSRBundle.message("shorten.fully.qualified.names.checkbox"));
-    initReplaceCheckbox.accept(shortenFqn,
-                               profile != null && profile.supportsShortenFQNames(),
-                               myReplace && myConfiguration.getReplaceOptions().isToShortenFQN());
-    shortenFqn.addActionListener(e -> {
-      myConfiguration.getReplaceOptions().setToShortenFQN(shortenFqn.isSelected());
+    myShortenFqn = new JBCheckBox(SSRBundle.message("shorten.fully.qualified.names.checkbox"));
+    myShortenFqn.setOpaque(false);
+    myShortenFqn.addActionListener(e -> {
+      myConfiguration.getReplaceOptions().setToShortenFQN(myShortenFqn.isSelected());
     });
 
-    final JBCheckBox staticImport = new JBCheckBox(SSRBundle.message("use.static.import.checkbox"));
-    initReplaceCheckbox.accept(staticImport,
-                               profile != null && profile.supportsUseStaticImports(),
-                               myReplace && myConfiguration.getReplaceOptions().isToUseStaticImport());
-    staticImport.addActionListener(e -> {
-      myConfiguration.getReplaceOptions().setToUseStaticImport(staticImport.isSelected());
+    myStaticImport = new JBCheckBox(SSRBundle.message("use.static.import.checkbox"));
+    myStaticImport.setOpaque(false);
+    myStaticImport.addActionListener(e -> {
+      myConfiguration.getReplaceOptions().setToUseStaticImport(myStaticImport.isSelected());
     });
 
-    final JBCheckBox reformat = new JBCheckBox(SSRBundle.message("reformat.checkbox"));
-    reformat.setOpaque(false);
-    reformat.setSelected(myReplace && myConfiguration.getReplaceOptions().isToReformatAccordingToStyle());
-    reformat.addActionListener(e -> {
-      myConfiguration.getReplaceOptions().setToReformatAccordingToStyle(reformat.isSelected());
+    myReformat = new JBCheckBox(SSRBundle.message("reformat.checkbox"));
+    myReformat.setOpaque(false);
+    myReformat.addActionListener(e -> {
+      myConfiguration.getReplaceOptions().setToReformatAccordingToStyle(myReformat.isSelected());
     });
 
     myReplaceCriteriaEdit = createEditor(true);
@@ -644,15 +634,40 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myComponentsWithEditorBackground.add(myReplaceWrapper);
 
     myReplaceWrapper.add(myReplaceCriteriaEdit, wrapperConstraint.width(4).fillXY().growXY().get());
-    myReplaceWrapper.add(shortenFqn, wrapperConstraint.newLine().width(1).noFill().noGrow().insets(10, 10, 10, 0).get());
-    myReplaceWrapper.add(staticImport, wrapperConstraint.get());
-    myReplaceWrapper.add(reformat, wrapperConstraint.get());
+    myReplaceWrapper.add(myShortenFqn, wrapperConstraint.newLine().width(1).noFill().noGrow().insets(10, 10, 10, 0).get());
+    myReplaceWrapper.add(myStaticImport, wrapperConstraint.get());
+    myReplaceWrapper.add(myReformat, wrapperConstraint.get());
 
     final JPanel replacePanel = new JPanel(new GridBagLayout());
     final var replaceConstraint = new GridBagConstraintHolder();
     replacePanel.add(replacementTemplateLabel, replaceConstraint.fillX().growX().insets(16, DEFAULT_HGAP, 14, 0).get());
     replacePanel.add(myReplaceWrapper, replaceConstraint.newLine().fillXY().growXY().noInsets().get());
     return replacePanel;
+  }
+
+  private void updateOptions() {
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+    final TriConsumer<JBCheckBox, Boolean, Boolean> initReplaceCheckbox = (checkBox, enabledAndVisible, selected) -> {
+      checkBox.setEnabled(enabledAndVisible); checkBox.setVisible(enabledAndVisible);
+      checkBox.setSelected(selected);
+    };
+
+    // Search options
+    if (myInjected == null) return;
+    myInjected.setSelected(myConfiguration.getMatchOptions().isSearchInjectedCode());
+    myInjected.setVisible(!myEditConfigOnly);
+    myMatchCase.setSelected(myConfiguration.getMatchOptions().isCaseSensitiveMatch());
+
+    // Replace options
+    if (myShortenFqn == null) return;
+    initReplaceCheckbox.accept(myShortenFqn,
+                               profile != null && profile.supportsShortenFQNames(),
+                               myReplace && myConfiguration.getReplaceOptions().isToShortenFQN());
+
+    initReplaceCheckbox.accept(myStaticImport,
+                               profile != null && profile.supportsUseStaticImports(),
+                               myReplace && myConfiguration.getReplaceOptions().isToUseStaticImport());
+    myReformat.setSelected(myReplace && myConfiguration.getReplaceOptions().isToReformatAccordingToStyle());
   }
 
   @Nullable
@@ -1076,13 +1091,13 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       }
       if (configuration instanceof ReplaceConfiguration) {
         final ReplaceOptions replaceOptions = configuration.getReplaceOptions();
-
         setEditorContent(true, replaceOptions.getReplacement());
       }
       else {
         setEditorContent(true, matchOptions.getSearchPattern());
       }
     }
+    updateOptions();
   }
 
   private void setEditorContent(boolean replace, String text) {
