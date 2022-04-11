@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.testFramework.TestModeFlags;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -52,7 +53,6 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getModuleImmediateValues;
@@ -431,7 +431,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     return orderedProviders;
   }
 
-  protected @Nullable Predicate<IndexedFile> getForceReindexingTrigger() {
+  protected @Nullable BooleanFunction<IndexedFile> getForceReindexingTrigger() {
     return null;
   }
 
@@ -480,7 +480,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       Object[] moduleValues;
       if (origin instanceof ModuleRootOrigin && !((ModuleRootOrigin)origin).getModule().isDisposed()) {
         pushers = FilePropertyPusher.EP_NAME.getExtensionList();
-        moduleValues = ReadAction.nonBlocking(() -> getModuleImmediateValues(pushers, ((ModuleRootOrigin)origin).getModule())).executeSynchronously();
+        moduleValues = ReadAction.compute(() -> getModuleImmediateValues(pushers, ((ModuleRootOrigin)origin).getModule()));
       }
       else {
         pushers = null;

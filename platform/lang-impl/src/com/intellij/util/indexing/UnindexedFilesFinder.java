@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.psi.search.FileTypeIndex;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.projectFilter.FileAddStatus;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
@@ -23,7 +24,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 final class UnindexedFilesFinder {
@@ -33,13 +33,13 @@ final class UnindexedFilesFinder {
   private final FileBasedIndexImpl myFileBasedIndex;
   private final UpdatableIndex<FileType, Void, FileContent, ?> myFileTypeIndex;
   private final Collection<FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor> myStateProcessors;
-  private final @Nullable Predicate<? super IndexedFile> myForceReindexingTrigger;
+  private final @Nullable BooleanFunction<? super IndexedFile> myForceReindexingTrigger;
   private final @NotNull ProjectIndexableFilesFilterHolder myIndexableFilesFilterHolder;
   private final boolean myShouldProcessUpToDateFiles;
 
   UnindexedFilesFinder(@NotNull Project project,
                        @NotNull FileBasedIndexImpl fileBasedIndex,
-                       @Nullable Predicate<? super IndexedFile> forceReindexingTrigger) {
+                       @Nullable BooleanFunction<? super IndexedFile> forceReindexingTrigger) {
     myProject = project;
     myFileBasedIndex = fileBasedIndex;
     myFileTypeIndex = fileBasedIndex.getIndex(FileTypeIndex.NAME);
@@ -60,7 +60,7 @@ final class UnindexedFilesFinder {
   @Nullable("null if the file is not subject for indexing (a directory, invalid, etc.)")
   public UnindexedFileStatus getFileStatus(@NotNull VirtualFile file) {
     ProgressManager.checkCanceled(); // give a chance to suspend indexing
-    return ReadAction.nonBlocking(() -> {
+    return ReadAction.compute(() -> {
       if (myProject.isDisposed() || !file.isValid() || !(file instanceof VirtualFileWithId)) {
         return null;
       }
@@ -118,6 +118,7 @@ final class UnindexedFilesFinder {
           }
           else {
             final List<ID<?, ?>> affectedIndexCandidates = myFileBasedIndex.getAffectedIndexCandidates(indexedFile);
+            //noinspection ForLoopReplaceableByForEach
             for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
               final ID<?, ?> indexId = affectedIndexCandidates.get(i);
               if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) continue;
@@ -201,7 +202,7 @@ final class UnindexedFilesFinder {
           timeUpdatingContentLessIndexes.addAndGet(System.nanoTime() - nowTime);
         }
 
-        if (myForceReindexingTrigger != null && myForceReindexingTrigger.test(indexedFile)) {
+        if (myForceReindexingTrigger != null && myForceReindexingTrigger.fun(indexedFile)) {
           myFileBasedIndex.dropNontrivialIndexedStates(inputId);
           shouldIndex.set(true);
         }
@@ -216,7 +217,7 @@ final class UnindexedFilesFinder {
                                      timeProcessingUpToDateFiles.get(),
                                      timeUpdatingContentLessIndexes.get(),
                                      timeIndexingWithoutContent.get());
-    }).executeSynchronously();
+    });
   }
 
   private boolean tryIndexWithoutContentViaInfrastructureExtension(IndexedFile fileContent, int inputId, ID<?, ?> indexId) {
