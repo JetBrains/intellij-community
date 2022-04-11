@@ -2398,6 +2398,15 @@
                      language="kotlin"
                      key="inspection.ambiguous.expression.when.branch.migration.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.CastDueToProgressionResolutionChangeMigrationInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
+                     enabledByDefault="false"
+                     cleanupTool="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.progression.resolution.change.migration.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.AddConversionCallMigrationInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
