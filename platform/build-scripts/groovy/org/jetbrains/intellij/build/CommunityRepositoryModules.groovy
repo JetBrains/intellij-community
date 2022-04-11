@@ -226,6 +226,7 @@ final class CommunityRepositoryModules {
     plugin("intellij.markdown") {
       withModule("intellij.markdown.core")
       withModule("intellij.markdown.fenceInjection")
+      withModule("intellij.markdown.frontmatter")
     }
   )
 

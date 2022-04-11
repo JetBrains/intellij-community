@@ -11,6 +11,7 @@
   </dependencies>
   <content>
     <module name="intellij.markdown.fenceInjection"/>
+    <module name="intellij.markdown.frontmatter"/>
   </content>
 
   <description><![CDATA[
@@ -310,6 +311,11 @@ Includes the following features:</p>
                  description="Enables precise scrolling on the document boundaries (direct passing of scroll events from IDE to JCEF preview).
                               Any opened Markdown editors should be manually reopened.
                               Use 'ide.browser.jcef.osr.wheelRotation.factor' to adjust swing's mouse wheel event multipler."/>
+
+    <registryKey key="markdown.experimental.frontmatter.support.enable"
+                 defaultValue="false"
+                 description="Enables experimental front matter support"
+                 restartRequired="true"/>
 
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>
     <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>

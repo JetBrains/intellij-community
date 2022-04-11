@@ -9,6 +9,7 @@ import com.intellij.psi.tree.OuterLanguageElementType;
 import org.intellij.markdown.flavours.gfm.GFMElementTypes;
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes;
 import org.intellij.plugins.markdown.lang.parser.DefinitionListMarkerProvider;
+import org.intellij.plugins.markdown.lang.parser.frontmatter.FrontMatterHeaderMarkerProvider;
 import org.jetbrains.annotations.ApiStatus;
 
 import static org.intellij.plugins.markdown.lang.MarkdownElementType.platformType;
@@ -91,4 +92,13 @@ public interface MarkdownElementTypes {
 
   @ApiStatus.Experimental
   IElementType DEFINITION_TERM = platformType(DefinitionListMarkerProvider.TERM);
+
+  @ApiStatus.Experimental
+  IElementType FRONT_MATTER_HEADER = platformType(FrontMatterHeaderMarkerProvider.FRONT_MATTER_HEADER);
+
+  @ApiStatus.Experimental
+  IElementType FRONT_MATTER_HEADER_CONTENT = platformType(FrontMatterHeaderMarkerProvider.FRONT_MATTER_HEADER_CONTENT);
+
+  @ApiStatus.Experimental
+  IElementType FRONT_MATTER_HEADER_DELIMITER = platformType(FrontMatterHeaderMarkerProvider.FRONT_MATTER_HEADER_DELIMITER);
 }

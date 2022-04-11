@@ -1,0 +1,32 @@
+package org.intellij.plugins.markdown.lang.psi.impl
+
+import com.intellij.psi.LiteralTextEscaper
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.impl.source.tree.CompositePsiElement
+import com.intellij.psi.tree.IElementType
+import com.intellij.psi.util.siblings
+import org.intellij.plugins.markdown.lang.MarkdownElementTypes
+import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
+import org.intellij.plugins.markdown.util.MarkdownPsiUtil
+import org.intellij.plugins.markdown.util.hasType
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Experimental
+class MarkdownFrontMatterHeader(type: IElementType): CompositePsiElement(type), PsiLanguageInjectionHost, MarkdownPsiElement {
+  override fun isValidHost(): Boolean {
+    val children = firstChild.siblings(forward = true, withSelf = true)
+    val newlines = children.count { MarkdownPsiUtil.WhiteSpaces.isNewLine(it) }
+    return newlines >= 2 && children.find { it.hasType(MarkdownElementTypes.FRONT_MATTER_HEADER_CONTENT) } != null
+  }
+
+  override fun updateText(text: String): PsiLanguageInjectionHost {
+    val children = firstChild.siblings(forward = true, withSelf = true)
+    val contentElement = children.filterIsInstance<MarkdownFrontMatterHeaderContent>().first()
+    contentElement.replaceWithText(text)
+    return this
+  }
+
+  override fun createLiteralTextEscaper(): LiteralTextEscaper<out PsiLanguageInjectionHost> {
+    return LiteralTextEscaper.createSimple(this)
+  }
+}

@@ -13,6 +13,7 @@ object MarkdownPsiFactory {
     return when (val elementType = node.elementType) {
       MarkdownElementTypes.PARAGRAPH -> MarkdownParagraph(node)
       MarkdownElementTypes.CODE_FENCE -> node as MarkdownCodeFence
+      MarkdownElementTypes.FRONT_MATTER_HEADER -> node as MarkdownFrontMatterHeader
       MarkdownElementTypes.IMAGE -> MarkdownImage(node)
       MarkdownElementTypes.LIST_ITEM -> MarkdownListItem(node)
       MarkdownElementTypes.BLOCK_QUOTE -> MarkdownBlockQuote(node)

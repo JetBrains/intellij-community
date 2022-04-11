@@ -14,26 +14,21 @@ import org.intellij.markdown.parser.constraints.MarkdownConstraints
 import org.intellij.markdown.parser.constraints.getCharsEaten
 import org.intellij.markdown.parser.markerblocks.MarkerBlockProvider
 import org.intellij.markdown.parser.markerblocks.providers.AtxHeaderProvider
+import org.intellij.markdown.parser.markerblocks.providers.HorizontalRuleProvider
 import org.intellij.markdown.parser.markerblocks.providers.LinkReferenceDefinitionProvider
 import org.intellij.markdown.parser.sequentialparsers.SequentialParser
+import org.intellij.plugins.markdown.lang.parser.frontmatter.FrontMatterHeaderMarkerProvider
 import kotlin.math.min
 
-class GFMCommentAwareMarkerProcessor(productionHolder: ProductionHolder, constraintsBase: MarkdownConstraints)
-  : CommonMarkMarkerProcessor(productionHolder, constraintsBase) {
-
-  private val markerBlockProviders = super.getMarkerBlockProviders()
-    .filterNot { it is AtxHeaderProvider }
-    .filterNot { it is LinkReferenceDefinitionProvider }
-    .plus(listOf(
-      DefinitionListMarkerProvider(),
-      GitHubTableMarkerProvider(),
-      AtxHeaderProvider(),
-      CommentAwareLinkReferenceDefinitionProvider()
-    ))
-
-  override fun populateConstraintsTokens(pos: LookaheadText.Position,
-                                         constraints: MarkdownConstraints,
-                                         productionHolder: ProductionHolder) {
+class GFMCommentAwareMarkerProcessor(
+  productionHolder: ProductionHolder,
+  constraintsBase: MarkdownConstraints
+): CommonMarkMarkerProcessor(productionHolder, constraintsBase) {
+  override fun populateConstraintsTokens(
+    pos: LookaheadText.Position,
+    constraints: MarkdownConstraints,
+    productionHolder: ProductionHolder
+  ) {
     if (constraints !is GFMConstraints || !constraints.hasCheckbox()) {
       super.populateConstraintsTokens(pos, constraints, productionHolder)
       return
@@ -56,8 +51,7 @@ class GFMCommentAwareMarkerProcessor(productionHolder: ProductionHolder, constra
       else -> MarkdownTokenTypes.LIST_BULLET
     }
     val middleOffset = pos.offset - pos.offsetInCurrentLine + offset
-    val endOffset = min(pos.offset - pos.offsetInCurrentLine + constraints.getCharsEaten(pos.currentLine),
-                             pos.nextLineOrEofOffset)
+    val endOffset = min(pos.offset - pos.offsetInCurrentLine + constraints.getCharsEaten(pos.currentLine), pos.nextLineOrEofOffset)
 
     productionHolder.addProduction(listOf(
       SequentialParser.Node(pos.offset..middleOffset, type),
@@ -66,10 +60,26 @@ class GFMCommentAwareMarkerProcessor(productionHolder: ProductionHolder, constra
   }
 
   override fun getMarkerBlockProviders(): List<MarkerBlockProvider<StateInfo>> {
-    return markerBlockProviders
+    val base = super.getMarkerBlockProviders().asSequence()
+      .filterNot { it is AtxHeaderProvider }
+      .filterNot { it is LinkReferenceDefinitionProvider }
+      .filterNot { it is HorizontalRuleProvider }
+      .toMutableList()
+    if (FrontMatterHeaderMarkerProvider.isFrontMatterSupportEnabled()) {
+      base.add(FrontMatterHeaderMarkerProvider())
+    }
+    val modified = listOf(
+      DefinitionListMarkerProvider(),
+      HorizontalRuleProvider(),
+      GitHubTableMarkerProvider(),
+      AtxHeaderProvider(),
+      CommentAwareLinkReferenceDefinitionProvider()
+    )
+    base.addAll(modified)
+    return base
   }
 
-  object Factory : MarkerProcessorFactory {
+  object Factory: MarkerProcessorFactory {
     override fun createMarkerProcessor(productionHolder: ProductionHolder): MarkerProcessor<*> {
       return GFMCommentAwareMarkerProcessor(productionHolder, GFMConstraints.BASE)
     }

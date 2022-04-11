@@ -40,6 +40,10 @@ internal class PsiBuilderFillingVisitor(private val builder: PsiBuilder) : Recur
 
     super.visitNode(node)
     ensureBuilderInPosition(node.endOffset)
+    if (node.type is MarkdownCollapsableElementType) {
+      marker.collapse(MarkdownElementType.platformType(node.type))
+      return
+    }
     marker.done(MarkdownElementType.platformType(node.type))
   }
 
