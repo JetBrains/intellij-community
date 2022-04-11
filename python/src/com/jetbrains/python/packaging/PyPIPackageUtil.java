@@ -361,7 +361,11 @@ public class PyPIPackageUtil {
         @Override
         public void handleText(char @NotNull [] data, int pos) {
           if (myTag != null && "a".equals(myTag.toString())) {
-            packages.add(String.valueOf(data));
+            String packageName = String.valueOf(data);
+            if (packageName.endsWith("/")) {
+              packageName = packageName.substring(0, packageName.indexOf("/"));
+            }
+            packages.add(packageName);
           }
         }
 
