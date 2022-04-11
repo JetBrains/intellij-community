@@ -18,7 +18,7 @@ import org.jetbrains.deft.Type
 
 
 interface ArtifactEntity : WorkspaceEntityWithPersistentId {
-    override val name: String
+  val name: String
 
     val artifactType: String
     val includeInProjectBuild: Boolean
@@ -29,22 +29,22 @@ interface ArtifactEntity : WorkspaceEntityWithPersistentId {
     @Child val artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity?
     override val persistentId: ArtifactId
         get() = ArtifactId(name)
-    //region generated code
-    //@formatter:off
-    interface Builder: ArtifactEntity, ModifiableWorkspaceEntity<ArtifactEntity>, ObjBuilder<ArtifactEntity> {
-        override var name: String
-        override var entitySource: EntitySource
-        override var artifactType: String
-        override var includeInProjectBuild: Boolean
-        override var outputUrl: VirtualFileUrl?
-        override var rootElement: CompositePackagingElementEntity
-        override var customProperties: List<ArtifactPropertiesEntity>
-        override var artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity?
-    }
-    
-    companion object: Type<ArtifactEntity, Builder>(23)
-    //@formatter:on
-    //endregion
+  //region generated code
+  //@formatter:off
+  interface Builder: ArtifactEntity, ModifiableWorkspaceEntity<ArtifactEntity>, ObjBuilder<ArtifactEntity> {
+      override var name: String
+      override var entitySource: EntitySource
+      override var artifactType: String
+      override var includeInProjectBuild: Boolean
+      override var outputUrl: VirtualFileUrl?
+      override var rootElement: CompositePackagingElementEntity
+      override var customProperties: List<ArtifactPropertiesEntity>
+      override var artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity?
+  }
+  
+  companion object: Type<ArtifactEntity, Builder>(23)
+  //@formatter:on
+  //endregion
 
 }
 

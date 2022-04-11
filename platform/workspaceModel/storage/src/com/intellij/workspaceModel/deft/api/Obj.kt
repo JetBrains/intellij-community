@@ -6,9 +6,7 @@ interface Struct
 interface _Obj0 : Struct
 interface _Obj1 : _Obj0
 
-interface Obj : _Obj1 {
-    val name: String?
-}
+interface Obj : _Obj1
 
 interface ObjBuilder<T : Obj> {
     fun build(): T

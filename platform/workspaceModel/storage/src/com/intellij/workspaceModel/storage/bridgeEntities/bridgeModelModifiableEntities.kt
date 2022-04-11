@@ -20,7 +20,7 @@ private val LOG = logger<WorkspaceEntityStorage>()
 
 class ModifiableModuleEntity : ModifiableWorkspaceEntityBase<ModuleEntity>() {
   internal var dependencyChanged = false
-  override var name: String by EntityDataDelegation()
+  var name: String by EntityDataDelegation()
   var type: String? by EntityDataDelegation()
   var dependencies: List<ModuleDependencyItem> by ModuleDependencyEntityDataDelegation()
 }
@@ -199,7 +199,7 @@ fun WorkspaceEntityStorageBuilder.addContentRootEntityWithCustomEntitySource(url
 
 class ModifiableLibraryEntity : ModifiableWorkspaceEntityBase<LibraryEntity>() {
   var tableId: LibraryTableId by EntityDataDelegation()
-  override var name: String by EntityDataDelegation()
+  var name: String by EntityDataDelegation()
   var roots: List<LibraryRoot> by VirtualFileUrlLibraryRootProperty()
   var excludedRoots: List<VirtualFileUrl> by VirtualFileUrlListProperty()
 }
@@ -265,7 +265,7 @@ fun WorkspaceEntityStorageBuilder.getOrCreateExternalSystemModuleOptions(module:
   }
 
 class ModifiableFacetEntity : ModifiableWorkspaceEntityBase<FacetEntity>() {
-  override var name: String by EntityDataDelegation()
+  var name: String by EntityDataDelegation()
   var facetType: String by EntityDataDelegation()
   var configurationXmlTag: String? by EntityDataDelegation()
   var moduleId: ModuleId by EntityDataDelegation()
@@ -286,7 +286,7 @@ fun WorkspaceEntityStorageBuilder.addFacetEntity(name: String, facetType: String
   }
 
 class ModifiableArtifactEntity : ModifiableWorkspaceEntityBase<ArtifactEntity>() {
-  override var name: String by EntityDataDelegation()
+  var name: String by EntityDataDelegation()
   var artifactType: String by EntityDataDelegation()
   var includeInProjectBuild: Boolean by EntityDataDelegation()
   var outputUrl: VirtualFileUrl? by VirtualFileUrlNullableProperty()

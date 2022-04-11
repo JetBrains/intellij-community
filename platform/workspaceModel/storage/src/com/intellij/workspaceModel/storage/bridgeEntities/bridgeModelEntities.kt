@@ -143,7 +143,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
 }
 
 class ModuleEntity(
-  override val name: String,
+  val name: String,
   val type: String?,
   val dependencies: List<ModuleDependencyItem>
 ) : WorkspaceEntityWithPersistentId, WorkspaceEntityBase() {
@@ -624,7 +624,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
 
 class LibraryEntity(
   val tableId: LibraryTableId,
-  override val name: String,
+  val name: String,
   val roots: List<LibraryRoot>,
   val excludedRoots: List<VirtualFileUrl>
 ) : WorkspaceEntityWithPersistentId, WorkspaceEntityBase() {
@@ -811,7 +811,7 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
 }
 
 class FacetEntity(
-  override val name: String,
+  val name: String,
   val facetType: String,
   val configurationXmlTag: String?,
   val moduleId: ModuleId
@@ -860,7 +860,7 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<Artifa
 }
 
 class ArtifactEntity(
-  override val name: String,
+  val name: String,
   val artifactType: String,
   val includeInProjectBuild: Boolean,
   val outputUrl: VirtualFileUrl?

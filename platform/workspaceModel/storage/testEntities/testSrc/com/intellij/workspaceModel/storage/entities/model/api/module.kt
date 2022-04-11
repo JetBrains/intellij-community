@@ -19,7 +19,7 @@ import org.jetbrains.deft.Type
 
 
 interface ModuleEntity : WorkspaceEntityWithPersistentId {
-    override val name: String
+  val name: String
 
     val type: String?
     val dependencies: List<ModuleDependencyItem>
@@ -33,24 +33,24 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
 
     override val persistentId: ModuleId
         get() = ModuleId(name)
-    //region generated code
-    //@formatter:off
-    interface Builder: ModuleEntity, ModifiableWorkspaceEntity<ModuleEntity>, ObjBuilder<ModuleEntity> {
-        override var name: String
-        override var entitySource: EntitySource
-        override var type: String?
-        override var dependencies: List<ModuleDependencyItem>
-        override var contentRoots: List<ContentRootEntity>
-        override var customImlData: ModuleCustomImlDataEntity?
-        override var groupPath: ModuleGroupPathEntity?
-        override var javaSettings: JavaModuleSettingsEntity?
-        override var exModuleOptions: ExternalSystemModuleOptionsEntity?
-        override var facets: List<FacetEntity>
-    }
-    
-    companion object: Type<ModuleEntity, Builder>(41)
-    //@formatter:on
-    //endregion
+  //region generated code
+  //@formatter:off
+  interface Builder: ModuleEntity, ModifiableWorkspaceEntity<ModuleEntity>, ObjBuilder<ModuleEntity> {
+      override var name: String
+      override var entitySource: EntitySource
+      override var type: String?
+      override var dependencies: List<ModuleDependencyItem>
+      override var contentRoots: List<ContentRootEntity>
+      override var customImlData: ModuleCustomImlDataEntity?
+      override var groupPath: ModuleGroupPathEntity?
+      override var javaSettings: JavaModuleSettingsEntity?
+      override var exModuleOptions: ExternalSystemModuleOptionsEntity?
+      override var facets: List<FacetEntity>
+  }
+  
+  companion object: Type<ModuleEntity, Builder>(41)
+  //@formatter:on
+  //endregion
 
 }
 

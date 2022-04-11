@@ -9,7 +9,7 @@ import org.jetbrains.deft.obj.impl.fields.MetaTypes
 
 abstract class MemberOrExtField<P : Obj, V>(
     val owner: ObjType<P, *>,
-    override val name: String,
+    val name: String,
     val type: ValueType<V>
 ) : ExtensibleImpl() {
     override fun toString(): String = "${owner.name}.$name"

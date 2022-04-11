@@ -84,7 +84,7 @@ class TStructure<T : Obj, B : ObjBuilder<T>>(
 
     val newFields get() = declaredFields.filter { it.base == null }
 
-    override val name: String?
+  val name: String?
         get() = box.name
 
     @ObjModule.InitApi

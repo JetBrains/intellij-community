@@ -20,7 +20,7 @@ import org.jetbrains.deft.Type
 
 
 interface LibraryEntity : WorkspaceEntityWithPersistentId {
-    override val name: String
+  val name: String
     val tableId: LibraryTableId
 
     val roots: List<LibraryRoot>
@@ -31,22 +31,22 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
 
     override val persistentId: LibraryId
         get() = LibraryId(name, tableId)
-    //region generated code
-    //@formatter:off
-    interface Builder: LibraryEntity, ModifiableWorkspaceEntity<LibraryEntity>, ObjBuilder<LibraryEntity> {
-        override var name: String
-        override var entitySource: EntitySource
-        override var tableId: LibraryTableId
-        override var roots: List<LibraryRoot>
-        override var excludedRoots: List<VirtualFileUrl>
-        override var sdk: SdkEntity?
-        override var libraryProperties: LibraryPropertiesEntity?
-        override var libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
-    }
-    
-    companion object: Type<LibraryEntity, Builder>(46)
-    //@formatter:on
-    //endregion
+  //region generated code
+  //@formatter:off
+  interface Builder: LibraryEntity, ModifiableWorkspaceEntity<LibraryEntity>, ObjBuilder<LibraryEntity> {
+      override var name: String
+      override var entitySource: EntitySource
+      override var tableId: LibraryTableId
+      override var roots: List<LibraryRoot>
+      override var excludedRoots: List<VirtualFileUrl>
+      override var sdk: SdkEntity?
+      override var libraryProperties: LibraryPropertiesEntity?
+      override var libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
+  }
+  
+  companion object: Type<LibraryEntity, Builder>(46)
+  //@formatter:on
+  //endregion
 
 }
 

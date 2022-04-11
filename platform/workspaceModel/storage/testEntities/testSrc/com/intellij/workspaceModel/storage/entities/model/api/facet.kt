@@ -17,7 +17,7 @@ import org.jetbrains.deft.Type
 
 
 interface FacetEntity: WorkspaceEntityWithPersistentId {
-    override val name: String
+  val name: String
     val module: ModuleEntity
     val facetType: String
     val configurationXmlTag: String?
@@ -28,20 +28,20 @@ interface FacetEntity: WorkspaceEntityWithPersistentId {
     val underlyingFacet: FacetEntity?
     override val persistentId: FacetId
         get() = FacetId(name, facetType, moduleId)
-    //region generated code
-    //@formatter:off
-    interface Builder: FacetEntity, ModifiableWorkspaceEntity<FacetEntity>, ObjBuilder<FacetEntity> {
-        override var name: String
-        override var entitySource: EntitySource
-        override var module: ModuleEntity
-        override var facetType: String
-        override var configurationXmlTag: String?
-        override var moduleId: ModuleId
-        override var underlyingFacet: FacetEntity?
-    }
-    
-    companion object: Type<FacetEntity, Builder>(40)
-    //@formatter:on
-    //endregion
+  //region generated code
+  //@formatter:off
+  interface Builder: FacetEntity, ModifiableWorkspaceEntity<FacetEntity>, ObjBuilder<FacetEntity> {
+      override var name: String
+      override var entitySource: EntitySource
+      override var module: ModuleEntity
+      override var facetType: String
+      override var configurationXmlTag: String?
+      override var moduleId: ModuleId
+      override var underlyingFacet: FacetEntity?
+  }
+  
+  companion object: Type<FacetEntity, Builder>(40)
+  //@formatter:on
+  //endregion
 
 }

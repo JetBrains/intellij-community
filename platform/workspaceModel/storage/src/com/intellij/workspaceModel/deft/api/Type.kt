@@ -14,7 +14,7 @@ abstract class Type<T : Obj, B : ObjBuilder<T>>(val id: Int, val base: Type<*, *
     open val packageName: String
         get() = ival.packageName
 
-    override val name by lazy {
+    open val name by lazy {
         if (ival.enclosingClass == null) ival.simpleName else {
             var topLevelClass: Class<*> = ival
             val outerNames = mutableListOf<String>()
