@@ -80,10 +80,10 @@ internal object GHPRTitleComponent {
       .toString()
   }
 
-  private fun layout(icon: JLabel, title: JComponent, editButton: JComponent? = null): NonOpaquePanel {
-    return NonOpaquePanel(MigLayout(LC().insets("0").gridGap("0", "0").fill())).apply {
+  private fun layout(icon: JLabel, title: JComponent, editButton: JComponent? = null): JComponent {
+    return NonOpaquePanel(MigLayout(LC().insets("0").gridGap("0", "0").noGrid())).apply {
       add(icon, CC().gapRight("${JBUIScale.scale(4)}"))
-      add(title, CC().push())
+      add(title, CC())
       if (editButton != null) add(editButton, CC().gapLeft("${JBUIScale.scale(12)}").hideMode(3))
     }
   }
