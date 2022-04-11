@@ -31,7 +31,7 @@ public final class HeavyProcessLatch {
   }
 
   /**
-   * Approximate type of a heavy operation. Used in {@link com.intellij.codeInsight.daemon.impl.TrafficLightRenderer} UI as brief description.
+   * Approximate type of heavy operation. Used in {@link com.intellij.codeInsight.daemon.impl.TrafficLightRenderer} UI as brief description.
    */
   public enum Type {
     Indexing("heavyProcess.type.indexing"),
@@ -69,7 +69,7 @@ public final class HeavyProcessLatch {
   }
 
   /**
-   * Executes {@code runnable} as a heavy operation. E.g. during this method execution, {@link #isRunning()} returns true.
+   * Executes {@code runnable} as a heavy operation. E.g., during this method execution, {@link #isRunning()} returns true.
    */
   public void performOperation(@NotNull Type type, @NotNull @Nls String displayName, @NotNull Runnable runnable) {
     Op op = new Op(type, displayName);
@@ -134,6 +134,7 @@ public final class HeavyProcessLatch {
     return new ArrayList<>(myHeavyProcesses);
   }
 
+  @SuppressWarnings("InterfaceMayBeAnnotatedFunctional")
   public interface HeavyProcessListener extends EventListener {
     default void processStarted(@NotNull Operation op) {
     }
@@ -151,7 +152,7 @@ public final class HeavyProcessLatch {
   }
 
   /**
-   * schedules {@code runnable} to be executed when all heavy operations are finished (i.e. when {@link #isRunning()} returned false)
+   * schedules {@code runnable} to be executed when all heavy operations are finished (i.e., when {@link #isRunning()} returned false)
    */
   public void queueExecuteOutOfHeavyProcess(@NotNull Runnable runnable) {
     if (isRunning()) {
