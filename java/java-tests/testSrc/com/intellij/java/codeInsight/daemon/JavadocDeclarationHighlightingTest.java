@@ -122,6 +122,7 @@ public class JavadocDeclarationHighlightingTest extends LightDaemonAnalyzerTestC
   public void testEmptySnippet() { doTest(); }
   public void testOnlyEmptyLinesInSnippet() { doTest(); }
   public void testSnippetInstructionsWithUnhandledThrowable() { doTest(); }
+  public void testJavaDocWithSpaces() { doTest(); }
 
   public void testIssueLinksInJavaDoc() {
     IssueNavigationConfiguration navigationConfiguration = IssueNavigationConfiguration.getInstance(getProject());

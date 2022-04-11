@@ -1,5 +1,5 @@
 
-class JavaDocDeclaration {
+class JavaDocWithSpaces {
   /**
    * @see
    *       java.util.ArrayList#spliterator
