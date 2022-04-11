@@ -10,14 +10,13 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.impl.references.MutableOneToOneChild
-import com.intellij.workspaceModel.storage.impl.references.OneToOneChild
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryPropertiesEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -207,10 +206,11 @@ internal fun loadLibrary(name: String, libraryElement: Element, libraryTableId: 
   }
   val externalSystemId = libraryElement.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE)
   if (externalSystemId != null && !isExternalStorage) {
-    builder.addEntity(ModifiableLibraryExternalSystemIdEntity::class.java, source) {
+    builder.addEntity(LibraryExternalSystemIdEntity {
       this.externalSystemId = externalSystemId
-      library = libraryEntity
-    }
+      this.library = libraryEntity
+      this.entitySource = source
+    })
   }
 
   return libraryEntity
@@ -224,7 +224,7 @@ internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?, isEx
   if (legacyName != null) {
     libraryTag.setAttribute(NAME_ATTRIBUTE, legacyName)
   }
-  val customProperties = library.getCustomProperties()
+  val customProperties = library.libraryProperties
   if (customProperties != null) {
     libraryTag.setAttribute(TYPE_ATTRIBUTE, customProperties.libraryType)
     val propertiesXmlTag = customProperties.propertiesXmlTag
@@ -277,27 +277,3 @@ internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?, isEx
 
 private val ROOT_TYPES_TO_WRITE_EMPTY_TAG = listOf("CLASSES", "SOURCES", "JAVADOC").map { libraryRootTypes[it]!! }
 
-/**
- * This property indicates that external-system-id attribute should be stored in library configuration file to avoid unnecessary modifications
- */
-@Suppress("unused")
-internal class LibraryExternalSystemIdEntityData : WorkspaceEntityData<LibraryExternalSystemIdEntity>() {
-  lateinit var externalSystemId: String
-
-  override fun createEntity(snapshot: WorkspaceEntityStorage): LibraryExternalSystemIdEntity {
-    return LibraryExternalSystemIdEntity(externalSystemId).also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class LibraryExternalSystemIdEntity(
-  val externalSystemId: String
-) : WorkspaceEntityBase() {
-  val library: LibraryEntity by OneToOneChild.NotNull(LibraryEntity::class.java)
-}
-
-internal class ModifiableLibraryExternalSystemIdEntity : ModifiableWorkspaceEntityBase<LibraryExternalSystemIdEntity>() {
-  var externalSystemId: String by EntityDataDelegation()
-  var library: LibraryEntity by MutableOneToOneChild.NotNull(LibraryExternalSystemIdEntity::class.java, LibraryEntity::class.java)
-}
-
-private val LibraryEntity.externalSystemId get() = referrersx(LibraryExternalSystemIdEntity::library).firstOrNull()

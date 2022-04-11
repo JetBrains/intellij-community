@@ -27,8 +27,9 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGene
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.OrderRootsCacheBridge
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.*
 import java.util.function.Supplier
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import org.jetbrains.workspaceModel.modifyEntity
 
 class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(project) {
   companion object {
@@ -214,7 +215,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
                   else -> it
                 }
               }
-              builder.modifyEntity(ModifiableModuleEntity::class.java, module) {
+              builder.modifyEntity(module) {
                 dependencies = updated
               }
             }
@@ -267,7 +268,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
                 else -> it
               }
             }
-            builder.modifyEntity(ModifiableModuleEntity::class.java, module) {
+            builder.modifyEntity(module) {
               dependencies = updated
             }
           }

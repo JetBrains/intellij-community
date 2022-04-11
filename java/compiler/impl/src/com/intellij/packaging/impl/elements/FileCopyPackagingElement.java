@@ -17,9 +17,9 @@ import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
 import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import com.intellij.workspaceModel.storage.bridgeEntities.BridgeModelModifiableEntitiesKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.FileCopyPackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableFileCopyPackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.FileCopyPackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableFileCopyPackagingElementEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import kotlin.Unit;
@@ -149,10 +149,10 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     VirtualFileUrlManager fileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, project);
     VirtualFileUrl fileUrl = fileUrlManager.fromPath(filePath);
     if (renamedOutputFileName != null) {
-      addedEntity = BridgeModelModifiableEntitiesKt.addFileCopyPackagingElementEntity(diff, fileUrl, renamedOutputFileName, source);
+      addedEntity = ExtensionsKt.addFileCopyPackagingElementEntity(diff, fileUrl, renamedOutputFileName, source);
     }
     else {
-      addedEntity = BridgeModelModifiableEntitiesKt.addFileCopyPackagingElementEntity(diff, fileUrl, null, source);
+      addedEntity = ExtensionsKt.addFileCopyPackagingElementEntity(diff, fileUrl, null, source);
     }
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
     return addedEntity;

@@ -9,9 +9,9 @@ import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.workspaceModel.storage.*;
-import com.intellij.workspaceModel.storage.bridgeEntities.BridgeModelModifiableEntitiesKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.CustomPackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.CustomPackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.PackagingElementEntity;
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +81,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
     }
 
     CustomPackagingElementEntity addedEntity =
-      BridgeModelModifiableEntitiesKt.addCustomPackagingElementEntity(diff, this.getType().getId(), xmlTag, children, source);
+      ExtensionsKt.addCustomPackagingElementEntity(diff, this.getType().getId(), xmlTag, children, source);
 
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
     return addedEntity;

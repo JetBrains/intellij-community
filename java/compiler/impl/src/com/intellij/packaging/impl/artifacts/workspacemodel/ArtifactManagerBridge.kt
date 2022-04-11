@@ -27,10 +27,10 @@ import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactId
-import com.intellij.workspaceModel.storage.bridgeEntities.CustomPackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableCustomPackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ArtifactId
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.CustomPackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableCustomPackagingElementEntity
 
 class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), Disposable {
 

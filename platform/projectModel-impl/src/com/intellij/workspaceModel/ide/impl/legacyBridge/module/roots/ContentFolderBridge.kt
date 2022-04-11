@@ -7,7 +7,12 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.addJavaSourceRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.asCustomSourceRoot
+import com.intellij.workspaceModel.storage.bridgeEntities.asJavaResourceRoot
+import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableJavaSourceRootEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes

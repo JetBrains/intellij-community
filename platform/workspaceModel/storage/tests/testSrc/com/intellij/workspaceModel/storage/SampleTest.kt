@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.entities.test.api.MySource
 import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity2
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -42,5 +42,17 @@ class SampleTest {
       assertTrue("entitySource" in e.message!!)
       assertTrue("initialized" in e.message!!)
     }
+  }
+
+  @Test
+  fun `optional field`() {
+    val entity = SampleEntity2 {
+      this.optionalData = null
+      this.entitySource = MySource
+      this.data = ""
+    }
+    val builder = WorkspaceEntityStorageBuilder.create()
+    builder.addEntity(entity)
+    Assertions.assertNull(entity.optionalData)
   }
 }

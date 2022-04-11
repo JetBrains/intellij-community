@@ -30,12 +30,20 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.sourceRoots
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableModuleCustomImlDataEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.workspaceModel.modifyEntity
 import java.util.concurrent.ConcurrentHashMap
 
 internal class ModifiableRootModelBridgeImpl(
@@ -149,7 +157,7 @@ internal class ModifiableRootModelBridgeImpl(
     val newItem = transformer(oldItem)
     if (oldItem == newItem) return
 
-    diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+    diff.modifyEntity(moduleEntity) {
       val copy = dependencies.toMutableList()
       copy[index] = newItem
       dependencies = copy
@@ -314,7 +322,7 @@ internal class ModifiableRootModelBridgeImpl(
   internal fun appendDependency(dependency: ModuleDependencyItem) {
     mutableOrderEntries.add(RootModelBridgeImpl.toOrderEntry(dependency, mutableOrderEntries.size, this, this::updateDependencyItem))
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
-    diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+    diff.modifyEntity(moduleEntity) {
       dependencies = dependencies + dependency
     }
   }
@@ -324,7 +332,7 @@ internal class ModifiableRootModelBridgeImpl(
       mutableOrderEntries.add(RootModelBridgeImpl.toOrderEntry(dependency, mutableOrderEntries.size, this, this::updateDependencyItem))
     }
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
-    diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+    diff.modifyEntity(moduleEntity) {
       this.dependencies = this.dependencies + dependencies
     }
   }
@@ -342,7 +350,7 @@ internal class ModifiableRootModelBridgeImpl(
       }
     }
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
-    diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+    diff.modifyEntity(moduleEntity) {
       dependencies = if (last) dependencies + dependency
       else dependencies.subList(0, position) + dependency + dependencies.subList(position, dependencies.size)
     }
@@ -364,7 +372,7 @@ internal class ModifiableRootModelBridgeImpl(
     mutableOrderEntries.clear()
     mutableOrderEntries.addAll(newOrderEntries)
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
-    diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+    diff.modifyEntity(moduleEntity) {
       dependencies = newDependencies
     }
   }
@@ -418,7 +426,7 @@ internal class ModifiableRootModelBridgeImpl(
       mutableOrderEntries[i].updateIndex(i)
     }
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
-    diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+    diff.modifyEntity(moduleEntity) {
       dependencies = newEntities
     }
   }

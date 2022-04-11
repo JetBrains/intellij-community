@@ -3,8 +3,8 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModuleCustomImlDataEntity;
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModuleEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

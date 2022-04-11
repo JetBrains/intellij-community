@@ -20,12 +20,15 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeIm
 import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableLibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableLibraryPropertiesEntity
 import com.intellij.workspaceModel.storage.referrersx
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
+import org.jetbrains.workspaceModel.modifyEntity
 
 internal class LibraryModifiableModelBridgeImpl(
   private val originalLibrary: LibraryBridgeImpl,
@@ -73,7 +76,7 @@ internal class LibraryModifiableModelBridgeImpl(
     }
 
     entityId = entity.persistentId.copy(name = name)
-    diff.modifyEntity(ModifiableLibraryEntity::class.java, entity) {
+    diff.modifyEntity(entity) {
       this.name = name
     }
 
@@ -113,30 +116,30 @@ internal class LibraryModifiableModelBridgeImpl(
     if (isChanged) originalLibrary.entityId = entityId
   }
 
-  private fun update(updater: ModifiableLibraryEntity.() -> Unit) {
-    diff.modifyEntity(ModifiableLibraryEntity::class.java, currentLibrary.libraryEntity, updater)
+  private fun update(updater: LibraryEntity.Builder.() -> Unit) {
+    diff.modifyEntity(currentLibrary.libraryEntity, updater)
   }
 
-  private fun updateProperties(updater: ModifiableLibraryPropertiesEntity.() -> Unit) {
+  private fun updateProperties(updater: LibraryPropertiesEntity.Builder.() -> Unit) {
     val entity = currentLibrary.libraryEntity
 
     val referrers = entity.referrersx(LibraryPropertiesEntity::library).toList()
     if (referrers.isEmpty()) {
-      diff.addEntity(ModifiableLibraryPropertiesEntity::class.java, entity.entitySource) {
+      diff.addEntity(LibraryPropertiesEntity {
         library = entity
         updater()
-      }
+      })
     }
     else {
-      diff.modifyEntity(ModifiableLibraryPropertiesEntity::class.java, referrers.first(), updater)
+      diff.modifyEntity(referrers.first(), updater)
       referrers.drop(1).forEach { diff.removeEntity(it) }
     }
   }
 
   override fun isChanged(): Boolean {
     if (!originalLibrarySnapshot.libraryEntity.hasEqualProperties(currentLibrary.libraryEntity)) return true
-    val p1 = originalLibrarySnapshot.libraryEntity.getCustomProperties()
-    val p2 = currentLibrary.libraryEntity.getCustomProperties()
+    val p1 = originalLibrarySnapshot.libraryEntity.libraryProperties
+    val p2 = currentLibrary.libraryEntity.libraryProperties
     return !(p1 == null && p2 == null || p1 != null && p2 != null && p1.hasEqualProperties(p2))
   }
 

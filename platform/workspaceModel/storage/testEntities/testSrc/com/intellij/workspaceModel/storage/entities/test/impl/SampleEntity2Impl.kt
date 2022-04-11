@@ -21,6 +21,9 @@ open class SampleEntity2Impl: SampleEntity2, WorkspaceEntityBase() {
         get() = _data!!
                         
     override var boolData: Boolean = false
+    @JvmField var _optionalData: String? = null
+    override val optionalData: String?
+        get() = _optionalData
 
     class Builder(val result: SampleEntity2Data?): ModifiableWorkspaceEntityBase<SampleEntity2>(), SampleEntity2.Builder {
         constructor(): this(SampleEntity2Data())
@@ -128,6 +131,14 @@ open class SampleEntity2Impl: SampleEntity2, WorkspaceEntityBase() {
                 getEntityData().boolData = value
                 changedProperty.add("boolData")
             }
+            
+        override var optionalData: String?
+            get() = getEntityData().optionalData
+            set(value) {
+                checkModificationAllowed()
+                getEntityData().optionalData = value
+                changedProperty.add("optionalData")
+            }
         
         override fun getEntityData(): SampleEntity2Data = result ?: super.getEntityData() as SampleEntity2Data
         override fun getEntityClass(): Class<SampleEntity2> = SampleEntity2::class.java
@@ -140,6 +151,7 @@ open class SampleEntity2Impl: SampleEntity2, WorkspaceEntityBase() {
 class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
     lateinit var data: String
     var boolData: Boolean = false
+    var optionalData: String? = null
 
     fun isDataInitialized(): Boolean = ::data.isInitialized
     
@@ -159,6 +171,7 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
         val entity = SampleEntity2Impl()
         entity._data = data
         entity.boolData = boolData
+        entity._optionalData = optionalData
         entity.entitySource = entitySource
         entity.snapshot = snapshot
         entity.id = createEntityId()
@@ -174,6 +187,7 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
         if (this.data != other.data) return false
         if (this.entitySource != other.entitySource) return false
         if (this.boolData != other.boolData) return false
+        if (this.optionalData != other.optionalData) return false
         return true
     }
 
@@ -185,6 +199,7 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
         
         if (this.data != other.data) return false
         if (this.boolData != other.boolData) return false
+        if (this.optionalData != other.optionalData) return false
         return true
     }
 
@@ -192,6 +207,7 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
         var result = entitySource.hashCode()
         result = 31 * result + data.hashCode()
         result = 31 * result + boolData.hashCode()
+        result = 31 * result + optionalData.hashCode()
         return result
     }
 }

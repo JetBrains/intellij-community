@@ -50,8 +50,8 @@ internal fun Field<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, 
         TBoolean -> "override var $javaName: ${fieldType.javaType} = false"
         TString -> """            
             @JvmField var $implFieldName: String? = null
-            override val $javaName: ${fieldType.javaType}
-                get() = $implFieldName${if (fieldType is TOptional) "" else "!!"}
+            override val $javaName: ${fieldType.javaType}${optionalSuffix}
+                get() = $implFieldName${if (optionalSuffix.isBlank()) "!!" else ""}
                                 
         """.trimIndent()
         is TRef -> {
@@ -133,7 +133,7 @@ internal val MemberOrExtField<*, *>.referencedField: MemberOrExtField<*, *>
         val ref = type.getRefType()
         val declaredReferenceFromChild =
             ref.targetObjType.structure.refsFields.filter { it.type.getRefType().targetObjType == owner } +
-                    ((ref.targetObjType.module as? KtObjModule)?.extFields?.filter { it.type.getRefType().targetObjType == owner }
+                    ((ref.targetObjType.module as? KtObjModule)?.extFields?.filter { it.type.getRefType().targetObjType == owner && it.owner == ref.targetObjType }
                         ?: emptyList())
         if (declaredReferenceFromChild.isEmpty()) {
             error("Reference should be declared at both entities. It exist at ${owner.name}#$name but absent at ${ref.targetObjType.name}")

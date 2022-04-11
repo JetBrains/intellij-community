@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -186,10 +187,11 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
       }
       val externalSystemId = actifactElement.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE)
       if (externalSystemId != null && !isExternalStorage) {
-        builder.addEntity(ModifiableArtifactExternalSystemIdEntity::class.java, entitySource) {
+        builder.addEntity(ArtifactExternalSystemIdEntity {
           this.externalSystemId = externalSystemId
-          artifact = artifactEntity
-        }
+          this.artifactEntity = artifactEntity
+          this.entitySource = entitySource
+        })
       }
       orderOfItems += state.name
     }
@@ -212,7 +214,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
   protected open fun createEntitySource(artifactTag: Element): EntitySource? = internalEntitySource
 
   protected open fun getExternalSystemId(artifactEntity: ArtifactEntity): String? {
-    return artifactEntity.externalSystemId?.externalSystemId
+    return artifactEntity.artifactExternalSystemIdEntity?.externalSystemId
   }
 
   private fun loadPackagingElement(element: Element,
@@ -386,28 +388,3 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
 
   override fun toString(): String = "${javaClass.simpleName.substringAfterLast('.')}($fileUrl)"
 }
-
-/**
- * This property indicates that external-system-id attribute should be stored in artifact configuration file to avoid unnecessary modifications
- */
-@Suppress("unused")
-internal class ArtifactExternalSystemIdEntityData : WorkspaceEntityData<ArtifactExternalSystemIdEntity>() {
-  lateinit var externalSystemId: String
-
-  override fun createEntity(snapshot: WorkspaceEntityStorage): ArtifactExternalSystemIdEntity {
-    return ArtifactExternalSystemIdEntity(externalSystemId).also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class ArtifactExternalSystemIdEntity(
-  val externalSystemId: String
-) : WorkspaceEntityBase() {
-  val artifact: ArtifactEntity by OneToOneChild.NotNull(ArtifactEntity::class.java)
-}
-
-internal class ModifiableArtifactExternalSystemIdEntity : ModifiableWorkspaceEntityBase<ArtifactExternalSystemIdEntity>() {
-  var externalSystemId: String by EntityDataDelegation()
-  var artifact: ArtifactEntity by MutableOneToOneChild.NotNull(ArtifactExternalSystemIdEntity::class.java, ArtifactEntity::class.java)
-}
-
-private val ArtifactEntity.externalSystemId get() = referrersx(ArtifactExternalSystemIdEntity::artifact).firstOrNull()

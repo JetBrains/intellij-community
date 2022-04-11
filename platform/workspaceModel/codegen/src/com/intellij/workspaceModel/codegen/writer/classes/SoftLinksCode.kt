@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.deft.codegen.ijws.classes
 
+import deft.storage.codegen.field.javaType
 import deft.storage.codegen.javaFullName
+import deft.storage.codegen.javaSimpleName
 import deft.storage.codegen.javaSuperType
 import org.jetbrains.deft.codegen.ijws.wsFqn
 import org.jetbrains.deft.codegen.model.DefType
@@ -10,6 +12,7 @@ import org.jetbrains.deft.codegen.model.WsSealed
 import org.jetbrains.deft.codegen.utils.LinesBuilder
 import org.jetbrains.deft.codegen.utils.lines
 import org.jetbrains.deft.impl.*
+import org.jetbrains.deft.impl.fields.Field
 
 internal fun ObjType<*, *>.softLinksCode(context: LinesBuilder, hasSoftLinks: Boolean, simpleTypes: List<DefType>) {
     context.conditionalLine({ hasSoftLinks }, "override fun getLinks(): Set<${wsFqn("PersistentEntityId")}<*>>") {
@@ -53,22 +56,84 @@ internal fun ObjType<*, *>.softLinksCode(context: LinesBuilder, hasSoftLinks: Bo
 }
 
 internal fun ObjType<*, *>.hasSoftLinks(simpleTypes: List<DefType>): Boolean {
-    return structure.allFields.noPersistentId().any { field ->
-        val type = field.type
-        if (field.name == "persistentId") return@any false
-        when (type) {
-            is TBlob<*> -> type.isPersistentId(simpleTypes)
-            else -> false
-        }
+  return structure.declaredFields.noPersistentId().noRefs().any { field ->
+    field.hasSoftLinks(simpleTypes)
+  }
+}
+
+internal fun Field<*, *>.hasSoftLinks(simpleTypes: List<DefType>): Boolean {
+  if (name == "persistentId") return false
+
+  return when (type) {
+    is TBlob<*> -> {
+      return type.hasSoftLinks(simpleTypes)
     }
+    is TList<*> -> {
+      val elementType = type.elementType
+      if (elementType is TBlob<*> && elementType.isPersistentId(simpleTypes)) {
+        true
+      } else {
+        val elementType = type.elementType
+        val listType = simpleTypes.singleOrNull { it.javaSimpleName == type.elementType.javaType } ?: return false
+        if (elementType is TBlob<*>) {
+          if (elementType.hasSoftLinks(simpleTypes)) {
+            return true
+          }
+        }
+        listType.hasSoftLinks(simpleTypes)
+      }
+    }
+    is TOptional<*> -> {
+      val optionalType = type.type
+      if (optionalType is TBlob<*> && optionalType.isPersistentId(simpleTypes)) {
+        true
+      } else {
+        val elementType = type.type
+        val listType = simpleTypes.singleOrNull { it.javaSimpleName == type.type.javaType } ?: return false
+        if (elementType is TBlob<*>) {
+          if (elementType.hasSoftLinks(simpleTypes)) {
+            return true
+          }
+        }
+        listType.hasSoftLinks(simpleTypes)
+      }
+    }
+    else -> return false
+  }
+}
+
+internal fun TBlob<*>.hasSoftLinks(simpleTypes: List<DefType>): Boolean {
+  if (this.isPersistentId(simpleTypes)) {
+    return true
+  }
+  if (this.isDataClass(simpleTypes)) {
+    val dataClass = this.getDataClass(simpleTypes)
+    return dataClass.hasSoftLinks(simpleTypes)
+  }
+  if (this.isSealedClass(simpleTypes)) {
+    val children = collectSealedChildren(simpleTypes.single { it.name == this.javaSimpleName }, simpleTypes)
+    return children.any {
+      it.hasSoftLinks(simpleTypes)
+    }
+  }
+  return false
+}
+
+private fun collectSealedChildren(defType: DefType, simpleTypes: List<DefType>): List<DefType> {
+  val directChildren = simpleTypes.filter { it.javaSuperType == defType.javaSimpleName }
+  val otherChildren = directChildren.flatMap { collectSealedChildren(it, simpleTypes) }
+  return directChildren + otherChildren
 }
 
 internal fun TBlob<*>.isPersistentId(simpleTypes: List<DefType>): Boolean {
-    val thisType = simpleTypes.find { it.name == javaSimpleName } ?: return false
-    return thisType
-        .def
-        .superTypes
-        .any { "PersistentEntityId" in it.classifier }
+  val thisType = simpleTypes.find { it.name == javaSimpleName } ?: return false
+  return thisType.isPersistentId()
+}
+
+private fun DefType.isPersistentId(): Boolean {
+  return def
+    .superTypes
+    .any { "PersistentEntityId" in it.classifier }
 }
 
 internal fun TBlob<*>.isDataClass(simpleTypes: List<DefType>): Boolean {
@@ -76,8 +141,11 @@ internal fun TBlob<*>.isDataClass(simpleTypes: List<DefType>): Boolean {
 }
 
 internal fun TBlob<*>.isSealedClass(simpleTypes: List<DefType>): Boolean {
-    return simpleTypes.find { it.name == this.javaSimpleName }?.def?.kind == WsSealed
+  val clazz = simpleTypes.find { it.name == this.javaSimpleName }
+  return clazz.isSealedClass()
 }
+
+private fun DefType?.isSealedClass() = this?.def?.kind == WsSealed
 
 internal fun TBlob<*>.getDataClass(simpleTypes: List<DefType>): DefType {
     return simpleTypes.find { it.name == this.javaSimpleName }!!
@@ -88,7 +156,7 @@ private fun ObjType<*, *>.operate(
     simpleTypes: List<DefType>,
     operation: LinesBuilder.(String) -> Unit
 ) {
-    structure.allFields.noPersistentId().forEach { field ->
+    structure.allFields.noPersistentId().noRefs().forEach { field ->
         field.type.operate(field.name, simpleTypes, context, operation)
     }
 }
@@ -111,18 +179,8 @@ private fun ValueType<*>.operate(
                 }
             }
             if (isSealedClass(simpleTypes)) {
-                val children = simpleTypes.filter { it.javaSuperType == this.javaSimpleName }
-                val newVarName = "_$varName"
-                context.line("val $newVarName = $varName")
-                context.section("when ($newVarName)") {
-                    listBuilder(children) { item ->
-                        section("is ${item.javaFullName} -> ") label@ {
-                            item.structure.declaredFields.filter { it.constructorField }.forEach {
-                                it.type.operate("$newVarName.${it.name}", simpleTypes, this@label, operation)
-                            }
-                        }
-                    }
-                }
+              val thisClass = simpleTypes.single { it.name == this.javaSimpleName }
+              processSealedClass(simpleTypes, thisClass, varName, context, operation)
             }
         }
         is TList<*> -> {
@@ -144,8 +202,31 @@ private fun ValueType<*>.operate(
     }
 }
 
+private fun processSealedClass(simpleTypes: List<DefType>,
+                               thisClass: DefType,
+                               varName: String,
+                               context: LinesBuilder,
+                               operation: LinesBuilder.(String) -> Unit) {
+  val children = simpleTypes.filter { it.javaSuperType == thisClass.javaSimpleName }
+  val newVarName = "_${varName.clean()}"
+  context.line("val $newVarName = $varName")
+  context.section("when ($newVarName)") {
+    listBuilder(children) { item ->
+      section("is ${item.javaFullName} -> ") label@{
+        if (item.isSealedClass()) {
+          processSealedClass(simpleTypes, item, newVarName, this, operation)
+        }
+        item.structure.declaredFields.filter { it.constructorField }.forEach {
+          it.type.operate("$newVarName.${it.name}", simpleTypes, this@label, operation)
+        }
+      }
+    }
+  }
+}
+
+
 private fun ObjType<*, *>.operateUpdateLink(context: LinesBuilder, simpleTypes: List<DefType>) {
-    structure.allFields.noPersistentId().forEach { field ->
+    structure.allFields.noPersistentId().noRefs().forEach { field ->
         val type = field.type
         val retType = type.processType(simpleTypes, context, field.name)
         if (retType != null) {
@@ -197,38 +278,8 @@ private fun ValueType<*>.processType(
                 }
             }
             if (isSealedClass(simpleTypes)) {
-                val children = simpleTypes.filter { it.javaSuperType == this.javaSimpleName }
-                val newVarName = "_${varName.clean()}"
-                val resVarName = "res_${varName.clean()}"
-                context.line("val $newVarName = $varName")
-                context.lineNoNl("val $resVarName = ")
-                context.section("when ($newVarName)") {
-                    listBuilder(children) { item ->
-                        section("is ${item.javaFullName} -> ") label@ {
-                            val updates = item.structure.declaredFields.filter { it.constructorField }.mapNotNull {
-                                val retVar = it.type.processType(
-                                    simpleTypes,
-                                    this@label,
-                                    "$newVarName.${it.name}"
-                                )
-                                if (retVar != null) it.name to retVar else null
-                            }
-                            if (updates.isEmpty()) {
-                                line(newVarName)
-                            } else {
-                                val name = "${newVarName.clean()}_data"
-                                line("var $name = $newVarName")
-                                updates.forEach { (fieldName, update) ->
-                                    `if`("$update != null") {
-                                        line("$name = $name.copy($fieldName = $update)")
-                                    }
-                                }
-                                line(name)
-                            }
-                        }
-                    }
-                }
-                return resVarName
+              val thisClass = simpleTypes.single { it.name == this.javaSimpleName }
+              return processSealedClass(simpleTypes, thisClass, varName, context)
             }
             return null
         }
@@ -281,6 +332,49 @@ private fun ValueType<*>.processType(
         }
         else -> return null
     }
+}
+
+private fun processSealedClass(simpleTypes: List<DefType>,
+                               thisClass: DefType,
+                               varName: String,
+                               context: LinesBuilder): String {
+  val children = simpleTypes.filter { it.javaSuperType == thisClass.javaSimpleName }
+  val newVarName = "_${varName.clean()}"
+  val resVarName = "res_${varName.clean()}"
+  context.line("val $newVarName = $varName")
+  context.lineNoNl("val $resVarName = ")
+  context.section("when ($newVarName)") {
+    listBuilder(children) { item ->
+      section("is ${item.javaFullName} -> ") label@{
+        var sectionVarName = newVarName
+        if (item.isSealedClass()) {
+          sectionVarName = processSealedClass(simpleTypes, item, sectionVarName, this)
+        }
+        val updates = item.structure.declaredFields.filter { it.constructorField }.mapNotNull {
+          val retVar = it.type.processType(
+            simpleTypes,
+            this@label,
+            "$sectionVarName.${it.name}"
+          )
+          if (retVar != null) it.name to retVar else null
+        }
+        if (updates.isEmpty()) {
+          line(sectionVarName)
+        }
+        else {
+          val name = "${sectionVarName.clean()}_data"
+          line("var $name = $sectionVarName")
+          updates.forEach { (fieldName, update) ->
+            `if`("$update != null") {
+              line("$name = $name.copy($fieldName = $update)")
+            }
+          }
+          line(name)
+        }
+      }
+    }
+  }
+  return resVarName
 }
 
 private fun String.clean(): String {

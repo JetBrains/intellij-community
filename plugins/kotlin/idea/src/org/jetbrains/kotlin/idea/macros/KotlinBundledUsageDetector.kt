@@ -8,9 +8,10 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.messages.Topic
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.LibraryEntity
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.versions.forEachAllUsedLibraries

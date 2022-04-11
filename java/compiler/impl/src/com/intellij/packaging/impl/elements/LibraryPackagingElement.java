@@ -23,7 +23,8 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import com.intellij.workspaceModel.storage.bridgeEntities.*;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.*;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -200,7 +201,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
 
     LibraryFilesPackagingElementEntity entity;
     if (myLibraryName == null) {
-      entity = BridgeModelModifiableEntitiesKt.addLibraryFilesPackagingElementEntity(diff, null, source);
+      entity = ExtensionsKt.addLibraryFilesPackagingElementEntity(diff, null, source);
     }
     else {
       LibraryId id;
@@ -213,7 +214,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
       else {
         id = new LibraryId(myLibraryName, new LibraryTableId.GlobalLibraryTableId(myLevel));
       }
-      entity = BridgeModelModifiableEntitiesKt.addLibraryFilesPackagingElementEntity(diff, id, source);
+      entity = ExtensionsKt.addLibraryFilesPackagingElementEntity(diff, id, source);
     }
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;

@@ -22,8 +22,13 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleGroupPathEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableModuleGroupPathEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.jetbrains.workspaceModel.modifyEntity
 import java.io.IOException
 import java.nio.file.Path
 
@@ -266,7 +271,7 @@ internal class ModifiableModuleModelBridgeImpl(
         myNewNameToModule[newName] = module
       }
       val entity = entityStorageOnDiff.current.findModuleEntity(module) ?: error("Unable to find module entity for $module")
-      diff.modifyEntity(ModifiableModuleEntity::class.java, entity) {
+      diff.modifyEntity(entity) {
         name = newName
       }
     }
@@ -304,8 +309,7 @@ internal class ModifiableModuleModelBridgeImpl(
 
         moduleGroupEntity != null && groupPathList == null -> diff.removeEntity(moduleGroupEntity)
 
-        moduleGroupEntity != null && groupPathList != null -> diff.modifyEntity(ModifiableModuleGroupPathEntity::class.java,
-                                                                                moduleGroupEntity) {
+        moduleGroupEntity != null && groupPathList != null -> diff.modifyEntity(moduleGroupEntity) {
           path = groupPathList
         }
 

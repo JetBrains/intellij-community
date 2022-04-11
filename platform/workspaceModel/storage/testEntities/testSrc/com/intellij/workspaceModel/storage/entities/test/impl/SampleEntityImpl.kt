@@ -38,6 +38,10 @@ open class SampleEntityImpl: SampleEntity, WorkspaceEntityBase() {
                         
     override val children: List<ChildSampleEntity>
         get() = snapshot.extractOneToManyChildren<ChildSampleEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
+    
+    @JvmField var _nullableData: String? = null
+    override val nullableData: String?
+        get() = _nullableData
 
     class Builder(val result: SampleEntityData?): ModifiableWorkspaceEntityBase<SampleEntity>(), SampleEntity.Builder {
         constructor(): this(SampleEntityData())
@@ -226,6 +230,14 @@ open class SampleEntityImpl: SampleEntity, WorkspaceEntityBase() {
                     changedProperty.add("children")
                 }
         
+        override var nullableData: String?
+            get() = getEntityData().nullableData
+            set(value) {
+                checkModificationAllowed()
+                getEntityData().nullableData = value
+                changedProperty.add("nullableData")
+            }
+        
         override fun getEntityData(): SampleEntityData = result ?: super.getEntityData() as SampleEntityData
         override fun getEntityClass(): Class<SampleEntity> = SampleEntity::class.java
     }
@@ -239,6 +251,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
     lateinit var stringProperty: String
     lateinit var stringListProperty: List<String>
     lateinit var fileProperty: VirtualFileUrl
+    var nullableData: String? = null
 
     
     fun isStringPropertyInitialized(): Boolean = ::stringProperty.isInitialized
@@ -262,6 +275,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
         entity._stringProperty = stringProperty
         entity._stringListProperty = stringListProperty
         entity._fileProperty = fileProperty
+        entity._nullableData = nullableData
         entity.entitySource = entitySource
         entity.snapshot = snapshot
         entity.id = createEntityId()
@@ -279,6 +293,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
         if (this.stringProperty != other.stringProperty) return false
         if (this.stringListProperty != other.stringListProperty) return false
         if (this.fileProperty != other.fileProperty) return false
+        if (this.nullableData != other.nullableData) return false
         return true
     }
 
@@ -292,6 +307,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
         if (this.stringProperty != other.stringProperty) return false
         if (this.stringListProperty != other.stringListProperty) return false
         if (this.fileProperty != other.fileProperty) return false
+        if (this.nullableData != other.nullableData) return false
         return true
     }
 
@@ -301,6 +317,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
         result = 31 * result + stringProperty.hashCode()
         result = 31 * result + stringListProperty.hashCode()
         result = 31 * result + fileProperty.hashCode()
+        result = 31 * result + nullableData.hashCode()
         return result
     }
 }

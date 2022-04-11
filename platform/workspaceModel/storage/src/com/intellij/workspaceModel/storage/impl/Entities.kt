@@ -3,8 +3,8 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.util.ReflectionUtil
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl

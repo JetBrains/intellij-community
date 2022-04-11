@@ -23,7 +23,11 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.subFacets
+import org.jetbrains.workspaceModel.modifyEntity
 
 class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntityStorage,
                                      private val diff: WorkspaceEntityStorageBuilder,
@@ -33,7 +37,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntity
   private val listeners: MutableList<ModifiableFacetModel.Listener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
   private val moduleEntity: ModuleEntity
-    get() = (diff as WorkspaceEntityStorageBuilder).findModuleEntity(moduleBridge) ?: error("Cannot find module entity for '$moduleBridge'")
+    get() = diff.findModuleEntity(moduleBridge) ?: error("Cannot find module entity for '$moduleBridge'")
 
   override fun addFacet(facet: Facet<*>) {
     addFacet(facet, null)
@@ -85,7 +89,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntity
 
   override fun rename(facet: Facet<*>, newName: String) {
     val entity = diff.facetMapping().getEntities(facet).single() as FacetEntity
-    val newEntity = diff.modifyEntity(ModifiableFacetEntity::class.java, entity) {
+    val newEntity = diff.modifyEntity(entity) {
       this.name = newName
     }
     diff.mutableFacetMapping().removeMapping(entity)
@@ -116,11 +120,11 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntity
     // In some cases configuration for newly added facets changes before the actual commit e.g. MavenProjectImportHandler#configureFacet.
     val changes = ArrayList<Triple<FacetEntity, FacetEntity, Facet<*>>>()
     val mapping = diff.facetMapping()
-    moduleEntity.facets.forEach { facetEntity ->
+    moduleEntity.facets?.forEach { facetEntity ->
       val facet = mapping.getDataByEntity(facetEntity) ?: return@forEach
       val newFacetConfiguration = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
       if (facetEntity.configurationXmlTag == newFacetConfiguration) return@forEach
-      val newEntity = diff.modifyEntity(ModifiableFacetEntity::class.java, facetEntity) {
+      val newEntity = diff.modifyEntity(facetEntity) {
         this.configurationXmlTag = newFacetConfiguration
       }
       changes.add(Triple(facetEntity, newEntity, facet))
@@ -134,7 +138,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntity
   override fun getAllFacets(): Array<Facet<*>> {
     val facetMapping = diff.facetMapping()
     val facetEntities = moduleEntity.facets
-    return facetEntities.mapNotNull { facetMapping.getDataByEntity(it) }.toList().toTypedArray()
+    return facetEntities?.mapNotNull { facetMapping.getDataByEntity(it) }?.toList()?.toTypedArray() ?: emptyArray()
   }
 
   fun getEntity(facet: Facet<*>): FacetEntity? = diff.facetMapping().getEntities(facet).singleOrNull() as FacetEntity?

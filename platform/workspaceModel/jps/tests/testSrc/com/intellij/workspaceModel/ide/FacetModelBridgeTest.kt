@@ -21,13 +21,13 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridg
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.ModifiableFacetModelBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
 import com.intellij.workspaceModel.storage.toBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.AssertionFailedError
+import org.jetbrains.workspaceModel.modifyEntity
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.ClassRule
@@ -54,7 +54,7 @@ class FacetModelBridgeTest {
 
   @Before
   fun registerFacetType() {
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(disposableRule.disposable, {})
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(disposableRule.disposable) {}
     registerFacetType(MockFacetType(), disposableRule.disposable)
     registerFacetType(AnotherMockFacetType(), disposableRule.disposable)
   }
@@ -160,7 +160,7 @@ class FacetModelBridgeTest {
     runWriteActionAndWait {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel { builder ->
         val facetEntity = builder.entities(FacetEntity::class.java).single()
-        builder.modifyEntity(ModifiableFacetEntity::class.java, facetEntity) {
+        builder.modifyEntity(facetEntity) {
           configurationXmlTag = """<configuration data="bar" />"""
         }
       }

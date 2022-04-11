@@ -13,7 +13,8 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import com.intellij.workspaceModel.storage.bridgeEntities.*;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.*;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -102,7 +103,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
       return (PackagingElementEntity)o.getOrAddEntity(diff, source, project);
     });
 
-    var entity = BridgeModelModifiableEntitiesKt.addArchivePackagingElementEntity(diff, myArchiveFileName, children, source);
+    var entity = ExtensionsKt.addArchivePackagingElementEntity(diff, myArchiveFileName, children, source);
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;
   }

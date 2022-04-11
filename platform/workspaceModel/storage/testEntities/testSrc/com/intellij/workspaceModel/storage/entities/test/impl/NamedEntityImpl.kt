@@ -28,8 +28,8 @@ open class NamedEntityImpl: NamedEntity, WorkspaceEntityBase() {
         get() = _myName!!
                         
     @JvmField var _additionalProperty: String? = null
-    override val additionalProperty: String
-        get() = _additionalProperty!!
+    override val additionalProperty: String?
+        get() = _additionalProperty
                         
     override val children: List<NamedChildEntity>
         get() = snapshot.extractOneToManyChildren<NamedChildEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()

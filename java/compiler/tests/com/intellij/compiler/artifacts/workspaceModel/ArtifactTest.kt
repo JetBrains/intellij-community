@@ -32,7 +32,10 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactRootElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addCustomPackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase
 import org.junit.Assume.assumeTrue

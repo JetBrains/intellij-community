@@ -35,7 +35,7 @@ interface ParentSingleAbEntity : WorkspaceEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<ParentSingleAbEntity, Builder>(47)
+    companion object: Type<ParentSingleAbEntity, Builder>(89)
     //@formatter:on
     //endregion
 
@@ -56,7 +56,7 @@ interface ChildSingleAbstractBaseEntity : WorkspaceEntity {
         override var parentEntity: ParentSingleAbEntity
     }
     
-    companion object: Type<ChildSingleAbstractBaseEntity, Builder>(48)
+    companion object: Type<ChildSingleAbstractBaseEntity, Builder>(90)
     //@formatter:on
     //endregion
 
@@ -75,7 +75,7 @@ interface ChildSingleFirstEntity : ChildSingleAbstractBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<ChildSingleFirstEntity, Builder>(49, ChildSingleAbstractBaseEntity)
+    companion object: Type<ChildSingleFirstEntity, Builder>(91, ChildSingleAbstractBaseEntity)
     //@formatter:on
     //endregion
 
@@ -94,7 +94,7 @@ interface ChildSingleSecondEntity : ChildSingleAbstractBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<ChildSingleSecondEntity, Builder>(50, ChildSingleAbstractBaseEntity)
+    companion object: Type<ChildSingleSecondEntity, Builder>(92, ChildSingleAbstractBaseEntity)
     //@formatter:on
     //endregion
 

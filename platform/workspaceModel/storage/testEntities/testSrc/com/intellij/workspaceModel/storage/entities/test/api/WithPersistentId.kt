@@ -15,11 +15,7 @@ import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 
 import org.jetbrains.deft.Type
-
-
-
-
-
+import org.jetbrains.deft.annotations.Child
 
 
 data class OnePersistentId(val name: String): PersistentEntityId<OneEntityWithPersistentId> {
@@ -43,6 +39,15 @@ sealed class SealedContainer {
     data class ContainerContainer(val container: List<Container>) : SealedContainer()
 }
 
+@Open
+sealed class DeepSealedOne {
+  sealed class DeepSealedTwo : DeepSealedOne() {
+    sealed class DeepSealedThree : DeepSealedTwo() {
+      data class DeepSealedFour(val id: OnePersistentId): DeepSealedThree()
+    }
+  }
+}
+
 interface OneEntityWithPersistentId : WorkspaceEntityWithPersistentId {
     val myName: String
 
@@ -59,7 +64,7 @@ interface OneEntityWithPersistentId : WorkspaceEntityWithPersistentId {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<OneEntityWithPersistentId, Builder>(27)
+    companion object: Type<OneEntityWithPersistentId, Builder>(32)
     //@formatter:on
     //endregion
 
@@ -81,6 +86,9 @@ interface EntityWithSoftLinks : WorkspaceEntity {
     val justNullableProperty: String?
     val justListProperty: List<String>
 
+    val deepSealedClass: DeepSealedOne
+
+    val children: List<@Child SoftLinkReferencedChild>
 
     //region generated code
     //@formatter:off
@@ -98,10 +106,27 @@ interface EntityWithSoftLinks : WorkspaceEntity {
         override var justProperty: String
         override var justNullableProperty: String?
         override var justListProperty: List<String>
+        override var deepSealedClass: DeepSealedOne
+        override var children: List<SoftLinkReferencedChild>
     }
     
-    companion object: Type<EntityWithSoftLinks, Builder>(28)
+    companion object: Type<EntityWithSoftLinks, Builder>(33)
     //@formatter:on
     //endregion
+
+}
+
+interface SoftLinkReferencedChild : WorkspaceEntity {
+  val parentEntity: EntityWithSoftLinks
+  //region generated code
+  //@formatter:off
+  interface Builder: SoftLinkReferencedChild, ModifiableWorkspaceEntity<SoftLinkReferencedChild>, ObjBuilder<SoftLinkReferencedChild> {
+      override var parentEntity: EntityWithSoftLinks
+      override var entitySource: EntitySource
+  }
+  
+  companion object: Type<SoftLinkReferencedChild, Builder>(34)
+  //@formatter:on
+  //endregion
 
 }

@@ -9,8 +9,8 @@ import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
 import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import com.intellij.workspaceModel.storage.bridgeEntities.BridgeModelModifiableEntitiesKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.DirectoryCopyPackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.DirectoryCopyPackagingElementEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,7 @@ public class DirectoryCopyPackagingElement extends FileOrDirectoryCopyPackagingE
     VirtualFileUrlManager fileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, project);
     VirtualFileUrl fileUrl = fileUrlManager.fromPath(myFilePath);
     DirectoryCopyPackagingElementEntity addedEntity =
-      BridgeModelModifiableEntitiesKt.addDirectoryCopyPackagingElementEntity(diff, fileUrl, source);
+      ExtensionsKt.addDirectoryCopyPackagingElementEntity(diff, fileUrl, source);
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
     return addedEntity;
   }

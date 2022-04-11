@@ -16,9 +16,9 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactId;
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactOutputPackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.BridgeModelModifiableEntitiesKt;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ArtifactId;
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ArtifactOutputPackagingElementEntity;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,7 +118,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
     if (this.myArtifactPointer != null) {
       id = new ArtifactId(this.myArtifactPointer.getArtifactName());
     }
-    ArtifactOutputPackagingElementEntity entity = BridgeModelModifiableEntitiesKt.addArtifactOutputPackagingElementEntity(diff, id, source);
+    ArtifactOutputPackagingElementEntity entity = ExtensionsKt.addArtifactOutputPackagingElementEntity(diff, id, source);
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;
   }

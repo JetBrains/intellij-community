@@ -24,16 +24,15 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import com.intellij.workspaceModel.storage.DummyParentEntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ExternalSystemModuleOptionsEntity
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModuleCustomImlDataEntity
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModuleEntity
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Paths
-import kotlin.io.path.absolutePathString
 
 class ReloadProjectTest {
   companion object {

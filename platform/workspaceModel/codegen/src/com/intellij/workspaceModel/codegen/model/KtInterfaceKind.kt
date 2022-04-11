@@ -73,3 +73,9 @@ object WsSealed: WsEntityInterface(), WsPropertyClass {
     return TBlob<Any>(ktType.classifier)
   }
 }
+object WsObject: WsEntityInterface(), WsPropertyClass {
+  override fun buildValueType(ktInterface: KtInterface?, diagnostics: Diagnostics, ktType: KtType,
+                              childAnnotation: KtAnnotation?): ValueType<*> {
+    return TBlob<Any>(ktType.classifier)
+  }
+}

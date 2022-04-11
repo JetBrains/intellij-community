@@ -20,6 +20,7 @@ import org.jetbrains.deft.Type
 interface SampleEntity2 : WorkspaceEntity {
   val data: String
   val boolData: Boolean
+  val optionalData: String?
 
   //region generated code
   //@formatter:off
@@ -27,9 +28,10 @@ interface SampleEntity2 : WorkspaceEntity {
       override var data: String
       override var entitySource: EntitySource
       override var boolData: Boolean
+      override var optionalData: String?
   }
   
-  companion object: Type<SampleEntity2, Builder>(25)
+  companion object: Type<SampleEntity2, Builder>(76)
   //@formatter:on
   //endregion
 
@@ -50,7 +52,7 @@ interface VFUEntity2 : WorkspaceEntity {
       override var notNullRoots: List<VirtualFileUrl>
   }
   
-  companion object: Type<VFUEntity2, Builder>(26)
+  companion object: Type<VFUEntity2, Builder>(77)
   //@formatter:on
   //endregion
 

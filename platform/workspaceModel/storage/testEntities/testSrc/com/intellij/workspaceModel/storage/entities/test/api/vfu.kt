@@ -31,7 +31,7 @@ interface VFUEntity : WorkspaceEntity {
       override var fileProperty: VirtualFileUrl
   }
   
-  companion object: Type<VFUEntity, Builder>(66)
+  companion object: Type<VFUEntity, Builder>(80)
   //@formatter:on
   //endregion
 
@@ -53,7 +53,7 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
       override var secondFileProperty: VirtualFileUrl
   }
   
-  companion object: Type<VFUWithTwoPropertiesEntity, Builder>(67)
+  companion object: Type<VFUWithTwoPropertiesEntity, Builder>(81)
   //@formatter:on
   //endregion
 
@@ -73,7 +73,7 @@ interface NullableVFUEntity : WorkspaceEntity {
       override var fileProperty: VirtualFileUrl?
   }
   
-  companion object: Type<NullableVFUEntity, Builder>(68)
+  companion object: Type<NullableVFUEntity, Builder>(82)
   //@formatter:on
   //endregion
 
@@ -93,7 +93,7 @@ interface ListVFUEntity : WorkspaceEntity {
       override var fileProperty: List<VirtualFileUrl>
   }
   
-  companion object: Type<ListVFUEntity, Builder>(69)
+  companion object: Type<ListVFUEntity, Builder>(83)
   //@formatter:on
   //endregion
 

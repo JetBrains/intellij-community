@@ -22,6 +22,7 @@ interface SampleEntity : WorkspaceEntity {
   val stringListProperty: List<String>
   val fileProperty: VirtualFileUrl
   val children: List<@Child ChildSampleEntity>
+  val nullableData: String?
 
   //region generated code
   //@formatter:off
@@ -32,9 +33,10 @@ interface SampleEntity : WorkspaceEntity {
       override var stringListProperty: List<String>
       override var fileProperty: VirtualFileUrl
       override var children: List<ChildSampleEntity>
+      override var nullableData: String?
   }
   
-  companion object: Type<SampleEntity, Builder>(83)
+  companion object: Type<SampleEntity, Builder>(41)
   //@formatter:on
   //endregion
 
@@ -51,7 +53,7 @@ interface ChildSampleEntity : WorkspaceEntity {
       override var parentEntity: SampleEntity?
   }
   
-  companion object: Type<ChildSampleEntity, Builder>(84)
+  companion object: Type<ChildSampleEntity, Builder>(42)
   //@formatter:on
   //endregion
 
@@ -83,7 +85,7 @@ interface SecondSampleEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<SecondSampleEntity, Builder>(85)
+  companion object: Type<SecondSampleEntity, Builder>(43)
   //@formatter:on
   //endregion
 
@@ -100,7 +102,7 @@ interface SourceEntity : WorkspaceEntity {
       override var children: List<ChildSourceEntity>
   }
   
-  companion object: Type<SourceEntity, Builder>(86)
+  companion object: Type<SourceEntity, Builder>(44)
   //@formatter:on
   //endregion
 
@@ -117,7 +119,7 @@ interface ChildSourceEntity : WorkspaceEntity {
       override var parentEntity: SourceEntity
   }
   
-  companion object: Type<ChildSourceEntity, Builder>(87)
+  companion object: Type<ChildSourceEntity, Builder>(45)
   //@formatter:on
   //endregion
 
@@ -136,7 +138,7 @@ interface PersistentIdEntity : WorkspaceEntityWithPersistentId {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<PersistentIdEntity, Builder>(88)
+  companion object: Type<PersistentIdEntity, Builder>(46)
   //@formatter:on
   //endregion
 

@@ -14,7 +14,11 @@ import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.asCustomSourceRoot
+import com.intellij.workspaceModel.storage.bridgeEntities.getModuleLibraries
+import com.intellij.workspaceModel.storage.bridgeEntities.projectLibraries
+import com.intellij.workspaceModel.storage.bridgeEntities.sourceRoots
 import com.intellij.workspaceModel.storage.checkConsistency
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -207,7 +211,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel/jps/tests/testData/serialization/facets/facets.ipr")
     val storage = loadProject(projectDir)
     val modules = storage.entities(ModuleEntity::class.java).associateBy { it.name }
-    val single = modules.getValue("single").facets.single()
+    val single = modules.getValue("single").facets?.single() ?: error("")
     assertEquals("foo", single.facetType)
     assertEquals("Foo", single.name)
     assertEquals("""
@@ -215,13 +219,13 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
                       <data />
                     </configuration>""".trimIndent(), single.configurationXmlTag)
 
-    val two = modules.getValue("two").facets.toList()
+    val two = modules.getValue("two").facets?.toList() ?: emptyList()
     assertEquals(setOf("a", "b"), two.mapTo(HashSet()) { it.name })
 
-    val twoReversed = modules.getValue("two.reversed").facets.toList()
+    val twoReversed = modules.getValue("two.reversed").facets?.toList() ?: emptyList()
     assertEquals(setOf("a", "b"), twoReversed.mapTo(HashSet()) { it.name })
 
-    val subFacets = modules.getValue("subFacets").facets.sortedBy { it.name }.toList()
+    val subFacets = modules.getValue("subFacets").facets?.sortedBy { it.name }?.toList() ?: emptyList()
     assertEquals(listOf("Bar", "Foo"), subFacets.map { it.name })
     val (bar, foo) = subFacets
     assertEquals("Foo", bar.underlyingFacet!!.name)

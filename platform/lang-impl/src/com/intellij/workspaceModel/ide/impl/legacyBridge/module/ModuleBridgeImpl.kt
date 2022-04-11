@@ -21,10 +21,16 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.VersionedEntityStorage
+import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import org.jetbrains.workspaceModel.modifyEntity
 
 internal class ModuleBridgeImpl(
   override var moduleEntityId: ModuleId,
@@ -122,7 +128,7 @@ internal class ModuleBridgeImpl(
   override fun setOption(key: String, value: String?) {
     fun updateOptionInEntity(diff: WorkspaceEntityStorageBuilder, entity: ModuleEntity) {
       if (key == Module.ELEMENT_TYPE) {
-        diff.modifyEntity(ModifiableModuleEntity::class.java, entity) { type = value }
+        diff.modifyEntity(entity) { type = value }
       }
       else {
         val customImlData = entity.customImlData
@@ -132,12 +138,12 @@ internal class ModuleBridgeImpl(
           }
         }
         else {
-          diff.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java, customImlData) {
+          diff.modifyEntity(customImlData) {
             if (value != null) {
-              customModuleOptions[key] = value
+              customModuleOptions = customModuleOptions.toMutableMap().also { it[key] = value }
             }
             else {
-              customModuleOptions.remove(key)
+              customModuleOptions = customModuleOptions.toMutableMap().also { it.remove(key) }
             }
           }
         }

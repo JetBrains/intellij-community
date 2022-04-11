@@ -8,8 +8,10 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import org.jetbrains.deft.ObjBuilder
 
     
@@ -144,12 +146,63 @@ open class WithListSoftLinksEntityImpl: WithListSoftLinksEntity, WorkspaceEntity
     fun builder(): ObjBuilder<*> = Builder(WithListSoftLinksEntityData())
 }
     
-class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistentId<WithListSoftLinksEntity>() {
+class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistentId<WithListSoftLinksEntity>(), SoftLinkable {
     lateinit var myName: String
     lateinit var links: List<NameId>
 
     fun isMyNameInitialized(): Boolean = ::myName.isInitialized
     fun isLinksInitialized(): Boolean = ::links.isInitialized
+
+    override fun getLinks(): Set<PersistentEntityId<*>> {
+        val result = HashSet<PersistentEntityId<*>>()
+        for (item in links) {
+            result.add(item)
+        }
+        return result
+    }
+
+    override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+        for (item in links) {
+            index.index(this, item)
+        }
+    }
+
+    override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+        // TODO verify logic
+        val mutablePreviousSet = HashSet(prev)
+        for (item in links) {
+            val removedItem_item = mutablePreviousSet.remove(item)
+            if (!removedItem_item) {
+                index.index(this, item)
+            }
+        }
+        for (removed in mutablePreviousSet) {
+            index.remove(this, removed)
+        }
+    }
+
+    override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
+        var changed = false
+        val links_data = links.map {
+            val it_data =             if (it == oldLink) {
+                changed = true
+                newLink as NameId
+            }
+            else {
+                null
+            }
+            if (it_data != null) {
+                it_data
+            }
+            else {
+                it
+            }
+        }
+        if (links_data != null) {
+            links = links_data
+        }
+        return changed
+    }
 
     override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<WithListSoftLinksEntity> {
         val modifiable = WithListSoftLinksEntityImpl.Builder(null)

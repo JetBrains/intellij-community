@@ -5,9 +5,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.LibraryId;
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModuleDependencyItem;
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModuleEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

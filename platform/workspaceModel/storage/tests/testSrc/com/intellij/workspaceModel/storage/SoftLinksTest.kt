@@ -126,6 +126,26 @@ class SoftLinksTest {
   }
 
   @Test
+  fun `change persistent id in list`() {
+    val builder = createEmptyBuilder()
+    val entity = builder.addNamedEntity("Name")
+    builder.addEntity(WithListSoftLinksEntity {
+      this.myName = "xyz"
+      this.entitySource = MySource
+      this.links = listOf(NameId("Name"))
+    })
+
+    builder.modifyEntity(entity) {
+      this.myName = "newName"
+    }
+
+    builder.assertConsistency()
+
+    val updatedPersistentId = builder.entities(WithListSoftLinksEntity::class.java).single()
+    assertEquals("newName", updatedPersistentId.links.single().presentableName)
+  }
+
+  @Test
   fun `change persistent id part of composed id entity and with linked entity`() {
     val builder = createEmptyBuilder()
     val entity = builder.addNamedEntity("Name")
@@ -140,7 +160,7 @@ class SoftLinksTest {
 
     val updatedPersistentId = builder.entities(ComposedIdSoftRefEntity::class.java).single().persistentId
     assertEquals("newName", updatedPersistentId.link.presentableName)
-    assertEquals("newName", (builder.entities(ComposedLinkEntity::class.java).single().link as ComposedId).link.presentableName)
+    assertEquals("newName", builder.entities(ComposedLinkEntity::class.java).single().link.link.presentableName)
   }
 
   @Test
@@ -170,6 +190,10 @@ class SoftLinksTest {
       justProperty = "Hello"
       justNullableProperty = "Hello"
       justListProperty = listOf("Hello")
+
+      this.children = emptyList()
+
+      this.deepSealedClass = DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour(persistentId)
     }
     builder.addEntity(softLinkEntity)
 
@@ -196,6 +220,12 @@ class SoftLinksTest {
         kotlin.test.assertEquals(
           "AnotherData",
           (updatedEntity.listSealedContainer.single() as SealedContainer.SmallContainer).notId.name
+        )
+      },
+      {
+        kotlin.test.assertEquals(
+          "AnotherData",
+          (updatedEntity.deepSealedClass as DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour).id.name
         )
       },
     )

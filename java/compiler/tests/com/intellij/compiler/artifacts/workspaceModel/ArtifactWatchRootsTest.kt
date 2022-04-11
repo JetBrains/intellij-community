@@ -11,7 +11,10 @@ import com.intellij.packaging.impl.elements.FileCopyPackagingElement
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactRootElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addFileCopyPackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assume.assumeTrue
 import java.nio.file.Files

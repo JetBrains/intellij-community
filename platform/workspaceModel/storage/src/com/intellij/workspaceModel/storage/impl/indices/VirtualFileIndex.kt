@@ -9,7 +9,7 @@ import com.intellij.openapi.util.text.Strings
 import com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintMap
 import com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintSet
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.LibraryRoot
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.containers.BidirectionalLongMultiMap
 import com.intellij.workspaceModel.storage.impl.containers.putAll

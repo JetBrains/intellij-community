@@ -37,7 +37,7 @@ interface ParentEntity : WorkspaceEntity {
         override var child: ChildEntity
     }
     
-    companion object: Type<ParentEntity, Builder>(51)
+    companion object: Type<ParentEntity, Builder>(47)
     //@formatter:on
     //endregion
 
@@ -58,7 +58,7 @@ interface ChildEntity : WorkspaceEntity {
         override var parentEntity: ParentEntity
     }
     
-    companion object: Type<ChildEntity, Builder>(52)
+    companion object: Type<ChildEntity, Builder>(48)
     //@formatter:on
     //endregion
 

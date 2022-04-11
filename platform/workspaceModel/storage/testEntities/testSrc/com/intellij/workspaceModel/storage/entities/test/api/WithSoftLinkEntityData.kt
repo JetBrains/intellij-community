@@ -56,7 +56,7 @@ interface NamedEntity : WorkspaceEntityWithPersistentId {
       override var children: List<NamedChildEntity>
   }
   
-  companion object: Type<NamedEntity, Builder>(31)
+  companion object: Type<NamedEntity, Builder>(61)
   //@formatter:on
   //endregion
 
@@ -98,7 +98,7 @@ interface NamedChildEntity : WorkspaceEntity {
       override var parentEntity: NamedEntity
   }
   
-  companion object: Type<NamedChildEntity, Builder>(32)
+  companion object: Type<NamedChildEntity, Builder>(62)
   //@formatter:on
   //endregion
 
@@ -131,7 +131,7 @@ interface WithSoftLinkEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<WithSoftLinkEntity, Builder>(33)
+  companion object: Type<WithSoftLinkEntity, Builder>(63)
   //@formatter:on
   //endregion
 
@@ -156,7 +156,7 @@ interface ComposedLinkEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<ComposedLinkEntity, Builder>(34)
+  companion object: Type<ComposedLinkEntity, Builder>(64)
   //@formatter:on
   //endregion
 
@@ -187,7 +187,7 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithPersistentId {
       override var links: List<NameId>
   }
   
-  companion object: Type<WithListSoftLinksEntity, Builder>(35)
+  companion object: Type<WithListSoftLinksEntity, Builder>(65)
   //@formatter:on
   //endregion
 
@@ -224,7 +224,7 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithPersistentId {
       override var link: NameId
   }
   
-  companion object: Type<ComposedIdSoftRefEntity, Builder>(36)
+  companion object: Type<ComposedIdSoftRefEntity, Builder>(66)
   //@formatter:on
   //endregion
 

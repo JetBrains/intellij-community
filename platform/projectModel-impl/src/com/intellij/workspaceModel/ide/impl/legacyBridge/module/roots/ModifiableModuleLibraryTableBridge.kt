@@ -17,7 +17,9 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGene
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryPropertiesEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: ModifiableRootModelBridgeImpl)
@@ -122,7 +124,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
       source = modifiableModel.moduleEntity.entitySource
     )
 
-    val originalProperties = originalEntity.getCustomProperties()
+    val originalProperties = originalEntity.libraryProperties
     if (originalProperties != null) {
       modifiableModel.diff.addLibraryPropertiesEntity(
         library = libraryEntity,

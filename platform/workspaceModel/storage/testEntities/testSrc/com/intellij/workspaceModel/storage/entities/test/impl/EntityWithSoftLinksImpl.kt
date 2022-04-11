@@ -6,18 +6,24 @@ import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
+import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import org.jetbrains.deft.ObjBuilder
 
     
 
 open class EntityWithSoftLinksImpl: EntityWithSoftLinks, WorkspaceEntityBase() {
     
+    companion object {
+        internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(EntityWithSoftLinks::class.java, SoftLinkReferencedChild::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    }
         
     @JvmField var _link: OnePersistentId? = null
     override val link: OnePersistentId
@@ -60,12 +66,19 @@ open class EntityWithSoftLinksImpl: EntityWithSoftLinks, WorkspaceEntityBase() {
         get() = _justProperty!!
                         
     @JvmField var _justNullableProperty: String? = null
-    override val justNullableProperty: String
-        get() = _justNullableProperty!!
+    override val justNullableProperty: String?
+        get() = _justNullableProperty
                         
     @JvmField var _justListProperty: List<String>? = null
     override val justListProperty: List<String>
-        get() = _justListProperty!!
+        get() = _justListProperty!!   
+    
+    @JvmField var _deepSealedClass: DeepSealedOne? = null
+    override val deepSealedClass: DeepSealedOne
+        get() = _deepSealedClass!!
+                        
+    override val children: List<SoftLinkReferencedChild>
+        get() = snapshot.extractOneToManyChildren<SoftLinkReferencedChild>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
     class Builder(val result: EntityWithSoftLinksData?): ModifiableWorkspaceEntityBase<EntityWithSoftLinks>(), EntityWithSoftLinks.Builder {
         constructor(): this(EntityWithSoftLinksData())
@@ -88,6 +101,15 @@ open class EntityWithSoftLinksImpl: EntityWithSoftLinks, WorkspaceEntityBase() {
             addToBuilder()
             this.id = getEntityData().createEntityId()
             
+            val __children = _children!!
+            for (item in __children) {
+                if (item is ModifiableWorkspaceEntityBase<*>) {
+                    builder.addEntity(item)
+                }
+            }
+            val (withBuilder_children, woBuilder_children) = __children.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
+            applyRef(CHILDREN_CONNECTION_ID, withBuilder_children)
+            this._children = if (woBuilder_children.isNotEmpty()) woBuilder_children else null
             // Process entities from extension fields
             val keysToRemove = ArrayList<ExtRefKey>()
             for ((key, entity) in extReferences) {
@@ -169,6 +191,19 @@ open class EntityWithSoftLinksImpl: EntityWithSoftLinks, WorkspaceEntityBase() {
             }
             if (!getEntityData().isJustListPropertyInitialized()) {
                 error("Field EntityWithSoftLinks#justListProperty should be initialized")
+            }
+            if (!getEntityData().isDeepSealedClassInitialized()) {
+                error("Field EntityWithSoftLinks#deepSealedClass should be initialized")
+            }
+            if (_diff != null) {
+                if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDREN_CONNECTION_ID, this) == null) {
+                    error("Field EntityWithSoftLinks#children should be initialized")
+                }
+            }
+            else {
+                if (_children == null) {
+                    error("Field EntityWithSoftLinks#children should be initialized")
+                }
             }
         }
     
@@ -287,6 +322,50 @@ open class EntityWithSoftLinksImpl: EntityWithSoftLinks, WorkspaceEntityBase() {
                 
                 changedProperty.add("justListProperty")
             }
+            
+        override var deepSealedClass: DeepSealedOne
+            get() = getEntityData().deepSealedClass
+            set(value) {
+                checkModificationAllowed()
+                getEntityData().deepSealedClass = value
+                changedProperty.add("deepSealedClass")
+                
+            }
+            
+            var _children: List<SoftLinkReferencedChild>? = null
+            override var children: List<SoftLinkReferencedChild>
+                get() {
+                    val _diff = diff
+                    return if (_diff != null) {
+                        _diff.extractOneToManyChildren<SoftLinkReferencedChild>(CHILDREN_CONNECTION_ID, this)!!.toList() + (_children ?: emptyList())
+                    } else {
+                        _children!!
+                    }
+                }
+                set(value) {
+                    checkModificationAllowed()
+                    val _diff = diff
+                    if (_diff != null) {
+                        for (item_value in value) {
+                            if ((item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+                                _diff.addEntity(item_value)
+                            }
+                        }
+                        _diff.updateOneToManyChildrenOfParent(CHILDREN_CONNECTION_ID, this, value)
+                    }
+                    else {
+                        for (item_value in value) {
+                            if (item_value is SoftLinkReferencedChildImpl.Builder) {
+                                item_value._parentEntity = this
+                            }
+                            // else you're attaching a new entity to an existing entity that is not modifiable
+                        }
+                        
+                        _children = value
+                        // Test
+                    }
+                    changedProperty.add("children")
+                }
         
         override fun getEntityData(): EntityWithSoftLinksData = result ?: super.getEntityData() as EntityWithSoftLinksData
         override fun getEntityClass(): Class<EntityWithSoftLinks> = EntityWithSoftLinks::class.java
@@ -309,6 +388,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
     lateinit var justProperty: String
     var justNullableProperty: String? = null
     lateinit var justListProperty: List<String>
+    lateinit var deepSealedClass: DeepSealedOne
 
     fun isLinkInitialized(): Boolean = ::link.isInitialized
     fun isManyLinksInitialized(): Boolean = ::manyLinks.isInitialized
@@ -319,6 +399,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
     fun isListSealedContainerInitialized(): Boolean = ::listSealedContainer.isInitialized
     fun isJustPropertyInitialized(): Boolean = ::justProperty.isInitialized
     fun isJustListPropertyInitialized(): Boolean = ::justListProperty.isInitialized
+    fun isDeepSealedClassInitialized(): Boolean = ::deepSealedClass.isInitialized
 
     override fun getLinks(): Set<PersistentEntityId<*>> {
         val result = HashSet<PersistentEntityId<*>>()
@@ -380,6 +461,22 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
             }
         }
         for (item in justListProperty) {
+        }
+        val _deepSealedClass = deepSealedClass
+        when (_deepSealedClass) {
+            is DeepSealedOne.DeepSealedTwo ->  {
+                val __deepSealedClass = _deepSealedClass
+                when (__deepSealedClass) {
+                    is DeepSealedOne.DeepSealedTwo.DeepSealedThree ->  {
+                        val ___deepSealedClass = __deepSealedClass
+                        when (___deepSealedClass) {
+                            is DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour ->  {
+                                result.add(___deepSealedClass.id)
+                            }
+                        }
+                    }
+                }
+            }
         }
         return result
     }
@@ -443,6 +540,22 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
             }
         }
         for (item in justListProperty) {
+        }
+        val _deepSealedClass = deepSealedClass
+        when (_deepSealedClass) {
+            is DeepSealedOne.DeepSealedTwo ->  {
+                val __deepSealedClass = _deepSealedClass
+                when (__deepSealedClass) {
+                    is DeepSealedOne.DeepSealedTwo.DeepSealedThree ->  {
+                        val ___deepSealedClass = __deepSealedClass
+                        when (___deepSealedClass) {
+                            is DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour ->  {
+                                index.index(this, ___deepSealedClass.id)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -546,6 +659,25 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
             }
         }
         for (item in justListProperty) {
+        }
+        val _deepSealedClass = deepSealedClass
+        when (_deepSealedClass) {
+            is DeepSealedOne.DeepSealedTwo ->  {
+                val __deepSealedClass = _deepSealedClass
+                when (__deepSealedClass) {
+                    is DeepSealedOne.DeepSealedTwo.DeepSealedThree ->  {
+                        val ___deepSealedClass = __deepSealedClass
+                        when (___deepSealedClass) {
+                            is DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour ->  {
+                                val removedItem____deepSealedClass_id = mutablePreviousSet.remove(___deepSealedClass.id)
+                                if (!removedItem____deepSealedClass_id) {
+                                    index.index(this, ___deepSealedClass.id)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
         for (removed in mutablePreviousSet) {
             index.remove(this, removed)
@@ -850,6 +982,38 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
         if (listSealedContainer_data != null) {
             listSealedContainer = listSealedContainer_data
         }
+        val _deepSealedClass = deepSealedClass
+        val res_deepSealedClass =         when (_deepSealedClass) {
+            is DeepSealedOne.DeepSealedTwo ->  {
+                val __deepSealedClass = _deepSealedClass
+                val res__deepSealedClass =                 when (__deepSealedClass) {
+                    is DeepSealedOne.DeepSealedTwo.DeepSealedThree ->  {
+                        val ___deepSealedClass = __deepSealedClass
+                        val res___deepSealedClass =                         when (___deepSealedClass) {
+                            is DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour ->  {
+                                val ___deepSealedClass_id_data =                                 if (___deepSealedClass.id == oldLink) {
+                                    changed = true
+                                    newLink as OnePersistentId
+                                }
+                                else {
+                                    null
+                                }
+                                var ___deepSealedClass_data = ___deepSealedClass
+                                if (___deepSealedClass_id_data != null) {
+                                    ___deepSealedClass_data = ___deepSealedClass_data.copy(id = ___deepSealedClass_id_data)
+                                }
+                                ___deepSealedClass_data
+                            }
+                        }
+                        res___deepSealedClass
+                    }
+                }
+                res__deepSealedClass
+            }
+        }
+        if (res_deepSealedClass != null) {
+            deepSealedClass = res_deepSealedClass
+        }
         return changed
     }
 
@@ -878,6 +1042,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
         entity._justProperty = justProperty
         entity._justNullableProperty = justNullableProperty
         entity._justListProperty = justListProperty
+        entity._deepSealedClass = deepSealedClass
         entity.entitySource = entitySource
         entity.snapshot = snapshot
         entity.id = createEntityId()
@@ -903,6 +1068,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
         if (this.justProperty != other.justProperty) return false
         if (this.justNullableProperty != other.justNullableProperty) return false
         if (this.justListProperty != other.justListProperty) return false
+        if (this.deepSealedClass != other.deepSealedClass) return false
         return true
     }
 
@@ -924,6 +1090,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
         if (this.justProperty != other.justProperty) return false
         if (this.justNullableProperty != other.justNullableProperty) return false
         if (this.justListProperty != other.justListProperty) return false
+        if (this.deepSealedClass != other.deepSealedClass) return false
         return true
     }
 
@@ -941,6 +1108,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
         result = 31 * result + justProperty.hashCode()
         result = 31 * result + justNullableProperty.hashCode()
         result = 31 * result + justListProperty.hashCode()
+        result = 31 * result + deepSealedClass.hashCode()
         return result
     }
 }

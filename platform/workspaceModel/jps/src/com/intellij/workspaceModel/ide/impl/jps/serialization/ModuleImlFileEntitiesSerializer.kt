@@ -18,6 +18,8 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableSourceRootOrderEntity
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -30,6 +32,7 @@ import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
 import org.jetbrains.jps.util.JpsPathUtil
+import org.jetbrains.workspaceModel.modifyEntity
 import java.io.StringReader
 import java.nio.file.Path
 import java.util.*
@@ -140,7 +143,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
     val moduleType = moduleOptions["type"]
     if (moduleType != null) {
-      builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+      builder.modifyEntity(moduleEntity) {
         type = moduleType
       }
     }
@@ -193,7 +196,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                                entitySource: EntitySource) {
     if (!shouldCreateExternalSystemModuleOptions(externalSystemId, externalSystemOptions, MODULE_OPTIONS_TO_CHECK)) return
     val optionsEntity = builder.getOrCreateExternalSystemModuleOptions(module, entitySource)
-    builder.modifyEntity(ModifiableExternalSystemModuleOptionsEntity::class.java, optionsEntity) {
+    builder.modifyEntity(optionsEntity) {
       externalSystem = externalSystemId
       externalSystemModuleVersion = externalSystemOptions["external.system.module.version"]
       linkedProjectPath = externalSystemOptions["external.linked.project.path"]
@@ -332,12 +335,12 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         )
       }
       else {
-        builder.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java, customImlData) {
+        builder.modifyEntity(customImlData) {
           rootManagerTagCustomData = JDOMUtil.write(rootManagerElement)
         }
       }
     }
-    builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+    builder.modifyEntity(moduleEntity) {
       dependencies = dependencyItems
     }
   }
@@ -389,7 +392,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                  entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
                                  storage: WorkspaceEntityStorage,
                                  writer: JpsFileContentWriter) {
-    val externalSystemOptions = module.externalSystemOptions
+    val externalSystemOptions = module.exModuleOptions
     val customImlData = module.customImlData
     saveModuleOptions(externalSystemOptions, module.type, customImlData, writer)
     val moduleOptions = customImlData?.customModuleOptions
@@ -744,12 +747,13 @@ fun storeSourceRootsOrder(orderOfItems: List<VirtualFileUrl>,
                           builder: WorkspaceEntityStorageBuilder) {
   if (orderOfItems.size > 1) {
     // Save the order in which sourceRoots appear in the module
-    val orderingEntity = contentRootEntity.getSourceRootOrder()
+    val orderingEntity = contentRootEntity.sourceRootOrder
     if (orderingEntity == null) {
-      builder.addEntity(ModifiableSourceRootOrderEntity::class.java, contentRootEntity.entitySource) {
+      builder.addEntity(SourceRootOrderEntity {
         this.contentRootEntity = contentRootEntity
         this.orderOfSourceRoots = orderOfItems
-      }
+        this.entitySource = contentRootEntity.entitySource
+      })
     }
     else {
       builder.modifyEntity(ModifiableSourceRootOrderEntity::class.java, orderingEntity) {
@@ -760,6 +764,6 @@ fun storeSourceRootsOrder(orderOfItems: List<VirtualFileUrl>,
 }
 
 fun ContentRootEntity.getSourceRootsComparator(): Comparator<SourceRootEntity> {
-  val order = (getSourceRootOrder()?.orderOfSourceRoots ?: emptyList()).withIndex().associateBy({ it.value }, { it.index })
+  val order = (sourceRootOrder?.orderOfSourceRoots ?: emptyList()).withIndex().associateBy({ it.value }, { it.index })
   return compareBy<SourceRootEntity> { order[it.url] ?: order.size }.thenBy { it.url.url }
 }

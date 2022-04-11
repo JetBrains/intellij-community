@@ -290,6 +290,7 @@ class KotlinReader(val file: KtFile) {
                 isNext("data ") && isNext("class ") -> `interface`(annotations(), WsData)
                 isNext("sealed ") && isNext("class ") -> `interface`(annotations(), WsSealed)
                 isNext("enum ") && isNext("class ") -> `interface`(annotations(), WsEnum)
+                isNext("object ") -> `interface`(annotations(), WsObject)
                 isNext("interface ") -> `interface`(annotations())
                 isNext("override ") && isNext("val ") -> `val`(annotations())
                 isNext("val ") -> `val`(annotations())

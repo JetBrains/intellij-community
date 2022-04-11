@@ -46,8 +46,8 @@ import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.SourceRootEntity
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable

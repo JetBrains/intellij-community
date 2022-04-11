@@ -29,8 +29,8 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId;
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.LibraryId;
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.LibraryTableId;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 

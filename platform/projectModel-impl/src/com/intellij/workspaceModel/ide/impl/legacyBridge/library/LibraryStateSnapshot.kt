@@ -21,10 +21,9 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.FileContainerDe
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.JarDirectoryDescription
 import com.intellij.workspaceModel.ide.toExternalSource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
-import com.intellij.workspaceModel.storage.bridgeEntities.getCustomProperties
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryPropertiesEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot
 import java.io.StringReader
 
 class LibraryStateSnapshot(
@@ -40,7 +39,7 @@ class LibraryStateSnapshot(
   else null
 
   private val kindProperties by lazy {
-    val customProperties = libraryEntity.getCustomProperties()
+    val customProperties = libraryEntity.libraryProperties
     val k = customProperties?.libraryType?.let {
       LibraryKindRegistry.getInstance().findKindById(it) ?: UnknownLibraryKind.getOrCreate(it)
     } as? PersistentLibraryKind<*>
