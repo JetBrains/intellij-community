@@ -1,0 +1,8 @@
+// "Cast to 'Iterable<Int>'" "true"
+
+fun append(x: Any) {}
+fun append(xs: Collection<*>) {}
+
+fun invoke() {
+    append(1.rangeTo(10)<caret>)
+}
