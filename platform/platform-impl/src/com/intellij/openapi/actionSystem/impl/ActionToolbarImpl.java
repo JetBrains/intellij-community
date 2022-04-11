@@ -127,7 +127,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private final ActionGroup myActionGroup;
   private final @NotNull String myPlace;
   private List<? extends AnAction> myVisibleActions;
-  private final PresentationFactory myPresentationFactory = new PresentationFactory();
+  private final PresentationFactory myPresentationFactory = new ActionToolbarPresentationFactory();
   private final boolean myDecorateButtons;
 
   private final ToolbarUpdater myUpdater;
