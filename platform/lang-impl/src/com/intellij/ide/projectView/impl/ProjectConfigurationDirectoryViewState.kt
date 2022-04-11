@@ -3,10 +3,11 @@ package com.intellij.ide.projectView.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.messages.Topic
 
 @State(name = "ProjectConfigurationDirectoryViewState", storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))], category = SettingsCategory.UI)
-open class ProjectConfigurationDirectoryViewState @JvmOverloads constructor(initialState: State = State())
+open class ProjectConfigurationDirectoryViewState @JvmOverloads @NonInjectable constructor(initialState: State = State())
   : SimplePersistentStateComponent<ProjectConfigurationDirectoryViewState.State>(initialState) {
 
   var shouldShow: Boolean
