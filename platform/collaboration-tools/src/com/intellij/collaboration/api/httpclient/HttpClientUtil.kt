@@ -2,17 +2,13 @@
 package com.intellij.collaboration.api.httpclient
 
 import com.intellij.collaboration.api.HttpStatusErrorException
+import com.intellij.collaboration.api.httpclient.response.InflatingInputStreamBodyHandler
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.text.nullize
 import java.io.InputStream
-import java.net.http.HttpHeaders
 import java.net.http.HttpResponse
-import java.util.zip.GZIPInputStream
+import java.net.http.HttpResponse.BodyHandler
 
-/**
- * Base class to perform API requests via JDK11 http library
- * Assists with handling compression, sets proper timeouts, headers, etc.
- */
 object HttpClientUtil {
 
   const val CONTENT_ENCODING_HEADER = "Content-Encoding"
@@ -23,30 +19,7 @@ object HttpClientUtil {
 
   private val LOG = thisLogger()
 
-  inline fun <reified T> handleResponse(response: HttpResponse<InputStream>,
-                                        crossinline bodyReader: (InputStream) -> T): T {
-    checkResponse(response)
-    return response.body().use { stream ->
-      wrapGzipIfNeeded(response.headers(), stream).let(bodyReader)
-    }
-  }
-
-  inline fun <reified T> handleOptionalResponse(response: HttpResponse<InputStream>,
-                                                crossinline bodyReader: (InputStream) -> T): T? {
-    try {
-      checkResponse(response)
-      return response.body().use { stream ->
-        wrapGzipIfNeeded(response.headers(), stream).let(bodyReader)
-      }
-    }
-    catch (e: HttpStatusErrorException) {
-      if (e.statusCode == 404) return null
-      throw e
-    }
-  }
-
-  @PublishedApi
-  internal fun checkResponse(response: HttpResponse<InputStream>) {
+  fun checkResponse(response: HttpResponse<InputStream>) {
     val request = response.request()
     val statusCode = response.statusCode()
     if (statusCode < 400) {
@@ -60,10 +33,5 @@ object HttpClientUtil {
     throw HttpStatusErrorException(request.method(), request.uri().toString(), statusCode, errorText)
   }
 
-  @PublishedApi
-  internal fun wrapGzipIfNeeded(headers: HttpHeaders, stream: InputStream): InputStream =
-    if (headers.allValues(CONTENT_ENCODING_HEADER).contains(CONTENT_ENCODING_GZIP)) {
-      GZIPInputStream(stream)
-    }
-    else stream
+  fun inflatedInputStreamBodyHandler(): BodyHandler<InputStream> = InflatingInputStreamBodyHandler()
 }

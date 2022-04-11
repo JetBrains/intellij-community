@@ -1,7 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.api.request
 
-import com.intellij.collaboration.api.httpclient.HttpClientUtil
+import com.intellij.collaboration.api.httpclient.HttpClientUtil.checkResponse
+import com.intellij.collaboration.api.httpclient.HttpClientUtil.inflatedInputStreamBodyHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
@@ -10,7 +11,6 @@ import org.jetbrains.plugins.gitlab.api.GitLabGQLQueries
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDto
 import java.awt.Image
-import java.net.http.HttpResponse
 import javax.imageio.ImageIO
 
 object GitLabUsersApi : GitLabApiRequestsBase() {
@@ -21,10 +21,10 @@ object GitLabUsersApi : GitLabApiRequestsBase() {
   }
 
   suspend fun GitLabApi.loadImage(uri: String): Image? {
+    val response = client.sendAsync(request(uri).GET().build(), inflatedInputStreamBodyHandler()).await()
     return withContext(Dispatchers.IO) {
-      val req = request(uri).GET().build()
-      val res = client.sendAsync(req, HttpResponse.BodyHandlers.ofInputStream()).await()
-      HttpClientUtil.handleResponse(res, ImageIO::read)
+      checkResponse(response)
+      response.body().use(ImageIO::read)
     }
   }
 }

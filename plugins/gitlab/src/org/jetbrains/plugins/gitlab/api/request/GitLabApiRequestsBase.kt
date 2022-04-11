@@ -6,11 +6,14 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.introspect.VisibilityChecker
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.intellij.collaboration.api.httpclient.HttpClientUtil
 import com.intellij.collaboration.api.dto.GraphQLErrorDTO
 import com.intellij.collaboration.api.dto.GraphQLRequestDTO
 import com.intellij.collaboration.api.dto.GraphQLResponseDTO
 import com.intellij.collaboration.api.graphql.GraphQLErrorException
+import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_TYPE_HEADER
+import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_TYPE_JSON
+import com.intellij.collaboration.api.httpclient.HttpClientUtil.checkResponse
+import com.intellij.collaboration.api.httpclient.HttpClientUtil.inflatedInputStreamBodyHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
@@ -18,9 +21,9 @@ import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQueryLoader
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import java.net.http.HttpRequest
-import java.net.http.HttpResponse
 import java.text.SimpleDateFormat
 import java.util.*
+
 
 /**
  * A base for a collection of API methods
@@ -34,26 +37,26 @@ abstract class GitLabApiRequestsBase {
     }
     return request(server)
       .POST(bodyPublisher)
-      .header(HttpClientUtil.CONTENT_TYPE_HEADER, HttpClientUtil.CONTENT_TYPE_JSON)
+      .header(CONTENT_TYPE_HEADER, CONTENT_TYPE_JSON)
       .build()
   }
 
   suspend inline fun <reified T> GitLabApi.loadRestJson(request: HttpRequest): T {
-    return withContext(Dispatchers.IO) {
-      val response = client.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream()).await()
-      HttpClientUtil.handleResponse(response) {
-        restJackson.readValue(it, T::class.java)!!
-      }
+    val response = client.sendAsync(request, inflatedInputStreamBodyHandler()).await()
+    checkResponse(response)
+    return response.body().use {
+      restJackson.readValue(it, T::class.java)!!
     }
   }
 
   suspend inline fun <reified T> GitLabApi.loadGQLResponse(request: HttpRequest, vararg pathFromData: String): T? {
-    val response = client.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream()).await()
+    val response = client.sendAsync(request, inflatedInputStreamBodyHandler()).await()
     return withContext(Dispatchers.IO) {
+      checkResponse(response)
       val responseType = gqlJackson.typeFactory
         .constructParametricType(GraphQLResponseDTO::class.java, JsonNode::class.java, GraphQLErrorDTO::class.java)
-      HttpClientUtil.handleResponse(response) { stream ->
-        extractObject(gqlJackson.readValue(stream, responseType), *pathFromData)
+      response.body().use {
+        extractObject(gqlJackson.readValue(it, responseType), *pathFromData)
       }
     }
   }
