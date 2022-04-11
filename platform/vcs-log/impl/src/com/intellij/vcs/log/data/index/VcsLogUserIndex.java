@@ -11,7 +11,11 @@ import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
-import com.intellij.util.io.*;
+import com.intellij.util.io.IntCollectionDataExternalizer;
+import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.VoidDataExternalizer;
+import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
@@ -63,7 +67,7 @@ public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShort
                                                                      @Nullable StorageLockContext storageLockContext,
                                                                      @NotNull VcsUserRegistry userRegistry) throws IOException {
     Path storageFile = storageId.getStorageFile(USERS_IDS);
-    return new PersistentEnumerator<>(storageFile, new VcsUserKeyDescriptor(userRegistry), Page.PAGE_SIZE, storageLockContext,
+    return new PersistentEnumerator<>(storageFile, new VcsUserKeyDescriptor(userRegistry), AbstractStorage.PAGE_SIZE, storageLockContext,
                                       storageId.getVersion());
   }
 

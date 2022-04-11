@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.io.*;
+import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -70,7 +71,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     VcsRefKeyDescriptor refsKeyDescriptor = new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor);
     StorageId refsStorageId = new StorageId(project.getName(), REFS_STORAGE, logId, VERSION + REFS_VERSION);
     myRefsEnumerator = IOUtil.openCleanOrResetBroken(() -> new PersistentEnumerator<>(refsStorageId.getStorageFile(STORAGE),
-                                                                                      refsKeyDescriptor, Page.PAGE_SIZE,
+                                                                                      refsKeyDescriptor, AbstractStorage.PAGE_SIZE,
                                                                                       storageLockContext, refsStorageId.getVersion()),
                                                      refsStorageId.getStorageFile(STORAGE).toFile());
     Disposer.register(parent, this);
@@ -317,7 +318,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   private static final class MyPersistentBTreeEnumerator extends PersistentBTreeEnumerator<CommitId> {
     MyPersistentBTreeEnumerator(@NotNull StorageId storageId, @NotNull KeyDescriptor<CommitId> commitIdKeyDescriptor,
                                 @Nullable StorageLockContext storageLockContext) throws IOException {
-      super(storageId.getStorageFile(STORAGE), commitIdKeyDescriptor, Page.PAGE_SIZE, storageLockContext,
+      super(storageId.getStorageFile(STORAGE), commitIdKeyDescriptor, AbstractStorage.PAGE_SIZE, storageLockContext,
             storageId.getVersion());
     }
 

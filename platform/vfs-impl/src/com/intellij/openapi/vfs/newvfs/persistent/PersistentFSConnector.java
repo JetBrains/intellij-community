@@ -101,10 +101,10 @@ final class PersistentFSConnector {
 
       attributes = new Storage(attributesFile, PersistentFSConnection.REASONABLY_SMALL) {
         @Override
-        protected AbstractRecordsTable createRecordsTable(PagePool pool, @NotNull Path recordsFile) throws IOException {
+        protected AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext context, @NotNull Path recordsFile) throws IOException {
           return FSRecords.inlineAttributes && FSRecords.useSmallAttrTable
-                 ? new CompactRecordsTable(recordsFile, pool, false)
-                 : super.createRecordsTable(pool, recordsFile);
+                 ? new CompactRecordsTable(recordsFile, context, false)
+                 : super.createRecordsTable(context, recordsFile);
         }
       };
 
@@ -181,9 +181,9 @@ final class PersistentFSConnector {
         deleted &= IOUtil.deleteAllFilesStartingWith(persistentFSPaths.getRootsBaseFile());
         deleted &= IOUtil.deleteAllFilesStartingWith(enumeratedAttributesFile);
 
-        if (!deleted) {
-          throw new IOException("Cannot delete filesystem storage files");
-        }
+        //if (!deleted) {
+        //  throw new IOException("Cannot delete filesystem storage files");
+        //}
       }
       catch (IOException e1) {
         e1.addSuppressed(e);
