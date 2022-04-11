@@ -6,7 +6,7 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A holder for both {@link FileEditor} and {@link FileEditorProvider}
+ * A holder for both {@link FileEditor} and {@link FileEditorProvider}.
  * The package is suffixed with 'ex' for backward compatibility
  */
 public final class FileEditorWithProvider {

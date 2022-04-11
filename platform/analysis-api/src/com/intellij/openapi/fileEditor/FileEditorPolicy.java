@@ -4,11 +4,9 @@ package com.intellij.openapi.fileEditor;
 public enum FileEditorPolicy {
 
   /**
-   * Place created editor before default IDE editor (if any).
+   * Place a created editor before the default IDE editor (if any).
    */
-  /*
-   * should be the first declaration
-   */
+  // should be the first declaration
   PLACE_BEFORE_DEFAULT_EDITOR,
 
   /**
@@ -24,8 +22,6 @@ public enum FileEditorPolicy {
   /**
    * Place created editor after the default IDE editor (if any).
    */
-  /*
-   * should be the last declaration
-   */
+  // should be the last declaration
   PLACE_AFTER_DEFAULT_EDITOR
 }

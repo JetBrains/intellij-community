@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.Disposable;
@@ -32,7 +32,6 @@ public abstract class FileEditorManager {
    */
   public abstract FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor);
 
-
   /**
    * Opens a file.
    * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
@@ -46,7 +45,7 @@ public abstract class FileEditorManager {
   }
 
   /**
-   * Closes all editors opened for the file.
+   * Closes all the editors opened for a given file.
    * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    *
    * @param file file to be closed.
@@ -94,7 +93,7 @@ public abstract class FileEditorManager {
   public abstract boolean isFileOpen(@NotNull VirtualFile file);
 
   /**
-   * @return {@code true} if {@code file} is opened, {@code false} otherwise
+   * @return {@code true} if {@code file} is opened, {@code false} otherwise.
    * Unlike {@link #isFileOpen(VirtualFile)} includes files which were opened by all guests during a collaborative development session.
    */
   @ApiStatus.Experimental
@@ -108,10 +107,10 @@ public abstract class FileEditorManager {
   public abstract VirtualFile @NotNull [] getOpenFiles();
 
   /**
-   * @return all opened files including ones which were opened by guests during a collaborative development session.
-   * Order of files in the array corresponds to the order of host's editor tabs, order for guests isn't determined.
-   * There are cases when only editors for of a particular user is needed (e.g. a search scope 'open files'),
-   * but at the same time editor notifications should be shown to all users
+   * @return all opened files, including ones which were opened by guests during a collaborative development session.
+   * The order of files in the array corresponds to the order of host's editor tabs, order for guests isn't determined.
+   * There are cases when only editors of a particular user are needed (e.g. a search scope 'open files'),
+   * but at the same time editor notifications should be shown to all users.
    */
   @ApiStatus.Experimental
   public VirtualFile @NotNull [] getOpenFilesWithRemotes() {
@@ -123,18 +122,18 @@ public abstract class FileEditorManager {
   }
 
   /**
-   * @return files currently selected. The method returns empty array if there are no selected files.
-   * If more than one file is selected (split), the file with most recent focused editor is returned first.
+   * @return files currently selected. The method returns an empty array if there are no selected files.
+   * If more than one file is selected (split), the file with the most recent focused editor is returned first.
    */
   public abstract VirtualFile @NotNull [] getSelectedFiles();
 
   /**
-   * @return editors currently selected. The method returns empty array if no editors are open.
+   * @return editors currently selected. The method returns an empty array if no editors are open.
    */
   public abstract FileEditor @NotNull [] getSelectedEditors();
 
   /**
-   * @return editors currently selected including ones which were opened by guests during a collaborative development session
+   * @return editors currently selected including ones which were opened by guests during a collaborative development session.
    * The method returns an empty array if no editors are open.
    */
   @ApiStatus.Experimental
@@ -151,7 +150,7 @@ public abstract class FileEditorManager {
   }
 
   /**
-   * @return editor which is currently selected for given file.
+   * @return editor which is currently selected for a given file.
    * The method returns {@code null} if {@code file} is not opened.
    */
   public abstract @Nullable FileEditor getSelectedEditor(@NotNull VirtualFile file);
@@ -179,8 +178,8 @@ public abstract class FileEditorManager {
    * {@link com.intellij.openapi.editor.colors.EditorColors#SEPARATOR_ABOVE_COLOR SEPARATOR_ABOVE_COLOR} or
    * {@link com.intellij.openapi.editor.colors.EditorColors#TEARLINE_COLOR TEARLINE_COLOR} if it is not set.
    * <p>
-   * This method allows to add several components above the editor.
-   * To change an order of components the specified component may implement the
+   * This method allows adding several components above the editor.
+   * To change the order of components, the specified component may implement the
    * {@link com.intellij.openapi.util.Weighted Weighted} interface.
    */
   public abstract void addTopComponent(final @NotNull FileEditor editor, final @NotNull JComponent component);
@@ -195,8 +194,8 @@ public abstract class FileEditorManager {
    * {@link com.intellij.openapi.editor.colors.EditorColors#SEPARATOR_BELOW_COLOR SEPARATOR_BELOW_COLOR} or
    * {@link com.intellij.openapi.editor.colors.EditorColors#TEARLINE_COLOR TEARLINE_COLOR} if it is not set.
    * <p>
-   * This method allows to add several components below the editor.
-   * To change an order of components the specified component may implement the
+   * This method allows adding several components below the editor.
+   * To change the order of components, the specified component may implement the
    * {@link com.intellij.openapi.util.Weighted Weighted} interface.
    */
   public abstract void addBottomComponent(final @NotNull FileEditor editor, final @NotNull JComponent component);
@@ -208,7 +207,7 @@ public abstract class FileEditorManager {
   public static final Key<Color> SEPARATOR_COLOR = Key.create("FileEditorSeparatorColor");
 
   /**
-   * Adds specified {@code listener}
+   * Adds specified {@code listener}.
    *
    * @param listener listener to be added
    * @deprecated Use {@link com.intellij.util.messages.MessageBus} instead: see {@link FileEditorManagerListener#FILE_EDITOR_MANAGER}
@@ -218,7 +217,7 @@ public abstract class FileEditorManager {
   }
 
   /**
-   * Removes specified {@code listener}
+   * Removes specified {@code listener}.
    *
    * @param listener listener to be removed
    * @deprecated Use {@link FileEditorManagerListener#FILE_EDITOR_MANAGER} instead
@@ -239,9 +238,7 @@ public abstract class FileEditorManager {
   public abstract @NotNull List<FileEditor> openFileEditor(@NotNull FileEditorNavigatable descriptor, boolean focusEditor);
 
   /**
-   * Returns the project with which the file editor manager is associated.
-   *
-   * @return the project instance.
+   * @return the project which the file editor manager is associated with.
    */
   public abstract @NotNull Project getProject();
 
@@ -257,14 +254,13 @@ public abstract class FileEditorManager {
    * Selects a specified file editor tab for the specified editor.
    *
    * @param file                 a file to switch the file editor tab for. The function does nothing if the file is not currently open in the editor.
-   * @param fileEditorProviderId the ID of the file editor to open; matches the return value of
-   *                             {@link FileEditorProvider#getEditorTypeId()}
+   * @param fileEditorProviderId the ID of the file editor to open; matches the return value of {@link FileEditorProvider#getEditorTypeId()}
    */
   public abstract void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId);
 
   /**
-   * {@link FileEditorManager} supports asynchronous opening of text editors, i.e. when one of 'openFile' methods returns, returned
-   * editor might not be fully initialized yet. This method allows delaying (if needed) execution of given runnable until editor is
+   * {@link FileEditorManager} supports asynchronous opening of text editors, i.e. when one of {@code openFile*} methods returns, returned
+   * editor might not be fully initialized yet. This method allows delaying (if needed) execution of a given runnable until the editor is
    * fully loaded.
    */
   public abstract void runWhenLoaded(@NotNull Editor editor, @NotNull Runnable runnable);
@@ -272,7 +268,7 @@ public abstract class FileEditorManager {
   /**
    * Refreshes the text, colors and icon of the editor tabs representing the specified file.
    *
-   * @param file the file to refresh.
+   * @param file refreshed file
    */
   public void updateFilePresentation(@NotNull VirtualFile file) { }
 }
