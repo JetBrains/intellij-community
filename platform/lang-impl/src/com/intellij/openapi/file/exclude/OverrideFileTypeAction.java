@@ -75,7 +75,7 @@ class OverrideFileTypeAction extends DumbAwareAction {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files == null) return VirtualFile.EMPTY_ARRAY;
     return Arrays.stream(files)
-      .filter(file -> file != null && !file.isDirectory())
+      .filter(file -> file != null && ChangeToThisFileTypeAction.isOverridableFile(file))
       .filter(additionalPredicate)
       .toArray(count -> VirtualFile.ARRAY_FACTORY.create(count));
   }
