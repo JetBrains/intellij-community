@@ -260,6 +260,28 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
   @Test
   @TargetVersions("4.7+")
+  public void testResourceFoldersWithIdeaPluginInNonJavaProject() throws Exception {
+    createProjectSubDirs("python/src", "python/test", "python/resources");
+    importProject(createBuildScriptBuilder().withIdeaPlugin()
+                    .addPostfix(      "idea {",
+                                      "  module {",
+                                      "    sourceDirs += file('python/src')",
+                                      "    resourceDirs += file('python/resources')",
+                                      "    testSourceDirs += file('python/test')",
+                                      "  }",
+                                      "}")
+                    .generate());
+
+    assertModules("project");
+    assertContentRoots("project", getProjectPath());
+
+    assertSources("project", "python/src");
+    assertResources("project", "python/resources");
+    assertTestSources("project", "python/test");
+  }
+
+  @Test
+  @TargetVersions("4.7+")
   public void testResourceFoldersWithIdeaPlugin() throws Exception {
     createProjectSubDirs("src/main/java",
                          "src/main/src2",
