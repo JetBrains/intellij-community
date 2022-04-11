@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.structuralsearch
 
@@ -17,11 +17,11 @@ import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo
 import com.intellij.util.containers.tail
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.addTypeParameter
 import org.jetbrains.kotlin.idea.core.setDefaultValue
-import org.jetbrains.kotlin.idea.imports.importableFqName
+import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.js.translate.declaration.hasCustomGetter
 import org.jetbrains.kotlin.js.translate.declaration.hasCustomSetter
@@ -31,8 +31,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
-import org.jetbrains.kotlin.resolve.ImportPath
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class KotlinStructuralReplaceHandler(private val project: Project) : StructuralReplaceHandler() {
     override fun replace(info: ReplacementInfo, options: ReplaceOptions) {
@@ -122,16 +120,14 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
     ) {
         // fix parsing for fq selector expression replacement with shorten references
         if (receiverExpression is KtDotQualifiedExpression && selectorExpression is KtCallExpression && options.isToShortenFQN) {
+            val file = match.containingKtFile
             val symbols = text.split(".")
             val psiFactory = KtPsiFactory(match)
             receiverExpression.replace(psiFactory.createExpression(symbols.first()))
-            val importPath = ImportPath(FqName(symbols.tail().joinToString(separator = ".") { it }.substringBefore("(")), false)
-            val replaceImport = psiFactory.createImportDirective(importPath)
-            val matchFqName = match.selectorExpression?.resolveToCall(BodyResolveMode.PARTIAL_NO_ADDITIONAL)?.candidateDescriptor?.importableFqName
-            val importList = (match.containingFile as? KtFile)?.importList ?: return
-            val import = importList.imports.first { it.importedFqName == matchFqName }
-            val newLine = importList.addAfter(psiFactory.createWhiteSpace("\n"), import)
-            importList.addAfter(replaceImport, newLine)
+            val importName = FqName(symbols.tail().joinToString(separator = ".") { it }.substringBefore("("))
+            file.resolveImportReference(importName).firstOrNull()?.let { importRef ->
+                ImportInsertHelper.getInstance(project).importDescriptor(file, importRef)
+            }
         }
         receiverExpression.structuralReplace(searchTemplate.receiverExpression, match.receiverExpression, options)
         val selectorExpr = selectorExpression
