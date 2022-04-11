@@ -9,7 +9,6 @@ internal class SettingsSyncUpdateChecker(private val application: Application,
   @RequiresBackgroundThread
   fun scheduleUpdateFromServer() : UpdateResult {
     val updateResult = remoteCommunicator.receiveUpdates()
-    SettingsSyncStatusTracker.getInstance().updateStatus(updateResult)
     if (updateResult is UpdateResult.Success) {
       val snapshot = updateResult.settingsSnapshot
       SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.CloudChange(snapshot))

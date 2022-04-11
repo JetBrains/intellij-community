@@ -20,7 +20,9 @@ import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-internal class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync")), SettingsSyncEnabler.Listener {
+internal class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync")),
+                                          SettingsSyncEnabler.Listener,
+                                          SettingsSyncStatusTracker.Listener {
 
   private lateinit var configPanel: DialogPanel
   private lateinit var enableButton: CellBuilder<JButton>
@@ -30,6 +32,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
   init {
     syncEnabler.addListener(this)
+    SettingsSyncStatusTracker.getInstance().addListener(this)
   }
 
   inner class LoggedInPredicate : ComponentPredicate() {
@@ -156,7 +159,6 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
         showError(enableButton.component, message("notification.title.update.error"), result.message)
       }
     }
-    SettingsSyncStatusTracker.getInstance().updateStatus(result)
     updateStatusInfo()
   }
 
@@ -231,6 +233,13 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     return SettingsSyncAuthService.getInstance().getUserData()?.loginName ?: "?"
   }
 
+  override fun syncStatusChanged() {
+    updateStatusInfo()
+  }
+
+  override fun disposeUIResources() {
+    SettingsSyncStatusTracker.getInstance().removeListener(this)
+  }
 }
 
 class SettingsSyncConfigurableProvider: ConfigurableProvider() {

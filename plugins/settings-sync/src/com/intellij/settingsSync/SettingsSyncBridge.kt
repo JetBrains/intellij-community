@@ -108,7 +108,10 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
       val pushResult: SettingsSyncPushResult = pushToIde(settingsLog.collectCurrentSnapshot())
       LOG.info("Result of pushing settings to the IDE: $pushResult")
       when (pushResult) {
-        SettingsSyncPushResult.Success -> settingsLog.setIdePosition(masterPosition)
+        SettingsSyncPushResult.Success -> {
+          settingsLog.setIdePosition(masterPosition)
+          SettingsSyncStatusTracker.getInstance().updateOnSuccess()
+        }
         is SettingsSyncPushResult.Error -> {
           // todo notify only in case of explicit sync invocation, otherwise update some SettingsSyncStatus
           notifySettingsSyncError(title = SettingsSyncBundle.message("notification.title.apply.error"),
@@ -128,7 +131,10 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
       val pushResult: SettingsSyncPushResult = pushToCloud(settingsLog.collectCurrentSnapshot())
       LOG.info("Result of pushing settings to the cloud: $pushResult")
       when (pushResult) {
-        SettingsSyncPushResult.Success -> settingsLog.setCloudPosition(masterPosition)
+        SettingsSyncPushResult.Success -> {
+          settingsLog.setCloudPosition(masterPosition)
+          SettingsSyncStatusTracker.getInstance().updateOnSuccess()
+        }
         is SettingsSyncPushResult.Error -> {
           // todo notify only in case of explicit sync invocation, otherwise update some SettingsSyncStatus
           notifySettingsSyncError(SettingsSyncBundle.message("notification.title.push.error"), pushResult.message)
@@ -152,9 +158,7 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
   }
 
   private fun pushToCloud(settingsSnapshot: SettingsSnapshot): SettingsSyncPushResult {
-    val result = remoteCommunicator.push(settingsSnapshot)
-    SettingsSyncStatusTracker.getInstance().updateStatus(result)
-    return result
+    return remoteCommunicator.push(settingsSnapshot)
   }
 
   private fun pushToIde(settingsSnapshot: SettingsSnapshot): SettingsSyncPushResult {
