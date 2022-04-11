@@ -201,10 +201,6 @@ public final class ConfigImportHelper {
 
         doImport(oldConfigDir, newConfigDir, oldIdeHome, log, configImportOptions);
 
-        if (settings != null) {
-          settings.importFinished(newConfigDir, pathSelectorOfOtherIde);
-        }
-
         setConfigImportedInThisSession();
       }
       else {
@@ -212,6 +208,10 @@ public final class ConfigImportHelper {
         if (importScenarioStatistics == null) {
           importScenarioStatistics = CLEAN_CONFIGS;
         }
+      }
+
+      if (settings != null) {
+        settings.importFinished(newConfigDir, pathSelectorOfOtherIde);
       }
 
       ImportOldConfigsState.getInstance().reportImportScenario(importScenarioStatistics);
