@@ -157,7 +157,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @Nullable private Int2ObjectMap<List<GutterMark>> myLineToGutterRenderers;
   private boolean myLineToGutterRenderersCacheForLogicalLines;
   private boolean myHasInlaysWithGutterIcons;
-  private int myStartIconAreaWidth = START_ICON_AREA_WIDTH.get();
+  private int myStartIconAreaWidth = ExperimentalUI.isNewUI() ? 0 : START_ICON_AREA_WIDTH.get();
   private int myIconsAreaWidth;
   int myLineNumberAreaWidth = getInitialLineNumberWidth();
   int myAdditionalLineNumberAreaWidth;
@@ -1094,6 +1094,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       for (int i = 0; i < renderers.size(); i++) {
         GutterMark renderer = renderers.get(i);
         if (!checkDumbAware(renderer)) continue;
+        if (isMergedWithLineNumbers(renderer)) continue;
         width += scaleIcon(renderer.getIcon()).getIconWidth();
         if (i > 0) width += getGapBetweenIcons();
       }
@@ -1120,6 +1121,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     else {
       myLastNonDumbModeIconAreaWidth = myIconsAreaWidth;
     }
+  }
+
+  private boolean isMergedWithLineNumbers(GutterMark renderer) {
+    return isLineNumbersShown() &&
+           renderer instanceof GutterIconRenderer &&
+           ((GutterIconRenderer)renderer).getAlignment() == GutterIconRenderer.Alignment.LINE_NUMBERS;
   }
 
   @Override
