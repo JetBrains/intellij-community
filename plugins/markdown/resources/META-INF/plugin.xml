@@ -129,6 +129,8 @@ Includes the following features:</p>
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence$Manipulator"/>
     <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination"
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination$Manipulator"/>
+    <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownFrontMatterHeader"
+                             implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownFrontMatterHeader$Manipulator"/>
 
     <colorSettingsPage implementation="org.intellij.plugins.markdown.highlighting.MarkdownColorSettingsPage"/>
     <syntaxHighlighter key="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownSyntaxHighlighter"/>

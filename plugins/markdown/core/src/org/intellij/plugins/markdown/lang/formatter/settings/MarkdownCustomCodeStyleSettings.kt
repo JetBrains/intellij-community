@@ -8,24 +8,31 @@ import org.intellij.plugins.markdown.lang.MarkdownLanguage
 @Suppress("PropertyName")
 class MarkdownCustomCodeStyleSettings(settings: CodeStyleSettings) : CustomCodeStyleSettings(MarkdownLanguage.INSTANCE.id, settings) {
   //BLANK LINES
+  // See IDEA-291443
   @JvmField
+  //@Property(externalName = "min_lines_around_header")
   var MAX_LINES_AROUND_HEADER: Int = 1
 
   @JvmField
+  //@Property(externalName = "max_lines_around_header")
   var MIN_LINES_AROUND_HEADER: Int = 1
 
 
   @JvmField
+  //@Property(externalName = "min_lines_around_block_elements")
   var MAX_LINES_AROUND_BLOCK_ELEMENTS: Int = 1
 
   @JvmField
+  //@Property(externalName = "max_lines_around_block_elements")
   var MIN_LINES_AROUND_BLOCK_ELEMENTS: Int = 1
 
 
   @JvmField
+  //@Property(externalName = "min_lines_between_paragraphs")
   var MAX_LINES_BETWEEN_PARAGRAPHS: Int = 1
 
   @JvmField
+  //@Property(externalName = "max_lines_between_paragraphs")
   var MIN_LINES_BETWEEN_PARAGRAPHS: Int = 1
 
   //SPACES
