@@ -195,7 +195,8 @@ final class FilePartNodeRoot extends FilePartNode {
       // if not, create temp UrlPartNode which will be replaced with FPPN when the real file is created
       //noinspection UseVirtualFileEquals
       if (currentFile == NEVER_TRIED_TO_FIND) {
-        currentFile = findFileFromRootOrNull(fsRoot = updateFSRoot(fs, names, fsRoot), currentFS, names, i);
+        fsRoot = updateFSRoot(fs, names, fsRoot);
+        currentFile = findFileFromRootOrNull(fsRoot, currentFS, names, i);
       }
       else {
         currentFile = currentFile == null ? null : findChildThroughJar(currentFile, name, currentFS);

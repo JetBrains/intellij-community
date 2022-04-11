@@ -72,7 +72,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   */
   private final FilePartNodeRoot myLocalRoot = FilePartNodeRoot.createFakeRoot(LocalFileSystem.getInstance()); // guarded by this
   private final FilePartNodeRoot myTempRoot = FilePartNodeRoot.createFakeRoot(TempFileSystem.getInstance()); // guarded by this
-  // compare by identity because VirtualFilePointerContainer has too smart equals
+  // compare by identity because VirtualFilePointerContainer.equals() is too smart
   private final Set<VirtualFilePointerContainerImpl> myContainers = new ReferenceOpenHashSet<>();  // guarded by myContainers
   private final @NotNull VirtualFilePointerListener myPublisher;
 
@@ -200,8 +200,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     }
 
     if (fileSystem instanceof TempFileSystem && listener == null) {
-      // Since VFS events work correctly in temp FS as well, ideally, this branch shouldn't exist and normal VFPointer should be used in all tests
-      // but we have so many tests that create pointers, not dispose and leak them,
+      // Since VFS events work correctly in temp FS as well, ideally, this branch shouldn't exist and normal VFPointer should be used in all tests.
+      // But we have so many tests that create pointers, not dispose and leak them,
       // so for now we create normal pointers only when there are listeners.
       // maybe, later we'll fix all those tests
       VirtualFile found = file == null ? VirtualFileManager.getInstance().findFileByUrl(url) : file;
@@ -299,21 +299,21 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     for (int i = slashIndex; i < path.length(); i++) {
       char c = path.charAt(i);
       if (c == '/') {
-        char nextc = i == path.length()-1 ? 0 : path.charAt(i + 1);
-        if (nextc == '.') {
+        char nextC = i == path.length()-1 ? 0 : path.charAt(i + 1);
+        if (nextC == '.') {
           if (i == path.length() - 2) {
             // ends with "/.", ignore
             break;
           }
-          char nextNextc = path.charAt(i + 2);
-          if (nextNextc == '/') {
+          char nextNextC = path.charAt(i + 2);
+          if (nextNextC == '/') {
             i++;
             // "/./" in the middle, ignore "/."
             continue;
           }
           // "/.xxx", append
         }
-        else if (nextc == '/') {
+        else if (nextC == '/') {
           // ignore duplicate /
           continue;
         }
@@ -344,12 +344,10 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
         root.findOrCreateByPath(fs instanceof ArchiveFileSystem && !path.contains(JarFileSystem.JAR_SEPARATOR) ? path + JarFileSystem.JAR_SEPARATOR : path, fs)
         : root.findOrCreateByFile(file);
     FilePartNode node = toUpdate.node;
-    if (fs != node.myFS && url != null) {
-      if (IS_UNDER_UNIT_TEST || IS_INTERNAL) {
-        throw new IllegalArgumentException("Invalid url: '" + url + "'. "+
-                                           "Its protocol '"+VirtualFileManager.extractProtocol(url)+"' is from "+fsFromFile+
-                                           " but the path part points to "+node.myFS);
-      }
+    if (fs != node.myFS && url != null && (IS_UNDER_UNIT_TEST || IS_INTERNAL)) {
+      throw new IllegalArgumentException("Invalid url: '" + url + "'. " +
+                                         "Its protocol '" + VirtualFileManager.extractProtocol(url) + "' is from " + fsFromFile +
+                                         " but the path part points to " + node.myFS);
     }
     assert fs == node.myFS : "fs=" + fs + "; node.myFS=" + node.myFS+"; url="+url+"; file="+file;
 
@@ -552,7 +550,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     return new CollectedEvents(toFirePointers, toUpdateNodes, eventList, startModCount, prepareElapsedMs);
   }
 
-  // converts multimap with pointers to fire into a convenient
+  // converts multi-map with pointers-to-fire into convenient
   // - (listener->pointers created with this listener) map for firing individual listeners and
   // - allPointersToFire list to fire in bulk via VirtualFilePointerListener.TOPIC
   private static void groupPointersToFire(@NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers,
@@ -672,8 +670,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
   @Override
   public long getModificationCount() {
-    // depends on PersistentFS.getStructureModificationCount() - because com.intellij.openapi.vfs.impl.FilePartNode.update does
-    // depends on its own modification counter - because we need to change both before and after VFS changes
+    // Depends on PersistentFS.getStructureModificationCount() - because com.intellij.openapi.vfs.impl.FilePartNode.update does.
+    // Depends on its own modification counter - because we need to change both before and after VFS changes
     return super.getModificationCount() + PersistentFS.getInstance().getStructureModificationCount();
   }
 
