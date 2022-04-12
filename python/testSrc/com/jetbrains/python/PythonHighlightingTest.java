@@ -287,6 +287,51 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON35, false, false);
   }
 
+  // PY-52930
+  public void testExceptionGroupsStarNoWarning() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testExceptionGroupsStarOlderPythonWarning() {
+    doTest(LanguageLevel.PYTHON310, false, false);
+  }
+
+  // PY-52930
+  public void testExceptionGroupInExceptOk() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testExceptionGroupInExceptStar() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testExceptionGroupInTupleInExceptStar() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testExceptStarAndExceptInTheSameTry() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testContinueBreakReturnInExceptStar() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testContinueBreakInsideLoopInExceptStarPart() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testReturnInsideFunctionInExceptStarPart() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
   // PY-35961
   public void testUnpackingInNonParenthesizedTuplesInReturnAndYieldBefore38() {
     doTest(LanguageLevel.PYTHON35, false, false);

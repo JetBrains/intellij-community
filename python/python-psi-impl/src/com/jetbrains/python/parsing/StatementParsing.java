@@ -784,6 +784,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       while (myBuilder.getTokenType() == PyTokenTypes.EXCEPT_KEYWORD) {
         final SyntaxTreeBuilder.Marker exceptBlock = myBuilder.mark();
         myBuilder.advanceLexer();
+
+        boolean star = matchToken(PyTokenTypes.MULT);
         if (myBuilder.getTokenType() != PyTokenTypes.COLON) {
           if (!getExpressionParser().parseSingleExpression(false)) {
             myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
@@ -794,6 +796,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
               myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
             }
           }
+        }
+        else if (star) {
+          myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
         }
         parseColonAndSuite();
         exceptBlock.done(PyElementTypes.EXCEPT_PART);

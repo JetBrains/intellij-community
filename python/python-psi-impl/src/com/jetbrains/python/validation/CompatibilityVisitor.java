@@ -91,6 +91,12 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                        new ReplaceExceptPartQuickFix());
       }
     }
+    PsiElement star = PyPsiUtils.getFirstChildOfType(node, PyTokenTypes.MULT);
+    if (star != null) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON311),
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.starred.except.part"),
+                                     star);
+    }
   }
 
   @Override
