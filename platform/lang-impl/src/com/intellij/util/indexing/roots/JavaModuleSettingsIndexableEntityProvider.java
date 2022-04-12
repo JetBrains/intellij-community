@@ -21,7 +21,7 @@ class JavaModuleSettingsIndexableEntityProvider implements IndexableEntityProvid
   public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull JavaModuleSettingsEntity entity,
                                                                                                 @NotNull Project project) {
     if (entity.getLanguageLevelId() != null) {
-      return IndexableIteratorBuilders.INSTANCE.forModuleContent(entity.getModule().getpersistentId);
+      return IndexableIteratorBuilders.INSTANCE.forModuleContent(entity.getModule().getPersistentId());
     }
     return Collections.emptyList();
   }
@@ -30,7 +30,7 @@ class JavaModuleSettingsIndexableEntityProvider implements IndexableEntityProvid
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull JavaModuleSettingsEntity oldEntity,
                                                                                                    @NotNull JavaModuleSettingsEntity newEntity) {
     if (!Objects.equals(newEntity.getLanguageLevelId(), oldEntity.getLanguageLevelId())) {
-      return IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getModule().getpersistentId);
+      return IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getModule().getPersistentId());
     }
     return Collections.emptyList();
   }

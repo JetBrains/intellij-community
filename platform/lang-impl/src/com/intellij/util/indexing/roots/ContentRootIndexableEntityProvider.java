@@ -31,20 +31,20 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Modu
   public @NotNull Collection<? extends IndexableIteratorBuilder> getIteratorBuildersForExistingModule(@NotNull ModuleEntity entity,
                                                                                                       @NotNull WorkspaceEntityStorage entityStorage,
                                                                                                       @NotNull Project project) {
-    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getpersistentId, collectRootUrls(entity.getContentRoots()));
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getPersistentId(), collectRootUrls(entity.getContentRoots()));
   }
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull ContentRootEntity entity,
                                                                                                 @NotNull Project project) {
-    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getModule().getpersistentId, entity.getUrl());
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getModule().getPersistentId(), entity.getUrl());
   }
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ContentRootEntity oldEntity,
                                                                                                    @NotNull ContentRootEntity newEntity) {
     if (!(newEntity.getExcludedPatterns().equals(oldEntity.getExcludedPatterns()))) {
-      return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getModule().getpersistentId, newEntity.getUrl());
+      return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getModule().getPersistentId(), newEntity.getUrl());
     }
     List<VirtualFileUrl> newExcludedUrls = newEntity.getExcludedUrls();
     List<VirtualFileUrl> oldExcludedUrls = oldEntity.getExcludedUrls();
@@ -63,7 +63,7 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Modu
           roots.add(oldUrl);
         }
       }
-      return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getModule().getpersistentId, roots);
+      return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getModule().getPersistentId(), roots);
     }
     return Collections.emptyList();
   }
@@ -74,7 +74,7 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Modu
                                                                                                         @NotNull Project project) {
     List<VirtualFileUrl> newRoots = collectRootUrls(newEntity.getContentRoots());
     List<VirtualFileUrl> oldRoots = collectRootUrls(oldEntity.getContentRoots());
-    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getpersistentId, newRoots, oldRoots);
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getPersistentId(), newRoots, oldRoots);
   }
 
   @NotNull
@@ -88,7 +88,7 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Modu
     if (!entity.getExcludedPatterns().isEmpty() || !entity.getExcludedUrls().isEmpty()) {
       VirtualFile root = ((VirtualFilePointer)entity.getUrl()).getFile();
       if (root != null && ProjectFileIndex.getInstance(project).isInContent(root)) {
-        return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getModule().getpersistentId, entity.getUrl());
+        return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getModule().getPersistentId(), entity.getUrl());
       }
     }
     return Collections.emptyList();

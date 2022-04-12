@@ -49,10 +49,12 @@ class WorkspaceModuleImporter(
     val dependencies = collectDependencies(importData, entitySource)
     val moduleName = importData.moduleData.moduleName
     val moduleEntity = builder.addModuleEntity(moduleName, dependencies, entitySource, ModuleTypeId.JAVA_MODULE)
-    builder.addEntity(ModifiableExternalSystemModuleOptionsEntity::class.java, entitySource) {
+    val externalSystemModuleOptionsEntity = ExternalSystemModuleOptionsEntity {
+      this.entitySource = entitySource
       module = moduleEntity
       externalSystem = externalSource.id
     }
+    builder.addEntity(externalSystemModuleOptionsEntity)
     val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings)
 
     when (importData.moduleData.type) {

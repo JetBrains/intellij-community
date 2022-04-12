@@ -153,7 +153,7 @@ class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<S
         return entity
     }
 
-    override fun persistentId: PersistentEntityId<*> {
+    override fun persistentId(): PersistentEntityId<*> {
         return SecondPId(data)
     }
 

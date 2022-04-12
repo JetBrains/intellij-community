@@ -106,11 +106,13 @@ class ModuleModelProxyImpl(private val diff: WorkspaceEntityStorageBuilder,
                                                                       PathUtil.getParentPath(
                                                                         systemIndependentPath)), ExternalProjectSystemRegistry.getInstance().getSourceById(
       ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID))
-    val moduleEntity = diff.addEntity(ModifiableModuleEntity::class.java, source) {
+    val moduleEntity = ModuleEntity {
       this.name = name
+      entitySource = source
       type = moduleTypeId
-      dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency)
+      dependencies =  listOf(ModuleDependencyItem.ModuleSourceDependency)
     }
+    diff.addEntity(moduleEntity)
     val moduleManager = getInstance(project)
     val module = moduleManager.createModuleInstance(moduleEntity, versionedStorage, diff, true, null)
     diff.getMutableExternalMapping<Module>("intellij.modules.bridge").addMapping(moduleEntity, module)
@@ -134,7 +136,7 @@ class ModuleModelProxyImpl(private val diff: WorkspaceEntityStorageBuilder,
 
         moduleGroupEntity == null && groupPathList == null -> Unit
         moduleGroupEntity != null && groupPathList == null -> diff.removeEntity(moduleGroupEntity)
-        moduleGroupEntity != null && groupPathList != null -> diff.modifyEntity(ModifiableModuleGroupPathEntity::class.java,
+        moduleGroupEntity != null && groupPathList != null -> diff.modifyEntity(ModuleGroupPathEntity.Builder::class.java,
                                                                                 moduleGroupEntity) {
           path = groupPathList
         }

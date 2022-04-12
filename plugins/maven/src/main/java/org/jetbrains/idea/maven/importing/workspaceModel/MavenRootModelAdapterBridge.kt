@@ -30,6 +30,7 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
+import org.jetbrains.workspaceModel.modifyEntity
 import java.io.File
 
 @Retention(AnnotationRetention.SOURCE)
@@ -134,7 +135,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
 
   override fun addExcludedFolder(path: String) {
     getContentRootFor(toUrl(path))?.let {
-      builder.modifyEntity(ModifiableContentRootEntity::class.java, it) {
+      builder.modifyEntity(it) {
         this.excludedUrls = this.excludedUrls + virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(path))
       }
     }
@@ -163,7 +164,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
                                    testJar: Boolean) {
 
     val dependency = ModuleDependencyItem.Exportable.ModuleDependency(ModuleId(moduleName), false, toEntityScope(scope), testJar)
-    moduleEntity = builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+    moduleEntity = builder.modifyEntity(moduleEntity) {
       this.dependencies = this.dependencies + dependency
     }
   }
@@ -224,9 +225,9 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
     val libDependency = ModuleDependencyItem.Exportable.LibraryDependency(LibraryId(libraryEntity.name, libraryTableId), false,
                                                                           toEntityScope(scope))
 
-    moduleEntity = builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity, {
+    moduleEntity = builder.modifyEntity(moduleEntity) {
       this.dependencies += this.dependencies + libDependency
-    })
+    }
     val last = legacyBridge.orderEntries.last()
     assert(last is LibraryOrderEntry && last.libraryName == artifact.ideaLibraryName())
     return last as LibraryOrderEntry

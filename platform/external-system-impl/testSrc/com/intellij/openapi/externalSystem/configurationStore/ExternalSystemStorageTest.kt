@@ -55,7 +55,6 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSyn
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder.Companion.from
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModuleOptionsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.externalSystemOptions
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
@@ -138,7 +137,7 @@ class ExternalSystemStorageTest {
             propertyManager.setExternalOptions(systemId, moduleData, projectData)
 
             val externalOptionsFromBuilder = modelsProvider.actualStorageBuilder
-              .entities(ModuleEntity::class.java).singleOrNull()?.externalSystemOptions
+              .entities(ModuleEntity::class.java).singleOrNull()?.exModuleOptions
             assertEquals("GRADLE", externalOptionsFromBuilder?.externalSystem)
           }
         }

@@ -48,10 +48,12 @@ class WorkspaceModuleImporter(
     val dependencies = collectDependencies(entitySource)
     val moduleName = mavenProjectToModuleName.getValue(mavenProject)
     val moduleEntity = builder.addModuleEntity(moduleName, dependencies, entitySource, ModuleTypeId.JAVA_MODULE)
-    builder.addEntity(ModifiableExternalSystemModuleOptionsEntity::class.java, entitySource) {
+    val externalSystemModuleOptionsEntity = ExternalSystemModuleOptionsEntity {
+      this.entitySource = entitySource
       module = moduleEntity
       externalSystem = externalSource.id
     }
+    builder.addEntity(externalSystemModuleOptionsEntity)
 
     val excludedFolders = LinkedHashSet<VirtualFileUrl>()
     importJavaSettings(moduleEntity, excludedFolders)

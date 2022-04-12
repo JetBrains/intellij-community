@@ -211,7 +211,7 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<Link
         return entity
     }
 
-    override fun persistentId: PersistentEntityId<*> {
+    override fun persistentId(): PersistentEntityId<*> {
         return LinkedListEntityId(myName)
     }
 

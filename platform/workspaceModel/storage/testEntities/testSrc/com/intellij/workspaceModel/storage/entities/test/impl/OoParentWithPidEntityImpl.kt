@@ -246,7 +246,7 @@ class OoParentWithPidEntityData : WorkspaceEntityData.WithCalculablePersistentId
         return entity
     }
 
-    override fun persistentId: PersistentEntityId<*> {
+    override fun persistentId(): PersistentEntityId<*> {
         return OoParentEntityId(parentProperty)
     }
 
