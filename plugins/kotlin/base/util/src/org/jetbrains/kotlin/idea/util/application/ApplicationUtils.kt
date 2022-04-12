@@ -4,17 +4,13 @@ package org.jetbrains.kotlin.idea.util.application
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.CancellationCheck
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
-import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 fun <T> runReadAction(action: () -> T): T {
     return ApplicationManager.getApplication().runReadAction<T>(action)
@@ -37,19 +33,6 @@ fun <T> runWriteActionIfPhysical(e: PsiElement, action: () -> T): T {
     }
     return action()
 }
-
-fun <T> runWriteActionInEdt(action: () -> T): T {
-    return if (isDispatchThread()) {
-        runWriteAction(action)
-    } else {
-        var result: T? = null
-        ApplicationManager.getApplication().invokeLater {
-            result = runWriteAction(action)
-        }
-        result!!
-    }
-}
-
 
 fun Project.executeWriteCommand(@NlsContexts.Command name: String, command: () -> Unit) {
     CommandProcessor.getInstance().executeCommand(this, { runWriteAction(command) }, name, null)
@@ -77,10 +60,13 @@ inline fun invokeLater(crossinline action: () -> Unit) =
 inline fun invokeLater(expired: Condition<*>, crossinline action: () -> Unit) =
     ApplicationManager.getApplication().invokeLater({ action() }, expired)
 
+@Suppress("NOTHING_TO_INLINE")
 inline fun isUnitTestMode(): Boolean = ApplicationManager.getApplication().isUnitTestMode
 
+@Suppress("NOTHING_TO_INLINE")
 inline fun isDispatchThread(): Boolean = ApplicationManager.getApplication().isDispatchThread
 
+@Suppress("NOTHING_TO_INLINE")
 inline fun isApplicationInternalMode(): Boolean = ApplicationManager.getApplication().isInternal
 
 fun <T> executeInBackgroundWithProgress(project: Project? = null, @NlsContexts.ProgressTitle title: String, block: () -> T): T {
@@ -90,9 +76,4 @@ fun <T> executeInBackgroundWithProgress(project: Project? = null, @NlsContexts.P
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(
         ThrowableComputable { block() }, title, true, project
     )
-}
-
-fun KotlinExceptionWithAttachments.withPsiAttachment(name: String, element: PsiElement?): KotlinExceptionWithAttachments {
-    kotlin.runCatching { element?.getElementTextWithContext() }.getOrNull()?.let { withAttachment(name, it) }
-    return this
 }
