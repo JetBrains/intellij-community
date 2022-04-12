@@ -104,11 +104,6 @@ public class Mock {
     public BackgroundEditorHighlighter getBackgroundHighlighter() {
       return null;
     }
-
-    @Override
-    public FileEditorLocation getCurrentLocation() {
-      return null;
-    }
   }
 
   public static class MyFileEditorManager extends FileEditorManagerEx {

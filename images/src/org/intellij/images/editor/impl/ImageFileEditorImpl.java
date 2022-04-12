@@ -17,7 +17,6 @@ package org.intellij.images.editor.impl;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
@@ -134,11 +133,6 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
 
   @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
-  }
-
-  @Override
-  public FileEditorLocation getCurrentLocation() {
     return null;
   }
 

@@ -118,7 +118,9 @@ public interface FileEditor extends UserDataHolder, Disposable {
    * The method is optional. Currently, it is used only by the Find Usages subsystem.
    * Expected to return a location of user's focus - a caret or any other form of selection start.
    */
-  @Nullable FileEditorLocation getCurrentLocation();
+  default @Nullable FileEditorLocation getCurrentLocation() {
+    return null;
+  }
 
   default @Nullable StructureViewBuilder getStructureViewBuilder() {
     return null;

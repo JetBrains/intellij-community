@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -7,7 +7,6 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
@@ -98,11 +97,6 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
 
     @Override
     public BackgroundEditorHighlighter getBackgroundHighlighter() {
-      return null;
-    }
-
-    @Override
-    public FileEditorLocation getCurrentLocation() {
       return null;
     }
 
