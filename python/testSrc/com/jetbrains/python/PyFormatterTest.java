@@ -1218,6 +1218,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-52930
+  public void testSpaceAfterStarredExcept() {
+    doTest();
+  }
+
   // PY-42200
   public void testParenthesizedWithItems() {
     doTest();

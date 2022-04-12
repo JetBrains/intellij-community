@@ -113,6 +113,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  // PY-52930
+  public void testTryExceptStarNoExpression() {
+    doTest();
+  }
+
   public void testPrintAsFunction26() {
     doTest(LanguageLevel.PYTHON26);
   }

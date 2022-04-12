@@ -1363,6 +1363,15 @@ public class Py3TypeTest extends PyTestCase {
            "expr: Foo | None");
   }
 
+  // PY-52930
+  public void testExceptionGroupInExceptStar() {
+    doTest("ExceptionGroup",
+           "try:\n" +
+           "    raise ExceptionGroup(\"asdf\", [Exception(\"fdsa\")])\n" +
+           "except* Exception as expr:\n" +
+           "    pass\n");
+  }
+
   /**
    * @see #testRecursiveDictTopDown()
    * @see PyTypeCheckerInspectionTest#testRecursiveDictAttribute()
