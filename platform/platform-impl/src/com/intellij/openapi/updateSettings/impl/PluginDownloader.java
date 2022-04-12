@@ -429,7 +429,7 @@ public final class PluginDownloader {
   }
 
   @ApiStatus.Internal
-  public static @NotNull Url getUrl(PluginId pluginId, @Nullable BuildNumber buildNumber) {
+  public static @NotNull Url getUrl(@NotNull PluginId pluginId, @Nullable BuildNumber buildNumber) {
     return Urls.newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginsDownloadUrl())
       .addParameters(Map.of("id", pluginId.getIdString(),
                             "build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
