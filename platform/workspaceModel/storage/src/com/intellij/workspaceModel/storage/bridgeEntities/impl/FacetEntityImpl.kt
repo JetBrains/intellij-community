@@ -356,7 +356,7 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
         return entity
     }
 
-    override fun persistentId: PersistentEntityId<*> {
+    override fun persistentId(): PersistentEntityId<*> {
         return FacetId(name, facetType, moduleId)
     }
 

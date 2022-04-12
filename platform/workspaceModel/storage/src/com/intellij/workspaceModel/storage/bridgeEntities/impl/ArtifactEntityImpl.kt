@@ -370,7 +370,7 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<Artifa
         return entity
     }
 
-    override fun persistentId: PersistentEntityId<*> {
+    override fun persistentId(): PersistentEntityId<*> {
         return ArtifactId(name)
     }
 

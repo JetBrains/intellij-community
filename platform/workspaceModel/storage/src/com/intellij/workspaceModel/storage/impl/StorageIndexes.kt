@@ -111,13 +111,13 @@ internal open class StorageIndexes(
     var expectedSize = 0
     storage.entitiesByType.entityFamilies.forEachIndexed { i, family ->
       if (family == null) return@forEachIndexed
-      if (family.entities.firstOrNull { it != null }?.persistentId == null) return@forEachIndexed
+      if (family.entities.firstOrNull { it != null }?.persistentId() == null) return@forEachIndexed
       var mutableId = createEntityId(0, i)
       family.entities.forEach { data ->
         if (data == null) return@forEach
         mutableId = mutableId.copy(arrayId = data.id)
         val expectedPersistentId = persistentIdIndex.getEntryById(mutableId)
-        assert(expectedPersistentId == data.persistentId) { "Entity $data isn't found in persistent id index. PersistentId: ${data.persistentId}, Id: $mutableId. Expected entity source: $expectedPersistentId" }
+        assert(expectedPersistentId == data.persistentId()) { "Entity $data isn't found in persistent id index. PersistentId: ${data.persistentId()}, Id: $mutableId. Expected entity source: $expectedPersistentId" }
         expectedSize++
       }
     }
@@ -164,7 +164,7 @@ internal class MutableStorageIndexes(
     val entitySource = entityData.entitySource
     entitySourceIndex.index(pid, entitySource)
 
-    entityData.persistentId?.let { persistentId ->
+    entityData.persistentId()?.let { persistentId ->
       persistentIdIndex.index(pid, persistentId)
     }
 
@@ -265,7 +265,7 @@ internal class MutableStorageIndexes(
       val originalEntityData = builder.getOriginalEntityData(entityId) as WorkspaceEntityData<WorkspaceEntity>
       val originalParentsData = builder.getOriginalParents(entityId.asChild())
       val entity = builder.entitiesByType.getEntityDataForModification(entityId) as WorkspaceEntityData<WorkspaceEntity>
-      val editingBeforePersistentId = entity.persistentId
+      val editingBeforePersistentId = entity.persistentId()
       (entity as SoftLinkable).updateLink(beforePersistentId, newPersistentId)
 
       // Add an entry to changelog

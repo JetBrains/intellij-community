@@ -225,13 +225,13 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
       if (LOG.isTraceEnabled) {
         LOG.trace(
-          "New entity added: $clazz-${pEntityData.id}. PersistentId: ${pEntityData.persistentId}. Store: $this.\n${
+          "New entity added: $clazz-${pEntityData.id}. PersistentId: ${pEntityData.persistentId()}. Store: $this.\n${
             currentStackTrace(10)
           }"
         )
       }
       else {
-        LOG.debug("New entity added: $clazz-${pEntityData.id}. PersistentId: ${pEntityData.persistentId}.")
+        LOG.debug("New entity added: $clazz-${pEntityData.id}. PersistentId: ${pEntityData.persistentId()}.")
       }
 
       return pEntityData.createEntity(this)
@@ -242,7 +242,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   private fun <T : WorkspaceEntity> assertUniquePersistentId(pEntityData: WorkspaceEntityData<T>) {
-    pEntityData.persistentId?.let { persistentId ->
+    pEntityData.persistentId()?.let { persistentId ->
       val ids = indexes.persistentIdIndex.getIdsByEntry(persistentId)
       if (ids != null) {
         // Oh, oh. This persistent id exists already
@@ -294,7 +294,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
       // Check for persistent id uniqueness
       if (beforePersistentId != null) {
-        val newPersistentId = copiedData.persistentId
+        val newPersistentId = copiedData.persistentId()
         if (newPersistentId != null) {
           val ids = indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
           if (beforePersistentId != newPersistentId && ids != null) {
