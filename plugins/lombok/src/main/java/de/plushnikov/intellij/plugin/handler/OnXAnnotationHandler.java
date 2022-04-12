@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.handler;
 
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -12,11 +13,11 @@ import java.util.regex.Pattern;
 
 public final class OnXAnnotationHandler {
   private static final Pattern UNDERSCORES = Pattern.compile("__*");
-  private static final Pattern CANNOT_RESOLVE_SYMBOL_UNDERSCORES_MESSAGE = Pattern.compile("Cannot resolve symbol '__*'");
-  private static final Pattern CANNOT_RESOLVE_METHOD_UNDERSCORES_MESSAGE = Pattern.compile("Cannot resolve method '(onMethod|onConstructor|onParam)_+'");
+  private static final Pattern CANNOT_RESOLVE_SYMBOL_UNDERSCORES_MESSAGE = Pattern.compile(JavaErrorBundle.message("cannot.resolve.symbol", "__*"));
+  private static final Pattern CANNOT_RESOLVE_METHOD_UNDERSCORES_MESSAGE = Pattern.compile(JavaErrorBundle.message("cannot.resolve.method", "(onMethod|onConstructor|onParam)_+"));
 
-  private static final String ANNOTATION_TYPE_EXPECTED = "Annotation type expected";
-  private static final String CANNOT_FIND_METHOD_VALUE_MESSAGE = "Cannot find method 'value'";
+  private static final String ANNOTATION_TYPE_EXPECTED = JavaErrorBundle.message("annotation.annotation.type.expected");
+  private static final String CANNOT_FIND_METHOD_VALUE_MESSAGE = JavaErrorBundle.message("annotation.missing.method", "value");
 
   private static final Collection<String> ONXABLE_ANNOTATIONS = Arrays.asList(
     LombokClassNames.GETTER,
