@@ -36,7 +36,7 @@ open class FileCopyPackagingElementEntityImpl: FileCopyPackagingElementEntity, W
     override val renamedOutputFileName: String?
         get() = _renamedOutputFileName
 
-    class Builder(val result: FileCopyPackagingElementEntityData?): ModifiableWorkspaceEntityBase<FileCopyPackagingElementEntity>(), FileCopyPackagingElementEntity.Builder {
+    class Builder(val result: FileCopyPackagingElementEntityData?): ModifiableWorkspaceEntityBase<FileCopyPackagingElementEntity>(), FileCopyPackagingElementEntity.Builder<FileCopyPackagingElementEntity> {
         constructor(): this(FileCopyPackagingElementEntityData())
                  
         override fun build(): FileCopyPackagingElementEntity = this

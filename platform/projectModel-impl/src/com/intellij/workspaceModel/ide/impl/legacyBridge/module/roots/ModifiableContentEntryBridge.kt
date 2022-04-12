@@ -14,9 +14,9 @@ import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.isEqualOrParentOf
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaResourceRoot
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableContentRootEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.JpsElement
@@ -137,8 +137,8 @@ internal class ModifiableContentEntryBridge(
     }
   }
 
-  private fun updateContentEntry(updater: ModifiableContentRootEntity.() -> Unit) {
-    diff.modifyEntity(ModifiableContentRootEntity::class.java, currentContentEntry.value.entity, updater)
+  private fun updateContentEntry(updater: ContentRootEntity.Builder.() -> Unit) {
+    diff.modifyEntity(ContentRootEntity.Builder::class.java, currentContentEntry.value.entity, updater)
   }
 
   override fun removeExcludeFolder(url: String): Boolean {

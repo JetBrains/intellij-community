@@ -37,7 +37,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyIt
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.workspaceModel.storage.bridgeEntities.sourceRoots
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableModuleCustomImlDataEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -495,12 +494,11 @@ internal class ModifiableRootModelBridgeImpl(
             diff.removeEntity(customImlDataEntity)
 
           customImlDataEntity != null && customImlDataEntity.customModuleOptions.isNotEmpty() && JDOMUtil.isEmpty(element) ->
-            diff.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java, customImlDataEntity) {
+            diff.modifyEntity(customImlDataEntity) {
               rootManagerTagCustomData = null
             }
 
-          customImlDataEntity != null && !JDOMUtil.isEmpty(element) -> diff.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java,
-            customImlDataEntity) {
+          customImlDataEntity != null && !JDOMUtil.isEmpty(element) -> diff.modifyEntity(customImlDataEntity) {
             rootManagerTagCustomData = elementAsString
           }
 
