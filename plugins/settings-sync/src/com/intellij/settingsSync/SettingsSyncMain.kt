@@ -85,7 +85,8 @@ internal class SettingsSyncMain : Disposable {
                       appConfigPath: Path,
                       remoteCommunicator: SettingsSyncRemoteCommunicator,
                       ideMediator: SettingsSyncIdeMediator): SettingsSyncControls {
-      val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable, ideMediator.collectFilesToExportFromSettings())
+      val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable,
+                                       ideMediator.collectFilesToExportFromSettings(appConfigPath))
       val updateChecker = SettingsSyncUpdateChecker(application, remoteCommunicator)
       val bridge = SettingsSyncBridge(parentDisposable, settingsLog, ideMediator, remoteCommunicator, updateChecker)
       return SettingsSyncControls(ideMediator, updateChecker, bridge, remoteCommunicator, settingsSyncStorage)

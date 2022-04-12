@@ -13,7 +13,8 @@ import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.testFramework.replaceService
 import com.intellij.util.toBufferExposingByteArray
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.*
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -21,9 +22,6 @@ import org.junit.runners.JUnit4
 import java.nio.charset.Charset
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-
-private val TIMEOUT_UNIT = TimeUnit.SECONDS
 
 @RunWith(JUnit4::class)
 internal class SettingsSyncTest : SettingsSyncTestBase() {
@@ -35,7 +33,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     application.replaceService(IComponentStore::class.java, componentStore, disposable)
   }
 
-  protected fun initSettingsSync() {
+  private fun initSettingsSync() {
     val ideMediator = SettingsSyncIdeMediatorImpl(componentStore, configDir, enabledCondition = { true })
     val controls = SettingsSyncMain.init(application, disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
     updateChecker = controls.updateChecker
@@ -212,16 +210,6 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     }
   }
 
-  private fun waitForSettingsPush(assertSnapshot: (SettingsSnapshot) -> Unit) {
-    val cdl = CountDownLatch(1)
-    remoteCommunicator.pushedLatch = cdl
-    assertTrue("Didn't await until changes are pushed", cdl.await(5, TIMEOUT_UNIT))
-
-    val pushedSnap = remoteCommunicator.pushed
-    assertNotNull("Changes were not pushed", pushedSnap)
-    assertSnapshot(pushedSnap!!)
-  }
-
   private fun <T : PersistentStateComponent<*>> T.init(): T {
     componentStore.initComponent(this, null, null)
     return this
@@ -241,39 +229,6 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     return this
   }
 
-
-  private fun assertSettingsPushed(build: SettingsSnapshotBuilder.() -> Unit) {
-    waitForSettingsPush { pushedSnap ->
-      pushedSnap.assertSettingsSnapshot {
-        build()
-      }
-    }
-  }
-
-  internal class TestRemoteCommunicator : SettingsSyncRemoteCommunicator {
-    var offline: Boolean = false
-    var updateResult: UpdateResult? = null
-    var pushed: SettingsSnapshot? = null
-    var startPushLatch: CountDownLatch? = null
-    lateinit var pushedLatch: CountDownLatch
-
-    override fun checkServerState(): ServerState {
-      return ServerState.UpdateNeeded
-    }
-
-    override fun receiveUpdates(): UpdateResult {
-      return updateResult ?: UpdateResult.Error("Unexpectedly null update result")
-    }
-
-    override fun push(snapshot: SettingsSnapshot): SettingsSyncPushResult {
-      startPushLatch?.countDown()
-      if (offline) return SettingsSyncPushResult.Error("Offline")
-
-      pushed = snapshot
-      if (::pushedLatch.isInitialized) pushedLatch.countDown()
-      return SettingsSyncPushResult.Success
-    }
-  }
 
   private class TestComponentStore(configDir: Path) : ApplicationStoreImpl() {
     override val loadPolicy: StateLoadPolicy
