@@ -270,7 +270,7 @@ internal class ChangesViewCommitWorkflowHandler(
   }
 
   private fun saveStateBeforeDispose() {
-    saveCommitOptions(false)
+    commitOptions.saveState()
     saveCommitMessage(false)
   }
 

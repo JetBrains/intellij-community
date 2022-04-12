@@ -117,7 +117,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   private fun executeDefault(executor: CommitExecutor?): Boolean {
     val proceed = checkCommit(executor) &&
                   addUnversionedFiles() &&
-                  saveCommitOptions()
+                  saveCommitOptionsOnCommit()
     if (!proceed) return false
 
     saveCommitMessage(true)
@@ -135,7 +135,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   private fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean {
     val proceed = checkCommit(executor) &&
                   canExecute(executor) &&
-                  saveCommitOptions()
+                  saveCommitOptionsOnCommit()
     if (!proceed) return false
 
     saveCommitMessage(true)
@@ -176,7 +176,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     return workflow.executeCustom(executor, session)
   }
 
-  protected open fun saveCommitOptions(): Boolean {
+  protected open fun saveCommitOptionsOnCommit(): Boolean {
     commitOptions.saveState()
     return true
   }

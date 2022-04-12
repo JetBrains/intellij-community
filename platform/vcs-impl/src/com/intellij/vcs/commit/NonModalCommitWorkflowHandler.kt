@@ -69,7 +69,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   private fun commitHandlersChanged() {
     if (workflow.isExecuting) return
 
-    saveCommitOptions(false)
+    commitOptions.saveState()
     disposeCommitOptions()
 
     initCommitHandlers()
@@ -222,11 +222,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) =
     ui.showCommitOptions(ensureCommitOptions(), getCommitActionName(), isFromToolbar, dataContext)
 
-  override fun saveCommitOptions(): Boolean = saveCommitOptions(true)
-
-  protected fun saveCommitOptions(isEnsureOptionsCreated: Boolean): Boolean {
-    if (isEnsureOptionsCreated) ensureCommitOptions()
-    return super.saveCommitOptions()
+  override fun saveCommitOptionsOnCommit(): Boolean {
+    ensureCommitOptions()
+    return super.saveCommitOptionsOnCommit()
   }
 
   protected fun ensureCommitOptions(): CommitOptions {
