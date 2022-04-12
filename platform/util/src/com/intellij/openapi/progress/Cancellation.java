@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.concurrency.ThreadContext;
@@ -32,6 +32,11 @@ public final class Cancellation {
   public static boolean isCancelled() {
     Job job = currentJob();
     return job != null && job.isCancelled();
+  }
+
+  public static boolean isJobActive() {
+    Job job = currentJob();
+    return job != null && job.isActive();
   }
 
   public static void checkCancelled() {
