@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
@@ -224,6 +225,10 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   override fun saveCommitOptionsOnCommit(): Boolean {
     ensureCommitOptions()
+    // restore state in case settings were changed via configurable
+    commitOptions.allOptions
+      .filter { it is UnnamedConfigurable }
+      .forEach { it.restoreState() }
     return super.saveCommitOptionsOnCommit()
   }
 
