@@ -126,6 +126,8 @@
     "Borders.color": "Grey1",
     "Borders.ContrastBorderColor": "Grey1",
 
+    "Breakpoint.iconHoverAlpha": 0.35,
+
     "Button": {
       "startBackground": "Grey2",
       "endBackground": "Grey2",
@@ -169,6 +171,18 @@
       "foreground": "#000000"
     },
 
+    "Debugger": {
+      "Variables": {
+        "valueForeground": "Orange8",
+        "collectingDataForeground": "Grey7",
+        "evaluatingExpressionForeground": "Grey7",
+        "changedValueForeground": "Blue8",
+        "modifyingValueForeground": "Blue8",
+        "errorMessageForeground": "Red6",
+        "exceptionForeground": "Red6"
+      }
+    },
+
     "FileColor": {
       "Yellow": "Yellow1",
       "Green": "Green1"
@@ -178,7 +192,11 @@
 
     "Component": {
       "borderColor": "Grey5",
-      "focusedBorderColor": "Grey2"
+      "focusedBorderColor": "Grey2",
+      "errorFocusColor": "Red4",
+      "inactiveErrorFocusColor": "Red2",
+      "warningFocusColor": "Yellow4",
+      "inactiveWarningFocusColor": "Yellow2"
     },
 
     "DragAndDrop": {
@@ -210,7 +228,8 @@
       "activeForeground": "Blue8",
       "hoverForeground": "Blue8",
       "pressedForeground": "Blue8",
-      "visitedForeground": "Blue8"
+      "visitedForeground": "Blue8",
+      "secondaryForeground": "Blue8"
     },
 
     "List": {
@@ -401,6 +420,13 @@
       "endBorderColor": "Grey7",
       "shortcutForeground": "Grey9",
       "linkForeground": "Blue9"
+    },
+
+    "ValidationTooltip": {
+      "errorBackground": "Red2",
+      "errorBorderColor": "Red2",
+      "warningBackground": "Yellow2",
+      "warningBorderColor": "Yellow2"
     },
 
     "ToolWindow": {

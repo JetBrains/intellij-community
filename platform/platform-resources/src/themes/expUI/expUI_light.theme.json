@@ -71,6 +71,7 @@
     "Red10": "#FCD4D4",
     "Red11": "#FFE8E8",
     "Red12": "#FFF5F5",
+    "errorForeground": "#d92b2b",
 
     "Orange1": "#7A4627",
     "Orange2": "#96572D",
@@ -131,6 +132,8 @@
     "Borders.color": "Grey11",
     "Borders.ContrastBorderColor": "Grey11",
 
+    "Breakpoint.iconHoverAlpha": 0.3,
+
     "Button": {
       "startBorderColor": "Grey9",
       "endBorderColor": "Grey9",
@@ -172,12 +175,28 @@
 
     "Component": {
       "borderColor": "Grey9",
-      "focusedBorderColor": "Grey13"
+      "focusedBorderColor": "Grey13",
+      "errorFocusColor": "Red7",
+      "inactiveErrorFocusColor": "Red10",
+      "warningFocusColor": "Yellow6",
+      "inactiveWarningFocusColor": "Yellow9"
     },
 
     "Counter": {
       "background": "Grey8",
       "foreground": "Grey13"
+    },
+
+    "Debugger": {
+      "Variables": {
+        "valueForeground": "Red2",
+        "collectingDataForeground": "Grey7",
+        "evaluatingExpressionForeground": "Grey7",
+        "changedValueForeground": "Blue5",
+        "modifyingValueForeground": "Blue5",
+        "errorMessageForeground": "errorForeground",
+        "exceptionForeground": "errorForeground"
+      }
     },
 
     "DragAndDrop": {
@@ -212,13 +231,14 @@
       "Green": "Green11"
     },
 
-    "Label.errorForeground": "#d92b2b",
+    "Label.errorForeground": "errorForeground",
 
     "Link": {
       "activeForeground": "Blue4",
       "hoverForeground": "Blue4",
       "pressedForeground": "Blue4",
-      "visitedForeground": "Blue4"
+      "visitedForeground": "Blue4",
+      "secondaryForeground": "Blue4"
     },
 
     "List": {
@@ -238,6 +258,11 @@
     "MemoryIndicator": {
       "allocatedBackground": "Grey10",
       "usedBackground": "#B7CEFA75"
+    },
+
+    "NewClass": {
+      "Panel.background": "Grey13",
+      "SearchField.background": "Grey13"
     },
 
     "Notification": {
@@ -324,7 +349,7 @@
     "ToolBar.horizontalToolbarInsets": "4,7,4,7",
 
     "SearchField": {
-      "errorForeground": "#d92b2b",
+      "errorForeground": "errorForeground",
       "errorBackground": "Red10"
     },
 
@@ -349,7 +374,7 @@
     "SpeedSearch": {
       "background": "Grey13",
       "borderColor": "Grey10",
-      "errorForeground": "#d92b2b"
+      "errorForeground": "errorForeground"
     },
 
     "StatusBar": {
@@ -387,6 +412,8 @@
 
     "Tag.background": "Grey11",
 
+    "TextArea.background": "Grey13",
+
     "ToolbarComboWidget": {
       "borderInsets": "3,8,3,4",
       "hoverBackground": "Grey1"
@@ -410,6 +437,13 @@
     "GotItTooltip.borderColor": {
       "os.default": "Grey9",
       "os.windows": "#B9BDC9"
+    },
+
+    "ValidationTooltip": {
+      "errorBackground": "Red11",
+      "errorBorderColor": "Red11",
+      "warningBackground": "Yellow10",
+      "warningBorderColor": "Yellow10"
     },
 
     "ToolWindow": {
@@ -468,7 +502,8 @@
       "expandedSelectedIcon": "/expui/general/chevronDown.svg",
       "rowHeight": 24,
       "hash": "Grey10",
-      "border": "4,12,4,12"
+      "border": "4,12,4,12",
+      "errorForeground": "errorForeground"
     },
 
     "MenuBar.borderColor": "Grey3",
