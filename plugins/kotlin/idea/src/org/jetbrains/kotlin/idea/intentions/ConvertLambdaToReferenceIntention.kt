@@ -403,12 +403,13 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             resolvedCall: ResolvedCall<out CallableDescriptor>?
         ): String {
             val calledVariable = resolvedCall is VariableAsFunctionResolvedCall
+            val invokeReference = if (resolvedCall?.resultingDescriptor?.isInvokeOperator == true) "::invoke" else ""
             return if (receiverText.isEmpty()) {
                 val colonColon = if (calledVariable) "" else "::"
-                "$colonColon$selectorText"
+                "$colonColon$selectorText$invokeReference"
             } else {
                 val colonColon = if (calledVariable) "." else "::"
-                "$receiverText$colonColon$selectorText"
+                "$receiverText$colonColon$selectorText$invokeReference"
             }
         }
 
