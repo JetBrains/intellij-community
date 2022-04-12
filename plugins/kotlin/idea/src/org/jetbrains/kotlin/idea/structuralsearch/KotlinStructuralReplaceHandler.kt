@@ -7,6 +7,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.codeStyle.IndentHelper
 import com.intellij.psi.util.elementType
 import com.intellij.structuralsearch.StructuralReplaceHandler
@@ -128,6 +129,8 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
             file.resolveImportReference(importName).firstOrNull()?.let { importRef ->
                 ImportInsertHelper.getInstance(project).importDescriptor(file, importRef)
             }
+            file.importList?.let { CodeStyleManager.getInstance(project).reformat(it, true) }
+
         }
         receiverExpression.structuralReplace(searchTemplate.receiverExpression, match.receiverExpression, options)
         val selectorExpr = selectorExpression

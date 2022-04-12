@@ -41,18 +41,19 @@ class KotlinSSRShortenFqNamesTest : KotlinSSRReplaceTest() {
             replacePattern = "'_REC.foo.bar.replaceCall()",
             match = """
                 package test
-
+                
                 import foo.bar.searchCall
-
+                
                 fun main() {               
                   0.searchCall()
                 }
             """.trimIndent(),
             result = """
                 package test
-
-                import foo.bar.replaceCallimport foo.bar.searchCall
-
+                
+                import foo.bar.replaceCall
+                import foo.bar.searchCall
+                
                 fun main() {               
                   0.replaceCall()
                 }
@@ -73,18 +74,19 @@ class KotlinSSRShortenFqNamesTest : KotlinSSRReplaceTest() {
             replacePattern = "'_REC.foo.bar.replaceCall()",
             match = """
                 package test
-
+                
                 import foo.bar.aSearchCall
-
+                
                 fun main() {               
                   0.searchCall()
                 }
             """.trimIndent(),
             result = """
                 package test
-
-                import foo.bar.aSearchCallimport foo.bar.replaceCall
-
+                
+                import foo.bar.aSearchCall
+                import foo.bar.replaceCall
+                
                 fun main() {               
                   0.replaceCall()
                 }
@@ -106,18 +108,18 @@ class KotlinSSRShortenFqNamesTest : KotlinSSRReplaceTest() {
             replacePattern = "'_REC.foo.bar.replaceCall()",
             match = """
                 package test
-
+                
                 import foo.bar.searchCall
-
+                
                 fun main() {               
                   0.searchCall()
                 }
             """.trimIndent(),
             result = """
                 package test
-  
+                
                 import foo.bar.searchCall
-
+                
                 fun main() {               
                   0.foo.bar.replaceCall()
                 }
