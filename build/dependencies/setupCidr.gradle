@@ -36,7 +36,7 @@ task setupCidr
   lldb: [
     platforms: [
       win: [
-        version: "896dd621c66b229cfdc6bbfc491eaa0fbee9ed99",
+        version: "7c75a16d6660c83103179103425add35ed9f97a9",
         archs: ["x64", "x86"]
       ],
       linux: [
