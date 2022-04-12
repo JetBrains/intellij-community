@@ -50,13 +50,13 @@ interface ChildSingleAbstractBaseEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: ChildSingleAbstractBaseEntity, ModifiableWorkspaceEntity<ChildSingleAbstractBaseEntity>, ObjBuilder<ChildSingleAbstractBaseEntity> {
+    interface Builder<T: ChildSingleAbstractBaseEntity>: ChildSingleAbstractBaseEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
         override var commonData: String
         override var entitySource: EntitySource
         override var parentEntity: ParentSingleAbEntity
     }
     
-    companion object: Type<ChildSingleAbstractBaseEntity, Builder>(56)
+    companion object: Type<ChildSingleAbstractBaseEntity, Builder<ChildSingleAbstractBaseEntity>>(56)
     //@formatter:on
     //endregion
 
@@ -68,7 +68,7 @@ interface ChildSingleFirstEntity : ChildSingleAbstractBaseEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: ChildSingleFirstEntity, ModifiableWorkspaceEntity<ChildSingleFirstEntity>, ObjBuilder<ChildSingleFirstEntity> {
+    interface Builder: ChildSingleFirstEntity, ChildSingleAbstractBaseEntity.Builder<ChildSingleFirstEntity>, ModifiableWorkspaceEntity<ChildSingleFirstEntity>, ObjBuilder<ChildSingleFirstEntity> {
         override var commonData: String
         override var parentEntity: ParentSingleAbEntity
         override var firstData: String
@@ -87,7 +87,7 @@ interface ChildSingleSecondEntity : ChildSingleAbstractBaseEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: ChildSingleSecondEntity, ModifiableWorkspaceEntity<ChildSingleSecondEntity>, ObjBuilder<ChildSingleSecondEntity> {
+    interface Builder: ChildSingleSecondEntity, ChildSingleAbstractBaseEntity.Builder<ChildSingleSecondEntity>, ModifiableWorkspaceEntity<ChildSingleSecondEntity>, ObjBuilder<ChildSingleSecondEntity> {
         override var commonData: String
         override var parentEntity: ParentSingleAbEntity
         override var secondData: String

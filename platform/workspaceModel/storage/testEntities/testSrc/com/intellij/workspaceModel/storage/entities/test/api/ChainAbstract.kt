@@ -45,12 +45,12 @@ interface SimpleAbstractEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: SimpleAbstractEntity, ModifiableWorkspaceEntity<SimpleAbstractEntity>, ObjBuilder<SimpleAbstractEntity> {
+    interface Builder<T: SimpleAbstractEntity>: SimpleAbstractEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
         override var parentInList: CompositeAbstractEntity
         override var entitySource: EntitySource
     }
     
-    companion object: Type<SimpleAbstractEntity, Builder>(70)
+    companion object: Type<SimpleAbstractEntity, Builder<SimpleAbstractEntity>>(70)
     //@formatter:on
     //endregion
 
@@ -65,14 +65,14 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: CompositeAbstractEntity, ModifiableWorkspaceEntity<CompositeAbstractEntity>, ObjBuilder<CompositeAbstractEntity> {
+    interface Builder<T: CompositeAbstractEntity>: CompositeAbstractEntity, SimpleAbstractEntity.Builder<T>, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
         override var parentInList: CompositeAbstractEntity
         override var children: List<SimpleAbstractEntity>
         override var entitySource: EntitySource
         override var parentEntity: ParentChainEntity?
     }
     
-    companion object: Type<CompositeAbstractEntity, Builder>(71, SimpleAbstractEntity)
+    companion object: Type<CompositeAbstractEntity, Builder<CompositeAbstractEntity>>(71, SimpleAbstractEntity)
     //@formatter:on
     //endregion
 
@@ -82,7 +82,7 @@ interface CompositeChildAbstractEntity : CompositeAbstractEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: CompositeChildAbstractEntity, ModifiableWorkspaceEntity<CompositeChildAbstractEntity>, ObjBuilder<CompositeChildAbstractEntity> {
+    interface Builder: CompositeChildAbstractEntity, CompositeAbstractEntity.Builder<CompositeChildAbstractEntity>, ModifiableWorkspaceEntity<CompositeChildAbstractEntity>, ObjBuilder<CompositeChildAbstractEntity> {
         override var parentInList: CompositeAbstractEntity
         override var children: List<SimpleAbstractEntity>
         override var entitySource: EntitySource
@@ -99,7 +99,7 @@ interface SimpleChildAbstractEntity : SimpleAbstractEntity {
 
     //region generated code
     //@formatter:off
-    interface Builder: SimpleChildAbstractEntity, ModifiableWorkspaceEntity<SimpleChildAbstractEntity>, ObjBuilder<SimpleChildAbstractEntity> {
+    interface Builder: SimpleChildAbstractEntity, SimpleAbstractEntity.Builder<SimpleChildAbstractEntity>, ModifiableWorkspaceEntity<SimpleChildAbstractEntity>, ObjBuilder<SimpleChildAbstractEntity> {
         override var parentInList: CompositeAbstractEntity
         override var entitySource: EntitySource
     }

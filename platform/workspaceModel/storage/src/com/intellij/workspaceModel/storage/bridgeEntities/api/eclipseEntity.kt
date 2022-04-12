@@ -46,7 +46,7 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
       override var srcPlace: Map<String, Int>
   }
   
-  companion object: Type<EclipseProjectPropertiesEntity, Builder>(20)
+  companion object: Type<EclipseProjectPropertiesEntity, Builder>(53)
   //@formatter:on
   //endregion
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package deft.storage.codegen
 
-import deft.storage.codegen.field.defCode
 import deft.storage.codegen.field.javaType
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.codegen.ijws.wsFqn
@@ -39,14 +38,28 @@ fun DefType.generatedApiCode(indent: String = "    "): String = lines(indent) {
     line("//region generated code")
     line("//@formatter:off")
 
-    section("interface Builder: $javaFullName, ${wsFqn("ModifiableWorkspaceEntity")}<$javaFullName>, ObjBuilder<$javaFullName>") {
-            list(structure.allFields.filter { it.hasSetter }) {
-                if (def.kind is WsEntityInterface) wsBuilderApi else builderApi
-            }
+    val abstractSupertype = if (base?.abstract == true) base else null
+    val header = when {
+      abstract && abstractSupertype != null -> {
+        "interface Builder<T: $javaFullName>: $javaFullName, ${abstractSupertype.name}.Builder<T>, ${wsFqn("ModifiableWorkspaceEntity")}<T>, ObjBuilder<T>"
+      }
+      abstractSupertype != null -> {
+        "interface Builder: $javaFullName, ${abstractSupertype.name}.Builder<$javaFullName>, ${wsFqn("ModifiableWorkspaceEntity")}<$javaFullName>, ObjBuilder<$javaFullName>"
+      }
+      abstract -> "interface Builder<T: $javaFullName>: $javaFullName, ${wsFqn("ModifiableWorkspaceEntity")}<T>, ObjBuilder<T>"
+      else -> "interface Builder: $javaFullName, ${wsFqn("ModifiableWorkspaceEntity")}<$javaFullName>, ObjBuilder<$javaFullName>"
     }
+
+    section(header) {
+      list(structure.allFields.filter { it.hasSetter }) {
+        if (def.kind is WsEntityInterface) wsBuilderApi else builderApi
+      }
+    }
+
     line()
+    val builderGeneric = if (abstract) "<$javaFullName>" else ""
     line(buildString {
-        append("companion object: ${Type::class.fqn}<$javaFullName, Builder>(")
+        append("companion object: ${Type::class.fqn}<$javaFullName, Builder$builderGeneric>(")
         append(id)
         if (base != null) {
           append(", ${base.javaFullName}")

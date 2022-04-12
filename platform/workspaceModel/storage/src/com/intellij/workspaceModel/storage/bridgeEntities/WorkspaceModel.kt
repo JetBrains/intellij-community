@@ -53,32 +53,6 @@ import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.referrersx
 import org.jetbrains.deft.annotations.Child
 
-
-var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntity?
-    get() {
-        return referrersx(EclipseProjectPropertiesEntity::module).singleOrNull()
-    }
-    set(value) {
-        val diff = (this as ModuleEntityImpl.Builder).diff
-        if (diff != null) {
-            if (value != null) {
-                if ((value as EclipseProjectPropertiesEntityImpl.Builder).diff == null) {
-                    value._module = this
-                    diff.addEntity(value)
-                }
-            }
-            diff.updateOneToOneChildOfParent(EclipseProjectPropertiesEntityImpl.MODULE_CONNECTION_ID, this, value)
-        }
-        else {
-            val key = ExtRefKey("EclipseProjectPropertiesEntity", "module", true, EclipseProjectPropertiesEntityImpl.MODULE_CONNECTION_ID)
-            this.extReferences[key] = value
-            
-            if (value != null) {
-                (value as EclipseProjectPropertiesEntityImpl.Builder)._module = this
-            }
-        }
-    }
-
 var ArtifactOutputPackagingElementEntity.Builder.artifactEntity: ArtifactEntity
     get() {
         return referrersx(ArtifactEntity::artifactOutputPackagingElement).single()
@@ -221,23 +195,38 @@ var LibraryEntity.Builder.externalSystemId: @Child LibraryExternalSystemIdEntity
         }
     }
 
+var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntity?
+    get() {
+        return referrersx(EclipseProjectPropertiesEntity::module).singleOrNull()
+    }
+    set(value) {
+        val diff = (this as ModuleEntityImpl.Builder).diff
+        if (diff != null) {
+            if (value != null) {
+                if ((value as EclipseProjectPropertiesEntityImpl.Builder).diff == null) {
+                    value._module = this
+                    diff.addEntity(value)
+                }
+            }
+            diff.updateOneToOneChildOfParent(EclipseProjectPropertiesEntityImpl.MODULE_CONNECTION_ID, this, value)
+        }
+        else {
+            val key = ExtRefKey("EclipseProjectPropertiesEntity", "module", true, EclipseProjectPropertiesEntityImpl.MODULE_CONNECTION_ID)
+            this.extReferences[key] = value
+            
+            if (value != null) {
+                (value as EclipseProjectPropertiesEntityImpl.Builder)._module = this
+            }
+        }
+    }
 
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: EclipseProjectPropertiesEntity, modification: EclipseProjectPropertiesEntity.Builder.() -> Unit) = modifyEntity(EclipseProjectPropertiesEntity.Builder::class.java, entity, modification)
+
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ContentRootEntity, modification: ContentRootEntity.Builder.() -> Unit) = modifyEntity(ContentRootEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SourceRootEntity, modification: SourceRootEntity.Builder.() -> Unit) = modifyEntity(SourceRootEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SourceRootOrderEntity, modification: SourceRootOrderEntity.Builder.() -> Unit) = modifyEntity(SourceRootOrderEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: CustomSourceRootPropertiesEntity, modification: CustomSourceRootPropertiesEntity.Builder.() -> Unit) = modifyEntity(CustomSourceRootPropertiesEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: JavaSourceRootEntity, modification: JavaSourceRootEntity.Builder.() -> Unit) = modifyEntity(JavaSourceRootEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: JavaResourceRootEntity, modification: JavaResourceRootEntity.Builder.() -> Unit) = modifyEntity(JavaResourceRootEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: LibraryEntity, modification: LibraryEntity.Builder.() -> Unit) = modifyEntity(LibraryEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: LibraryPropertiesEntity, modification: LibraryPropertiesEntity.Builder.() -> Unit) = modifyEntity(LibraryPropertiesEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SdkEntity, modification: SdkEntity.Builder.() -> Unit) = modifyEntity(SdkEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ModuleEntity, modification: ModuleEntity.Builder.() -> Unit) = modifyEntity(ModuleEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ModuleCustomImlDataEntity, modification: ModuleCustomImlDataEntity.Builder.() -> Unit) = modifyEntity(ModuleCustomImlDataEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ModuleGroupPathEntity, modification: ModuleGroupPathEntity.Builder.() -> Unit) = modifyEntity(ModuleGroupPathEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: JavaModuleSettingsEntity, modification: JavaModuleSettingsEntity.Builder.() -> Unit) = modifyEntity(JavaModuleSettingsEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ExternalSystemModuleOptionsEntity, modification: ExternalSystemModuleOptionsEntity.Builder.() -> Unit) = modifyEntity(ExternalSystemModuleOptionsEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: FacetEntity, modification: FacetEntity.Builder.() -> Unit) = modifyEntity(FacetEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ArtifactEntity, modification: ArtifactEntity.Builder.() -> Unit) = modifyEntity(ArtifactEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ArtifactPropertiesEntity, modification: ArtifactPropertiesEntity.Builder.() -> Unit) = modifyEntity(ArtifactPropertiesEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: DirectoryPackagingElementEntity, modification: DirectoryPackagingElementEntity.Builder.() -> Unit) = modifyEntity(DirectoryPackagingElementEntity.Builder::class.java, entity, modification)
@@ -253,7 +242,17 @@ fun WorkspaceEntityStorageBuilder.modifyEntity(entity: DirectoryCopyPackagingEle
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ExtractedDirectoryPackagingElementEntity, modification: ExtractedDirectoryPackagingElementEntity.Builder.() -> Unit) = modifyEntity(ExtractedDirectoryPackagingElementEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: FileCopyPackagingElementEntity, modification: FileCopyPackagingElementEntity.Builder.() -> Unit) = modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: CustomPackagingElementEntity, modification: CustomPackagingElementEntity.Builder.() -> Unit) = modifyEntity(CustomPackagingElementEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: FacetEntity, modification: FacetEntity.Builder.() -> Unit) = modifyEntity(FacetEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: FacetsOrderEntity, modification: FacetsOrderEntity.Builder.() -> Unit) = modifyEntity(FacetsOrderEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: FacetExternalSystemIdEntity, modification: FacetExternalSystemIdEntity.Builder.() -> Unit) = modifyEntity(FacetExternalSystemIdEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ArtifactExternalSystemIdEntity, modification: ArtifactExternalSystemIdEntity.Builder.() -> Unit) = modifyEntity(ArtifactExternalSystemIdEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: LibraryExternalSystemIdEntity, modification: LibraryExternalSystemIdEntity.Builder.() -> Unit) = modifyEntity(LibraryExternalSystemIdEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ModuleEntity, modification: ModuleEntity.Builder.() -> Unit) = modifyEntity(ModuleEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ModuleCustomImlDataEntity, modification: ModuleCustomImlDataEntity.Builder.() -> Unit) = modifyEntity(ModuleCustomImlDataEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ModuleGroupPathEntity, modification: ModuleGroupPathEntity.Builder.() -> Unit) = modifyEntity(ModuleGroupPathEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: JavaModuleSettingsEntity, modification: JavaModuleSettingsEntity.Builder.() -> Unit) = modifyEntity(JavaModuleSettingsEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ExternalSystemModuleOptionsEntity, modification: ExternalSystemModuleOptionsEntity.Builder.() -> Unit) = modifyEntity(ExternalSystemModuleOptionsEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: EclipseProjectPropertiesEntity, modification: EclipseProjectPropertiesEntity.Builder.() -> Unit) = modifyEntity(EclipseProjectPropertiesEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: LibraryEntity, modification: LibraryEntity.Builder.() -> Unit) = modifyEntity(LibraryEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: LibraryPropertiesEntity, modification: LibraryPropertiesEntity.Builder.() -> Unit) = modifyEntity(LibraryPropertiesEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SdkEntity, modification: SdkEntity.Builder.() -> Unit) = modifyEntity(SdkEntity.Builder::class.java, entity, modification)
