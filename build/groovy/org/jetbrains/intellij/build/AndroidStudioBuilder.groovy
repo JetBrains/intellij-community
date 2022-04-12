@@ -15,6 +15,8 @@
  */
 package org.jetbrains.intellij.build
 
+import org.jetbrains.intellij.build.impl.BuildContextImpl
+
 /**
  * Based on IdeaCommunityBuilder, but simplified a bit since we build fewer things
  * (for example, no intellij-core distribution)
@@ -24,7 +26,7 @@ class AndroidStudioBuilder {
 
   AndroidStudioBuilder(String home, BuildOptions options = new BuildOptions(), String projectHome = home) {
     def properties = new AndroidStudioProperties(home, options)
-    buildContext = BuildContext.createContext(home, projectHome, properties, ProprietaryBuildTools.DUMMY, options)
+    buildContext = BuildContextImpl.createContext(home, projectHome, properties, ProprietaryBuildTools.DUMMY, options)
   }
 
   void compileModules() {

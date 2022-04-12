@@ -233,7 +233,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
       @Override
       @CompileDynamic
-      void copyAdditionalFiles(BuildContext context, Path targetDirectory) {
+      void copyAdditionalFiles(BuildContext context, Path targetDirectory, JvmArchitecture arch) {
         def root = "$context.paths.communityHome/../.."
 
         context.ant.copy(todir: "$targetDirectory/plugins/c-clangd/bin/clang/linux") {
