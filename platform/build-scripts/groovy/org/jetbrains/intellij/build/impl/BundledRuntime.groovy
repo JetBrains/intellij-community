@@ -200,26 +200,15 @@ final class BundledRuntime {
   */
   @SuppressWarnings('SpellCheckingInspection')
   private String archiveName(String prefix, JvmArchitecture arch, OsFamily os) {
-    int version = context.options.bundledRuntimeVersion
-    String jreBuild = build
-    String update, build
-    String[] split = jreBuild.split('b')
-    if (split.length > 2) {
-      throw new IllegalArgumentException("${jreBuild} doesn't match '<update>b<build_number>' format (e.g.: u202b1483.24, 11_0_2b140, b96)")
+    String[] split = build.split('b')
+    if (split.length != 2) {
+      throw new IllegalArgumentException("$build doesn't match '<update>b<build_number>' format (e.g.: 17.0.2b387.1)")
     }
-    if (split.length == 2) {
-      update = split[0]
-      if (update.startsWith(version.toString())) update -= version
-      // [11_0_2, b140] or [8u202, b1483.24]
-      (update, build) = ["$version$update", "b${split[1]}"]
-    }
-    else {
-      // [11, b96]
-      (update, build) = [version.toString(), jreBuild]
-    }
+    String version, buildNumber
+    (version, buildNumber) = [split[0], "b${split[1]}"]
 
     String archSuffix = getArchSuffix(arch)
-    return "${prefix}${update}-${os.jbrArchiveSuffix}-${archSuffix}-${runtimeBuildPrefix()}${build}.tar.gz"
+    return "${prefix}${version}-${os.jbrArchiveSuffix}-${archSuffix}-${runtimeBuildPrefix()}${buildNumber}.tar.gz"
   }
 
   private String runtimeBuildPrefix() {

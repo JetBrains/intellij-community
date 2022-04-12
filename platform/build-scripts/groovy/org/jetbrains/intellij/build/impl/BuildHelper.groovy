@@ -180,9 +180,7 @@ final class BuildHelper {
                       Iterable<String> classPath,
                       long timeoutMillis = DEFAULT_TIMEOUT,
                       Path workingDir = null) {
-    if (context.options.bundledRuntimeVersion >= 17) {
-      jvmArgs = OpenedPackages.getCommandLineArguments(context) + jvmArgs
-    }
+    jvmArgs = OpenedPackages.getCommandLineArguments(context) + jvmArgs
     ProcessKt.runJava(mainClass, args, jvmArgs, classPath, context.messages, timeoutMillis,
                                                            workingDir)
   }

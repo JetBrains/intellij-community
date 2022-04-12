@@ -433,9 +433,7 @@ final class BuildContextImpl extends BuildContext {
       jvmArgs.add('-Dsplash=true')
     }
 
-    if (options.bundledRuntimeVersion >= 17) {
-      jvmArgs.addAll(OpenedPackages.getCommandLineArguments(this))
-    }
+    jvmArgs.addAll(OpenedPackages.getCommandLineArguments(this))
 
     return jvmArgs
   }

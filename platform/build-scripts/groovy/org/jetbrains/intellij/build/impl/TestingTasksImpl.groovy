@@ -533,9 +533,7 @@ class TestingTasksImpl extends TestingTasks {
       jvmArgs.addAll(buildCausalProfilingAgentJvmArg(causalProfilingOptions))
     }
 
-    if (context.options.bundledRuntimeVersion >= 17) {
-      jvmArgs.addAll(OpenedPackages.getCommandLineArguments(context))
-    }
+    jvmArgs.addAll(OpenedPackages.getCommandLineArguments(context))
 
     if (suspendDebugProcess) {
       context.messages.info("""
