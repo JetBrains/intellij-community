@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table.column
 
 import com.intellij.openapi.util.Disposer
@@ -11,6 +11,8 @@ import com.intellij.util.text.JBDateFormat
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.graph.DefaultColorGenerator
+import com.intellij.vcs.log.history.FileHistoryPaths.filePathOrDefault
+import com.intellij.vcs.log.history.FileHistoryPaths.hasPathsInformation
 import com.intellij.vcs.log.impl.CommonUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.paint.GraphCellPainter
@@ -47,7 +49,16 @@ internal sealed class VcsLogDefaultColumn<T>(
 internal object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", false) {
   override val isResizable = false
 
-  override fun getValue(model: GraphTableModel, row: Int): FilePath = model.visiblePack.getFilePath(row)
+  override fun getValue(model: GraphTableModel, row: Int): FilePath {
+    val visiblePack = model.visiblePack
+    if (visiblePack.hasPathsInformation()) {
+      val path = visiblePack.filePathOrDefault(visiblePack.visibleGraph.getRowInfo(row).commit)
+      if (path != null) {
+        return path
+      }
+    }
+    return VcsUtil.getFilePath(visiblePack.getRoot(row))
+  }
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
     doOnPropertyChange(table) { property ->
