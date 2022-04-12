@@ -119,9 +119,13 @@ internal fun KotlinType.toPsiType(
             StandardClassIds.Double.asSingleFqName() -> PsiType.DOUBLE.orBoxed()
             StandardClassIds.Float.asSingleFqName() -> PsiType.FLOAT.orBoxed()
             StandardClassIds.Unit.asSingleFqName() -> {
-                if (typeOwnerKind == TypeOwnerKind.DECLARATION && context is KtNamedFunction)
-                    PsiType.VOID.orBoxed()
-                else null
+                when {
+                    typeOwnerKind == TypeOwnerKind.DECLARATION && context is KtNamedFunction ->
+                        PsiType.VOID.orBoxed()
+                    typeOwnerKind == TypeOwnerKind.EXPRESSION && context is KtBlockExpression && context.isFunctionBody ->
+                        PsiType.VOID.orBoxed()
+                    else -> null
+                }
             }
             StandardClassIds.String.asSingleFqName() -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> {

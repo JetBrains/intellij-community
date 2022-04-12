@@ -21,10 +21,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
-import org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin
-import org.jetbrains.uast.kotlin.TypeOwnerKind
-import org.jetbrains.uast.kotlin.getContainingLightClass
-import org.jetbrains.uast.kotlin.lz
+import org.jetbrains.uast.kotlin.*
 import org.jetbrains.uast.kotlin.psi.UastFakeLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
 
@@ -124,9 +121,13 @@ internal fun KtAnalysisSession.toPsiType(
             StandardClassIds.Double -> PsiType.DOUBLE.orBoxed()
             StandardClassIds.Float -> PsiType.FLOAT.orBoxed()
             StandardClassIds.Unit -> {
-                if (typeOwnerKind == TypeOwnerKind.DECLARATION && context is KtNamedFunction)
-                    PsiType.VOID.orBoxed()
-                else null
+                when {
+                    typeOwnerKind == TypeOwnerKind.DECLARATION && context is KtNamedFunction ->
+                        PsiType.VOID.orBoxed()
+                    typeOwnerKind == TypeOwnerKind.EXPRESSION && context is KtBlockExpression && context.isFunctionBody ->
+                        PsiType.VOID.orBoxed()
+                    else -> null
+                }
             }
             StandardClassIds.String -> PsiType.getJavaLangString(context.manager, context.resolveScope)
             else -> null
