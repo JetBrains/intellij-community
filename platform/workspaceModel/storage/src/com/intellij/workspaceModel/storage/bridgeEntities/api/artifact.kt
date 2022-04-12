@@ -4,12 +4,11 @@ package com.intellij.workspaceModel.storage.bridgeEntities.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
-import org.jetbrains.deft.annotations.Open
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import org.jetbrains.deft.Type
 
 
 
@@ -258,19 +257,19 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
 
 }
 
-@Open interface FileOrDirectoryPackagingElementEntity : PackagingElementEntity {
+@Abstract interface FileOrDirectoryPackagingElementEntity : PackagingElementEntity {
     val filePath: VirtualFileUrl
 
 
     //region generated code
     //@formatter:off
-    interface Builder: FileOrDirectoryPackagingElementEntity, PackagingElementEntity.Builder<FileOrDirectoryPackagingElementEntity>, ModifiableWorkspaceEntity<FileOrDirectoryPackagingElementEntity>, ObjBuilder<FileOrDirectoryPackagingElementEntity> {
+    interface Builder<T: FileOrDirectoryPackagingElementEntity>: FileOrDirectoryPackagingElementEntity, PackagingElementEntity.Builder<T>, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
         override var parentEntity: CompositePackagingElementEntity?
         override var filePath: VirtualFileUrl
         override var entitySource: EntitySource
     }
     
-    companion object: Type<FileOrDirectoryPackagingElementEntity, Builder>(48, PackagingElementEntity)
+    companion object: Type<FileOrDirectoryPackagingElementEntity, Builder<FileOrDirectoryPackagingElementEntity>>(48, PackagingElementEntity)
     //@formatter:on
     //endregion
 
@@ -281,7 +280,7 @@ interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementE
 
     //region generated code
     //@formatter:off
-    interface Builder: DirectoryCopyPackagingElementEntity, ModifiableWorkspaceEntity<DirectoryCopyPackagingElementEntity>, ObjBuilder<DirectoryCopyPackagingElementEntity> {
+    interface Builder: DirectoryCopyPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<DirectoryCopyPackagingElementEntity>, ModifiableWorkspaceEntity<DirectoryCopyPackagingElementEntity>, ObjBuilder<DirectoryCopyPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var filePath: VirtualFileUrl
         override var entitySource: EntitySource
@@ -299,7 +298,7 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
 
     //region generated code
     //@formatter:off
-    interface Builder: ExtractedDirectoryPackagingElementEntity, ModifiableWorkspaceEntity<ExtractedDirectoryPackagingElementEntity>, ObjBuilder<ExtractedDirectoryPackagingElementEntity> {
+    interface Builder: ExtractedDirectoryPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<ExtractedDirectoryPackagingElementEntity>, ModifiableWorkspaceEntity<ExtractedDirectoryPackagingElementEntity>, ObjBuilder<ExtractedDirectoryPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var filePath: VirtualFileUrl
         override var pathInArchive: String
@@ -318,7 +317,7 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
 
     //region generated code
     //@formatter:off
-    interface Builder: FileCopyPackagingElementEntity, ModifiableWorkspaceEntity<FileCopyPackagingElementEntity>, ObjBuilder<FileCopyPackagingElementEntity> {
+    interface Builder: FileCopyPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<FileCopyPackagingElementEntity>, ModifiableWorkspaceEntity<FileCopyPackagingElementEntity>, ObjBuilder<FileCopyPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var filePath: VirtualFileUrl
         override var renamedOutputFileName: String?

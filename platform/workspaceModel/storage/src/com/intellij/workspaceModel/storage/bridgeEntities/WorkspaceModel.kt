@@ -26,7 +26,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetExternalSyste
 import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetsOrderEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetsOrderEntityImpl
 import com.intellij.workspaceModel.storage.bridgeEntities.api.FileCopyPackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.FileOrDirectoryPackagingElementEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.JavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.JavaResourceRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.JavaSourceRootEntity
@@ -247,7 +246,6 @@ fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ModuleOutputPackagingElem
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: LibraryFilesPackagingElementEntity, modification: LibraryFilesPackagingElementEntity.Builder.() -> Unit) = modifyEntity(LibraryFilesPackagingElementEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ModuleSourcePackagingElementEntity, modification: ModuleSourcePackagingElementEntity.Builder.() -> Unit) = modifyEntity(ModuleSourcePackagingElementEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ModuleTestOutputPackagingElementEntity, modification: ModuleTestOutputPackagingElementEntity.Builder.() -> Unit) = modifyEntity(ModuleTestOutputPackagingElementEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: FileOrDirectoryPackagingElementEntity, modification: FileOrDirectoryPackagingElementEntity.Builder.() -> Unit) = modifyEntity(FileOrDirectoryPackagingElementEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: DirectoryCopyPackagingElementEntity, modification: DirectoryCopyPackagingElementEntity.Builder.() -> Unit) = modifyEntity(DirectoryCopyPackagingElementEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ExtractedDirectoryPackagingElementEntity, modification: ExtractedDirectoryPackagingElementEntity.Builder.() -> Unit) = modifyEntity(ExtractedDirectoryPackagingElementEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: FileCopyPackagingElementEntity, modification: FileCopyPackagingElementEntity.Builder.() -> Unit) = modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, entity, modification)
