@@ -16682,6 +16682,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("binaryExpressionInParentheses.kt")
+            public void testBinaryExpressionInParentheses() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/wrapped/binaryExpressionInParentheses.kt");
+            }
+
+            @TestMetadata("nullCheckExpressionInParentheses.kt")
+            public void testNullCheckExpressionInParentheses() throws Exception {
+                runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/wrapped/nullCheckExpressionInParentheses.kt");
+            }
+
             @TestMetadata("nullOrIsEmpty.kt")
             public void testNullOrIsEmpty() throws Exception {
                 runTest("testData/inspectionsLocal/verboseNullabilityAndEmptiness/wrapped/nullOrIsEmpty.kt");
