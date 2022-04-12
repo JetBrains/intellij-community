@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.icons.AllIcons;
@@ -616,7 +616,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
         int arc = (int)Math.ceil(scaleVal(5));
         g.fillRoundRect(x, y, getIconWidth(), getIconHeight(), arc, arc);
       }
-      var icon = (!isSelected() || mySelectedIcon == null) ? myIcon : mySelectedIcon;
+      var icon = (!isSelected() || mySelectedIcon == null || ExperimentalUI.isNewUI()) ? myIcon : mySelectedIcon;
       icon.paintIcon(c, g, x + (getIconWidth() - icon.getIconWidth()) / 2, y + (getIconHeight() - icon.getIconHeight()) / 2);
     }
 
