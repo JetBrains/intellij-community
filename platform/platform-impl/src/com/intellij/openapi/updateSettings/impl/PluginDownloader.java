@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -376,9 +377,13 @@ public final class PluginDownloader {
   public static @NotNull PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor,
                                                            @Nullable String host,
                                                            @Nullable BuildNumber buildNumber) throws IOException {
-    String url = descriptor instanceof PluginNode && host != null ?
-                 getDownloadUrl((PluginNode)descriptor, host) :
-                 getUrl(descriptor.getPluginId(), buildNumber);
+    String url = null;
+    if (descriptor instanceof PluginNode) {
+      url = getDownloadUrl((PluginNode)descriptor, host);
+    }
+    if (url == null) {
+      url = getUrl(descriptor.getPluginId(), buildNumber).toExternalForm();
+    }
     return new PluginDownloader(descriptor,
                                 url,
                                 buildNumber,
@@ -410,21 +415,22 @@ public final class PluginDownloader {
     return node;
   }
 
-  private static String getDownloadUrl(PluginNode pluginNode, String host) throws IOException {
+  private static @Nullable String getDownloadUrl(PluginNode pluginNode, @Nullable String host) throws IOException {
     String url = pluginNode.getDownloadUrl();
     try {
-      return new URI(url).isAbsolute() ? url : new URL(new URL(host), url).toExternalForm();
+      return new URI(url).isAbsolute() ? url
+                                       : host == null ? null
+                                                      : new URL(new URL(host), url).toExternalForm();
     }
     catch (URISyntaxException e) {
       throw new IOException(e);
     }
   }
 
-  private static String getUrl(PluginId pluginId, @Nullable BuildNumber buildNumber) {
+  public static Url getUrl(PluginId pluginId, @Nullable BuildNumber buildNumber) {
     return Urls.newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginsDownloadUrl())
       .addParameters(Map.of("id", pluginId.getIdString(),
                             "build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
-                            "uuid", getMarketplaceDownloadsUUID()))
-      .toExternalForm();
+                            "uuid", getMarketplaceDownloadsUUID()));
   }
 }
