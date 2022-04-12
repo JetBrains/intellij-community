@@ -164,7 +164,8 @@ public class EditorGutterLayout {
 
       area(ICONS_AREA, myEditorGutter::getIconsAreaWidth).showIf(() -> myEditorGutter.isLineMarkersShown()),
       area(GAP_AFTER_ICONS_AREA, myEditorGutter::getGapAfterIconsArea),
-      area(FOLDING_AREA, myEditorGutter::getFoldingAreaWidth)
+      area(FOLDING_AREA, myEditorGutter::getFoldingAreaWidth),
+      areaGap(3).showIf(() -> myEditorGutter.isLineMarkersShown())
       );
   }
 

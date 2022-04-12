@@ -461,7 +461,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private double getExpUIVerticalLineX() {
-    return getWidth() - 1;
+    return getWidth() - 3;
   }
 
   private void paintEditorBackgrounds(Graphics g, int firstVisibleOffset, int lastVisibleOffset) {
@@ -1834,7 +1834,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   int getGapAfterIconsArea() {
-    return isRealEditor() && areIconsShown() ? getGapBetweenAreas() : 0;
+    return isRealEditor() && areIconsShown() ? ExperimentalUI.isNewUI() ? scaleWidth(2) : getGapBetweenAreas() : 0;
   }
 
   private boolean isMirrored() {
