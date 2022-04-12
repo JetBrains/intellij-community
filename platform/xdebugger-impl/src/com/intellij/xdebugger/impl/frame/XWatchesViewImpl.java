@@ -71,6 +71,9 @@ import java.util.List;
 import java.util.*;
 
 public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget, XWatchesView, XInlineWatchesView {
+  private static final JBColor EVALUATE_FIELD_BACKGROUND_COLOR =
+    JBColor.namedColor("Debugger.EvaluateExpression.background", new JBColor(0xFFFFFF, 0x45494A));
+
   protected WatchesRootNode myRootNode;
   private XDebuggerExpressionComboBox myEvaluateComboBox;
 
@@ -269,6 +272,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
           }
         }
       });
+      editorComponent.setBackground(EVALUATE_FIELD_BACKGROUND_COLOR);
+
       myEvaluateComboBox.getComboBox().addPopupMenuListener(new PopupMenuListenerAdapter() {
         private int selectedIndexOnPopupOpen = -1;
 

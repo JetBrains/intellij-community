@@ -218,6 +218,11 @@
       "since": "2019.2"
     },
     {
+      "key": "Debugger.EvaluateExpression.background",
+      "description": "Background color of the evaluate expression field embedded into the variables view",
+      "since": "2022.2"
+    },
+    {
       "key": "DefaultTabs.background",
       "since": "2019.2",
       "description": "Default tabs are applied to all tabs except TabbedPane and unless particular tab keys, e.g. EditorTabs, are set. This key is the background under all tabs."
