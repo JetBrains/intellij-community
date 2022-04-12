@@ -52,7 +52,7 @@ abstract class LinuxDistributionCustomizer {
    * Override this method to copy additional files to Linux distribution of the product.
    * @param targetDirectory contents of this directory will be packed into .tar.gz archive under {@link #getRootDirectoryName(ApplicationInfoProperties, String)}
    */
-  void copyAdditionalFiles(BuildContext context, Path targetDir) {
+  void copyAdditionalFiles(BuildContext context, Path targetDir, JvmArchitecture arch) {
     RepairUtilityBuilder.bundle(context, OsFamily.LINUX, JvmArchitecture.x64, targetDir)
   }
 }

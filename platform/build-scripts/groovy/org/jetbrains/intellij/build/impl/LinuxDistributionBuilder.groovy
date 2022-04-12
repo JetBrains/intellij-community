@@ -39,7 +39,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
-  void copyFilesForOsDistribution(@NotNull Path unixDistPath, JvmArchitecture arch = null) {
+  void copyFilesForOsDistribution(@NotNull Path unixDistPath, JvmArchitecture arch) {
     BuildHelper buildHelper = BuildHelper.getInstance(buildContext)
     buildHelper.span(TracerManager.spanBuilder("copy files for os distribution")
                        .setAttribute("os", targetOs.osName)
@@ -65,7 +65,8 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         UnixScriptBuilder.generateScripts(buildContext, extraJarNames, distBinDir, OsFamily.LINUX)
         generateReadme(unixDistPath)
         generateVersionMarker(unixDistPath, buildContext)
-        customizer.copyAdditionalFiles(buildContext, unixDistPath)
+        RepairUtilityBuilder.bundle(buildContext, OsFamily.LINUX, arch, unixDistPath)
+        customizer.copyAdditionalFiles(buildContext, unixDistPath, arch)
       }
     })
   }
