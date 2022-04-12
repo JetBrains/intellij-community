@@ -64,7 +64,7 @@ private class GitSkipHooksConfigurationPanel(
   }
 
   override fun saveState() {
-    commitContext.isSkipHooks = runHooks.isVisible && !runHooks.isSelected
+    commitContext.isSkipHooks = runHooks.isEnabled && !runHooks.isSelected
   }
 
   override fun restoreState() {
