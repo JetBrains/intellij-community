@@ -14,7 +14,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.util.Function
 import com.intellij.util.messages.Topic
 import com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectService
@@ -49,6 +51,15 @@ internal val packageVersionNormalizer
 
 internal val Project.packageSearchProjectCachesService
     get() = service<PackageSearchProjectCachesService>()
+
+internal val Project.toolWindowManagerFlow
+    get() = messageBusFlow(ToolWindowManagerListener.TOPIC) {
+        object : ToolWindowManagerListener {
+            override fun toolWindowShown(toolWindow: ToolWindow) {
+                trySend(toolWindow)
+            }
+        }
+    }
 
 @OptIn(ExperimentalTypeInference::class)
 internal fun <L : Any, K> Project.messageBusFlow(

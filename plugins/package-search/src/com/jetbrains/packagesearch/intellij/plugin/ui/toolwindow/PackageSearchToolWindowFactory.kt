@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.take
 
 internal class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
     companion object {
-        private val ToolWindowId = PackageSearchBundle.message("toolwindow.stripe.Dependencies")
+        internal val ToolWindowId = PackageSearchBundle.message("toolwindow.stripe.Dependencies")
 
         private fun getToolWindow(project: Project) = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId)
 
@@ -42,7 +42,9 @@ internal class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
                 .take(1)
                 .map {
                     RegisterToolWindowTask.closable(
-                        ToolWindowId, PackageSearchBundle.messagePointer("toolwindow.stripe.Dependencies"), PackageSearchIcons.ArtifactSmall
+                        ToolWindowId,
+                        PackageSearchBundle.messagePointer("toolwindow.stripe.Dependencies"),
+                        PackageSearchIcons.ArtifactSmall
                     )
                 }
                 .map { toolWindowTask -> project.toolWindowManager.registerToolWindow(toolWindowTask) }
