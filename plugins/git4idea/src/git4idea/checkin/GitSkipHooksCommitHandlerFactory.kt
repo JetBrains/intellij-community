@@ -45,16 +45,22 @@ private class GitSkipHooksConfigurationPanel(
 
   private val repositoryManager get() = GitRepositoryManager.getInstance(panel.project)
   private val runHooks = NonFocusableCheckBox(GitBundle.message("checkbox.run.git.hooks")).apply {
+    isSelected = true
     toolTipText = GitBundle.message("tooltip.run.git.hooks")
   }
   private var lastSelectedState = true
 
   override fun getComponent(): JComponent = JBUI.Panels.simplePanel(runHooks)
 
-  override fun onChangeListSelected(list: LocalChangeList) {
+  private fun refreshAvailability() {
     if (runHooks.isEnabled) lastSelectedState = runHooks.isSelected
+    runHooks.isVisible = repositoryManager.repositories.any { it.hasCommitHooks() }
     runHooks.isEnabled = panel.roots.any { repositoryManager.getRepositoryForRootQuick(it)?.hasCommitHooks() == true }
     runHooks.isSelected = if (runHooks.isEnabled) lastSelectedState else false
+  }
+
+  override fun onChangeListSelected(list: LocalChangeList) {
+    refreshAvailability()
   }
 
   override fun saveState() {
@@ -62,8 +68,7 @@ private class GitSkipHooksConfigurationPanel(
   }
 
   override fun restoreState() {
-    runHooks.isVisible = repositoryManager.repositories.any { it.hasCommitHooks() }
-    runHooks.isSelected = true
+    refreshAvailability()
   }
 
   private fun GitRepository.hasCommitHooks() = info.hooksInfo.areCommitHooksAvailable
