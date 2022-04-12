@@ -48,6 +48,7 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SmartHashSet;
 import kotlin.Unit;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -179,12 +180,24 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
         if (active) {
           myActiveToolWindowIds.add(toolWindowId);
         }
-        toolWindow.setShowStripeButton(true);
+        restoreBrokenToolWindowIfNeeded(toolWindow);
       }
       finally {
         myRegisteringToolWindowAvailable = false;
       }
     });
+  }
+
+  /*
+   * Temporary fix for restoring Services Tool Window (IDEA-288804)
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated
+  private static void restoreBrokenToolWindowIfNeeded(@NotNull ToolWindow toolWindow) {
+    if (!toolWindow.isShowStripeButton() && toolWindow.isVisible()) {
+      toolWindow.hide();
+      toolWindow.show();
+    }
   }
 
   private void updateToolWindow(@NotNull String toolWindowId, boolean active, boolean show) {
