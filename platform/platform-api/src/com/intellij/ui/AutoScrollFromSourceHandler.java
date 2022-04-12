@@ -72,7 +72,7 @@ public abstract class AutoScrollFromSourceHandler {
     updateCurrentSelection();
   }
 
-  private void selectInAlarm(final FileEditor editor) {
+  protected void selectInAlarm(final FileEditor editor) {
     // Code WithMe: do not process changes from remote (client) editor switching
     if (!ClientId.isCurrentlyUnderLocalId()) return;
 
