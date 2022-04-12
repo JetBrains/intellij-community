@@ -32,9 +32,11 @@ class MavenArtifactsBuilder {
   /** second component of module names which describes a common group rather than a specific framework and therefore should be excluded from artifactId */
   private static final Set<String> COMMON_GROUP_NAMES = ["platform", "vcs", "tools", "clouds"] as Set<String>
   protected final BuildContext buildContext
+  private final boolean skipNothing
 
-  MavenArtifactsBuilder(BuildContext buildContext) {
+  MavenArtifactsBuilder(BuildContext buildContext, boolean skipNothing = false) {
     this.buildContext = buildContext
+    this.skipNothing = skipNothing
   }
 
   void generateMavenArtifacts(List<String> namesOfModulesToPublish,
@@ -300,7 +302,7 @@ class MavenArtifactsBuilder {
   }
 
   protected boolean shouldSkipModule(String moduleName, boolean moduleIsDependency) {
-    if (moduleIsDependency) return false
+    if (skipNothing || moduleIsDependency) return false
     return !moduleName.startsWith("intellij.")
   }
 
