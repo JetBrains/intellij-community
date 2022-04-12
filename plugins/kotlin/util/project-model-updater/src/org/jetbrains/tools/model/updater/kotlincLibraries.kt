@@ -25,6 +25,7 @@ fun generateKotlincLibraries(kotlincArtifactsMode: KotlincArtifactsMode, version
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-fe10", version),
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-fir", version),
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-ir", version),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-dist", version),
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-gradle-statistics", version),
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-stdlib-minimal-for-test", version),
         kotlincForIdeWithStandardNaming("kotlinc.kotlinx-serialization-compiler-plugin", version),
@@ -39,6 +40,7 @@ fun generateKotlincLibraries(kotlincArtifactsMode: KotlincArtifactsMode, version
         singleJarMvnLib("kotlinc.kotlin-scripting-jvm", "$ktGroup:kotlin-scripting-jvm:$version", transitive = false),
         singleJarMvnLib("kotlinc.kotlin-script-runtime", "$ktGroup:kotlin-script-runtime:$version"),
         singleJarMvnLib("kotlinc.kotlin-reflect", "$ktGroup:kotlin-reflect:$version", excludes = listOf(MavenId(ktGroup, "kotlin-stdlib"))),
+        singleJarMvnLib("kotlinc.kotlin-jps-plugin-classpath", "$ktGroup:kotlin-jps-plugin-classpath:$version"),
         run {
             val mavenIds = listOf(
                 MavenId.fromCoordinates("$ktGroup:kotlin-stdlib-jdk8:$version"),
