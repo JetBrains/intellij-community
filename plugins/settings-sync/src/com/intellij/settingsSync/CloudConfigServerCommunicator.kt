@@ -58,10 +58,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   }
 
   private fun receiveSnapshotFile(): InputStream? {
-    // todo remove this explicit request after client.read will be fixed to accept null version
-    val version = client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP)?.versionId ?: return null
-
-    return clientVersionContext.doWithVersion(SETTINGS_SYNC_SNAPSHOT_ZIP, version) {
+    return clientVersionContext.doWithVersion(SETTINGS_SYNC_SNAPSHOT_ZIP, null) {
       client.read(SETTINGS_SYNC_SNAPSHOT_ZIP)
     }
   }
