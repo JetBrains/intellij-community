@@ -4,7 +4,6 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.ui.InputException
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
@@ -169,13 +168,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     }
 
   protected open fun doExecuteDefault(executor: CommitExecutor?): Boolean {
-    try {
-      return workflow.executeDefault(executor)
-    }
-    catch (e: InputException) { // TODO Looks like this catch is unnecessary - check
-      e.show()
-      return false
-    }
+    return workflow.executeDefault(executor)
   }
 
   private fun canExecute(executor: CommitExecutor): Boolean = workflow.canExecute(executor, getIncludedChanges())
@@ -183,13 +176,9 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     return workflow.executeCustom(executor, session)
   }
 
-  protected open fun saveCommitOptions() = try {
+  protected open fun saveCommitOptions(): Boolean {
     commitOptions.saveState()
-    true
-  }
-  catch (ex: InputException) {
-    ex.show()
-    false
+    return true
   }
 
   protected abstract fun saveCommitMessage(success: Boolean)
