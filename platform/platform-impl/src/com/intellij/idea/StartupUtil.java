@@ -78,6 +78,8 @@ import java.util.logging.Level;
 @ApiStatus.Internal
 @SuppressWarnings("LoggerInitializedWithForeignClass")
 public final class StartupUtil {
+  public static final String IDE_STARTED =  "------------------------------------------------------ IDE STARTED ------------------------------------------------------";
+  public static final String IDE_SHUTDOWN = "------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------";
   @SuppressWarnings("StaticNonFinalField")
   public static BiFunction<String, String[], Integer> LISTENER = (integer, s) -> Main.ACTIVATE_NOT_INITIALIZED;
 
@@ -818,9 +820,9 @@ public final class StartupUtil {
       e.printStackTrace();
     }
     Logger log = Logger.getInstance(StartupUtil.class);
-    log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
+    log.info(IDE_STARTED);
     ShutDownTracker.getInstance().registerShutdownTask(() -> {
-      log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
+      log.info(IDE_SHUTDOWN);
     });
     if (Boolean.parseBoolean(System.getProperty("intellij.log.stdout", "true"))) {
       System.setOut(new PrintStreamLogger("STDOUT", System.out));
