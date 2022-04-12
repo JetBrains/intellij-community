@@ -9,6 +9,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 class SelectChangesGroupingActionGroup : DefaultActionGroup(), DumbAware {
 
   override fun update(e: AnActionEvent) {
+    val fromActionToolbar = e.isFromActionToolbar
+    e.presentation.isPopupGroup = fromActionToolbar
     e.presentation.isEnabled = e.getData(ChangesGroupingSupport.KEY) != null
   }
 }

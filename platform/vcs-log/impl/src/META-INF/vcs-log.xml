@@ -183,19 +183,23 @@
       <reference id="Vcs.Log.MoveDiffPreviewToRight"/>
     </group>
     <group id="Vcs.Log.LayoutConfiguration" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
-           icon="AllIcons.Debugger.RestoreLayout" popup="true">
+           icon="AllIcons.Debugger.RestoreLayout" popup="false">
+      <separator key="group.Vcs.Log.LayoutConfiguration.separator.text"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="Vcs.Log.ShowDiffPreview"/>
       <reference id="Vcs.Log.Diff.Preview.Location"/>
     </group>
+    <group id="Vcs.Log.ChangesBrowser.PresentationSettings"
+           icon="AllIcons.Actions.GroupBy"
+           popup="true">
+      <reference id="ChangesView.GroupBy"/>
+      <reference id="ChangesBrowser.FiltererGroup"/>
+      <reference id="Vcs.Log.LayoutConfiguration"/>
+    </group>
     <group id="Vcs.Log.ChangesBrowser.Toolbar">
       <reference id="Vcs.RepositoryChangesBrowserToolbar"/>
       <reference id="Vcs.Log.ShowOnlyAffectedChanges"/>
-      <separator/>
-      <reference id="ChangesView.GroupBy"/>
-      <reference id="ChangesBrowser.FiltererGroup"/>
-      <separator/>
-      <reference id="Vcs.Log.LayoutConfiguration"/>
+      <reference id="Vcs.Log.ChangesBrowser.PresentationSettings"/>
     </group>
     <group id="Vcs.Log.ChangesBrowser.Popup">
       <reference id="Vcs.RepositoryChangesBrowserMenu"/>
