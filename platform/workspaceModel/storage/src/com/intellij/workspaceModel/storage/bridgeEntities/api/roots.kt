@@ -33,7 +33,7 @@ interface ContentRootEntity : WorkspaceEntity {
         override var sourceRootOrder: SourceRootOrderEntity?
     }
     
-    companion object: Type<ContentRootEntity, Builder>(20)
+    companion object: Type<ContentRootEntity, Builder>(21)
     //@formatter:on
     //endregion
 
@@ -62,7 +62,7 @@ interface SourceRootEntity : WorkspaceEntity {
         override var javaResourceRoots: List<JavaResourceRootEntity>
     }
     
-    companion object: Type<SourceRootEntity, Builder>(21)
+    companion object: Type<SourceRootEntity, Builder>(22)
     //@formatter:on
     //endregion
 
@@ -82,7 +82,7 @@ interface SourceRootOrderEntity : WorkspaceEntity {
         override var orderOfSourceRoots: List<VirtualFileUrl>
     }
     
-    companion object: Type<SourceRootOrderEntity, Builder>(22)
+    companion object: Type<SourceRootOrderEntity, Builder>(23)
     //@formatter:on
     //endregion
 
@@ -101,7 +101,7 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
         override var propertiesXmlTag: String
     }
     
-    companion object: Type<CustomSourceRootPropertiesEntity, Builder>(23)
+    companion object: Type<CustomSourceRootPropertiesEntity, Builder>(24)
     //@formatter:on
     //endregion
 
@@ -123,7 +123,7 @@ interface JavaSourceRootEntity : WorkspaceEntity {
         override var packagePrefix: String
     }
     
-    companion object: Type<JavaSourceRootEntity, Builder>(24)
+    companion object: Type<JavaSourceRootEntity, Builder>(25)
     //@formatter:on
     //endregion
 
@@ -145,7 +145,7 @@ interface JavaResourceRootEntity: WorkspaceEntity {
         override var relativeOutputPath: String
     }
     
-    companion object: Type<JavaResourceRootEntity, Builder>(25)
+    companion object: Type<JavaResourceRootEntity, Builder>(26)
     //@formatter:on
     //endregion
 

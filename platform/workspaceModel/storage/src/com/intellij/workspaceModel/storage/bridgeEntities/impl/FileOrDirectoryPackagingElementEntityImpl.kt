@@ -32,7 +32,7 @@ open class FileOrDirectoryPackagingElementEntityImpl: FileOrDirectoryPackagingEl
     override val filePath: VirtualFileUrl
         get() = _filePath!!
 
-    class Builder(val result: FileOrDirectoryPackagingElementEntityData?): ModifiableWorkspaceEntityBase<FileOrDirectoryPackagingElementEntity>(), FileOrDirectoryPackagingElementEntity.Builder<FileOrDirectoryPackagingElementEntity> {
+    class Builder(val result: FileOrDirectoryPackagingElementEntityData?): ModifiableWorkspaceEntityBase<FileOrDirectoryPackagingElementEntity>(), FileOrDirectoryPackagingElementEntity.Builder {
         constructor(): this(FileOrDirectoryPackagingElementEntityData())
                  
         override fun build(): FileOrDirectoryPackagingElementEntity = this

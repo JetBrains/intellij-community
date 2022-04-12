@@ -129,31 +129,6 @@ var AttachedEntityToParent.Builder.ref: MainEntityToParent
         }
     }
 
-var MainEntity.Builder.child: @Child AttachedEntity?
-    get() {
-        return referrersx(AttachedEntity::ref).singleOrNull()
-    }
-    set(value) {
-        val diff = (this as MainEntityImpl.Builder).diff
-        if (diff != null) {
-            if (value != null) {
-                if ((value as AttachedEntityImpl.Builder).diff == null) {
-                    value._ref = this
-                    diff.addEntity(value)
-                }
-            }
-            diff.updateOneToOneChildOfParent(AttachedEntityImpl.REF_CONNECTION_ID, this, value)
-        }
-        else {
-            val key = ExtRefKey("AttachedEntity", "ref", true, AttachedEntityImpl.REF_CONNECTION_ID)
-            this.extReferences[key] = value
-            
-            if (value != null) {
-                (value as AttachedEntityImpl.Builder)._ref = this
-            }
-        }
-    }
-
 var MainEntityList.Builder.child: @Child List<AttachedEntityList>
     get() {
         return referrersx(AttachedEntityList::ref)
@@ -179,25 +154,90 @@ var MainEntityList.Builder.child: @Child List<AttachedEntityList>
         }
     }
 
+var MainEntity.Builder.child: @Child AttachedEntity?
+    get() {
+        return referrersx(AttachedEntity::ref).singleOrNull()
+    }
+    set(value) {
+        val diff = (this as MainEntityImpl.Builder).diff
+        if (diff != null) {
+            if (value != null) {
+                if ((value as AttachedEntityImpl.Builder).diff == null) {
+                    value._ref = this
+                    diff.addEntity(value)
+                }
+            }
+            diff.updateOneToOneChildOfParent(AttachedEntityImpl.REF_CONNECTION_ID, this, value)
+        }
+        else {
+            val key = ExtRefKey("AttachedEntity", "ref", true, AttachedEntityImpl.REF_CONNECTION_ID)
+            this.extReferences[key] = value
+            
+            if (value != null) {
+                (value as AttachedEntityImpl.Builder)._ref = this
+            }
+        }
+    }
 
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: MainEntityParentList, modification: MainEntityParentList.Builder.() -> Unit) = modifyEntity(MainEntityParentList.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: AttachedEntityParentList, modification: AttachedEntityParentList.Builder.() -> Unit) = modifyEntity(AttachedEntityParentList.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: LinkedListEntity, modification: LinkedListEntity.Builder.() -> Unit) = modifyEntity(LinkedListEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SampleEntity2, modification: SampleEntity2.Builder.() -> Unit) = modifyEntity(SampleEntity2.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: VFUEntity2, modification: VFUEntity2.Builder.() -> Unit) = modifyEntity(VFUEntity2.Builder::class.java, entity, modification)
+
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ParentSubEntity, modification: ParentSubEntity.Builder.() -> Unit) = modifyEntity(ParentSubEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildSubEntity, modification: ChildSubEntity.Builder.() -> Unit) = modifyEntity(ChildSubEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildSubSubEntity, modification: ChildSubSubEntity.Builder.() -> Unit) = modifyEntity(ChildSubSubEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: OneEntityWithPersistentId, modification: OneEntityWithPersistentId.Builder.() -> Unit) = modifyEntity(OneEntityWithPersistentId.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: EntityWithSoftLinks, modification: EntityWithSoftLinks.Builder.() -> Unit) = modifyEntity(EntityWithSoftLinks.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SoftLinkReferencedChild, modification: SoftLinkReferencedChild.Builder.() -> Unit) = modifyEntity(SoftLinkReferencedChild.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: MainEntityParentList, modification: MainEntityParentList.Builder.() -> Unit) = modifyEntity(MainEntityParentList.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: AttachedEntityParentList, modification: AttachedEntityParentList.Builder.() -> Unit) = modifyEntity(AttachedEntityParentList.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: MainEntityToParent, modification: MainEntityToParent.Builder.() -> Unit) = modifyEntity(MainEntityToParent.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: AttachedEntityToParent, modification: AttachedEntityToParent.Builder.() -> Unit) = modifyEntity(AttachedEntityToParent.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: MainEntityList, modification: MainEntityList.Builder.() -> Unit) = modifyEntity(MainEntityList.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: AttachedEntityList, modification: AttachedEntityList.Builder.() -> Unit) = modifyEntity(AttachedEntityList.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SampleEntity, modification: SampleEntity.Builder.() -> Unit) = modifyEntity(SampleEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildSampleEntity, modification: ChildSampleEntity.Builder.() -> Unit) = modifyEntity(ChildSampleEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SecondSampleEntity, modification: SecondSampleEntity.Builder.() -> Unit) = modifyEntity(SecondSampleEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SourceEntity, modification: SourceEntity.Builder.() -> Unit) = modifyEntity(SourceEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildSourceEntity, modification: ChildSourceEntity.Builder.() -> Unit) = modifyEntity(ChildSourceEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: PersistentIdEntity, modification: PersistentIdEntity.Builder.() -> Unit) = modifyEntity(PersistentIdEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ParentEntity, modification: ParentEntity.Builder.() -> Unit) = modifyEntity(ParentEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildEntity, modification: ChildEntity.Builder.() -> Unit) = modifyEntity(ChildEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ParentNullableEntity, modification: ParentNullableEntity.Builder.() -> Unit) = modifyEntity(ParentNullableEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildNullableEntity, modification: ChildNullableEntity.Builder.() -> Unit) = modifyEntity(ChildNullableEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: LinkedListEntity, modification: LinkedListEntity.Builder.() -> Unit) = modifyEntity(LinkedListEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: MainEntity, modification: MainEntity.Builder.() -> Unit) = modifyEntity(MainEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: AttachedEntity, modification: AttachedEntity.Builder.() -> Unit) = modifyEntity(AttachedEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: FirstEntityWithPId, modification: FirstEntityWithPId.Builder.() -> Unit) = modifyEntity(FirstEntityWithPId.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SecondEntityWithPId, modification: SecondEntityWithPId.Builder.() -> Unit) = modifyEntity(SecondEntityWithPId.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ParentChainEntity, modification: ParentChainEntity.Builder.() -> Unit) = modifyEntity(ParentChainEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: CompositeChildAbstractEntity, modification: CompositeChildAbstractEntity.Builder.() -> Unit) = modifyEntity(CompositeChildAbstractEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SimpleChildAbstractEntity, modification: SimpleChildAbstractEntity.Builder.() -> Unit) = modifyEntity(SimpleChildAbstractEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: NamedEntity, modification: NamedEntity.Builder.() -> Unit) = modifyEntity(NamedEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: NamedChildEntity, modification: NamedChildEntity.Builder.() -> Unit) = modifyEntity(NamedChildEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: WithSoftLinkEntity, modification: WithSoftLinkEntity.Builder.() -> Unit) = modifyEntity(WithSoftLinkEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ComposedLinkEntity, modification: ComposedLinkEntity.Builder.() -> Unit) = modifyEntity(ComposedLinkEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: WithListSoftLinksEntity, modification: WithListSoftLinksEntity.Builder.() -> Unit) = modifyEntity(WithListSoftLinksEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ComposedIdSoftRefEntity, modification: ComposedIdSoftRefEntity.Builder.() -> Unit) = modifyEntity(ComposedIdSoftRefEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: MainEntity, modification: MainEntity.Builder.() -> Unit) = modifyEntity(MainEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: AttachedEntity, modification: AttachedEntity.Builder.() -> Unit) = modifyEntity(AttachedEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ParentAbEntity, modification: ParentAbEntity.Builder.() -> Unit) = modifyEntity(ParentAbEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildFirstEntity, modification: ChildFirstEntity.Builder.() -> Unit) = modifyEntity(ChildFirstEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildSecondEntity, modification: ChildSecondEntity.Builder.() -> Unit) = modifyEntity(ChildSecondEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: XParentEntity, modification: XParentEntity.Builder.() -> Unit) = modifyEntity(XParentEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: XChildEntity, modification: XChildEntity.Builder.() -> Unit) = modifyEntity(XChildEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: XChildWithOptionalParentEntity, modification: XChildWithOptionalParentEntity.Builder.() -> Unit) = modifyEntity(XChildWithOptionalParentEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: XChildChildEntity, modification: XChildChildEntity.Builder.() -> Unit) = modifyEntity(XChildChildEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: AssertConsistencyEntity, modification: AssertConsistencyEntity.Builder.() -> Unit) = modifyEntity(AssertConsistencyEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SampleEntity2, modification: SampleEntity2.Builder.() -> Unit) = modifyEntity(SampleEntity2.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: VFUEntity2, modification: VFUEntity2.Builder.() -> Unit) = modifyEntity(VFUEntity2.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ParentMultipleEntity, modification: ParentMultipleEntity.Builder.() -> Unit) = modifyEntity(ParentMultipleEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildMultipleEntity, modification: ChildMultipleEntity.Builder.() -> Unit) = modifyEntity(ChildMultipleEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: VFUEntity, modification: VFUEntity.Builder.() -> Unit) = modifyEntity(VFUEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: VFUWithTwoPropertiesEntity, modification: VFUWithTwoPropertiesEntity.Builder.() -> Unit) = modifyEntity(VFUWithTwoPropertiesEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: NullableVFUEntity, modification: NullableVFUEntity.Builder.() -> Unit) = modifyEntity(NullableVFUEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ListVFUEntity, modification: ListVFUEntity.Builder.() -> Unit) = modifyEntity(ListVFUEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: MiddleEntity, modification: MiddleEntity.Builder.() -> Unit) = modifyEntity(MiddleEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: LeftEntity, modification: LeftEntity.Builder.() -> Unit) = modifyEntity(LeftEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: RightEntity, modification: RightEntity.Builder.() -> Unit) = modifyEntity(RightEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ParentSingleAbEntity, modification: ParentSingleAbEntity.Builder.() -> Unit) = modifyEntity(ParentSingleAbEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildSingleFirstEntity, modification: ChildSingleFirstEntity.Builder.() -> Unit) = modifyEntity(ChildSingleFirstEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildSingleSecondEntity, modification: ChildSingleSecondEntity.Builder.() -> Unit) = modifyEntity(ChildSingleSecondEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: OoParentEntity, modification: OoParentEntity.Builder.() -> Unit) = modifyEntity(OoParentEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: OoChildEntity, modification: OoChildEntity.Builder.() -> Unit) = modifyEntity(OoChildEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: OoChildWithNullableParentEntity, modification: OoChildWithNullableParentEntity.Builder.() -> Unit) = modifyEntity(OoChildWithNullableParentEntity.Builder::class.java, entity, modification)
@@ -206,43 +246,3 @@ fun WorkspaceEntityStorageBuilder.modifyEntity(entity: OoChildForParentWithPidEn
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: OoChildAlsoWithPidEntity, modification: OoChildAlsoWithPidEntity.Builder.() -> Unit) = modifyEntity(OoChildAlsoWithPidEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: OoParentWithoutPidEntity, modification: OoParentWithoutPidEntity.Builder.() -> Unit) = modifyEntity(OoParentWithoutPidEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: OoChildWithPidEntity, modification: OoChildWithPidEntity.Builder.() -> Unit) = modifyEntity(OoChildWithPidEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ParentSingleAbEntity, modification: ParentSingleAbEntity.Builder.() -> Unit) = modifyEntity(ParentSingleAbEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildSingleFirstEntity, modification: ChildSingleFirstEntity.Builder.() -> Unit) = modifyEntity(ChildSingleFirstEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildSingleSecondEntity, modification: ChildSingleSecondEntity.Builder.() -> Unit) = modifyEntity(ChildSingleSecondEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ParentEntity, modification: ParentEntity.Builder.() -> Unit) = modifyEntity(ParentEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildEntity, modification: ChildEntity.Builder.() -> Unit) = modifyEntity(ChildEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ParentNullableEntity, modification: ParentNullableEntity.Builder.() -> Unit) = modifyEntity(ParentNullableEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildNullableEntity, modification: ChildNullableEntity.Builder.() -> Unit) = modifyEntity(ChildNullableEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: MainEntityList, modification: MainEntityList.Builder.() -> Unit) = modifyEntity(MainEntityList.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: AttachedEntityList, modification: AttachedEntityList.Builder.() -> Unit) = modifyEntity(AttachedEntityList.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: XParentEntity, modification: XParentEntity.Builder.() -> Unit) = modifyEntity(XParentEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: XChildEntity, modification: XChildEntity.Builder.() -> Unit) = modifyEntity(XChildEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: XChildWithOptionalParentEntity, modification: XChildWithOptionalParentEntity.Builder.() -> Unit) = modifyEntity(XChildWithOptionalParentEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: XChildChildEntity, modification: XChildChildEntity.Builder.() -> Unit) = modifyEntity(XChildChildEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ParentChainEntity, modification: ParentChainEntity.Builder.() -> Unit) = modifyEntity(ParentChainEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: CompositeChildAbstractEntity, modification: CompositeChildAbstractEntity.Builder.() -> Unit) = modifyEntity(CompositeChildAbstractEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SimpleChildAbstractEntity, modification: SimpleChildAbstractEntity.Builder.() -> Unit) = modifyEntity(SimpleChildAbstractEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: VFUEntity, modification: VFUEntity.Builder.() -> Unit) = modifyEntity(VFUEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: VFUWithTwoPropertiesEntity, modification: VFUWithTwoPropertiesEntity.Builder.() -> Unit) = modifyEntity(VFUWithTwoPropertiesEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: NullableVFUEntity, modification: NullableVFUEntity.Builder.() -> Unit) = modifyEntity(NullableVFUEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ListVFUEntity, modification: ListVFUEntity.Builder.() -> Unit) = modifyEntity(ListVFUEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ParentAbEntity, modification: ParentAbEntity.Builder.() -> Unit) = modifyEntity(ParentAbEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildFirstEntity, modification: ChildFirstEntity.Builder.() -> Unit) = modifyEntity(ChildFirstEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildSecondEntity, modification: ChildSecondEntity.Builder.() -> Unit) = modifyEntity(ChildSecondEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: AssertConsistencyEntity, modification: AssertConsistencyEntity.Builder.() -> Unit) = modifyEntity(AssertConsistencyEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ParentSubEntity, modification: ParentSubEntity.Builder.() -> Unit) = modifyEntity(ParentSubEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildSubEntity, modification: ChildSubEntity.Builder.() -> Unit) = modifyEntity(ChildSubEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildSubSubEntity, modification: ChildSubSubEntity.Builder.() -> Unit) = modifyEntity(ChildSubSubEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: MiddleEntity, modification: MiddleEntity.Builder.() -> Unit) = modifyEntity(MiddleEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: LeftEntity, modification: LeftEntity.Builder.() -> Unit) = modifyEntity(LeftEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: RightEntity, modification: RightEntity.Builder.() -> Unit) = modifyEntity(RightEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SampleEntity, modification: SampleEntity.Builder.() -> Unit) = modifyEntity(SampleEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildSampleEntity, modification: ChildSampleEntity.Builder.() -> Unit) = modifyEntity(ChildSampleEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SecondSampleEntity, modification: SecondSampleEntity.Builder.() -> Unit) = modifyEntity(SecondSampleEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SourceEntity, modification: SourceEntity.Builder.() -> Unit) = modifyEntity(SourceEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildSourceEntity, modification: ChildSourceEntity.Builder.() -> Unit) = modifyEntity(ChildSourceEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: PersistentIdEntity, modification: PersistentIdEntity.Builder.() -> Unit) = modifyEntity(PersistentIdEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: FirstEntityWithPId, modification: FirstEntityWithPId.Builder.() -> Unit) = modifyEntity(FirstEntityWithPId.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SecondEntityWithPId, modification: SecondEntityWithPId.Builder.() -> Unit) = modifyEntity(SecondEntityWithPId.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ParentMultipleEntity, modification: ParentMultipleEntity.Builder.() -> Unit) = modifyEntity(ParentMultipleEntity.Builder::class.java, entity, modification)
-fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildMultipleEntity, modification: ChildMultipleEntity.Builder.() -> Unit) = modifyEntity(ChildMultipleEntity.Builder::class.java, entity, modification)

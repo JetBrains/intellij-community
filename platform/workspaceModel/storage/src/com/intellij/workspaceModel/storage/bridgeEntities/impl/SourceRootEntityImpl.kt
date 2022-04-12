@@ -314,7 +314,7 @@ open class SourceRootEntityImpl: SourceRootEntity, WorkspaceEntityBase() {
                     val _diff = diff
                     if (_diff != null) {
                         for (item_value in value) {
-                            if ((item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+                            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
                                 _diff.addEntity(item_value)
                             }
                         }
@@ -349,7 +349,7 @@ open class SourceRootEntityImpl: SourceRootEntity, WorkspaceEntityBase() {
                     val _diff = diff
                     if (_diff != null) {
                         for (item_value in value) {
-                            if ((item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+                            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
                                 _diff.addEntity(item_value)
                             }
                         }

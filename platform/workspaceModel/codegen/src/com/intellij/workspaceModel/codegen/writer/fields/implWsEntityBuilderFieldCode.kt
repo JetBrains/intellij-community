@@ -136,7 +136,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
                             line("val _diff = diff")
                             `if`("_diff != null") {
                                 `for`("item_value in value") {
-                                    `if`("(item_value as? ${wsFqn("ModifiableWorkspaceEntityBase")}<*>)?.diff == null") {
+                                    `if`("item_value is ${wsFqn("ModifiableWorkspaceEntityBase")}<*> && (item_value as? ${wsFqn("ModifiableWorkspaceEntityBase")}<*>)?.diff == null") {
                                         line("_diff.addEntity(item_value)")
                                     }
                                 }
@@ -168,7 +168,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
                             line("val _diff = diff")
                             `if`("_diff != null") {
                                 `for`("item_value in value") {
-                                    `if`("(item_value as? ${wsFqn("ModifiableWorkspaceEntityBase")}<*>)?.diff == null") {
+                                    `if`("item_value is ${wsFqn("ModifiableWorkspaceEntityBase")}<*> && (item_value as? ${wsFqn("ModifiableWorkspaceEntityBase")}<*>)?.diff == null") {
                                         line("_diff.addEntity(item_value)")
                                     }
                                 }

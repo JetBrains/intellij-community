@@ -31,7 +31,7 @@ interface MainEntityList : WorkspaceEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<MainEntityList, Builder>(63)
+    companion object: Type<MainEntityList, Builder>(39)
     //@formatter:on
     //endregion
 }
@@ -49,7 +49,7 @@ interface AttachedEntityList : WorkspaceEntity {
         override var data: String
     }
     
-    companion object: Type<AttachedEntityList, Builder>(64)
+    companion object: Type<AttachedEntityList, Builder>(40)
     //@formatter:on
     //endregion
 

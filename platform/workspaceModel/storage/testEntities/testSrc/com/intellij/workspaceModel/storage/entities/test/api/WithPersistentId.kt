@@ -41,7 +41,9 @@ sealed class SealedContainer {
 
 @Open
 sealed class DeepSealedOne {
+  @Open
   sealed class DeepSealedTwo : DeepSealedOne() {
+    @Open
     sealed class DeepSealedThree : DeepSealedTwo() {
       data class DeepSealedFour(val id: OnePersistentId): DeepSealedThree()
     }
@@ -64,7 +66,7 @@ interface OneEntityWithPersistentId : WorkspaceEntityWithPersistentId {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<OneEntityWithPersistentId, Builder>(34)
+    companion object: Type<OneEntityWithPersistentId, Builder>(32)
     //@formatter:on
     //endregion
 
@@ -110,7 +112,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
         override var children: List<SoftLinkReferencedChild>
     }
     
-    companion object: Type<EntityWithSoftLinks, Builder>(35)
+    companion object: Type<EntityWithSoftLinks, Builder>(33)
     //@formatter:on
     //endregion
 
@@ -125,7 +127,7 @@ interface SoftLinkReferencedChild : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<SoftLinkReferencedChild, Builder>(36)
+  companion object: Type<SoftLinkReferencedChild, Builder>(34)
   //@formatter:on
   //endregion
 
