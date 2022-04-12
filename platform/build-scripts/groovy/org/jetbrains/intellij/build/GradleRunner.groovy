@@ -21,7 +21,7 @@ final class GradleRunner {
     String projectDir,
     BuildMessages messages,
     BuildOptions options,
-    List<String> additionalParams = getDefaultAdditionalParams()
+    List<String> additionalParams = []
   ) {
     this.messages = messages
     this.options = options
@@ -49,27 +49,6 @@ final class GradleRunner {
    */
   boolean run(String title, File buildFile, String... tasks) {
     return runInner(title, buildFile, false, false, tasks)
-  }
-
-  GradleRunner withParams(List<String> additionalParams) {
-    return new GradleRunner(gradleProjectDir, projectDir, messages, options, this.additionalParams + additionalParams)
-  }
-
-  private static List<String> getDefaultAdditionalParams() {
-    def rawParams = System.getProperty("intellij.gradle.jdk.build.parameters", "")
-    if (rawParams.isEmpty()) {
-      return Collections.emptyList()
-    }
-
-    return Arrays.asList(rawParams.split(" "))
-  }
-
-  boolean runOneTask(String task) {
-    boolean result = runInner(null, false, task)
-    if (!result) {
-      messages.error("Failed to complete `gradle $task`")
-    }
-    return result
   }
 
   private boolean runInner(String title, File buildFile, boolean force, boolean parallel, String... tasks) {
