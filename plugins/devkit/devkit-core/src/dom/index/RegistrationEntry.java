@@ -48,6 +48,9 @@ class RegistrationEntry {
     MODULE_COMPONENT,
 
     ACTION_ID,
-    ACTION_GROUP_ID
+    ACTION_GROUP_ID,
+
+    APPLICATION_LISTENER,
+    PROJECT_LISTENER
   }
 }
