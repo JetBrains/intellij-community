@@ -58,7 +58,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   }
 
   private fun receiveSnapshotFile(): InputStream? {
-    return clientVersionContext.doWithVersion(SETTINGS_SYNC_SNAPSHOT_ZIP, null) {
+    return clientVersionContext.doWithVersion(null) {
       client.read(SETTINGS_SYNC_SNAPSHOT_ZIP)
     }
   }
@@ -66,7 +66,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   private fun sendSnapshotFile(inputStream: InputStream) {
     val currentVersion = getCurrentVersion()
     LOG.info("Sending $SETTINGS_SYNC_SNAPSHOT_ZIP, current version: $currentVersion")
-    clientVersionContext.doWithVersion(SETTINGS_SYNC_SNAPSHOT_ZIP, currentVersion) {
+    clientVersionContext.doWithVersion(currentVersion) {
       client.write(SETTINGS_SYNC_SNAPSHOT_ZIP, inputStream)
     }
   }
@@ -183,7 +183,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   }
 
   fun downloadSnapshot(version: FileVersionInfo): InputStream? {
-    val stream = clientVersionContext.doWithVersion(SETTINGS_SYNC_SNAPSHOT_ZIP, version.versionId) {
+    val stream = clientVersionContext.doWithVersion(version.versionId) {
       client.read(SETTINGS_SYNC_SNAPSHOT_ZIP)
     }
 
@@ -223,7 +223,8 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
       else contextVersionMap.remove(path)
     }
 
-    fun <T> doWithVersion(path: String, version: String?, function: () -> T): T {
+    fun <T> doWithVersion(version: String?, function: () -> T): T {
+      val path = SETTINGS_SYNC_SNAPSHOT_ZIP
       return lock.withLock {
         try {
           if (version != null) {
