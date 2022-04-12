@@ -44,7 +44,7 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
         override var facets: List<FacetEntity>
     }
     
-    companion object: Type<ModuleEntity, Builder>(48)
+    companion object: Type<ModuleEntity, Builder>(30)
     //@formatter:on
     //endregion
 
@@ -66,7 +66,7 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
         override var customModuleOptions: Map<String, String>
     }
     
-    companion object: Type<ModuleCustomImlDataEntity, Builder>(49)
+    companion object: Type<ModuleCustomImlDataEntity, Builder>(31)
     //@formatter:on
     //endregion
 
@@ -86,7 +86,7 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
         override var path: List<String>
     }
     
-    companion object: Type<ModuleGroupPathEntity, Builder>(50)
+    companion object: Type<ModuleGroupPathEntity, Builder>(32)
     //@formatter:on
     //endregion
 
@@ -114,7 +114,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
         override var languageLevelId: String?
     }
     
-    companion object: Type<JavaModuleSettingsEntity, Builder>(51)
+    companion object: Type<JavaModuleSettingsEntity, Builder>(33)
     //@formatter:on
     //endregion
 
@@ -147,7 +147,7 @@ interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
         override var externalSystemModuleType: String?
     }
     
-    companion object: Type<ExternalSystemModuleOptionsEntity, Builder>(52)
+    companion object: Type<ExternalSystemModuleOptionsEntity, Builder>(34)
     //@formatter:on
     //endregion
 

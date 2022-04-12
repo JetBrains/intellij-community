@@ -22,9 +22,9 @@ import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ArtifactId
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.CompositePackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.CompositePackagingElementEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -147,7 +147,7 @@ class ArtifactModifiableModelBridge(
       outputUrl, rootElementEntity, source
     )
 
-    val persistentId = artifactEntity.persistentId()
+    val persistentId = artifactEntity.persistentId
     val modifiableArtifact = ArtifactBridge(persistentId, versionedOnBuilder, project, eventDispatcher, null)
     modifiableToOriginal[modifiableArtifact] = modifiableArtifact
     diff.mutableArtifactsMap.addMapping(artifactEntity, modifiableArtifact)
@@ -182,7 +182,7 @@ class ArtifactModifiableModelBridge(
     if (artifact as ArtifactBridge in modifiableToOriginal) return artifact
 
     val entity = diff.artifactsMap.getEntities(artifact).singleOrNull() as? ArtifactEntity ?: error("Artifact doesn't exist")
-    val artifactId = entity.persistentId()
+    val artifactId = entity.persistentId
     val existingModifiableArtifact = modifiableToOriginal.getKeysByValue(artifact)?.singleOrNull()
     if (existingModifiableArtifact != null) return existingModifiableArtifact
 

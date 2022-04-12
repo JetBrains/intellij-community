@@ -14,7 +14,8 @@ import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.*;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArchivePackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.PackagingElementEntity;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +75,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     this.update(
       () -> myArchiveFileName = archiveFileName,
       (builder, entity) -> {
-        builder.modifyEntity(ModifiableArchivePackagingElementEntity.class, entity, ent -> {
+        builder.modifyEntity(ArchivePackagingElementEntity.Builder.class, entity, ent -> {
           ent.setFileName(archiveFileName);
           return Unit.INSTANCE;
         });

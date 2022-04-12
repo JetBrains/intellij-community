@@ -27,10 +27,10 @@ import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ArtifactId
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.CustomPackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableCustomPackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.CustomPackagingElementEntity
+import org.jetbrains.workspaceModel.modifyEntity
 
 class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), Disposable {
 
@@ -262,7 +262,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
       val state = packagingElement.state ?: continue
       val newState = JDOMUtil.write(XmlSerializer.serialize(state))
       if (newState != customEntity.propertiesXmlTag) {
-        diff.modifyEntity(ModifiableCustomPackagingElementEntity::class.java, customEntity) {
+        diff.modifyEntity(customEntity) {
           this.propertiesXmlTag = newState
         }
       }

@@ -18,8 +18,7 @@ import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.FileCopyPackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableFileCopyPackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.FileCopyPackagingElementEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import kotlin.Unit;
@@ -98,7 +97,7 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
       (builder, entity) -> {
         if (Objects.equals(renamedBefore, renamedOutputFileName)) return;
 
-        builder.modifyEntity(ModifiableFileCopyPackagingElementEntity.class, entity, ent -> {
+        builder.modifyEntity(FileCopyPackagingElementEntity.Builder.class, entity, ent -> {
           ent.setRenamedOutputFileName(renamedOutputFileName);
           return Unit.INSTANCE;
         });
@@ -122,7 +121,7 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     this.update(
       () -> myRenamedOutputFileName = updatedName,
       (builder, entity) -> {
-        builder.modifyEntity(ModifiableFileCopyPackagingElementEntity.class, entity, ent -> {
+        builder.modifyEntity(FileCopyPackagingElementEntity.Builder.class, entity, ent -> {
           ent.setRenamedOutputFileName(updatedName);
           return Unit.INSTANCE;
         });

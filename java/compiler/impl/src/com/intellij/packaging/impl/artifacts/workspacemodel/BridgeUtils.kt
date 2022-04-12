@@ -17,7 +17,7 @@ import com.intellij.packaging.impl.elements.*
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 
 internal fun addBridgesToDiff(newBridges: List<ArtifactBridge>, builder: WorkspaceEntityStorageBuilder) {
   for (newBridge in newBridges) {
@@ -28,7 +28,7 @@ internal fun addBridgesToDiff(newBridges: List<ArtifactBridge>, builder: Workspa
 
 internal fun createArtifactBridge(it: ArtifactEntity, entityStorage: VersionedEntityStorage, project: Project): ArtifactBridge {
   if (ArtifactType.findById(it.artifactType) == null) {
-    return InvalidArtifactBridge(it.persistentId(), entityStorage, project, null,
+    return InvalidArtifactBridge(it.persistentId, entityStorage, project, null,
                                  JavaCompilerBundle.message("unknown.artifact.type.0", it.artifactType))
   }
 
@@ -50,17 +50,17 @@ internal fun createArtifactBridge(it: ArtifactEntity, entityStorage: VersionedEn
 
   val missingArtifactType = findMissingArtifactType(it.rootElement!!)
   if (missingArtifactType != null) {
-    return InvalidArtifactBridge(it.persistentId(), entityStorage, project, null,
+    return InvalidArtifactBridge(it.persistentId, entityStorage, project, null,
                                  JavaCompilerBundle.message("unknown.element.0", missingArtifactType))
   }
 
   val unknownProperty = it.customProperties.firstOrNull { ArtifactPropertiesProvider.findById(it.providerType) == null }
   if (unknownProperty != null) {
-    return InvalidArtifactBridge(it.persistentId(), entityStorage, project, null,
+    return InvalidArtifactBridge(it.persistentId, entityStorage, project, null,
                                  JavaCompilerBundle.message("unknown.artifact.properties.0", unknownProperty))
   }
 
-  return ArtifactBridge(it.persistentId(), entityStorage, project, null, null)
+  return ArtifactBridge(it.persistentId, entityStorage, project, null, null)
 }
 
 fun PackagingElement<*>.forThisAndFullTree(action: (PackagingElement<*>) -> Unit) {

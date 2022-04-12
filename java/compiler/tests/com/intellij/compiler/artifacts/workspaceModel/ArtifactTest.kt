@@ -35,9 +35,25 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactRootElementEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addCustomPackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArchivePackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactPropertiesEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactRootElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.DirectoryPackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ExtractedDirectoryPackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.FileCopyPackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryFilesPackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableDirectoryPackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableFileCopyPackagingElementEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase
+import org.jetbrains.workspaceModel.modifyEntity
 import org.junit.Assume.assumeTrue
 import org.junit.runner.RunWith
 import java.util.concurrent.Callable
@@ -59,7 +75,7 @@ class ArtifactTest : ArtifactsTestCase() {
 
     WorkspaceModel.getInstance(project).updateProjectModel {
       val artifactEntity = it.entities(ArtifactEntity::class.java).single()
-      it.modifyEntity(ModifiableArtifactEntity::class.java, artifactEntity) {
+      it.modifyEntity(artifactEntity) {
         name = anotherName
       }
     }
@@ -116,7 +132,7 @@ class ArtifactTest : ArtifactsTestCase() {
 
     workspaceModel.updateProjectModel {
       val artifactEntity = it.resolve(ArtifactId("MyName"))!!
-      it.modifyEntity(ModifiableArtifactEntity::class.java, artifactEntity) {
+      it.modifyEntity(artifactEntity) {
         name = "NameThree"
       }
     }
@@ -137,7 +153,7 @@ class ArtifactTest : ArtifactsTestCase() {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as FileCopyPackagingElementEntity
-        builder.modifyEntity(ModifiableFileCopyPackagingElementEntity::class.java, elementEntity) {
+        builder.modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, elementEntity) {
           filePath = VirtualFileUrlManager.getInstance(project).fromPath(file2.systemIndependentPath)
         }
       }
@@ -195,7 +211,7 @@ class ArtifactTest : ArtifactsTestCase() {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as ArchivePackagingElementEntity
-        builder.modifyEntity(ModifiableArchivePackagingElementEntity::class.java, elementEntity) {
+        builder.modifyEntity(elementEntity) {
           this.fileName = "AnotherName"
         }
       }
@@ -218,7 +234,7 @@ class ArtifactTest : ArtifactsTestCase() {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as LibraryFilesPackagingElementEntity
-        builder.modifyEntity(ModifiableLibraryFilesPackagingElementEntity::class.java, elementEntity) {
+        builder.modifyEntity(elementEntity) {
           this.library = LibraryId("123", LibraryTableId.ModuleLibraryTableId(ModuleId("MyModule")))
         }
       }
@@ -239,7 +255,7 @@ class ArtifactTest : ArtifactsTestCase() {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as ExtractedDirectoryPackagingElementEntity
-        builder.modifyEntity(ModifiableExtractedDirectoryPackagingElementEntity::class.java, elementEntity) {
+        builder.modifyEntity(ExtractedDirectoryPackagingElementEntity.Builder::class.java, elementEntity) {
           this.pathInArchive = "/another/test"
         }
       }
@@ -258,7 +274,7 @@ class ArtifactTest : ArtifactsTestCase() {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as FileCopyPackagingElementEntity
-        builder.modifyEntity(ModifiableFileCopyPackagingElementEntity::class.java, elementEntity) {
+        builder.modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, elementEntity) {
           this.renamedOutputFileName = "output"
         }
       }
@@ -285,7 +301,7 @@ class ArtifactTest : ArtifactsTestCase() {
 
     workspaceModel.updateProjectModel {
       val artifactEntity = it.resolve(ArtifactId("MyName"))!!
-      it.modifyEntity(ModifiableArtifactEntity::class.java, artifactEntity) {
+      it.modifyEntity(artifactEntity) {
         name = "NameThree"
       }
     }

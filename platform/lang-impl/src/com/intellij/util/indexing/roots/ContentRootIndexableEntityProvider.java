@@ -8,17 +8,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ContentRootEntity;
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
-import kotlin.sequences.Sequence;
-import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 class ContentRootIndexableEntityProvider implements IndexableEntityProvider.ModuleEntityDependent<ContentRootEntity>,
                                                     IndexableEntityProvider.Existing<ContentRootEntity> {
@@ -79,8 +78,8 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Modu
   }
 
   @NotNull
-  private static List<VirtualFileUrl> collectRootUrls(Sequence<ContentRootEntity> newContentRoots) {
-    return SequencesKt.toList(SequencesKt.mapNotNull(newContentRoots, root -> root.getUrl()));
+  private static List<VirtualFileUrl> collectRootUrls(List<ContentRootEntity> newContentRoots) {
+    return newContentRoots.stream().map(o -> o.getUrl()).filter(o -> o != null).collect(Collectors.toList());
   }
 
   @Override

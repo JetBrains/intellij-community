@@ -24,7 +24,10 @@ import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.*;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryFilesPackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +125,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
       (builder, entity) -> {
         if (levelBefore.equals(level)) return;
 
-        builder.modifyEntity(ModifiableLibraryFilesPackagingElementEntity.class, entity, ent -> {
+        builder.modifyEntity(LibraryFilesPackagingElementEntity.Builder.class, entity, ent -> {
           LibraryId libraryId = ent.getLibrary();
           if (libraryId != null) {
             LibraryTableId newTableId;
@@ -152,7 +155,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     this.update(
       () -> myLibraryName = libraryName,
       (builder, entity) -> {
-        builder.modifyEntity(ModifiableLibraryFilesPackagingElementEntity.class, entity, ent -> {
+        builder.modifyEntity(LibraryFilesPackagingElementEntity.Builder.class, entity, ent -> {
           LibraryId libraryId = ent.getLibrary();
           if (libraryId != null) {
             ent.setLibrary(libraryId.copy(libraryName, libraryId.getTableId()));
@@ -175,7 +178,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
       (builder, entity) -> {
         if (moduleNameBefore.equals(moduleName)) return;
 
-        builder.modifyEntity(ModifiableLibraryFilesPackagingElementEntity.class, entity, ent -> {
+        builder.modifyEntity(LibraryFilesPackagingElementEntity.Builder.class, entity, ent -> {
           LibraryId libraryId = ent.getLibrary();
           if (libraryId != null) {
             LibraryTableId newTableId = new LibraryTableId.ModuleLibraryTableId(new ModuleId(moduleName));

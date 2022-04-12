@@ -11,8 +11,8 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableJavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
+import org.jetbrains.workspaceModel.modifyEntity
 
 class LanguageLevelModuleExtensionBridge private constructor(private val module: ModuleBridge,
                                                              private val entityStorage: VersionedEntityStorage,
@@ -26,7 +26,7 @@ class LanguageLevelModuleExtensionBridge private constructor(private val module:
     val moduleEntity = moduleEntity ?: error("Cannot find entity for $module")
     val javaSettings = moduleEntity.javaSettings
     if (javaSettings != null) {
-      diff.modifyEntity(ModifiableJavaModuleSettingsEntity::class.java, javaSettings) {
+      diff.modifyEntity(javaSettings) {
         this.languageLevel = languageLevel
       }
     }

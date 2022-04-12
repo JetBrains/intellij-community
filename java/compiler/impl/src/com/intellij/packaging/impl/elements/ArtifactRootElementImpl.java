@@ -15,8 +15,8 @@ import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ArtifactRootElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.PackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactRootElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.PackagingElementEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

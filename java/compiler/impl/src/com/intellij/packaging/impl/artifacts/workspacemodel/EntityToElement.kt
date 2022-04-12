@@ -15,7 +15,7 @@ import com.intellij.packaging.impl.elements.*
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.TimeUnit
@@ -265,9 +265,9 @@ private fun PackagingElementEntity.unknownElement(): Nothing {
   error("Unknown packaging element entity: $this")
 }
 
-private fun Sequence<PackagingElementEntity>.pushTo(element: CompositePackagingElement<*>,
-                                                    project: Project,
-                                                    storage: VersionedEntityStorage) {
+private fun List<PackagingElementEntity>.pushTo(element: CompositePackagingElement<*>,
+                                                project: Project,
+                                                storage: VersionedEntityStorage) {
   val children = this.map { it.toElement(project, storage) }.toList()
   children.reversed().forEach { element.addFirstChild(it) }
 }

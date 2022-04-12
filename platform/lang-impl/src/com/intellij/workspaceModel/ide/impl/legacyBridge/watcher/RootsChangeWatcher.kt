@@ -30,12 +30,12 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlW
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.workspaceModel.modifyEntity
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -188,7 +188,7 @@ internal class RootsChangeWatcher(val project: Project) {
         val workspaceModel = WorkspaceModel.getInstance(project)
         val moduleEntity = workspaceModel.entityStorage.current.resolve(ModuleId(oldModuleName)) ?: return
         workspaceModel.updateProjectModel { diff ->
-          diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) { this.name = newModuleName }
+          diff.modifyEntity(moduleEntity) { this.name = newModuleName }
         }
       }
 

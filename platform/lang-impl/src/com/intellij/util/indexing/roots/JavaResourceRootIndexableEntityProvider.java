@@ -2,9 +2,9 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.JavaResourceRootEntity;
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModuleEntity;
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.SourceRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.JavaResourceRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;

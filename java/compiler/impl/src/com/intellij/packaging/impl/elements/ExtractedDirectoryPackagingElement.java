@@ -15,8 +15,7 @@ import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ExtractedDirectoryPackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableExtractedDirectoryPackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ExtractedDirectoryPackagingElementEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import kotlin.Unit;
@@ -93,7 +92,7 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
       (builder, entity) -> {
         if (myPathInJarBefore.equals(pathInJar)) return;
 
-        builder.modifyEntity(ModifiableExtractedDirectoryPackagingElementEntity.class, entity, ent -> {
+        builder.modifyEntity(ExtractedDirectoryPackagingElementEntity.Builder.class, entity, ent -> {
           ent.setPathInArchive(pathInJar);
           return Unit.INSTANCE;
         });
