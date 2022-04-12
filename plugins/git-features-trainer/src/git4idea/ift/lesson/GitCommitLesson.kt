@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.VcsNotificationIdsHolder
 import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
-import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
@@ -29,7 +28,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.AbstractCommitWorkflowHandler
 import com.intellij.vcs.commit.CommitActionsPanel
 import com.intellij.vcs.commit.CommitOptionsPanel
-import com.intellij.vcs.commit.allOptions
+import com.intellij.vcs.commit.restoreState
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import git4idea.i18n.GitBundle
@@ -106,7 +105,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
       val commitWorkflowHandler: AbstractCommitWorkflowHandler<*, *> = ChangesViewManager.getInstanceEx(project).commitWorkflowHandler
                                                                        ?: return@prepareRuntimeTask
-      commitWorkflowHandler.workflow.commitOptions.allOptions.forEach(RefreshableOnComponent::restoreState)
+      commitWorkflowHandler.workflow.commitOptions.restoreState()
       commitWorkflowHandler.setCommitMessage(lastCommitMessage)
     }
 

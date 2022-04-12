@@ -183,11 +183,15 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   protected abstract fun saveCommitMessage(success: Boolean)
 
-  private fun getVcsOptions(commitPanel: CheckinProjectPanel, vcses: Collection<AbstractVcs>, commitContext: CommitContext) =
+  private fun getVcsOptions(commitPanel: CheckinProjectPanel,
+                            vcses: Collection<AbstractVcs>,
+                            commitContext: CommitContext): Map<AbstractVcs, RefreshableOnComponent> =
     vcses.sortedWith(VCS_COMPARATOR)
-      .associateWith { it.checkinEnvironment?.createCommitOptions(commitPanel, commitContext) }
-      .filterValues { it != null }
-      .mapValues { it.value!! }
+      .mapNotNull { vcs ->
+        val optionsPanel = vcs.checkinEnvironment?.createCommitOptions(commitPanel, commitContext) ?: return@mapNotNull null
+        Pair(vcs, optionsPanel)
+      }
+      .toMap()
 
   private fun getBeforeOptions(handlers: Collection<CheckinHandler>): List<RefreshableOnComponent> =
     handlers.mapNotNullLoggingErrors(LOG) { it.beforeCheckinConfigurationPanel }

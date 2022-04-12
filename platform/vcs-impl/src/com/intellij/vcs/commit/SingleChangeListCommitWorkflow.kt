@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nls
 
 private val LOG = logger<SingleChangeListCommitWorkflow>()
 
-internal val CommitOptions.changeListSpecificOptions: Sequence<CheckinChangeListSpecificComponent>
+private val CommitOptions.changeListSpecificOptions: Sequence<CheckinChangeListSpecificComponent>
   get() = allOptions.filterIsInstance<CheckinChangeListSpecificComponent>()
 
 internal fun CommitOptions.changeListChanged(changeList: LocalChangeList) = changeListSpecificOptions.forEach {
