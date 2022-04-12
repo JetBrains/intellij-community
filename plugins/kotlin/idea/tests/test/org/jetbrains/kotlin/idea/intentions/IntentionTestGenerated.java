@@ -6282,6 +6282,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/convertLambdaToReference/inner.kt");
             }
 
+            @TestMetadata("invokeOperatorCall.kt")
+            public void testInvokeOperatorCall() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/invokeOperatorCall.kt");
+            }
+
+            @TestMetadata("invokeOperatorCallWithReceiver.kt")
+            public void testInvokeOperatorCallWithReceiver() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/invokeOperatorCallWithReceiver.kt");
+            }
+
             @TestMetadata("javaStaticMethod.kt")
             public void testJavaStaticMethod() throws Exception {
                 runTest("testData/intentions/convertLambdaToReference/javaStaticMethod.kt");
