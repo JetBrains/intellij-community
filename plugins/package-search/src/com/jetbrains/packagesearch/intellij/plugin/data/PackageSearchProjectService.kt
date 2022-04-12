@@ -11,6 +11,7 @@ import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
 import com.jetbrains.packagesearch.intellij.plugin.api.ServerURLs
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackagesToUpgrade
@@ -36,6 +37,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.replayOnSignals
 import com.jetbrains.packagesearch.intellij.plugin.util.showBackgroundLoadingBar
 import com.jetbrains.packagesearch.intellij.plugin.util.throttle
 import com.jetbrains.packagesearch.intellij.plugin.util.timer
+import com.jetbrains.packagesearch.intellij.plugin.util.toolWindowManagerFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.trustedProjectFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.whileLoading
 import kotlinx.coroutines.async
@@ -57,6 +59,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.take
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration
 import kotlin.time.seconds
@@ -80,6 +83,8 @@ internal class PackageSearchProjectService(private val project: Project) {
     private val installedPackagesDifferenceLoadingFlow = MutableStateFlow(false)
     private val packageUpgradesLoadingFlow = MutableStateFlow(false)
     private val availableUpgradesLoadingFlow = MutableStateFlow(false)
+
+    val canShowLoadingBar = MutableStateFlow(false)
 
     private val operationExecutedChannel = Channel<List<ProjectModule>>()
 
@@ -269,8 +274,16 @@ internal class PackageSearchProjectService(private val project: Project) {
 
         var controller: BackgroundLoadingBarController? = null
 
+        project.toolWindowManagerFlow
+            .filter { it.id == PackageSearchToolWindowFactory.ToolWindowId }
+            .take(1)
+            .onEach { canShowLoadingBar.emit(true) }
+            .launchIn(project.lifecycleScope)
+
         if (PluginEnvironment.isNonModalLoadingEnabled) {
-            isLoadingFlow.throttle(1.seconds)
+            canShowLoadingBar.filter { it }
+                .flatMapLatest { isLoadingFlow }
+                .throttle(1.seconds)
                 .onEach { controller?.clear() }
                 .filter { it }
                 .onEach {
