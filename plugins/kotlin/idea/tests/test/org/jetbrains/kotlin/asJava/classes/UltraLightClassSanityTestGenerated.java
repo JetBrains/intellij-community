@@ -444,6 +444,12 @@ public abstract class UltraLightClassSanityTestGenerated extends AbstractUltraLi
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @Override
+        protected void setUp() {
+            compilerTestData("compiler/testData/asJava/lightClasses");
+            super.setUp();
+        }
+
         @TestMetadata("AnnotatedParameterInEnumConstructor.kt")
         public void testAnnotatedParameterInEnumConstructor() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/AnnotatedParameterInEnumConstructor.kt"));

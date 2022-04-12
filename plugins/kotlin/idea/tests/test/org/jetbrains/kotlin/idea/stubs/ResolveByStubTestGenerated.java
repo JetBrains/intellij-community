@@ -434,6 +434,12 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @Override
+            protected void setUp() {
+                compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations");
+                super.setUp();
+            }
+
             @TestMetadata("AnnotatedAnnotation.kt")
             public void testAnnotatedAnnotation() throws Exception {
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/AnnotatedAnnotation.kt"));
@@ -572,6 +578,12 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
         public static class Uncategorized extends AbstractResolveByStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @Override
+            protected void setUp() {
+                compilerTestData("compiler/testData/loadJava/compiledKotlin/class");
+                super.setUp();
             }
 
             @TestMetadata("Class.kt")
@@ -887,6 +899,12 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
         public static class Uncategorized extends AbstractResolveByStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @Override
+            protected void setUp() {
+                compilerTestData("compiler/testData/loadJava/compiledKotlin/constructor");
+                super.setUp();
             }
 
             @TestMetadata("Constructor0.kt")
@@ -1644,6 +1662,12 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
 
+                    @Override
+                    protected void setUp() {
+                        compilerTestData("compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation");
+                        super.setUp();
+                    }
+
                     @TestMetadata("PropagateTypeArgumentNullable.kt")
                     public void testPropagateTypeArgumentNullable() throws Exception {
                         runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation/PropagateTypeArgumentNullable.kt"));
@@ -1656,6 +1680,12 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
             public static class Uncategorized extends AbstractResolveByStubTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @Override
+                protected void setUp() {
+                    compilerTestData("compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature");
+                    super.setUp();
                 }
 
                 @TestMetadata("AllBoundsInWhen.kt")
@@ -1832,6 +1862,12 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
         public static class Uncategorized extends AbstractResolveByStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @Override
+            protected void setUp() {
+                compilerTestData("compiler/testData/loadJava/compiledKotlin/fromLoadJava");
+                super.setUp();
             }
 
             @TestMetadata("ArrayTypeVariance.kt")
@@ -2213,6 +2249,12 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @Override
+            protected void setUp() {
+                compilerTestData("compiler/testData/loadJava/compiledKotlin/fun");
+                super.setUp();
+            }
+
             @TestMetadata("Assert.kt")
             public void testAssert() throws Exception {
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/fun/Assert.kt"));
@@ -2487,6 +2529,12 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
         public static class Uncategorized extends AbstractResolveByStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @Override
+            protected void setUp() {
+                compilerTestData("compiler/testData/loadJava/compiledKotlin/prop");
+                super.setUp();
             }
 
             @TestMetadata("ClassVal.kt")

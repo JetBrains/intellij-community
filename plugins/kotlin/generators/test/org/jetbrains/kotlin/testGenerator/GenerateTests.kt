@@ -1461,15 +1461,15 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("refIndex/tests") {
         testClass<AbstractKotlinCompilerReferenceTest> {
-            model("compilerIndex", pattern = DIRECTORY, testPerClass = true)
+            model("compilerIndex", pattern = DIRECTORY, classPerTest = true)
         }
     }
 
     testGroup("refIndex/tests", testDataPath = "../../idea/tests/testData") {
         testClass<AbstractFindUsagesWithCompilerReferenceIndexTest> {
-            model("findUsages/kotlin", pattern = Patterns.forRegex("""^(.+)\.0\.kt$"""), testPerClass = true)
-            model("findUsages/java", pattern = Patterns.forRegex("""^(.+)\.0\.java$"""), testPerClass = true)
-            model("findUsages/propertyFiles", pattern = Patterns.forRegex("""^(.+)\.0\.properties$"""), testPerClass = true)
+            model("findUsages/kotlin", pattern = Patterns.forRegex("""^(.+)\.0\.kt$"""), classPerTest = true)
+            model("findUsages/java", pattern = Patterns.forRegex("""^(.+)\.0\.java$"""), classPerTest = true)
+            model("findUsages/propertyFiles", pattern = Patterns.forRegex("""^(.+)\.0\.properties$"""), classPerTest = true)
         }
     }
 
