@@ -3,7 +3,7 @@ UFile (package = ) [public final class BrokenGenericKt {...]
         UMethod (name = test) [public static final fun test(@org.jetbrains.annotations.NotNull a: int) : void {...}]
             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
                 UDeclarationsExpression [var x1: <ErrorType> = <anonymous class>()]
                     ULocalVariable (name = x1) [var x1: <ErrorType> = <anonymous class>()]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:<ErrorType>
