@@ -166,6 +166,7 @@ class VerboseNullabilityAndEmptinessInspection : AbstractKotlinInspection() {
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val nullCheckExpression = descriptor.psiElement as? KtExpression ?: return
             val binaryExpression = findBinaryExpression(nullCheckExpression) ?: return
+            val parenthesizedParent = binaryExpression.getTopmostParenthesizedParent() as? KtParenthesizedExpression
 
             val expressionText = buildString {
                 if (isPositiveCheck) append("!")
@@ -186,6 +187,9 @@ class VerboseNullabilityAndEmptinessInspection : AbstractKotlinInspection() {
                     binaryExpression.replace(leftExpression) // flag && a != null && a.isNotEmpty() -> flag && a.isNotEmpty()
                     outerBinaryExpression.right?.replace(callExpression) // flag && a.isNotEmpty() -> flag && !a.isNullOrEmpty()
                 }
+            }
+            if (parenthesizedParent != null && KtPsiUtil.areParenthesesUseless(parenthesizedParent)) {
+                parenthesizedParent.replace(parenthesizedParent.deparenthesize())
             }
         }
 
@@ -245,8 +249,7 @@ class VerboseNullabilityAndEmptinessInspection : AbstractKotlinInspection() {
         }
 
         private fun findBinaryExpression(nullCheckExpression: KtExpression): KtBinaryExpression? {
-            val parent = nullCheckExpression.parent as? KtExpression ?: return null
-            return (parent.getTopmostParenthesizedParent()?.parent ?: parent) as? KtBinaryExpression
+            return nullCheckExpression.parenthesize().parent as? KtBinaryExpression
         }
 
         private fun findContentCheckExpression(nullCheckExpression: KtExpression, binaryExpression: KtBinaryExpression): KtExpression? {
