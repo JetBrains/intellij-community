@@ -1,4 +1,4 @@
-// "Convert to ThreadLocal" "true"
+// "Convert to 'ThreadLocal'" "true"
 class X {
     private final ThreadLocal<byte[]> bytes = ThreadLocal.withInitial(() -> new byte[10]);
 

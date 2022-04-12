@@ -1,4 +1,4 @@
-// "Convert to ThreadLocal" "true"
+// "Convert to 'ThreadLocal'" "true"
 class Foo {
   private final boolean prope<caret>rty;
 

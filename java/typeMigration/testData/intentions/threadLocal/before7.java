@@ -1,4 +1,4 @@
-// "Convert to ThreadLocal" "true"
+// "Convert to 'ThreadLocal'" "true"
 class X {
   private final byte[] <caret>bytes = new byte[10];
 
