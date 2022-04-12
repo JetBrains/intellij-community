@@ -24,6 +24,7 @@ import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -427,7 +428,8 @@ public final class PluginDownloader {
     }
   }
 
-  public static Url getUrl(PluginId pluginId, @Nullable BuildNumber buildNumber) {
+  @ApiStatus.Internal
+  public static @NotNull Url getUrl(PluginId pluginId, @Nullable BuildNumber buildNumber) {
     return Urls.newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginsDownloadUrl())
       .addParameters(Map.of("id", pluginId.getIdString(),
                             "build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
