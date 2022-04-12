@@ -147,8 +147,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                            comment, null, true);
     }
     else {
-      return commitChanges(project, new ArrayList<>(changes), included, initialSelection, singletonList(executor), false, null, comment, null,
-                           true);
+      return commitChanges(project, new ArrayList<>(changes), included, initialSelection, singletonList(executor), false, null,
+                           comment, null, true);
     }
   }
 
@@ -371,7 +371,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
       @Override
       protected float getSplitterInitialProportion() {
-        float value = PropertiesComponent.getInstance().getFloat(DETAILS_SPLITTER_PROPORTION_OPTION, DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT);
+        float value = PropertiesComponent.getInstance().getFloat(DETAILS_SPLITTER_PROPORTION_OPTION,
+                                                                 DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT);
         return value <= 0.05 || value >= 0.95 ? DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT : value;
       }
     };
@@ -391,7 +392,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   @NotNull
   private List<CommitExecutorAction> createExecutorActions(@NotNull List<? extends CommitExecutor> executors) {
-    if(executors.isEmpty()) return emptyList();
+    if (executors.isEmpty()) return emptyList();
     List<CommitExecutorAction> result = new ArrayList<>();
 
     if (isDefaultCommitEnabled() && UISettings.getShadowInstance().getAllowMergeButtons()) {
@@ -509,7 +510,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, mySplitter.getProportion(), SPLITTER_PROPORTION_OPTION_DEFAULT);
     float usedProportion = myDetailsSplitter.getUsedProportion();
     if (usedProportion > 0) {
-      PropertiesComponent.getInstance().setValue(DETAILS_SPLITTER_PROPORTION_OPTION, usedProportion, DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT);
+      PropertiesComponent.getInstance().setValue(DETAILS_SPLITTER_PROPORTION_OPTION, usedProportion,
+                                                 DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT);
     }
     PropertiesComponent.getInstance().setValue(DETAILS_SHOW_OPTION, myDetailsSplitter.isOn(), DETAILS_SHOW_OPTION_DEFAULT);
   }
@@ -546,7 +548,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   @SuppressWarnings("unused")
   @Deprecated(forRemoval = true)
-  public void setCommitMessage(@Nullable String commitMessage) {}
+  public void setCommitMessage(@Nullable String commitMessage) { }
 
   @Deprecated(forRemoval = true)
   @NotNull

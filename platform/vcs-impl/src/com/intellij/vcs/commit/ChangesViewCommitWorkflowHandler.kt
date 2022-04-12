@@ -18,7 +18,9 @@ import com.intellij.util.containers.CollectionFactory
 import java.util.*
 import kotlin.properties.Delegates.observable
 
-private fun Collection<Change>.toPartialAwareSet() = CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY).also { it.addAll(this) }
+private fun Collection<Change>.toPartialAwareSet() =
+  CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY)
+    .also { it.addAll(this) }
 
 internal class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
@@ -115,7 +117,8 @@ internal class ChangesViewCommitWorkflowHandler(
 
   fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
     if (!inclusionModel.isInclusionEmpty()) {
-      val possibleInclusion: MutableSet<Any> = changeLists.flatMapTo(CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY)) { it.changes }
+      val possibleInclusion = CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY)
+      possibleInclusion.addAll(changeLists.asSequence().flatMap { it.changes })
       possibleInclusion.addAll(unversionedFiles)
 
       inclusionModel.retainInclusion(possibleInclusion)

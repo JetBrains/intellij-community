@@ -60,6 +60,7 @@ open class SingleChangeListCommitWorkflow(
     CheckinHandler.ReturnResult.COMMIT -> DefaultNameChangeListCleaner(project, commitState).use { doCommit(commitState) }
     CheckinHandler.ReturnResult.CLOSE_WINDOW ->
       moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
+
     CheckinHandler.ReturnResult.CANCEL -> Unit
   }
 
@@ -71,6 +72,7 @@ open class SingleChangeListCommitWorkflow(
       CheckinHandler.ReturnResult.COMMIT -> doCommitCustom(executor, session)
       CheckinHandler.ReturnResult.CLOSE_WINDOW ->
         moveToFailedList(project, commitState, message("commit.dialog.rejected.commit.template", commitState.changeList.name))
+
       CheckinHandler.ReturnResult.CANCEL -> Unit
     }
 
