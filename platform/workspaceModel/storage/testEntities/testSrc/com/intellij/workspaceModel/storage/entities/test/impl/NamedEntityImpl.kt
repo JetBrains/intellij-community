@@ -230,7 +230,7 @@ class NamedEntityData : WorkspaceEntityData.WithCalculablePersistentId<NamedEnti
         return entity
     }
 
-    override fun persistentId(): PersistentEntityId<*> {
+    override fun persistentId: PersistentEntityId<*> {
         return NameId(myName)
     }
 

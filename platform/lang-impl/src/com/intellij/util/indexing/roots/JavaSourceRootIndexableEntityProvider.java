@@ -38,7 +38,7 @@ class JavaSourceRootIndexableEntityProvider implements IndexableEntityProvider<J
   static <E extends WorkspaceEntity> Collection<IndexableIteratorBuilder> collectBuildersOnAddedEntityWithDataExtractor(@NotNull E entity,
                                                                                                                         @NotNull Function<? super E, @NotNull Pair<VirtualFileUrl, ModuleEntity>> extractor) {
     Pair<VirtualFileUrl, ModuleEntity> data = extractor.fun(entity);
-    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(data.getSecond().getPersistentId(), data.getFirst());
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(data.getSecond().getpersistentId, data.getFirst());
   }
 
   @NotNull
@@ -50,7 +50,7 @@ class JavaSourceRootIndexableEntityProvider implements IndexableEntityProvider<J
     if (newData != null) {
       Pair<VirtualFileUrl, ModuleEntity> oldData = extractor.fun(oldEntity);
       if (oldData == null || !newData.getFirst().equals(oldData.getFirst())) {
-        return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newData.getSecond().getPersistentId(), newData.getFirst());
+        return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newData.getSecond().getpersistentId, newData.getFirst());
       }
     }
     return Collections.emptyList();

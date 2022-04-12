@@ -441,7 +441,7 @@ class ReplaceBySourceTest {
     fun `entity with soft reference - linked has wrong source`() {
       val builder = PEntityStorageBuilder.create()
       val named = builder.addNamedEntity("MyName")
-      val linked = builder.addWithSoftLinkEntity(named.persistentId(), AnotherSource)
+      val linked = builder.addWithSoftLinkEntity(named.persistentId, AnotherSource)
       resetChanges()
       builder.assertConsistency()
 

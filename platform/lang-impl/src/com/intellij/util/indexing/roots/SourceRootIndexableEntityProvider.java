@@ -27,20 +27,20 @@ class SourceRootIndexableEntityProvider implements IndexableEntityProvider.Modul
   public @NotNull Collection<? extends IndexableIteratorBuilder> getIteratorBuildersForExistingModule(@NotNull ModuleEntity entity,
                                                                                                       @NotNull WorkspaceEntityStorage entityStorage,
                                                                                                       @NotNull Project project) {
-    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getPersistentId(), collectRootUrls(ExtensionsKt.getSourceRoots(entity)));
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getpersistentId, collectRootUrls(ExtensionsKt.getSourceRoots(entity)));
   }
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull SourceRootEntity entity,
                                                                                                 @NotNull Project project) {
-    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getContentRoot().getModule().getPersistentId(), entity.getUrl());
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getContentRoot().getModule().getpersistentId, entity.getUrl());
   }
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull SourceRootEntity oldEntity,
                                                                                                    @NotNull SourceRootEntity newEntity) {
     if (!(newEntity.getUrl().equals(oldEntity.getUrl())) || !newEntity.getRootType().equals(oldEntity.getRootType())) {
-      return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getContentRoot().getModule().getPersistentId(), newEntity.getUrl());
+      return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getContentRoot().getModule().getpersistentId, newEntity.getUrl());
     }
     return Collections.emptyList();
   }
@@ -51,7 +51,7 @@ class SourceRootIndexableEntityProvider implements IndexableEntityProvider.Modul
                                                                                                         @NotNull Project project) {
     List<VirtualFileUrl> newRoots = collectRootUrls(ExtensionsKt.getSourceRoots(newEntity));
     List<VirtualFileUrl> oldRoots = collectRootUrls(ExtensionsKt.getSourceRoots(oldEntity));
-    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getPersistentId(), newRoots, oldRoots);
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getpersistentId, newRoots, oldRoots);
   }
 
   @NotNull

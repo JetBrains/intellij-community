@@ -56,7 +56,7 @@ internal fun ObjType<*, *>.softLinksCode(context: LinesBuilder, hasSoftLinks: Bo
 }
 
 internal fun ObjType<*, *>.hasSoftLinks(simpleTypes: List<DefType>): Boolean {
-  return structure.declaredFields.noPersistentId().noRefs().any { field ->
+  return structure.declaredFields.nopersistentId.noRefs().any { field ->
     field.hasSoftLinks(simpleTypes)
   }
 }
@@ -127,10 +127,10 @@ private fun collectSealedChildren(defType: DefType, simpleTypes: List<DefType>):
 
 internal fun TBlob<*>.isPersistentId(simpleTypes: List<DefType>): Boolean {
   val thisType = simpleTypes.find { it.name == javaSimpleName } ?: return false
-  return thisType.isPersistentId()
+  return thisType.ispersistentId
 }
 
-private fun DefType.isPersistentId(): Boolean {
+private fun DefType.ispersistentId: Boolean {
   return def
     .superTypes
     .any { "PersistentEntityId" in it.classifier }
@@ -156,7 +156,7 @@ private fun ObjType<*, *>.operate(
     simpleTypes: List<DefType>,
     operation: LinesBuilder.(String) -> Unit
 ) {
-    structure.allFields.noPersistentId().noRefs().forEach { field ->
+    structure.allFields.nopersistentId.noRefs().forEach { field ->
         field.type.operate(field.name, simpleTypes, context, operation)
     }
 }
@@ -226,7 +226,7 @@ private fun processSealedClass(simpleTypes: List<DefType>,
 
 
 private fun ObjType<*, *>.operateUpdateLink(context: LinesBuilder, simpleTypes: List<DefType>) {
-    structure.allFields.noPersistentId().noRefs().forEach { field ->
+    structure.allFields.nopersistentId.noRefs().forEach { field ->
         val type = field.type
         val retType = type.processType(simpleTypes, context, field.name)
         if (retType != null) {

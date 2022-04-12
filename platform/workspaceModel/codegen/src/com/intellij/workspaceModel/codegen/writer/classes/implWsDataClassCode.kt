@@ -38,9 +38,9 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
     val softLinkable = if (hasSoftLinks) wsFqn("SoftLinkable") else null
     return lines {
         section("class $javaDataName : ${sups(entityDataBaseClass, softLinkable)}") label@ {
-            listNl(structure.allFields.noRefs().noEntitySource().noPersistentId()) { implWsDataFieldCode }
+            listNl(structure.allFields.noRefs().noEntitySource().nopersistentId) { implWsDataFieldCode }
 
-            listNl(structure.allFields.noRefs().noEntitySource().noPersistentId().noOptional()) { implWsDataFieldInitializedCode }
+            listNl(structure.allFields.noRefs().noEntitySource().nopersistentId.noOptional()) { implWsDataFieldInitializedCode }
 
             softLinksCode(this@label, hasSoftLinks, simpleTypes)
 
@@ -58,7 +58,7 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
             // --- createEntity
             sectionNl("override fun createEntity(snapshot: ${wsFqn("WorkspaceEntityStorage")}): $javaFullName") {
                 line("val entity = $javaImplName()")
-                list(structure.allFields.noRefs().noEntitySource().noPersistentId()) {
+                list(structure.allFields.noRefs().noEntitySource().nopersistentId) {
                     "entity.$implFieldName = $name"
                 }
                 line("entity.entitySource = entitySource")
@@ -67,7 +67,7 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
                 line("return entity")
             }
 
-            conditionalLine({ isEntityWithPersistentId }, "override fun persistentId(): ${wsFqn("PersistentEntityId")}<*>") {
+            conditionalLine({ isEntityWithPersistentId }, "override fun persistentId: ${wsFqn("PersistentEntityId")}<*>") {
                 val persistentIdField = structure.allFields.first { it.name == "persistentId" }
                 assert(persistentIdField.hasDefault  == Field.Default.plain)
                 val methodBody = persistentIdField.defaultValue!!
@@ -85,7 +85,7 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
 
                 lineWrapped("other as $javaDataName")
 
-                list(structure.allFields.noRefs().noPersistentId()) {
+                list(structure.allFields.noRefs().nopersistentId) {
                     "if (this.$name != other.$name) return false"
                 }
 
@@ -99,7 +99,7 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
 
                 lineWrapped("other as $javaDataName")
 
-                list(structure.allFields.noRefs().noEntitySource().noPersistentId()) {
+                list(structure.allFields.noRefs().noEntitySource().nopersistentId) {
                     "if (this.$name != other.$name) return false"
                 }
 
@@ -109,7 +109,7 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
             // --- hashCode
             section("override fun hashCode(): Int") {
                 line("var result = entitySource.hashCode()")
-                list(structure.allFields.noRefs().noEntitySource().noPersistentId()) {
+                list(structure.allFields.noRefs().noEntitySource().nopersistentId) {
                     "result = 31 * result + $name.hashCode()"
                 }
                 line("return result")
@@ -120,7 +120,7 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
 
 fun List<Field<out Obj, Any?>>.noRefs(): List<Field<out Obj, Any?>> = this.filterNot { it.type.isRefType() }
 fun List<Field<out Obj, Any?>>.noEntitySource() = this.filter { it.name != "entitySource" }
-fun List<Field<out Obj, Any?>>.noPersistentId() = this.filter { it.name != "persistentId" }
+fun List<Field<out Obj, Any?>>.nopersistentId = this.filter { it.name != "persistentId" }
 fun List<Field<out Obj, Any?>>.noOptional() = this.filter { it.type !is TOptional<*> }
 fun List<Field<out Obj, Any?>>.noId() = this.filter { it.name != "id" }
 fun List<Field<out Obj, Any?>>.noSnapshot() = this.filter { it.name != "snapshot" }

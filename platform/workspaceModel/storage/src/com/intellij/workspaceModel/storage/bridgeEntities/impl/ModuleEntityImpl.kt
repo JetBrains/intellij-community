@@ -670,7 +670,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
         return entity
     }
 
-    override fun persistentId(): PersistentEntityId<*> {
+    override fun persistentId: PersistentEntityId<*> {
         return ModuleId(name)
     }
 

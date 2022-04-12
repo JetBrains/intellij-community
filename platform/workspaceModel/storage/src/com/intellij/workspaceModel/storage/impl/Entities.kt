@@ -30,7 +30,7 @@ import kotlin.reflect.KProperty
  *
  *      val childModule: MyModuleEntity? by OneToOneParent.Nullable(MyModuleEntity::class.java, true)
  *
- *      fun persistentId() = NameId(name)
+ *      fun persistentId = NameId(name)
  *   }
  *   ```
  *
@@ -64,7 +64,7 @@ import kotlin.reflect.KProperty
  *   class MyModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<MyModuleEntity>() {
  *       lateinit var name: String
  *
- *       override fun persistentId(): NameId = NameId(name)
+ *       override fun persistentId: NameId = NameId(name)
  *
  *        override fun createEntity(snapshot: WorkspaceEntityStorage): MyModuleEntity = MyModuleEntity(name).also {
  *            addMetaData(it, snapshot)
@@ -414,12 +414,12 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
    * But it doesn't everywhere. E.g. FacetEntity where we should resolve module before creating persistent id.
    */
   abstract class WithCalculablePersistentId<E : WorkspaceEntity> : WorkspaceEntityData<E>() {
-    abstract fun persistentId(): PersistentEntityId<*>
+    abstract fun persistentId: PersistentEntityId<*>
   }
 }
 
-fun WorkspaceEntityData<*>.persistentId(): PersistentEntityId<*>? = when (this) {
-  is WorkspaceEntityData.WithCalculablePersistentId -> this.persistentId()
+fun WorkspaceEntityData<*>.persistentId: PersistentEntityId<*>? = when (this) {
+  is WorkspaceEntityData.WithCalculablePersistentId -> this.persistentId
   else -> null
 }
 

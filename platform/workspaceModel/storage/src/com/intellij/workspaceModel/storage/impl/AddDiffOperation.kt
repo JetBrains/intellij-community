@@ -203,7 +203,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     target.indexes.updateIndices(sourceEntityId.id, newTargetEntityData, diff)
 
     val newEntityId = newTargetEntityData.createEntityId()
-    val oldPersistentId = target.entityDataById(newEntityId)?.persistentId()
+    val oldPersistentId = target.entityDataById(newEntityId)?.persistentId
 
     /// Replace entity data. id should not be changed
     target.entitiesByType.replaceById(newTargetEntityData, sourceEntityId.id.clazz)
@@ -360,7 +360,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
   }
 
   private fun checkPersistentId(entityData: WorkspaceEntityData<out WorkspaceEntity>, newEntityId: EntityId?) {
-    val newPersistentId = entityData.persistentId()
+    val newPersistentId = entityData.persistentId
     if (newPersistentId != null) {
       val existingIds = target.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
       if (existingIds != null) {

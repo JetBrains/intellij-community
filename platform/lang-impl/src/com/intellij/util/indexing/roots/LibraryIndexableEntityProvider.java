@@ -25,14 +25,14 @@ class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryE
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull LibraryEntity entity,
                                                                                                 @NotNull Project project) {
-    return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(entity.getPersistentId(), false);
+    return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(entity.getpersistentId, false);
   }
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull LibraryEntity oldEntity,
                                                                                                    @NotNull LibraryEntity newEntity) {
     if (hasSomethingToIndex(oldEntity, newEntity)) {
-      return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(newEntity.getPersistentId(), false);
+      return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(newEntity.getpersistentId, false);
     }
     else {
       return Collections.emptyList();

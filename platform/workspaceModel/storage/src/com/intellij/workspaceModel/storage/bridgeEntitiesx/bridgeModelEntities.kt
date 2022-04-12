@@ -94,7 +94,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
     addMetaData(it, snapshot, classId)
   }
 
-  override fun persistentId(): ModuleId = ModuleId(name)
+  override fun persistentId: ModuleId = ModuleId(name)
 
   override fun assertConsistency(storage: WorkspaceEntityStorage) {
     this.dependencies.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>().forEach { libraryDependency ->
@@ -614,7 +614,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     return LibraryEntity(tableId, name, roots, excludedRoots).also { addMetaData(it, snapshot, classId) }
   }
 
-  override fun persistentId(): LibraryId = LibraryId(name, tableId)
+  override fun persistentId: LibraryId = LibraryId(name, tableId)
 
   companion object {
     @Transient
@@ -807,7 +807,7 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
     return true
   }
 
-  override fun persistentId(): PersistentEntityId<*> = FacetId(name, facetType, moduleId)
+  override fun persistentId: PersistentEntityId<*> = FacetId(name, facetType, moduleId)
 }
 
 class FacetEntity(
@@ -856,7 +856,7 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<Artifa
     return ArtifactEntity(name, artifactType, includeInProjectBuild, outputUrl).also { addMetaData(it, snapshot) }
   }
 
-  override fun persistentId(): ArtifactId = ArtifactId(name)
+  override fun persistentId: ArtifactId = ArtifactId(name)
 }
 
 class ArtifactEntity(

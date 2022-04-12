@@ -55,7 +55,7 @@ class MavenProjectTreeImporterToWorkspaceModel(
       val moduleEntity = WorkspaceModuleImporter(
         importData, virtualFileUrlManager, builder, myImportingSettings, mavenFolderHolderByMavenId, myProject
       ).importModule()
-      createdModuleIds.add(importData to moduleEntity.persistentId())
+      createdModuleIds.add(importData to moduleEntity.persistentId)
     }
 
     val moduleImportData = mutableListOf<ModuleImportData>()

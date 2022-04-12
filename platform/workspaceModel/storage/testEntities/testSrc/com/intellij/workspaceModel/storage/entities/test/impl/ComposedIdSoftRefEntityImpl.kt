@@ -211,7 +211,7 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistent
         return entity
     }
 
-    override fun persistentId(): PersistentEntityId<*> {
+    override fun persistentId: PersistentEntityId<*> {
         return ComposedId(myName, link)
     }
 

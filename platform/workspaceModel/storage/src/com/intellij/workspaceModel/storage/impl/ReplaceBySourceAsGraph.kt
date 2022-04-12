@@ -150,7 +150,7 @@ internal object ReplaceBySourceAsGraph {
         else {
           // This is a new entity for this store. Perform add operation
 
-          val persistentId = matchedEntityData.persistentId()
+          val persistentId = matchedEntityData.persistentId
           if (persistentId != null) {
             val existingEntityId = thisBuilder.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.asThis()
             if (existingEntityId != null) {
@@ -369,12 +369,12 @@ internal object ReplaceBySourceAsGraph {
   }
 
   private fun WorkspaceEntityData<*>.identificator(): Any {
-    return this.persistentId() ?: this.hashCode()
+    return this.persistentId ?: this.hashCode()
   }
 
   private fun <T> HashMultimap<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, T>>.find(entity: WorkspaceEntityData<out WorkspaceEntity>): Pair<WorkspaceEntityData<out WorkspaceEntity>, T>? {
     val possibleValues = this[entity.identificator()]
-    val persistentId = entity.persistentId()
+    val persistentId = entity.persistentId
     return if (persistentId != null) {
       possibleValues.singleOrNull()
     }
@@ -397,7 +397,7 @@ internal object ReplaceBySourceAsGraph {
                                dataDiffersByEntitySource: Boolean,
                                originalEntitySource: EntitySource) {
     val clonedEntity = matchedEntityData.clone() as WorkspaceEntityData<WorkspaceEntity>
-    val persistentIdBefore = matchedEntityData.persistentId() ?: error("PersistentId expected for $matchedEntityData")
+    val persistentIdBefore = matchedEntityData.persistentId ?: error("PersistentId expected for $matchedEntityData")
     clonedEntity.id = localNode.id
     val clonedEntityId = matchedEntityId.id.copy(arrayId = clonedEntity.id)
     thisBuilder.entitiesByType.replaceById(clonedEntity, clonedEntityId.clazz)
