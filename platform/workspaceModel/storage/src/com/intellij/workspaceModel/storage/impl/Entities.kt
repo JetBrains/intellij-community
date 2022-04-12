@@ -3,8 +3,6 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.util.ReflectionUtil
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModifiableModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntitiesx.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -414,12 +412,12 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
    * But it doesn't everywhere. E.g. FacetEntity where we should resolve module before creating persistent id.
    */
   abstract class WithCalculablePersistentId<E : WorkspaceEntity> : WorkspaceEntityData<E>() {
-    abstract fun persistentId: PersistentEntityId<*>
+    abstract fun persistentId(): PersistentEntityId<*>
   }
 }
 
-fun WorkspaceEntityData<*>.persistentId: PersistentEntityId<*>? = when (this) {
-  is WorkspaceEntityData.WithCalculablePersistentId -> this.persistentId
+fun WorkspaceEntityData<*>.persistentId(): PersistentEntityId<*>? = when (this) {
+  is WorkspaceEntityData.WithCalculablePersistentId -> this.persistentId()
   else -> null
 }
 
@@ -436,25 +434,6 @@ class EntityDataDelegation<A : ModifiableWorkspaceEntityBase<*>, B> : ReadWriteP
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    field.isAccessible = true
-    field.set(thisRef.original, value)
-  }
-}
-
-class ModuleDependencyEntityDataDelegation : ReadWriteProperty<ModifiableModuleEntity, List<ModuleDependencyItem>> {
-  override fun getValue(thisRef: ModifiableModuleEntity, property: KProperty<*>): List<ModuleDependencyItem> {
-    val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    field.isAccessible = true
-    @Suppress("UNCHECKED_CAST")
-    return field.get(thisRef.original) as List<ModuleDependencyItem>
-  }
-
-  override fun setValue(thisRef: ModifiableModuleEntity, property: KProperty<*>, value: List<ModuleDependencyItem>) {
-    if (!thisRef.modifiable.get()) {
-      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
-    }
-    val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    thisRef.dependencyChanged = true
     field.isAccessible = true
     field.set(thisRef.original, value)
   }
