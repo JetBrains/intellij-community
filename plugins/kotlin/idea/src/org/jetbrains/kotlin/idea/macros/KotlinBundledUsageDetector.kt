@@ -25,12 +25,12 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 @Service
 class KotlinBundledUsageDetector : Disposable {
+    val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+    private val _isKotlinBundledPotentiallyUsedInLibraries = MutableStateFlow(false)
     /**
      * When this variable is `false` then it means that KOTLIN_BUNDLED certainly NOT used in any JPS library.
      * If this variable is `true` then it means that KOTLIN_BUNDLED is potentially used in the project/module libraries
      */
-    val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-    private val _isKotlinBundledPotentiallyUsedInLibraries = MutableStateFlow(false)
     val isKotlinBundledPotentiallyUsedInLibraries: StateFlow<Boolean>
         get() = _isKotlinBundledPotentiallyUsedInLibraries
 
