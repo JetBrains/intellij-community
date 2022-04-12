@@ -23,9 +23,6 @@ abstract class FileEditorBase : UserDataHolderBase(), FileEditor, CheckedDisposa
 
   override fun isValid(): Boolean = true
 
-  override fun selectNotify() {}
-  override fun deselectNotify() {}
-
   fun firePropertyChange(propName: String, oldValue: Boolean, newValue: Boolean) {
     propertyChangeSupport.firePropertyChange(propName, oldValue, newValue)
   }
@@ -45,6 +42,4 @@ abstract class FileEditorBase : UserDataHolderBase(), FileEditor, CheckedDisposa
   override fun getState(level: FileEditorStateLevel): FileEditorState = FileEditorState.INSTANCE
   override fun setState(state: FileEditorState) {}
   override fun isModified(): Boolean = false
-
-  override fun getBackgroundHighlighter(): BackgroundEditorHighlighter? = null
 }
