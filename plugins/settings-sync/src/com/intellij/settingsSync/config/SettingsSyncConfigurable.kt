@@ -217,11 +217,13 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
   }
 
   private fun updateStatusInfo() {
-    if (SettingsSyncStatusTracker.getInstance().isSyncSuccessful()) {
-      statusLabel.text = message("sync.status.last.sync.message", getReadableSyncTime(), getUserName())
-    }
-    else {
-      statusLabel.text = ""
+    if (::statusLabel.isInitialized) {
+      if (SettingsSyncStatusTracker.getInstance().isSyncSuccessful()) {
+        statusLabel.text = message("sync.status.last.sync.message", getReadableSyncTime(), getUserName())
+      }
+      else {
+        statusLabel.text = ""
+      }
     }
   }
 
