@@ -34,16 +34,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.singleWindowApplication
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.Orientation
 import org.jetbrains.jewel.components.Icon
 import org.jetbrains.jewel.theme.intellij.IntelliJTheme
 import org.jetbrains.jewel.theme.intellij.components.Button
 import org.jetbrains.jewel.theme.intellij.components.CheckboxRow
-import org.jetbrains.jewel.theme.intellij.components.GroupHeader
-import org.jetbrains.jewel.theme.intellij.components.CheckboxRow
 import org.jetbrains.jewel.theme.intellij.components.CircularProgressIndicator
+import org.jetbrains.jewel.theme.intellij.components.GroupHeader
 import org.jetbrains.jewel.theme.intellij.components.IconButton
 import org.jetbrains.jewel.theme.intellij.components.RadioButtonRow
 import org.jetbrains.jewel.theme.intellij.components.Slider
@@ -106,7 +104,7 @@ fun WizardHeader(modifier: Modifier = Modifier, currentPage: MutableState<Int>) 
             Text(
                 text = when (currentPage.value) {
                     1 -> "Configure Image Asset"
-                    2 ->  "Confirm Icon Path"
+                    2 -> "Confirm Icon Path"
                     else -> "Assets Wizard"
                 },
                 fontSize = 24.sp
@@ -119,8 +117,7 @@ fun WizardHeader(modifier: Modifier = Modifier, currentPage: MutableState<Int>) 
 fun WizardMainContent(modifier: Modifier = Modifier, currentPage: MutableState<Int>) {
     if (currentPage.value == 1) {
         FirstPage(modifier.fillMaxWidth().fillMaxHeight())
-    }
-    else if (currentPage.value == 2) {
+    } else if (currentPage.value == 2) {
         ConfirmIconPathPage(modifier)
     }
 }
@@ -189,11 +186,10 @@ fun OutputDirectoriesLabelTree(modifier: Modifier = Modifier, outputDir: Mutable
                     text = "Loading...",
                 )
             }
-        }
-        else {
+        } else {
             Text(
                 modifier = modifier.padding(5.dp),
-                text = "Output Directories:" ,
+                text = "Output Directories:",
             )
         }
 
@@ -310,9 +306,24 @@ enum class AssetType {
 fun ForegroundAssetTypeSelection(assetType: MutableState<AssetType>) {
     Row {
         val radioButtonModifier = Modifier.padding(end = 10.dp)
-        RadioButtonRow(selected = assetType.value == AssetType.IMAGE, onClick = { assetType.value = AssetType.IMAGE }) { Text("Image", modifier = radioButtonModifier) }
-        RadioButtonRow(selected = assetType.value == AssetType.CLIP_ART, onClick = { assetType.value = AssetType.CLIP_ART }) { Text("Clip Art", modifier = radioButtonModifier) }
-        RadioButtonRow(selected = assetType.value == AssetType.TEXT, onClick = { assetType.value = AssetType.TEXT }) { Text("Text", modifier = radioButtonModifier) }
+        RadioButtonRow(selected = assetType.value == AssetType.IMAGE, onClick = { assetType.value = AssetType.IMAGE }) {
+            Text(
+                "Image",
+                modifier = radioButtonModifier
+            )
+        }
+        RadioButtonRow(selected = assetType.value == AssetType.CLIP_ART, onClick = { assetType.value = AssetType.CLIP_ART }) {
+            Text(
+                "Clip Art",
+                modifier = radioButtonModifier
+            )
+        }
+        RadioButtonRow(selected = assetType.value == AssetType.TEXT, onClick = { assetType.value = AssetType.TEXT }) {
+            Text(
+                "Text",
+                modifier = radioButtonModifier
+            )
+        }
     }
 }
 
@@ -320,8 +331,18 @@ fun ForegroundAssetTypeSelection(assetType: MutableState<AssetType>) {
 fun BackgroundAssetTypeSelection(assetType: MutableState<AssetType>) {
     Row {
         val radioButtonModifier = Modifier.padding(end = 10.dp)
-        RadioButtonRow(selected = assetType.value == AssetType.COLOR, onClick = { assetType.value = AssetType.COLOR }) { Text("Color", modifier = radioButtonModifier) }
-        RadioButtonRow(selected = assetType.value == AssetType.IMAGE, onClick = { assetType.value = AssetType.IMAGE }) { Text("Image", modifier = radioButtonModifier) }
+        RadioButtonRow(selected = assetType.value == AssetType.COLOR, onClick = { assetType.value = AssetType.COLOR }) {
+            Text(
+                "Color",
+                modifier = radioButtonModifier
+            )
+        }
+        RadioButtonRow(selected = assetType.value == AssetType.IMAGE, onClick = { assetType.value = AssetType.IMAGE }) {
+            Text(
+                "Image",
+                modifier = radioButtonModifier
+            )
+        }
     }
 }
 
@@ -395,7 +416,8 @@ fun CommonLayer(
                     typography = IntelliJTheme.typography,
                     minorTickSpacing = 20,
                     majorTickSpacing = 0,
-                    paintTicks = true),
+                    paintTicks = true
+                ),
                 min = 0,
                 max = 400,
                 modifier = Modifier.weight(1.0f)
@@ -411,7 +433,13 @@ fun ForegroundLayer(modifier: Modifier) {
     CommonLayer(
         assetType = assetType,
         assetTypeSelection = { ForegroundAssetTypeSelection(it) },
-        assetTypeSpecificOptions = { at: AssetType, subLabelModifier: Modifier, rowModifier: Modifier -> AssetTypeSpecificOptions(at, subLabelModifier, rowModifier) },
+        assetTypeSpecificOptions = { at: AssetType, subLabelModifier: Modifier, rowModifier: Modifier ->
+            AssetTypeSpecificOptions(
+                at,
+                subLabelModifier,
+                rowModifier
+            )
+        },
         modifier = modifier
     )
 }
@@ -422,7 +450,13 @@ fun BackgroundLayer(modifier: Modifier) {
     CommonLayer(
         assetType = assetType,
         assetTypeSelection = { BackgroundAssetTypeSelection(it) },
-        assetTypeSpecificOptions = { at: AssetType, subLabelModifier: Modifier, rowModifier: Modifier -> AssetTypeSpecificOptions(at, subLabelModifier, rowModifier) },
+        assetTypeSpecificOptions = { at: AssetType, subLabelModifier: Modifier, rowModifier: Modifier ->
+            AssetTypeSpecificOptions(
+                at,
+                subLabelModifier,
+                rowModifier
+            )
+        },
         modifier = modifier,
     )
 }
@@ -490,7 +524,7 @@ fun FirstPage(modifier: Modifier = Modifier) {
                 }
                 Divider(orientation = Orientation.Horizontal)
                 val tabContentModifier = Modifier.padding(all = 10.dp)
-                when (tabState.selectedKey) {
+                when (tabState.selectedKey!!) {
                     OptionTabs.FOREGROUND -> ForegroundLayer(tabContentModifier)
                     OptionTabs.BACKGROUND -> BackgroundLayer(tabContentModifier)
                     OptionTabs.OPTIONS -> OptionsTab(tabContentModifier)
@@ -504,7 +538,11 @@ fun FirstPage(modifier: Modifier = Modifier) {
                     TextField(value = "", onValueChange = {}, modifier = Modifier.width(50.dp))
                     val showSafeZone = remember { mutableStateOf(true) }
                     val showGrid = remember { mutableStateOf(false) }
-                    CheckboxRow(checked = showSafeZone.value, onCheckedChange = { showSafeZone.value = it }, modifier = Modifier.padding(horizontal = 10.dp)) {
+                    CheckboxRow(
+                        checked = showSafeZone.value,
+                        onCheckedChange = { showSafeZone.value = it },
+                        modifier = Modifier.padding(horizontal = 10.dp)
+                    ) {
                         Text(
                             "Show safe zone",
                         )
@@ -516,7 +554,7 @@ fun FirstPage(modifier: Modifier = Modifier) {
                         )
                     }
                 }
-                Box (modifier = Modifier.padding(20.dp).background(color = Color.Green).fillMaxSize()) {
+                Box(modifier = Modifier.padding(20.dp).background(color = Color.Green).fillMaxSize()) {
 
                 }
             }
