@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.ui.impl;
 
 import com.intellij.openapi.project.Project;
@@ -55,7 +55,7 @@ public class TraceTreeCellRenderer extends ColoredTreeCellRenderer {
     setIcon(node.getIcon());
 
     Rectangle treeVisibleRect = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewRect() : tree.getVisibleRect();
-    int rowX = getNodeRowX(tree, row);
+    int rowX = getNodeRowX(tree, row) + tree.getInsets().left;
 
     if (myHaveLink) {
       setupLinkDimensions(treeVisibleRect, rowX);
