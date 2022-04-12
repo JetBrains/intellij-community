@@ -228,21 +228,25 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
     fun <T> doWithVersion(path: String, version: String?, function: () -> T): T {
       return lock.withLock {
-        if (version != null) {
-          contextVersionMap[path] = version
-        }
+        try {
+          if (version != null) {
+            contextVersionMap[path] = version
+          }
 
-        val result = function()
+          val result = function()
 
-        val actualVersion: String? = contextVersionMap[path]
-        if (actualVersion == null) {
-          LOG.warn("Version not found for $path")
+          val actualVersion: String? = contextVersionMap[path]
+          if (actualVersion == null) {
+            LOG.warn("Version not stored in the context for $path")
+          }
+          else {
+            currentVersionOfFiles[path] = actualVersion
+          }
+          result
         }
-        else {
-          currentVersionOfFiles[path] = actualVersion
+        finally {
+          contextVersionMap.clear()
         }
-
-        result
       }
     }
   }
