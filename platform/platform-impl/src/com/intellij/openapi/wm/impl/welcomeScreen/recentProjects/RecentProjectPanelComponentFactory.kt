@@ -64,6 +64,7 @@ internal object RecentProjectPanelComponentFactory {
 
       isRootVisible = false
       cellRenderer = ProjectActionRenderer(filePathChecker::isValid)
+      rowHeight = 0 // Fix tree renderer size on macOS
     }
 
     val defaultProject = DefaultProjectFactory.getInstance().defaultProject
