@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -22,7 +22,6 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.fixes.ChangeModifierFix;
@@ -129,8 +128,10 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         // can be null in some strange cases of malbuilt PSI, like in EA-95877
         if (toHighlight != null) {
           String suggestedModifier = PsiUtil.getAccessModifier(suggestedLevel);
-          myHolder.registerProblem(toHighlight,
-                                   JavaAnalysisBundle.message("access.can.be.0", VisibilityUtil.toPresentableText(suggestedModifier)), new ChangeModifierFix(suggestedModifier));
+          String message = PsiModifier.PACKAGE_LOCAL.equals(suggestedModifier)
+                           ? JavaAnalysisBundle.message("access.can.be.package.private")
+                           : JavaAnalysisBundle.message("access.can.be.0", suggestedModifier);
+          myHolder.registerProblem(toHighlight, message, new ChangeModifierFix(suggestedModifier));
         }
       }
     }

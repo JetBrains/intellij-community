@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
@@ -49,8 +49,8 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
   public void testSimple() {
     doTest("import java.util.*;\n" +
            "class C {\n" +
-           "    final int /*Access can be private*/fd/**/ = 0;\n" +
-           "    /*Access can be private*/public/**/ int fd2;\n" +
+           "    final int /*Access can be 'private'*/fd/**/ = 0;\n" +
+           "    /*Access can be 'private'*/public/**/ int fd2;\n" +
            "    /*Access can be package-private*/public/**/ int forSubClass;\n" +
            "    @Override\n" +
            "    public int hashCode() {\n" +
@@ -58,9 +58,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
            "    }\n" +
            " public void fff() {\n" +
            "   class Local {\n" +
-           "        int /*Access can be private*/fd/**/;\n" +
+           "        int /*Access can be 'private'*/fd/**/;\n" +
            "        void f(){}\n" + // unused, ignore
-           "        void /*Access can be private*/fd/**/(){}\n" +
+           "        void /*Access can be 'private'*/fd/**/(){}\n" +
            "        @Override\n" +
            "        public int hashCode() {\n" +
            "          fd();\n" +
@@ -97,7 +97,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
   public void testSameFile() {
     doTest("class C {\n" +
            "  private static class Err {\n" +
-           "    /*Access can be private*/public/**/ boolean isVisible() { return true; }\n" +
+           "    /*Access can be 'private'*/public/**/ boolean isVisible() { return true; }\n" +
            "  }\n"+
            "  boolean f = new Err().isVisible();\n" +
            "}");
@@ -208,7 +208,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
            "            return myElement;\n" +
            "        }\n" +
            "    }\n" +
-           "    <warning descr=\"Access can be private\">protected</warning> String myElement1;\n" +
+           "    <warning descr=\"Access can be 'private'\">protected</warning> String myElement1;\n" +
            "    class B1 {\n" +
            "        @Override\n" +
            "        public String toString() {\n" +
@@ -319,7 +319,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
   public void testSuggestPackagePrivateForEntryPoint() {
     addJavaFile("x/MyTest.java", "package x;\n" +
                                "public class MyTest {\n" +
-                               "    <warning descr=\"Access can be protected\">public</warning> void foo() {}\n" +
+                               "    <warning descr=\"Access can be 'protected'\">public</warning> void foo() {}\n" +
                                "}");
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), EntryPointsManagerBase.DEAD_CODE_EP_NAME, new EntryPointWithVisibilityLevel() {
       @Override
@@ -375,7 +375,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
   public void testMinimalVisibilityForNonEntryPOint() {
     addJavaFile("x/MyTest.java", "package x;\n" +
                                "public class MyTest {\n" +
-                               "    <warning descr=\"Access can be protected\">public</warning> void foo() {}\n" +
+                               "    <warning descr=\"Access can be 'protected'\">public</warning> void foo() {}\n" +
                                "    {foo();}\n" +
                                "}");
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), EntryPointsManagerBase.DEAD_CODE_EP_NAME, new EntryPointWithVisibilityLevel() {
@@ -459,7 +459,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
   public void testSuggestForConstants() {
     myVisibilityInspection.SUGGEST_FOR_CONSTANTS = true;
     doTest("class SuggestForConstants {\n" +
-           "    <warning descr=\"Access can be private\">public</warning> static final String MY_CONSTANT = \"a\";\n" +
+           "    <warning descr=\"Access can be 'private'\">public</warning> static final String MY_CONSTANT = \"a\";\n" +
            "    private final String myField = MY_CONSTANT;" +
            "}");
   }
