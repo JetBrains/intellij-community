@@ -478,6 +478,10 @@ public final class JBUI {
       public static @NotNull Color paneBackground() {
         return JBColor.namedColor("Panel.background", Gray.xCD);
       }
+
+      public static int menuPopupMinWidth() {
+        return JBUI.scale(180);
+      }
     }
 
     public static final class DefaultTabs {

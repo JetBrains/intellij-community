@@ -187,6 +187,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
         JBPopupFactory.getInstance()
           .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, ActionPlaces.MAIN_MENU_IN_POPUP)
           .apply { setShowSubmenuOnHover(true) }
+          .apply { setMinimumSize(Dimension(CustomFrameDecorations.menuPopupMinWidth(), 0)) }
           .showUnderneathOf(button)
       }
     }
