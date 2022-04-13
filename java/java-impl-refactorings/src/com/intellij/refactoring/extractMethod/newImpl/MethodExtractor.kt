@@ -93,7 +93,7 @@ class MethodExtractor {
       return Runnable {
         executeRefactoringCommand(project) {
           val inplaceExtractor = InplaceMethodExtractor(editor, range, targetClass, popupSettings, methodName)
-          inplaceExtractor.performInplaceRefactoring(LinkedHashSet(suggestedNames))
+          inplaceExtractor.extractAndRunTemplate(LinkedHashSet(suggestedNames))
         }
       }
     }
