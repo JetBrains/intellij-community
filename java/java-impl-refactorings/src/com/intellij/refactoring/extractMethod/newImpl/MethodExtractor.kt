@@ -85,7 +85,6 @@ class MethodExtractor {
   private fun prepareExtractAction(editor: Editor, range: TextRange, options: ExtractOptions): Runnable {
     val project = options.project
     val targetClass = options.anchor.containingClass ?: throw IllegalStateException("Failed to find target class")
-    val extractor = getDefaultInplaceExtractor(options)
     if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
       val popupSettings = createInplaceSettingsPopup(options)
       val guessedNames = suggestSafeMethodNames(options)
@@ -93,20 +92,16 @@ class MethodExtractor {
       val suggestedNames = guessedNames.takeIf { it.size > 1 }.orEmpty()
       return Runnable {
         executeRefactoringCommand(project) {
-          val inplaceExtractor = InplaceMethodExtractor(editor, range, targetClass, extractor, popupSettings, methodName)
+          val inplaceExtractor = InplaceMethodExtractor(editor, range, targetClass, popupSettings, methodName)
           inplaceExtractor.performInplaceRefactoring(LinkedHashSet(suggestedNames))
         }
       }
     }
     else {
       return Runnable {
-        extractor.extractInDialog(targetClass, options.elements, "", options.isStatic)
+        DuplicatesMethodExtractor().extractInDialog(targetClass, options.elements, "", options.isStatic)
       }
     }
-  }
-
-  fun getDefaultInplaceExtractor(options: ExtractOptions): InplaceExtractMethodProvider {
-    return DuplicatesMethodExtractor()
   }
 
   fun suggestSafeMethodNames(options: ExtractOptions): List<String> {

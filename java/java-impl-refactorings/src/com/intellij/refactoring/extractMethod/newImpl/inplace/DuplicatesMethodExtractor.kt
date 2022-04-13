@@ -24,7 +24,7 @@ import com.intellij.refactoring.util.duplicates.DuplicatesImpl
 import com.intellij.ui.ReplacePromptDialog
 import com.siyeh.ig.psiutils.SideEffectChecker.mayHaveSideEffects
 
-class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
+class DuplicatesMethodExtractor {
 
   companion object {
     private val isSilentMode = ApplicationManager.getApplication().isUnitTestMode
@@ -38,7 +38,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
 
   private var extractOptions: ExtractOptions? = null
 
-  override fun extract(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean): Pair<PsiMethod, PsiMethodCallExpression> {
+  fun extract(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean): Pair<PsiMethod, PsiMethodCallExpression> {
     val file = targetClass.containingFile
     JavaDuplicatesFinder.linkCopiedClassMembersWithOrigin(file)
     val copiedFile = file.copy() as PsiFile
@@ -59,7 +59,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     return Pair(method, callExpression)
   }
 
-  override fun extractInDialog(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean) {
+  fun extractInDialog(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean) {
     val extractOptions = findExtractOptions(targetClass, elements, methodName, makeStatic)
     MethodExtractor().doDialogExtract(extractOptions)
   }
@@ -72,7 +72,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     return options
   }
 
-  override fun postprocess(editor: Editor, method: PsiMethod) {
+  fun postprocess(editor: Editor, method: PsiMethod) {
     val project = editor.project ?: return
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
     val finder = duplicatesFinder ?: return

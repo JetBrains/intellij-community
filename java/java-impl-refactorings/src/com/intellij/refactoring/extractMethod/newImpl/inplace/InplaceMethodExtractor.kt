@@ -85,7 +85,6 @@ private fun installGotItTooltips(editor: Editor, navigationGotItRange: TextRange
 class InplaceMethodExtractor(private val editor: Editor,
                              private val range: TextRange,
                              private val targetClass: PsiClass,
-                             private val extractor: InplaceExtractMethodProvider,
                              private val popupProvider: ExtractMethodPopupProvider,
                              private val initialMethodName: String)
   : InplaceRefactoring(editor, null, targetClass.project) {
@@ -106,6 +105,8 @@ class InplaceMethodExtractor(private val editor: Editor,
     initPopupOptionsAdvertisement()
   }
 
+  private val extractor: DuplicatesMethodExtractor = DuplicatesMethodExtractor()
+
   private val editorState = EditorState(editor)
 
   private val file: PsiFile = targetClass.containingFile
@@ -121,7 +122,7 @@ class InplaceMethodExtractor(private val editor: Editor,
 
     val extractedRange = createGreedyRangeMarker(document, range)
 
-    val (method, callExpression) = extractMethod(extractor, targetClass, range, initialMethodName, popupProvider.makeStatic ?: false)
+    val (method, callExpression) = extractMethod(targetClass, range, initialMethodName, popupProvider.makeStatic ?: false)
 
     val methodIdentifier = method.nameIdentifier ?: throw IllegalStateException()
     val callIdentifier = getNameIdentifier(callExpression) ?: throw IllegalStateException()
@@ -141,8 +142,7 @@ class InplaceMethodExtractor(private val editor: Editor,
     addPreview(codePreview, editor, getLinesFromTextRange(editor.document, method.textRange), methodIdentifier.textRange.endOffset)
   }
 
-  fun extractMethod(extractor: InplaceExtractMethodProvider,
-                    targetClass: PsiClass,
+  fun extractMethod(targetClass: PsiClass,
                     range: TextRange,
                     methodName: String,
                     makeStatic: Boolean): Pair<PsiMethod, PsiMethodCallExpression> {
@@ -260,7 +260,7 @@ class InplaceMethodExtractor(private val editor: Editor,
   private fun restartInplace(methodName: String?) {
     performCleanup()
     WriteCommandAction.runWriteCommandAction(myProject) {
-      val inplaceExtractor = InplaceMethodExtractor(editor, range, targetClass, extractor, popupProvider, initialMethodName)
+      val inplaceExtractor = InplaceMethodExtractor(editor, range, targetClass, popupProvider, initialMethodName)
       inplaceExtractor.performInplaceRefactoring(linkedSetOf())
       if (methodName != null) {
         inplaceExtractor.setMethodName(methodName)
