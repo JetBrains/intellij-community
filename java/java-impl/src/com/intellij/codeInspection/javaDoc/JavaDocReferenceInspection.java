@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -142,7 +142,13 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
             if (adjacent instanceof PsiDocToken &&
                 ((PsiDocToken)adjacent).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA &&
                 adjacent.getText().startsWith(URLUtil.SCHEME_SEPARATOR)) {
-              fix = new UrlToHtmlFix(refHolder, adjacent);
+              PsiDocComment docComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
+              if (docComment != null) {
+                int startOffsetInDocComment = refHolder.getTextOffset() - docComment.getTextOffset();
+                int endOffsetInDocComment =
+                  refHolder.getTextOffset() + refText.length() + adjacent.getTextLength() - docComment.getTextOffset();
+                fix = new UrlToHtmlFix(docComment, startOffsetInDocComment, endOffsetInDocComment);
+              }
             }
           }
         }
@@ -359,50 +365,6 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
       PsiDocTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
       if (myTag != null) {
         myTag.delete();
-      }
-    }
-  }
-
-  private static class UrlToHtmlFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-    private UrlToHtmlFix(PsiElement startElement, PsiElement endElement) {
-      super(startElement, endElement);
-    }
-
-    @Override
-    public @NotNull String getText() {
-      return JavaBundle.message("quickfix.text.replace.url.with.html");
-    }
-
-    @Override
-    public @NotNull String getFamilyName() {
-      return getText();
-    }
-
-    @Override
-    public void invoke(@NotNull Project project,
-                       @NotNull PsiFile file,
-                       @Nullable Editor editor,
-                       @NotNull PsiElement refHolder,
-                       @NotNull PsiElement adjacent) {
-      String text = adjacent.getText(), url;
-      int urlEnd = text.indexOf(' ');
-      if (urlEnd > 0) {
-        url = refHolder.getText() + text.substring(0, urlEnd);
-        text = text.substring(urlEnd).trim();
-      }
-      else {
-        url = refHolder.getText() + text;
-        text = "...";
-      }
-      PsiDocTag tag = PsiElementFactory.getInstance(project).createDocTagFromText("@see <a href=\"" + url + "\">" + text + "</a>");
-      PsiElement replacement = tag.getLastChild();
-      assert replacement instanceof PsiDocToken : Arrays.toString(tag.getChildren());
-      refHolder.delete();
-      replacement = adjacent.replace(replacement);
-      if (editor != null) {
-        int start = replacement.getTextRange().getStartOffset() + url.length() + 11, end = start + text.length();
-        editor.getCaretModel().moveToOffset(start);
-        editor.getSelectionModel().setSelection(start, end);
       }
     }
   }

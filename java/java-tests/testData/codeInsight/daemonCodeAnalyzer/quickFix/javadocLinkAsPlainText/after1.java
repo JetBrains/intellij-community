@@ -1,6 +1,6 @@
-// "Wrap in <a> tag" "true"
+// "Replace URL with HTML link" "true"
 
 /**
- * abc <a href="https://en.wikipedia.org/">...</a> def
+ * abc <a href="https://en.wikipedia.org/"><caret><selection>...</selection></a> def
  */
 class Main { }
