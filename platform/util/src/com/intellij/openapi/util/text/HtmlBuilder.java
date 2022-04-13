@@ -198,4 +198,13 @@ public final class HtmlBuilder {
     }
     return sb.toString();
   }
+
+  public void clear() {
+    myChunks.clear();
+  }
+
+  public void clearAndAppend(@NotNull HtmlChunk chunk) {
+    clear();
+    append(chunk);
+  }
 }
