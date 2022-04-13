@@ -16,6 +16,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.JsonDependencyModificationTracker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
@@ -1132,7 +1133,7 @@ public final class JsonSchemaObject extends UserDataHolderBase {
   public JsonSchemaObject resolveRefSchema(@NotNull JsonSchemaService service) {
     final String ref = getRef();
     assert !StringUtil.isEmptyOrSpaces(ref);
-    ConcurrentMap<String, JsonSchemaObject> refsStorage = getComputedRefsStorage(service.getProject(), service);
+    ConcurrentMap<String, JsonSchemaObject> refsStorage = getComputedRefsStorage(service.getProject());
     JsonSchemaObject schemaObject = refsStorage.getOrDefault(ref, NULL_OBJ);
     if (schemaObject == NULL_OBJ) {
       JsonSchemaObject value = fetchSchemaFromRefDefinition(ref, this, service, isRefRecursive());
@@ -1155,10 +1156,10 @@ public final class JsonSchemaObject extends UserDataHolderBase {
     return schemaObject;
   }
 
-  private ConcurrentMap<String, JsonSchemaObject> getComputedRefsStorage(@NotNull Project project, @NotNull JsonSchemaService service) {
+  private ConcurrentMap<String, JsonSchemaObject> getComputedRefsStorage(@NotNull Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(
       this,
-      () -> CachedValueProvider.Result.create(new ConcurrentHashMap<String, JsonSchemaObject>(), service)
+      () -> CachedValueProvider.Result.create(new ConcurrentHashMap<String, JsonSchemaObject>(), JsonDependencyModificationTracker.forProject(project))
     );
   }
 
