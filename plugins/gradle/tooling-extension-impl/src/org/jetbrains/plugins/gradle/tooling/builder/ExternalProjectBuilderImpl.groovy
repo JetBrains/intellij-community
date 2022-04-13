@@ -600,23 +600,18 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
         if (copyActions) {
           copyActions.each { Action<? super FileCopyDetails> action ->
-            def filter = getRenamingCopyFilter(action) ?: getFilter(action)
-            if (filter != null) {
-              filterReaders << filter
+            if ('RenamingCopyAction' == action.class.simpleName) {
+              filterReaders << getRenamingCopyFilter(action)
             }
-//          else {
-//            project.logger.error(
-//              ErrorMessageBuilder.create(project, "Resource configuration errors")
-//                .withDescription("Unsupported copy action found: " + action.class.name).build())
-//          }
+            else {
+              filterReaders << getFilter(action)
+            }
           }
         }
       }
     }
-    catch (Exception ignore) {
-//      project.logger.error(
-//        ErrorMessageBuilder.create(project, e, "Resource configuration errors")
-//          .withDescription("Unable to resolve resources filtering configuration").build())
+    catch (Exception exception) {
+      project.logger.error("Idea internal error: Unable to resolve resources filtering configuration", exception)
     }
 
     return [includes, excludes, filterReaders]
@@ -626,8 +621,9 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   private static ExternalFilter getFilter(Action<? super FileCopyDetails> action) {
     def filterClass = findPropertyWithType(action, Class, 'filterType', 'val$filterType', 'arg$2', 'arg$1')
     if (filterClass == null) {
-      return null
+      throw new IllegalArgumentException("Unsupported action found: " + action.class.name)
     }
+
     def filterType = filterClass.name
     def properties = findPropertyWithType(action, Map, 'properties', 'val$properties', 'arg$1')
     if ('org.apache.tools.ant.filters.ExpandProperties' == filterType) {
@@ -646,33 +642,11 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   @CompileDynamic
   private static ExternalFilter getRenamingCopyFilter(Action<? super FileCopyDetails> action) {
-    if (action.class.simpleName != 'RenamingCopyAction') {
-      return null
-    }
-    if (!action.hasProperty('transformer')) {
-      return null
-    }
-    def transformer = action.transformer
-    if (transformer == null) {
-      return null
-    }
-    String pattern = null
-    if (transformer.hasProperty('matcher')) {
-      pattern = transformer.matcher?.pattern()?.pattern()
-    }
-    if (pattern == null && transformer.hasProperty('pattern')) {
-      pattern = transformer.pattern?.pattern()
-    }
-    if (pattern == null) {
-      return null
-    }
-    if (!transformer.hasProperty('replacement')) {
-      return null
-    }
+    assert 'RenamingCopyAction' == action.class.simpleName
+
+    def pattern = action.transformer.matcher?.pattern()?.pattern() ?:
+                  action.transformer.pattern?.pattern()
     def replacement = action.transformer.replacement
-    if (replacement == null) {
-      return null
-    }
 
     def filter = new DefaultExternalFilter()
     filter.filterType = 'RenamingCopyFilter'
