@@ -218,24 +218,24 @@
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
       <reference id="VcsHistoryActionsGroup"/>
     </group>
-    <group id="Vcs.FileHistory.PresentationSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
-           icon="AllIcons.Actions.Show"
+    <group id="Vcs.FileHistory.PresentationSettings"
+           class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
+           icon="AllIcons.Actions.GroupBy"
            popup="true">
+      <separator key="action.vcs.log.show.separator"/>
+      <reference id="Vcs.Log.ShowOtherBranches"/>
       <reference id="Vcs.Log.PreferCommitDate"/>
       <reference id="Vcs.Log.ToggleColumns"/>
+      <reference id="Vcs.Log.LayoutConfiguration"/>
     </group>
     <group id="Vcs.FileHistory.Toolbar">
       <reference id="Vcs.Log.Refresh"/>
       <reference id="Diff.ShowDiff"/>
       <reference id="Vcs.Log.ShowAllAffected"/>
       <separator/>
-      <reference id="Vcs.Log.ShowOtherBranches"/>
       <reference id="Vcs.FileHistory.PresentationSettings"/>
       <separator/>
-      <reference id="Vcs.Log.LayoutConfiguration"/>
-      <separator/>
       <reference id="VcsHistoryActionsGroup.Toolbar"/>
-      <separator/>
     </group>
 
     <group id="Log.KeymapGroup" searchable="false">
