@@ -17,8 +17,10 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.ApplicationInitializedListener;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -40,43 +42,92 @@ public class ResetFontSizeAction extends EditorAction {
   private static final String FONT_SIZE_TO_RESET_EDITOR = "fontSizeToResetEditor";
   public static final String PREVIOUS_COLOR_SCHEME = "previousColorScheme";
 
-  private static float getResetFontSize(@NotNull Editor editor) {
-    PropertiesComponent c = PropertiesComponent.getInstance();
-    boolean isConsoleViewEditor = ConsoleViewUtil.isConsoleViewEditor(editor);
-    float value;
-    if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) { // all editors case
-      if (isConsoleViewEditor) {
-        value = c.getFloat(FONT_SIZE_TO_RESET_CONSOLE, -1);
-      }
-      else {
-        value = c.getFloat(FONT_SIZE_TO_RESET_EDITOR, -1);
-      }
+  private interface Strategy {
+    float getFontSize();
+    void setFontSize(float fontSize);
+    default void reset() {
+      setFontSize(getFontSize());
     }
-    else { // single editor
-      EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-      if (isConsoleViewEditor) {
-        value = globalScheme.getConsoleFontSize2D();
-      }
-      else {
-        value = globalScheme.getEditorFontSize2D();
-      }
+  }
+
+  private static class SingleEditorStrategy implements Strategy {
+    private final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+
+    private final EditorEx myEditorEx;
+
+    SingleEditorStrategy(EditorEx editorEx) {
+      myEditorEx = editorEx;
     }
-    return value;
+
+    @Override
+    public float getFontSize() {
+      if (ConsoleViewUtil.isConsoleViewEditor(myEditorEx)) {
+        return globalScheme.getConsoleFontSize2D();
+      }
+      return globalScheme.getEditorFontSize2D();
+    }
+
+    @Override
+    public void setFontSize(float fontSize) {
+      myEditorEx.setFontSize(fontSize);
+    }
+  }
+
+  private static class AllEditorsStratery implements Strategy {
+    private PropertiesComponent c = PropertiesComponent.getInstance();
+    private final EditorEx myEditorEx;
+
+    AllEditorsStratery(EditorEx editorEx) {
+      myEditorEx = editorEx;
+    }
+
+    @Override
+    public float getFontSize() {
+      if (ConsoleViewUtil.isConsoleViewEditor(myEditorEx)) {
+        return c.getFloat(FONT_SIZE_TO_RESET_CONSOLE, -1);
+      }
+      return c.getFloat(FONT_SIZE_TO_RESET_EDITOR, -1);
+    }
+
+    @Override
+    public void setFontSize(float fontSize) {
+      EditorColorsManager.getInstance().getGlobalScheme().setEditorFontSize(fontSize);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
+    }
+  }
+
+  private static Strategy getStrategy(EditorEx editor) {
+    if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
+      return new AllEditorsStratery(editor);
+    }
+    return new SingleEditorStrategy(editor);
   }
 
   public ResetFontSizeAction() {
     super(new MyHandler());
   }
-  
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    if (e.getPlace().equals(ActionPlaces.POPUP) && editor != null) {
+      if (!(editor instanceof EditorEx)) {
+        return;
+      }
+      EditorEx editorEx = (EditorEx)editor;
+      //noinspection DialogTitleCapitalization
+      e.getPresentation().setText(IdeBundle.message("action.reset.font.size", getStrategy(editorEx).getFontSize()));
+    }
+  }
+
   private static class MyHandler extends EditorActionHandler {
     @Override
     public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       if (!(editor instanceof EditorEx)) {
         return;
       }
-      float fontSize = getResetFontSize(editor);
       EditorEx editorEx = (EditorEx)editor;
-      editorEx.setFontSize(fontSize);
+      getStrategy(editorEx).reset();
     }
   }
 
