@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
-import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -223,26 +222,14 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     final PsiElement element = refElement.getPsiElement();
     final PsiElement nameIdentifier = element != null ? IdentifierUtil.getNameIdentifier(element) : null;
     if (nameIdentifier != null) {
-      final String message;
-      String targetVisibility;
-      if (access.equals(PsiModifier.PRIVATE)) {
-        message = getCanBePrivate();
-        targetVisibility = VisibilityUtil.toPresentableText(PsiModifier.PRIVATE);
-      }
-      else if (access.equals(PsiModifier.PACKAGE_LOCAL)) {
-        message = getCanBePackageLocal();
-        targetVisibility = VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL);
-      }
-      else {
-        message = getCanBeProtected();
-        targetVisibility = VisibilityUtil.toPresentableText(PsiModifier.PROTECTED);
-      }
-      String quickFixName = JavaAnalysisBundle.message(
-        "change.visibility.level", ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE), targetVisibility);
-      return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier,
-                                                                     message,
-                                                                     new AcceptSuggestedAccess(globalContext.getRefManager(), access, quickFixName),
-                                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)};
+      String targetVisibility = VisibilityUtil.toPresentableText(access);
+      final String message = JavaAnalysisBundle.message("inspection.visibility.compose.suggestion", targetVisibility);
+      final String elementDescription = ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE);
+      final String quickFixName = JavaAnalysisBundle.message("change.visibility.level", elementDescription, targetVisibility);
+      final AcceptSuggestedAccess fix = new AcceptSuggestedAccess(globalContext.getRefManager(), access, quickFixName);
+      return new ProblemDescriptor[] {
+        manager.createProblemDescriptor(nameIdentifier, message, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)
+      };
     }
     return CommonProblemDescriptor.EMPTY_ARRAY;
   }
@@ -409,9 +396,12 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       if (SUGGEST_PRIVATE_FOR_INNERS) {
         //TODO
         final PsiClass fromTopLevelElement = fromTopLevel != null ? (PsiClass)fromTopLevel.getPsiElement() : null;
-        if (fromTopLevelElement != null && isInExtendsList(to, fromTopLevelElement.getExtendsList())) return false;
-        if (fromTopLevelElement != null && isInExtendsList(to, fromTopLevelElement.getImplementsList())) return false;
-        if (fromTopLevelElement != null && isInAnnotations(to, fromTopLevelElement)) return false;
+        final PsiElement target = to.getPsiElement();
+        if (fromTopLevelElement != null) {
+          if (containsReferenceTo(fromTopLevelElement.getExtendsList(), target)) return false;
+          if (containsReferenceTo(fromTopLevelElement.getImplementsList(), target)) return false;
+          if (containsReferenceTo(fromTopLevelElement.getModifierList(), target)) return false;
+        }
         return fromTopLevel == toOwner || fromOwner == toTopLevel || toOwner != null && (
           refUtil.getOwnerClass(toOwner) == from || from instanceof RefMethod && toOwner == ((RefMethod)from).getOwnerClass() ||
           from instanceof RefField && toOwner == ((RefField)from).getOwnerClass());
@@ -420,10 +410,15 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       if (fromOwner != null && fromOwner.isStatic() && !to.isStatic() && refUtil.isInheritor(fromOwner, toOwner)) return false;
 
       if (fromTopLevel == toOwner) {
-        if (from instanceof RefClass && to instanceof RefClass) {
+        if (from instanceof RefClass) {
           PsiClass fromClass = ((RefClass)from).getUastElement().getJavaPsi();
-          if (isInExtendsList(to, fromClass.getExtendsList())) return false;
-          if (isInExtendsList(to, fromClass.getImplementsList())) return false;
+          final PsiElement target = to.getPsiElement();
+          if ((to instanceof RefClass || to instanceof RefField) &&
+              containsReferenceTo(fromClass.getModifierList(), target)) return false;
+          if (to instanceof RefClass) {
+            if (containsReferenceTo(fromClass.getExtendsList(), target)) return false;
+            if (containsReferenceTo(fromClass.getImplementsList(), target)) return false;
+          }
         }
 
         return true;
@@ -433,34 +428,12 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     return false;
   }
 
-  private static boolean isInAnnotations(final RefJavaElement to, @NotNull final PsiClass fromTopLevelElement) {
-    final PsiModifierList modifierList = fromTopLevelElement.getModifierList();
-    if (modifierList == null) return false;
-    final PsiElement toElement = to.getPsiElement();
-
-    return SyntaxTraverser.psiTraverser(modifierList)
+  private static boolean containsReferenceTo(PsiElement source, PsiElement target) {
+    return SyntaxTraverser.psiTraverser(source)
              .filter(PsiJavaCodeReferenceElement.class)
-             .filter(ref -> ref.isReferenceTo(toElement))
-             .first() != null;
+             .filter(ref -> ref.isReferenceTo(target))
+             .isNotEmpty();
   }
-
-  private static boolean isInExtendsList(final RefJavaElement to, final PsiReferenceList extendsList) {
-    if (extendsList != null) {
-      final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
-      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
-        final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
-        if (parameterList != null) {
-          for (PsiType type : parameterList.getTypeArguments()) {
-            if (extendsList.getManager().areElementsEquivalent(PsiUtil.resolveClassInType(type), to.getPsiElement())) {
-              return true;
-            }
-          }
-        }
-      }
-    }
-    return false;
-  }
-
 
   @Override
   protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager,
@@ -611,7 +584,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     myExtensions.put(entryPointId, enabled);
   }
 
-  private static final class AcceptSuggestedAccess implements LocalQuickFix{
+  private static final class AcceptSuggestedAccess implements LocalQuickFix {
     @SafeFieldForPreview
     private final RefManager myManager;
     @PsiModifier.ModifierConstant private final String myHint;
@@ -667,17 +640,5 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
         }
       }
     }
-  }
-
-  private static @InspectionMessage String getCanBePrivate() {
-    return JavaAnalysisBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PRIVATE));
-  }
-
-  private static @InspectionMessage String getCanBePackageLocal() {
-    return JavaAnalysisBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL));
-  }
-
-  private static @InspectionMessage String getCanBeProtected() {
-    return JavaAnalysisBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PROTECTED));
   }
 }

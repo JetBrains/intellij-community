@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -129,6 +129,12 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
     doTest("visibility/usedFromAnnotationsExtendsList", myTool, false, true);
+  }
+
+  public void testUsedFromAnnotationsExtendsList2() {
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
+    doTest("visibility/usedFromAnnotationsExtendsList2", myTool, false, true);
   }
 
   public void testOverrideInInnerClass() {
