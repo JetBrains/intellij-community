@@ -40,6 +40,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
@@ -87,6 +88,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   public void runActivity(@NotNull Project project) {
     Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode()) return;
+    if (application.isHeadlessEnvironment()) return; // see PythonHeadlessSdkUpdater
     if (project.isDisposed()) return;
 
     for (Sdk sdk : getPythonSdks(project)) {
@@ -348,6 +350,13 @@ public class PythonSdkUpdater implements StartupActivity.Background {
       ourUnderRefresh.add(key);
     }
     ProgressManager.getInstance().run(new PyUpdateSdkTask(project, key, new PyUpdateSdkRequestData()));
+  }
+
+  static boolean isUpdateScheduled(@NotNull Sdk sdk) {
+    final String key = PythonSdkType.getSdkKey(sdk);
+    synchronized (ourLock) {
+      return ourUnderRefresh.contains(key) || ourToBeRefreshed.containsKey(key);
+    }
   }
 
   private static void scheduleUpdate(@NotNull Sdk sdk, @NotNull Project project, @NotNull PyUpdateSdkRequestData requestData) {
@@ -671,7 +680,8 @@ public class PythonSdkUpdater implements StartupActivity.Background {
    * Returns unique Python SDKs for the open modules of the project.
    */
   @NotNull
-  private static Set<Sdk> getPythonSdks(@NotNull Project project) {
+  @RequiresReadLock
+  static Set<Sdk> getPythonSdks(@NotNull Project project) {
     final Set<Sdk> pythonSdks = new LinkedHashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
