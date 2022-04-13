@@ -40,6 +40,26 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.Nls
 
+class EditorState(val editor: Editor){
+  private val caretToRevert: Int = editor.caretModel.currentCaret.offset
+  private val selectionToRevert: TextRange? = ExtractMethodHelper.findEditorSelection(editor)
+  private val textToRevert: String = editor.document.text
+
+  fun revert() {
+    val project = editor.project
+    ApplicationManager.getApplication().runWriteAction {
+      editor.document.setText(textToRevert)
+      if (project != null) {
+        PsiDocumentManager.getInstance(project).commitDocument(editor.document)
+      }
+    }
+    editor.caretModel.moveToOffset(caretToRevert)
+    if (selectionToRevert != null) {
+      editor.selectionModel.setSelection(selectionToRevert.startOffset, selectionToRevert.endOffset)
+    }
+  }
+}
+
 class InplaceMethodExtractor(private val editor: Editor,
                              private val range: TextRange,
                              private val targetClass: PsiClass,
@@ -64,11 +84,7 @@ class InplaceMethodExtractor(private val editor: Editor,
     initPopupOptionsAdvertisement()
   }
 
-  private val caretToRevert: Int = editor.caretModel.currentCaret.offset
-
-  private val selectionToRevert: TextRange? = ExtractMethodHelper.findEditorSelection(editor)
-
-  private val textToRevert: String = editor.document.text
+  private val editorState = EditorState(editor)
 
   private val file: PsiFile = targetClass.containingFile
 
@@ -169,14 +185,7 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   override fun revertState() {
     super.revertState()
-    WriteCommandAction.runWriteCommandAction(myProject) {
-      editor.document.setText(textToRevert)
-      PsiDocumentManager.getInstance(myProject).commitDocument(editor.document)
-    }
-    editor.caretModel.moveToOffset(caretToRevert)
-    if (selectionToRevert != null) {
-      editor.selectionModel.setSelection(selectionToRevert.startOffset, selectionToRevert.endOffset)
-    }
+    editorState.revert()
   }
 
   override fun afterTemplateStart() {
