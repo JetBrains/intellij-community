@@ -26,6 +26,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Point
@@ -225,6 +226,9 @@ internal object RecentProjectPanelComponentFactory {
         isEnabled = isProjectPathValid
       }
       projectActions.isVisible = isHovered
+
+      AccessibleContextUtil.setCombinedName(this, projectNameLabel, "-", projectPathLabel) // NON-NLS
+      AccessibleContextUtil.setCombinedDescription(this, projectNameLabel, "-", projectPathLabel) // NON-NLS
     }
 
     private fun createProjectGroupComponent(item: ProjectsGroupItem, isHovered: Boolean): JComponent {
@@ -234,7 +238,10 @@ internal object RecentProjectPanelComponentFactory {
       }
       projectGroupActions.isVisible = isHovered
 
-      return projectGroupComponent
+      return projectGroupComponent.apply {
+        AccessibleContextUtil.setName(this, projectGroupLabel) // NON-NLS
+        AccessibleContextUtil.setDescription(this, projectGroupLabel) // NON-NLS
+      }
     }
   }
 }
