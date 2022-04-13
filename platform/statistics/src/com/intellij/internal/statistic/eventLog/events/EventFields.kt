@@ -441,7 +441,7 @@ object EventFields {
   @JvmStatic
   fun createAdditionalDataField(groupId: String, eventId: String): ObjectEventField {
     val additionalFields = mutableListOf<EventField<*>>()
-    for (ext in FeatureUsageCollectorExtension.EP_NAME.extensions) {
+    for (ext in FeatureUsageCollectorExtension.EP_NAME.extensionsIfPointIsRegistered) {
       if (ext.groupId == groupId && ext.eventId == eventId) {
         for (field in ext.extensionFields) {
           if (field != null) {

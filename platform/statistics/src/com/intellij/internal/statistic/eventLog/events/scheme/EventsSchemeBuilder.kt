@@ -78,12 +78,14 @@ object EventsSchemeBuilder {
   }
 
   /**
+   * @param recorder id of the recorder, only groups from that recorder will be used to build scheme.
+   * If null, groups from all recorders will be used.
    * @param pluginId id of the plugin, only groups registered in that plugin will be used to build scheme.
    * If null, all registered groups will be used.
    */
   @JvmStatic
   @JvmOverloads
-  fun buildEventsScheme(recorder: String, pluginId: String? = null): List<GroupDescriptor> {
+  fun buildEventsScheme(recorder: String?, pluginId: String? = null): List<GroupDescriptor> {
     val result = mutableListOf<GroupDescriptor>()
     val counterCollectors = FUCounterUsageLogger.instantiateCounterCollectors(pluginId)
     result.addAll(collectGroupsFromExtensions("counter", counterCollectors, recorder))
@@ -106,13 +108,13 @@ object EventsSchemeBuilder {
 
   fun collectGroupsFromExtensions(groupType: String,
                                   collectors: Collection<FeatureUsagesCollector>,
-                                  recorder: String): MutableCollection<GroupDescriptor> {
+                                  recorder: String?): MutableCollection<GroupDescriptor> {
     val result = HashMap<String, GroupDescriptor>()
     for (collector in collectors) {
       val collectorClass = if (collector.javaClass.enclosingClass != null) collector.javaClass.enclosingClass else collector.javaClass
       validateGroupId(collector)
       val group = collector.group ?: continue
-      if (group.recorder != recorder) continue
+      if (recorder != null && group.recorder != recorder) continue
       val existingGroup = result[group.id]
       if (existingGroup != null && group.version != existingGroup.version) {
         throw IllegalStateException("If group is reused in multiple collectors classes (e.g Project and Application collector), " +
@@ -122,7 +124,7 @@ object EventsSchemeBuilder {
       val eventsDescriptors = existingScheme + group.events.groupBy { it.eventId }
         .map { (eventName, events) -> EventDescriptor(eventName, buildFields(events, eventName, group.id)) }
         .toSet()
-      result[group.id] = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name)
+      result[group.id] = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name, group.recorder)
     }
     return result.values
   }

@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.utils.PluginType
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PlatformUtils
@@ -18,7 +19,9 @@ class StatisticsEventLogProvidersHolder {
     AtomicReference(calculateEventLogProvider())
 
   init {
-    EP_NAME.addChangeListener(Runnable { eventLoggerProviders.set(calculateEventLogProvider()) }, null)
+    if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(EP_NAME)) {
+      EP_NAME.addChangeListener(Runnable { eventLoggerProviders.set(calculateEventLogProvider()) }, null)
+    }
   }
 
   fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider {
