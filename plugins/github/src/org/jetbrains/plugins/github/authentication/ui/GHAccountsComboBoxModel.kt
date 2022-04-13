@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -24,18 +26,19 @@ internal class GHAccountsComboBoxModel(accounts: Set<GithubAccount>, selection: 
     GithubAuthenticationManager.getInstance().isAccountUnique(login, server)
 
   companion object {
-    fun Row.accountSelector(model: CollectionComboBoxModel<GithubAccount>, onChange: (() -> Unit)? = null) =
-      cell {
-        comboBox(model, { model.selected }, { })
-          .constraints(pushX, growX)
-          .withValidationOnApply { if (model.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }
-          .applyToComponent {
-            if (onChange != null) addActionListener { onChange() }
-          }
+    fun accountSelector(@Nls label: String, model: CollectionComboBoxModel<GithubAccount>, onChange: (() -> Unit)? = null) = panel {
+      row(label) {
+        comboBox(model)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .validationOnApply { if (model.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }
+          .applyToComponent { if (onChange != null) addActionListener { onChange() } }
+      }
 
-        if (model.size == 0) {
-          createAddAccountLink()().withLargeLeftGap()
+      if (model.size == 0) {
+        row {
+          cell(createAddAccountLink())
         }
       }
+    }
   }
 }

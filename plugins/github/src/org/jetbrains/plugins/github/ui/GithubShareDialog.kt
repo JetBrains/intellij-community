@@ -9,7 +9,10 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.dialog.DialogUtils
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -82,21 +85,27 @@ class GithubShareDialog(project: Project,
 
   override fun createCenterPanel() = panel {
     row(message("share.dialog.repo.name")) {
-      cell {
-        repositoryTextField(growX, pushX).withValidationOnApply { validateRepository() }
-        privateCheckBox()
-      }
+      cell(repositoryTextField)
+        .horizontalAlign(HorizontalAlign.FILL)
+        .validationOnApply { validateRepository() }
+        .resizableColumn()
+      cell(privateCheckBox)
     }
     row(message("share.dialog.remote")) {
-      remoteTextField(growX, pushX).withValidationOnApply { validateRemote() }
+      cell(remoteTextField)
+        .horizontalAlign(HorizontalAlign.FILL)
+        .validationOnApply { validateRemote() }
     }
-    row(message("share.dialog.description")) {
-      scrollPane(descriptionTextArea)
-    }
+    row {
+      label(message("share.dialog.description"))
+        .verticalAlign(VerticalAlign.TOP)
+      scrollCell(descriptionTextArea)
+        .horizontalAlign(HorizontalAlign.FILL)
+        .verticalAlign(VerticalAlign.FILL)
+    }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
+
     if (accountsModel.size != 1) {
-      row(message("share.dialog.share.by")) {
-        accountSelector(accountsModel) { switchAccount(getAccount()) }
-      }
+      accountSelector(message("share.dialog.share.by"), accountsModel) { switchAccount(getAccount()) }
     }
   }
 

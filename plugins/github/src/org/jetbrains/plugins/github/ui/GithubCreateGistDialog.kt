@@ -7,7 +7,11 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.EMPTY_LABEL
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsComboBoxModel
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsComboBoxModel.Companion.accountSelector
@@ -50,23 +54,26 @@ class GithubCreateGistDialog(
   override fun createCenterPanel() = panel {
     fileNameField?.let {
       row(message("create.gist.dialog.filename.field")) {
-        it(pushX, growX)
+        cell(it).horizontalAlign(HorizontalAlign.FILL)
       }
     }
-    row(message("create.gist.dialog.description.field")) {
-      scrollPane(descriptionField)
+
+    row {
+      label(message("create.gist.dialog.description.field"))
+        .verticalAlign(VerticalAlign.TOP)
+      scrollCell(descriptionField)
+        .horizontalAlign(HorizontalAlign.FILL)
+        .verticalAlign(VerticalAlign.FILL)
+    }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
+
+    row(EMPTY_LABEL) {
+      cell(secretCheckBox)
+      cell(browserCheckBox)
+      cell(copyLinkCheckBox)
     }
-    row("") {
-      cell {
-        secretCheckBox()
-        browserCheckBox()
-        copyLinkCheckBox()
-      }
-    }
+
     if (accountsModel.size != 1) {
-      row(message("create.gist.dialog.create.for.field")) {
-        accountSelector(accountsModel)
-      }
+      accountSelector(message("create.gist.dialog.create.for.field"), accountsModel)
     }
   }
 
