@@ -3,3 +3,5 @@ version = '1.0'
 repositories {
     mavenCentral()
 }
+
+// VERSION: 1.6.20
