@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.containers.ContainerUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -30,8 +31,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -147,7 +146,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   }
 
   private static List<String> childNames(VirtualFile dir) {
-    return Stream.of(dir.getChildren()).map(VirtualFile::getName).collect(Collectors.toList());
+    return ContainerUtil.map(dir.getChildren(), VirtualFile::getName);
   }
 
   private static void assertPointers(VirtualFilePointer[] pointers, boolean valid) {
