@@ -600,36 +600,9 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
         if (copyActions) {
           copyActions.each { Action<? super FileCopyDetails> action ->
-            def filterClass = findPropertyWithType(action, Class, 'filterType', 'val$filterType', 'arg$2', 'arg$1')
-            if (filterClass != null) {
-              //noinspection GrUnresolvedAccess
-              def filterType = filterClass.name
-              def filter = [filterType: filterType] as DefaultExternalFilter
-
-              def props = findPropertyWithType(action, Map, 'properties', 'val$properties', 'arg$1')
-              if (props != null) {
-                  if ('org.apache.tools.ant.filters.ExpandProperties' == filterType && props['project']) {
-                    if (props['project']) filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props['project'].properties)
-                  }
-                  else {
-                    filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props)
-                  }
-              }
+            def filter = getRenamingCopyFilter(action) ?: getFilter(action)
+            if (filter != null) {
               filterReaders << filter
-            }
-            else if (action.class.simpleName == 'RenamingCopyAction' && action.hasProperty('transformer')) {
-              //noinspection GrUnresolvedAccess
-              if (action.transformer.hasProperty('matcher') && action?.transformer?.hasProperty('replacement')) {
-                //noinspection GrUnresolvedAccess
-                String pattern = action?.transformer?.matcher?.pattern()?.pattern ?: action?.transformer?.pattern?.pattern
-                //noinspection GrUnresolvedAccess
-                String replacement = action?.transformer?.replacement
-                def filter = [filterType: 'RenamingCopyFilter'] as DefaultExternalFilter
-                if (pattern && replacement) {
-                  filter.propertiesAsJsonMap = new GsonBuilder().create().toJson([pattern: pattern, replacement: replacement])
-                  filterReaders << filter
-                }
-              }
             }
 //          else {
 //            project.logger.error(
@@ -649,6 +622,63 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     return [includes, excludes, filterReaders]
   }
 
+  @CompileDynamic
+  private static ExternalFilter getFilter(Action<? super FileCopyDetails> action) {
+    def filterClass = findPropertyWithType(action, Class, 'filterType', 'val$filterType', 'arg$2', 'arg$1')
+    if (filterClass == null) {
+      return null
+    }
+    def filterType = filterClass.name
+    def properties = findPropertyWithType(action, Map, 'properties', 'val$properties', 'arg$1')
+    if ('org.apache.tools.ant.filters.ExpandProperties' == filterType) {
+      if (properties != null && properties['project'] != null) {
+        properties = properties['project'].properties
+      }
+    }
+
+    def filter = new DefaultExternalFilter()
+    filter.filterType = filterType
+    if (properties != null) {
+      filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(properties)
+    }
+    return filter
+  }
+
+  @CompileDynamic
+  private static ExternalFilter getRenamingCopyFilter(Action<? super FileCopyDetails> action) {
+    if (action.class.simpleName != 'RenamingCopyAction') {
+      return null
+    }
+    if (!action.hasProperty('transformer')) {
+      return null
+    }
+    def transformer = action.transformer
+    if (transformer == null) {
+      return null
+    }
+    String pattern = null
+    if (transformer.hasProperty('matcher')) {
+      pattern = transformer.matcher?.pattern()?.pattern()
+    }
+    if (pattern == null && transformer.hasProperty('pattern')) {
+      pattern = transformer.pattern?.pattern()
+    }
+    if (pattern == null) {
+      return null
+    }
+    if (!transformer.hasProperty('replacement')) {
+      return null
+    }
+    def replacement = action.transformer.replacement
+    if (replacement == null) {
+      return null
+    }
+
+    def filter = new DefaultExternalFilter()
+    filter.filterType = 'RenamingCopyFilter'
+    filter.propertiesAsJsonMap = new GsonBuilder().create().toJson([pattern: pattern, replacement: replacement])
+    return filter
+  }
 
   static <T> T findPropertyWithType(Object self, Class<T> type, String... propertyNames) {
     for (String name in propertyNames) {
@@ -658,7 +688,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
           field.setAccessible(true)
           return field.get(self) as T
         }
-      } catch (NoSuchFieldException ignored) {
+      }
+      catch (NoSuchFieldException ignored) {
       }
     }
     return null
