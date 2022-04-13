@@ -28,7 +28,7 @@ public class MakePublicStaticVoidFix extends InspectionGadgetsFix {
   private final boolean myMakeStatic;
   private final String myNewVisibility;
 
-  MakePublicStaticVoidFix(PsiMethod method, boolean makeStatic) {
+  public MakePublicStaticVoidFix(PsiMethod method, boolean makeStatic) {
     this(method, makeStatic, PsiModifier.PUBLIC);
   }
 

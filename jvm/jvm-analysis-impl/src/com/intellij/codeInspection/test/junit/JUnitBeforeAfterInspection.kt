@@ -11,26 +11,22 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.PsiType
 import com.siyeh.ig.junit.MakePublicStaticVoidFix
-import com.siyeh.ig.psiutils.TestUtils
 import org.jetbrains.uast.UMethod
 
-class JUnitBeforeAfterClassInspection : AbstractBaseUastLocalInspectionTool() {
+class JUnitBeforeAfterInspection : AbstractBaseUastLocalInspectionTool() {
   override fun checkMethod(method: UMethod, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
     val javaMethod = method.javaPsi
     val annotation = STATIC_CONFIGS.firstOrNull {
       AnnotationUtil.isAnnotated(javaMethod, it, AnnotationUtil.CHECK_HIERARCHY)
     } ?: return emptyArray()
     val returnType = method.returnType ?: return emptyArray()
-    val targetClass = javaMethod.containingClass ?: return emptyArray()
-
     val parameterList = method.uastParameters
-    val junit4Annotation = isJunit4Annotation(annotation)
-    if (junit4Annotation && (parameterList.isNotEmpty() || !javaMethod.hasModifier(JvmModifier.PUBLIC)) || returnType != PsiType.VOID ||
-        !javaMethod.hasModifier(JvmModifier.STATIC) && (junit4Annotation || !TestUtils.testInstancePerClass(targetClass))
+    if (parameterList.isNotEmpty() || returnType != PsiType.VOID ||
+        !javaMethod.hasModifier(JvmModifier.PUBLIC) || javaMethod.hasModifier(JvmModifier.STATIC)
     ) {
       val message = JvmAnalysisBundle.message("jvm.inspections.before.after.descriptor", annotation)
       val fixes = if (method.sourcePsi?.language == JavaLanguage.INSTANCE) {
-        arrayOf(MakePublicStaticVoidFix(javaMethod, true))
+        arrayOf(MakePublicStaticVoidFix(javaMethod, false))
       } else emptyArray()
       val place = method.uastAnchor?.sourcePsi ?: return emptyArray()
       val problemDescriptor = manager.createProblemDescriptor(
@@ -41,17 +37,11 @@ class JUnitBeforeAfterClassInspection : AbstractBaseUastLocalInspectionTool() {
     return emptyArray()
   }
 
-  private fun isJunit4Annotation(annotation: String) = annotation.endsWith("Class")
-
   companion object {
     // JUnit 4 classes
-    private const val BEFORE_CLASS = "org.junit.BeforeClass"
-    private const val AFTER_CLASS = "org.junit.AfterClass"
+    private const val BEFORE = "org.junit.Before"
+    private const val AFTER = "org.junit.After"
 
-    // JUnit 5 classes
-    private const val BEFORE_ALL = "org.junit.jupiter.api.BeforeAll"
-    private const val AFTER_ALL = "org.junit.jupiter.api.AfterALL"
-
-    private val STATIC_CONFIGS = arrayOf(BEFORE_CLASS, AFTER_CLASS, BEFORE_ALL, AFTER_ALL)
+    private val STATIC_CONFIGS = arrayOf(BEFORE, AFTER)
   }
 }

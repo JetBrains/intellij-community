@@ -1351,10 +1351,6 @@
                      bundle="messages.InspectionGadgetsBundle" key="asserts.without.messages.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.test.frameworks.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.testFrameworks.AssertWithoutMessageInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="BeforeOrAfterWithIncorrectSignature" shortName="BeforeOrAfterIsPublicVoidNoArg"
-                     bundle="messages.InspectionGadgetsBundle" key="before.or.after.is.public.void.no.arg.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.BeforeOrAfterIsPublicVoidNoArgInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ExpectedExceptionNeverThrown" bundle="messages.InspectionGadgetsBundle"
                      key="expected.exception.never.thrown.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
