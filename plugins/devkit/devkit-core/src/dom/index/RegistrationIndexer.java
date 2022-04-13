@@ -12,10 +12,7 @@ import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.dom.Action;
-import org.jetbrains.idea.devkit.dom.Actions;
-import org.jetbrains.idea.devkit.dom.Group;
-import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.*;
 
 import java.util.List;
 import java.util.Map;
@@ -40,25 +37,25 @@ class RegistrationIndexer {
     processActions(ideaPlugin);
 
     processElements(ideaPlugin.getApplicationComponents(),
-                    components -> components.getComponents(),
-                    component -> component.getImplementationClass(),
+                    ApplicationComponents::getComponents,
+                    Component::getImplementationClass,
                     RegistrationEntry.RegistrationType.APPLICATION_COMPONENT);
     processElements(ideaPlugin.getProjectComponents(),
-                    components -> components.getComponents(),
-                    component -> component.getImplementationClass(),
+                    ProjectComponents::getComponents,
+                    Component::getImplementationClass,
                     RegistrationEntry.RegistrationType.PROJECT_COMPONENT);
     processElements(ideaPlugin.getModuleComponents(),
-                    components -> components.getComponents(),
-                    component -> component.getImplementationClass(),
+                    ModuleComponents::getComponents,
+                    Component::getImplementationClass,
                     RegistrationEntry.RegistrationType.MODULE_COMPONENT);
 
     processElements(ideaPlugin.getApplicationListeners(),
-                    listeners -> listeners.getListeners(),
-                    listener -> listener.getListenerClassName(),
+                    Listeners::getListeners,
+                    Listeners.Listener::getListenerClassName,
                     RegistrationEntry.RegistrationType.APPLICATION_LISTENER);
     processElements(ideaPlugin.getProjectListeners(),
-                    listeners -> listeners.getListeners(),
-                    listener -> listener.getListenerClassName(),
+                    Listeners::getListeners,
+                    Listeners.Listener::getListenerClassName,
                     RegistrationEntry.RegistrationType.PROJECT_LISTENER);
   }
 
