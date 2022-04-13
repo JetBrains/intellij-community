@@ -24,18 +24,7 @@ abstract class ToolbarComboWidget: JComponent() {
 
   init {
     updateUI() //set UI for component
-
-    foreground = JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground())
-    background = JBColor.namedColor("MainToolbar.Dropdown.background", JBColor.background())
-    hoverBackground = JBColor.namedColor("MainToolbar.Dropdown.hoverBackground", JBColor.background())
-
-    val hoverListener = object : HoverStateListener() {
-      override fun hoverChanged(component: Component, hovered: Boolean) {
-        (component as JComponent).isOpaque = hovered
-      }
-    }
-    isOpaque = false
-    hoverListener.addTo(this)
+    isOpaque = true
   }
 
   abstract fun doExpand(e: InputEvent)

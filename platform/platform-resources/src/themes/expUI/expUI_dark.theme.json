@@ -395,8 +395,6 @@
 
     "Tag.background": "Grey3",
 
-    "ToolbarComboWidget.borderInsets": "3,8,3,4",
-
     "ToolTip":{
       "background": "Grey3",
       "borderColor": "Grey4",
@@ -453,7 +451,7 @@
         "pressedBackground": "Grey3"
       },
       "Dropdown": {
-        "borderInsets": "12,6,12,6",
+        "borderInsets": "3,8,3,4",
         "pressedBackground": "Grey3"
       },
       "background": "Grey2"

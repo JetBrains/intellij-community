@@ -414,11 +414,6 @@
 
     "TextArea.background": "Grey13",
 
-    "ToolbarComboWidget": {
-      "borderInsets": "3,8,3,4",
-      "hoverBackground": "Grey1"
-    },
-
     "ToolTip":{
       "background": "Grey2",
       "foreground": "Grey13",
@@ -477,7 +472,7 @@
       },
       "Dropdown": {
         "foreground": "Grey11",
-        "borderInsets": "12,6,12,6",
+        "borderInsets": "3,8,3,4",
         "background": "Grey2",
         "hoverBackground": "Grey1",
         "pressedBackground": "Grey1"

@@ -4,6 +4,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolbarComboWidget;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -51,10 +52,11 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   }
 
   private static void setUIDefaults(ToolbarComboWidget c) {
-    c.setBackground(UIManager.getColor("ToolbarComboWidget.background"));
-    c.setHoverBackground(UIManager.getColor("ToolbarComboWidget.hoverBackground"));
+    c.setForeground(JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground()));
+    c.setBackground(JBColor.namedColor("MainToolbar.Dropdown.background", JBColor.foreground()));
+    c.setHoverBackground(JBColor.namedColor("MainToolbar.Dropdown.hoverBackground", JBColor.background()));
 
-    Insets insets = UIManager.getInsets("ToolbarComboWidget.borderInsets");
+    Insets insets = UIManager.getInsets("MainToolbar.Dropdown.borderInsets");
     JBEmptyBorder border = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
     c.setBorder(border);
   }

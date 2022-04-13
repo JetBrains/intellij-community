@@ -518,9 +518,6 @@
     },
 
     "ToolbarComboWidget": {
-      "background": "#3C3F41",
-      "hoverBackground": "#4C5052",
-      "borderInsets": "3,5,3,5",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
     },
 
@@ -563,7 +560,7 @@
         "pressedBackground": "#4C5052"
       },
       "Dropdown": {
-        "borderInsets": "12,6,12,6",
+        "borderInsets": "3,5,3,5",
         "background": "#3C3F41",
         "hoverBackground": "#4C5052",
         "pressedBackground": "#4C5052"
