@@ -32,14 +32,9 @@ class MarkdownFrontMatterHeader(type: IElementType): CompositePsiElement(type), 
   }
 
   internal class Manipulator: AbstractElementManipulator<MarkdownFrontMatterHeader>() {
-    override fun handleContentChange(
-      element: MarkdownFrontMatterHeader,
-      range: TextRange,
-      newContent: String?
-    ): MarkdownFrontMatterHeader? {
-      val actualContent = newContent ?: return null
-      if (actualContent.contains("---")) {
-        val textElement = MarkdownPsiElementFactory.createTextElement(element.project, actualContent)
+    override fun handleContentChange(element: MarkdownFrontMatterHeader, range: TextRange, content: String): MarkdownFrontMatterHeader? {
+      if (content.contains("---")) {
+        val textElement = MarkdownPsiElementFactory.createTextElement(element.project, content)
         return when (textElement) {
           is MarkdownFrontMatterHeader -> element.replace(textElement) as MarkdownFrontMatterHeader
           else -> null
@@ -47,7 +42,9 @@ class MarkdownFrontMatterHeader(type: IElementType): CompositePsiElement(type), 
       }
       val children = element.firstChild.siblings(forward = true, withSelf = true)
       val contentElement = children.filterIsInstance<MarkdownFrontMatterHeaderContent>().firstOrNull() ?: return null
-      contentElement.replaceWithText(actualContent)
+      val shiftedRange = range.shiftLeft(contentElement.startOffsetInParent)
+      val updatedText = shiftedRange.replace(contentElement.text, content)
+      contentElement.replaceWithText(updatedText)
       return element
     }
   }
