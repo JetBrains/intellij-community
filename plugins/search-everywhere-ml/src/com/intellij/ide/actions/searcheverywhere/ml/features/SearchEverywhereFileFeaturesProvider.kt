@@ -27,7 +27,6 @@ internal class SearchEverywhereFileFeaturesProvider
     internal const val IS_OPENED_DATA_KEY = "isOpened"
     internal const val RECENT_INDEX_DATA_KEY = "recentFilesIndex"
     internal const val PREDICTION_SCORE_DATA_KEY = "predictionScore"
-    internal const val PRIORITY_DATA_KEY = "priority"
     internal const val IS_EXACT_MATCH_DATA_KEY = "isExactMatch"
     internal const val FILETYPE_MATCHES_QUERY_DATA_KEY = "fileTypeMatchesQuery"
     internal const val IS_TOP_LEVEL_DATA_KEY = "isTopLevel"
@@ -50,9 +49,7 @@ internal class SearchEverywhereFileFeaturesProvider
     val data = hashMapOf<String, Any>(
       IS_FAVORITE_DATA_KEY to isFavorite(item),
       IS_DIRECTORY_DATA_KEY to item.isDirectory,
-      PRIORITY_DATA_KEY to elementPriority,
-      IS_EXACT_MATCH_DATA_KEY to (elementPriority == GotoFileItemProvider.EXACT_MATCH_DEGREE),
-      SearchEverywhereUsageTriggerCollector.TOTAL_SYMBOLS_AMOUNT_DATA_KEY to searchQuery.length,
+      IS_EXACT_MATCH_DATA_KEY to (elementPriority == GotoFileItemProvider.EXACT_MATCH_DEGREE)
     )
 
     data.putIfValueNotNull(IS_TOP_LEVEL_DATA_KEY, isTopLevel(item))

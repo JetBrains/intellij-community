@@ -15,7 +15,6 @@ import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFil
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_DIRECTORY_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.IS_FAVORITE_DATA_KEY
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.PRIORITY_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.RECENT_INDEX_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.TIME_SINCE_LAST_MODIFICATION_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider.Companion.WAS_MODIFIED_IN_LAST_DAY_DATA_KEY
@@ -139,15 +138,6 @@ internal class SearchEverywhereFileFeaturesProviderTest
     checkThatFeature(RECENT_INDEX_DATA_KEY)
       .ofElement(openedFiles.first()) // First opened file (i.e. the oldest)
       .isEqualTo(expectedIndex)
-  }
-
-  fun testPriority() {
-    val priority = 10101
-
-    checkThatFeature(PRIORITY_DATA_KEY)
-      .ofElement(testFile)
-      .withPriority(priority)
-      .isEqualTo(priority)
   }
 
   fun `test file type usage ratio for the most popular file type`() {

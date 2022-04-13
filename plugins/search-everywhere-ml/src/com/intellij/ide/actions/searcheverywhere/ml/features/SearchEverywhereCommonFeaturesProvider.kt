@@ -6,6 +6,9 @@ import com.intellij.openapi.components.service
 class SearchEverywhereCommonFeaturesProvider
   : SearchEverywhereElementFeaturesProvider() {
   companion object {
+    internal const val PRIORITY_DATA_KEY = "priority"
+    internal const val TOTAL_SYMBOLS_AMOUNT_DATA_KEY = "totalSymbolsAmount"
+
     internal const val STATISTICIAN_USE_COUNT_DATA_KEY = "statUseCount"
     internal const val STATISTICIAN_IS_MOST_POPULAR_DATA_KEY = "statIsMostPopular"
     internal const val STATISTICIAN_RECENCY_DATA_KEY = "statRecency"
@@ -19,19 +22,22 @@ class SearchEverywhereCommonFeaturesProvider
                                   searchQuery: String,
                                   elementPriority: Int,
                                   cache: Any?): Map<String, Any> {
-    return getStatisticianFeatures(element)
+    val features = hashMapOf<String, Any>(
+      PRIORITY_DATA_KEY to elementPriority,
+      TOTAL_SYMBOLS_AMOUNT_DATA_KEY to searchQuery.length,
+    )
+    addStatisticianFeatures(element, features)
+    return features
   }
 
-  private fun getStatisticianFeatures(element: Any): Map<String, Any> {
+  private fun addStatisticianFeatures(element: Any, features: MutableMap<String, Any>) {
     val statisticianService = service<SearchEverywhereStatisticianService>()
 
-    return statisticianService.getCombinedStats(element)?.let { stats ->
-      mapOf<String, Any>(
-        STATISTICIAN_USE_COUNT_DATA_KEY to stats.useCount,
-        STATISTICIAN_IS_MOST_POPULAR_DATA_KEY to stats.isMostPopular,
-        STATISTICIAN_RECENCY_DATA_KEY to stats.recency,
-        STATISTICIAN_IS_MOST_RECENT_DATA_KEY to stats.isMostRecent,
-      )
-    } ?: emptyMap()
+    statisticianService.getCombinedStats(element)?.let { stats ->
+      features[STATISTICIAN_USE_COUNT_DATA_KEY] = stats.useCount
+      features[STATISTICIAN_IS_MOST_POPULAR_DATA_KEY] = stats.isMostPopular
+      features[STATISTICIAN_RECENCY_DATA_KEY] = stats.recency
+      features[STATISTICIAN_IS_MOST_RECENT_DATA_KEY] = stats.isMostRecent
+    }
   }
 }
