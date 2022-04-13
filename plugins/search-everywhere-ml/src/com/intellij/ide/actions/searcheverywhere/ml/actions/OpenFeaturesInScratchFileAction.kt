@@ -59,8 +59,8 @@ class OpenFeaturesInScratchFileAction : AnAction() {
       val rankingWeight = info.priority
       val contributor = info.contributor.searchProviderId
       val elementName = StringUtil.notNullize(info.element.toString(), "undefined")
-      if (searchSession.itemIdProvider.isElementSupported(info.element)) {
-        val id = searchSession.itemIdProvider.getId(info.element)
+      val elementId = searchSession.itemIdProvider.getId(info.element)
+      if (elementId != null) {
         val mlWeight = if (isTabWithMl(searchEverywhereUI.selectedTabID)) {
           mlSessionService.getMlWeight(info.contributor, info.element, rankingWeight)
         } else {
@@ -72,7 +72,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
           mlWeight,
           rankingWeight,
           contributor,
-          state!!.getElementFeatures(id, info.element, info.contributor, rankingWeight).features.toSortedMap()
+          state!!.getElementFeatures(elementId, info.element, info.contributor, rankingWeight).features.toSortedMap()
         )
       }
       else {

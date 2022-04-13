@@ -113,8 +113,10 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   fun getMLWeight(contributor: SearchEverywhereContributor<*>, element: Any, matchingDegree: Int): Double {
     val state = getCurrentSearchState()
     if (state != null && SearchEverywhereTabWithMl.findById(state.tabId) != null) {
-      val id = itemIdProvider.getId(element)
-      return state.getMLWeight(id, element, contributor, cachedContextInfo, matchingDegree)
+      val elementId = itemIdProvider.getId(element)
+      if (elementId != null) {
+        return state.getMLWeight(elementId, element, contributor, cachedContextInfo, matchingDegree)
+      }
     }
     return -1.0
   }

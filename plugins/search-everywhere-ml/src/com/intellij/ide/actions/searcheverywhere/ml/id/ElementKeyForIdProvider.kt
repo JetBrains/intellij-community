@@ -6,17 +6,12 @@ internal abstract class ElementKeyForIdProvider {
   companion object {
     private val EP_NAME = ExtensionPointName.create<ElementKeyForIdProvider>("com.intellij.searcheverywhere.ml.elementKeyForIdProvider")
 
-    fun isElementSupported(element: Any) = getKeyOrNull(element) != null
-
     /**
      * Returns key that will be used by [SearchEverywhereMlItemIdProvider].
-     * The method may throw a [UnsupportedElementTypeException] if no provider was found for the element,
-     * therefore [isElementSupported] should be used before to make sure that calling this method is safe.
+     * The method returns an element key or null if element isn't supported yet.
      * @return Key for ID
      */
-    fun getKey(element: Any) = getKeyOrNull(element) ?: throw UnsupportedElementTypeException(element::class.java)
-
-    private fun getKeyOrNull(element: Any): Any? {
+    fun getKeyOrNull(element: Any): Any? {
       EP_NAME.extensionList.forEach {
         val key = it.getKey(element)
         if (key != null) {
@@ -37,5 +32,3 @@ internal abstract class ElementKeyForIdProvider {
    */
   protected abstract fun getKey(element: Any): Any?
 }
-
-internal class UnsupportedElementTypeException(elementType: Class<*>): Exception("No provider found for element type: ${elementType}")

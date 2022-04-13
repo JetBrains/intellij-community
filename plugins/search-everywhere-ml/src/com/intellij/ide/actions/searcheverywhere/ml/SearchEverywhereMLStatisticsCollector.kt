@@ -137,8 +137,9 @@ internal class SearchEverywhereMLStatisticsCollector {
       data[SELECTED_ELEMENTS_DATA_KEY] = selectedElements.map {
         if (it < elements.size) {
           val element = elements[it].element
-          if (elementIdProvider.isElementSupported(element)) {
-            return@map elementIdProvider.getId(element)
+          val elementId = elementIdProvider.getId(element)
+          if (elementId != null) {
+            return@map elementId
           }
         }
         return@map -1
@@ -168,12 +169,13 @@ internal class SearchEverywhereMLStatisticsCollector {
         CONTRIBUTOR_ID_KEY to it.contributor.searchProviderId
       )
 
-      if (elementIdProvider.isElementSupported(it.element)) {
+      val elementId = elementIdProvider.getId(it.element)
+      if (elementId != null) {
         // After changing tabs, it may happen that the code will run for an outdated list of results,
         // for example, results from All tab will be reported after switching to the Actions tab.
         // As this can lead to exceptions, we'll check if the element is supported, before collecting
         // features for it.
-        addElementFeatures(elementIdProvider, it, state, result, actionManager)
+        addElementFeatures(elementId, it, state, result, actionManager)
       }
       result
     }
@@ -195,12 +197,11 @@ internal class SearchEverywhereMLStatisticsCollector {
     return true
   }
 
-  private fun addElementFeatures(elementIdProvider: SearchEverywhereMlItemIdProvider,
+  private fun addElementFeatures(elementId: Int,
                                  elementInfo: SearchEverywhereFoundElementInfo,
                                  state: SearchEverywhereMlSearchState,
                                  result: HashMap<String, Any>,
                                  actionManager: ActionManager) {
-    val elementId = elementIdProvider.getId(elementInfo.element)
     val itemInfo = state.getElementFeatures(elementId, elementInfo.element, elementInfo.contributor, elementInfo.priority)
     if (itemInfo.features.isNotEmpty()) {
       result[FEATURES_DATA_KEY] = itemInfo.features
