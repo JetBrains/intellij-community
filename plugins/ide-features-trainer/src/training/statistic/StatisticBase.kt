@@ -29,11 +29,10 @@ import training.statistic.FeatureUsageStatisticConsts.FEEDBACK_HAS_BEEN_SENT
 import training.statistic.FeatureUsageStatisticConsts.FEEDBACK_LIKENESS_ANSWER
 import training.statistic.FeatureUsageStatisticConsts.FEEDBACK_OPENED_VIA_NOTIFICATION
 import training.statistic.FeatureUsageStatisticConsts.HELP_LINK_CLICKED
+import training.statistic.FeatureUsageStatisticConsts.INTERNAL_PROBLEM
 import training.statistic.FeatureUsageStatisticConsts.KEYMAP_SCHEME
 import training.statistic.FeatureUsageStatisticConsts.LANGUAGE
 import training.statistic.FeatureUsageStatisticConsts.LAST_BUILD_LEARNING_OPENED
-import training.statistic.FeatureUsageStatisticConsts.LEARNING_PROBLEM
-import training.statistic.FeatureUsageStatisticConsts.LEARNING_PROBLEM_EVENT
 import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENED_FIRST_TIME
 import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENING_WAY
 import training.statistic.FeatureUsageStatisticConsts.LESSON_ID
@@ -47,6 +46,7 @@ import training.statistic.FeatureUsageStatisticConsts.NON_LEARNING_PROJECT_OPENE
 import training.statistic.FeatureUsageStatisticConsts.ONBOARDING_FEEDBACK_DIALOG_RESULT
 import training.statistic.FeatureUsageStatisticConsts.ONBOARDING_FEEDBACK_NOTIFICATION_SHOWN
 import training.statistic.FeatureUsageStatisticConsts.PASSED
+import training.statistic.FeatureUsageStatisticConsts.PROBLEM
 import training.statistic.FeatureUsageStatisticConsts.PROGRESS
 import training.statistic.FeatureUsageStatisticConsts.REASON
 import training.statistic.FeatureUsageStatisticConsts.RESTORE
@@ -75,7 +75,7 @@ internal enum class FeedbackLikenessAnswer {
   NO_ANSWER, LIKE, DISLIKE
 }
 
-enum class LearningProblems {
+enum class LearningInternalProblems {
   NO_SDK_CONFIGURED, // Before learning start we are trying to autoconfigure SDK or at least ask about location
 }
 
@@ -96,7 +96,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val LOG = logger<StatisticBase>()
     private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
     private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 17)
+    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 18)
 
     var isLearnProjectCloseLogged = false
 
@@ -122,7 +122,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val feedbackOpenedViaNotification = EventFields.Boolean(FEEDBACK_OPENED_VIA_NOTIFICATION)
     private val feedbackLikenessAnswer = EventFields.Enum<FeedbackLikenessAnswer>(FEEDBACK_LIKENESS_ANSWER)
     private val feedbackExperiencedUser = EventFields.Boolean(FEEDBACK_EXPERIENCED_USER)
-    private val learningProblemField = EventFields.Enum<LearningProblems>(LEARNING_PROBLEM)
+    private val internalProblemField = EventFields.Enum<LearningInternalProblems>(PROBLEM)
 
     private val lastBuildLearningOpened = object : PrimitiveEventField<String?>() {
       override val name: String = LAST_BUILD_LEARNING_OPENED
@@ -161,8 +161,8 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val needShowNewLessonsNotifications =
       GROUP.registerEvent(NEED_SHOW_NEW_LESSONS_NOTIFICATIONS, newLessonsCount, lastBuildLearningOpened, showNewLessonsState)
 
-    private val learningProblem =
-      GROUP.registerEvent(LEARNING_PROBLEM_EVENT, learningProblemField, lessonIdField, languageField)
+    private val internalProblem =
+      GROUP.registerEvent(INTERNAL_PROBLEM, internalProblemField, lessonIdField, languageField)
 
     private val lessonLinkClickedFromTip = GROUP.registerEvent(LESSON_LINK_CLICKED_FROM_TIP, lessonIdField, languageField, tipFilenameField)
     private val helpLinkClicked = GROUP.registerEvent(HELP_LINK_CLICKED, lessonIdField, languageField)
@@ -297,8 +297,8 @@ internal class StatisticBase : CounterUsagesCollector() {
       )
     }
 
-    fun logLearningProblem(problem: LearningProblems, lesson: Lesson) {
-      learningProblem.log(problem, lesson.id, courseLanguage())
+    fun logLearningProblem(problem: LearningInternalProblems, lesson: Lesson) {
+      internalProblem.log(problem, lesson.id, courseLanguage())
     }
 
     private fun courseLanguage() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.toLowerCase() ?: ""

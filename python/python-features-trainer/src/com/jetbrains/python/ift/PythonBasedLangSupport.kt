@@ -30,7 +30,7 @@ import training.learn.CourseManager
 import training.learn.course.KLesson
 import training.project.ProjectUtils
 import training.project.ReadMeCreator
-import training.statistic.LearningProblems
+import training.statistic.LearningInternalProblems
 import training.statistic.LessonStartingWay
 import training.ui.LearningUiManager
 import training.util.isLearningProject
@@ -154,7 +154,7 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
       }
       if (useUserProjects || isLearningProject(project, this@PythonBasedLangSupport)) {
         showWarning(PythonLessonsBundle.message("no.interpreter.in.learning.project", configureCallbackId),
-                    problem = LearningProblems.NO_SDK_CONFIGURED) {
+                    problem = LearningInternalProblems.NO_SDK_CONFIGURED) {
           !hasPythonSdk()
         }
       } else {
