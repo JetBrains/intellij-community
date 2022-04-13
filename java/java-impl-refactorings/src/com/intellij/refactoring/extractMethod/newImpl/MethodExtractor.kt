@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -107,12 +106,7 @@ class MethodExtractor {
   }
 
   fun getDefaultInplaceExtractor(options: ExtractOptions): InplaceExtractMethodProvider {
-    if (Registry.`is`("java.refactoring.extractMethod.newDuplicatesExtractor")) return DuplicatesMethodExtractor()
-    return if (ExtractMethodHandler.canUseNewImpl(options.project, options.anchor.containingFile, options.elements.toTypedArray())) {
-      DefaultMethodExtractor()
-    } else {
-      LegacyMethodExtractor()
-    }
+    return DuplicatesMethodExtractor()
   }
 
   fun suggestSafeMethodNames(options: ExtractOptions): List<String> {

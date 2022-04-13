@@ -7,7 +7,6 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
@@ -23,14 +22,6 @@ import org.jetbrains.annotations.NonNls
 class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
 
   private val BASE_PATH: @NonNls String = "/refactoring/extractMethodAndDuplicatesInplace"
-
-  override fun setUp() {
-    super.setUp()
-    val featureRegistry = Registry.get("java.refactoring.extractMethod.newDuplicatesExtractor")
-    val previousValue = featureRegistry.asBoolean()
-    Disposer.register(testRootDisposable) { featureRegistry.setValue(previousValue) }
-    featureRegistry.setValue(true)
-  }
 
   fun testStatement(){
     doTest()

@@ -63,6 +63,25 @@ class EditorState(val editor: Editor){
   }
 }
 
+private fun installGotItTooltips(editor: Editor, navigationGotItRange: TextRange?, changeSignatureGotItRange: TextRange?){
+  if (navigationGotItRange == null || changeSignatureGotItRange == null) {
+    return
+  }
+  val parentDisposable = Disposer.newDisposable().also { EditorUtil.disposeWithEditor(editor, it) }
+  val previousBalloonFuture = createNavigationGotIt(parentDisposable)?.showInEditor(editor, navigationGotItRange)
+  val disposable = createChangeBasedDisposable(editor)
+  val caretListener = object: CaretListener {
+    override fun caretPositionChanged(event: CaretEvent) {
+      if (editor.logicalPositionToOffset(event.newPosition) in changeSignatureGotItRange) {
+        previousBalloonFuture?.thenAccept { balloon -> balloon.hide(true) }
+        createChangeSignatureGotIt(parentDisposable)?.showInEditor(editor, changeSignatureGotItRange)
+        Disposer.dispose(disposable)
+      }
+    }
+  }
+  editor.caretModel.addCaretListener(caretListener, disposable)
+}
+
 class InplaceMethodExtractor(private val editor: Editor,
                              private val range: TextRange,
                              private val targetClass: PsiClass,
@@ -142,24 +161,6 @@ class InplaceMethodExtractor(private val editor: Editor,
     return Pair(methodPointer.element!!, callPointer.element!!)
   }
 
-  private fun installGotItTooltips(){
-    val navigationGotItRange = callIdentifierRange?.range ?: return
-    val changeSignatureGotItRange = methodIdentifierRange?.range ?: return
-    val parentDisposable = Disposer.newDisposable().also { EditorUtil.disposeWithEditor(editor, it) }
-    val previousBalloonFuture = createNavigationGotIt(parentDisposable)?.showInEditor(editor, navigationGotItRange)
-    val disposable = createChangeBasedDisposable(editor)
-    val caretListener = object: CaretListener {
-      override fun caretPositionChanged(event: CaretEvent) {
-        if (editor.logicalPositionToOffset(event.newPosition) in changeSignatureGotItRange) {
-          previousBalloonFuture?.thenAccept { balloon -> balloon.hide(true) }
-          createChangeSignatureGotIt(parentDisposable)?.showInEditor(editor, changeSignatureGotItRange)
-          Disposer.dispose(disposable)
-        }
-      }
-    }
-    editor.caretModel.addCaretListener(caretListener, disposable)
-  }
-
   override fun performInplaceRefactoring(nameSuggestions: LinkedHashSet<String>?): Boolean {
     try {
       ApplicationManager.getApplication().runWriteAction { prepareCodeForTemplate() }
@@ -231,7 +232,7 @@ class InplaceMethodExtractor(private val editor: Editor,
     } else {
       val extractedMethod = findElementAt<PsiMethod>(file, methodIdentifierRange) ?: return
       InplaceExtractMethodCollector.executed.log(initialMethodName != methodName)
-      installGotItTooltips()
+      installGotItTooltips(editor, callIdentifierRange?.range, methodIdentifierRange?.range)
       MethodExtractor.sendRefactoringDoneEvent(extractedMethod)
       extractor.postprocess(editor, extractedMethod)
     }
