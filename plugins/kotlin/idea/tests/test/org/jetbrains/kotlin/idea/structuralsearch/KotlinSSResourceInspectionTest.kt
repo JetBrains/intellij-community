@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.idea.test.util.slashedPath
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 
 abstract class KotlinSSResourceInspectionTest : BasePlatformTestCase() {
     private var myInspection: SSBasedInspection? = null
@@ -46,7 +47,9 @@ abstract class KotlinSSResourceInspectionTest : BasePlatformTestCase() {
         val message = checkApplicableConstraints(options, PatternCompiler.compilePattern(project, options, true, false))
         assertNull("Constraint applicability error: $message\n", message)
         StructuralSearchProfileActionProvider.createNewInspection(myConfiguration, project)
-        myFixture.testHighlighting(true, false, false)
+        withCustomCompilerOptions(myFixture.file.text, project, module) {
+            myFixture.testHighlighting(true, false, false)
+        }
     }
 
     override fun getTestDataPath(): String = IDEA_TEST_DATA_DIR.resolve("structuralsearch/$basePath").slashedPath
