@@ -21,7 +21,7 @@ import training.dsl.*
 import training.learn.ActionsRecorder
 import training.learn.LearnBundle
 import training.learn.lesson.LessonManager
-import training.statistic.LearningProblems
+import training.statistic.LearningInternalProblems
 import training.statistic.StatisticBase
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil
@@ -132,7 +132,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
    */
   override fun showWarning(text: String,
                            restoreTaskWhenResolved: Boolean,
-                           problem: LearningProblems?,
+                           problem: LearningInternalProblems?,
                            warningRequired: TaskRuntimeContext.() -> Boolean
   ) {
     var warningIsLogged = false
