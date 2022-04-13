@@ -227,6 +227,9 @@ internal object RecentProjectPanelComponentFactory {
       }
       projectActions.isVisible = isHovered
 
+      val toolTipPath = PathUtil.toSystemDependentName(item.projectPath)
+      toolTipText = if (isProjectPathValid) toolTipPath else "$toolTipPath ${IdeBundle.message("recent.project.unavailable")}"
+
       AccessibleContextUtil.setCombinedName(this, projectNameLabel, "-", projectPathLabel) // NON-NLS
       AccessibleContextUtil.setCombinedDescription(this, projectNameLabel, "-", projectPathLabel) // NON-NLS
     }
