@@ -6,6 +6,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.SettingsSyncSettings
+import com.intellij.settingsSync.SettingsSyncStatusTracker
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.isSettingsSyncEnabledByKey
 
@@ -41,9 +42,12 @@ class SettingsSyncStatusAction : DumbAwareAction(message("title.settings.sync"))
   private enum class SyncStatus {ON, OFF, FAILED}
 
   private fun getStatus() : SyncStatus {
-    // TODO<rv>: Support FAILED status
-    return if (SettingsSyncSettings.getInstance().syncEnabled &&
-        SettingsSyncAuthService.getInstance().isLoggedIn()) SyncStatus.ON
-    else SyncStatus.OFF
+    if (SettingsSyncSettings.getInstance().syncEnabled &&
+        SettingsSyncAuthService.getInstance().isLoggedIn()) {
+      return if (SettingsSyncStatusTracker.getInstance().isSyncSuccessful()) SyncStatus.ON
+      else SyncStatus.FAILED
+    }
+    else
+      return SyncStatus.OFF
   }
 }

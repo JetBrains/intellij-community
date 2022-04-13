@@ -89,13 +89,8 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       val isSyncEnabled = LoggedInPredicate().and(EnabledPredicate())
       row {
         cell {
-          label(message("sync.status"))
-          @Suppress("DialogTitleCapitalization") // Partial content
-          label(message("sync.status.disabled")).visibleIf(isSyncEnabled.not())
-          @Suppress("DialogTitleCapitalization") // Partial content
-          label(message("sync.status.enabled")).visibleIf(isSyncEnabled)
           val statusCell = label("")
-          statusCell.visibleIf(isSyncEnabled)
+          statusCell.visibleIf(LoggedInPredicate())
           statusLabel = statusCell.component
           updateStatusInfo()
           label(message("sync.status.login.message")).visibleIf(LoggedInPredicate().not())
@@ -218,12 +213,30 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
   private fun updateStatusInfo() {
     if (::statusLabel.isInitialized) {
-      if (SettingsSyncStatusTracker.getInstance().isSyncSuccessful()) {
-        statusLabel.text = message("sync.status.last.sync.message", getReadableSyncTime(), getUserName())
+      val messageBuilder = StringBuilder()
+      statusLabel.icon = null
+      if (SettingsSyncSettings.getInstance().syncEnabled) {
+        val errorMessage = SettingsSyncStatusTracker.getInstance().getErrorMessage()
+        if (errorMessage == null) {
+          messageBuilder
+            .append(message("sync.status.enabled"))
+          if (SettingsSyncStatusTracker.getInstance().isSyncSuccessful()) {
+            messageBuilder
+              .append(' ')
+              .append(message("sync.status.last.sync.message", getReadableSyncTime(), getUserName()))
+          }
+        }
+        else {
+          messageBuilder.append(message("sync.status.failed"))
+          statusLabel.icon = AllIcons.General.Error
+          messageBuilder.append(' ').append(errorMessage)
+        }
       }
       else {
-        statusLabel.text = ""
+        messageBuilder.append(message("sync.status.disabled"))
       }
+      @Suppress("HardCodedStringLiteral") // The above strings are localized
+      statusLabel.text =messageBuilder.toString()
     }
   }
 
