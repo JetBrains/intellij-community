@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.configurable;
 
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -365,6 +366,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
 
   @NotNull
   private Collection<VcsRootError> findUnregisteredRoots() {
+    if (!TrustedProjects.isTrusted(myProject)) return Collections.emptyList();
     return ContainerUtil.filter(VcsRootErrorsFinder.getInstance(myProject).getOrFind(),
                                 error -> error.getType() == VcsRootError.Type.UNREGISTERED_ROOT);
   }
