@@ -240,6 +240,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
   }
 
   override fun disposeUIResources() {
+    super.disposeUIResources()
     SettingsSyncStatusTracker.getInstance().removeListener(this)
   }
 }
