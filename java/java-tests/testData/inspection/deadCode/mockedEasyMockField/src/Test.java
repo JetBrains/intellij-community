@@ -1,5 +1,5 @@
-public class MyMTest {
-  @org.mockito.Mock
+public class MyEasyMockTest {
+  @org.easymock.Mock
   private String myFoo;
 
   {

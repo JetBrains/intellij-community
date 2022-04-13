@@ -155,7 +155,11 @@ public class UnusedDeclarationInspectionTest extends AbstractUnusedDeclarationTe
     doTest();
   }
 
-  public void testMockedField() {
+  public void testMockedMockitoField() {
+    doTest();
+  }
+
+  public void testMockedEasyMockField() {
     doTest();
   }
 
