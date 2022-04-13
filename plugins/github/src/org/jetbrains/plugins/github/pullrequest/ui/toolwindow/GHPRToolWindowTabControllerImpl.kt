@@ -11,6 +11,7 @@ import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
+import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
@@ -255,7 +256,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       currentPullRequest = null
       currentView = GHPRToolWindowViewType.NEW
       wrapper.setContent(createComponentHolder.value.component)
-      wrapper.repaint()
+      IJSwingUtilities.updateComponentTreeUI(wrapper)
       if (requestFocus) GHUIUtil.focusPanel(wrapper.targetComponent)
     }
 
@@ -272,7 +273,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       currentPullRequest = null
       currentView = GHPRToolWindowViewType.LIST
       wrapper.setContent(listComponent)
-      wrapper.repaint()
+      IJSwingUtilities.updateComponentTreeUI(wrapper)
       if (requestFocus) GHUIUtil.focusPanel(wrapper.targetComponent)
     }
 
