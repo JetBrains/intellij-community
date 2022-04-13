@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -12,6 +13,7 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
@@ -40,6 +42,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   implements VcsLogCellRenderer {
   private static final int MAX_GRAPH_WIDTH = 6;
   private static final int VERTICAL_PADDING = JBUIScale.scale(7);
+  @NotNull private static final JBValue.UIInteger LOG_ROW_HEIGHT = new JBValue.UIInteger("VersionControl.Log.Commit.rowHeight", 26);
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogGraphTable myGraphTable;
@@ -277,6 +280,13 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     private int calculateHeight() {
+      int rowContentHeight = calculateRowContentHeight();
+      return ExperimentalUI.isNewUI() ?
+             Math.max(rowContentHeight, LOG_ROW_HEIGHT.get()) :
+             rowContentHeight;
+    }
+
+    private int calculateRowContentHeight() {
       return Math.max(myReferencePainter.getSize().height, getFontMetrics(myFont).getHeight() + VERTICAL_PADDING);
     }
 

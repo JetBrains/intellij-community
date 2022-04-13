@@ -1449,6 +1449,11 @@
       "since": "2022.2"
     },
     {
+      "key": "VersionControl.Log.Commit.rowHeight",
+      "description": "Height of row in the Version Control | Log tab (experimental UI only)",
+      "since": "2022.2"
+    },
+    {
       "key": "VersionControl.RefLabel.backgroundBase",
       "description": "Reference label background base color",
       "since": "2019.1"
