@@ -2,7 +2,6 @@
 package com.intellij.notification.impl
 
 import com.intellij.UtilBundle
-import com.intellij.execution.impl.ConsoleViewUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
@@ -16,14 +15,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.event.SelectionEvent
-import com.intellij.openapi.editor.event.SelectionListener
-import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -58,14 +49,15 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
+import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.*
 import java.util.*
 import java.util.function.Consumer
-import java.util.function.Supplier
+import javax.accessibility.AccessibleContext
 import javax.swing.*
-import javax.swing.event.CaretEvent
 import javax.swing.event.DocumentEvent
+import javax.swing.event.HyperlinkEvent
 import javax.swing.event.PopupMenuEvent
 import javax.swing.text.JTextComponent
 import kotlin.streams.toList
@@ -113,7 +105,7 @@ internal class NotificationContent(val project: Project,
   private val timeline: NotificationGroupComponent
   private val searchController: SearchController
 
-  private val singleSelectionHandler = TextSelectionHandler()
+  private val singleSelectionHandler = SingleTextSelectionHandler()
 
   private var myVisible = true
 
@@ -344,8 +336,6 @@ internal class NotificationContent(val project: Project,
   override fun dispose() {
     NotificationsToolWindowFactory.myModel.unregister(this)
     Disposer.dispose(mySearchUpdateAlarm)
-    suggestions.iterateComponents { it.releaseEditor() }
-    timeline.iterateComponents { it.releaseEditor() }
   }
 
   fun fullRepaint() {
@@ -546,7 +536,7 @@ private class NotificationGroupComponent(private val myMainContent: Notification
     }
   }
 
-  fun add(notification: Notification, singleSelectionHandler: TextSelectionHandler) {
+  fun add(notification: Notification, singleSelectionHandler: SingleTextSelectionHandler) {
     val component = NotificationComponent(myProject, notification, myTimeComponents, singleSelectionHandler)
     component.setNew(true)
 
@@ -719,60 +709,10 @@ private class NotificationGroupComponent(private val myMainContent: Notification
   override fun isNull(): Boolean = !isVisible
 }
 
-private class TextSelectionHandler: SingleTextSelectionHandler(), SelectionListener {
-  private val myEditors = ArrayList<Editor>()
-
-  fun add(editor: Editor) {
-    myEditors.add(editor)
-    editor.selectionModel.addSelectionListener(this)
-  }
-
-  fun remove(editor: Editor) {
-    editor.selectionModel.removeSelectionListener(this)
-    myEditors.remove(editor)
-  }
-
-  override fun selectionChanged(e: SelectionEvent) {
-    if (!myIgnoreEvents) {
-      myIgnoreEvents = true
-      try {
-        val eventEditor = e.editor
-        for (editor in myEditors) {
-          val model = editor.selectionModel
-          if (editor !== eventEditor && model.selectionStart != model.selectionEnd) {
-            model.setSelection(0, 0)
-          }
-        }
-        for (component in myComponents) {
-          component.select(0, 0)
-        }
-      }
-      finally {
-        myIgnoreEvents = false
-      }
-    }
-  }
-
-  override fun caretUpdate(e: CaretEvent) {
-    super.caretUpdate(e)
-    if (!myIgnoreEvents) {
-      myIgnoreEvents = true
-      try {
-        for (editor in myEditors) {
-          editor.selectionModel.setSelection(0, 0)
-        }
-      }
-      finally {
-        myIgnoreEvents = false
-      }
-    }
-  }
-}
-
 private class NotificationComponent(val project: Project,
                                     notification: Notification,
                                     timeComponents: ArrayList<JLabel>,
-                                    val singleSelectionHandler: TextSelectionHandler) : JPanel() {
+                                    val singleSelectionHandler: SingleTextSelectionHandler) : JPanel() {
 
   companion object {
     val BG_COLOR: Color
@@ -804,9 +744,7 @@ private class NotificationComponent(val project: Project,
   var myMoreAwtPopup: JPopupMenu? = null
   var myDropDownPopup: JPopupMenu? = null
 
-  var myTextEditor: EditorEx? = null
-  var myDisposable: Disposable? = null
-  private var myTextEditorRemoveCallback: Runnable? = null
+  private var myLafUpdater: Runnable? = null
 
   init {
     isOpaque = true
@@ -892,52 +830,21 @@ private class NotificationComponent(val project: Project,
     }
 
     if (notification.hasContent()) {
-      val textEditor = ConsoleViewUtil.setupConsoleEditor(project, false, false)
-      textEditor.settings.isWhitespacesShown = false
-      textEditor.settings.isUseSoftWraps = true
-      textEditor.settings.isPaintSoftWraps = false
-      textEditor.settings.isWheelFontChangeEnabled = false
-      textEditor.setHorizontalScrollbarVisible(false)
-      textEditor.setVerticalScrollbarVisible(false)
-      textEditor.setBorder(null)
-      textEditor.setCaretEnabled(false)
-      textEditor.setCaretVisible(false)
+      val textContent = NotificationsUtil.buildFullContent(notification)
+      val textComponent = createTextComponent(textContent)
 
-      myDisposable = Disposer.newDisposable()
-      EventLogConsole.installNotificationsFont(textEditor, myDisposable!!, object : EventLogConsole.FontProvider {
-        override fun getFontName() = UIUtil.getLabelFont().fontName
+      NotificationsManagerImpl.setTextAccessibleName(textComponent, textContent)
 
-        override fun getFontSize() = UIUtil.getLabelFont().size2D
-
-        override fun getLineSpacing() = 1f
-      })
-
-      myTextEditorRemoveCallback = EventLog.formatContent(textEditor, notification, Supplier { myNotificationWrapper.notification })
-      UIUtil.setNotOpaqueRecursively(textEditor.component)
-      (textEditor as? EditorImpl)?.softWrapModel?.setSoftWrapPainter(object : SoftWrapPainter {
-        override fun paint(g: Graphics, drawingType: SoftWrapDrawingType, x: Int, y: Int, lineHeight: Int) = 0
-
-        override fun getDrawingHorizontalOffset(g: Graphics, drawingType: SoftWrapDrawingType, x: Int, y: Int, lineHeight: Int) = 0
-
-        override fun getMinDrawingWidth(drawingType: SoftWrapDrawingType) = 0
-
-        override fun canUse() = true
-
-        override fun reinit() {
-        }
-      })
-      myTextEditor = textEditor
-
-      singleSelectionHandler.add(textEditor)
+      singleSelectionHandler.add(textComponent, true)
 
       if (!notification.hasTitle() && !notification.isSuggestionType) {
         titlePanel = JPanel(BorderLayout())
         titlePanel.isOpaque = false
-        titlePanel.add(textEditor.component)
+        titlePanel.add(textComponent)
         centerPanel.add(titlePanel)
       }
       else {
-        centerPanel.add(textEditor.component)
+        centerPanel.add(textComponent)
       }
     }
 
@@ -1145,27 +1052,12 @@ private class NotificationComponent(val project: Project,
     if (dropDownAction != null) {
       DataManager.removeDataProvider(dropDownAction)
     }
-
-    if (myTextEditorRemoveCallback != null) {
-      myTextEditorRemoveCallback!!.run()
-      myTextEditorRemoveCallback = null
-    }
   }
 
   fun removeFromParent() {
-    releaseEditor()
     closePopups()
     for (component in UIUtil.findComponentsOfType(this, JTextComponent::class.java)) {
       singleSelectionHandler.remove(component)
-    }
-  }
-
-  fun releaseEditor() {
-    if (myTextEditor != null) {
-      singleSelectionHandler.remove(myTextEditor!!)
-      EditorFactory.getInstance().releaseEditor(myTextEditor!!)
-      myTextEditor = null
-      Disposer.dispose(myDisposable!!)
     }
   }
 
@@ -1175,7 +1067,50 @@ private class NotificationComponent(val project: Project,
     myDropDownPopup?.isVisible = false
   }
 
+  private fun createTextComponent(text: @Nls String): JEditorPane {
+    val component = JEditorPane()
+    component.isEditable = false
+    component.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, java.lang.Boolean.TRUE)
+    component.contentType = "text/html"
+    component.isOpaque = false
+    component.border = null
+
+    NotificationsUtil.configureHtmlEditorKit(component, false)
+
+    if (myNotificationWrapper.notification!!.listener != null) {
+      component.addHyperlinkListener { e ->
+        val notification = myNotificationWrapper.notification
+        if (notification != null && e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+          val listener = notification.listener
+          if (listener != null) {
+            NotificationCollector.getInstance().logHyperlinkClicked(notification)
+            listener.hyperlinkUpdate(notification, e)
+          }
+        }
+      }
+    }
+
+    component.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, StringUtil.unescapeXmlEntities(StringUtil.stripHtml(text, " ")))
+
+    component.text = text
+
+    component.isEditable = false
+    if (component.caret != null) {
+      component.caretPosition = 0
+    }
+
+    myLafUpdater = Runnable {
+      NotificationsUtil.configureHtmlEditorKit(component, false)
+      component.text = text
+      component.revalidate()
+      component.repaint()
+    }
+
+    return component
+  }
+
   fun updateLaf() {
+    myLafUpdater?.run()
     updateColor()
   }
 
