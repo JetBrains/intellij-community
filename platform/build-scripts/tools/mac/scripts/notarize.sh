@@ -22,9 +22,12 @@ function publish-log() {
 }
 
 function check-itmstransporter() {
-  transporter="$(find /Applications -name 'iTMSTransporter' -print -quit)"
+  transporter=/usr/local/itms/bin/iTMSTransporter
+  if [[ ! -f $transporter ]]; then
+    transporter="$(find /Applications -name 'iTMSTransporter' -print -quit || echo "")"
+  fi
   if [[ -z "$transporter" ]]; then
-    echo "iTMSTransporter not found"
+    echo "iTMSTransporter is not installed and installation requires sudo. Please install manually."
     exit 1
   fi
   if ! "$transporter" -v eXtreme; then
@@ -48,6 +51,10 @@ function altool-upload() {
     cp -r "$shared_itmstransporter" "$HOME/.itmstransporter"
   fi
   check-itmstransporter
+  if ! xcodebuild -version; then
+    log "Installing Xcode and accepting 'sudo xcodebuild -license' is required for the first use"
+    exit 1
+  fi
   # For some reason altool prints everything to stderr, not stdout
   set +ex
   xcrun altool --notarize-app \
