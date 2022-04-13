@@ -27,15 +27,18 @@ internal class NodeChooseTypeAction : DumbAwareAction(BookmarkBundle.messagePoin
     val manager = event.bookmarksManager ?: return
     val bookmark = event.bookmarksViewFromToolWindow?.selectedNode?.value as? Bookmark ?: return
     val type = manager.getType(bookmark) ?: return
-    val chooser = BookmarkTypeChooser(type, manager.assignedTypes) {
+    val chooser = BookmarkTypeChooser(type, manager.assignedTypes, bookmark.firstGroupWithDescription?.getDescription(bookmark)) { chosenType, description ->
       popupState.hidePopup()
-      manager.setType(bookmark, it)
+      manager.setType(bookmark, chosenType)
+      if (description != "") {
+        manager.getGroups(bookmark).firstOrNull()?.setDescription(bookmark, description)
+      }
     }
     val title = when (type) {
       BookmarkType.DEFAULT -> BookmarkBundle.message("mnemonic.chooser.mnemonic.assign.popup.title")
       else -> BookmarkBundle.message("mnemonic.chooser.mnemonic.change.popup.title")
     }
-    JBPopupFactory.getInstance().createComponentPopupBuilder(chooser, chooser.buttons().first())
+    JBPopupFactory.getInstance().createComponentPopupBuilder(chooser, chooser.firstButton)
       .setFocusable(true).setRequestFocus(true)
       .setMovable(false).setResizable(false)
       .setTitle(title).createPopup()
