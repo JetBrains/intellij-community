@@ -85,11 +85,6 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   }
 
   @Override
-  public void incrementModificationCount() {
-    myAnyChangeCount.incrementAndGet();
-  }
-
-  @Override
   public void dispose() {
   }
 

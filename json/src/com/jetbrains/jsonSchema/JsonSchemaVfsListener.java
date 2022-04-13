@@ -91,8 +91,7 @@ public final class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter 
         Collection<VirtualFile> scope = new HashSet<>(myDirtySchemas);
         if (scope.stream().anyMatch(f -> service.possiblyHasReference(f.getName()))) {
           myProject.getMessageBus().syncPublisher(JSON_DEPS_CHANGED).run();
-          //todo new mod tracker
-          myService.incrementModificationCount();
+          JsonDependencyModificationTracker.forProject(myProject).incModificationCount();
         }
         myDirtySchemas.removeAll(scope);
         if (scope.isEmpty()) return;
