@@ -38,8 +38,9 @@ class DuplicatesMethodExtractor {
 
   private var extractOptions: ExtractOptions? = null
 
-  fun extract(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean): Pair<PsiMethod, PsiMethodCallExpression> {
+  fun extract(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean): ExtractedElements {
     val file = targetClass.containingFile
+    val document = file.viewProvider.document
     JavaDuplicatesFinder.linkCopiedClassMembersWithOrigin(file)
     val copiedFile = file.copy() as PsiFile
     val copiedClass = PsiTreeUtil.findSameElementInCopy(targetClass, copiedFile)
@@ -54,9 +55,17 @@ class DuplicatesMethodExtractor {
     val calls = replacePsiRange(elements, elementsToReplace.callElements)
     val method = targetClass.addAfter(elementsToReplace.method, anchor) as PsiMethod
 
-    this.callsToReplace = calls.map(SmartPointerManager::createPointer)
-    val callExpression = PsiTreeUtil.findChildOfType(calls.first(), PsiMethodCallExpression::class.java, false)!!
-    return Pair(method, callExpression)
+    val methodPointer = SmartPointerManager.createPointer(method)
+    val callsPointer = calls.map(SmartPointerManager::createPointer)
+    val manager = PsiDocumentManager.getInstance(file.project)
+    manager.doPostponedOperationsAndUnblockDocument(document)
+    manager.commitDocument(document)
+    val replacedMethod = methodPointer.element ?: throw IllegalStateException()
+    val replacedCalls = callsPointer.map { it.element ?: throw IllegalStateException() }
+
+    this.callsToReplace = callsPointer
+
+    return ExtractedElements(replacedCalls, replacedMethod)
   }
 
   fun extractInDialog(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean) {
@@ -113,7 +122,7 @@ class DuplicatesMethodExtractor {
     val changeSignature = parametrizedDuplicatesNumber > 0 && confirmChange()
     duplicates = if (changeSignature) duplicatesWithUnifiedParameters else exactDuplicates
     val parameters = if (changeSignature) updatedParameters else options.inputParameters
-    val extractedElements = if (changeSignature) parametrizedExtraction else MethodExtractor.ExtractedElements(calls, method)
+    val extractedElements = if (changeSignature) parametrizedExtraction else ExtractedElements(calls, method)
 
     duplicates = when (replaceDuplicatesDefault) {
       null -> confirmDuplicates (project, editor, duplicates)

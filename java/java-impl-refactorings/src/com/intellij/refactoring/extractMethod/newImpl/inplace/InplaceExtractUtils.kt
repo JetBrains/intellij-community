@@ -195,10 +195,6 @@ object InplaceExtractUtils {
     }
   }
 
-  fun getNameIdentifier(call: PsiMethodCallExpression?): PsiIdentifier? {
-    return call?.methodExpression?.referenceNameElement as? PsiIdentifier
-  }
-
   fun addPreview(preview: EditorCodePreview, editor: Editor, lines: IntRange, navigatableOffset: Int){
     val navigatableMarker = createGreedyRangeMarker(editor.document, TextRange(navigatableOffset, navigatableOffset))
     Disposer.register(preview) { navigatableMarker.dispose() }

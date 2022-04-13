@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
@@ -33,7 +34,6 @@ import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtil
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.findElementAt
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.getEditedTemplateText
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.getLinesFromTextRange
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.getNameIdentifier
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.showInEditor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.trim
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
@@ -118,16 +118,16 @@ class InplaceMethodExtractor(private val editor: Editor,
   private val disposable = Disposer.newDisposable()
 
   fun prepareCodeForTemplate() {
-    val document = editor.document
-
-    val extractedRange = createGreedyRangeMarker(document, range)
-
-    val (method, callExpression) = extractMethod(targetClass, range, initialMethodName, popupProvider.makeStatic ?: false)
-
+    val elements = ExtractSelector().suggestElementsToExtract(file, range)
+    MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
+    val (callElements, method) = extractor.extract(targetClass, elements, initialMethodName, popupProvider.makeStatic ?: false)
+    val callExpression = PsiTreeUtil.findChildOfType(callElements.first(), PsiMethodCallExpression::class.java, false)
+                         ?: throw IllegalStateException()
     val methodIdentifier = method.nameIdentifier ?: throw IllegalStateException()
-    val callIdentifier = getNameIdentifier(callExpression) ?: throw IllegalStateException()
-    methodIdentifierRange = createGreedyRangeMarker(document, methodIdentifier.textRange)
-    callIdentifierRange = createGreedyRangeMarker(document, callIdentifier.textRange)
+    val callIdentifier = callExpression.methodExpression.referenceNameElement ?: throw IllegalStateException()
+
+    methodIdentifierRange = createGreedyRangeMarker(editor.document, methodIdentifier.textRange)
+    callIdentifierRange = createGreedyRangeMarker(editor.document, callIdentifier.textRange)
 
     editor.caretModel.moveToOffset(callExpression.textRange.startOffset)
     setElementToRename(method)
@@ -137,28 +137,9 @@ class InplaceMethodExtractor(private val editor: Editor,
 
     val codePreview = EditorCodePreview.create(editor)
     Disposer.register(disposable, codePreview)
-    val callLines = getLinesFromTextRange(editor.document, extractedRange.range!!).trim(maxLength = 4)
-    addPreview(codePreview, editor, callLines, callIdentifier.textRange.endOffset)
+    val callRange = TextRange(callElements.first().textRange.startOffset, callElements.last().textRange.endOffset)
+    addPreview(codePreview, editor, getLinesFromTextRange(editor.document, callRange).trim(4), callIdentifier.textRange.endOffset)
     addPreview(codePreview, editor, getLinesFromTextRange(editor.document, method.textRange), methodIdentifier.textRange.endOffset)
-  }
-
-  fun extractMethod(targetClass: PsiClass,
-                    range: TextRange,
-                    methodName: String,
-                    makeStatic: Boolean): Pair<PsiMethod, PsiMethodCallExpression> {
-    val project = targetClass.project
-    val file = targetClass.containingFile
-    val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: throw IllegalStateException()
-
-    val elements = ExtractSelector().suggestElementsToExtract(file, range)
-    MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
-    val (method, call) = extractor.extract(targetClass, elements, methodName, makeStatic)
-    val methodPointer = SmartPointerManager.createPointer(method)
-    val callPointer = SmartPointerManager.createPointer(call)
-    val manager = PsiDocumentManager.getInstance(project)
-    manager.doPostponedOperationsAndUnblockDocument(document)
-    manager.commitDocument(document)
-    return Pair(methodPointer.element!!, callPointer.element!!)
   }
 
   override fun performInplaceRefactoring(nameSuggestions: LinkedHashSet<String>?): Boolean {

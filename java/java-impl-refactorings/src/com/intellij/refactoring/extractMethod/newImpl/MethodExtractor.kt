@@ -42,9 +42,9 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.NonNls
 
-class MethodExtractor {
+data class ExtractedElements(val callElements: List<PsiElement>, val method: PsiMethod)
 
-  data class ExtractedElements(val callElements: List<PsiElement>, val method: PsiMethod)
+class MethodExtractor {
 
   fun doExtract(file: PsiFile, range: TextRange) {
     val project = file.project
