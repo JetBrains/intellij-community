@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
+import com.intellij.codeInsight.hint.EditorCodePreview
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.refactoring.JavaRefactoringBundle
@@ -22,17 +23,19 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
 import com.intellij.refactoring.extractMethod.newImpl.ExtractSelector
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.addInlaySettingsElement
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.addPreview
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.addTemplateFinishedListener
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createChangeBasedDisposable
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createChangeSignatureGotIt
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createCodePreview
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createGreedyRangeMarker
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createInsertedHighlighting
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createNavigationGotIt
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.findElementAt
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.getEditedTemplateText
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.getLinesFromTextRange
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.getNameIdentifier
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.showInEditor
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.trim
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
 import com.intellij.refactoring.suggested.range
@@ -92,12 +95,6 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   private var callIdentifierRange: RangeMarker? = null
 
-  private val method: PsiMethod?
-    get() = findElementAt(file, methodIdentifierRange)
-
-  private val call: PsiMethodCallExpression?
-    get() = findElementAt(file, callIdentifierRange)
-
   private val disposable = Disposer.newDisposable()
 
   fun prepareCodeForTemplate() {
@@ -118,8 +115,11 @@ class InplaceMethodExtractor(private val editor: Editor,
     val highlighting = createInsertedHighlighting(editor, method.textRange)
     Disposer.register(disposable, highlighting)
 
-    val codePreview = createCodePreview(editor, extractedRange.range, this::method::get, this::call::get)
+    val codePreview = EditorCodePreview.create(editor)
     Disposer.register(disposable, codePreview)
+    val callLines = getLinesFromTextRange(editor.document, extractedRange.range!!).trim(maxLength = 4)
+    addPreview(codePreview, editor, callLines, callIdentifier.textRange.endOffset)
+    addPreview(codePreview, editor, getLinesFromTextRange(editor.document, method.textRange), methodIdentifier.textRange.endOffset)
   }
 
   fun extractMethod(extractor: InplaceExtractMethodProvider,
@@ -143,8 +143,8 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   private fun installGotItTooltips(){
-    val navigationGotItRange = getNameIdentifier(call)?.textRange ?: return
-    val changeSignatureGotItRange = method?.nameIdentifier?.textRange ?: return
+    val navigationGotItRange = callIdentifierRange?.range ?: return
+    val changeSignatureGotItRange = methodIdentifierRange?.range ?: return
     val parentDisposable = Disposer.newDisposable().also { EditorUtil.disposeWithEditor(editor, it) }
     val previousBalloonFuture = createNavigationGotIt(parentDisposable)?.showInEditor(editor, navigationGotItRange)
     val disposable = createChangeBasedDisposable(editor)
@@ -179,8 +179,7 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   override fun collectRefs(referencesSearchScope: SearchScope?): MutableCollection<PsiReference> {
-    val reference = call?.reference ?: return SmartList()
-    return SmartList(reference)
+    return SmartList()
   }
 
   override fun revertState() {
@@ -222,6 +221,7 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   private fun afterTemplateFinished(templateEditedText: String?) {
     val methodName = templateEditedText ?: return
+    val call = findElementAt<PsiMethodCallExpression>(file, callIdentifierRange)
     val errorMessage = getIdentifierError(methodName, call)
     if (errorMessage != null) {
       ApplicationManager.getApplication().invokeLater {
@@ -229,7 +229,7 @@ class InplaceMethodExtractor(private val editor: Editor,
         CommonRefactoringUtil.showErrorHint(myProject, editor, errorMessage, ExtractMethodHandler.getRefactoringName(), null)
       }
     } else {
-      val extractedMethod = method ?: return
+      val extractedMethod = findElementAt<PsiMethod>(file, methodIdentifierRange) ?: return
       InplaceExtractMethodCollector.executed.log(initialMethodName != methodName)
       installGotItTooltips()
       MethodExtractor.sendRefactoringDoneEvent(extractedMethod)
@@ -238,20 +238,22 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   private fun setMethodName(methodName: String) {
-    val manager = PsiDocumentManager.getInstance(myProject)
-    val callNameRange = getNameIdentifier(call)?.textRange ?: return
-    editor.document.replaceString(callNameRange.startOffset, callNameRange.endOffset, methodName)
-    manager.commitDocument(editor.document)
-    val methodNameRange = method?.nameIdentifier?.textRange ?: return
-    editor.document.replaceString(methodNameRange.startOffset, methodNameRange.endOffset, methodName)
-    manager.commitDocument(editor.document)
+    val callRange = callIdentifierRange ?: return
+    val methodRange = methodIdentifierRange ?: return
+    if (callRange.isValid && callRange.isValid) {
+      editor.document.replaceString(callRange.startOffset, callRange.endOffset, methodName)
+      editor.document.replaceString(methodRange.startOffset, methodRange.endOffset, methodName)
+      PsiDocumentManager.getInstance(myProject).commitDocument(editor.document)
+    }
   }
 
   fun restartInDialog(isLinkUsed: Boolean = false) {
     InplaceExtractMethodCollector.openExtractDialog.log(myProject, isLinkUsed)
     performCleanup()
     val elements = ExtractSelector().suggestElementsToExtract(targetClass.containingFile, range)
-    extractor.extractInDialog(targetClass, elements, method?.name ?: "", popupProvider.makeStatic ?: false)
+    val methodRange = callIdentifierRange?.range
+    val methodName = if (methodRange != null) editor.document.getText(methodRange) else ""
+    extractor.extractInDialog(targetClass, elements, methodName, popupProvider.makeStatic ?: false)
   }
 
   private fun restartInplace(methodName: String?) {

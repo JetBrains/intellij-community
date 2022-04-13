@@ -142,8 +142,10 @@ object InplaceExtractUtils {
     }
   }
 
-  fun navigateToFileOffset(project: Project, file: VirtualFile, offset: Int?) {
+  fun navigateToEditorOffset(editor: Editor, offset: Int?) {
     if (offset == null) return
+    val project: Project = editor.project ?: return
+    val file: VirtualFile = FileDocumentManager.getInstance().getFile(editor.document) ?: return
     val descriptor = OpenFileDescriptor(project, file, offset)
     descriptor.navigate(true)
     descriptor.dispose()
@@ -197,26 +199,10 @@ object InplaceExtractUtils {
     return call?.methodExpression?.referenceNameElement as? PsiIdentifier
   }
 
-  fun createCodePreview(editor: Editor,
-                        extractedRange: TextRange?,
-                        getMethod: () -> PsiMethod?,
-                        getCall: () -> PsiMethodCallExpression?): EditorCodePreview {
-    val preview = EditorCodePreview.create(editor)
-    val project = editor.project ?: return preview
-    val document = editor.document
-    val file = FileDocumentManager.getInstance().getFile(document) ?: return preview
-
-    if (extractedRange != null) {
-      val callLines = findLines(document, extractedRange)
-      preview.addPreview(callLines) { navigateToFileOffset(project, file, getNameIdentifier(getCall())?.textRange?.endOffset) }
-    }
-    val methodRange = getMethod()?.textRange
-    if (methodRange != null) {
-      val methodLines = findLines(document, methodRange).trimToLength(4)
-      preview.addPreview(methodLines) { navigateToFileOffset(project, file, getMethod()?.nameIdentifier?.textRange?.endOffset) }
-    }
-
-    return preview
+  fun addPreview(preview: EditorCodePreview, editor: Editor, lines: IntRange, navigatableOffset: Int){
+    val navigatableMarker = createGreedyRangeMarker(editor.document, TextRange(navigatableOffset, navigatableOffset))
+    Disposer.register(preview) { navigatableMarker.dispose() }
+    preview.addPreview(lines, onClickAction = { navigateToEditorOffset(editor, navigatableMarker.range?.endOffset) })
   }
 
   inline fun <reified T: PsiElement> findElementAt(file: PsiFile, range: RangeMarker?): T? {
@@ -231,9 +217,9 @@ object InplaceExtractUtils {
     }
   }
 
-  private fun IntRange.trimToLength(maxLength: Int) = first until first + minOf(maxLength, last - first + 1)
+  fun IntRange.trim(maxLength: Int) = first until first + minOf(maxLength, last - first + 1)
 
-  private fun findLines(document: Document, range: TextRange): IntRange {
+  fun getLinesFromTextRange(document: Document, range: TextRange): IntRange {
     return document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
   }
 
