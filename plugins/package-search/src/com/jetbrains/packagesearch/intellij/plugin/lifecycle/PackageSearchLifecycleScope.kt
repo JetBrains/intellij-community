@@ -16,7 +16,7 @@ import kotlin.math.max
 internal class PackageSearchLifecycleScope : CoroutineScope, Disposable {
 
     private inline val pkgsThreadCount
-        get() = max(1, Runtime.getRuntime().availableProcessors() / 4)
+        get() = max(1, 2 * Runtime.getRuntime().availableProcessors() / 3)
 
     private val installedDependenciesExecutor =
         AppExecutorUtil.createBoundedApplicationPoolExecutor(
