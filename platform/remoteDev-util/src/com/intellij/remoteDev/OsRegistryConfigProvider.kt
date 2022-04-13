@@ -42,7 +42,7 @@ class OsRegistryConfigProvider(private val configName: String) {
   private fun getFromRegistry(regValue: String): OsRegistrySystemSetting<String>? {
     val regKey = "SOFTWARE\\JetBrains\\$configName"
 
-    logger.info("Looking for $regValue in registry $regKey, is32Bit=${CpuArch.isIntel32()}")
+    logger.debug("Looking for $regValue in registry $regKey, is32Bit=${CpuArch.isIntel32()}")
 
     // these WOW64 keys are ignored by 32-bit Windows, see https://docs.microsoft.com/en-us/windows/win32/sysinfo/registry-key-security-and-access-rights
     val uris = listOf(
@@ -57,13 +57,13 @@ class OsRegistryConfigProvider(private val configName: String) {
 
     return uris.mapNotNull {
       val uri = try {
-        logger.info("Searching for ${it.readable()} in registry")
+        logger.debug("Searching for ${it.readable()} in registry")
         it.second()
       }
       catch (t: Throwable) {
         when (t) {
           is Win32Exception -> {
-            if (t.errorCode == WinError.ERROR_FILE_NOT_FOUND) logger.info("registry entry not found at ${it.readable()}")
+            if (t.errorCode == WinError.ERROR_FILE_NOT_FOUND) logger.debug("registry entry not found at ${it.readable()}")
             else logger.warn("Failed to get registry entry at ${it.readable()}, HRESULT=${t.hr.toInt()}", t)
           }
           else -> {
@@ -108,10 +108,10 @@ class OsRegistryConfigProvider(private val configName: String) {
     }.firstOrNull()
 
   private fun getFromJsonFile(key: String, file: File): OsRegistrySystemSetting<String>? {
-    logger.info("Trying to get $key from file=${file.canonicalPath}")
+    logger.debug("Trying to get $key from file=${file.canonicalPath}")
 
     if (!file.exists()) {
-      logger.info("File=${file.canonicalPath} does not exist.")
+      logger.debug("File=${file.canonicalPath} does not exist.")
       return null
     }
     return try {
