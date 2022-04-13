@@ -47,7 +47,9 @@ abstract class KotlinSSResourceInspectionTest : BasePlatformTestCase() {
 
     protected fun doTest(pattern: String, highlighting: String, context: PatternContext = KotlinStructuralSearchProfile.DEFAULT_CONTEXT) {
         myFixture.configureByText("aaa.kt", highlighting)
-        testHighlighting(pattern, context)
+        withCustomCompilerOptions(myFixture.file.text, project, module) {
+            testHighlighting(pattern, context)
+        }
     }
 
     private fun testHighlighting(pattern: String, context: PatternContext = KotlinStructuralSearchProfile.DEFAULT_CONTEXT) {
