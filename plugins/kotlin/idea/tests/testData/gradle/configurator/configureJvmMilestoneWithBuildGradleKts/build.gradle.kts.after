@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     java
-    kotlin("jvm") version "1.2.40-eap-62"
+    kotlin("jvm") version "1.6.20-M1"
 }
 
 group = "testgroup"

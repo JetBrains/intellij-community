@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.2.40-eap-62'
+    id 'org.jetbrains.kotlin.jvm' version '1.6.20-M1'
 }
 
 group 'testgroup'
