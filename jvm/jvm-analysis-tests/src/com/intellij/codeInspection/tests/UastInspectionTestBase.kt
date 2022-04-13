@@ -34,8 +34,12 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, languageLevel, testRootDisposable)
   }
 
-  protected fun JavaCodeInsightTestFixture.testHighlighting(lang: ULanguage, text: String) {
-    configureByText("UnderTest${lang.ext}", text)
+  protected fun JavaCodeInsightTestFixture.testHighlighting(
+    lang: ULanguage,
+    text: String,
+    fileName: String = generateFileName()
+  ) {
+    configureByText("$fileName${lang.ext}", text)
     checkHighlighting()
   }
 
@@ -45,9 +49,10 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     after: String,
     vararg hints: String = arrayOf(InspectionsBundle.message(
       "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
-    ))
+    )),
+    fileName: String = generateFileName()
   ) {
-    configureByText("UnderTest${lang.ext}", before)
+    configureByText("$fileName${lang.ext}", before)
     hints.forEach { runQuickFix(it) }
     checkResult(after)
   }
@@ -70,9 +75,10 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     text: String,
     hint: String = InspectionsBundle.message(
       "fix.all.inspection.problems.in.file", InspectionTestUtil.instantiateTool(inspection.javaClass).displayName
-    )
+    ),
+    fileName: String = generateFileName()
   ) {
-    configureByText("UnderTest${lang.ext}", text)
+    configureByText("$fileName${lang.ext}", text)
     assertEmpty("Quickfix '$hint' is available but should not.", myFixture.filterAvailableIntentions(hint))
   }
 
@@ -82,6 +88,8 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
     configureByFile(file)
     assertEmpty("Quickfix '$hint' is available but should not.", myFixture.filterAvailableIntentions(hint))
   }
+
+  private fun generateFileName() = getTestName(false).replace("[^a-zA-Z0-9\\.\\-]", "_")
 
   override fun tearDown() {
     try {
