@@ -110,6 +110,7 @@ data class VMOptions(
     else {
       this
     }
+
     return if (traceLoggers.isNotEmpty()) {
       withDebug.addSystemProperty("idea.log.trace.categories", traceLoggers.joinToString(separator = ",") { "#" + it.removePrefix("#") })
     }
