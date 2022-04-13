@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.application.options.RegistryManager;
@@ -20,11 +20,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,9 +34,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 
 public final class PluginDownloader {
@@ -378,13 +374,10 @@ public final class PluginDownloader {
   public static @NotNull PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor,
                                                            @Nullable String host,
                                                            @Nullable BuildNumber buildNumber) throws IOException {
-    String url = null;
-    if (descriptor instanceof PluginNode) {
-      url = getDownloadUrl((PluginNode)descriptor, host);
-    }
-    if (url == null) {
-      url = getUrl(descriptor.getPluginId(), buildNumber).toExternalForm();
-    }
+    String url = descriptor instanceof PluginNode && host != null ?
+                 toAbsoluteUrl(((PluginNode)descriptor).getDownloadUrl(), host) :
+                 getMarketplaceBuildUrl(descriptor, buildNumber);
+
     return new PluginDownloader(descriptor,
                                 url,
                                 buildNumber,
@@ -416,24 +409,34 @@ public final class PluginDownloader {
     return node;
   }
 
-  private static @Nullable String getDownloadUrl(PluginNode pluginNode, @Nullable String host) throws IOException {
-    String url = pluginNode.getDownloadUrl();
-    if (url == null) return null;
+  private static @NotNull String toAbsoluteUrl(@NotNull String downloadUrl,
+                                               @NotNull String host) throws IOException {
     try {
-      return new URI(url).isAbsolute() ? url
-                                       : host == null ? null
-                                                      : new URL(new URL(host), url).toExternalForm();
+      return new URI(downloadUrl).isAbsolute() ?
+             downloadUrl :
+             new URL(new URL(host), downloadUrl).toExternalForm();
     }
     catch (URISyntaxException e) {
       throw new IOException(e);
     }
   }
 
-  @ApiStatus.Internal
-  public static @NotNull Url getUrl(@NotNull PluginId pluginId, @Nullable BuildNumber buildNumber) {
+  private static @NotNull String getMarketplaceBuildUrl(@NotNull IdeaPluginDescriptor descriptor,
+                                                        @Nullable BuildNumber buildNumber) {
+    Map<String, String> parameters = new LinkedHashMap<>();
+    parameters.put("id", descriptor.getPluginId().getIdString());
+    parameters.put("build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber));
+    parameters.put("uuid", getMarketplaceDownloadsUUID());
+
+    if (descriptor instanceof PluginNode) {
+      String channel = ((PluginNode)descriptor).getChannel();
+      if (channel != null) {
+        parameters.put("channel", channel);
+      }
+    }
+
     return Urls.newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginsDownloadUrl())
-      .addParameters(Map.of("id", pluginId.getIdString(),
-                            "build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
-                            "uuid", getMarketplaceDownloadsUUID()));
+      .addParameters(Collections.unmodifiableMap(parameters))
+      .toExternalForm();
   }
 }
