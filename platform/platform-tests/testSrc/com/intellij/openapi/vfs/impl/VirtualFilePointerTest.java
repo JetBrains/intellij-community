@@ -29,10 +29,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.TestTimeOut;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.SuperUserStatus;
@@ -210,11 +207,6 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals("[before:false, after:true]", fileToCreateListener.log.toString());
     String expectedUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(fileToCreate.getPath()));
     assertEquals(expectedUrl.toUpperCase(Locale.US), fileToCreatePointer.getUrl().toUpperCase(Locale.US));
-  }
-
-  @Test
-  public void testCreateVFPFromStrangeJarUrlMustCrash() {
-    UsefulTestCase.assertThrows(IllegalArgumentException.class, ()->myVirtualFilePointerManager.create("jar://C:/!/java.base", disposable, null));
   }
 
   @Test
@@ -1280,5 +1272,22 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     VirtualFilePointer pointer = myVirtualFilePointerManager.create("jar://" + path, disposable, null);
     assertTrue(pointer.getUrl(), pointer.getUrl().endsWith(path));
     assertEquals("allopen-compiler-plugin.jar", pointer.getFileName());
+  }
+  @Test
+  public void testJarUrlContainingInvalidExclamationInTheMiddleMustNotCrashAnything() {
+    File root = tempDir.getRoot();
+    while (root.getParentFile() != null) root = root.getParentFile();
+    String diskRoot = UriUtil.trimTrailingSlashes(FileUtil.toSystemIndependentName(root.getPath()));
+
+    assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/!/abc", "jar://" + diskRoot + "/!/abc!/", "abc");
+    assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/abc/", "jar://" + diskRoot + "/abc!/", "abc");
+    assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/abc!/", "jar://" + diskRoot + "/abc!/", "abc");
+    assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/abc!/xxx", "jar://" + diskRoot + "/abc!/xxx", "xxx");
+  }
+
+  private void assertJarSeparatorParsedCorrectly(@NotNull String sourceUrl, @NotNull String expectedPointerUrl, @NotNull String expectedPointerFileName) {
+    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(sourceUrl, disposable, null);
+    assertEquals(expectedPointerUrl, pointer.getUrl());
+    assertEquals(expectedPointerFileName, pointer.getFileName());
   }
 }

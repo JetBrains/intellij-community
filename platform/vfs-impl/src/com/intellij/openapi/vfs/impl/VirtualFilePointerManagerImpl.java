@@ -223,8 +223,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       // if newly created path is the same as the one extracted from url then the url did not change, we can reuse it
       //noinspection StringEquality
       if (cleanPath != path) {
-        String fsSpecificPath = cleanPath + (fileSystem instanceof ArchiveFileSystem && !cleanPath.contains(JarFileSystem.JAR_SEPARATOR) ? JarFileSystem.JAR_SEPARATOR : "");
-        url = VirtualFileManager.constructUrl(protocol, fsSpecificPath);
+        url = VirtualFileManager.constructUrl(protocol, cleanPath);
         path = cleanPath;
       }
       if (url.contains("..")) {
@@ -237,7 +236,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
         else {
           // when someone is crazy enough to create VFP for not-yet existing file from the path with "..", ignore all symlinks
           path = FileUtil.toCanonicalPath(path);
-          url = VirtualFileManager.constructUrl(protocol, path + (fileSystem instanceof ArchiveFileSystem ? JarFileSystem.JAR_SEPARATOR : ""));
+          url = VirtualFileManager.constructUrl(protocol, path);
         }
       }
       if (file == null && StringUtil.isEmptyOrSpaces(path)) {
@@ -342,19 +341,34 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     FilePartNodeRoot root = getRoot(fs);
     NodeToUpdate toUpdate;
     if (file == null) {
-      String normPath = fs instanceof ArchiveFileSystem && !path.contains(JarFileSystem.JAR_SEPARATOR) ? path + JarFileSystem.JAR_SEPARATOR : path;
+      String normPath = path;
+      if (fs instanceof ArchiveFileSystem) {
+        // check that "!/" separator is placed correctly in the url:
+        // "xx!/yyy" has jar separator; but "xx/!/yyy" doesn't: directory separator only
+        int index = -1;
+        do {
+          index = path.indexOf(JarFileSystem.JAR_SEPARATOR, index + 1);
+        }
+        while (index > 0 && path.charAt(index-1) == '/');
+        if (index == -1) {
+          // treat url "jar://xx/x.jar" as "jar://xx/x.jar!/"
+          normPath = path + JarFileSystem.JAR_SEPARATOR;
+        }
+      }
       toUpdate = root.findOrCreateByPath(normPath, fs);
     }
     else {
       toUpdate = root.findOrCreateByFile(file);
     }
     FilePartNode node = toUpdate.node;
-    if (fs != node.myFS && url != null && (IS_UNDER_UNIT_TEST || IS_INTERNAL)) {
-      throw new IllegalArgumentException("Invalid url: '" + url + "'. " +
-                                         "Its protocol '" + VirtualFileManager.extractProtocol(url) + "' is from " + fsFromFile +
-                                         " but the path part points to " + node.myFS);
+    if (fs != node.myFS) {
+      if (url != null && (IS_UNDER_UNIT_TEST || IS_INTERNAL)) {
+        throw new IllegalArgumentException("Invalid url: '" + url + "'. " +
+                                           "Its protocol '" + VirtualFileManager.extractProtocol(url) + "' is from " + fsFromFile +
+                                           " but the path part points to " + node.myFS);
+      }
+      LOG.error("fs=" + fs + "; node.myFS=" + node.myFS+"; url="+url+"; file="+file+"; node="+node);
     }
-    assert fs == node.myFS : "fs=" + fs + "; node.myFS=" + node.myFS+"; url="+url+"; file="+file+"; node="+node;
 
     VirtualFilePointerImpl pointer = node.getPointer(listener);
     if (pointer == null) {
