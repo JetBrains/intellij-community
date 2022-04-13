@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel.FilePathChecker
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.SimpleColoredComponent
@@ -38,6 +39,8 @@ import javax.swing.tree.TreeCellRenderer
 internal object RecentProjectPanelComponentFactory {
   @JvmStatic
   fun createComponent(parentDisposable: Disposable): RecentProjectFilteringTree {
+    ProjectDetector.runDetectors {} // Run detectors that will add projects to the RecentProjectsManagerBase
+
     val tree = Tree()
     val filteringTree = RecentProjectFilteringTree(tree).apply {
       installSearchField()
