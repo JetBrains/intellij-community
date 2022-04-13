@@ -34,11 +34,6 @@ public final class Cancellation {
     return job != null && job.isCancelled();
   }
 
-  public static boolean isJobActive() {
-    Job job = currentJob();
-    return job != null && job.isActive();
-  }
-
   public static void checkCancelled() {
     Job currentJob = currentJob();
     if (currentJob != null) {

@@ -132,7 +132,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   protected void doCheckCanceled() throws ProcessCanceledException {
-    if (!Cancellation.isJobActive() && !isInNonCancelableSection()) {
+    if (Cancellation.isCancelled() && !isInNonCancelableSection()) {
       Cancellation.checkCancelled();
     }
 
