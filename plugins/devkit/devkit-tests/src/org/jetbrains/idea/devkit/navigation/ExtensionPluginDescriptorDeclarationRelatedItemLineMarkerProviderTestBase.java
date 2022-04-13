@@ -15,7 +15,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitIcons;
 
-public abstract class ExtensionDeclarationRelatedItemLineMarkerProviderTestBase extends JavaCodeInsightFixtureTestCase {
+public abstract class ExtensionPluginDescriptorDeclarationRelatedItemLineMarkerProviderTestBase extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {

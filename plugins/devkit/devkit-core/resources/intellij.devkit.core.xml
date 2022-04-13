@@ -323,7 +323,7 @@
     <codeInsight.lineMarkerProvider language="JAVA"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.ExtensionPointDeclarationRelatedItemLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="UAST"
-                                    implementationClass="org.jetbrains.idea.devkit.navigation.ExtensionDeclarationRelatedItemLineMarkerProvider"/>
+                                    implementationClass="org.jetbrains.idea.devkit.navigation.PluginDescriptorDeclarationRelatedItemLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="XML"
                                     implementationClass="org.jetbrains.idea.devkit.references.DevKitRelatedPropertiesProvider"/>
     <psi.referenceContributor

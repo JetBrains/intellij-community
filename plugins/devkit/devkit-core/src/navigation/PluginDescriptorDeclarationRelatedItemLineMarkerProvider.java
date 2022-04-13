@@ -15,7 +15,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
-public final class ExtensionDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedClassLineMarkerProviderBase {
+public final class PluginDescriptorDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedClassLineMarkerProviderBase {
 
   @Override
   public String getName() {
