@@ -163,14 +163,14 @@ private fun createClassPathFile(classPath: Iterable<String>, classpathFile: Path
 
 @JvmOverloads
 fun runProcess(vararg args: String, workingDir: Path? = null,
-               logger: Logger = System.getLogger(args.joinToString(separator = " ")),
+               logger: Logger? = null,
                timeoutMillis: Long = Timeout.DEFAULT) {
   runProcess(args.toList(), workingDir, logger, timeoutMillis)
 }
 
 @JvmOverloads
 fun runProcess(args: List<String>, workingDir: Path? = null,
-               logger: Logger = System.getLogger(args.joinToString(separator = " ")),
+               logger: Logger? = null,
                timeoutMillis: Long = Timeout.DEFAULT) {
   tracer.spanBuilder("runProcess")
     .setAttribute(AttributeKey.stringArrayKey("args"), args)
@@ -178,10 +178,13 @@ fun runProcess(args: List<String>, workingDir: Path? = null,
     .startSpan()
     .use {
       val timeout = Timeout(timeoutMillis)
-      val process = ProcessBuilder(args).directory(workingDir?.toFile()).start()
-      val errorReader = readErrorOutput(process, timeout, logger)
+      val process = ProcessBuilder(args)
+        .directory(workingDir?.toFile())
+        .let { if (logger == null) it.inheritIO() else it }
+        .start()
+      val errorReader = logger?.let { readErrorOutput(process, timeout, it) }
       try {
-        readOutputAndBlock(process, timeout, logger)
+        if (logger != null) readOutputAndBlock(process, timeout, logger)
 
         if (!process.waitFor(timeout.remainingTime, TimeUnit.MILLISECONDS)) {
           process.destroyForcibly().waitFor()
@@ -194,7 +197,7 @@ fun runProcess(args: List<String>, workingDir: Path? = null,
         }
       }
       finally {
-        errorReader.join()
+        errorReader?.join()
       }
     }
 }
