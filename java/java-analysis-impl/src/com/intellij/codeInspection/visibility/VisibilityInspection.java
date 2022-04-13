@@ -262,7 +262,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   @NotNull
   @PsiModifier.ModifierConstant
   private String getPossibleAccess(@NotNull RefJavaElement refElement, int minLevel) {
-    String curAccess = refElement.getAccessModifier();
+    @PsiModifier.ModifierConstant String curAccess = refElement.getAccessModifier();
     String weakestAccess = PsiUtil.getAccessModifier(minLevel);
 
     if (isTopLevelClass(refElement) || isCalledOnSubClasses(refElement)) {
@@ -428,7 +428,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     return false;
   }
 
-  private static boolean containsReferenceTo(PsiElement source, PsiElement target) {
+  static boolean containsReferenceTo(PsiElement source, PsiElement target) {
     return SyntaxTraverser.psiTraverser(source)
              .filter(PsiJavaCodeReferenceElement.class)
              .filter(ref -> ref.isReferenceTo(target))

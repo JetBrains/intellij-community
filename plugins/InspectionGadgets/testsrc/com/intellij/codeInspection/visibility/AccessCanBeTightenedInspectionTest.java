@@ -278,6 +278,45 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     myFixture.checkHighlighting();
   }
 
+  public void testInnerClassIsExposedInMethodSignature() {
+    addJavaFile("x/Record.java", "package x;\n" +
+                                 "class Record {\n" +
+                                 "    java.util.List<Inner> getRecord() {\n" +
+                                 "        return null;\n" +
+                                 "    }\n" +
+                                 "    static class Inner {}\n" +
+                                 "\n" +
+                                 "    void x(Inner2 inner) {}\n" +
+                                 "    class Inner2 {}\n" +
+                                 "    \n" +
+                                 "    Inner3 field;\n" +
+                                 "    class Inner3 {}\n" +
+                                 "    \n" +
+                                 "    private Inner4 field2;\n" +
+                                 "    class <warning descr=\"Access can be 'private'\">Inner4</warning> {}\n" +
+                                 "    \n" +
+                                 "    private void y(Inner5 i) {}\n" +
+                                 "    class <warning descr=\"Access can be 'private'\">Inner5</warning> {}" +
+                                 "}");
+    myFixture.configureByFiles("x/Record.java");
+    myFixture.checkHighlighting();
+  }
+
+  public void testClassIsExposedInMethodSignature() {
+    addJavaFile("mypackage/sub1/Sub123.java",
+                "package mypackage.sub1;\n" +
+                "\n" +
+                "public class Sub123 {}");
+    addJavaFile("mypackage/sub1/Intermediate.java",
+                "package mypackage.sub1;\n" +
+                "\n" +
+                "public class Intermediate {\n" +
+                "  public Sub123 getSub() {return null;}\n" +
+                "}");
+    myFixture.configureByFiles("mypackage/sub1/Sub123.java", "mypackage/sub1/Intermediate.java");
+    myFixture.checkHighlighting();
+  }
+
   public void testNestedEnumWithReferenceByName() {
     myFixture.allowTreeAccessForAllFiles();
     addJavaFile("x/Outer.java", "package x;\n" +

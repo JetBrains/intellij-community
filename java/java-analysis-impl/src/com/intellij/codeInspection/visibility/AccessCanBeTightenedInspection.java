@@ -271,6 +271,14 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
                                   @NotNull PsiMember member,
                                   PsiClass memberClass,
                                   PsiPackage memberPackage) {
+      if (member instanceof PsiClass) {
+        PsiMember exportingElement = getExportingElement(element);
+        if (exportingElement != null) {
+          final PsiModifierList modifierList = exportingElement.getModifierList();
+          assert modifierList != null;
+          return PsiUtil.getAccessLevel(modifierList);
+        }
+      }
       PsiClass innerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
       boolean isAbstractMember = member.hasModifierProperty(PsiModifier.ABSTRACT);
       if (memberClass != null && PsiTreeUtil.isAncestor(innerClass, memberClass, false) ||
@@ -279,9 +287,9 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         // except when used in annotation:
         // @Ann(value = C.VAL) class C { public static final String VAL = "xx"; }
         // or in implements/extends clauses
-        if (isInReferenceList(innerClass.getModifierList(), member) ||
-            isInReferenceList(innerClass.getImplementsList(), member) ||
-            isInReferenceList(innerClass.getExtendsList(), member)) {
+        if (VisibilityInspection.containsReferenceTo(innerClass.getModifierList(), member) ||
+            VisibilityInspection.containsReferenceTo(innerClass.getImplementsList(), member) ||
+            VisibilityInspection.containsReferenceTo(innerClass.getExtendsList(), member)) {
           return suggestPackageLocal(member);
         }
 
@@ -319,6 +327,36 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         }
       }
       return PsiUtil.ACCESS_LEVEL_PUBLIC;
+    }
+
+    private PsiMember getExportingElement(PsiElement element) {
+      if (!(element instanceof PsiJavaCodeReferenceElement)) {
+        return null;
+      }
+      PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(element, PsiTypeElement.class, true, PsiExpression.class, PsiClass.class);
+      if (typeElement == null) {
+        return null;
+      }
+      while (typeElement.getParent() instanceof PsiReferenceParameterList) {
+        final PsiTypeElement parent =
+          PsiTreeUtil.getParentOfType(typeElement, PsiTypeElement.class, true, PsiExpression.class, PsiClass.class);
+        if (parent == null) {
+          break;
+        }
+        typeElement = parent;
+      }
+      final PsiElement parent = typeElement.getParent();
+      if (parent instanceof PsiMethod || parent instanceof PsiField) {
+        return (PsiMember)parent;
+      }
+      else if (parent instanceof PsiParameter) {
+        final PsiParameter parameter = (PsiParameter)parent;
+        final PsiElement declarationScope = parameter.getDeclarationScope();
+        if (declarationScope instanceof PsiMethod) {
+          return (PsiMember)declarationScope;
+        }
+      }
+      return null;
     }
 
     private boolean calledOnInheritor(@NotNull PsiElement element, PsiClass memberClass) {
@@ -381,23 +419,6 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
            member.hasModifierProperty(PsiModifier.STATIC) &&
            member.hasModifierProperty(PsiModifier.FINAL) &&
            ((PsiField)member).hasInitializer();
-  }
-
-  private static boolean isInReferenceList(@Nullable PsiElement list, @NotNull final PsiMember member) {
-    if (list == null) return false;
-    final PsiManager psiManager = member.getManager();
-    final boolean[] result = new boolean[1];
-    list.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-        super.visitReferenceElement(reference);
-        if (psiManager.areElementsEquivalent(reference.resolve(), member)) {
-          result[0] = true;
-          stopWalking();
-        }
-      }
-    });
-    return result[0];
   }
 
   @PsiUtil.AccessLevel
