@@ -1431,10 +1431,6 @@
                      bundle="messages.InspectionGadgetsBundle" key="test.method.without.assertion.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.TestMethodWithoutAssertionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="UnconstructableJUnitTestCase" shortName="UnconstructableTestCase"
-                     bundle="messages.InspectionGadgetsBundle" key="unconstructable.test.case.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.UnconstructableTestCaseInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UseOfObsoleteAssert" bundle="messages.InspectionGadgetsBundle" key="usage.of.obsolete.assert.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.UseOfObsoleteAssertInspection"/>
