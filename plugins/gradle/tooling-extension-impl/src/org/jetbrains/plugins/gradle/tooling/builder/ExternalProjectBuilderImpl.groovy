@@ -208,7 +208,19 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def downloadSources = true
 
     def testSourceSets = []
-    if (is74OrBetter && project.hasProperty("testing")) {
+
+    def testingExtensionClass = null
+    try {
+      testingExtensionClass =
+        project.getPlugins().findPlugin("jvm-test-suite")?.getClass()?.classLoader?.loadClass("org.gradle.testing.base.TestingExtension")
+    }
+    catch (Exception ignore) {
+    }
+
+    if (is74OrBetter
+      && project.hasProperty("testing")
+      && testingExtensionClass != null
+      && testingExtensionClass.isAssignableFrom(project.testing.getClass())) {
       testSourceSets = project.testing.suites.collect { it.getSources() }
     }
 
