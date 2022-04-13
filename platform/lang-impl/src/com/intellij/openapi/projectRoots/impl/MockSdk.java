@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.indexing.BuildableRootsChangeRescanningInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -97,6 +98,7 @@ public class MockSdk implements Sdk, SdkModificator {
   public Sdk clone() {
     return new MockSdk(myName, myHomePath, myVersionString, new MultiMap<>(myRoots), mySdkType.get()) {
       private final UserDataHolder udh = new UserDataHolderBase();
+
       @NotNull
       @Override
       public SdkModificator getSdkModificator() {
@@ -171,8 +173,10 @@ public class MockSdk implements Sdk, SdkModificator {
   @Override
   public void commitChanges() {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      WriteAction
-        .run(() -> ((ProjectRootManagerEx)ProjectRootManager.getInstance(project)).makeRootsChange(EmptyRunnable.getInstance(), false, true));
+      WriteAction.run(() -> {
+        BuildableRootsChangeRescanningInfo info = BuildableRootsChangeRescanningInfo.newInstance().addSdk(this);
+        ((ProjectRootManagerEx)ProjectRootManager.getInstance(project)).makeRootsChange(EmptyRunnable.getInstance(), info);
+      });
     }
   }
 
