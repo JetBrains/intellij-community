@@ -35,7 +35,6 @@ import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.BoundedRangeModelThresholdListener
 import java.awt.FlowLayout
-import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -99,7 +98,7 @@ internal object GHPRListComponent {
 
     val renderer = GHPRListCellRenderer(dataContext.avatarIconsProvider, openButtonViewModel)
     list.cellRenderer = renderer
-    UIUtil.putClientProperty(list, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
+    ClientProperty.put(list, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
 
     val searchQueryHolder = dataContext.searchHolder
     val searchStringModel = SingleValueModel(searchQueryHolder.queryString)
@@ -168,7 +167,7 @@ internal object GHPRListComponent {
 
       verticalScrollBar.apply {
         isOpaque = true
-        UIUtil.putClientProperty(this, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, false)
+        ClientProperty.put(this, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, false)
       }
 
       BoundedRangeModelThresholdListener.install(verticalScrollBar) {
@@ -209,8 +208,9 @@ internal object GHPRListComponent {
       if (query == GHPRSearchQuery.DEFAULT) {
         emptyText.appendText(GithubBundle.message("pull.request.list.no.matches"))
           .appendSecondaryText(GithubBundle.message("pull.request.list.reset.filters"),
-                               SimpleTextAttributes.LINK_ATTRIBUTES,
-                               ActionListener { searchHolder.query = GHPRSearchQuery.EMPTY })
+                               SimpleTextAttributes.LINK_ATTRIBUTES) {
+            searchHolder.query = GHPRSearchQuery.EMPTY
+          }
       }
       else if (query.isEmpty()) {
         emptyText.appendText(GithubBundle.message("pull.request.list.nothing.loaded"))
@@ -218,8 +218,9 @@ internal object GHPRListComponent {
       else {
         emptyText.appendText(GithubBundle.message("pull.request.list.no.matches"))
           .appendSecondaryText(GithubBundle.message("pull.request.list.reset.filters.to.default", GHPRSearchQuery.DEFAULT.toString()),
-                               SimpleTextAttributes.LINK_ATTRIBUTES,
-                               ActionListener { searchHolder.query = GHPRSearchQuery.DEFAULT })
+                               SimpleTextAttributes.LINK_ATTRIBUTES) {
+            searchHolder.query = GHPRSearchQuery.DEFAULT
+          }
       }
     }
   }
