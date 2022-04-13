@@ -57,7 +57,7 @@ public final class IoTestUtil {
     return filterParts(Charset.forName(forEncoding).newEncoder()::canEncode);
   }
 
-  private static String filterParts(Predicate<String> predicate) {
+  private static String filterParts(@NotNull Predicate<? super String> predicate) {
     return StringUtil.nullize(Stream.of(UNICODE_PARTS).filter(predicate).collect(Collectors.joining("_")));
   }
 
@@ -266,7 +266,7 @@ public final class IoTestUtil {
     }
   }
 
-  public static @NotNull File createTestJar(@NotNull File jarFile, @NotNull Collection<Pair<String, byte[]>> namesAndContents) {
+  public static @NotNull File createTestJar(@NotNull File jarFile, @NotNull Collection<? extends Pair<String, byte[]>> namesAndContents) {
     try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       for (Pair<String, byte[]> p : namesAndContents) {
         String name = p.first;
