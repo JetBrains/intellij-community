@@ -30,6 +30,7 @@
   <depends optional="true" config-file="duplicates-detection-groovy.xml">com.intellij.modules.duplicatesDetector</depends>
   <!--suppress PluginXmlValidity -->
   <depends optional="true" config-file="groovy-structural-search.xml">com.intellij.modules.structuralsearch</depends>
+  <depends optional="true" config-file="spock-support.xml">JUnit</depends>
 
   <resource-bundle>messages.GroovyBundle</resource-bundle>
 
@@ -1403,6 +1404,5 @@
   <xi:include href="groovy-indexed-property-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="groovy-logback-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="geb-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="spock-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="gant-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>
