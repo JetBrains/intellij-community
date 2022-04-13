@@ -285,8 +285,7 @@
     </action>
 
     <action id="AddFrameworkSupport" class="com.intellij.ide.util.frameworkSupport.AddFrameworkSupportAction">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
-      <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
+      <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="before" relative-to-action="LoadUnloadModules"/>
     </action>
 
     <group>
