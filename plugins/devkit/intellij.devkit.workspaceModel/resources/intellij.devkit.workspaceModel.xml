@@ -1,0 +1,15 @@
+<idea-plugin package="com.intellij.workspaceModel.codegen">
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+  </dependencies>
+  <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>
+  <actions>
+    <group id="WorkspaceModelGenerationGroup">
+      <separator/>
+      <action id="WorkspaceModelGeneration" class="com.intellij.workspaceModel.codegen.psi.WorkspaceGenerateModifiableEntitiesAction"/>
+      <add-to-group group-id="CodeMenu" anchor="last"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+    </group>
+  </actions>
+</idea-plugin>

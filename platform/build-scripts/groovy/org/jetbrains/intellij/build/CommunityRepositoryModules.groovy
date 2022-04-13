@@ -165,6 +165,7 @@ final class CommunityRepositoryModules {
       withModule("intellij.devkit.images")
       withModule("intellij.devkit.intelliLang")
       withModule("intellij.devkit.uiDesigner")
+      withModule("intellij.devkit.workspaceModule")
       withModule("intellij.java.devkit")
       withModule("intellij.groovy.devkit")
       withModule("intellij.devkit.jps")
