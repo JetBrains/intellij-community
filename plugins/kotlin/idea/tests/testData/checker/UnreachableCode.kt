@@ -1,3 +1,5 @@
+// LANGUAGE_VERSION: 1.6
+
 fun t1() : Int{
   return 0
   <warning>1</warning>
