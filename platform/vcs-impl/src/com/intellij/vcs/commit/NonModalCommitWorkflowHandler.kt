@@ -6,10 +6,11 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.ApplicationListener
-import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -17,17 +18,26 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.isDumb
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler.ReturnResult
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.util.containers.nullize
 import com.intellij.util.progress.DelegatingProgressIndicatorEx
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import kotlinx.coroutines.*
@@ -139,12 +149,51 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       !isEmptyChanges && !isEmptyMessage
     }
 
-  protected fun setupCommitChecksResultTracking() =
-    getApplication().addApplicationListener(object : ApplicationListener {
-      override fun writeActionStarted(action: Any) {
-        isCommitChecksResultUpToDate = false
+  /**
+   * Subscribe to VFS and documents changes to reset commit checks results
+   */
+  protected fun setupCommitChecksResultTracking() {
+    fun areFilesAffectsCommitChecksResult(files: Collection<VirtualFile>): Boolean {
+      val vcsManager = ProjectLevelVcsManager.getInstance(project)
+      val filesFromVcs = files.filter { vcsManager.getVcsFor(it) != null }.nullize() ?: return false
+
+      val changeListManager = ChangeListManager.getInstance(project)
+      val fileIndex = ProjectRootManagerEx.getInstanceEx(project).fileIndex
+      return filesFromVcs.any {
+        fileIndex.isInContent(it) && changeListManager.getStatus(it) != FileStatus.IGNORED
+      }
+    }
+
+    // reset commit checks on VFS updates
+    project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: MutableList<out VFileEvent>) {
+        if (!isCommitChecksResultUpToDate) {
+          return
+        }
+        val updatedFiles = events.mapNotNull { it.file }
+        if (areFilesAffectsCommitChecksResult(updatedFiles)) {
+          resetCommitChecksResult()
+        }
+      }
+    })
+
+    // reset commit checks on documents modification (e.g. user typed in the editor)
+    EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        if (!isCommitChecksResultUpToDate) {
+          return
+        }
+        val file = FileDocumentManager.getInstance().getFile(event.document)
+        if (file != null && areFilesAffectsCommitChecksResult(listOf(file))) {
+          resetCommitChecksResult()
+        }
       }
     }, this)
+  }
+
+  private fun resetCommitChecksResult() {
+    isCommitChecksResultUpToDate = false
+  }
 
   override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: ReturnResult) {
     super.beforeCommitChecksEnded(isDefaultCommit, result)
@@ -262,7 +311,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       workflow.clearCommitContext()
       initCommitHandlers()
 
-      isCommitChecksResultUpToDate = false
+      resetCommitChecksResult()
       updateDefaultCommitActionName()
     }
   }
