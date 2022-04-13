@@ -1,13 +1,13 @@
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
+import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.ide.util.gotoByName.GotoActionItemProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.util.Time.*
 
 internal abstract class SearchEverywhereBaseActionFeaturesProvider
-  : SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java) {
+  : SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java) {
   companion object {
     internal const val IS_ENABLED = "isEnabled"
 
@@ -30,28 +30,33 @@ internal abstract class SearchEverywhereBaseActionFeaturesProvider
                                   searchQuery: String,
                                   elementPriority: Int,
                                   cache: Any?): Map<String, Any> {
-    if (element !is GotoActionModel.MatchedValue) {
-      // not an action/option
-      return emptyMap()
+    val data: MutableMap<String, Any> = hashMapOf()
+    addIfTrue(data, IS_HIGH_PRIORITY, isHighPriority(elementPriority))
+
+    // (element is GotoActionModel.MatchedValue) for actions and option provided by 'ActionSearchEverywhereContributor'
+    // (element is OptionDescription || element is AnAction) for actions and option provided by 'TopHitSEContributor'
+    if (element is GotoActionModel.MatchedValue) {
+      data[ITEM_TYPE] = element.type
+      data[TYPE_WEIGHT] = element.valueTypeWeight
     }
 
-    val priority = element.matchingDegree
-    val data: MutableMap<String, Any> = hashMapOf(
-      ITEM_TYPE to element.type,
-      TYPE_WEIGHT to element.valueTypeWeight
-    )
-    addIfTrue(data, IS_HIGH_PRIORITY, isHighPriority(priority))
-
-    val actionText = GotoActionItemProvider.getActionText(element.value)
+    val value = if (element is GotoActionModel.MatchedValue) element.value else element
+    val actionText = GotoActionItemProvider.getActionText(value)
     actionText?.let {
       data.putAll(getNameMatchingFeatures(it, searchQuery))
     }
-    return getFeatures(data, currentTime, element)
+    return getFeatures(data, currentTime, value)
   }
 
   private fun isHighPriority(priority: Int): Boolean = priority >= 11001
 
-  abstract fun getFeatures(data: MutableMap<String, Any>, currentTime: Long, matchedValue: GotoActionModel.MatchedValue): Map<String, Any>
+  /**
+   * [value] is either
+   * [com.intellij.ide.ui.search.OptionDescription],
+   * [com.intellij.execution.Executor.ActionWrapper]
+   * or [com.intellij.openapi.actionSystem.AnAction]
+   */
+  abstract fun getFeatures(data: MutableMap<String, Any>, currentTime: Long, value: Any): Map<String, Any>
 
   internal fun addTimeAndUsageStatistics(data: MutableMap<String, Any>,
                                          usage: Int, maxUsage: Int,

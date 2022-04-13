@@ -5,7 +5,6 @@ import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.ide.ui.RegistryTextOptionDescriptor
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
-import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.util.text.StringUtil
 
 internal class SearchEverywhereOptionFeaturesProvider : SearchEverywhereBaseActionFeaturesProvider() {
@@ -17,8 +16,8 @@ internal class SearchEverywhereOptionFeaturesProvider : SearchEverywhereBaseActi
     private const val FROM_CONFIGURABLE = "fromConfigurable"
   }
 
-  override fun getFeatures(data: MutableMap<String, Any>, currentTime: Long, matchedValue: GotoActionModel.MatchedValue): Map<String, Any> {
-    val optionDescription = matchedValue.value as? OptionDescription
+  override fun getFeatures(data: MutableMap<String, Any>, currentTime: Long, value: Any): Map<String, Any> {
+    val optionDescription = value as? OptionDescription
     data[IS_OPTION] = optionDescription != null
 
     if (optionDescription == null) {

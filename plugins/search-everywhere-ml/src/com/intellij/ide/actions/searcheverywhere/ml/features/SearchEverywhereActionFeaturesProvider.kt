@@ -2,7 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.ide.actions.SearchEverywhereBaseAction
-import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
 import com.intellij.internal.statistic.local.ActionGlobalUsageInfo
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
 import com.intellij.internal.statistic.local.ActionsLocalSummary
@@ -35,31 +35,28 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActi
     private const val USAGES_PER_USER_RATIO_DATA_KEY = "usagesPerUserRatio"
   }
 
-  override fun getFeatures(data: MutableMap<String, Any>, currentTime: Long, matchedValue: GotoActionModel.MatchedValue): Map<String, Any> {
-    val actionWrapper = matchedValue.value as? GotoActionModel.ActionWrapper
-    data[IS_ACTION_DATA_KEY] = actionWrapper != null
+  override fun getFeatures(data: MutableMap<String, Any>, currentTime: Long, value: Any): Map<String, Any> {
+    // 'action' is null if item is an option (OptionDescriptor)
+    val action = getAnAction(value) ?: return data
 
-    if (actionWrapper == null) {
-      // item is an option (OptionDescriptor)
-      return data
+    data[IS_ACTION_DATA_KEY] = true
+    if (value is ActionWrapper) {
+      data[MATCH_MODE_KEY] = value.mode
+      data[IS_GROUP_KEY] = value.isGroupAction
+
+      value.actionText?.let {
+        data[TEXT_LENGTH_KEY] = withUpperBound(it.length)
+      }
+
+      value.groupName?.let {
+        data[GROUP_LENGTH_KEY] = withUpperBound(it.length)
+      }
     }
-
-    data[MATCH_MODE_KEY] = actionWrapper.mode
-    data[IS_GROUP_KEY] = actionWrapper.isGroupAction
-
-    val action = actionWrapper.action
     addIfTrue(data, IS_EDITOR_ACTION, action is EditorAction)
     addIfTrue(data, IS_SEARCH_ACTION, action is SearchEverywhereBaseAction)
     addIfTrue(data, IS_TOGGLE_ACTION_DATA_KEY, action is ToggleAction)
-    actionWrapper.actionText?.let {
-      data[TEXT_LENGTH_KEY] = withUpperBound(it.length)
-    }
 
-    actionWrapper.groupName?.let {
-      data[GROUP_LENGTH_KEY] = withUpperBound(it.length)
-    }
-
-    val presentation = if (actionWrapper.hasPresentation()) actionWrapper.presentation else action.templatePresentation
+    val presentation = if (value is ActionWrapper && value.hasPresentation()) value.presentation else action.templatePresentation
     data[HAS_ICON_KEY] = presentation.icon != null
     data[IS_ENABLED] = presentation.isEnabled
     data[WEIGHT_KEY] = presentation.weight
@@ -84,6 +81,16 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActi
       pluginInfo.id?.let { data[PLUGIN_ID] = it }
     }
     return data
+  }
+
+  private fun getAnAction(value: Any): AnAction? {
+    if (value is ActionWrapper) {
+      return value.action
+    }
+    else if (value is AnAction) {
+      return value
+    }
+    return null
   }
 
   private fun getGlobalUsageStatistics(actionGlobalStatistics: ActionGlobalUsageInfo?, maxUsageCount: Long, suffix: String = "") : Map<String, Any> {
