@@ -106,13 +106,13 @@ class IntellijModulesPublication {
       deployJar(jar, pom, coordinates)
     }
     else {
-      context.messages.warning("${coordinates.toString()} jar is not found")
+      context.messages.warning("${coordinates.toString()} $jar is not found")
     }
     if (sources.exists()) {
       deploySources(sources, coordinates)
     }
     else {
-      context.messages.warning("${coordinates.toString()} sources is not found")
+      context.messages.warning("${coordinates.toString()} $sources is not found")
     }
   }
 
