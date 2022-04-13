@@ -322,8 +322,6 @@
                         serviceImplementation="com.intellij.openapi.vfs.encoding.EncodingManagerImpl"/>
     <applicationService serviceInterface="com.intellij.ui.errorView.ErrorViewFactory"
                         serviceImplementation="com.intellij.ui.errorView.impl.ErrorViewFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.fileChooser.FileSystemTreeFactory"
-                        serviceImplementation="com.intellij.openapi.fileChooser.ex.FileSystemTreeFactoryImpl"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.PluginManagerUISettings"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.hint.HintManager"
