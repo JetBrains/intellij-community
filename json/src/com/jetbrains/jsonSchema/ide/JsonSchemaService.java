@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.ide;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
@@ -16,12 +17,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-public interface JsonSchemaService {
+public interface JsonSchemaService extends ModificationTracker {
   final class Impl {
     public static JsonSchemaService get(@NotNull Project project) {
       return project.getService(JsonSchemaService.class);
     }
   }
+
+  void incrementModificationCount();
 
   static boolean isSchemaFile(@NotNull PsiFile psiFile) {
     if (JsonLikePsiWalker.getWalker(psiFile, JsonSchemaObject.NULL_OBJ) == null) return false;
