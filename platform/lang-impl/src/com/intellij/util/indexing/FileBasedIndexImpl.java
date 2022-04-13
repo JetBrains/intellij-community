@@ -1603,8 +1603,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     try {
       Supplier<Boolean> storageUpdate;
       long mapInputTime = System.nanoTime();
-      FileData fileData = index.instantiateFileData();
-      index.writeData(fileData, currentFC);
+      FileData fileData = index.getFileIndexMetaData(currentFC);
       try {
         storageUpdate = index.mapInputAndPrepareUpdate(inputId, currentFC);
       }
@@ -1628,9 +1627,17 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         mapInputTime = System.nanoTime() - mapInputTime;
       }
 
-      SingleIndexValueApplier<FileData> applier = new SingleIndexValueApplier<>(this, indexId, inputId, fileData, storageUpdate,
-                                                                                file, currentFC, mapInputTime
+      SingleIndexValueApplier<FileData> applier = new SingleIndexValueApplier<>(
+        this,
+        indexId,
+        inputId,
+        fileData,
+        storageUpdate,
+        file,
+        currentFC,
+        mapInputTime
       );
+
       if (!writeValuesSeparately && !applier.applyImmediately()) {
         return null;
       }

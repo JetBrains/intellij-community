@@ -19,13 +19,13 @@ public interface FileBasedIndexInfrastructureExtensionUpdatableIndex<K, V, I, D>
   }
 
   default void setIndexedStateForFileOnCachedData(int fileId,
-                                                  @NotNull D cachedFileData,
+                                                  @Nullable D cachedFileData,
                                                   boolean isProvidedByInfrastructureExtension) {
     setIndexedStateForFileOnCachedData(fileId, cachedFileData);
   }
 
   @Override
-  default void setIndexedStateForFileOnCachedData(int fileId, @NotNull D cachedFileData) {
+  default void setIndexedStateForFileOnCachedData(int fileId, @Nullable D cachedFileData) {
     throw new IllegalStateException("not implemented");
   }
 }

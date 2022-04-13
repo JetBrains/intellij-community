@@ -41,7 +41,7 @@ import java.util.function.IntConsumer;
  * Implementation of {@link FileTypeIndexImpl} based on plain change log.
  * Does not support indexing unsaved changes (content-less indexes don't require them).
  */
-public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, FileContent, UpdatableIndex.EmptyData>, FileTypeNameEnumerator {
+public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, FileContent, Void>, FileTypeNameEnumerator {
   private static final Logger LOG = Logger.getInstance(LogFileTypeIndex.class);
 
   private final @NotNull Disposable myDisposable;
@@ -104,16 +104,12 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
   }
 
   @Override
-  public @NotNull UpdatableIndex.EmptyData instantiateFileData() {
-    return UpdatableIndex.EmptyData.INSTANCE;
+  public Void getFileIndexMetaData(@NotNull IndexedFile file) {
+    return null;
   }
 
   @Override
-  public void writeData(@NotNull UpdatableIndex.EmptyData unused, @NotNull IndexedFile file) {
-  }
-
-  @Override
-  public void setIndexedStateForFileOnCachedData(int fileId, @NotNull UpdatableIndex.EmptyData data) {
+  public void setIndexedStateForFileOnCachedData(int fileId, @Nullable Void data) {
     IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId);
   }
 

@@ -129,22 +129,23 @@ final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, 
   }
 
   static class Data extends IndexerIdHolder {
-    private FileType myFileType;
+    private final FileType myFileType;
+
+    Data(int indexerId, FileType type) {
+      super(indexerId);
+      myFileType = type;
+    }
   }
 
   @Override
-  public @NotNull StubUpdatingIndexStorage.Data instantiateFileData() {
-    return new Data();
+  public Data getFileIndexMetaData(@NotNull IndexedFile file) {
+    IndexerIdHolder data = super.getFileIndexMetaData(file);
+    FileType fileType = ProgressManager.getInstance().computeInNonCancelableSection(() -> file.getFileType());
+    return new Data(data == null ? -1 : data.indexerId, fileType);
   }
 
   @Override
-  public void writeData(@NotNull StubUpdatingIndexStorage.Data fileData, @NotNull IndexedFile file) {
-    super.writeData(fileData, file);
-    fileData.myFileType = ProgressManager.getInstance().computeInNonCancelableSection(() -> file.getFileType());
-  }
-
-  @Override
-  public void setIndexedStateForFileOnCachedData(int fileId, @NotNull StubUpdatingIndexStorage.Data fileData) {
+  public void setIndexedStateForFileOnCachedData(int fileId, @Nullable StubUpdatingIndexStorage.Data fileData) {
     super.setIndexedStateForFileOnCachedData(fileId, fileData);
     setBinaryBuilderConfiguration(fileId, fileData);
   }

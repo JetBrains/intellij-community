@@ -78,11 +78,6 @@ class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void, V
     return myFileTypeNameEnumerator.valueOf(id);
   }
 
-  @Override
-  public @NotNull VfsAwareMapReduceIndex.IndexerIdHolder instantiateFileData() {
-    return new IndexerIdHolder();
-  }
-
   @NotNull
   private static PersistentStringEnumerator createFileTypeNameEnumerator() throws IOException {
     return new PersistentStringEnumerator(getFileTypeNameEnumeratorPath(),  128, true, new StorageLockContext());

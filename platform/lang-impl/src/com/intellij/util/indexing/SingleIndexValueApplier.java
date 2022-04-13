@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
@@ -13,16 +14,17 @@ class SingleIndexValueApplier<CachedFileData> {
   private final FileBasedIndexImpl myIndex;
   @NotNull final ID<?, ?> indexId;
   final int inputId;
-  private final CachedFileData myCachedFileData;
+  private final @Nullable CachedFileData myCachedFileData;
   final long mapInputTime;
   @NotNull final Supplier<Boolean> storageUpdate;
   @NotNull private final String fileInfo;
   @NotNull private final String filePath;
   private final boolean isMock;
 
-  SingleIndexValueApplier(FileBasedIndexImpl index, @NotNull ID<?, ?> indexId,
+  SingleIndexValueApplier(@NotNull FileBasedIndexImpl index,
+                          @NotNull ID<?, ?> indexId,
                           int inputId,
-                          @NotNull CachedFileData cachedFileData,
+                          @Nullable CachedFileData cachedFileData,
                           @NotNull Supplier<Boolean> update,
                           @NotNull VirtualFile file,
                           @NotNull FileContent currentFC,
@@ -78,8 +80,8 @@ class SingleIndexValueApplier<CachedFileData> {
     return true;
   }
 
-  private static <CachedFileData> void setIndexedState(UpdatableIndex<?, ?, FileContent, CachedFileData> index,
-                                                       @NotNull CachedFileData fileData,
+  private static <CachedFileData> void setIndexedState(@NotNull UpdatableIndex<?, ?, FileContent, CachedFileData> index,
+                                                       @Nullable CachedFileData fileData,
                                                        int inputId,
                                                        boolean indexWasProvided) {
     if (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
