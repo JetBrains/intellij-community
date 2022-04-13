@@ -69,7 +69,7 @@ final class CommunityStandaloneJpsBuilder {
           jar("jps-javac-rt-rpc.jar") {
             module("intellij.platform.jps.build.javac.rt.rpc")
           }
-          moduleLibrary("intellij.platform.jps.build.javac.rt.rpc", "protobuf-java6")
+          moduleLibrary("intellij.platform.jps.build.javac.rt.rpc", "protobuf-java6", n -> n.startsWith("protobuf-java-") && n.endsWith(".jar")? "protobuf-java6.jar" : n)
         }
         //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
         jar("groovy-jps.jar") { module("intellij.groovy.jps") }

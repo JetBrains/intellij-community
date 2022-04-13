@@ -16,6 +16,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 
 import java.nio.file.Path
+import java.util.function.Function
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -239,13 +240,13 @@ final class LayoutBuilder {
     /**
      * Include JARs added as classes roots of a module library {@code libraryName} from module {@code moduleName} to the current place in the layout
      */
-    void moduleLibrary(String moduleName, String libraryName) {
+    void moduleLibrary(String moduleName, String libraryName, Function<String, String> nameMapper = Function.identity()) {
       JpsModule module = findModule(moduleName)
       JpsLibrary library = module.libraryCollection.libraries.find {getLibraryName(it) == libraryName}
       if (library == null) {
         throw new IllegalArgumentException("Cannot find library $libraryName in '$moduleName' module")
       }
-      jpsLibrary(library)
+      jpsLibrary(library, false, nameMapper)
     }
 
     /**
@@ -253,11 +254,11 @@ final class LayoutBuilder {
      *      * keep names of JARs included into bootstrap classpath only.</strong>
      **/
     @CompileStatic(TypeCheckingMode.SKIP)
-    void jpsLibrary(JpsLibrary library, boolean removeVersionFromJarName = false) {
+    void jpsLibrary(JpsLibrary library, boolean removeVersionFromJarName = false, Function<String, String> nameMapper = Function.identity()) {
       for (File file in library.getFiles(JpsOrderRootType.COMPILED)) {
         Matcher matcher = file.name =~ JAR_NAME_WITH_VERSION_PATTERN
         if (removeVersionFromJarName && matcher.matches()) {
-          String newName = matcher.group(1) + ".jar"
+          String newName = nameMapper.apply(matcher.group(1) + ".jar")
           if (copyFiles) {
             ant.renamedFile(filePath: file.absolutePath, newName: newName)
           }
@@ -265,11 +266,17 @@ final class LayoutBuilder {
           context.messages.debug(" include $newName (renamed from $file.absolutePath) from library '${getLibraryName(library)}'")
         }
         else {
+          String outputFileName = nameMapper.apply(file.name)
           if (copyFiles) {
-            ant.fileset(file: file.absolutePath)
+            if (outputFileName == file.name) {
+              ant.fileset(file: file.absolutePath)
+            }
+            else {
+              ant.renamedFile(filePath: file.absolutePath, newName: outputFileName)
+            }
           }
-          addLibraryMapping(library, file.name, file.toPath())
-          context.messages.debug(" include $file.name ($file.absolutePath) from library '${getLibraryName(library)}'")
+          addLibraryMapping(library, outputFileName, file.toPath())
+          context.messages.debug(" include $outputFileName ($file.absolutePath) from library '${getLibraryName(library)}'")
         }
       }
     }
