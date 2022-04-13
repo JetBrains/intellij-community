@@ -418,6 +418,7 @@ public final class PluginDownloader {
 
   private static @Nullable String getDownloadUrl(PluginNode pluginNode, @Nullable String host) throws IOException {
     String url = pluginNode.getDownloadUrl();
+    if (url == null) return null;
     try {
       return new URI(url).isAbsolute() ? url
                                        : host == null ? null
