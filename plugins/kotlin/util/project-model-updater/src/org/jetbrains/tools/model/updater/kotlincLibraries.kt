@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
 import org.jetbrains.tools.model.updater.impl.*
@@ -34,6 +35,7 @@ fun generateKotlincLibraries(kotlincArtifactsMode: KotlincArtifactsMode, version
         kotlincForIdeWithStandardNaming("kotlinc.parcelize-compiler-plugin", version),
         kotlincForIdeWithStandardNaming("kotlinc.sam-with-receiver-compiler-plugin", version),
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-common", version),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", version),
         singleJarMvnLib("kotlinc.kotlin-scripting-common", "$ktGroup:kotlin-scripting-common:$version", transitive = false),
         singleJarMvnLib("kotlinc.kotlin-scripting-compiler-impl", "$ktGroup:kotlin-scripting-compiler-impl:$version", transitive = false),
         singleJarMvnLib("kotlinc.kotlin-scripting-jvm", "$ktGroup:kotlin-scripting-jvm:$version", transitive = false),
