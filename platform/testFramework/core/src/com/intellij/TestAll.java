@@ -134,7 +134,7 @@ public class TestAll implements Test {
       List<Path> classpath = Objects.requireNonNull(ExternalClasspathClassLoader.getRoots());
       return Arrays.stream(jars)
         .map(jarName -> {
-               List<Path> resultJars = classpath.stream().filter(path -> path.getFileName().startsWith(jarName)).collect(Collectors.toList());
+               List<Path> resultJars = ContainerUtil.filter(classpath, path -> path.getFileName().toString().startsWith(jarName));
                if (resultJars.size() != 1) {
                  String classpathPretty = classpath.stream().map(Path::toString).collect(Collectors.joining(File.pathSeparator));
                  throw new IllegalStateException(
