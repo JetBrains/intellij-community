@@ -69,7 +69,7 @@ public class HighlightDisplayLevel {
     }
   };
 
-  private Pair<Icon, Icon> myIconPair = new Pair<>(null, null);
+  private Pair<Icon, Icon> myIconPair = new Pair<>(EmptyIcon.ICON_16, EmptyIcon.ICON_16);
   private final HighlightSeverity mySeverity;
 
   @Nullable
@@ -116,12 +116,12 @@ public class HighlightDisplayLevel {
 
   @NotNull
   public Icon getIcon() {
-    return myIconPair.first;
+    return myIconPair.first != null ? myIconPair.first : EmptyIcon.ICON_16;
   }
 
   @NotNull
   public Icon getOutlineIcon() {
-    return myIconPair.second;
+    return myIconPair.second != null ? myIconPair.second : EmptyIcon.ICON_16;
   }
 
   @NotNull
