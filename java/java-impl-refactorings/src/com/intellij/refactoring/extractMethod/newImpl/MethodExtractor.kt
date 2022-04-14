@@ -66,8 +66,12 @@ class MethodExtractor {
       }
       val selectedOption = selectOptionWithTargetClass(editor, allOptionsToExtract)
       selectedOption.thenApply { options ->
-        val prepareExtractAction = computeWithAnalyzeProgress<Runnable, Exception>(project) { prepareExtractAction(editor, range, options) }
-        prepareExtractAction.run()
+        if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
+          runInplaceExtract(editor, range, options)
+        }
+        else {
+          DuplicatesMethodExtractor().extractInDialog(options.targetClass, options.elements, "", options.isStatic)
+        }
       }
     }
     catch (e: ExtractException) {
@@ -86,27 +90,20 @@ class MethodExtractor {
     })
   }
 
-  private fun prepareExtractAction(editor: Editor, range: TextRange, options: ExtractOptions): Runnable {
+  private fun runInplaceExtract(editor: Editor, range: TextRange, options: ExtractOptions){
     val project = options.project
-    val targetClass = options.anchor.containingClass ?: throw IllegalStateException("Failed to find target class")
-    if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
-      val popupSettings = createInplaceSettingsPopup(options)
-      val guessedNames = suggestSafeMethodNames(options)
-      val methodName = guessedNames.first()
-      val suggestedNames = guessedNames.takeIf { it.size > 1 }.orEmpty()
-      return Runnable {
-        executeRefactoringCommand(project) {
-          val inplaceExtractor = InplaceMethodExtractor(editor, range, targetClass, popupSettings, methodName)
-          inplaceExtractor.extractAndRunTemplate(LinkedHashSet(suggestedNames))
-        }
-      }
-    }
-    else {
-      return Runnable {
-        DuplicatesMethodExtractor().extractInDialog(targetClass, options.elements, "", options.isStatic)
-      }
+    val popupSettings = createInplaceSettingsPopup(options)
+    val guessedNames = suggestSafeMethodNames(options)
+    val methodName = guessedNames.first()
+    val suggestedNames = guessedNames.takeIf { it.size > 1 }.orEmpty()
+    executeRefactoringCommand(project) {
+      val inplaceExtractor = InplaceMethodExtractor(editor, range, options.targetClass, popupSettings, methodName)
+      inplaceExtractor.extractAndRunTemplate(LinkedHashSet(suggestedNames))
     }
   }
+
+  val ExtractOptions.targetClass: PsiClass
+    get() = anchor.containingClass ?: throw IllegalStateException()
 
   fun suggestSafeMethodNames(options: ExtractOptions): List<String> {
     val unsafeNames = guessMethodName(options)
