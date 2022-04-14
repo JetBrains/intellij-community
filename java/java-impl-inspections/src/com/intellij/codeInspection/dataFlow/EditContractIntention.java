@@ -132,7 +132,6 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
     constraints.gridwidth = 1;
     constraints.weightx = 1;
     JLabel contractLabel = new JLabel(JavaBundle.message("label.contract"));
-    contractLabel.setDisplayedMnemonic('c');
     contractLabel.setLabelFor(contractText);
     panel.add(contractLabel, constraints);
     constraints.gridx = 1;
@@ -150,7 +149,6 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
       constraints.weightx = 1;
       constraints.gridwidth = 1;
       JLabel mutatesLabel = new JLabel(JavaBundle.message("label.mutates"));
-      mutatesLabel.setDisplayedMnemonic('m');
       mutatesLabel.setLabelFor(mutatesText);
       panel.add(mutatesLabel, constraints);
       constraints.gridx = 1;
@@ -167,7 +165,6 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
 
   private static JCheckBox createPureCheckBox(boolean selected) {
     JCheckBox pureCB = new NonFocusableCheckBox(JavaBundle.message("edit.contract.dialog.checkbox.pure.method"));
-    pureCB.setMnemonic('p');
     pureCB.setSelected(selected);
     return pureCB;
   }
