@@ -70,6 +70,15 @@ public class GridBagConstraintHolder {
   }
 
   /**
+   * Makes cells grow according to weightx and weighty.
+   */
+  public GridBagConstraintHolder weight(double weightx, double weighty) {
+    constraint.weightx = weightx;
+    constraint.weighty = weighty;
+    return this;
+  }
+
+  /**
    * Makes cells grow vertically.
    */
   public GridBagConstraintHolder growY() {
@@ -125,6 +134,31 @@ public class GridBagConstraintHolder {
    */
   public GridBagConstraintHolder anchorEnd() {
     constraint.anchor = GridBagConstraints.LINE_END;
+    return this;
+  }
+
+  /**
+   * Makes cells stick to the start of the line.
+   */
+  public GridBagConstraintHolder anchorStart() {
+    constraint.anchor = GridBagConstraints.LINE_START;
+    return this;
+  }
+
+  /**
+   * Makes cells stick to the center of the line.
+   */
+  public GridBagConstraintHolder anchorCenter() {
+    constraint.anchor = GridBagConstraints.CENTER;
+    return this;
+  }
+
+  /**
+   * Makes cells stick horizontally along the trailing edge.
+   * See {@link GridBagConstraints#BASELINE_TRAILING}.
+   */
+  public GridBagConstraintHolder anchorTrailing() {
+    constraint.anchor = GridBagConstraints.BASELINE_TRAILING;
     return this;
   }
 }
