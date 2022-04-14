@@ -100,7 +100,17 @@ abstract class SEResultsListFactory {
     AppUIUtil.targetToDevice(component, list);
 
     if (ExperimentalUI.isNewUI()) {
-      Color rowBackground = selected ? unselectedBackground : component.getBackground();
+      Color rowBackground;
+      if (selected) {
+        rowBackground = unselectedBackground;
+      }
+      else {
+        // In case component's background is null parent's background is returned. Detach from parent to avoid that
+        if (component.getParent() != null) {
+          component.getParent().remove(component);
+        }
+        rowBackground = component.getBackground();
+      }
       if (rowBackground == null || rowBackground == UIUtil.getListBackground()) {
         rowBackground = JBUI.CurrentTheme.Popup.BACKGROUND;
       }
