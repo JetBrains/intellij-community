@@ -111,6 +111,16 @@ class CompressorTest {
       "tar/d2/f21" to "21", "tar/d2/f22" to "22")
   }
 
+  @Test fun tarWithEmptyPrefix() {
+    val dir = tempDir.newDirectory("dir")
+    assert(dir.resolve("file").createNewFile())
+    val tar = tempDir.newFile("test.tgz")
+    Compressor.Tar(tar, Compressor.Tar.Compression.GZIP).use { it.addDirectory("", dir) }
+    val out = tempDir.newDirectory("out")
+    Decompressor.Tar(tar).extract(out)
+    assert(out.resolve("file").exists())
+  }
+
   @Test fun entryNameTrimming() {
     val zip = tempDir.newFile("test.zip")
     Compressor.Zip(zip).use { it.addFile("//file.txt//", "123".toByteArray()) }

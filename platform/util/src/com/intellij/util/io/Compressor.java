@@ -228,11 +228,12 @@ public abstract class Compressor implements Closeable {
   }
 
   public final void addDirectory(@NotNull String prefix, @NotNull Path directory) throws IOException {
-    addRecursively(entryName(prefix), directory, -1);
+    addDirectory(prefix, directory, -1);
   }
 
   public final void addDirectory(@NotNull String prefix, @NotNull Path directory, long timestampInMillis) throws IOException {
-    addRecursively(entryName(prefix), directory, timestampInMillis);
+    String entryName = prefix.isEmpty() ? "" : entryName(prefix);
+    addRecursively(entryName, directory, timestampInMillis);
   }
 
   //<editor-fold desc="Internal interface">
