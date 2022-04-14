@@ -831,11 +831,12 @@ public class JavaDocInfoGenerator {
 
   @NotNull
   private String generateOneParameterPresentableName(PsiNamedElement parameter) {
+    String value = Objects.requireNonNullElse(parameter.getName(), CommonBundle.getErrorTitle());
+    if (isRendered()) {
+      return value;
+    }
     StringBuilder paramName = new StringBuilder();
-    appendStyledSpan(
-      paramName,
-      getHighlightingManager().getParameterAttributes(),
-      Objects.requireNonNullElse(parameter.getName(), CommonBundle.getErrorTitle()));
+    appendStyledSpan(paramName, getHighlightingManager().getParameterAttributes(), value);
     return paramName.toString();
   }
 
