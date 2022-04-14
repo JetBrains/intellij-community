@@ -241,6 +241,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/stepInto/inlineOnly.kt");
         }
 
+        @TestMetadata("oneLineSuspendFunWithInline.kt")
+        public void testOneLineSuspendFunWithInline() throws Exception {
+            runTest("testData/stepping/stepInto/oneLineSuspendFunWithInline.kt");
+        }
+
         @TestMetadata("propertyReference.kt")
         public void testPropertyReference() throws Exception {
             runTest("testData/stepping/stepInto/propertyReference.kt");
