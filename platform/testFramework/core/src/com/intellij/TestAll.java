@@ -132,7 +132,7 @@ public class TestAll implements Test {
     if (jarsToRunTestsFrom != null) {
       String[] jars = jarsToRunTestsFrom.split(";");
       List<Path> classpath = Objects.requireNonNull(ExternalClasspathClassLoader.getRoots());
-      return Arrays.stream(jars)
+      List<Path> testPaths = Arrays.stream(jars)
         .map(jarName -> {
                List<Path> resultJars = ContainerUtil.filter(classpath, path -> path.getFileName().toString().startsWith(jarName));
                if (resultJars.size() != 1) {
@@ -162,6 +162,9 @@ public class TestAll implements Test {
           }
         })
         .collect(Collectors.toList());
+
+      System.out.println("Collecting tests from roots specified by jar.dependencies.to.tests property: " + testPaths);
+      return testPaths;
     }
 
     String testRoots = System.getProperty("test.roots");
