@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.*;
@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -69,6 +70,11 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
     if (var == null || !ref.isReferenceTo(var)) return;
     final PsiExpression rhs = assignment.getRExpression();
     assert rhs != null;
+    boolean readBeforeWritten = SyntaxTraverser.psiTraverser(rhs)
+      .filter(PsiReferenceExpression.class)
+      .filter(r -> r.isReferenceTo(var) && PsiUtil.isAccessedForReading(r))
+      .isNotEmpty();
+    if (readBeforeWritten) return;
     CommentTracker ct = new CommentTracker();
     var.setInitializer(ct.markUnchanged(rhs));
     ct.deleteAndRestoreComments(result);
