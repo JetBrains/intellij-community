@@ -15,21 +15,21 @@ import kotlin.math.max
 @Service(Service.Level.PROJECT)
 internal class PackageSearchLifecycleScope : CoroutineScope, Disposable {
 
-    private inline val pkgsThreadCount
+    private inline val threadCount
         get() = max(1, 2 * Runtime.getRuntime().availableProcessors() / 3)
 
-    private val installedDependenciesExecutor =
+    private val dispatcher =
         AppExecutorUtil.createBoundedApplicationPoolExecutor(
             /* name = */ this::class.simpleName!!,
-            /* maxThreads = */ pkgsThreadCount
+            /* maxThreads = */ threadCount
         ).asCoroutineDispatcher()
 
     private val supervisor = SupervisorJob()
 
-    override val coroutineContext = supervisor + CoroutineName(this::class.qualifiedName!!) + installedDependenciesExecutor
+    override val coroutineContext = supervisor + CoroutineName(this::class.qualifiedName!!) + dispatcher
 
     override fun dispose() {
-        supervisor.invokeOnCompletion { installedDependenciesExecutor.close() }
+        supervisor.invokeOnCompletion { dispatcher.close() }
         supervisor.cancel("Disposing ${this::class.simpleName}")
     }
 }
