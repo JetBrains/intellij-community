@@ -63,6 +63,8 @@ import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity2
 import com.intellij.workspaceModel.storage.entities.test.api.SecondEntityWithPId
 import com.intellij.workspaceModel.storage.entities.test.api.SecondSampleEntity
+import com.intellij.workspaceModel.storage.entities.test.api.SelfLinkedEntity
+import com.intellij.workspaceModel.storage.entities.test.api.SelfLinkedEntityImpl
 import com.intellij.workspaceModel.storage.entities.test.api.SimpleChildAbstractEntity
 import com.intellij.workspaceModel.storage.entities.test.api.SoftLinkReferencedChild
 import com.intellij.workspaceModel.storage.entities.test.api.SourceEntity
@@ -154,6 +156,31 @@ var MainEntityList.Builder.child: @Child List<AttachedEntityList>
         }
     }
 
+var SelfLinkedEntity.Builder.children: @Child List<SelfLinkedEntity>
+    get() {
+        return referrersx(SelfLinkedEntity::parentEntity)
+    }
+    set(value) {
+        val diff = (this as SelfLinkedEntityImpl.Builder).diff
+        if (diff != null) {
+            for (item in value) {
+                if ((item as SelfLinkedEntityImpl.Builder).diff == null) {
+                    item._parentEntity = this
+                    diff.addEntity(item)
+                }
+            }
+            diff.updateOneToManyChildrenOfParent(SelfLinkedEntityImpl.PARENTENTITY_CONNECTION_ID, this, value)
+        }
+        else {
+            val key = ExtRefKey("SelfLinkedEntity", "parentEntity", true, SelfLinkedEntityImpl.PARENTENTITY_CONNECTION_ID)
+            this.extReferences[key] = value
+            
+            for (item in value) {
+                (item as SelfLinkedEntityImpl.Builder)._parentEntity = this
+            }
+        }
+    }
+
 var MainEntity.Builder.child: @Child AttachedEntity?
     get() {
         return referrersx(AttachedEntity::ref).singleOrNull()
@@ -200,6 +227,7 @@ fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildSourceEntity, modifi
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: PersistentIdEntity, modification: PersistentIdEntity.Builder.() -> Unit) = modifyEntity(PersistentIdEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ParentEntity, modification: ParentEntity.Builder.() -> Unit) = modifyEntity(ParentEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildEntity, modification: ChildEntity.Builder.() -> Unit) = modifyEntity(ChildEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: SelfLinkedEntity, modification: SelfLinkedEntity.Builder.() -> Unit) = modifyEntity(SelfLinkedEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ParentNullableEntity, modification: ParentNullableEntity.Builder.() -> Unit) = modifyEntity(ParentNullableEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ChildNullableEntity, modification: ChildNullableEntity.Builder.() -> Unit) = modifyEntity(ChildNullableEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: LinkedListEntity, modification: LinkedListEntity.Builder.() -> Unit) = modifyEntity(LinkedListEntity.Builder::class.java, entity, modification)

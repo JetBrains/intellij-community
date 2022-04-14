@@ -31,7 +31,7 @@ interface ParentChainEntity : WorkspaceEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<ParentChainEntity, Builder>(56)
+    companion object: Type<ParentChainEntity, Builder>(57)
     //@formatter:on
     //endregion
 
@@ -50,7 +50,7 @@ interface SimpleAbstractEntity : WorkspaceEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<SimpleAbstractEntity, Builder<SimpleAbstractEntity>>(57)
+    companion object: Type<SimpleAbstractEntity, Builder<SimpleAbstractEntity>>(58)
     //@formatter:on
     //endregion
 
@@ -72,7 +72,7 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
         override var parentEntity: ParentChainEntity?
     }
     
-    companion object: Type<CompositeAbstractEntity, Builder<CompositeAbstractEntity>>(58, SimpleAbstractEntity)
+    companion object: Type<CompositeAbstractEntity, Builder<CompositeAbstractEntity>>(59, SimpleAbstractEntity)
     //@formatter:on
     //endregion
 
@@ -89,7 +89,7 @@ interface CompositeChildAbstractEntity : CompositeAbstractEntity {
         override var parentEntity: ParentChainEntity?
     }
     
-    companion object: Type<CompositeChildAbstractEntity, Builder>(59, CompositeAbstractEntity)
+    companion object: Type<CompositeChildAbstractEntity, Builder>(60, CompositeAbstractEntity)
     //@formatter:on
     //endregion
 
@@ -104,7 +104,7 @@ interface SimpleChildAbstractEntity : SimpleAbstractEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<SimpleChildAbstractEntity, Builder>(60, SimpleAbstractEntity)
+    companion object: Type<SimpleChildAbstractEntity, Builder>(61, SimpleAbstractEntity)
     //@formatter:on
     //endregion
 

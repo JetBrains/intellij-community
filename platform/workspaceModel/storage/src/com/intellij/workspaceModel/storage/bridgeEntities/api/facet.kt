@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage.bridgeEntities.api
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
+import com.intellij.workspaceModel.storage.referrersx
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.Type
@@ -17,8 +18,7 @@ interface FacetEntity: WorkspaceEntityWithPersistentId {
     val configurationXmlTag: String?
     val moduleId: ModuleId
 
-    // TODO:: Fix me
-    @Child
+    // underlyingFacet is a parent facet!!
     val underlyingFacet: FacetEntity?
     override val persistentId: FacetId
         get() = FacetId(name, facetType, moduleId)
@@ -41,3 +41,6 @@ interface FacetEntity: WorkspaceEntityWithPersistentId {
     //endregion
 
 }
+
+val FacetEntity.childrenFacets: List<@Child FacetEntity>
+  get() = referrersx(FacetEntity::underlyingFacet)

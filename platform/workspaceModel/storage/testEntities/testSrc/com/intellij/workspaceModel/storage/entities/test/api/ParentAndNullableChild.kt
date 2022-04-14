@@ -34,7 +34,7 @@ interface ParentNullableEntity : WorkspaceEntity {
         override var child: ChildNullableEntity?
     }
     
-    companion object: Type<ParentNullableEntity, Builder>(49)
+    companion object: Type<ParentNullableEntity, Builder>(50)
     //@formatter:on
     //endregion
 
@@ -54,7 +54,7 @@ interface ChildNullableEntity : WorkspaceEntity {
         override var parentEntity: ParentNullableEntity
     }
     
-    companion object: Type<ChildNullableEntity, Builder>(50)
+    companion object: Type<ChildNullableEntity, Builder>(51)
     //@formatter:on
     //endregion
 

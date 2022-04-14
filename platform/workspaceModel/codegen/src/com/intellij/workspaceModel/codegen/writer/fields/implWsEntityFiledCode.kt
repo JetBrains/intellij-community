@@ -131,10 +131,10 @@ internal val Field<*, *>.implWsBlockingCodeOverride: String
 internal val MemberOrExtField<*, *>.referencedField: MemberOrExtField<*, *>
     get() {
         val ref = type.getRefType()
-        val declaredReferenceFromChild =
-            ref.targetObjType.structure.refsFields.filter { it.type.getRefType().targetObjType == owner } +
-                    ((ref.targetObjType.module as? KtObjModule)?.extFields?.filter { it.type.getRefType().targetObjType == owner && it.owner == ref.targetObjType }
-                        ?: emptyList())
+      val declaredReferenceFromChild =
+        ref.targetObjType.structure.refsFields.filter { it.type.getRefType().targetObjType == owner && it != this } +
+        ((ref.targetObjType.module as? KtObjModule)?.extFields?.filter { it.type.getRefType().targetObjType == owner && it.owner == ref.targetObjType && it != this }
+         ?: emptyList())
         if (declaredReferenceFromChild.isEmpty()) {
             error("Reference should be declared at both entities. It exist at ${owner.name}#$name but absent at ${ref.targetObjType.name}")
         }

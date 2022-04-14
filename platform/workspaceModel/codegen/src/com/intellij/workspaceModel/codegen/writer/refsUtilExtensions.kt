@@ -52,8 +52,8 @@ fun MemberOrExtField<*, *>.getParentField(): MemberOrExtField<*, *> {
     val refType = type.getRefType()
     if (refType.child) error("This method should be called on parent reference")
 
-    val declaredReferenceFromChild = refType.targetObjType.structure.refsFields.filter { it.type.getRefType().targetObjType == owner } +
-                                     (refType.targetObjType.module as KtObjModule).extFields.filter { it.type.getRefType().targetObjType == owner }
+    val declaredReferenceFromChild = refType.targetObjType.structure.refsFields.filter { it.type.getRefType().targetObjType == owner && it != this} +
+                                     (refType.targetObjType.module as KtObjModule).extFields.filter { it.type.getRefType().targetObjType == owner && it.owner == refType.targetObjType && it != this }
     if (declaredReferenceFromChild.isEmpty()) {
         error("Reference should be declared at both entities. It exist at ${owner.name}#$name but absent at ${refType.targetObjType.name}")
     }

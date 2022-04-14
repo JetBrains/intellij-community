@@ -62,7 +62,7 @@ import kotlin.reflect.KProperty
  *   class MyModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<MyModuleEntity>() {
  *       lateinit var name: String
  *
- *       override fun persistentId: NameId = NameId(name)
+ *       override fun persistentId(): NameId = NameId(name)
  *
  *        override fun createEntity(snapshot: WorkspaceEntityStorage): MyModuleEntity = MyModuleEntity(name).also {
  *            addMetaData(it, snapshot)

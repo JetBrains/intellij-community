@@ -47,6 +47,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.SdkEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootOrderEntity
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
+import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.referrersx
@@ -73,6 +74,31 @@ var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntit
             
             if (value != null) {
                 (value as EclipseProjectPropertiesEntityImpl.Builder)._module = this
+            }
+        }
+    }
+
+var FacetEntity.Builder.childrenFacets: @Child List<FacetEntity>
+    get() {
+        return referrersx(FacetEntity::underlyingFacet)
+    }
+    set(value) {
+        val diff = (this as FacetEntityImpl.Builder).diff
+        if (diff != null) {
+            for (item in value) {
+                if ((item as FacetEntityImpl.Builder).diff == null) {
+                    item._underlyingFacet = this
+                    diff.addEntity(item)
+                }
+            }
+            diff.updateOneToManyChildrenOfParent(FacetEntityImpl.UNDERLYINGFACET_CONNECTION_ID, this, value)
+        }
+        else {
+            val key = ExtRefKey("FacetEntity", "underlyingFacet", true, FacetEntityImpl.UNDERLYINGFACET_CONNECTION_ID)
+            this.extReferences[key] = value
+            
+            for (item in value) {
+                (item as FacetEntityImpl.Builder)._underlyingFacet = this
             }
         }
     }

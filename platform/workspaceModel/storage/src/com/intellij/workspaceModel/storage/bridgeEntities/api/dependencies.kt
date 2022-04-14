@@ -7,6 +7,9 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.annotations.Child
 import java.io.Serializable
 import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 
 
 

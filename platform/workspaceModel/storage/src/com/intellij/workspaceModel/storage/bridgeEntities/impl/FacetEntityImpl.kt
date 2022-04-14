@@ -13,10 +13,8 @@ import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
-import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
-import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import org.jetbrains.deft.ObjBuilder
 
     
@@ -25,7 +23,7 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
     
     companion object {
         internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
-        internal val UNDERLYINGFACET_CONNECTION_ID: ConnectionId = ConnectionId.create(FacetEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true)
+        internal val UNDERLYINGFACET_CONNECTION_ID: ConnectionId = ConnectionId.create(FacetEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
     }
         
     @JvmField var _name: String? = null
@@ -48,7 +46,7 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
         get() = _moduleId!!
                         
     override val underlyingFacet: FacetEntity?
-        get() = snapshot.extractOneToOneChild(UNDERLYINGFACET_CONNECTION_ID, this)
+        get() = snapshot.extractOneToManyParent(UNDERLYINGFACET_CONNECTION_ID, this)
 
     class Builder(val result: FacetEntityData?): ModifiableWorkspaceEntityBase<FacetEntity>(), FacetEntity.Builder {
         constructor(): this(FacetEntityData())
@@ -71,12 +69,6 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
             addToBuilder()
             this.id = getEntityData().createEntityId()
             
-            val __underlyingFacet = _underlyingFacet
-            if (__underlyingFacet != null && __underlyingFacet is ModifiableWorkspaceEntityBase<*>) {
-                builder.addEntity(__underlyingFacet)
-                applyRef(UNDERLYINGFACET_CONNECTION_ID, __underlyingFacet)
-                this._underlyingFacet = null
-            }
             // Process entities from extension fields
             val keysToRemove = ArrayList<ExtRefKey>()
             for ((key, entity) in extReferences) {
@@ -119,6 +111,20 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
             if (__module != null) {
                 applyParentRef(MODULE_CONNECTION_ID, __module)
                 this._module = null
+            }
+            val __underlyingFacet = _underlyingFacet
+            if (__underlyingFacet != null && (__underlyingFacet is ModifiableWorkspaceEntityBase<*>) && __underlyingFacet.diff == null) {
+                builder.addEntity(__underlyingFacet)
+            }
+            if (__underlyingFacet != null && (__underlyingFacet is ModifiableWorkspaceEntityBase<*>) && __underlyingFacet.diff != null) {
+                // Set field to null (in referenced entity)
+                val __mutChildrenFacets = ((__underlyingFacet as ModifiableWorkspaceEntityBase<*>).extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] as? List<Any> ?: emptyList()).toMutableList()
+                __mutChildrenFacets.remove(this)
+                __underlyingFacet.extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] = __mutChildrenFacets
+            }
+            if (__underlyingFacet != null) {
+                applyParentRef(UNDERLYINGFACET_CONNECTION_ID, __underlyingFacet)
+                this._underlyingFacet = null
             }
             val parentKeysToRemove = ArrayList<ExtRefKey>()
             for ((key, entity) in extReferences) {
@@ -249,7 +255,7 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
                 get() {
                     val _diff = diff
                     return if (_diff != null) {
-                        _diff.extractOneToOneChild(UNDERLYINGFACET_CONNECTION_ID, this) ?: _underlyingFacet
+                        _diff.extractOneToManyParent(UNDERLYINGFACET_CONNECTION_ID, this) ?: _underlyingFacet
                     } else {
                         _underlyingFacet
                     }
@@ -259,17 +265,17 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
                         if (value is FacetEntityImpl.Builder) {
-                            value._underlyingFacet = this
+                            value.extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] = (value.extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
                         _diff.addEntity(value)
                     }
                     if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneChildOfParent(UNDERLYINGFACET_CONNECTION_ID, this, value)
+                        _diff.updateOneToManyParentOfChild(UNDERLYINGFACET_CONNECTION_ID, this, value)
                     }
                     else {
                         if (value is FacetEntityImpl.Builder) {
-                            value._underlyingFacet = this
+                            value.extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] = (value.extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
                         

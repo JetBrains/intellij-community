@@ -37,7 +37,7 @@ interface FirstEntityWithPId  : WorkspaceEntityWithPersistentId {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<FirstEntityWithPId, Builder>(54)
+    companion object: Type<FirstEntityWithPId, Builder>(55)
     //@formatter:on
     //endregion
 
@@ -58,7 +58,7 @@ interface SecondEntityWithPId  : WorkspaceEntityWithPersistentId {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<SecondEntityWithPId, Builder>(55)
+    companion object: Type<SecondEntityWithPId, Builder>(56)
     //@formatter:on
     //endregion
 

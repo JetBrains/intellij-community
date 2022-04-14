@@ -67,7 +67,7 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
                 line("return entity")
             }
 
-            conditionalLine({ isEntityWithPersistentId }, "override fun persistentId: ${wsFqn("PersistentEntityId")}<*>") {
+            conditionalLine({ isEntityWithPersistentId }, "override fun persistentId(): ${wsFqn("PersistentEntityId")}<*>") {
                 val persistentIdField = structure.allFields.first { it.name == "persistentId" }
                 assert(persistentIdField.hasDefault  == Field.Default.plain)
                 val methodBody = persistentIdField.defaultValue!!
