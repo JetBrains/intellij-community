@@ -18,6 +18,7 @@
     "Grey11": "#EBECF0",
     "Grey12": "#F7F8FA",
     "Grey13": "#FFFFFF",
+    "windowsPopupBorder": "#B9BDC9",
 
     "Blue1": "#243D70",
     "Blue2": "#29498A",
@@ -248,7 +249,10 @@
 
     "Menu": {
       "background": "Grey13",
-      "borderColor": "Grey11"
+      "borderColor": {
+        "os.default": "Grey11",
+        "os.windows": "windowsPopupBorder"
+      }
     },
 
     "PopupMenu.background": "Grey13",
@@ -308,7 +312,7 @@
 
     "Popup": {
       "background": "Grey13",
-      "borderColor": "#B9BDC9",
+      "borderColor": "windowsPopupBorder",
       "Advertiser": {
         "borderInsets": "6,20,6,20",
         "foreground": "Grey7",
@@ -431,7 +435,7 @@
 
     "GotItTooltip.borderColor": {
       "os.default": "Grey9",
-      "os.windows": "#B9BDC9"
+      "os.windows": "windowsPopupBorder"
     },
 
     "ValidationTooltip": {

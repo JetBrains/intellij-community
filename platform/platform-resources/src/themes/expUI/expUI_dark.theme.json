@@ -289,7 +289,7 @@
     "Popup": {
       "borderWidth": 1,
       "paintBorder": true,
-      "borderColor": "Grey3",
+      "borderColor": "Grey4",
       "inactiveBorderColor": "Grey3",
       "Advertiser": {
         "borderInsets": "6,20,6,20",
