@@ -87,8 +87,8 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
           .bindSelected(settings::isEnhancedEditingEnabled)
       }
       row {
-        checkBox(MarkdownBundle.message("markdown.settings.hide.errors"))
-          .bindSelected(settings::showErrorsInCodeBlocks)
+        checkBox(MarkdownBundle.message("markdown.settings.show.problems"))
+          .bindSelected(settings::showProblemsInCodeBlocks)
       }
       row {
         checkBox(MarkdownBundle.message("markdown.settings.commandrunner.text")).apply {

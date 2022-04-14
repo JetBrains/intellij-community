@@ -35,12 +35,12 @@ internal class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
     }
   }
 
-  override fun getText(): String = MarkdownBundle.message("markdown.hide.errors.intention.text")
+  override fun getText(): String = MarkdownBundle.message("markdown.hide.problems.intention.text")
 
   override fun getFamilyName(): String = text
 
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    if (file?.fileType != MarkdownFileType.INSTANCE || !MarkdownSettings.getInstance(project).showErrorsInCodeBlocks) {
+    if (file?.fileType != MarkdownFileType.INSTANCE || !MarkdownSettings.getInstance(project).showProblemsInCodeBlocks) {
       return false
     }
     val element = file?.findElementAt(editor?.caretModel?.offset ?: return false) ?: return false
@@ -50,11 +50,11 @@ internal class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     setHideErrors(project, true)
     val notification = MarkdownNotifications.group.createNotification(
-      MarkdownBundle.message("markdown.hide.errors.notification.title"),
-      MarkdownBundle.message("markdown.hide.errors.notification.content"),
+      MarkdownBundle.message("markdown.hide.problems.notification.title"),
+      MarkdownBundle.message("markdown.hide.problems.notification.content"),
       NotificationType.INFORMATION
     )
-    notification.addAction(object: NotificationAction(MarkdownBundle.message("markdown.hide.errors.notification.rollback.action.text")) {
+    notification.addAction(object: NotificationAction(MarkdownBundle.message("markdown.hide.problems.notification.rollback.action.text")) {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
         setHideErrors(project, false)
         notification.expire()
@@ -65,7 +65,7 @@ internal class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
 
   private fun setHideErrors(project: Project, hideErrors: Boolean) {
     MarkdownSettings.getInstance(project).update {
-      it.showErrorsInCodeBlocks = !hideErrors
+      it.showProblemsInCodeBlocks = !hideErrors
     }
   }
 

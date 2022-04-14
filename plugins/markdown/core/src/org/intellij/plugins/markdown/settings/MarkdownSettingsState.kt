@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class MarkdownSettingsState: BaseState() {
   var areInjectionsEnabled by property(true)
-  var showErrorsInCodeBlocks by property(true)
+  var showProblemsInCodeBlocks by property(true)
   var isEnhancedEditingEnabled by property(true)
 
   @get:XMap

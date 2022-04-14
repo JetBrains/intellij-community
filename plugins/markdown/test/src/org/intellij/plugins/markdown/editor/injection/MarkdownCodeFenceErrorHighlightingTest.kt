@@ -13,7 +13,7 @@ class MarkdownCodeFenceErrorHighlightingTest : BasePlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
-    oldShowErrorsSetting = settings.showErrorsInCodeBlocks
+    oldShowErrorsSetting = settings.showProblemsInCodeBlocks
   }
 
   override fun getTestDataPath(): String {
@@ -21,18 +21,18 @@ class MarkdownCodeFenceErrorHighlightingTest : BasePlatformTestCase() {
   }
 
   fun testSimpleCodeFenceError() {
-    settings.showErrorsInCodeBlocks = true
+    settings.showProblemsInCodeBlocks = true
     myFixture.testHighlighting(true, false, false, getTestName(true) + ".md")
   }
 
   fun testSimpleCodeFenceNoErrors() {
-    settings.showErrorsInCodeBlocks = true
+    settings.showProblemsInCodeBlocks = true
     myFixture.testHighlighting(true, false, false, getTestName(true) + ".md")
   }
 
   override fun tearDown() {
     try {
-      settings.showErrorsInCodeBlocks = oldShowErrorsSetting
+      settings.showProblemsInCodeBlocks = oldShowErrorsSetting
     }
     finally {
       super.tearDown()
