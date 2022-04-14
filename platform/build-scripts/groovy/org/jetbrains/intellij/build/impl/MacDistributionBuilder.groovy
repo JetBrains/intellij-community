@@ -9,6 +9,7 @@ import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.intellij.build.tasks.MacKt
 
@@ -400,9 +401,18 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
   static byte[] generateProductJson(BuildContext buildContext, String javaExecutablePath) {
     String executable = buildContext.productProperties.baseFileName
-    return new ProductInfoGenerator(buildContext).generateProductJson("../bin", null,
-                                                                      "../MacOS/${executable}", javaExecutablePath,
-                                                                      "../bin/${executable}.vmoptions", OsFamily.MACOS)
+    return new ProductInfoGenerator(buildContext).generateMultiPlatformProductJson(
+      "../bin",
+      [
+        new ProductInfoLaunchData(
+          os: OsFamily.MACOS.osName,
+          launcherPath: "../MacOS/${executable}",
+          javaExecutablePath: javaExecutablePath,
+          vmOptionsFilePath: "../bin/${executable}.vmoptions",
+          startupWmClass: null,
+        )
+      ]
+    )
   }
 
   private static String optionsToXml(List<String> options) {

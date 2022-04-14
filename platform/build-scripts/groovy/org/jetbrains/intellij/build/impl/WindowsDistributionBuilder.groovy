@@ -16,6 +16,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -341,8 +342,18 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     String launcherPath = "bin/${context.productProperties.baseFileName}64.exe"
     String vmOptionsPath = "bin/${context.productProperties.baseFileName}64.exe.vmoptions"
     String javaExecutablePath = isJreIncluded ? "jbr/bin/java.exe" : null
-    new ProductInfoGenerator(context)
-      .generateProductJson(targetDir, "bin", null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
+
+    Path file = targetDir.resolve(ProductInfoGenerator.FILE_NAME)
+    Files.createDirectories(targetDir)
+    Files.write(file, new ProductInfoGenerator(context).generateMultiPlatformProductJson("bin", [
+      new ProductInfoLaunchData(
+        os: OsFamily.WINDOWS.osName,
+        launcherPath: launcherPath,
+        javaExecutablePath: javaExecutablePath,
+        vmOptionsFilePath: vmOptionsPath,
+        startupWmClass: null,
+      )])
+    )
   }
 
   private static @NotNull FileFilter createFileFilter(String... extensions) {

@@ -26,42 +26,6 @@ final class ProductInfoGenerator {
     this.context = context
   }
 
-  void generateProductJson(@NotNull Path targetDirectory,
-                           @NotNull String relativePathToBin,
-                           @Nullable String startupWmClass,
-                           @NotNull String launcherPath,
-                           @Nullable String javaExecutablePath,
-                           @NotNull String vmOptionsFilePath,
-                           @NotNull OsFamily os) {
-    Path file = targetDirectory.resolve(FILE_NAME)
-    Files.createDirectories(targetDirectory)
-    Files.write(file, generateMultiPlatformProductJson(relativePathToBin, [
-      new ProductInfoLaunchData(
-        os: os.osName,
-        startupWmClass: startupWmClass,
-        launcherPath: launcherPath,
-        javaExecutablePath: javaExecutablePath,
-        vmOptionsFilePath: vmOptionsFilePath
-      )])
-    )
-  }
-
-  byte[] generateProductJson(@NotNull String relativePathToBin,
-                             @Nullable String startupWmClass,
-                             @NotNull String launcherPath,
-                             @Nullable String javaExecutablePath,
-                             @NotNull String vmOptionsFilePath,
-                             @NotNull OsFamily os) {
-    return generateMultiPlatformProductJson(relativePathToBin, [
-      new ProductInfoLaunchData(
-        os: os.osName,
-        startupWmClass: startupWmClass,
-        launcherPath: launcherPath,
-        javaExecutablePath: javaExecutablePath,
-        vmOptionsFilePath: vmOptionsFilePath
-    )])
-  }
-
   byte[] generateMultiPlatformProductJson(@NotNull String relativePathToBin, @NotNull List<ProductInfoLaunchData> launch) {
     ApplicationInfoProperties appInfo = context.applicationInfo
     ProductInfoData json = new ProductInfoData(

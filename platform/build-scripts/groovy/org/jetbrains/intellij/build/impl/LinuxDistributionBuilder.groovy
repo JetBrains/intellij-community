@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 
@@ -206,8 +207,18 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void generateProductJson(@NotNull Path targetDir, String javaExecutablePath) {
     def scriptName = buildContext.productProperties.baseFileName
-    new ProductInfoGenerator(buildContext).generateProductJson(
-      targetDir, "bin", getFrameClass(buildContext), "bin/${scriptName}.sh", javaExecutablePath, "bin/${scriptName}64.vmoptions", OsFamily.LINUX)
+
+    Path file = targetDir.resolve(ProductInfoGenerator.FILE_NAME)
+    Files.createDirectories(targetDir)
+    Files.write(file, new ProductInfoGenerator(buildContext).generateMultiPlatformProductJson("bin", [
+      new ProductInfoLaunchData(
+        os: OsFamily.LINUX.osName,
+        startupWmClass: getFrameClass(buildContext),
+        launcherPath: "bin/${scriptName}.sh",
+        javaExecutablePath: javaExecutablePath,
+        vmOptionsFilePath: "bin/${scriptName}64.vmoptions",
+      )])
+    )
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
