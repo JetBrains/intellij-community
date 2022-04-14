@@ -10,6 +10,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -139,7 +140,14 @@ public class GitBranchPopupActions {
       .toList();
     wrapWithMoreActionIfNeeded(myProject, popupGroup, sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
                                getNumOfTopShownBranches(remoteBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_REMOTES_KEY : null);
-    return popupGroup;
+
+    LightActionGroup result = new LightActionGroup(true);
+    for (AnAction action : popupGroup.getChildren(null)) {
+      boolean isSeparatorOrGroup = action instanceof Separator || action instanceof ActionGroup;
+      result.addAction(isSeparatorOrGroup ? action : new MyDelegateWithShortcutText(action));
+    }
+
+    return result;
   }
 
   private static boolean isSpecForRepo(@NotNull GitRebaseSpec spec, @NotNull GitRepository repository) {
@@ -1187,5 +1195,17 @@ public class GitBranchPopupActions {
    */
   public static void addTooltipText(Presentation presentation, @NlsContexts.Tooltip String tooltipText) {
     presentation.putClientProperty(JComponent.TOOL_TIP_TEXT_KEY, tooltipText);
+  }
+
+  private static class MyDelegateWithShortcutText extends EmptyAction.MyDelegatingAction implements PopupElementWithAdditionalInfo {
+    private MyDelegateWithShortcutText(@NotNull AnAction action) {
+      super(action);
+    }
+
+    @Nls
+    @Override
+    public @Nullable String getInfoText() {
+      return KeymapUtil.getPreferredShortcutText(getDelegate().getShortcutSet().getShortcuts());
+    }
   }
 }
