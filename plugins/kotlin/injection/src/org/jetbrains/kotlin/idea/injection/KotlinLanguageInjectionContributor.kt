@@ -32,6 +32,7 @@ import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -48,7 +49,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.util.aliasImportMap
 import org.jetbrains.kotlin.util.findAnnotation
 import org.jetbrains.kotlin.util.getStringValue
 import org.jetbrains.kotlin.utils.SmartList
@@ -458,7 +458,7 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
 
     private fun getCallableShortName(annotationEntry: KtCallElement): String? {
         val referencedName = getNameReference(annotationEntry.calleeExpression)?.getReferencedName() ?: return null
-        return annotationEntry.containingKtFile.aliasImportMap()[referencedName].singleOrNull() ?: referencedName
+        return KotlinPsiHeuristics.unwrapImportAlias(annotationEntry.containingKtFile, referencedName).singleOrNull() ?: referencedName
     }
 
     private fun retrieveJavaPlaceTargetClassesFQNs(place: InjectionPlace): Collection<String> {

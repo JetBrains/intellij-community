@@ -15,6 +15,7 @@
     <orderEntry type="library" name="maven-resolver-provider" level="project" />
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="module" module-name="kotlin.base.util" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
     <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />

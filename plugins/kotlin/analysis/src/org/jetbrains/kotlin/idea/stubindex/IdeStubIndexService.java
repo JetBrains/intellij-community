@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.fileClasses.JvmFileClassInfo;
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil;
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics;
+import org.jetbrains.kotlin.idea.base.psi.KotlinStubUtils;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.load.java.JvmAbi;
 import org.jetbrains.kotlin.name.ClassId;
@@ -15,11 +17,11 @@ import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.psi.KtClassOrObject;
 import org.jetbrains.kotlin.psi.KtFile;
+import org.jetbrains.kotlin.psi.KtTypeReference;
 import org.jetbrains.kotlin.psi.stubs.*;
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes;
 import org.jetbrains.kotlin.psi.stubs.elements.StubIndexService;
 import org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl;
-import org.jetbrains.kotlin.util.TypeIndexUtilKt;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -169,7 +171,8 @@ public class IdeStubIndexService extends StubIndexService {
                 IndexUtilsKt.indexExtensionInObject(stub, sink);
             }
 
-            if (TypeIndexUtilKt.isProbablyNothing(stub.getPsi().getTypeReference())) {
+            KtTypeReference typeReference = stub.getPsi().getTypeReference();
+            if (typeReference != null && KotlinPsiHeuristics.isProbablyNothing(typeReference)) {
                 sink.occurrence(KotlinProbablyNothingFunctionShortNameIndex.INSTANCE.getKey(), name);
             }
 
@@ -227,7 +230,8 @@ public class IdeStubIndexService extends StubIndexService {
                 IndexUtilsKt.indexExtensionInObject(stub, sink);
             }
 
-            if (TypeIndexUtilKt.isProbablyNothing(stub.getPsi().getTypeReference())) {
+            KtTypeReference typeReference = stub.getPsi().getTypeReference();
+            if (typeReference != null && KotlinPsiHeuristics.isProbablyNothing(typeReference)) {
                 sink.occurrence(KotlinProbablyNothingPropertyShortNameIndex.INSTANCE.getKey(), name);
             }
             indexPrime(stub, sink);
@@ -262,7 +266,7 @@ public class IdeStubIndexService extends StubIndexService {
         }
         sink.occurrence(KotlinAnnotationsIndex.INSTANCE.getKey(), name);
 
-        KotlinFileStub fileStub = getContainingFileStub(stub);
+        KotlinFileStub fileStub = KotlinStubUtils.getContainingKotlinFileStub(stub);
         if (fileStub != null) {
             List<KotlinImportDirectiveStub> aliasImportStubs = fileStub.findImportsByAlias(name);
             for (KotlinImportDirectiveStub importStub : aliasImportStubs) {
@@ -274,17 +278,6 @@ public class IdeStubIndexService extends StubIndexService {
         }
 
         IndexUtilsKt.indexJvmNameAnnotation(stub, sink);
-    }
-
-    private static KotlinFileStub getContainingFileStub(StubElement stub) {
-        StubElement parent = stub.getParentStub();
-        while (parent != null) {
-            if (parent instanceof KotlinFileStub) {
-                return (KotlinFileStub) parent;
-            }
-            parent = parent.getParentStub();
-        }
-        return null;
     }
 
     @Override

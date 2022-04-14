@@ -37,6 +37,8 @@ final class KotlinPluginBuilder {
     "kotlin.base.indices",
     "kotlin.base.compiler-configuration",
     "kotlin.base.plugin",
+    "kotlin.base.psi",
+    "kotlin.base.fe10.analysis",
     "kotlin.core",
     "kotlin.idea",
     "kotlin.fir.frontend-independent",
@@ -109,8 +111,7 @@ final class KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-idea",
     "kotlin.i18n",
     "kotlin.project-model",
-    "kotlin.features-trainer",
-    "kotlin.fe10-analyze.safe-analyze-utils"
+    "kotlin.features-trainer"
     )
 
   @SuppressWarnings('SpellCheckingInspection')

@@ -994,8 +994,10 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/yaml/intellij.yaml.iml" filepath="$PROJECT_DIR$/plugins/yaml/intellij.yaml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.all-tests/kotlin.all-tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.all-tests/kotlin.all-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/compiler-configuration/kotlin.base.compiler-configuration.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/compiler-configuration/kotlin.base.compiler-configuration.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fe10/analysis/kotlin.base.fe10.analysis.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fe10/analysis/kotlin.base.fe10.analysis.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/indices/kotlin.base.indices.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/indices/kotlin.base.indices.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/plugin/kotlin.base.plugin.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/plugin/kotlin.base.plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/psi/kotlin.base.psi.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/psi/kotlin.base.psi.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/util/kotlin.base.util.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/util/kotlin.base.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/common/kotlin.common.iml" filepath="$PROJECT_DIR$/plugins/kotlin/common/kotlin.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/compiler-plugins/allopen/common/kotlin.compiler-plugins.allopen.common.iml" filepath="$PROJECT_DIR$/plugins/kotlin/compiler-plugins/allopen/common/kotlin.compiler-plugins.allopen.common.iml" />
@@ -1031,7 +1033,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/core/tests/kotlin.core.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/core/tests/kotlin.core.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/coverage/kotlin.coverage.iml" filepath="$PROJECT_DIR$/plugins/kotlin/coverage/kotlin.coverage.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/coverage/tests/kotlin.coverage.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/coverage/tests/kotlin.coverage.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/fe10-analyze/safe-analyze-utils/kotlin.fe10-analyze.safe-analyze-utils.iml" filepath="$PROJECT_DIR$/plugins/kotlin/fe10-analyze/safe-analyze-utils/kotlin.fe10-analyze.safe-analyze-utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/features-trainer/kotlin.features-trainer.iml" filepath="$PROJECT_DIR$/plugins/kotlin/features-trainer/kotlin.features-trainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/features-trainer/tests/kotlin.features-trainer.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/features-trainer/tests/kotlin.features-trainer.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/fir/kotlin.fir.iml" filepath="$PROJECT_DIR$/plugins/kotlin/fir/kotlin.fir.iml" />

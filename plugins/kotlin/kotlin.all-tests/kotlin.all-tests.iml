@@ -10,6 +10,8 @@
     <orderEntry type="module" module-name="kotlin.base.plugin" />
     <orderEntry type="module" module-name="kotlin.base.indices" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" />
+    <orderEntry type="module" module-name="kotlin.base.psi" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
     <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" />
@@ -105,6 +107,5 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.tests" />
     <orderEntry type="module" module-name="kotlin.features-trainer" />
     <orderEntry type="module" module-name="kotlin.features-trainer.tests" />
-    <orderEntry type="module" module-name="kotlin.fe10-analyze.safe-analyze-utils" />
   </component>
 </module>

@@ -7,11 +7,11 @@ import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.NamedStub
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.stubs.*
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
-import org.jetbrains.kotlin.util.aliasImportMap
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun <TDeclaration : KtCallableDeclaration> indexTopLevelExtension(stub: KotlinCallableStubBase<TDeclaration>, sink: IndexSink) {
@@ -80,7 +80,7 @@ private fun KtTypeElement.index(
 
                 occurrence(referenceName)
 
-                aliasImportMap()[referenceName].forEach { occurrence(it) }
+                KotlinPsiHeuristics.unwrapImportAlias(this, referenceName).forEach { occurrence(it) }
             }
 
             is KtNullableType -> innerType?.indexWithVisited(declaration, containingTypeReference, visited, occurrence)

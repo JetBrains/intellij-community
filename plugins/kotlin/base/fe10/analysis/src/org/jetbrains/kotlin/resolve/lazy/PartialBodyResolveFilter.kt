@@ -5,11 +5,11 @@ package org.jetbrains.kotlin.resolve.lazy
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.StatementFilter
-import org.jetbrains.kotlin.util.isProbablyNothing
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.swap
 import java.util.*
@@ -574,7 +574,7 @@ class PartialBodyResolveFilter(
         private fun PsiElement.isStatement() = this is KtExpression && parent is KtBlockExpression
 
         private fun KtTypeReference?.containsProbablyNothing() =
-            this?.typeElement?.anyDescendantOfType<KtUserType> { it.isProbablyNothing() } ?: false
+            this?.typeElement?.anyDescendantOfType<KtUserType> { KotlinPsiHeuristics.isProbablyNothing(it) } ?: false
     }
 
     private inner class StatementMarks {

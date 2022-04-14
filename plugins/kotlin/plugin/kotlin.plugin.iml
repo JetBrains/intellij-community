@@ -12,6 +12,8 @@
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.indices" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.base.psi" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.analysis" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.common" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" scope="PROVIDED" />
@@ -82,6 +84,5 @@
     <orderEntry type="module" module-name="kotlin.features-trainer" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.maven" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.fe10-analyze.safe-analyze-utils" scope="PROVIDED" />
   </component>
 </module>
