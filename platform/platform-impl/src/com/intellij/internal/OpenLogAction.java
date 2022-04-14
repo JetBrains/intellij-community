@@ -8,6 +8,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -53,7 +54,10 @@ public class OpenLogAction extends DumbAwareAction {
         String log = new String(bytes, StandardCharsets.UTF_8);
         int index = log.lastIndexOf(StartupUtil.IDE_STARTED);
         if (index != -1) {
-          ApplicationManager.getApplication().invokeLater(() -> editor.getEditor().getCaretModel().moveToOffset(index));
+          ApplicationManager.getApplication().invokeLater(() -> {
+            editor.getEditor().getCaretModel().moveToOffset(index);
+            editor.getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER_UP);
+          }, x -> editor.getEditor().isDisposed());
         }
       } catch (IOException ignore) { }
     });
