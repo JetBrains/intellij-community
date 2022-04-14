@@ -345,15 +345,19 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
     Path file = targetDir.resolve(ProductInfoGenerator.FILE_NAME)
     Files.createDirectories(targetDir)
-    Files.write(file, new ProductInfoGenerator(context).generateMultiPlatformProductJson("bin", [
-      new ProductInfoLaunchData(
-        os: OsFamily.WINDOWS.osName,
-        launcherPath: launcherPath,
-        javaExecutablePath: javaExecutablePath,
-        vmOptionsFilePath: vmOptionsPath,
-        startupWmClass: null,
-      )])
-    )
+    Files.write(file, new ProductInfoGenerator(context).generateMultiPlatformProductJson(
+      "bin",
+      context.getBuiltinModule(),
+      [
+        new ProductInfoLaunchData(
+          os: OsFamily.WINDOWS.osName,
+          launcherPath: launcherPath,
+          javaExecutablePath: javaExecutablePath,
+          vmOptionsFilePath: vmOptionsPath,
+          startupWmClass: null,
+          )
+      ]
+    ))
   }
 
   private static @NotNull FileFilter createFileFilter(String... extensions) {

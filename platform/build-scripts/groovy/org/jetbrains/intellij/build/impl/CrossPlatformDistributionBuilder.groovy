@@ -18,7 +18,10 @@ final class CrossPlatformDistributionBuilder {
   static Path buildCrossPlatformZip(Map<Pair<OsFamily, JvmArchitecture>, Path> distDirs, BuildContext context) {
     String executableName = context.productProperties.baseFileName
 
-    byte[] productJson = new ProductInfoGenerator(context).generateMultiPlatformProductJson("bin", List.of(
+    byte[] productJson = new ProductInfoGenerator(context).generateMultiPlatformProductJson(
+      "bin",
+      context.getBuiltinModule(),
+      List.of(
       new ProductInfoLaunchData(OsFamily.WINDOWS.osName, "bin/${executableName}.bat", null, "bin/win/${executableName}64.exe.vmoptions",
                                 null),
       new ProductInfoLaunchData(OsFamily.LINUX.osName, "bin/${executableName}.sh", null, "bin/linux/${executableName}64.vmoptions",

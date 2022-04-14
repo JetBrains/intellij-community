@@ -19,4 +19,7 @@ final class ProductInfoData {
   String svgIconPath
   List<ProductInfoLaunchData> launch = []
   List<CustomProperty> customProperties = []
+  List<String> bundledPlugins
+  List<String> modules
+  List<String> fileExtensions
 }

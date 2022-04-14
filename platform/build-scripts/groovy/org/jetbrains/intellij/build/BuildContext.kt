@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import io.opentelemetry.api.trace.SpanBuilder
+import org.jetbrains.intellij.build.impl.BuiltinModulesFileData
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
@@ -99,4 +100,9 @@ abstract class BuildContext: CompilationContext {
   abstract fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: String): BuildContext
 
   abstract fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null): OsSpecificDistributionBuilder?
+
+  /**
+   * see BuildTasksImpl.buildProvidedModuleList
+   */
+  abstract fun getBuiltinModule(): BuiltinModulesFileData?
 }

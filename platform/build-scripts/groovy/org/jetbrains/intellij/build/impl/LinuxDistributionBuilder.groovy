@@ -210,14 +210,17 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
     Path file = targetDir.resolve(ProductInfoGenerator.FILE_NAME)
     Files.createDirectories(targetDir)
-    Files.write(file, new ProductInfoGenerator(buildContext).generateMultiPlatformProductJson("bin", [
-      new ProductInfoLaunchData(
-        os: OsFamily.LINUX.osName,
-        startupWmClass: getFrameClass(buildContext),
-        launcherPath: "bin/${scriptName}.sh",
-        javaExecutablePath: javaExecutablePath,
-        vmOptionsFilePath: "bin/${scriptName}64.vmoptions",
-      )])
+    Files.write(file, new ProductInfoGenerator(buildContext).generateMultiPlatformProductJson(
+      "bin",
+      buildContext.builtinModule,
+      [
+        new ProductInfoLaunchData(
+          os: OsFamily.LINUX.osName,
+          startupWmClass: getFrameClass(buildContext),
+          launcherPath: "bin/${scriptName}.sh",
+          javaExecutablePath: javaExecutablePath,
+          vmOptionsFilePath: "bin/${scriptName}64.vmoptions",
+          )])
     )
   }
 

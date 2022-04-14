@@ -7,11 +7,8 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.impl.BuiltinModulesFileData
 import org.jetbrains.intellij.build.impl.SkipTransientPropertiesJrExtension
-
-import java.nio.file.Files
-import java.nio.file.Path
 
 /**
  * Generates product-info.json file containing meta-information about product installation.
@@ -26,7 +23,11 @@ final class ProductInfoGenerator {
     this.context = context
   }
 
-  byte[] generateMultiPlatformProductJson(@NotNull String relativePathToBin, @NotNull List<ProductInfoLaunchData> launch) {
+  byte[] generateMultiPlatformProductJson(
+    @NotNull String relativePathToBin,
+    @Nullable BuiltinModulesFileData builtinModules,
+    @NotNull List<ProductInfoLaunchData> launch
+  ) {
     ApplicationInfoProperties appInfo = context.applicationInfo
     ProductInfoData json = new ProductInfoData(
       name: appInfo.productName,
@@ -37,7 +38,10 @@ final class ProductInfoGenerator {
       dataDirectoryName: context.systemSelector,
       svgIconPath: appInfo.svgRelativePath == null ? null : "$relativePathToBin/${context.productProperties.baseFileName}.svg",
       launch: launch,
-      customProperties: context.productProperties.generateCustomPropertiesForProductInfo()
+      customProperties: context.productProperties.generateCustomPropertiesForProductInfo(),
+      bundledPlugins: builtinModules?.bundledPlugins,
+      fileExtensions: builtinModules?.fileExtensions,
+      modules: builtinModules?.modules,
     )
     return JSON.builder().enable(JSON.Feature.PRETTY_PRINT_OUTPUT).register(new SkipTransientPropertiesJrExtension()).build().asBytes(json)
   }

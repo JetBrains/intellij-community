@@ -54,6 +54,8 @@ final class BuildContextImpl extends BuildContext {
   // thread-safe - forkForParallelTask pass it to child context
   private final ConcurrentLinkedQueue<Map.Entry<Path, String>> distFiles
 
+  private BuiltinModulesFileData builtinModulesData
+
   @Override
   String getFullBuildNumber() {
     return "$applicationInfo.productCode-$buildNumber"
@@ -135,6 +137,7 @@ final class BuildContextImpl extends BuildContext {
     XBootClassPathJarNames = parent.XBootClassPathJarNames
     bootClassPathJarNames = parent.bootClassPathJarNames
     applicationInfo = parent.applicationInfo
+    builtinModulesData = parent.builtinModulesData
   }
 
   @Override
@@ -477,5 +480,26 @@ final class BuildContextImpl extends BuildContext {
         break
     }
     return builder
+  }
+
+  @Override
+  BuiltinModulesFileData getBuiltinModule() {
+    if (options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
+      return null
+    }
+
+    BuiltinModulesFileData data = builtinModulesData
+    if (data == null) {
+      throw new IllegalStateException("builtinModulesData is not set. Make sure `BuildTasksImpl.buildProvidedModuleList` was called before")
+    }
+    return data
+  }
+
+  void setBuiltinModules(BuiltinModulesFileData data) {
+    if (builtinModulesData != null) {
+      throw new IllegalStateException("builtinModulesData was already set")
+    }
+
+    builtinModulesData = data
   }
 }

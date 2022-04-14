@@ -403,6 +403,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     String executable = buildContext.productProperties.baseFileName
     return new ProductInfoGenerator(buildContext).generateMultiPlatformProductJson(
       "../bin",
+      buildContext.builtinModule,
       [
         new ProductInfoLaunchData(
           os: OsFamily.MACOS.osName,
