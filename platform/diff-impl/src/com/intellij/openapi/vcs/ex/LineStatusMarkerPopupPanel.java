@@ -236,7 +236,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
 
   @NotNull
   public static Color getBorderColor() {
-    return new JBColor(Gray._206, Gray._75);
+    return JBColor.namedColor("VersionControl.MarkerPopup.borderColor", new JBColor(Gray._206, Gray._75));
   }
 
   @NotNull

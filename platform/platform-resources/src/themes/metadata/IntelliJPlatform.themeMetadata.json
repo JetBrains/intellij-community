@@ -1469,6 +1469,11 @@
       "since": "2019.1"
     },
     {
+      "key": "VersionControl.MarkerPopup.borderColor",
+      "description": "Color of border in the Vcs Marker Popup",
+      "since": "2022.2"
+    },
+    {
       "key": "WelcomeScreen.background"
     },
     {
