@@ -20,11 +20,11 @@ abstract class ToolbarComboWidget: JComponent() {
   var text: String? by Delegates.observable("", this::fireUpdateEvents)
   var leftIcons: List<Icon> by Delegates.observable(emptyList(), this::fireUpdateEvents)
   var rightIcons: List<Icon> by Delegates.observable(emptyList(), this::fireUpdateEvents)
-  var hoverBackground: Color by Delegates.observable(UIManager.getColor("MainToolbar.Dropdown.hoverBackground"), this::fireUpdateEvents)
+  var hoverBackground: Color? by Delegates.observable(null, this::fireUpdateEvents)
 
   init {
     updateUI() //set UI for component
-    isOpaque = true
+    isOpaque = false
   }
 
   abstract fun doExpand(e: InputEvent)

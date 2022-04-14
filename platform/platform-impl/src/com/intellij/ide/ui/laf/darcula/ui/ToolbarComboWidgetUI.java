@@ -64,7 +64,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   @Override
   public void paint(Graphics g, JComponent c) {
     ToolbarComboWidget combo = (ToolbarComboWidget)c;
-    if (c.isOpaque()) paintBackground(g, combo);
+    paintBackground(g, combo);
 
     List<Icon> leftIcons = combo.getLeftIcons();
     List<Icon> rightIcons = combo.getRightIcons();
@@ -121,13 +121,16 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   private void paintBackground(Graphics g, ToolbarComboWidget c) {
     Graphics g2 = g.create();
     try {
-      g2.setColor(c.getBackground());
-      Rectangle bounds = g2.getClipBounds();
-      g2.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+      if (c.isOpaque()) {
+        g2.setColor(c.getBackground());
+        Rectangle bounds = g2.getClipBounds();
+        g2.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+      }
 
       Rectangle hoverRect = hoverTracker.getHoverRect();
-      if (hoverRect != null) {
-        g2.setColor(c.getHoverBackground());
+      Color hoverBackground = c.getHoverBackground();
+      if (hoverRect != null && hoverBackground != null) {
+        g2.setColor(hoverBackground);
         g2.fillRect(hoverRect.x, hoverRect.y, hoverRect.width, hoverRect.height);
       }
     }
