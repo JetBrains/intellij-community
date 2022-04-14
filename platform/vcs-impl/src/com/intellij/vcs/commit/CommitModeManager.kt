@@ -117,18 +117,19 @@ class CommitModeManager(private val project: Project) : Disposable {
 
   private fun subscribeToChanges() {
     isForceNonModalCommit.addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) = scheduleUpdateCommitMode()
+      override fun afterValueChanged(value: RegistryValue) = updateCommitMode()
     }, this)
+
     val connection = getApplication().messageBus.connect(this)
     connection.subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
       override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
         if (id == TOGGLE_COMMIT_UI) {
-          scheduleUpdateCommitMode()
+          updateCommitMode()
         }
       }
     })
     connection.subscribe(SETTINGS, object : SettingsListener {
-      override fun settingsChanged() = scheduleUpdateCommitMode()
+      override fun settingsChanged() = updateCommitMode()
     })
 
     VcsEP.EP_NAME.addChangeListener(::scheduleUpdateCommitMode, this)
