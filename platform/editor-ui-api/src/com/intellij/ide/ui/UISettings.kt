@@ -445,7 +445,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   companion object {
     init {
       if (JBUIScale.SCALE_VERBOSE) {
-        LOG.info(String.format("defFontSize=%d, defFontScale=%.2f", defFontSize, defFontScale))
+        LOG.info(String.format("defFontSize=%.1f, defFontScale=%.2f", defFontSize, defFontScale))
       }
     }
 
