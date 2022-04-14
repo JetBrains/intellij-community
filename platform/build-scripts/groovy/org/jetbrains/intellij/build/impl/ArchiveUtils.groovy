@@ -97,7 +97,7 @@ final class ArchiveUtils {
   }
 
   /**
-   * For Linux hosts GNU Tar command is used to ensure executable flags preserved
+   * For Linux hosts GNU Tar command is used for performance reasons.
    *
    * @param fallbackToPortableTar ignored for Linux hosts since production installers are built there
    */
@@ -160,7 +160,7 @@ final class ArchiveUtils {
       decompressor.extract(destination)
     }
     else {
-      // 'tar' command is used to ensure that executable flags will be preserved
+      // 'tar' command is used for performance reasons
       // both GNU Tar and BSD Tar will suffice
       Files.createDirectories(destination)
       List<String> args = new ArrayList<>()
