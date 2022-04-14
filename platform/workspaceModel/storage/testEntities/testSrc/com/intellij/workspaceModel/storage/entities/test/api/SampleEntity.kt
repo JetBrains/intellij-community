@@ -36,7 +36,7 @@ interface SampleEntity : WorkspaceEntity {
       override var nullableData: String?
   }
   
-  companion object: Type<SampleEntity, Builder>(41)
+  companion object: Type<SampleEntity, Builder>(91)
   //@formatter:on
   //endregion
 
@@ -53,7 +53,7 @@ interface ChildSampleEntity : WorkspaceEntity {
       override var parentEntity: SampleEntity?
   }
   
-  companion object: Type<ChildSampleEntity, Builder>(42)
+  companion object: Type<ChildSampleEntity, Builder>(92)
   //@formatter:on
   //endregion
 
@@ -85,7 +85,7 @@ interface SecondSampleEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<SecondSampleEntity, Builder>(43)
+  companion object: Type<SecondSampleEntity, Builder>(93)
   //@formatter:on
   //endregion
 
@@ -102,7 +102,7 @@ interface SourceEntity : WorkspaceEntity {
       override var children: List<ChildSourceEntity>
   }
   
-  companion object: Type<SourceEntity, Builder>(44)
+  companion object: Type<SourceEntity, Builder>(94)
   //@formatter:on
   //endregion
 
@@ -119,7 +119,7 @@ interface ChildSourceEntity : WorkspaceEntity {
       override var parentEntity: SourceEntity
   }
   
-  companion object: Type<ChildSourceEntity, Builder>(45)
+  companion object: Type<ChildSourceEntity, Builder>(95)
   //@formatter:on
   //endregion
 
@@ -138,7 +138,7 @@ interface PersistentIdEntity : WorkspaceEntityWithPersistentId {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<PersistentIdEntity, Builder>(46)
+  companion object: Type<PersistentIdEntity, Builder>(96)
   //@formatter:on
   //endregion
 

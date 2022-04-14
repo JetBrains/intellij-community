@@ -1,50 +1,33 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.codegen.psi
+package com.intellij.workspaceModel.codegen
 
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileVisitor
-import com.intellij.psi.PsiManager
-import com.intellij.psi.impl.compiled.ClsFileImpl
-import com.intellij.workspace.model.generate
+import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtImportDirective
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
-import kotlin.io.path.name
-import kotlin.io.path.pathString
 
-class WorkspaceGenerateModifiableEntitiesAction: DumbAwareAction() {
+class WorkspaceModelGenerationAction: AnAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
     val module = event.getData(PlatformCoreDataKeys.MODULE) ?: return
     val virtualFiles = event.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return
     if (virtualFiles.size != 1 || !virtualFiles[0].isDirectory) return
     val selectedFolder = virtualFiles[0]
-    val sourceRoot = getSourceRoot(module, selectedFolder)
-    WriteAction.run<RuntimeException> {
-      val moduleRootManager = ModuleRootManager.getInstance(module)
-      val generatedFolder = WriteAction.compute<VirtualFile, RuntimeException> {
-        VfsUtil.createDirectoryIfMissing(sourceRoot!!.parent, "gen")
-      }
-      createGenerationFolder(module, moduleRootManager, generatedFolder)
-    }
 
-    val genFolder = createPackageFolderPath(sourceRoot!!, selectedFolder)
-    generate(selectedFolder, genFolder!!)
-
+    val sourceRoot = getSourceRoot(module, selectedFolder) ?: return
+    createGeneratedSourceFolder(module, sourceRoot)
+    val packageFolder = createPackageFolder(sourceRoot.file!!, selectedFolder) ?: return
+    WriteAction.run<RuntimeException> { CodeWriter.generate(selectedFolder, packageFolder, "org.jetbrains.workspaceModel") }
     println("Selected module ${module.name}")
       //VfsUtilCore.visitChildrenRecursively(sourceRoot, object : VirtualFileVisitor<Unit>() {
           //  override fun visitFile(file: VirtualFile): Boolean {
@@ -119,26 +102,28 @@ class WorkspaceGenerateModifiableEntitiesAction: DumbAwareAction() {
           //})
   }
 
-  private fun getSourceRoot(module: Module, selectedFolder: VirtualFile): VirtualFile? {
-    val moduleRootManager = ModuleRootManager.getInstance(module)
-    return moduleRootManager.getSourceRoots(false).firstOrNull { sourceRoot ->
-      VfsUtil.isUnder(selectedFolder, setOf(sourceRoot))
+  private fun createGeneratedSourceFolder(module: Module, sourceFolder: SourceFolder) {
+    // Create gen folder if it doesn't exist
+    val generatedFolder = WriteAction.compute<VirtualFile, RuntimeException> {
+      VfsUtil.createDirectoryIfMissing(sourceFolder.file?.parent, GENERATED_FOLDER_NAME)
     }
-  }
 
-  private fun createPackageFolderPath(sourceRoot: VirtualFile,selectedFolder: VirtualFile): VirtualFile? {
-    val relativePath = sourceRoot.toNioPath().relativize(selectedFolder.toNioPath())
-    return WriteAction.compute<VirtualFile, RuntimeException> { VfsUtil.createDirectoryIfMissing(sourceRoot.parent, "gen/$relativePath")}
-  }
-
-  private fun createGenerationFolder(module: Module, moduleRootManager: ModuleRootManager, generatedFolder: VirtualFile) {
+    val moduleRootManager = ModuleRootManager.getInstance(module)
     val modifiableModel = moduleRootManager.modifiableModel
-    val contentEntries = modifiableModel.contentEntries
-    for (contentEntry in contentEntries) {
+    // Searching for the related content root
+    for (contentEntry in modifiableModel.contentEntries) {
       val contentEntryFile = contentEntry.file
       if (contentEntryFile != null && VfsUtilCore.isAncestor(contentEntryFile, generatedFolder, false)) {
+        // Checking if it already contains generation folder
+        val existingGenFolder = contentEntry.sourceFolders.firstOrNull {
+          (it.jpsElement.properties as? JavaSourceRootProperties)?.isForGeneratedSources == true &&
+          it.file == generatedFolder
+        }
+        if (existingGenFolder != null) return
+        // If it doesn't, create new get folder for the selected content root
         val properties = JpsJavaExtensionService.getInstance().createSourceRootProperties("", true)
-        contentEntry.addSourceFolder(generatedFolder, JavaSourceRootType.SOURCE, properties)
+        val sourceFolderType = if (sourceFolder.isTestSource) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE
+        contentEntry.addSourceFolder(generatedFolder, sourceFolderType, properties)
         WriteAction.run<RuntimeException> {
           modifiableModel.commit()
           module.project.save()
@@ -146,9 +131,28 @@ class WorkspaceGenerateModifiableEntitiesAction: DumbAwareAction() {
         return
       }
     }
+    modifiableModel.dispose()
+  }
+
+  private fun getSourceRoot(module: Module, selectedFolder: VirtualFile): SourceFolder? {
+    val moduleRootManager = ModuleRootManager.getInstance(module)
+    for (contentEntry in moduleRootManager.contentEntries) {
+      val contentEntryFile = contentEntry.file
+      if (contentEntryFile != null && VfsUtilCore.isAncestor(contentEntryFile, selectedFolder, false)) {
+        val sourceFolder = contentEntry.sourceFolders.firstOrNull { sourceRoot -> VfsUtil.isUnder(selectedFolder, setOf(sourceRoot.file)) }
+        if (sourceFolder != null) return sourceFolder
+      }
+    }
+    return null
+  }
+
+  private fun createPackageFolder(sourceRoot: VirtualFile, selectedFolder: VirtualFile): VirtualFile? {
+    val relativePath = VfsUtil.getRelativePath(selectedFolder, sourceRoot, '/')
+    return WriteAction.compute<VirtualFile, RuntimeException> { VfsUtil.createDirectoryIfMissing(sourceRoot.parent, "$GENERATED_FOLDER_NAME/$relativePath") }
   }
 
   companion object {
+    private const val GENERATED_FOLDER_NAME = "gen"
     private val RELATIONSHIP_ANNOTATION = setOf("com.intellij.workspaceModel.storage.generator.annotations.ManyToOne",
                                                 "com.intellij.workspaceModel.storage.generator.annotations.OneToMany",
                                                 "com.intellij.workspaceModel.storage.generator.annotations.OneToOne")

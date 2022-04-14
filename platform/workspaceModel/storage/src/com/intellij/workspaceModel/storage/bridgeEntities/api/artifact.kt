@@ -39,7 +39,7 @@ interface ArtifactEntity : WorkspaceEntityWithPersistentId {
         override var artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity?
     }
     
-    companion object: Type<ArtifactEntity, Builder>(36)
+    companion object: Type<ArtifactEntity, Builder>(26)
     //@formatter:on
     //endregion
 
@@ -61,7 +61,7 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
         override var propertiesXmlTag: String?
     }
     
-    companion object: Type<ArtifactPropertiesEntity, Builder>(37)
+    companion object: Type<ArtifactPropertiesEntity, Builder>(27)
     //@formatter:on
     //endregion
 
@@ -77,7 +77,7 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<PackagingElementEntity, Builder<PackagingElementEntity>>(38)
+    companion object: Type<PackagingElementEntity, Builder<PackagingElementEntity>>(28)
     //@formatter:on
     //endregion
 
@@ -98,7 +98,7 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
         override var children: List<PackagingElementEntity>
     }
     
-    companion object: Type<CompositePackagingElementEntity, Builder<CompositePackagingElementEntity>>(39, PackagingElementEntity)
+    companion object: Type<CompositePackagingElementEntity, Builder<CompositePackagingElementEntity>>(29, PackagingElementEntity)
     //@formatter:on
     //endregion
 
@@ -118,7 +118,7 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<DirectoryPackagingElementEntity, Builder>(40, CompositePackagingElementEntity)
+    companion object: Type<DirectoryPackagingElementEntity, Builder>(30, CompositePackagingElementEntity)
     //@formatter:on
     //endregion
 
@@ -138,7 +138,7 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<ArchivePackagingElementEntity, Builder>(41, CompositePackagingElementEntity)
+    companion object: Type<ArchivePackagingElementEntity, Builder>(31, CompositePackagingElementEntity)
     //@formatter:on
     //endregion
 
@@ -156,7 +156,7 @@ interface ArtifactRootElementEntity: CompositePackagingElementEntity {
         override var children: List<PackagingElementEntity>
     }
     
-    companion object: Type<ArtifactRootElementEntity, Builder>(42, CompositePackagingElementEntity)
+    companion object: Type<ArtifactRootElementEntity, Builder>(32, CompositePackagingElementEntity)
     //@formatter:on
     //endregion
 
@@ -174,7 +174,7 @@ interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<ArtifactOutputPackagingElementEntity, Builder>(43, PackagingElementEntity)
+    companion object: Type<ArtifactOutputPackagingElementEntity, Builder>(33, PackagingElementEntity)
     //@formatter:on
     //endregion
 
@@ -195,7 +195,7 @@ interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<ModuleOutputPackagingElementEntity, Builder>(44, PackagingElementEntity)
+    companion object: Type<ModuleOutputPackagingElementEntity, Builder>(34, PackagingElementEntity)
     //@formatter:on
     //endregion
 
@@ -212,7 +212,7 @@ interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<LibraryFilesPackagingElementEntity, Builder>(45, PackagingElementEntity)
+    companion object: Type<LibraryFilesPackagingElementEntity, Builder>(35, PackagingElementEntity)
     //@formatter:on
     //endregion
 
@@ -233,7 +233,7 @@ interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<ModuleSourcePackagingElementEntity, Builder>(46, PackagingElementEntity)
+    companion object: Type<ModuleSourcePackagingElementEntity, Builder>(36, PackagingElementEntity)
     //@formatter:on
     //endregion
 
@@ -251,7 +251,7 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<ModuleTestOutputPackagingElementEntity, Builder>(47, PackagingElementEntity)
+    companion object: Type<ModuleTestOutputPackagingElementEntity, Builder>(37, PackagingElementEntity)
     //@formatter:on
     //endregion
 
@@ -269,7 +269,7 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<FileOrDirectoryPackagingElementEntity, Builder<FileOrDirectoryPackagingElementEntity>>(48, PackagingElementEntity)
+    companion object: Type<FileOrDirectoryPackagingElementEntity, Builder<FileOrDirectoryPackagingElementEntity>>(38, PackagingElementEntity)
     //@formatter:on
     //endregion
 
@@ -286,7 +286,7 @@ interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementE
         override var entitySource: EntitySource
     }
     
-    companion object: Type<DirectoryCopyPackagingElementEntity, Builder>(49, FileOrDirectoryPackagingElementEntity)
+    companion object: Type<DirectoryCopyPackagingElementEntity, Builder>(39, FileOrDirectoryPackagingElementEntity)
     //@formatter:on
     //endregion
 
@@ -305,7 +305,7 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
         override var entitySource: EntitySource
     }
     
-    companion object: Type<ExtractedDirectoryPackagingElementEntity, Builder>(50, FileOrDirectoryPackagingElementEntity)
+    companion object: Type<ExtractedDirectoryPackagingElementEntity, Builder>(40, FileOrDirectoryPackagingElementEntity)
     //@formatter:on
     //endregion
 
@@ -324,7 +324,7 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
         override var entitySource: EntitySource
     }
     
-    companion object: Type<FileCopyPackagingElementEntity, Builder>(51, FileOrDirectoryPackagingElementEntity)
+    companion object: Type<FileCopyPackagingElementEntity, Builder>(41, FileOrDirectoryPackagingElementEntity)
     //@formatter:on
     //endregion
 
@@ -346,7 +346,7 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
         override var propertiesXmlTag: String
     }
     
-    companion object: Type<CustomPackagingElementEntity, Builder>(52, CompositePackagingElementEntity)
+    companion object: Type<CustomPackagingElementEntity, Builder>(42, CompositePackagingElementEntity)
     //@formatter:on
     //endregion
 

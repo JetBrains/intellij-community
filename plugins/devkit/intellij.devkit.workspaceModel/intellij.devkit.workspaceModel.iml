@@ -20,5 +20,6 @@
     <orderEntry type="module" module-name="intellij.platform.resources" />
     <orderEntry type="library" name="kotlinx-collections-immutable-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.codegen" />
   </component>
 </module>

@@ -1,4 +1,5 @@
-package com.intellij.workspace.model
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.workspaceModel.codegen
 
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,28 +13,15 @@ import org.jetbrains.deft.codegen.utils.fileContents
 import org.jetbrains.deft.impl.ObjModule
 import java.io.File
 
-fun generate(sourceFolder: VirtualFile, targetFolder: VirtualFile) {
-  CodeWriter().generate(sourceFolder, targetFolder, "org.jetbrains.workspaceModel")
-}
-
 fun DefType.implIjWsFileContents(simpleTypes: List<DefType>): String {
   return fileContents(def.file!!.pkg.fqn, """
             ${implWsCode(simpleTypes)}
         """.trim())
 }
 
-open class CodeWriter() {
-  open fun File.writeCode(code: String) {
-    writeCodeInternal(this, code)
-  }
-
-  private fun writeCodeInternal(file: File, code: String) {
-    file.writeText(code)
-  }
-
+object CodeWriter {
   fun generate(sourceFolder: VirtualFile, targetFolder: VirtualFile, moduleId: String) {
     val documentManager = FileDocumentManager.getInstance()
-    val generatedDestDir = targetFolder.toNioPath().toFile()
     val ktSrcs = sourceFolder.children.filter { it.extension == "kt" }.mapNotNull {
       val document = documentManager.getDocument(it) ?: return@mapNotNull null
       it to document
@@ -55,6 +43,29 @@ open class CodeWriter() {
     }
     val virtualFile = targetFolder.parent.createChildData(this, module.moduleObjName + ".kt")
     documentManager.getDocument(virtualFile)?.setText(result.wsModuleCode())
+    //        dir.resolve("toIjWs/generated.kt").writeCode(result.ijWsCode())
+  }
+
+  fun generate(dir: File, fromDirectory: String, toDirectory: String, moduleId: String) {
+    val generatedDestDir = dir.resolve(toDirectory)
+    val ktSrcs = dir.resolve(fromDirectory).listFiles()!!
+      .toList()
+      .filter { it.name.endsWith(".kt") }
+
+    val module = KtObjModule(ObjModule.Id(moduleId))
+    ktSrcs.forEach {
+      module.addFile(it.relativeTo(dir).path) { it.readText() }
+    }
+    val result = module.build()
+    module.files.forEach {
+      dir.resolve(it.name).writeText(it.rewrite())
+    }
+    result.typeDefs.filterNot { it.name == "WorkspaceEntity" || it.name == "WorkspaceEntityWithPersistentId" || it.abstract }.forEach {
+      generatedDestDir
+        .resolve(it.javaImplName + ".kt")
+        .writeText(it.implIjWsFileContents(result.simpleTypes))
+    }
+    dir.resolve(module.moduleObjName + ".kt").writeText(result.wsModuleCode())
     //        dir.resolve("toIjWs/generated.kt").writeCode(result.ijWsCode())
   }
 }

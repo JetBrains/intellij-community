@@ -35,7 +35,7 @@ interface MainEntityParentList : WorkspaceEntity {
         override var children: List<AttachedEntityParentList>
     }
     
-    companion object: Type<MainEntityParentList, Builder>(35)
+    companion object: Type<MainEntityParentList, Builder>(29)
     //@formatter:on
     //endregion
 
@@ -52,7 +52,7 @@ interface AttachedEntityParentList : WorkspaceEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<AttachedEntityParentList, Builder>(36)
+    companion object: Type<AttachedEntityParentList, Builder>(30)
     //@formatter:on
     //endregion
 

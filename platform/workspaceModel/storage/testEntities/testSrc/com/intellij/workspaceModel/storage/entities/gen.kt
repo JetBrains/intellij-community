@@ -1,5 +1,6 @@
 package com.intellij.workspace.model
 
+import com.intellij.workspaceModel.codegen.CodeWriter
 import deft.storage.codegen.javaImplName
 import org.jetbrains.deft.codegen.ijws.implWsCode
 import org.jetbrains.deft.codegen.ijws.wsModuleCode
@@ -12,47 +13,8 @@ import java.io.File
 
 fun main() {
     val productionModuleRoot = File("community/platform/workspaceModel/storage/src/com/intellij/workspaceModel/storage/bridgeEntities").absoluteFile
-    CodeWriter().generate(productionModuleRoot, "api", "impl", "org.jetbrains.workspaceModel")
+    CodeWriter.generate(productionModuleRoot, "api", "impl", "org.jetbrains.workspaceModel")
     val testRoots = File("community/platform/workspaceModel/storage/testEntities/testSrc/com/intellij/workspaceModel/storage/entities").absoluteFile
-    CodeWriter().generate(testRoots.resolve("model"), "api", "impl", "org.jetbrains.deft.IntellijWs")
-    CodeWriter().generate(testRoots.resolve("test"), "api", "impl", "org.jetbrains.deft.TestEntities")
-}
-
-fun DefType.implIjWsFileContents(simpleTypes: List<DefType>): String {
-    return fileContents(def.file!!.pkg.fqn, """
-            ${implWsCode(simpleTypes)}
-        """.trim())
-}
-
-open class CodeWriter() {
-    open fun File.writeCode(code: String) {
-        writeCodeInternal(this, code)
-    }
-
-    private fun writeCodeInternal(file: File, code: String) {
-        file.writeText(code)
-    }
-
-    fun generate(dir: File, fromDirectory: String, toDirectory: String, moduleId: String) {
-        val generatedDestDir = dir.resolve(toDirectory)
-        val ktSrcs = dir.resolve(fromDirectory).listFiles()!!
-            .toList()
-            .filter { it.name.endsWith(".kt") }
-
-        val module = KtObjModule(ObjModule.Id(moduleId))
-        ktSrcs.forEach {
-            module.addFile(it.relativeTo(dir).path) { it.readText() }
-        }
-        val result = module.build()
-        module.files.forEach {
-            dir.resolve(it.name).writeCode(it.rewrite())
-        }
-        result.typeDefs.filterNot { it.name == "WorkspaceEntity" || it.name == "WorkspaceEntityWithPersistentId" || it.abstract }.forEach {
-            generatedDestDir
-                .resolve(it.javaImplName + ".kt")
-                .writeCode(it.implIjWsFileContents(result.simpleTypes))
-        }
-        dir.resolve(module.moduleObjName + ".kt").writeCode(result.wsModuleCode())
-//        dir.resolve("toIjWs/generated.kt").writeCode(result.ijWsCode())
-    }
+    CodeWriter.generate(testRoots.resolve("model"), "api", "impl", "org.jetbrains.deft.IntellijWs")
+    CodeWriter.generate(testRoots.resolve("test"), "api", "impl", "org.jetbrains.deft.TestEntities")
 }

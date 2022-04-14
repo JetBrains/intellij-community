@@ -1,4 +1,3 @@
-import com.intellij.workspace.model.CodeWriter
 import com.intellij.workspaceModel.storage.EntitySource
 import java.io.File
 //import kotlin.test.assertEquals

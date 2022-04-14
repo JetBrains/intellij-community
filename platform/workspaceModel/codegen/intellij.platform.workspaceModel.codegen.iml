@@ -20,5 +20,6 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-reflect" level="project" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
   </component>
 </module>

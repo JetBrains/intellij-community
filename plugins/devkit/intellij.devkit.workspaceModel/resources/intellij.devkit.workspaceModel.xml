@@ -6,7 +6,7 @@
   <actions>
     <group id="WorkspaceModelGenerationGroup">
       <separator/>
-      <action id="WorkspaceModelGeneration" class="com.intellij.workspaceModel.codegen.psi.WorkspaceGenerateModifiableEntitiesAction"/>
+      <action id="WorkspaceModelGeneration" class="com.intellij.workspaceModel.codegen.WorkspaceModelGenerationAction"/>
       <add-to-group group-id="CodeMenu" anchor="last"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
