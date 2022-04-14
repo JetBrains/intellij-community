@@ -118,24 +118,13 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
                                              FEEDBACK_CONTENT_WIDTH - SUB_OFFSET, 65)
 
   val technicalIssuesPanel = FormBuilder.createFormBuilder().let { builder ->
-    builder.addComponent(feedbackOption("cannot_pass", LearnBundle.message("onboarding.feedback.option.cannot.pass.task")))
-    for ((id, label) in onboardingFeedbackData.possibleTechnicalIssues) {
-      builder.addComponent(feedbackOption(id, label))
-    }
     builder.addComponent(technicalIssuesArea)
-
     builder.panel
   }
   technicalIssuesPanel.isVisible = false
   technicalIssuesPanel.border = JBUI.Borders.emptyLeft(SUB_OFFSET)
 
   val experiencedUserOption = feedbackOption("experienced_user", LearnBundle.message("onboarding.feedback.option.experienced.user"))
-  val usefulPanel = FormBuilder.createFormBuilder()
-    .addComponent(experiencedUserOption)
-    .addComponent(feedbackOption("too_obvious", LearnBundle.message("onboarding.feedback.option.too.obvious")))
-    .panel
-  usefulPanel.isVisible = false
-  usefulPanel.border = JBUI.Borders.emptyLeft(SUB_OFFSET)
 
   val (votePanel, likenessResult) = createLikenessPanel()
   saver.add {
@@ -152,7 +141,6 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
   }
 
   val technicalIssuesOption = feedbackOption("technical_issues", LearnBundle.message("onboarding.feedback.option.technical.issues"))
-  val unusefulOption = feedbackOption("useless", LearnBundle.message("onboarding.feedback.option.tour.is.useless"))
   val header = JLabel(LearnBundle.message("onboarding.feedback.option.form.header")).also {
     it.font = UISettings.getInstance().getFont(5).deriveFont(Font.BOLD)
     it.border = JBUI.Borders.empty(24 - UIUtil.DEFAULT_VGAP, 0, 20 - UIUtil.DEFAULT_VGAP, 0)
@@ -166,10 +154,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     })
     .addComponent(technicalIssuesOption)
     .addComponent(technicalIssuesPanel)
-    .addComponent(feedbackOption("dislike_interactive", LearnBundle.message("onboarding.feedback.option.dislike.interactive")))
-    .addComponent(feedbackOption("too_restrictive", LearnBundle.message("onboarding.feedback.option.too.restrictive")))
-    .addComponent(unusefulOption)
-    .addComponent(usefulPanel)
+    .addComponent(feedbackOption("useless", LearnBundle.message("onboarding.feedback.option.tour.is.useless")))
     .addComponent(feedbackOption("very_long", LearnBundle.message("onboarding.feedback.option.too.many.steps")))
     .addComponent(JLabel(LearnBundle.message("onboarding.feedback.label.overall.experience")).also {
       it.border = JBUI.Borders.empty(20 - UIUtil.DEFAULT_VGAP, 0, 12 - UIUtil.DEFAULT_VGAP, 0)
@@ -192,7 +177,6 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
   dialog.isResizable = false
 
   installSubPanelLogic(technicalIssuesOption, technicalIssuesPanel, wholePanel, dialog)
-  installSubPanelLogic(unusefulOption, usefulPanel, wholePanel, dialog)
 
   val maySendFeedback = dialog.showAndGet()
   if (maySendFeedback) {

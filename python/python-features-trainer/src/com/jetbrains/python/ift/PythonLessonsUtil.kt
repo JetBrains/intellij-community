@@ -18,7 +18,6 @@ import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.put
-import org.jetbrains.annotations.Nls
 import training.dsl.LessonContext
 import training.lang.LangSupport
 import training.ui.LearningUiManager
@@ -104,10 +103,6 @@ object PythonLessonsUtil {
           label(startInterpreter)
         }
       }
-
-      override val possibleTechnicalIssues: Map<String, @Nls String> = mapOf(
-        "interpreter_issues" to PythonLessonsBundle.message("python.onboarding.option.interpreter.issues")
-      )
 
       override fun feedbackHasBeenProposed() {
         PropertiesComponent.getInstance().setValue(configPropertyName, true, false)

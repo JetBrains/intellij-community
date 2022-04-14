@@ -288,10 +288,6 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
         }
       }
 
-      override val possibleTechnicalIssues: Map<String, @Nls String> = mapOf(
-        "jdk_issues" to JavaLessonsBundle.message("java.onboarding.option.jdk.issues")
-      )
-
       override fun feedbackHasBeenProposed() {
         PropertiesComponent.getInstance().setValue(configPropertyName, true, false)
       }
