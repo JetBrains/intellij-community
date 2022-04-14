@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +63,8 @@ public class LineStatusMarkerPopupPanel extends JPanel {
 
     JComponent toolbarPanel = JBUI.Panels.simplePanel(toolbarComponent);
     Border outsideToolbarBorder = JBUI.Borders.customLine(getBorderColor(), 1, 1, isEditorVisible ? 0 : 1, 1);
-    Border insideToolbarBorder = JBUI.Borders.empty(1, 5);
+    JBInsets insets = JBUI.insets("VersionControl.MarkerPopup.borderInsets", JBInsets.create(1, 5));
+    Border insideToolbarBorder = JBUI.Borders.empty(insets);
     toolbarPanel.setBorder(BorderFactory.createCompoundBorder(outsideToolbarBorder, insideToolbarBorder));
 
     if (additionalInfo != null) {

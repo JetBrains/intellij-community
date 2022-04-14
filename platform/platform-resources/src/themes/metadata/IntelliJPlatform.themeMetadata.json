@@ -1474,6 +1474,11 @@
       "since": "2022.2"
     },
     {
+      "key": "VersionControl.MarkerPopup.borderInsets",
+      "description": "Insets between the icons toolbar and popup borders in the Vcs Marker Popup",
+      "since": "2022.2"
+    },
+    {
       "key": "WelcomeScreen.background"
     },
     {
