@@ -96,6 +96,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
         myWrapperPanel.setVisible(false);
       }
 
+      getNavBarPanel(); //init myNavigationBar
       myWrapperPanel.putClientProperty(PANEL_KEY, myNavigationBar);
       revalidate();
     }
