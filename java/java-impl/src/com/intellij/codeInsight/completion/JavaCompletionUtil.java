@@ -698,6 +698,7 @@ public final class JavaCompletionUtil {
           catch (IncorrectOperationException e) {
             return endOffset; // can happen if fqn contains reserved words, for example
           }
+          SmartPsiElementPointer<PsiClass> classPointer = SmartPointerManager.createPointer(psiClass);
 
           final RangeMarker rangeMarker = document.createRangeMarker(newElement.getTextRange());
           documentManager.doPostponedOperationsAndUnblockDocument(document);
@@ -715,8 +716,10 @@ public final class JavaCompletionUtil {
                 newEndOffset = parameterList.getTextRange().getStartOffset();
               }
             }
+            psiClass = classPointer.getElement();
 
             if (!staticImport &&
+                psiClass != null &&
                 !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference((PsiReference)newElement)) &&
                 !PsiUtil.isInnerClass(psiClass)) {
               final String qName = psiClass.getQualifiedName();
