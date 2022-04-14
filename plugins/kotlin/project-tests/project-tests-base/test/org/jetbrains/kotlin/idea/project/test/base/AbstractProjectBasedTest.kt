@@ -70,6 +70,7 @@ abstract class AbstractProjectBasedTest : UsefulTestCase() {
     }
 
     private fun globalWarmup(actions: List<ProjectAction>, project: ProjectData, profile: ProjectBasedTestPreferences) {
+        if (profile.warmUpIterations == 0) return
         runActions(
             actions,
             project,
