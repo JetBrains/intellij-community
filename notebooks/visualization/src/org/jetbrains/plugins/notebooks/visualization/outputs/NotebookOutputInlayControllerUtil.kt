@@ -7,6 +7,7 @@ import org.jetbrains.plugins.notebooks.visualization.outputs.impl.CollapsingComp
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.InnerComponent
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.SurroundingComponent
 import java.awt.BorderLayout
+import java.awt.Component
 import javax.swing.JComponent
 
 internal var EditorGutterComponentEx.hoveredCollapsingComponentRect: CollapsingComponent? by SwingClientProperty("hoveredCollapsingComponentRect")
@@ -24,3 +25,14 @@ internal val NotebookOutputInlayController.collapsingComponents: List<Collapsing
 
 val NotebookOutputInlayController.outputComponents: List<JComponent>
   @TestOnly get() = collapsingComponents.map { it.mainComponent }
+
+/**
+ * [component] is any component that belongs to an output inlay.
+ * If the component is null or seems to be not inside an output inlay, nothing happens.
+ */
+fun resetOutputInlayCustomHeight(component: Component?) {
+  generateSequence(component, Component::getParent)
+    .filterIsInstance<CollapsingComponent>()
+    .firstOrNull()
+    ?.resetCustomHeight()
+}

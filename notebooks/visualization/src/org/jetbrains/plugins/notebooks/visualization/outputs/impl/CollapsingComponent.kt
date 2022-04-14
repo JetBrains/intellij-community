@@ -26,9 +26,18 @@ internal class CollapsingComponent(
   child: JComponent,
   private val resizable: Boolean,
   private val collapsedTextSupplier: () -> @NlsSafe String,
-) : JPanel(BorderLayout()) {
-  private val resizeController by lazy { ResizeController(this, editor) }
-  private var oldPredefinedPreferredSize: Dimension? = null
+) : JPanel(null) {
+  private var customHeight: Int = -1
+
+  private val resizeController by lazy {
+    ResizeController(this, editor) { _, dy ->
+      if (customHeight < 0) {
+        customHeight = mainComponent.preferredSize.height
+      }
+      customHeight += dy
+      mainComponent.revalidate()
+    }
+  }
 
   var isSeen: Boolean
     get() = mainComponent.isVisible
@@ -40,14 +49,10 @@ internal class CollapsingComponent(
         if (value) {
           addMouseListener(resizeController)
           addMouseMotionListener(resizeController)
-          preferredSize = oldPredefinedPreferredSize
-          oldPredefinedPreferredSize = null
         }
         else {
           removeMouseListener(resizeController)
           removeMouseMotionListener(resizeController)
-          oldPredefinedPreferredSize = if (isPreferredSizeSet) preferredSize else null
-          preferredSize = null
         }
       }
 
@@ -57,8 +62,8 @@ internal class CollapsingComponent(
     }
 
   init {
-    add(child, BorderLayout.CENTER)
-    add(StubComponent(editor), BorderLayout.NORTH)
+    add(child)
+    add(StubComponent(editor))
     border = IdeBorderFactory.createEmptyBorder(Insets(0, 0, 10, 0))  // It's used as a grip for resizing.
     isSeen = true
   }
@@ -77,6 +82,37 @@ internal class CollapsingComponent(
   val stubComponent: JComponent get() = getComponent(1) as JComponent
 
   val isWorthCollapsing: Boolean get() = !isSeen || mainComponent.height >= MIN_HEIGHT_TO_COLLAPSE
+
+  fun resetCustomHeight() {
+    customHeight = -1
+    if (mainComponent.isValid) {
+      mainComponent.revalidate()
+    }
+  }
+
+  override fun getPreferredSize(): Dimension {
+    val result = when {
+      !isSeen -> stubComponent.preferredSize
+      customHeight >= 0 -> mainComponent.preferredSize.apply { height = customHeight }
+      else -> mainComponent.preferredSize
+    }
+    result.height += insets.run { top + bottom }
+    return result
+  }
+
+  override fun doLayout() {
+    val (borderWidth, borderHeight) = insets.run { left + right to top + bottom }
+    when {
+      !isSeen ->
+        stubComponent.setBounds(0, 0, width - borderWidth, height - borderHeight)
+
+      customHeight >= 0 ->
+        mainComponent.setBounds(0, 0, width - borderWidth, customHeight - borderHeight)
+
+      else ->
+        mainComponent.setBounds(0, 0, width - borderWidth, height - borderHeight)
+    }
+  }
 
   fun paintGutter(editor: EditorEx, yOffset: Int, g: Graphics) {
     val notebookAppearance = editor.notebookAppearance
