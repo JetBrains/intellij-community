@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.shortenReferencesForFirCompl
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.types.*
-import org.jetbrains.kotlin.miniStdLib.letIf
+import org.jetbrains.kotlin.base.util.letIf
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
