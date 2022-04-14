@@ -17,7 +17,7 @@ import org.jetbrains.uast.UMethod
 class JUnitBeforeAfterClassInspection : AbstractBaseUastLocalInspectionTool() {
   override fun checkMethod(method: UMethod, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
     val javaMethod = method.javaPsi
-    val annotation = STATIC_CONFIGS.firstOrNull {
+    val annotation = ANNOTATIONS.firstOrNull {
       AnnotationUtil.isAnnotated(javaMethod, it, AnnotationUtil.CHECK_HIERARCHY)
     } ?: return emptyArray()
     val returnType = method.returnType ?: return emptyArray()
@@ -52,6 +52,6 @@ class JUnitBeforeAfterClassInspection : AbstractBaseUastLocalInspectionTool() {
     private const val BEFORE_ALL = "org.junit.jupiter.api.BeforeAll"
     private const val AFTER_ALL = "org.junit.jupiter.api.AfterALL"
 
-    private val STATIC_CONFIGS = arrayOf(BEFORE_CLASS, AFTER_CLASS, BEFORE_ALL, AFTER_ALL)
+    private val ANNOTATIONS = arrayOf(BEFORE_CLASS, AFTER_CLASS, BEFORE_ALL, AFTER_ALL)
   }
 }

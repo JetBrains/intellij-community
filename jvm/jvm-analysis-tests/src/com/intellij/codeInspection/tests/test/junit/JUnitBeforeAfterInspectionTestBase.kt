@@ -17,5 +17,13 @@ abstract class JUnitBeforeAfterInspectionTestBase : UastInspectionTestBase() {
       package org.junit;
       public @interface After {}
     """.trimIndent())
+    myFixture.addClass("""
+      package org.junit.jupiter.api;
+      public @interface BeforeEach {}
+    """.trimIndent())
+    myFixture.addClass("""
+      package org.junit.jupiter.api;
+      public @interface AfterEach {}
+    """.trimIndent())
   }
 }
