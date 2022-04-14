@@ -53,7 +53,7 @@ private const val FEEDBACK_CONTENT_WIDTH = 500
 private const val SUB_OFFSET = 20
 
 /** Increase the additional number when onboarding feedback format is changed */
-private const val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 0
+private const val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 1
 
 fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData: OnboardingFeedbackData) {
   onboardingFeedbackData.feedbackHasBeenProposed()
@@ -80,7 +80,7 @@ fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData
 fun showOnboardingLessonFeedbackForm(project: Project?,
                                      onboardingFeedbackData: OnboardingFeedbackData,
                                      openedViaNotification: Boolean): Boolean {
-  onboardingFeedbackData?.feedbackHasBeenProposed()
+  onboardingFeedbackData.feedbackHasBeenProposed()
   val saver = mutableListOf<JsonObjectBuilder.() -> Unit>()
 
   fun feedbackTextArea(fieldName: String, optionalText: @Nls String, width: Int, height: Int): JBScrollPane {
@@ -139,7 +139,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
 
   val (votePanel, likenessResult) = createLikenessPanel()
   saver.add {
-    "like_vote" to likenessToString(likenessResult())
+    put("like_vote", likenessToString(likenessResult()))
   }
 
   val systemInfoData = CommonFeedbackSystemInfoData.getCurrentData()
@@ -196,7 +196,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
 
   val maySendFeedback = dialog.showAndGet()
   if (maySendFeedback) {
-    val jsonConverter = Json { }
+    val jsonConverter = Json
 
     val collectedData = buildJsonObject {
       put(FEEDBACK_REPORT_ID_KEY, onboardingFeedbackData.feedbackReportId)
