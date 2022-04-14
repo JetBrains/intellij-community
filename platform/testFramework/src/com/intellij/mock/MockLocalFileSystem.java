@@ -41,9 +41,6 @@ public class MockLocalFileSystem extends LocalFileSystem {
   public void registerAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler) { }
 
   @Override
-  public void registerAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler, boolean first) { }
-
-  @Override
   public void unregisterAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler) { }
 
   @NotNull

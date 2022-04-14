@@ -135,17 +135,10 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
                                                                  @Nullable Collection<String> flatRoots);
 
   /**
-   * Overload of {@link #registerAuxiliaryFileOperationsHandler(LocalFileOperationsHandler, boolean)
-   * registerAuxiliaryFileOperationsHandler}. Always adds a handler to the end of the list
-   */
-  public abstract void registerAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler);
-
-  /**
    * Registers a handler that allows a version control system plugin to intercept file operations in the local file system
    * and to perform them through the VCS tool.
-   * @param first if true, then handler is added before all others
    */
-  public abstract void registerAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler, boolean first);
+  public abstract void registerAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler);
 
   /**
    * Unregisters a handler that allows a version control system plugin to intercept file operations in the local file system
