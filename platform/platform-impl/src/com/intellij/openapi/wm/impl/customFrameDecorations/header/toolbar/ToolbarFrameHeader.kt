@@ -159,6 +159,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     }
 
     button.isContentAreaFilled = false
+    button.background = CustomFrameDecorations.mainToolbarBackground(true)
     addHoverAndPressStateListener(button,
                                   hoveredStateCallback = { cmp, hovered ->
                                     if (cmp !is AbstractButton) return@addHoverAndPressStateListener
