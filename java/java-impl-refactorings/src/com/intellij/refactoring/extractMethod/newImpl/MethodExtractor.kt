@@ -29,7 +29,8 @@ import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.addSiblingAfter
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessMethodName
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replacePsiRange
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectTargetClass
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.findAllOptionsToExtract
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectOptionWithTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
 import com.intellij.refactoring.extractMethod.newImpl.MapFromDialog.mapFromDialog
 import com.intellij.refactoring.extractMethod.newImpl.inplace.*
@@ -60,8 +61,11 @@ class MethodExtractor {
       if (elements.isEmpty()) {
         throw ExtractException(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"), file)
       }
-      val extractOptions = computeWithAnalyzeProgress<ExtractOptions, ExtractException>(project) { findExtractOptions(elements) }
-      selectTargetClass(extractOptions) { options ->
+      val allOptionsToExtract: List<ExtractOptions> = computeWithAnalyzeProgress<List<ExtractOptions>, ExtractException>(project) {
+        findAllOptionsToExtract(elements)
+      }
+      val selectedOption = selectOptionWithTargetClass(editor, allOptionsToExtract)
+      selectedOption.thenApply { options ->
         val prepareExtractAction = computeWithAnalyzeProgress<Runnable, Exception>(project) { prepareExtractAction(editor, range, options) }
         prepareExtractAction.run()
       }
@@ -187,13 +191,11 @@ class MethodExtractor {
     val range = ExtractMethodHelper.findEditorSelection(editor) ?: return false
     val elements = ExtractSelector().suggestElementsToExtract(file, range)
     if (elements.isEmpty()) throw ExtractException("Nothing to extract", file)
-    var options = findExtractOptions(elements)
     val analyzer = CodeFragmentAnalyzer(elements)
-
-    val candidates = ExtractMethodPipeline.findTargetCandidates(analyzer, options)
-    val defaultTargetClass = candidates.firstOrNull { it !is PsiAnonymousClass } ?: candidates.first()
-    options = ExtractMethodPipeline.withTargetClass(analyzer, options, targetClass ?: defaultTargetClass)
-                                    ?: throw ExtractException("Fail", elements.first())
+    val allOptionsToExtract = findAllOptionsToExtract(elements)
+    var options = allOptionsToExtract.takeIf { targetClass != null }?.find { option -> option.anchor.containingClass == targetClass }
+                  ?: allOptionsToExtract.find { option -> option.anchor.containingClass !is PsiAnonymousClass }
+                  ?: allOptionsToExtract.first()
     options = options.copy(methodName = "newMethod")
     if (isConstructor != options.isConstructor){
       options = ExtractMethodPipeline.asConstructor(analyzer, options) ?: throw ExtractException("Fail", elements.first())
