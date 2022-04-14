@@ -807,6 +807,7 @@
         <group id="OpenProjectWindows" class="com.intellij.openapi.wm.impl.ProjectWindowActionGroup">
           <action id="NextProjectWindow" class="com.intellij.openapi.wm.impl.NextProjectWindow"/>
           <action id="PreviousProjectWindow" class="com.intellij.openapi.wm.impl.PreviousProjectWindow"/>
+          <action id="MergeAllWindowsAction" class="com.intellij.ui.mac.MergeAllWindowsAction"/>
           <separator/>
         </group>
       </group>
