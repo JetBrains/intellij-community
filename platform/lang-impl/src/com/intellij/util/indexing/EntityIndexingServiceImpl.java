@@ -146,7 +146,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
   private static <E extends WorkspaceEntity> void collectIteratorBuildersOnAdd(@NotNull E entity,
                                                                                @NotNull Project project,
                                                                                @NotNull Collection<IndexableIteratorBuilder> builders) {
-    Class<? extends WorkspaceEntity> entityClass = entity.getClass();
+    Class<? extends WorkspaceEntity> entityClass = entity.getEntityInterface();
     for (IndexableEntityProvider<?> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
       if (entityClass == provider.getEntityClass()) {
         //noinspection unchecked
@@ -159,7 +159,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
                                                                                    @NotNull E newEntity,
                                                                                    @NotNull Project project,
                                                                                    @NotNull Collection<IndexableIteratorBuilder> builders) {
-    Class<? extends WorkspaceEntity> entityClass = oldEntity.getClass();
+    Class<? extends WorkspaceEntity> entityClass = oldEntity.getEntityInterface();
     for (IndexableEntityProvider<?> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
       if (entityClass == provider.getEntityClass()) {
         //noinspection unchecked
@@ -182,7 +182,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
   private static <E extends WorkspaceEntity> void collectIteratorBuildersOnRemove(@NotNull E entity,
                                                                                   @NotNull Project project,
                                                                                   @NotNull Collection<IndexableIteratorBuilder> builders) {
-    Class<? extends WorkspaceEntity> entityClass = entity.getClass();
+    Class<? extends WorkspaceEntity> entityClass = entity.getEntityInterface();
     for (IndexableEntityProvider<?> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
       if (entityClass == provider.getEntityClass()) {
         //noinspection unchecked

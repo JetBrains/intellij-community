@@ -81,7 +81,7 @@ import kotlin.reflect.KProperty1
   val entitySource: EntitySource
 
   fun <E : WorkspaceEntity> createReference(): EntityReference<E>
-//  fun <E : WorkspaceEntity> getEntityClass(): Class<E>
+  fun getEntityInterface(): Class<out WorkspaceEntity>
 }
 
 /**

@@ -152,7 +152,7 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
     return EntityReferenceImpl(this.id)
   }
 
-  fun getEntityInterface(): Class<out WorkspaceEntity> = id.clazz.findWorkspaceEntity()
+  override fun getEntityInterface(): Class<out WorkspaceEntity> = id.clazz.findWorkspaceEntity()
 
   override fun toString(): String = id.asString()
 
