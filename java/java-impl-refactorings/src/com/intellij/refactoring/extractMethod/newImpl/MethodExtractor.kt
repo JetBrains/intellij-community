@@ -42,42 +42,47 @@ import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.NonNls
+import java.util.concurrent.CompletableFuture
 
 data class ExtractedElements(val callElements: List<PsiElement>, val method: PsiMethod)
 
 class MethodExtractor {
 
   fun doExtract(file: PsiFile, range: TextRange) {
-    val project = file.project
     val editor = PsiEditorUtil.findEditor(file) ?: return
-    val activeExtractor = InplaceMethodExtractor.getActiveExtractor(editor)
-    if (activeExtractor != null) {
-      activeExtractor.restartInDialog()
-      return
+    if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
+      val activeExtractor = InplaceMethodExtractor.getActiveExtractor(editor)
+      if (activeExtractor != null) {
+        activeExtractor.restartInDialog()
+      } else {
+        findAndSelectExtractOption(editor, file, range)?.thenApply { options ->
+          runInplaceExtract(editor, range, options)
+        }
+      }
+    } else {
+      findAndSelectExtractOption(editor, file, range)?.thenApply { options ->
+        DuplicatesMethodExtractor().extractInDialog(options.targetClass, options.elements, "", options.isStatic)
+      }
     }
+}
+
+  private fun findAndSelectExtractOption(editor: Editor, file: PsiFile, range: TextRange): CompletableFuture<ExtractOptions>? {
     try {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(file.project, file)) return
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(file.project, file)) return null
       val elements = ExtractSelector().suggestElementsToExtract(file, range)
       if (elements.isEmpty()) {
         throw ExtractException(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"), file)
       }
-      val allOptionsToExtract: List<ExtractOptions> = computeWithAnalyzeProgress<List<ExtractOptions>, ExtractException>(project) {
+      val allOptionsToExtract: List<ExtractOptions> = computeWithAnalyzeProgress<List<ExtractOptions>, ExtractException>(file.project) {
         findAllOptionsToExtract(elements)
       }
-      val selectedOption = selectOptionWithTargetClass(editor, allOptionsToExtract)
-      selectedOption.thenApply { options ->
-        if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
-          runInplaceExtract(editor, range, options)
-        }
-        else {
-          DuplicatesMethodExtractor().extractInDialog(options.targetClass, options.elements, "", options.isStatic)
-        }
-      }
+      return selectOptionWithTargetClass(editor, allOptionsToExtract)
     }
     catch (e: ExtractException) {
       val message = JavaRefactoringBundle.message("extract.method.error.prefix") + " " + (e.message ?: "")
-      CommonRefactoringUtil.showErrorHint(project, editor, message, ExtractMethodHandler.getRefactoringName(), HelpID.EXTRACT_METHOD)
+      CommonRefactoringUtil.showErrorHint(file.project, editor, message, ExtractMethodHandler.getRefactoringName(), HelpID.EXTRACT_METHOD)
       showError(editor, e.problems)
+      return null
     }
   }
 
