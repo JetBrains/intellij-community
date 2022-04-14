@@ -620,7 +620,7 @@ public class KotlinTestUtils {
         if (testDataFile.isAbsolute()) {
             absoluteTestDataFilePath = testDataFilePath;
         } else {
-            if ("true".equals(System.getProperty("pass.kombo.compiler.tests.mode", "false"))) {
+            if ("true".equals(System.getProperty("kombo.compiler.tests.mode", "false"))) {
                 absoluteTestDataFilePath = new File(AdditionalKotlinArtifacts.compilerTestData(testDataFilePath)).getAbsolutePath();
             } else {
                 File testRoot = TestMetadataUtil.getTestRoot(testCase.getClass());
