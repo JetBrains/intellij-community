@@ -76,7 +76,7 @@ internal class CommitMessageCellEditor(
 
   private fun createCommitMessage() = CommitMessage(project, false, false, true).apply {
     editorField.addSettingsProvider { editor ->
-      editor.scrollPane.border = JBUI.Borders.empty()
+      editor.scrollPane.border = JBUI.Borders.emptyLeft(6)
       registerCloseEditorShortcut(editor, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
       registerCloseEditorShortcut(editor, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.META_DOWN_MASK))
     }
