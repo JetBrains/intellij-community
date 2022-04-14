@@ -49,6 +49,15 @@ class MavenImportingManager(val project: Project) {
     return openProjectAndImport(importPath, manager.importingSettings, manager.generalSettings, MavenImportSpec.EXPLICIT_IMPORT);
   }
 
+  fun openProjectAndImport(importPaths: ImportPaths): Promise<MavenImportFinishedContext> {
+    val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings
+    return openProjectAndImport(importPaths,
+                                settings.getImportingSettings(),
+                                settings.getGeneralSettings(),
+                                MavenImportSpec.EXPLICIT_IMPORT)
+
+  }
+
   fun openProjectAndImport(importPaths: ImportPaths,
                            importingSettings: MavenImportingSettings,
                            generalSettings: MavenGeneralSettings,
