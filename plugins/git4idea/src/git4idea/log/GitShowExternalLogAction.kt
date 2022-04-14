@@ -88,7 +88,8 @@ fun showExternalGitLogInToolwindow(project: Project,
   val showContent = {
     val cm = toolWindow.contentManager
     if (!selectProjectLog(project, vcs, roots) && !selectAlreadyOpened(cm, roots)) {
-      val component = createManagerAndContent(project, vcs, roots, true)
+      val isToolWindowTab = toolWindow.id == ChangesViewContentManager.TOOLWINDOW_ID
+      val component = createManagerAndContent(project, vcs, roots, isToolWindowTab)
       val content = ContentFactory.SERVICE.getInstance().createContent(component, tabTitle, false)
       content.setDisposer(component.disposable)
       content.description = tabDescription
