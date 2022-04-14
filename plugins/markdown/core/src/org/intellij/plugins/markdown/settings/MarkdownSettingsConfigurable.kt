@@ -88,7 +88,7 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
       }
       row {
         checkBox(MarkdownBundle.message("markdown.settings.hide.errors"))
-          .bindSelected(settings::hideErrorsInCodeBlocks)
+          .bindSelected(settings::showErrorsInCodeBlocks)
       }
       row {
         checkBox(MarkdownBundle.message("markdown.settings.commandrunner.text")).apply {
