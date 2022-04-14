@@ -4,8 +4,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.wm.ToolWindowManager
 import git4idea.GitVcs
-import git4idea.log.showExternalGitLogInDialog
+import git4idea.log.showExternalGitLogInToolwindow
+import java.util.function.Supplier
 
 class SettingsSyncHistoryAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
@@ -16,7 +18,14 @@ class SettingsSyncHistoryAction : DumbAwareAction() {
       Messages.showErrorDialog(SettingsSyncBundle.message("history.error.message"), SettingsSyncBundle.message("history.dialog.title"))
       return
     }
-    showExternalGitLogInDialog(project, GitVcs.getInstance(project), listOf(virtualFile), SettingsSyncBundle.message("history.dialog.title"))
+
+    val toolWindowId = "SettingsSync"
+    val toolWindowManager = ToolWindowManager.getInstance(project)
+    val toolWindow = toolWindowManager.getToolWindow(toolWindowId) ?: toolWindowManager.registerToolWindow(toolWindowId) {
+      stripeTitle = Supplier { SettingsSyncBundle.message("title.settings.sync") }
+    }
+    showExternalGitLogInToolwindow(project, toolWindow, GitVcs.getInstance(project), listOf(virtualFile),
+                                   SettingsSyncBundle.message("history.tab.name"), "")
   }
 
   override fun update(e: AnActionEvent) {
