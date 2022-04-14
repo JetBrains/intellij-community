@@ -777,19 +777,13 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     public VcsCommitStyle getBaseStyle(int row, int column, boolean hasFocus, boolean selected) {
       Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(myTable, "", selected, hasFocus, row, column);
       Color background = selected ? getSelectionBackground(myTable.hasFocus()) : getBackground();
-      Color foreground = selected ? getSelectionForeground(myTable.hasFocus()) : dummyRendererComponent.getForeground();
 
-      return createStyle(foreground, background, VcsLogHighlighter.TextStyle.NORMAL);
+      return createStyle(dummyRendererComponent.getForeground(), background, VcsLogHighlighter.TextStyle.NORMAL);
     }
 
     @NotNull
     private static Color getBackground() {
       return ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.ToolWindow.background() : UIUtil.getListBackground();
-    }
-
-    @NotNull
-    private static Color getSelectionForeground(boolean hasFocus) {
-      return hasFocus ? SELECTION_FOREGROUND : SELECTION_FOREGROUND_INACTIVE;
     }
 
     @NotNull
@@ -1070,5 +1064,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       myInitializedColumns.remove(column);
       onColumnOrderSettingChanged();
     }
+  }
+
+  @NotNull
+  public static Color getSelectionForeground(boolean hasFocus) {
+    return hasFocus ? SELECTION_FOREGROUND : SELECTION_FOREGROUND_INACTIVE;
   }
 }

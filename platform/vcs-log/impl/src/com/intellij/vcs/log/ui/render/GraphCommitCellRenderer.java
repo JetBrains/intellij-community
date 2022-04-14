@@ -10,6 +10,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TableCellState;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.ImageUtil;
@@ -375,6 +376,12 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @Override
     protected @Nullable Border getBorder(boolean isSelected, boolean hasFocus) {
       return null;
+    }
+
+    @Override
+    protected @NotNull Color getSelectionForeground(JTable table, boolean isSelected) {
+      if (!isSelected) return super.getSelectionForeground(table, isSelected);
+      return VcsLogGraphTable.getSelectionForeground(RenderingUtil.isFocused(table));
     }
   }
 }
