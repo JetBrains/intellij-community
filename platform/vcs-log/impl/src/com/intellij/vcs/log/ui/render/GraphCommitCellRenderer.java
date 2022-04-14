@@ -376,18 +376,5 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     protected @Nullable Border getBorder(boolean isSelected, boolean hasFocus) {
       return null;
     }
-
-    /**
-     * Do not replace foreground for selected row to allow controlling it with {@link VcsLogGraphTable#applyHighlighters}
-     * and {@link VcsLogGraphTable#getBaseStyle}
-     *
-     * @see TableCellState#modifyAttributes
-     * @see VcsLogGraphTable#applyHighlighters
-     * @see VcsLogGraphTable#getBaseStyle
-     */
-    @Override
-    public SimpleTextAttributes modifyAttributes(SimpleTextAttributes attributes) {
-      return attributes;
-    }
   }
 }
