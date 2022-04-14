@@ -26,7 +26,7 @@ interface FacetsOrderEntity : WorkspaceEntity {
       override var moduleEntity: ModuleEntity
   }
   
-  companion object: Type<FacetsOrderEntity, Builder>(44)
+  companion object: Type<FacetsOrderEntity, Builder>()
   //@formatter:on
   //endregion
 
@@ -50,7 +50,7 @@ interface FacetExternalSystemIdEntity : WorkspaceEntity {
       override var facet: FacetEntity
   }
   
-  companion object: Type<FacetExternalSystemIdEntity, Builder>(45)
+  companion object: Type<FacetExternalSystemIdEntity, Builder>()
   //@formatter:on
   //endregion
 
@@ -73,7 +73,7 @@ interface ArtifactExternalSystemIdEntity : WorkspaceEntity {
       override var artifactEntity: ArtifactEntity
   }
   
-  companion object: Type<ArtifactExternalSystemIdEntity, Builder>(46)
+  companion object: Type<ArtifactExternalSystemIdEntity, Builder>()
   //@formatter:on
   //endregion
 
@@ -96,7 +96,7 @@ interface LibraryExternalSystemIdEntity: WorkspaceEntity {
       override var library: LibraryEntity
   }
   
-  companion object: Type<LibraryExternalSystemIdEntity, Builder>(47)
+  companion object: Type<LibraryExternalSystemIdEntity, Builder>()
   //@formatter:on
   //endregion
 

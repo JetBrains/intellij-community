@@ -73,8 +73,8 @@ abstract class ObjModule(
     }
 
     @InitApi
-    protected fun add(type: Type<*, *>) {
-        byId[modules.typeIndex(type.id)] = type as ObjType<*, *>
+    protected fun add(type: ObjType<*, *>) {
+        byId[modules.typeIndex(type.id)] = type
     }
 
     private var extFields: Array<ExtField<*, *>?>? = null

@@ -60,10 +60,7 @@ fun DefType.generatedApiCode(indent: String = "    "): String = lines(indent) {
     val builderGeneric = if (abstract) "<$javaFullName>" else ""
     line(buildString {
         append("companion object: ${Type::class.fqn}<$javaFullName, Builder$builderGeneric>(")
-        append(id)
-        if (base != null) {
-          append(", ${base.javaFullName}")
-        }
+        if (base != null) append(base.javaFullName)
         append(")")
     })
     line("//@formatter:on")

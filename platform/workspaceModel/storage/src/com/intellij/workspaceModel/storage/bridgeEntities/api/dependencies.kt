@@ -39,7 +39,7 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
         override var libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
     }
     
-    companion object: Type<LibraryEntity, Builder>(54)
+    companion object: Type<LibraryEntity, Builder>()
     //@formatter:on
     //endregion
 
@@ -61,7 +61,7 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
         override var propertiesXmlTag: String?
     }
     
-    companion object: Type<LibraryPropertiesEntity, Builder>(55)
+    companion object: Type<LibraryPropertiesEntity, Builder>()
     //@formatter:on
     //endregion
 
@@ -80,7 +80,7 @@ interface SdkEntity : WorkspaceEntity {
         override var homeUrl: VirtualFileUrl
     }
     
-    companion object: Type<SdkEntity, Builder>(56)
+    companion object: Type<SdkEntity, Builder>()
     //@formatter:on
     //endregion
 

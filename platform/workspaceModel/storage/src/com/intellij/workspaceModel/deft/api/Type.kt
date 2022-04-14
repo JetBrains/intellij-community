@@ -1,7 +1,7 @@
 package org.jetbrains.deft
 
 
-abstract class Type<T : Obj, B : ObjBuilder<T>>(val id: Int, val base: Type<*, *>? = null) : Obj {
+abstract class Type<T : Obj, B : ObjBuilder<T>>(val base: Type<*, *>? = null) : Obj {
     var open: Boolean = false
     var abstract: Boolean = false
     var sealed: Boolean = false

@@ -66,7 +66,7 @@ interface OneEntityWithPersistentId : WorkspaceEntityWithPersistentId {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<OneEntityWithPersistentId, Builder>(34)
+    companion object: Type<OneEntityWithPersistentId, Builder>()
     //@formatter:on
     //endregion
 
@@ -112,7 +112,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
         override var children: List<SoftLinkReferencedChild>
     }
     
-    companion object: Type<EntityWithSoftLinks, Builder>(35)
+    companion object: Type<EntityWithSoftLinks, Builder>()
     //@formatter:on
     //endregion
 
@@ -127,7 +127,7 @@ interface SoftLinkReferencedChild : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<SoftLinkReferencedChild, Builder>(36)
+  companion object: Type<SoftLinkReferencedChild, Builder>()
   //@formatter:on
   //endregion
 

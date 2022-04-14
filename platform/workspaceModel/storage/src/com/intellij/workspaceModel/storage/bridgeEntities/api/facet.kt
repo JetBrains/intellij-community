@@ -36,7 +36,7 @@ interface FacetEntity: WorkspaceEntityWithPersistentId {
         override var underlyingFacet: FacetEntity?
     }
     
-    companion object: Type<FacetEntity, Builder>(43)
+    companion object: Type<FacetEntity, Builder>()
     //@formatter:on
     //endregion
 

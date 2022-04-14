@@ -20,7 +20,7 @@ interface AnotherTest: WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<AnotherTest, Builder>(1)
+  companion object: Type<AnotherTest, Builder>()
   //@formatter:on
   //endregion
 

@@ -4,7 +4,7 @@ import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
-abstract class ObjType<T : Obj, B : ObjBuilder<T>>(private val _module: ObjModule, id: Int, base: ObjType<*, *>? = null) : Type<T, B>(id, base), Obj {
+abstract class ObjType<T : Obj, B : ObjBuilder<T>>(private val _module: ObjModule, val id: Int, base: ObjType<*, *>? = null) : Type<T, B>(base), Obj {
     val module: ObjModule
         get() = _module.require()
 
