@@ -2388,7 +2388,7 @@ class Abc {
                           "}")
   }
 
-  @NeedsIndex.ForStandardLibrary
+  @NeedsIndex.SmartMode(reason = "isEffectivelyDeprecated needs smart mode")
   void "test no final library classes in extends"() {
     myFixture.configureByText("X.java", "class StriFoo{}final class StriBar{}class X extends Stri<caret>")
     myFixture.completeBasic()

@@ -723,7 +723,7 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'unmodifiableList', 'unmodifiableCollection'
   }
 
-  @NeedsIndex.Full
+  @NeedsIndex.SmartMode(reason = "isEffectivelyDeprecated needs smart mode")
   void testDispreferDeprecatedMethodWithUnresolvedQualifier() {
     myFixture.addClass("package foo; public class Assert { public static void assertTrue() {} }")
     myFixture.addClass("package bar; @Deprecated public class Assert { public static void assertTrue() {}; public static void assertTrue2() {} }")

@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.LanguageLevelUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -1006,6 +1007,7 @@ public final class JavaCompletionUtil {
   }
 
   public static boolean isEffectivelyDeprecated(PsiDocCommentOwner member) {
+    if (DumbService.isDumb(member.getProject())) return false;
     if (member.isDeprecated()) {
       return true;
     }
