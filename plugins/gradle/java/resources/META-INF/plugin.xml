@@ -29,6 +29,8 @@
                     dynamic="true"/>
     <extensionPoint name="testTasksProvider" interface="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider"
                     dynamic="true"/>
+    <extensionPoint name="testLocationCustomizer" interface="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestLocationCustomizer"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
