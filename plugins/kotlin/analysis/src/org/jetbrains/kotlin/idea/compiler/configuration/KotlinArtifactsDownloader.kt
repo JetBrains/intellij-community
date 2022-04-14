@@ -34,8 +34,8 @@ object KotlinArtifactsDownloader {
             return true
         }
         val unpackedTimestamp = getUnpackedKotlinDistPath(version).lastModified()
-        val mavenJarTimestamp = KotlinMavenUtils.findArtifactOrFail(KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, version)
-            .toFile().lastModified()
+        val mavenJarTimestamp = KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, version)
+            ?.toFile()?.lastModified() ?: 0
 
         return unpackedTimestamp != 0L && mavenJarTimestamp != 0L && unpackedTimestamp >= mavenJarTimestamp
     }
@@ -79,12 +79,12 @@ object KotlinArtifactsDownloader {
                 return KotlinPluginLayout.instance.kotlinc
             }
         }
-        val expectedMavenArtifactJarPath = KotlinMavenUtils.findArtifactOrFail(KOTLIN_MAVEN_GROUP_ID, artifactId, version).toFile()
-        expectedMavenArtifactJarPath.takeIf { it.exists() }?.let {
+        val expectedMavenArtifactJarPath = KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, artifactId, version)?.toFile()
+        expectedMavenArtifactJarPath?.takeIf { it.exists() }?.let {
             return it
         }
         indicator.text = indicatorDownloadText
-        return downloadMavenArtifact(artifactId, version, project, indicator, onError, expectedMavenArtifactJarPath)
+        return downloadMavenArtifact(artifactId, version, project, indicator, onError)
     }
 
     private fun downloadMavenArtifact(
@@ -92,8 +92,7 @@ object KotlinArtifactsDownloader {
         version: String,
         project: Project,
         indicator: ProgressIndicator,
-        onError: (String) -> Unit,
-        expectedMavenArtifactJarPath: File
+        onError: (String) -> Unit
     ): File? {
         check(!EventQueue.isDispatchThread()) {
             "Don't call downloadMavenArtifact on UI thread"
@@ -134,6 +133,7 @@ object KotlinArtifactsDownloader {
         return downloadedCompiler.singleOrNull().let { it ?: error("Expected to download only single artifact") }.file
             .toVirtualFileUrl(VirtualFileUrlManager.getInstance(project)).presentableUrl.let { File(it) }
             .also {
+                val expectedMavenArtifactJarPath = KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, artifactId, version)?.toFile()
                 check(it == expectedMavenArtifactJarPath) {
                     "Expected maven artifact path ($expectedMavenArtifactJarPath) doesn't match actual artifact path ($it)"
                 }

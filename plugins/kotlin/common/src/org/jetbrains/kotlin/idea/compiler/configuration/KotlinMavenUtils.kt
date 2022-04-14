@@ -59,7 +59,7 @@ object KotlinMavenUtils {
             ?: error("Artifact $groupId:$artifactId:$version not found")
     }
 
-    private fun findArtifact(groupId: String, artifactId: String, version: String): Path? {
+    fun findArtifact(groupId: String, artifactId: String, version: String): Path? {
         val localMavenRepository = Paths.get(SystemProperties.getUserHome(), ".m2/repository")
         findArtifact(localMavenRepository, groupId, artifactId, version)?.let { return it }
 
