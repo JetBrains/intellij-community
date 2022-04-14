@@ -160,7 +160,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
           if (element instanceof PsiReferenceExpression &&
               ((PsiReferenceExpression)element).getQualifierExpression() instanceof PsiSuperExpression &&
               PsiTreeUtil.isAncestor(targetClass, element, false) &&
-              !PushDownConflicts.isSuperCallToBeInlined(member, targetClass, mySuperClass, element)) {
+              !PushDownConflicts.isSuperCallToBeInlined(member, targetClass, mySuperClass)) {
             usages.add(new RemoveQualifierUsageInfo((PsiReferenceExpression)element));
           }
         }

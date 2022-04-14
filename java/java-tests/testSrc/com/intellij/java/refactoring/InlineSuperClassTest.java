@@ -76,6 +76,7 @@ public class InlineSuperClassTest extends LightMultiFileTestCase {
   public void testSealedGrandParentNonSealedInheritor() { doTest(false, true); }
   public void testSealedParentInlineAll() { doTest(); }
   public void testMultipleSealedParents() { doTest(false, true); }
+  public void testMultipleSuperCalls() { doTest(false, true); }
 
   private void doTest() {
     doTest(false, false);
