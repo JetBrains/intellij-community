@@ -3,11 +3,11 @@
 package org.jetbrains.kotlin.idea.fir.api.impl
 
 import org.jetbrains.kotlin.idea.api.ResolveAllowanceService
-import org.jetbrains.kotlin.miniStdLib.multithreadings.javaThreadLocal
+import org.jetbrains.kotlin.miniStdLib.multithreadings.threadLocal
 
 class ResolveAllowanceServiceFirImpl : ResolveAllowanceService() {
-    private var allowResolveOnEdt by javaThreadLocal(false)
-    private var forbidResolve by javaThreadLocal<String?>(null)
+    private var allowResolveOnEdt by threadLocal(false)
+    private var forbidResolve by threadLocal<String?>(null)
 
     override fun switchOnAllowingResolveInEdtInCurrentThread(): SwitchResult {
         if (allowResolveOnEdt) {
