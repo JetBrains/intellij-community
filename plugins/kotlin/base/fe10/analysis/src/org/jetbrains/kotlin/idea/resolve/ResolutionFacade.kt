@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.ResolverForProject
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.diagnostics.DiagnosticSink
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValueFactory
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 interface ResolutionFacade {
@@ -54,3 +56,9 @@ interface ResolutionFacade {
 inline fun <reified T : Any> ResolutionFacade.frontendService(): T = this.getFrontendService(T::class.java)
 
 inline fun <reified T : Any> ResolutionFacade.ideService(): T = this.getIdeService(T::class.java)
+
+val ResolutionFacade.languageVersionSettings: LanguageVersionSettings
+    get() = @OptIn(FrontendInternals::class) frontendService()
+
+val ResolutionFacade.dataFlowValueFactory: DataFlowValueFactory
+    get() = @OptIn(FrontendInternals::class) frontendService()

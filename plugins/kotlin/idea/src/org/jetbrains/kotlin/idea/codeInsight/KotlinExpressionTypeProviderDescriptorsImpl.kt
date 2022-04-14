@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.parameterInfo.KotlinIdeDescriptorRenderer
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
@@ -75,7 +75,7 @@ class KotlinExpressionTypeProviderDescriptorsImpl : KotlinExpressionTypeProvider
 
         val result = expressionType?.let { typeRenderer.renderType(it) } ?: return KotlinBundle.message("type.provider.unknown.type")
 
-        val dataFlowValueFactory = element.getResolutionFacade().getDataFlowValueFactory()
+        val dataFlowValueFactory = element.getResolutionFacade().dataFlowValueFactory
         val dataFlowValue =
             dataFlowValueFactory.createDataFlowValue(element, expressionType, bindingContext, element.findModuleDescriptor())
         val types = expressionTypeInfo.dataFlowInfo.getStableTypes(dataFlowValue, element.languageVersionSettings)

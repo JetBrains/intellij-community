@@ -24,8 +24,8 @@ import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromTextFile
 import org.jetbrains.kotlin.idea.project.KotlinMultiplatformAnalysisModeComponent
 import org.jetbrains.kotlin.idea.codeMetaInfo.AbstractDiagnosticCodeMetaInfoTest
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.allKotlinFiles
@@ -91,17 +91,17 @@ abstract class AbstractMultiModuleIdeResolveTest : AbstractMultiModuleTest() {
         val diagnosticsFilter = parseDiagnosticFilterDirective(directives, allowUnderscoreUsage = false)
 
         val actualDiagnostics = CheckerTestUtil.getDiagnosticsIncludingSyntaxErrors(
-            bindingContext,
-            file,
-            markDynamicCalls = false,
-            dynamicCallDescriptors = mutableListOf(),
-            configuration = DiagnosticsRenderingConfiguration(
-                platform = null, // we don't need to attach platform-description string to diagnostic here
-                withNewInference = false,
-                languageVersionSettings = resolutionFacade.getLanguageVersionSettings(),
+          bindingContext,
+          file,
+          markDynamicCalls = false,
+          dynamicCallDescriptors = mutableListOf(),
+          configuration = DiagnosticsRenderingConfiguration(
+              platform = null, // we don't need to attach platform-description string to diagnostic here
+              withNewInference = false,
+              languageVersionSettings = resolutionFacade.languageVersionSettings,
             ),
-            dataFlowValueFactory = resolutionFacade.getDataFlowValueFactory(),
-            moduleDescriptor = moduleDescriptor as ModuleDescriptorImpl
+          dataFlowValueFactory = resolutionFacade.dataFlowValueFactory,
+          moduleDescriptor = moduleDescriptor as ModuleDescriptorImpl
         ).filter { diagnosticsFilter.value(it.diagnostic) }
 
         val actualTextWithDiagnostics = CheckerTestUtil.addDiagnosticMarkersToText(

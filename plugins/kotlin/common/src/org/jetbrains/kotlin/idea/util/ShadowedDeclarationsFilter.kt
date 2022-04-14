@@ -8,8 +8,8 @@ import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingTraceFilter.Companion.NO_DIAGNOSTICS
@@ -214,8 +214,8 @@ class ShadowedDeclarationsFilter(
         val context = BasicCallResolutionContext.create(
             bindingTrace, scope, newCall, TypeUtils.NO_EXPECTED_TYPE, dataFlowInfo,
             ContextDependency.INDEPENDENT, CheckArgumentTypesMode.CHECK_VALUE_ARGUMENTS,
-            false, resolutionFacade.getLanguageVersionSettings(),
-            resolutionFacade.getDataFlowValueFactory()
+            false, resolutionFacade.languageVersionSettings,
+            resolutionFacade.dataFlowValueFactory
         )
 
         @OptIn(FrontendInternals::class)

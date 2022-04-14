@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyEquals
 import org.jetbrains.kotlin.idea.intentions.isOperatorOrCompatible
 import org.jetbrains.kotlin.idea.intentions.isReceiverExpressionWithValue
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.idea.util.calleeTextRangeInThis
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -190,7 +190,7 @@ class ReplaceCallWithBinaryOperatorInspection : AbstractApplicabilityBasedInspec
         val resolutionFacade = getResolutionFacade()
         val context = analyze(resolutionFacade, BodyResolveMode.PARTIAL)
         val declarationDescriptor = containingDeclarationForPseudocode?.resolveToDescriptorIfAny()
-        val dataFlowValueFactory = resolutionFacade.getDataFlowValueFactory()
+        val dataFlowValueFactory = resolutionFacade.dataFlowValueFactory
         val defaultType: (KotlinType, Set<KotlinType>) -> KotlinType = { givenType, stableTypes -> stableTypes.firstOrNull() ?: givenType }
         val receiverType = resolvedCall.getReceiverExpression()?.getKotlinTypeWithPossibleSmartCastToFP(
             context, declarationDescriptor, languageVersionSettings, dataFlowValueFactory, defaultType

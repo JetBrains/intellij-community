@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -61,7 +61,7 @@ class RedundantRequireNotNullCallInspection : AbstractKotlinInspection() {
         resolutionFacade: ResolutionFacade,
     ): Boolean {
         if (!type.isNullable()) return false
-        val dataFlowValueFactory = resolutionFacade.getDataFlowValueFactory()
+        val dataFlowValueFactory = resolutionFacade.dataFlowValueFactory
         val dataFlow = dataFlowValueFactory.createDataFlowValue(this, type, context, descriptor)
         val stableTypes = context.getDataFlowInfoBefore(this).getStableTypes(dataFlow, this.languageVersionSettings)
         return stableTypes.none { !it.isNullable() }

@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.idea.util.getImplicitReceiversWithInstance
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.KtExpression
@@ -33,7 +33,7 @@ class SmartCastCalculator(
     receiver: KtExpression?,
     resolutionFacade: ResolutionFacade
 ) {
-    private val dataFlowValueFactory = resolutionFacade.getDataFlowValueFactory()
+    private val dataFlowValueFactory = resolutionFacade.dataFlowValueFactory
 
     // keys are VariableDescriptor's and ThisReceiver's
     private val entityToSmartCastInfo: Map<Any, SmartCastInfo> = processDataFlowInfo(

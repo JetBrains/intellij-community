@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.substringContextOrThis
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiRange
@@ -167,7 +167,7 @@ data class ExtractionData(
     }
 
     private fun getPossibleTypes(expression: KtExpression, resolvedCall: ResolvedCall<*>?, context: BindingContext): Set<KotlinType> {
-        val dataFlowValueFactory = expression.getResolutionFacade().getDataFlowValueFactory()
+        val dataFlowValueFactory = expression.getResolutionFacade().dataFlowValueFactory
         val dataFlowInfo = context.getDataFlowInfoAfter(expression)
 
         resolvedCall?.getImplicitReceiverValue()?.let {

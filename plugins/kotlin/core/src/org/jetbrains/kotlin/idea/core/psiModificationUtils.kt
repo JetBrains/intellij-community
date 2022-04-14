@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.frontendService
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
@@ -138,7 +138,7 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(): Boolean {
         val resolutionFacade = getResolutionFacade()
         val samConversionTransformer = resolutionFacade.frontendService<SamConversionResolver>()
         val samConversionOracle = resolutionFacade.frontendService<SamConversionOracle>()
-        val languageVersionSettings = resolutionFacade.getLanguageVersionSettings()
+        val languageVersionSettings = resolutionFacade.languageVersionSettings
         val newInferenceEnabled = languageVersionSettings.supportsFeature(LanguageFeature.NewInference)
 
         val bindingContext = safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)

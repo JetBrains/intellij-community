@@ -14,8 +14,8 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.getImplicitReceiversWithInstanceToExpression
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -122,8 +122,8 @@ fun Call.resolveCandidates(
     val callResolutionContext = BasicCallResolutionContext.create(
         bindingTrace, resolutionScope, this, expectedType, dataFlowInfo,
         ContextDependency.INDEPENDENT, CheckArgumentTypesMode.CHECK_VALUE_ARGUMENTS,
-        false, resolutionFacade.getLanguageVersionSettings(),
-        resolutionFacade.getDataFlowValueFactory()
+        false, resolutionFacade.languageVersionSettings,
+        resolutionFacade.dataFlowValueFactory
     ).replaceCollectAllCandidates(true)
 
     @OptIn(FrontendInternals::class)
@@ -150,7 +150,7 @@ fun Call.resolveCandidates(
                 it.getDispatchReceiverWithSmartCast(),
                 it.resultingDescriptor,
                 inDescriptor,
-                resolutionFacade.getLanguageVersionSettings()
+                resolutionFacade.languageVersionSettings
             )
         }
     }

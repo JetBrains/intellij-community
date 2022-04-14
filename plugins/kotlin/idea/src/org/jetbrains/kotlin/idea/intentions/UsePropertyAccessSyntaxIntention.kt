@@ -24,8 +24,8 @@ import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -251,8 +251,8 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         val context = BasicCallResolutionContext.create(
             bindingTrace, resolutionScope, newCall, expectedType, dataFlowInfo,
             ContextDependency.INDEPENDENT, CheckArgumentTypesMode.CHECK_VALUE_ARGUMENTS,
-            false, facade.getLanguageVersionSettings(),
-            facade.getDataFlowValueFactory()
+            false, facade.languageVersionSettings,
+            facade.dataFlowValueFactory
         )
 
         @OptIn(FrontendInternals::class)

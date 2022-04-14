@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
@@ -206,7 +206,7 @@ private fun checkVisibility(
     fun reportConflictIfAny(targetDescriptor: DeclarationDescriptor) {
         val target = (targetDescriptor as? DeclarationDescriptorWithSource)?.source?.getPsi() ?: return
         if (targetDescriptor is DeclarationDescriptorWithVisibility
-            && !DescriptorVisibilityUtils.isVisibleIgnoringReceiver(targetDescriptor, targetClassDescriptor, context.resolutionFacade.getLanguageVersionSettings())
+            && !DescriptorVisibilityUtils.isVisibleIgnoringReceiver(targetDescriptor, targetClassDescriptor, context.resolutionFacade.languageVersionSettings)
         ) {
             val message = KotlinBundle.message(
                 "text.0.uses.1.which.is.not.accessible.from.2",

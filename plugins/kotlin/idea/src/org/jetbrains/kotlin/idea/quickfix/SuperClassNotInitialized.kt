@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.replaced
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
@@ -58,7 +58,7 @@ object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
         val containingPackage = superClass.classId?.packageFqName
         val inSamePackage = containingPackage != null && containingPackage == classDescriptor.classId?.packageFqName
         val constructors = superClass.constructors.filter {
-            it.isVisible(classDescriptor, delegator.getResolutionFacade().getLanguageVersionSettings()) &&
+          it.isVisible(classDescriptor, delegator.getResolutionFacade().languageVersionSettings) &&
                     (superClass.modality != Modality.SEALED || inSamePackage && classDescriptor.visibility != DescriptorVisibilities.LOCAL)
         }
         if (constructors.isEmpty() && (!superClass.isExpect || superClass.kind != ClassKind.CLASS)) {

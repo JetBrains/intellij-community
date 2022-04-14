@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.core.setType
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.getAllAccessibleVariables
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.name.Name
@@ -77,7 +77,7 @@ internal fun MutableCodeToInline.introduceValue(
             val resolutionScope = expressionToBeReplaced.getResolutionScope(bindingContext, resolutionFacade)
 
             val name = suggestName { name ->
-                !name.nameHasConflictsInScope(resolutionScope, resolutionFacade.getLanguageVersionSettings()) && !isNameUsed(name)
+              !name.nameHasConflictsInScope(resolutionScope, resolutionFacade.languageVersionSettings) && !isNameUsed(name)
             }
 
             val declaration = psiFactory.createDeclarationByPattern<KtVariableDeclaration>("val $0 = $1", name, value)

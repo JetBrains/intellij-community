@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.useScope
@@ -90,7 +90,7 @@ private fun collectConflicts(
             checkClashWithSuperDeclaration(member, memberDescriptor, conflicts)
             checkAccidentalOverrides(member, memberDescriptor, conflicts)
             checkInnerClassToInterface(member, memberDescriptor, conflicts)
-            checkVisibility(memberInfo, memberDescriptor, conflicts, resolutionFacade.getLanguageVersionSettings())
+            checkVisibility(memberInfo, memberDescriptor, conflicts, resolutionFacade.languageVersionSettings)
         }
     }
     checkVisibilityInAbstractedMembers(memberInfos, pullUpData.resolutionFacade, conflicts)

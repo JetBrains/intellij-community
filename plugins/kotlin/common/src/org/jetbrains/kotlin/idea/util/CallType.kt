@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
@@ -249,7 +249,7 @@ fun CallTypeAndReceiver<*, *>.receiverTypesWithIndex(
     stableSmartCastsOnly: Boolean,
     withImplicitReceiversWhenExplicitPresent: Boolean = false
 ): List<ReceiverType>? {
-    val languageVersionSettings = resolutionFacade.getLanguageVersionSettings()
+    val languageVersionSettings = resolutionFacade.languageVersionSettings
 
     val receiverExpression: KtExpression?
     when (this) {
@@ -360,8 +360,8 @@ private fun receiverValueTypes(
     stableSmartCastsOnly: Boolean,
     resolutionFacade: ResolutionFacade
 ): List<KotlinType> {
-    val languageVersionSettings = resolutionFacade.getLanguageVersionSettings()
-    val dataFlowValueFactory = resolutionFacade.getDataFlowValueFactory()
+    val languageVersionSettings = resolutionFacade.languageVersionSettings
+    val dataFlowValueFactory = resolutionFacade.dataFlowValueFactory
     val smartCastManager = resolutionFacade.frontendService<SmartCastManager>()
     val dataFlowValue = dataFlowValueFactory.createDataFlowValue(receiverValue, bindingContext, moduleDescriptor)
     return if (dataFlowValue.isStable || !stableSmartCastsOnly) { // we don't include smart cast receiver types for "unstable" receiver value to mark members grayed

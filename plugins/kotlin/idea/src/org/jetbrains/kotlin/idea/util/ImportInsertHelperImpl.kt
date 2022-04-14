@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.imports.getImportableTargets
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.project.findAnalyzerServices
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
@@ -42,7 +42,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
     )
 
     override fun isImportedWithDefault(importPath: ImportPath, contextFile: KtFile): Boolean {
-        val languageVersionSettings = contextFile.getResolutionFacade().getLanguageVersionSettings()
+        val languageVersionSettings = contextFile.getResolutionFacade().languageVersionSettings
         val platform = TargetPlatformDetector.getPlatform(contextFile)
         val analyzerServices = platform.findAnalyzerServices(contextFile.project)
         val allDefaultImports = analyzerServices.getDefaultImports(languageVersionSettings, includeLowPriorityImports = true)
@@ -99,7 +99,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
     ) {
         private val file = element.containingKtFile
         private val resolutionFacade = file.getResolutionFacade()
-        private val languageVersionSettings = resolutionFacade.getLanguageVersionSettings()
+        private val languageVersionSettings = resolutionFacade.languageVersionSettings
 
         private fun alreadyImported(
             target: DeclarationDescriptor,

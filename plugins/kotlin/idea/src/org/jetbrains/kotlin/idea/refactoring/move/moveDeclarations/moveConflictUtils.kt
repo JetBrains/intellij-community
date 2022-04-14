@@ -55,7 +55,7 @@ import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.refactoring.getUsageContext
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveUsage
 import org.jetbrains.kotlin.idea.refactoring.pullUp.renderForConflicts
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.search.and
 import org.jetbrains.kotlin.idea.search.not
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
@@ -416,7 +416,7 @@ class MoveConflictChecker(
                 else -> null
             } ?: continue
 
-            val languageVersionSettings = referencedElement.getResolutionFacade().getLanguageVersionSettings()
+            val languageVersionSettings = referencedElement.getResolutionFacade().languageVersionSettings
 
             val actualVisibility = if (referencingDescriptor.isJavaDescriptor) referencedDescriptor.visibilityAsViewedFromJava() else null
             val originalDescriptorToCheck = referencedDescriptor.wrap(newVisibility = actualVisibility) ?: referencedDescriptor
@@ -483,7 +483,7 @@ class MoveConflictChecker(
         }
 
         for (declaration in elementsToMove - doNotGoIn) {
-            val languageVersionSettings = declaration.getResolutionFacade().getLanguageVersionSettings()
+            val languageVersionSettings = declaration.getResolutionFacade().languageVersionSettings
             declaration.forEachDescendantOfType<KtReferenceExpression> { refExpr ->
                 refExpr.references.forEach { ref ->
                     val target = ref.resolve() ?: return@forEach

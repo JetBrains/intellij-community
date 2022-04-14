@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory3
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.toDescriptor
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -61,9 +61,9 @@ object ChangeVisibilityOnExposureFactory : KotlinIntentionActionsFactory() {
         if (userDeclaration != null && !userDeclaration.isPrivate()) {
             val userDescriptor = userDeclaration.toDescriptor() as? DeclarationDescriptorWithVisibility
             if (userDescriptor != null && DescriptorVisibilityUtils.isVisibleIgnoringReceiver(
-                    exposedDescriptor,
-                    userDescriptor,
-                    exposedDeclaration.getResolutionFacade().getLanguageVersionSettings(),
+                exposedDescriptor,
+                userDescriptor,
+                exposedDeclaration.getResolutionFacade().languageVersionSettings,
                 )
             ) {
                 addFixToTargetVisibility(
