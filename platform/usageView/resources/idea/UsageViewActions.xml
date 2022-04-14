@@ -2,11 +2,13 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.usages.usageReferenceClassProvider"
                     interface="com.intellij.usages.impl.UsageReferenceClassProvider"/>
+    <extensionPoint name="generatedSourceUsageFilter" interface="com.intellij.usages.rules.GeneratedSourceUsageFilter" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <actionPromoter implementation="com.intellij.usages.impl.UsageViewActionPromoter"/>
     <postStartupActivity implementation="com.intellij.usages.impl.rules.UsageFilteringRulesActivity"/>
     <usages.usageReferenceClassProvider implementation="com.intellij.usages.impl.PsiElementUsageReferenceClassProvider"/>
+    <generatedSourceUsageFilter implementation="com.intellij.usages.impl.rules.DefaultGeneratedSourceUsageFilter"/>
   </extensions>
   <actions resource-bundle="messages.UsageViewBundle">
     <group id="UsageGroupingActionGroup">

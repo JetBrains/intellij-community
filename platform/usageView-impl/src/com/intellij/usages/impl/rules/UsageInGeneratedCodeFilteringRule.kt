@@ -2,19 +2,21 @@
 package com.intellij.usages.impl.rules
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.GeneratedSourcesFilter
 import com.intellij.usages.Usage
 import com.intellij.usages.UsageTarget
 import com.intellij.usages.rules.UsageFilteringRule
-import com.intellij.usages.rules.UsageInFile
+import com.intellij.usages.rules.GeneratedSourceUsageFilter
 
 internal class UsageInGeneratedCodeFilteringRule(private val project: Project) : UsageFilteringRule {
 
   override fun getActionId(): String = "UsageFiltering.GeneratedCode"
 
   override fun isVisible(usage: Usage, targets: Array<out UsageTarget>): Boolean {
-    return usage !is UsageInFile || usage.file.let { file ->
-      file == null || !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project)
+    for (filter in GeneratedSourceUsageFilter.EP_NAME.extensions) {
+      if (filter.isGeneratedSource(usage, project)) {
+        return false
+      }
     }
+    return true
   }
 }
