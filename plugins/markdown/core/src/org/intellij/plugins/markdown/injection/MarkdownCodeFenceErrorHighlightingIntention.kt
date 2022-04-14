@@ -2,9 +2,7 @@
 package org.intellij.plugins.markdown.injection
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
-import com.intellij.codeInsight.highlighting.HighlightErrorFilter
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -13,7 +11,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
@@ -69,17 +66,6 @@ internal class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
   private fun setHideErrors(project: Project, hideErrors: Boolean) {
     MarkdownSettings.getInstance(project).update {
       it.showErrorsInCodeBlocks = !hideErrors
-    }
-  }
-
-  class CodeFenceHighlightErrorFilter : HighlightErrorFilter() {
-    override fun shouldHighlightErrorElement(element: PsiErrorElement): Boolean {
-      val manager = InjectedLanguageManager.getInstance(element.project)
-      val topLevelFile = manager.getTopLevelFile(element)
-      if (topLevelFile.fileType == MarkdownFileType.INSTANCE && manager.getInjectionHost(element) is MarkdownCodeFence) {
-        return MarkdownSettings.getInstance(element.project).showErrorsInCodeBlocks
-      }
-      return true
     }
   }
 
