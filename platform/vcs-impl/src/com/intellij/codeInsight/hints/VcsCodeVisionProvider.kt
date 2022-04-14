@@ -63,6 +63,11 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
       val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@runReadAction CodeVisionState.NotReady
       val language = file.language
 
+      val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file.virtualFile) ?: return@runReadAction READY_EMPTY
+      if ("Git" != vcs.name) {
+        return@runReadAction READY_EMPTY
+      }
+
       val aspectResult = getAspect(file, editor)
       if (aspectResult.isSuccess.not()) return@runReadAction CodeVisionState.NotReady
       val aspect = aspectResult.result ?: return@runReadAction READY_EMPTY
@@ -129,6 +134,9 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
     val project = editor.project ?: return null
     val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language) ?: return null
     val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(psiFile.virtualFile) ?: return null
+    if ("Git" != vcs.name) {
+        return null
+    }
     if (vcs.annotationProvider !is CacheableAnnotationProvider) return null
     return object: BypassBasedPlaceholderCollector {
       override fun collectPlaceholders(element: PsiElement, editor: Editor): List<TextRange> {
