@@ -40,7 +40,7 @@ interface LinkedListEntity : WorkspaceEntityWithPersistentId {
       override var next: LinkedListEntityId
   }
   
-  companion object: Type<LinkedListEntity, Builder>(52)
+  companion object: Type<LinkedListEntity, Builder>()
   //@formatter:on
   //endregion
 

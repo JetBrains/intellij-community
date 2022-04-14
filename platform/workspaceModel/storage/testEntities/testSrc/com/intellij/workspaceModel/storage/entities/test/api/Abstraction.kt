@@ -27,7 +27,7 @@ interface BaseEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<BaseEntity, Builder<BaseEntity>>(85)
+  companion object: Type<BaseEntity, Builder<BaseEntity>>()
   //@formatter:on
   //endregion
 
@@ -47,7 +47,7 @@ interface CompositeBaseEntity : BaseEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<CompositeBaseEntity, Builder<CompositeBaseEntity>>(86, BaseEntity)
+  companion object: Type<CompositeBaseEntity, Builder<CompositeBaseEntity>>(BaseEntity)
   //@formatter:on
   //endregion
 
@@ -66,7 +66,7 @@ interface MiddleEntity : BaseEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<MiddleEntity, Builder>(87, BaseEntity)
+  companion object: Type<MiddleEntity, Builder>(BaseEntity)
   //@formatter:on
   //endregion
 
@@ -94,7 +94,7 @@ interface LeftEntity : CompositeBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<LeftEntity, Builder>(88, CompositeBaseEntity)
+    companion object: Type<LeftEntity, Builder>(CompositeBaseEntity)
     //@formatter:on
     //endregion
 
@@ -122,7 +122,7 @@ interface RightEntity : CompositeBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<RightEntity, Builder>(89, CompositeBaseEntity)
+    companion object: Type<RightEntity, Builder>(CompositeBaseEntity)
     //@formatter:on
     //endregion
 

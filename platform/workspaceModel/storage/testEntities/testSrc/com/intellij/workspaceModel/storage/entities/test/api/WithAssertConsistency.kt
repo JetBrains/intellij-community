@@ -31,7 +31,7 @@ interface AssertConsistencyEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<AssertConsistencyEntity, Builder>(76)
+  companion object: Type<AssertConsistencyEntity, Builder>()
   //@formatter:on
   //endregion
 

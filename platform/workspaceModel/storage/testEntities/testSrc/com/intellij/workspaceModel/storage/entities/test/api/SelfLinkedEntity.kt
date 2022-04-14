@@ -19,7 +19,7 @@ interface SelfLinkedEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<SelfLinkedEntity, Builder>(49)
+  companion object: Type<SelfLinkedEntity, Builder>()
   //@formatter:on
   //endregion
 

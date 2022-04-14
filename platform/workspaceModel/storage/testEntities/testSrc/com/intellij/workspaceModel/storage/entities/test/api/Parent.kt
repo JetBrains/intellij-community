@@ -32,7 +32,7 @@ interface XParentEntity : WorkspaceEntity {
       override var childChild: List<XChildChildEntity>
   }
   
-  companion object: Type<XParentEntity, Builder>(72)
+  companion object: Type<XParentEntity, Builder>()
   //@formatter:on
   //endregion
 
@@ -58,7 +58,7 @@ interface XChildEntity : WorkspaceEntity {
       override var childChild: List<XChildChildEntity>
   }
   
-  companion object: Type<XChildEntity, Builder>(73)
+  companion object: Type<XChildEntity, Builder>()
   //@formatter:on
   //endregion
 
@@ -76,7 +76,7 @@ interface XChildWithOptionalParentEntity : WorkspaceEntity {
       override var optionalParent: XParentEntity?
   }
   
-  companion object: Type<XChildWithOptionalParentEntity, Builder>(74)
+  companion object: Type<XChildWithOptionalParentEntity, Builder>()
   //@formatter:on
   //endregion
 
@@ -95,7 +95,7 @@ interface XChildChildEntity : WorkspaceEntity {
       override var parent2: XChildEntity
   }
   
-  companion object: Type<XChildChildEntity, Builder>(75)
+  companion object: Type<XChildChildEntity, Builder>()
   //@formatter:on
   //endregion
 

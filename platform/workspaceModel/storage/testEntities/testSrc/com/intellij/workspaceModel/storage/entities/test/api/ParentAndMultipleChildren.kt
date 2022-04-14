@@ -32,7 +32,7 @@ interface ParentMultipleEntity : WorkspaceEntity {
         override var children: List<ChildMultipleEntity>
     }
     
-    companion object: Type<ParentMultipleEntity, Builder>(79)
+    companion object: Type<ParentMultipleEntity, Builder>()
     //@formatter:on
     //endregion
 
@@ -52,7 +52,7 @@ interface ChildMultipleEntity : WorkspaceEntity {
         override var parentEntity: ParentMultipleEntity
     }
     
-    companion object: Type<ChildMultipleEntity, Builder>(80)
+    companion object: Type<ChildMultipleEntity, Builder>()
     //@formatter:on
     //endregion
 
