@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -2008,6 +2008,20 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "}}";
     assertEquals("Find static methods within expr type hierarchy", 3,
                  findMatchesCount(s1, "'_Instance:[regex( *A )].'_Method:[regex( foo )] ( '_Params* )"));
+
+    String s2 = "import static java.lang.String.valueOf;" +
+                "class A {" +
+                "  void x() {" +
+                "    valueOf(1);" +
+                "  }" +
+                "}" +
+                "class B {" +
+                "  void x() {" +
+                "    valueOf(1);" +
+                "  }" +
+                "  void valueOf(int i) {}" +
+                "}";
+    assertEquals("matching implicit class qualifier within hierarchy", 1, findMatchesCount(s2, "'_Q?:*Object .'_m:valueOf ('_a)"));
   }
 
   public void testFindClassesWithinHierarchy() {
