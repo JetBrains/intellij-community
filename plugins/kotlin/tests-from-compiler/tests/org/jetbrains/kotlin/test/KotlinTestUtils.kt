@@ -21,6 +21,11 @@ object KotlinTestUtils {
         KotlinTestUtils.assertEqualsToFile(expectedFile, actual)
     }
 
+    @JvmStatic
+    fun assertEqualsToFile(message: String, expectedFile: File, actual: String) {
+        KotlinTestUtils.assertEqualsToFile(message, expectedFile, actual)
+    }
+
     interface DoTest : KotlinTestUtils.DoTest
 
     @JvmStatic
