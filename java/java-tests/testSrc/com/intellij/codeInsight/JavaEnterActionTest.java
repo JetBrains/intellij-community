@@ -267,6 +267,35 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     }
   }
 
+  public void testNoCloseComment() {
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    boolean old = settings.CLOSE_COMMENT_ON_ENTER;
+    settings.CLOSE_COMMENT_ON_ENTER = false;
+
+    try {
+      doTextTest("java",
+                 "/*<caret>",
+                 "/*\n");
+    }
+    finally {
+      settings.CLOSE_COMMENT_ON_ENTER = old;
+    }
+  }
+
+  public void testNoCloseJavaDocComment() {
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    boolean old = settings.CLOSE_COMMENT_ON_ENTER;
+    settings.CLOSE_COMMENT_ON_ENTER = false;
+
+    try {
+      doTextTest("java",
+                 "/**<caret>",
+                 "/**\n <caret>");
+    }
+    finally {
+      settings.CLOSE_COMMENT_ON_ENTER = old;
+    }
+  }
   public void testNoInsertBrace() {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     boolean old = settings.INSERT_BRACE_ON_ENTER;

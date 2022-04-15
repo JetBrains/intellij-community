@@ -19,9 +19,11 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.EnumComboBoxModel
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.NonNls
@@ -66,6 +68,10 @@ private val cbSmartIndentOnEnter
 private val cbInsertPairCurlyBraceOnEnter
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.insert.pair.curly.brace"),
                              codeInsightSettings::INSERT_BRACE_ON_ENTER)
+
+private val cbCloseBlockCommentOnEnter
+  get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.close.block.comment"),
+                             codeInsightSettings::CLOSE_COMMENT_ON_ENTER)
 private val cbInsertJavadocStubOnEnter
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.javadoc.stub.after.slash.star.star"),
                              codeInsightSettings::JAVADOC_STUB_ON_ENTER)
@@ -87,6 +93,7 @@ internal val editorSmartKeysOptionDescriptors: List<BooleanOptionDescription>
     cbEnableAddingCaretsOnDoubleCtrlArrows,
     cbSmartIndentOnEnter,
     cbInsertPairCurlyBraceOnEnter,
+    cbCloseBlockCommentOnEnter,
     cbInsertJavadocStubOnEnter,
     cbHonorCamelHumpsWhenSelectingByClicking
   ).map(CheckboxDescriptor::asUiOptionDescriptor)
@@ -111,6 +118,7 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
   ID
 ), SearchableConfigurable.Parent {
   override fun createPanel(): DialogPanel {
+    lateinit var checkBoxCloseBlockComment: com.intellij.ui.dsl.builder.Cell<JBCheckBox>
     return panel {
       row {
         checkBox(cbSmartHome)
@@ -149,9 +157,12 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
         row {
           checkBox(cbInsertPairCurlyBraceOnEnter)
         }
+        row {
+          checkBoxCloseBlockComment = checkBox(cbCloseBlockCommentOnEnter)
+        }
         if (hasAnyDocAwareCommenters()) {
           row {
-            checkBox(cbInsertJavadocStubOnEnter)
+            checkBox(cbInsertJavadocStubOnEnter).enabledIf(checkBoxCloseBlockComment.selected)
           }
         }
       }

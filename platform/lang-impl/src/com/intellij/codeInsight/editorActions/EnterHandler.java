@@ -369,6 +369,7 @@ public class EnterHandler extends BaseEnterHandler {
         boolean isBeforeEof = myOffset > 0 && myOffset == chars.length() && chars.charAt(myOffset - 1) == '\n';
 
         PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(getProject());
+        CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
         if (commentContext.docStart) {
           psiDocumentManager.commitDocument(myDocument);
           PsiElement element = myFile.findElementAt(commentContext.lineStart);
@@ -395,8 +396,12 @@ public class EnterHandler extends BaseEnterHandler {
                 }
                 commentContext.docStart = false;
               }
-              else {
+              else if (codeInsightSettings.CLOSE_COMMENT_ON_ENTER) {
                 generateJavadoc(commentContext.commenter);
+              }
+              else {
+                commentContext.docStart = false;
+                commentContext.docAsterisk = false;
               }
             }
           }
@@ -427,7 +432,6 @@ public class EnterHandler extends BaseEnterHandler {
         }
 
         boolean docIndentApplied = false;
-        CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
         if (codeInsightSettings.SMART_INDENT_ON_ENTER || myForceIndent || commentContext.docStart || commentContext.docAsterisk) {
           final int offset = adjustLineIndentNoCommit(getLanguage(myDataContext), myDocument, myEditor, myOffset);
           if (offset >= 0) {
