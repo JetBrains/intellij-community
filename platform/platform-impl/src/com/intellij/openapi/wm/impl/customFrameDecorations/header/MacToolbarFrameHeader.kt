@@ -29,6 +29,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   init {
     layout = BorderLayout()
     root.addPropertyChangeListener(MacMainFrameDecorator.FULL_SCREEN, PropertyChangeListener { updateBorders() })
+    add(ideMenu, BorderLayout.NORTH)
   }
 
   override fun updateToolbar() {
@@ -45,7 +46,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   }
 
   override fun removeToolbar() {
-    removeAll()
+    myToolbar?.let { remove(it) }
     revalidate()
   }
 
