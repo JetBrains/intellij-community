@@ -2,8 +2,6 @@
 package com.intellij.collaboration.api.httpclient
 
 import com.intellij.collaboration.api.HttpStatusErrorException
-import com.intellij.collaboration.api.dto.GraphQLRequestDTO
-import com.intellij.collaboration.api.graphql.CachingGraphQLQueryLoader
 import java.awt.Image
 import java.io.InputStream
 import java.net.http.HttpRequest
@@ -26,20 +24,6 @@ abstract class ByteArrayProducingBodyPublisher
 
   override fun contentLength(): Long = -1
 }
-
-abstract class GraphQLQueryBodyPublisher(private val queryPath: String, private val input: Any? = null)
-  : ByteArrayProducingBodyPublisher() {
-
-  protected abstract val queryLoader: CachingGraphQLQueryLoader
-
-  final override fun produceBytes(): ByteArray {
-    val query = queryLoader.loadQuery(queryPath)
-    return serialize(GraphQLRequestDTO(query, input))
-  }
-
-  abstract fun serialize(request: GraphQLRequestDTO): ByteArray
-}
-
 
 abstract class StreamReadingBodyHandler<T>(protected val request: HttpRequest) : BodyHandler<T> {
 
