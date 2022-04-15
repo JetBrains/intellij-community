@@ -4,9 +4,7 @@ package com.intellij.diagnostic;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.internal.DebugAttachDetector;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventId1;
-import com.intellij.internal.statistic.eventLog.events.EventId2;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -92,14 +90,18 @@ public final class IdeHeartbeatEventReporter implements Disposable {
   }
 
   public static final class UILatencyLogger extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("performance", 61);
+    private static final EventLogGroup GROUP = new EventLogGroup("performance", 62);
 
     private static final EventId2<Integer, Integer> HEARTBEAT = GROUP.registerEvent(
       "heartbeat", EventFields.Int("system_cpu_load"), EventFields.Int("swap_load"));
     private static final EventId1<Long> LATENCY = GROUP.registerEvent("ui.latency", EventFields.DurationMs);
     private static final EventId1<Long> LAGGING = GROUP.registerEvent("ui.lagging", EventFields.DurationMs);
-    public static final EventId2<Long, String> POPUP_LATENCY =
-      GROUP.registerEvent("popup.latency", EventFields.DurationMs, EventFields.ActionPlace);
+    public static final BooleanEventField COLD_START = EventFields.Boolean("cold_start");
+    public static final VarargEventId POPUP_LATENCY = GROUP.registerVarargEvent("popup.latency",
+                                                                                EventFields.DurationMs,
+                                                                                EventFields.ActionPlace,
+                                                                                COLD_START,
+                                                                                EventFields.Language);
 
     @Override
     public EventLogGroup getGroup() {

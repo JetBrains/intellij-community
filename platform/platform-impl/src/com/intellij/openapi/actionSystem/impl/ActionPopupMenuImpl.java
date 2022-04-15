@@ -6,13 +6,12 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.inspector.UiInspectorUtil;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.lang.Language;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,6 +25,8 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ import java.util.function.Supplier;
  */
 final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivationListener {
   private static final Logger LOG = Logger.getInstance(ActionPopupMenuImpl.class);
+  private static final IntSet SEEN_ACTION_GROUPS = new IntOpenHashSet(50);
   private final MyMenu myMenu;
   private final ActionManagerImpl myManager;
 
@@ -151,7 +153,13 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     public void addNotify() {
       super.addNotify();
       long time = System.currentTimeMillis() - IdeEventQueue.getInstance().getPopupTriggerTime();
-      IdeHeartbeatEventReporter.UILatencyLogger.POPUP_LATENCY.log(time, myPlace);
+      final Language language = CommonDataKeys.LANGUAGE.getData(myContext);
+      int languageHashCode = language != null ? language.hashCode() : 0;
+      final boolean coldStart = SEEN_ACTION_GROUPS.add(myGroup.hashCode() + languageHashCode);
+      IdeHeartbeatEventReporter.UILatencyLogger.POPUP_LATENCY.log(EventFields.DurationMs.with(time),
+                                                                  EventFields.ActionPlace.with(myPlace),
+                                                                  IdeHeartbeatEventReporter.UILatencyLogger.COLD_START.with(coldStart),
+                                                                  EventFields.Language.with(language));
       //noinspection RedundantSuppression
       if (Registry.is("ide.diagnostics.show.context.menu.invocation.time")) {
         //noinspection HardCodedStringLiteral
