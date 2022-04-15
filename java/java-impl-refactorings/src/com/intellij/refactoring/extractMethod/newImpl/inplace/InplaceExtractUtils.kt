@@ -219,4 +219,13 @@ object InplaceExtractUtils {
     return document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
   }
 
+  fun createPreview(editor: Editor, methodRange: TextRange, methodOffset: Int, callRange: TextRange, callOffset: Int): EditorCodePreview {
+    val codePreview = EditorCodePreview.create(editor)
+    val highlighting = createInsertedHighlighting(editor, methodRange)
+    Disposer.register(codePreview, highlighting)
+    addPreview(codePreview, editor, getLinesFromTextRange(editor.document, callRange).trim(4), callOffset)
+    addPreview(codePreview, editor, getLinesFromTextRange(editor.document, methodRange), methodOffset)
+    return codePreview
+  }
+
 }

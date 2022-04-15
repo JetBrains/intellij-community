@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
-import com.intellij.codeInsight.hint.EditorCodePreview
-import com.intellij.codeInsight.template.*
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.refactoring.JavaRefactoringBundle
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
@@ -27,18 +27,15 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
 import com.intellij.refactoring.extractMethod.newImpl.ExtractSelector
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.addInlaySettingsElement
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.addPreview
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.addTemplateFinishedListener
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createChangeBasedDisposable
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createChangeSignatureGotIt
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createGreedyRangeMarker
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createInsertedHighlighting
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createNavigationGotIt
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createPreview
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.findElementAt
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.getEditedTemplateText
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.getLinesFromTextRange
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.showInEditor
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.trim
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
 import com.intellij.refactoring.suggested.range
@@ -88,23 +85,16 @@ private fun installGotItTooltips(editor: Editor, navigationGotItRange: TextRange
 class ExtractMethodTemplate(private val editor: Editor, private val method: PsiMethod, private val call: PsiElement)
   : InplaceRefactoring(editor, method, method.project) {
 
-  private val disposable: Disposable = Disposer.newDisposable()
-
   init {
     initPopupOptionsAdvertisement()
   }
 
   fun runTemplate(suggestedNames: LinkedHashSet<String>): TemplateState {
-    try {
-      editor.caretModel.moveToOffset(call.textRange.startOffset)
-      super.performInplaceRefactoring(suggestedNames)
-      val templateState = TemplateManagerImpl.getTemplateState(editor) ?: throw IllegalStateException()
-      Disposer.register(templateState, disposable)
-      return templateState
-    } catch (e: Throwable) {
-      Disposer.dispose(disposable)
-      throw e
-    }
+    editor.caretModel.moveToOffset(call.textRange.startOffset)
+    super.performInplaceRefactoring(suggestedNames)
+    val templateState = TemplateManagerImpl.getTemplateState(editor) ?: throw IllegalStateException()
+    Disposer.register(templateState) { SuggestedRefactoringProvider.getInstance(method.project).reset() }
+    return templateState
   }
 
   override fun checkLocalScope(): PsiElement {
@@ -164,28 +154,29 @@ class InplaceMethodExtractor(private val editor: Editor,
   private val project = file.project
 
   fun extractAndRunTemplate(suggestedNames: LinkedHashSet<String>) {
-    val elements = ExtractSelector().suggestElementsToExtract(file, range)
-    MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
-    val (callElements, method) = extractor.extract(targetClass, elements, initialMethodName, popupProvider.makeStatic ?: false)
-    val callExpression = PsiTreeUtil.findChildOfType(callElements.first(), PsiMethodCallExpression::class.java, false)
-                         ?: throw IllegalStateException()
-    val methodIdentifier = method.nameIdentifier ?: throw IllegalStateException()
-    val callIdentifier = callExpression.methodExpression.referenceNameElement ?: throw IllegalStateException()
+    try {
+      val elements = ExtractSelector().suggestElementsToExtract(file, range)
+      MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
+      val (callElements, method) = extractor.extract(targetClass, elements, initialMethodName, popupProvider.makeStatic ?: false)
+      val callExpression = PsiTreeUtil.findChildOfType(callElements.first(), PsiMethodCallExpression::class.java, false)
+                           ?: throw IllegalStateException()
+      val methodIdentifier = method.nameIdentifier ?: throw IllegalStateException()
+      val callIdentifier = callExpression.methodExpression.referenceNameElement ?: throw IllegalStateException()
 
-    methodIdentifierRange = createGreedyRangeMarker(editor.document, methodIdentifier.textRange)
-    callIdentifierRange = createGreedyRangeMarker(editor.document, callIdentifier.textRange)
+      methodIdentifierRange = createGreedyRangeMarker(editor.document, methodIdentifier.textRange)
+      callIdentifierRange = createGreedyRangeMarker(editor.document, callIdentifier.textRange)
 
-    val highlighting = createInsertedHighlighting(editor, method.textRange)
-    Disposer.register(disposable, highlighting)
+      val callRange = TextRange(callElements.first().textRange.startOffset, callElements.last().textRange.endOffset)
+      val codePreview = createPreview(editor, method.textRange, methodIdentifier.textRange.endOffset, callRange,
+                                      callIdentifier.textRange.endOffset)
+      Disposer.register(disposable, codePreview)
 
-    val codePreview = EditorCodePreview.create(editor)
-    Disposer.register(disposable, codePreview)
-    val callRange = TextRange(callElements.first().textRange.startOffset, callElements.last().textRange.endOffset)
-    addPreview(codePreview, editor, getLinesFromTextRange(editor.document, callRange).trim(4), callIdentifier.textRange.endOffset)
-    addPreview(codePreview, editor, getLinesFromTextRange(editor.document, method.textRange), methodIdentifier.textRange.endOffset)
-
-    val templateState = ExtractMethodTemplate(editor, method, callIdentifier).runTemplate(suggestedNames)
-    afterTemplateStart(templateState)
+      val templateState = ExtractMethodTemplate(editor, method, callIdentifier).runTemplate(suggestedNames)
+      afterTemplateStart(templateState)
+    } catch (e: Throwable) {
+      Disposer.dispose(disposable)
+      throw e
+    }
   }
 
   private fun revertState() {
@@ -206,7 +197,6 @@ class InplaceMethodExtractor(private val editor: Editor,
       }
     })
     setActiveExtractor(editor, this)
-    Disposer.register(templateState) { SuggestedRefactoringProvider.getInstance(project).reset() }
     Disposer.register(templateState, disposable)
     addTemplateFinishedListener(templateState, ::afterTemplateFinished)
     popupProvider.setChangeListener {
