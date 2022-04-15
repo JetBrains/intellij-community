@@ -13,6 +13,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -21,10 +22,14 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.JBColor
+import com.intellij.ui.LicensingFacade
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.*
@@ -136,9 +141,32 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
   val recentProjectsNumber = RecentProjectsManagerBase.instanceEx.getRecentPaths().size
   val actionsNumber = service<ActionsLocalSummary>().getActionsStats().keys.size
 
-  val agreement = createAgreementComponent {
+  val emailCheckBox = JBCheckBox(LearnBundle.message("onboarding.feedback.email.consent"))
+
+  val jLabel = JLabel(ApplicationBundle.message("feedback.form.email"))
+  jLabel.isEnabled = false
+  val emailTextField = JBTextField(LicensingFacade.INSTANCE?.getLicenseeEmail() ?: "")
+  emailTextField.disabledTextColor = UIUtil.getComboBoxDisabledForeground()
+  emailTextField.isEnabled = false
+
+  val emailLine = JPanel().also { panel ->
+    panel.isOpaque = false
+    panel.layout = BoxLayout(panel, BoxLayout.X_AXIS)
+    panel.add(jLabel)
+    panel.add(emailTextField)
+  }
+
+  emailCheckBox.addItemListener {
+    emailCheckBox.isSelected.let {
+      jLabel.isEnabled = it
+      emailTextField.isEnabled = it
+    }
+  }
+
+  val agreement1 = createAgreementTextPane(LearnBundle.message("onboarding.feedback.user.agreement.info"), false) {
     showSystemData(project, systemInfoData, onboardingFeedbackData, recentProjectsNumber, actionsNumber)
   }
+  val agreement2 = createCollapsableAgreement()
 
   val technicalIssuesOption = feedbackOption("technical_issues", LearnBundle.message("onboarding.feedback.option.technical.issues"))
   val header = JLabel(LearnBundle.message("onboarding.feedback.option.form.header")).also {
@@ -160,7 +188,10 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
       it.border = JBUI.Borders.empty(20 - UIUtil.DEFAULT_VGAP, 0, 12 - UIUtil.DEFAULT_VGAP, 0)
     })
     .addComponent(freeForm)
-    .addComponent(agreement.also { it.border = JBUI.Borders.emptyTop(18 - UIUtil.DEFAULT_VGAP) })
+    .addComponent(agreement1.also { it.border = JBUI.Borders.emptyBottom(20 - UIUtil.DEFAULT_VGAP) })
+    .addComponent(emailCheckBox.also { it.border = JBUI.Borders.emptyBottom(6 - UIUtil.DEFAULT_VGAP) })
+    .addComponent(emailLine.also { it.border = JBUI.Borders.emptyBottom(14 - UIUtil.DEFAULT_VGAP) })
+    .addComponent(agreement2)
     .panel
 
   val dialog = object : DialogWrapper(project) {
@@ -185,6 +216,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     val collectedData = buildJsonObject {
       put(FEEDBACK_REPORT_ID_KEY, onboardingFeedbackData.feedbackReportId)
       put("format_version", FEEDBACK_JSON_VERSION + onboardingFeedbackData.additionalFeedbackFormatVersion)
+      put("email", if (emailCheckBox.isSelected) emailTextField.text else "")
       for (function in saver) {
         function()
       }
@@ -353,9 +385,25 @@ private class FeedbackOption(@NlsContexts.Label text: String?, icon: Icon?) : JB
   }
 }
 
-private fun createAgreementComponent(showSystemInfo: () -> Unit): JComponent {
-  val htmlText = LearnBundle.message("onboarding.feedback.user.agreement")
-  val jTextPane = JTextPane().apply {
+private fun createCollapsableAgreement(): JComponent {
+  val prefix = LearnBundle.message("onboarding.feedback.user.agreement.prefix")
+  val suffix = LearnBundle.message("onboarding.feedback.user.agreement.suffix")
+  val shortText = prefix + " " + LearnBundle.message("onboarding.feedback.user.agreement.more")
+  val longText = prefix + " " + suffix + " " + LearnBundle.message("onboarding.feedback.user.agreement.less")
+  var shortForm = true
+  val jTextPane = createAgreementTextPane(shortText, true) {
+    shortForm = !shortForm
+    text = if (shortForm) shortText else longText
+  }
+
+  val scrollPane = JBScrollPane(jTextPane)
+  scrollPane.preferredSize = Dimension(FEEDBACK_CONTENT_WIDTH, 100)
+  scrollPane.border = null
+  return scrollPane
+}
+
+private fun createAgreementTextPane(@Nls htmlText: String, customLink: Boolean, showSystemInfo: JTextPane.() -> Unit): JTextPane {
+  return JTextPane().apply {
     contentType = "text/html"
     addHyperlinkListener(object : HyperlinkAdapter() {
       override fun hyperlinkActivated(e: HyperlinkEvent?) {
@@ -366,14 +414,13 @@ private fun createAgreementComponent(showSystemInfo: () -> Unit): JComponent {
     text = htmlText
 
     val styleSheet = (document as HTMLDocument).styleSheet
-    styleSheet.addRule("body {font-size:${JBUI.Fonts.label().lessOn(3f)}pt;}")
+    val textColor = "#" + ColorUtil.toHex(UIUtil.getContextHelpForeground())
+    styleSheet.addRule("body { color: $textColor; font-size:${JBUI.Fonts.label().lessOn(3f)}pt;}")
+    if (customLink) {
+      styleSheet.addRule("a, a:link { color: $textColor; text-decoration: underline;}")
+    }
     isEditable = false
   }
-
-  val scrollPane = JBScrollPane(jTextPane)
-  scrollPane.preferredSize = Dimension(FEEDBACK_CONTENT_WIDTH, 100)
-  scrollPane.border = null
-  return scrollPane
 }
 
 private fun getFeedbackEntryPlace(project: Project?) = when {
