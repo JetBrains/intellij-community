@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.ProjectTopics;
@@ -215,7 +215,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   @Nullable
   protected Project openProject(@NotNull Path projectPath, @NotNull Disposable parentDisposable)
     throws InterruptedException, ExecutionException {
-    VirtualFile vfsProject = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(projectPath.toString()));
+    VirtualFile vfsProject = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(projectPath.toString()));
     if (vfsProject == null) {
       reportError(InspectionsBundle.message("inspection.application.file.cannot.be.found", projectPath));
       printHelp();
