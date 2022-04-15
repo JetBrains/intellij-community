@@ -141,6 +141,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
         if (!warningIsLogged) {
           warningIsLogged = true
           if (problem != null) {
+            this@TaskContextImpl.lessonExecutor.internalProblems.add(problem)
             StatisticBase.logLearningProblem(problem, this@TaskContextImpl.lessonExecutor.lesson)
             thisLogger().error("Detected important problem ($problem): $text")
           }
