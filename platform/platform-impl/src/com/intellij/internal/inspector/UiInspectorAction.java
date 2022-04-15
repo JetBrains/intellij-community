@@ -312,7 +312,20 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
             @Override
             public void navigate(boolean requestFocus) {
               if (myHierarchyTree.hasFocus()) {
-                openClass(myComponents.get(0).getClass().getName(), requestFocus);
+                if (!myComponents.isEmpty()) {
+                  openClass(myComponents.get(0).getClass().getName(), requestFocus);
+                } else {
+                  TreePath path = myHierarchyTree.getSelectionPath();
+                  if (path != null) {
+                    Object obj = path.getLastPathComponent();
+                    if (obj instanceof HierarchyTree.ComponentNode) {
+                      Component comp = ((HierarchyTree.ComponentNode)obj).getComponent();
+                      if (comp != null) {
+                        openClass(comp.getClass().getName(), requestFocus);
+                      }
+                    }
+                  }
+                }
               } else if (myInspectorTable.myTable.hasFocus()) {
                 int row = myInspectorTable.myTable.getSelectedRow();
                 Object at = myInspectorTable.myModel.getValueAt(row, 1);
