@@ -1,12 +1,22 @@
 #!/bin/bash
 
 # Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-SIT_FILE=$1
-BUNDLE_ID=$2
-FAKE_ROOT="${3:-fake-root}"
-
-if [[ -z "$SIT_FILE" ]] || [[ -z "$BUNDLE_ID" ]] ; then
-  echo "Usage: $0 SitFile BundleId [FakeRootForAltool]"
+set +x
+APP_DIRECTORY=$1
+APPLE_USERNAME=$2
+APPLE_PASSWORD=$3
+APP_NAME=$4
+BUNDLE_ID=$5
+FAKE_ROOT="${6:-fake-root}"
+if [[ -z "$APP_DIRECTORY" ]] || \
+   [[ -z "$APPLE_USERNAME" ]] || [[ -z "$APPLE_PASSWORD" ]] || \
+   [[ -z "$APP_NAME" ]] || [[ -z "$BUNDLE_ID" ]] ; then
+  echo "Usage: $0 AppDirectory Username Password AppName BundleId [FakeRootForAltool]"
+  exit 1
+fi
+set -x
+if [[ ! -d "$APP_DIRECTORY" ]]; then
+  echo "AppDirectory '$APP_DIRECTORY' does not exist or not a directory"
   exit 1
 fi
 
@@ -72,12 +82,14 @@ set -euo pipefail
 set -x
 
 # only ZIP or DMG file can be notarized
-ZIP_FILE="${SIT_FILE%.*}".zip
-mv "$SIT_FILE" "$ZIP_FILE"
-log "Notarizing $ZIP_FILE..."
+file="$APP_NAME.zip"
+log "Zipping $file..."
+rm -rf "$file"
+ditto -c -k --sequesterRsrc --keepParent "$APP_DIRECTORY" "$file"
+log "Notarizing $file..."
 rm -rf "altool.init.out" "altool.check.out"
-altool-upload "$ZIP_FILE"
-mv "$ZIP_FILE" "$SIT_FILE"
+altool-upload "$file"
+rm -rf "$file"
 
 notarization_info="$(grep -e "RequestUUID" "altool.init.out" | grep -oE '([0-9a-f-]{36})')"
 
@@ -122,7 +134,7 @@ while true; do
   developer_log="developer_log.json"
   log "Fetching $developer_log"
   url="$(grep -oe 'LogFileURL: .*' "altool.check.out" | sed 's/LogFileURL: //')"
-  wget "$url" -O "$developer_log"
+  curl --output "$developer_log" "$url"
   log "$developer_log content:"
   cat "$developer_log"
   issues=$(python -c "import sys, json; print(json.load(sys.stdin)['issues'])" < "$developer_log")

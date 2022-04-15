@@ -116,6 +116,7 @@ log "Signing whole app..."
   --entitlements "$ENTITLEMENTS" "$SIT_FILE"
 
 ditto -xk "$SIT_FILE" "$(dirname "$APP_DIRECTORY")"
+rm -rf "$SIT_FILE"
 codesign --verify --verbose "$APP_DIRECTORY"
 
 log "Verifying java is not broken"

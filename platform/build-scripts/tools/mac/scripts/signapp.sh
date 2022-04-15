@@ -130,31 +130,33 @@ if [ "$NOTARIZE" = "yes" ]; then
     log "Apple credentials are required for Notarization"
     exit 1
   fi
-  export APPLE_USERNAME
-  export APPLE_PASSWORD
   set -x
   # Since notarization tool uses same file for upload token we have to trick it into using different folders, hence fake root
   # Also it leaves copy of zip file in TMPDIR, so notarize.sh overrides it and uses FAKE_ROOT as location for temp TMPDIR
   FAKE_ROOT="$(pwd)/fake-root"
   mkdir -p "$FAKE_ROOT"
   echo "Notarization will use fake root: $FAKE_ROOT"
-  retry "Notarization" 3 ./notarize.sh "$SIT_FILE" "$BUNDLE_ID" "$FAKE_ROOT"
+  APP_NAME="${SIT_FILE%.*}"
+  set +x
+  retry "Notarization" 3 ./notarize.sh "$APPLICATION_PATH" "$APPLE_USERNAME" "$APPLE_PASSWORD" "$APP_NAME" "$BUNDLE_ID" "$FAKE_ROOT"
+  set -x
   rm -rf "$FAKE_ROOT"
 
   log "Stapling..."
   # only unzipped application can be stapled
   retry "Stapling" 3 xcrun stapler staple "$APPLICATION_PATH"
-  if [ "$COMPRESS_INPUT" != "false" ]; then
-    log "Zipping $BUILD_NAME to $SIT_FILE ..."
-    (
-      cd "$EXPLODED"
-      ditto -c -k --zlibCompressionLevel=-1 --sequesterRsrc --keepParent "$BUILD_NAME" "../$SIT_FILE"
-      log "Finished zipping"
-    )
-  fi
 else
   log "Notarization disabled"
   log "Stapling disabled"
+fi
+
+if [ "$COMPRESS_INPUT" != "false" ]; then
+  log "Zipping $BUILD_NAME to $SIT_FILE ..."
+  (
+    cd "$EXPLODED"
+    ditto -c -k --zlibCompressionLevel=-1 --sequesterRsrc --keepParent "$BUILD_NAME" "../$SIT_FILE"
+    log "Finished zipping"
+  )
 fi
 
 log "Done"
