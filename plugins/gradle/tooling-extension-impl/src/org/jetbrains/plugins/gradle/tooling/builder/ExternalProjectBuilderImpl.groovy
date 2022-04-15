@@ -72,12 +72,13 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def cache = context.getData(PROJECTS_PROVIDER)
     def tasksFactory = context.getData(TASKS_PROVIDER)
     def sourceSetFinder = new SourceSetCachedFinder(context)
-    return doBuild(modelName, project, cache, tasksFactory, sourceSetFinder)
+    return doBuild(modelName, project, context, cache, tasksFactory, sourceSetFinder)
   }
 
   @Nullable
   private static Object doBuild(final String modelName,
                                 final Project project,
+                                ModelBuilderContext context,
                                 ConcurrentMap<Project, ExternalProject> cache,
                                 TasksFactory tasksFactory,
                                 SourceSetCachedFinder sourceSetFinder) {
@@ -103,7 +104,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     defaultExternalProject.buildFile = project.buildFile
     defaultExternalProject.group = wrap(project.group)
     defaultExternalProject.projectDir = project.projectDir
-    defaultExternalProject.sourceSets = getSourceSets(project, resolveSourceSetDependencies, sourceSetFinder)
+    defaultExternalProject.sourceSets = getSourceSets(project, context, resolveSourceSetDependencies, sourceSetFinder)
     defaultExternalProject.tasks = getTasks(project, tasksFactory)
     defaultExternalProject.sourceCompatibility = getSourceCompatibility(project)
     defaultExternalProject.targetCompatibility = getTargetCompatibility(project)
@@ -112,7 +113,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
     final Map<String, DefaultExternalProject> childProjects = new TreeMap<String, DefaultExternalProject>()
     for (Map.Entry<String, Project> projectEntry : project.getChildProjects().entrySet()) {
-      final Object externalProjectChild = doBuild(modelName, projectEntry.getValue(), cache, tasksFactory, sourceSetFinder)
+      final Object externalProjectChild = doBuild(modelName, projectEntry.getValue(), context, cache, tasksFactory, sourceSetFinder)
       if (externalProjectChild instanceof DefaultExternalProject) {
         childProjects.put(projectEntry.getKey(), (DefaultExternalProject)externalProjectChild)
       }
@@ -192,6 +193,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   @CompileDynamic
   private static Map<String, DefaultExternalSourceSet> getSourceSets(Project project,
+                                                                     ModelBuilderContext context,
                                                                      boolean resolveSourceSetDependencies,
                                                                      SourceSetCachedFinder sourceSetFinder) {
     final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
@@ -255,8 +257,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       return result
     }
 
-    def (resourcesIncludes, resourcesExcludes, filterReaders) = getFilters(project, 'processResources')
-    def (testResourcesIncludes, testResourcesExcludes, testFilterReaders) = getFilters(project, 'processTestResources')
+    def (resourcesIncludes, resourcesExcludes, filterReaders) = getFilters(project, context, 'processResources')
+    def (testResourcesIncludes, testResourcesExcludes, testFilterReaders) = getFilters(project, context, 'processTestResources')
     //def (javaIncludes,javaExcludes) = getFilters(project,'compileJava')
 
     def additionalIdeaGenDirs = [] as Collection<File>
@@ -590,7 +592,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   }
 
   @CompileDynamic
-  static List<List> getFilters(Project project, String taskName) {
+  static List<List> getFilters(Project project, ModelBuilderContext context, String taskName) {
     def includes = []
     def excludes = []
     def filterReaders = [] as List<ExternalFilter>
@@ -623,7 +625,10 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       }
     }
     catch (Exception exception) {
-      project.logger.error("Idea internal error: Unable to resolve resources filtering configuration", exception)
+      def message = ErrorMessageBuilder.create(project, exception, "Resource configuration errors")
+        .withDescription("Idea internal error: Unable to resolve resources filtering configuration")
+        .buildMessage()
+      context.report(project, message)
     }
 
     return [includes, excludes, filterReaders]
