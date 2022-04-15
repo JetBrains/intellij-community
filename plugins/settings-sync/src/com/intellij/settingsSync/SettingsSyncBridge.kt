@@ -113,9 +113,8 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
           SettingsSyncStatusTracker.getInstance().updateOnSuccess()
         }
         is SettingsSyncPushResult.Error -> {
-          // todo notify only in case of explicit sync invocation, otherwise update some SettingsSyncStatus
-          notifySettingsSyncError(title = SettingsSyncBundle.message("notification.title.apply.error"),
-                                  message = pushResult.message)
+          SettingsSyncStatusTracker.getInstance().updateOnError(
+            SettingsSyncBundle.message("notification.title.apply.error") + ": " + pushResult.message)
         }
         SettingsSyncPushResult.Rejected -> {
           // In the case of reject we'll just "wait" for the next update event:
@@ -136,8 +135,8 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
           SettingsSyncStatusTracker.getInstance().updateOnSuccess()
         }
         is SettingsSyncPushResult.Error -> {
-          // todo notify only in case of explicit sync invocation, otherwise update some SettingsSyncStatus
-          notifySettingsSyncError(SettingsSyncBundle.message("notification.title.push.error"), pushResult.message)
+          SettingsSyncStatusTracker.getInstance().updateOnError(
+            SettingsSyncBundle.message("notification.title.push.error") + ": " + pushResult.message)
         }
         SettingsSyncPushResult.Rejected -> {
           // todo add protection against potential infinite reject-update-reject cycle
