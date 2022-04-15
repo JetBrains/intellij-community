@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-build-common-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-build-common-tests-for-ide:1.7.20-dev-212" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-build-common-tests-for-ide:1.7.20-dev-261" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/1.7.20-dev-212/kotlin-build-common-tests-for-ide-1.7.20-dev-212.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/1.7.20-dev-261/kotlin-build-common-tests-for-ide-1.7.20-dev-261.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/1.7.20-dev-212/kotlin-build-common-tests-for-ide-1.7.20-dev-212-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/1.7.20-dev-261/kotlin-build-common-tests-for-ide-1.7.20-dev-261-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
