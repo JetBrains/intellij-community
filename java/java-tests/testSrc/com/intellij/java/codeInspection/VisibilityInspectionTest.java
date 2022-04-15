@@ -24,11 +24,11 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/visibility";
   }
 
   private void doTest() {
-    doTest("visibility/" + getTestName(false), myTool);
+    doTest(getTestName(false), myTool);
   }
 
   @Override
@@ -41,7 +41,6 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-
     doTest();
   }
 
@@ -49,7 +48,6 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
-
     doTest();
   }
 
@@ -57,7 +55,6 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-
     doTest();
   }
 
@@ -65,7 +62,6 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-
     doTest();
   }
 
@@ -73,7 +69,6 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-
     doTest();
   }
 
@@ -93,62 +88,62 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
-    doTest("visibility/defaultConstructor", myTool, false, true);
+    doTest(getTestName(true), myTool, false, true);
   }
 
   public void testImplicitConstructor() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
-    doTest("visibility/implicitConstructor", myTool, false, true);
+    doTest(getTestName(true), myTool, false, true);
   }
 
-  public void testEnumConstants() {
+  public void testEnumConstantsVisibility() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
-    doTest("visibility/enumConstantsVisibility", myTool, false, true);
+    doTest(getTestName(true), myTool, false, true);
   }
 
-  public void testUsagesFromAnnotations() {
+  public void testAnnotationUsages() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
-    doTest("visibility/annotationUsages", myTool, false, true);
+    doTest(getTestName(true), myTool, false, true);
   }
 
   public void testTypeArguments() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
-    doTest("visibility/typeArguments", myTool, false, true);
+    doTest(getTestName(true), myTool, false, true);
   }
 
   public void testUsedFromAnnotationsExtendsList() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-    doTest("visibility/usedFromAnnotationsExtendsList", myTool, false, true);
+    doTest(getTestName(true), myTool, false, true);
   }
 
   public void testUsedFromAnnotationsExtendsList2() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
-    doTest("visibility/usedFromAnnotationsExtendsList2", myTool, false, true);
+    doTest(getTestName(true), myTool, false, true);
   }
 
   public void testOverrideInInnerClass() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-    doTest("visibility/overrideInInnerClass", myTool, false, true);
+    doTest(getTestName(true), myTool, false, true);
   }
 
-  public void testUsedQualifiedFromAnotherPackage() {
+  public void testUsedFromAnotherPackage() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-    doTest("visibility/usedFromAnotherPackage", myTool, false, true);
+    doTest(getTestName(true), myTool, false, true);
   }
 
   // IDEA-175921
@@ -156,21 +151,21 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-    doTest("visibility/innerClassMethodUsedInsideOtherInnerClassInheritor", myTool, false, true);
+    doTest(getTestName(true), myTool, false, true);
   }
 
   public void testMethodUsedInInheritorInnerClass() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-    doTest("visibility/methodUsedInInheritorInnerClass", myTool, false, true);
+    doTest(getTestName(true), myTool, false, true);
   }
 
   public void testInnerClassMethodUsedInsideInheritor() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-    doTest("visibility/innerClassMethodUsedInsideInheritor", myTool, false, true);
+    doTest(getTestName(true), myTool, false, true);
   }
 
   public void testEntryPointWithPredefinedVisibility() {
@@ -223,6 +218,6 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-    doTest("visibility/entryPointWithPredefinedVisibility", myTool, false, true);
+    doTest(getTestName(true), myTool, false, true);
   }
 }
