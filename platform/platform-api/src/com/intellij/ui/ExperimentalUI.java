@@ -350,6 +350,15 @@ public final class ExperimentalUI {
     paths.put("actions/restart.svg", "expui/run/restart.svg");
     paths.put("actions/suspend.svg", "expui/run/stop.svg");
     paths.put("codeWithMe/cwmAccess.svg", "expui/general/addAccount.svg");
+    paths.put("ide/readonly.svg", "expui/general/locked.svg");
+    paths.put("ide/readwrite.svg", "expui/general/unlocked.svg");
+    paths.put("actions/splitVertically.svg", "expui/general/splitVertically.svg");
+    paths.put("actions/splitHorizontally.svg", "expui/general/splitHorizontally.svg");
+    paths.put("actions/previewDetails.svg", "expui/general/previewVertically.svg");
+    paths.put("actions/previewDetailsVertically.svg", "expui/general/previewHorizontally.svg");
+    paths.put("actions/copy.svg", "expui/general/copy.svg");
+    paths.put("actions/menu-paste.svg", "expui/general/paste.svg");
+    paths.put("debugger/restoreLayout.svg", "expui/general/layout.svg");
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
