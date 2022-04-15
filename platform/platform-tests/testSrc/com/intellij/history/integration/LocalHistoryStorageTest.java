@@ -50,7 +50,7 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
     try {
       createRecord();
     }
-    catch (AssertionError e) {
+    catch (IOException e) {
       return;
     }
     fail("should have thrown exception");

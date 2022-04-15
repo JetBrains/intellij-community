@@ -5,6 +5,7 @@ import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.storage.AbstractRecordsTable;
 import com.intellij.util.io.storage.RecordIdIterator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -215,10 +216,17 @@ final class CompactRecordsTable extends AbstractRecordsTable {
         return result;
       }
 
+      @TestOnly
       @Override
       public boolean validId() throws IOException {
         assert hasNextId();
-        return isSizeOfLiveRecord(getSize(nextId));
+        myStorage.lockWrite();
+        try {
+          return isSizeOfLiveRecord(getSize(nextId));
+        }
+        finally {
+          myStorage.unlockWrite();
+        }
       }
     };
   }
