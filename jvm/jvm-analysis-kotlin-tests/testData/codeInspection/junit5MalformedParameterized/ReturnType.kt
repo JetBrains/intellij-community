@@ -7,7 +7,7 @@ import org.junit.jupiter.api.TestInstance
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 object PrivateRule {
   @ParameterizedTest
-  @MethodSource("<warning descr="Method source 'squares' must have one of the following return type: 'Stream<?>', 'Iterator<?>', 'Iterable<?>' or 'Object[]'">squares</warning>")
+  @MethodSource("<warning descr="Method source 'squares' must have one of the following return types: 'Stream<?>', 'Iterator<?>', 'Iterable<?>' or 'Object[]'">squares</warning>")
   fun foo() {}
 
 
