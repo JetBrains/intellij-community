@@ -114,7 +114,7 @@ open class MarketplacePluginDownloadService {
       LOG.info("Plugin's download percent is = %.2f".format(downloadPercent * 100))
       if (downloadPercent > MAXIMUM_DOWNLOAD_PERCENT) {
         LOG.info(IdeBundle.message("too.large.download.size"))
-        return downloadPlugin(pluginFileUrl, indicator)
+        return downloadPlugin(pluginUrl, indicator)
       }
 
       val file = getPluginTempFile()
@@ -124,7 +124,7 @@ open class MarketplacePluginDownloadService {
       val curFileHash = FileInputStream(file).use { input -> FileHash(input, newPluginHash.algorithm) }
       if (curFileHash != newPluginHash) {
         LOG.info(IdeBundle.message("hashes.doesnt.match"))
-        return downloadPlugin(pluginFileUrl, indicator)
+        return downloadPlugin(pluginUrl, indicator)
       }
 
       return if (pluginFileUrl.endsWith(".zip")) {
@@ -136,7 +136,7 @@ open class MarketplacePluginDownloadService {
     }
     catch (e: Exception) {
       LOG.info(IdeBundle.message("error.download.plugin.via.blockmap"), e)
-      return downloadPlugin(pluginFileUrl, indicator)
+      return downloadPlugin(pluginUrl, indicator)
     }
   }
 
