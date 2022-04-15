@@ -7,8 +7,8 @@ import com.intellij.openapi.components.service
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDto
-import org.jetbrains.plugins.gitlab.api.request.GitLabUsersApi.getCurrentUser
-import org.jetbrains.plugins.gitlab.api.request.GitLabUsersApi.loadImage
+import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
+import org.jetbrains.plugins.gitlab.api.request.loadImage
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.ui.GitLabBundle
