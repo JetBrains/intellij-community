@@ -11,6 +11,11 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 
+val isRunningFromSources: Boolean by lazy {
+    val ideaDirectory = Paths.get(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER)
+    Files.isDirectory(ideaDirectory) && !System.getProperty("idea.use.dev.build.server", "false").toBoolean()
+}
+
 sealed class KotlinPluginLayout {
     /**
      * Directory with the bundled Kotlin compiler distribution. Includes the compiler itself and a set of compiler plugins
@@ -41,9 +46,7 @@ sealed class KotlinPluginLayout {
     companion object {
         @JvmStatic
         val instance: KotlinPluginLayout by lazy {
-            val ideaDirectory = Paths.get(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER)
-
-            val layout = if (Files.isDirectory(ideaDirectory) && !System.getProperty("idea.use.dev.build.server", "false").toBoolean()) {
+            val layout = if (isRunningFromSources) {
                 KotlinPluginLayoutWhenRunFromSources()
             } else {
                 val jarInsideLib = PathManager.getJarPathForClass(KotlinPluginLayout::class.java)

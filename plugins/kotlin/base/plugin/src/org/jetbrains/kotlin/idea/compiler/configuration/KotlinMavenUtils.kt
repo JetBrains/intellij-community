@@ -1,11 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
+import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.SystemProperties
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.utils.yieldIfNotNull
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.isRegularFile
@@ -14,9 +15,10 @@ import kotlin.io.path.nameWithoutExtension
 import com.google.common.base.Function as GuavaFunction
 
 object KotlinMavenUtils {
-    private val repositoryForKotlinCompiler: Path? by lazy { findMavenRepository(KtElement::class.java, KOTLIN_MAVEN_GROUP_ID) }
-    private val repositoryForLibraries: Path? by lazy { findMavenRepository(GuavaFunction::class.java, "com.google.guava") }
-
+    /**
+     * Deducts main binary artifact version in a given IntelliJ IDEA project library.
+     * This function works only when the IDE is run from sources (for instance, in tests), as in production there is no '.idea' directory.
+     */
     fun findLibraryVersion(libraryFileName: String): String? {
         val librariesDir = Paths.get(PathManager.getHomePath(), ".idea/libraries")
         val libraryFile = librariesDir.resolve(libraryFileName)
@@ -54,45 +56,76 @@ object KotlinMavenUtils {
         return null
     }
 
+    /**
+     * Returns the single non-classified binary artifact with given coordinates, or throws an exception if the artifact file is not found.
+     * This function works both in production and when the IDEA is run from sources (for instance, in tests).
+     */
     fun findArtifactOrFail(groupId: String, artifactId: String, version: String): Path {
         return findArtifact(groupId, artifactId, version)
             ?: error("Artifact $groupId:$artifactId:$version not found")
     }
 
+    /**
+     * Returns the single non-classified binary artifact with given coordinates, or `null` if the artifact file is not found.
+     * This function works both in production and when the IntelliJ IDEA is run from sources (for instance, in tests).
+     */
     fun findArtifact(groupId: String, artifactId: String, version: String): Path? {
-        val localMavenRepository = Paths.get(SystemProperties.getUserHome(), ".m2/repository")
-        findArtifact(localMavenRepository, groupId, artifactId, version)?.let { return it }
+        return KotlinMavenArtifactFinder.instance.findArtifact(groupId, artifactId, version)
+    }
+}
 
-        val compilerRepository = repositoryForKotlinCompiler
-        if (compilerRepository != null) {
-            findArtifact(compilerRepository, groupId, artifactId, version)?.let { return it }
-        }
+private abstract class KotlinMavenArtifactFinder {
+    companion object {
+        val instance: KotlinMavenArtifactFinder
+            get() = when {
+                isRunningFromSources -> SourcesKotlinMavenArtifactFinder
+                else -> ProductionKotlinMavenArtifactFinder
+            }
+    }
 
-        val libraryRepository = repositoryForLibraries
-        if (libraryRepository != null) {
-            findArtifact(libraryRepository, groupId, artifactId, version)?.let { return it }
+    protected abstract val repositories: Sequence<Path>
+
+    fun findArtifact(groupId: String, artifactId: String, version: String): Path? {
+        for (repository in repositories) {
+            val artifact = repository.resolve(groupId.replace(".", "/"))
+                .resolve(artifactId)
+                .resolve(version)
+                .resolve("$artifactId-$version.jar")
+                .takeIf { it.isRegularFile() }
+
+            if (artifact != null) {
+                return artifact
+            }
         }
 
         return null
     }
+}
 
-    private fun findArtifact(repositoryDir: Path, groupId: String, artifactId: String, version: String): Path? {
-        return repositoryDir.resolve(groupId.replace(".", "/"))
-            .resolve(artifactId)
-            .resolve(version)
-            .resolve("$artifactId-$version.jar")
-            .takeIf { it.isRegularFile() }
+private object ProductionKotlinMavenArtifactFinder : KotlinMavenArtifactFinder() {
+    override val repositories: Sequence<Path> = sequence {
+        yield(JarRepositoryManager.getLocalRepositoryPath().toPath())
     }
 }
 
-private fun findMavenRepository(libraryClass: Class<*>, groupId: String): Path? {
-    val compilerArtifactJarPathString = PathManager.getJarPathForClass(libraryClass) ?: return null
-    val compilerArtifactJar = Path.of(compilerArtifactJarPathString)
-    val versionDir = compilerArtifactJar.parent ?: return null
-    val artifactDir = versionDir.parent ?: return null
-    val repositoryDir = groupId.split('.').fold<String, Path?>(artifactDir.parent) { path, _ -> path?.parent } ?: return null
-    if (compilerArtifactJar.nameWithoutExtension == "${artifactDir.name}-${versionDir.name}") {
-        return repositoryDir
+private object SourcesKotlinMavenArtifactFinder : KotlinMavenArtifactFinder() {
+    override val repositories: Sequence<Path> = sequence {
+        yieldIfNotNull(repositoryForKotlinCompiler)
+        yieldIfNotNull(repositoryForLibraries)
     }
-    return null
+
+    private val repositoryForKotlinCompiler: Path? by lazy { findMavenRepository(KtElement::class.java, KOTLIN_MAVEN_GROUP_ID) }
+    private val repositoryForLibraries: Path? by lazy { findMavenRepository(GuavaFunction::class.java, "com.google.guava") }
+
+    private fun findMavenRepository(libraryClass: Class<*>, groupId: String): Path? {
+        val compilerArtifactJarPathString = PathManager.getJarPathForClass(libraryClass) ?: return null
+        val compilerArtifactJar = Path.of(compilerArtifactJarPathString)
+        val versionDir = compilerArtifactJar.parent ?: return null
+        val artifactDir = versionDir.parent ?: return null
+        val repositoryDir = groupId.split('.').fold<String, Path?>(artifactDir.parent) { path, _ -> path?.parent } ?: return null
+        if (compilerArtifactJar.nameWithoutExtension == "${artifactDir.name}-${versionDir.name}") {
+            return repositoryDir
+        }
+        return null
+    }
 }
