@@ -24,6 +24,8 @@ public final class DirectBufferWrapper {
   private final AtomicInteger myReferences = new AtomicInteger();
   private volatile int myBufferDataEndPos;
 
+  //private final Stack<Throwable> myReferenceTraces = new Stack<>();
+
   DirectBufferWrapper(@NotNull PagedFileStorage file, long offset, boolean readOnly) throws IOException {
     myFile = file;
     myPosition = offset;
@@ -240,11 +242,13 @@ public final class DirectBufferWrapper {
   }
 
   public boolean tryLock() {
+    //myReferenceTraces.add(new Throwable());
     assert !isReleased();
     return myReferences.updateAndGet(operand -> operand >= 0 ? operand + 1 : operand) >= 0;
   }
 
   public void unlock() {
+    //myReferenceTraces.pop();
     assert myReferences.decrementAndGet() >= 0;
   }
 
