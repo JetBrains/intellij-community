@@ -236,7 +236,13 @@ public abstract class AbstractStorage implements Disposable, Forceable {
 
   @TestOnly
   public RecordIdIterator createRecordIdIterator() throws IOException {
-    return myRecordsTable.createRecordIdIterator();
+    myRecordsTable.myStorage.lockWrite();
+    try {
+      return myRecordsTable.createRecordIdIterator();
+    }
+    finally {
+      myRecordsTable.myStorage.unlockWrite();
+    }
   }
 
   public StorageDataOutput writeStream(final int record) {
