@@ -35,9 +35,15 @@ import javax.swing.*;
 public class BeanProperty {
 
   private final PsiMethod myMethod;
+  private final boolean myAcceptBoxedBooleanIsPrefix;
 
   protected BeanProperty(@NotNull PsiMethod method) {
+    this(method, false);
+  }
+
+  private BeanProperty(@NotNull PsiMethod method, boolean acceptBoxedBooleanIsPrefix) {
     myMethod = method;
+    myAcceptBoxedBooleanIsPrefix = acceptBoxedBooleanIsPrefix;
   }
 
   public PsiNamedElement getPsiElement() {
@@ -51,13 +57,22 @@ public class BeanProperty {
 
   @NotNull
   public String getName() {
-    final String name = PropertyUtilBase.getPropertyName(myMethod);
+    final String name = PropertyUtilBase.getPropertyName(myMethod, myAcceptBoxedBooleanIsPrefix);
     return name == null ? "" : name;
   }
 
   @NotNull
   public PsiType getPropertyType() {
-    PsiType type = PropertyUtilBase.getPropertyType(myMethod);
+    PsiType type;
+    if (PropertyUtilBase.isSimplePropertyGetter(myMethod, myAcceptBoxedBooleanIsPrefix)) {
+      type = myMethod.getReturnType();
+    }
+    else if (PropertyUtilBase.isSimplePropertySetter(myMethod)) {
+      type = myMethod.getParameterList().getParameters()[0].getType();
+    }
+    else {
+      type = null;
+    }
     assert type != null;
     return type;
   }
@@ -69,10 +84,10 @@ public class BeanProperty {
 
   @Nullable
   public PsiMethod getGetter() {
-    if (PropertyUtilBase.isSimplePropertyGetter(myMethod)) {
+    if (PropertyUtilBase.isSimplePropertyGetter(myMethod, myAcceptBoxedBooleanIsPrefix)) {
       return myMethod;
     }
-    return PropertyUtilBase.findPropertyGetter(myMethod.getContainingClass(), getName(), false, true);
+    return PropertyUtilBase.findPropertyGetter(myMethod.getContainingClass(), getName(), false, true, myAcceptBoxedBooleanIsPrefix);
   }
 
   @Nullable
@@ -103,6 +118,12 @@ public class BeanProperty {
 
   @Nullable
   public static BeanProperty createBeanProperty(@NotNull PsiMethod method) {
-    return PropertyUtilBase.isSimplePropertyAccessor(method) ? new BeanProperty(method) : null;
+    return createBeanProperty(method, false);
+  }
+
+  @Nullable
+  public static BeanProperty createBeanProperty(@NotNull PsiMethod method, boolean acceptBoxedBooleanIsPrefix) {
+    return PropertyUtilBase.isSimplePropertyAccessor(method, acceptBoxedBooleanIsPrefix) ?
+           new BeanProperty(method, acceptBoxedBooleanIsPrefix) : null;
   }
 }
