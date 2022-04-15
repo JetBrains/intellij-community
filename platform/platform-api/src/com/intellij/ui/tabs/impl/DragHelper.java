@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -7,7 +7,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.reference.SoftReference;
@@ -84,7 +83,7 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
 
   private static boolean prepareDisableSorting() {
     boolean wasSorted = UISettings.getInstance().getSortTabsAlphabetically() /*&& myTabs.isAlphabeticalMode()*/;
-    if (wasSorted) {
+    if (wasSorted && !UISettings.getInstance().getAlwaysKeepTabsAlphabeticallySorted()) {
       UISettings.getInstance().setSortTabsAlphabetically(false);
     }
     return wasSorted;
@@ -93,7 +92,7 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
   private static void disableSortingIfNeed(@NotNull MouseEvent event, boolean wasSorted) {
     if (!wasSorted) return;
 
-    if (event.isConsumed()) {//new container for separate window was created, see DockManagerImpl.MyDragSession
+    if (event.isConsumed() || UISettings.getInstance().getAlwaysKeepTabsAlphabeticallySorted()) {//new container for separate window was created, see DockManagerImpl.MyDragSession
       UISettings.getInstance().setSortTabsAlphabetically(true);
     }
     else {
@@ -102,11 +101,18 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
         Notification notification =
           new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("alphabetical.mode.is.on.notification"), "", NotificationType.INFORMATION);
         notification.addAction(
-          DumbAwareAction.create(ApplicationBundle.message("checkbox.sort.tabs.alphabetically"), e -> {
+          DumbAwareAction.create(IdeBundle.message("editor.tabs.enable.sorting"), e -> {
             UISettings.getInstance().setSortTabsAlphabetically(true);
             UISettings.getInstance().fireUISettingsChanged();
             notification.expire();
-          }));
+          }))
+          .addAction(
+            DumbAwareAction.create(IdeBundle.message("editor.tabs.always.keep.sorting"), e -> {
+              UISettings.getInstance().setAlwaysKeepTabsAlphabeticallySorted(true);
+              UISettings.getInstance().setSortTabsAlphabetically(true);
+              UISettings.getInstance().fireUISettingsChanged();
+              notification.expire();
+            }));
         Notifications.Bus.notify(notification);
       });
     }
