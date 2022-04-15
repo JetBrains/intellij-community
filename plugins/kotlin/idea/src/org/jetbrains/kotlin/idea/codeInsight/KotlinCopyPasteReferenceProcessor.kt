@@ -35,9 +35,6 @@ import org.jetbrains.kotlin.idea.codeInsight.ReviewAddedImports.reviewAddedImpor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.core.util.end
-import org.jetbrains.kotlin.idea.core.util.range
-import org.jetbrains.kotlin.idea.core.util.start
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.idea.util.*
@@ -264,8 +261,8 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
 
             val kind = KotlinReferenceData.Kind.fromDescriptor(descriptor) ?: continue
             val isQualifiable = KotlinReferenceData.isQualifiable(ktElement, descriptor)
-            val relativeStart = ktElement.range.start
-            val relativeEnd = ktElement.range.end
+            val relativeStart = ktElement.textRange.startOffset
+            val relativeEnd = ktElement.textRange.endOffset
             add(KotlinReferenceData(relativeStart, relativeEnd, fqName, isQualifiable, kind))
         }
     }
@@ -437,8 +434,8 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
                             val itTextRange = it.element.textRange
                             val refTextRange = mainReference.element.textRange
                             val originalTextRange = elementByTextRange.originalTextRange
-                            val offset = originalTextRange.start - refTextRange.start
-                            val range = TextRange(itTextRange.start + offset, itTextRange.end + offset)
+                            val offset = originalTextRange.startOffset - refTextRange.startOffset
+                            val range = TextRange(itTextRange.startOffset + offset, itTextRange.endOffset + offset)
                             range to it
                         }
                     }
@@ -671,7 +668,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
 
     private fun findReference(element: PsiElement, desiredRange: TextRange): KtReference? = runReadAction {
         for (current in element.parentsWithSelf) {
-            val range = current.range
+            val range = current.textRange
             if (current is KtElement && range == desiredRange) {
                 current.mainReference?.let { return@runReadAction it }
             }
@@ -823,7 +820,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
 
     private fun PsiElement.isInCopiedArea(fileCopiedFrom: KtFile, textRanges: List<TextRange>): Boolean =
         runReadAction {
-            if (containingFile != fileCopiedFrom) false else textRanges.any { this.range in it }
+            if (containingFile != fileCopiedFrom) false else textRanges.any { this.textRange in it }
         }
 
     companion object {

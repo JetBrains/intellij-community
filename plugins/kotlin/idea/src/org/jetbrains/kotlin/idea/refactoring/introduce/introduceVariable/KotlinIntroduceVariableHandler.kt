@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.idea.analysis.computeTypeInfoInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
-import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention
 import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
@@ -797,7 +796,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         occurrencesToReplace,
         onNonInteractiveFinish
     ) { candidateContainers, doRefactoring ->
-        val foundPair = candidateContainers.find { it.first.range == container.range }
+        val foundPair = candidateContainers.find { it.first.textRange == container.textRange }
         if (foundPair != null) {
             doRefactoring(foundPair)
         }

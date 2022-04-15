@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.addImportAlias
 
 import org.jetbrains.kotlin.AbstractImportsTest
-import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceImportAlias.KotlinIntroduceImportAliasHandler
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -25,7 +24,7 @@ abstract class AbstractAddImportAliasTest53 : AbstractImportsTest() {
         var element = file.findElementAt(offset)
         while (element != null) {
             if (element is KtNameReferenceExpression || element is KtFile) break
-            if (offset !in element.range) break
+          if (offset !in element.textRange) break
             element = element.parent
         }
         return (element as? KtNameReferenceExpression).sure {

@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor
 import org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceData
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures
 import org.jetbrains.kotlin.idea.core.util.range
-import org.jetbrains.kotlin.idea.core.util.start
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.statistics.ConversionType
@@ -119,7 +118,8 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
             rangeMarker.isGreedyToLeft = true
             rangeMarker.isGreedyToRight = true
 
-            KotlinCopyPasteReferenceProcessor().processReferenceData(project, editor, targetFile, bounds.start, referenceData.toTypedArray())
+            KotlinCopyPasteReferenceProcessor()
+                .processReferenceData(project, editor, targetFile, bounds.startOffset, referenceData.toTypedArray())
 
             runWriteAction {
                 explicitImports.forEach { fqName ->

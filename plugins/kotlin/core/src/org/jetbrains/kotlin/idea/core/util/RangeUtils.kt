@@ -6,12 +6,7 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 
-val TextRange.start: Int
-    get() = startOffset
-
-val TextRange.end: Int
-    get() = endOffset
-
+@Deprecated("Use 'textRange' instead", ReplaceWith("textRange"))
 val PsiElement.range: TextRange
     get() = textRange!!
 

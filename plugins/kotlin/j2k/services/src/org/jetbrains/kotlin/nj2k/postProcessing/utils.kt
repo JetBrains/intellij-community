@@ -11,7 +11,6 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
@@ -77,7 +76,7 @@ inline fun <reified T : PsiElement> List<PsiElement>.descendantsOfType(): List<T
     flatMap { it.collectDescendantsOfType() }
 
 fun PsiElement.isInRange(outerRange: TextRange) =
-    outerRange.contains(range)
+    outerRange.contains(textRange)
 
 fun runUndoTransparentActionInEdt(inWriteAction: Boolean, action: () -> Unit) {
     ApplicationManager.getApplication().invokeAndWait {
