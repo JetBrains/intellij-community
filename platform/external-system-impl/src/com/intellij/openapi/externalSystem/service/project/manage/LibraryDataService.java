@@ -44,7 +44,7 @@ import java.util.*;
 @Order(ExternalSystemConstants.BUILTIN_LIBRARY_DATA_SERVICE_ORDER)
 public final class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
   private static final Logger LOG = Logger.getInstance(LibraryDataService.class);
-  public static final @NotNull NotNullFunction<String, File> PATH_TO_FILE = path -> new File(path);
+  public static final @NotNull NotNullFunction<String, File> PATH_TO_FILE = File::new;
 
   @Override
   public @NotNull Key<LibraryData> getTargetDataKey() {
@@ -85,24 +85,16 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     }
     library = modelsProvider.createLibrary(libraryName, ExternalSystemApiUtil.toExternalSource(toImport.getOwner()));
     Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
-    refreshVfsFiles(libraryFiles);
     Set<String> excludedPaths = toImport.getPaths(LibraryPathType.EXCLUDED);
     registerPaths(toImport.isUnresolved(), libraryFiles, excludedPaths, libraryModel, libraryName);
   }
 
-  private static void refreshVfsFiles(Map<OrderRootType, Collection<File>> libraryFiles) {
+  private static void refreshVfsFiles(Collection<File> files) {
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    for(Map.Entry<OrderRootType, Collection<File>> entry : libraryFiles.entrySet()) {
-      Collection<File> files = entry.getValue();
-      if (files != null) {
-        for (File file : files) {
-          Path path = file.toPath();
-          // search for jar file first otherwise lib root won't be found!
-          if (virtualFileManager.findFileByNioPath(path) == null) {
-            virtualFileManager.refreshAndFindFileByNioPath(path);
-          }
-        }
-      }
+    for (File file : files) {
+      Path path = file.toPath();
+      // search for jar file first otherwise lib root won't be found!
+      virtualFileManager.refreshAndFindFileByNioPath(path);
     }
   }
 
@@ -117,7 +109,9 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       if (paths.isEmpty()) {
         continue;
       }
-      result.put(orderRootType, ContainerUtil.map(paths, PATH_TO_FILE));
+      List<File> files = ContainerUtil.map(paths, PATH_TO_FILE);
+      refreshVfsFiles(files);
+      result.put(orderRootType, files);
     }
     return result;
   }
