@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBInsets;
@@ -35,6 +36,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import javax.swing.border.AbstractBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.plaf.basic.BasicPanelUI;
 import java.awt.*;
@@ -118,13 +120,22 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     JPanel panel = new NonOpaquePanel(new BorderLayout());
     panel.add(BorderLayout.CENTER, myLabel);
     panel.add(BorderLayout.EAST, myLinksPanel);
-    panel.setBorder(JBUI.Borders.empty(5, 0, 5, 5));
     panel.setMinimumSize(new Dimension(0, 0));
 
+    Wrapper gearWrapper = new Wrapper(myGearLabel);
+    gearWrapper.setBorder(new AbstractBorder() {
+      @Override
+      public Insets getBorderInsets(Component c) {
+        return myGearLabel.getIcon() == null ? super.getBorderInsets(c) : new JBInsets(0, 5, 0, 0);
+      }
+    });
+
     add(BorderLayout.CENTER, panel);
-    add(BorderLayout.EAST, myGearLabel);
-    JBInsets defaultInsets = ExperimentalUI.isNewUI() && editor != null ? JBInsets.create(9, 16) : JBInsets.create(0, 10);
-    setBorder(JBUI.Borders.empty(JBUI.insets("Editor.Notification.borderInsets", defaultInsets)));
+    add(BorderLayout.EAST, gearWrapper);
+    if (editor != null) {
+      JBInsets defaultInsets = ExperimentalUI.isNewUI() ? JBInsets.create(9, 16) : JBInsets.create(5, 10);
+      setBorder(JBUI.Borders.empty(JBUI.insets("Editor.Notification.borderInsets", defaultInsets)));
+    }
     setOpaque(true);
 
     myLabel.setForeground(mySchemeSupplier.get().getDefaultForeground());
