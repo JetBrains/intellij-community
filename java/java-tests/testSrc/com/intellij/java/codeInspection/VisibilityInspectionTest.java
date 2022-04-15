@@ -168,6 +168,10 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
     doTest(getTestName(true), myTool, false, true);
   }
 
+  public void testSameFileInheritance() {
+    doTest(getTestName(true), myTool);
+  }
+
   public void testEntryPointWithPredefinedVisibility() {
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), EntryPointsManagerBase.DEAD_CODE_EP_NAME, new EntryPointWithVisibilityLevel() {
       @Override

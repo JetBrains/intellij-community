@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
@@ -490,20 +490,17 @@ public class RefJavaUtilImpl extends RefJavaUtil {
         refMethod.updateParameterValues(argumentList, psiResolved);
       }
 
-      final UExpression uExpression = call.getReceiver();
-      if (uExpression != null) {
-        final PsiType usedType = uExpression.getExpressionType();
-        if (usedType != null) {
-          UClass containingClass = UDeclarationKt.getContainingDeclaration(uMethod, UClass.class);
-          final String fqName;
-          if (containingClass != null) {
-            fqName = containingClass.getQualifiedName();
-            if (fqName != null) {
-              final PsiClassType methodOwnerType = JavaPsiFacade.getElementFactory(psiResolved.getProject())
-                .createTypeByFQClassName(fqName, GlobalSearchScope.allScope(psiResolved.getProject()));
-              if (!usedType.equals(methodOwnerType)) {
-                refMethod.setCalledOnSubClass(true);
-              }
+      final PsiType usedType = call.getReceiverType();
+      if (usedType != null) {
+        UClass containingClass = UDeclarationKt.getContainingDeclaration(uMethod, UClass.class);
+        if (containingClass != null) {
+          final String fqName = containingClass.getQualifiedName();
+          if (fqName != null) {
+            final Project project = psiResolved.getProject();
+            final PsiClassType methodOwnerType = JavaPsiFacade.getElementFactory(project)
+              .createTypeByFQClassName(fqName, GlobalSearchScope.allScope(project));
+            if (!usedType.equals(methodOwnerType)) {
+              refMethod.setCalledOnSubClass(true);
             }
           }
         }
