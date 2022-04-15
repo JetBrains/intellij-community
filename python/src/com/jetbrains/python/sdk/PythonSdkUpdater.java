@@ -9,10 +9,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -40,7 +37,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.Processor;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
@@ -680,15 +676,21 @@ public class PythonSdkUpdater implements StartupActivity.Background {
    * Returns unique Python SDKs for the open modules of the project.
    */
   @NotNull
-  @RequiresReadLock
   static Set<Sdk> getPythonSdks(@NotNull Project project) {
     final Set<Sdk> pythonSdks = new LinkedHashSet<>();
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-      if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
-        pythonSdks.add(sdk);
+
+    ReadAction.run(
+      () ->
+      {
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+          final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+          if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
+            pythonSdks.add(sdk);
+          }
+        }
       }
-    }
+    );
+
     return pythonSdks;
   }
 
