@@ -195,7 +195,7 @@ class NotebookOutputInlayController private constructor(
     val collapsingComponent = CollapsingComponent(
       editor,
       newComponent.component,
-      newComponent.limitHeight,
+      newComponent.resizable,
       newComponent.collapsedTextSupplier,
     )
 

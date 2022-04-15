@@ -33,9 +33,11 @@ interface NotebookOutputComponentFactory<C : JComponent, K : NotebookOutputDataK
 
   /**
    * @param limitHeight if the height of the component should be limited by 2/3 of visible vertical space. It's  the [component]'s
-   * responsibility to handle cutoffs, by using scroll panes, for example.
+   * responsibility to handle cutoffs, by using scroll panes, for example. In case when [resizable] is true, it affects only the initial
+   * height.
    * @param collapsedTextSupplier every time a user collapses a cell output, this delegate is called, and its result is written
    * in collapsed component's stead.
+   * @param resizable defines if the component allowed to be resized by a user.
    *
    * [disposable] will be disposed when system destroys component. Default value is [component] itself if it implements [Disposable]
    */
@@ -44,6 +46,7 @@ interface NotebookOutputComponentFactory<C : JComponent, K : NotebookOutputDataK
     val widthStretching: WidthStretching,
     val gutterPainter: GutterPainter?,
     val limitHeight: Boolean,
+    val resizable: Boolean,
     val collapsedTextSupplier: () -> @Nls String,
     val disposable: Disposable? = component as? Disposable
   )
