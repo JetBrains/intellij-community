@@ -3,9 +3,11 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -16,10 +18,6 @@ public abstract class AbstractEnterActionTestCase extends LightJavaCodeInsightTe
     final int offset = PsiDocumentManager.getInstance(getProject()).getDocument(file).getLineEndOffset(lineNum);
     final String actial = CodeStyleManager.getInstance(getProject()).getLineIndent(file, offset);
     assertEquals(expected, actial);
-  }
-
-  protected void doTest() throws Exception {
-    doTest("java");
   }
 
   protected void doTextTest(@NonNls String ext, @NonNls String before, @NonNls String after) {
@@ -38,5 +36,9 @@ public abstract class AbstractEnterActionTestCase extends LightJavaCodeInsightTe
 
   protected void performAction() {
     type('\n');
+  }
+
+  protected CodeStyleSettings getCodeStyleSettings() {
+    return CodeStyle.getSettings(getProject());
   }
 }

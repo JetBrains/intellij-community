@@ -1,0 +1,2 @@
+/**<caret> comment */
+class Test {}

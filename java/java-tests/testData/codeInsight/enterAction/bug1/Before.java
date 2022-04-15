@@ -1,0 +1,3 @@
+<caret>
+public class Test{
+}
