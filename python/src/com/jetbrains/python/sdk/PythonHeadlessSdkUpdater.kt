@@ -2,12 +2,10 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PyBundle
@@ -31,7 +29,7 @@ class PythonHeadlessSdkUpdater : StartupActivity, DumbAware {
   }
 
   private fun scheduleTasks(project: Project) {
-    pythonSdks(project).forEach { sdk ->
+    PythonSdkUpdater.getPythonSdks(project).forEach { sdk ->
       LOG.info("Scheduling update: ${sdk.homePath}")
       PythonSdkUpdater.scheduleUpdate(sdk, project)
     }
@@ -42,15 +40,11 @@ class PythonHeadlessSdkUpdater : StartupActivity, DumbAware {
     val start = System.currentTimeMillis()
 
     LOG.info("Waiting for $title tasks...")
-    while (pythonSdks(project).any { PythonSdkUpdater.isUpdateScheduled(it) }) {
+    while (PythonSdkUpdater.getPythonSdks(project).any { PythonSdkUpdater.isUpdateScheduled(it) }) {
       Thread.sleep(DELAY)
     }
 
     val duration = StringUtil.formatDuration(System.currentTimeMillis() - start)
     LOG.info("Completed waiting for $title tasks in $duration")
-  }
-
-  private fun pythonSdks(project: Project): Set<Sdk> {
-    return ReadAction.compute<Set<Sdk>, Throwable> { PythonSdkUpdater.getPythonSdks(project) }
   }
 }
