@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.artifacts
 
-import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.io.Decompressor
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
@@ -66,9 +65,3 @@ fun lazyUnpackJar(jar: File, destination: File): File {
     check(destination.isDirectory)
     return destination
 }
-
-fun resolveMavenArtifactInMavenRepo(mavenRepo: File, groupId: String, artifactId: String, version: String) =
-    mavenRepo.resolve(groupId.replace(".", "/"))
-        .resolve(artifactId)
-        .resolve(version)
-        .resolve("$artifactId-$version.jar")
