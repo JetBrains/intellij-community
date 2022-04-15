@@ -36,7 +36,7 @@ class ReplaceWithJavadocInspection : LocalInspectionTool() {
         if (type != null) return
 
         val fix = ReplaceWithJavadocFix()
-        holder.registerProblem(element, JavaBundle.message("inspection.replace.with.javadoc.comment"), ProblemHighlightType.INFORMATION, fix)
+        holder.registerProblem(element, JavaBundle.message("inspection.replace.with.javadoc.comment"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix)
       }
     }
   }
