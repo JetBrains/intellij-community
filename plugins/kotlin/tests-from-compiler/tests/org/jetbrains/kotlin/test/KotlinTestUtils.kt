@@ -25,7 +25,7 @@ object KotlinTestUtils {
 
     @JvmStatic
     fun runTest(test: DoTest, testCase: TestCase, @TestDataFile testDataFile: String) {
-        println("Kotlinc path: " + KotlinArtifacts.instance.kotlincDirectory)
+        KotlinArtifacts.instance.kotlincDirectory // to initialize dist
         KotlinTestUtils.runTest(test, testCase, testDataFile)
     }
 
