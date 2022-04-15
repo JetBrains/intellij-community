@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.test
 
 import com.intellij.testFramework.TestDataFile
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.util.KtTestUtil
 import java.io.File
@@ -24,6 +25,7 @@ object KotlinTestUtils {
 
     @JvmStatic
     fun runTest(test: DoTest, testCase: TestCase, @TestDataFile testDataFile: String) {
+        println("Kotlinc path: " + KotlinArtifacts.instance.kotlincDirectory)
         KotlinTestUtils.runTest(test, testCase, testDataFile)
     }
 
