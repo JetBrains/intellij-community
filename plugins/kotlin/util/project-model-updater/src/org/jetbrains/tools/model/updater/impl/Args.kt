@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater.impl
 
 import kotlin.properties.ReadOnlyProperty
@@ -7,6 +8,7 @@ import kotlin.reflect.KVisibility
 class Args(args: Map<String, String>) {
     private val mutableArgs: MutableMap<String, String> = HashMap(args)
 
+    val jpsPluginVersion: String by mapDelegate(mutableArgs)
     val kotlincVersion: String by mapDelegate(mutableArgs)
     val kotlincArtifactsMode: KotlincArtifactsMode by mapDelegate(mutableArgs, KotlincArtifactsMode::valueOf)
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
 import org.jetbrains.tools.model.updater.impl.*
@@ -26,7 +26,7 @@ fun main(args: Array<String>) {
 private fun generateProjectModelFiles(dotIdea: File, args: Args, isCommunity: Boolean) {
     val libraries = dotIdea.resolve("libraries")
     libraries.listFiles()!!.filter { it.startsWith("kotlinc_") }.forEach { it.delete() }
-    generateKotlincLibraries(args.kotlincArtifactsMode, args.kotlincVersion, isCommunity).forEach {
+    generateKotlincLibraries(args.kotlincArtifactsMode, args.kotlincVersion, args.jpsPluginVersion, isCommunity).forEach {
         val libXmlName = it.name.jpsEntityNameToFilename() + ".xml"
         libraries.resolve(libXmlName).writeText(it.generateXml())
     }
@@ -48,6 +48,7 @@ private fun patchGitignore(dotIdea: File, kotlincArtifactsMode: KotlincArtifacts
         KotlincArtifactsMode.MAVEN -> {
             gitignore.writeText(normalizedContent)
         }
+
         KotlincArtifactsMode.BOOTSTRAP -> {
             gitignore.writeText("$normalizedContent\n$ignoreRule")
         }
@@ -55,14 +56,14 @@ private fun patchGitignore(dotIdea: File, kotlincArtifactsMode: KotlincArtifacts
 }
 
 private fun patchKotlincLibs(args: Args, isCommunity: Boolean, dotIdea: File) {
-    val kotlincMvnLibs = generateKotlincLibraries(KotlincArtifactsMode.MAVEN, args.kotlincVersion, isCommunity)
+    val kotlincMvnLibs = generateKotlincLibraries(KotlincArtifactsMode.MAVEN, args.kotlincVersion, args.jpsPluginVersion, isCommunity)
 
     val artifactIds = kotlincMvnLibs.flatMap { lib -> lib.classes.map { (it.jpsPath as JpsPath.MavenRepository).mavenId.artifactId } }
-    val replacements = generateKotlincLibraries(args.kotlincArtifactsMode, args.kotlincVersion, isCommunity)
+    val replacements = generateKotlincLibraries(args.kotlincArtifactsMode, args.kotlincVersion, args.jpsPluginVersion, isCommunity)
         .flatMap { lib -> lib.classes.map { it.jpsPath.generateXml() } }
 
     val stubVersion = "STUB_VERSION"
-    val regexes = KotlincArtifactsMode.values().flatMap { generateKotlincLibraries(it, stubVersion, isCommunity) }
+    val regexes = KotlincArtifactsMode.values().flatMap { generateKotlincLibraries(it, stubVersion, args.jpsPluginVersion, isCommunity) }
         .flatMap { it.classes }
         .map {
             it.jpsPath.generateXml().escapeForRegex().replace(stubVersion, """\d+.\d+.\d+(-SNAPSHOT|-M1|-M2|-RC|-release)?(-\d+)?""")

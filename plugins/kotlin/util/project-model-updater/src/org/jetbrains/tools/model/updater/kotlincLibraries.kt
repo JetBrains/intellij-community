@@ -5,49 +5,66 @@ import org.jetbrains.tools.model.updater.impl.*
 
 const val ktGroup = "org.jetbrains.kotlin"
 
-fun generateKotlincLibraries(kotlincArtifactsMode: KotlincArtifactsMode, version: String, isCommunity: Boolean): List<JpsLibrary> {
+fun generateKotlincLibraries(
+    kotlincArtifactsMode: KotlincArtifactsMode,
+    kotlincVersion: String,
+    jpsPluginVersion: String,
+    isCommunity: Boolean,
+): List<JpsLibrary> {
     return listOf(
-        kotlincForIdeWithStandardNaming("kotlinc.allopen-compiler-plugin", version),
-        kotlincForIdeWithStandardNaming("kotlinc.android-extensions-compiler-plugin", version),
-        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-fir-tests", version),
-        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-fir", version),
-        kotlincForIdeWithStandardNaming("kotlinc.high-level-api", version),
-        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-impl-base", version),
-        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-impl-base-tests", version),
-        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-providers", version),
-        kotlincForIdeWithStandardNaming("kotlinc.analysis-project-structure", version),
-        kotlincForIdeWithStandardNaming("kotlinc.symbol-light-classes", version),
-        kotlincForIdeWithStandardNaming("kotlinc.incremental-compilation-impl-tests", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-build-common-tests", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-cli", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-testdata", version, includeSources = false),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-tests", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-common", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-fe10", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-fir", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-ir", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-gradle-statistics", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-stdlib-minimal-for-test", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlinx-serialization-compiler-plugin", version),
-        kotlincForIdeWithStandardNaming("kotlinc.lombok-compiler-plugin", version),
-        kotlincForIdeWithStandardNaming("kotlinc.low-level-api-fir", version),
-        kotlincForIdeWithStandardNaming("kotlinc.noarg-compiler-plugin", version),
-        kotlincForIdeWithStandardNaming("kotlinc.parcelize-compiler-plugin", version),
-        kotlincForIdeWithStandardNaming("kotlinc.sam-with-receiver-compiler-plugin", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-common", version),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", version),
-        singleJarMvnLib("kotlinc.kotlin-scripting-common", "$ktGroup:kotlin-scripting-common:$version", transitive = false),
-        singleJarMvnLib("kotlinc.kotlin-scripting-compiler-impl", "$ktGroup:kotlin-scripting-compiler-impl:$version", transitive = false),
-        singleJarMvnLib("kotlinc.kotlin-scripting-jvm", "$ktGroup:kotlin-scripting-jvm:$version", transitive = false),
-        singleJarMvnLib("kotlinc.kotlin-script-runtime", "$ktGroup:kotlin-script-runtime:$version"),
-        singleJarMvnLib("kotlinc.kotlin-reflect", "$ktGroup:kotlin-reflect:$version", excludes = listOf(MavenId(ktGroup, "kotlin-stdlib"))),
+        kotlincForIdeWithStandardNaming("kotlinc.allopen-compiler-plugin", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.android-extensions-compiler-plugin", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-fir-tests", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-fir", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.high-level-api", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-impl-base", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-impl-base-tests", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.analysis-api-providers", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.analysis-project-structure", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.symbol-light-classes", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.incremental-compilation-impl-tests", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-build-common-tests", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-cli", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-testdata", kotlincVersion, includeSources = false),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-tests", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-common", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-fe10", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-fir", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-ir", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-gradle-statistics", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-stdlib-minimal-for-test", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlinx-serialization-compiler-plugin", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.lombok-compiler-plugin", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.low-level-api-fir", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.noarg-compiler-plugin", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.parcelize-compiler-plugin", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.sam-with-receiver-compiler-plugin", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-common", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", kotlincVersion),
+
+        kotlincWithStandardNaming("kotlinc.kotlin-scripting-common", kotlincVersion),
+        kotlincWithStandardNaming("kotlinc.kotlin-scripting-compiler-impl", kotlincVersion),
+        kotlincWithStandardNaming("kotlinc.kotlin-scripting-jvm", kotlincVersion),
+        kotlincWithStandardNaming("kotlinc.kotlin-script-runtime", kotlincVersion, transitive = true),
+
+        kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginVersion, postfix = "-for-ide"),
+        kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginVersion),
+
+        kotlincWithStandardNaming(
+            "kotlinc.kotlin-reflect",
+            kotlincVersion,
+            transitive = true,
+            excludes = listOf(MavenId(ktGroup, "kotlin-stdlib"))
+        ),
+
         run {
             val mavenIds = listOf(
-                MavenId.fromCoordinates("$ktGroup:kotlin-stdlib-jdk8:$version"),
-                MavenId.fromCoordinates("$ktGroup:kotlin-stdlib:$version"),
-                MavenId.fromCoordinates("$ktGroup:kotlin-stdlib-common:$version"),
-                MavenId.fromCoordinates("$ktGroup:kotlin-stdlib-jdk7:$version")
+                MavenId.fromCoordinates("$ktGroup:kotlin-stdlib-jdk8:$kotlincVersion"),
+                MavenId.fromCoordinates("$ktGroup:kotlin-stdlib:$kotlincVersion"),
+                MavenId.fromCoordinates("$ktGroup:kotlin-stdlib-common:$kotlincVersion"),
+                MavenId.fromCoordinates("$ktGroup:kotlin-stdlib-jdk7:$kotlincVersion")
             )
+
             JpsLibrary(
                 "kotlinc.kotlin-stdlib",
                 JpsLibrary.Kind.Maven(mavenIds.first(), excludes = listOf(MavenId("org.jetbrains", "annotations"))),
@@ -75,11 +92,23 @@ private fun JpsUrl.convertKotlincMvnToBootstrap(isCommunity: Boolean): JpsUrl {
 }
 
 private fun kotlincForIdeWithStandardNaming(name: String, version: String, includeSources: Boolean = true): JpsLibrary {
+    return kotlincWithStandardNaming(name, version, includeSources, "-for-ide")
+}
+
+private fun kotlincWithStandardNaming(
+    name: String,
+    version: String,
+    includeSources: Boolean = true,
+    postfix: String = "",
+    transitive: Boolean = false,
+    excludes: List<MavenId> = emptyList(),
+): JpsLibrary {
     require(name.startsWith("kotlinc."))
     return singleJarMvnLib(
-        name,
-        "$ktGroup:${name.removePrefix("kotlinc.")}-for-ide:$version",
-        transitive = false,
-        includeSources = includeSources
+        name = name,
+        mavenCoordinates = "$ktGroup:${name.removePrefix("kotlinc.")}$postfix:$version",
+        transitive = transitive,
+        includeSources = includeSources,
+        excludes = excludes,
     )
 }
