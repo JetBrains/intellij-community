@@ -403,6 +403,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.sortTabsAlphabetically = value
     }
 
+  var alwaysKeepTabsAlphabeticallySorted: Boolean
+    get() = state.alwaysKeepTabsAlphabeticallySorted
+    set(value) {
+      state.alwaysKeepTabsAlphabeticallySorted = value
+    }
+
   var openTabsAtTheEnd: Boolean
     get() = state.openTabsAtTheEnd
     set(value) {

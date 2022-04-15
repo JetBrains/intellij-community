@@ -97,7 +97,7 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
         }.enabledIf((myEditorTabPlacement.selectedValueMatches { it != TABS_NONE }))
       }
       group(message("group.tab.order")) {
-        row { checkBox(sortTabsAlphabetically) }
+        row { checkBox(sortTabsAlphabetically).onApply { resetAlwaysKeepSorted() } }
         row { checkBox(openTabsAtTheEnd) }
       }
       group(message("group.tab.opening.policy")) {
@@ -162,3 +162,10 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
       .forEach { appendDslConfigurable(it) }
   }
 }
+
+  private fun resetAlwaysKeepSorted() {
+    if (!UISettings.getInstance().sortTabsAlphabetically) {
+      UISettings.getInstance().alwaysKeepTabsAlphabeticallySorted = false
+    }
+  }
+
