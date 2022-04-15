@@ -127,6 +127,7 @@ internal class LibraryModifiableModelBridgeImpl(
     if (referrers.isEmpty()) {
       diff.addEntity(LibraryPropertiesEntity {
         library = entity
+        this.entitySource = entity.entitySource
         updater()
       })
     }
