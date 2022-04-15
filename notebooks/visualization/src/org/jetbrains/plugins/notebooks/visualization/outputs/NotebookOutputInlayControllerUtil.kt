@@ -1,9 +1,11 @@
-package org.jetbrains.plugins.notebooks.visualization.outputs.impl
+package org.jetbrains.plugins.notebooks.visualization.outputs
 
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.notebooks.visualization.SwingClientProperty
-import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputInlayController
+import org.jetbrains.plugins.notebooks.visualization.outputs.impl.CollapsingComponent
+import org.jetbrains.plugins.notebooks.visualization.outputs.impl.InnerComponent
+import org.jetbrains.plugins.notebooks.visualization.outputs.impl.SurroundingComponent
 import java.awt.BorderLayout
 import javax.swing.JComponent
 
