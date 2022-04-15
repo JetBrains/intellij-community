@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -84,8 +85,25 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     }
     library = modelsProvider.createLibrary(libraryName, ExternalSystemApiUtil.toExternalSource(toImport.getOwner()));
     Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
+    refreshVfsFiles(libraryFiles);
     Set<String> excludedPaths = toImport.getPaths(LibraryPathType.EXCLUDED);
     registerPaths(toImport.isUnresolved(), libraryFiles, excludedPaths, libraryModel, libraryName);
+  }
+
+  private static void refreshVfsFiles(Map<OrderRootType, Collection<File>> libraryFiles) {
+    VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
+    for(Map.Entry<OrderRootType, Collection<File>> entry : libraryFiles.entrySet()) {
+      Collection<File> files = entry.getValue();
+      if (files != null) {
+        for (File file : files) {
+          Path path = file.toPath();
+          // search for jar file first otherwise lib root won't be found!
+          if (virtualFileManager.findFileByNioPath(path) == null) {
+            virtualFileManager.refreshAndFindFileByNioPath(path);
+          }
+        }
+      }
+    }
   }
 
   public @NotNull Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
