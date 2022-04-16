@@ -266,7 +266,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals(PsiType.getTypeByName("MyClass", project, file.resolveScope), functionCall.getExpressionType())
     }
 
-
     fun checkMultiInvokableObjectResolve(myFixture: JavaCodeInsightTestFixture) {
         val file = myFixture.configureByText(
             "s.kt", """
@@ -339,7 +338,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         """
         )
 
-
         val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
             .orFail("cant convert to UCallExpression")
         val resolved = uCallExpression.resolve()
@@ -364,6 +362,25 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             .orFail("cant resolve from $uCallExpression")
         TestCase.assertTrue("Not resolved to local class default constructor", resolved.isConstructor)
         TestCase.assertEquals("LocalClass", resolved.name)
+    }
+
+    fun checkResolveJavaClassAsAnonymousObjectSuperType(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """public class JavaClass { }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                fun foo() {
+                    val o = object : JavaClass() { }
+                }
+            """.trimIndent()
+        )
+
+        val o = myFixture.file.toUElement()!!.findElementByTextFromPsi<UObjectLiteralExpression>("object : JavaClass() { }")
+        val resolved = (o.classReference?.resolve() as? PsiClass)
+            .orFail("cant resolve Java class as a super type of an anonymous object")
+        TestCase.assertEquals("JavaClass", resolved.name)
     }
 
     fun checkResolveCompiledAnnotation(myFixture: JavaCodeInsightTestFixture) {

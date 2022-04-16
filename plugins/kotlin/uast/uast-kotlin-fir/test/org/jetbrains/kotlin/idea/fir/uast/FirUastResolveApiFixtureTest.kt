@@ -113,6 +113,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("ResolveLocalDefaultConstructor", ::checkResolveLocalDefaultConstructor)
     }
 
+    fun testResolveJavaClassAsAnonymousObjectSuperType() {
+        doCheck("ResolveJavaClassAsAnonymousObjectSuperType", ::checkResolveJavaClassAsAnonymousObjectSuperType)
+    }
+
     fun testResolveCompiledAnnotation() {
         doCheck("ResolveCompiledAnnotation", ::checkResolveCompiledAnnotation)
     }
