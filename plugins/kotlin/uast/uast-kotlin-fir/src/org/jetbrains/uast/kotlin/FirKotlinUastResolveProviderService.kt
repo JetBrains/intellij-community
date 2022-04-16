@@ -382,7 +382,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun getReceiverType(ktCallElement: KtCallElement, source: UElement): PsiType? {
         analyseForUast(ktCallElement) {
-            val ktType = ktCallElement.resolveCall().singleFunctionCallOrNull()?.symbol?.receiverType ?: return null
+            val ktCall = ktCallElement.resolveCall().singleFunctionCallOrNull() ?: return null
+            val ktType = ktCall.partiallyAppliedSymbol.signature.receiverType ?: return null
             if (ktType is KtClassErrorType) return null
             return toPsiType(ktType, source, ktCallElement, ktCallElement.typeOwnerKind, boxed = true)
         }
@@ -390,8 +391,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun getAccessorReceiverType(ktSimpleNameExpression: KtSimpleNameExpression, source: UElement): PsiType? {
         analyseForUast(ktSimpleNameExpression) {
-            val ktType =
-                ktSimpleNameExpression.resolveCall()?.singleCallOrNull<KtVariableAccessCall>()?.symbol?.receiverType ?: return null
+            val ktCall = ktSimpleNameExpression.resolveCall()?.singleCallOrNull<KtVariableAccessCall>() ?: return null
+            val ktType = ktCall.partiallyAppliedSymbol.signature.receiverType ?: return null
             if (ktType is KtClassErrorType) return null
             return toPsiType(ktType, source, ktSimpleNameExpression, ktSimpleNameExpression.typeOwnerKind, boxed = true)
         }
