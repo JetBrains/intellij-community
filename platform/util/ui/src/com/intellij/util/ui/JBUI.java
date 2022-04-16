@@ -302,7 +302,7 @@ public final class JBUI {
 
     public static @NotNull Border merge(@Nullable Border source, @NotNull Border extra, boolean extraIsOutside) {
       if (source == null) return extra;
-      return new CompoundBorder(extraIsOutside ? extra : source, extraIsOutside? source : extra);
+      return new CompoundBorder(extraIsOutside ? extra : source, extraIsOutside ? source : extra);
     }
   }
 
