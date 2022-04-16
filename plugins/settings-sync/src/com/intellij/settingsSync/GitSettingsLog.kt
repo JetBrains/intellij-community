@@ -102,7 +102,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
         addCommand.addFilepattern(fileSpec)
       }
       addCommand.call()
-      git.commit().setMessage("Copy existing configs").call()
+      commit("Copy existing configs")
     }
   }
 
@@ -167,6 +167,11 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       addCommand.addFilepattern(fileState.file)
     }
     addCommand.call()
+
+    commit(message)
+  }
+
+  private fun commit(message: String) {
     // Don't allow empty commit: sometimes the stream provider can notify about changes but there are no actual changes on disk
     try {
       git.commit().setMessage(message).setAllowEmpty(false).call()
