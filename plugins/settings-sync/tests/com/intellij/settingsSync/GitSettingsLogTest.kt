@@ -53,6 +53,7 @@ internal class GitSettingsLogTest {
       listOf(keymapsFolder, editorXml)
     }
     settingsLog.initialize()
+    settingsLog.logExistingSettings()
 
     settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
       fileState("keymaps/mykeymap.xml", keymapContent)

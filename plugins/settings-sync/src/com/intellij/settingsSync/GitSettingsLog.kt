@@ -52,12 +52,15 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       LOG.info("Initializing new Git repository for Settings Sync at $settingsSyncStorage")
       repository.create()
       initRepository(repository)
-      copyExistingSettings(repository)
     }
 
     createBranchIfNeeded(MASTER_REF_NAME, newRepository)
     createBranchIfNeeded(CLOUD_REF_NAME, newRepository)
     createBranchIfNeeded(IDE_REF_NAME, newRepository)
+  }
+
+  override fun logExistingSettings() {
+    copyExistingSettings(repository)
   }
 
   private fun createBranchIfNeeded(name: String, newRepository: Boolean) {
@@ -73,6 +76,8 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
   private fun copyExistingSettings(repository: Repository) {
     LOG.info("Copying existing settings from $rootConfigPath to $settingsSyncStorage")
+    git.checkout().setName(IDE_REF_NAME).call()
+
     val copiedFileSpecs = mutableListOf<String>()
 
     val filesToExport = collectFilesToExportFromSettings()

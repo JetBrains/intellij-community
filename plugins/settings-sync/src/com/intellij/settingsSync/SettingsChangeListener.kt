@@ -13,6 +13,7 @@ internal sealed class SyncSettingsEvent {
   class CloudChange(val snapshot: SettingsSnapshot) : SyncSettingsEvent()
   object PushIfNeededRequest : SyncSettingsEvent()
   object MustPushRequest: SyncSettingsEvent()
+  object LogCurrentSettings: SyncSettingsEvent()
 }
 
 internal data class SettingsSnapshot(val fileStates: Set<FileState>) {

@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -34,7 +35,9 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     initSettingsSync()
 
-    assertSettingsPushed {
+    val pushedSnapshot = remoteCommunicator.pushed
+    assertNotNull("Nothing has been pushed", pushedSnapshot)
+    pushedSnapshot!!.assertSettingsSnapshot {
       fileState(fileName, contentBetweenSessions)
     }
   }

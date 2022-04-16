@@ -41,17 +41,13 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
     // activate the stream provider at this point to correctly process the event from the server (e.g. to synchronize the access to xmls)
     ideMediator.activateStreamProvider()
 
-    when (initMode) {
-      is InitMode.TakeFromServer -> {
-        pendingEvents.add(initMode.cloudEvent)
-        processPendingEvents()
-      }
-      is InitMode.PushToServer -> {
-        pendingEvents.add(SyncSettingsEvent.MustPushRequest)
-        processPendingEvents()
-      }
-      InitMode.JustInit -> {} // nothing to do
+    val initialEvent = when (initMode) {
+      is InitMode.TakeFromServer -> initMode.cloudEvent
+      InitMode.PushToServer -> SyncSettingsEvent.MustPushRequest
+      InitMode.JustInit -> SyncSettingsEvent.LogCurrentSettings
     }
+    pendingEvents.add(initialEvent)
+    processPendingEvents()
 
     // todo copy existing settings again here
     // because local events could happen between activating the stream provider above and starting processing events here
@@ -81,6 +77,9 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
       }
       else if (event is SyncSettingsEvent.CloudChange) {
         settingsLog.applyCloudState(event.snapshot)
+      }
+      else if (event is SyncSettingsEvent.LogCurrentSettings) {
+        settingsLog.logExistingSettings()
       }
       else if (event is SyncSettingsEvent.PushIfNeededRequest) {
         pushToCloudRequested = true

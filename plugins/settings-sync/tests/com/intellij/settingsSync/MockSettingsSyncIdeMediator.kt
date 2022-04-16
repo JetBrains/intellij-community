@@ -1,8 +1,10 @@
 package com.intellij.settingsSync
 
+import com.intellij.util.io.isFile
 import java.nio.charset.Charset
+import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.listDirectoryEntries
+import kotlin.streams.toList
 
 internal class MockSettingsSyncIdeMediator : SettingsSyncIdeMediator {
   private val files = mutableMapOf<String, String>()
@@ -30,7 +32,9 @@ internal class MockSettingsSyncIdeMediator : SettingsSyncIdeMediator {
 
   companion object {
     fun getAllFilesFromSettings(appConfigPath: Path): () -> Collection<Path> {
-      return { appConfigPath.listDirectoryEntries() }
+      return {
+        Files.walk(appConfigPath).filter { it.isFile() }.toList()
+      }
     }
   }
 }
