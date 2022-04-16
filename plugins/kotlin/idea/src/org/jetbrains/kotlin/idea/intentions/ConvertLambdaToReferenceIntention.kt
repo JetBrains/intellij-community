@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -32,14 +32,14 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContext.FUNCTION
 import org.jetbrains.kotlin.resolve.BindingContext.REFERENCE_TARGET
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.components.hasDefaultValue
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.calls.model.DefaultValueArgument
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VarargValueArgument
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.isCompanionObject
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyPackageDescriptor
@@ -66,8 +66,6 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
 ) {
     @Suppress("unused")
     constructor() : this(KotlinBundle.lazyMessage("convert.lambda.to.reference"))
-
-    open fun buildReferenceText(element: KtLambdaExpression) = buildReferenceText(lambdaExpression = element, shortTypes = false)
 
     private fun isConvertibleCallInLambda(
         callableExpression: KtExpression,
@@ -274,6 +272,85 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
         }
     }
 
+    open fun buildReferenceText(lambdaExpression: KtLambdaExpression): String? {
+        val lambdaParameterType = lambdaExpression.lambdaParameterType()
+        return when (val singleStatement = lambdaExpression.singleStatementOrNull()) {
+            is KtCallExpression -> {
+                val calleeReferenceExpression = singleStatement.calleeExpression as? KtNameReferenceExpression ?: return null
+                val context = calleeReferenceExpression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
+                val resolvedCall = calleeReferenceExpression.getResolvedCall(context) ?: return null
+                val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver
+                val descriptor by lazy { receiver?.type?.constructor?.declarationDescriptor }
+                val receiverText = when {
+                    lambdaParameterType?.isExtensionFunctionType == true ->
+                        calleeReferenceExpression.renderTargetReceiverType(context, resolvedCall)
+
+                    receiver == null || descriptor?.isCompanionObject() == true ||
+                            lambdaExpression.languageVersionSettings.languageVersion >= LanguageVersion.KOTLIN_1_2 -> ""
+
+                    receiver is ExtensionReceiver ||
+                            descriptor?.let { DescriptorUtils.isAnonymousObject(it) } == true ||
+                            lambdaExpression.getResolutionScope().getImplicitReceiversHierarchy().size == 1 -> "this"
+
+                    else -> descriptor?.name?.let { "this@$it" }
+                } ?: return null
+                val selectorText = singleStatement.getCallReferencedName() ?: return null
+                buildReferenceText(receiverText, selectorText, resolvedCall)
+            }
+            is KtDotQualifiedExpression -> {
+                val (selectorReference, selectorReferenceName) = when (val selector = singleStatement.selectorExpression) {
+                    is KtCallExpression -> {
+                        val callee = selector.calleeExpression as? KtNameReferenceExpression ?: return null
+                        callee to callee.getSafeReferencedName()
+                    }
+                    is KtNameReferenceExpression -> {
+                        selector to selector.getSafeReferencedName()
+                    }
+                    else -> return null
+                }
+                val receiver = singleStatement.receiverExpression
+                val context = receiver.safeAnalyzeNonSourceRootCode()
+                val resolvedCall = singleStatement.selectorExpression.getResolvedCall(context)
+                when (receiver) {
+                    is KtNameReferenceExpression -> {
+                        val receiverDescriptor = context[REFERENCE_TARGET, receiver] ?: return null
+                        val lambdaValueParameters = context[FUNCTION, lambdaExpression.functionLiteral]?.valueParameters ?: return null
+                        if (receiverDescriptor is ParameterDescriptor && receiverDescriptor == lambdaValueParameters.firstOrNull()) {
+                            val originalReceiverType = receiverDescriptor.type
+                            val receiverType = originalReceiverType.approximateFlexibleTypes(preferNotNull = true)
+                            val receiverText = IdeDescriptorRenderers.SOURCE_CODE.renderType(receiverType)
+                            buildReferenceText(receiverText, selectorReferenceName, resolvedCall)
+                        } else {
+                            val receiverName = receiverDescriptor.importableFqName?.asString() ?: receiverDescriptor.name.asString()
+                            buildReferenceText(receiverName, selectorReferenceName, resolvedCall)
+                        }
+                    }
+                    else -> {
+                        val receiverText = if (lambdaParameterType?.isExtensionFunctionType == true) {
+                            selectorReference.renderTargetReceiverType(context)
+                        } else {
+                            receiver.text
+                        } ?: return null
+                        buildReferenceText(receiverText, selectorReferenceName, resolvedCall)
+                    }
+                }
+            }
+            else -> null
+        }
+    }
+
+    private fun buildReferenceText(receiver: String, selector: String, resolvedCall: ResolvedCall<out CallableDescriptor>?): String {
+        val isVariableCall = resolvedCall is VariableAsFunctionResolvedCall
+        val invokeReference = if (resolvedCall?.resultingDescriptor?.isInvokeOperator == true) "::invoke" else ""
+        return if (receiver.isEmpty()) {
+            val operator = if (isVariableCall) "" else "::"
+            "$operator$selector$invokeReference"
+        } else {
+            val operator = if (isVariableCall) "." else "::"
+            "$receiver$operator$selector$invokeReference"
+        }
+    }
+
     private fun KtCallExpression.addTypeArgumentsIfNeeded(
         lambda: KtLambdaExpression,
         valueArgument: KtValueArgument,
@@ -324,93 +401,6 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             } else {
                 parent
             } as? KtValueArgument
-        }
-
-        private fun buildReferenceText(lambdaExpression: KtLambdaExpression, shortTypes: Boolean): String? {
-            val lambdaParameterType = lambdaExpression.lambdaParameterType()
-            return when (val singleStatement = lambdaExpression.singleStatementOrNull()) {
-                is KtCallExpression -> {
-                    val calleeReferenceExpression = singleStatement.calleeExpression as? KtNameReferenceExpression ?: return null
-                    val context = calleeReferenceExpression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
-                    val resolvedCall = calleeReferenceExpression.getResolvedCall(context) ?: return null
-                    val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver
-                    val descriptor by lazy { receiver?.type?.constructor?.declarationDescriptor }
-                    val receiverText = when {
-                        lambdaParameterType?.isExtensionFunctionType == true ->
-                            calleeReferenceExpression.renderTargetReceiverType(context, resolvedCall)
-
-                        receiver == null || descriptor?.isCompanionObject() == true ||
-                                lambdaExpression.languageVersionSettings.languageVersion >= LanguageVersion.KOTLIN_1_2 -> ""
-
-                        receiver is ExtensionReceiver ||
-                                descriptor?.let { DescriptorUtils.isAnonymousObject(it) } == true ||
-                                lambdaExpression.getResolutionScope().getImplicitReceiversHierarchy().size == 1 -> "this"
-
-                        else -> descriptor?.name?.let { "this@$it" }
-                    } ?: return null
-                    val selectorText = singleStatement.getCallReferencedName() ?: return null
-                    buildReferenceText(receiverText, selectorText, resolvedCall)
-                }
-                is KtDotQualifiedExpression -> {
-                    val (selectorReference, selectorReferenceName) = when (val selector = singleStatement.selectorExpression) {
-                        is KtCallExpression -> {
-                            val callee = selector.calleeExpression as? KtNameReferenceExpression ?: return null
-                            callee to callee.getSafeReferencedName()
-                        }
-                        is KtNameReferenceExpression -> {
-                            selector to selector.getSafeReferencedName()
-                        }
-                        else -> return null
-                    }
-                    val receiver = singleStatement.receiverExpression
-                    val context = receiver.safeAnalyzeNonSourceRootCode()
-                    val resolvedCall = singleStatement.selectorExpression.getResolvedCall(context)
-                    when (receiver) {
-                        is KtNameReferenceExpression -> {
-                            val receiverDescriptor = context[REFERENCE_TARGET, receiver] ?: return null
-                            val lambdaValueParameters = context[FUNCTION, lambdaExpression.functionLiteral]?.valueParameters ?: return null
-                            if (receiverDescriptor is ParameterDescriptor && receiverDescriptor == lambdaValueParameters.firstOrNull()) {
-                                val originalReceiverType = receiverDescriptor.type
-                                val receiverType = originalReceiverType.approximateFlexibleTypes(preferNotNull = true)
-                                val receiverText = if (shortTypes) {
-                                    IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(receiverType)
-                                } else {
-                                    IdeDescriptorRenderers.SOURCE_CODE.renderType(receiverType)
-                                }
-                                buildReferenceText(receiverText, selectorReferenceName, resolvedCall)
-                            } else {
-                                val receiverName = receiverDescriptor.importableFqName?.asString() ?: receiverDescriptor.name.asString()
-                                buildReferenceText(receiverName, selectorReferenceName, resolvedCall)
-                            }
-                        }
-                        else -> {
-                            val receiverText = if (lambdaParameterType?.isExtensionFunctionType == true) {
-                                selectorReference.renderTargetReceiverType(context)
-                            } else {
-                                receiver.text
-                            } ?: return null
-                            buildReferenceText(receiverText, selectorReferenceName, resolvedCall)
-                        }
-                    }
-                }
-                else -> null
-            }
-        }
-
-        private fun buildReferenceText(
-            receiverText: String,
-            selectorText: String,
-            resolvedCall: ResolvedCall<out CallableDescriptor>?
-        ): String {
-            val calledVariable = resolvedCall is VariableAsFunctionResolvedCall
-            val invokeReference = if (resolvedCall?.resultingDescriptor?.isInvokeOperator == true) "::invoke" else ""
-            return if (receiverText.isEmpty()) {
-                val colonColon = if (calledVariable) "" else "::"
-                "$colonColon$selectorText$invokeReference"
-            } else {
-                val colonColon = if (calledVariable) "." else "::"
-                "$receiverText$colonColon$selectorText$invokeReference"
-            }
         }
 
         private fun KtCallExpression.getCallReferencedName() = (calleeExpression as? KtNameReferenceExpression)?.getSafeReferencedName()
