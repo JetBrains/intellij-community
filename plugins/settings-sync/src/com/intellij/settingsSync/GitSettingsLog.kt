@@ -42,7 +42,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     Disposer.register(parentDisposable, this)
   }
 
-  override fun initialize(): Boolean {
+  override fun initialize() {
     val dotGit = settingsSyncStorage.resolve(".git")
     repository = FileRepositoryBuilder.create(dotGit.toFile())
     git = Git(repository)
@@ -58,8 +58,6 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     createBranchIfNeeded(MASTER_REF_NAME, newRepository)
     createBranchIfNeeded(CLOUD_REF_NAME, newRepository)
     createBranchIfNeeded(IDE_REF_NAME, newRepository)
-
-    return newRepository
   }
 
   private fun createBranchIfNeeded(name: String, newRepository: Boolean) {

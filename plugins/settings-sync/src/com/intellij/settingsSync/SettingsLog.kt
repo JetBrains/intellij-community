@@ -19,7 +19,7 @@ internal interface SettingsLog {
    * false if the data was already there, and we've just created internal structures.
    */
   @RequiresBackgroundThread
-  fun initialize(): Boolean
+  fun initialize()
 
   /**
    * Records the current local state of the settings.
