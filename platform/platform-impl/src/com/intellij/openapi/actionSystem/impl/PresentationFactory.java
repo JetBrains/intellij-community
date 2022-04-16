@@ -42,7 +42,7 @@ public class PresentationFactory {
           presentation.putClientProperty(NEED_UPDATE_PRESENTATION, null);
         }
       }
-      processPresentation(presentation);
+      processPresentation(presentation, action);
     }
     return presentation;
   }
@@ -54,6 +54,10 @@ public class PresentationFactory {
   @ApiStatus.Internal
   public final @NotNull Collection<AnAction> getActions() {
     return Collections.unmodifiableSet(myPresentations.keySet());
+  }
+
+  protected void processPresentation(@NotNull Presentation presentation, @NotNull AnAction action) {
+    processPresentation(presentation);
   }
 
   protected void processPresentation(@NotNull Presentation presentation) {
