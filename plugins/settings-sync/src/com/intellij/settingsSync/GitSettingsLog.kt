@@ -60,7 +60,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   }
 
   override fun logExistingSettings() {
-    copyExistingSettings(repository)
+    copyExistingSettings()
   }
 
   private fun createBranchIfNeeded(name: String, newRepository: Boolean) {
@@ -74,7 +74,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     }
   }
 
-  private fun copyExistingSettings(repository: Repository) {
+  private fun copyExistingSettings() {
     LOG.info("Copying existing settings from $rootConfigPath to $settingsSyncStorage")
     git.checkout().setName(IDE_REF_NAME).call()
 
@@ -97,7 +97,6 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     }
 
     if (copiedFileSpecs.isNotEmpty()) {
-      val git = Git(repository)
       val addCommand = git.add()
       for (fileSpec in copiedFileSpecs) {
         addCommand.addFilepattern(fileSpec)
