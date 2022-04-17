@@ -55,7 +55,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     "intellij.ant",
     "intellij.devkit",
     "intellij.eclipse",
-    "intellij.externalSystem.dependencyUpdater",
     "intellij.featuresTrainer",
     "intellij.gradle.dependencyUpdater",
     "intellij.gradle.java.maven",
