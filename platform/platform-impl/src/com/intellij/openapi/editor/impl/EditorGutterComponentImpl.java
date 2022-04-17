@@ -423,7 +423,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       paintLineNumbers(g, startVisualLine, endVisualLine);
       paintCurrentAccessibleLine(g);
 
-      if (ExperimentalUI.isNewUI()) {
+      if (ExperimentalUI.isNewUI() && myPaintBackground) {
         g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
         double offsetX = getExpUIVerticalLineX();
         LinePainter2D.paint(g, offsetX, clip.y, offsetX, clip.y + clip.height);
