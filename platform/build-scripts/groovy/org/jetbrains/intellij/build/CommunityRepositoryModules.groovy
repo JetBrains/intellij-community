@@ -122,7 +122,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.packageSearch.maven")
       withModule("intellij.packageSearch.kotlin")
     },
-    plugin("intellij.externalSystem.dependencyUpdater"),
     plugin("intellij.gradle.dependencyUpdater"),
     plugin("intellij.android.gradle.dsl"),
     plugin("intellij.gradle.java") {

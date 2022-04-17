@@ -621,6 +621,7 @@ io/netty/channel/AbstractChannel$AnnotatedNoRouteToHostException.class:lib/3rd-p
 META-INF/ExternalSystem.xml:lib/app.jar
 META-INF/ExternalSystemExtensionPoints.xml:lib/app.jar
 META-INF/ExternalSystemExtensions.xml:lib/app.jar
+META-INF/ExternalSystemDependencyUpdater.xml:lib/app.jar
 io/netty/channel/AbstractChannel$AnnotatedSocketException.class:lib/3rd-party-rt.jar
 META-INF/ExternalSystemActions.xml:lib/app.jar
 intellij.platform.remoteServers.impl.xml:lib/app.jar

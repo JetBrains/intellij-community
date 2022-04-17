@@ -798,6 +798,7 @@ META-INF/ExternalSystem.xml:lib/app.jar
 META-INF/ExternalSystemExtensionPoints.xml:lib/app.jar
 META-INF/ExternalSystemExtensions.xml:lib/app.jar
 META-INF/ExternalSystemActions.xml:lib/app.jar
+META-INF/ExternalSystemDependencyUpdater.xml:lib/app.jar
 intellij.platform.remoteServers.impl.xml:lib/app.jar
 META-INF/XmlPlugin.xml:lib/app.jar
 META-INF/XmlActions.xml:lib/app.jar

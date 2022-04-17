@@ -37,6 +37,7 @@ final class PlatformModules {
     "intellij.platform.vcs.dvcs",
     "intellij.platform.editor",
     "intellij.platform.externalSystem",
+    "intellij.platform.externalSystem.dependencyUpdater",
     "intellij.platform.codeStyle",
     "intellij.platform.indexing",
     "intellij.platform.jps.model",
