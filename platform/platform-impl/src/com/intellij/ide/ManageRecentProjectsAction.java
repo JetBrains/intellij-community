@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.welcomeScreen.NewRecentProjectPanel;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
@@ -41,7 +42,7 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
     SearchTextField searchTextField = UIUtil.findComponentOfType(panel, SearchTextField.class);
     PopupUtil.applyNewUIBackground(searchTextField);
     JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, list)
-      .setTitle(IdeBundle.message("popup.title.recent.projects"))
+      .setTitle(IdeUICustomization.getInstance().projectMessage("popup.title.recent.projects"))
       .setFocusable(true)
       .setRequestFocus(true)
       .setMayBeParent(true)

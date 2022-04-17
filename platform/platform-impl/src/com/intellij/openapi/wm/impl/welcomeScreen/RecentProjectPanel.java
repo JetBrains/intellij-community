@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
@@ -63,7 +64,9 @@ import java.util.function.Supplier;
 public class RecentProjectPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance(RecentProjectPanel.class);
 
-  public static final Supplier<@Nls String> RECENT_PROJECTS_LABEL = IdeBundle.messagePointer("popup.title.recent.projects");
+  public static final Supplier<@Nls String> RECENT_PROJECTS_LABEL = IdeUICustomization
+    .getInstance()
+    .projectMessagePointer("popup.title.recent.projects");
 
   protected final JBList<AnAction> myList;
   protected final UniqueNameBuilder<ReopenProjectAction> myPathShortener;

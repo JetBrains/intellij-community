@@ -6,6 +6,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.*;
 
+import java.util.function.Supplier;
+
 /**
  * Allows to apply IDE-specific customizations to the terms used in platform UI features.
  */
@@ -30,6 +32,14 @@ public class IdeUICustomization {
   @NotNull
   public @Nls String projectMessage(@NotNull @PropertyKey(resourceBundle = ProjectConceptBundle.BUNDLE) String key, Object @NotNull ... params) {
     return ProjectConceptBundle.message(key, params);
+  }
+
+  /**
+   * Returns a message which mentions 'project' concept.
+   */
+  @NotNull
+  public Supplier<@Nls String> projectMessagePointer(@NotNull @PropertyKey(resourceBundle = ProjectConceptBundle.BUNDLE) String key, Object @NotNull ... params) {
+    return ProjectConceptBundle.messagePointer(key, params);
   }
 
   /**
@@ -92,5 +102,9 @@ final class ProjectConceptBundle {
 
   static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
+  }
+
+  static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 }
