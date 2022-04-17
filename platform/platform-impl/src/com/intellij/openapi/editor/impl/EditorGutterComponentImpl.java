@@ -248,11 +248,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
             if (draggableObject != null) {
               final int line = convertPointToLineNumber(e.getPoint());
               if (line != -1) {
-
-
-
-
-
                 draggableObject.copy(line, myEditor.getVirtualFile(), e.getAction().getActionId());
               }
             }
