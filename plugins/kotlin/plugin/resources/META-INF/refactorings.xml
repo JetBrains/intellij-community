@@ -172,6 +172,12 @@
             description="Enable experimental move method refactoring"
             defaultValue="false"
             restartRequired="false"/>
+
+    <registryKey
+            key="kotlin.enable.inplace.extract.method"
+            description="Replace dialog with template for extract method refactoring"
+            defaultValue="false"
+            restartRequired="false"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

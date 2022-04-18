@@ -4,14 +4,20 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringActionHandler
+import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTemplate
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ui.KotlinExtractFunctionDialog
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
@@ -19,6 +25,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetS
 import org.jetbrains.kotlin.idea.refactoring.introduce.validateExpressionElements
 import org.jetbrains.kotlin.idea.util.nonBlocking
 import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -27,6 +34,14 @@ class ExtractKotlinFunctionHandler(
     private val helper: ExtractionEngineHelper = InteractiveExtractionHelper
 ) : RefactoringActionHandler {
 
+    companion object {
+        private val isInplaceRefactoringEnabled: Boolean
+            get() {
+                return EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled
+                       && Registry.`is`("kotlin.enable.inplace.extract.method")
+            }
+    }
+
     object InteractiveExtractionHelper : ExtractionEngineHelper(EXTRACT_FUNCTION) {
         override fun configureAndRun(
             project: Project,
@@ -34,9 +49,15 @@ class ExtractKotlinFunctionHandler(
             descriptorWithConflicts: ExtractableCodeDescriptorWithConflicts,
             onFinish: (ExtractionResult) -> Unit
         ) {
-            KotlinExtractFunctionDialog(descriptorWithConflicts.descriptor.extractionData.project, descriptorWithConflicts) {
-                doRefactor(it.currentConfiguration, onFinish)
-            }.show()
+            if (isInplaceRefactoringEnabled) {
+                val descriptor = descriptorWithConflicts.descriptor.copy(suggestedNames = listOf("extracted"))
+                val configuration = ExtractionGeneratorConfiguration(descriptor, ExtractionGeneratorOptions.DEFAULT)
+                doRefactor(configuration, onFinish)
+            } else {
+                KotlinExtractFunctionDialog(descriptorWithConflicts.descriptor.extractionData.project, descriptorWithConflicts) {
+                    doRefactor(it.currentConfiguration, onFinish)
+                }.show()
+            }
         }
     }
 
@@ -50,10 +71,26 @@ class ExtractKotlinFunctionHandler(
             val adjustedElements = elements.singleOrNull().safeAs<KtBlockExpression>()?.statements ?: elements
             ExtractionData(file, adjustedElements.toRange(false), targetSibling)
         }) { extractionData ->
-            ExtractionEngine(helper).run(editor, extractionData) {
-                processDuplicates(it.duplicateReplacers, file.project, editor)
+            val callRange = editor.document.createRangeMarker(elements.first().textRange.startOffset, elements.last().textRange.endOffset)
+                .apply { isGreedyToLeft = true; isGreedyToRight = true }
+            ExtractionEngine(helper).run(editor, extractionData) { extraction ->
+                if (isInplaceRefactoringEnabled) {
+                    val callIdentifier = findSingleCallExpression(file, callRange.range)?.calleeExpression ?: throw IllegalStateException()
+                    ExtractMethodTemplate(editor, extraction.declaration, callIdentifier).runTemplate(LinkedHashSet())
+                    callRange.dispose()
+                    //TODO fix duplicates
+                } else {
+                    processDuplicates(extraction.duplicateReplacers, file.project, editor)
+                }
             }
         }
+    }
+
+    private fun findSingleCallExpression(file: KtFile, range: TextRange?): KtCallExpression? {
+        if (range == null) return null
+        val container = PsiTreeUtil.findCommonParent(file.findElementAt(range.startOffset), file.findElementAt(range.endOffset))
+        val callExpressions = PsiTreeUtil.findChildrenOfType(container, KtCallExpression::class.java)
+        return callExpressions.filter { it.textRange in range }.singleOrNull()
     }
 
     fun selectElements(editor: Editor, file: KtFile, continuation: (elements: List<PsiElement>, targetSibling: PsiElement) -> Unit) {

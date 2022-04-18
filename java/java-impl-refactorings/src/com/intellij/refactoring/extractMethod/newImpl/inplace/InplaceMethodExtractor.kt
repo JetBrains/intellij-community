@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -82,7 +81,7 @@ private fun installGotItTooltips(editor: Editor, navigationGotItRange: TextRange
   editor.caretModel.addCaretListener(caretListener, disposable)
 }
 
-class ExtractMethodTemplate(private val editor: Editor, private val method: PsiMethod, private val call: PsiElement)
+class ExtractMethodTemplate(private val editor: Editor, private val method: PsiNamedElement, private val call: PsiElement)
   : InplaceRefactoring(editor, method, method.project) {
 
   init {
