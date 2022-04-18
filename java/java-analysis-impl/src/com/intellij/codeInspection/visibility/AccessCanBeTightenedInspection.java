@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
@@ -155,6 +156,9 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
           }
           return currentLevel;
         }
+        if (FindSuperElementsHelper.getSiblingInfoInheritedViaSubClass(method) != null) {
+          return currentLevel;
+        }
       }
       if (member instanceof PsiEnumConstant) return currentLevel;
       if (member instanceof PsiClass && (member instanceof PsiAnonymousClass ||
@@ -163,7 +167,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
                                          PsiUtil.isLocalClass((PsiClass)member))) {
         return currentLevel;
       }
-      if (memberClass != null && (memberClass.isInterface() || memberClass.isEnum() || memberClass.isAnnotationType() || PsiUtil.isLocalClass(memberClass) && member instanceof PsiClass)) {
+      if (memberClass != null && (memberClass.isInterface() || PsiUtil.isLocalClass(memberClass) && member instanceof PsiClass)) {
         return currentLevel;
       }
 
@@ -239,7 +243,6 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       return suggestedLevel;
     }
 
-
     private boolean handleUsage(@NotNull PsiMember member,
                                 @Nullable PsiClass memberClass,
                                 @NotNull AtomicInteger maxLevel,
@@ -280,7 +283,6 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         }
       }
       PsiClass innerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-      boolean isAbstractMember = member.hasModifierProperty(PsiModifier.ABSTRACT);
       if (memberClass != null && PsiTreeUtil.isAncestor(innerClass, memberClass, false) ||
           innerClass != null && PsiTreeUtil.isAncestor(memberClass, innerClass, false)) {
         // access from the same file can be via private
@@ -293,9 +295,9 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
           return suggestPackageLocal(member);
         }
 
-        return !isAbstractMember &&
+        return !member.hasModifierProperty(PsiModifier.ABSTRACT) &&
                (myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS || !isInnerClass(memberClass)) &&
-               !calledOnInheritor(element, memberClass)
+               (member.hasModifierProperty(PsiModifier.STATIC) || !calledOnInheritor(element, memberClass))
                ? PsiUtil.ACCESS_LEVEL_PRIVATE : suggestPackageLocal(member);
       }
 

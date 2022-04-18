@@ -110,6 +110,24 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
            "  }\n"+
            "  boolean f = new Err(){}.notVisible();\n" + //call on anonymous class!
            "}");
+    doTest("class C {\n" +
+           "  private static class Err {\n" +
+           "    /*Access can be 'private'*/public/**/ static boolean notVisible() { return true; }\n" +
+           "  }\n"+
+           "  boolean f = new Err(){}.notVisible();\n" + //call on anonymous class!
+           "}");
+  }
+
+  public void testSiblingInheritance() {
+    doTest("abstract class Impl {\n" +
+           "  public void doSomething() {\n" +
+           "    run();\n" +
+           "  }\n" +
+           "\n" +
+           "  public void run() {}\n" +
+           "}\n" +
+           "class Concrete extends Impl implements Runnable {\n" +
+           "}");
   }
 
   public void testAccessFromSubclass() {
@@ -201,14 +219,14 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
 
   public void testDoNotSuggestPrivateForInnerStaticSubclass() {
     doTest("class A {\n" +
-           "    <warning descr=\"Access can be package-private\">protected</warning> String myElement;\n" +
+           "    /*Access can be package-private*/protected/**/ String myElement;\n" +
            "    static class B extends A {\n" +
            "        @Override\n" +
            "        public String toString() {\n" +
            "            return myElement;\n" +
            "        }\n" +
            "    }\n" +
-           "    <warning descr=\"Access can be 'private'\">protected</warning> String myElement1;\n" +
+           "    /*Access can be 'private'*/protected/**/ String myElement1;\n" +
            "    class B1 {\n" +
            "        @Override\n" +
            "        public String toString() {\n" +
@@ -279,27 +297,25 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
   }
 
   public void testInnerClassIsExposedInMethodSignature() {
-    addJavaFile("x/Record.java", "package x;\n" +
-                                 "class Record {\n" +
-                                 "    java.util.List<Inner> getRecord() {\n" +
-                                 "        return null;\n" +
-                                 "    }\n" +
-                                 "    static class Inner {}\n" +
-                                 "\n" +
-                                 "    void x(Inner2 inner) {}\n" +
-                                 "    class Inner2 {}\n" +
-                                 "    \n" +
-                                 "    Inner3 field;\n" +
-                                 "    class Inner3 {}\n" +
-                                 "    \n" +
-                                 "    private Inner4 field2;\n" +
-                                 "    class <warning descr=\"Access can be 'private'\">Inner4</warning> {}\n" +
-                                 "    \n" +
-                                 "    private void y(Inner5 i) {}\n" +
-                                 "    class <warning descr=\"Access can be 'private'\">Inner5</warning> {}" +
-                                 "}");
-    myFixture.configureByFiles("x/Record.java");
-    myFixture.checkHighlighting();
+    doTest("package x;\n" +
+           "class Record {\n" +
+           "    java.util.List<Inner> getRecord() {\n" +
+           "        return null;\n" +
+           "    }\n" +
+           "    static class Inner {}\n" +
+           "\n" +
+           "    void x(Inner2 inner) {}\n" +
+           "    class Inner2 {}\n" +
+           "    \n" +
+           "    Inner3 field;\n" +
+           "    class Inner3 {}\n" +
+           "    \n" +
+           "    private Inner4 field2;\n" +
+           "    class /*Access can be 'private'*/Inner4/**/ {}\n" +
+           "    \n" +
+           "    private void y(Inner5 i) {}\n" +
+           "    class /*Access can be 'private'*/Inner5/**/ {}" +
+           "}");
   }
 
   public void testClassIsExposedInMethodSignature() {
@@ -336,6 +352,17 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
                                  "}");
     myFixture.configureByFiles("x/Outer.java", "x/Consumer.java");
     myFixture.checkHighlighting();
+  }
+
+  public void testEnumMemberCanBePrivate() {
+    doTest("enum E {" +
+           "  A;" +
+           "  void x() {" +
+           "    y();" +
+           "  }" +
+           "  /*Access can be 'private'*/public/**/ void y() {" +
+           "  }" +
+           "}");
   }
 
   public void testSuggestPackagePrivateForTopLevelClassSetting() {
@@ -498,7 +525,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
   public void testSuggestForConstants() {
     myVisibilityInspection.SUGGEST_FOR_CONSTANTS = true;
     doTest("class SuggestForConstants {\n" +
-           "    <warning descr=\"Access can be 'private'\">public</warning> static final String MY_CONSTANT = \"a\";\n" +
+           "    /*Access can be 'private'*/public/**/ static final String MY_CONSTANT = \"a\";\n" +
            "    private final String myField = MY_CONSTANT;" +
            "}");
   }
