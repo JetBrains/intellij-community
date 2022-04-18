@@ -98,14 +98,13 @@ public class GroovyPositionManager extends PositionManagerEx {
 
   @Override
   public @Nullable XStackFrame createStackFrame(@NotNull StackFrameDescriptorImpl descriptor) {
-    if (!isInGroovyFile(descriptor)) {
+    if (!isInGroovyFile(descriptor.getLocation())) {
       return null;
     }
     return new GroovyStackFrame(descriptor, true);
   }
 
-  private static boolean isInGroovyFile(StackFrameDescriptorImpl descriptor) {
-    Location location = descriptor.getLocation();
+  private static boolean isInGroovyFile(@Nullable Location location) {
     if (location != null) {
       var refType = location.declaringType();
       try {
@@ -285,6 +284,10 @@ public class GroovyPositionManager extends PositionManagerEx {
   @Override
   public SourcePosition getSourcePosition(@Nullable final Location location) throws NoDataException {
     if (location == null) throw NoDataException.INSTANCE;
+    if (!isInGroovyFile(location)) throw NoDataException.INSTANCE;
+
+    int lineNumber = calcLineIndex(location);
+    if (lineNumber < 0) throw NoDataException.INSTANCE;
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("getSourcePosition: " + location);
@@ -292,8 +295,6 @@ public class GroovyPositionManager extends PositionManagerEx {
     PsiFile psiFile = getPsiFileByLocation(getDebugProcess().getProject(), location);
     if (psiFile == null) throw NoDataException.INSTANCE;
 
-    int lineNumber = calcLineIndex(location);
-    if (lineNumber < 0) throw NoDataException.INSTANCE;
     return SourcePosition.createFromLine(psiFile, lineNumber);
   }
 
