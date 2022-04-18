@@ -26,9 +26,9 @@ final class UnixScriptBuilder {
     }
 
     List<String> additionalJvmArguments = context.additionalJvmArguments
-    if (!context.xBootClassPathJarNames.isEmpty()) {
+    if (!context.getXBootClassPathJarNames().isEmpty()) {
       additionalJvmArguments = new ArrayList<>(additionalJvmArguments)
-      String bootCp = String.join(':', context.xBootClassPathJarNames.collect { "\$IDE_HOME/lib/${it}" })
+      String bootCp = String.join(':', context.getXBootClassPathJarNames().collect { "\$IDE_HOME/lib/${it}" })
       additionalJvmArguments.add('"-Xbootclasspath/a:' + bootCp + '"')
     }
     String additionalJvmArgs = String.join(' ', additionalJvmArguments)

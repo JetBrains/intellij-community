@@ -29,7 +29,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     this.customizer = customizer
     this.ideaProperties = ideaProperties
 
-    String iconPng = (buildContext.applicationInfo.isEAP ? customizer.iconPngPathForEAP : null) ?: customizer.iconPngPath
+    String iconPng = (buildContext.applicationInfo.isEAP() ? customizer.iconPngPathForEAP : null) ?: customizer.iconPngPath
     iconPngPath = iconPng == null || iconPng.isEmpty() ? null : Path.of(iconPng)
   }
 

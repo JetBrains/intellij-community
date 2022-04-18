@@ -85,7 +85,7 @@ final class MacDmgBuilder {
                                                      BuildContext context) {
     Path dmgImage = context.options.buildStepsToSkip.contains(BuildOptions.MAC_DMG_STEP)
       ? null
-      : Path.of((context.applicationInfo.isEAP ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath)
+      : Path.of((context.applicationInfo.isEAP() ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath)
     Path jetSignClient = context.proprietaryBuildTools.signTool.commandLineClient(context)
     if (jetSignClient == null) {
       context.messages.error("JetSign client is missing, cannot proceed with signing")
@@ -180,7 +180,7 @@ final class MacDmgBuilder {
   @SuppressWarnings("SpellCheckingInspection")
   private static void buildDmgLocally(Path tempDir, String targetFileName, MacDistributionCustomizer customizer, BuildContext context) {
     Path dmgImageCopy = tempDir.resolve("${context.fullBuildNumber}.png")
-    Files.copy(Path.of((context.applicationInfo.isEAP ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath), dmgImageCopy)
+    Files.copy(Path.of((context.applicationInfo.isEAP() ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath), dmgImageCopy)
     Path scriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
     ["sh", "py"].each {
       Files.copy(scriptDir.resolve("makedmg.$it"), tempDir.resolve("makedmg.$it"),

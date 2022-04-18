@@ -2,40 +2,37 @@
 package org.jetbrains.intellij.build
 
 
-import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
-
 import java.nio.file.Path
 import java.util.function.Predicate
 
-@CompileStatic
 abstract class MacDistributionCustomizer {
   /**
    * Path to icns file containing product icon bundle for macOS distribution
    * For full description of icns files see <a href="https://en.wikipedia.org/wiki/Apple_Icon_Image_format">Apple Icon Image Format</a>
    */
-  String icnsPath
+  lateinit var icnsPath: String
 
   /**
    * Path to icns file for EAP builds (if {@code null} {@link #icnsPath} will be used)
    */
-  String icnsPathForEAP = null
+  var icnsPathForEAP: String? = null
 
   /**
    * An unique identifier string that specifies the app type of the bundle. The string should be in reverse DNS format using only the Roman alphabet in upper and lower case (A-Z, a-z), the dot ("."), and the hyphen ("-")
    * See <a href="https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070">CFBundleIdentifier</a> for details
    */
-  String bundleIdentifier
+  lateinit var bundleIdentifier: String
 
   /**
    * Path to an image which will be injected into .dmg file
    */
-  String dmgImagePath
+  lateinit var dmgImagePath: String
 
   /**
    * The minimum version of macOS where the product is allowed to be installed
    */
-  String minOSXVersion = "10.8"
+  var minOSXVersion = "10.8"
 
   /**
    * String with declarations of additional file types that should be automatically opened by the application.
@@ -55,7 +52,7 @@ abstract class MacDistributionCustomizer {
    * &lt;/dict&gt;
    * </pre>
    */
-  String additionalDocTypes = ""
+  var additionalDocTypes = ""
 
   /**
    * Note that users won't be able to switch off some of these associations during installation
@@ -63,50 +60,50 @@ abstract class MacDistributionCustomizer {
    *
    * @see FileAssociation
    */
-  List<FileAssociation> fileAssociations = []
+  var fileAssociations: MutableList<FileAssociation> = mutableListOf()
 
   /**
    * Specify &lt;scheme&gt; here if you want product to be able to open urls like <scheme>://open?file=/some/file/path&line=0
    */
-  List<String> urlSchemes = []
+  var urlSchemes: MutableList<String> = mutableListOf()
 
   /**
    * CPU architectures app can be launched on, currently arm64 and x86_64 are supported
    */
-  List<String> architectures = ["arm64", "x86_64"]
+  var architectures: MutableList<String> = mutableListOf("arm64", "x86_64")
 
   /**
    * If {@code true} *.ipr files will be associated with the product in Info.plist
    */
-  boolean associateIpr = false
+  var associateIpr = false
 
 
   /**
    * Relative paths to files in macOS distribution which should take 'executable' permissions
    */
-  List<String> extraExecutables = []
+  var extraExecutables: MutableList<String> = mutableListOf()
 
   /**
    * Filter for files that is going to be put to `<distribution>/bin` directory.
    */
-  Predicate<Path> binFilesFilter = { true } as Predicate<Path>
+  var binFilesFilter: Predicate<Path> = Predicate { true }
 
   /**
    * Relative paths to files in macOS distribution which should be signed
    */
-  List<String> getBinariesToSign(BuildContext context, JvmArchitecture arch) { [] }
+  open fun getBinariesToSign(context: BuildContext, arch: JvmArchitecture): List<String> = listOf()
 
   /**
    * Path to a image which will be injected into .dmg file for EAP builds (if {@code null} dmgImagePath will be used)
    */
-  String dmgImagePathForEAP = null
+  var dmgImagePathForEAP: String? = null
 
   /**
    * If {@code true} will publish sit archive as artifact.
    *
    * `true` by default because archive is required for patches.
    */
-  boolean publishArchive = true
+  var publishArchive = true
 
   /**
    * Application bundle name: &lt;name&gt;.app. Current convention is to have ProductName.app for release and ProductName Version EAP.app.
@@ -114,9 +111,9 @@ abstract class MacDistributionCustomizer {
    * @param buildNumber current build number
    * @return application bundle directory name
    */
-  String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
-    String suffix = applicationInfo.isEAP ? " ${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart} EAP" : ""
-    "$applicationInfo.productName${suffix}.app"
+  open fun getRootDirectoryName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String {
+    val suffix = if (applicationInfo.isEAP) " ${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart} EAP" else ""
+    return "${applicationInfo.productName}${suffix}.app"
   }
 
   /**
@@ -124,9 +121,7 @@ abstract class MacDistributionCustomizer {
    * @param applicationInfo application info that can be used to check for EAP and building version
    * @return map propertyName-&gt;propertyValue
    */
-  Map<String, String> getCustomIdeaProperties(ApplicationInfoProperties applicationInfo) {
-    return Collections.emptyMap()
-  }
+  open fun getCustomIdeaProperties(applicationInfo: ApplicationInfoProperties): Map<String, String> = emptyMap()
 
   /**
    * Additional files to be copied to the distribution, e.g. help bundle or debugger binaries
@@ -134,7 +129,7 @@ abstract class MacDistributionCustomizer {
    * @param context build context that contains information about build directories, product properties and application info
    * @param targetDirectory application bundle directory
    */
-  void copyAdditionalFiles(BuildContext context, String targetDirectory) {
+  open fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
   }
 
   /**
@@ -147,7 +142,7 @@ abstract class MacDistributionCustomizer {
    * @param targetDirectory application bundle directory
    * @param arch distribution target architecture, not null
    */
-  void copyAdditionalFiles(BuildContext context, Path targetDirectory, JvmArchitecture arch) {
+  open fun copyAdditionalFiles(context: BuildContext, targetDirectory: Path, arch: JvmArchitecture) {
     RepairUtilityBuilder.bundle(context, OsFamily.MACOS, arch, targetDirectory)
   }
 }

@@ -135,7 +135,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
 
       @Override
       String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
-        applicationInfo.isEAP ? "IntelliJ IDEA ${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart} CE EAP.app"
+        applicationInfo.isEAP() ? "IntelliJ IDEA ${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart} CE EAP.app"
                               : "IntelliJ IDEA CE.app"
       }
     }

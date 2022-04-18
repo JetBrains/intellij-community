@@ -7,9 +7,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
-import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
-import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
-import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry.LibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.jps.model.artifact.JpsArtifactService
@@ -64,8 +62,8 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
   val platformPrefix = productProperties.platformPrefix ?: "idea"
   val runDir = createRunDirForProduct(homePath, platformPrefix)
 
-  val buildContext = BuildContext.createContext(getCommunityHomePath(homePath).toString(), homePath.toString(), productProperties,
-                                                ProprietaryBuildTools.DUMMY, createBuildOptions(runDir))
+  val buildContext = BuildContextImpl.createContext(getCommunityHomePath(homePath).toString(), homePath.toString(), productProperties,
+                                                    ProprietaryBuildTools.DUMMY, createBuildOptions(runDir))
   val pluginsDir = runDir.resolve("plugins")
 
   val mainModuleToNonTrivialPlugin = HashMap<String, BuildItem>(bundledMainModuleNames.size)
@@ -82,12 +80,12 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
     // (old module names are not supported)
     var item = mainModuleToNonTrivialPlugin.get(mainModuleName)
     if (item == null) {
-      val pluginLayout = PluginLayout.plugin(mainModuleName)
+      val pluginLayout = PluginLayoutGroovy.plugin(mainModuleName)
       val pluginDir = pluginsDir.resolve(DistributionJARsBuilder.getActualPluginDirectoryName(pluginLayout, buildContext))
-      item = BuildItem(pluginDir, PluginLayout.plugin(mainModuleName))
+      item = BuildItem(pluginDir, PluginLayoutGroovy.plugin(mainModuleName))
     }
     else {
-      for (entry in item.layout.jarToIncludedModuleNames) {
+      for (entry in item.layout.getJarToIncludedModuleNames()) {
         if (!entry.key.contains('/')) {
           for (name in entry.value) {
             moduleNameToPlugin.put(name, item)

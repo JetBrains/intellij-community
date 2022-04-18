@@ -14,7 +14,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
 
-import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
+import static org.jetbrains.intellij.build.impl.PluginLayoutGroovy.plugin
 
 @CompileStatic
 final class CommunityRepositoryModules {

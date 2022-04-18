@@ -27,7 +27,7 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
       }
     }
 
-    val librariesWithLicenses = licenses.flatMap { it.libraryNames }.toSet()
+    val librariesWithLicenses = licenses.flatMap { it.getLibraryNames() }.toSet()
 
     for ((jpsLibrary, jpsModule) in libraries) {
       val libraryName = LibraryLicensesListGenerator.getLibraryName(jpsLibrary)

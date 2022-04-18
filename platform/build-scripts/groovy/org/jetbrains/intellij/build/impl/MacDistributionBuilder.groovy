@@ -257,7 +257,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     Files.move(macDistDir.resolve("MacOS/executable"), macDistDir.resolve("MacOS/$executable"))
 
     //noinspection SpellCheckingInspection
-    Path icnsPath = Path.of((context.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath)
+    Path icnsPath = Path.of((context.applicationInfo.isEAP() ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath)
     Path resourcesDistDir = macDistDir.resolve("Resources")
     BuildHelper.copyFile(icnsPath, resourcesDistDir.resolve(targetIcnsFileName))
 
@@ -274,7 +274,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     //todo[nik] improve
     String minor = context.applicationInfo.minorVersion
-    boolean isNotRelease = context.applicationInfo.isEAP && !minor.contains("RC") && !minor.contains("Beta")
+    boolean isNotRelease = context.applicationInfo.isEAP() && !minor.contains("RC") && !minor.contains("Beta")
     String version = isNotRelease ? "EAP $context.fullBuildNumber" : "${context.applicationInfo.majorVersion}.${minor}"
     String EAP = isNotRelease ? "-EAP" : ""
 
@@ -282,10 +282,10 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     properties.addAll(platformProperties)
     Files.write(macDistDir.resolve("bin/idea.properties"), properties)
 
-    String bootClassPath = String.join(":", context.xBootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/$it" })
+    String bootClassPath = String.join(":", context.getXBootClassPathJarNames().collect { "\$APP_PACKAGE/Contents/lib/$it" })
     String classPath = String.join(":", context.bootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/$it" })
 
-    List<String> fileVmOptions = VmOptionsGenerator.computeVmOptions(context.applicationInfo.isEAP, context.productProperties)
+    List<String> fileVmOptions = VmOptionsGenerator.computeVmOptions(context.applicationInfo.isEAP(), context.productProperties)
     List<String> additionalJvmArgs = context.additionalJvmArguments
     if (!bootClassPath.isEmpty()) {
       additionalJvmArgs = new ArrayList<>(additionalJvmArgs)

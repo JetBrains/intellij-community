@@ -85,7 +85,7 @@ final class JavaPluginLayout {
         }
 
         spec.withArtifact("debugger-agent", "rt")
-        spec.layout.includedProjectLibraries.add(new ProjectLibraryData("Eclipse", "ecj", ProjectLibraryData.PackMode.STANDALONE_MERGED))
+        spec.withProjectLibrary("Eclipse", "ecj", ProjectLibraryData.PackMode.STANDALONE_MERGED)
         // used in JPS - do not use uber jar
         spec.withProjectLibrary("jgoodies-common", ProjectLibraryData.PackMode.STANDALONE_MERGED)
         spec.withProjectLibrary("jps-javac-extension", ProjectLibraryData.PackMode.STANDALONE_MERGED)

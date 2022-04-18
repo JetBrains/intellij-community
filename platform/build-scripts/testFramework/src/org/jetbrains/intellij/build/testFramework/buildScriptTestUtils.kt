@@ -9,6 +9,7 @@ import com.intellij.util.ExceptionUtil
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.TracerManager
 import org.jetbrains.intellij.build.impl.TracerProviderManager
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
@@ -58,7 +59,7 @@ fun createBuildContext(
   val options = BuildOptions()
   customizeBuildOptionsForTest(options, productProperties, skipDependencySetup)
   buildOptionsCustomizer(options)
-  return BuildContext.createContext(communityHomePath, homePath, productProperties, buildTools, options)
+  return BuildContextImpl.createContext(communityHomePath, homePath, productProperties, buildTools, options)
 }
 
 fun runTestBuild(

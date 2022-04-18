@@ -28,27 +28,25 @@ import groovy.transform.Immutable
  *  <li>Set environment variable VERSIONER_PERL_PREFER_32_BIT to "true". <a href=http://apple.stackexchange.com/questions/83109/macosx-10-8-and-32-bit-perl-modules">More information about it.</a></li>
  * </ol>
  */
-@CompileStatic
-@Immutable
-final class MacHostProperties {
+data class MacHostProperties(
   /**
    * Mac host host name.
    */
-  final String host
+  val host: String?,
 
   /**
    * userName for access to Mac host via SFTP
    */
-  final String userName
+  val userName: String?,
 
   /**
    * password for access to Mac host via SFTP
    */
-  final String password
+  val password: String?,
 
   /**
    * Full name of a keychain identity (Applications > Utilities > Keychain Access).
    * More info in SIGNING IDENTITIES (https://developer.apple.com/legacy/library/documentation/Darwin/Reference/ManPages/man1/codesign.1.html)
    */
-  final String codesignString
-}
+  val codesignString: String?,
+)

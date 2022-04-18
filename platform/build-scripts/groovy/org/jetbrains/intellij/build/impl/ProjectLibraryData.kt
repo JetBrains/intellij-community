@@ -1,22 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.text.Strings
-import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
+import java.util.*
 
-@CompileStatic
-final class ProjectLibraryData {
-  final String libraryName
-  final String outPath
-  final PackMode packMode
+class ProjectLibraryData @JvmOverloads constructor(
+  val libraryName: String,
+  val outPath: String?,
+  val packMode: PackMode,
+  val reason: String? = null,
+) {
   // plugin to list of modules that uses the library
-  final Map<String, List<String>> dependentModules = new TreeMap<>()
+  val dependentModules: MutableMap<String, List<String>> = TreeMap()
 
-  final @Nullable String reason
-
-  enum PackMode {
+  enum class PackMode {
     // merged into some uber jar
     MERGED,
     // all JARs of the library is merged into JAR named after the library
@@ -27,33 +23,22 @@ final class ProjectLibraryData {
     STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
   }
 
-  ProjectLibraryData(@NotNull String libraryName, @Nullable String outPath, @NotNull PackMode packMode) {
-    this(libraryName, outPath, packMode, null)
+  override fun toString(): String {
+    return "ProjectLibraryData(name=$libraryName, packMode=$packMode, relativeOutputPath=$outPath)"
   }
 
-  ProjectLibraryData(@NotNull String libraryName, @Nullable String outPath, @NotNull PackMode packMode, @Nullable String reason) {
-    this.libraryName = libraryName
-    this.outPath = Strings.nullize(outPath)
-    this.packMode = packMode
-    this.reason = reason
-  }
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
 
-  boolean equals(o) {
-    if (this.is(o)) return true
-    if (!(o instanceof ProjectLibraryData)) return false
+    other as ProjectLibraryData
 
-    ProjectLibraryData data = (ProjectLibraryData)o
-    if (libraryName != data.libraryName) return false
+    if (libraryName != other.libraryName) return false
 
     return true
   }
 
-  int hashCode() {
+  override fun hashCode(): Int {
     return libraryName.hashCode()
-  }
-
-  @Override
-  String toString() {
-    return "ProjectLibraryData(name=$libraryName, packMode=$packMode, relativeOutputPath=$outPath)"
   }
 }

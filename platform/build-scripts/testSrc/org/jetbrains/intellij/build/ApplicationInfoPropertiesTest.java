@@ -12,16 +12,16 @@ import static org.junit.Assert.assertEquals;
 public class ApplicationInfoPropertiesTest {
   @Test
   public void majorReleaseDate() {
-    assertEquals("20200401", ApplicationInfoProperties.formatMajorReleaseDate("20200401"));
-    assertEquals("20200401", ApplicationInfoProperties.formatMajorReleaseDate("202004012323"));
+    assertEquals("20200401", ApplicationInfoPropertiesImpl.formatMajorReleaseDate("20200401"));
+    assertEquals("20200401", ApplicationInfoPropertiesImpl.formatMajorReleaseDate("202004012323"));
   }
 
   @Test
   public void majorReleaseDateGenerated() {
     var now = System.currentTimeMillis() / 1000;
     var expectedDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(now), ZoneOffset.UTC)
-      .format(ApplicationInfoProperties.getMAJOR_RELEASE_DATE_PATTERN());
-    assertEquals(expectedDate, ApplicationInfoProperties.formatMajorReleaseDate(null, now));
-    assertEquals(expectedDate, ApplicationInfoProperties.formatMajorReleaseDate("__BUILD_DATE__", now));
+      .format(ApplicationInfoPropertiesImpl.getMAJOR_RELEASE_DATE_PATTERN());
+    assertEquals(expectedDate, ApplicationInfoPropertiesImpl.formatMajorReleaseDate(null, now));
+    assertEquals(expectedDate, ApplicationInfoPropertiesImpl.formatMajorReleaseDate("__BUILD_DATE__", now));
   }
 }

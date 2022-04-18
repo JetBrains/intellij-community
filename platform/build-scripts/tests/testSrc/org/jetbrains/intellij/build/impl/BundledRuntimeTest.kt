@@ -13,7 +13,7 @@ class BundledRuntimeTest {
       val bundledRuntime = BundledRuntimeImpl(context)
       val currentJbr = bundledRuntime.getHomeForCurrentOsAndArch()
       var spottedCurrentJbrInDownloadVariants = false
-      for (prefix in JetBrainsRuntimeDistribution.getALL()) {
+      for (prefix in JetBrainsRuntimeDistribution.ALL) {
         for (os in OsFamily.ALL) {
           for (arch in JvmArchitecture.ALL) {
             if (os == OsFamily.WINDOWS && arch == JvmArchitecture.aarch64) {

@@ -1,115 +1,102 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.SpanBuilder
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
-import org.jetbrains.intellij.build.impl.BuildContextImpl
-import org.jetbrains.intellij.build.impl.DependenciesProperties
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder
 import org.jetbrains.jps.model.module.JpsModule
-
 import java.nio.file.Path
 import java.util.function.UnaryOperator
 
-@CompileStatic
-abstract class BuildContext implements CompilationContext {
-  ProductProperties productProperties
-  WindowsDistributionCustomizer windowsDistributionCustomizer
-  LinuxDistributionCustomizer linuxDistributionCustomizer
-  MacDistributionCustomizer macDistributionCustomizer
-  ProprietaryBuildTools proprietaryBuildTools
-  DependenciesProperties dependenciesProperties
+abstract class BuildContext: CompilationContext {
+  abstract val productProperties: ProductProperties
+  abstract val windowsDistributionCustomizer: WindowsDistributionCustomizer
+  abstract val linuxDistributionCustomizer: LinuxDistributionCustomizer
+  abstract val macDistributionCustomizer: MacDistributionCustomizer
+  abstract val proprietaryBuildTools: ProprietaryBuildTools
 
-  abstract ApplicationInfoProperties getApplicationInfo()
+  abstract fun getApplicationInfo(): ApplicationInfoProperties
 
   /**
    * Build number without product code (e.g. '162.500.10')
    */
-  String buildNumber
+  abstract val buildNumber: String
 
   /**
    * Build number with product code (e.g. 'IC-162.500.10')
    */
-  String fullBuildNumber
+  abstract val fullBuildNumber: String
 
   /**
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1)
    */
-  String systemSelector
+  abstract val systemSelector: String
 
   /**
    * Names of JARs inside `IDE_HOME/lib` directory which need to be added to the JVM boot classpath to start the IDE.
    */
-  List<String> xBootClassPathJarNames
+  abstract var xBootClassPathJarNames: MutableList<String>
 
   /**
    * Names of JARs inside `IDE_HOME/lib` directory which need to be added to the JVM classpath to start the IDE.
    */
-  List<String> bootClassPathJarNames
+  abstract var bootClassPathJarNames: MutableList<String>
 
   /**
    * Allows customize classpath for buildSearchableOptions and builtinModules
    */
-  UnaryOperator<Set<String>> classpathCustomizer
+  abstract val classpathCustomizer: UnaryOperator<Set<String>>
 
   /**
    * Add file to be copied into application.
    */
-  abstract void addDistFile(@NotNull Map.Entry<Path, String> file)
+  abstract fun addDistFile(file: Map.Entry<Path, String>)
 
-  abstract @NotNull Collection<Map.Entry<Path, String>> getDistFiles()
+  abstract fun getDistFiles(): Collection<Map.Entry<Path, String>>
 
-  abstract boolean includeBreakGenLibraries()
+  abstract fun includeBreakGenLibraries(): Boolean
 
-  abstract void patchInspectScript(@NotNull Path path)
+  abstract fun patchInspectScript(path: Path)
 
   /**
    * Unlike VM options produced by {@link org.jetbrains.intellij.build.impl.VmOptionsGenerator},
    * these are hard-coded into launchers and aren't supposed to be changed by a user.
    */
-  abstract @NotNull List<String> getAdditionalJvmArguments()
+  abstract fun getAdditionalJvmArguments(): List<String>
 
-  abstract void notifyArtifactBuilt(Path artifactPath)
+  abstract fun notifyArtifactBuilt(artifactPath: Path)
 
-  abstract JpsModule findApplicationInfoModule()
+  abstract fun findApplicationInfoModule(): JpsModule
 
-  abstract @Nullable Path findFileInModuleSources(@NotNull String moduleName, @NotNull String relativePath)
+  abstract fun findFileInModuleSources(moduleName: String, relativePath: String): Path?
 
-  void signFile(@NotNull Path file, Map<String, String> options = Collections.emptyMap()) {
-    signFiles(List.of(file), options)
+  @JvmOverloads
+  fun signFile(file: Path, options: Map<String, String> = emptyMap()) {
+    signFiles(listOf(file), options)
   }
 
-  abstract void signFiles(@NotNull List<Path> files, Map<String, String> options = Collections.emptyMap())
+  abstract fun signFiles(files: List<Path>, options: Map<String, String> = emptyMap())
 
   /**
    * Execute a build step or skip it if {@code stepId} is included into {@link BuildOptions#buildStepsToSkip}
    * @return {@code true} if the step was executed
    */
-  abstract boolean executeStep(String stepMessage, String stepId, Runnable step)
+  abstract fun executeStep(stepMessage: String, stepId: String, step: Runnable): Boolean
 
-  abstract void executeStep(SpanBuilder spanBuilder, String stepId, Runnable step)
+  abstract fun executeStep(spanBuilder: SpanBuilder, stepId: String, step: Runnable)
 
-  abstract boolean shouldBuildDistributions()
+  abstract fun shouldBuildDistributions(): Boolean
 
-  abstract boolean shouldBuildDistributionForOS(String os)
-
-  static BuildContext createContext(String communityHome, String projectHome, ProductProperties productProperties,
-                                    ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-                                    BuildOptions options = new BuildOptions()) {
-    return BuildContextImpl.create(communityHome, projectHome, productProperties, proprietaryBuildTools, options)
-  }
+  abstract fun shouldBuildDistributionForOS(os: String): Boolean
 
   /**
    * Creates copy of this context which can be used to start a parallel task.
    * @param taskName short name of the task. It will be prepended to the messages from that task to distinguish them from messages from
    * other tasks running in parallel
    */
-  abstract BuildContext forkForParallelTask(String taskName)
+  abstract fun forkForParallelTask(taskName: String): BuildContext
 
-  abstract BuildContext createCopyForProduct(ProductProperties productProperties, String projectHomeForCustomizers)
+  abstract fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: String): BuildContext
 
-  abstract @Nullable OsSpecificDistributionBuilder getOsDistributionBuilder(OsFamily os, Path ideaProperties = null)
+  abstract fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null): OsSpecificDistributionBuilder?
 }

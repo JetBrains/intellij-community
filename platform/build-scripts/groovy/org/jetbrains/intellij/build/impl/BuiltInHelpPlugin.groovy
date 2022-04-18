@@ -22,7 +22,7 @@ final class BuiltInHelpPlugin {
       return null
     }
 
-    return PluginLayout.plugin(MODULE_NAME) {
+    return PluginLayoutGroovy.plugin(MODULE_NAME) {
       configure(delegate, pluginVersion, productName, resourceRoot)
     }
   }

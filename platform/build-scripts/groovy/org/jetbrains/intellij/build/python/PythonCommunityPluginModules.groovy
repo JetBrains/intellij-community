@@ -5,6 +5,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.PluginLayoutGroovy
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -46,7 +47,7 @@ final class PythonCommunityPluginModules {
 
   static PluginLayout pythonPlugin(String mainModuleName, String name, List<String> modules,
                                    @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
-    PluginLayout.plugin(mainModuleName) {
+    PluginLayoutGroovy.plugin(mainModuleName) {
       directoryName = name
       mainJarName = "${name}.jar"
       modules.each { module ->

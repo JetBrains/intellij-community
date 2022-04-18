@@ -43,7 +43,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     this.customizer = customizer
     this.ideaProperties = ideaProperties
 
-    String icoPath = (buildContext.applicationInfo.isEAP ? customizer.icoPathForEAP : null) ?: customizer.icoPath
+    String icoPath = (buildContext.applicationInfo.isEAP() ? customizer.icoPathForEAP : null) ?: customizer.icoPath
     icoFile = icoPath == null ? null : Paths.get(icoPath)
   }
 
@@ -185,9 +185,9 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     List<String> additionalJvmArguments = buildContext.additionalJvmArguments
-    if (!buildContext.xBootClassPathJarNames.isEmpty()) {
+    if (!buildContext.XBootClassPathJarNames.isEmpty()) {
       additionalJvmArguments = new ArrayList<>(additionalJvmArguments)
-      String bootCp = String.join(';', buildContext.xBootClassPathJarNames.collect { "%IDE_HOME%\\lib\\${it}" })
+      String bootCp = String.join(';', buildContext.XBootClassPathJarNames.collect { "%IDE_HOME%\\lib\\${it}" })
       additionalJvmArguments.add('"-Xbootclasspath/a:' + bootCp + '"')
     }
 
@@ -218,10 +218,11 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.fixcrlf(srcdir: distBinDir.toString(), includes: "*.bat", eol: "dos")
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
   private void generateVMOptions(Path distBinDir) {
-    String fileName = "${buildContext.productProperties.baseFileName}64.exe.vmoptions"
-    List<String> vmOptions = VmOptionsGenerator.computeVmOptions(buildContext.applicationInfo.isEAP, buildContext.productProperties)
+    ProductProperties productProperties = buildContext.productProperties
+    String fileName = "${productProperties.baseFileName}64.exe.vmoptions"
+    boolean isEAP = buildContext.applicationInfo.isEAP()
+    List<String> vmOptions = VmOptionsGenerator.computeVmOptions(isEAP, productProperties)
     Files.writeString(distBinDir.resolve(fileName), String.join('\r\n', vmOptions) + '\r\n', StandardCharsets.US_ASCII)
   }
 
@@ -234,7 +235,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       List<String> vmOptions = buildContext.additionalJvmArguments + ['-Dide.native.launcher=true']
       def productName = buildContext.applicationInfo.shortProductName
       String classPath = buildContext.bootClassPathJarNames.join(";")
-      String bootClassPath = buildContext.xBootClassPathJarNames.join(";")
+      String bootClassPath = buildContext.XBootClassPathJarNames.join(";")
       def envVarBaseName = buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo)
       Path icoFilesDirectory = buildContext.paths.tempDir.resolve("win-launcher-ico")
       Path appInfoForLauncher = generateApplicationInfoForLauncher(patchedApplicationInfo, icoFilesDirectory)

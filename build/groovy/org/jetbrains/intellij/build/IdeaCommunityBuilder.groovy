@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 
 import java.nio.file.Paths
@@ -11,7 +12,7 @@ final class IdeaCommunityBuilder {
   private final BuildContext buildContext
 
   IdeaCommunityBuilder(String home, BuildOptions options = new BuildOptions(), String projectHome = home) {
-    buildContext = BuildContext.createContext(home, projectHome, new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY, options)
+    buildContext = BuildContextImpl.createContext(home, projectHome, new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY, options)
   }
 
   IdeaCommunityBuilder(BuildContext buildContext) {

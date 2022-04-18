@@ -15,14 +15,10 @@
  */
 package org.jetbrains.intellij.build
 
-import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
-
-@CompileStatic
 interface ArtifactsServer {
   /**
    * Returns full URL which can be used to download an artifact.
    * @param relativePath path to an artifact from {@link org.jetbrains.intellij.build.BuildPaths#artifacts} directory
    */
-  String urlToArtifact(@NotNull BuildContext buildContext, @NotNull String relativePath)
+  fun urlToArtifact(buildContext: BuildContext, relativePath: String): String
 }

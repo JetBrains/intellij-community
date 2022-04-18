@@ -6,8 +6,10 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.PluginLayoutGroovy
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.tasks.ArchiveKt
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -144,7 +146,7 @@ final class KotlinPluginBuilder {
   }
 
   static PluginLayout kotlinPlugin(KotlinPluginKind kind) {
-    return PluginLayout.plugin(MAIN_KOTLIN_PLUGIN_MODULE) {
+    return PluginLayoutGroovy.plugin(MAIN_KOTLIN_PLUGIN_MODULE) {
       switch (kind) {
         default:
           directoryName = "Kotlin"
@@ -324,7 +326,7 @@ final class KotlinPluginBuilder {
   }
 
   def build() {
-    BuildContext buildContext = BuildContext.createContext(communityHome, home, properties)
+    BuildContext buildContext = BuildContextImpl.createContext(communityHome, home, properties)
     BuildTasks.create(buildContext).buildNonBundledPlugins([MAIN_KOTLIN_PLUGIN_MODULE])
   }
 

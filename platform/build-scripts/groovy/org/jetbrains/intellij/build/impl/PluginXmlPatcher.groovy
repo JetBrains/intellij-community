@@ -71,7 +71,7 @@ final class PluginXmlPatcher {
                                                 //plugins included into the built-in custom plugin repository should use EXACT range because such custom repositories are used for nightly builds and there may be API differences between different builds
                                                 includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT :
       //when publishing plugins with EAP build let's use restricted range to ensure that users will update to a newer version of the plugin when they update to the next EAP or release build
-                                                context.applicationInfo.isEAP ? CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
+                                                context.applicationInfo.isEAP() ? CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
                                                                                    : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
 
     String defaultPluginVersion = context.buildNumber.endsWith(".SNAPSHOT")
@@ -90,7 +90,7 @@ final class PluginXmlPatcher {
         sinceUntil,
         pluginsToPublish.contains(plugin),
         plugin.retainProductDescriptorForBundledPlugin,
-        context.applicationInfo.isEAP,
+        context.applicationInfo.isEAP(),
         context.applicationInfo.productName
         )
       content = plugin.pluginXmlPatcher.apply(content)

@@ -5,7 +5,7 @@ import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.intellij.build.*
 
-import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
+import static org.jetbrains.intellij.build.impl.PluginLayoutGroovy.plugin
 
 @CompileStatic
 class PyCharmCommunityProperties extends PyCharmPropertiesBase {

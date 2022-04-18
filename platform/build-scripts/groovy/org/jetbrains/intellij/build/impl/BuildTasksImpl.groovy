@@ -261,7 +261,7 @@ final class BuildTasksImpl extends BuildTasks {
     builder.setLength(0)
     builder.append(BuildUtils.replaceAll(temp, ["settings_dir": settingsDir], "@@"))
 
-    if (buildContext.applicationInfo.isEAP) {
+    if (buildContext.applicationInfo.isEAP()) {
       builder.append("""
 #-----------------------------------------------------------------------
 # Change to 'disabled' if you don't want to receive instant visual notifications
@@ -530,7 +530,7 @@ idea.fatal.error.notification=disabled
                   toolboxLiteGenVersion,
                   "/artifacts-dir=${context.paths.artifacts}",
                   "/product-code=${context.applicationInfo.productCode}",
-                  "/isEAP=${context.applicationInfo.isEAP}",
+                  "/isEAP=${context.applicationInfo.isEAP()}",
                   "/output-dir=${context.paths.buildOutputRoot}/toolbox-lite-gen"
                 )
               }
@@ -601,7 +601,7 @@ idea.fatal.error.notification=disabled
         void accept(BuildContext context) {
           context.macDistributionCustomizer?.with {
             Path macZip = findMacZip(macZipDir, JvmArchitecture.x64, context)
-            (context.getOsDistributionBuilder(OsFamily.MACOS) as MacDistributionBuilder)
+            (context.getOsDistributionBuilder(OsFamily.MACOS, null) as MacDistributionBuilder)
               ?.buildAndSignDmgFromZip(macZip, JvmArchitecture.x64)
           }
         }
@@ -610,7 +610,7 @@ idea.fatal.error.notification=disabled
         @Override
         void accept(BuildContext context) {
           Path macZip = findMacZip(macZipDir, JvmArchitecture.aarch64, context)
-          (context.getOsDistributionBuilder(OsFamily.MACOS) as MacDistributionBuilder)
+          (context.getOsDistributionBuilder(OsFamily.MACOS, null) as MacDistributionBuilder)
             ?.buildAndSignDmgFromZip(macZip, JvmArchitecture.aarch64)
         }
       })

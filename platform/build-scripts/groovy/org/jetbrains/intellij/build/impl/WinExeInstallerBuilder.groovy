@@ -191,7 +191,7 @@ final class WinExeInstallerBuilder {
 !define SHOULD_SET_DEFAULT_INSTDIR "0"
 """)
 
-    def versionString = buildContext.applicationInfo.isEAP ? "\${VER_BUILD}" : "\${MUI_VERSION_MAJOR}.\${MUI_VERSION_MINOR}"
+    def versionString = buildContext.applicationInfo.isEAP() ? "\${VER_BUILD}" : "\${MUI_VERSION_MAJOR}.\${MUI_VERSION_MINOR}"
     def installDirAndShortcutName = customizer.getNameForInstallDirAndDesktopShortcut(buildContext.applicationInfo, buildContext.buildNumber)
     Files.writeString(nsiConfDir.resolve("version.nsi"), """
 !define MUI_VERSION_MAJOR "${buildContext.applicationInfo.majorVersion}"

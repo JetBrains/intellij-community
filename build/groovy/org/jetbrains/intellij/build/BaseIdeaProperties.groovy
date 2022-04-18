@@ -181,7 +181,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]
 
-    isAntRequired = true
+    antRequired = true
   }
 
   @Override

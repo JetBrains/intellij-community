@@ -1,15 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
-
 import java.util.function.BiConsumer
+import java.util.function.Consumer
 
 /**
  * Describes layout of the platform (*.jar files in IDE_HOME/lib directory).
@@ -20,58 +19,49 @@ import java.util.function.BiConsumer
  * (or prepared to be {@link org.jetbrains.intellij.build.ProductModulesLayout#setPluginModulesToPublish published}) with the product (except
  * project libraries which are explicitly included into layouts of all plugins depending on them by {@link BaseLayoutSpec#withProjectLibrary}).
  */
-@CompileStatic
-final class PlatformLayout extends BaseLayout {
-  final Set<String> excludedProjectLibraries = new HashSet<>()
+class PlatformLayout: BaseLayout() {
+  val excludedProjectLibraries: MutableSet<String> = mutableSetOf()
 
-  void customize(@DelegatesTo(PlatformLayoutSpec) Closure body) {
-    def spec = new PlatformLayoutSpec(this)
-    body.delegate = spec
-    body()
+  fun customize(body: Consumer<PlatformLayoutSpec>) {
+    val spec = PlatformLayoutSpec(this)
+    body.accept(spec)
   }
 
-  void withProjectLibrary(String libraryName) {
-    includedProjectLibraries.add(new ProjectLibraryData(libraryName, "", ProjectLibraryData.PackMode.MERGED))
+  fun withProjectLibrary(libraryName: String) {
+    includedProjectLibraries.add(ProjectLibraryData(libraryName, "", ProjectLibraryData.PackMode.MERGED))
   }
 
-  void withProjectLibrary(String libraryName, ProjectLibraryData.PackMode packMode) {
-    includedProjectLibraries.add(new ProjectLibraryData(libraryName, "", packMode))
+  fun withProjectLibrary(libraryName: String, packMode: ProjectLibraryData.PackMode) {
+    includedProjectLibraries.add(ProjectLibraryData(libraryName, "", packMode))
   }
 
-  void withProjectLibrary(ProjectLibraryData data) {
+  fun withProjectLibrary(data: ProjectLibraryData) {
     includedProjectLibraries.add(data)
   }
 
   /**
    * Exclude project library {@code libraryName} even if it's added to dependencies of some module or plugin included into the product
    */
-  void withoutProjectLibrary(String libraryName) {
+  fun withoutProjectLibrary(libraryName: String) {
     excludedProjectLibraries.add(libraryName)
   }
 
-  static final class PlatformLayoutSpec extends BaseLayoutSpec {
-    final PlatformLayout layout
-
-    PlatformLayoutSpec(PlatformLayout layout) {
-      super(layout)
-      this.layout = layout
-    }
-
+  class PlatformLayoutSpec(private val layout: PlatformLayout): BaseLayoutSpec(layout) {
     /**
      * Exclude project library {@code libraryName} even if it's added to dependencies of some module or plugin included into the product
      */
-    void withoutProjectLibrary(String libraryName) {
+    fun withoutProjectLibrary(libraryName: String) {
       layout.withoutProjectLibrary(libraryName)
     }
   }
 
-  void collectProjectLibrariesFromIncludedModules(BuildContext context, BiConsumer<JpsLibrary, JpsModule> consumer) {
-    Collection<String> libsToUnpack = projectLibrariesToUnpack.values()
-    for (String moduleName in includedModuleNames) {
-      JpsModule module = context.findRequiredModule(moduleName)
+  fun collectProjectLibrariesFromIncludedModules(context: BuildContext, consumer: BiConsumer<JpsLibrary, JpsModule>) {
+    val libsToUnpack = projectLibrariesToUnpack.values()
+    for (moduleName in getIncludedModuleNames()) {
+      val module = context.findRequiredModule(moduleName)
       for (
-        JpsLibrary library : JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
-        if (library.createReference().parentReference instanceof JpsModuleReference ||
+        library in JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
+        if (library.createReference().parentReference is JpsModuleReference ||
             libsToUnpack.contains(library.name) ||
             excludedProjectLibraries.contains(library.name)) {
           continue

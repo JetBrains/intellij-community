@@ -3,59 +3,56 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.containers.MultiMap
-import groovy.transform.CompileStatic
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NotNull
+
 /**
  * Describes layout of a plugin or the platform JARs in the product distribution
  */
-@CompileStatic
 abstract class BaseLayout {
-  public static final String APP_JAR = "app.jar"
+  companion object {
+    @JvmStatic
+    val APP_JAR = "app.jar"
+
+    @JvmStatic
+    fun convertModuleNameToFileName(moduleName: String): String =
+      Strings.trimStart(moduleName, "intellij.").replace('.', '-')
+  }
 
   /** JAR name (or path relative to 'lib' directory) to names of modules */
-  final MultiMap<String, String> moduleJars = MultiMap.createLinkedSet()
+  val moduleJars: MultiMap<String, String> = MultiMap.createLinkedSet()
   /** artifact name to relative output path */
-  final Map<String, String> includedArtifacts = new LinkedHashMap<>()
+  val includedArtifacts: MutableMap<String, String> = mutableMapOf()
   /** list of additional resources which should be included into the distribution */
-  final List<ModuleResourceData> resourcePaths = new ArrayList<>()
+  val resourcePaths: MutableList<ModuleResourceData> = mutableListOf()
   /** module name to entries which should be excluded from its output */
-  final MultiMap<String, String> moduleExcludes = MultiMap.createLinked()
+  val moduleExcludes: MultiMap<String, String> = MultiMap.createLinked()
   @ApiStatus.Internal
-  public final ObjectOpenHashSet<ProjectLibraryData> includedProjectLibraries = new ObjectOpenHashSet<>()
-  final Set<ModuleLibraryData> includedModuleLibraries = new LinkedHashSet<>()
+  val includedProjectLibraries: ObjectOpenHashSet<ProjectLibraryData> = ObjectOpenHashSet()
+  val includedModuleLibraries: MutableSet<ModuleLibraryData> = mutableSetOf()
   /** module name to name of the module library */
-  final MultiMap<String, String> excludedModuleLibraries = MultiMap.createLinked()
+  val excludedModuleLibraries: MultiMap<String, String> = MultiMap.createLinked()
   /** JAR name -> name of project library which content should be unpacked */
-  final MultiMap<String, String> projectLibrariesToUnpack = MultiMap.createLinked()
-  final List<String> modulesWithExcludedModuleLibraries = []
+  val projectLibrariesToUnpack: MultiMap<String, String> = MultiMap.createLinked()
+  val modulesWithExcludedModuleLibraries: MutableList<String> = mutableListOf()
   /** set of keys in {@link #moduleJars} which are set explicitly, not automatically derived from modules names */
-  final Set<String> explicitlySetJarPaths = new LinkedHashSet<>()
+  val explicitlySetJarPaths: MutableSet<String> = mutableSetOf()
 
-  private final Map<String, String> moduleNameToJarPath = new HashMap<>()
+  private val moduleNameToJarPath: MutableMap<String, String> = mutableMapOf()
 
-  final Collection<String> getIncludedModuleNames() {
-    return moduleJars.values()
-  }
+  fun getIncludedModuleNames(): Collection<String> = moduleJars.values()
 
-  final Set<Map.Entry<String, Collection<String>>> getJarToIncludedModuleNames() {
-    return moduleJars.entrySet()
-  }
+  fun getJarToIncludedModuleNames(): Set<Map.Entry<String, Collection<String>>> = moduleJars.entrySet()
 
-  static String convertModuleNameToFileName(String moduleName) {
-    return Strings.trimStart(moduleName, "intellij.").replace('.' as char, '-' as char)
-  }
-
-  final void withModule(String moduleName, String relativeJarPath) {
+  open fun withModule(moduleName: String, relativeJarPath: String) {
     checkAndAssociateModuleNameWithJarPath(moduleName, relativeJarPath)
 
     moduleJars.putValue(relativeJarPath, moduleName)
     explicitlySetJarPaths.add(relativeJarPath)
   }
 
-  private void checkAndAssociateModuleNameWithJarPath(String moduleName, String relativeJarPath) {
-    String previousJarPath = moduleNameToJarPath.putIfAbsent(moduleName, relativeJarPath)
+  private fun checkAndAssociateModuleNameWithJarPath(moduleName: String, relativeJarPath: String) {
+    val previousJarPath = moduleNameToJarPath.putIfAbsent(moduleName, relativeJarPath)
     if (previousJarPath != null && moduleName != "intellij.maven.artifactResolver.common") {
       if (previousJarPath == relativeJarPath) {
         // already added
@@ -65,26 +62,26 @@ abstract class BaseLayout {
       // allow to put module to several JARs if JAR located in another dir
       // (e.g. intellij.spring.customNs packed into main JAR and customNs/customNs.jar)
       if (!previousJarPath.contains("/") && !relativeJarPath.contains("/")) {
-        throw new IllegalStateException(
+        error(
           "$moduleName cannot be packed into $relativeJarPath because it is already configured to be packed into $previousJarPath")
       }
     }
   }
 
-  void withModule(@NotNull String moduleName) {
+  open fun withModule(moduleName: String) {
     withModuleImpl(moduleName, convertModuleNameToFileName(moduleName) + ".jar")
   }
 
-  protected final void withModuleImpl(String moduleName, String jarPath) {
+  protected fun withModuleImpl(moduleName: String, jarPath: String) {
     checkAndAssociateModuleNameWithJarPath(moduleName, jarPath)
     moduleJars.putValue(jarPath, moduleName)
   }
 
-  final void withProjectLibraryUnpackedIntoJar(String libraryName, String jarName) {
+  fun withProjectLibraryUnpackedIntoJar(libraryName: String, jarName: String) {
     projectLibrariesToUnpack.putValue(jarName, libraryName)
   }
 
-  void excludeFromModule(String moduleName, String excludedPattern) {
+  fun excludeFromModule(moduleName: String, excludedPattern: String) {
     moduleExcludes.putValue(moduleName, excludedPattern)
   }
 }

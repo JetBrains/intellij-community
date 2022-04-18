@@ -263,7 +263,7 @@ final class DistributionJARsBuilder {
 
     Set<PluginLayout> pluginLayouts = getPluginsByModules(context, context.productProperties.productLayout.bundledPluginModules)
 
-    Path antDir = context.productProperties.isAntRequired ? context.paths.distAllDir.resolve("lib/ant") : null
+    Path antDir = context.productProperties.isAntRequired() ? context.paths.distAllDir.resolve("lib/ant") : null
     Path antTargetFile = antDir == null ? null : antDir.resolve("lib/ant.jar")
 
     ModuleOutputPatcher moduleOutputPatcher = new ModuleOutputPatcher()
@@ -719,7 +719,7 @@ final class DistributionJARsBuilder {
   private static boolean satisfiesBundlingRequirements(PluginLayout plugin, @Nullable OsFamily osFamily, @Nullable JvmArchitecture arch, @NotNull BuildContext context) {
     PluginBundlingRestrictions bundlingRestrictions = plugin.bundlingRestrictions
 
-    if (bundlingRestrictions.includeInEapOnly && !context.applicationInfo.isEAP) {
+    if (bundlingRestrictions.includeInEapOnly && !context.applicationInfo.isEAP()) {
       return false
     }
 

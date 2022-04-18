@@ -30,10 +30,22 @@ import java.util.function.BiFunction
 import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.Supplier
+import java.util.function.UnaryOperator
 import java.util.stream.Collectors
 
 @CompileStatic
 final class BuildContextImpl extends BuildContext {
+  final ProductProperties productProperties
+  final WindowsDistributionCustomizer windowsDistributionCustomizer
+  final LinuxDistributionCustomizer linuxDistributionCustomizer
+  final MacDistributionCustomizer macDistributionCustomizer
+  final ProprietaryBuildTools proprietaryBuildTools
+
+  final String buildNumber
+  List<String> XBootClassPathJarNames
+  List<String> bootClassPathJarNames
+  final UnaryOperator<Set<String>> classpathCustomizer = UnaryOperator.identity()
+
   final ApplicationInfoProperties applicationInfo
 
   private final JpsGlobal global
@@ -50,6 +62,12 @@ final class BuildContextImpl extends BuildContext {
   @Override
   String getSystemSelector() {
     return productProperties.getSystemSelector(applicationInfo, buildNumber)
+  }
+
+  static BuildContext createContext(String communityHome, String projectHome, ProductProperties productProperties,
+                                    ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+                                    BuildOptions options = new BuildOptions()) {
+    return create(communityHome, projectHome, productProperties, proprietaryBuildTools, options)
   }
 
   static BuildContextImpl create(String communityHome, String projectHome, ProductProperties productProperties,
@@ -83,9 +101,9 @@ final class BuildContextImpl extends BuildContext {
 
     buildNumber = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDir)
 
-    xBootClassPathJarNames = productProperties.xBootClassPathJarNames
+    XBootClassPathJarNames = productProperties.XBootClassPathJarNames
     bootClassPathJarNames = List.of("util.jar", "util_rt.jar")
-    applicationInfo = new ApplicationInfoProperties(project, productProperties, options, messages).patch(this)
+    applicationInfo = new ApplicationInfoPropertiesImpl(project, productProperties, options, messages).patch(this)
     if (productProperties.productCode == null && applicationInfo.productCode != null) {
       productProperties.productCode = applicationInfo.productCode
     }
@@ -114,13 +132,13 @@ final class BuildContextImpl extends BuildContext {
 
     buildNumber = parent.buildNumber
 
-    xBootClassPathJarNames = parent.xBootClassPathJarNames
+    XBootClassPathJarNames = parent.XBootClassPathJarNames
     bootClassPathJarNames = parent.bootClassPathJarNames
     applicationInfo = parent.applicationInfo
   }
 
   @Override
-  void addDistFile(@NotNull Map.Entry<Path, String> file) {
+  void addDistFile(@NotNull Map.Entry<? extends Path, String> file) {
     messages.debug("$file requested to be added to app resources")
     distFiles.add(file)
   }
@@ -137,7 +155,7 @@ final class BuildContextImpl extends BuildContext {
                                                                                               ProductProperties productProperties,
                                                                                               BuildOptions buildOptions) {
     return { JpsProject project, BuildMessages messages ->
-      ApplicationInfoProperties applicationInfo = new ApplicationInfoProperties(project, productProperties, buildOptions, messages)
+      ApplicationInfoProperties applicationInfo = new ApplicationInfoPropertiesImpl(project, productProperties, buildOptions, messages)
       return "$projectHome/out/${productProperties.getOutputDirectoryName(applicationInfo)}"
     } as BiFunction<JpsProject, BuildMessages, String>
   }
@@ -285,7 +303,7 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  void signFiles(@NotNull List<Path> files, Map<String, String> options) {
+  void signFiles(@NotNull List<? extends Path> files, @NotNull Map<String, String> options) {
     if (proprietaryBuildTools.signTool == null) {
       messages.warning("Sign tool isn't defined, $files won't be signed")
     }

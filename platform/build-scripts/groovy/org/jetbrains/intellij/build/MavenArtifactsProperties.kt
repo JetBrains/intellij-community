@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.FileUtil
-import groovy.transform.CompileStatic
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 
@@ -15,24 +14,23 @@ import java.util.function.BiPredicate
  * @see ProductProperties#mavenArtifacts
  * @see org.jetbrains.intellij.build.impl.MavenArtifactsBuilder#generateMavenArtifacts
  */
-@CompileStatic
 class MavenArtifactsProperties {
   /**
    * If {@code true} Maven artifacts are generated for all modules included into the IDE distribution.
    */
-  boolean forIdeModules = false
+  var forIdeModules = false
 
   /**
    * Names of additional modules for which Maven artifacts should be generated.
    */
-  List<String> additionalModules = []
+  var additionalModules: MutableList<String> = mutableListOf()
 
   /**
    * Names of modules for which Maven artifacts should be generated, that will create all its module-dependencies in a single jar.
    *
    * Initially, it's introduced for having `util-base` artifact which will include `util-rt` in it to avoid JPMS package-split.
    */
-  List<String> squashedModules = []
+  var squashedModules: MutableList<String> = mutableListOf()
 
   /**
    * Names of proprietary modules for which Maven artifacts should be generated.
@@ -41,12 +39,12 @@ class MavenArtifactsProperties {
    *  Note: Intended only for private Maven repository publication.
    *  </p>
    */
-  List<String> proprietaryModules = []
+  var proprietaryModules: MutableList<String> = mutableListOf()
 
   /**
    * A predicate which returns {@code true} for modules which sources should be published as Maven artifacts.
    */
-  BiPredicate<JpsModule, BuildContext> publishSourcesFilter = { JpsModule module, BuildContext context ->
-    module.contentRootsList.urls.every { FileUtil.isAncestor(context.paths.communityHome, JpsPathUtil.urlToPath(it), false) }
-  } as BiPredicate<JpsModule, BuildContext>
+  var publishSourcesFilter: BiPredicate<JpsModule, BuildContext> = BiPredicate { module, context ->
+    module.contentRootsList.urls.all { FileUtil.isAncestor(context.paths.communityHome, JpsPathUtil.urlToPath(it), false) }
+  }
 }
