@@ -45,5 +45,8 @@
     <orderEntry type="library" scope="RUNTIME" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.devkit.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.core" scope="RUNTIME" />
+    <orderEntry type="library" scope="RUNTIME" name="SSHJ" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jsch-agent-proxy" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jsch-agent-proxy-sshj" level="project" />
   </component>
 </module>
