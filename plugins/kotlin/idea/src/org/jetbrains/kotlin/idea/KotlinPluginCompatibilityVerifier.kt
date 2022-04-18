@@ -2,20 +2,30 @@
 
 package org.jetbrains.kotlin.idea
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.ui.Messages
+import com.intellij.util.PlatformUtils
 import com.intellij.util.text.nullize
+import org.jetbrains.kotlin.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 
 object KotlinPluginCompatibilityVerifier {
     @JvmStatic
     fun checkCompatibility() {
-        val kotlinVersion = KotlinPluginVersion.getCurrent() ?: return
-        val platformVersion = PlatformVersion.getCurrent() ?: return
+        val platformVersion = ApplicationInfo.getInstance().shortVersion ?: return
+        val isAndroidStudio = KotlinPlatformUtils.isAndroidStudio
 
-        if (kotlinVersion.platformVersion.platform != platformVersion.platform) {
+        val kotlinVersion = KotlinPluginVersion.getCurrent() ?: return
+        if (kotlinVersion.platformVersion != platformVersion || kotlinVersion.isAndroidStudio != isAndroidStudio) {
+            val platformName = when {
+                isAndroidStudio -> "Android Studio"
+                PlatformUtils.isIntelliJ() -> "IntelliJ IDEA"
+                else -> PlatformUtils.getPlatformPrefix()
+            }
+
             Messages.showWarningDialog(
-                KotlinBundle.message("plugin.verifier.compatibility.issue.message", kotlinVersion, platformVersion),
+                KotlinBundle.message("plugin.verifier.compatibility.issue.message", KotlinIdePlugin.version, platformName, platformVersion),
                 KotlinBundle.message("plugin.verifier.compatibility.issue.title")
             )
         }
@@ -28,7 +38,8 @@ object KotlinPluginCompatibilityVerifier {
 interface KotlinPluginVersion {
     val kotlinVersion: String // 1.2.3
     val status: String?
-    val platformVersion: PlatformVersion
+    val platformVersion: String
+    val isAndroidStudio: Boolean
     val buildNumber: String?
 
     companion object {
@@ -43,7 +54,8 @@ interface KotlinPluginVersion {
 data class NewKotlinPluginVersion(
     val kotlinCompilerVersion: IdeKotlinVersion,
     override val buildNumber: String?, // 53
-    override val platformVersion: PlatformVersion,
+    override val platformVersion: String,
+    override val isAndroidStudio: Boolean,
     val patchNumber: String?
 ) : KotlinPluginVersion {
     override val kotlinVersion: String
@@ -88,9 +100,9 @@ data class NewKotlinPluginVersion(
                     append(it)
                 }
             }
-            val platformVersion = PlatformVersion.parse(platformVersionString) ?: return null
 
-            return NewKotlinPluginVersion(compilerVersion, buildNumber.nullize(), platformVersion, update.nullize())
+            val (platformVersion, isAndroidStudio) = parsePlatformVersion(platformVersionString) ?: return null
+            return NewKotlinPluginVersion(compilerVersion, buildNumber.nullize(), platformVersion, isAndroidStudio, update.nullize())
         }
     }
 }
@@ -100,7 +112,8 @@ data class OldKotlinPluginVersion(
     val milestone: String?, // M1
     override val status: String?, // release, eap, rc
     override val buildNumber: String?, // 53
-    override val platformVersion: PlatformVersion,
+    override val platformVersion: String,
+    override val isAndroidStudio: Boolean,
     val patchNumber: String // usually '1'
 ) : KotlinPluginVersion {
     companion object {
@@ -116,18 +129,37 @@ data class OldKotlinPluginVersion(
 
         fun parse(version: String): OldKotlinPluginVersion? {
             val matchResult = OLD_KOTLIN_VERSION_REGEX.matchEntire(version) ?: return null
-            val (kotlinVersion, milestone, status, buildNumber, platformString, patchNumber) = matchResult.destructured
-            val platformVersion = PlatformVersion.parse(platformString) ?: return null
+            val (kotlinVersion, milestone, status, buildNumber, platformVersionString, patchNumber) = matchResult.destructured
+            val (platformVersion, isAndroidStudio) = parsePlatformVersion(platformVersionString) ?: return null
             return OldKotlinPluginVersion(
                 kotlinVersion,
                 milestone.nullize(),
                 status.nullize(),
                 buildNumber.nullize(),
                 platformVersion,
+                isAndroidStudio,
                 patchNumber
             )
         }
     }
 
     override fun toString() = "$kotlinVersion for $platformVersion"
+}
+
+private val ANDROID_STUDIO_PLATFORM_QUALIFIERS = listOf("Studio", "AS")
+
+private fun parsePlatformVersion(platformVersionString: String): Pair<String, Boolean>? {
+    for (qualifier in ANDROID_STUDIO_PLATFORM_QUALIFIERS) {
+        if (platformVersionString.startsWith(qualifier)) {
+            val platformVersion = platformVersionString.drop(qualifier.length)
+            return Pair(platformVersion, true)
+        }
+    }
+
+    if (platformVersionString.startsWith("IJ")) {
+        val platformVersion = platformVersionString.drop("IJ".length)
+        return Pair(platformVersion, false)
+    }
+
+    return null
 }

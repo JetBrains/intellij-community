@@ -11,7 +11,7 @@ import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
-import org.jetbrains.kotlin.idea.PlatformVersion
+import org.jetbrains.kotlin.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.*
 import org.jetbrains.kotlin.idea.search.containsKotlinFile
@@ -23,7 +23,7 @@ class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
     override fun getMetrics(project: Project): Set<MetricEvent> {
-        if (PlatformVersion.isAndroidStudio() || project.runReadActionInSmartMode { !project.containsKotlinFile() }) {
+        if (KotlinPlatformUtils.isAndroidStudio || project.runReadActionInSmartMode { !project.containsKotlinFile() }) {
             return emptySet()
         }
 

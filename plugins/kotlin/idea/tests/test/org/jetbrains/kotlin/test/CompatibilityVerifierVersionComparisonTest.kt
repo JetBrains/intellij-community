@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.test
 
 import com.intellij.testFramework.LightPlatformTestCase
 import org.jetbrains.kotlin.idea.*
-import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.test.util.ignored
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -13,12 +12,12 @@ import org.junit.runner.RunWith
 @RunWith(JUnit38ClassRunner::class)
 class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
     fun testValidVersion() {
-        testVersion("203-1.4.20-dev-4575-IJ1234.45-1", "1.4.20", "dev", PlatformVersion.Platform.IDEA, "203.1234", "45")
-        testVersion("211-1.4.30-release-AS193", "1.4.30", null, PlatformVersion.Platform.ANDROID_STUDIO, "211", "193")
-        testVersion("202-1.4.30-AS", "1.4.30", null, PlatformVersion.Platform.ANDROID_STUDIO, "202", null)
-        testVersion("1.2.40-dev-193-Studio3.0-1", "1.2.40", "dev", PlatformVersion.Platform.ANDROID_STUDIO, "3.0", "193")
-        testVersion("1.4-M1-42-IJ2020.1-1", "1.4", null, PlatformVersion.Platform.IDEA, "2020.1", "42")
-        testVersion("1.4-M1-eap-27-IJ2020.1-1", "1.4", "eap", PlatformVersion.Platform.IDEA, "2020.1", "27")
+        testVersion("203-1.4.20-dev-4575-IJ1234.45-1", "1.4.20", "dev", isAndroidStudio = false, "203.1234", "45")
+        testVersion("211-1.4.30-release-AS193", "1.4.30", null, isAndroidStudio = true, "211", "193")
+        testVersion("202-1.4.30-AS", "1.4.30", null, isAndroidStudio = true, "202", null)
+        testVersion("1.2.40-dev-193-Studio3.0-1", "1.2.40", "dev", isAndroidStudio = true, "3.0", "193")
+        testVersion("1.4-M1-42-IJ2020.1-1", "1.4", null, isAndroidStudio = false, "2020.1", "42")
+        testVersion("1.4-M1-eap-27-IJ2020.1-1", "1.4", "eap", isAndroidStudio = false, "2020.1", "27")
     }
 
     fun testInvalidVersion() {
@@ -33,11 +32,6 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
 
         assertNull(version.buildNumber)
     }
-
-    fun testPlatformVersionParsing() {
-        PlatformVersion.getCurrent() ?: throw AssertionError("Version should not be null")
-    }
-
 
     /**
      *  This test is disabled in kt-212-[master|1.6.0] because it is stable fails here, because
@@ -57,7 +51,6 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
         assert(currentVersion is NewKotlinPluginVersion) { "Can not parse current Kotlin Plugin version: ${KotlinIdePlugin.version}" }
     }
 
-
     fun testNewParser() {
         val version = KotlinPluginVersion.parse("203-1.4.20-dev-4575-IJ1234.45-7") as? NewKotlinPluginVersion ?: throw AssertionError("Version should not be null")
 
@@ -65,8 +58,8 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
         assertEquals("dev", version.status)
         assertEquals("4575", version.kotlinCompilerVersion.buildNumber)
         assertEquals("45", version.buildNumber)
-        assertEquals(PlatformVersion.Platform.IDEA, version.platformVersion.platform)
-        assertEquals("203.1234", version.platformVersion.version)
+        assertEquals(false, version.isAndroidStudio)
+        assertEquals("203.1234", version.platformVersion)
         assertEquals("7", version.patchNumber)
     }
 
@@ -77,8 +70,8 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
         assertNull(version.milestone)
         assertEquals("dev", version.status)
         assertEquals("193", version.buildNumber)
-        assertEquals(PlatformVersion.Platform.ANDROID_STUDIO, version.platformVersion.platform)
-        assertEquals("3.0", version.platformVersion.version)
+        assertEquals(true, version.isAndroidStudio)
+        assertEquals("3.0", version.platformVersion)
         assertEquals("1", version.patchNumber)
     }
 
@@ -89,8 +82,8 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
         assertEquals("M1", version.milestone)
         assertEquals("eap", version.status)
         assertEquals("27", version.buildNumber)
-        assertEquals(PlatformVersion.Platform.IDEA, version.platformVersion.platform)
-        assertEquals("2020.1", version.platformVersion.version)
+        assertEquals(false, version.isAndroidStudio)
+        assertEquals("2020.1", version.platformVersion)
         assertEquals("1", version.patchNumber)
     }
 
@@ -100,8 +93,8 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
         assertEquals("1.4", version.kotlinVersion)
         assertEquals("M1", version.milestone)
         assertEquals("42", version.buildNumber)
-        assertEquals(PlatformVersion.Platform.IDEA, version.platformVersion.platform)
-        assertEquals("2020.1", version.platformVersion.version)
+        assertEquals(false, version.isAndroidStudio)
+        assertEquals("2020.1", version.platformVersion)
         assertEquals("1", version.patchNumber)
     }
 
@@ -109,7 +102,7 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
         version: String,
         expectedKotlinVersion: String,
         expectedStatus: String?,
-        expectedPlatform: PlatformVersion.Platform,
+        isAndroidStudio: Boolean,
         expectedPlatformVersion: String,
         expectedBuildNumber: String?
     ) {
@@ -117,8 +110,8 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
 
         assertEquals(expectedKotlinVersion, parsed.kotlinVersion)
         assertEquals(expectedStatus, parsed.status)
-        assertEquals(expectedPlatform, parsed.platformVersion.platform)
-        assertEquals(expectedPlatformVersion, parsed.platformVersion.version)
+        assertEquals(isAndroidStudio, parsed.isAndroidStudio)
+        assertEquals(expectedPlatformVersion, parsed.platformVersion)
         assertEquals(expectedBuildNumber, parsed.buildNumber)
     }
 

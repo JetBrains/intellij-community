@@ -11,7 +11,7 @@ import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.util.PlatformUtils
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.idea.PlatformVersion
+import org.jetbrains.kotlin.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.configuration.multiplatform.KotlinMultiplatformNativeDebugSuggester
 import org.jetbrains.kotlin.idea.gradle.configuration.ResolveModulesPerSourceSetInMppBuildIssue
 import org.jetbrains.kotlin.idea.gradle.configuration.buildClasspathData
@@ -55,7 +55,7 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
         }
         nativeDebugSuggester.suggestNativeDebug(getModelOrNull(gradleModule), resolverCtx)
 
-        if (!resolverCtx.isResolveModulePerSourceSet && !PlatformVersion.isAndroidStudio() && !PlatformUtils.isMobileIde() &&
+        if (!resolverCtx.isResolveModulePerSourceSet && !KotlinPlatformUtils.isAndroidStudio && !PlatformUtils.isMobileIde() &&
             !PlatformUtils.isAppCode()
         ) {
             notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(resolverCtx.projectPath)
