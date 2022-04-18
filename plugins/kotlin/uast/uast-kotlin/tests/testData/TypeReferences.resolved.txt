@@ -23,7 +23,7 @@ UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifie
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = tl) -> LightVariableBuilder:tl: tl
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:map) -> USimpleNameReferenceExpression (identifier = map) -> PsiMethod:map: map
         UReturnExpression -> UQualifiedReferenceExpression -> null: null
-        UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = it) -> null: null
+        UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = it) -> Light Parameter: it
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> null: null
     UTypeReferenceExpression (name = java.util.List<? extends java.util.List<? extends java.lang.String>>) -> USimpleNameReferenceExpression (identifier = List) -> PsiClass:List: List
     UTypeReferenceExpression (name = java.util.List<? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = List) -> PsiClass:List: List

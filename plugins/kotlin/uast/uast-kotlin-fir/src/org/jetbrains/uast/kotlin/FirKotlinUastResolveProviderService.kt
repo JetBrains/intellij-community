@@ -358,6 +358,15 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     )?.let { return it }
                 }
             }
+            is KtFunctionLiteral -> {
+                // Implicit lambda parameter `it`
+                if ((resolvedTargetSymbol as? KtValueParameterSymbol)?.isImplicitLambdaParameter == true) {
+                    // From its containing lambda (of function literal), build ULambdaExpression
+                    val lambda = resolvedTargetElement.toUElementOfType<ULambdaExpression>()
+                    // and return javaPsi of the corresponding lambda implicit parameter
+                    lambda?.valueParameters?.singleOrNull()?.javaPsi?.let { return it }
+                }
+            }
         }
 
         // TODO: need to handle resolved target to library source
