@@ -11361,6 +11361,21 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public void testBasic() throws Exception {
             runTest("testData/quickfix/removeNoConstructor/basic.kt");
         }
+
+        @TestMetadata("functionType.kt")
+        public void testFunctionType() throws Exception {
+            runTest("testData/quickfix/removeNoConstructor/functionType.kt");
+        }
+
+        @TestMetadata("functionType2.kt")
+        public void testFunctionType2() throws Exception {
+            runTest("testData/quickfix/removeNoConstructor/functionType2.kt");
+        }
+
+        @TestMetadata("suspend.kt")
+        public void testSuspend() throws Exception {
+            runTest("testData/quickfix/removeNoConstructor/suspend.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

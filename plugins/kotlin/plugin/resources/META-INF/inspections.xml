@@ -2451,6 +2451,14 @@
                      language="kotlin"
                      key="inspection.do.not.propagate.method.deprecation.through.overrides" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.NoConstructorMigrationInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
+                     enabledByDefault="false"
+                     level="ERROR"
+                     language="kotlin"
+                     key="inspection.this.class.does.not.have.a.constructor" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.NonExhaustiveWhenStatementMigrationInspection"
                      groupPath="Kotlin"
                      groupName="Migration"
