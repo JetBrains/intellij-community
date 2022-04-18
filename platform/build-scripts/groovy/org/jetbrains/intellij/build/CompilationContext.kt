@@ -1,57 +1,52 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
+import groovy.util.AntBuilder
 import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.DependenciesProperties
 import org.jetbrains.intellij.build.impl.JpsCompilationData
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
-
+import java.io.File
 import java.nio.file.Path
 
-@CompileStatic
 interface CompilationContext {
-  AntBuilder getAnt()
-  BuildOptions getOptions()
-  BuildMessages getMessages()
-  BuildPaths getPaths()
-  JpsProject getProject()
-  JpsModel getProjectModel()
-  DependenciesProperties getDependenciesProperties()
-  BundledRuntime getBundledRuntime()
+  val ant: AntBuilder
+  val options: BuildOptions
+  val messages: BuildMessages
+  val paths: BuildPaths
+  val project: JpsProject
+  val projectModel: JpsModel
+  val dependenciesProperties: DependenciesProperties
+  val bundledRuntime: BundledRuntime
 
-  JpsCompilationData getCompilationData()
+  val compilationData: JpsCompilationData
 
   /**
    * @return directory with compiled project classes, url attribute value of output tag from .idea/misc.xml by default
    */
-  File getProjectOutputDirectory()
+  val projectOutputDirectory: File
 
-  JpsModule findRequiredModule(@NotNull String name)
+  fun findRequiredModule(name: String): JpsModule
 
-  JpsModule findModule(@NotNull String name)
+  fun findModule(name: String): JpsModule
 
   /**
    * If module {@code newName} was renamed returns its old name and {@code null} otherwise. This method can be used to temporary keep names
    * of directories and JARs in the product distributions after renaming modules.
    */
-  String getOldModuleName(String newName)
+  fun getOldModuleName(newName: String): String
 
-  Path getModuleOutputDir(JpsModule module)
+  fun getModuleOutputDir(module: JpsModule): Path
 
-  String getModuleTestsOutputPath(JpsModule module)
+  fun getModuleTestsOutputPath(module: JpsModule): String
 
-  List<String> getModuleRuntimeClasspath(JpsModule module, boolean forTests)
+  fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String>
 
   // "Was" added due to Groovy bug (compilation error - cannot find method with same name but different parameter type)
-  void notifyArtifactWasBuilt(Path artifactPath)
+  fun notifyArtifactWasBuilt(artifactPath: Path)
 
-  /**
-   * @deprecated Use {@link #notifyArtifactWasBuilt(java.nio.file.Path)}
-   */
-  @Deprecated
-  void notifyArtifactBuilt(String artifactPath)
+  @Deprecated("Use notifyArtifactWasBuilt")
+  fun notifyArtifactBuilt(artifactPath: String)
 }

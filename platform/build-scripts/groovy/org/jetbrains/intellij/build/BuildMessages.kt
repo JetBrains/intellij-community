@@ -1,66 +1,61 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.SpanBuilder
-import org.jetbrains.annotations.NotNull
-
 import java.util.function.Supplier
 
-@CompileStatic
-interface BuildMessages extends System.Logger {
-  void info(String message)
+interface BuildMessages: System.Logger {
+  fun info(message: String)
 
-  void warning(String message)
+  fun warning(message: String)
 
   /**
    * Print {@code message} to <output-root>/log/debug.log file. This log file will also include 'info' and 'warning' messages.
    */
-  void debug(String message)
+  fun debug(message: String)
 
   /**
    * Report an error and stop the build process
    */
-  void error(String message)
+  fun error(message: String)
 
-  void error(String message, Throwable cause)
+  fun error(message: String, cause: Throwable)
 
   /**
    * @deprecated use {@link #compilationErrors(java.lang.String, java.util.List)} instead; if compilation errors are reported individually they are shown in separate blocks in TeamCity
    */
-  void compilationError(String compilerName, String message)
+  fun compilationError(compilerName: String, message: String)
 
-  void compilationErrors(String compilerName, List<String> messages)
+  fun compilationErrors(compilerName: String, messages: List<String>)
 
-  void progress(String message)
+  fun progress(message: String)
 
-  void buildStatus(String message)
+  fun buildStatus(message: String)
 
-  void setParameter(String parameterName, String value)
+  fun setParameter(parameterName: String, value: String)
 
-  def <V> V block(@NotNull String blockName, @NotNull Supplier<V> task)
+  fun <V> block(blockName: String, task: Supplier<V>): V
+  fun <V> block(spanBuilder: SpanBuilder, task: Supplier<V>): V
 
-  def <V> V block(@NotNull SpanBuilder spanBuilder, @NotNull Supplier<V> task)
+  fun artifactBuilt(relativeArtifactPath: String)
 
-  void artifactBuilt(String relativeArtifactPath)
+  fun reportStatisticValue(key: String, value: String)
 
-  void reportStatisticValue(String key, String value)
-
-  BuildMessages forkForParallelTask(String taskName)
+  fun forkForParallelTask(taskName: String): BuildMessages
 
   /**
    * Must be invoked from the main thread when all forks have been finished
    */
-  void onAllForksFinished()
+  fun onAllForksFinished()
 
   /**
    * Must be invoked for the forked instance on the thread where it is executing before the task is started.
    * It's required to correctly handle messages from Ant tasks.
    */
-  void onForkStarted()
+  fun onForkStarted()
 
   /**
    * Must be invoked for the forked instance on the thread where it is executing when the task is finished
    */
-  void onForkFinished()
+  fun onForkFinished()
 }

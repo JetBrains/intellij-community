@@ -86,7 +86,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         return
       }
 
-      Path jreDirectoryPath = buildContext.bundledRuntime.extract(BundledRuntime.getProductPrefix(buildContext), OsFamily.LINUX, arch)
+      Path jreDirectoryPath = buildContext.bundledRuntime.extract(BundledRuntimeImpl.getProductPrefix(buildContext), OsFamily.LINUX, arch)
       Path tarGzPath = buildTarGz(jreDirectoryPath.toString(), osAndArchSpecificDistPath, "")
       buildContext.bundledRuntime.checkExecutablePermissions(tarGzPath, getRootDirectoryName(), OsFamily.LINUX)
 

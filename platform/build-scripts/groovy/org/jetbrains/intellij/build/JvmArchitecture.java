@@ -1,30 +1,32 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.intellij.build
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build;
 
 
-import groovy.transform.CompileStatic
+import java.util.List;
 
-@CompileStatic
-enum JvmArchitecture {
-  x64("64"), aarch64("aarch64"),
+public enum JvmArchitecture {
+  x64("64"), aarch64("aarch64");
 
-  static final List<JvmArchitecture> ALL = List.of(values())
+  public static final List<JvmArchitecture> ALL = List.of(values());
 
-  static final JvmArchitecture currentJvmArch
+  public static final JvmArchitecture currentJvmArch;
+
   static {
-    String archName = System.getProperty("os.arch")
-    if (archName == "aarch64") {
-      currentJvmArch = aarch64
-    } else if (archName == "x86_64" || archName == "amd64") {
-      currentJvmArch = x64
-    } else {
-      throw new IllegalStateException("Unsupported arch: $archName")
+    String archName = System.getProperty("os.arch");
+    if ("aarch64".equals(archName)) {
+      currentJvmArch = aarch64;
+    }
+    else if ("x86_64".equals(archName) || "amd64".equals(archName)) {
+      currentJvmArch = x64;
+    }
+    else {
+      throw new IllegalStateException("Unsupported arch: $archName");
     }
   }
 
-  final String fileSuffix
+  public final String fileSuffix;
 
   JvmArchitecture(String fileSuffix) {
-    this.fileSuffix = fileSuffix
+    this.fileSuffix = fileSuffix;
   }
 }

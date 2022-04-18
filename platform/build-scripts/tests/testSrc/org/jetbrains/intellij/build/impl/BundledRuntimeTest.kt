@@ -10,12 +10,12 @@ class BundledRuntimeTest {
   @Test
   fun download() {
     withCompilationContext { context ->
-      val bundledRuntime = BundledRuntime(context)
-      val currentJbr = bundledRuntime.homeForCurrentOsAndArch
+      val bundledRuntime = BundledRuntimeImpl(context)
+      val currentJbr = bundledRuntime.getHomeForCurrentOsAndArch()
       var spottedCurrentJbrInDownloadVariants = false
       for (prefix in JetBrainsRuntimeDistribution.getALL()) {
-        for (os in OsFamily.getALL()) {
-          for (arch in JvmArchitecture.getALL()) {
+        for (os in OsFamily.ALL) {
+          for (arch in JvmArchitecture.ALL) {
             if (os == OsFamily.WINDOWS && arch == JvmArchitecture.aarch64) {
               // Not supported yet
               // https://youtrack.jetbrains.com/issue/JBR-2074
@@ -57,7 +57,7 @@ class BundledRuntimeTest {
   @Test
   fun currentArchDownload() {
     withCompilationContext { context ->
-      val currentJbrHome = BundledRuntime(context).homeForCurrentOsAndArch
+      val currentJbrHome = BundledRuntimeImpl(context).getHomeForCurrentOsAndArch()
       val javaExe = Jdk11Downloader.getJavaExecutable(currentJbrHome)
       val process = ProcessBuilder(javaExe.toString(), "-version")
         .inheritIO()

@@ -1034,11 +1034,11 @@ idea.fatal.error.notification=disabled
       Path propertiesFile = patchIdeaPropertiesFile(buildContext)
       OsSpecificDistributionBuilder builder = buildContext.getOsDistributionBuilder(currentOs, propertiesFile)
       builder.copyFilesForOsDistribution(targetDirectory, arch)
-      buildContext.bundledRuntime.extractTo(BundledRuntime.getProductPrefix(buildContext), currentOs, targetDirectory.resolve("jbr"), arch)
+      buildContext.bundledRuntime.extractTo(BundledRuntimeImpl.getProductPrefix(buildContext), currentOs, targetDirectory.resolve("jbr"), arch)
 
       List<String> executableFilesPatterns = builder.generateExecutableFilesPatterns(true)
       updateExecutablePermissions(targetDirectory, executableFilesPatterns)
-      buildContext.bundledRuntime.checkExecutablePermissions(targetDirectory, currentOs)
+      buildContext.bundledRuntime.checkExecutablePermissions(targetDirectory, "", currentOs)
     }
     else {
       copyDistFiles(buildContext, targetDirectory)

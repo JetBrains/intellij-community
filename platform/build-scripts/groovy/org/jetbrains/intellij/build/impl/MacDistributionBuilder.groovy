@@ -218,7 +218,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         new Runnable() {
           @Override
           void run() {
-            Path jreArchive = jreManager.findArchive(BundledRuntime.getProductPrefix(context), OsFamily.MACOS, arch)
+            Path jreArchive = jreManager.findArchive(BundledRuntimeImpl.getProductPrefix(context), OsFamily.MACOS, arch)
             MacDmgBuilder.signAndBuildDmg(context, customizer, context.proprietaryBuildTools.macHostProperties, macZip,
                                           null, jreArchive, suffix, notarize)
           }

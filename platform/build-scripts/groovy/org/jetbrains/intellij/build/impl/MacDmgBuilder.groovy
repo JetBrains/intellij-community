@@ -34,7 +34,7 @@ final class MacDmgBuilder {
                               boolean notarize) {
     String javaExePath = null
     if (jreArchivePath != null) {
-      String rootDir = BundledRuntime.rootDir(jreArchivePath) ?: "jdk"
+      String rootDir = BundledRuntimeImpl.rootDir(jreArchivePath) ?: "jdk"
       javaExePath = "../${rootDir}/Contents/Home/bin/java"
     }
 

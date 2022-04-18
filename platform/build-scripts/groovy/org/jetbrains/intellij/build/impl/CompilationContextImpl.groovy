@@ -179,7 +179,7 @@ final class CompilationContextImpl implements CompilationContext {
     paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, logDir)
 
     this.dependenciesProperties = new DependenciesProperties(this)
-    this.bundledRuntime = new BundledRuntime(this)
+    this.bundledRuntime = new BundledRuntimeImpl(this)
   }
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
@@ -402,7 +402,7 @@ final class CompilationContextImpl implements CompilationContext {
 
   @Override
   void notifyArtifactWasBuilt(Path file) {
-    if (options.buildStepsToSkip.contains(BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION)) {
+    if (options.buildStepsToSkip.contains(BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP)) {
       return
     }
 

@@ -109,7 +109,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
     ForkJoinTask<Path> zipPathTask = null
     String exePath = null
-    Path jreDir = buildContext.bundledRuntime.extract(BundledRuntime.getProductPrefix(buildContext), OsFamily.WINDOWS, arch)
+    Path jreDir = buildContext.bundledRuntime.extract(BundledRuntimeImpl.getProductPrefix(buildContext), OsFamily.WINDOWS, arch)
 
     Path vcRtDll = jreDir.resolve("jbr/bin/msvcp140.dll")
     if (!Files.exists(vcRtDll)) {

@@ -35,14 +35,14 @@ import java.util.zip.GZIPInputStream
 import static java.nio.file.attribute.PosixFilePermission.*
 
 @CompileStatic
-final class BundledRuntime {
+final class BundledRuntimeImpl implements BundledRuntime {
   private final CompilationContext context
 
   @Lazy private String build = {
     context.options.bundledRuntimeBuild ?: context.dependenciesProperties.property('runtimeBuild')
   }()
 
-  BundledRuntime(CompilationContext context) {
+  BundledRuntimeImpl(CompilationContext context) {
     this.context = context
   }
 

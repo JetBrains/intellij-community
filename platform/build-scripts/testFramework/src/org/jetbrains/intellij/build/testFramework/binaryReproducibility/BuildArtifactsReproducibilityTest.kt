@@ -37,8 +37,8 @@ class BuildArtifactsReproducibilityTest {
     assert(isEnabled)
     assert(!this::diffDirectory.isInitialized)
     diffDirectory = System.getProperty("intellij.build.test.artifacts.reproducibility.diffDir")?.let { Paths.get(it) }
-                    ?: context1.paths.artifactDir.resolve(".diff")
-    val errors = OsFamily.getALL().asSequence().flatMap { os ->
+                    ?: context1.paths.artifactDir!!.resolve(".diff")
+    val errors = OsFamily.ALL.asSequence().flatMap { os ->
       val artifacts1 = context1.getOsDistributionBuilder(os)?.getArtifactNames(context1) ?: emptyList()
       val artifacts2 = context2.getOsDistributionBuilder(os)?.getArtifactNames(context2) ?: emptyList()
       assert(artifacts1 == artifacts2)
@@ -63,7 +63,7 @@ class BuildArtifactsReproducibilityTest {
         context1.messages.artifactBuilt("$diff")
       }
       else {
-        context1.messages.info("${path1} and ${path2} are byte-to-byte identical.")
+        context1.messages.info("$path1 and $path2 are byte-to-byte identical.")
       }
       error
     }.toList()

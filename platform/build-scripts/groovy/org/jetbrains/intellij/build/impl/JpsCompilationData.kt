@@ -1,24 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import groovy.transform.CompileStatic
-import org.jetbrains.annotations.Nullable
+import java.io.File
 
-@CompileStatic
-final class JpsCompilationData {
-  final File dataStorageRoot
-  final Set<String> compiledModules = new HashSet<>()
-  final Set<String> compiledModuleTests = new HashSet<>()
-  final Set<String> builtArtifacts = new HashSet<>()
-  boolean compiledClassesAreLoaded
-  boolean statisticsReported
-  boolean projectDependenciesResolved
-  final File buildLogFile
-  final String categoriesWithDebugLevel
+class JpsCompilationData(val buildLogFile: File, val dataStorageRoot: File, categoriesWithDebugLevelNullable: String?) {
+  val compiledModules: Set<String> = mutableSetOf()
+  val compiledModuleTests: Set<String> = mutableSetOf()
+  val builtArtifacts: Set<String> = mutableSetOf()
+  var compiledClassesAreLoaded: Boolean = false
+  var statisticsReported: Boolean = false
+  var projectDependenciesResolved: Boolean = false
 
-  JpsCompilationData(File dataStorageRoot, File buildLogFile, @Nullable String categoriesWithDebugLevel) {
-    this.buildLogFile = buildLogFile
-    this.dataStorageRoot = dataStorageRoot
-    this.categoriesWithDebugLevel = categoriesWithDebugLevel ?: ""
-  }
+  val categoriesWithDebugLevel: String = categoriesWithDebugLevelNullable ?: ""
 }

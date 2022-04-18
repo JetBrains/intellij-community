@@ -31,10 +31,10 @@ private val initializeTracer by lazy {
 }
 
 fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: ProductProperties, skipDependencySetup: Boolean = false) {
-  options.isSkipDependencySetup = skipDependencySetup
-  options.isIsTestBuild = true
+  options.skipDependencySetup = skipDependencySetup
+  options.isTestBuild = true
   options.buildStepsToSkip.addAll(listOf(
-    BuildOptions.getTEAMCITY_ARTIFACTS_PUBLICATION(),
+    BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP,
     BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP,
     BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP,
     BuildOptions.WIN_SIGN_STEP,
@@ -44,7 +44,7 @@ fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: Produ
   options.buildDmgWithoutBundledJre = false
   options.buildUnixSnaps = false
   options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).absolutePath
-  options.isUseCompiledClassesFromProjectOutput = true
+  options.useCompiledClassesFromProjectOutput = true
   options.compilationLogEnabled = false
 }
 
