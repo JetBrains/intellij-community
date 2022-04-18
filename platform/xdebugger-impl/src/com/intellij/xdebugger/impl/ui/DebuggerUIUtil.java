@@ -4,7 +4,9 @@ package com.intellij.xdebugger.impl.ui;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -21,15 +23,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.*;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.AnActionLink;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
@@ -462,6 +463,22 @@ public final class DebuggerUIUtil {
         invokeLater(() -> watchesView.addWatchExpression(expression, -1, false));
       }
     });
+  }
+
+  @Nullable
+  public static XWatchesView getWatchesView(@NotNull AnActionEvent e) {
+    XWatchesView view = e.getData(XWatchesView.DATA_KEY);
+    Project project = e.getProject();
+    if (view == null && project != null) {
+      XDebugSession session = getSession(e);
+      if (session != null) {
+        XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
+        if (tab != null) {
+          return tab.getWatchesView();
+        }
+      }
+    }
+    return view;
   }
 
   public static void registerActionOnComponent(String name, JComponent component, Disposable parentDisposable) {
