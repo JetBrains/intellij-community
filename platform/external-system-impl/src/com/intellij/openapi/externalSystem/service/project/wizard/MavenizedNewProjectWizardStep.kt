@@ -8,9 +8,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.validation.CHECK_ARTIFACT_ID_FORMAT
-import com.intellij.openapi.ui.validation.CHECK_GROUP_ID_FORMAT
-import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
+import com.intellij.openapi.ui.validation.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.SortedComboBoxModel
@@ -79,14 +77,14 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
         textField()
           .bindText(groupIdProperty.trim())
           .columns(COLUMNS_MEDIUM)
-          .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_GROUP_ID_FORMAT)
+          .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_GROUP_ID)
           .validation { validateGroupId() }
       }.bottomGap(BottomGap.SMALL)
       row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label")) {
         textField()
           .bindText(artifactIdProperty.trim())
           .columns(COLUMNS_MEDIUM)
-          .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_ARTIFACT_ID_FORMAT)
+          .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_ARTIFACT_ID)
           .validation { validateArtifactId() }
       }.bottomGap(BottomGap.SMALL)
     }
