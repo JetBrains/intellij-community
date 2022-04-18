@@ -92,7 +92,7 @@ class ExtractMethodTemplate(private val editor: Editor, private val method: PsiN
     editor.caretModel.moveToOffset(call.textRange.startOffset)
     super.performInplaceRefactoring(suggestedNames)
     val templateState = TemplateManagerImpl.getTemplateState(editor) ?: throw IllegalStateException()
-    Disposer.register(templateState) { SuggestedRefactoringProvider.getInstance(method.project).reset() }
+    Disposer.register(templateState) { SuggestedRefactoringProvider.getInstance(myProject).reset() }
     return templateState
   }
 
