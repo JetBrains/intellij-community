@@ -19,6 +19,7 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.base.plugin" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="kotlin.common" />
