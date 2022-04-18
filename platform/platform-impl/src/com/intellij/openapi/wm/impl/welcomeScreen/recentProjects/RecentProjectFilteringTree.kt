@@ -54,7 +54,6 @@ class RecentProjectFilteringTree(
   parentDisposable: Disposable,
   collectors: List<() -> List<RecentProjectTreeItem>>
 ) : FilteringTree<DefaultMutableTreeNode, RecentProjectTreeItem>(
-  ProjectManager.getInstance().defaultProject,
   treeComponent,
   DefaultMutableTreeNode(RootItem(collectors))
 ) {
