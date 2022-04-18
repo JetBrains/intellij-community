@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
@@ -77,8 +78,13 @@ class ExtractKotlinFunctionHandler(
             ExtractionEngine(helper).run(editor, extractionData) { extraction ->
                 if (isInplaceRefactoringEnabled) {
                     val callIdentifier = findSingleCallExpression(file, callRange.range)?.calleeExpression ?: throw IllegalStateException()
+                    val methodRange = extraction.declaration.textRange
+                    val methodOffset = extraction.declaration.navigationElement.textRange.endOffset
+                    val callOffset = callIdentifier.textRange.endOffset
+                    val preview = InplaceExtractUtils.createPreview(editor, methodRange, methodOffset, callRange.range!!, callOffset)
                     val templateState = ExtractMethodTemplate(editor, extraction.declaration, callIdentifier).runTemplate(LinkedHashSet())
                     callRange.dispose()
+                    Disposer.register(templateState, preview)
                     InplaceExtractUtils.addTemplateFinishedListener(templateState) {
                         processDuplicates(extraction.duplicateReplacers, file.project, editor)
                     }
