@@ -875,7 +875,7 @@ private class MyActiveProjectUiFrameManager(frame: IdeFrameImpl,
         val frameHelper = ProjectFrameHelper(frame, null)
         frame.isVisible = true
 
-        if (isFullScreen && manager is MyActiveProjectUiFrameManager && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
+        if (isFullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
           frameHelper.toggleFullScreen(true)
         }
 
