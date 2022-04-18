@@ -5,6 +5,7 @@ import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
+import javax.accessibility.AccessibleContext
 import javax.swing.JPanel
 
 /**
@@ -34,7 +35,11 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
     @JvmStatic
     @JvmOverloads
     fun wrap(component: Component, background: Color? = null): SelectablePanel {
-      val result = SelectablePanel(background)
+      val result = object : SelectablePanel(background) {
+        override fun getAccessibleContext(): AccessibleContext {
+          return component.accessibleContext
+        }
+      }
       result.layout = BorderLayout()
       result.add(component, BorderLayout.CENTER)
       return result
