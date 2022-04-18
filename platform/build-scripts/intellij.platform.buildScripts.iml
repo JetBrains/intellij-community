@@ -14,5 +14,8 @@
     <orderEntry type="library" exported="" scope="PROVIDED" name="commons-cli" level="project" />
     <orderEntry type="library" name="decentxml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
+    <orderEntry type="library" scope="PROVIDED" name="SSHJ" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="jsch-agent-proxy" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="jsch-agent-proxy-sshj" level="project" />
   </component>
 </module>
