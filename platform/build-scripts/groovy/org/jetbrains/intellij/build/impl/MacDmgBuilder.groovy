@@ -1,11 +1,27 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtilRt
+import com.jcraft.jsch.agentproxy.AgentProxy
+import com.jcraft.jsch.agentproxy.AgentProxyException
+import com.jcraft.jsch.agentproxy.Connector
+import com.jcraft.jsch.agentproxy.ConnectorFactory
+import com.jcraft.jsch.agentproxy.sshj.AuthAgent
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
-import org.apache.tools.ant.BuildException
+import net.schmizz.keepalive.KeepAliveProvider
+import net.schmizz.sshj.DefaultConfig
+import net.schmizz.sshj.SSHClient
+import net.schmizz.sshj.common.SSHException
+import net.schmizz.sshj.sftp.SFTPClient
+import net.schmizz.sshj.transport.verification.PromiscuousVerifier
+import net.schmizz.sshj.userauth.method.AuthKeyboardInteractive
+import net.schmizz.sshj.userauth.method.AuthMethod
+import net.schmizz.sshj.userauth.method.AuthPassword
+import net.schmizz.sshj.userauth.method.PasswordResponseProvider
+import net.schmizz.sshj.userauth.password.PasswordFinder
+import net.schmizz.sshj.userauth.password.Resource
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
@@ -13,12 +29,19 @@ import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.MacHostProperties
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.security.SecureRandom
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+import java.util.function.BiConsumer
 
 import static com.intellij.openapi.util.Pair.pair
 
@@ -30,9 +53,15 @@ final class MacDmgBuilder {
   private final MacHostProperties macHostProperties
   private final String remoteDir
   private final MacDistributionCustomizer customizer
-  private static final def ENV_FOR_MAC_BUILDER = ['ARTIFACTORY_URL']
+  private static final List<String> ENV_FOR_MAC_BUILDER = ['ARTIFACTORY_URL']
 
-  private MacDmgBuilder(BuildContext buildContext, MacDistributionCustomizer customizer, String remoteDir, MacHostProperties macHostProperties) {
+  private static final SecureRandom random = new SecureRandom()
+  private static final ThreadPoolExecutor ioExecutor = Executors.newCachedThreadPool() as ThreadPoolExecutor
+
+  private MacDmgBuilder(BuildContext buildContext,
+                        MacDistributionCustomizer customizer,
+                        String remoteDir,
+                        MacHostProperties macHostProperties) {
     this.customizer = customizer
     this.buildContext = buildContext
     ant = buildContext.ant
@@ -41,9 +70,15 @@ final class MacDmgBuilder {
     this.remoteDir = remoteDir
   }
 
-  static void signBinaryFiles(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, @NotNull Path macDistPath) {
+  static void signBinaryFiles(BuildContext buildContext,
+                              MacDistributionCustomizer customizer, MacHostProperties macHostProperties,
+                              @NotNull Path macDistPath) {
     MacDmgBuilder dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
-    dmgBuilder.doSignBinaryFiles(macDistPath)
+    dmgBuilder
+      .executeTask(dmgBuilder.macHostProperties.host, dmgBuilder.macHostProperties.userName, dmgBuilder.macHostProperties.password) {
+        SSHClient ssh, SFTPClient sftp ->
+          dmgBuilder.doSignBinaryFiles(macDistPath, ssh, sftp)
+      }
   }
 
   static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer,
@@ -53,23 +88,20 @@ final class MacDmgBuilder {
     dmgBuilder.doSignAndBuildDmg(macZipPath, macAdditionalDirPath, jreArchivePath, suffix, notarize)
   }
 
-  private static MacDmgBuilder createInstance(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties) {
-    BuildUtils.defineFtpTask(buildContext)
-    BuildUtils.defineSshTask(buildContext)
-
+  private static MacDmgBuilder createInstance(BuildContext buildContext,
+                                              MacDistributionCustomizer customizer,
+                                              MacHostProperties macHostProperties) {
     String currentDateTimeString = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME).replace(':', '-')
-    int randomSeed = new Random().nextInt(Integer.MAX_VALUE)
-    String remoteDir = "intellij-builds/${buildContext.fullBuildNumber}-${currentDateTimeString}-${randomSeed}"
-
+    long randomSeed = random.nextLong()
+    String remoteDir = "intellij-builds/${buildContext.fullBuildNumber}-$currentDateTimeString-${Long.toUnsignedString(randomSeed, Character.MAX_RADIX)}"
     new MacDmgBuilder(buildContext, customizer, remoteDir, macHostProperties)
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private void doSignBinaryFiles(@NotNull Path macDistPath) {
-    ftpAction("mkdir") {}
-    ftpAction("put", false, "777") {
-      ant.fileset(file: "${buildContext.paths.communityHome}/platform/build-scripts/tools/mac/scripts/signbin.sh")
-    }
+  private void doSignBinaryFiles(@NotNull Path macDistPath,
+                                 @NotNull SSHClient ssh,
+                                 @NotNull SFTPClient sftp) {
+    Path scripts = buildContext.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
+    uploadExecutable(sftp, scripts.resolve("signbin.sh"))
 
     Path signedFilesDir = Paths.get("$buildContext.paths.temp/signed-files")
     Files.createDirectories(signedFilesDir)
@@ -78,30 +110,22 @@ final class MacDmgBuilder {
     customizer.binariesToSign.each { relativePath ->
       buildContext.messages.progress("Signing $relativePath")
       Path fullPath = macDistPath.resolveSibling(relativePath)
-      ftpAction("put") {
-        ant.fileset(file: fullPath.toString())
-      }
+      uploadRegular(sftp, fullPath)
       FileUtil.delete(fullPath)
       String fileName = fullPath.fileName.toString()
-      sshExec("$remoteDir/signbin.sh \"$fileName\" ${macHostProperties.userName}" +
-              " ${macHostProperties.password} \"${this.macHostProperties.codesignString}\"", "signbin.log")
-
-      ftpAction("get", true, null, 3) {
-        ant.fileset(dir: signedFilesDir.toString()) {
-          ant.include(name: '**/' + fileName)
-        }
-      }
+      sshExec(ssh, "$remoteDir/signbin.sh \"$fileName\" ${macHostProperties.userName}" +
+                   " ${macHostProperties.password} \"${this.macHostProperties.codesignString}\"", "signbin-${fileName}.log")
 
       Path file = signedFilesDir.resolve(fileName)
+      download(sftp, file)
       if (Files.exists(file)) {
-        ant.move(file: file.toString(), tofile: fullPath)
+        Files.move(file, fullPath)
       }
       else {
         failedToSign << relativePath
       }
     }
 
-    deleteRemoteDir()
     if (!failedToSign.empty) {
       buildContext.messages.error("Failed to sign files: $failedToSign")
     }
@@ -130,40 +154,46 @@ final class MacDmgBuilder {
     new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "Resources/", installationDirectories, installationArchives)
 
     def targetName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) + suffix
-    def sitFile = new File(artifactsPath, "${targetName}.sit")
-    ant.copy(file: macZipPath, tofile: sitFile.path)
-    ant.zip(destfile: sitFile.path, update: true) {
+    Path sitFile = Paths.get(artifactsPath, "${targetName}.sit")
+    Files.copy(Paths.get(macZipPath), sitFile)
+    ant.zip(destfile: sitFile.toString(), update: true) {
       zipfileset(dir: productJsonDir.toString(), prefix: zipRoot)
 
       if (macAdditionalDirPath != null) {
         zipfileset(dir: macAdditionalDirPath, prefix: zipRoot)
       }
     }
-    if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP) || !isMac()) {
-      ftpAction("mkdir") {}
-      try {
-        signMacZip(sitFile, jreArchivePath, notarize)
 
-        if (customizer.publishArchive) {
-          buildContext.notifyArtifactBuilt(sitFile.path)
-        }
-        buildDmg(targetName)
-      }
-      finally {
-        deleteRemoteDir()
+    def signMacArtifacts = !buildContext.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP)
+    if (signMacArtifacts || !isMac()) {
+      executeTask(this.macHostProperties.host, this.macHostProperties.userName, this.macHostProperties.password) {
+        SSHClient ssh, SFTPClient sftp ->
+          Path jreArchivePathPath = jreArchivePath != null ? Paths.get(jreArchivePath) : null
+          signMacZip(sitFile, jreArchivePathPath, notarize, ssh, sftp)
+
+          if (customizer.publishArchive) {
+            buildContext.notifyArtifactBuilt(sitFile)
+          }
+          buildContext.executeStep("Build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP) {
+            buildDmg(targetName, ssh, sftp)
+          }
       }
     }
     else {
-      bundleJBRLocally(sitFile, jreArchivePath)
-      if (customizer.publishArchive) {
-        buildContext.notifyArtifactBuilt(sitFile.path)
+      if (jreArchivePath != null || signMacArtifacts) {
+        bundleJBRAndSignSitLocally(sitFile.toFile(), jreArchivePath)
       }
-      buildDmgLocally(sitFile, targetName)
+      if (customizer.publishArchive) {
+        buildContext.notifyArtifactBuilt(sitFile)
+      }
+      buildContext.executeStep("Build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP) {
+        buildDmgLocally(sitFile.toFile(), targetName)
+      }
     }
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private void bundleJBRLocally(File targetFile, String jreArchivePath) {
+  private void bundleJBRAndSignSitLocally(File targetFile, String jreArchivePath) {
     buildContext.messages.progress("Bundling JBR")
     File tempDir = new File(new File(buildContext.paths.temp, targetFile.getName()), "mac.dist.bundled.jre")
     tempDir.mkdirs()
@@ -189,7 +219,7 @@ final class MacDmgBuilder {
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private void buildDmgLocally(File sitFile, String targetFileName){
+  private void buildDmgLocally(File sitFile, String targetFileName) {
     File tempDir = new File(buildContext.paths.temp, "mac.dist.dmg")
     tempDir.mkdirs()
     buildContext.messages.progress("Building ${targetFileName}.dmg")
@@ -224,8 +254,7 @@ final class MacDmgBuilder {
     return osName.toLowerCase().startsWith('mac')
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private void buildDmg(String targetFileName) {
+  private void buildDmg(@NotNull String targetFileName, @NotNull SSHClient ssh, @NotNull SFTPClient sftp) {
     buildContext.messages.progress("Building ${targetFileName}.dmg")
     Path tempDir = buildContext.paths.tempDir.resolve("files-for-dmg-$targetFileName")
     Files.createDirectories(tempDir)
@@ -233,136 +262,196 @@ final class MacDmgBuilder {
     Path dmgImageCopy = tempDir.resolve("${buildContext.fullBuildNumber}.png")
     String dmgImagePath = (buildContext.applicationInfo.isEAP ? customizer.dmgImagePathForEAP : null) ?: customizer.dmgImagePath
     Files.copy(Paths.get(dmgImagePath), dmgImageCopy, StandardCopyOption.REPLACE_EXISTING)
-    ftpAction("put") {
-      ant.fileset(file: dmgImageCopy.toString())
-    }
 
-    ftpAction("put", false, "777") {
-      ant.fileset(dir: "${buildContext.paths.communityHome}/platform/build-scripts/tools/mac/scripts") {
-        include(name: "makedmg.sh")
-        include(name: "makedmg.pl")
-      }
-    }
+    uploadRegular(sftp, dmgImageCopy)
+    Path scripts = buildContext.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
+    uploadExecutable(sftp, scripts.resolve("makedmg.sh"))
+    uploadExecutable(sftp, scripts.resolve("makedmg.pl"))
 
-    sshExec("$remoteDir/makedmg.sh ${targetFileName} ${buildContext.fullBuildNumber}", "makedmg.log")
-    ftpAction("get", true, null, 3) {
-      ant.fileset(dir: artifactsPath) {
-        include(name: "**/${targetFileName}.dmg")
-      }
-    }
-    def dmgFilePath = "$artifactsPath/${targetFileName}.dmg"
-    if (!new File(dmgFilePath).exists()) {
+    sshExec(ssh, "$remoteDir/makedmg.sh ${targetFileName} ${buildContext.fullBuildNumber}", "makedmg-${targetFileName}.log")
+
+    Path dmgFilePath = Paths.get(artifactsPath, "${targetFileName}.dmg".toString())
+    download(sftp, dmgFilePath)
+    if (!Files.exists(dmgFilePath)) {
       buildContext.messages.error("Failed to build .dmg file")
     }
     buildContext.notifyArtifactBuilt(dmgFilePath)
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private void deleteRemoteDir() {
-    ftpAction("delete") {
-      ant.fileset() {
-        include(name: "**")
+  private def signMacZip(Path targetFile, Path jreArchivePath, boolean notarize, SSHClient ssh, SFTPClient sftp) {
+    buildContext.messages.block("Signing ${targetFile.fileName}") {
+      buildContext.messages.progress("Uploading ${targetFile.fileName} to ${macHostProperties.host}")
+      uploadRegular(sftp, targetFile)
+      if (jreArchivePath != null) {
+        uploadRegular(sftp, jreArchivePath)
       }
-    }
-    ftpAction("rmdir", true, null, 0, PathUtilRt.getParentPath(remoteDir)) {
-      ant.fileset() {
-        include(name: "${PathUtilRt.getFileName(remoteDir)}/**")
-      }
-    }
-  }
+      def scripts = buildContext.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
+      uploadRegular(sftp, scripts.resolve("entitlements.xml"))
+      uploadExecutable(sftp, scripts.resolve("sign.sh"))
+      uploadExecutable(sftp, scripts.resolve("notarize.sh"))
+      uploadExecutable(sftp, scripts.resolve("signapp.sh"))
 
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private def signMacZip(File targetFile, String jreArchivePath, boolean notarize) {
-    buildContext.messages.block("Signing ${targetFile.name}") {
-      buildContext.messages.progress("Uploading ${targetFile} to ${macHostProperties.host}")
-      ftpAction("put") {
-        ant.fileset(file: targetFile.path)
-        if (jreArchivePath != null) {
-          ant.fileset(file: jreArchivePath)
-        }
-      }
-      ftpAction("put", false, "777") {
-        ant.fileset(dir: "${buildContext.paths.communityHome}/platform/build-scripts/tools/mac/scripts") {
-          include(name: "entitlements.xml")
-          include(name: "sign.sh")
-          include(name: "notarize.sh")
-          include(name: "signapp.sh")
-        }
-      }
-
-      buildContext.messages.progress("Signing ${targetFile.name} on ${macHostProperties.host}")
-      List<String> args = [targetFile.name,
+      buildContext.messages.progress("Signing ${targetFile.fileName} on ${macHostProperties.host}")
+      List<String> args = [targetFile.fileName.toString(),
                            buildContext.fullBuildNumber,
                            macHostProperties.userName,
                            macHostProperties.password,
-                           "\"${macHostProperties.codesignString}\"",
-                           jreArchivePath != null ? '"' + PathUtilRt.getFileName(jreArchivePath) + '"' : "no-jdk",
-                           notarize ? "yes" : "no",
+                           "\"${macHostProperties.codesignString}\"".toString(),
+                           jreArchivePath != null ? '"' + jreArchivePath.fileName.toString() + '"' : 'no-jdk',
+                           notarize ? 'yes' : 'no',
                            customizer.bundleIdentifier,
       ]
-      def env = ''
+      StringBuilder env = new StringBuilder();
       ENV_FOR_MAC_BUILDER.each {
         def value = System.getenv(it)
         if (value != null && !value.isEmpty()) {
-          env += "$it=$value "
+          env.append(it).append('=').append(value).append(' ')
         }
       }
+      sshExec(ssh, "${env.toString()}$remoteDir/signapp.sh ${args.join(" ")}", "signapp-${targetFile.fileName}.log")
 
-      sshExec("$env$remoteDir/signapp.sh ${args.join(" ")}", "signapp.log")
-
-      buildContext.messages.progress("Downloading signed ${targetFile.name} from ${macHostProperties.host}")
-      ant.delete(file: targetFile.path)
-      ftpAction("get", true, null, 3) {
-        ant.fileset(dir: artifactsPath) {
-          include(name: "**/${targetFile.name}")
-        }
-      }
-      if (!targetFile.exists()) {
-        buildContext.messages.error("Failed to sign ${targetFile.name}")
+      buildContext.messages.progress("Downloading signed ${targetFile.fileName} from ${macHostProperties.host}")
+      Files.delete(targetFile)
+      download(sftp, targetFile)
+      if (!Files.exists(targetFile)) {
+        buildContext.messages.error("Failed to sign ${targetFile.fileName}")
       }
     }
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private void sshExec(String command, String logFileName) {
+
+  static CompletableFuture<?> runAsync(Runnable closure) {
+    return CompletableFuture.runAsync(closure, ioExecutor)
+  }
+
+  private void sshExec(@NotNull SSHClient ssh, String commandString, String logFileName) {
+    def logFile = buildContext.paths.logDir.resolve(logFileName)
+    Files.createDirectories(logFile.parent)
+    def session = ssh.startSession()
     try {
-      ant.sshexec(
-        host: this.macHostProperties.host,
-        username: this.macHostProperties.userName,
-        password: this.macHostProperties.password,
-        trust: "yes",
-        command: "set -eo pipefail;$command 2>&1 | tee $remoteDir/$logFileName"
-      )
-    }
-    catch (BuildException e) {
-      buildContext.messages.error("SSH command failed, details are available in $logFileName: $e.message", e)
+      def command = session.exec("$commandString 2>&1")
+      try {
+        CompletableFuture.allOf(
+          runAsync { Files.copy(command.inputStream, logFile, StandardCopyOption.REPLACE_EXISTING) },
+          runAsync { command.errorStream.transferTo(System.err) }
+        ).get(6, TimeUnit.HOURS)
+
+        command.join(1, TimeUnit.MINUTES)
+      }
+      catch (Exception e) {
+        String logFileLocation = (Files.exists(logFile)) ? logFile.fileName.toString() : '<internal error - log file is not created>'
+        throw new RuntimeException("SSH command failed, details are available in $logFileLocation: ${e.message}", e)
+      }
+      finally {
+        if (Files.exists(logFile)) {
+          buildContext.notifyArtifactBuilt(logFile)
+        }
+        command.close()
+      }
+
+
+      if (command.exitStatus != 0) {
+        throw new RuntimeException("SSH command failed, details are available in ${logFile.fileName}" +
+                                   " (exitStatus=${command.exitStatus}, exitErrorMessage=${command.exitErrorMessage})")
+      }
     }
     finally {
-      buildContext.messages.info("Retrieving log file from SSH command '$command' to $logFileName")
-      ftpAction("get", true, null, 3) {
-        ant.fileset(dir: artifactsPath) {
-          include(name: '**/' + logFileName)
-        }
-      }
-      buildContext.notifyArtifactWasBuilt(new File(artifactsPath, logFileName).toPath())
+      session.close()
     }
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
-  void ftpAction(String action, boolean binary = true, String chmod = null, int retriesAllowed = 0, String overrideRemoteDir = null, Closure filesets) {
-    Map<String, String> args = [
-      server        : this.macHostProperties.host,
-      userid        : this.macHostProperties.userName,
-      password      : this.macHostProperties.password,
-      action        : action,
-      remotedir     : overrideRemoteDir ?: remoteDir,
-      binary        : binary ? "yes" : "no",
-      passive       : "yes",
-      retriesallowed: "$retriesAllowed"
-    ]
-    if (chmod != null) {
-      args["chmod"] = chmod
+  String uploadRegular(SFTPClient sftp, Path path) {
+    String remote = "$remoteDir/${path.fileName}".toString()
+    sftp.put(path.toString(), remote)
+    return remote
+  }
+
+  String uploadExecutable(SFTPClient sftp, Path path) {
+    String remote = uploadRegular(sftp, path)
+    sftp.chmod(remote, 0777)
+    return remote
+  }
+
+  void download(SFTPClient sftp, Path path) {
+    sftp.get("$remoteDir/${path.fileName}".toString(), path.toString())
+  }
+
+  private void executeTask(String host, String username, String password, BiConsumer<SSHClient, SFTPClient> action) {
+    def config = new DefaultConfig()
+    config.keepAliveProvider = KeepAliveProvider.KEEP_ALIVE
+    SSHClient ssh = new SSHClient(config)
+    try {
+      ssh.addHostKeyVerifier(new PromiscuousVerifier())
+      ssh.connect(host)
+      def passwordFinder = new PasswordFinder() {
+        @Override
+        char[] reqPassword(Resource<?> resource) {
+          return password.toCharArray()
+        }
+
+        @Override
+        boolean shouldRetry(Resource<?> resource) {
+          return false
+        }
+      }
+      List<AuthMethod> authMethods = new ArrayList()
+      def connector = getAgentConnector()
+      if (connector != null) {
+        authMethods.addAll(getAuthMethods(new AgentProxy(connector)))
+      }
+      authMethods.add(new AuthPassword(passwordFinder))
+      authMethods.add(new AuthKeyboardInteractive(new PasswordResponseProvider(passwordFinder)))
+
+      ssh.auth(username, authMethods)
+      ssh.newSFTPClient().withCloseable { SFTPClient sftp ->
+        sftp.mkdir(remoteDir)
+        try {
+          action.accept(ssh, sftp)
+        }
+        finally {
+          // as odd as it is, session can only be used once
+          // https://stackoverflow.com/a/23467751
+          removeDir(ssh, remoteDir)
+        }
+      }
     }
-    ant.ftp(args, filesets)
+    catch (SSHException e) {
+      buildContext.messages.error("SSH failed: $e.message", e)
+      throw e
+    }
+    finally {
+      ssh.close()
+    }
+  }
+
+  private Connector getAgentConnector() {
+    try {
+      return ConnectorFactory.getDefault().createConnector()
+    }
+    catch (AgentProxyException ignored) {
+      buildContext.messages.warning("SSH-Agent connector creation failed: ${ignored.message}")
+    }
+    return null
+  }
+
+  private List<AuthMethod> getAuthMethods(AgentProxy self) {
+    def identities = self.identities
+    buildContext.messages.info("SSH-Agent identities: ${identities.collect { new String(it.comment, StandardCharsets.UTF_8) }.join(",")}")
+    def result = new ArrayList<AuthMethod>(identities.length)
+    identities.each { result.add(new AuthAgent(self, it)) }
+    return result
+  }
+
+  private static def removeDir(SSHClient ssh, String remoteDir) {
+    ssh.startSession().withCloseable { session ->
+      def command = session.exec("rm -rf '$remoteDir'")
+      command.join(30, TimeUnit.SECONDS)
+      // must be called before checking exit code
+      command.close()
+      if (command.exitStatus != 0) {
+        throw new RuntimeException("cannot remove remote directory (exitStatus=${command.exitStatus}, " +
+                                   "exitErrorMessage=${command.exitErrorMessage})")
+      }
+    }
   }
 }
