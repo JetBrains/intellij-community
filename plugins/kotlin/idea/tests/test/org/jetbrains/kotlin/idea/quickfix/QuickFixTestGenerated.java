@@ -7459,6 +7459,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                     runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/functionReference4.kt");
                 }
 
+                @TestMetadata("functionReference5.kt")
+                public void testFunctionReference5() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/functionReference5.kt");
+                }
+
                 @TestMetadata("keepInUserCodeRuntime.kt")
                 public void testKeepInUserCodeRuntime() throws Exception {
                     runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/keepInUserCodeRuntime.kt");
@@ -7492,6 +7497,21 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 @TestMetadata("nonEmptyVarargRuntime.kt")
                 public void testNonEmptyVarargRuntime() throws Exception {
                     runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/nonEmptyVarargRuntime.kt");
+                }
+
+                @TestMetadata("propertyReference.kt")
+                public void testPropertyReference() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/propertyReference.kt");
+                }
+
+                @TestMetadata("propertyReference2.kt")
+                public void testPropertyReference2() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/propertyReference2.kt");
+                }
+
+                @TestMetadata("propertyReference3.kt")
+                public void testPropertyReference3() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/propertyReference3.kt");
                 }
 
                 @TestMetadata("typeReference.kt")

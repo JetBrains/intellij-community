@@ -132,9 +132,7 @@ class CodeInliner<TCallElement : KtElement>(
             keepInfixFormIfPossible()
         }
 
-        if (elementToBeReplaced is KtCallableReferenceExpression) {
-           codeToInline.convertToCallableReference()
-        }
+        codeToInline.convertToCallableReferenceIfNeeded(elementToBeReplaced)
 
         if (elementToBeReplaced is KtExpression) {
             if (receiver != null) {
@@ -205,10 +203,15 @@ class CodeInliner<TCallElement : KtElement>(
     private fun KtSimpleNameExpression.receiverExpression(): KtExpression? =
         getReceiverExpression() ?: parent.safeAs<KtCallableReferenceExpression>()?.receiverExpression
 
-    private fun MutableCodeToInline.convertToCallableReference() {
+    private fun MutableCodeToInline.convertToCallableReferenceIfNeeded(elementToBeReplaced: KtElement) {
+        if (elementToBeReplaced !is KtCallableReferenceExpression) return
         val qualified = mainExpression?.safeAs<KtQualifiedExpression>() ?: return
-        val callee = qualified.callExpression?.calleeExpression ?: return
-        val callableReference = psiFactory.createExpressionByPattern("$0::$1", qualified.receiverExpression, callee)
+        val reference = qualified.callExpression?.calleeExpression ?: qualified.selectorExpression ?: return
+        val callableReference  = if (elementToBeReplaced.receiverExpression == null) {
+            psiFactory.createExpressionByPattern("::$0", reference)
+        } else {
+            psiFactory.createExpressionByPattern("$0::$1", qualified.receiverExpression, reference)
+        }
         codeToInline.replaceExpression(qualified, callableReference)
     }
 
