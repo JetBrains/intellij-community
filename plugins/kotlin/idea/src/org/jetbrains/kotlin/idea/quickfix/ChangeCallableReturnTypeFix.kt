@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -153,7 +154,7 @@ abstract class ChangeCallableReturnTypeFix(
 
     object HasNextFunctionTypeMismatchFactory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val expression = QuickFixUtil.getParentElementOfType(diagnostic, KtExpression::class.java)
+            val expression = diagnostic.psiElement.findParentOfType<KtExpression>(strict = false)
                 ?: error("HAS_NEXT_FUNCTION_TYPE_MISMATCH reported on element that is not within any expression")
             val context = expression.analyze(BodyResolveMode.PARTIAL)
             val resolvedCall = context[BindingContext.LOOP_RANGE_HAS_NEXT_RESOLVED_CALL, expression] ?: return null
@@ -165,7 +166,7 @@ abstract class ChangeCallableReturnTypeFix(
 
     object CompareToTypeMismatchFactory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val expression = QuickFixUtil.getParentElementOfType(diagnostic, KtBinaryExpression::class.java)
+            val expression = diagnostic.psiElement.findParentOfType<KtBinaryExpression>(strict = false)
                 ?: error("COMPARE_TO_TYPE_MISMATCH reported on element that is not within any expression")
             val resolvedCall = expression.resolveToCall() ?: return null
             val compareToDescriptor = resolvedCall.candidateDescriptor
@@ -176,7 +177,7 @@ abstract class ChangeCallableReturnTypeFix(
 
     object ReturnTypeMismatchOnOverrideFactory : KotlinIntentionActionsFactory() {
         override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
-            val function = QuickFixUtil.getParentElementOfType(diagnostic, KtFunction::class.java) ?: return emptyList()
+            val function = diagnostic.psiElement.findParentOfType<KtFunction>(strict = false) ?: return emptyList()
 
             val actions = LinkedList<IntentionAction>()
 
@@ -210,14 +211,14 @@ abstract class ChangeCallableReturnTypeFix(
 
     object ChangingReturnTypeToUnitFactory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val function = QuickFixUtil.getParentElementOfType(diagnostic, KtFunction::class.java) ?: return null
+            val function = diagnostic.psiElement.findParentOfType<KtFunction>(strict = false) ?: return null
             return ForEnclosing(function, function.builtIns.unitType)
         }
     }
 
     object ChangingReturnTypeToNothingFactory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val function = QuickFixUtil.getParentElementOfType(diagnostic, KtFunction::class.java) ?: return null
+            val function = diagnostic.psiElement.findParentOfType<KtFunction>(strict = false) ?: return null
             return ForEnclosing(function, function.builtIns.nothingType)
         }
     }
@@ -226,7 +227,7 @@ abstract class ChangeCallableReturnTypeFix(
         fun getDestructuringDeclarationEntryThatTypeMismatchComponentFunction(diagnostic: Diagnostic): KtDestructuringDeclarationEntry {
             val componentName = COMPONENT_FUNCTION_RETURN_TYPE_MISMATCH.cast(diagnostic).a
             val componentIndex = DataClassDescriptorResolver.getComponentIndex(componentName.asString())
-            val multiDeclaration = QuickFixUtil.getParentElementOfType(diagnostic, KtDestructuringDeclaration::class.java)
+            val multiDeclaration = diagnostic.psiElement.findParentOfType<KtDestructuringDeclaration>(strict = false)
                 ?: error("COMPONENT_FUNCTION_RETURN_TYPE_MISMATCH reported on expression that is not within any multi declaration")
             return multiDeclaration.entries[componentIndex - 1]
         }

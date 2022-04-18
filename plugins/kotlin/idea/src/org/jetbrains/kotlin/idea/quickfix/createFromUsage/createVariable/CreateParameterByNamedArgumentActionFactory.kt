@@ -3,11 +3,11 @@
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.quickfix.QuickFixUtil
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.guessTypes
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
@@ -21,8 +21,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 
 object CreateParameterByNamedArgumentActionFactory : CreateParameterFromUsageFactory<KtValueArgument>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtValueArgument? {
-        val argument = QuickFixUtil.getParentElementOfType(diagnostic, KtValueArgument::class.java) ?: return null
-        return if (argument.isNamed()) argument else null
+        return diagnostic.psiElement.findParentOfType<KtValueArgument>(strict = false)?.takeIf { it.isNamed() }
     }
 
     override fun extractFixData(element: KtValueArgument, diagnostic: Diagnostic): CreateParameterData<KtValueArgument>? {

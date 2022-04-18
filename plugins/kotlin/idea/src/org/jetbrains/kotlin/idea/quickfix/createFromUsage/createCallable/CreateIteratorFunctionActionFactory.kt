@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
+import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
-import org.jetbrains.kotlin.idea.core.quickfix.QuickFixUtil
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallableInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.FunctionInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
@@ -23,7 +23,7 @@ import java.util.*
 
 object CreateIteratorFunctionActionFactory : CreateCallableMemberFromUsageFactory<KtForExpression>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtForExpression? {
-        return QuickFixUtil.getParentElementOfType(diagnostic, KtForExpression::class.java)
+        return diagnostic.psiElement.findParentOfType(strict = false)
     }
 
     override fun createCallableInfo(element: KtForExpression, diagnostic: Diagnostic): CallableInfo? {
