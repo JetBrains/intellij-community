@@ -297,13 +297,13 @@ private fun makeCall(
         return anchor.replaced(wrappedCall)
     }
 
-    if (rangeToReplace !is KotlinPsiRange.ListRange) return
+    if (rangeToReplace.empty) return
 
-    val anchor = rangeToReplace.startElement
+    val anchor = rangeToReplace.elements.first()
     val anchorParent = anchor.parent!!
 
     anchor.nextSibling?.let { from ->
-        val to = rangeToReplace.endElement
+        val to = rangeToReplace.elements.last()
         if (to != anchor) {
             anchorParent.deleteChildRange(from, to)
         }
@@ -683,7 +683,10 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
         if (generatorOptions.delayInitialOccurrenceReplacement) {
             put(descriptor.extractionData.originalRange, replaceInitialOccurrence)
         }
-        putAll(duplicates.map { it.range to { makeCall(descriptor, declaration, it.controlFlow, it.range, it.arguments) } })
+        putAll(duplicates.map {
+            val smartListRange = KotlinPsiRange.SmartListRange(it.range.elements)
+            smartListRange to { makeCall(descriptor, declaration, it.controlFlow, smartListRange, it.arguments) }
+        })
     }
 
     if (descriptor.typeParameters.isNotEmpty()) {

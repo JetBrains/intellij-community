@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTemplate
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
@@ -76,9 +77,11 @@ class ExtractKotlinFunctionHandler(
             ExtractionEngine(helper).run(editor, extractionData) { extraction ->
                 if (isInplaceRefactoringEnabled) {
                     val callIdentifier = findSingleCallExpression(file, callRange.range)?.calleeExpression ?: throw IllegalStateException()
-                    ExtractMethodTemplate(editor, extraction.declaration, callIdentifier).runTemplate(LinkedHashSet())
+                    val templateState = ExtractMethodTemplate(editor, extraction.declaration, callIdentifier).runTemplate(LinkedHashSet())
                     callRange.dispose()
-                    //TODO fix duplicates
+                    InplaceExtractUtils.addTemplateFinishedListener(templateState) {
+                        processDuplicates(extraction.duplicateReplacers, file.project, editor)
+                    }
                 } else {
                     processDuplicates(extraction.duplicateReplacers, file.project, editor)
                 }
