@@ -41,13 +41,13 @@ abstract class AbstractMavenCatalogDialog(private val project: Project) : Dialog
         .bindText(locationProperty.trim())
         .applyToComponent { emptyText.text = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.hint") }
         .columns(COLUMNS_MEDIUM)
-        .textValidation(CHECK_NON_EMPTY, CHECK_MAVEN_CATALOG)
+        .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_MAVEN_CATALOG)
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.name.label")) {
       textField()
         .bindText(nameProperty.trim())
         .columns(COLUMNS_MEDIUM)
-        .textValidation(CHECK_NON_EMPTY)
+        .trimmedTextValidation(CHECK_NON_EMPTY)
     }
     onApply { onApply() }
   }

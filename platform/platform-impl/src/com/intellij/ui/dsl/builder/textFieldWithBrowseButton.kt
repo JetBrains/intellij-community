@@ -7,7 +7,9 @@ import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.forTextFieldWithBrowseButton
+import com.intellij.openapi.ui.validation.trimParameter
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
+import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KMutableProperty0
 
@@ -42,5 +44,8 @@ private fun <T : TextFieldWithBrowseButton> Cell<T>.bindText(prop: MutableProper
   return bind(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, prop)
 }
 
+fun <T : TextFieldWithBrowseButton> Cell<T>.trimmedTextValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =
+  textValidation(*validations.map2Array { it.trimParameter() })
+
 fun <T : TextFieldWithBrowseButton> Cell<T>.textValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =
-  validation(*validations.map { it.forTextFieldWithBrowseButton() }.toTypedArray())
+  validation(*validations.map2Array { it.forTextFieldWithBrowseButton() })

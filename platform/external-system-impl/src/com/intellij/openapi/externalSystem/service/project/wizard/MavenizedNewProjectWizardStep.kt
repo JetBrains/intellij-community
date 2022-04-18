@@ -36,9 +36,9 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
   final override val versionProperty = propertyGraph.lazyProperty(::suggestVersionByParent)
 
   final override var parent by parentProperty
-  final override var groupId by groupIdProperty.trim()
-  final override var artifactId by artifactIdProperty.trim()
-  final override var version by versionProperty.trim()
+  final override var groupId by groupIdProperty
+  final override var artifactId by artifactIdProperty
+  final override var version by versionProperty
 
   val parents by lazy { parentsData.map(::createView) }
   val parentsData by lazy { findAllParents() }
@@ -77,16 +77,16 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
     with(builder) {
       row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
         textField()
-          .bindText(groupIdProperty)
+          .bindText(groupIdProperty.trim())
           .columns(COLUMNS_MEDIUM)
-          .textValidation(CHECK_NON_EMPTY, CHECK_GROUP_ID_FORMAT)
+          .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_GROUP_ID_FORMAT)
           .validation { validateGroupId() }
       }.bottomGap(BottomGap.SMALL)
       row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label")) {
         textField()
-          .bindText(artifactIdProperty)
+          .bindText(artifactIdProperty.trim())
           .columns(COLUMNS_MEDIUM)
-          .textValidation(CHECK_NON_EMPTY, CHECK_ARTIFACT_ID_FORMAT)
+          .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_ARTIFACT_ID_FORMAT)
           .validation { validateArtifactId() }
       }.bottomGap(BottomGap.SMALL)
     }

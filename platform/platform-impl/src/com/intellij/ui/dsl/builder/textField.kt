@@ -8,6 +8,7 @@ import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.forTextComponent
+import com.intellij.openapi.ui.validation.trimParameter
 import com.intellij.ui.dsl.ValidationException
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
 import com.intellij.ui.dsl.catchValidationException
@@ -130,6 +131,9 @@ private fun <T : JTextComponent> Cell<T>.bindIntText(prop: MutableProperty<Int>)
   return bindText({ prop.get().toString() },
                   { value -> catchValidationException { prop.set(component.getValidatedIntValue(value)) } })
 }
+
+fun <T : JTextComponent> Cell<T>.trimmedTextValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =
+  textValidation(*validations.map2Array { it.trimParameter() })
 
 fun <T : JTextComponent> Cell<T>.textValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =
   validation(*validations.map2Array { it.forTextComponent() })

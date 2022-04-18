@@ -27,6 +27,7 @@ import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionR
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.util.transform
+import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -181,9 +182,9 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       with(builder) {
         row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.label")) {
           textField()
-            .bindText(versionProperty)
+            .bindText(versionProperty.trim())
             .columns(COLUMNS_MEDIUM)
-            .textValidation(CHECK_NON_EMPTY)
+            .trimmedTextValidation(CHECK_NON_EMPTY)
         }.bottomGap(BottomGap.SMALL)
       }
     }
