@@ -183,12 +183,7 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   private fun afterTemplateStart(templateState: TemplateState) {
-    //TODO fix undo after change make static
     templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
-      override fun templateCancelled(template: Template?) {
-        revertState()
-      }
-
       override fun templateFinished(template: Template, brokenOff: Boolean) {
         if (brokenOff) {
           revertState()

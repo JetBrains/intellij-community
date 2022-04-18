@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction
 
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -13,6 +15,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringActionHandler
+import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
 import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTemplate
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
 import org.jetbrains.annotations.Nls
@@ -75,6 +78,7 @@ class ExtractKotlinFunctionHandler(
         }) { extractionData ->
             val callRange = editor.document.createRangeMarker(elements.first().textRange.startOffset, elements.last().textRange.endOffset)
                 .apply { isGreedyToLeft = true; isGreedyToRight = true }
+            val editorState = EditorState(editor)
             ExtractionEngine(helper).run(editor, extractionData) { extraction ->
                 if (isInplaceRefactoringEnabled) {
                     val callIdentifier = findSingleCallExpression(file, callRange.range)?.calleeExpression ?: throw IllegalStateException()
@@ -83,8 +87,16 @@ class ExtractKotlinFunctionHandler(
                     val callOffset = callIdentifier.textRange.endOffset
                     val preview = InplaceExtractUtils.createPreview(editor, methodRange, methodOffset, callRange.range!!, callOffset)
                     val templateState = ExtractMethodTemplate(editor, extraction.declaration, callIdentifier).runTemplate(LinkedHashSet())
+                    templateState.properties.put("ExtractMethod", true)
                     callRange.dispose()
                     Disposer.register(templateState, preview)
+                    templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
+                        override fun templateFinished(template: Template, brokenOff: Boolean) {
+                            if (brokenOff) {
+                                editorState.revert()
+                            }
+                        }
+                    })
                     InplaceExtractUtils.addTemplateFinishedListener(templateState) {
                         processDuplicates(extraction.duplicateReplacers, file.project, editor)
                     }
