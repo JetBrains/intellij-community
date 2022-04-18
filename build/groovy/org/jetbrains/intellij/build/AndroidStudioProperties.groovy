@@ -109,21 +109,21 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.groovyPlugin([]),
       plugin("intellij.cidr.debugger.plugin") {
-        withModule("intellij.cidr.debugger", mainJarName)
-        withModule("intellij.cidr.debugger.backend", mainJarName)
-        withModule("intellij.cidr.debugger.commandInterpreterLang", mainJarName)
-        withModule("intellij.cidr.core", mainJarName)
-        withModule("intellij.cidr.util", mainJarName)
-        withModule("intellij.cidr.util.serializer", mainJarName)
-        withModule("intellij.cidr.util.ui", mainJarName)
+        it.withModule("intellij.cidr.debugger", it.mainJarName)
+        it.withModule("intellij.cidr.debugger.backend", it.mainJarName)
+        it.withModule("intellij.cidr.debugger.commandInterpreterLang", it.mainJarName)
+        it.withModule("intellij.cidr.core", it.mainJarName)
+        it.withModule("intellij.cidr.util", it.mainJarName)
+        it.withModule("intellij.cidr.util.serializer", it.mainJarName)
+        it.withModule("intellij.cidr.util.ui", it.mainJarName)
       },
       plugin("intellij.cidr.base.plugin") {
-        withModule("intellij.c.dfa", mainJarName)
-        withModule("intellij.cidr.base", mainJarName)
-        withModule("intellij.cidr.projectModel", mainJarName)
-        withModule("intellij.cidr.workspaceModel", mainJarName)
-        withModule("intellij.cidr.lang.base", mainJarName)
-        withModule("intellij.cidr.execution", mainJarName)
+        it.withModule("intellij.c.dfa", it.mainJarName)
+        it.withModule("intellij.cidr.base", it.mainJarName)
+        it.withModule("intellij.cidr.projectModel", it.mainJarName)
+        it.withModule("intellij.cidr.workspaceModel", it.mainJarName)
+        it.withModule("intellij.cidr.lang.base", it.mainJarName)
+        it.withModule("intellij.cidr.execution", it.mainJarName)
         // Note the following are in CLionProperties.groovy but we don't include them since
         // they were never shipped with Android Studio before.
         //   * intellij.cidr.toolchains
@@ -132,20 +132,20 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         // The following are not in CLionProperties.groovy for this plugin. Instead they
         // are put under plugin "intellij.clion" or IDE implementation. We put them under
         // this base plugin so that they will still be shipped.
-        withModule("intellij.cidr.psi.base", mainJarName)
-        withModule("intellij.cidr.resources", mainJarName)
-        withModule("intellij.cidr.common", mainJarName)
-        withModule("intellij.cmake.psi", mainJarName)
+        it.withModule("intellij.cidr.psi.base", it.mainJarName)
+        it.withModule("intellij.cidr.resources", it.mainJarName)
+        it.withModule("intellij.cidr.common", it.mainJarName)
+        it.withModule("intellij.cmake.psi", it.mainJarName)
         // The cidr test framework is included in the IDE base in Clion. But we
         // include it here to support writing tests in plugins.
-        withModule("intellij.cidr.common.testFramework.core", mainJarName)
+        it.withModule("intellij.cidr.common.testFramework.core", it.mainJarName)
       },
       plugin("intellij.c.plugin") {
-        withModule("intellij.c", mainJarName)
-        withModule("intellij.c.debugger", mainJarName)
-        withModule("intellij.c.doxygen", mainJarName)
-        withModule("intellij.c.testing", mainJarName)
-        withModule("intellij.cidr.modulemap.language", mainJarName)
+        it.withModule("intellij.c", it.mainJarName)
+        it.withModule("intellij.c.debugger", it.mainJarName)
+        it.withModule("intellij.c.doxygen", it.mainJarName)
+        it.withModule("intellij.c.testing", it.mainJarName)
+        it.withModule("intellij.cidr.modulemap.language", it.mainJarName)
       },
     ]
   }
@@ -260,7 +260,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     @Override
     String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
-      applicationInfo.isEAP ? "Android Studio Preview.app" : "Android Studio.app"
+      applicationInfo.isEAP() ? "Android Studio Preview.app" : "Android Studio.app"
     }
 
     @Override
@@ -282,7 +282,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   }
 
   @Override
-  String getSystemSelector(ApplicationInfoProperties applicationInfo, String buildNumber) { "AndroidStudio${applicationInfo.isEAP ? "Preview" : ""}${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}" }
+  String getSystemSelector(ApplicationInfoProperties applicationInfo, String buildNumber) { "AndroidStudio${applicationInfo.isEAP() ? "Preview" : ""}${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}" }
 
   @Override
   String getBaseArtifactName(ApplicationInfoProperties applicationInfo, String buildNumber) { "android-studio-$buildNumber" }
