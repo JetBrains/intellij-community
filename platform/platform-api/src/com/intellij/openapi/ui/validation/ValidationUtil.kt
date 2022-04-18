@@ -1,6 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("unused")
-
 package com.intellij.openapi.ui.validation
 
 import com.intellij.openapi.util.NlsContexts
@@ -32,7 +30,7 @@ fun <T1, T2> validationErrorFor(getMessage: (T1, T2) -> @NlsContexts.DialogMessa
 
 /**
  * Created validation with text parameter that produces error if [getMessage] returns non-null value.
- * Note: Text parameter will be trimmed. So, don't forget to trim text from text components, when applies it into model.
+ * Note: Text parameter will be trimmed.
  */
 fun validationTextErrorFor(getMessage: (String) -> @NlsContexts.DialogMessage String?) =
   validationErrorFor<() -> String> { getter -> getMessage(getter().trim()) }
