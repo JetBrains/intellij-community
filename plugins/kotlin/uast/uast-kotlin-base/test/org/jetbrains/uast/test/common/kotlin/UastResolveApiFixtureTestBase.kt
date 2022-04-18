@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertContainsElements
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertDoesntContain
 import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
@@ -378,6 +379,52 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         val resolved = (compiledAnnotationParameter.resolve() as? PsiMethod)
             .orFail("cant resolve annotation parameter")
         TestCase.assertEquals("message", resolved.name)
+    }
+
+    fun checkResolveExplicitLambdaParameter(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                inline fun <T, R> T.use(block: (T) -> R): R {
+                  return block(this)
+                }
+                
+                fun foo() {
+                  42.use { it ->
+                    i<caret>t.toString()
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        TestCase.assertEquals("it", (uCallExpression.receiver as? USimpleNameReferenceExpression)?.identifier)
+        // Expect to be resolved to source KtParameter
+        val resolved = (uCallExpression.receiver?.tryResolve() as? KtParameter)
+            .orFail("cant resolve explicit lambda parameter")
+        TestCase.assertEquals("it", resolved.name)
+    }
+
+    fun checkResolveImplicitLambdaParameter(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                inline fun <T, R> T.use(block: (T) -> R): R {
+                  return block(this)
+                }
+                
+                fun foo() {
+                  42.use { i<caret>t.toString() }
+                }
+            """.trimIndent()
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        TestCase.assertEquals("it", (uCallExpression.receiver as? USimpleNameReferenceExpression)?.identifier)
+        // No source for implicit lambda parameter. Expect to be resolved to fake PsiParameter used inside ULambdaExpression
+        val resolved = (uCallExpression.receiver?.tryResolve() as? PsiParameter)
+            .orFail("cant resolve implicit lambda parameter")
+        TestCase.assertEquals("it", resolved.name)
     }
 
     fun checkResolveSyntheticMethod(myFixture: JavaCodeInsightTestFixture) {

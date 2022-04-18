@@ -24,7 +24,7 @@ UBlockExpression -> UQualifiedReferenceExpression -> Kotlin_Light_Method: foo
 }: A
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = forEach) -> Decompiled_Method: forEach
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = println) -> Decompiled_Method: println
-        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = it) -> null: null
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = it) -> Kotlin_Light_Value_Parameter: it
     UBlockExpression -> UQualifiedReferenceExpression -> Decompiled_Method: joinToString
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = listOf) -> Decompiled_Method: listOf
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = joinToString) -> Decompiled_Method: joinToString

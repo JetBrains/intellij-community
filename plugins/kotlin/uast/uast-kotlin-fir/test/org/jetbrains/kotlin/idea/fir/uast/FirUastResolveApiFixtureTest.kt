@@ -117,6 +117,14 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("ResolveCompiledAnnotation", ::checkResolveCompiledAnnotation)
     }
 
+    fun testResolveExplicitLambdaParameter() {
+        doCheck("ResolveExplicitLambdaParameter", ::checkResolveExplicitLambdaParameter)
+    }
+
+    fun testResolveImplicitLambdaParameter() {
+        doCheck("ResolveImplicitLambdaParameter", ::checkResolveImplicitLambdaParameter)
+    }
+
     fun testResolveSyntheticMethod() {
         doCheck("ResolveSyntheticMethod", ::checkResolveSyntheticMethod)
     }
