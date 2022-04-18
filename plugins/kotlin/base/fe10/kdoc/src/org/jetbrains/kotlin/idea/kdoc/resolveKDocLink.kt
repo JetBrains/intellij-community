@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.kdoc
 
@@ -52,7 +52,8 @@ fun resolveKDocLink(
     }
     val isMarkdownLink = tag == null
     if (tag == KDocKnownTag.SAMPLE || tag == KDocKnownTag.SEE || isMarkdownLink) {
-        val declarationDescriptors = KDocLinkResolutionService.resolveKDocLinkGlobal(context, fromDescriptor, resolutionFacade, qualifiedName)
+        val kdocService = resolutionFacade.project.serviceOrNull<KDocLinkResolutionService>()
+        val declarationDescriptors = kdocService?.resolveKDocLink(context, fromDescriptor, resolutionFacade, qualifiedName) ?: emptyList()
         if (declarationDescriptors.isNotEmpty()) {
             return declarationDescriptors
         }

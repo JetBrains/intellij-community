@@ -41,6 +41,7 @@ final class KotlinPluginBuilder {
     "kotlin.base.plugin",
     "kotlin.base.psi",
     "kotlin.base.fe10.analysis",
+    "kotlin.base.fe10.kdoc",
     "kotlin.core",
     "kotlin.idea",
     "kotlin.fir.frontend-independent",

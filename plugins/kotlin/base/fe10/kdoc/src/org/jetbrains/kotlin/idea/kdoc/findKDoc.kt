@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.kdoc
 
@@ -41,7 +41,6 @@ fun KtElement.findKDoc(descriptorToPsi: DescriptorToPsi): KDocContent? {
 }
 
 private fun KtElement.lookupOwnedKDoc(): KDocContent? {
-
     // KDoc for primary constructor is located inside of its class KDoc
     val psiDeclaration = when (this) {
         is KtPrimaryConstructor -> getContainingClassOrObject()
@@ -79,7 +78,6 @@ private fun KDoc.findSectionsContainingTag(tag: KDocKnownTag): List<KDocSection>
 }
 
 private fun KtElement.lookupKDocInContainer(): KDocContent? {
-
     val subjectName = name
     val containingDeclaration =
         PsiTreeUtil.findFirstParent(this, true) {
