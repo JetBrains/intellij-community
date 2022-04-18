@@ -10,17 +10,17 @@ import java.io.IOException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
-val CHECK_NON_EMPTY = validationTextErrorIf(UIBundle.message("kotlin.dsl.validation.missing.value")) { it.isEmpty() }
+val CHECK_NON_EMPTY = validationErrorIf<String>(UIBundle.message("kotlin.dsl.validation.missing.value")) { it.isEmpty() }
 
-val CHECK_NO_WHITESPACES = validationTextErrorIf(UIBundle.message("kotlin.dsl.validation.no.whitespaces")) { ' ' in it }
+val CHECK_NO_WHITESPACES = validationErrorIf<String>(UIBundle.message("kotlin.dsl.validation.no.whitespaces")) { ' ' in it }
 
 private val reservedWordsPattern = "(^|[ .])(con|prn|aux|nul|com\\d|lpt\\d)($|[ .])".toRegex(RegexOption.IGNORE_CASE)
-val CHECK_NO_RESERVED_WORDS = validationTextErrorIf(UIBundle.message("kotlin.dsl.validation.no.reserved.words")) {
+val CHECK_NO_RESERVED_WORDS = validationErrorIf<String>(UIBundle.message("kotlin.dsl.validation.no.reserved.words")) {
   reservedWordsPattern.find(it) != null
 }
 
 private val namePattern = "[a-zA-Z\\d\\s_.-]*".toRegex()
-val CHECK_NAME_FORMAT = validationTextErrorIf(UIBundle.message("kotlin.dsl.validation.name.allowed.symbols")) {
+val CHECK_NAME_FORMAT = validationErrorIf<String>(UIBundle.message("kotlin.dsl.validation.name.allowed.symbols")) {
   !namePattern.matches(it)
 }
 
@@ -32,7 +32,7 @@ val CHECK_NON_EMPTY_DIRECTORY = validationFileErrorFor { file ->
   else null
 }.asWarning().withOKEnabled()
 
-val CHECK_DIRECTORY = validationTextErrorFor { text ->
+val CHECK_DIRECTORY = validationErrorFor<String> { text ->
   runCatching { Path.of(text).toFile() }
     .mapCatching { file ->
       when {
@@ -51,7 +51,7 @@ val CHECK_DIRECTORY = validationTextErrorFor { text ->
 }
 
 private val groupIdPartPattern = "[a-zA-Z_].*".toRegex()
-val CHECK_GROUP_ID_FORMAT = CHECK_NO_WHITESPACES and CHECK_NAME_FORMAT and validationTextErrorFor { text ->
+val CHECK_GROUP_ID_FORMAT = CHECK_NO_WHITESPACES and CHECK_NAME_FORMAT and validationErrorFor { text ->
   if (text.startsWith('.') || text.endsWith('.')) {
     UIBundle.message("kotlin.dsl.validation.groupId.leading.trailing.dot")
   }
@@ -67,7 +67,7 @@ val CHECK_GROUP_ID_FORMAT = CHECK_NO_WHITESPACES and CHECK_NAME_FORMAT and valid
 
 private val artifactIdPattern = "[a-zA-Z\\d_.-]*".toRegex()
 private val firstSymbolArtifactIdPattern = "[a-zA-Z_].*".toRegex()
-val CHECK_ARTIFACT_ID_FORMAT = validationTextErrorFor { text ->
+val CHECK_ARTIFACT_ID_FORMAT = validationErrorFor<String> { text ->
   if (!artifactIdPattern.matches(text)) {
     UIBundle.message("kotlin.dsl.validation.artifactId.allowed.symbols")
   }
@@ -81,7 +81,7 @@ val CHECK_ARTIFACT_ID_FORMAT = validationTextErrorFor { text ->
 
 private fun Project.getModules() = ModuleManager.getInstance(this).modules
 
-val CHECK_FREE_MODULE_NAME = validationTextErrorFor<Project?> { project, name ->
+val CHECK_FREE_MODULE_NAME = validationErrorFor<Project?, String> { project, name ->
   project?.getModules()
     ?.find { it.name == name }
     ?.let { UIBundle.message("label.project.wizard.new.module.name.exists.error", it.name) }
