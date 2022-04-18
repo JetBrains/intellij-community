@@ -82,9 +82,7 @@ open class RecentProjectListActionProvider {
       val children = mutableListOf<AnAction>()
       for (path in group.projects) {
         val action = createOpenAction(path!!, duplicates)
-        if (action is ReopenProjectAction) {
-          action.setProjectGroup(group)
-        }
+        action.setProjectGroup(group)
         children.add(action)
         if (addClearListItem && children.size >= RecentProjectsManagerBase.MAX_PROJECTS_IN_MAIN_MENU) {
           break
@@ -98,7 +96,7 @@ open class RecentProjectListActionProvider {
   }
 
   // for Rider
-  protected open fun createOpenAction(path: String, duplicates: Set<String>): AnAction {
+  protected open fun createOpenAction(path: String, duplicates: Set<String>): ReopenProjectAction {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
     var displayName = recentProjectManager.getDisplayName(path)
     val projectName = recentProjectManager.getProjectName(path)
@@ -114,8 +112,9 @@ open class RecentProjectListActionProvider {
   }
 
   private fun createRecentProject(path: String, duplicates: Set<String>): RecentProjectItem {
-    val reopenProjectAction = createOpenAction(path, duplicates) as ReopenProjectAction
-    return RecentProjectItem(reopenProjectAction.projectPath, reopenProjectAction.projectName, reopenProjectAction.projectNameToDisplay ?: "")
+    val reopenProjectAction = createOpenAction(path, duplicates)
+    return RecentProjectItem(reopenProjectAction.projectPath, reopenProjectAction.projectName,
+                             reopenProjectAction.projectNameToDisplay ?: "")
   }
 
   /**
