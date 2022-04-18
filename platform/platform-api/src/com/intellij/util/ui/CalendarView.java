@@ -126,10 +126,9 @@ public class CalendarView extends JPanel {
         int newValue = getIntValue(spinner) + inc;
         SpinnerNumberModel model = (SpinnerNumberModel)spinner.getModel();
         if (newValue <= (Integer)model.getMaximum() && newValue >= (Integer)model.getMinimum()) {
-          int start = field.getSelectionStart();
-          int end = field.getSelectionEnd();
+          boolean hasSelection = field.getSelectionStart() != field.getSelectionEnd();
           model.setValue(newValue);
-          field.select(start, end);
+          if (hasSelection) field.selectAll();
         }
       }
     };
