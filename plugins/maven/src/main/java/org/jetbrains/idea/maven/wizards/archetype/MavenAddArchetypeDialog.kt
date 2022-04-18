@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.wizards.archetype
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.emptyText
@@ -13,6 +14,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.layout.*
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 
@@ -36,19 +38,19 @@ class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(proj
   override fun createCenterPanel() = panel {
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.group.id.label")) {
       textField()
-        .bindText(archetypeGroupIdProperty)
+        .bindText(archetypeGroupIdProperty.trim())
         .columns(COLUMNS_MEDIUM)
         .textValidation(CHECK_NON_EMPTY, CHECK_GROUP_ID_FORMAT)
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.artifact.id.label")) {
       textField()
-        .bindText(archetypeArtifactIdProperty)
+        .bindText(archetypeArtifactIdProperty.trim())
         .columns(COLUMNS_MEDIUM)
         .textValidation(CHECK_NON_EMPTY, CHECK_ARTIFACT_ID_FORMAT)
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.version.label")) {
       textField()
-        .bindText(archetypeVersionProperty)
+        .bindText(archetypeVersionProperty.trim())
         .columns(COLUMNS_MEDIUM)
         .textValidation(CHECK_NON_EMPTY)
     }
@@ -56,7 +58,7 @@ class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(proj
       val title = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.title")
       val descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
       textFieldWithBrowseButton(title, project, descriptor)
-        .bindText(catalogLocationProperty)
+        .bindText(catalogLocationProperty.trim())
         .applyToComponent { emptyText.text = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.hint") }
         .columns(COLUMNS_MEDIUM)
         .textValidation(CHECK_MAVEN_CATALOG)
