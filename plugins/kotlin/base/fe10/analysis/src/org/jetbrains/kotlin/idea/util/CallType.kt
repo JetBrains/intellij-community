@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.psi.PsiElement
@@ -27,13 +26,15 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindExclude
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.receivers.*
+import org.jetbrains.kotlin.types.FlexibleType
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
-import org.jetbrains.kotlin.util.isJavaDescriptor
 import org.jetbrains.kotlin.util.supertypesWithAny
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.*
 
+@Suppress("ClassName")
 sealed class CallType<TReceiver : KtElement?>(val descriptorKindFilter: DescriptorKindFilter) {
     object UNKNOWN : CallType<Nothing?>(DescriptorKindFilter.ALL)
 
@@ -111,6 +112,7 @@ sealed class CallType<TReceiver : KtElement?>(val descriptorKindFilter: Descript
     }
 }
 
+@Suppress("ClassName")
 sealed class CallTypeAndReceiver<TReceiver : KtElement?, out TCallType : CallType<TReceiver>>(
     val callType: TCallType,
     val receiver: TReceiver
@@ -376,4 +378,43 @@ private fun receiverValueTypes(
     } else {
         listOf(receiverValue.type)
     }
+}
+
+fun SmartCastManager.getSmartCastVariantsWithLessSpecificExcluded(
+    receiverToCast: ReceiverValue,
+    bindingContext: BindingContext,
+    containingDeclarationOrModule: DeclarationDescriptor,
+    dataFlowInfo: DataFlowInfo,
+    languageVersionSettings: LanguageVersionSettings,
+    dataFlowValueFactory: DataFlowValueFactory
+): List<KotlinType> {
+    val variants = getSmartCastVariants(
+        receiverToCast,
+        bindingContext,
+        containingDeclarationOrModule,
+        dataFlowInfo,
+        languageVersionSettings,
+        dataFlowValueFactory
+    )
+    return variants.filter { type ->
+        variants.all { another -> another === type || chooseMoreSpecific(type, another).let { it == null || it === type } }
+    }
+}
+
+private fun chooseMoreSpecific(type1: KotlinType, type2: KotlinType): KotlinType? {
+    val type1IsSubtype = KotlinTypeChecker.DEFAULT.isSubtypeOf(type1, type2)
+    val type2IsSubtype = KotlinTypeChecker.DEFAULT.isSubtypeOf(type2, type1)
+
+    if (type1IsSubtype && type2IsSubtype) {
+        val flexible1 = type1.unwrap() as? FlexibleType
+        val flexible2 = type2.unwrap() as? FlexibleType
+        return when {
+            flexible1 != null && flexible2 == null -> type2
+            flexible2 != null && flexible1 == null -> type1
+            else -> null //TODO?
+        }
+    }
+
+    return type1.takeIf { type1IsSubtype }
+        ?: type2.takeIf { type2IsSubtype }
 }

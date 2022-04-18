@@ -20,8 +20,9 @@ import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import java.util.*
 import kotlin.collections.LinkedHashSet
 
-fun LexicalScope.getImplicitReceiversWithInstance(excludeShadowedByDslMarkers: Boolean = false): Collection<ReceiverParameterDescriptor> =
-    getImplicitReceiversWithInstanceToExpression(excludeShadowedByDslMarkers).keys
+fun LexicalScope.getImplicitReceiversWithInstance(excludeShadowedByDslMarkers: Boolean = false): Collection<ReceiverParameterDescriptor> {
+    return getImplicitReceiversWithInstanceToExpression(excludeShadowedByDslMarkers).keys
+}
 
 interface ReceiverExpressionFactory {
     val isImmediate: Boolean
@@ -38,10 +39,10 @@ fun LexicalScope.getImplicitReceiversWithInstanceToExpression(
     excludeShadowedByDslMarkers: Boolean = false
 ): Map<ReceiverParameterDescriptor, ReceiverExpressionFactory?> {
     val allReceivers = getImplicitReceiversHierarchy()
-    // we use a set to workaround a bug with receiver for companion object present twice in the result of getImplicitReceiversHierarchy()
+    // We use a set to work around a bug with receiver for companion object present twice in the result of getImplicitReceiversHierarchy()
     val receivers = LinkedHashSet(
         if (excludeShadowedByDslMarkers) {
-            allReceivers - allReceivers.shadowedByDslMarkers()
+            allReceivers - getParametersShadowedByDslMarkers(allReceivers)
         } else {
             allReceivers
         }
@@ -69,51 +70,58 @@ fun LexicalScope.getImplicitReceiversWithInstanceToExpression(
             outerDeclarationsWithInstance.addAll(owner.implicitReceivers)
             continue
         }
-        val (expressionText, isImmediateThis) = if (owner in outerDeclarationsWithInstance) {
-            val thisWithLabel = thisQualifierName(receiver)?.let { "this@${it.render()}" }
-            if (index == 0)
-                (thisWithLabel ?: "this") to true
-            else
-                thisWithLabel to false
-        } else if (owner is ClassDescriptor && owner.kind.isSingleton) {
-            IdeDescriptorRenderers.SOURCE_CODE.renderClassifierName(owner) to false
-        } else {
-            continue
-        }
-        val factory = if (expressionText != null)
-            object : ReceiverExpressionFactory {
-                override val isImmediate = isImmediateThis
-                override val expressionText: String get() = expressionText
-                override fun createExpression(psiFactory: KtPsiFactory, shortThis: Boolean): KtExpression {
-                    return psiFactory.createExpression(if (shortThis && isImmediateThis) "this" else expressionText)
+
+        val (expressionText, isImmediateThis) = when {
+            owner in outerDeclarationsWithInstance -> {
+                val thisWithLabel = getThisQualifierName(receiver)?.let { "this@${it.render()}" }
+                when (index) {
+                  0 -> (thisWithLabel ?: "this") to true
+                  else -> thisWithLabel to false
                 }
             }
-        else
-            null
-        result[receiver] = factory
+            owner is ClassDescriptor && owner.kind.isSingleton -> {
+                IdeDescriptorRenderers.SOURCE_CODE.renderClassifierName(owner) to false
+            }
+            else -> continue
+        }
+
+        result[receiver] = if (expressionText != null) createReceiverExpressionFactory(expressionText, isImmediateThis) else null
     }
+
     return result
 }
 
-private fun thisQualifierName(receiver: ReceiverParameterDescriptor): Name? {
+private fun createReceiverExpressionFactory(expressionText: String, isImmediateThis: Boolean): ReceiverExpressionFactory {
+    return object : ReceiverExpressionFactory {
+        override val isImmediate = isImmediateThis
+        override val expressionText: String get() = expressionText
+        override fun createExpression(psiFactory: KtPsiFactory, shortThis: Boolean): KtExpression {
+            return psiFactory.createExpression(if (shortThis && isImmediateThis) "this" else expressionText)
+        }
+    }
+}
+
+private fun getThisQualifierName(receiver: ReceiverParameterDescriptor): Name? {
     val descriptor = receiver.containingDeclaration
     val name = descriptor.name
-    if (!name.isSpecial) return name
+    if (!name.isSpecial) {
+        return name
+    }
 
     val functionLiteral = DescriptorToSourceUtils.descriptorToDeclaration(descriptor) as? KtFunctionLiteral
     return functionLiteral?.findLabelAndCall()?.first
 }
 
-private fun List<ReceiverParameterDescriptor>.shadowedByDslMarkers(): Set<ReceiverParameterDescriptor> {
+private fun getParametersShadowedByDslMarkers(receiverParameters: List<ReceiverParameterDescriptor>): Set<ReceiverParameterDescriptor> {
     val typesByDslScopes = mutableMapOf<FqName, MutableList<ReceiverParameterDescriptor>>()
 
-    for (receiver in this) {
-        val dslMarkers = DslMarkerUtils.extractDslMarkerFqNames(receiver.value).all()
+    for (receiverParameter in receiverParameters) {
+        val dslMarkers = DslMarkerUtils.extractDslMarkerFqNames(receiverParameter.value).all()
         for (marker in dslMarkers) {
-            typesByDslScopes.getOrPut(marker) { mutableListOf() } += receiver
+            typesByDslScopes.getOrPut(marker) { mutableListOf() } += receiverParameter
         }
     }
 
-    // for each DSL marker, all receivers except the closest one are shadowed by it; that is why we drop it
+    // For each DSL marker, all receivers except the closest one are shadowed by it; that is why we drop it
     return typesByDslScopes.values.flatMapTo(mutableSetOf()) { it.drop(1) }
 }

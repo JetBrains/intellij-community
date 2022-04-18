@@ -38,6 +38,7 @@ fun <TCallable : CallableDescriptor> TCallable.substituteExtensionIfCallable(
         }
         substitutor
     }
+
     return if (typeParameters.isEmpty()) { // optimization for non-generic callables
         if (substitutors.any()) listOf(this) else listOf()
     } else {
@@ -53,23 +54,22 @@ fun ReceiverValue?.getThisReceiverOwner(bindingContext: BindingContext): Declara
             val thisRef = (KtPsiUtil.deparenthesize(this.expression) as? KtThisExpression)?.instanceReference ?: return null
             bindingContext[BindingContext.REFERENCE_TARGET, thisRef]
         }
-
         is ImplicitReceiver -> this.declarationDescriptor
-
         else -> null
     }
 }
 
-fun ReceiverValue?.getReceiverTargetDescriptor(bindingContext: BindingContext): DeclarationDescriptor? = when (this) {
-    is ExpressionReceiver -> when (val expression = KtPsiUtil.deparenthesize(this.expression)) {
-        is KtThisExpression -> expression.instanceReference
-        is KtReferenceExpression -> expression
+fun ReceiverValue?.getReceiverTargetDescriptor(bindingContext: BindingContext): DeclarationDescriptor? {
+    return when (this) {
+        is ExpressionReceiver -> {
+            val target = when (val expression = KtPsiUtil.deparenthesize(this.expression)) {
+                is KtThisExpression -> expression.instanceReference
+                is KtReferenceExpression -> expression
+                else -> null
+            }
+            return if (target != null) bindingContext[BindingContext.REFERENCE_TARGET, target] else null
+        }
+        is ImplicitReceiver -> this.declarationDescriptor
         else -> null
-    }?.let { referenceExpression ->
-        bindingContext[BindingContext.REFERENCE_TARGET, referenceExpression]
     }
-
-    is ImplicitReceiver -> this.declarationDescriptor
-
-    else -> null
 }

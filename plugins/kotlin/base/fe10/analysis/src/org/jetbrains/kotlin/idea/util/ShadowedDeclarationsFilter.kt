@@ -231,7 +231,9 @@ class ShadowedDeclarationsFilter(
                 )
             }
         }
-        return if (filtered.isNotEmpty()) filtered else descriptors /* something went wrong, none of our declarations among resolve candidates, let's not filter anything */
+
+        // Something went wrong, none of our declarations among resolve candidates, let's not filter anything
+        return filtered.ifEmpty { descriptors }
     }
 
     private class DummyExpressionFactory(val factory: KtPsiFactory) {

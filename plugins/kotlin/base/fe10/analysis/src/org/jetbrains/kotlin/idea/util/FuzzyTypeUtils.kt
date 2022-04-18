@@ -1,7 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 @file:JvmName("FuzzyTypeUtils")
-
 package org.jetbrains.kotlin.idea.util
 
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -52,10 +50,7 @@ fun FuzzyType.presentationType(): KotlinType {
 
 fun KotlinType.toFuzzyType(freeParameters: Collection<TypeParameterDescriptor>) = FuzzyType(this, freeParameters)
 
-class FuzzyType(
-    val type: KotlinType,
-    freeParameters: Collection<TypeParameterDescriptor>
-) {
+class FuzzyType(val type: KotlinType, freeParameters: Collection<TypeParameterDescriptor>) {
     val freeParameters: Set<TypeParameterDescriptor>
 
     init {
@@ -164,8 +159,8 @@ class FuzzyType(
             .map { it.originalTypeParameter }
             .associateBy(
                 keySelector = { it.typeConstructor },
-                valueTransform = {
-                    val typeProjection = TypeProjectionImpl(Variance.INVARIANT, it.defaultType)
+                valueTransform = { parameterDescriptor ->
+                    val typeProjection = TypeProjectionImpl(Variance.INVARIANT, parameterDescriptor.defaultType)
                     val substitutedProjection = substitutorToKeepCapturedTypes.substitute(typeProjection)
                     substitutedProjection?.takeUnless { ErrorUtils.containsUninferredTypeVariable(it.type) } ?: typeProjection
                 })

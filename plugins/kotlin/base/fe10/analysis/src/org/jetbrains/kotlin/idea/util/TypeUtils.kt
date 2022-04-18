@@ -1,7 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 @file:JvmName("TypeUtils")
-
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.psi.*
@@ -140,8 +138,10 @@ private fun KotlinType.approximateNonDynamicFlexibleTypes(
 
 fun KotlinType.isResolvableInScope(scope: LexicalScope?, checkTypeParameters: Boolean, allowIntersections: Boolean = false): Boolean {
     if (constructor is IntersectionTypeConstructor) {
-        if (!allowIntersections) return false
-        return constructor.supertypes.all { it.isResolvableInScope(scope, checkTypeParameters, allowIntersections) }
+        if (!allowIntersections) {
+            return false
+        }
+        return constructor.supertypes.all { it.isResolvableInScope(scope, checkTypeParameters, allowIntersections = true) }
     }
 
     if (canBeReferencedViaImport()) return true
@@ -231,7 +231,7 @@ private fun TypeProjection.fixTypeProjection(
                 arg.type.approximateWithResolvableType(scope, checkTypeParameters)
             )
 
-            else -> return if (isOutVariance) type.replaceArgumentsWithStarProjections().asTypeProjection() else null
+            else -> return type.replaceArgumentsWithStarProjections().asTypeProjection()
         }
     }
 

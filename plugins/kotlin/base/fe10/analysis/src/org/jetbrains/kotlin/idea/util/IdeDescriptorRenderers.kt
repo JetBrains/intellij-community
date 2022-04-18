@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.renderer.DescriptorRenderer.Companion.FQ_NAMES_IN_TYPES
 import org.jetbrains.kotlin.renderer.DescriptorRendererModifier
 import org.jetbrains.kotlin.renderer.OverrideRenderingPolicy
-import org.jetbrains.kotlin.resolve.calls.inference.isCaptured
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.NewCapturedTypeConstructor
 import org.jetbrains.kotlin.types.isDynamic
@@ -76,7 +75,7 @@ object IdeDescriptorRenderers {
     val SOURCE_CODE_TYPES_WITH_SHORT_NAMES: DescriptorRenderer = BASE.withOptions {
         classifierNamePolicy = ClassifierNamePolicy.SHORT
         typeNormalizer = { APPROXIMATE_FLEXIBLE_TYPES(unwrapAnonymousType(it)) }
-        modifiers -= DescriptorRendererModifier.ANNOTATIONS
+        modifiers = modifiers - DescriptorRendererModifier.ANNOTATIONS
         parameterNamesInFunctionalTypes = false
     }
 
@@ -92,6 +91,6 @@ object IdeDescriptorRenderers {
     val SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS: DescriptorRenderer = BASE.withOptions {
         classifierNamePolicy = ClassifierNamePolicy.SHORT
         typeNormalizer = { APPROXIMATE_FLEXIBLE_TYPES(unwrapAnonymousType(it)) }
-        modifiers -= DescriptorRendererModifier.ANNOTATIONS
+        modifiers = modifiers - DescriptorRendererModifier.ANNOTATIONS
     }
 }
