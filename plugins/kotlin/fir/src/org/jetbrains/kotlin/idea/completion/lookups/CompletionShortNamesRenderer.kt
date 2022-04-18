@@ -12,9 +12,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 
 internal object CompletionShortNamesRenderer {
     fun KtAnalysisSession.renderFunctionParameters(function: KtFunctionSymbol, substitutor: KtSubstitutor): String {
-        val receiver = renderReceiver(function, substitutor)
-        val parameters = function.valueParameters.joinToString(", ", "(", ")") { renderFunctionParameter(it, substitutor) }
-        return receiver + parameters
+        return function.valueParameters.joinToString(", ", "(", ")") { renderFunctionParameter(it, substitutor) }
     }
 
     fun KtAnalysisSession.renderVariable(function: KtVariableLikeSymbol, substitutor: KtSubstitutor): String {
