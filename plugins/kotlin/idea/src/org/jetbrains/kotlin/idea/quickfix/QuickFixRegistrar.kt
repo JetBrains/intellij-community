@@ -619,6 +619,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         NO_CONSTRUCTOR.registerFactory(RemoveNoConstructorFix)
         NO_CONSTRUCTOR.registerFactory(AddDefaultConstructorFix)
+        NO_CONSTRUCTOR_WARNING.registerFactory(RemoveNoConstructorFix)
 
         ANNOTATION_USED_AS_ANNOTATION_ARGUMENT.registerFactory(RemoveAtFromAnnotationArgument)
 
