@@ -1721,7 +1721,11 @@ public final class ExpressionUtils {
     return true;
   }
 
-  public static boolean isOnlyExpressionInMethod(PsiExpression expression) {
+  /**
+   * @param expression  the expression to check
+   * @return true, if the specified expression is the only expression in the method (it's value is returned by the method). False otherwise.
+   */
+  public static boolean isOnlyExpressionInMethod(@NotNull PsiExpression expression) {
     final PsiElement parent = expression.getParent();
     if (!(parent instanceof PsiReturnStatement)) {
       return false;
