@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.tools.projectWizard.kmpWizardLink
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType.GradleGroovyDsl
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType.GradleKotlinDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
+import java.io.File
 
 internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
@@ -93,6 +94,15 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             addAssets(StandardAssetsProvider().getGradlewAssets())
             if (gitData?.git == true) {
                 addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
+            }
+        }
+
+        override fun setupProject(project: Project) {
+            super.setupProject(project)
+
+            val gradlewFile = File(outputDirectory, "gradlew")
+            if (gradlewFile.exists()) {
+                gradlewFile.setExecutable(true, false)
             }
         }
     }
