@@ -3,9 +3,9 @@ package com.intellij.platform;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -32,7 +32,7 @@ public final class ProjectConfigurationDirectoryConcealer implements TreeStructu
   @Override
   public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
     if (parent instanceof PsiDirectoryNode &&
-        !AdvancedSettings.getBoolean("show.configuration.directory.in.project.view")) {
+        ProjectViewDirectoryHelper.getInstance(myProject).shouldHideProjectConfigurationFilesDirectory()) {
       final VirtualFile vFile = ((PsiDirectoryNode)parent).getVirtualFile();
       if (vFile != null && Comparing.equal(ProjectFileIndex.SERVICE.getInstance(myProject).getContentRootForFile(vFile), vFile)) {
         final Collection<? extends AbstractTreeNode<?>> moduleChildren = parent.getChildren();

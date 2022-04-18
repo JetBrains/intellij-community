@@ -99,6 +99,13 @@ public class ProjectViewDirectoryHelper {
     return false;
   }
 
+  /**
+   * Returns {@code true} if the directory containing project configuration files (.idea) should be hidden in Project View.
+   */
+  public boolean shouldHideProjectConfigurationFilesDirectory() {
+    return true;
+  }
+
   @Nullable
   public String getNodeName(ViewSettings settings, Object parentValue, PsiDirectory directory) {
     return directory.getName();
