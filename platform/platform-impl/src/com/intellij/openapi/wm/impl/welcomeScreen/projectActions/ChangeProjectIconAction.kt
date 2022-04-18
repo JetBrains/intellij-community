@@ -79,7 +79,11 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
   }
 
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabled = getSelectedItem(event) != null && !hasGroupSelected(event)
+    val selectedItem = getSelectedItem(event) ?: return
+    event.presentation.isEnabled = when (selectedItem) {
+      is RecentProjectItem -> !hasGroupSelected(event)
+      else -> false
+    }
   }
 }
 
