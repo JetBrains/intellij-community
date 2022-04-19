@@ -30,11 +30,11 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
   private static final TokenSet BOOLEAN_TOKENS = TokenSet.create(
     JavaTokenType.ANDAND, JavaTokenType.OROR, JavaTokenType.XOR, JavaTokenType.AND, JavaTokenType.OR, JavaTokenType.EQEQ, JavaTokenType.NE);
 
-  private final Map<PsiExpression, DfaHint> myHints = new HashMap<>();
+  private final Map<PsiElement, DfaHint> myHints = new HashMap<>();
 
-  private void addHint(@NotNull PsiExpression expression, @Nullable DfaHint hint) {
+  private void addHint(@NotNull PsiElement element, @Nullable DfaHint hint) {
     if (hint != null) {
-      myHints.merge(expression, hint, DfaHint::merge);
+      myHints.merge(element, hint, DfaHint::merge);
     }
   }
 
@@ -62,11 +62,13 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
                           @NotNull DfaValue value,
                           @NotNull ThreeState failed,
                           @NotNull DfaMemoryState state) {
-    if (problem instanceof ArrayStoreProblem && failed == ThreeState.YES) {
-      addHint(((ArrayStoreProblem)problem).getAnchor().getLExpression(), DfaHint.ASE);
+    if (problem instanceof ArrayStoreProblem) {
+      addHint(((ArrayStoreProblem)problem).getAnchor().getLExpression(), failed == ThreeState.YES ? DfaHint.ASE : DfaHint.NONE);
     }
-    else if (problem instanceof ArrayIndexProblem && failed == ThreeState.YES) {
-      addHint(((ArrayIndexProblem)problem).getAnchor(), DfaHint.AIOOBE);
+    else if (problem instanceof ArrayIndexProblem) {
+      PsiArrayAccessExpression anchor = ((ArrayIndexProblem)problem).getAnchor();
+      // Anchor to the last child to differentiate from ArrayStoreException
+      addHint(anchor.getLastChild(), failed == ThreeState.YES ? DfaHint.AIOOBE : DfaHint.NONE);
     }
     else if (problem instanceof ClassCastProblem) {
       addHint(((ClassCastProblem)problem).getAnchor(), failed == ThreeState.YES ? DfaHint.CCE : DfaHint.NONE);
@@ -112,9 +114,11 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
 
   void cleanup() {
     myHints.entrySet().removeIf(e -> {
-      PsiExpression expr = e.getKey();
+      PsiElement anchor = e.getKey();
       DfaHint hint = e.getValue();
       if (hint.getTitle() == null) return true;
+      if (!(anchor instanceof PsiExpression)) return false;
+      PsiExpression expr = (PsiExpression)anchor;
       CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expr);
       return result != null && result.getExpressionValues(expr).size() == 1;
     });
