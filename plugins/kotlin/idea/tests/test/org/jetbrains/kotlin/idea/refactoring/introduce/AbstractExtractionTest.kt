@@ -496,7 +496,11 @@ fun doExtractFunction(fixture: CodeInsightTestFixture, file: KtFile) {
                     descriptor
                 }
 
-                doRefactor(ExtractionGeneratorConfiguration(newDescriptor, ExtractionGeneratorOptions.DEFAULT), onFinish)
+                fun afterFinish(extraction: ExtractionResult){
+                    processDuplicates(extraction.duplicateReplacers, project, editor)
+                    onFinish(extraction)
+                }
+                doRefactor(ExtractionGeneratorConfiguration(newDescriptor, ExtractionGeneratorOptions.DEFAULT), ::afterFinish)
             }
         }
     )

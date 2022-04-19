@@ -41,7 +41,7 @@ class KotlinRefactoringSupportProvider : RefactoringSupportProvider() {
     fun getExtractFunctionHandler(): RefactoringActionHandler = ExtractKotlinFunctionHandler()
 
     fun getExtractFunctionToScopeHandler(): RefactoringActionHandler =
-        ExtractKotlinFunctionHandler(true, ExtractKotlinFunctionHandler.InteractiveExtractionHelper)
+        ExtractKotlinFunctionHandler(allContainersEnabled = true)
 
     override fun getChangeSignatureHandler() = KotlinChangeSignatureHandler()
 

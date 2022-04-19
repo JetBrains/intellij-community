@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction
 
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -36,7 +37,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ExtractKotlinFunctionHandler(
     private val allContainersEnabled: Boolean = false,
-    private val helper: ExtractionEngineHelper = InteractiveExtractionHelper
+    private val helper: ExtractionEngineHelper = getDefaultHelper(allContainersEnabled)
 ) : RefactoringActionHandler {
 
     companion object {
@@ -45,6 +46,10 @@ class ExtractKotlinFunctionHandler(
                 return EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled
                        && Registry.`is`("kotlin.enable.inplace.extract.method")
             }
+
+        fun getDefaultHelper(allContainersEnabled: Boolean): ExtractionEngineHelper {
+            return if (isInplaceRefactoringEnabled) InplaceExtractionHelper(allContainersEnabled) else InteractiveExtractionHelper
+        }
     }
 
     object InteractiveExtractionHelper : ExtractionEngineHelper(EXTRACT_FUNCTION) {
@@ -54,15 +59,66 @@ class ExtractKotlinFunctionHandler(
             descriptorWithConflicts: ExtractableCodeDescriptorWithConflicts,
             onFinish: (ExtractionResult) -> Unit
         ) {
-            if (isInplaceRefactoringEnabled) {
-                val descriptor = descriptorWithConflicts.descriptor.copy(suggestedNames = listOf("extracted"))
-                val configuration = ExtractionGeneratorConfiguration(descriptor, ExtractionGeneratorOptions.DEFAULT)
-                doRefactor(configuration, onFinish)
-            } else {
-                KotlinExtractFunctionDialog(descriptorWithConflicts.descriptor.extractionData.project, descriptorWithConflicts) {
-                    doRefactor(it.currentConfiguration, onFinish)
-                }.show()
+            fun afterFinish(extraction: ExtractionResult){
+                processDuplicates(extraction.duplicateReplacers, project, editor)
+                onFinish(extraction)
             }
+            KotlinExtractFunctionDialog(descriptorWithConflicts.descriptor.extractionData.project, descriptorWithConflicts) {
+                doRefactor(it.currentConfiguration, ::afterFinish)
+            }.show()
+        }
+    }
+
+    class InplaceExtractionHelper(private val allContainersEnabled: Boolean) : ExtractionEngineHelper(EXTRACT_FUNCTION) {
+        override fun configureAndRun(
+            project: Project,
+            editor: Editor,
+            descriptorWithConflicts: ExtractableCodeDescriptorWithConflicts,
+            onFinish: (ExtractionResult) -> Unit
+        ) {
+            val activeTemplateState = TemplateManagerImpl.getTemplateState(editor)
+            if (activeTemplateState != null) {
+                activeTemplateState.gotoEnd(true)
+                ExtractKotlinFunctionHandler(allContainersEnabled, InteractiveExtractionHelper)
+                    .invoke(project, editor, descriptorWithConflicts.descriptor.extractionData.originalFile, null)
+            }
+
+            val descriptor = descriptorWithConflicts.descriptor.copy(suggestedNames = listOf("extracted"))
+            val elements = descriptor.extractionData.originalElements
+            val file = descriptor.extractionData.originalFile
+            val callRange = editor.document.createRangeMarker(elements.first().textRange.startOffset, elements.last().textRange.endOffset)
+                .apply { isGreedyToLeft = true; isGreedyToRight = true }
+            val editorState = EditorState(editor)
+            fun afterFinish(extraction: ExtractionResult){
+                val callIdentifier = findSingleCallExpression(file, callRange.range)?.calleeExpression ?: throw IllegalStateException()
+                val methodRange = extraction.declaration.textRange
+                val methodOffset = extraction.declaration.navigationElement.textRange.endOffset
+                val callOffset = callIdentifier.textRange.endOffset
+                val preview = InplaceExtractUtils.createPreview(editor, methodRange, methodOffset, callRange.range!!, callOffset)
+                val templateState = ExtractMethodTemplate(editor, extraction.declaration, callIdentifier).runTemplate(LinkedHashSet())
+                callRange.dispose()
+                Disposer.register(templateState, preview)
+                templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
+                    override fun templateFinished(template: Template, brokenOff: Boolean) {
+                        if (brokenOff) {
+                            editorState.revert()
+                        }
+                    }
+                })
+                InplaceExtractUtils.addTemplateFinishedListener(templateState) {
+                    processDuplicates(extraction.duplicateReplacers, file.project, editor)
+                }
+                onFinish(extraction)
+            }
+            val configuration = ExtractionGeneratorConfiguration(descriptor, ExtractionGeneratorOptions.DEFAULT)
+            doRefactor(configuration, ::afterFinish)
+        }
+
+        private fun findSingleCallExpression(file: KtFile, range: TextRange?): KtCallExpression? {
+            if (range == null) return null
+            val container = PsiTreeUtil.findCommonParent(file.findElementAt(range.startOffset), file.findElementAt(range.endOffset))
+            val callExpressions = PsiTreeUtil.findChildrenOfType(container, KtCallExpression::class.java)
+            return callExpressions.singleOrNull { it.textRange in range }
         }
     }
 
@@ -76,42 +132,8 @@ class ExtractKotlinFunctionHandler(
             val adjustedElements = elements.singleOrNull().safeAs<KtBlockExpression>()?.statements ?: elements
             ExtractionData(file, adjustedElements.toRange(false), targetSibling)
         }) { extractionData ->
-            val callRange = editor.document.createRangeMarker(elements.first().textRange.startOffset, elements.last().textRange.endOffset)
-                .apply { isGreedyToLeft = true; isGreedyToRight = true }
-            val editorState = EditorState(editor)
-            ExtractionEngine(helper).run(editor, extractionData) { extraction ->
-                if (isInplaceRefactoringEnabled) {
-                    val callIdentifier = findSingleCallExpression(file, callRange.range)?.calleeExpression ?: throw IllegalStateException()
-                    val methodRange = extraction.declaration.textRange
-                    val methodOffset = extraction.declaration.navigationElement.textRange.endOffset
-                    val callOffset = callIdentifier.textRange.endOffset
-                    val preview = InplaceExtractUtils.createPreview(editor, methodRange, methodOffset, callRange.range!!, callOffset)
-                    val templateState = ExtractMethodTemplate(editor, extraction.declaration, callIdentifier).runTemplate(LinkedHashSet())
-                    templateState.properties.put("ExtractMethod", true)
-                    callRange.dispose()
-                    Disposer.register(templateState, preview)
-                    templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
-                        override fun templateFinished(template: Template, brokenOff: Boolean) {
-                            if (brokenOff) {
-                                editorState.revert()
-                            }
-                        }
-                    })
-                    InplaceExtractUtils.addTemplateFinishedListener(templateState) {
-                        processDuplicates(extraction.duplicateReplacers, file.project, editor)
-                    }
-                } else {
-                    processDuplicates(extraction.duplicateReplacers, file.project, editor)
-                }
-            }
+            ExtractionEngine(helper).run(editor, extractionData) { }
         }
-    }
-
-    private fun findSingleCallExpression(file: KtFile, range: TextRange?): KtCallExpression? {
-        if (range == null) return null
-        val container = PsiTreeUtil.findCommonParent(file.findElementAt(range.startOffset), file.findElementAt(range.endOffset))
-        val callExpressions = PsiTreeUtil.findChildrenOfType(container, KtCallExpression::class.java)
-        return callExpressions.filter { it.textRange in range }.singleOrNull()
     }
 
     fun selectElements(editor: Editor, file: KtFile, continuation: (elements: List<PsiElement>, targetSibling: PsiElement) -> Unit) {
