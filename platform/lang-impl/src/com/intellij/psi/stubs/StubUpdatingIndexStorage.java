@@ -106,7 +106,7 @@ final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, 
 
   @Override
   protected void doClear() throws StorageException, IOException {
-    final StubIndexImpl stubIndex = (StubIndexImpl)StubIndexImpl.getInstance();
+    final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
     if (stubIndex != null) {
       stubIndex.clearAllIndices();
     }
@@ -147,6 +147,7 @@ final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, 
   @Override
   public void setIndexedStateForFileOnCachedData(int fileId, @Nullable StubUpdatingIndexStorage.Data fileData) {
     super.setIndexedStateForFileOnCachedData(fileId, fileData);
+    LOG.assertTrue(fileData != null, "getFileIndexMetaData doesn't return null");
     setBinaryBuilderConfiguration(fileId, fileData);
   }
 

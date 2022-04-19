@@ -1425,7 +1425,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
       Set<ID<?, ?>> currentIndexedStates = new HashSet<>(IndexingStamp.getNontrivialFileIndexedStates(inputId));
       List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(indexedFile);
-      //noinspection ForLoopReplaceableByForEach
       for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
         ID<?, ?> indexId = affectedIndexCandidates.get(i);
         if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) continue;
@@ -1897,7 +1896,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
             boolean scheduleForUpdate = false;
 
-            //noinspection ForLoopReplaceableByForEach
             for (int i = 0, size = candidates.size(); i < size; ++i) {
               final ID<?, ?> indexId = candidates.get(i);
               if (needsFileContentLoading(indexId) && acceptsInput(indexId, indexedFile)) {
