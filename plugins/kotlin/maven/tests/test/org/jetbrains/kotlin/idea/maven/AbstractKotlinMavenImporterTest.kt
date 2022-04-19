@@ -1805,12 +1805,12 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                             </execution>
                         </executions>
                         <configuration>
-                            <jvmTarget>1.6</jvmTarget>
+                            <jvmTarget>1.8</jvmTarget>
                             <languageVersion>1.0</languageVersion>
                             <apiVersion>1.0</apiVersion>
                             <args>
                                 <arg>-jvm-target</arg>
-                                <arg>1.8</arg>
+                                <arg>11</arg>
                                 <arg>-language-version</arg>
                                 <arg>1.1</arg>
                                 <arg>-api-version</arg>
@@ -1827,10 +1827,10 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             assertImporterStatePresent()
 
             with(facetSettings) {
-                Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
+                Assert.assertEquals("JVM 11", targetPlatform!!.oldFashionedDescription)
                 Assert.assertEquals(LanguageVersion.KOTLIN_1_1.description, languageLevel!!.description)
                 Assert.assertEquals(LanguageVersion.KOTLIN_1_1.description, apiLevel!!.description)
-                Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
+                Assert.assertEquals("11", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             }
         }
     }
@@ -3370,6 +3370,70 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             // decision, but we don't have a better one
             checkStableModuleName("project", "test", JsPlatforms.defaultJsPlatform, isProduction = true)
             checkStableModuleName("project", "test", JsPlatforms.defaultJsPlatform, isProduction = false)
+        }
+    }
+
+    class JvmTarget6 : AbstractKotlinMavenImporterTest() {
+        @Test
+        fun testJvmFacetConfiguration() {
+            val notificationText = doTest()
+            assertEquals(
+                "Maven project uses JVM target 1.6 for Kotlin compilation, which is no longer supported. " +
+                "It has been imported as JVM target 1.8. Consider migrating the project to JVM 1.8.",
+                notificationText,
+            )
+        }
+
+        private fun doTest(): String? = catchNotificationText(myProject) {
+            createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
+
+            importProject(
+                """
+            <groupId>test</groupId>
+            <artifactId>project</artifactId>
+            <version>1.0.0</version>
+
+            <dependencies>
+                <dependency>
+                    <groupId>org.jetbrains.kotlin</groupId>
+                    <artifactId>kotlin-stdlib</artifactId>
+                    <version>$kotlinVersion</version>
+                </dependency>
+            </dependencies>
+
+            <build>
+                <sourceDirectory>src/main/kotlin</sourceDirectory>
+
+                <plugins>
+                    <plugin>
+                        <groupId>org.jetbrains.kotlin</groupId>
+                        <artifactId>kotlin-maven-plugin</artifactId>
+
+                        <executions>
+                            <execution>
+                                <id>compile</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <jvmTarget>1.6</jvmTarget>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+            """
+            )
+
+            assertModules("project")
+            assertImporterStatePresent()
+
+            with(facetSettings) {
+                Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
+                Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
+            }
         }
     }
 
