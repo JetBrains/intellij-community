@@ -13,10 +13,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public class BlockTreeNode extends SimpleNode {
+public final class BlockTreeNode extends SimpleNode {
   private final Block myBlock;
 
-  public BlockTreeNode(Block block, BlockTreeNode parent) {
+  BlockTreeNode(Block block, BlockTreeNode parent) {
     super(parent);
     myBlock = block;
   }

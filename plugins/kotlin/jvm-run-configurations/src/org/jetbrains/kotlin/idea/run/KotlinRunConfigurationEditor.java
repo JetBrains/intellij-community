@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.run;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -28,7 +27,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRunConfiguration> implements PanelWithAnchor {
+public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRunConfiguration> implements PanelWithAnchor {
     private JPanel mainPanel;
     private LabeledComponent<EditorTextFieldWithBrowseButton> mainClass;
 
@@ -52,8 +51,7 @@ public class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRunConfig
                 return aClass instanceof KtLightClass && ConfigurationUtil.MAIN_CLASS.value(aClass) && findMainMethod(aClass) != null;
             }
 
-            @Nullable
-            private PsiMethod findMainMethod(PsiClass aClass) {
+            private @Nullable PsiMethod findMainMethod(PsiClass aClass) {
                 return ReadAction.compute(() -> PsiMethodUtil.findMainMethod(aClass));
             }
         };
@@ -83,7 +81,7 @@ public class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRunConfig
     }
 
     @Override
-    protected void applyEditorTo(KotlinRunConfiguration configuration) {
+    protected void applyEditorTo(@NotNull KotlinRunConfiguration configuration) {
         commonProgramParameters.applyTo(configuration);
         moduleSelector.applyTo(configuration);
 
@@ -97,7 +95,7 @@ public class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRunConfig
     }
 
     @Override
-    protected void resetEditorFrom(KotlinRunConfiguration configuration) {
+    protected void resetEditorFrom(@NotNull KotlinRunConfiguration configuration) {
         commonProgramParameters.reset(configuration);
         moduleSelector.reset(configuration);
         String runClass = configuration.getRunClass();
@@ -106,9 +104,8 @@ public class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRunConfig
         shortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
     }
 
-    @NotNull
     @Override
-    protected JComponent createEditor() {
+    protected @NotNull JComponent createEditor() {
         return mainPanel;
     }
 

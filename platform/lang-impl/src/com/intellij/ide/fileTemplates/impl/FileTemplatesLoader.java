@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -283,27 +283,27 @@ class FileTemplatesLoader implements Disposable {
     return null;
   }
 
-  private static class LoadedConfiguration {
-    public final URL defaultTemplateDescription;
-    public final URL defaultIncludeDescription;
+  private static final class LoadedConfiguration {
+    private final URL defaultTemplateDescription;
+    private final URL defaultIncludeDescription;
 
-    private final Map<String, FTManager> myManagers;
+    private final Map<String, FTManager> managers;
 
-    LoadedConfiguration(@NotNull Map<String, FTManager> managers,
-                        URL defaultTemplateDescription,
-                        URL defaultIncludeDescription) {
+    private LoadedConfiguration(@NotNull Map<String, FTManager> managers,
+                                URL defaultTemplateDescription,
+                                URL defaultIncludeDescription) {
 
-      myManagers = Collections.unmodifiableMap(managers);
+      this.managers = Collections.unmodifiableMap(managers);
       this.defaultTemplateDescription = defaultTemplateDescription;
       this.defaultIncludeDescription = defaultIncludeDescription;
     }
 
-    public FTManager getManager(@NotNull String kind) {
-      return myManagers.get(kind);
+    private FTManager getManager(@NotNull String kind) {
+      return managers.get(kind);
     }
 
-    public Collection<FTManager> getManagers() {
-      return myManagers.values();
+    private Collection<FTManager> getManagers() {
+      return managers.values();
     }
   }
 }

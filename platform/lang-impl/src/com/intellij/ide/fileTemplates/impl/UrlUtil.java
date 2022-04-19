@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,17 +19,13 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-/**
- * @author Eugene Zhuravlev
- */
 public final class UrlUtil {
   private static final String JAR_SEPARATOR = URLUtil.JAR_SEPARATOR;
   private static final String URL_PATH_SEPARATOR = "/";
   private static final String FILE_PROTOCOL = URLUtil.FILE_PROTOCOL;
   private static final String FILE_PROTOCOL_PREFIX = FILE_PROTOCOL + ":";
 
-  @NotNull
-  public static String loadText(@NotNull URL url) throws IOException {
+  public static @NotNull String loadText(@NotNull URL url) throws IOException {
     try (InputStream stream = new BufferedInputStream(URLUtil.openStream(url))) {
       return new String(FileUtil.loadBytes(stream), FileTemplate.ourEncoding);
     }
@@ -52,7 +48,7 @@ public final class UrlUtil {
     final List<String> paths = new ArrayList<>();
     final File rootFile = new File(FileUtil.unquote(root.getPath()));
     new Object() {
-      void collectFiles(File fromFile, String prefix) {
+      private void collectFiles(File fromFile, String prefix) {
         File[] list = fromFile.listFiles();
         if (list == null) {
           return;
@@ -74,7 +70,7 @@ public final class UrlUtil {
 
   private static @NotNull List<String> getChildPathsFromJar(@NotNull URL root) throws IOException {
     String file = root.getFile();
-    file = StringUtil.trimStart(file, FILE_PROTOCOL_PREFIX);
+    file = Strings.trimStart(file, FILE_PROTOCOL_PREFIX);
     int jarSeparatorIndex = file.indexOf(JAR_SEPARATOR);
     assert jarSeparatorIndex > 0;
 

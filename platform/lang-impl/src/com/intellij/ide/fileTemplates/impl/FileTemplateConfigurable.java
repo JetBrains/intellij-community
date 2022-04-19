@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -64,9 +64,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
-public class FileTemplateConfigurable implements Configurable, Configurable.NoScroll {
+public final class FileTemplateConfigurable implements Configurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance(FileTemplateConfigurable.class);
-  @NonNls private static final String EMPTY_HTML = "<html></html>";
+  private static final @NonNls String EMPTY_HTML = "<html></html>";
 
   private JPanel myMainPanel;
   private FileTemplate myTemplate;
@@ -259,8 +259,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     return editor;
   }
 
-  @NotNull
-  private Document createDocument(@Nullable PsiFile file) {
+  private @NotNull Document createDocument(@Nullable PsiFile file) {
     Document document = file != null ? PsiDocumentManager.getInstance(file.getProject()).getDocument(file) : null;
     return document != null ? document : EditorFactory.getInstance().createDocument(myTemplate == null ? "" : myTemplate.getText());
   }
@@ -389,8 +388,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     return myTemplate != null && !myTemplate.isDefault();
   }
 
-  @Nullable
-  private PsiFile createFile(final String text, final String name) {
+  private @Nullable PsiFile createFile(final String text, final String name) {
     final FileType fileType = myVelocityFileType;
     if (fileType == FileTypes.UNKNOWN) return null;
 
@@ -435,13 +433,12 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     return highlighter;
   }
 
-  @NotNull
   @VisibleForTesting
-  public static Lexer createDefaultLexer() {
+  public static @NotNull Lexer createDefaultLexer() {
     return new MergingLexerAdapter(new FlexAdapter(new _FileTemplateTextLexer()), TokenSet.create(FileTemplateTokenType.TEXT));
   }
 
-  public void focusToNameField() {
+  void focusToNameField() {
     JComponent field = FileTemplateBase.isChild(myTemplate) ? myFileName : myNameField;
     myNameField.selectAll();
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(field, true));

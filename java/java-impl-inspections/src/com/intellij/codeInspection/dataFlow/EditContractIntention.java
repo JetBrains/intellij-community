@@ -33,19 +33,13 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.Collections;
 
-/**
- * @author peter
- */
-public class EditContractIntention extends BaseIntentionAction implements LowPriorityAction {
-
-  @NotNull
+public final class EditContractIntention extends BaseIntentionAction implements LowPriorityAction {
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.family.edit.method.contract");
   }
 
-  @Nullable
-  private static PsiMethod getTargetMethod(Editor editor, PsiFile file) {
+  private static @Nullable PsiMethod getTargetMethod(Editor editor, PsiFile file) {
     final PsiModifierListOwner owner =  AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset(), true);
     if (owner instanceof PsiMethod && ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(owner)) {
       PsiElement original = owner.getOriginalElement();
@@ -184,13 +178,11 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
     DaemonCodeAnalyzer.getInstance(project).restart();
   }
 
-  @Nullable
-  private static @NlsContexts.DialogMessage String getMutatesErrorMessage(String mutates, PsiMethod method) {
+  private static @Nullable @NlsContexts.DialogMessage String getMutatesErrorMessage(String mutates, PsiMethod method) {
     return StringUtil.isEmpty(mutates) ? null : MutationSignature.checkSignature(mutates, method);
   }
 
-  @Nullable
-  private static @NlsContexts.DialogMessage String getContractErrorMessage(String contract, PsiMethod method) {
+  private static @Nullable @NlsContexts.DialogMessage String getContractErrorMessage(String contract, PsiMethod method) {
     if (StringUtil.isEmpty(contract)) {
       return null;
     }
