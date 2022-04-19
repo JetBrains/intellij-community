@@ -8,26 +8,27 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestLocationCustomizer
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestLocationCustomizer.GradleTestLocationInfo
 import org.jetbrains.plugins.groovy.ext.spock.isSpockSpecification
 
 internal class SpockGradleTestLocationCustomizer : GradleTestLocationCustomizer {
-  override fun getLocationUrl(parent: SMTestProxy?,
-                              name: String?,
-                              displayName: String?,
-                              fqClassName: String,
-                              project: Project,
-                              locationUrlFactory: (String?, String) -> String): String? {
+  override fun getLocationInfo(project: Project,
+                               parent: SMTestProxy?,
+                               fqClassName: String,
+                               methodName: String?,
+                               displayName: String?): GradleTestLocationInfo? {
     if (parent == null) {
       return null
     }
     val className = getClassName(fqClassName, parent)
-    if (!shouldProcessAsSpock(project, className, name)) return null
-    val methodName = if (fqClassName.isEmpty() && displayName != null && name == null) {
+    if (!shouldProcessAsSpock(project, className, methodName)) return null
+    val methodName = if (fqClassName.isEmpty() && displayName != null && methodName == null) {
       displayName
-    } else {
+    }
+    else {
       parent.name
     }
-    return locationUrlFactory(methodName, className)
+    return GradleTestLocationInfo(className, methodName)
   }
 }
 
@@ -44,6 +45,6 @@ private fun shouldProcessAsSpock(project: Project,
   return shouldProcessAsSpock
 }
 
-private fun getClassName(fqClassName: String, parent: SMTestProxy) : String {
+private fun getClassName(fqClassName: String, parent: SMTestProxy): String {
   return fqClassName.takeUnless { it.isEmpty() } ?: parent.name
 }

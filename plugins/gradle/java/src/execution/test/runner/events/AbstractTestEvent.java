@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 import static com.intellij.util.io.URLUtil.SCHEME_SEPARATOR;
+import static org.jetbrains.plugins.gradle.execution.test.runner.GradleTestLocationCustomizer.GradleTestLocationInfo;
 
 /**
  * @author Vladislav.Soroka
@@ -67,13 +68,11 @@ public abstract class AbstractTestEvent implements TestEvent {
     return GradleConsoleProperties.SHOW_INTERNAL_TEST_NODES.value(getProperties());
   }
 
-  protected @NotNull String computeLocationUrl(@Nullable SMTestProxy parentProxy, @Nullable String name, @Nullable String displayName,
-                                               @NotNull String fqClassName,
-                                               @NotNull Project project) {
+  protected final @NotNull String computeLocationUrl(@Nullable SMTestProxy parentProxy, @NotNull String fqClassName, @Nullable String name, @Nullable String displayName) {
     for (GradleTestLocationCustomizer customizer : GradleTestLocationCustomizer.EP_NAME.getExtensionList()) {
-      String location = customizer.getLocationUrl(parentProxy, name, displayName, fqClassName, project, this::findLocationUrl);
+      GradleTestLocationInfo location = customizer.getLocationInfo(getProject(), parentProxy, fqClassName, name, displayName);
       if (location != null) {
-        return location;
+        return findLocationUrl(location.getMethodName(), location.getFqClassName());
       }
     }
     return findLocationUrl(name, fqClassName);

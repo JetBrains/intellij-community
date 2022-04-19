@@ -44,7 +44,7 @@ public class BeforeTestEvent extends AbstractTestEvent {
   }
 
   private void doProcess(String testId, String parentTestId, String name, String displayName, String fqClassName) {
-    String locationUrl = computeLocationUrl(findTestProxy(parentTestId), name, displayName, fqClassName, getProject());
+    String locationUrl = computeLocationUrl(findTestProxy(parentTestId), fqClassName, name, displayName);
     final GradleSMTestProxy testProxy = new GradleSMTestProxy(displayName, false, locationUrl, fqClassName);
 
     testProxy.setStarted();

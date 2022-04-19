@@ -4,13 +4,27 @@ package org.jetbrains.plugins.gradle.execution.test.runner
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Allows to define custom location for test nodes under Gradle test execution.
+ */
+@ApiStatus.Internal
 internal interface GradleTestLocationCustomizer {
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<GradleTestLocationCustomizer> = ExtensionPointName.create("org.jetbrains.plugins.gradle.testLocationCustomizer")
   }
 
-  fun getLocationUrl(parent: SMTestProxy?, name: String?, displayName: String?,
-                     fqClassName: String, project: Project, locationUrlFactory: (String?, String) -> String): String?
+  data class GradleTestLocationInfo(val fqClassName: String, val methodName : String?)
+
+  /**
+   * Produces test framework-specific test location by the data of a test node.
+   *
+   * @param parent direct parent of a customizable test node
+   * @param fqClassName fully-qualified name of the class containing a test method of a customizable test node
+   * @param methodName name of a test method of a customizable test node
+   * @param displayName name of a customizable test node that will be displayed in the UI
+   */
+  fun getLocationInfo(project: Project, parent: SMTestProxy?, fqClassName: String, methodName: String?, displayName: String?): GradleTestLocationInfo?
 }
