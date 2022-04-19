@@ -27,6 +27,7 @@ import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.visibility.ClassEscapesItsScopeInspection;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -274,10 +275,10 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
                                   @NotNull PsiMember member,
                                   PsiClass memberClass,
                                   PsiPackage memberPackage) {
-      if (member instanceof PsiClass) {
-        PsiMember exportingElement = getExportingElement(element);
-        if (exportingElement != null) {
-          final PsiModifierList modifierList = exportingElement.getModifierList();
+      if (member instanceof PsiClass && element instanceof PsiJavaCodeReferenceElement) {
+        PsiMember exportingMember = ClassEscapesItsScopeInspection.getExportingMember((PsiJavaCodeReferenceElement)element);
+        if (exportingMember != null) {
+          final PsiModifierList modifierList = exportingMember.getModifierList();
           assert modifierList != null;
           return PsiUtil.getAccessLevel(modifierList);
         }
@@ -329,36 +330,6 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         }
       }
       return PsiUtil.ACCESS_LEVEL_PUBLIC;
-    }
-
-    private PsiMember getExportingElement(PsiElement element) {
-      if (!(element instanceof PsiJavaCodeReferenceElement)) {
-        return null;
-      }
-      PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(element, PsiTypeElement.class, true, PsiExpression.class, PsiClass.class);
-      if (typeElement == null) {
-        return null;
-      }
-      while (typeElement.getParent() instanceof PsiReferenceParameterList) {
-        final PsiTypeElement parent =
-          PsiTreeUtil.getParentOfType(typeElement, PsiTypeElement.class, true, PsiExpression.class, PsiClass.class);
-        if (parent == null) {
-          break;
-        }
-        typeElement = parent;
-      }
-      final PsiElement parent = typeElement.getParent();
-      if (parent instanceof PsiMethod || parent instanceof PsiField) {
-        return (PsiMember)parent;
-      }
-      else if (parent instanceof PsiParameter) {
-        final PsiParameter parameter = (PsiParameter)parent;
-        final PsiElement declarationScope = parameter.getDeclarationScope();
-        if (declarationScope instanceof PsiMethod) {
-          return (PsiMember)declarationScope;
-        }
-      }
-      return null;
     }
 
     private boolean calledOnInheritor(@NotNull PsiElement element, PsiClass memberClass) {
