@@ -7,8 +7,11 @@ import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 internal fun createStarTypeArgumentsList(typeArgumentsCount: Int): String =
     if (typeArgumentsCount > 0) {
@@ -32,3 +35,14 @@ internal fun KtAnalysisSession.collectNonExtensions(
 
 private fun Name.toJavaGetterName(): Name? = identifierOrNullIfSpecial?.let { Name.identifier(JvmAbi.getterName(it)) }
 private fun Name.toJavaSetterName(): Name? = identifierOrNullIfSpecial?.let { Name.identifier(JvmAbi.setterName(it)) }
+
+internal fun KtDeclaration.canDefinitelyNotBeSeenFromOtherFile(): Boolean {
+    return when {
+        isPrivate() -> true
+        hasModifier(KtTokens.INTERNAL_KEYWORD) && containingKtFile.isCompiled -> {
+            // internal declarations from library are invisible from source modules
+            true
+        }
+        else -> false
+    }
+}
