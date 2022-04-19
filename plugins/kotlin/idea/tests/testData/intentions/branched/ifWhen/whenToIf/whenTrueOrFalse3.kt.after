@@ -1,3 +1,6 @@
+// ERROR: 'when' expression must be exhaustive, add necessary 'false' branch or 'else' branch instead
+// SKIP_ERRORS_AFTER
+
 fun foo(i : Int) {
     if (0 == i) 1
     else if (0 == i) 2
