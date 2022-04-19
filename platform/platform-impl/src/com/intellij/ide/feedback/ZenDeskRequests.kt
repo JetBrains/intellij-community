@@ -39,24 +39,30 @@ class ZenDeskRequests {
       customFields
     )
     val requestData = objectMapper.writeValueAsString(mapOf("request" to request))
-    HttpRequests
-      .post("${form.url}/api/v2/requests", "application/json")
-      .productNameAsUserAgent()
-      .accept("application/json")
-      .connect {
-        it.write(requestData)
-        val bytes = try {
-          it.inputStream.readAllBytes()
+    try {
+      HttpRequests
+        .post("${form.url}/api/v2/requests", "application/json")
+        .productNameAsUserAgent()
+        .accept("application/json")
+        .connect {
+          try {
+            it.write(requestData)
+            val bytes = it.inputStream.readAllBytes()
+            LOG.info(bytes.toString(Charsets.UTF_8))
+          }
+          catch (e: IOException) {
+            val errorResponse = (it.connection as HttpURLConnection).errorStream.readAllBytes().toString(Charsets.UTF_8)
+            LOG.info("Failed to submit feedback. Feedback data:\n$requestData\nServer response:\n$errorResponse")
+            onError()
+            return@connect
+          }
+          onDone()
         }
-        catch (e: IOException) {
-          val errorResponse = (it.connection as HttpURLConnection).errorStream.readAllBytes().toString(Charsets.UTF_8)
-          LOG.info("Failed to submit feedback. Feedback data:\n$requestData\nServer response:\n$errorResponse")
-          onError()
-          return@connect
-        }
-        LOG.info(bytes.toString(Charsets.UTF_8))
-        onDone()
-      }
+    } catch (e: IOException) {
+      LOG.info("Failed to submit feedback. Feedback data:\n$requestData\nError message:\n${e.message}")
+      onError()
+      return
+    }
   }
 
   private fun getOsForZenDesk(): String {
