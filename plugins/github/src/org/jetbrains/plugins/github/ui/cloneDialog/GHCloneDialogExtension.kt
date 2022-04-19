@@ -159,5 +159,5 @@ private class GHCloneDialogLoginPanel(account: GithubAccount?) :
     repaint()
   }
 
-  override fun dispose() = loginPanel.cancelLogin()
+  override fun dispose() = Unit
 }

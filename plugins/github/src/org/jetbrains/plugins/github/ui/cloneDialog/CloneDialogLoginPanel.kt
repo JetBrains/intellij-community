@@ -97,7 +97,9 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
 
   fun setServer(path: String, editable: Boolean) = loginPanel.setServer(path, editable)
 
-  override fun dispose() = Unit
+  override fun dispose() {
+    cancelLogin()
+  }
 
   private fun buildLayout() {
     add(JPanel(HorizontalLayout(0)).apply {
