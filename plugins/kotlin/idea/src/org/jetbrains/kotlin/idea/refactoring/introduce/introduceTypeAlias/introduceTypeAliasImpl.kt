@@ -224,7 +224,7 @@ fun findDuplicates(typeAlias: KtTypeAlias): Map<KotlinPsiRange, () -> Unit> {
         .toRange()
         .match(typeAlias.parent, unifier)
         .asSequence()
-        .filter { !(it.range.getTextRange().intersects(aliasRange)) }
+        .filter { !(it.range.textRange.intersects(aliasRange)) }
         .mapNotNullTo(rangesWithReplacers) { match ->
             val occurrence = match.range.elements.singleOrNull() as? KtTypeElement ?: return@mapNotNullTo null
             val arguments = unifierParameters.mapNotNull { (match.substitution[it] as? KtTypeReference)?.typeElement }

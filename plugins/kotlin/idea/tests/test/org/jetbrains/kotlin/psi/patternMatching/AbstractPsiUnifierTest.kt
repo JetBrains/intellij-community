@@ -31,7 +31,7 @@ abstract class AbstractPsiUnifierTest : KotlinLightCodeInsightFixtureTestCase() 
         DirectiveBasedActionUtils.checkForUnexpectedErrors(file)
 
         val actualText =
-            findPattern(file).toRange().match(file, KotlinPsiUnifier.DEFAULT).map { it.range.getTextRange().substring(file.getText()!!) }
+            findPattern(file).toRange().match(file, KotlinPsiUnifier.DEFAULT).map { it.range.textRange.substring(file.getText()!!) }
                 .joinToString("\n\n")
         KotlinTestUtils.assertEqualsToFile(File(testDataPath, "${fileName()}.match"), actualText)
     }

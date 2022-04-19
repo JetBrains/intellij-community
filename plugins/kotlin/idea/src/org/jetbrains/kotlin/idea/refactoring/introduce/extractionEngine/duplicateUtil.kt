@@ -87,7 +87,7 @@ fun processDuplicates(
     duplicateReplacersLoop@
     for ((i, entry) in duplicateReplacers.entries.withIndex()) {
         val (pattern, replacer) = entry
-        if (!pattern.isValid()) continue
+        if (!pattern.isValid) continue
 
         val highlighter = pattern.preview(project, editor)
         if (!isUnitTestMode()) {

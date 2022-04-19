@@ -121,7 +121,7 @@ object KotlinIntroduceTypeParameterHandler : RefactoringActionHandler {
                     .match(restoredOwner, KotlinPsiUnifier.DEFAULT)
                     .asSequence()
                     .filterNot {
-                        val textRange = it.range.getTextRange()
+                        val textRange = it.range.textRange
                         restoredOriginalTypeElement.textRange.intersects(textRange)
                                 || restoredOwner.typeParameterList?.textRange?.intersects(textRange) ?: false
                     }

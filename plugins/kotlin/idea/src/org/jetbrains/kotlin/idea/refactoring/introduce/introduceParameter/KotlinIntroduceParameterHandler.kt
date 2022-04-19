@@ -74,14 +74,14 @@ data class IntroduceParameterDescriptor(
     }
 
     val originalOccurrence: KotlinPsiRange
-        get() = occurrencesToReplace.first { it.getTextRange().intersects(originalRange.getTextRange()) }
+        get() = occurrencesToReplace.first { it.textRange.intersects(originalRange.textRange) }
 
     val valVar: KotlinValVar = if (callable is KtClass) {
         val modifierIsUnnecessary: (PsiElement) -> Boolean = {
             when {
                 it.parent != callable.body -> false
                 it is KtAnonymousInitializer -> true
-                it is KtProperty && it.initializer?.textRange?.intersects(originalRange.getTextRange()) ?: false -> true
+              it is KtProperty && it.initializer?.textRange?.intersects(originalRange.textRange) ?: false -> true
                 else -> false
             }
         }
@@ -101,7 +101,7 @@ fun getParametersToRemove(
 ): List<KtElement> {
     if (withDefaultValue) return Collections.emptyList()
 
-    val occurrenceRanges = occurrencesToReplace.map { it.getTextRange() }
+    val occurrenceRanges = occurrencesToReplace.map { it.textRange }
     return parametersUsages.entrySet()
         .asSequence()
         .filter {

@@ -188,7 +188,7 @@ fun findExpressionOrStringFragment(file: KtFile, startOffset: Int, endOffset: In
 }
 
 fun KotlinPsiRange.getPhysicalTextRange(): TextRange {
-    return (elements.singleOrNull() as? KtExpression)?.extractableSubstringInfo?.contentRange ?: getTextRange()
+    return (elements.singleOrNull() as? KtExpression)?.extractableSubstringInfo?.contentRange ?: textRange
 }
 
 fun ExtractableSubstringInfo.replaceWith(replacement: KtExpression): KtExpression {

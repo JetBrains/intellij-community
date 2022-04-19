@@ -951,7 +951,7 @@ class KotlinPsiUnifier(
             val targetChildren = targetNode.getChildrenRange()
             val patternChildren = patternNode.getChildrenRange()
 
-            if (patternChildren.empty && targetChildren.empty) {
+            if (patternChildren.isEmpty && targetChildren.isEmpty) {
                 return if (targetElementUnwrapped.unquotedText() == patternElementUnwrapped.unquotedText()) MATCHED else UNMATCHED
             }
 

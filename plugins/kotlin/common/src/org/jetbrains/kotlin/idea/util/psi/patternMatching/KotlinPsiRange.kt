@@ -11,40 +11,44 @@ import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import java.util.*
 
-private val SIGNIFICANT_FILTER = { e: PsiElement -> e !is PsiWhiteSpace && e !is PsiComment && e.textLength > 0 }
-
-interface KotlinPsiRange {
+sealed interface KotlinPsiRange {
     object Empty : KotlinPsiRange {
-        override val elements: List<PsiElement> get() = Collections.emptyList<PsiElement>()
+        override val elements: List<PsiElement>
+            get() = Collections.emptyList()
 
-        override fun getTextRange(): TextRange = TextRange.EMPTY_RANGE
+        override val textRange: TextRange
+            get() = TextRange.EMPTY_RANGE
     }
 
     class ListRange(override val elements: List<PsiElement>) : KotlinPsiRange {
         val startElement: PsiElement = elements.first()
         val endElement: PsiElement = elements.last()
 
-        override fun getTextRange(): TextRange {
-            val startRange = startElement.textRange
-            val endRange = endElement.textRange
-            if (startRange == null || endRange == null) return TextRange.EMPTY_RANGE
+        override val textRange: TextRange
+            get() {
+                val startRange = startElement.textRange
+                val endRange = endElement.textRange
+                if (startRange == null || endRange == null) return TextRange.EMPTY_RANGE
 
-            return TextRange(startRange.startOffset, endRange.endOffset)
-        }
+                return TextRange(startRange.startOffset, endRange.endOffset)
+            }
     }
 
     val elements: List<PsiElement>
+    val textRange: TextRange
 
-    fun getTextRange(): TextRange
+    val isValid: Boolean
+        get() = elements.all { it.isValid }
 
-    fun isValid(): Boolean = elements.all { it.isValid }
+    val isEmpty: Boolean
+        get() = elements.isEmpty()
 
-    val empty: Boolean get() = this is Empty
-
-    operator fun contains(element: PsiElement): Boolean = getTextRange().contains(element.textRange ?: TextRange.EMPTY_RANGE)
+    operator fun contains(element: PsiElement): Boolean {
+        return textRange.contains(element.textRange ?: TextRange.EMPTY_RANGE)
+    }
 
     fun match(scope: PsiElement, unifier: KotlinPsiUnifier): List<UnificationResult.Matched> {
-        val elements = elements.filter(SIGNIFICANT_FILTER)
+        val elements = elements.filter(::isSignificant)
         if (elements.isEmpty()) return Collections.emptyList()
 
         val matches = ArrayList<UnificationResult.Matched>()
@@ -53,7 +57,7 @@ interface KotlinPsiRange {
                 override fun visitKtElement(element: KtElement) {
                     val range = element
                         .siblings()
-                        .filter(SIGNIFICANT_FILTER)
+                        .filter(::isSignificant)
                         .take(elements.size)
                         .toList()
                         .toRange()
@@ -77,8 +81,15 @@ interface KotlinPsiRange {
 }
 
 fun List<PsiElement>.toRange(significantOnly: Boolean = true): KotlinPsiRange {
-    val elements = if (significantOnly) filter(SIGNIFICANT_FILTER) else this
+    val elements = if (significantOnly) filter(::isSignificant) else this
     return if (elements.isEmpty()) KotlinPsiRange.Empty else KotlinPsiRange.ListRange(elements)
 }
 
-fun PsiElement?.toRange(): KotlinPsiRange = this?.let { KotlinPsiRange.ListRange(Collections.singletonList(it)) } ?: KotlinPsiRange.Empty
+fun PsiElement?.toRange(): KotlinPsiRange {
+    if (this == null) return KotlinPsiRange.Empty
+    return KotlinPsiRange.ListRange(Collections.singletonList(this))
+}
+
+private fun isSignificant(element: PsiElement): Boolean {
+    return element !is PsiWhiteSpace && element !is PsiComment && element.textLength > 0
+}
