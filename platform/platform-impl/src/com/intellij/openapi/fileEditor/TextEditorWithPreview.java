@@ -11,10 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -500,8 +497,12 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     public Icon getIcon(@Nullable TextEditorWithPreview editor) {
       if (this == SHOW_EDITOR) return AllIcons.General.LayoutEditorOnly;
       if (this == SHOW_PREVIEW) return AllIcons.General.LayoutPreviewOnly;
-      if (ExperimentalUI.isNewUI()) return AllIcons.General.LayoutEditorPreview; //todo[kb] add icon for horizontal split
-      return editor != null && editor.myIsVerticalSplit ? AllIcons.Actions.PreviewDetailsVertically : AllIcons.Actions.PreviewDetails;
+      boolean isVerticalSplit = editor != null && editor.myIsVerticalSplit;
+      if (ExperimentalUI.isNewUI()) {
+        return isVerticalSplit ? IconLoader.getIcon("expui/general/editorPreviewVertical.svg", AllIcons.class)
+                               : IconLoader.getIcon("expui/general/editorPreview.svg", AllIcons.class);
+      }
+      return isVerticalSplit ? AllIcons.Actions.PreviewDetailsVertically : AllIcons.Actions.PreviewDetails;
     }
   }
 
