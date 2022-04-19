@@ -1517,9 +1517,24 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
             KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
         }
 
+        @TestMetadata("diamond.kt")
+        public void testDiamond() throws Exception {
+            runTest("testData/evaluation/multiplatform/diamond.kt");
+        }
+
+        @TestMetadata("differentCommons.kt")
+        public void testDifferentCommons() throws Exception {
+            runTest("testData/evaluation/multiplatform/differentCommons.kt");
+        }
+
         @TestMetadata("evaluateInCommonCode.kt")
         public void testEvaluateInCommonCode() throws Exception {
             runTest("testData/evaluation/multiplatform/evaluateInCommonCode.kt");
+        }
+
+        @TestMetadata("evaluateWithIntermediateJvm.kt")
+        public void testEvaluateWithIntermediateJvm() throws Exception {
+            runTest("testData/evaluation/multiplatform/evaluateWithIntermediateJvm.kt");
         }
 
         @TestMetadata("typealiasFromCommonCode.kt")
