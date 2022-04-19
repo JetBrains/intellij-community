@@ -151,6 +151,7 @@ final class CommunityRepositoryModules {
       withProjectLibrary("TestNG")
     },
     plugin("intellij.dev") {
+      withModule("intellij.dev.psiViewer")
     },
     plugin("intellij.devkit") {
       withModule("intellij.devkit.core")
@@ -160,7 +161,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.devkit.i18n")
       withModule("intellij.devkit.images")
       withModule("intellij.devkit.intelliLang")
-      withModule("intellij.devkit.psiviewer")
       withModule("intellij.devkit.uiDesigner")
       withModule("intellij.java.devkit")
       withModule("intellij.groovy.devkit")

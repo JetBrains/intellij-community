@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.psiviewer;
+package com.intellij.dev.psiViewer;
 
 import com.intellij.codeInsight.documentation.render.DocRenderManager;
+import com.intellij.dev.psiViewer.formatter.BlockViewerPsiBasedTree;
+import com.intellij.dev.psiViewer.stubs.StubViewerPsiBasedTree;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -65,8 +67,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.psiviewer.formatter.BlockViewerPsiBasedTree;
-import org.jetbrains.idea.devkit.psiviewer.stubs.StubViewerPsiBasedTree;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -771,7 +771,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     DefaultListModel<String> model = (DefaultListModel<String>)myRefs.getModel();
     model.clear();
 
-    String progressTitle = DevKitPsiViewerBundle.message("psi.viewer.progress.dialog.update.refs");
+    String progressTitle = DevPsiViewerBundle.message("psi.viewer.progress.dialog.update.refs");
     Callable<List<PsiReference>> updater =
       () -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> doUpdateReferences(element));
 
@@ -974,7 +974,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       PsiElement rootElement = getTreeStructure().getRootPsiElement();
       int baseOffset = rootPsiElement.getTextRange().getStartOffset();
       int offset = myEditor.getCaretModel().getOffset() + baseOffset;
-      String progressDialogTitle = DevKitPsiViewerBundle.message("psi.viewer.progress.dialog.get.element.at.offset");
+      String progressDialogTitle = DevPsiViewerBundle.message("psi.viewer.progress.dialog.get.element.at.offset");
       Callable<PsiElement> finder = () -> InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), offset);
 
       PsiElement element = computeSlowOperationsSafeInBgThread(myProject, progressDialogTitle, finder);
@@ -996,7 +996,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       int start = selection.getSelectionStart() + baseOffset;
       int end = selection.getSelectionEnd() + baseOffset - 1;
 
-      String progressDialogTitle = DevKitPsiViewerBundle.message("psi.viewer.progress.dialog.get.common.parent");
+      String progressDialogTitle = DevPsiViewerBundle.message("psi.viewer.progress.dialog.get.common.parent");
       Callable<PsiElement> finder =
         () -> findCommonParent(InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), start),
                                InjectedLanguageUtilBase.findElementAtNoCommit(rootElement.getContainingFile(), end));

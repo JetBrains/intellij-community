@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.psiviewer.formatter;
+package com.intellij.dev.psiViewer.formatter;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.dev.psiViewer.PsiViewerDialog;
+import com.intellij.dev.psiViewer.ViewerPsiBasedTree;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
@@ -28,8 +30,6 @@ import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.psiviewer.PsiViewerDialog;
-import org.jetbrains.idea.devkit.psiviewer.ViewerPsiBasedTree;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -42,7 +42,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.jetbrains.idea.devkit.psiviewer.PsiViewerDialog.initTree;
+import static com.intellij.dev.psiViewer.PsiViewerDialog.initTree;
 
 public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 

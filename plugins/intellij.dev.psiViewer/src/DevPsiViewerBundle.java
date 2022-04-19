@@ -1,17 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.psiviewer;
+package com.intellij.dev.psiViewer;
 
 import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
 
-final class DevKitPsiViewerBundle {
+final class DevPsiViewerBundle {
 
-  private static final @NonNls String BUNDLE_FQN = "messages.DevKitPsiViewerBundle";
-  private static final DynamicBundle BUNDLE = new DynamicBundle(DevKitPsiViewerBundle.class, BUNDLE_FQN);
+  private static final @NonNls String BUNDLE_FQN = "messages.DevPsiViewerBundle";
+  private static final DynamicBundle BUNDLE = new DynamicBundle(DevPsiViewerBundle.class, BUNDLE_FQN);
 
-  private DevKitPsiViewerBundle() {
+  private DevPsiViewerBundle() {
   }
 
   public static @Nls @NotNull String message(

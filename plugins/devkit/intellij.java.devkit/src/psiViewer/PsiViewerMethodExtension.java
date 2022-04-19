@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.devkit.psiviewer;
+package com.intellij.java.devkit.psiViewer;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -8,19 +8,19 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class PsiViewerCodeFragmentExtension extends JavaPsiViewerExtension {
+public class PsiViewerMethodExtension extends JavaPsiViewerExtension {
   @Override
   public @NotNull String getName() {
-    return "Java Code Block";
+    return "Java Method";
   }
 
   @Override
   public @NotNull Icon getIcon() {
-    return PlatformIcons.CLASS_INITIALIZER;
+    return PlatformIcons.METHOD_ICON;
   }
 
   @Override
   public @NotNull PsiElement createElement(@NotNull Project project, @NotNull String text) {
-    return getFactory(project).createCodeBlockFromText(text, null);
+    return getFactory(project).createMethodFromText(text, null);
   }
 }
