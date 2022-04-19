@@ -114,12 +114,12 @@ class KotlinPullUpHelper(
                         initializerCandidate = statement
                         elementsToRemove.add(statement)
                     } else {
-                        if (!KotlinPsiUnifier.DEFAULT.unify(statement, currentInitializer).matched) return null
+                        if (!KotlinPsiUnifier.DEFAULT.unify(statement, currentInitializer).isMatched) return null
 
                         initializerCandidate = currentInitializer
                         elementsToRemove.add(statement)
                     }
-                } else if (!KotlinPsiUnifier.DEFAULT.unify(statement, initializerCandidate).matched) return null
+                } else if (!KotlinPsiUnifier.DEFAULT.unify(statement, initializerCandidate).isMatched) return null
             }
         }
 

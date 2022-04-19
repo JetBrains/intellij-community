@@ -75,7 +75,7 @@ fun IntroduceTypeAliasData.analyze(): IntroduceTypeAliasAnalysisResult {
 
         val equivalenceRepresentative = groupedReferencesToExtract
             .keySet()
-            .firstOrNull { unifier.unify(it.reference, resolveInfo.reference).matched }
+            .firstOrNull { unifier.unify(it.reference, resolveInfo.reference).isMatched }
         if (equivalenceRepresentative != null) {
             groupedReferencesToExtract.putValue(equivalenceRepresentative, resolveInfo)
         } else {

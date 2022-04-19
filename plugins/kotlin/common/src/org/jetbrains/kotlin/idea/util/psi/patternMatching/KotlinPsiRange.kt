@@ -47,11 +47,11 @@ sealed interface KotlinPsiRange {
         return textRange.contains(element.textRange ?: TextRange.EMPTY_RANGE)
     }
 
-    fun match(scope: PsiElement, unifier: KotlinPsiUnifier): List<UnificationResult.Matched> {
+    fun match(scope: PsiElement, unifier: KotlinPsiUnifier): List<KotlinPsiUnificationResult.Success> {
         val elements = elements.filter(::isSignificant)
         if (elements.isEmpty()) return Collections.emptyList()
 
-        val matches = ArrayList<UnificationResult.Matched>()
+        val matches = ArrayList<KotlinPsiUnificationResult.Success>()
         scope.accept(
             object : KtTreeVisitorVoid() {
                 override fun visitKtElement(element: KtElement) {
@@ -64,12 +64,12 @@ sealed interface KotlinPsiRange {
 
                     val result = unifier.unify(range, this@KotlinPsiRange)
 
-                    if (result is UnificationResult.StronglyMatched) {
+                    if (result is KotlinPsiUnificationResult.StrictSuccess) {
                         matches.add(result)
                     } else {
                         val matchCountSoFar = matches.size
                         super.visitKtElement(element)
-                        if (result is UnificationResult.WeaklyMatched && matches.size == matchCountSoFar) {
+                        if (result is KotlinPsiUnificationResult.WeakSuccess && matches.size == matchCountSoFar) {
                             matches.add(result)
                         }
                     }
