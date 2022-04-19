@@ -196,10 +196,6 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
     public IndexerIdHolder(int indexerId) {
       this.indexerId = indexerId;
     }
-
-    int getIndexerId() {
-      return indexerId;
-    }
   }
 
   @Override
@@ -221,7 +217,7 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
     if (mySubIndexerRetriever != null) {
       LOG.assertTrue(fileData != null, "getFileIndexMetaData() shouldn't have returned null.");
       try {
-        mySubIndexerRetriever.setFileIndexerId(fileId, fileData.getIndexerId());
+        mySubIndexerRetriever.setFileIndexerId(fileId, fileData.indexerId);
       }
       catch (IOException e) {
         LOG.error(e);
