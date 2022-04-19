@@ -132,12 +132,12 @@ class KotlinMavenImporterTest07 : AbstractKotlinMavenImporterTest() {
                             </execution>
                         </executions>
                         <configuration>
-                            <jvmTarget>1.6</jvmTarget>
+                            <jvmTarget>1.8</jvmTarget>
                             <languageVersion>1.0</languageVersion>
                             <apiVersion>1.0</apiVersion>
                             <args>
                                 <arg>-jvm-target</arg>
-                                <arg>1.8</arg>
+                                <arg>11</arg>
                                 <arg>-language-version</arg>
                                 <arg>1.1</arg>
                                 <arg>-api-version</arg>
@@ -154,10 +154,10 @@ class KotlinMavenImporterTest07 : AbstractKotlinMavenImporterTest() {
         assertImporterStatePresent()
 
         with(facetSettings) {
-            Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
+            Assert.assertEquals("JVM 11", targetPlatform!!.oldFashionedDescription)
             Assert.assertEquals(LanguageVersion.KOTLIN_1_1.description, languageLevel!!.description)
             Assert.assertEquals(LanguageVersion.KOTLIN_1_1.description, apiLevel!!.description)
-            Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
+            Assert.assertEquals("11", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
         }
     }
 

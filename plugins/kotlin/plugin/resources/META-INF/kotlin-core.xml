@@ -366,6 +366,11 @@
             displayType="STICKY_BALLOON"
             key="kotlin.external.compiler.updates.notification.group.name"
     />
+    <notificationGroup
+            id="Kotlin Maven project import"
+            displayType="STICKY_BALLOON"
+            key="configuration.maven.group.name"
+    />
   </extensions>
 
   <!-- Navigation -->
