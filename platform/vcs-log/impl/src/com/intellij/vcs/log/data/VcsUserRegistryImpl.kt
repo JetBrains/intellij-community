@@ -9,11 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.HashSetInterner
 import com.intellij.util.containers.Interner
-import com.intellij.util.io.IOUtil
-import com.intellij.util.io.KeyDescriptor
-import com.intellij.util.io.PersistentBTreeEnumerator
-import com.intellij.util.io.PersistentEnumeratorBase
-import com.intellij.util.io.storage.AbstractStorage
+import com.intellij.util.io.*
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.VcsUserRegistry
 import com.intellij.vcs.log.impl.VcsUserImpl
@@ -39,7 +35,7 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
     try {
       val enumerator = IOUtil.openCleanOrResetBroken({
                                                        PersistentBTreeEnumerator(mapFile.toPath(), VcsUserKeyDescriptor(this),
-                                                                                 AbstractStorage.PAGE_SIZE, null, STORAGE_VERSION)
+                                                                                 Page.PAGE_SIZE, null, STORAGE_VERSION)
                                                      }, mapFile)
       val wasSet = _persistentEnumerator.compareAndSet(null, enumerator)
       if (!wasSet) {

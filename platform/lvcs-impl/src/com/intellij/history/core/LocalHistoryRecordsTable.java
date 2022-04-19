@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.core;
 
-import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.PagePool;
 import com.intellij.util.io.storage.AbstractRecordsTable;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +24,7 @@ public final class LocalHistoryRecordsTable extends AbstractRecordsTable {
 
   private static final byte[] ZEROS = new byte[RECORD_SIZE];
 
-  public LocalHistoryRecordsTable(@NotNull Path storageFilePath, @NotNull StorageLockContext pool) throws IOException {
+  public LocalHistoryRecordsTable(@NotNull Path storageFilePath, @NotNull PagePool pool) throws IOException {
     super(storageFilePath, pool);
   }
 
@@ -48,66 +48,66 @@ public final class LocalHistoryRecordsTable extends AbstractRecordsTable {
     return ZEROS;
   }
 
-  public long getLastId() throws IOException {
+  public long getLastId() {
     return myStorage.getLong(LAST_ID_OFFSET);
   }
 
-  public void setLastId(long lastId) throws IOException {
+  public void setLastId(long lastId) {
     markDirty();
     myStorage.putLong(LAST_ID_OFFSET, lastId);
   }
 
-  public void setFirstRecord(int record) throws IOException {
+  public void setFirstRecord(int record) {
     markDirty();
     myStorage.putInt(FIRST_RECORD_OFFSET, record);
   }
 
-  public int getFirstRecord() throws IOException {
+  public int getFirstRecord() {
     return myStorage.getInt(FIRST_RECORD_OFFSET);
   }
 
-  public void setLastRecord(int record) throws IOException {
+  public void setLastRecord(int record) {
     markDirty();
     myStorage.putInt(LAST_RECORD_OFFSET, record);
   }
 
-  public int getLastRecord() throws IOException {
+  public int getLastRecord() {
     return myStorage.getInt(LAST_RECORD_OFFSET);
   }
 
-  public void setFSTimestamp(long timestamp) throws IOException {
+  public void setFSTimestamp(long timestamp) {
     markDirty();
     myStorage.putLong(FS_TIMESTAMP_OFFSET, timestamp);
   }
 
-  public long getFSTimestamp() throws IOException {
+  public long getFSTimestamp() {
     return myStorage.getLong(FS_TIMESTAMP_OFFSET);
   }
 
-  public void setPrevRecord(int record, int prevRecord) throws IOException {
+  public void setPrevRecord(int record, int prevRecord) {
     markDirty();
     myStorage.putInt(getOffset(record, PREV_RECORD_OFFSET), prevRecord);
   }
 
-  public int getPrevRecord(int record) throws IOException {
+  public int getPrevRecord(int record) {
     return myStorage.getInt(getOffset(record, PREV_RECORD_OFFSET));
   }
 
-  public void setNextRecord(int record, int nextRecord) throws IOException {
+  public void setNextRecord(int record, int nextRecord) {
     markDirty();
     myStorage.putInt(getOffset(record, NEXT_RECORD_OFFSET), nextRecord);
   }
 
-  public int getNextRecord(int record) throws IOException {
+  public int getNextRecord(int record) {
     return myStorage.getInt(getOffset(record, NEXT_RECORD_OFFSET));
   }
 
-  public void setTimestamp(int record, long timestamp) throws IOException {
+  public void setTimestamp(int record, long timestamp) {
     markDirty();
     myStorage.putLong(getOffset(record, TIMESTAMP_OFFSET), timestamp);
   }
 
-  public long getTimestamp(int record) throws IOException {
+  public long getTimestamp(int record) {
     return myStorage.getLong(getOffset(record, TIMESTAMP_OFFSET));
   }
 }

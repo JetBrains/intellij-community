@@ -13,7 +13,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
-import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.history.EdgeData;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
@@ -65,7 +64,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
                                                                            @Nullable StorageLockContext storageLockContext) throws IOException {
     Path storageFile = storageId.getStorageFile(INDEX_PATHS_IDS);
     return new PersistentEnumerator<>(storageFile, new LightFilePathKeyDescriptor(roots),
-                                      AbstractStorage.PAGE_SIZE, storageLockContext, storageId.getVersion());
+                                      Page.PAGE_SIZE, storageLockContext, storageId.getVersion());
   }
 
   @NotNull
@@ -73,7 +72,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
                                                                                                   @Nullable StorageLockContext storageLockContext)
     throws IOException {
     Path storageFile = storageId.getStorageFile(RENAMES_MAP);
-    return new PersistentHashMap<>(storageFile, new CoupleKeyDescriptor(), new CollectionDataExternalizer(), AbstractStorage.PAGE_SIZE,
+    return new PersistentHashMap<>(storageFile, new CoupleKeyDescriptor(), new CollectionDataExternalizer(), Page.PAGE_SIZE,
                                    storageId.getVersion(), storageLockContext);
   }
 

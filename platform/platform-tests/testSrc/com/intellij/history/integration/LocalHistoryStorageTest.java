@@ -139,7 +139,7 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
     return r;
   }
 
-  private void assertFirstAndLast(int first, int last) throws IOException {
+  private void assertFirstAndLast(int first, int last) {
     assertEquals(first, myStorage.getFirstRecord());
     assertEquals(last, myStorage.getLastRecord());
   }

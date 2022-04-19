@@ -22,7 +22,6 @@ public final class DirectBufferWrapper {
   private volatile ByteBuffer myBuffer;
   private volatile boolean myDirty;
   private final AtomicInteger myReferences = new AtomicInteger();
-  private volatile int myBufferDataEndPos;
 
   DirectBufferWrapper(@NotNull PagedFileStorage file, long offset, boolean readOnly) throws IOException {
     myFile = file;
@@ -42,11 +41,8 @@ public final class DirectBufferWrapper {
     }
   }
 
-  private void fileSizeMayChanged(int bufferDataEndPos) {
-    if (bufferDataEndPos > myBufferDataEndPos) {
-      myBufferDataEndPos = bufferDataEndPos;
-      myFile.ensureCachedSizeAtLeast(myPosition + myBufferDataEndPos);
-    }
+  private void fileSizeMayChanged(int bufferDataEnd) {
+    myFile.ensureCachedSizeAtLeast(myPosition + bufferDataEnd);
   }
 
   boolean isDirty() {
@@ -194,7 +190,6 @@ public final class DirectBufferWrapper {
     return myReferences.get() == RELEASED_CODE;
   }
 
-  @SuppressWarnings("RedundantCast")
   void force() throws IOException {
     myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
 
@@ -205,13 +200,7 @@ public final class DirectBufferWrapper {
         buffer.rewind();
 
         myFile.useChannel(ch -> {
-          int oldLimit = buffer.limit();
-          try {
-            ch.write((ByteBuffer)buffer.limit(myBufferDataEndPos), myPosition);
-          }
-          finally {
-            buffer.limit(oldLimit);
-          }
+          ch.write(buffer, myPosition);
           return null;
         }, myReadOnly);
       }

@@ -8,7 +8,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +41,7 @@ public class PagedFileStorage implements Forceable {
   @NotNull
   private final StorageLockContext myStorageLockContext;
   private final boolean myNativeBytesOrder;
-  private long myStorageIndex; // -1 when closed
+  private int myStorageIndex; // -1 when closed
   @NotNull
   private final PagedFileStorageCache myLastAccessedBufferCache = new PagedFileStorageCache();
 
@@ -74,7 +73,7 @@ public class PagedFileStorage implements Forceable {
     }
 
     myStorageLockContext = storageLockContext != null ? storageLockContext : ourDefaultContext;
-    myPageSize = Math.max(pageSize > 0 ? pageSize : BUFFER_SIZE, AbstractStorage.PAGE_SIZE);
+    myPageSize = Math.max(pageSize > 0 ? pageSize : BUFFER_SIZE, Page.PAGE_SIZE);
     myValuesAreBufferAligned = valuesAreBufferAligned;
     myStorageIndex = myStorageLockContext.getBufferCache().registerPagedFileStorage(this);
     myNativeBytesOrder = nativeBytesOrder;
@@ -331,7 +330,7 @@ public class PagedFileStorage implements Forceable {
     if (oldSize == newSize && oldSize == length()) return;
 
     final long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;
-    myStorageLockContext.getBufferCache().invalidateBuffer(myStorageIndex | (oldSize / myPageSize)); // TODO long page
+    myStorageLockContext.getBufferCache().invalidateBuffer(myStorageIndex | (int)(oldSize / myPageSize), myStorageLockContext); // TODO long page
     final long unmapAllFinished = IOStatistics.DEBUG ? System.currentTimeMillis():0;
 
     resizeFile(newSize);
@@ -420,14 +419,12 @@ public class PagedFileStorage implements Forceable {
       return pageFromCache;
     }
 
-    if (page < 0 || page > FilePageCache.MAX_PAGES_COUNT) {
-      throw new AssertionError(page);
-    }
+    assert page >= 0 && page <= FilePageCache.MAX_PAGES_COUNT : page;
 
     if (myStorageIndex == -1) {
       throw new IOException("storage is already closed; path " + myFile);
     }
-    DirectBufferWrapper byteBufferWrapper = myStorageLockContext.getBufferCache().get(myStorageIndex | page, !modify, myReadOnly); // TODO: long page
+    DirectBufferWrapper byteBufferWrapper = myStorageLockContext.getBufferCache().get(myStorageIndex | (int)page, !modify, myReadOnly); // TODO: long page
     if (modify) markDirty();
     if (myNativeBytesOrder) {
       byteBufferWrapper.useNativeByteOrder();
@@ -472,10 +469,5 @@ public class PagedFileStorage implements Forceable {
   @Override
   public boolean isDirty() {
     return isDirty;
-  }
-
-  @Override
-  public String toString() {
-    return "PagedFileStorage[" + myFile + "]";
   }
 }

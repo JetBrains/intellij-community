@@ -21,7 +21,6 @@ import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
-import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsUserRegistry;
@@ -324,12 +323,12 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
         Path commitsStorage = storageId.getStorageFile(COMMITS);
         myIsFresh = !Files.exists(commitsStorage);
-        commits = new PersistentSetImpl<>(commitsStorage, EnumeratorIntegerDescriptor.INSTANCE, AbstractStorage.PAGE_SIZE, storageLockContext,
+        commits = new PersistentSetImpl<>(commitsStorage, EnumeratorIntegerDescriptor.INSTANCE, Page.PAGE_SIZE, storageLockContext,
                                           storageId.getVersion());
         Disposer.register(this, () -> catchAndWarn(commits::close));
 
         messages = new PersistentHashMap<>(storageId.getStorageFile(MESSAGES), EnumeratorIntegerDescriptor.INSTANCE,
-                                           EnumeratorStringDescriptor.INSTANCE, AbstractStorage.PAGE_SIZE, storageId.getVersion(),
+                                           EnumeratorStringDescriptor.INSTANCE, Page.PAGE_SIZE, storageId.getVersion(),
                                            storageLockContext);
         Disposer.register(this, () -> catchAndWarn(messages::close));
 
@@ -339,17 +338,17 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
         Path parentsStorage = storageId.getStorageFile(PARENTS);
         parents = new PersistentHashMap<>(parentsStorage, EnumeratorIntegerDescriptor.INSTANCE,
-                                          new IntListDataExternalizer(), AbstractStorage.PAGE_SIZE, storageId.getVersion(), storageLockContext);
+                                          new IntListDataExternalizer(), Page.PAGE_SIZE, storageId.getVersion(), storageLockContext);
         Disposer.register(this, () -> catchAndWarn(parents::close));
 
         Path committersStorage = storageId.getStorageFile(COMMITTERS);
         committers = new PersistentHashMap<>(committersStorage, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE,
-                                             AbstractStorage.PAGE_SIZE, storageId.getVersion(), storageLockContext);
+                                             Page.PAGE_SIZE, storageId.getVersion(), storageLockContext);
         Disposer.register(this, () -> catchAndWarn(committers::close));
 
         Path timestampsStorage = storageId.getStorageFile(TIMESTAMPS);
         timestamps = new PersistentHashMap<>(timestampsStorage, EnumeratorIntegerDescriptor.INSTANCE, new LongPairDataExternalizer(),
-                                             AbstractStorage.PAGE_SIZE, storageId.getVersion(), storageLockContext);
+                                             Page.PAGE_SIZE, storageId.getVersion(), storageLockContext);
         Disposer.register(this, () -> catchAndWarn(timestamps::close));
 
         checkConsistency();

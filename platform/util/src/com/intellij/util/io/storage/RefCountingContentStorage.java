@@ -5,7 +5,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.PagePool;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -158,7 +158,7 @@ public final class RefCountingContentStorage extends AbstractStorage {
   }
 
   @Override
-  protected AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext pool, @NotNull Path recordsFile) throws IOException {
+  protected AbstractRecordsTable createRecordsTable(PagePool pool, @NotNull Path recordsFile) throws IOException {
     return new RefCountingRecordsTable(recordsFile, pool);
   }
 
@@ -174,7 +174,7 @@ public final class RefCountingContentStorage extends AbstractStorage {
     return myRecordsTable.getRecordsCount();
   }
 
-  public void acquireRecord(int record) throws IOException {
+  public void acquireRecord(int record) {
     waitForPendingWriteForRecord(record);
     withWriteLock(() -> {
       ((RefCountingRecordsTable)myRecordsTable).incRefCount(record);
@@ -190,7 +190,7 @@ public final class RefCountingContentStorage extends AbstractStorage {
     });
   }
 
-  public int getRefCount(int record) throws IOException {
+  public int getRefCount(int record) {
     waitForPendingWriteForRecord(record);
     return withReadLock(() -> {
       return ((RefCountingRecordsTable)myRecordsTable).getRefCount(record);
@@ -198,7 +198,7 @@ public final class RefCountingContentStorage extends AbstractStorage {
   }
 
   @Override
-  public void force() throws IOException {
+  public void force() {
     flushPendingWrites();
     super.force();
   }
@@ -215,7 +215,7 @@ public final class RefCountingContentStorage extends AbstractStorage {
   }
 
   @Override
-  public void checkSanity(int record) throws IOException {
+  public void checkSanity(int record) {
     flushPendingWrites();
     super.checkSanity(record);
   }
