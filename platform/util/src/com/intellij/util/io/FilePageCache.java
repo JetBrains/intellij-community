@@ -314,13 +314,13 @@ public final class FilePageCache {
       finally {
         mySegmentsAccessLock.unlock();
       }
-    }
 
-    mySegmentsAllocationLock.lock();
-    try {
-      disposeRemovedSegments(fileStorage);
-    } finally {
-      mySegmentsAllocationLock.unlock();
+      mySegmentsAllocationLock.lock();
+      try {
+        disposeRemovedSegments(fileStorage);
+      } finally {
+        mySegmentsAllocationLock.unlock();
+      }
     }
   }
 
