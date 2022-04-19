@@ -9,6 +9,7 @@ import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.refactoring.changeSignature.OverriderUsageInfo
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -20,7 +21,9 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.JavaMethodKo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinCallableDefinitionUsage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinCallerUsage
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.KotlinTypeSubstitution
 import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.idea.util.getTypeSubstitution
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
 import org.jetbrains.kotlin.name.Name
@@ -28,7 +31,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.types.*
-import org.jetbrains.kotlin.types.substitutions.getCallableSubstitutor
 import org.jetbrains.kotlin.types.typeUtil.asTypeProjection
 
 fun KtNamedDeclaration.getDeclarationBody(): KtElement? = when (this) {
@@ -64,7 +66,20 @@ fun getCallableSubstitutor(
 ): TypeSubstitutor? {
     val currentBaseFunction = baseFunction.currentCallableDescriptor ?: return null
     val currentDerivedFunction = derivedCallable.currentCallableDescriptor ?: return null
-    return getCallableSubstitutor(currentBaseFunction, currentDerivedFunction)
+    val substitution = getCallableSubstitution(currentBaseFunction, currentDerivedFunction) ?: return null
+    return TypeSubstitutor.create(substitution)
+}
+
+private fun getCallableSubstitution(baseCallable: CallableDescriptor, derivedCallable: CallableDescriptor): KotlinTypeSubstitution? {
+    val baseClass = baseCallable.containingDeclaration as? ClassDescriptor ?: return null
+    val derivedClass = derivedCallable.containingDeclaration as? ClassDescriptor ?: return null
+    val substitution = getTypeSubstitution(baseClass.defaultType, derivedClass.defaultType) ?: return null
+
+    for ((baseParam, derivedParam) in baseCallable.typeParameters.zip(derivedCallable.typeParameters)) {
+        substitution[baseParam.typeConstructor] = TypeProjectionImpl(derivedParam.defaultType)
+    }
+
+    return substitution
 }
 
 fun KotlinType.renderTypeWithSubstitution(substitutor: TypeSubstitutor?, defaultText: String, inArgumentPosition: Boolean): String {

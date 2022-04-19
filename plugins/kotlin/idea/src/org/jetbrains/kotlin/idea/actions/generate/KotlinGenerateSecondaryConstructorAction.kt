@@ -21,6 +21,9 @@ import org.jetbrains.kotlin.idea.core.util.DescriptorMemberChooserObject
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.getTypeSubstitution
+import org.jetbrains.kotlin.idea.util.orEmpty
+import org.jetbrains.kotlin.idea.util.toSubstitutor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -28,10 +31,8 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
-import org.jetbrains.kotlin.types.substitutions.getTypeSubstitutor
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
@@ -153,8 +154,9 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
         val parameterList = constructor.valueParameterList!!
 
         if (superConstructor != null) {
-            val substitutor = getTypeSubstitutor(superConstructor.containingDeclaration.defaultType, classDescriptor.defaultType)
-                ?: TypeSubstitutor.EMPTY
+            val superClassType = superConstructor.containingDeclaration.defaultType
+            val substitutor = getTypeSubstitution(superClassType, classDescriptor.defaultType)?.toSubstitutor().orEmpty()
+
             val delegationCallArguments = ArrayList<String>()
             for (parameter in superConstructor.valueParameters) {
                 val isVararg = parameter.varargElementType != null

@@ -18,11 +18,12 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
+import org.jetbrains.kotlin.idea.util.getTypeSubstitution
+import org.jetbrains.kotlin.idea.util.substitute
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.parents
-import org.jetbrains.kotlin.types.substitutions.getTypeSubstitutor
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 import java.awt.Font
 import javax.swing.Icon
@@ -53,8 +54,8 @@ class KotlinOverrideHierarchyNodeDescriptor(
         val classDescriptor = getCurrentClassDescriptor() ?: return null
         val baseDescriptor = getBaseDescriptor() ?: return null
         val baseClassDescriptor = baseDescriptor.containingDeclaration as? ClassDescriptor ?: return null
-        val substitutor = getTypeSubstitutor(baseClassDescriptor.defaultType, classDescriptor.defaultType) ?: return null
-        return classDescriptor.findCallableMemberBySignature(baseDescriptor.substitute(substitutor) as CallableMemberDescriptor)
+        val substitution = getTypeSubstitution(baseClassDescriptor.defaultType, classDescriptor.defaultType) ?: return null
+        return classDescriptor.findCallableMemberBySignature(baseDescriptor.substitute(substitution) as CallableMemberDescriptor)
     }
 
     internal fun calculateState(): Icon? {

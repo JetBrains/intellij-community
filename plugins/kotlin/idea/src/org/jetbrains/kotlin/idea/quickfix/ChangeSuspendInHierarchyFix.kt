@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.useScope
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.getTypeSubstitution
+import org.jetbrains.kotlin.idea.util.substitute
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -32,7 +34,6 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.OverridingUtil
 import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 import org.jetbrains.kotlin.resolve.source.getPsi
-import org.jetbrains.kotlin.types.substitutions.getTypeSubstitutor
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 import org.jetbrains.kotlin.utils.DFS
 import org.jetbrains.kotlin.utils.ifEmpty
@@ -72,9 +73,9 @@ class ChangeSuspendInHierarchyFix(
             classes.mapNotNullTo(result) {
                 val subClass = it.unwrapped as? KtClassOrObject ?: return@mapNotNullTo null
                 val classDescriptor = subClass.unsafeResolveToDescriptor() as ClassDescriptor
-                val substitutor = getTypeSubstitutor(baseClassDescriptor.defaultType, classDescriptor.defaultType)
+                val substitution = getTypeSubstitution(baseClassDescriptor.defaultType, classDescriptor.defaultType)
                     ?: return@mapNotNullTo null
-                val signatureInSubClass = baseFunctionDescriptor.substitute(substitutor) as FunctionDescriptor
+                val signatureInSubClass = baseFunctionDescriptor.substitute(substitution) as FunctionDescriptor
                 val subFunctionDescriptor = classDescriptor.findCallableMemberBySignature(signatureInSubClass, true)
                     ?: return@mapNotNullTo null
                 subFunctionDescriptor.source.getPsi() as? KtNamedFunction
@@ -111,10 +112,10 @@ class ChangeSuspendInHierarchyFix(
                         if (superClassDescriptor !is ClassDescriptorWithResolutionScopes) return@flatMap emptyList<FunctionDescriptor>()
                         val candidates =
                             superClassDescriptor.unsubstitutedMemberScope.getContributedFunctions(name, NoLookupLocation.FROM_IDE)
-                        val substitutor = getTypeSubstitutor(superClassDescriptor.defaultType, classDescriptor.defaultType)
+                        val substitution = getTypeSubstitution(superClassDescriptor.defaultType, classDescriptor.defaultType)
                             ?: return@flatMap emptyList<FunctionDescriptor>()
                         candidates.filter {
-                            val signature = it.substitute(substitutor) as FunctionDescriptor
+                            val signature = it.substitute(substitution) as FunctionDescriptor
                             classDescriptor.findCallableMemberBySignature(signature, true) == this
                         }
                     }
@@ -142,11 +143,9 @@ class ChangeSuspendInHierarchyFix(
                 if (it.isSuspend == currentDescriptor.isSuspend) return@filter false
                 val containingClassDescriptor = it.containingDeclaration as? ClassDescriptor ?: return@filter false
                 if (!currentClassDescriptor.isSubclassOf(containingClassDescriptor)) return@filter false
-                val substitutor = getTypeSubstitutor(
-                    containingClassDescriptor.defaultType,
-                    currentClassDescriptor.defaultType
-                ) ?: return@filter false
-                val signatureInCurrentClass = it.substitute(substitutor) ?: return@filter false
+                val substitution = getTypeSubstitution(containingClassDescriptor.defaultType, currentClassDescriptor.defaultType)
+                    ?: return@filter false
+                val signatureInCurrentClass = it.substitute(substitution) ?: return@filter false
                 OverridingUtil.DEFAULT.isOverridableBy(signatureInCurrentClass, currentDescriptor, null).result ==
                         OverridingUtil.OverrideCompatibilityInfo.Result.CONFLICT
             }

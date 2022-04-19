@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.useScope
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -40,9 +40,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 import org.jetbrains.kotlin.resolve.source.getPsi
-import org.jetbrains.kotlin.types.TypeSubstitutor
 import org.jetbrains.kotlin.types.Variance
-import org.jetbrains.kotlin.types.substitutions.getTypeSubstitutor
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
 fun checkConflicts(
@@ -226,12 +224,9 @@ private fun KotlinPullUpData.checkAccidentalOverrides(
 
             for (it in sequence) {
                 val subClassDescriptor = it.resolveToDescriptorWrapperAware(resolutionFacade) as ClassDescriptor
-                val substitutor = getTypeSubstitutor(
-                    targetClassDescriptor.defaultType,
-                    subClassDescriptor.defaultType
-                ) ?: TypeSubstitutor.EMPTY
+                val substitution = getTypeSubstitution(targetClassDescriptor.defaultType, subClassDescriptor.defaultType).orEmpty()
 
-                val memberDescriptorInSubClass = memberDescriptorInTargetClass.substitute(substitutor) as? CallableMemberDescriptor
+                val memberDescriptorInSubClass = memberDescriptorInTargetClass.substitute(substitution) as? CallableMemberDescriptor
                 val clashingMemberDescriptor = memberDescriptorInSubClass?.let {
                     subClassDescriptor.findCallableMemberBySignature(it)
                 } ?: continue

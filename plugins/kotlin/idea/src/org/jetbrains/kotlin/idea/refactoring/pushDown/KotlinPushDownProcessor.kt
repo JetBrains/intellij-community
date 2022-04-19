@@ -27,11 +27,13 @@ import org.jetbrains.kotlin.idea.refactoring.pullUp.*
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.util.getTypeSubstitution
+import org.jetbrains.kotlin.idea.util.orEmpty
+import org.jetbrains.kotlin.idea.util.toSubstitutor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.types.TypeSubstitutor
-import org.jetbrains.kotlin.types.substitutions.getTypeSubstitutor
 import org.jetbrains.kotlin.utils.keysToMap
 
 class KotlinPushDownContext(
@@ -108,9 +110,9 @@ class KotlinPushDownProcessor(
     }
 
     private fun pushDownToClass(targetClass: KtClassOrObject) {
+        val sourceClassType = context.sourceClassDescriptor.defaultType
         val targetClassDescriptor = context.resolutionFacade.resolveToDescriptor(targetClass) as ClassDescriptor
-        val substitutor = getTypeSubstitutor(context.sourceClassDescriptor.defaultType, targetClassDescriptor.defaultType)
-            ?: TypeSubstitutor.EMPTY
+        val substitutor = getTypeSubstitution(sourceClassType, targetClassDescriptor.defaultType)?.toSubstitutor().orEmpty()
         members@ for (memberInfo in context.membersToMove) {
             val member = memberInfo.member
             val memberDescriptor = context.memberDescriptors[member] ?: continue

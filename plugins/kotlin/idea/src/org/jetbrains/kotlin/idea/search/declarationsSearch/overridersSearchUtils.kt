@@ -29,12 +29,12 @@ import org.jetbrains.kotlin.idea.refactoring.resolveToExpectedDescriptorIfPossib
 import org.jetbrains.kotlin.idea.search.excludeKotlinSources
 import org.jetbrains.kotlin.idea.search.useScope
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.util.getTypeSubstitution
+import org.jetbrains.kotlin.idea.util.toSubstitutor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.source.getPsi
-import org.jetbrains.kotlin.types.substitutions.getTypeSubstitutor
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
 fun forEachKotlinOverride(
@@ -53,11 +53,12 @@ fun forEachKotlinOverride(
         val inheritor = psiClass.unwrapped as? KtClassOrObject ?: return@Processor true
         runReadAction {
             val inheritorDescriptor = inheritor.unsafeResolveToDescriptor() as ClassDescriptor
-            val substitutor =
-                getTypeSubstitutor(baseClassDescriptor.defaultType, inheritorDescriptor.defaultType) ?: return@runReadAction true
-            baseDescriptors.forEach {
-                val superMember = it.source.getPsi()!!
-                val overridingDescriptor = (it.substitute(substitutor) as? CallableMemberDescriptor)?.let { memberDescriptor ->
+            val substitutor = getTypeSubstitution(baseClassDescriptor.defaultType, inheritorDescriptor.defaultType)?.toSubstitutor()
+                ?: return@runReadAction true
+
+            baseDescriptors.forEach { baseDescriptor ->
+                val superMember = baseDescriptor.source.getPsi()!!
+                val overridingDescriptor = (baseDescriptor.substitute(substitutor) as? CallableMemberDescriptor)?.let { memberDescriptor ->
                     inheritorDescriptor.findCallableMemberBySignature(memberDescriptor)
                 }
                 val overridingMember = overridingDescriptor?.source?.getPsi()

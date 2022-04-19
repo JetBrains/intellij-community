@@ -37,11 +37,13 @@ import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.checker.TypeCheckingProcedure
 import org.jetbrains.kotlin.types.error.ErrorType
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.error.ErrorScopeKind
 import org.jetbrains.kotlin.types.typeUtil.*
 import org.jetbrains.kotlin.utils.SmartSet
+import java.util.LinkedHashMap
 
 fun KotlinType.approximateFlexibleTypes(
     preferNotNull: Boolean = false,
@@ -301,3 +303,25 @@ private fun PsiType.collectTypeParameters(): List<PsiTypeParameter> {
     )
     return results
 }
+
+typealias KotlinTypeSubstitution = Map<TypeConstructor, TypeProjection>
+typealias MutableKotlinTypeSubstitution = LinkedHashMap<TypeConstructor, TypeProjection>
+
+fun <T: DeclarationDescriptorNonRoot> Substitutable<T>.substitute(substitution: KotlinTypeSubstitution): T {
+    return substitute(substitution.toSubstitutor())
+}
+
+fun getTypeSubstitution(baseType: KotlinType, derivedType: KotlinType): MutableKotlinTypeSubstitution? {
+    val substitutedType = TypeCheckingProcedure.findCorrespondingSupertype(derivedType, baseType) ?: return null
+
+    val substitution = LinkedHashMap<TypeConstructor, TypeProjection>(substitutedType.arguments.size)
+    for ((param, arg) in baseType.constructor.parameters.zip(substitutedType.arguments)) {
+        substitution[param.typeConstructor] = arg
+    }
+
+    return substitution
+}
+
+fun KotlinTypeSubstitution.toSubstitutor(): TypeSubstitutor = TypeSubstitutor.create(this)
+
+fun TypeSubstitutor?.orEmpty(): TypeSubstitutor = this ?: TypeSubstitutor.EMPTY
