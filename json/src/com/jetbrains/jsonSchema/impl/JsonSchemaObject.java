@@ -37,7 +37,7 @@ import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
 /**
  * @author Irina.Chernushina on 8/28/2015.
  */
-public final class JsonSchemaObject extends UserDataHolderBase {
+public final class JsonSchemaObject {
   private static final Logger LOG = Logger.getInstance(JsonSchemaObject.class);
 
   public static final String MOCK_URL = "mock:///";
@@ -131,6 +131,8 @@ public final class JsonSchemaObject extends UserDataHolderBase {
   @Nullable private Map<String, Map<String, String>> myEnumMetadata;
 
   private boolean myForceCaseInsensitive = false;
+
+  private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
   public boolean isValidByExclusion() {
     return myIsValidByExclusion;
@@ -1158,7 +1160,7 @@ public final class JsonSchemaObject extends UserDataHolderBase {
 
   private ConcurrentMap<String, JsonSchemaObject> getComputedRefsStorage(@NotNull Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(
-      this,
+      myUserDataHolder,
       () -> CachedValueProvider.Result.create(new ConcurrentHashMap<String, JsonSchemaObject>(), JsonDependencyModificationTracker.forProject(project))
     );
   }
