@@ -4,26 +4,25 @@ package com.intellij.codeInsight.intention.impl.preview
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.ide.plugins.MultiPanel
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupBorder
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JEditorPane
-import javax.swing.JLabel
 import javax.swing.JPanel
 
 internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(BorderLayout(),
                                                                             { panel -> IntentionPreviewLoadingDecorator(panel, project) }) {
-  private var NO_PREVIEW_LABEL = JLabel(CodeInsightBundle.message("intention.preview.no.available.text") + "     ").also { setupLabel(it) }
-  private var LOADING_LABEL = JLabel(CodeInsightBundle.message("intention.preview.loading.preview") + "     ").also { setupLabel(it) }
+  private var NO_PREVIEW_LABEL = setupLabel(CodeInsightBundle.message("intention.preview.no.available.text"))
+  private var LOADING_LABEL = setupLabel(CodeInsightBundle.message("intention.preview.loading.preview"))
 
   var editors: List<EditorEx> = emptyList()
   var html: IntentionPreviewInfo.Html? = null
@@ -65,11 +64,7 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
         .build()
       editor.text = htmlInfo.content().toString()
       editor.size = Dimension(IntentionPreviewPopupUpdateProcessor.MIN_WIDTH, Integer.MAX_VALUE)
-      val panel = JPanel(BorderLayout())
-      panel.background = editor.background
-      panel.add(editor, BorderLayout.CENTER)
-      panel.border = JBEmptyBorder(5)
-      return panel
+      return wrapToPanel(editor)
     }
   }
 
@@ -83,9 +78,18 @@ internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(Bord
     const val NO_PREVIEW = -1
     const val LOADING_PREVIEW = -2
 
-    private fun setupLabel(label: JLabel) {
-      label.border = JBUI.Borders.empty(3)
-      label.background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+    private fun setupLabel(text: @Nls String): JComponent {
+      val label = SimpleColoredComponent()
+      label.append(text)
+      return wrapToPanel(label)
+    }
+
+    private fun wrapToPanel(component: JComponent): JPanel {
+      val panel = JPanel(BorderLayout())
+      panel.background = component.background
+      panel.add(component, BorderLayout.CENTER)
+      panel.border = JBEmptyBorder(5)
+      return panel
     }
   }
 }

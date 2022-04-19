@@ -28,10 +28,12 @@ import com.intellij.ui.popup.PopupPositionManager.Position.RIGHT
 import com.intellij.ui.popup.PopupPositionManager.PositionAdjuster
 import com.intellij.ui.popup.PopupUpdateProcessor
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import javax.swing.JWindow
 import kotlin.math.max
 import kotlin.math.min
 
@@ -45,6 +47,9 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
 
   private lateinit var popup: JBPopup
   private lateinit var component: IntentionPreviewComponent
+  private var justActivated: Boolean = false
+  private val popupWindow: JWindow?
+    get() = UIUtil.getParentOfType(JWindow::class.java, popup.content)
 
   override fun updatePopup(intentionAction: Any?) {
     if (!show) return
@@ -105,7 +110,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
       is IntentionPreviewDiffResult -> {
         val editors = IntentionPreviewModel.createEditors(project, result)
         if (editors.isEmpty()) {
-          select(NO_PREVIEW)
+          selectNoPreview()
           return
         }
 
@@ -116,8 +121,17 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
         select(index, html = result)
       }
       else -> {
-        select(NO_PREVIEW)
+        selectNoPreview()
       }
+    }
+  }
+
+  private fun selectNoPreview() {
+    if (justActivated) {
+      select(NO_PREVIEW)
+    }
+    else {
+      popupWindow?.isVisible = false
     }
   }
 
@@ -126,7 +140,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     originalPopup = popup
   }
 
-  fun isShown() = show
+  fun isShown() = show && popupWindow?.isVisible != false
 
   fun hide() {
     if (::popup.isInitialized && !popup.isDisposed) {
@@ -147,6 +161,8 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   }
 
   private fun select(index: Int, editors: List<EditorEx> = emptyList(), @NlsSafe html: IntentionPreviewInfo.Html? = null) {
+    justActivated = false
+    popupWindow?.isVisible = true
     component.stopLoading()
     component.editors = editors
     component.html = html
@@ -183,6 +199,13 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     }
 
     popup.pack(true, true)
+  }
+
+  /**
+   * Call when process is just activated via hotkey
+   */
+  fun activate() {
+    justActivated = true
   }
 
   companion object {

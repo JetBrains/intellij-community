@@ -645,24 +645,24 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         boolean shouldShow = !processor.isShown();
         EditorSettingsExternalizable.getInstance().setShowIntentionPreview(shouldShow);
         if (shouldShow) {
+          processor.activate();
           showPreview(that);
         }
         else {
           processor.hide();
-          advertisePopup(that, true);
         }
       }
     };
     ((WizardPopup)that.myListPopup).registerAction("showIntentionPreview",
                                                    KeymapUtil.getKeyStroke(IntentionPreviewPopupUpdateProcessor.Companion.getShortcutSet()), action);
-    advertisePopup(that, true);
+    advertisePopup(that);
   }
 
-  private static void advertisePopup(@NotNull IntentionPopup that, boolean show) {
+  private static void advertisePopup(@NotNull IntentionPopup that) {
     ListPopup popup = that.myListPopup;
     if (!popup.isDisposed()) {
       popup.setAdText(CodeInsightBundle.message(
-        show ? "intention.preview.adv.show.text" : "intention.preview.adv.hide.text",
+        "intention.preview.adv.toggle.text",
         IntentionPreviewPopupUpdateProcessor.Companion.getShortcutText()), SwingConstants.LEFT);
     }
   }
@@ -677,7 +677,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         updatePreviewPopup(that, ((IntentionActionWithTextCaching)selectedValue).getAction(), selectedIndex);
       }
     }
-    advertisePopup(that, false);
   }
 
   private static final class MyComponentHint extends LightweightHint {
