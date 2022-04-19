@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.nio.charset.Charset;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -72,7 +73,7 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
         }
 
         PsiElementKind kind = getKind(element, syntaxHighlighter);
-        TextRange valueRange = null; // the range inside element with the actual contents with quotes/comment prefixes stripped out
+        TextRange valueRange; // the range inside element with the actual contents with quotes/comment prefixes stripped out
         switch (kind) {
           case STRING:
             if (CHECK_FOR_NOT_ASCII_STRING_LITERAL || CHECK_FOR_DIFFERENT_LANGUAGES_IN_STRING) {
@@ -109,11 +110,11 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
           case OTHER:
             if (CHECK_FOR_NOT_ASCII_IN_ANY_OTHER_WORD) {
               String text = element.getText();
-              reportNonAsciiRange(element, text, holder, valueRange);
+              iterateWordsInLeafElement(text, range -> reportMixedLanguages(element, text, holder, range));
             }
             if (CHECK_FOR_DIFFERENT_LANGUAGES_IN_ANY_OTHER_WORD) {
               String text = element.getText();
-              reportMixedLanguages(element, text, holder, valueRange);
+              iterateWordsInLeafElement(text, range -> reportMixedLanguages(element, text, holder, range));
             }
             break;
         }
@@ -127,6 +128,22 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
         }
       }
     };
+  }
+
+  private static void iterateWordsInLeafElement(@NotNull String text, @NotNull Consumer<? super TextRange> consumer) {
+    int start = -1;
+    int c;
+    for (int i = 0; i <= text.length(); i += Character.charCount(c)) {
+      c = i == text.length() ? -1 : text.codePointAt(i);
+      boolean isIdentifierPart = Character.isJavaIdentifierPart(c);
+      if (isIdentifierPart && start == -1) {
+        start = i;
+      }
+      if (!isIdentifierPart && start != -1) {
+        consumer.accept(new TextRange(start, i));
+        start = -1;
+      }
+    }
   }
 
   // null means natural range
