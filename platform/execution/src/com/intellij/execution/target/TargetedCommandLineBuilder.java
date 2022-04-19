@@ -102,7 +102,7 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
     addParametersAt(index, ContainerUtil.map(parameters, p -> TargetValue.fixed(p)));
   }
 
-  private void addParametersAt(int index, @NotNull List<TargetValue<String>> parameters) {
+  public void addParametersAt(int index, @NotNull List<TargetValue<String>> parameters) {
     int i = 0;
     for (TargetValue<String> parameter : parameters) {
       addParameterAt(index + i++, parameter);
