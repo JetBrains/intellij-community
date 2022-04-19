@@ -87,7 +87,7 @@ private class GHCloneDialogExtensionComponent(project: Project) : GHCloneDialogE
       message("login.via.github.action"),
       {
         switchToLogin(account)
-        getLoginPanel()?.setPrimaryLoginUi()
+        getLoginPanel()?.setOAuthLoginUi()
       },
       showSeparatorAbove = !isExistingAccount
     )
@@ -120,7 +120,7 @@ private class GHCloneDialogLoginPanel(account: GithubAccount?) :
     JPanel(HorizontalLayout(0)).apply {
       border = JBEmptyBorder(getRegularPanelInsets())
 
-      val loginViaGHButton = JButton(message("login.via.github.action")).apply { addActionListener { setPrimaryLoginUi() } }
+      val loginViaGHButton = JButton(message("login.via.github.action")).apply { addActionListener { setOAuthLoginUi() } }
       val useTokenLink = ActionLink(message("link.label.use.token")) { setTokenUi() }
 
       add(loginViaGHButton)
@@ -142,16 +142,14 @@ private class GHCloneDialogLoginPanel(account: GithubAccount?) :
 
   fun setChooseLoginUi() = setContent(chooseLoginUiPanel)
 
-  fun setPrimaryLoginUi() = setOAuthUi()
+  fun setOAuthLoginUi() {
+    setContent(loginPanel)
+    loginPanel.setOAuthUi()
+  }
 
   fun setTokenUi() {
     setContent(loginPanel)
     loginPanel.setTokenUi() // after `loginPanel` is set as content to ensure correct focus behavior
-  }
-
-  fun setOAuthUi() {
-    setContent(loginPanel)
-    loginPanel.setOAuthUi()
   }
 
   private fun setContent(content: JComponent) {
