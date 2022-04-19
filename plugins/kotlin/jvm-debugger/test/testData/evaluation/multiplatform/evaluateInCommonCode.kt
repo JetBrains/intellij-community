@@ -21,6 +21,7 @@ fun bar() {
 
 // MODULE: jvm
 // FILE: evaluateInCommonCode.kt
+// DEPENDS_ON: common
 
 actual fun foo() = 1
 
