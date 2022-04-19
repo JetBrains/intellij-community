@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -21,18 +22,21 @@ import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTempl
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.range
+import org.jetbrains.kotlin.idea.refactoring.KotlinNamesValidator
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ui.KotlinExtractFunctionDialog
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetSibling
 import org.jetbrains.kotlin.idea.refactoring.introduce.validateExpressionElements
 import org.jetbrains.kotlin.idea.util.nonBlocking
+import org.jetbrains.kotlin.idea.util.psi.patternMatching.toRange
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ExtractKotlinFunctionHandler(
@@ -95,8 +99,7 @@ class ExtractKotlinFunctionHandler(
                 val methodOffset = extraction.declaration.navigationElement.textRange.endOffset
                 val callOffset = callIdentifier.textRange.endOffset
                 val preview = InplaceExtractUtils.createPreview(editor, methodRange, methodOffset, callRange.range!!, callOffset)
-                val templateState = ExtractMethodTemplate(editor, extraction.declaration, callIdentifier).runTemplate(LinkedHashSet())
-                callRange.dispose()
+                val templateState = ExtractMethodTemplate(editor, EXTRACT_FUNCTION, extraction.declaration, callIdentifier).runTemplate(LinkedHashSet())
                 Disposer.register(templateState, preview)
                 templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
                     override fun templateFinished(template: Template, brokenOff: Boolean) {
@@ -106,12 +109,32 @@ class ExtractKotlinFunctionHandler(
                     }
                 })
                 InplaceExtractUtils.addTemplateFinishedListener(templateState) {
-                    processDuplicates(extraction.duplicateReplacers, file.project, editor)
+                    val call = findSingleCallExpression(file, callRange.range)
+                    val errorMessage = getIdentifierError(it!!, call)
+                    if (errorMessage != null) {
+                            editorState.revert()
+                            ExtractKotlinFunctionHandler(allContainersEnabled, InplaceExtractionHelper(allContainersEnabled))
+                                .invoke(project, editor, descriptorWithConflicts.descriptor.extractionData.originalFile, null)
+                                //CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, EXTRACT_FUNCTION, null)
+                    } else {
+                        Disposer.dispose(preview)
+                        processDuplicates(extraction.duplicateReplacers, file.project, editor)
+                    }
                 }
                 onFinish(extraction)
             }
             val configuration = ExtractionGeneratorConfiguration(descriptor, ExtractionGeneratorOptions.DEFAULT)
             doRefactor(configuration, ::afterFinish)
+        }
+
+        private fun getIdentifierError(methodName: String, call: KtCallExpression?): String? {
+            return if (! KotlinNamesValidator().isIdentifier(methodName, null)) {
+                JavaRefactoringBundle.message("extract.method.error.invalid.name")
+            } else if (call?.getResolvedCall(call.analyze())?.resultingDescriptor == null) {
+                JavaRefactoringBundle.message("extract.method.error.method.conflict")
+            } else {
+                null
+            }
         }
 
         private fun findSingleCallExpression(file: KtFile, range: TextRange?): KtCallExpression? {

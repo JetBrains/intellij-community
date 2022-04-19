@@ -81,7 +81,7 @@ private fun installGotItTooltips(editor: Editor, navigationGotItRange: TextRange
   editor.caretModel.addCaretListener(caretListener, disposable)
 }
 
-class ExtractMethodTemplate(private val editor: Editor, private val method: PsiNamedElement, private val call: PsiElement)
+class ExtractMethodTemplate(private val editor: Editor, private val commandName: @Nls String, private val method: PsiNamedElement, private val call: PsiElement)
   : InplaceRefactoring(editor, method, method.project) {
 
   init {
@@ -116,7 +116,7 @@ class ExtractMethodTemplate(private val editor: Editor, private val method: PsiN
 
   override fun shouldSelectAll(): Boolean = false
 
-  override fun getCommandName(): String = ExtractMethodHandler.getRefactoringName()
+  override fun getCommandName(): String = commandName
 
 }
 
@@ -170,7 +170,7 @@ class InplaceMethodExtractor(private val editor: Editor,
                                       callIdentifier.textRange.endOffset)
       Disposer.register(disposable, codePreview)
 
-      val templateState = ExtractMethodTemplate(editor, method, callIdentifier).runTemplate(suggestedNames)
+      val templateState = ExtractMethodTemplate(editor, ExtractMethodHandler.getRefactoringName(), method, callIdentifier).runTemplate(suggestedNames)
       afterTemplateStart(templateState)
     } catch (e: Throwable) {
       Disposer.dispose(disposable)
