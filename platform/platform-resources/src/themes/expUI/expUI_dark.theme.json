@@ -155,7 +155,11 @@
     },
 
     "ComboBox": {
-      "ArrowButton.background": "Grey2"
+      "ArrowButton": {
+        "background": "Grey2",
+        "nonEditableBackground": "Grey3"
+      },
+      "nonEditableBackground": "Grey3"
     },
 
     "ComboPopup.border": "1,1,1,1,#43454A",
@@ -180,7 +184,8 @@
         "modifyingValueForeground": "Blue8",
         "errorMessageForeground": "Red6",
         "exceptionForeground": "Red6"
-      }
+      },
+      "EvaluateExpression.background": "Grey3"
     },
 
     "FileColor": {

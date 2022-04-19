@@ -159,7 +159,11 @@
 
     "ComboBox": {
       "background": "Grey13",
-      "ArrowButton.background": "Grey13"
+      "disabledBackground": "Grey12",
+      "ArrowButton": {
+        "background": "Grey13",
+        "nonEditableBackground": "Grey13"
+      }
     },
 
     "ComboPopup.border": {
@@ -197,7 +201,8 @@
         "modifyingValueForeground": "Blue5",
         "errorMessageForeground": "errorForeground",
         "exceptionForeground": "errorForeground"
-      }
+      },
+      "EvaluateExpression.background": "Grey13"
     },
 
     "DragAndDrop": {
