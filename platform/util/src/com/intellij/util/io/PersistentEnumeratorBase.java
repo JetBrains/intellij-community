@@ -177,10 +177,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         }
         if (sign != myVersion.correctlyClosedMagic) {
           myStorage.close();
-
-          if (sign != myVersion.dirtyMagic) {
-            throw new VersionUpdatedException(file, Integer.toHexString(myVersion.correctlyClosedMagic), Integer.toHexString(sign));
-          }
+          if (sign != myVersion.dirtyMagic) throw new VersionUpdatedException(file);
           throw new CorruptedException(file);
         }
       }

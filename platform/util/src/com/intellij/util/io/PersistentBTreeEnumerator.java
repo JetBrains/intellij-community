@@ -5,6 +5,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.io.keyStorage.AppendableObjectStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -111,31 +112,33 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     myInlineKeysNoMapping = dataDescriptor instanceof InlineKeyDescriptor;
     myExternalKeysNoMapping = !(dataDescriptor instanceof InlineKeyDescriptor);
 
-    try {
-      lockStorageWrite();
-      storeVars(false);
-      initBtree(false);
-      storeBTreeVars(false);
-    }
-    catch (IOException e) {
+    if (myBTree == null) {
       try {
-        close();  // cleanup already initialized state
+        lockStorageWrite();
+        storeVars(false);
+        initBtree(false);
+        storeBTreeVars(false);
       }
-      catch (Throwable ignored) {
+      catch (IOException e) {
+        try {
+          close();  // cleanup already initialized state
+        }
+        catch (Throwable ignored) {
+        }
+        throw e;
       }
-      throw e;
-    }
-    catch (Throwable e) {
-      LOG.info(e);
-      try {
-        close();  // cleanup already initialized state
+      catch (Throwable e) {
+        LOG.info(e);
+        try {
+          close();  // cleanup already initialized state
+        }
+        catch (Throwable ignored) {
+        }
+        throw new CorruptedException(file);
       }
-      catch (Throwable ignored) {
+      finally {
+        unlockStorageWrite();
       }
-      throw new CorruptedException(file);
-    }
-    finally {
-      unlockStorageWrite();
     }
 
     diagnose();

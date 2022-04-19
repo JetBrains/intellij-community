@@ -5,7 +5,6 @@ import com.intellij.util.indexing.impl.IndexDebugProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @ApiStatus.Internal
@@ -43,13 +42,6 @@ public final class StorageLockContext {
 
   boolean useChannelCache() {
     return myCacheChannels;
-  }
-
-  public Lock readLock() {
-    return myUseReadWriteLock ? myLock.readLock() : myLock.writeLock();
-  }
-  public Lock writeLock() {
-    return myLock.writeLock();
   }
 
   public void lockRead() {
