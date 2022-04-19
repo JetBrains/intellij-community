@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.codeInliner
 
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.idea.analysis.computeTypeInContext
+import org.jetbrains.kotlin.idea.caches.resolve.computeTypeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
