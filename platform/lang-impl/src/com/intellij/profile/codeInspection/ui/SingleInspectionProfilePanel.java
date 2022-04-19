@@ -803,7 +803,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           }
         };
 
-        final GridBagConstraintHolder constraint = new GridBagConstraintHolder();
+        final GridBagConstraintBuilder constraint = new GridBagConstraintBuilder();
 
         JLabel severityLabel = new JLabel(InspectionsBundle.message("inspection.severity"));
         severityPanel.add(severityLabel, constraint.anchorStart().fillY().insets(10, 0, 10, 0).get());
@@ -907,7 +907,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         severityPanelWeightY = 0.3;
       }
 
-      final GridBagConstraintHolder constraint = new GridBagConstraintHolder();
+      final GridBagConstraintBuilder constraint = new GridBagConstraintBuilder();
       myOptionsPanel.add(severityPanel, constraint.anchorStart().weight(1.0, severityPanelWeightY).fillXY().insets(SECTION_GAP, 0, 0, 0).get());
 
       GuiUtils.enableChildren(myOptionsPanel, isThoughOneNodeEnabled(nodes));
@@ -1057,7 +1057,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     final JPanel northPanel = new JPanel(new GridBagLayout());
     northPanel.setBorder(JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0));
     myProfileFilter.setPreferredSize(new Dimension(20, myProfileFilter.getPreferredSize().height));
-    final GridBagConstraintHolder constraint = new GridBagConstraintHolder();
+    final GridBagConstraintBuilder constraint = new GridBagConstraintBuilder();
     northPanel.add(myProfileFilter, constraint.weight(0.5, 1).anchorTrailing().fillX().get());
     northPanel.add(createTreeToolbarPanel().getComponent(), constraint.growXY().get());
 
@@ -1272,7 +1272,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       myScopesAndSeveritiesTable = scopesAndSeveritiesTable;
       setLayout(new GridBagLayout());
       setBorder(JBUI.Borders.emptyTop(IdeBorderFactory.TITLED_BORDER_INDENT));
-      final GridBagConstraintHolder constraint = new GridBagConstraintHolder();
+      final GridBagConstraintBuilder constraint = new GridBagConstraintBuilder();
       add(myOptionsLabel, constraint.growY().anchorStart().get());
       add(new JSeparator(SwingConstants.HORIZONTAL), constraint.growXY().anchorCenter().fillX().insets(2, TitledSeparator.SEPARATOR_LEFT_INSET, 0, TitledSeparator.SEPARATOR_RIGHT_INSET).get());
 

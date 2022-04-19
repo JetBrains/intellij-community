@@ -78,7 +78,7 @@ import com.intellij.util.TriConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.textCompletion.TextCompletionUtil;
-import com.intellij.util.ui.GridBagConstraintHolder;
+import com.intellij.util.ui.GridBagConstraintBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import org.jdom.JDOMException;
@@ -405,7 +405,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myReplacePanel.setVisible(myReplace);
 
     final GridBagLayout centerPanelLayout = new GridBagLayout();
-    final var centerConstraint = new GridBagConstraintHolder();
+    final var centerConstraint = new GridBagConstraintBuilder();
     final JPanel centerPanel = new JPanel(centerPanelLayout);
     centerPanel.add(searchPanel, centerConstraint.newLine().fillXY().growXY().get());
     centerPanel.add(myReplacePanel, centerConstraint.newLine().fillXY().growXY().get());
@@ -549,7 +549,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
     // Search editor panel, 1st splitter element
     final var searchEditorPanel = new JPanel(new GridBagLayout());
-    final var searchConstraint = new GridBagConstraintHolder();
+    final var searchConstraint = new GridBagConstraintBuilder();
 
     // Search panel options
     myTargetComboBox = new LinkComboBox(SSRBundle.message("complete.match.variable.name"));
@@ -599,7 +599,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myComponentsWithEditorBackground.add(myFilterPanel.getTable());
 
     final JPanel searchPanel = new JPanel(new GridBagLayout());
-    final var northConstraint = new GridBagConstraintHolder();
+    final var northConstraint = new GridBagConstraintBuilder();
     searchPanel.add(searchTemplateLabel, northConstraint.insets(6, DEFAULT_HGAP, 6, 0).get());
     searchPanel.add(myOptionsToolbar.getComponent(), northConstraint.growX().anchorEnd().insets(6, 0, 6, DEFAULT_HGAP).get());
     searchPanel.add(mySearchWrapper, northConstraint.newLine().fillXY().growXY().width(2).insets(0, 0, 0, 0).get());
@@ -629,7 +629,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
     myReplaceCriteriaEdit = createEditor(true);
     myReplaceWrapper = new JPanel(new GridBagLayout());
-    final var wrapperConstraint = new GridBagConstraintHolder();
+    final var wrapperConstraint = new GridBagConstraintBuilder();
     myComponentsWithEditorBackground.add(myReplaceWrapper);
 
     myReplaceWrapper.add(myReplaceCriteriaEdit, wrapperConstraint.width(4).fillXY().growXY().get());
@@ -638,7 +638,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myReplaceWrapper.add(myReformat, wrapperConstraint.get());
 
     final JPanel replacePanel = new JPanel(new GridBagLayout());
-    final var replaceConstraint = new GridBagConstraintHolder();
+    final var replaceConstraint = new GridBagConstraintBuilder();
     replacePanel.add(replacementTemplateLabel, replaceConstraint.fillX().growX().insets(16, DEFAULT_HGAP, 14, 0).get());
     replacePanel.add(myReplaceWrapper, replaceConstraint.newLine().fillXY().growXY().noInsets().get());
     return replacePanel;
