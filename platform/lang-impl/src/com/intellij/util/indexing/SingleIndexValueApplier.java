@@ -10,11 +10,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
-class SingleIndexValueApplier<CachedFileData> {
+class SingleIndexValueApplier<FileIndexMetaData> {
   private final FileBasedIndexImpl myIndex;
   @NotNull final ID<?, ?> indexId;
   final int inputId;
-  private final @Nullable CachedFileData myCachedFileData;
+  private final @Nullable FileIndexMetaData myFileIndexMetaData;
   final long mapInputTime;
   @NotNull final Supplier<Boolean> storageUpdate;
   @NotNull private final String fileInfo;
@@ -24,7 +24,7 @@ class SingleIndexValueApplier<CachedFileData> {
   SingleIndexValueApplier(@NotNull FileBasedIndexImpl index,
                           @NotNull ID<?, ?> indexId,
                           int inputId,
-                          @Nullable CachedFileData cachedFileData,
+                          @Nullable FileIndexMetaData fileIndexMetaData,
                           @NotNull Supplier<Boolean> update,
                           @NotNull VirtualFile file,
                           @NotNull FileContent currentFC,
@@ -32,7 +32,7 @@ class SingleIndexValueApplier<CachedFileData> {
     myIndex = index;
     this.indexId = indexId;
     this.inputId = inputId;
-    myCachedFileData = cachedFileData;
+    myFileIndexMetaData = fileIndexMetaData;
     this.mapInputTime = mapInputTime;
     storageUpdate = update;
     fileInfo = FileBasedIndexImpl.getFileInfoLogString(inputId, file, currentFC);
@@ -71,26 +71,26 @@ class SingleIndexValueApplier<CachedFileData> {
       if (!isMock) {
         ConcurrencyUtil.withLock(myIndex.myReadLock, () -> {
           //noinspection unchecked
-          UpdatableIndex<?, ?, FileContent, CachedFileData> index =
-            (UpdatableIndex<?, ?, FileContent, CachedFileData>)myIndex.getIndex(indexId);
-          setIndexedState(index, myCachedFileData, inputId, wasIndexProvidedByExtension());
+          UpdatableIndex<?, ?, FileContent, FileIndexMetaData> index =
+            (UpdatableIndex<?, ?, FileContent, FileIndexMetaData>)myIndex.getIndex(indexId);
+          setIndexedState(index, myFileIndexMetaData, inputId, wasIndexProvidedByExtension());
         });
       }
     }
     return true;
   }
 
-  private static <CachedFileData> void setIndexedState(@NotNull UpdatableIndex<?, ?, FileContent, CachedFileData> index,
-                                                       @Nullable CachedFileData fileData,
-                                                       int inputId,
-                                                       boolean indexWasProvided) {
+  private static <FileIndexMetaData> void setIndexedState(@NotNull UpdatableIndex<?, ?, FileContent, FileIndexMetaData> index,
+                                                          @Nullable FileIndexMetaData fileData,
+                                                          int inputId,
+                                                          boolean indexWasProvided) {
     if (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
       //noinspection unchecked
-      ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?, CachedFileData>)index)
-        .setIndexedStateForFileOnCachedData(inputId, fileData, indexWasProvided);
+      ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?, FileIndexMetaData>)index)
+        .setIndexedStateForFileOnFileIndexMetaData(inputId, fileData, indexWasProvided);
     }
     else {
-      index.setIndexedStateForFileOnCachedData(inputId, fileData);
+      index.setIndexedStateForFileOnFileIndexMetaData(inputId, fileData);
     }
   }
 }

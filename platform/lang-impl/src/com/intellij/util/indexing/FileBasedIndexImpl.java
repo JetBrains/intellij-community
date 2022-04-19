@@ -1567,11 +1567,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @Nullable("null in case index update is not necessary or the update has failed")
-  private <FileData> SingleIndexValueApplier<FileData> createSingleIndexValueApplier(@NotNull ID<?, ?> indexId,
-                                                                                     @NotNull VirtualFile file,
-                                                                                     int inputId,
-                                                                                     @NotNull FileContent currentFC,
-                                                                                     boolean writeValuesSeparately) {
+  private <FileIndexMetaData> SingleIndexValueApplier<FileIndexMetaData> createSingleIndexValueApplier(@NotNull ID<?, ?> indexId,
+                                                                                                       @NotNull VirtualFile file,
+                                                                                                       int inputId,
+                                                                                                       @NotNull FileContent currentFC,
+                                                                                                       boolean writeValuesSeparately) {
     if (doTraceStubUpdates(indexId)) {
       LOG.info("index " + indexId + " update requested for " + getFileInfoLogString(inputId, file, currentFC));
     }
@@ -1582,7 +1582,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     increaseLocalModCount();
 
     //noinspection unchecked
-    UpdatableIndex<?, ?, FileContent, FileData> index = (UpdatableIndex<?, ?, FileContent, FileData>)getIndex(indexId);
+    UpdatableIndex<?, ?, FileContent, FileIndexMetaData> index = (UpdatableIndex<?, ?, FileContent, FileIndexMetaData>)getIndex(indexId);
 
     ensureFileBelongsToIndexableFilter(inputId, file);
 
@@ -1602,7 +1602,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     try {
       Supplier<Boolean> storageUpdate;
       long mapInputTime = System.nanoTime();
-      FileData fileData = index.getFileIndexMetaData(currentFC);
+      FileIndexMetaData fileIndexMetaData = index.getFileIndexMetaData(currentFC);
       try {
         storageUpdate = index.mapInputAndPrepareUpdate(inputId, currentFC);
       }
@@ -1626,11 +1626,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         mapInputTime = System.nanoTime() - mapInputTime;
       }
 
-      SingleIndexValueApplier<FileData> applier = new SingleIndexValueApplier<>(
+      SingleIndexValueApplier<FileIndexMetaData> applier = new SingleIndexValueApplier<>(
         this,
         indexId,
         inputId,
-        fileData,
+        fileIndexMetaData,
         storageUpdate,
         file,
         currentFC,

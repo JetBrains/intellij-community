@@ -61,7 +61,7 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
   }
 
   @Override
-  public void setIndexedStateForFileOnCachedData(int fileId, @Nullable Void data) {
+  public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable Void data) {
     IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId);
   }
 

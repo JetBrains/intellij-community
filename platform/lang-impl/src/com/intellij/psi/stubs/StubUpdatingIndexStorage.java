@@ -145,8 +145,8 @@ final class StubUpdatingIndexStorage extends TransientFileContentIndex<Integer, 
   }
 
   @Override
-  public void setIndexedStateForFileOnCachedData(int fileId, @Nullable StubUpdatingIndexStorage.Data fileData) {
-    super.setIndexedStateForFileOnCachedData(fileId, fileData);
+  public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable StubUpdatingIndexStorage.Data fileData) {
+    super.setIndexedStateForFileOnFileIndexMetaData(fileId, fileData);
     LOG.assertTrue(fileData != null, "getFileIndexMetaData doesn't return null");
     setBinaryBuilderConfiguration(fileId, fileData);
   }

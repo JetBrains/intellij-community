@@ -220,7 +220,7 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
-    public void setIndexedStateForFileOnCachedData(int fileId, @Nullable Void unused) {
+    public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable Void unused) {
       throw new UnsupportedOperationException();
     }
 

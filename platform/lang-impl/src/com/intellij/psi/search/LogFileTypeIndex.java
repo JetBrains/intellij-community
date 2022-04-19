@@ -109,7 +109,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
   }
 
   @Override
-  public void setIndexedStateForFileOnCachedData(int fileId, @Nullable Void data) {
+  public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable Void data) {
     IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId);
   }
 
