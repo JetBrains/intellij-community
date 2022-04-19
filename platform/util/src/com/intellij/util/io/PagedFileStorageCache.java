@@ -13,9 +13,9 @@ class PagedFileStorageCache {
   private static class CachedBuffer {
     private final DirectBufferWrapper myWrapper;
     private final int myLastChangeCount;
-    private final long myLastPage;
+    private final int myLastPage;
 
-    private CachedBuffer(DirectBufferWrapper wrapper, int count, long page) {
+    private CachedBuffer(DirectBufferWrapper wrapper, int count, int page) {
       myWrapper = wrapper;
       myLastChangeCount = count;
       myLastPage = page;
@@ -52,11 +52,11 @@ class PagedFileStorageCache {
     return null;
   }
 
-  /* race */ void updateCache(long page, DirectBufferWrapper byteBufferWrapper, int mappingChangeCount) {
+  synchronized void updateCache(long page, DirectBufferWrapper byteBufferWrapper, int mappingChangeCount) {
     if (myLastBuffer != null && myLastBuffer.myLastPage != page) {
       myLastBuffer3 = myLastBuffer2;
       myLastBuffer2 = myLastBuffer;
     }
-    myLastBuffer = new CachedBuffer(byteBufferWrapper, mappingChangeCount, page);
+    myLastBuffer = new CachedBuffer(byteBufferWrapper, mappingChangeCount, (int) page);
   }
 }
