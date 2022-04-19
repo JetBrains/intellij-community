@@ -55,9 +55,7 @@ internal abstract class BaseLoginDialog(
     val emptyProgressIndicator = EmptyProgressIndicator(modalityState)
     Disposer.register(disposable, Disposable { emptyProgressIndicator.cancel() })
 
-    startGettingToken()
     loginPanel.acquireLoginAndToken(emptyProgressIndicator)
-      .completionOnEdt(modalityState) { finishGettingToken() }
       .successOnEdt(modalityState) { (login, token) ->
         _login = login
         _token = token
@@ -68,7 +66,4 @@ internal abstract class BaseLoginDialog(
         if (!CompletableFutureUtil.isCancellation(it)) startTrackingValidation()
       }
   }
-
-  protected open fun startGettingToken() = Unit
-  protected open fun finishGettingToken() = Unit
 }
