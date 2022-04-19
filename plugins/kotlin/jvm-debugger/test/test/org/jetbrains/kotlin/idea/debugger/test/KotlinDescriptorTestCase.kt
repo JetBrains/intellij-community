@@ -42,13 +42,14 @@ import org.jetbrains.kotlin.idea.debugger.test.util.LogPropagator
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
+import org.jetbrains.kotlin.idea.test.TestFiles.*
 import org.jetbrains.kotlin.test.TargetBackend
 import org.junit.ComparisonFailure
 import java.io.File
 
 internal const val KOTLIN_LIBRARY_NAME = "KotlinJavaRuntime"
 internal const val TEST_LIBRARY_NAME = "TestLibrary"
-internal const val COMMON_MODULE_NAME = "common"
+internal const val COMMON_SOURCES_DIR = "commonSrc"
 internal const val JVM_MODULE_NAME = "jvm"
 
 abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
@@ -74,7 +75,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
         testAppDirectory = tmpDir("debuggerTestSources")
         jvmSourcesOutputDirectory = File(testAppDirectory, ExecutionTestCase.SOURCES_DIRECTORY_NAME).apply { mkdirs() }
-        commonSourcesOutputDirectory = File(testAppDirectory, COMMON_MODULE_NAME).apply { mkdirs() }
+        commonSourcesOutputDirectory = File(testAppDirectory, COMMON_SOURCES_DIR).apply { mkdirs() }
 
         librarySrcDirectory = File(testAppDirectory, "libSrc").apply { mkdirs() }
         libraryOutputDirectory = File(testAppDirectory, "lib").apply { mkdirs() }
@@ -121,12 +122,17 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
                 if (useIrBackend()) TargetBackend.JVM_IR_WITH_IR_EVALUATOR else TargetBackend.JVM_WITH_IR_EVALUATOR
         }
 
+    protected open fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>) {
+    }
+
     @Suppress("UNUSED_PARAMETER")
     fun doTest(unused: String) {
         val wholeFile = testDataFile()
         val wholeFileContents = FileUtil.loadFile(wholeFile, true)
 
         val testFiles = createTestFiles(wholeFile, wholeFileContents)
+        configureProjectByTestFiles(testFiles)
+
         val preferences = DebuggerPreferences(myProject, wholeFileContents)
 
         oldValues = SettingsMutators.mutate(preferences)
@@ -242,10 +248,10 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     }
 
     private fun createTestFiles(wholeFile: File, wholeFileContents: String): TestFiles {
-        val testFiles = org.jetbrains.kotlin.idea.test.TestFiles.createTestFiles(
+        val testFiles = createTestFiles(
             wholeFile.name,
             wholeFileContents,
-            object : org.jetbrains.kotlin.idea.test.TestFiles.TestFileFactory<DebuggerTestModule, TestFileWithModule> {
+            object : TestFileFactory<DebuggerTestModule, TestFileWithModule> {
                 override fun createFile(
                     module: DebuggerTestModule?,
                     fileName: String,
@@ -260,10 +266,10 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
                     dependencies: MutableList<String>,
                     friends: MutableList<String>
                 ) =
-                    if (name == DebuggerTestModule.Common.name)
-                        DebuggerTestModule.Common
-                    else
-                        DebuggerTestModule.Jvm
+                    when {
+                        name == JVM_MODULE_NAME -> DebuggerTestModule.Jvm
+                        else -> DebuggerTestModule.Common(name)
+                    }
             }
         )
 
@@ -370,7 +376,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 class TestFiles(val originalFile: File, val wholeFile: TestFile, files: List<TestFileWithModule>) : List<TestFileWithModule> by files
 
 sealed class DebuggerTestModule(name: String) : KotlinBaseTest.TestModule(name, emptyList(), emptyList())  {
-    object Common : DebuggerTestModule(COMMON_MODULE_NAME)
+    class Common(name: String) : DebuggerTestModule(name)
     object Jvm : DebuggerTestModule(JVM_MODULE_NAME)
 }
 
