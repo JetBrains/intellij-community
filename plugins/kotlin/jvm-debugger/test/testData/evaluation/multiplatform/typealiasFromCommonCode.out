@@ -1,8 +1,8 @@
 // IGNORE_BACKEND: JVM_WITH_IR_EVALUATOR, JVM_IR_WITH_IR_EVALUATOR
-LineBreakpoint created at typealiasFromCommonCode.kt:11
+LineBreakpoint created at typealiasFromCommonCode.kt:12
 Run Java
 Connected to the target VM
-typealiasFromCommonCode.kt:11
+typealiasFromCommonCode.kt:12
 Compile bytecode for value
 Disconnected from the target VM
 
