@@ -15,7 +15,12 @@ import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.StrictSuccess
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.WeakSuccess
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult
+import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.core.util.isMultiLine
 import org.jetbrains.kotlin.idea.inspections.PublicApiImplicitTypeInspection
@@ -32,8 +37,6 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getAllAccessibleVariables
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.*
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnificationResult.StrictSuccess
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnificationResult.WeakSuccess
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -185,7 +188,7 @@ class DuplicateInfo(
 )
 
 fun ExtractableCodeDescriptor.findDuplicates(): List<DuplicateInfo> {
-    fun processWeakMatch(match: WeakSuccess, newControlFlow: ControlFlow): Boolean {
+    fun processWeakMatch(match: WeakSuccess<*>, newControlFlow: ControlFlow): Boolean {
         val valueCount = controlFlow.outputValues.size
 
         val weakMatches = HashMap(match.weakMatches)
@@ -215,7 +218,7 @@ fun ExtractableCodeDescriptor.findDuplicates(): List<DuplicateInfo> {
         return currentValuesToNew.size == valueCount && weakMatches.isEmpty()
     }
 
-    fun getControlFlowIfMatched(match: KotlinPsiUnificationResult.Success): ControlFlow? {
+    fun getControlFlowIfMatched(match: KotlinPsiUnificationResult.Success<*>): ControlFlow? {
         val analysisResult = extractionData.copy(originalRange = match.range).performAnalysis()
         if (analysisResult.status != AnalysisResult.Status.SUCCESS) return null
 

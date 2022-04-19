@@ -8,12 +8,15 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange.Empty
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.*
+import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.refactoring.introduce.ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiRange.Empty
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnificationResult.*
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -38,34 +41,6 @@ import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import java.util.*
-
-sealed interface KotlinPsiUnificationResult {
-    object Failure : KotlinPsiUnificationResult {
-        override val isMatched: Boolean
-            get() = false
-    }
-
-    sealed interface Success : KotlinPsiUnificationResult {
-        val range: KotlinPsiRange
-        val substitution: Map<UnifierParameter, KtElement>
-
-        override val isMatched: Boolean
-            get() = true
-    }
-
-    class StrictSuccess(
-        override val range: KotlinPsiRange,
-        override val substitution: Map<UnifierParameter, KtElement>
-    ) : Success
-
-    class WeakSuccess(
-        override val range: KotlinPsiRange,
-        override val substitution: Map<UnifierParameter, KtElement>,
-        val weakMatches: Map<KtElement, KtElement>
-    ) : Success
-
-    val isMatched: Boolean
-}
 
 class UnifierParameter(
     val descriptor: DeclarationDescriptor,
@@ -974,3 +949,10 @@ class KotlinPsiUnifier(
 
 fun PsiElement?.matches(e: PsiElement?): Boolean = KotlinPsiUnifier.DEFAULT.unify(this, e).isMatched
 fun KotlinPsiRange.matches(r: KotlinPsiRange): Boolean = KotlinPsiUnifier.DEFAULT.unify(this, r).isMatched
+
+fun KotlinPsiRange.match(scope: PsiElement, unifier: KotlinPsiUnifier): List<Success<UnifierParameter>> {
+    return match(scope) { target, pattern ->
+        @Suppress("UNCHECKED_CAST")
+        unifier.unify(target, pattern) as? Success<UnifierParameter>
+    }
+}

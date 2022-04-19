@@ -16,10 +16,10 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler
 import com.intellij.ui.ReplacePromptDialog
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.refactoring.introduce.getPhysicalTextRange
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiRange
 
 fun KotlinPsiRange.highlight(project: Project, editor: Editor): RangeHighlighter? {
     val textRange = getPhysicalTextRange()
