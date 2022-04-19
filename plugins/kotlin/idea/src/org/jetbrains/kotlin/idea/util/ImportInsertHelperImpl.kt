@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.project.findAnalyzerServices
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
+import org.jetbrains.kotlin.idea.util.application.runAction
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
@@ -77,11 +78,11 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
     override fun importDescriptor(
         element: KtElement,
         descriptor: DeclarationDescriptor,
-        actionRunningMode: ActionRunningMode,
+        runImmediately: Boolean,
         forceAllUnderImport: Boolean,
         aliasName: Name?,
     ): ImportDescriptorResult {
-        val importer = Importer(element, actionRunningMode)
+        val importer = Importer(element, runImmediately)
         return if (forceAllUnderImport) {
             importer.importDescriptorWithStarImport(descriptor)
         } else {
@@ -89,13 +90,13 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
         }
     }
 
-    override fun importPsiClass(element: KtElement, psiClass: PsiClass, actionRunningMode: ActionRunningMode): ImportDescriptorResult {
-        return Importer(element, actionRunningMode).importPsiClass(psiClass)
+    override fun importPsiClass(element: KtElement, psiClass: PsiClass, runImmediately: Boolean): ImportDescriptorResult {
+        return Importer(element, runImmediately).importPsiClass(psiClass)
     }
 
     private inner class Importer(
         private val element: KtElement,
-        private val actionRunningMode: ActionRunningMode
+        private val runImmediately: Boolean
     ) {
         private val file = element.containingKtFile
         private val resolutionFacade = file.getResolutionFacade()
@@ -323,7 +324,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
             val addedImport = addImport(parentFqName, true)
 
             if (alreadyImported(targetDescriptor, resolutionFacade.getFileResolutionScope(file), targetFqName) == null) {
-                actionRunningMode.runAction { addedImport.delete() }
+                runAction(runImmediately) { addedImport.delete() }
                 return ImportDescriptorResult.FAIL
             }
             dropRedundantExplicitImports(parentFqName)
@@ -388,7 +389,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
                 if (targets.any { it is PackageViewDescriptor }) continue // do not drop import of package
                 val classDescriptor = targets.filterIsInstance<ClassDescriptor>().firstOrNull()
                 importsToCheck.addIfNotNull(classDescriptor?.importableFqName)
-                actionRunningMode.runAction { import.delete() }
+                runAction(runImmediately) { import.delete() }
             }
 
             if (importsToCheck.isNotEmpty()) {
@@ -442,8 +443,10 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
         private fun KtReferenceExpression.resolveTargets(): Collection<DeclarationDescriptor> =
             this.getImportableTargets(resolutionFacade.analyze(this, BodyResolveMode.PARTIAL))
 
-        private fun addImport(fqName: FqName, allUnder: Boolean, aliasName: Name? = null): KtImportDirective = actionRunningMode.runAction {
-            addImport(project, file, fqName, allUnder, aliasName)
+        private fun addImport(fqName: FqName, allUnder: Boolean, aliasName: Name? = null): KtImportDirective {
+            return runAction(runImmediately) {
+                addImport(project, file, fqName, allUnder, aliasName)
+            }
         }
     }
 

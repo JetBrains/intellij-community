@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.imports.getImportableTargets
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.application.runAction
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -100,9 +101,9 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
     fun process(
         element: KtElement,
         elementFilter: (PsiElement) -> FilterResult = { FilterResult.PROCESS },
-        actionRunningMode: ActionRunningMode = ActionRunningMode.RUN_IN_CURRENT_THREAD
+        runImmediately: Boolean = true
     ): KtElement {
-        return process(listOf(element), elementFilter, actionRunningMode).single()
+        return process(listOf(element), elementFilter, runImmediately).single()
     }
 
     @JvmOverloads
@@ -110,7 +111,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
         element: KtElement,
         elementFilter: (PsiElement) -> FilterResult = { FilterResult.PROCESS },
     ): KtElement {
-        return process(element, elementFilter, ActionRunningMode.RUN_IN_CURRENT_THREAD)
+        return process(element, elementFilter, runImmediately = true)
     }
 
     @JvmOverloads
@@ -119,7 +120,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
         startOffset: Int,
         endOffset: Int,
         additionalFilter: (PsiElement) -> FilterResult = { FilterResult.PROCESS },
-        actionRunningMode: ActionRunningMode = ActionRunningMode.RUN_IN_CURRENT_THREAD
+        runImmediately: Boolean = true
     ) {
         val rangeMarker = runReadAction {
             val documentManager = PsiDocumentManager.getInstance(file.project)
@@ -161,7 +162,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
             val filter = { element: PsiElement ->
                 minOf(rangeFilter(element), additionalFilter(element))
             }
-            process(listOf(file), filter, actionRunningMode)
+            process(listOf(file), filter, runImmediately)
         } finally {
             runReadAction { rangeMarker.dispose() }
         }
@@ -177,10 +178,10 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
     fun process(
         elements: Iterable<KtElement>,
         elementFilter: (PsiElement) -> FilterResult = { FilterResult.PROCESS },
-        actionRunningMode: ActionRunningMode = ActionRunningMode.RUN_IN_CURRENT_THREAD
+        runImmediately: Boolean = true
     ): Collection<KtElement> = runReadAction { elements.groupBy(KtElement::getContainingKtFile) }.flatMap { (file, elements) ->
         try {
-            shortenReferencesInFile(file, elements, elementFilter, actionRunningMode)
+            shortenReferencesInFile(file, elements, elementFilter, runImmediately)
         } catch (e: Throwable) {
             if (e is ControlFlowException) throw e
 
@@ -213,7 +214,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
         file: KtFile,
         elements: List<KtElement>,
         elementFilter: (PsiElement) -> FilterResult,
-        actionRunningMode: ActionRunningMode = ActionRunningMode.RUN_IN_CURRENT_THREAD
+        runImmediately: Boolean = true
     ): Collection<KtElement> {
         //TODO: that's not correct since we have options!
         val elementsToUse = dropNestedElements(elements)
@@ -263,7 +264,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
             }
 
             // step 3: shorten elements that can be shortened right now
-            actionRunningMode.runAction {
+            runAction(runImmediately) {
                 processors.forEach { it.shortenElements(elementSetToUpdate = elementsToUse, options = options) }
             }
             var anyChange = false
@@ -271,7 +272,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
             val descriptorsToImport = runReadAction {
                 processors.flatMap { it.getDescriptorsToImport() }.toSet()
             }
-            actionRunningMode.runAction {
+            runAction(runImmediately) {
                 for (descriptor in descriptorsToImport) {
                     assert(descriptor !in failedToImportDescriptors)
 

@@ -77,3 +77,17 @@ fun <T> executeInBackgroundWithProgress(project: Project? = null, @NlsContexts.P
         ThrowableComputable { block() }, title, true, project
     )
 }
+
+inline fun <T> runAction(runImmediately: Boolean, crossinline action: () -> T): T {
+    if (runImmediately) {
+        return action()
+    }
+
+    var result: T? = null
+    ApplicationManager.getApplication().invokeAndWait {
+        CommandProcessor.getInstance().runUndoTransparentAction {
+            result = ApplicationManager.getApplication().runWriteAction<T> { action() }
+        }
+    }
+    return result!!
+}

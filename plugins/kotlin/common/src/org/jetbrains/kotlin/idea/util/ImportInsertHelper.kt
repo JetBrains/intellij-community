@@ -25,7 +25,7 @@ abstract class ImportInsertHelper {
     abstract fun importDescriptor(
         element: KtElement,
         descriptor: DeclarationDescriptor,
-        actionRunningMode: ActionRunningMode = ActionRunningMode.RUN_IN_CURRENT_THREAD,
+        runImmediately: Boolean = true,
         forceAllUnderImport: Boolean = false,
         aliasName: Name? = null,
     ): ImportDescriptorResult
@@ -34,31 +34,20 @@ abstract class ImportInsertHelper {
     fun importDescriptor(
         file: KtFile,
         descriptor: DeclarationDescriptor,
-        actionRunningMode: ActionRunningMode = ActionRunningMode.RUN_IN_CURRENT_THREAD,
+        runImmediately: Boolean = true,
         forceAllUnderImport: Boolean = false
     ): ImportDescriptorResult = importDescriptor(
         element = file,
         descriptor = descriptor,
-        actionRunningMode = actionRunningMode,
+        runImmediately = runImmediately,
         forceAllUnderImport = forceAllUnderImport
     )
 
-    fun importDescriptor(
-        file: KtFile,
-        descriptor: DeclarationDescriptor,
-        forceAllUnderImport: Boolean = false
-    ): ImportDescriptorResult = importDescriptor(
-        file as KtElement,
-        descriptor,
-        ActionRunningMode.RUN_IN_CURRENT_THREAD,
-        forceAllUnderImport
-    )
+    fun importDescriptor(file: KtFile, descriptor: DeclarationDescriptor, forceAllUnderImport: Boolean = false): ImportDescriptorResult {
+        return importDescriptor(file as KtElement, descriptor, runImmediately = true, forceAllUnderImport)
+    }
 
-    abstract fun importPsiClass(
-        element: KtElement,
-        psiClass: PsiClass,
-        actionRunningMode: ActionRunningMode = ActionRunningMode.RUN_IN_CURRENT_THREAD,
-    ): ImportDescriptorResult
+    abstract fun importPsiClass(element: KtElement, psiClass: PsiClass, runImmediately: Boolean = true): ImportDescriptorResult
 
     companion object {
         @JvmStatic

@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.nj2k.postProcessing.processings
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.util.ActionRunningMode
 import org.jetbrains.kotlin.nj2k.JKImportStorage
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.postProcessing.FileBasedPostProcessing
@@ -31,11 +30,11 @@ class ShortenReferenceProcessing : FileBasedPostProcessing() {
                     rangeMarker.startOffset,
                     rangeMarker.endOffset,
                     filter,
-                    actionRunningMode = ActionRunningMode.RUN_IN_EDT
+                    runImmediately = false
                 )
             }
         } else {
-            ShortenReferences.DEFAULT.process(file, filter, actionRunningMode = ActionRunningMode.RUN_IN_EDT)
+            ShortenReferences.DEFAULT.process(file, filter, runImmediately = false)
         }
     }
 }
