@@ -6,11 +6,11 @@ import java.awt.*;
 /**
  * Util around {@link GridBagConstraints} to avoid long repetitive configuration blocs.
  */
-public class GridBagConstraintHolder {
+public class GridBagConstraintBuilder {
 
   private final GridBagConstraints constraint;
 
-  public GridBagConstraintHolder() {
+  public GridBagConstraintBuilder() {
     constraint = new GridBagConstraints();
     constraint.gridx = -1;
     constraint.gridy = 0;
@@ -23,7 +23,7 @@ public class GridBagConstraintHolder {
   /**
    * Makes elements resize horizontally.
    */
-  public GridBagConstraintHolder fillX() {
+  public GridBagConstraintBuilder fillX() {
     constraint.fill = GridBagConstraints.HORIZONTAL;
     return this;
   }
@@ -31,7 +31,7 @@ public class GridBagConstraintHolder {
   /**
    * Makes elements resize vertically.
    */
-  public GridBagConstraintHolder fillY() {
+  public GridBagConstraintBuilder fillY() {
     constraint.fill = GridBagConstraints.VERTICAL;
     return this;
   }
@@ -39,7 +39,7 @@ public class GridBagConstraintHolder {
   /**
    * Makes elements resize horizontally and vertically.
    */
-  public GridBagConstraintHolder fillXY() {
+  public GridBagConstraintBuilder fillXY() {
     constraint.fill = GridBagConstraints.BOTH;
     return this;
   }
@@ -47,7 +47,7 @@ public class GridBagConstraintHolder {
   /**
    * Stops elements resizing.
    */
-  public GridBagConstraintHolder noFill() {
+  public GridBagConstraintBuilder noFill() {
     constraint.fill = GridBagConstraints.NONE;
     return this;
   }
@@ -55,7 +55,7 @@ public class GridBagConstraintHolder {
   /**
    * Puts elements in a new line.
    */
-  public GridBagConstraintHolder newLine() {
+  public GridBagConstraintBuilder newLine() {
     constraint.gridy += 1;
     return this;
   }
@@ -63,7 +63,7 @@ public class GridBagConstraintHolder {
   /**
    * Makes cells grow horizontally.
    */
-  public GridBagConstraintHolder growX() {
+  public GridBagConstraintBuilder growX() {
     constraint.weightx = 1.0;
     constraint.weighty = 0.0;
     return this;
@@ -72,7 +72,7 @@ public class GridBagConstraintHolder {
   /**
    * Makes cells grow according to weightx and weighty.
    */
-  public GridBagConstraintHolder weight(double weightx, double weighty) {
+  public GridBagConstraintBuilder weight(double weightx, double weighty) {
     constraint.weightx = weightx;
     constraint.weighty = weighty;
     return this;
@@ -81,7 +81,7 @@ public class GridBagConstraintHolder {
   /**
    * Makes cells grow vertically.
    */
-  public GridBagConstraintHolder growY() {
+  public GridBagConstraintBuilder growY() {
     constraint.weightx = 0.0;
     constraint.weighty = 1.0;
     return this;
@@ -90,7 +90,7 @@ public class GridBagConstraintHolder {
   /**
    * Makes cells grow horizontally and vertically.
    */
-  public GridBagConstraintHolder growXY() {
+  public GridBagConstraintBuilder growXY() {
     constraint.weightx = 1.0;
     constraint.weighty = 1.0;
     return this;
@@ -99,7 +99,7 @@ public class GridBagConstraintHolder {
   /**
    * Stops cells growing.
    */
-  public GridBagConstraintHolder noGrow() {
+  public GridBagConstraintBuilder noGrow() {
     constraint.weightx = 0.0;
     constraint.weighty = 0.0;
     return this;
@@ -108,7 +108,7 @@ public class GridBagConstraintHolder {
   /**
    * Changes the width of cells within the grid.
    */
-  public GridBagConstraintHolder width(int w) {
+  public GridBagConstraintBuilder width(int w) {
     constraint.gridwidth = w;
     return this;
   }
@@ -116,7 +116,7 @@ public class GridBagConstraintHolder {
   /**
    * Removes cells insets.
    */
-  public GridBagConstraintHolder noInsets() {
+  public GridBagConstraintBuilder noInsets() {
     constraint.insets.set(0, 0, 0, 0);
     return this;
   }
@@ -124,7 +124,7 @@ public class GridBagConstraintHolder {
   /**
    * Adds insets to cells.
    */
-  public GridBagConstraintHolder insets(int top, int left, int bottom, int right) {
+  public GridBagConstraintBuilder insets(int top, int left, int bottom, int right) {
     constraint.insets.set(top, left, bottom, right);
     return this;
   }
@@ -132,7 +132,7 @@ public class GridBagConstraintHolder {
   /**
    * Makes cells stick to the end of the line.
    */
-  public GridBagConstraintHolder anchorEnd() {
+  public GridBagConstraintBuilder anchorEnd() {
     constraint.anchor = GridBagConstraints.LINE_END;
     return this;
   }
@@ -140,7 +140,7 @@ public class GridBagConstraintHolder {
   /**
    * Makes cells stick to the start of the line.
    */
-  public GridBagConstraintHolder anchorStart() {
+  public GridBagConstraintBuilder anchorStart() {
     constraint.anchor = GridBagConstraints.LINE_START;
     return this;
   }
@@ -148,7 +148,7 @@ public class GridBagConstraintHolder {
   /**
    * Makes cells stick to the center of the line.
    */
-  public GridBagConstraintHolder anchorCenter() {
+  public GridBagConstraintBuilder anchorCenter() {
     constraint.anchor = GridBagConstraints.CENTER;
     return this;
   }
@@ -157,7 +157,7 @@ public class GridBagConstraintHolder {
    * Makes cells stick horizontally along the trailing edge.
    * See {@link GridBagConstraints#BASELINE_TRAILING}.
    */
-  public GridBagConstraintHolder anchorTrailing() {
+  public GridBagConstraintBuilder anchorTrailing() {
     constraint.anchor = GridBagConstraints.BASELINE_TRAILING;
     return this;
   }
