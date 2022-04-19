@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("unused")
-package org.jetbrains.kotlin.util
+@file:JvmName("AnnotationDescriptorUtils")
+package org.jetbrains.kotlin.base.fe10.analysis
 
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor

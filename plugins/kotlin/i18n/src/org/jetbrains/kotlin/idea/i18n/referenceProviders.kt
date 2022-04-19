@@ -12,6 +12,8 @@ import com.intellij.psi.PsiReferenceProvider
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.util.ProcessingContext
 import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.kotlin.base.fe10.analysis.findAnnotation
+import org.jetbrains.kotlin.base.fe10.analysis.getStringValue
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
@@ -33,8 +35,6 @@ import org.jetbrains.kotlin.resolve.calls.model.ExpressionValueArgument
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
-import org.jetbrains.kotlin.util.findAnnotation
-import org.jetbrains.kotlin.util.getStringValue
 
 private val PROPERTY_KEY = FqName(AnnotationUtil.PROPERTY_KEY)
 private val PROPERTY_KEY_RESOURCE_BUNDLE = Name.identifier(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER)

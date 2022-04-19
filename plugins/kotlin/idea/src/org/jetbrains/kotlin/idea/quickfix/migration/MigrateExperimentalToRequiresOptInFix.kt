@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix.migration
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.base.fe10.analysis.getEnumValue
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors.DEPRECATION
 import org.jetbrains.kotlin.diagnostics.Errors.DEPRECATION_ERROR
@@ -18,7 +19,6 @@ import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
-import org.jetbrains.kotlin.util.getEnumValue
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**

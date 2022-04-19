@@ -30,6 +30,8 @@ import org.intellij.plugins.intelliLang.inject.config.Injection
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace
 import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx
+import org.jetbrains.kotlin.base.fe10.analysis.findAnnotation
+import org.jetbrains.kotlin.base.fe10.analysis.getStringValue
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -49,8 +51,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.util.findAnnotation
-import org.jetbrains.kotlin.util.getStringValue
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.intellij.lang.annotations.Language as LanguageAnnotation
