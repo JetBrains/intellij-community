@@ -249,8 +249,7 @@ public final class DirectBufferWrapper {
 
   public void unlock() {
     //myReferenceTraces.pop();
-    int currentRefs = myReferences.decrementAndGet();
-    assert currentRefs >= 0;
+    assert myReferences.decrementAndGet() >= 0;
   }
 
   @NotNull PagedFileStorage getFile() {

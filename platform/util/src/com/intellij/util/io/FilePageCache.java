@@ -58,13 +58,6 @@ public final class FilePageCache {
 
   private static long maxDirectMemory() {
     try {
-      Class<?> aClass = Class.forName("jdk.internal.misc.VM");
-      Method maxDirectMemory = aClass.getMethod("maxDirectMemory");
-      return (Long)maxDirectMemory.invoke(null);
-    }
-    catch (Throwable ignore) { }
-
-    try {
       Class<?> aClass = Class.forName("sun.misc.VM");
       Method maxDirectMemory = aClass.getMethod("maxDirectMemory");
       return (Long)maxDirectMemory.invoke(null);
@@ -74,14 +67,6 @@ public final class FilePageCache {
     try {
       Class<?> aClass = Class.forName("java.nio.Bits");
       Field maxMemory = aClass.getDeclaredField("maxMemory");
-      maxMemory.setAccessible(true);
-      return (Long)maxMemory.get(null);
-    }
-    catch (Throwable ignore) { }
-
-    try {
-      Class<?> aClass = Class.forName("java.nio.Bits");
-      Field maxMemory = aClass.getDeclaredField("MAX_MEMORY");
       maxMemory.setAccessible(true);
       return (Long)maxMemory.get(null);
     }
@@ -110,12 +95,6 @@ public final class FilePageCache {
       protected boolean removeEldestEntry(Map.Entry<Long, DirectBufferWrapper> eldest) {
         assert mySegmentsAccessLock.isHeldByCurrentThread();
         return mySize > mySizeLimit;
-      }
-
-      @Override
-      public DirectBufferWrapper put(Long key, @NotNull DirectBufferWrapper wrapper) {
-        mySize += wrapper.getLength();
-        return super.put(key, wrapper);
       }
 
       @Nullable
@@ -183,8 +162,6 @@ public final class FilePageCache {
         finally {
           mySegmentsAccessLock.unlock();
         }
-
-        disposeRemovedSegments(null);
         return notYetRemoved;
       }
 
@@ -215,6 +192,7 @@ public final class FilePageCache {
       mySegmentsAccessLock.lock();
       try {
         mySegments.put(key, wrapper);
+        mySize += wrapper.getLength();
       }
       finally {
         mySegmentsAccessLock.unlock();
@@ -282,6 +260,22 @@ public final class FilePageCache {
            : DirectBufferWrapper.readWriteDirect(owner, off);
   }
 
+  @NotNull
+  private Map<Long, DirectBufferWrapper> getBuffersOrderedForOwner(@NotNull PagedFileStorage fileStorage) {
+    mySegmentsAccessLock.lock();
+    try {
+      Map<Long, DirectBufferWrapper> mineBuffers = new TreeMap<>();
+      for (Map.Entry<Long, DirectBufferWrapper> entry : mySegments.entrySet()) {
+        if (entry.getValue().getFile() == fileStorage) {
+          mineBuffers.put(entry.getKey(), entry.getValue());
+        }
+      }
+      return mineBuffers;
+    }
+    finally {
+      mySegmentsAccessLock.unlock();
+    }
+  }
 
   @NotNull
   private Map<Long, DirectBufferWrapper> getBuffersOrderedForOwner(@NotNull StorageLockContext storageLockContext) {
@@ -302,7 +296,7 @@ public final class FilePageCache {
   }
 
   void unmapBuffersForOwner(PagedFileStorage fileStorage) {
-    Map<Long, DirectBufferWrapper> buffers = getBuffersOrderedForOwner(fileStorage.getStorageLockContext());
+    final Map<Long, DirectBufferWrapper> buffers = getBuffersOrderedForOwner(fileStorage);
 
     if (!buffers.isEmpty()) {
       mySegmentsAccessLock.lock();
