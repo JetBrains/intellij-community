@@ -159,10 +159,10 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
   @Override
   public boolean checkBytesAreTheSame(final int addr, Data value) throws IOException {
     final boolean[] sameValue = new boolean[1];
-    try (OutputStream comparer = buildOldComparerStream(addr, sameValue)) {
-      DataOutput out = new DataOutputStream(comparer);
-      myDataDescriptor.save(out, value);
-    }
+    OutputStream comparer = buildOldComparerStream(addr, sameValue);
+    DataOutput out = new DataOutputStream(comparer);
+    myDataDescriptor.save(out, value);
+    comparer.close();
     return sameValue[0];
   }
 
