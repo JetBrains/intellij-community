@@ -6,4 +6,7 @@ import com.intellij.util.PlatformUtils
 object KotlinPlatformUtils {
     @JvmStatic
     val isAndroidStudio: Boolean = PlatformUtils.getPlatformPrefix() == "AndroidStudio"
+
+    @JvmStatic
+    val isCidr: Boolean = PlatformUtils.isCidr()
 }

@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
+import org.jetbrains.kotlin.base.util.KotlinPlatformUtils;
 import org.jetbrains.kotlin.cli.common.arguments.*;
 import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.idea.KotlinBundle;
@@ -41,7 +42,6 @@ import org.jetbrains.kotlin.idea.facet.DescriptionListCellRenderer;
 import org.jetbrains.kotlin.idea.facet.KotlinFacet;
 import org.jetbrains.kotlin.idea.jps.SetupKotlinJpsPluginBeforeCompileTask;
 import org.jetbrains.kotlin.idea.roots.RootUtilsKt;
-import org.jetbrains.kotlin.idea.util.CidrUtil;
 import org.jetbrains.kotlin.idea.util.application.ApplicationUtilsKt;
 import org.jetbrains.kotlin.platform.IdePlatformKind;
 import org.jetbrains.kotlin.platform.PlatformUtilKt;
@@ -146,7 +146,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
 
         fillVersions();
 
-        if (CidrUtil.isRunningInCidrIde()) {
+        if (KotlinPlatformUtils.isCidr()) {
             keepAliveCheckBox.setVisible(false);
             k2jvmPanel.setVisible(false);
             k2jsPanel.setVisible(false);

@@ -8,7 +8,7 @@ import com.intellij.facet.FacetTypeRegistry
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.kotlin.idea.util.isRunningInCidrIde
+import org.jetbrains.kotlin.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.KotlinIcons
 import javax.swing.Icon
 
@@ -17,6 +17,7 @@ abstract class KotlinFacetType<C : KotlinFacetConfiguration> :
     companion object {
         const val ID = "kotlin-language"
         val TYPE_ID = FacetTypeId<KotlinFacet>(ID)
+
         @NlsSafe
         const val NAME = "Kotlin"
 
@@ -24,7 +25,12 @@ abstract class KotlinFacetType<C : KotlinFacetConfiguration> :
             get() = FacetTypeRegistry.getInstance().findFacetType(TYPE_ID)
     }
 
-    override fun isSuitableModuleType(moduleType: ModuleType<*>) = if (isRunningInCidrIde) true else moduleType is JavaModuleType
+    override fun isSuitableModuleType(moduleType: ModuleType<*>): Boolean {
+        return when {
+            KotlinPlatformUtils.isCidr -> true
+            else -> moduleType is JavaModuleType
+        }
+    }
 
     override fun getIcon(): Icon = KotlinIcons.SMALL_LOGO
 }

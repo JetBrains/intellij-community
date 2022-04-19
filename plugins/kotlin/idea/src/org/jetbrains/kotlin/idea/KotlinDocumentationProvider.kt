@@ -34,6 +34,7 @@ import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
+import org.jetbrains.kotlin.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -53,7 +54,6 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
-import org.jetbrains.kotlin.idea.util.isRunningInCidrIde
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
@@ -731,7 +731,10 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
             element: PsiElement,
             originalElement: PsiElement?
         ): String? {
-            if (isRunningInCidrIde) return null // no Java support in CIDR
+            if (KotlinPlatformUtils.isCidr) {
+                // No Java support in CIDR
+                return null
+            }
 
             val originalInfo = JavaDocumentationProvider().getQuickNavigateInfo(element, originalElement)
             if (originalInfo != null) {
