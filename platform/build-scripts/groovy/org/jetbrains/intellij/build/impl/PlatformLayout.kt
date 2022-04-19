@@ -28,11 +28,11 @@ class PlatformLayout: BaseLayout() {
   }
 
   fun withProjectLibrary(libraryName: String) {
-    includedProjectLibraries.add(ProjectLibraryData(libraryName, "", ProjectLibraryData.PackMode.MERGED))
+    includedProjectLibraries.add(ProjectLibraryData(libraryName, null, ProjectLibraryData.PackMode.MERGED))
   }
 
   fun withProjectLibrary(libraryName: String, packMode: ProjectLibraryData.PackMode) {
-    includedProjectLibraries.add(ProjectLibraryData(libraryName, "", packMode))
+    includedProjectLibraries.add(ProjectLibraryData(libraryName, null, packMode))
   }
 
   fun withProjectLibrary(data: ProjectLibraryData) {

@@ -315,7 +315,7 @@ final class PlatformModules {
       @Override
       void accept(JpsLibrary lib, JpsModule module) {
         String name = lib.name
-        layout.includedProjectLibraries.addOrGet(new ProjectLibraryData(name, "", CUSTOM_PACK_MODE.getOrDefault(name, PackMode.MERGED)))
+        layout.includedProjectLibraries.addOrGet(new ProjectLibraryData(name, null, CUSTOM_PACK_MODE.getOrDefault(name, PackMode.MERGED)))
           .dependentModules.computeIfAbsent("core", LIST_PRODUCER).add(module.name)
       }
     })

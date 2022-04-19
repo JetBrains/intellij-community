@@ -297,7 +297,7 @@ final class JarPackager {
         sourceList.add(JarBuilder.createZipSource(file, new IntConsumer() {
           @Override
           void accept(int size) {
-            ProjectLibraryData libraryData = new ProjectLibraryData(library.name, "", PackMode.MERGED, "explicitUnpack")
+            ProjectLibraryData libraryData = new ProjectLibraryData(library.name, null, PackMode.MERGED, "explicitUnpack")
             projectStructureMapping.add(new ProjectLibraryEntry(jarFile, libraryData, file, size))
           }
         }))

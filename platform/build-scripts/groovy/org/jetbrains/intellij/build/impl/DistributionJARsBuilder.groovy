@@ -151,7 +151,7 @@ final class DistributionJARsBuilder {
 
             String name = library.name
             ProjectLibraryData.PackMode packMode = PlatformModules.CUSTOM_PACK_MODE.getOrDefault(name, ProjectLibraryData.PackMode.MERGED)
-            result.addOrGet(new ProjectLibraryData(name, "", packMode))
+            result.addOrGet(new ProjectLibraryData(name, null, packMode))
               .dependentModules.computeIfAbsent(Objects.requireNonNull(plugin.directoryName), PlatformModules.LIST_PRODUCER).add(moduleName)
           }
         })
@@ -385,7 +385,7 @@ final class DistributionJARsBuilder {
         List<DistributionFileEntry> get() {
           List<Source> sources = new ArrayList<>()
           List<DistributionFileEntry> result = new ArrayList<>()
-          ProjectLibraryData libraryData = new ProjectLibraryData("Ant", "", ProjectLibraryData.PackMode.MERGED)
+          ProjectLibraryData libraryData = new ProjectLibraryData("Ant", null, ProjectLibraryData.PackMode.MERGED)
           buildHelper.copyDir(
             context.paths.communityHomeDir.resolve("lib/ant"), antDir,
             new Predicate<Path>() {
@@ -1365,7 +1365,7 @@ final class DistributionJARsBuilder {
           entries.add(new ModuleLibraryFileEntry(artifactFile, ((JpsModuleReference)parentReference).moduleName, null, 0))
         }
         else {
-          ProjectLibraryData libraryData = new ProjectLibraryData(library.name, "", ProjectLibraryData.PackMode.MERGED)
+          ProjectLibraryData libraryData = new ProjectLibraryData(library.name, null, ProjectLibraryData.PackMode.MERGED)
           entries.add(new ProjectLibraryEntry(artifactFile, libraryData, null, 0))
         }
       }

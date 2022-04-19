@@ -9,6 +9,12 @@ class ProjectLibraryData @JvmOverloads constructor(
   val packMode: PackMode,
   val reason: String? = null,
 ) {
+  init {
+    require(outPath == null || !outPath.isBlank()) {
+      "Empty outPath is not allowed, please pass null. libraryName=$libraryName"
+    }
+  }
+
   // plugin to list of modules that uses the library
   val dependentModules: MutableMap<String, List<String>> = TreeMap()
 
