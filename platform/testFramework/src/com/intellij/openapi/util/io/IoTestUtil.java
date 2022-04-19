@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -174,7 +175,11 @@ public final class IoTestUtil {
     assertTrue(new File(junction).delete());
   }
 
-  public static @NotNull File createSubst(@NotNull String target) {
+  /**
+   * (Windows-only)
+   * creates "subst" drive for target, perform some tests on it and deletes it
+   */
+  public static void performTestOnWindowsSubst(@NotNull String target, @NotNull Consumer<? super @NotNull File> createdSubstTester) {
     assertTrue(SystemInfo.isWindows);
     File targetFile = new File(target);
     assertTrue(targetFile.getPath(), targetFile.isDirectory());
@@ -182,11 +187,13 @@ public final class IoTestUtil {
     runCommand("subst", substRoot, targetFile.getPath());
     File rootFile = new File(substRoot + "\\");
     assertTrue("target=" + targetFile + ", subst=" + rootFile, rootFile.isDirectory());
-    return rootFile;
-  }
 
-  public static void deleteSubst(@NotNull String substRoot) {
-    runCommand("subst", StringUtil.trimEnd(substRoot, '\\'), "/d");
+    try {
+      createdSubstTester.accept(rootFile);
+    }
+    finally {
+      runCommand("subst", StringUtil.trimEnd(substRoot, '\\'), "/d");
+    }
   }
 
   public static void createFifo(@NotNull String path) {

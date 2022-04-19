@@ -462,30 +462,30 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val target = tempDir.newDirectory("top")
     val file = tempDir.newFile("top/sub/test.txt")
 
-    val substRoot = IoTestUtil.createSubst(target.path)
-    VfsRootAccess.allowRootAccess(testRootDisposable, substRoot.path)
-    val vfsRoot = fs.findFileByIoFile(substRoot)!!
-    watchedPaths += substRoot.path
+    IoTestUtil.performTestOnWindowsSubst(target.path) { substRoot ->
+      VfsRootAccess.allowRootAccess(testRootDisposable, substRoot.path)
+      val vfsRoot = fs.findFileByIoFile(substRoot)!!
+      watchedPaths += substRoot.path
 
-    val substFile = File(substRoot, "sub/test.txt")
-    refresh(target)
-    refresh(substRoot)
+      val substFile = File(substRoot, "sub/test.txt")
+      refresh(target)
+      refresh(substRoot)
 
-    try {
-      watch(substRoot)
-      assertEvents({ file.writeText("new content") }, mapOf(substFile to 'U'))
+      try {
+        watch(substRoot)
+        assertEvents({ file.writeText("new content") }, mapOf(substFile to 'U'))
 
-      val request = watch(target)
-      assertEvents({ file.writeText("updated content") }, mapOf(file to 'U', substFile to 'U'))
-      assertEvents({ assertTrue(file.delete()) }, mapOf(file to 'D', substFile to 'D'))
-      unwatch(request)
+        val request = watch(target)
+        assertEvents({ file.writeText("updated content") }, mapOf(file to 'U', substFile to 'U'))
+        assertEvents({ assertTrue(file.delete()) }, mapOf(file to 'D', substFile to 'D'))
+        unwatch(request)
 
-      assertEvents({ file.writeText("re-creation") }, mapOf(substFile to 'C'))
-    }
-    finally {
-      IoTestUtil.deleteSubst(substRoot.path)
-      (vfsRoot as NewVirtualFile).markDirty()
-      fs.refresh(false)
+        assertEvents({ file.writeText("re-creation") }, mapOf(substFile to 'C'))
+      }
+      finally {
+        (vfsRoot as NewVirtualFile).markDirty()
+        fs.refresh(false)
+      }
     }
   }
 

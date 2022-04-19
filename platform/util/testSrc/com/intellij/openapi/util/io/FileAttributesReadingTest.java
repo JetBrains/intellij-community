@@ -429,8 +429,7 @@ public abstract class FileAttributesReadingTest {
     assumeWindows();
 
     tempDir.newFile("file.txt");  // just to populate a directory
-    File substRoot = createSubst(tempDir.getRoot().getPath());
-    try {
+    performTestOnWindowsSubst(tempDir.getRoot().getPath(), substRoot ->{
       FileAttributes attributes = getAttributes(substRoot);
       assertEquals(substRoot + " " + attributes, FileAttributes.Type.DIRECTORY, attributes.getType());
       assertFalse(substRoot + " " + attributes, attributes.isSymLink());
@@ -442,10 +441,7 @@ public abstract class FileAttributesReadingTest {
       File file = children[0];
       String target = resolveSymLink(file);
       assertEquals(file.getPath(), target);
-    }
-    finally {
-      deleteSubst(substRoot.getPath());
-    }
+    });
   }
 
   @Test
