@@ -757,8 +757,6 @@
     <renameInputValidator implementation="org.jetbrains.plugins.groovy.GroovyRenameInputValidator"/>
     <lang.namesValidator implementationClass="org.jetbrains.plugins.groovy.lang.GroovyNamesValidator" language="Groovy"/>
 
-    <fileBasedIndex implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex"/>
-
     <patterns.patternClass className="org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns" alias="groovy"/>
 
     <stacktrace.fold substring="at org.codehaus.groovy."/>

@@ -4,10 +4,14 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.stubs.ShareableStubTreeSerializer;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
@@ -243,6 +247,20 @@ public final class GrTraitUtil {
       }
       catch (IOException e) {
         return List.of();
+      }
+    });
+
+  public static final VirtualFileGist<ByteArraySequence> GROOVY_TRAIT_METHODS_GIST =
+    GistManager.getInstance().newVirtualFileGist("GROOVY_TRAIT_METHODS", 1, new GroovyTraitMethodsFileIndex().getValueExternalizer(), (project, file) -> {
+      try {
+        @Nullable PsiJavaFileStub stub = GroovyTraitMethodsFileIndex.index(file, file.contentsToByteArray());
+        if (stub == null) return null;
+        BufferExposingByteArrayOutputStream buffer = new BufferExposingByteArrayOutputStream();
+        new ShareableStubTreeSerializer().serialize(stub, buffer);
+        return buffer.toByteArraySequence();
+      }
+      catch (IOException e) {
+        return ByteArraySequence.EMPTY;
       }
     });
 }
