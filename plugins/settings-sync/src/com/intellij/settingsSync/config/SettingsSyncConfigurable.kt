@@ -5,6 +5,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -196,10 +198,28 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       }
     }
 
-    if (result != RESULT_CANCEL) {
-      SettingsSyncSettings.getInstance().syncEnabled = false
+    when(result) {
+      RESULT_DISABLE->SettingsSyncSettings.getInstance().syncEnabled = false
+      RESULT_REMOVE_DATA_AND_DISABLE-> disableAndRemoveData()
     }
     updateStatusInfo()
+  }
+
+  private fun disableAndRemoveData() {
+    val remoteCommunicator = SettingsSyncMain.getInstance().getRemoteCommunicator()
+    if (remoteCommunicator is CloudConfigServerCommunicator) {
+      object : Task.Modal(null, message("disable.remove.data.title"), false) {
+
+        override fun run(indicator: ProgressIndicator) {
+          SettingsSyncSettings.getInstance().syncEnabled = false
+          remoteCommunicator.delete()
+        }
+
+        override fun onThrowable(error: Throwable) {
+          showError(statusLabel, message("disable.remove.data.failure"), error.localizedMessage)
+        }
+      }.queue()
+    }
   }
 
   private fun showError(component: JComponent, message: @Nls String, details: @Nls String) {
