@@ -12,5 +12,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.java.guiForms.designer" />
     <orderEntry type="module" module-name="intellij.devkit.core" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>
