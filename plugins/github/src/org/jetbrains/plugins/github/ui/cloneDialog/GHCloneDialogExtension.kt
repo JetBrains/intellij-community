@@ -72,10 +72,10 @@ private class GHCloneDialogExtensionComponent(project: Project) : GHCloneDialogE
 
   override fun createLoginPanel(account: GithubAccount?, cancelHandler: () -> Unit): JComponent =
     GHCloneDialogLoginPanel(account).apply {
-      Disposer.register(this@GHCloneDialogExtensionComponent, this)
-
       val chooseLoginUiHandler = { setChooseLoginUi() }
       loginPanel.setCancelHandler(if (getAccounts().isEmpty()) chooseLoginUiHandler else cancelHandler)
+    }.also {
+      Disposer.register(this, it)
     }
 
   override fun createAccountMenuLoginActions(account: GithubAccount?): Collection<AccountMenuItem.Action> =
@@ -128,9 +128,9 @@ private class GHCloneDialogLoginPanel(account: GithubAccount?) :
       add(useTokenLink)
     }
   val loginPanel = CloneDialogLoginPanel(account).apply {
-    Disposer.register(this@GHCloneDialogLoginPanel, this)
-
     setServer(GithubServerPath.DEFAULT_HOST, false)
+  }.also {
+    Disposer.register(this, it)
   }
 
   init {
