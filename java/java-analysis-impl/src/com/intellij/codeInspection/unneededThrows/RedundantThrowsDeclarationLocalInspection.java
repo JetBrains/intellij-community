@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -24,6 +24,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
@@ -288,7 +289,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
     @Contract(pure = true)
     private boolean isInOverriddenOf(@NotNull final PsiMethod method) {
-      if (!isMethodPossiblyOverridden(method)) return false;
+      if (!PsiUtil.canBeOverridden(method)) return false;
 
       final Predicate<PsiMethod> methodContainsThrownExceptions = m -> !ArrayUtil.isEmpty(m.getThrowsList().getReferencedTypes());
 
@@ -320,7 +321,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
       return ContainerUtil.exists(method.getThrowsList().getReferencedTypes(), myType::isAssignableFrom);
     }
 
-    public boolean isCaught(@NotNull final PsiMethod method) {
+    boolean isCaught(@NotNull final PsiMethod method) {
       if (method.getUseScope() instanceof GlobalSearchScope) {
         final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(method.getProject());
         final PsiSearchHelper.SearchCostResult search = searchHelper.isCheapEnoughToSearch(method.getName(),
@@ -340,21 +341,6 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
         if (!catchSectionAbsent) return true;
       }
       return false;
-    }
-
-    @Contract(pure = true)
-    private static boolean isMethodPossiblyOverridden(@NotNull final PsiMethod method) {
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) return false;
-
-      final PsiModifierList modifierList = method.getModifierList();
-
-      return !(modifierList.hasModifierProperty(PsiModifier.PRIVATE) ||
-               modifierList.hasModifierProperty(PsiModifier.STATIC) ||
-               modifierList.hasModifierProperty(PsiModifier.FINAL) ||
-               method.isConstructor() ||
-               containingClass instanceof PsiAnonymousClass ||
-               containingClass.hasModifierProperty(PsiModifier.FINAL));
     }
 
     @NotNull PsiJavaCodeReferenceElement getReference() {
