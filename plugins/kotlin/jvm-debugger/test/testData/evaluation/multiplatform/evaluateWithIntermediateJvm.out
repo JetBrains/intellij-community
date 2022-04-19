@@ -1,0 +1,8 @@
+LineBreakpoint created at common.kt:7 lambdaOrdinal = 1
+Run Java
+Connected to the target VM
+common.kt:7
+Compile bytecode for debugMe(42)
+Disconnected from the target VM
+
+Process finished with exit code 0
