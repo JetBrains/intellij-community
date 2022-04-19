@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.PlatformUtils
 import javax.swing.UIManager.LookAndFeelInfo
 
 // separate service to avoid using LafManager in the EditorColorsManagerImpl initialization
@@ -23,13 +24,25 @@ internal class UiThemeProviderListManager {
 
     const val DEFAULT_LIGHT_THEME_ID = "JetBrainsLightTheme"
 
-    var lafNameOrder: Map<String, Int> = java.util.Map.of(
-      "IntelliJ Light", 0,
-      "macOS Light", 1,
-      "Windows 10 Light", 1,
-      "Darcula", 2,
-      "High contrast", 3
-    )
+    var lafNameOrder: Map<String, Int> = if (PlatformUtils.isRider()) {
+      java.util.Map.of(
+        "Rider Dark", 0,
+        "Rider Light", 1,
+        "IntelliJ Light", 2,
+        "macOS Light", 3,
+        "Windows 10 Light", 3,
+        "Darcula", 4,
+        "High contrast", 5
+      )
+    } else {
+      java.util.Map.of(
+        "IntelliJ Light", 0,
+        "macOS Light", 1,
+        "Windows 10 Light", 1,
+        "Darcula", 2,
+        "High contrast", 3
+      )
+    }
 
     fun sortThemes(list: MutableList<out LookAndFeelInfo>) {
       list.sortWith { t1: LookAndFeelInfo, t2: LookAndFeelInfo ->
