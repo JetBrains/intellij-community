@@ -466,7 +466,7 @@ private class MethodSourceChecker(val problemsHolder: ProblemsHolder) {
           createAddAnnotationActions(containingClass, annotationRequest(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INSTANCE,
                                                                         constantAttribute("value", value.text))))
       }
-      actions.addAll(sourceProvider.createMakeStaticActions())
+      actions.addAll(createModifierActions(sourceProvider, modifierRequest(JvmModifier.STATIC, true)))
       val intention = IntentionWrapper.wrapToQuickFixes(actions, sourceProvider.javaPsi.containingFile).toTypedArray()
       problemsHolder.registerProblem(sourcePsi, JvmAnalysisBundle.message(
         "jvm.inspections.junit5.malformed.parameterized.inspection.description.method.source.static", providerName),

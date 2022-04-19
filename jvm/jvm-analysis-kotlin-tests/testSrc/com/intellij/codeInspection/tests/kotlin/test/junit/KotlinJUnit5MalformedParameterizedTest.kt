@@ -58,10 +58,16 @@ class KotlinJUnit5MalformedParameterizedTest : JavaCodeInsightFixtureTestCase() 
     myFixture.testHighlighting("CantResolveTarget.kt")
   }
 
-  fun `test StaticMethodSourceTest quickFixes`() {
-    val quickfixes = myFixture.getAllQuickFixes("StaticMethodSource.kt")
+  fun `test StaticMethodSourceTest quickFix from object`() {
+    val quickfixes = myFixture.getAllQuickFixes("StaticMethodSourceObject.kt")
     quickfixes.forEach { myFixture.launchAction(it) }
-    myFixture.checkResultByFile("StaticMethodSource.after.kt")
+    myFixture.checkResultByFile("StaticMethodSourceObject.after.kt")
+  }
+
+  fun `test StaticMethodSourceTest quickFix from class`() {
+    val quickfixes = myFixture.getAllQuickFixes("StaticMethodSourceClass.kt")
+    quickfixes.forEach { myFixture.launchAction(it) }
+    myFixture.checkResultByFile("StaticMethodSourceClass.after.kt")
   }
 
   fun `test SuspiciousCombination quickFixes`() {

@@ -6,15 +6,15 @@ import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-object PrivateClassRule {
-  @ParameterizedTest
-  @MethodSource("squares")
-  fun foo() {}
+class PrivateClassRule {
+    @ParameterizedTest
+    @MethodSource("squares")
+    fun foo() {}
 
-  object {
-    @JvmStatic
-    fun squares(): Stream<Int?>? {
-      return null
+    companion object {
+        @JvmStatic
+        fun squares(): Stream<Int?>? {
+            return null
+        }
     }
-  }
 }
