@@ -35,6 +35,9 @@ hdiutil create -srcfolder "./${EXPLODED}" -volname "$VOLNAME" -anyowners -nospot
 
 # check if the image already mounted
 if [ -d "/Volumes/$1" ]; then
+  diskutil unmount "/Volumes/$1"
+fi
+if [ -d "/Volumes/$1" ]; then
   attempt=1
   limit=5
   while [ $attempt -le $limit ]
