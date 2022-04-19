@@ -875,7 +875,7 @@ public class StringUtilTest {
   public void testEndsWith() {
     assertTrue(StringUtil.endsWith("text", 0, 4, "text"));
     assertFalse(StringUtil.endsWith("text", 4, 4, "-->"));
-    UsefulTestCase.assertThrows(IllegalArgumentException.class, ()->StringUtil.endsWith("text", -1, 4, "t"));
+    UsefulTestCase.assertThrows(IllegalArgumentException.class, ()->assertFalse(StringUtil.endsWith("text", -1, 4, "t")));
     assertFalse(StringUtil.endsWith("text", "-->"));
   }
 }
