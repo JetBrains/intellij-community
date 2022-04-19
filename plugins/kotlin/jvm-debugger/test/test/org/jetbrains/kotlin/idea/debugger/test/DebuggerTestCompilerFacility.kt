@@ -127,17 +127,20 @@ class DebuggerTestCompilerFacility(
         resources.copy(jvmSrcDir)
         resources.copy(classesDir) // sic!
         (kotlinJvm + java).copy(jvmSrcDir)
-        kotlinCommon.copy(commonSrcDir)
+        kotlinCommon.forEach { testFile -> testFile.copy(commonSrcDir.resolve(testFile.module.name)) }
 
-        lateinit var ktFiles: List<KtFile>
+        lateinit var allKtFiles: List<KtFile>
+        lateinit var jvmKtFiles: List<KtFile>
         val project = module.project
         doWriteAction {
-            ktFiles =
-                createPsiFilesAndCollectKtFiles(kotlinJvm + java, jvmSrcDir, project) +
-                createPsiFilesAndCollectKtFiles(kotlinCommon, commonSrcDir, project)
+            jvmKtFiles = createPsiFilesAndCollectKtFiles(kotlinJvm + java, jvmSrcDir, project)
+            val commonKtFiles = kotlinCommon.groupBy { it.module }.flatMap { (module, files) ->
+                createPsiFilesAndCollectKtFiles(files, commonSrcDir.resolve(module.name), project)
+            }
+            allKtFiles = jvmKtFiles + commonKtFiles
         }
 
-        if (ktFiles.isEmpty()) {
+        if (allKtFiles.isEmpty()) {
             error("No Kotlin files found")
         }
 
@@ -148,9 +151,10 @@ class DebuggerTestCompilerFacility(
 
         doWriteAction {
             if (kotlinCommon.isNotEmpty()) {
-                mainClassName = compileKotlinFilesWithCliCompiler(project, ktFiles, jvmSrcDir, commonSrcDir, classesDir)
+                compileKotlinFilesWithCliCompiler(jvmSrcDir, commonSrcDir, classesDir)
+                mainClassName = analyzeAndFindMainClass(project, jvmKtFiles)
             } else {
-                mainClassName = compileKotlinFilesInIde(project, ktFiles, classesDir)
+                mainClassName = compileKotlinFilesInIde(project, allKtFiles, classesDir)
             }
         }
 
@@ -166,24 +170,26 @@ class DebuggerTestCompilerFacility(
         return mainClassName
     }
 
-    private fun compileKotlinFilesWithCliCompiler(
-        project: Project,
-        files: List<KtFile>,
-        jvmSrcDir: File,
-        commonSrcDir: File,
-        classesDir: File
-    ): String {
-        return analyzeAndCompileFiles(project, files) {
-            KotlinCompilerStandalone(
-                listOf(jvmSrcDir, commonSrcDir), target = classesDir,
-                options = listOf(
-                    "-Xuse-ir=$useIrBackend",
-                    "-Xcommon-sources=${commonSrcDir.absolutePath}",
-                    "-Xmulti-platform"
-                ),
-                classpath = mavenArtifacts.map(::File)
-            ).compile()
-        }
+    private fun compileKotlinFilesWithCliCompiler(jvmSrcDir: File, commonSrcDir: File, classesDir: File) {
+        KotlinCompilerStandalone(
+            listOf(jvmSrcDir, commonSrcDir), target = classesDir,
+            options = listOf(
+                "-Xuse-ir=$useIrBackend",
+                "-Xcommon-sources=${commonSrcDir.absolutePath}",
+                "-Xmulti-platform"
+            ),
+            classpath = mavenArtifacts.map(::File)
+        ).compile()
+    }
+
+    private fun analyzeAndFindMainClass(project: Project, jvmKtFiles: List<KtFile>): String {
+        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacade(jvmKtFiles)
+
+        val analysisResult = resolutionFacade.analyzeWithAllCompilerChecks(jvmKtFiles)
+        analysisResult.throwIfError()
+
+        return findMainClass(analysisResult.bindingContext, resolutionFacade.getLanguageVersionSettings(), jvmKtFiles)?.asString()
+            ?: error("Cannot find main class name")
     }
 
     private fun compileKotlinFilesInIde(project: Project, files: List<KtFile>, classesDir: File): String {
@@ -254,14 +260,18 @@ class DebuggerTestCompilerFacility(
     }
 }
 
-private fun File.refreshAndToVirtualFile(): VirtualFile? = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(this)
+internal fun File.refreshAndToVirtualFile(): VirtualFile? = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(this)
 
 private fun List<TestFile>.copy(destination: File) {
     for (file in this) {
-        val target = File(destination, file.name)
-        target.parentFile.mkdirs()
-        target.writeText(file.content)
+        file.copy(destination)
     }
+}
+
+private fun TestFile.copy(destination: File) {
+    val target = File(destination, name)
+    target.parentFile.mkdirs()
+    target.writeText(content)
 }
 
 class TestFilesByTarget(val main: List<TestFileWithModule>, val library: List<TestFileWithModule>)
