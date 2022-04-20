@@ -147,11 +147,13 @@ fun IDETestContext.downloadAndroidPluginProject(): IDETestContext {
     val scriptContent = script.readText()
 
     val stdout = ExecOutputRedirect.ToString()
+    val stderr = ExecOutputRedirect.ToString()
     exec(
       "git-clone-android-plugin",
       workDir = projectHome, timeout = Duration.minutes(10),
       args = scriptContent.split(" "),
-      stdoutRedirect = stdout
+      stdoutRedirect = stdout,
+      stderrRedirect = stderr
     )
     logOutput(stdout.read().trim())
   }
