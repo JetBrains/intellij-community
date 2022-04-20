@@ -6,17 +6,47 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyIt
 import com.intellij.workspaceModel.storage.entity.TestEntity
 import com.intellij.workspaceModel.storage.referrersx
 import org.jetbrains.deft.annotations.Child
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.Type
+
 
 
 interface FooEntity: WorkspaceEntity {
   val name: String
   val moduleDependency: ModuleDependencyItem.Exportable.ModuleDependency
+  //region generated code
+  //@formatter:off
+  @GeneratedCodeApiVersion(0)
+  interface Builder: FooEntity, ModifiableWorkspaceEntity<FooEntity>, ObjBuilder<FooEntity> {
+      override var name: String
+      override var entitySource: EntitySource
+  }
+  
+  companion object: Type<FooEntity, Builder>()
+  //@formatter:on
+  //endregion
+
 }
 
 
 interface AnotherTest: WorkspaceEntity {
   val name: String
   val testField: TestEntity
+  //region generated code
+  //@formatter:off
+  @GeneratedCodeApiVersion(0)
+  interface Builder: AnotherTest, ModifiableWorkspaceEntity<AnotherTest>, ObjBuilder<AnotherTest> {
+      override var name: String
+      override var entitySource: EntitySource
+  }
+  
+  companion object: Type<AnotherTest, Builder>()
+  //@formatter:on
+  //endregion
+
 }
 
 val TestEntity.anotherTest: @Child AnotherTest?

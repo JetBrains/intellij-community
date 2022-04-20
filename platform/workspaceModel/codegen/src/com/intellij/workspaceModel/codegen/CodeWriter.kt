@@ -30,7 +30,7 @@ object CodeWriter {
 
     val module = KtObjModule(project, ObjModule.Id(moduleId))
     ktSrcs.forEach { (vfu, document) ->
-      module.addFile(vfu) { document.text }
+      module.addFile(vfu.name, vfu) { document.text }
     }
     val result = module.build()
     module.files.forEach {
@@ -48,25 +48,25 @@ object CodeWriter {
   }
 
   fun generate(dir: File, fromDirectory: String, toDirectory: String, moduleId: String) {
-    //val generatedDestDir = dir.resolve(toDirectory)
-    //val ktSrcs = dir.resolve(fromDirectory).listFiles()!!
-    //  .toList()
-    //  .filter { it.name.endsWith(".kt") }
-    //
-    //val module = KtObjModule(ObjModule.Id(moduleId))
-    //ktSrcs.forEach {
-    //  module.addFile(it.relativeTo(dir).path) { it.readText() }
-    //}
-    //val result = module.build()
-    //module.files.forEach {
-    //  dir.resolve(it.name).writeText(it.rewrite())
-    //}
-    //result.typeDefs.filterNot { it.name == "WorkspaceEntity" || it.name == "WorkspaceEntityWithPersistentId" || it.abstract }.forEach {
-    //  generatedDestDir
-    //    .resolve(it.javaImplName + ".kt")
-    //    .writeText(it.implIjWsFileContents(result.simpleTypes))
-    //}
-    //dir.resolve(module.moduleObjName + ".kt").writeText(result.wsModuleCode())
-    ////        dir.resolve("toIjWs/generated.kt").writeCode(result.ijWsCode())
+    val generatedDestDir = dir.resolve(toDirectory)
+    val ktSrcs = dir.resolve(fromDirectory).listFiles()!!
+      .toList()
+      .filter { it.name.endsWith(".kt") }
+
+    val module = KtObjModule(null, ObjModule.Id(moduleId))
+    ktSrcs.forEach {
+      module.addFile(it.relativeTo(dir).path, null) { it.readText() }
+    }
+    val result = module.build()
+    module.files.forEach {
+      dir.resolve(it.name).writeText(it.rewrite())
+    }
+    result.typeDefs.filterNot { it.name == "WorkspaceEntity" || it.name == "WorkspaceEntityWithPersistentId" || it.abstract }.forEach {
+      generatedDestDir
+        .resolve(it.javaImplName + ".kt")
+        .writeText(it.implIjWsFileContents(result.simpleTypes))
+    }
+    dir.resolve(module.moduleObjName + ".kt").writeText(result.wsModuleCode())
+    //        dir.resolve("toIjWs/generated.kt").writeCode(result.ijWsCode())
   }
 }

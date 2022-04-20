@@ -27,8 +27,8 @@ class KtObjModule(
     }
   }
 
-    fun addFile(virtualFile: VirtualFile, content: () -> String): KtFile {
-        val file = KtFile(this, virtualFile, content)
+    fun addFile(name: String, virtualFile: VirtualFile?, content: () -> String): KtFile {
+        val file = KtFile(this, content, name, virtualFile)
         val reader = KotlinReader(file)
         reader.read()
         files.add(file)

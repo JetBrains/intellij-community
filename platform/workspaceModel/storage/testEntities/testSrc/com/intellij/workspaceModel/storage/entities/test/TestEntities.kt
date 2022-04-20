@@ -85,31 +85,6 @@ import com.intellij.workspaceModel.storage.referrersx
 import com.intellij.workspaceModel.storage.referrersy
 import org.jetbrains.deft.annotations.Child
 
-var MainEntityList.Builder.child: @Child List<AttachedEntityList>
-    get() {
-        return referrersx(AttachedEntityList::ref)
-    }
-    set(value) {
-        val diff = (this as MainEntityListImpl.Builder).diff
-        if (diff != null) {
-            for (item in value) {
-                if ((item as AttachedEntityListImpl.Builder).diff == null) {
-                    item._ref = this
-                    diff.addEntity(item)
-                }
-            }
-            diff.updateOneToManyChildrenOfParent(AttachedEntityListImpl.REF_CONNECTION_ID, this, value)
-        }
-        else {
-            val key = ExtRefKey("AttachedEntityList", "ref", true, AttachedEntityListImpl.REF_CONNECTION_ID)
-            this.extReferences[key] = value
-            
-            for (item in value) {
-                (item as AttachedEntityListImpl.Builder)._ref = this
-            }
-        }
-    }
-
 var MainEntity.Builder.child: @Child AttachedEntity?
     get() {
         return referrersx(AttachedEntity::ref).singleOrNull()
@@ -131,6 +106,31 @@ var MainEntity.Builder.child: @Child AttachedEntity?
             
             if (value != null) {
                 (value as AttachedEntityImpl.Builder)._ref = this
+            }
+        }
+    }
+
+var MainEntityList.Builder.child: @Child List<AttachedEntityList>
+    get() {
+        return referrersx(AttachedEntityList::ref)
+    }
+    set(value) {
+        val diff = (this as MainEntityListImpl.Builder).diff
+        if (diff != null) {
+            for (item in value) {
+                if ((item as AttachedEntityListImpl.Builder).diff == null) {
+                    item._ref = this
+                    diff.addEntity(item)
+                }
+            }
+            diff.updateOneToManyChildrenOfParent(AttachedEntityListImpl.REF_CONNECTION_ID, this, value)
+        }
+        else {
+            val key = ExtRefKey("AttachedEntityList", "ref", true, AttachedEntityListImpl.REF_CONNECTION_ID)
+            this.extReferences[key] = value
+            
+            for (item in value) {
+                (item as AttachedEntityListImpl.Builder)._ref = this
             }
         }
     }

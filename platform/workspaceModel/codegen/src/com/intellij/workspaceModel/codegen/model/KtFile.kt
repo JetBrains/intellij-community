@@ -3,8 +3,7 @@ package org.jetbrains.deft.codegen.model
 
 import com.intellij.openapi.vfs.VirtualFile
 
-class KtFile(val module: KtObjModule, val virtualFile: VirtualFile, val content: () -> CharSequence) {
-    val name: String = virtualFile.name
+class KtFile(val module: KtObjModule, val content: () -> CharSequence, val name: String, val virtualFile: VirtualFile?) {
   override fun toString(): String = "[file://$name]"
   fun asSrc() = Src(name, content)
 

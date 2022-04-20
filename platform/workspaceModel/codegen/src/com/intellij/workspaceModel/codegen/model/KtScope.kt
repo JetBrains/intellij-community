@@ -90,10 +90,10 @@ class KtScope(val parent: KtScope?, var owner: Any? = null) {
   private fun resolveFromPsiImportedNames(typeName: String) = psiImportedNames[typeName]
 
     private fun resolveFromPsi(ktFile: KtFile, typeName: String): KtScope? {
-      println(typeName)
       val module = ktFile.module
+      if (module.project == null) return null
       if (typeName == WorkspaceEntity::class.java.simpleName) return null
-      val psiFile = PsiManager.getInstance(module.project!!).findFile(ktFile.virtualFile) ?: return null
+      val psiFile = PsiManager.getInstance(module.project).findFile(ktFile.virtualFile!!) ?: return null
       if (psiFile !is org.jetbrains.kotlin.psi.KtFile) return null
       var resolvedType: PsiElement? = null
       PsiTreeUtil.processElements(psiFile) { psiElement ->
