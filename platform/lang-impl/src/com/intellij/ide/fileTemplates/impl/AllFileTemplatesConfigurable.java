@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.fileTemplates.impl;
 
@@ -53,16 +53,15 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
                                                            Configurable.VariableProjectAppLevel, Configurable.WithEpDependencies {
   private static final Logger LOG = Logger.getInstance(AllFileTemplatesConfigurable.class);
   
-  final static class Provider extends ConfigurableProvider {
+  static final class Provider extends ConfigurableProvider {
     private final Project myProject;
 
     Provider(@NotNull Project project) {
       myProject = project;
     }
 
-    @NotNull
     @Override
-    public Configurable createConfigurable() {
+    public @NotNull Configurable createConfigurable() {
       return new AllFileTemplatesConfigurable(myProject);
     }
   }
@@ -74,8 +73,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
   private FileTemplateTab myTemplatesList;
   private FileTemplateTab myIncludesList;
   private FileTemplateTab myCodeTemplatesList;
-  @Nullable
-  private FileTemplateTab myOtherTemplatesList;
+  private @Nullable FileTemplateTab myOtherTemplatesList;
   private JComponent myToolBar;
   private TabbedPaneWrapper myTabbedPane;
   private FileTemplateConfigurable myEditor;
@@ -120,7 +118,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
   }
 
   @NotNull
-  FileTemplate createTemplate(@NotNull String prefName, @NotNull final String extension, @NotNull final String content, boolean child) {
+  FileTemplate createTemplate(@NotNull String prefName, final @NotNull String extension, final @NotNull String content, boolean child) {
     final FileTemplate[] templates = myCurrentTab.getTemplates();
     final FileTemplate newTemplate = FileTemplateUtil.createTemplate(prefName, extension, content, templates);
     if (child) {
@@ -243,9 +241,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
             ContainerUtil.addIfNotNull(categories, templateGroupFactory.getFileTemplatesDescriptor());
           }
 
-          //noinspection HardCodedStringLiteral
-          return new FileTemplateNode("ROOT", null,
-                                      ContainerUtil.map2List(categories, FileTemplateNode::new));
+          return new FileTemplateNode("ROOT", null, ContainerUtil.map2List(categories, FileTemplateNode::new));
         }
       };
       allTabs.add(myOtherTemplatesList);
@@ -382,8 +378,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
     return myMainPanel;
   }
 
-  @Nullable
-  private FileTemplate getSelectedTemplate() {
+  private @Nullable FileTemplate getSelectedTemplate() {
     return myCurrentTab.getSelectedTemplate();
   }
 
@@ -477,7 +472,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
   }
 
   // internal template could not be removed
-  static boolean isInternalTemplate(String templateName, String templateTabTitle) {
+  private static boolean isInternalTemplate(String templateName, String templateTabTitle) {
     if (templateName == null) {
       return false;
     }
@@ -656,12 +651,11 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return "fileTemplates";
   }
 
-  public static void editCodeTemplate(@NotNull final String templateId, Project project) {
+  public static void editCodeTemplate(final @NotNull String templateId, Project project) {
     final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
     final AllFileTemplatesConfigurable configurable = new AllFileTemplatesConfigurable(project);
     util.editConfigurable(project, configurable, () -> {
@@ -737,14 +731,8 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
     }
   }
 
-  @NotNull
-  public FileTemplateManager getManager() {
+  public @NotNull FileTemplateManager getManager() {
     return myManager;
-  }
-
-  @TestOnly
-  FileTemplateConfigurable getEditor() {
-    return myEditor;
   }
 
   @TestOnly
@@ -753,9 +741,8 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
   }
 
   private final class SchemesPanel extends SimpleSchemesPanel<FileTemplatesScheme> implements SchemesModel<FileTemplatesScheme> {
-    @NotNull
     @Override
-    protected AbstractSchemeActions<FileTemplatesScheme> createSchemeActions() {
+    protected @NotNull AbstractSchemeActions<FileTemplatesScheme> createSchemeActions() {
       return new AbstractSchemeActions<>(this) {
         @Override
         protected void resetScheme(@NotNull FileTemplatesScheme scheme) {
@@ -777,17 +764,15 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
           throw new UnsupportedOperationException();
         }
 
-        @NotNull
         @Override
-        protected Class<FileTemplatesScheme> getSchemeType() {
+        protected @NotNull Class<FileTemplatesScheme> getSchemeType() {
           return FileTemplatesScheme.class;
         }
       };
     }
 
-    @NotNull
     @Override
-    public SchemesModel<FileTemplatesScheme> getModel() {
+    public @NotNull SchemesModel<FileTemplatesScheme> getModel() {
       return this;
     }
 
