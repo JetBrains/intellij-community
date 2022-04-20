@@ -13,6 +13,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.java.ift.JavaLessonsBundle
+import com.intellij.java.ift.JavaProjectUtil
 import com.intellij.java.ift.lesson.run.highlightRunGutters
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -31,8 +32,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.SdkType
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkDetector
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
@@ -243,15 +242,13 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       })
     }
 
-    val projectJdk = ProjectRootManager.getInstance(project).projectSdk
-    val module = ModuleManager.getInstance(project).modules.first()
-    val moduleJdk = ModuleRootManager.getInstance(module).sdk
-    val currentJdk = moduleJdk ?: projectJdk
+    val currentJdk = JavaProjectUtil.getProjectJdk(project)
     val currentJdkVersion: @NlsSafe String = if (currentJdk != null) {
       JavaSdk.getInstance().getVersionString(currentJdk) ?: "none"
     }
     else "none"
 
+    val module = ModuleManager.getInstance(project).modules.first()
     val currentLanguageLevel: @NlsSafe String = LanguageLevelUtil.getEffectiveLanguageLevel(module).name
 
     primaryLanguage.onboardingFeedbackData = object : OnboardingFeedbackData("IDEA Onboarding Tour Feedback", lessonEndInfo) {
