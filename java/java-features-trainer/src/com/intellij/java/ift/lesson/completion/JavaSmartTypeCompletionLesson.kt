@@ -46,7 +46,7 @@ class JavaSmartTypeCompletionLesson : KLesson("Smart type completion", LessonsBu
         val text = editor.document.text
         text.contains("strings = arrayBlockingQueue;") || text.contains("strings = linkedList;")
       }
-      restoreIfModifiedOrMoved()
+      restoreIfModifiedOrMoved(sample)
       testSmartCompletion()
     }
     caret(20, 16)
