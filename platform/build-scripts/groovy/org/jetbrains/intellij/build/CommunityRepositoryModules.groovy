@@ -150,6 +150,8 @@ final class CommunityRepositoryModules {
       withModule("intellij.testng.rt", "testng-rt.jar")
       withProjectLibrary("TestNG")
     },
+    plugin("intellij.dev") {
+    },
     plugin("intellij.devkit") {
       withModule("intellij.devkit.core")
       withModule("intellij.devkit.git")
