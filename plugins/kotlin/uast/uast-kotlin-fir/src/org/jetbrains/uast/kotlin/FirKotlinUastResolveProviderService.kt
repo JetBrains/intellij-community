@@ -98,7 +98,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val resolvedFunctionCall = ktCallElement.resolveCall().singleFunctionCallOrNull()
             val resolvedFunctionLikeSymbol =
                 resolvedFunctionCall?.symbol ?: return null
-            val parameter = resolvedFunctionLikeSymbol.valueParameters[index]
+            val parameter = resolvedFunctionLikeSymbol.valueParameters.getOrNull(index) ?: return null
             val arguments = resolvedFunctionCall.argumentMapping.entries
                 .filter { (_, param) -> param.symbol == parameter }
                 .mapNotNull { (arg, _) -> arg.parentValueArgument }

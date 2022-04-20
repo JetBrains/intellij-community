@@ -87,6 +87,10 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkAssigningArrayElementType(myFixture)
     }
 
+    fun testArgumentMappingOOBE() {
+        checkArgumentMappingOOBE(myFixture)
+    }
+
     fun testDivByZero() {
         checkDivByZero(myFixture)
     }
