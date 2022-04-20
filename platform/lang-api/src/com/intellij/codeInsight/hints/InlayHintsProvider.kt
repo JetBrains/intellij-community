@@ -22,17 +22,17 @@ import kotlin.reflect.KMutableProperty0
 
 private const val EXTENSION_POINT_NAME = "com.intellij.codeInsight.inlayProvider"
 
-enum class InlayGroup(val key: String) {
-  CODE_VISION_GROUP_NEW("settings.hints.new.group.code.vision"),
-  CODE_VISION_GROUP("settings.hints.group.code.vision"),
-  PARAMETERS_GROUP("settings.hints.group.parameters"),
-  TYPES_GROUP("settings.hints.group.types"),
-  VALUES_GROUP("settings.hints.group.values"),
-  ANNOTATIONS_GROUP("settings.hints.group.annotations"),
+enum class InlayGroup(val key: String, @Nls val description: String? = null) {
+  CODE_VISION_GROUP_NEW("settings.hints.new.group.code.vision", ApplicationBundle.message("settings.hints.new.group.code.vision.description")),
+  CODE_VISION_GROUP("settings.hints.group.code.vision", ApplicationBundle.message("settings.hints.new.group.code.vision.description")),
+  PARAMETERS_GROUP("settings.hints.group.parameters", ApplicationBundle.message("settings.hints.group.parameters.description")),
+  TYPES_GROUP("settings.hints.group.types", ApplicationBundle.message("settings.hints.group.types.description")),
+  VALUES_GROUP("settings.hints.group.values", ApplicationBundle.message("settings.hints.group.values.description")),
+  ANNOTATIONS_GROUP("settings.hints.group.annotations", ApplicationBundle.message("settings.hints.group.annotations.description")),
   METHOD_CHAINS_GROUP("settings.hints.group.method.chains"),
-  LAMBDAS_GROUP("settings.hints.group.lambdas"),
-  CODE_AUTHOR_GROUP("settings.hints.group.code.author"),
-  URL_PATH_GROUP("settings.hints.group.url.path"),
+  LAMBDAS_GROUP("settings.hints.group.lambdas", ApplicationBundle.message("settings.hints.group.lambdas.description")),
+  CODE_AUTHOR_GROUP("settings.hints.group.code.author", ApplicationBundle.message("settings.hints.group.code.author.description")),
+  URL_PATH_GROUP("settings.hints.group.url.path", ApplicationBundle.message("settings.hints.group.url.path.description")),
   OTHER_GROUP("settings.hints.group.other");
 
   override fun toString(): @Nls String {

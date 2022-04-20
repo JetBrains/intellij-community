@@ -187,7 +187,11 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     rightPanel.removeAll()
     currentEditor = null
     when (val item = treeNode?.userObject) {
+      is InlayGroup -> {
+        addDescription(item.description)
+      }
       is InlayGroupSettingProvider -> {
+        addDescription(item.group.description)
         rightPanel.add(item.component)
       }
       is InlayProviderSettingsModel -> {
