@@ -13,6 +13,8 @@ import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 
 import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+
 
 
 
@@ -28,6 +30,7 @@ interface MainEntityToParent : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: MainEntityToParent, ModifiableWorkspaceEntity<MainEntityToParent>, ObjBuilder<MainEntityToParent> {
         override var child: AttachedEntityToParent?
         override var entitySource: EntitySource
@@ -46,6 +49,7 @@ interface AttachedEntityToParent : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: AttachedEntityToParent, ModifiableWorkspaceEntity<AttachedEntityToParent>, ObjBuilder<AttachedEntityToParent> {
         override var data: String
         override var entitySource: EntitySource

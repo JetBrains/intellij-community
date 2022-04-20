@@ -15,6 +15,8 @@ import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 
 import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+
 
 
 
@@ -32,6 +34,7 @@ interface FirstEntityWithPId  : WorkspaceEntityWithPersistentId {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: FirstEntityWithPId, ModifiableWorkspaceEntity<FirstEntityWithPId>, ObjBuilder<FirstEntityWithPId> {
         override var data: String
         override var entitySource: EntitySource
@@ -53,6 +56,7 @@ interface SecondEntityWithPId  : WorkspaceEntityWithPersistentId {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: SecondEntityWithPId, ModifiableWorkspaceEntity<SecondEntityWithPId>, ObjBuilder<SecondEntityWithPId> {
         override var data: String
         override var entitySource: EntitySource

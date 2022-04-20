@@ -11,6 +11,8 @@ import jdk.jshell.spi.ExecutionControlProvider
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+
 
 
 /**
@@ -34,6 +36,7 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
   val srcPlace: Map<String, Int>
   //region generated code
   //@formatter:off
+  @GeneratedCodeApiVersion(0)
   interface Builder: EclipseProjectPropertiesEntity, ModifiableWorkspaceEntity<EclipseProjectPropertiesEntity>, ObjBuilder<EclipseProjectPropertiesEntity> {
       override var module: ModuleEntity
       override var entitySource: EntitySource

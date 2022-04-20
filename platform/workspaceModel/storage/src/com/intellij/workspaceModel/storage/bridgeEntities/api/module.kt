@@ -1,14 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 
 
 
@@ -31,6 +32,7 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ModuleEntity, ModifiableWorkspaceEntity<ModuleEntity>, ObjBuilder<ModuleEntity> {
         override var name: String
         override var entitySource: EntitySource
@@ -59,6 +61,7 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ModuleCustomImlDataEntity, ModifiableWorkspaceEntity<ModuleCustomImlDataEntity>, ObjBuilder<ModuleCustomImlDataEntity> {
         override var module: ModuleEntity
         override var entitySource: EntitySource
@@ -80,6 +83,7 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ModuleGroupPathEntity, ModifiableWorkspaceEntity<ModuleGroupPathEntity>, ObjBuilder<ModuleGroupPathEntity> {
         override var module: ModuleEntity
         override var entitySource: EntitySource
@@ -104,6 +108,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: JavaModuleSettingsEntity, ModifiableWorkspaceEntity<JavaModuleSettingsEntity>, ObjBuilder<JavaModuleSettingsEntity> {
         override var module: ModuleEntity
         override var entitySource: EntitySource
@@ -135,6 +140,7 @@ interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ExternalSystemModuleOptionsEntity, ModifiableWorkspaceEntity<ExternalSystemModuleOptionsEntity>, ObjBuilder<ExternalSystemModuleOptionsEntity> {
         override var module: ModuleEntity
         override var entitySource: EntitySource

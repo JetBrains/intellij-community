@@ -1,6 +1,8 @@
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
 import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
@@ -16,6 +18,8 @@ import org.jetbrains.deft.ObjBuilder
 
     
 
+@GeneratedCodeApiVersion(0)
+@GeneratedCodeImplVersion(0)
 open class JavaSourceRootEntityImpl: JavaSourceRootEntity, WorkspaceEntityBase() {
     
     companion object {

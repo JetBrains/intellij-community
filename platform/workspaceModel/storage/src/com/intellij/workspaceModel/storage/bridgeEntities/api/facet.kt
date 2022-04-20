@@ -8,6 +8,8 @@ import com.intellij.workspaceModel.storage.referrersx
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+
 
 
 
@@ -26,6 +28,7 @@ interface FacetEntity: WorkspaceEntityWithPersistentId {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: FacetEntity, ModifiableWorkspaceEntity<FacetEntity>, ObjBuilder<FacetEntity> {
         override var name: String
         override var entitySource: EntitySource

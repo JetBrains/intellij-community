@@ -1,5 +1,6 @@
 package org.jetbrains.deft.codegen.ijws.classes
 
+import com.intellij.workspaceModel.storage.CodeGeneratorVersions
 import deft.storage.codegen.indentRestOnly
 import deft.storage.codegen.javaFullName
 import deft.storage.codegen.javaImplName
@@ -13,6 +14,8 @@ import org.jetbrains.deft.impl.ObjType
 fun ObjType<*, *>.implWsEntityCode(): String {
   return """
 
+@${wsFqn("GeneratedCodeApiVersion")}(${CodeGeneratorVersions.API_VERSION})
+@${wsFqn("GeneratedCodeImplVersion")}(${CodeGeneratorVersions.IMPL_VERSION})
 ${if (abstract) "abstract" else "open"} class $javaImplName: $javaFullName, ${wsFqn("WorkspaceEntityBase")}() {
     ${
     if (structure.allRefsFields.isNotEmpty()) """

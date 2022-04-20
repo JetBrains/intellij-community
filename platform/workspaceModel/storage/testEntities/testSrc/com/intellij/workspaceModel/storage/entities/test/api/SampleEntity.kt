@@ -12,6 +12,8 @@ import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 
 import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+
 
 
 
@@ -26,6 +28,7 @@ interface SampleEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
+  @GeneratedCodeApiVersion(0)
   interface Builder: SampleEntity, ModifiableWorkspaceEntity<SampleEntity>, ObjBuilder<SampleEntity> {
       override var booleanProperty: Boolean
       override var entitySource: EntitySource
@@ -47,6 +50,7 @@ interface ChildSampleEntity : WorkspaceEntity {
   val parentEntity: SampleEntity?
   //region generated code
   //@formatter:off
+  @GeneratedCodeApiVersion(0)
   interface Builder: ChildSampleEntity, ModifiableWorkspaceEntity<ChildSampleEntity>, ObjBuilder<ChildSampleEntity> {
       override var data: String
       override var entitySource: EntitySource
@@ -80,6 +84,7 @@ interface SecondSampleEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
+  @GeneratedCodeApiVersion(0)
   interface Builder: SecondSampleEntity, ModifiableWorkspaceEntity<SecondSampleEntity>, ObjBuilder<SecondSampleEntity> {
       override var intProperty: Int
       override var entitySource: EntitySource
@@ -96,6 +101,7 @@ interface SourceEntity : WorkspaceEntity {
   val children: List<@Child ChildSourceEntity>
   //region generated code
   //@formatter:off
+  @GeneratedCodeApiVersion(0)
   interface Builder: SourceEntity, ModifiableWorkspaceEntity<SourceEntity>, ObjBuilder<SourceEntity> {
       override var data: String
       override var entitySource: EntitySource
@@ -113,6 +119,7 @@ interface ChildSourceEntity : WorkspaceEntity {
   val parentEntity: SourceEntity
   //region generated code
   //@formatter:off
+  @GeneratedCodeApiVersion(0)
   interface Builder: ChildSourceEntity, ModifiableWorkspaceEntity<ChildSourceEntity>, ObjBuilder<ChildSourceEntity> {
       override var data: String
       override var entitySource: EntitySource
@@ -133,6 +140,7 @@ interface PersistentIdEntity : WorkspaceEntityWithPersistentId {
     }
   //region generated code
   //@formatter:off
+  @GeneratedCodeApiVersion(0)
   interface Builder: PersistentIdEntity, ModifiableWorkspaceEntity<PersistentIdEntity>, ObjBuilder<PersistentIdEntity> {
       override var data: String
       override var entitySource: EntitySource

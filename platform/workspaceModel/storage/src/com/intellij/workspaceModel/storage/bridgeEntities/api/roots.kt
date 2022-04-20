@@ -8,6 +8,8 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+
 
 
 
@@ -23,6 +25,7 @@ interface ContentRootEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ContentRootEntity, ModifiableWorkspaceEntity<ContentRootEntity>, ObjBuilder<ContentRootEntity> {
         override var module: ModuleEntity
         override var entitySource: EntitySource
@@ -52,6 +55,7 @@ interface SourceRootEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: SourceRootEntity, ModifiableWorkspaceEntity<SourceRootEntity>, ObjBuilder<SourceRootEntity> {
         override var contentRoot: ContentRootEntity
         override var entitySource: EntitySource
@@ -76,6 +80,7 @@ interface SourceRootOrderEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: SourceRootOrderEntity, ModifiableWorkspaceEntity<SourceRootOrderEntity>, ObjBuilder<SourceRootOrderEntity> {
         override var contentRootEntity: ContentRootEntity
         override var entitySource: EntitySource
@@ -95,6 +100,7 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: CustomSourceRootPropertiesEntity, ModifiableWorkspaceEntity<CustomSourceRootPropertiesEntity>, ObjBuilder<CustomSourceRootPropertiesEntity> {
         override var sourceRoot: SourceRootEntity
         override var entitySource: EntitySource
@@ -116,6 +122,7 @@ interface JavaSourceRootEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: JavaSourceRootEntity, ModifiableWorkspaceEntity<JavaSourceRootEntity>, ObjBuilder<JavaSourceRootEntity> {
         override var sourceRoot: SourceRootEntity
         override var entitySource: EntitySource
@@ -138,6 +145,7 @@ interface JavaResourceRootEntity: WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: JavaResourceRootEntity, ModifiableWorkspaceEntity<JavaResourceRootEntity>, ObjBuilder<JavaResourceRootEntity> {
         override var sourceRoot: SourceRootEntity
         override var entitySource: EntitySource

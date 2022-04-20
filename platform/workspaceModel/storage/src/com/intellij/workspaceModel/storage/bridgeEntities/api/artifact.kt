@@ -9,6 +9,8 @@ import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+
 
 
 
@@ -28,6 +30,7 @@ interface ArtifactEntity : WorkspaceEntityWithPersistentId {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ArtifactEntity, ModifiableWorkspaceEntity<ArtifactEntity>, ObjBuilder<ArtifactEntity> {
         override var name: String
         override var entitySource: EntitySource
@@ -54,6 +57,7 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ArtifactPropertiesEntity, ModifiableWorkspaceEntity<ArtifactPropertiesEntity>, ObjBuilder<ArtifactPropertiesEntity> {
         override var artifact: ArtifactEntity
         override var entitySource: EntitySource
@@ -72,6 +76,7 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder<T: PackagingElementEntity>: PackagingElementEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
         override var parentEntity: CompositePackagingElementEntity?
         override var entitySource: EntitySource
@@ -91,6 +96,7 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder<T: CompositePackagingElementEntity>: CompositePackagingElementEntity, PackagingElementEntity.Builder<T>, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
         override var parentEntity: CompositePackagingElementEntity?
         override var artifact: ArtifactEntity?
@@ -110,6 +116,7 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: DirectoryPackagingElementEntity, CompositePackagingElementEntity.Builder<DirectoryPackagingElementEntity>, ModifiableWorkspaceEntity<DirectoryPackagingElementEntity>, ObjBuilder<DirectoryPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var artifact: ArtifactEntity?
@@ -130,6 +137,7 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ArchivePackagingElementEntity, CompositePackagingElementEntity.Builder<ArchivePackagingElementEntity>, ModifiableWorkspaceEntity<ArchivePackagingElementEntity>, ObjBuilder<ArchivePackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var artifact: ArtifactEntity?
@@ -149,6 +157,7 @@ interface ArtifactRootElementEntity: CompositePackagingElementEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ArtifactRootElementEntity, CompositePackagingElementEntity.Builder<ArtifactRootElementEntity>, ModifiableWorkspaceEntity<ArtifactRootElementEntity>, ObjBuilder<ArtifactRootElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var artifact: ArtifactEntity?
@@ -168,6 +177,7 @@ interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ArtifactOutputPackagingElementEntity, PackagingElementEntity.Builder<ArtifactOutputPackagingElementEntity>, ModifiableWorkspaceEntity<ArtifactOutputPackagingElementEntity>, ObjBuilder<ArtifactOutputPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var artifact: ArtifactId?
@@ -189,6 +199,7 @@ interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ModuleOutputPackagingElementEntity, PackagingElementEntity.Builder<ModuleOutputPackagingElementEntity>, ModifiableWorkspaceEntity<ModuleOutputPackagingElementEntity>, ObjBuilder<ModuleOutputPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var module: ModuleId?
@@ -206,6 +217,7 @@ interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: LibraryFilesPackagingElementEntity, PackagingElementEntity.Builder<LibraryFilesPackagingElementEntity>, ModifiableWorkspaceEntity<LibraryFilesPackagingElementEntity>, ObjBuilder<LibraryFilesPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var library: LibraryId?
@@ -227,6 +239,7 @@ interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ModuleSourcePackagingElementEntity, PackagingElementEntity.Builder<ModuleSourcePackagingElementEntity>, ModifiableWorkspaceEntity<ModuleSourcePackagingElementEntity>, ObjBuilder<ModuleSourcePackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var module: ModuleId?
@@ -245,6 +258,7 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ModuleTestOutputPackagingElementEntity, PackagingElementEntity.Builder<ModuleTestOutputPackagingElementEntity>, ModifiableWorkspaceEntity<ModuleTestOutputPackagingElementEntity>, ObjBuilder<ModuleTestOutputPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var module: ModuleId?
@@ -263,6 +277,7 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder<T: FileOrDirectoryPackagingElementEntity>: FileOrDirectoryPackagingElementEntity, PackagingElementEntity.Builder<T>, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
         override var parentEntity: CompositePackagingElementEntity?
         override var filePath: VirtualFileUrl
@@ -280,6 +295,7 @@ interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementE
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: DirectoryCopyPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<DirectoryCopyPackagingElementEntity>, ModifiableWorkspaceEntity<DirectoryCopyPackagingElementEntity>, ObjBuilder<DirectoryCopyPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var filePath: VirtualFileUrl
@@ -298,6 +314,7 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ExtractedDirectoryPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<ExtractedDirectoryPackagingElementEntity>, ModifiableWorkspaceEntity<ExtractedDirectoryPackagingElementEntity>, ObjBuilder<ExtractedDirectoryPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var filePath: VirtualFileUrl
@@ -317,6 +334,7 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: FileCopyPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<FileCopyPackagingElementEntity>, ModifiableWorkspaceEntity<FileCopyPackagingElementEntity>, ObjBuilder<FileCopyPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var filePath: VirtualFileUrl
@@ -337,6 +355,7 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: CustomPackagingElementEntity, CompositePackagingElementEntity.Builder<CustomPackagingElementEntity>, ModifiableWorkspaceEntity<CustomPackagingElementEntity>, ObjBuilder<CustomPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var artifact: ArtifactEntity?

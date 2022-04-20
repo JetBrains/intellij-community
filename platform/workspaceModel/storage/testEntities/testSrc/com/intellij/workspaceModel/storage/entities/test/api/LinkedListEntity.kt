@@ -15,6 +15,8 @@ import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.*
 
 import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+
 
 
 
@@ -34,6 +36,7 @@ interface LinkedListEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   //@formatter:off
+  @GeneratedCodeApiVersion(0)
   interface Builder: LinkedListEntity, ModifiableWorkspaceEntity<LinkedListEntity>, ObjBuilder<LinkedListEntity> {
       override var myName: String
       override var entitySource: EntitySource

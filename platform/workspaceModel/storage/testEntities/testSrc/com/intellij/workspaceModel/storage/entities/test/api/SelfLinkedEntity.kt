@@ -8,12 +8,15 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+
 
 
 interface SelfLinkedEntity : WorkspaceEntity {
   val parentEntity: SelfLinkedEntity?
   //region generated code
   //@formatter:off
+  @GeneratedCodeApiVersion(0)
   interface Builder: SelfLinkedEntity, ModifiableWorkspaceEntity<SelfLinkedEntity>, ObjBuilder<SelfLinkedEntity> {
       override var parentEntity: SelfLinkedEntity?
       override var entitySource: EntitySource

@@ -16,6 +16,8 @@ import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+
 
 
 data class OnePersistentId(val name: String): PersistentEntityId<OneEntityWithPersistentId> {
@@ -61,6 +63,7 @@ interface OneEntityWithPersistentId : WorkspaceEntityWithPersistentId {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: OneEntityWithPersistentId, ModifiableWorkspaceEntity<OneEntityWithPersistentId>, ObjBuilder<OneEntityWithPersistentId> {
         override var myName: String
         override var entitySource: EntitySource
@@ -94,6 +97,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: EntityWithSoftLinks, ModifiableWorkspaceEntity<EntityWithSoftLinks>, ObjBuilder<EntityWithSoftLinks> {
         override var link: OnePersistentId
         override var entitySource: EntitySource
@@ -122,6 +126,7 @@ interface SoftLinkReferencedChild : WorkspaceEntity {
   val parentEntity: EntityWithSoftLinks
   //region generated code
   //@formatter:off
+  @GeneratedCodeApiVersion(0)
   interface Builder: SoftLinkReferencedChild, ModifiableWorkspaceEntity<SoftLinkReferencedChild>, ObjBuilder<SoftLinkReferencedChild> {
       override var parentEntity: EntityWithSoftLinks
       override var entitySource: EntitySource

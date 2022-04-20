@@ -12,6 +12,8 @@ import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 
 import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+
 
 
 
@@ -26,6 +28,7 @@ interface ParentChainEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ParentChainEntity, ModifiableWorkspaceEntity<ParentChainEntity>, ObjBuilder<ParentChainEntity> {
         override var root: CompositeAbstractEntity
         override var entitySource: EntitySource
@@ -45,6 +48,7 @@ interface SimpleAbstractEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder<T: SimpleAbstractEntity>: SimpleAbstractEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
         override var parentInList: CompositeAbstractEntity
         override var entitySource: EntitySource
@@ -65,6 +69,7 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder<T: CompositeAbstractEntity>: CompositeAbstractEntity, SimpleAbstractEntity.Builder<T>, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
         override var parentInList: CompositeAbstractEntity
         override var children: List<SimpleAbstractEntity>
@@ -82,6 +87,7 @@ interface CompositeChildAbstractEntity : CompositeAbstractEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: CompositeChildAbstractEntity, CompositeAbstractEntity.Builder<CompositeChildAbstractEntity>, ModifiableWorkspaceEntity<CompositeChildAbstractEntity>, ObjBuilder<CompositeChildAbstractEntity> {
         override var parentInList: CompositeAbstractEntity
         override var children: List<SimpleAbstractEntity>
@@ -99,6 +105,7 @@ interface SimpleChildAbstractEntity : SimpleAbstractEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: SimpleChildAbstractEntity, SimpleAbstractEntity.Builder<SimpleChildAbstractEntity>, ModifiableWorkspaceEntity<SimpleChildAbstractEntity>, ObjBuilder<SimpleChildAbstractEntity> {
         override var parentInList: CompositeAbstractEntity
         override var entitySource: EntitySource

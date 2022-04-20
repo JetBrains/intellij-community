@@ -17,6 +17,8 @@ import org.jetbrains.deft.impl.fields.*
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 
 import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+
 
 
 
@@ -30,6 +32,7 @@ interface ParentSingleAbEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ParentSingleAbEntity, ModifiableWorkspaceEntity<ParentSingleAbEntity>, ObjBuilder<ParentSingleAbEntity> {
         override var child: ChildSingleAbstractBaseEntity
         override var entitySource: EntitySource
@@ -50,6 +53,7 @@ interface ChildSingleAbstractBaseEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder<T: ChildSingleAbstractBaseEntity>: ChildSingleAbstractBaseEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
         override var commonData: String
         override var entitySource: EntitySource
@@ -68,6 +72,7 @@ interface ChildSingleFirstEntity : ChildSingleAbstractBaseEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ChildSingleFirstEntity, ChildSingleAbstractBaseEntity.Builder<ChildSingleFirstEntity>, ModifiableWorkspaceEntity<ChildSingleFirstEntity>, ObjBuilder<ChildSingleFirstEntity> {
         override var commonData: String
         override var parentEntity: ParentSingleAbEntity
@@ -87,6 +92,7 @@ interface ChildSingleSecondEntity : ChildSingleAbstractBaseEntity {
 
     //region generated code
     //@formatter:off
+    @GeneratedCodeApiVersion(0)
     interface Builder: ChildSingleSecondEntity, ChildSingleAbstractBaseEntity.Builder<ChildSingleSecondEntity>, ModifiableWorkspaceEntity<ChildSingleSecondEntity>, ObjBuilder<ChildSingleSecondEntity> {
         override var commonData: String
         override var parentEntity: ParentSingleAbEntity

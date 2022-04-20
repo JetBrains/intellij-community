@@ -14,6 +14,8 @@ import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.*
 
 import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+
 
 
 
@@ -26,6 +28,7 @@ interface AssertConsistencyEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
+  @GeneratedCodeApiVersion(0)
   interface Builder: AssertConsistencyEntity, ModifiableWorkspaceEntity<AssertConsistencyEntity>, ObjBuilder<AssertConsistencyEntity> {
       override var passCheck: Boolean
       override var entitySource: EntitySource

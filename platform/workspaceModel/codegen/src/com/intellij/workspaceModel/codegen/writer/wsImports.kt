@@ -24,6 +24,8 @@ fun wsFqn(name: String): String {
     "Child" -> "org.jetbrains.deft.annotations"
     "referrersx" -> "com.intellij.workspaceModel.storage"
     "referrersy" -> "com.intellij.workspaceModel.storage"
+    "GeneratedCodeApiVersion" -> "com.intellij.workspaceModel.storage"
+    "GeneratedCodeImplVersion" -> "com.intellij.workspaceModel.storage"
     else -> null
 
   }
