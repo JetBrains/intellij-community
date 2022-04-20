@@ -145,9 +145,11 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
 
     projectTasks()
 
-    prepareSample(sample)
+    prepareSample(sample, checkSdkConfiguration = false)
 
     openLearnToolwindow()
+
+    sdkConfigurationTasks()
 
     waitIndexingTasks()
 
@@ -243,12 +245,13 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     }
 
     val currentJdk = JavaProjectUtil.getProjectJdk(project)
-    val currentJdkVersion: @NlsSafe String = if (currentJdk != null) {
-      JavaSdk.getInstance().getVersionString(currentJdk) ?: "none"
-    }
-    else "none"
+
+    @Suppress("HardCodedStringLiteral")
+    val currentJdkVersion: @NlsSafe String = currentJdk?.let { JavaSdk.getInstance().getVersionString(it) } ?: "none"
 
     val module = ModuleManager.getInstance(project).modules.first()
+
+    @Suppress("HardCodedStringLiteral")
     val currentLanguageLevel: @NlsSafe String = LanguageLevelUtil.getEffectiveLanguageLevel(module).name
 
     primaryLanguage.onboardingFeedbackData = object : OnboardingFeedbackData("IDEA Onboarding Tour Feedback", lessonEndInfo) {

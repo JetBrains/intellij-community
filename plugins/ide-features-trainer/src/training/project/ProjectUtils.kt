@@ -8,8 +8,6 @@ import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -32,7 +30,6 @@ import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.LearnBundle
 import training.util.featureTrainerVersion
-import training.util.iftNotificationGroup
 import java.io.File
 import java.io.FileFilter
 import java.io.IOException
@@ -284,13 +281,6 @@ object ProjectUtils {
       rootsModel.commit()
       project.save()
     }
-  }
-
-  fun createSdkDownloadingNotification(): Notification {
-    return iftNotificationGroup.createNotification(LearnBundle.message("learn.project.initializing.jdk.download.notification.title"),
-                                                LearnBundle.message("learn.project.initializing.jdk.download.notification.message",
-                                                                    ApplicationNamesInfo.getInstance().fullProductName),
-                                                NotificationType.INFORMATION)
   }
 
   fun closeAllEditorsInProject(project: Project) {
