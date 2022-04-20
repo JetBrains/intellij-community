@@ -50,6 +50,7 @@ import org.assertj.swing.timing.Timeout
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
+import training.lang.LangManager
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.Lesson
@@ -697,3 +698,10 @@ fun LessonContext.showInvalidDebugLayoutWarning() = task {
 }
 
 private fun getDebugFramesView() = RunnerLayoutSettings.getInstance().getLayout("Debug").getViewById("FrameContent")
+
+fun LessonContext.sdkConfigurationTasks() {
+  val langSupport = LangManager.getInstance().getLangSupport()
+  if (langSupport != null && lesson.languageId == langSupport.primaryLanguage) {
+    langSupport.sdkConfigurationTasks.invoke(this, lesson)
+  }
+}

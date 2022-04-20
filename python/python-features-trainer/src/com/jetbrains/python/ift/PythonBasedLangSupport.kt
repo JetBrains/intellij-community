@@ -143,7 +143,7 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
   }
 
 
-  override val commonCheckContent: LessonContext.(lesson: KLesson) -> Unit = { lesson ->
+  override val sdkConfigurationTasks: LessonContext.(lesson: KLesson) -> Unit = { lesson ->
     task {
       stateCheck {
         hasPythonSdk()
