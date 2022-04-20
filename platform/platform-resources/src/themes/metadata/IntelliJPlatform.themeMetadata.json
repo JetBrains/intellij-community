@@ -218,6 +218,11 @@
       "since": "2019.2"
     },
     {
+      "key": "Debugger.Variables.typeForeground",
+      "description": "Value type text color",
+      "since": "2022.2"
+    },
+    {
       "key": "Debugger.EvaluateExpression.background",
       "description": "Background color of the evaluate expression field embedded into the variables view",
       "since": "2022.2"
