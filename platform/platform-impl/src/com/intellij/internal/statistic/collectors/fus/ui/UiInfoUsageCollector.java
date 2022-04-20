@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.ui;
 
 import com.intellij.ide.ui.LafManager;
@@ -166,7 +166,7 @@ final class UiInfoUsageCollector extends ApplicationUsagesCollector {
       try {
         SwingUtilities.invokeAndWait(() -> {
           DisplayMode dm = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
-          isScaleMode.set(dm != null && JdkEx.getDisplayModeEx().isDefault(dm));
+          isScaleMode.set(dm != null && !JdkEx.getDisplayModeEx().isDefault(dm));
         });
       }
       catch (InvocationTargetException e) {
