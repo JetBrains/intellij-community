@@ -1243,6 +1243,7 @@
     <notificationGroup id="Load Error" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.load.error"/>
     <notificationGroup id="Heap Dump Analysis" displayType="STICKY_BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.heap.dump.analysis"/>
     <notificationGroup id="KeymapMissing" displayType="STICKY_BALLOON" bundle="messages.KeyMapBundle" key="notification.group.keymap.missing"/>
+    <notificationGroup id="ColorSchemeDeprecation" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.title.solarized.color.scheme.deprecation"/>
     <notificationGroup id="KeymapInstalled" displayType="BALLOON" bundle="messages.KeyMapBundle" key="notification.group.keymap.installed"/>
     <notificationGroup id="IDE and Plugin Updates" displayType="STICKY_BALLOON"
                        bundle="messages.IdeBundle" key="notification.group.ide.and.plugin.updates"
