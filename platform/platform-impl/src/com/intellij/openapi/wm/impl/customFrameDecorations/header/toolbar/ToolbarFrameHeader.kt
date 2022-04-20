@@ -12,8 +12,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.ui.FixedSizeButton
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeMenuBar
@@ -29,7 +27,7 @@ import com.intellij.ui.hover.addHoverAndPressStateListener
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
-import com.jetbrains.CustomWindowDecoration.*
+import com.jetbrains.CustomWindowDecoration.MENU_BAR
 import java.awt.*
 import java.awt.GridBagConstraints.*
 import javax.swing.*
@@ -153,10 +151,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
 
   private fun createMenuButton(): AbstractButton {
     val button = FixedSizeButton(36)
-    val icon = IconManager.getInstance().getIcon("expui/general/windowsMenu.svg", AllIcons::class.java)
-    if (icon is ScalableIcon) {
-      button.icon = IconLoader.loadCustomVersionOrScale(icon, 20f) //todo change to precompiled icon later
-    }
+    button.icon = IconManager.getInstance().getIcon("expui/general/windowsMenu@20x20.svg", AllIcons::class.java)
 
     button.isContentAreaFilled = false
     button.background = CustomFrameDecorations.mainToolbarBackground(true)
