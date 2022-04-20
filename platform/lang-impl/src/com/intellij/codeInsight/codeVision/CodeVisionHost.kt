@@ -40,7 +40,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SyntaxTraverser
-import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Alarm
 import com.intellij.util.application
@@ -469,7 +468,7 @@ open class CodeVisionHost(val project: Project) {
     return indicator
   }
 
-  private fun openCodeVisionSettings(groupId: String? = null) {
+  protected open fun openCodeVisionSettings(groupId: String? = null) {
     InlayHintsConfigurable.showSettingsDialogForLanguage(project, Language.ANY) {
       if(groupId == null) return@showSettingsDialogForLanguage it.group == InlayGroup.CODE_VISION_GROUP_NEW
 
