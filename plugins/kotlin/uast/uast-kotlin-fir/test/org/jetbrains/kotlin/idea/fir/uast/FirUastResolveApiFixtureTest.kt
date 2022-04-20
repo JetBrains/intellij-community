@@ -146,6 +146,18 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("DivByZero", ::checkDivByZero)
     }
 
+    fun testArgumentMappingDefaultValue() {
+        doCheck("ArgumentMappingDefaultValue", ::checkArgumentMappingDefaultValue)
+    }
+
+    fun testArgumentMappingExtensionFunction() {
+        doCheck("ArgumentMappingExtensionFunction", ::checkArgumentMappingExtensionFunction)
+    }
+
+    fun testArgumentMappingVararg() {
+        doCheck("ArgumentMappingVararg", ::checkArgumentMappingVararg)
+    }
+
     fun testArgumentMappingOOBE() {
         doCheck("ArgumentMappingOOBE", ::checkArgumentMappingOOBE)
     }

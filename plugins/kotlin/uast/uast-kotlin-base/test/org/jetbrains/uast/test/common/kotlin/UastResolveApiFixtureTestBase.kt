@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUE_OF
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertContainsElements
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertDoesntContain
+import org.jetbrains.kotlin.idea.test.util.JUnit4Assertions.assertSameElements
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtParameter
@@ -563,6 +564,104 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         )
     }
 
+    fun checkArgumentMappingDefaultValue(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+            class Foo {
+                fun boo(ch: Char, i: Int = 42): Int {
+                  return i
+                }
+            }
+            
+            fun box(foo: Foo) = run {
+                foo.b<caret>oo('x')
+            }
+        """
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+            .orFail("cant resolve from $uCallExpression")
+
+        resolved.parameters.forEachIndexed { index, _ ->
+            val arg = uCallExpression.getArgumentForParameter(index)
+            if (index == 0) {
+                TestCase.assertNotNull("Value parameter ch of function boo", arg)
+                TestCase.assertEquals('x', arg?.evaluate())
+            } else {
+                // 2nd parameter has a default value, and is not passed.
+                TestCase.assertNull(arg)
+            }
+        }
+    }
+
+    fun checkArgumentMappingExtensionFunction(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+            class Foo {
+            }
+            
+            fun Foo.boo(ch: Char): Int {
+                return 42
+            }
+            
+            fun box(foo: Foo) = run {
+                foo.b<caret>oo('x')
+            }
+        """
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+            .orFail("cant resolve from $uCallExpression")
+
+        resolved.parameters.forEachIndexed { index, _ ->
+            val arg = uCallExpression.getArgumentForParameter(index)
+            if (index == 0) {
+                // Extension receiver parameter
+                TestCase.assertNotNull("Extension receiver parameter", arg)
+                TestCase.assertEquals("foo", (arg as? USimpleNameReferenceExpression)?.identifier)
+            } else {
+                // one and only parameter becomes 2nd parameter in JVM bytecode.
+                TestCase.assertNotNull("Value parameter ch of function boo", arg)
+                TestCase.assertEquals('x', arg?.evaluate())
+            }
+        }
+    }
+
+    fun checkArgumentMappingVararg(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+            class Foo {
+                fun boo(vararg chars: Char): Int {
+                  return chars.size
+                }
+            }
+            
+            fun box(foo: Foo) = run {
+                foo.b<caret>oo('x', 'y', 'z')
+            }
+        """
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+            .orFail("cant resolve from $uCallExpression")
+
+        resolved.parameters.forEachIndexed { index, _ ->
+            val arg = uCallExpression.getArgumentForParameter(index)
+            TestCase.assertNotNull("vararg chars of function boo", arg)
+            TestCase.assertTrue(arg is UExpressionList)
+            val varargValues = (arg as UExpressionList).expressions.map { it.evaluate() }
+            assertSameElements(listOf('x', 'y', 'z'), varargValues) {
+                varargValues.joinToString(separator = ", ", prefix = "[", postfix = "]")
+            }
+        }
+    }
+
     fun checkArgumentMappingOOBE(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
@@ -587,6 +686,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             val arg = uCallExpression.getArgumentForParameter(index)
             if (index == 0) {
                 TestCase.assertNotNull("Value parameter ch of function boo", arg)
+                TestCase.assertEquals('x', arg?.evaluate())
             } else {
                 // That suspend function has only one parameter. Anything else is generated by the compiler.
                 // But, at least, UCallExpression#getArgumentForParameter should not raise an out-of-bound exception.
