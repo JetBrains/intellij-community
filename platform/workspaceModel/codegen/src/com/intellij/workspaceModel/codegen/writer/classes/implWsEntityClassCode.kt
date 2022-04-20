@@ -11,13 +11,16 @@ import org.jetbrains.deft.codegen.ijws.wsFqn
 import org.jetbrains.deft.impl.ObjType
 
 fun ObjType<*, *>.implWsEntityCode(): String {
-    return """
+  return """
 
-${ if (abstract) "abstract" else "open" } class $javaImplName: $javaFullName, ${wsFqn("WorkspaceEntityBase")}() {
-    ${if (structure.allRefsFields.isNotEmpty()) """
+${if (abstract) "abstract" else "open"} class $javaImplName: $javaFullName, ${wsFqn("WorkspaceEntityBase")}() {
+    ${
+    if (structure.allRefsFields.isNotEmpty()) """
     companion object {
         ${structure.allRefsFields.lines("        ") { refsConnectionIdCode }.trimEnd()}
-    }""" else ""}
+    }"""
+    else ""
+  }
         
     ${structure.allFields.filter { it.name !in listOf("entitySource", "persistentId") }.lines("    ") { implWsEntityFieldCode }.trimEnd()}
 

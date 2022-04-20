@@ -4,9 +4,9 @@ import org.jetbrains.deft.impl.ObjModule
 import org.jetbrains.deft.impl.fields.MemberOrExtField
 
 object MetaTypes : ObjModule(Id("org.jetbrains.deft.impl.fields")) {
-    @InitApi
-    override fun init() {
-        beginInit(1)
-        add(MemberOrExtField)
-    }
+  @InitApi
+  override fun init() {
+    beginInit(1)
+    add(MemberOrExtField)
+  }
 }

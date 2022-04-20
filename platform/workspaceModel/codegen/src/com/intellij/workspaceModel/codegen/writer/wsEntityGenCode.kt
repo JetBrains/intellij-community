@@ -31,9 +31,9 @@ import org.jetbrains.deft.impl.ObjType
  */
 
 fun ObjType<*, *>.implWsCode(simpleTypes: List<DefType>, additionalImports: String? = null): String {
-    return """
+  return """
 import org.jetbrains.deft.ObjBuilder
-${if (additionalImports?.isNotBlank() == true)"\n$additionalImports\n" else ""}
+${if (additionalImports?.isNotBlank() == true) "\n$additionalImports\n" else ""}
     
 ${implWsEntityCode()}
     

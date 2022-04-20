@@ -8,12 +8,16 @@ import org.jetbrains.deft.codegen.utils.fileContents
 import org.jetbrains.deft.codegen.utils.fqn
 
 fun KtObjModule.Built.wsModuleCode(): String = fileContents(
-    src.id.javaPackage,
-    """
+  src.id.javaPackage,
+  """
 ${extFields.sortedBy { it.name }.lines { wsCode }}
 
-${typeDefs.filter { !it.abstract }.sortedBy { it.name }.lines { 
-      "fun ${wsFqn("WorkspaceEntityStorageBuilder")}.modifyEntity(entity: ${fqn(packageName, name)}, modification: $name.Builder.() -> Unit) = modifyEntity(${fqn(packageName, name)}.Builder::class.java, entity, modification)" 
-}}
+${
+    typeDefs.filter { !it.abstract }.sortedBy { it.name }.lines {
+      "fun ${wsFqn("WorkspaceEntityStorageBuilder")}.modifyEntity(entity: ${
+        fqn(packageName, name)
+      }, modification: $name.Builder.() -> Unit) = modifyEntity(${fqn(packageName, name)}.Builder::class.java, entity, modification)"
+    }
+  }
 """
 )

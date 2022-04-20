@@ -21,22 +21,22 @@ interface $javaSimpleName: $javaSuperType {
 """.trimIndent()
 
 val DefType.innerModels: Collection<DefType>
-    get() = module
-        .types
-        .filter { it.name.startsWith("$name.") }
-        .map { it as DefType }
+  get() = module
+    .types
+    .filter { it.name.startsWith("$name.") }
+    .map { it as DefType }
 
 fun DefType.innerModelsCode(indent: String, moduleName: String): String {
-    val innerModels = innerModels
-    if (innerModels.isEmpty()) return ""
-    return innerModels.joinToString("\n\n") {
-        it.apiCode(moduleName).indentRestOnly(indent)
-    } + "\n\n$indent"
+  val innerModels = innerModels
+  if (innerModels.isEmpty()) return ""
+  return innerModels.joinToString("\n\n") {
+    it.apiCode(moduleName).indentRestOnly(indent)
+  } + "\n\n$indent"
 }
 
 fun DefType.generatedApiCode(indent: String = "    "): String = lines(indent) {
-    line("//region generated code")
-    line("//@formatter:off")
+  line("//region generated code")
+  line("//@formatter:off")
 
     val abstractSupertype = if (base?.abstract == true) base else null
     val header = when {
@@ -64,7 +64,7 @@ fun DefType.generatedApiCode(indent: String = "    "): String = lines(indent) {
         append(")")
     })
     line("//@formatter:on")
-    lineNoNl("//endregion")
+  lineNoNl("//endregion")
 }
 
 val Field<*, *>.wsBuilderApi: String

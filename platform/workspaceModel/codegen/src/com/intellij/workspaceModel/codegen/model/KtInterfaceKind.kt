@@ -9,11 +9,11 @@ import org.jetbrains.deft.impl.ValueType
 import org.jetbrains.deft.impl.fields.Field
 
 abstract class KtInterfaceKind {
-    abstract fun buildField(fieldNumber: Int, field: DefField, scope: KtScope, type: DefType, diagnostics: Diagnostics)
-    abstract fun buildValueType(
-        ktInterface: KtInterface?, diagnostics: Diagnostics, ktType: KtType,
-        childAnnotation: KtAnnotation?
-    ): ValueType<*>?
+  abstract fun buildField(fieldNumber: Int, field: DefField, scope: KtScope, type: DefType, diagnostics: Diagnostics)
+  abstract fun buildValueType(
+    ktInterface: KtInterface?, diagnostics: Diagnostics, ktType: KtType,
+    childAnnotation: KtAnnotation?
+  ): ValueType<*>?
 }
 
 open class WsEntityInterface : KtInterfaceKind() {
@@ -50,30 +50,32 @@ open class WsEntityInterface : KtInterfaceKind() {
   }
 }
 
-object WsEntityWithPersistentId: WsEntityInterface()
+object WsEntityWithPersistentId : WsEntityInterface()
 
 interface WsPropertyClass
 
-object WsEnum: WsEntityInterface(), WsPropertyClass {
+object WsEnum : WsEntityInterface(), WsPropertyClass {
   override fun buildValueType(ktInterface: KtInterface?, diagnostics: Diagnostics, ktType: KtType,
                               childAnnotation: KtAnnotation?): ValueType<*> {
     return TBlob<Any>(ktType.classifier)
   }
 }
 
-object WsData: WsEntityInterface(), WsPropertyClass {
+object WsData : WsEntityInterface(), WsPropertyClass {
   override fun buildValueType(ktInterface: KtInterface?, diagnostics: Diagnostics, ktType: KtType,
                               childAnnotation: KtAnnotation?): ValueType<*> {
     return TBlob<Any>(ktType.classifier)
   }
 }
-object WsSealed: WsEntityInterface(), WsPropertyClass {
+
+object WsSealed : WsEntityInterface(), WsPropertyClass {
   override fun buildValueType(ktInterface: KtInterface?, diagnostics: Diagnostics, ktType: KtType,
                               childAnnotation: KtAnnotation?): ValueType<*> {
     return TBlob<Any>(ktType.classifier)
   }
 }
-object WsObject: WsEntityInterface(), WsPropertyClass {
+
+object WsObject : WsEntityInterface(), WsPropertyClass {
   override fun buildValueType(ktInterface: KtInterface?, diagnostics: Diagnostics, ktType: KtType,
                               childAnnotation: KtAnnotation?): ValueType<*> {
     return TBlob<Any>(ktType.classifier)

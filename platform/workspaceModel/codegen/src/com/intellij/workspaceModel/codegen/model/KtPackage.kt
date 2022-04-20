@@ -2,12 +2,12 @@
 package org.jetbrains.deft.codegen.model
 
 class KtPackage(val fqn: String?) {
-    override fun toString(): String = "[package: ${fqn ?: "<anonymous>"}]"
+  override fun toString(): String = "[package: ${fqn ?: "<anonymous>"}]"
 
-    val scope = KtScope(null, this)
-    val files = mutableListOf<KtFile>()
+  val scope = KtScope(null, this)
+  val files = mutableListOf<KtFile>()
 
-    init {
-        scope.owner = this
-    }
+  init {
+    scope.owner = this
+  }
 }
