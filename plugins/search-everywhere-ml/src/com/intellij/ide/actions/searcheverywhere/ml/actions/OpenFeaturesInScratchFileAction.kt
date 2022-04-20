@@ -21,6 +21,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
   companion object {
     private const val SHOULD_ORDER_BY_ML_KEY = "shouldOrderByMl"
     private const val CONTEXT_INFO_KEY = "contextInfo"
+    private const val SEARCH_STATE_FEATURES_KEY = "searchStateFeatures"
     private const val FOUND_ELEMENTS_KEY = "foundElements"
   }
 
@@ -52,6 +53,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
   private fun getFeaturesReport(searchEverywhereUI: SearchEverywhereUI): Map<String, Any> {
     val mlSessionService = SearchEverywhereMlSessionService.getService()
     val searchSession = mlSessionService.getCurrentSession()!!
+    val state = searchSession.getCurrentSearchState()
 
     val features = searchEverywhereUI.foundElementsInfo.map { info ->
       val rankingWeight = info.priority
@@ -65,7 +67,6 @@ class OpenFeaturesInScratchFileAction : AnAction() {
           null
         }
 
-        val state = searchSession.getCurrentSearchState()
         return@map ElementFeatures(
           elementName,
           mlWeight,
@@ -82,6 +83,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
     return mapOf(
       SHOULD_ORDER_BY_ML_KEY to mlSessionService.shouldOrderByMl(searchEverywhereUI.selectedTabID),
       CONTEXT_INFO_KEY to searchSession.cachedContextInfo,
+      SEARCH_STATE_FEATURES_KEY to state!!.searchStateFeatures.toSortedMap(),
       FOUND_ELEMENTS_KEY to features
     )
   }

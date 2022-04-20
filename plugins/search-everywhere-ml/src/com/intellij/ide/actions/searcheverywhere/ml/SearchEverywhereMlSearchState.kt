@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereStateFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereRankingModel
 
@@ -16,6 +17,8 @@ internal class SearchEverywhereMlSearchState(
 ) {
   private val cachedElementsInfo: MutableMap<Int, SearchEverywhereMLItemInfo> = hashMapOf()
   private val cachedMLWeight: MutableMap<Int, Double> = hashMapOf()
+
+  val searchStateFeatures = SearchEverywhereStateFeaturesProvider().getSearchStateFeatures(tabId, searchQuery)
 
   private val model: SearchEverywhereRankingModel by lazy {
     SearchEverywhereRankingModel(modelProvider.getModel(tabId))
@@ -53,6 +56,7 @@ internal class SearchEverywhereMlSearchState(
       val features = hashMapOf<String, Any>()
       features.putAll(context.features)
       features.putAll(getElementFeatures(elementId, element, contributor, priority).features)
+      features.putAll(searchStateFeatures)
       model.predict(features)
     }
   }

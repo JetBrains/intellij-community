@@ -93,6 +93,7 @@ internal class SearchEverywhereMLStatisticsCollector {
       data[EXPERIMENT_GROUP] = experimentGroup
       data[ORDER_BY_ML_GROUP] = orderByMl
       data[SEARCH_START_TIME_KEY] = state.searchStartTime
+      data[SEARCH_STATE_FEATURES_DATA_KEY] = state.searchStateFeatures
 
       if (timeToFirstResult > -1) {
         // Only report if some results came up in the search
@@ -263,6 +264,8 @@ internal class SearchEverywhereMLStatisticsCollector {
     private const val SELECTED_INDEXES_DATA_KEY = "selectedIndexes"
     private const val SELECTED_ELEMENTS_DATA_KEY = "selectedIds"
     private const val SELECTED_ELEMENTS_CONSISTENT = "isConsistent"
+
+    private const val SEARCH_STATE_FEATURES_DATA_KEY = "searchStateFeatures"
 
     // item fields
     internal const val ID_KEY = "id"
