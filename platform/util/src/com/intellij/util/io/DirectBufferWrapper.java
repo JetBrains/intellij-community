@@ -20,7 +20,6 @@ public final class DirectBufferWrapper {
 
   private final @NotNull PagedFileStorage myFile;
   private final long myPosition;
-  //private final boolean myReadOnly;
 
   private volatile ByteBuffer myBuffer;
   private volatile boolean myDirty;
@@ -146,10 +145,9 @@ public final class DirectBufferWrapper {
     StorageLockContext context = myFile.getStorageLockContext();
     context.checkReadAccess();
 
-    synchronized (this) {
-      myBuffer.position(page_offset);
-      myBuffer.get(dst, o, page_len);
-    }
+    ByteBuffer buf = myBuffer.duplicate();
+    buf.position(page_offset);
+    buf.get(dst, o, page_len);
   }
 
   public void putFromArray(byte[] src, int o, int page_offset, int page_len) throws IOException, IllegalArgumentException {
@@ -157,11 +155,10 @@ public final class DirectBufferWrapper {
     context.checkWriteAccess();
 
     markDirty();
-    synchronized (this) {
-      myBuffer.position(page_offset);
-      myBuffer.put(src, o, page_len);
-    }
-    fileSizeMayChanged(myBuffer.position());
+    ByteBuffer buf = myBuffer.duplicate();
+    buf.position(page_offset);
+    buf.put(src, o, page_len);
+    fileSizeMayChanged(buf.position());
   }
 
 
@@ -198,27 +195,19 @@ public final class DirectBufferWrapper {
     return myReferences == RELEASED_CODE;
   }
 
-  @SuppressWarnings("RedundantCast")
   void force() throws IOException {
     myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
 
     assert !myFile.isReadOnly();
     if (isDirty()) {
-      synchronized (this) {
-        ByteBuffer buffer = myBuffer;
-        buffer.rewind();
+      ByteBuffer buffer = myBuffer.duplicate();
+      buffer.rewind();
+      buffer.limit(myBufferDataEndPos);
 
-        myFile.useChannel(ch -> {
-          int oldLimit = buffer.limit();
-          try {
-            ch.write((ByteBuffer)buffer.limit(myBufferDataEndPos), myPosition);
-          }
-          finally {
-            buffer.limit(oldLimit);
-          }
-          return null;
-        }, myFile.isReadOnly());
-      }
+      myFile.useChannel(ch -> {
+        ch.write(buffer, myPosition);
+        return null;
+      }, myFile.isReadOnly());
 
       myDirty = false;
     }
