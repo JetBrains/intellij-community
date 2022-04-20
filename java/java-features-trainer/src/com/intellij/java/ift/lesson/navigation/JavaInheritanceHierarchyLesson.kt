@@ -21,6 +21,8 @@ class JavaInheritanceHierarchyLesson
   override val sampleFilePath: String = "src/InheritanceHierarchySample.java"
 
   override val lessonContent: LessonContext.() -> Unit = {
+    sdkConfigurationTasks()
+
     caret("foo(demo)")
 
     actionTask("GotoImplementation") {

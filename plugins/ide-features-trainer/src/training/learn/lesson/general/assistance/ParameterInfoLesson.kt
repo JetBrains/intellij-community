@@ -16,7 +16,7 @@ class ParameterInfoLesson(private val sample: LessonSample) :
     val initialOffset = sample.getPosition(0).startOffset
 
     actionTask("ParameterInfo") {
-      restoreIfModifiedOrMoved()
+      restoreIfModifiedOrMoved(sample)
       LessonsBundle.message("parameter.info.use.action", action(it))
     }
 

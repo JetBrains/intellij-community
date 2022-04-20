@@ -20,7 +20,7 @@ class ExtractVariableFromBubbleLesson(private val sample: LessonSample)
       task("IntroduceVariable") {
         text(LessonsBundle.message("extract.variable.start.refactoring", action(it), code("i + 1")))
         triggerStart("IntroduceVariable")
-        restoreIfModifiedOrMoved()
+        restoreIfModifiedOrMoved(sample)
         test {
           actions(it)
         }
