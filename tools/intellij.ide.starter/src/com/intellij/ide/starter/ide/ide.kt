@@ -182,7 +182,11 @@ fun getExecutableNameFromInfoPlist(appDir: File, @Suppress("SameParameterValue")
 
 
 private fun downloadAndUnpackJbrIfNeeded(jbrFullVersion: String): Path {
-  val majorVersion = jbrFullVersion.split("+").firstOrNull()
+  val jbrVersion = jbrFullVersion.split(".")[0].toInt()
+  var majorVersion = jbrFullVersion.split("+").firstOrNull()
+  if (jbrVersion < 17) {
+    majorVersion = majorVersion?.replace(".", "_")
+  }
   requireNotNull(majorVersion) {
     { "majorVersion is: $majorVersion" }
   }
