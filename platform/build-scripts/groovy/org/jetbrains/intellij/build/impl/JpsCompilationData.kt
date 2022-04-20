@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import java.io.File
 
-class JpsCompilationData(val buildLogFile: File, val dataStorageRoot: File, categoriesWithDebugLevelNullable: String?) {
+class JpsCompilationData(val dataStorageRoot: File, val buildLogFile: File, categoriesWithDebugLevelNullable: String?) {
   val compiledModules: Set<String> = mutableSetOf()
   val compiledModuleTests: Set<String> = mutableSetOf()
   val builtArtifacts: Set<String> = mutableSetOf()
