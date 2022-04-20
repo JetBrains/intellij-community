@@ -129,10 +129,7 @@ public class GradleExecutionHelper {
       projectDir, taskId, settings, listener, cancellationToken,
       connection -> {
         try {
-          Map<String, String> propertiesFixes = new HashMap<>();
-          propertiesFixes.put("user.dir", projectDir);
-          propertiesFixes.put("java.system.class.loader", null);
-          return maybeFixSystemProperties(() -> f.fun(connection), propertiesFixes);
+          return maybeFixSystemProperties(() -> f.fun(connection), projectDir);
         }
         catch (ExternalSystemException | ProcessCanceledException e) {
           throw e;
@@ -147,18 +144,17 @@ public class GradleExecutionHelper {
       });
   }
 
-  public static <T> T maybeFixSystemProperties(@NotNull Computable<T> action, Map<String, String> keyToMask) {
+  private static <T> T maybeFixSystemProperties(@NotNull Computable<T> action, String projectDir) {
+    Map<String, String> keyToMask = ApplicationManager.getApplication().getService(SystemPropertiesAdjuster.class).getKeyToMask(projectDir);
     Map<String, String> oldValues = new HashMap<>();
     try {
-      if (!PlatformUtils.isFleetBackend() && Registry.is("gradle.tooling.adjust.user.dir", true)) {
-        keyToMask.forEach((key, newVal) -> {
-          String oldVal = System.getProperty(key);
-          oldValues.put(key, oldVal);
-          if (oldVal != null) {
-            SystemProperties.setProperty(key, newVal);
-          }
-        });
-      }
+      keyToMask.forEach((key, newVal) -> {
+        String oldVal = System.getProperty(key);
+        oldValues.put(key, oldVal);
+        if (oldVal != null) {
+          SystemProperties.setProperty(key, newVal);
+        }
+      });
       return action.compute();
     }
     finally {
@@ -168,6 +164,26 @@ public class GradleExecutionHelper {
           System.setProperty(k, v);
         }
       });
+    }
+  }
+
+  /**
+   * Use with caution! IDE system properties will be changed for the period of running Gradle long-running operations.
+   * This is a workaround to fix leaking unwanted IDE system properties to Gradle process.
+   */
+  @ApiStatus.Internal
+  public static class SystemPropertiesAdjuster {
+    public SystemPropertiesAdjuster() {
+      LOG.info("Gradle system adjuster service: " + this.getClass().getName());
+    }
+
+    public Map<String, String> getKeyToMask(@NotNull String projectDir) {
+      Map<String, String> propertiesFixes = new HashMap<>();
+      if (Registry.is("gradle.tooling.adjust.user.dir", true)) {
+        propertiesFixes.put("user.dir", projectDir);
+      }
+      propertiesFixes.put("java.system.class.loader", null);
+      return propertiesFixes;
     }
   }
 
