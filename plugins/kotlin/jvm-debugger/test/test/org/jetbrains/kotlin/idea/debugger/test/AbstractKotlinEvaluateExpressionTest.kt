@@ -56,6 +56,9 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
     private var isMultipleBreakpointsTest = false
     private var isFrameTest = false
 
+    override fun fragmentCompilerBackend() =
+        FragmentCompilerBackend.JVM
+
     private val exceptions = ConcurrentHashMap<String, Throwable>()
 
     fun doSingleBreakpointTest(path: String) {
