@@ -4,11 +4,14 @@ package org.jetbrains.kotlin.idea.debugger.breakpoints
 import com.intellij.debugger.ui.breakpoints.JavaMethodBreakpointType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerCoreBundle.message
 import org.jetbrains.kotlin.idea.debugger.breakpoints.ApplicabilityResult.Companion.maybe
+import org.jetbrains.kotlin.idea.project.TargetPlatformDetector.getPlatform
+import org.jetbrains.kotlin.platform.isCommon
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 
 class KotlinFunctionBreakpointType :
@@ -20,8 +23,8 @@ class KotlinFunctionBreakpointType :
     override fun createJavaBreakpoint(project: Project, breakpoint: XBreakpoint<JavaMethodBreakpointProperties>) =
         KotlinFunctionBreakpoint(project, breakpoint)
 
-    override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean {
-        return isBreakpointApplicable(file, line, project) { element: PsiElement ->
+    override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean =
+        isKtFileWithCommonOrJvmPlatform(file, project) && isBreakpointApplicable(file, line, project) { element ->
             when (element) {
                 is KtConstructor<*> ->
                     ApplicabilityResult.DEFINITELY_YES
@@ -40,5 +43,10 @@ class KotlinFunctionBreakpointType :
                     ApplicabilityResult.UNKNOWN
             }
         }
+
+    private fun isKtFileWithCommonOrJvmPlatform(file: VirtualFile, project: Project): Boolean {
+        val psiFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return false
+        val platform = getPlatform(psiFile)
+        return platform.isCommon() || platform.isJvm()
     }
 }
