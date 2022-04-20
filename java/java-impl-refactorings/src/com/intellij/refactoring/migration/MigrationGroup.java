@@ -33,6 +33,6 @@ public class MigrationGroup extends ActionGroup {
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     Project project = event.getProject();
-    presentation.setEnabledAndVisible(project != null);
+    presentation.setEnabledAndVisible(project != null && ActionPlaces.isMainMenuOrActionSearch(event.getPlace()));
   }
 }
