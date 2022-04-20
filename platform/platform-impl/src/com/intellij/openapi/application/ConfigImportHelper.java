@@ -38,6 +38,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.text.VersionComparatorUtil;
+import com.intellij.util.ui.IoErrorText;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -724,7 +725,7 @@ public final class ConfigImportHelper {
     }
     catch (Exception e) {
       log.warn(e);
-      String message = BootstrapBundle.message("import.settings.failed", e.getMessage());
+      String message = BootstrapBundle.message("import.settings.failed", IoErrorText.message(e));
       Main.showMessage(BootstrapBundle.message("import.settings.failed.title"), message, false);
     }
   }
