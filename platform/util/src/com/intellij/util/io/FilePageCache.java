@@ -155,7 +155,7 @@ final class FilePageCache {
     return myIndex2Storage.get(storageIndex);
   }
 
-  DirectBufferWrapper get(Long key, boolean read, boolean readOnly) throws IOException {
+  DirectBufferWrapper get(Long key, boolean read) throws IOException {
     DirectBufferWrapper wrapper;
     try {         // fast path
       mySegmentsAccessLock.lock();
@@ -197,7 +197,7 @@ final class FilePageCache {
 
       disposeRemovedSegments(null);
 
-      wrapper = createValue(key, read, readOnly, fileStorage);
+      wrapper = createValue(key, read, fileStorage);
 
       if (IOStatistics.DEBUG) {
         long finished = System.currentTimeMillis();
@@ -262,7 +262,7 @@ final class FilePageCache {
   }
 
   @NotNull
-  private static DirectBufferWrapper createValue(Long key, boolean read, boolean readOnly, PagedFileStorage owner) throws IOException {
+  private static DirectBufferWrapper createValue(Long key, boolean read, PagedFileStorage owner) throws IOException {
     StorageLockContext context = owner.getStorageLockContext();
     if (read) {
       context.checkReadAccess();
@@ -272,9 +272,7 @@ final class FilePageCache {
     }
     long off = (key & MAX_PAGES_COUNT) * owner.myPageSize;
 
-    return readOnly
-           ? DirectBufferWrapper.readOnlyDirect(owner, off)
-           : DirectBufferWrapper.readWriteDirect(owner, off);
+    return new DirectBufferWrapper(owner, off);
   }
 
 
@@ -346,22 +344,6 @@ final class FilePageCache {
       if (!exceptions.isEmpty()) {
         throw new IOException(new CompoundRuntimeException(exceptions));
       }
-    }
-  }
-
-  void invalidateBuffer(long page) {
-    mySegmentsAccessLock.lock();
-    try {
-      mySegments.remove(page);
-    } finally {
-      mySegmentsAccessLock.unlock();
-    }
-    mySegmentsAllocationLock.lock();
-    try {
-      disposeRemovedSegments(null);
-    }
-    finally {
-      mySegmentsAllocationLock.unlock();
     }
   }
 

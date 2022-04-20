@@ -225,7 +225,7 @@ public final class IntToIntBtree {
       boolean canUseLastKey = myCanUseLastKey;
       if (canUseLastKey) {
         myCanUseLastKey = false;
-        if (key == myLastGetKey && !myAccessNodeView.myHasFullPagesAlongPath && myAccessNodeView.isValid()) {
+        if (key == myLastGetKey && !myAccessNodeView.myHasFullPagesAlongPath) {
           ++myOptimizedInserts;
           ++count;
           myAccessNodeView.insert(key, value);
@@ -420,25 +420,9 @@ public final class IntToIntBtree {
     }
 
     private <T> T withBuffer(@NotNull NodeOp<T> operation) throws IOException {
-      boolean hasBeenLocked;
-      if (bufferWrapper != null && !cacheBuffer) {
-        if (bufferWrapper.tryLock()) {
-          hasBeenLocked = true;
-        }
-        else {
-          hasBeenLocked = false;
-        }
-      }
-      else {
-        hasBeenLocked = false;
-      }
-      if (!hasBeenLocked) {
-        if (cacheBuffer && bufferWrapper != null) {
-
-        }
-        else {
-          bufferWrapper = getStorage().getByteBuffer(address, false);
-        }
+      boolean hasBeenLocked = bufferWrapper != null && !cacheBuffer && bufferWrapper.tryLock();
+      if (!hasBeenLocked && (!cacheBuffer || bufferWrapper == null)) {
+        bufferWrapper = getStorage().getByteBuffer(address, false);
       }
 
       try {
@@ -614,10 +598,6 @@ public final class IntToIntBtree {
     public void initTraversal(int address) throws IOException {
       myHasFullPagesAlongPath = false;
       setAddress(address);
-    }
-
-    public boolean isValid() {
-      return true; //!myBufferWrapper.isReleased();
     }
 
     @Override

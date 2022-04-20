@@ -20,7 +20,7 @@ public final class DirectBufferWrapper {
 
   private final @NotNull PagedFileStorage myFile;
   private final long myPosition;
-  private final boolean myReadOnly;
+  //private final boolean myReadOnly;
 
   private volatile ByteBuffer myBuffer;
   private volatile boolean myDirty;
@@ -29,19 +29,18 @@ public final class DirectBufferWrapper {
 
   //private final Stack<Throwable> myReferenceTraces = new Stack<>();
 
-  DirectBufferWrapper(@NotNull PagedFileStorage file, long offset, boolean readOnly) throws IOException {
+  DirectBufferWrapper(@NotNull PagedFileStorage file, long offset) throws IOException {
     myFile = file;
     myPosition = offset;
-    myReadOnly = readOnly;
     myBuffer = DirectByteBufferAllocator.allocate(() -> create());
     myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
   }
 
   private void markDirty() throws IOException {
-    if (myReadOnly) {
-      throw new IOException("Read-only byte buffer can't be modified. File: " + myFile);
-    }
     if (!myDirty) {
+      if (myFile.isReadOnly()) {
+        throw new IOException("Read-only byte buffer can't be modified. File: " + myFile);
+      }
       myDirty = true;
       myFile.markDirty();
     }
@@ -172,7 +171,7 @@ public final class DirectBufferWrapper {
     return myFile.useChannel(ch -> {
       ch.read(buffer, myPosition);
       return buffer;
-    }, myReadOnly);
+    }, myFile.isReadOnly());
   }
 
   boolean tryRelease(boolean force) throws IOException {
@@ -203,7 +202,7 @@ public final class DirectBufferWrapper {
   void force() throws IOException {
     myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
 
-    assert !myReadOnly;
+    assert !myFile.isReadOnly();
     if (isDirty()) {
       synchronized (this) {
         ByteBuffer buffer = myBuffer;
@@ -218,7 +217,7 @@ public final class DirectBufferWrapper {
             buffer.limit(oldLimit);
           }
           return null;
-        }, myReadOnly);
+        }, myFile.isReadOnly());
       }
 
       myDirty = false;
@@ -258,13 +257,5 @@ public final class DirectBufferWrapper {
 
   @NotNull PagedFileStorage getFile() {
     return myFile;
-  }
-
-  public static DirectBufferWrapper readWriteDirect(PagedFileStorage file, long offset) throws IOException {
-    return new DirectBufferWrapper(file, offset,false);
-  }
-
-  public static DirectBufferWrapper readOnlyDirect(PagedFileStorage file, long offset) throws IOException {
-    return new DirectBufferWrapper(file, offset, true);
   }
 }
