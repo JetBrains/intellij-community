@@ -353,7 +353,10 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
     setDocumentText(file[0], "document");
 
-    executeCommand(() -> delete(dir[0]));
+    executeCommand(() -> {
+      delete(file[0]);
+      delete(dir[0]);
+    });
 
     for (int i = 0; i < 2; i++) {
       globalUndo();
@@ -362,6 +365,34 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
       file[0] = dir[0].findChild("file.txt");
       assertNotNull(file[0]);
       assertEquals("document", getDocumentText(file[0]));
+
+      globalRedo();
+      assertNull(myRoot.findChild("dir"));
+    }
+  }
+
+  public void testUndoDeleteDirectoryWithFileWithDisabledUndoMustNotRecreateFiles() {
+    final VirtualFile[] dir = new VirtualFile[1];
+    final VirtualFile[] file = new VirtualFile[1];
+    executeCommand(() -> {
+      dir[0] = createChildDirectory(myRoot, "dir");
+      file[0] = createChildData(dir[0], "file.txt");
+    });
+
+    setDocumentText(file[0], "document");
+
+    executeCommand(() -> {
+      UndoUtil.disableUndoFor(file[0]);
+      delete(file[0]);
+      delete(dir[0]);
+    });
+
+    for (int i = 0; i < 2; i++) {
+      globalUndo();
+      dir[0] = myRoot.findChild("dir");
+      assertNotNull(dir);
+      file[0] = dir[0].findChild("file.txt");
+      assertNull(file[0]);
 
       globalRedo();
       assertNull(myRoot.findChild("dir"));
