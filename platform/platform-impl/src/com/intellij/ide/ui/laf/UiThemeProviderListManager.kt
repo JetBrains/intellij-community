@@ -11,7 +11,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
 import javax.swing.UIManager.LookAndFeelInfo
 
@@ -90,17 +89,10 @@ internal class UiThemeProviderListManager {
 private fun computeList(): List<UIThemeBasedLookAndFeelInfo> {
   val point = UIThemeProvider.EP_NAME.point as ExtensionPointImpl<UIThemeProvider>
   val themes = ArrayList<UIThemeBasedLookAndFeelInfo>(point.size())
-  val isNewUi = ExperimentalUI.isNewUI()
   for (adapter in point.sortedAdapters) {
-    if (isNewUi || shouldCreateThemeForOldUi(adapter.orderId ?: "")) {
-      val provider = adapter.createInstance<UIThemeProvider>(ApplicationManager.getApplication()) ?: continue
-      themes.add(UIThemeBasedLookAndFeelInfo(provider.createTheme() ?: continue))
-    }
+    val provider = adapter.createInstance<UIThemeProvider>(ApplicationManager.getApplication()) ?: continue
+    themes.add(UIThemeBasedLookAndFeelInfo(provider.createTheme() ?: continue))
   }
   sortThemes(themes)
   return themes
-}
-
-private fun shouldCreateThemeForOldUi(id: String): Boolean {
-  return id != "ExperimentalLight" && id != "ExperimentalDark"
 }
