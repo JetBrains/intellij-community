@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
 import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
+import org.jetbrains.kotlin.idea.macros.KOTLIN_BUNDLED
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.test.resetCodeStyle
 import org.jetbrains.kotlin.idea.test.runAll
@@ -50,6 +51,7 @@ import org.jetbrains.kotlin.platform.oldFashionedDescription
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import org.junit.Test
+import java.io.File
 
 abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() {
     protected val kotlinVersion = "1.1.3"
@@ -3312,9 +3314,16 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                     KotlinArtifacts.instance.lombokCompilerPlugin,
                     KotlinArtifacts.instance.noargCompilerPlugin,
                     KotlinArtifacts.instance.samWithReceiverCompilerPlugin,
-                ).map { it.absolutePath },
+                ).map { it.toJpsVersionAgnosticKotlinBundledPath() },
                 facetSettings.compilerArguments?.pluginClasspaths?.sorted()
             )
         }
     }
+}
+
+fun File.toJpsVersionAgnosticKotlinBundledPath(): String {
+    require(this.startsWith(KotlinArtifacts.instance.kotlincDirectory)) {
+        "$this should start with ${KotlinArtifacts.instance.kotlincDirectory}"
+    }
+    return "\$$KOTLIN_BUNDLED\$/${this.relativeTo(KotlinArtifacts.instance.kotlincDirectory)}"
 }

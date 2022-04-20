@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.maven.importer
 
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenImporterTest
+import org.jetbrains.kotlin.idea.maven.toJpsVersionAgnosticKotlinBundledPath
 import org.junit.Test
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -90,7 +91,10 @@ class KotlinLombokMavenImporterTest : AbstractKotlinMavenImporterTest() {
                 "-version",
                 compilerSettings!!.additionalArguments
             )
-            assertContain(compilerArguments!!.pluginClasspaths!!.toList(), KotlinArtifacts.instance.lombokCompilerPlugin.absolutePath)
+            assertContain(
+                compilerArguments!!.pluginClasspaths!!.toList(),
+                KotlinArtifacts.instance.lombokCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+            )
             assertEquals(
                 compilerArguments!!.pluginOptions!!.toList(),
                 listOf(

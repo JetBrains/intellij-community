@@ -3,7 +3,9 @@
 package org.jetbrains.kotlin.idea.compilerPlugin
 
 import com.intellij.openapi.module.Module
+import org.jetbrains.kotlin.idea.macros.KOTLIN_BUNDLED
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import java.io.File
 
@@ -19,6 +21,13 @@ fun Module.getSpecialAnnotations(prefix: String): List<String> {
 
 class CompilerPluginSetup(val options: List<PluginOption>, val classpath: List<String>) {
     class PluginOption(val key: String, val value: String)
+}
+
+fun File.toJpsVersionAgnosticKotlinBundledPath(): String {
+    require(this.startsWith(KotlinArtifacts.instance.kotlincDirectory)) {
+        "$this should start with ${KotlinArtifacts.instance.kotlincDirectory}"
+    }
+    return "\$$KOTLIN_BUNDLED\$/${this.relativeTo(KotlinArtifacts.instance.kotlincDirectory)}"
 }
 
 fun modifyCompilerArgumentsForPlugin(

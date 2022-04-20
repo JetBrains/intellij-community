@@ -6,10 +6,13 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
 import java.io.File
 
 object KotlinSerializationImportHandler {
-    val PLUGIN_JPS_JAR: String by lazy { KotlinArtifacts.instance.kotlinxSerializationCompilerPlugin.absolutePath }
+    val PLUGIN_JPS_JAR: String by lazy {
+        KotlinArtifacts.instance.kotlinxSerializationCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+    }
 
     fun isPluginJarPath(path: String): Boolean {
         return path.endsWith(KotlinArtifactNames.KOTLINX_SERIALIZATION_COMPILER_PLUGIN)

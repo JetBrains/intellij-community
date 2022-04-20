@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.allopen.AllOpenCommandLineProcessor
 import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
 
 class AllOpenMavenProjectImportHandler : AbstractMavenImportHandler() {
     private companion object {
@@ -16,7 +17,7 @@ class AllOpenMavenProjectImportHandler : AbstractMavenImportHandler() {
     override val compilerPluginId = AllOpenCommandLineProcessor.PLUGIN_ID
     override val pluginName = "allopen"
     override val mavenPluginArtifactName = "kotlin-maven-allopen"
-    override val pluginJarFileFromIdea = KotlinArtifacts.instance.allopenCompilerPlugin
+    override val pluginJarFileFromIdea = KotlinArtifacts.instance.allopenCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
 
     override fun getOptions(
         mavenProject: MavenProject,

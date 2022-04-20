@@ -5,20 +5,19 @@ package org.jetbrains.kotlin.idea.maven.compilerPlugin
 import org.jdom.Element
 import org.jdom.Text
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPlugin
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
+import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPlugin
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.maven.MavenProjectImportHandler
-import org.jetbrains.kotlin.idea.maven.KotlinMavenImporter.Companion.KOTLIN_PLUGIN_GROUP_ID
 import org.jetbrains.kotlin.idea.maven.KotlinMavenImporter.Companion.KOTLIN_PLUGIN_ARTIFACT_ID
-import java.io.File
+import org.jetbrains.kotlin.idea.maven.KotlinMavenImporter.Companion.KOTLIN_PLUGIN_GROUP_ID
+import org.jetbrains.kotlin.idea.maven.MavenProjectImportHandler
 
 abstract class AbstractMavenImportHandler : MavenProjectImportHandler {
     abstract val compilerPluginId: String
     abstract val pluginName: String
     abstract val mavenPluginArtifactName: String
-    abstract val pluginJarFileFromIdea: File
+    abstract val pluginJarFileFromIdea: String
 
     override fun invoke(facet: KotlinFacet, mavenProject: MavenProject) {
         modifyCompilerArgumentsForPlugin(facet, getPluginSetup(mavenProject),
@@ -51,7 +50,7 @@ abstract class AbstractMavenImportHandler : MavenProjectImportHandler {
                 ?: mutableListOf<String>()
 
         // We can't use the plugin from Gradle as it may have the incompatible version
-        val classpath = listOf(pluginJarFileFromIdea.absolutePath)
+        val classpath = listOf(pluginJarFileFromIdea)
 
         val options = getOptions(mavenProject, enabledCompilerPlugins, compilerPluginOptions) ?: return null
         return CompilerPluginSetup(options, classpath)
