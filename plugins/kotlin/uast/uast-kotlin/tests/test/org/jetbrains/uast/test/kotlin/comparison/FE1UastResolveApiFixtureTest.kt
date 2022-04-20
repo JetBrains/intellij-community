@@ -87,6 +87,18 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkAssigningArrayElementType(myFixture)
     }
 
+    fun testArgumentMappingDefaultValue() {
+        checkArgumentMappingDefaultValue(myFixture)
+    }
+
+    fun testArgumentMappingExtensionFunction() {
+        checkArgumentMappingExtensionFunction(myFixture)
+    }
+
+    fun testArgumentMappingVararg() {
+        checkArgumentMappingVararg(myFixture)
+    }
+
     fun testArgumentMappingOOBE() {
         checkArgumentMappingOOBE(myFixture)
     }
