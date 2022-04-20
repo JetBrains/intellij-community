@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +117,7 @@ public final class RegisteredIndexes {
       myUnsavedDataUpdateTasks.put(name, new DocumentUpdateTask(name));
     }
 
-    if (extension.getName().equals(FilenameIndex.NAME)) {
+    if (extension.getName() == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
       return;
     }
 
