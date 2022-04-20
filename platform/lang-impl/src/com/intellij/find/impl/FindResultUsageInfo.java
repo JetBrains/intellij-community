@@ -131,4 +131,9 @@ public class FindResultUsageInfo extends UsageInfo {
   private PsiFile getPsiFile() {
     return (PsiFile)getElement();
   }
+
+  @Override
+  public String toString() {
+    return "FindResultUsageInfo: myFindModel=" + myFindModel + " in " + getSmartPointer();
+  }
 }
