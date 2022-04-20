@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 @ApiStatus.Internal
 public final class DirectBufferWrapper {
@@ -15,13 +15,16 @@ public final class DirectBufferWrapper {
   private static final ByteOrder ourNativeByteOrder = ByteOrder.nativeOrder();
   private static final int RELEASED_CODE = -1;
 
+  private static final AtomicIntegerFieldUpdater<DirectBufferWrapper> REF_UPDATER =
+    AtomicIntegerFieldUpdater.newUpdater(DirectBufferWrapper.class, "myReferences");
+
   private final @NotNull PagedFileStorage myFile;
   private final long myPosition;
   private final boolean myReadOnly;
 
   private volatile ByteBuffer myBuffer;
   private volatile boolean myDirty;
-  private final AtomicInteger myReferences = new AtomicInteger();
+  private volatile int myReferences;
   private volatile int myBufferDataEndPos;
 
   //private final Stack<Throwable> myReferenceTraces = new Stack<>();
@@ -144,7 +147,7 @@ public final class DirectBufferWrapper {
     StorageLockContext context = myFile.getStorageLockContext();
     context.checkReadAccess();
 
-    synchronized (myReferences) {
+    synchronized (this) {
       myBuffer.position(page_offset);
       myBuffer.get(dst, o, page_len);
     }
@@ -155,7 +158,7 @@ public final class DirectBufferWrapper {
     context.checkWriteAccess();
 
     markDirty();
-    synchronized (myReferences) {
+    synchronized (this) {
       myBuffer.position(page_offset);
       myBuffer.put(src, o, page_len);
     }
@@ -173,7 +176,7 @@ public final class DirectBufferWrapper {
   }
 
   boolean tryRelease(boolean force) throws IOException {
-    boolean releaseState = myReferences.updateAndGet(operand -> operand == 0 ? RELEASED_CODE : operand) == RELEASED_CODE;
+    boolean releaseState = REF_UPDATER.updateAndGet(this, operand -> operand == 0 ? RELEASED_CODE : operand) == RELEASED_CODE;
     if (releaseState || force) {
       myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
 
@@ -193,7 +196,7 @@ public final class DirectBufferWrapper {
   }
 
   boolean isReleased() {
-    return myReferences.get() == RELEASED_CODE;
+    return myReferences == RELEASED_CODE;
   }
 
   @SuppressWarnings("RedundantCast")
@@ -202,7 +205,7 @@ public final class DirectBufferWrapper {
 
     assert !myReadOnly;
     if (isDirty()) {
-      synchronized (myReferences) {
+      synchronized (this) {
         ByteBuffer buffer = myBuffer;
         buffer.rewind();
 
@@ -244,12 +247,12 @@ public final class DirectBufferWrapper {
   public boolean tryLock() {
     //myReferenceTraces.add(new Throwable());
     //assert !isReleased();
-    return myReferences.updateAndGet(operand -> operand >= 0 ? operand + 1 : operand) >= 0;
+    return REF_UPDATER.updateAndGet(this, operand -> operand >= 0 ? operand + 1 : operand) >= 0;
   }
 
   public void unlock() {
     //myReferenceTraces.pop();
-    int currentRefs = myReferences.decrementAndGet();
+    int currentRefs = REF_UPDATER.decrementAndGet(this);
     assert currentRefs >= 0;
   }
 
