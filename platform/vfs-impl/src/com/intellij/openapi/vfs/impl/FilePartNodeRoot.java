@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
@@ -154,7 +155,18 @@ final class FilePartNodeRoot extends FilePartNode {
       currentFS = fs;
       jarSuffix = false;
     }
-    Pair<NewVirtualFile, String> pair = VfsImplUtil.extractRootFromPath(currentFS, path);
+    Pair<NewVirtualFile, String> pair;
+    if (fs instanceof ArchiveFileSystem
+        && SystemInfo.isWindows
+        && isArchiveInTheWindowsDiskRoot(path)) {
+      // special case: "C:!/foo" means the archive is in the disk root - we shouldn't treat it as relative path starting with "!"
+      // other special case: "jrt://C:/!/foo" means the archive is in the disk root - we shouldn't treat it as under the (local) directory "!" in the disk root
+      NewVirtualFile root = ManagingFS.getInstance().findRoot(path.substring(0, 2), currentFS);
+      pair = Pair.create(root, path.substring(path.charAt(2) == '/' ? 3 : 2));
+    }
+    else {
+      pair = VfsImplUtil.extractRootFromPath(currentFS, path);
+    }
     String pathFromRoot = pair == null ? path : pair.second;
     if (jarSuffix) {
       pathFromRoot += JarFileSystem.JAR_SEPARATOR;
@@ -182,6 +194,24 @@ final class FilePartNodeRoot extends FilePartNode {
     }
 
     return trieDescend(fs, currentFS, names, fsRoot, currentNode, parentNode);
+  }
+
+  static boolean isArchiveInTheWindowsDiskRoot(@NotNull String path) {
+    // special case: "C:!/foo" means the archive is in the disk root - we shouldn't treat it as relative path starting with "!"
+    // other special case: "jrt://C:/!/foo" means the archive is in the disk root - we shouldn't treat it as under the (local) directory "!" in the disk root
+    return Character.isLetter(path.charAt(0))
+           && (path.length() >= 4
+               && path.charAt(1) == ':'
+               && path.charAt(2) == '!'
+               && path.charAt(3) == '/'
+               ||
+               path.length() >= 5
+               && path.charAt(1) == ':'
+               && path.charAt(2) == '/'
+               && path.charAt(3) == '!'
+               && path.charAt(4) == '/'
+           )
+      ;
   }
 
   // extracted private method to split code which is too large for JDK17 to not crash (see IDEA-289921 [JBR17] Constant crashes while executing tests on TeamCity
@@ -283,16 +313,16 @@ final class FilePartNodeRoot extends FilePartNode {
     if (end == 0) return Collections.emptyList();
     List<String> names = new ArrayList<>(Math.max(20, end/4)); // path length -> path height approximation
     while (true) {
-      boolean isJarSeparator = StringUtil.endsWith(path, 0, end, JarFileSystem.JAR_SEPARATOR) && end > 2 && path.charAt(end - 3) != '/';
+      boolean isJarSeparator = StringUtil.endsWith(path, 0, end, JarFileSystem.JAR_SEPARATOR)
+                               && (end == 2 && SystemInfo.isWindows || end > 2 && path.charAt(end - 3) != '/');
       if (isJarSeparator) {
         names.add(JarFileSystem.JAR_SEPARATOR);
         end -= 2;
-        continue;
       }
-      if (path.charAt(end-1) == '/') {
+      if (end != 0 && path.charAt(end-1) == '/') {
         end--;
       }
-      if (end == 0 && path.charAt(0) == '/') {
+      if (end == 0) {
         break; // here's separator between non-empty root (e.g. on Windows) and path's tail
       }
       int startIndex = extractName(path, end);
@@ -321,8 +351,8 @@ final class FilePartNodeRoot extends FilePartNode {
   }
 
   // returns start index of the name (i.e. path[return..length) is considered a name)
-  private static int extractName(@NotNull CharSequence path, int length) {
-    int i = StringUtil.lastIndexOf(path, '/', 0, length);
+  private static int extractName(@NotNull CharSequence path, int endOffset) {
+    int i = StringUtil.lastIndexOf(path, '/', 0, endOffset);
     if (i != -1 && PathUtilRt.isWindowsUNCRoot(path, i)) {
       // UNC
       return 0;

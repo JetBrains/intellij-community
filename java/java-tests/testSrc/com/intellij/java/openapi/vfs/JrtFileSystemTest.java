@@ -6,17 +6,20 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.junit.After;
 import org.junit.Before;
@@ -41,7 +44,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   private final Disposable myDisposable = Disposer.newDisposable();
   private Path myTestData;
   private Path myJrtPath;
-  private VirtualFile myRoot;
+  private VirtualFile myRoot; // in jrt:// FS
 
   @Before
   public void setUp() throws IOException {
@@ -152,5 +155,21 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
   private static void assertPointers(VirtualFilePointer[] pointers, boolean valid) {
     assertThat(pointers).allMatch(p -> p.isValid() == valid);
     assertThat(pointers).allMatch(p -> p.getFile() == null || p.getFile().isValid());
+  }
+
+  @Test
+  public void testJDKInstalledIntoDiskRootUnderWindowsDoesntCauseHorribleThings() {
+    IoTestUtil.assumeWindows();
+
+    IoTestUtil.performTestOnWindowsSubst(myJrtPath.toString(), substRoot -> {
+      VfsRootAccess.allowRootAccess(myDisposable, substRoot.getPath());
+
+      String substedUrl = "jrt://" + UriUtil.trimTrailingSlashes(FileUtil.toSystemIndependentName(substRoot.getPath())) + "/!/java.base";
+      VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(substedUrl, myDisposable, null);
+      assertTrue(pointer.isValid());
+      VirtualFile file = pointer.getFile();
+      assertNotNull(file);
+      assertTrue(file.getFileSystem() instanceof JrtFileSystem);
+    });
   }
 }
