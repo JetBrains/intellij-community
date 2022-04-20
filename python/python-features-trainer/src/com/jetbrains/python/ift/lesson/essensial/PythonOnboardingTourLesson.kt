@@ -123,9 +123,11 @@ class PythonOnboardingTourLesson :
 
     projectTasks()
 
-    prepareSample(sample)
+    prepareSample(sample, checkSdkConfiguration = false)
 
     openLearnToolwindow()
+
+    sdkConfigurationTasks()
 
     showInterpreterConfiguration()
 

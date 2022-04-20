@@ -42,6 +42,8 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
   private val countOfFilesToDelete: Int = 5
 
   override val lessonContent: LessonContext.() -> Unit = {
+    sdkConfigurationTasks()
+
     setInitialPosition()
 
     task("GotoDeclaration") {

@@ -19,7 +19,7 @@ class DuplicateLesson(private val sample: LessonSample) :
     task("EditorDuplicate") {
       text(LessonsBundle.message("duplicate.and.delete.lines.duplicate.line", action(it)))
       trigger(it)
-      restoreIfModifiedOrMoved()
+      restoreIfModifiedOrMoved(sample)
       test { actions(it) }
     }
 

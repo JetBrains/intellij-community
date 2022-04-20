@@ -24,7 +24,7 @@ class CodeFormatLesson(private val sample: LessonSample, private val optimizeImp
     }
 
     actionTask("ReformatCode") {
-      restoreIfModifiedOrMoved()
+      restoreIfModifiedOrMoved(sample)
       LessonsBundle.message("code.format.reformat.selection", action(it))
     }
 
