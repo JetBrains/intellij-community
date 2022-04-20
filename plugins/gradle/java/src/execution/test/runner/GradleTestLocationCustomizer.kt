@@ -8,6 +8,10 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Allows to define custom location for test nodes under Gradle test execution.
+ *
+ * The only point behind this EP is making gradle code not tied up with groovy one.
+ * If someone decides to make this API public (i.e. the API obtains more clients), then they should rethink this approach.
+ * One of the possible solutions may be built [in this way](https://upsource.jetbrains.com/intellij/review/IDEA-CR-56127).
  */
 @ApiStatus.Internal
 internal interface GradleTestLocationCustomizer {
@@ -26,5 +30,5 @@ internal interface GradleTestLocationCustomizer {
    * @param methodName name of a test method of a customizable test node
    * @param displayName name of a customizable test node that will be displayed in the UI
    */
-  fun getLocationInfo(project: Project, parent: SMTestProxy?, fqClassName: String, methodName: String?, displayName: String?): GradleTestLocationInfo?
+  fun getLocationInfo(project: Project, parent: SMTestProxy, fqClassName: String, methodName: String?, displayName: String?): GradleTestLocationInfo?
 }

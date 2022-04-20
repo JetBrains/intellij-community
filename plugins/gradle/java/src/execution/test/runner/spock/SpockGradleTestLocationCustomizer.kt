@@ -13,36 +13,31 @@ import org.jetbrains.plugins.groovy.ext.spock.isSpockSpecification
 
 internal class SpockGradleTestLocationCustomizer : GradleTestLocationCustomizer {
   override fun getLocationInfo(project: Project,
-                               parent: SMTestProxy?,
+                               parent: SMTestProxy,
                                fqClassName: String,
                                methodName: String?,
                                displayName: String?): GradleTestLocationInfo? {
-    if (parent == null) {
-      return null
-    }
     val className = getClassName(fqClassName, parent)
     if (!shouldProcessAsSpock(project, className, methodName)) return null
-    val methodName = if (fqClassName.isEmpty() && displayName != null && methodName == null) {
+    val actualMethodName = if (fqClassName.isEmpty() && displayName != null && methodName == null) {
       displayName
     }
     else {
       parent.name
     }
-    return GradleTestLocationInfo(className, methodName)
+    return GradleTestLocationInfo(className, actualMethodName)
   }
 }
 
 private fun shouldProcessAsSpock(project: Project,
                                  className: String,
                                  name: String?): Boolean {
-  var shouldProcessAsSpock = true
-  runReadAction {
-    DumbService.getInstance(project).runWithAlternativeResolveEnabled<Throwable> {
+  return runReadAction {
+    DumbService.getInstance(project).computeWithAlternativeResolveEnabled<Boolean, Throwable> {
       val clazz = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project))
-      shouldProcessAsSpock = clazz != null && clazz.isSpockSpecification() && (name == null || clazz.methods.all { it.name != name })
+      clazz != null && clazz.isSpockSpecification() && (name == null || clazz.methods.all { it.name != name })
     }
   }
-  return shouldProcessAsSpock
 }
 
 private fun getClassName(fqClassName: String, parent: SMTestProxy): String {

@@ -69,10 +69,12 @@ public abstract class AbstractTestEvent implements TestEvent {
   }
 
   protected final @NotNull String computeLocationUrl(@Nullable SMTestProxy parentProxy, @NotNull String fqClassName, @Nullable String name, @Nullable String displayName) {
-    for (GradleTestLocationCustomizer customizer : GradleTestLocationCustomizer.EP_NAME.getExtensionList()) {
-      GradleTestLocationInfo location = customizer.getLocationInfo(getProject(), parentProxy, fqClassName, name, displayName);
-      if (location != null) {
-        return findLocationUrl(location.getMethodName(), location.getFqClassName());
+    if (parentProxy != null) {
+      for (GradleTestLocationCustomizer customizer : GradleTestLocationCustomizer.EP_NAME.getExtensionList()) {
+        GradleTestLocationInfo location = customizer.getLocationInfo(getProject(), parentProxy, fqClassName, name, displayName);
+        if (location != null) {
+          return findLocationUrl(location.getMethodName(), location.getFqClassName());
+        }
       }
     }
     return findLocationUrl(name, fqClassName);
