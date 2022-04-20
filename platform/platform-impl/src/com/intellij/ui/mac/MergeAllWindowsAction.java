@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -46,9 +47,33 @@ public class MergeAllWindowsAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Window window = Objects.requireNonNull(UIUtil.getWindow(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)));
 
+    mergeAllWindows(window);
+  }
+
+  private static void mergeAllWindows(Window window) {
     Foundation.executeOnMainThread(true, false, () -> {
       ID id = MacUtil.getWindowFromJavaWindow(window);
       Foundation.invoke(id, "mergeAllWindows:", ID.NIL);
     });
+  }
+
+  private static class RecentProjectsFullScreenTabSupport implements AppLifecycleListener {
+    @Override
+    public void appStarted() {
+      if (JdkEx.isTabbingModeAvailable()) {
+        IdeFrame[] frames = WindowManager.getInstance().getAllProjectFrames();
+        if (frames.length > 1) {
+          for (IdeFrame frame : frames) {
+            if (!frame.isInFullScreen()) {
+              return;
+            }
+          }
+        }
+
+        if (Foundation.invoke("NSWindow", "userTabbingPreference").intValue() == 2/*NSWindowUserTabbingPreferenceInFullScreen*/) {
+          mergeAllWindows(((ProjectFrameHelper)frames[0]).getFrame());
+        }
+      }
+    }
   }
 }
