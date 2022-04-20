@@ -6,12 +6,13 @@ import org.jetbrains.kotlin.allopen.AllOpenCommandLineProcessor
 import org.jetbrains.kotlin.idea.gradleTooling.model.allopen.AllOpenModel
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractAnnotationBasedCompilerPluginGradleImportHandler
+import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
 
 class AllOpenGradleProjectImportHandler : AbstractAnnotationBasedCompilerPluginGradleImportHandler<AllOpenModel>() {
     override val compilerPluginId = AllOpenCommandLineProcessor.PLUGIN_ID
     override val pluginName = "allopen"
     override val annotationOptionName = AllOpenCommandLineProcessor.ANNOTATION_OPTION.optionName
-    override val pluginJarFileFromIdea = KotlinArtifacts.instance.allopenCompilerPlugin
+    override val pluginJarFileFromIdea = KotlinArtifacts.instance.allopenCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
     override val modelKey = AllOpenProjectResolverExtension.KEY
 
     override fun getAnnotationsForPreset(presetName: String): List<String> {
