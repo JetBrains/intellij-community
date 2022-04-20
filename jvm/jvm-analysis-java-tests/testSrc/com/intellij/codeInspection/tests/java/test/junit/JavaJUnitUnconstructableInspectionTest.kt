@@ -108,4 +108,28 @@ class JavaJUnitUnconstructableInspectionTest : JUnitUnconstructableTestCaseTestB
       }
     """.trimIndent())
   }
+
+  fun testConstructableJunit3WithJunit4runner() {
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      import java.util.Collection;
+      import java.util.Arrays;
+      import junit.framework.TestCase;
+      import org.junit.runner.RunWith;
+      import org.junit.runner.Parameterized;
+      import org.junit.Test;
+
+      @RunWith(Parameterized.class)
+      class ConstructableJunit3WithJunit4runner extends TestCase {
+        ConstructableJunit3WithJunit4runner(Integer i) {}
+        
+        @Parameterized.Parameters
+        public static Collection<Integer> params() {
+          return Arrays.asList(1, 2, 3);
+        }
+
+        @Test
+        void testMe() {}
+      }
+    """.trimIndent())
+  }
 }

@@ -130,12 +130,15 @@ public final class TestUtils {
    * @return whether a class is a JUnit 3 test class.
    */
   public static boolean isJUnitTestClass(@Nullable PsiClass targetClass) {
-    return targetClass != null && InheritanceUtil.isInheritor(targetClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE);
+    return targetClass != null
+           && InheritanceUtil.isInheritor(targetClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE)
+           && !AnnotationUtil.isAnnotated(targetClass, RUN_WITH, CHECK_HIERARCHY);
   }
 
   public static boolean isJUnit4TestClass(@Nullable PsiClass aClass, boolean runWithIsTestClass) {
     if (aClass == null) return false;
     if (AnnotationUtil.isAnnotated(aClass, RUN_WITH, CHECK_HIERARCHY)) return runWithIsTestClass;
+    if (InheritanceUtil.isInheritor(aClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE)) return false; // test will run with JUnit 3
     for (final PsiMethod method : aClass.getAllMethods()) {
       if (isExplicitlyJUnit4TestAnnotated(method)) return true;
     }

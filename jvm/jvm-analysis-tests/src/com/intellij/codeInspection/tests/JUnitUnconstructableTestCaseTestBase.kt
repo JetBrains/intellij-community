@@ -19,5 +19,26 @@ abstract class JUnitUnconstructableTestCaseTestBase : UastInspectionTestBase() {
         Class<? extends Throwable> expected() default Test.None.class;
       }
     """.trimIndent())
+    myFixture.addClass("""
+      package org.junit.runner;
+      
+      public abstract class Runner implements Describable { }
+    """.trimIndent())
+    myFixture.addClass("""
+      package org.junit.runner;
+      
+      public class Parameterized extends Runner {
+        public @interface Parameters {
+            String name() default "{index}";
+        }
+      }
+    """.trimIndent())
+    myFixture.addClass("""
+      package org.junit.runner;
+      
+      public @interface RunWith {
+          Class<? extends Runner> value();
+      }
+    """.trimIndent())
   }
 }
