@@ -17,8 +17,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
-import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -210,7 +208,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
           modCounter.incrementAndGet()
         }
       }
-      notifyUI()
+      fireChangeEvent()
     }
   }
 
@@ -589,7 +587,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     synchronized(stateLock) {
       if (!state.groups.contains(group)) {
         state.groups.add(group)
-        notifyUI()
+        fireChangeEvent()
       }
     }
   }
@@ -602,14 +600,14 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
       state.groups.remove(group)
       modCounter.incrementAndGet()
-      notifyUI()
+      fireChangeEvent()
     }
   }
 
   override fun moveProjectToGroup(projectPath: String, from: ProjectGroup, to: ProjectGroup) {
     from.removeProject(projectPath)
     to.addProject(projectPath)
-    notifyUI()
+    fireChangeEvent()
   }
 
   override fun getModificationCount(): Long {
@@ -751,10 +749,6 @@ int32 "extendedState"
       }
       modCounter.incrementAndGet()
     }
-  }
-
-  private fun notifyUI() {
-    BackgroundTaskUtil.syncPublisher(DefaultProjectFactory.getInstance().defaultProject, RECENT_PROJECTS_CHANGE_TOPIC).change()
   }
 
   @Internal

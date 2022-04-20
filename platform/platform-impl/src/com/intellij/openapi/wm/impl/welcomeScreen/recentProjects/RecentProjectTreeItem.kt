@@ -7,9 +7,13 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
+import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction
 import com.intellij.util.BitUtil
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.event.InputEvent
@@ -29,6 +33,18 @@ sealed interface RecentProjectTreeItem {
   fun displayName(): String
 
   fun children(): List<RecentProjectTreeItem>
+
+  fun removeItem(event: AnActionEvent) {
+    val exitCode = Messages.showYesNoDialog(
+      IdeBundle.message("dialog.message.remove.0.from.recent.projects.list", displayName()),
+      IdeBundle.message("dialog.title.remove.recent.project"),
+      Messages.getQuestionIcon()
+    )
+
+    if (exitCode == Messages.OK) {
+      RemoveSelectedProjectsAction().actionPerformed(event)
+    }
+  }
 }
 
 data class RecentProjectItem(
@@ -46,14 +62,15 @@ data class RecentProjectItem(
 
     val file = Paths.get(projectPath).normalize()
     if (!Files.exists(file)) {
-      val exitCode = Messages.showDialog(null,
-                                         IdeBundle.message("message.the.path.0.does.not.exist.maybe.on.remote",
-                                                           FileUtil.toSystemDependentName(projectPath)),
-                                         IdeBundle.message("dialog.title.reopen.project"),
-                                         arrayOf(CommonBundle.getOkButtonText(), IdeBundle.message("button.remove.from.list")),
-                                         0,
-                                         Messages.getErrorIcon())
-      if (exitCode == 1) {
+      val exitCode = Messages.showYesNoDialog(
+        IdeBundle.message("message.the.path.0.does.not.exist.maybe.on.remote", FileUtil.toSystemDependentName(projectPath)),
+        IdeBundle.message("dialog.title.reopen.project"),
+        CommonBundle.getOkButtonText(),
+        IdeBundle.message("button.remove.from.list"),
+        Messages.getErrorIcon()
+      )
+
+      if (exitCode == Messages.NO) {
         RecentProjectsManager.getInstance().removePath(projectPath)
       }
 
@@ -65,7 +82,11 @@ data class RecentProjectItem(
                               BitUtil.isSet(modifiers, InputEvent.SHIFT_DOWN_MASK) ||
                               event.place === ActionPlaces.WELCOME_SCREEN ||
                               LightEdit.owns(null)
-    val options = OpenProjectTask.build().withProjectToClose(null).withForceOpenInNewFrame(forceOpenInNewFrame).withRunConfigurators()
+    val options = OpenProjectTask.build()
+      .withProjectToClose(null)
+      .withForceOpenInNewFrame(forceOpenInNewFrame)
+      .withRunConfigurators()
+
     RecentProjectsManagerBase.instanceEx.openProject(file, options)
   }
 }
@@ -79,9 +100,28 @@ data class ProjectsGroupItem(
   override fun children(): List<RecentProjectTreeItem> = children
 }
 
+data class CloneableProjectItem(
+  val projectPath: @SystemIndependent String,
+  @NlsSafe val projectName: String,
+  @NlsSafe val displayName: String,
+  val progressIndicator: ProgressIndicatorEx,
+  val taskInfo: TaskInfo
+) : RecentProjectTreeItem {
+  override fun displayName(): String = displayName
+
+  override fun children(): List<RecentProjectTreeItem> = emptyList()
+}
+
 // The root node is required for the filtering tree
 object RootItem : RecentProjectTreeItem {
   override fun displayName(): String = "" // Not visible in tree
 
-  override fun children(): List<RecentProjectTreeItem> = RecentProjectListActionProvider.getInstance().collectProjects()
+  override fun children(): List<RecentProjectTreeItem> {
+    val projects = mutableListOf<RecentProjectTreeItem>().apply {
+      addAll(CloneableProjectsService.getInstance().collectCloneableProjects())
+      addAll(RecentProjectListActionProvider.getInstance().collectProjects())
+    }
+
+    return projects
+  }
 }

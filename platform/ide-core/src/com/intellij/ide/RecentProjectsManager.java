@@ -23,6 +23,10 @@ public abstract class RecentProjectsManager {
     return ApplicationManager.getApplication().getService(RecentProjectsManager.class);
   }
 
+  public static void fireChangeEvent() {
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(RECENT_PROJECTS_CHANGE_TOPIC).change();
+  }
+
   public abstract @Nullable @SystemIndependent String getLastProjectCreationLocation();
 
   public abstract void setLastProjectCreationLocation(@Nullable @SystemIndependent String lastProjectLocation);

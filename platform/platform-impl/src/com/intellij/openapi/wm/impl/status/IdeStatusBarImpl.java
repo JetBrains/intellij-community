@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetWrapper;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ExperimentalUI;
@@ -171,6 +172,8 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     if (project != null) {
       project.getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, myInfoAndProgressPanel);
     }
+
+    registerCloneTasks();
 
     setOpaque(true);
     updateUI();
@@ -776,6 +779,21 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   private void fireWidgetRemoved(@NonNls @NotNull String id) {
     myListeners.getMulticaster().widgetRemoved(id);
+  }
+
+  private void registerCloneTasks() {
+    CloneableProjectsService.getInstance().collectCloneableProjects().forEach(cloneProject -> {
+      addProgress(cloneProject.getProgressIndicator(), cloneProject.getTaskInfo());
+    });
+
+    ApplicationManager.getApplication().getMessageBus()
+      .connect(this)
+      .subscribe(CloneableProjectsService.TOPIC, new CloneableProjectsService.CloneProjectChange() {
+        @Override
+        public void add(@NotNull ProgressIndicatorEx progressIndicator, @NotNull TaskInfo taskInfo) {
+          addProgress(progressIndicator, taskInfo);
+        }
+      });
   }
 
   protected class AccessibleIdeStatusBarImpl extends AccessibleJComponent {
