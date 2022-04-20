@@ -4,6 +4,7 @@ package org.jetbrains.deft.codegen.model
 import deft.storage.codegen.suspendable
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.TBlob
+import org.jetbrains.deft.impl.TPsiRef
 import org.jetbrains.deft.impl.TRef
 import org.jetbrains.deft.impl.ValueType
 import org.jetbrains.deft.impl.fields.Field
@@ -50,7 +51,19 @@ open class WsEntityInterface : KtInterfaceKind() {
   }
 }
 
-object WsEntityWithPersistentId : WsEntityInterface()
+object WsPsiEntityInterface: WsEntityInterface() {
+  override fun buildValueType(ktInterface: KtInterface?,
+                              diagnostics: Diagnostics,
+                              ktType: KtType,
+                              childAnnotation: KtAnnotation?): ValueType<*>? {
+    val type = ktInterface?.objType
+    if (type != null)
+      return TPsiRef<Obj>(type.def.module.id.notation, type.id, child = childAnnotation != null).also { it.targetObjType = type }
+    return super.buildValueType(ktInterface, diagnostics, ktType, childAnnotation)
+  }
+}
+
+object WsEntityWithPersistentId: WsEntityInterface()
 
 interface WsPropertyClass
 

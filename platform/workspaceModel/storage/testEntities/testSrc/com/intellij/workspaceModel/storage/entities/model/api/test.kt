@@ -2,29 +2,22 @@
 package com.intellij.workspaceModel.storage.entities.model.api
 
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.entity.TestEntity
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.referrersx
+import org.jetbrains.deft.annotations.Child
 
 
+interface FooEntity: WorkspaceEntity {
+  val name: String
+  val moduleDependency: ModuleDependencyItem.Exportable.ModuleDependency
+}
 
 
 interface AnotherTest: WorkspaceEntity {
   val name: String
   val testField: TestEntity
-  //region generated code
-  //@formatter:off
-  @GeneratedCodeApiVersion(0)
-  interface Builder: AnotherTest, ModifiableWorkspaceEntity<AnotherTest>, ObjBuilder<AnotherTest> {
-      override var name: String
-      override var entitySource: EntitySource
-  }
-  
-  companion object: Type<AnotherTest, Builder>()
-  //@formatter:on
-  //endregion
-
 }
+
+val TestEntity.anotherTest: @Child AnotherTest?
+  get() = referrersx(AnotherTest::testField).singleOrNull()

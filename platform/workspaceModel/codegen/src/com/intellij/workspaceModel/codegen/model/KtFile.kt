@@ -1,7 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.deft.codegen.model
 
-class KtFile(val module: KtObjModule, val name: String, val content: () -> CharSequence) {
+import com.intellij.openapi.vfs.VirtualFile
+
+class KtFile(val module: KtObjModule, val virtualFile: VirtualFile, val content: () -> CharSequence) {
+    val name: String = virtualFile.name
   override fun toString(): String = "[file://$name]"
   fun asSrc() = Src(name, content)
 

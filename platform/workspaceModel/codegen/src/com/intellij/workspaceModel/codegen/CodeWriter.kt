@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.codegen
 
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import deft.storage.codegen.javaImplName
 import org.jetbrains.deft.codegen.ijws.implWsCode
@@ -20,16 +21,16 @@ fun DefType.implIjWsFileContents(simpleTypes: List<DefType>): String {
 }
 
 object CodeWriter {
-  fun generate(sourceFolder: VirtualFile, targetFolder: VirtualFile, moduleId: String) {
+  fun generate(project: Project, sourceFolder: VirtualFile, targetFolder: VirtualFile, moduleId: String) {
     val documentManager = FileDocumentManager.getInstance()
     val ktSrcs = sourceFolder.children.filter { it.extension == "kt" }.mapNotNull {
       val document = documentManager.getDocument(it) ?: return@mapNotNull null
       it to document
     }
 
-    val module = KtObjModule(ObjModule.Id(moduleId))
+    val module = KtObjModule(project, ObjModule.Id(moduleId))
     ktSrcs.forEach { (vfu, document) ->
-      module.addFile(vfu.name) { document.text }
+      module.addFile(vfu) { document.text }
     }
     val result = module.build()
     module.files.forEach {
@@ -47,25 +48,25 @@ object CodeWriter {
   }
 
   fun generate(dir: File, fromDirectory: String, toDirectory: String, moduleId: String) {
-    val generatedDestDir = dir.resolve(toDirectory)
-    val ktSrcs = dir.resolve(fromDirectory).listFiles()!!
-      .toList()
-      .filter { it.name.endsWith(".kt") }
-
-    val module = KtObjModule(ObjModule.Id(moduleId))
-    ktSrcs.forEach {
-      module.addFile(it.relativeTo(dir).path) { it.readText() }
-    }
-    val result = module.build()
-    module.files.forEach {
-      dir.resolve(it.name).writeText(it.rewrite())
-    }
-    result.typeDefs.filterNot { it.name == "WorkspaceEntity" || it.name == "WorkspaceEntityWithPersistentId" || it.abstract }.forEach {
-      generatedDestDir
-        .resolve(it.javaImplName + ".kt")
-        .writeText(it.implIjWsFileContents(result.simpleTypes))
-    }
-    dir.resolve(module.moduleObjName + ".kt").writeText(result.wsModuleCode())
-    //        dir.resolve("toIjWs/generated.kt").writeCode(result.ijWsCode())
+    //val generatedDestDir = dir.resolve(toDirectory)
+    //val ktSrcs = dir.resolve(fromDirectory).listFiles()!!
+    //  .toList()
+    //  .filter { it.name.endsWith(".kt") }
+    //
+    //val module = KtObjModule(ObjModule.Id(moduleId))
+    //ktSrcs.forEach {
+    //  module.addFile(it.relativeTo(dir).path) { it.readText() }
+    //}
+    //val result = module.build()
+    //module.files.forEach {
+    //  dir.resolve(it.name).writeText(it.rewrite())
+    //}
+    //result.typeDefs.filterNot { it.name == "WorkspaceEntity" || it.name == "WorkspaceEntityWithPersistentId" || it.abstract }.forEach {
+    //  generatedDestDir
+    //    .resolve(it.javaImplName + ".kt")
+    //    .writeText(it.implIjWsFileContents(result.simpleTypes))
+    //}
+    //dir.resolve(module.moduleObjName + ".kt").writeText(result.wsModuleCode())
+    ////        dir.resolve("toIjWs/generated.kt").writeCode(result.ijWsCode())
   }
 }

@@ -1,6 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.deft.codegen.model
 
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtSuperTypeEntry
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
+
 class KtScope(val parent: KtScope?, var owner: Any? = null) {
   val ktInterface: KtInterface? get() = owner as? KtInterface
 
@@ -22,12 +32,15 @@ class KtScope(val parent: KtScope?, var owner: Any? = null) {
   // import x.y
   val importedNames = mutableMapOf<String, KtPackage>()
 
-  val file: KtFile?
-    get() {
-      var i = this
-      while (i.owner !is KtFile) i = i.parent ?: return null
-      return i.owner as KtFile
-    }
+    // dependency founded via PSI analyze
+    private val psiImportedNames = mutableMapOf<String, KtScope>()
+
+    val file: KtFile?
+        get() {
+            var i = this
+            while (i.owner !is KtFile) i = i.parent ?: return null
+            return i.owner as KtFile
+        }
 
   fun def(name: String, value: KtScope) {
     _own[name] = value
@@ -40,16 +53,27 @@ class KtScope(val parent: KtScope?, var owner: Any? = null) {
       result = result?.resolveSimpleName(it)
     }
 
-    return result
-  }
+        if (result == null) {
+          val ktFile = owner as? KtFile ?: parent?.owner as? KtFile ?: return null
+          result = resolveFromPsi(ktFile, typeName)
+          if (result != null) {
+            when {
+              owner is KtFile -> psiImportedNames[typeName] = result!!
+              parent?.owner is KtFile -> parent.psiImportedNames[typeName] = result!!
+            }
+          }
+        }
+        return result
+    }
 
-  private fun resolveSimpleName(typeName: String): KtScope? {
-    val names = sharedScope?._own ?: _own
-    return names[typeName]
-           ?: resolveFromImportedNames(typeName)
-           ?: resolveFromImportedScopes(typeName)
-           ?: parent?.resolve(typeName)
-  }
+    private fun resolveSimpleName(typeName: String): KtScope? {
+        val names = sharedScope?._own ?: _own
+        return names[typeName]
+            ?: resolveFromImportedNames(typeName)
+            ?: resolveFromImportedScopes(typeName)
+            ?: resolveFromPsiImportedNames(typeName)
+            ?: parent?.resolve(typeName)
+    }
 
   private fun resolveFromImportedNames(typeName: String) =
     importedNames[typeName]?.scope?.resolve(typeName)
@@ -63,14 +87,92 @@ class KtScope(val parent: KtScope?, var owner: Any? = null) {
     return null
   }
 
-  fun visitTypes(result: MutableList<DefType>) {
-    own.values.forEach { inner ->
-      inner.ktInterface?.objType?.let {
-        result.add(it)
-        inner.visitTypes(result)
+  private fun resolveFromPsiImportedNames(typeName: String) = psiImportedNames[typeName]
+
+    private fun resolveFromPsi(ktFile: KtFile, typeName: String): KtScope? {
+      println(typeName)
+      val module = ktFile.module
+      if (typeName == WorkspaceEntity::class.java.simpleName) return null
+      val psiFile = PsiManager.getInstance(module.project!!).findFile(ktFile.virtualFile) ?: return null
+      if (psiFile !is org.jetbrains.kotlin.psi.KtFile) return null
+      var resolvedType: PsiElement? = null
+      PsiTreeUtil.processElements(psiFile) { psiElement ->
+        if (psiElement is KtTypeReference && psiElement.text == typeName) {
+          resolvedType = (psiElement.typeElement as KtUserType).referenceExpression?.mainReference?.resolve()
+          return@processElements false
+        }
+        return@processElements true
       }
+      val ktClass = resolvedType as? KtClass ?: return null
+      val superTypes = PsiTreeUtil.findChildrenOfType(ktClass, KtSuperTypeEntry::class.java)
+
+      // Code for checking supertype FQN
+      //((superType.typeReference?.typeElement as? KtUserType)?.referenceExpression?.mainReference?.resolve() as? KtClass)?.fqName?.toString()
+      val workspaceEntitySuperType = superTypes.find { superType ->
+        superType.text == WorkspaceEntity::class.java.simpleName
+      }
+
+      val nameRange = ktClass.identifyingElement!!.textRange
+      val src = Src(ktClass.name!!) { ktClass.containingFile.text }
+      val ktTypes = superTypes.map { KtType(SrcRange(src, it.textRange.startOffset until it.textRange.endOffset)) }
+
+      val predefinedKind = when {
+        ktClass.isData() -> WsData
+        ktClass.isEnum() -> WsEnum
+        ktClass.isSealed() -> WsSealed
+        ktClass.isInterface() -> WsPsiEntityInterface
+        else -> null
+      }
+      return KtScope(this, KtInterface(module, this,
+                                       SrcRange(src, nameRange.startOffset until nameRange.endOffset),
+                                       ktTypes, null, predefinedKind))
     }
-  }
+
+      //  val importList = psiFile.importList
+      //  val children = importList?.children ?: return null
+      //  for (child in children) {
+      //    child as KtImportDirective
+      //    val resolve = child.importedReference?.getQualifiedElementSelector()?.mainReference?.resolve() ?: return null
+      //    val importedFile = resolve.containingFile ?: return null
+      //    println("${child.text} ${importedFile.name} ${importedFile.fileType}")
+      //    when (importedFile) {
+      //      is org.jetbrains.kotlin.psi.KtFile -> {
+      //        val `class` = importedFile.classes[0]
+      //        //`class`.methods.forEach {
+      //        //  println(it.name)
+      //        //}
+      //        `class`.implementsListTypes.forEach {
+      //          println(it.className)
+      //        }
+      //        println("")
+      //      }
+      //      is ClsFileImpl -> {
+      //        val `class` = importedFile.classes[0]
+      //        //`class`.allMethods.forEach {
+      //        //  println(it.name)
+      //        //}
+      //        `class`.implementsListTypes.forEach {
+      //          println(it.className)
+      //        }
+      //        println("")
+      //      }
+      //      else -> {
+      //        error("Unsupported file type")
+      //      }
+      //    }
+      //    println("----------------------------------------")
+      //  }
+      //}
+      //return null
+
+    fun visitTypes(result: MutableList<DefType>) {
+        own.values.forEach { inner ->
+            inner.ktInterface?.objType?.let {
+                result.add(it)
+                inner.visitTypes(result)
+            }
+        }
+    }
 
   fun visitSimpleTypes(result: MutableList<DefType>) {
     own.values.forEach { inner ->
@@ -81,3 +183,26 @@ class KtScope(val parent: KtScope?, var owner: Any? = null) {
     }
   }
 }
+
+//      //PsiTreeUtil.processElements(psiFile) { psiElement ->
+//      //  if (psiElement is KtClass && psiElement.isInterface() && hasEntityAnnotation(psiElement))  {
+//      //    val className = psiElement.name!!
+//      //    println(className)
+//      //    val packageName = psiElement.fqName.toString().dropLast(className.length + 1)
+//      //    val generator = ModifiableModelGenerator(className, packageName)
+//      //    psiElement.getProperties().forEach { ktProperty ->
+//      //      // TODO:: Add tests for this
+//      //      // TODO:: Add check for Annotation and type nullability
+//      //      if (ktProperty.annotationEntries.isEmpty()) {
+//      //        generator.addProperty(ktProperty.name!!, convertToPropertyType(ktProperty.type()!!),  null)
+//      //      } else if (hasConnectionAnnotation(ktProperty)) {
+//      //        generator.addProperty(ktProperty.name!!, convertToPropertyType(ktProperty.type()!!), getPropertyAnnotation(ktProperty))
+//      //      }
+//      //      ktProperty.isVar
+//      //    }
+//      //    val packageFolder = createPackageFolder(sourceRoot, packageName)
+//      //    generator.generate(packageFolder.canonicalPath!!)
+//      //  }
+//      //  return@processElements true
+//      //}
+//      //println("${file.presentableUrl} ${psiFile.language} ${psiFile.fileType}")

@@ -33,7 +33,17 @@ class TMap<K, V>(val keyType: ValueType<K>, val valueType: ValueType<V>) : Value
   }
 }
 
-class TRef<T : Obj>(
+class TPsiRef<T : Obj>(
+  targetModule: String,
+  targetModuleType: Int,
+  child: Boolean = false,
+  relation: Boolean = false,
+) : TRef<T>(targetModule, targetModuleType, child, relation) {
+  @ObjModule.InitApi
+  override fun link(linker: ObjModules) { }
+}
+
+open class TRef<T : Obj>(
   targetModule: String,
   targetModuleType: Int,
   var child: Boolean = false,

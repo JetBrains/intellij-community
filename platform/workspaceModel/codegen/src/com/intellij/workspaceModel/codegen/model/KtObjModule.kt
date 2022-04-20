@@ -1,13 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.deft.codegen.model
 
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.deft.impl.ObjModule
 import org.jetbrains.deft.impl.fields.ExtField
 import storage.codegen.patcher.KotlinReader
 
 class KtObjModule(
-  fqn: Id,
-  val addDependencies: List<KtObjModule> = listOf()
+    val project: Project?,
+    fqn: Id,
+    val addDependencies: List<KtObjModule> = listOf()
 ) : ObjModule(fqn) {
   val moduleObjName = fqn.objName
   val packages = mutableMapOf<String?, KtPackage>()
@@ -24,13 +27,13 @@ class KtObjModule(
     }
   }
 
-  fun addFile(name: String, content: () -> String): KtFile {
-    val file = KtFile(this, name, content)
-    val reader = KotlinReader(file)
-    reader.read()
-    files.add(file)
-    return file
-  }
+    fun addFile(virtualFile: VirtualFile, content: () -> String): KtFile {
+        val file = KtFile(this, virtualFile, content)
+        val reader = KotlinReader(file)
+        reader.read()
+        files.add(file)
+        return file
+    }
 
   @InitApi
   override fun init() {

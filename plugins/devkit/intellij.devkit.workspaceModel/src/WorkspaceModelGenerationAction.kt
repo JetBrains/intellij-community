@@ -27,79 +27,8 @@ class WorkspaceModelGenerationAction: AnAction() {
     val sourceRoot = getSourceRoot(module, selectedFolder) ?: return
     createGeneratedSourceFolder(module, sourceRoot)
     val packageFolder = createPackageFolder(sourceRoot.file!!, selectedFolder) ?: return
-    WriteAction.run<RuntimeException> { CodeWriter.generate(selectedFolder, packageFolder, "org.jetbrains.workspaceModel") }
+    WriteAction.run<RuntimeException> { CodeWriter.generate(project, selectedFolder, packageFolder, "org.jetbrains.workspaceModel") }
     println("Selected module ${module.name}")
-      //VfsUtilCore.visitChildrenRecursively(sourceRoot, object : VirtualFileVisitor<Unit>() {
-          //  override fun visitFile(file: VirtualFile): Boolean {
-          //    if (file.extension == "kt" ) {
-          //      val psiFile = PsiManager.getInstance(project).findFile(file) ?: return true
-          //      if (psiFile is KtFile) {
-          //        /*
-          //        KotlinAnnotationsIndex.getInstance().get(COMPOSE_PREVIEW_ANNOTATION_NAME, project,
-          //                                                 GlobalSearchScope.fileScope(project, vFile)).asSequence()
-          //        */
-          //        println(psiFile.name)
-          //        val importList = psiFile.importList
-          //        val children = importList?.children ?: return true
-          //        for (child in children) {
-          //          child as KtImportDirective
-          //          val resolve = child.importedReference?.getQualifiedElementSelector()?.mainReference?.resolve() ?: return true
-          //          val importedFile = resolve.containingFile ?: return true
-          //          println("${child.text} ${importedFile.name} ${importedFile.fileType}")
-          //          when (importedFile) {
-          //            is KtFile -> {
-          //              val `class` = importedFile.classes[0]
-          //              //`class`.methods.forEach {
-          //              //  println(it.name)
-          //              //}
-          //              `class`.implementsListTypes.forEach {
-          //                println(it.className)
-          //              }
-          //              println("")
-          //            }
-          //            is ClsFileImpl -> {
-          //              val `class` = importedFile.classes[0]
-          //              //`class`.allMethods.forEach {
-          //              //  println(it.name)
-          //              //}
-          //              `class`.implementsListTypes.forEach {
-          //                println(it.className)
-          //              }
-          //              println("")
-          //            }
-          //            else -> {
-          //              error("Unsupported file type")
-          //            }
-          //          }
-          //          println("----------------------------------------")
-          //        }
-          //      }
-          //      //PsiTreeUtil.processElements(psiFile) { psiElement ->
-          //      //  if (psiElement is KtClass && psiElement.isInterface() && hasEntityAnnotation(psiElement))  {
-          //      //    val className = psiElement.name!!
-          //      //    println(className)
-          //      //    val packageName = psiElement.fqName.toString().dropLast(className.length + 1)
-          //      //    val generator = ModifiableModelGenerator(className, packageName)
-          //      //    psiElement.getProperties().forEach { ktProperty ->
-          //      //      // TODO:: Add tests for this
-          //      //      // TODO:: Add check for Annotation and type nullability
-          //      //      if (ktProperty.annotationEntries.isEmpty()) {
-          //      //        generator.addProperty(ktProperty.name!!, convertToPropertyType(ktProperty.type()!!),  null)
-          //      //      } else if (hasConnectionAnnotation(ktProperty)) {
-          //      //        generator.addProperty(ktProperty.name!!, convertToPropertyType(ktProperty.type()!!), getPropertyAnnotation(ktProperty))
-          //      //      }
-          //      //      ktProperty.isVar
-          //      //    }
-          //      //    val packageFolder = createPackageFolder(sourceRoot, packageName)
-          //      //    generator.generate(packageFolder.canonicalPath!!)
-          //      //  }
-          //      //  return@processElements true
-          //      //}
-          //      //println("${file.presentableUrl} ${psiFile.language} ${psiFile.fileType}")
-          //    }
-          //    return true
-          //  }
-          //})
   }
 
   private fun createGeneratedSourceFolder(module: Module, sourceFolder: SourceFolder) {
