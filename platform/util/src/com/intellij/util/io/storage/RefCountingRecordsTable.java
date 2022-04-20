@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.storage;
 
-import com.intellij.util.io.PagePool;
+import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -15,7 +15,7 @@ final class RefCountingRecordsTable extends AbstractRecordsTable {
 
   private static final byte[] ZEROES = new byte[RECORD_SIZE];
 
-  RefCountingRecordsTable(@NotNull Path recordsFile, PagePool pool) throws IOException {
+  RefCountingRecordsTable(@NotNull Path recordsFile, StorageLockContext pool) throws IOException {
     super(recordsFile, pool);
   }
 
@@ -34,14 +34,14 @@ final class RefCountingRecordsTable extends AbstractRecordsTable {
     return ZEROES;
   }
 
-  public void incRefCount(int record) {
+  public void incRefCount(int record) throws IOException {
     markDirty();
 
     int offset = getOffset(record, REF_COUNT_OFFSET);
     myStorage.putInt(offset, myStorage.getInt(offset) + 1);
   }
 
-  public boolean decRefCount(int record) {
+  public boolean decRefCount(int record) throws IOException {
     markDirty();
 
     int offset = getOffset(record, REF_COUNT_OFFSET);
@@ -52,7 +52,7 @@ final class RefCountingRecordsTable extends AbstractRecordsTable {
     return count == 0;
   }
 
-  public int getRefCount(int record) {
+  public int getRefCount(int record) throws IOException {
     return myStorage.getInt(getOffset(record, REF_COUNT_OFFSET));
   }
 }

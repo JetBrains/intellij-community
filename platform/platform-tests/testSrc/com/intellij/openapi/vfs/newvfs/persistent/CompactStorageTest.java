@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.io.PagePool;
+import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.storage.AbstractRecordsTable;
 import com.intellij.util.io.storage.RecordIdIterator;
 import com.intellij.util.io.storage.Storage;
@@ -46,6 +46,7 @@ public class CompactStorageTest extends StorageTestBase {
     assertThat(myStorage.readStream(removedRecordId).available()).describedAs("No content for reading removed record").isEqualTo(0);
 
     // compact is triggered
+    assertThat(myStorage.getLiveRecordsCount()).isEqualTo(physicalRecordCount / 2);
     Disposer.dispose(myStorage);
     setUpStorage();
     assertThat(myStorage.getLiveRecordsCount()).isEqualTo(physicalRecordCount / 2);
@@ -79,7 +80,7 @@ public class CompactStorageTest extends StorageTestBase {
 
   private static final int TIMES_LIMIT = 10000;
 
-  static  int createTestRecord(Storage storage) throws IOException {
+  static int createTestRecord(Storage storage) throws IOException {
     final int r = storage.createNewRecord();
 
     try (DataOutputStream out = new DataOutputStream(storage.appendStream(r))) {
@@ -107,7 +108,7 @@ public class CompactStorageTest extends StorageTestBase {
     }
 
     @Override
-    protected AbstractRecordsTable createRecordsTable(@NotNull PagePool pool, @NotNull Path recordsFile) throws IOException {
+    protected AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext pool, @NotNull Path recordsFile) throws IOException {
       return new CompactRecordsTable(recordsFile, pool, false);
     }
   }

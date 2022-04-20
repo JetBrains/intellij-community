@@ -17,11 +17,13 @@ package com.intellij.util.io.storage;
 
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.IOException;
+
 public interface RecordIdIterator {
   boolean hasNextId();
 
   int nextId();
 
   @TestOnly
-  boolean validId();
+  boolean validId() throws IOException;
 }

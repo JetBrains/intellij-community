@@ -3,7 +3,6 @@ package com.intellij.util.io.keyStorage;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataOutputStream;
@@ -160,10 +159,10 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
   @Override
   public boolean checkBytesAreTheSame(final int addr, Data value) throws IOException {
     final boolean[] sameValue = new boolean[1];
-    OutputStream comparer = buildOldComparerStream(addr, sameValue);
-    DataOutput out = new DataOutputStream(comparer);
-    myDataDescriptor.save(out, value);
-    comparer.close();
+    try (OutputStream comparer = buildOldComparerStream(addr, sameValue)) {
+      DataOutput out = new DataOutputStream(comparer);
+      myDataDescriptor.save(out, value);
+    }
     return sameValue[0];
   }
 
@@ -201,6 +200,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
           if (same) {
             if (myPageSize == address && address < myFileLength) {    // reached end of current byte buffer
               base += address;
+              buffer.unlock();
               buffer = storage.getByteBuffer(base, false);
               address = 0;
             }
@@ -211,6 +211,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
         @Override
         public void close() {
           sameValue[0]  = same;
+          buffer.unlock();
         }
       };
 
