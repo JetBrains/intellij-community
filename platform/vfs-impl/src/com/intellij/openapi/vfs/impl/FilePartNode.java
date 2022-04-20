@@ -202,7 +202,7 @@ class FilePartNode {
         String myUrl = myUrl();
         String expectedUrl = StringUtil.trimEnd(urlFromRoot, '/');
         String actualUrl = StringUtil.trimEnd(myUrl, '/');
-        assert FileUtil.namesEqual(actualUrl, expectedUrl) : "Expected url: '" + expectedUrl + "' but got: '" + actualUrl + "'";
+        assert FileUtil.namesEqual(actualUrl, expectedUrl) : "Expected url: '" + expectedUrl + "' but got: '" + actualUrl + "'; parent="+parent+"; name="+name+"; urlFromParent="+urlFromRoot;
       }
       else {
         assert Comparing.equal(getParentThroughJar(myFile, myFS), parent) :
