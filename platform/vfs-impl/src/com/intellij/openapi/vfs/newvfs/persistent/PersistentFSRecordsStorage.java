@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.BitUtil;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.ResizeableMappedFile;
 import org.jetbrains.annotations.NotNull;
@@ -293,8 +294,11 @@ public final class PersistentFSRecordsStorage {
             ProgressManager.checkCanceled();
             offset = id == 1 ? RECORD_SIZE : 0; // skip header
             for (; offset < limit; offset += RECORD_SIZE) {
-              int nameId = buffer.getInt(offset + 4); // name offset is 4
-              if (nameId != 0 && operator.applyAsInt(nameId, id) != 0) {
+              int nameId = buffer.getInt(offset + NAME_OFFSET);
+              int flags = buffer.getInt(offset + FLAGS_OFFSET);
+              if (nameId != 0 &&
+                  !BitUtil.isSet(flags, PersistentFSRecordAccessor.FREE_RECORD_FLAG) &&
+                  operator.applyAsInt(nameId, id) != 0) {
                 return false;
               }
               id ++;
