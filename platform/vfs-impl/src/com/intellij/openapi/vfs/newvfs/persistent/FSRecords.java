@@ -108,7 +108,7 @@ public final class FSRecords {
    */
   static int writeAttributesToRecord(int fileId, int parentId, @NotNull FileAttributes attributes, @NotNull String name) {
     return writeAndHandleErrors(() -> {
-      int nameId = setName(fileId, name);
+      int nameId = setName(fileId, name, 0);
 
       setTimestamp(fileId, attributes.lastModified);
       setLength(fileId, attributes.isDirectory() ? -1L : attributes.length);
@@ -187,12 +187,14 @@ public final class FSRecords {
     });
   }
 
-  private static void markAsDeletedRecursively(final int id) throws IOException {
+  private static void markAsDeletedRecursively(int id) throws IOException {
     for (int subRecord : listIds(id)) {
       markAsDeletedRecursively(subRecord);
     }
 
+    int nameId = ourConnection.getRecords().getNameId(id);
     ourRecordAccessor.addToFreeRecordsList(id);
+    InvertedNameIndex.updateFileName(id, 0, nameId);
   }
 
   @TestOnly
@@ -621,12 +623,13 @@ public final class FSRecords {
   /**
    * @return nameId
    */
-  static int setName(int fileId, @NotNull String name) {
+  static int setName(int fileId, @NotNull String name, int oldNameId) {
     return writeAndHandleErrors(() -> {
       ourNamesIndexModCount.incrementAndGet();
       incModCount(fileId);
       int nameId = ourConnection.getNames().enumerate(name);
       ourConnection.getRecords().setNameId(fileId, nameId);
+      InvertedNameIndex.updateFileName(fileId, nameId, oldNameId);
       return nameId;
     });
   }
@@ -779,6 +782,7 @@ public final class FSRecords {
   static synchronized void dispose() {
     writeAndHandleErrors(() -> {
       try {
+        InvertedNameIndex.clear();
         ourConnection.doForce();
         ourConnection.closeFiles();
       }

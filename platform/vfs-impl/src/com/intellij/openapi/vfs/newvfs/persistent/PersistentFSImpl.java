@@ -1692,7 +1692,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private static void executeRename(@NotNull VirtualFile file, @NotNull String newName) {
     int id = getFileId(file);
-    FSRecords.setName(id, newName);
+    FSRecords.setName(id, newName, ((VirtualFileSystemEntry)file).getNameId());
     ((VirtualFileSystemEntry)file).setNewName(newName);
   }
 
