@@ -9,13 +9,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.intellij.lang.annotations.Language
-import training.dsl.LessonContext
 import training.dsl.TaskContext
 import training.dsl.TaskTextProperties
 import training.dsl.impl.LessonExecutor
 import training.dsl.impl.OpenPassedContext
-import training.lang.LangManager
-import training.lang.LangSupport
 import training.learn.course.KLesson
 import training.learn.course.Lesson
 import training.ui.*
@@ -50,7 +47,7 @@ class LessonManager {
     val learnPanel = learnPanel ?: error("No learn panel")
     initLesson(null, lesson)
     learnPanel.scrollToNewMessages = false
-    OpenPassedContext(project).apply(lesson.fullLessonContent)
+    OpenPassedContext(project, lesson).apply(lesson.lessonContent)
     learnPanel.scrollRectToVisible(Rectangle(0, 0, 1, 1))
     learnPanel.makeNextButtonSelected()
     learnPanel.learnToolWindow.showGotItAboutRestart()

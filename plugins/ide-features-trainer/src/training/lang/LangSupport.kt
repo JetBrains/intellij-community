@@ -49,8 +49,8 @@ interface LangSupport {
   val scratchFileName: String
     get() = "Learning"
 
-  /** Language support can add tasks to check common requirements  */
-  val commonCheckContent: LessonContext.(lesson: KLesson) -> Unit
+  /** Language support can add tasks to check SDK configuration  */
+  val sdkConfigurationTasks: LessonContext.(lesson: KLesson) -> Unit
     get() = {}
 
   companion object {
