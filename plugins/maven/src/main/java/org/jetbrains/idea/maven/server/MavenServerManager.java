@@ -32,6 +32,7 @@ import org.apache.commons.lang.SystemUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.MavenDisposable;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
@@ -116,7 +117,7 @@ public final class MavenServerManager implements Disposable {
       public void onProjectTrusted(@NotNull Project project) {
         MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
         if (manager.isMavenizedProject()) {
-          MavenUtil.restartMavenConnectors(project);
+          MavenUtil.restartMavenConnectors(project, true);
         }
       }
 
@@ -270,6 +271,10 @@ public final class MavenServerManager implements Disposable {
     return true;
   }
 
+  /**
+   *
+   * use MavenUtil.restartMavenConnectors
+   */
   public void shutdown(boolean wait) {
     Collection<MavenServerConnector> values;
     synchronized (myMultimoduleDirToConnectorMap) {

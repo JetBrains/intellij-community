@@ -70,10 +70,7 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.server.MavenServerEmbedder;
-import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.server.MavenServerUtil;
+import org.jetbrains.idea.maven.server.*;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -92,6 +89,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -1185,15 +1183,19 @@ public class MavenUtil {
     return ExternalSystemUtil.confirmLoadingUntrustedProject(project, SYSTEM_ID);
   }
 
-  public static void restartMavenConnectors(Project project) {
+  public static void restartMavenConnectors(Project project, boolean wait, Predicate<MavenServerConnector> condition) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       MavenServerManager.getInstance().getAllConnectors().forEach(it -> {
-        if (it.getProject().equals(project)) {
-          MavenServerManager.getInstance().shutdownConnector(it, true);
+        if (it.getProject().equals(project) && condition.test(it)) {
+          MavenServerManager.getInstance().shutdownConnector(it, wait);
         }
       });
       MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
     }, SyncBundle.message("maven.sync.restarting"), false, project);
+  }
+
+  public static void restartMavenConnectors(Project project, boolean wait) {
+    restartMavenConnectors(project, wait, c -> Boolean.TRUE);
   }
 
   public interface MavenTaskHandler {
