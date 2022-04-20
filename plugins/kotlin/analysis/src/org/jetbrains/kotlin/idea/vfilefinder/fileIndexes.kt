@@ -135,7 +135,7 @@ object KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>()
         } catch (e: ProcessCanceledException) {
             throw e
         } catch (e: Throwable) {
-            LOG.warn("Error while indexing file " + fileContent.fileName, e)
+            LOG.warn("Error `(${e.javaClass.simpleName}: ${e.message})` while indexing file ${fileContent.fileName} using $name index. Probably the file is broken.")
             emptyMap()
         }
     }
