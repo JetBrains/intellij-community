@@ -350,7 +350,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
           index = path.indexOf(JarFileSystem.JAR_SEPARATOR, index + 1);
         }
         while (index > 0 && path.charAt(index-1) == '/');
-        if (index == -1) {
+        if (index == -1 && !FilePartNodeRoot.isArchiveInTheWindowsDiskRoot(path)) {
           // treat url "jar://xx/x.jar" as "jar://xx/x.jar!/"
           normPath = path + JarFileSystem.JAR_SEPARATOR;
         }

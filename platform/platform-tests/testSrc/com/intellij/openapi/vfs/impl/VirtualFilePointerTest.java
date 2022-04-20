@@ -1283,6 +1283,9 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/abc/", "jar://" + diskRoot + "/abc!/", "abc");
     assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/abc!/", "jar://" + diskRoot + "/abc!/", "abc");
     assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/abc!/xxx", "jar://" + diskRoot + "/abc!/xxx", "xxx");
+    if (SystemInfo.isWindows) {
+      assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "!/abc", "jar://" + diskRoot + "!/abc", "abc");
+    }
   }
 
   private void assertJarSeparatorParsedCorrectly(@NotNull String sourceUrl, @NotNull String expectedPointerUrl, @NotNull String expectedPointerFileName) {
