@@ -371,7 +371,7 @@ public final class ConfigImportHelper {
   }
 
   /**
-   * Checks that the current user is a "new" one (i.e. this is the very first launch of the IDE on this machine).
+   * Checking that the current user is a "new" one (i.e. this is the very first launch of the IDE on this machine).
    */
   public static boolean isNewUser() {
     return isFirstSession() && !isConfigImported();
@@ -840,7 +840,8 @@ public final class ConfigImportHelper {
         }
 
         migratePlugins(newPluginsDir, pluginsToMigrate, pendingUpdates, log);
-      } else {
+      }
+      else {
         pendingUpdates = new ArrayList<>();
         log.info("non-existing plugins directory: " + oldPluginsDir);
 
@@ -863,7 +864,6 @@ public final class ConfigImportHelper {
               downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, pluginsToDownload, pendingUpdates, dialog.getIndicator());
               SwingUtilities.invokeLater(() -> dialog.setVisible(false));
             }, "Plugin migration downloader").start();
-
             dialog.setVisible(true);
           });
         }
