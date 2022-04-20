@@ -1410,7 +1410,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (capital_type_element | clear_variants_and_fail) declaration_lookahead
+  // (capital_type_element | lowercase_type_element | clear_variants_and_fail) declaration_lookahead
   static boolean block_declaration_type_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_declaration_type_element")) return false;
     boolean r;
@@ -1421,11 +1421,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // capital_type_element | clear_variants_and_fail
+  // capital_type_element | lowercase_type_element | clear_variants_and_fail
   private static boolean block_declaration_type_element_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_declaration_type_element_0")) return false;
     boolean r;
     r = capital_type_element(b, l + 1);
+    if (!r) r = lowercase_type_element(b, l + 1);
     if (!r) r = clear_variants_and_fail(b, l + 1);
     return r;
   }
@@ -4731,6 +4732,48 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // code_reference &((weak_keyword | IDENTIFIER) '=')
+  public static boolean lowercase_type_element(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lowercase_type_element")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, TYPE_ELEMENT, "<type>");
+    r = code_reference(b, l + 1);
+    r = r && lowercase_type_element_1(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // &((weak_keyword | IDENTIFIER) '=')
+  private static boolean lowercase_type_element_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lowercase_type_element_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = lowercase_type_element_1_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // (weak_keyword | IDENTIFIER) '='
+  private static boolean lowercase_type_element_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lowercase_type_element_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = lowercase_type_element_1_0_0(b, l + 1);
+    r = r && consumeToken(b, T_ASSIGN);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // weak_keyword | IDENTIFIER
+  private static boolean lowercase_type_element_1_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lowercase_type_element_1_0_0")) return false;
+    boolean r;
+    r = weak_keyword(b, l + 1);
+    if (!r) r = consumeToken(b, IDENTIFIER);
+    return r;
+  }
+
+  /* ********************************************************** */
   // non_empty_annotation_list? '[' expression ']'
   static boolean mandatory_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "mandatory_expression")) return false;
@@ -5151,7 +5194,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // empty_modifier_list  mb_type_parameter_list (method_lookahead | compact_constructor_lookahead)
+  // empty_modifier_list mb_type_parameter_list (method_lookahead | compact_constructor_lookahead)
   static boolean naked_method_declaration_start(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "naked_method_declaration_start")) return false;
     boolean r;
