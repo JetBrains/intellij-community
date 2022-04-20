@@ -84,6 +84,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testIncompleteElseIf() { doTest(); }
   public void testField() { doTest(); }
   public void testMethod() { doTest(); }
+  public void testLikelyField() { doTest(); }
+  public void testFieldWithEquals() { doTest(); }
   public void testClass() { doTest(); }
   public void testInnerEnumBeforeMethod() { doTest(); }
   public void testInnerEnumBeforeMethodWithSpace() { doTest(); }
