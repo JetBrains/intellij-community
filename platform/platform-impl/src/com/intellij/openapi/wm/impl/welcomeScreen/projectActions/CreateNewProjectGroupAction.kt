@@ -7,6 +7,8 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 
 /**
  * @author Konstantin Bulenkov
@@ -29,6 +31,11 @@ class CreateNewProjectGroupAction : RecentProjectsWelcomeScreenActionBase() {
     if (newGroup != null) {
       RecentProjectsManager.getInstance().addGroup(ProjectGroup(newGroup))
     }
+  }
+
+  override fun update(event: AnActionEvent) {
+    val item = getSelectedItem(event) ?: return
+    event.presentation.isEnabled = item is RecentProjectItem || item is ProjectsGroupItem
   }
 
   companion object {

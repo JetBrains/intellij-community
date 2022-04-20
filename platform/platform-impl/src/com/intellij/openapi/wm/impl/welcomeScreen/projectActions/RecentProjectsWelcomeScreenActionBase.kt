@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 
-import com.intellij.ide.ProjectGroupActionGroup
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
@@ -44,11 +43,6 @@ abstract class RecentProjectsWelcomeScreenActionBase : DumbAwareAction(), LightE
       val component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
       return if (component is Tree) component
       else null
-    }
-
-    @JvmStatic
-    fun hasGroupSelected(event: AnActionEvent): Boolean {
-      return getSelectedItem(event) is ProjectGroupActionGroup
     }
   }
 }

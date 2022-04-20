@@ -46,9 +46,7 @@ class EditProjectGroupAction : RecentProjectsWelcomeScreenActionBase() {
   }
 
   override fun update(event: AnActionEvent) {
-    val selected = getSelectedItem(event)
-    val enabled = selected != null && selected is ProjectsGroupItem
-
-    event.presentation.isEnabledAndVisible = enabled
+    val item = getSelectedItem(event) ?: return
+    event.presentation.isEnabledAndVisible = item is ProjectsGroupItem
   }
 }

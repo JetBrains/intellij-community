@@ -3,6 +3,8 @@ package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.CloneableProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RootItem
@@ -12,10 +14,14 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RootItem
  */
 internal class RemoveSelectedProjectsAction : RecentProjectsWelcomeScreenActionBase() {
   override fun actionPerformed(event: AnActionEvent) {
-    val manager = RecentProjectsManager.getInstance()
-    when (val item = getSelectedItem(event)) {
-      is ProjectsGroupItem -> manager.removeGroup(item.group)
-      is RecentProjectItem -> manager.removePath(item.projectPath)
+    val recentProjectsManager = RecentProjectsManager.getInstance()
+    val cloneableProjectsService = CloneableProjectsService.getInstance()
+
+    val item = getSelectedItem(event) ?: return
+    when (item) {
+      is ProjectsGroupItem -> recentProjectsManager.removeGroup(item.group)
+      is RecentProjectItem -> recentProjectsManager.removePath(item.projectPath)
+      is CloneableProjectItem -> cloneableProjectsService.removeCloneProject(item.progressIndicator)
       is RootItem -> {}
     }
   }

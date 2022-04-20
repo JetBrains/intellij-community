@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RootItem
 import java.awt.event.InputEvent
 
 /**
@@ -20,7 +19,7 @@ class OpenSelectedProjectsAction : RecentProjectsWelcomeScreenActionBase() {
     when (item) {
       is ProjectsGroupItem -> item.children.forEach { child -> child.openProject(newEvent) }
       is RecentProjectItem -> item.openProject(newEvent)
-      is RootItem -> {}
+      else -> {}
     }
   }
 
@@ -29,7 +28,7 @@ class OpenSelectedProjectsAction : RecentProjectsWelcomeScreenActionBase() {
     val item = getSelectedItem(event) ?: return
 
     if (ActionPlaces.WELCOME_SCREEN == event.place) {
-      presentation.isEnabledAndVisible = true
+      presentation.isEnabledAndVisible = item is RecentProjectItem || item is ProjectsGroupItem
       when (item) {
         is ProjectsGroupItem -> presentation.setText(
           IdeBundle.messagePointer("action.presentation.OpenSelectedProjectsAction.text.open.all.projects.in.group")
