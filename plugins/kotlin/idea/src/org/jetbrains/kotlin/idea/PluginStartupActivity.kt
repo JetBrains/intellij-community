@@ -13,8 +13,10 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinPluginCompatibilityVerifier.checkCompatibility
 import org.jetbrains.kotlin.idea.configuration.notifications.notifyKotlinStyleUpdateIfNeeded
+import org.jetbrains.kotlin.idea.configuration.notifications.showEapSurveyNotification
 import org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter.Companion.setupReportingFromRelease
 import org.jetbrains.kotlin.idea.search.containsKotlinFile
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative
@@ -42,6 +44,10 @@ internal class PluginStartupActivity : StartupActivity.Background {
 
                 if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
                     notifyKotlinStyleUpdateIfNeeded(project)
+
+                    if (!isUnitTestMode()) {
+                        showEapSurveyNotification(project)
+                    }
                 }
 
                 val daemonCodeAnalyzer = DaemonCodeAnalyzerImpl.getInstanceEx(project) as DaemonCodeAnalyzerImpl
