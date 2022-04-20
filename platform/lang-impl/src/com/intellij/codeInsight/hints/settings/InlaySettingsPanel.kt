@@ -196,6 +196,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       }
       is Language -> {
         configureLanguageNode(treeNode)
+        configurePreview((treeNode.firstChild as CheckedTreeNode).userObject as InlayProviderSettingsModel)
       }
       is InlayProviderSettingsModel -> {
         if (item.isMergedNode && item.description == null) {
@@ -210,6 +211,9 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         }
         if (treeNode.isLeaf) {
           addPreview(item.getCasePreview(null) ?: item.previewText, item, null)
+        }
+        else if (item.isMergedNode) {
+          configurePreview(item)
         }
       }
       is ImmediateConfigurable.Case -> {
@@ -227,9 +231,24 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     rightPanel.repaint()
   }
 
+  private fun configurePreview(item: InlayProviderSettingsModel) {
+    val previewText = item.getCasePreview(null) ?: item.previewText
+    if (previewText != null) {
+      addPreview(previewText, item, null)
+    }
+    else {
+      for (case in item.cases) {
+        val preview = item.getCasePreview(case)
+        if (preview != null) {
+          addPreview(preview, item, case)
+          break
+        }
+      }
+    }
+  }
+
   private fun configureLanguageNode(treeNode: CheckedTreeNode) {
     addDescription(((treeNode.parent as CheckedTreeNode).userObject as InlayGroup).description)
-
   }
 
   private fun addPreview(previewText: String?, model: InlayProviderSettingsModel, case: ImmediateConfigurable.Case?) {
