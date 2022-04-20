@@ -74,6 +74,9 @@ import java.io.File
 abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluateExpressionTest() {
     override fun useIrBackend() = true
 
+    override fun fragmentCompilerBackend() =
+        FragmentCompilerBackend.JVM
+
     override fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>) {
         val context = ConfigurationContext(
             filesByModules = testFiles.groupBy(TestFileWithModule::module),
