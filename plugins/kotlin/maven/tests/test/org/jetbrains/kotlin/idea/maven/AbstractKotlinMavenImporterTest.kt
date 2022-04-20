@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -15,6 +14,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
+import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.additionalArgumentsAsList
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.project.productionSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.testSourceInfo
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAndGetResult
@@ -3264,6 +3265,56 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             // decision, but we don't have a better one
             checkStableModuleName("project", "test", JsPlatforms.defaultJsPlatform, isProduction = true)
             checkStableModuleName("project", "test", JsPlatforms.defaultJsPlatform, isProduction = false)
+        }
+    }
+
+    class CompilerPlugins : AbstractKotlinMavenImporterTest() {
+        @Test
+        fun testCompilerPlugins() {
+            importProject(
+                """
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1.0.0</version>
+
+                    <build>
+                        <plugins>
+                            <plugin>
+                                <groupId>org.jetbrains.kotlin</groupId>
+                                <artifactId>kotlin-maven-plugin</artifactId>
+                                <version>$kotlinVersion</version>
+                                <configuration>
+                                    <compilerPlugins>
+                                        <plugin>kotlinx-serialization</plugin>
+                                        <plugin>all-open</plugin>
+                                        <plugin>lombok</plugin>
+                                        <plugin>jpa</plugin>
+                                        <plugin>noarg</plugin>
+                                        <plugin>sam-with-receiver</plugin>
+                                    </compilerPlugins>
+                                </configuration>
+                            </plugin>
+                        </plugins>
+                    </build>
+                """
+            )
+
+            Assert.assertEquals(
+                "-version",
+                facetSettings.compilerSettings!!.additionalArguments
+            )
+            assertModules("project")
+            assertImporterStatePresent()
+            TestCase.assertEquals(
+                listOf(
+                    KotlinArtifacts.instance.allopenCompilerPlugin,
+                    KotlinArtifacts.instance.kotlinxSerializationCompilerPlugin,
+                    KotlinArtifacts.instance.lombokCompilerPlugin,
+                    KotlinArtifacts.instance.noargCompilerPlugin,
+                    KotlinArtifacts.instance.samWithReceiverCompilerPlugin,
+                ).map { it.absolutePath },
+                facetSettings.compilerArguments?.pluginClasspaths?.sorted()
+            )
         }
     }
 }
