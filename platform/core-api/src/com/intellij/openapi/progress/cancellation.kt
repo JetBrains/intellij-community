@@ -13,6 +13,9 @@ private val LOG: Logger = Logger.getInstance("#com.intellij.openapi.progress")
 
 fun <X> withJob(job: Job, action: () -> X): X = Cancellation.withJob(job, ThrowableComputable(action))
 
+@JvmField
+val DISABLED_PCE_IN_HEADLESS_MODE = "disabled" == System.getProperty("idea.check.canceled.headless.mode")
+
 /**
  * Ensures that the current thread has an [associated job][Cancellation.currentJob].
  *
@@ -85,6 +88,9 @@ internal fun <T> ensureCurrentJob(indicator: ProgressIndicator, action: (current
 
 private fun cancelWithIndicator(job: CompletableJob, indicator: ProgressIndicator): Job {
   return CoroutineScope(Dispatchers.IO).launch(CoroutineName("indicator watcher")) {
+    if (DISABLED_PCE_IN_HEADLESS_MODE) {
+      return@launch
+    }
     while (!indicator.isCanceled) {
       delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
     }

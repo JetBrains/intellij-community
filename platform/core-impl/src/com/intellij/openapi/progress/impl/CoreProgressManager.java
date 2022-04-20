@@ -48,7 +48,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private final AtomicInteger myUnsafeProgressCount = new AtomicInteger(0);
 
   public static final boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));
-  private static final boolean DISABLED_IN_HEADLESS_MODE = "disabled".equals(System.getProperty("idea.check.canceled.headless.mode"));
+  
   private static CheckCanceledHook ourCheckCanceledHook;
   private ScheduledFuture<?> myCheckCancelledFuture; // guarded by threadsUnderIndicator
 
@@ -133,7 +133,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   protected void doCheckCanceled() throws ProcessCanceledException {
-    if (DISABLED_IN_HEADLESS_MODE) {
+    if (CancellationKt.DISABLED_PCE_IN_HEADLESS_MODE) {
       return;
     }
 
@@ -778,7 +778,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   public boolean isInNonCancelableSection() {
-    if (DISABLED_IN_HEADLESS_MODE) {
+    if (CancellationKt.DISABLED_PCE_IN_HEADLESS_MODE) {
       return true;
     }
     return isInNonCancelableSection.get() != null;
