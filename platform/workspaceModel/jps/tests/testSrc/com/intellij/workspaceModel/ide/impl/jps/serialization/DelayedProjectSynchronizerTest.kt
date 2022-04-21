@@ -23,6 +23,7 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.EntityStorageSerializer
 import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
@@ -141,7 +142,7 @@ class DelayedProjectSynchronizerTest {
     val originalBuilder = MutableEntityStorage.create()
     val configLocation = toConfigLocation(projectData.projectDir.toPath(), virtualFileManager)
     val serializers = loadProject(configLocation, originalBuilder, virtualFileManager, fileInDirectorySourceNames) as JpsProjectSerializersImpl
-    val loadedProjectData = LoadedProjectData(originalBuilder.toStorage(), serializers, configLocation, projectFile)
+    val loadedProjectData = LoadedProjectData(originalBuilder.toSnapshot(), serializers, configLocation, projectFile)
     serializers.checkConsistency(configLocation, loadedProjectData.storage, virtualFileManager)
 
     assertThat(projectData.storage.entities(ModuleEntity::class.java).map {
@@ -195,7 +196,7 @@ class DelayedProjectSynchronizerTest {
   }
 
 
-  private fun saveToCache(storage: EntityStorage) {
+  private fun saveToCache(storage: EntityStorageSnapshot) {
     val cacheFile = tempDirectory.newFile("cache.data")
     WorkspaceModelCacheImpl.testCacheFile = cacheFile
 

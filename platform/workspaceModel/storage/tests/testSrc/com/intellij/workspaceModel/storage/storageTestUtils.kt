@@ -3,11 +3,11 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
+import com.intellij.workspaceModel.storage.impl.EntityStorageSnapshotImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 
 fun EntityStorage.checkConsistency() {
-  if (this is WorkspaceEntityStorageImpl) {
+  if (this is EntityStorageSnapshotImpl) {
     this.assertConsistency()
     return
   }

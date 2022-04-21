@@ -88,10 +88,10 @@ class ImlReplaceBySourceTest {
     val source = builder.entities(ModuleEntity::class.java).first().entitySource as JpsFileEntitySource.FileInDirectory
     JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), source, configLocation, replaceWith, TestErrorReporter, virtualFileManager)
 
-    val before = builder.toStorage()
+    val before = builder.toSnapshot()
 
     builder = before.toBuilder()
-    builder.replaceBySource({ true }, replaceWith.toStorage())
+    builder.replaceBySource({ true }, replaceWith.toSnapshot())
 
     val changes = builder.collectChanges(before).values.flatten()
     Assert.assertEquals(5, changes.size)
@@ -118,10 +118,10 @@ class ImlReplaceBySourceTest {
     val reader = CachingJpsFileContentReader(projectFile.asConfigLocation(virtualFileManager))
     data.loadAll(reader, storageBuilder2, TestErrorReporter, null)
 
-    val before = storageBuilder1.toStorage()
+    val before = storageBuilder1.toSnapshot()
     storageBuilder1 = before.toBuilder()
     storageBuilder1.checkConsistency()
-    storageBuilder1.replaceBySource(sourceFilter = { true }, replaceWith = storageBuilder2.toStorage())
+    storageBuilder1.replaceBySource(sourceFilter = { true }, replaceWith = storageBuilder2.toSnapshot())
     storageBuilder1.checkConsistency()
 
     val changes = storageBuilder1.collectChanges(before)

@@ -53,7 +53,7 @@ internal class ModuleBridgeImpl(
             if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
 
             val currentStore = entityStorage.current
-            val storage = if (currentStore is MutableEntityStorage) currentStore.toStorage() else currentStore
+            val storage = if (currentStore is MutableEntityStorage) currentStore.toSnapshot() else currentStore
             entityStorage = VersionedEntityStorageOnStorage(storage)
             assert(entityStorage.current.resolve(moduleEntityId) != null) {
               // If we ever get this assertion, replace use `event.storeBefore` instead of current

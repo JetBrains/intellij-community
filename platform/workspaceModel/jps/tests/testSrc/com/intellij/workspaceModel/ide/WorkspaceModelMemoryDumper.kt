@@ -36,5 +36,5 @@ private fun loadProject(): Pair<JpsProjectSerializers, EntityStorage> {
   val projectDir = File(PathManager.getHomePath()).asConfigLocation(virtualFileManager)
   val serializers = JpsProjectEntitiesLoader.loadProject(projectDir, builder, Paths.get("/tmp"), TestErrorReporter,
                                                          virtualFileManager)
-  return Pair(serializers, builder.toStorage())
+  return Pair(serializers, builder.toSnapshot())
 }

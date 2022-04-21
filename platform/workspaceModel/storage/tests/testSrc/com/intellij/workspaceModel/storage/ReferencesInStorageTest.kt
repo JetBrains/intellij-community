@@ -62,7 +62,7 @@ class ReferencesInStorageTest {
     }
     builder.addEntity(parentEntity)
 
-    val diff = createBuilderFrom(builder.toStorage())
+    val diff = createBuilderFrom(builder.toSnapshot())
     val childEntity = XChildEntity {
       childProperty = "child"
       dataClass = null

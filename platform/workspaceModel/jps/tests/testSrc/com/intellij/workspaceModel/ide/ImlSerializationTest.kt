@@ -87,7 +87,7 @@ class ImlSerializationTest {
   }
 
   private fun serializationRoundTrip(storageBuilder: MutableEntityStorage): ByteArray {
-    val storage = storageBuilder.toStorage()
+    val storage = storageBuilder.toSnapshot()
     val byteArray: ByteArray
     val timeMillis = measureTimeMillis {
       byteArray = SerializationRoundTripChecker.verifyPSerializationRoundTrip(storage, virtualFileManager)

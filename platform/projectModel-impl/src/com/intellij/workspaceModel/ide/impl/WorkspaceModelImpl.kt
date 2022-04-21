@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import kotlin.system.measureTimeMillis
@@ -36,7 +37,7 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
 
     val initialContent = WorkspaceModelInitialTestContent.pop()
     val cache = WorkspaceModelCache.getInstance(project)
-    val projectEntities = when {
+    val projectEntities: EntityStorageSnapshot = when {
       initialContent != null -> initialContent
       cache != null -> {
         val activity = startActivity("cache loading", ActivityCategory.DEFAULT)
@@ -48,16 +49,16 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
           log.info("Load workspace model from cache in $loadingCacheTime ms")
           loadedFromCache = true
           entityTracer.printInfoAboutTracedEntity(previousStorage, "cache")
-          previousStorage
+          previousStorage.toSnapshot()
         }
-        else MutableEntityStorage.create()
+        else MutableEntityStorage.create().toSnapshot()
         activity.end()
         storage
       }
-      else -> MutableEntityStorage.create()
+      else -> MutableEntityStorage.create().toSnapshot()
     }
 
-    entityStorage = VersionedEntityStorageImpl((projectEntities as? MutableEntityStorage)?.toStorage() ?: projectEntities)
+    entityStorage = VersionedEntityStorageImpl(projectEntities)
     entityTracer.subscribe(project)
   }
 
@@ -72,14 +73,14 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     val result = updater(builder)
     startPreUpdateHandlers(before, builder)
     val changes = builder.collectChanges(before)
-    entityStorage.replace(builder.toStorage(), changes, this::onBeforeChanged, this::onChanged)
+    entityStorage.replace(builder.toSnapshot(), changes, this::onBeforeChanged, this::onChanged)
     return result
   }
 
   override fun <R> updateProjectModelSilent(updater: (MutableEntityStorage) -> R): R {
     val builder = MutableEntityStorage.from(entityStorage.current)
     val result = updater(builder)
-    entityStorage.replaceSilently(builder.toStorage())
+    entityStorage.replaceSilently(builder.toSnapshot())
     return result
   }
 

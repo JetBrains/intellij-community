@@ -40,13 +40,13 @@ class WorkspaceEntityEqualityTest {
   @Test
   fun `equality modified entity`() {
     builderOne.addSampleEntity("Data")
-    val storage = builderOne.toStorage()
+    val storage = builderOne.toSnapshot()
     val entityOne = storage.entities(SampleEntity::class.java).single()
     val builder = storage.toBuilder()
     builder.modifyEntity(entityOne) {
       stringProperty = "AnotherData"
     }
-    val entityTwo = builder.toStorage().entities(SampleEntity::class.java).single()
+    val entityTwo = builder.toSnapshot().entities(SampleEntity::class.java).single()
 
     assertNotEquals(entityOne, entityTwo)
   }
@@ -55,14 +55,14 @@ class WorkspaceEntityEqualityTest {
   fun `equality modified another entity`() {
     builderOne.addSampleEntity("Data1")
     builderOne.addSampleEntity("Data2")
-    val storage = builderOne.toStorage()
+    val storage = builderOne.toSnapshot()
     val entityOne = storage.entities(SampleEntity::class.java).single { it.stringProperty == "Data1" }
     val entityForModification = storage.entities(SampleEntity::class.java).single { it.stringProperty == "Data2" }
     val builder = storage.toBuilder()
     builder.modifyEntity(entityForModification) {
       stringProperty = "AnotherData"
     }
-    val entityTwo = builder.toStorage().entities(SampleEntity::class.java).single { it.stringProperty == "Data1" }
+    val entityTwo = builder.toSnapshot().entities(SampleEntity::class.java).single { it.stringProperty == "Data1" }
 
 
     assertEquals(entityOne, entityTwo)
@@ -75,7 +75,7 @@ class WorkspaceEntityEqualityTest {
 
     val checkSet = HashSet<SampleEntity>()
 
-    var storage = builderOne.toStorage()
+    var storage = builderOne.toSnapshot()
     val entityOne = storage.entities(SampleEntity::class.java).single { it.stringProperty == "Data1" }
     checkSet += entityOne
 
@@ -84,7 +84,7 @@ class WorkspaceEntityEqualityTest {
     builder.modifyEntity(entityForModification) {
       stringProperty = "AnotherData"
     }
-    storage = builder.toStorage()
+    storage = builder.toSnapshot()
     val entityTwo = storage.entities(SampleEntity::class.java).single { it.stringProperty == "Data1" }
 
     assertTrue(entityTwo in checkSet)
@@ -94,7 +94,7 @@ class WorkspaceEntityEqualityTest {
     builder.modifyEntity(entityForModification) {
       stringProperty = "AnotherData2"
     }
-    val entityThree = builder.toStorage().entities(SampleEntity::class.java).single { it.stringProperty == "AnotherData2" }
+    val entityThree = builder.toSnapshot().entities(SampleEntity::class.java).single { it.stringProperty == "AnotherData2" }
 
     assertFalse(entityThree in checkSet)
   }

@@ -117,8 +117,8 @@ class ReplaceBySourceTest {
     val replacement = createBuilderFrom(builder)
     replacement.addChildEntity(parentEntity = parentEntity, source = sourceA2)
     builder.replaceBySource({ it == sourceA2 }, replacement)
-    assertEquals(1, builder.toStorage().entities(XParentEntity::class.java).toList().size)
-    assertEquals(1, builder.toStorage().entities(XChildEntity::class.java).toList().size)
+    assertEquals(1, builder.toSnapshot().entities(XParentEntity::class.java).toList().size)
+    assertEquals(1, builder.toSnapshot().entities(XChildEntity::class.java).toList().size)
     builder.assertConsistency()
   }
 
@@ -137,7 +137,7 @@ class ReplaceBySourceTest {
     builder.addSampleEntity("data1")
     builder.addSampleEntity("data2")
     resetChanges()
-    val originalStorage = builder.toStorage()
+    val originalStorage = builder.toSnapshot()
 
     builder.replaceBySource({ true }, createEmptyBuilder())
     val collectChanges = builder.collectChanges(originalStorage)
@@ -609,6 +609,6 @@ class ReplaceBySourceTest {
   }
 
   private fun resetChanges() {
-    builder = builder.toStorage().toBuilder() as MutableEntityStorageImpl
+    builder = builder.toSnapshot().toBuilder() as MutableEntityStorageImpl
   }
 }

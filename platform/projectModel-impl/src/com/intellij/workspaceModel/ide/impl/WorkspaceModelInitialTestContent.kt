@@ -2,22 +2,22 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
 
 object WorkspaceModelInitialTestContent {
-  private val initialContent: AtomicReference<EntityStorage?> = AtomicReference(null)
+  private val initialContent: AtomicReference<EntityStorageSnapshot?> = AtomicReference(null)
 
   @Volatile
   var hasInitialContent = false
     private set
 
-  fun peek(): EntityStorage? = initialContent.get()
-  internal fun pop(): EntityStorage? = initialContent.getAndSet(null)
+  fun peek(): EntityStorageSnapshot? = initialContent.get()
+  internal fun pop(): EntityStorageSnapshot? = initialContent.getAndSet(null)
 
   @TestOnly
-  fun <R> withInitialContent(storage: EntityStorage, block: () -> R): R {
+  fun <R> withInitialContent(storage: EntityStorageSnapshot, block: () -> R): R {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       error("For test purposes only")
     }

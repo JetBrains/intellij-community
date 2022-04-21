@@ -360,8 +360,8 @@ class EntityStorageSerializerImpl(
     return false
   }
 
-  override fun serializeCache(stream: OutputStream, storage: EntityStorage): SerializationResult {
-    storage as WorkspaceEntityStorageImpl
+  override fun serializeCache(stream: OutputStream, storage: EntityStorageSnapshot): SerializationResult {
+    storage as EntityStorageSnapshotImpl
 
     val output = Output(stream, KRYO_BUFFER_SIZE)
     return try {
@@ -657,7 +657,7 @@ class EntityStorageSerializerImpl(
         val persistentIdIndex = readPersistentIdIndex(kryo, input)
         val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
 
-        val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes)
+        val storage = EntityStorageSnapshotImpl(entitiesBarrel, refsTable, storageIndexes)
         val builder = MutableEntityStorageImpl.from(storage)
 
         builder.entitiesByType.entityFamilies.forEach { family ->

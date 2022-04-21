@@ -25,7 +25,7 @@ class TestEntityTypesResolver : EntityTypesResolver {
 
 object SerializationRoundTripChecker {
   fun verifyPSerializationRoundTrip(storage: EntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
-    storage as WorkspaceEntityStorageImpl
+    storage as EntityStorageSnapshotImpl
     storage.assertConsistency()
 
     val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
@@ -34,7 +34,7 @@ object SerializationRoundTripChecker {
     serializer.serializeCache(stream, storage)
 
     val byteArray = stream.toByteArray()
-    val deserialized = (serializer.deserializeCache(ByteArrayInputStream(byteArray)) as MutableEntityStorageImpl).toStorage()
+    val deserialized = (serializer.deserializeCache(ByteArrayInputStream(byteArray)) as MutableEntityStorageImpl).toSnapshot() as EntityStorageSnapshotImpl
     deserialized.assertConsistency()
 
     assertStorageEquals(storage, deserialized)
@@ -44,7 +44,7 @@ object SerializationRoundTripChecker {
     return byteArray
   }
 
-  private fun assertStorageEquals(expected: WorkspaceEntityStorageImpl, actual: WorkspaceEntityStorageImpl) {
+  private fun assertStorageEquals(expected: EntityStorageSnapshotImpl, actual: EntityStorageSnapshotImpl) {
     // Assert entity data
     assertEquals(expected.entitiesByType.size(), actual.entitiesByType.size())
     for ((clazz, expectedEntityFamily) in expected.entitiesByType.entityFamilies.withIndex()) {

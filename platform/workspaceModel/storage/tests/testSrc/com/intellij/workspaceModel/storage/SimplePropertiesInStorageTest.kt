@@ -66,7 +66,7 @@ class SimplePropertiesInStorageTest {
   fun `builder from storage`() {
     val storage = createEmptyBuilder().apply {
       addSampleEntity("hello")
-    }.toStorage()
+    }.toSnapshot()
 
     assertEquals("hello", storage.singleSampleEntity().stringProperty)
 
@@ -86,7 +86,7 @@ class SimplePropertiesInStorageTest {
     val builder = createEmptyBuilder()
     builder.addSampleEntity("hello")
 
-    val snapshot = builder.toStorage()
+    val snapshot = builder.toSnapshot()
 
     assertEquals("hello", builder.singleSampleEntity().stringProperty)
     assertEquals("hello", snapshot.singleSampleEntity().stringProperty)

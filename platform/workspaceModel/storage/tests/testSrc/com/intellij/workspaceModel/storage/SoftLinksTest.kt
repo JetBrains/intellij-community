@@ -34,7 +34,7 @@ class SoftLinksTest {
     })
 
     // Change persistent id in a different builder
-    val newBuilder = createBuilderFrom(builder.toStorage())
+    val newBuilder = createBuilderFrom(builder.toSnapshot())
     val entity = newBuilder.resolve(NameId(id))!!
     newBuilder.modifyEntity(entity) {
       this.myName = newId
@@ -66,7 +66,7 @@ class SoftLinksTest {
     })
 
     // Change persistent id in a different builder
-    val newBuilder = createBuilderFrom(builder.toStorage())
+    val newBuilder = createBuilderFrom(builder.toSnapshot())
     val entity = newBuilder.resolve(NameId(id))!!
     newBuilder.modifyEntity(entity) {
       this.myName = newId
@@ -80,7 +80,7 @@ class SoftLinksTest {
     assertOneElement(builder.referrers(NameId(newId), WithSoftLinkEntity::class.java).toList())
 
     // Change persistent id to the initial value
-    val anotherNewBuilder = createBuilderFrom(builder.toStorage())
+    val anotherNewBuilder = createBuilderFrom(builder.toSnapshot())
     val anotherEntity = anotherNewBuilder.resolve(NameId(newId))!!
     anotherNewBuilder.modifyEntity(anotherEntity) {
       this.myName = id

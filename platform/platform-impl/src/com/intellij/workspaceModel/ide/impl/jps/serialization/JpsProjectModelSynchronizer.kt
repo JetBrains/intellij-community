@@ -89,7 +89,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     ApplicationManager.getApplication().invokeAndWait(Runnable {
       runWriteAction {
         WorkspaceModel.getInstance(project).updateProjectModel { updater ->
-          val storage = builder.toStorage()
+          val storage = builder.toSnapshot()
           updater.replaceBySource({ it in changedSources || (it is JpsImportedEntitySource && !it.storedExternally && it.internalFile in changedSources)
                                     || it is DummyParentEntitySource }, storage)
           runAutomaticModuleUnloader(updater)
@@ -194,7 +194,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, it, project) }
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.entityTracer?.printInfoAboutTracedEntity(builder, "JPS files")
       childActivity = childActivity?.endAndStart("applying loaded changes (in queue)")
-      return builder.toStorage() to sourcesToUpdate
+      return builder.toSnapshot() to sourcesToUpdate
     }
     else {
       childActivity?.end()

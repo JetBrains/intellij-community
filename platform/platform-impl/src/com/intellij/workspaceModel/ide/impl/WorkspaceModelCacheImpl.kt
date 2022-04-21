@@ -94,7 +94,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
     }
   }
 
-  private fun cachePreProcess(storage: EntityStorage): EntityStorage {
+  private fun cachePreProcess(storage: EntityStorage): EntityStorageSnapshot {
     val builder = MutableEntityStorage.from(storage)
     val nonPersistentModules = builder.entities(ModuleEntity::class.java)
       .filter { it.entitySource == NonPersistentEntitySource }
@@ -102,7 +102,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
     nonPersistentModules.forEach {
       builder.removeEntity(it)
     }
-    return builder.toStorage()
+    return builder.toSnapshot()
   }
 
   override fun dispose() = Unit
@@ -133,7 +133,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
   }
 
   // Serialize and atomically replace cacheFile. Delete temporary file in any cache to avoid junk in cache folder
-  private fun saveCache(storage: EntityStorage) {
+  private fun saveCache(storage: EntityStorageSnapshot) {
     val tmpFile = FileUtil.createTempFile(cacheFile.parent.toFile(), "cache", ".tmp")
     try {
       val serializationResult = tmpFile.outputStream().use { serializer.serializeCache(it, storage) }

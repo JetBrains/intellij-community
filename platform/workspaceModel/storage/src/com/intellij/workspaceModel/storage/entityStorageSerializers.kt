@@ -7,7 +7,7 @@ import java.io.OutputStream
 interface EntityStorageSerializer {
   val serializerDataFormatVersion: String
 
-  fun serializeCache(stream: OutputStream, storage: EntityStorage): SerializationResult
+  fun serializeCache(stream: OutputStream, storage: EntityStorageSnapshot): SerializationResult
   fun deserializeCache(stream: InputStream): MutableEntityStorage?
 }
 

@@ -19,7 +19,7 @@ class EntityStorageSerializationTest {
     val builder = createEmptyBuilder()
     builder.addSampleEntity("MyEntity")
 
-    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toStorage(), VirtualFileUrlManagerImpl())
+    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
   }
 
   @Test
@@ -29,7 +29,7 @@ class EntityStorageSerializationTest {
                             stringListProperty = mutableListOf("a", "b"),
                             stringSetProperty = mutableSetOf("c", "d"))
 
-    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toStorage(), VirtualFileUrlManagerImpl())
+    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
   }
 
   @Test
@@ -42,10 +42,10 @@ class EntityStorageSerializationTest {
       .also { it.serializerDataFormatVersion = "XYZ" }
 
     val stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, builder.toStorage())
+    serializer.serializeCache(stream, builder.toSnapshot())
 
     val byteArray = stream.toByteArray()
-    val deserialized = (deserializer.deserializeCache(ByteArrayInputStream(byteArray)) as? MutableEntityStorageImpl)?.toStorage()
+    val deserialized = (deserializer.deserializeCache(ByteArrayInputStream(byteArray)) as? MutableEntityStorageImpl)?.toSnapshot()
 
     assertNull(deserialized)
   }
@@ -72,7 +72,7 @@ class EntityStorageSerializationTest {
     builder.addLibraryEntity("myName", LibraryTableId.ProjectLibraryTableId, ArrayList(), ArrayList(), MySource)
 
     val stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, builder.toStorage())
+    serializer.serializeCache(stream, builder.toSnapshot())
   }
 
   @Test
@@ -85,7 +85,7 @@ class EntityStorageSerializationTest {
     builder.addSampleEntity("myString")
 
     val stream = ByteArrayOutputStream()
-    val result = serializer.serializeCache(stream, builder.toStorage())
+    val result = serializer.serializeCache(stream, builder.toSnapshot())
 
     assertTrue(result is SerializationResult.Success)
   }
@@ -100,7 +100,7 @@ class EntityStorageSerializationTest {
     builder.addSampleEntity("myString")
 
     val stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, builder.toStorage())
+    serializer.serializeCache(stream, builder.toSnapshot())
 
     // Remove random byte from a serialised store
     val inputStream = stream.toByteArray().filterIndexed { i, _ -> i != 3 }.toByteArray().inputStream()

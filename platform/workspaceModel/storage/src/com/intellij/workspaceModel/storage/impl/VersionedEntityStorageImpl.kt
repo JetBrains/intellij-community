@@ -82,7 +82,7 @@ class VersionedEntityStorageOnBuilder(private val builder: MutableEntityStorage)
   private fun getCurrentSnapshot(): StorageSnapshotCache {
     val snapshotCache = currentSnapshot.get()
     if (snapshotCache == null || builder.modificationCount != snapshotCache.storageVersion) {
-      val storageSnapshotCache = StorageSnapshotCache(builder.modificationCount, ValuesCache(), builder.toStorage())
+      val storageSnapshotCache = StorageSnapshotCache(builder.modificationCount, ValuesCache(), builder.toSnapshot())
       currentSnapshot.set(storageSnapshotCache)
       return storageSnapshotCache
     }
@@ -132,7 +132,7 @@ class DummyVersionedEntityStorage(private val builder: MutableEntityStorage) : V
   override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) {}
 }
 
-open class VersionedEntityStorageImpl(initialStorage: EntityStorage) : VersionedEntityStorage {
+open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : VersionedEntityStorage {
   private val currentSnapshot: AtomicReference<StorageSnapshotCache> = AtomicReference()
   private val valuesCache: ValuesCache
     get() {
@@ -167,13 +167,13 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorage) : Versioned
   override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) =
     valuesCache.clearCachedValue(value, parameter)
 
-  class Current(val version: Long, val storage: EntityStorage)
+  class Current(val version: Long, val storage: EntityStorageSnapshot)
 
   @Volatile
   private var currentPointer: Current = Current(0, initialStorage)
 
   @Synchronized
-  fun replace(newStorage: EntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>,
+  fun replace(newStorage: EntityStorageSnapshot, changes: Map<Class<*>, List<EntityChange<*>>>,
               beforeChanged: (VersionedStorageChange) -> Unit, afterChanged: (VersionedStorageChange) -> Unit) {
     val oldCopy = currentPointer
     if (oldCopy.storage == newStorage) return
@@ -184,7 +184,7 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorage) : Versioned
   }
 
   @Synchronized
-  fun replaceSilently(newStorage: EntityStorage) {
+  fun replaceSilently(newStorage: EntityStorageSnapshot) {
     val oldCopy = currentPointer
     if (oldCopy.storage == newStorage) return
     currentPointer = Current(version = oldCopy.version + 1, storage = newStorage)

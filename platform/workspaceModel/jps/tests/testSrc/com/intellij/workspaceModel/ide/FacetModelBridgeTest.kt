@@ -101,7 +101,7 @@ class FacetModelBridgeTest {
     builder.addFacetEntity("MyFacet", "MockFacetId", """<configuration data="foo" />""", moduleEntity,
                            null, source)
 
-    WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
+    WorkspaceModelInitialTestContent.withInitialContent(builder.toSnapshot()) {
       val project = PlatformTestUtil.loadAndOpenProject(iprFile, disposableRule.disposable)
       Disposer.register(disposableRule.disposable, Disposable {
         PlatformTestUtil.forceCloseProjectWithoutSaving(project)
@@ -136,7 +136,7 @@ class FacetModelBridgeTest {
         </secondElement>
       </AnotherFacetConfigProperties>""", moduleEntity, null, source)
 
-    WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
+    WorkspaceModelInitialTestContent.withInitialContent(builder.toSnapshot()) {
       val project = PlatformTestUtil.loadAndOpenProject(iprFile, disposableRule.disposable)
       Disposer.register(disposableRule.disposable, Disposable {
         PlatformTestUtil.forceCloseProjectWithoutSaving(project)

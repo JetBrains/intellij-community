@@ -28,7 +28,7 @@ class MutableStorageTest {
     assertEquals("NewParentData", sampleEntity.data)
     assertEquals("NewParentData", simpleEntityFromStore.data)
 
-    val newBuilder = MutableEntityStorage.from(builder.toStorage())
+    val newBuilder = MutableEntityStorage.from(builder.toSnapshot())
 
     val entityFromStoreOne = newBuilder.entities(SampleEntity2::class.java).single()
     entityFromStoreOne as SampleEntity2.Builder
@@ -58,7 +58,7 @@ class MutableStorageTest {
       data = "ParentData"
     }
     builder.addEntity(sampleEntity)
-    val newBuilder = MutableEntityStorage.from(builder.toStorage())
+    val newBuilder = MutableEntityStorage.from(builder.toSnapshot())
     val entityFromStore = newBuilder.entities(SampleEntity2::class.java).single()
     newBuilder.removeEntity(entityFromStore)
 

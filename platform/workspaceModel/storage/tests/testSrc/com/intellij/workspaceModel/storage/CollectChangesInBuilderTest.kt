@@ -24,7 +24,7 @@ class CollectChangesInBuilderTest {
         this.entitySource = SampleEntitySource("test")
         intProperty = 1
       })
-    }.toStorage()
+    }.toSnapshot()
     builder = createBuilderFrom(initialStorage)
   }
 
@@ -120,7 +120,7 @@ class CollectChangesInBuilderTest {
   fun `remove parent with child`() {
     val parent = builder.addParentEntity("to remove")
     builder.addChildEntity(parent, "to remove")
-    val storage = builder.toStorage()
+    val storage = builder.toSnapshot()
     val newBuilder = createBuilderFrom(storage)
     newBuilder.removeEntity(parent)
     val changes = newBuilder.collectChanges(storage)

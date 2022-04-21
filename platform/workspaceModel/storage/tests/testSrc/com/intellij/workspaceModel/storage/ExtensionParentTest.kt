@@ -1,6 +1,5 @@
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.createEmptyBuilder
 import com.intellij.workspaceModel.storage.entities.test.api.AttachedEntityToParent
 import com.intellij.workspaceModel.storage.entities.test.api.MainEntityToParent
 import com.intellij.workspaceModel.storage.entities.test.api.MySource
@@ -23,7 +22,7 @@ class ExtensionParentTest {
         this.x = "123"
       }
     })
-    val child: AttachedEntityToParent = builder.toStorage().entities(MainEntityToParent::class.java).single().child!!
+    val child: AttachedEntityToParent = builder.toSnapshot().entities(MainEntityToParent::class.java).single().child!!
     assertEquals("xyz", child.data)
 
     assertTrue(builder.entities(MainEntityToParent::class.java).toList().isNotEmpty())
@@ -58,7 +57,7 @@ class ExtensionParentTest {
         data = "xyz"
       }
     })
-    val child: AttachedEntityToParent = builder.toStorage().entities(MainEntityToParent::class.java).single().child!!
+    val child: AttachedEntityToParent = builder.toSnapshot().entities(MainEntityToParent::class.java).single().child!!
     assertEquals("xyz", child.data)
 
     assertTrue(builder.entities(MainEntityToParent::class.java).toList().isNotEmpty())

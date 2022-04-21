@@ -2,16 +2,16 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 class StorageReplacement internal constructor(
   val version: Long,
-  val snapshot: EntityStorage,
+  val snapshot: EntityStorageSnapshot,
   val changes: Map<Class<*>, List<EntityChange<*>>>
 )
 
-class BuilderSnapshot(val version: Long, private val storage: EntityStorage) {
+class BuilderSnapshot(val version: Long, private val storage: EntityStorageSnapshot) {
   val builder: MutableEntityStorage = MutableEntityStorage.from(storage)
 
   /**
@@ -19,7 +19,7 @@ class BuilderSnapshot(val version: Long, private val storage: EntityStorage) {
    */
   fun getStorageReplacement(): StorageReplacement {
     val changes = builder.collectChanges(storage)
-    val newStorage = builder.toStorage()
+    val newStorage = builder.toSnapshot()
     return StorageReplacement(version, newStorage, changes)
   }
 }

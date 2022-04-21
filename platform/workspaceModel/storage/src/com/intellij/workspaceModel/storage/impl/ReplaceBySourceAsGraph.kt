@@ -41,7 +41,7 @@ internal object ReplaceBySourceAsGraph {
       LOG.trace("Before starting replaceBySource no consistency issues were found")
     }
 
-    val initialStore = if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) thisBuilder.toStorage() else null
+    val initialStore = if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) thisBuilder.toSnapshot() else null
 
     LOG.debug { "Performing replace by source" }
 

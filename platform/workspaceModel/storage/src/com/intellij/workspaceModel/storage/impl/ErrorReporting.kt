@@ -32,12 +32,8 @@ internal fun serializeContent(path: Path, howToSerialize: (EntityStorageSerializ
 
 internal fun serializeEntityStorage(path: Path, storage: EntityStorage) {
   serializeContent(path) { serializer, stream ->
-    serializer.serializeCache(stream, storage.makeSureItsStore())
+    serializer.serializeCache(stream, storage.toSnapshot())
   }
-}
-
-private fun EntityStorage.makeSureItsStore(): EntityStorage {
-  return if (this is MutableEntityStorageImpl) this.toStorage() else this
 }
 
 internal fun getStoreDumpDirectory(): Path {
@@ -71,7 +67,7 @@ private fun ageInDays(file: File) = TimeUnit.DAYS.convert(System.currentTimeMill
 
 internal fun EntityStorage.serializeTo(stream: OutputStream) {
   val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
-  serializer.serializeCache(stream, this.makeSureItsStore())
+  serializer.serializeCache(stream, this.toSnapshot())
 }
 
 internal fun MutableEntityStorageImpl.serializeDiff(stream: OutputStream) {
@@ -91,7 +87,7 @@ internal fun EntityStorage.anonymize(sourceFilter: ((EntitySource) -> Boolean)?)
       this.entitySource = entity.entitySource.anonymize(sourceFilter)
     }
   }
-  return builder.toStorage()
+  return builder.toSnapshot()
 }
 
 internal fun ChangeLog.anonymize(): ChangeLog {

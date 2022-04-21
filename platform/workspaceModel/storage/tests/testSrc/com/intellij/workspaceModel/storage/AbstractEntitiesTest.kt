@@ -19,7 +19,7 @@ class AbstractEntitiesTest {
     val middleEntity = builder.addMiddleEntity()
     builder.addLeftEntity(sequenceOf(middleEntity))
 
-    val storage = builder.toStorage()
+    val storage = builder.toSnapshot()
 
     val leftEntity = assertOneElement(storage.entities(LeftEntity::class.java).toList())
     assertOneElement(leftEntity.children.toList())
@@ -37,7 +37,7 @@ class AbstractEntitiesTest {
       this.children = listOf(anotherMiddleEntity)
     }
 
-    val storage = builder.toStorage()
+    val storage = builder.toSnapshot()
 
     val actualLeftEntity = assertOneElement(storage.entities(LeftEntity::class.java).toList())
     val actualChild = assertOneElement(actualLeftEntity.children.toList())
@@ -57,7 +57,7 @@ class AbstractEntitiesTest {
       this.children = listOf(anotherMiddleEntity)
     }
 
-    val storage = builder.toStorage()
+    val storage = builder.toSnapshot()
 
     val actualLeftEntity = assertOneElement(storage.entities(LeftEntity::class.java).toList())
     val actualChild = assertOneElement(actualLeftEntity.children.toList())
@@ -98,7 +98,7 @@ class AbstractEntitiesTest {
     val middleEntity2 = builder.addMiddleEntity("Two")
     builder.addLeftEntity(sequenceOf(middleEntity1, middleEntity2))
 
-    val storage = builder.toStorage()
+    val storage = builder.toSnapshot()
     val children = storage.entities(LeftEntity::class.java).single().children.toList()
     assertEquals(middleEntity1, children[0])
     assertEquals(middleEntity2, children[1])
@@ -118,7 +118,7 @@ class AbstractEntitiesTest {
 
     builder.addDiff(anotherBuilder)
 
-    val storage = builder.toStorage()
+    val storage = builder.toSnapshot()
     val children = storage.entities(LeftEntity::class.java).last().children.toList()
     assertEquals(middleEntity2, children[0])
     assertEquals(middleEntity1, children[1])
@@ -135,7 +135,7 @@ class AbstractEntitiesTest {
 
     target.replaceBySource({ true }, builder)
 
-    val children = target.toStorage().entities(LeftEntity::class.java).last().children.toList()
+    val children = target.toSnapshot().entities(LeftEntity::class.java).last().children.toList()
     assertEquals(middleEntity1.property, (children[0] as MiddleEntity).property)
     assertEquals(middleEntity2.property, (children[1] as MiddleEntity).property)
   }
@@ -151,7 +151,7 @@ class AbstractEntitiesTest {
 
     target.replaceBySource({ true }, builder)
 
-    val children = target.toStorage().entities(LeftEntity::class.java).last().children.toList()
+    val children = target.toSnapshot().entities(LeftEntity::class.java).last().children.toList()
     assertEquals(middleEntity2.property, (children[0] as MiddleEntity).property)
     assertEquals(middleEntity1.property, (children[1] as MiddleEntity).property)
   }

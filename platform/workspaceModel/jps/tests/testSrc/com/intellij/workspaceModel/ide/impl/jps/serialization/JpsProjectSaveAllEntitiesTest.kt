@@ -65,7 +65,7 @@ class JpsProjectSaveAllEntitiesTest {
     val libraryRoot = LibraryRoot(jarUrl, LibraryRootTypeId.COMPILED)
     val source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(projectDir.asConfigLocation(virtualFileManager))
     builder.addLibraryEntity("foo", LibraryTableId.ProjectLibraryTableId, listOf(libraryRoot), emptyList(), source)
-    val storage = builder.toStorage()
+    val storage = builder.toSnapshot()
     serializers.saveAllEntities(storage, configLocation)
     val expectedDir = File(PathManagerEx.getCommunityHomePath(),
                            "platform/workspaceModel/jps/tests/testData/serialization/fromScratch/addLibrary")
@@ -81,7 +81,7 @@ class JpsProjectSaveAllEntitiesTest {
       val source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(projectDir.asConfigLocation(virtualFileManager))
       builder.addLibraryEntity(libName, LibraryTableId.ProjectLibraryTableId, emptyList(), emptyList(), source)
     }
-    val storage = builder.toStorage()
+    val storage = builder.toSnapshot()
     serializers.saveAllEntities(storage, configLocation)
     val expectedDir = File(PathManagerEx.getCommunityHomePath(),
                            "platform/workspaceModel/jps/tests/testData/serialization/specialSymbolsInLibraryName")
@@ -99,7 +99,7 @@ class JpsProjectSaveAllEntitiesTest {
       val source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(projectDir.asConfigLocation(virtualFileManager))
       builder.addLibraryEntity(libName, LibraryTableId.ProjectLibraryTableId, emptyList(), emptyList(), source)
     }
-    val storage = builder.toStorage()
+    val storage = builder.toSnapshot()
     serializers.saveAllEntities(storage, configLocation)
     val expectedDir = File(PathManagerEx.getCommunityHomePath(),
                            "platform/workspaceModel/jps/tests/testData/serialization/specialSymbolsInLibraryName")

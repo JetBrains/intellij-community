@@ -29,7 +29,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RuleChain
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
-import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
@@ -54,7 +54,7 @@ open class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = fal
     public override fun before() {
       projectRootDir = baseProjectDir.root.toPath()
       if (forceEnableWorkspaceModel) {
-        WorkspaceModelInitialTestContent.withInitialContent(MutableEntityStorage.create()) {
+        WorkspaceModelInitialTestContent.withInitialContent(EntityStorageSnapshot.empty()) {
           project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
         }
       }

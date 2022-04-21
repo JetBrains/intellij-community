@@ -29,11 +29,11 @@ internal data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: Ent
   }
 }
 
-internal class WorkspaceEntityStorageImpl constructor(
+internal class EntityStorageSnapshotImpl constructor(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
   override val indexes: StorageIndexes
-) : AbstractEntityStorage() {
+) : EntityStorageSnapshot, AbstractEntityStorage() {
 
   // This cache should not be transferred to other versions of storage
   private val persistentIdCache = ConcurrentHashMap<PersistentEntityId<*>, WorkspaceEntity>()
@@ -44,9 +44,11 @@ internal class WorkspaceEntityStorageImpl constructor(
     return if (entity !== NULL_ENTITY) entity as E else null
   }
 
+  override fun toSnapshot(): EntityStorageSnapshot = this
+
   companion object {
     private val NULL_ENTITY = ObjectUtils.sentinel("null entity", WorkspaceEntity::class.java)
-    val EMPTY = WorkspaceEntityStorageImpl(ImmutableEntitiesBarrel.EMPTY, RefsTable(), StorageIndexes.EMPTY)
+    val EMPTY = EntityStorageSnapshotImpl(ImmutableEntitiesBarrel.EMPTY, RefsTable(), StorageIndexes.EMPTY)
   }
 }
 
@@ -344,11 +346,11 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  override fun toStorage(): WorkspaceEntityStorageImpl {
+  override fun toSnapshot(): EntityStorageSnapshot {
     val newEntities = entitiesByType.toImmutable()
     val newRefs = refs.toImmutable()
     val newIndexes = indexes.toImmutable()
-    return WorkspaceEntityStorageImpl(newEntities, newRefs, newIndexes)
+    return EntityStorageSnapshotImpl(newEntities, newRefs, newIndexes)
   }
 
   override fun isEmpty(): Boolean = this.changeLog.changeLog.isEmpty()
@@ -496,13 +498,13 @@ internal class MutableEntityStorageImpl(
     private val LOG = logger<MutableEntityStorageImpl>()
 
     fun create(): MutableEntityStorageImpl {
-      return from(WorkspaceEntityStorageImpl.EMPTY)
+      return from(EntityStorageSnapshotImpl.EMPTY)
     }
 
     fun from(storage: EntityStorage): MutableEntityStorageImpl {
       storage as AbstractEntityStorage
       val newBuilder = when (storage) {
-        is WorkspaceEntityStorageImpl -> {
+        is EntityStorageSnapshotImpl -> {
           val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType)
           val copiedRefs = MutableRefsTable.from(storage.refs)
           val copiedIndex = storage.indexes.toMutable()
@@ -650,7 +652,7 @@ internal sealed class AbstractEntityStorage : EntityStorage {
       }
       catch (e: Throwable) {
         brokenConsistency = true
-        val storage = if (this is MutableEntityStorage) this.toStorage() as AbstractEntityStorage else this
+        val storage = if (this is MutableEntityStorage) this.toSnapshot() as AbstractEntityStorage else this
         val report = { reportConsistencyIssue(message, e, sourceFilter, left, right, storage) }
         if (ConsistencyCheckingMode.current == ConsistencyCheckingMode.ASYNCHRONOUS) {
           consistencyChecker.execute(report)

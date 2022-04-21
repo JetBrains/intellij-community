@@ -23,7 +23,7 @@ class ExtensionTest {
         this.x = "123"
       }
     })
-    val child: AttachedEntity = builder.toStorage().entities(MainEntity::class.java).single().child!!
+    val child: AttachedEntity = builder.toSnapshot().entities(MainEntity::class.java).single().child!!
     assertEquals("xyz", child.data)
 
     assertTrue(builder.entities(MainEntity::class.java).toList().isNotEmpty())
@@ -58,7 +58,7 @@ class ExtensionTest {
         data = "xyz"
       }
     })
-    val child: AttachedEntity = builder.toStorage().entities(MainEntity::class.java).single().child!!
+    val child: AttachedEntity = builder.toSnapshot().entities(MainEntity::class.java).single().child!!
     assertEquals("xyz", child.data)
 
     assertTrue(builder.entities(MainEntity::class.java).toList().isNotEmpty())

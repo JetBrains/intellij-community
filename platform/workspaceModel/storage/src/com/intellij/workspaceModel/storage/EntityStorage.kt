@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
+import com.intellij.workspaceModel.storage.impl.EntityStorageSnapshotImpl
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -181,9 +182,6 @@ interface PersistentEntityId<out E : WorkspaceEntityWithPersistentId> {
   val persistentId: PersistentEntityId<WorkspaceEntityWithPersistentId>
 }
 
-/**
- * Read-only interface to a storage. Use [MutableEntityStorage] to modify it.
- */
 interface EntityStorage {
   fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E>
   fun <E : WorkspaceEntity> entitiesAmount(entityClass: Class<E>): Int
@@ -202,6 +200,16 @@ interface EntityStorage {
   fun getVirtualFileUrlIndex(): VirtualFileUrlIndex
   fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>
   fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E>
+  fun toSnapshot(): EntityStorageSnapshot
+}
+
+/**
+ * Read-only interface to a storage. Use [MutableEntityStorage] to modify it.
+ */
+interface EntityStorageSnapshot : EntityStorage {
+  companion object {
+    fun empty(): EntityStorageSnapshot = EntityStorageSnapshotImpl.EMPTY
+  }
 }
 
 /**
@@ -223,7 +231,6 @@ interface MutableEntityStorage : EntityStorage {
    */
   fun collectChanges(original: EntityStorage): Map<Class<*>, List<EntityChange<*>>>
   fun addDiff(diff: MutableEntityStorage)
-  fun toStorage(): EntityStorage
 
   /**
    * Please see [EntityStorage.getExternalMapping] for naming conventions

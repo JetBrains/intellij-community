@@ -62,7 +62,7 @@ class PropertyTest {
 private class AddDiff(private val storage: MutableEntityStorage) : ImperativeCommand {
   override fun performCommand(env: ImperativeCommand.Environment) {
     env.logMessage("Trying to perform addDiff")
-    val backup = storage.toStorage()
+    val backup = storage.toSnapshot()
     val another = createBuilderFrom(backup)
     env.logMessage("Modify diff:")
     env.executeCommands(getEntityManipulation(another))
@@ -92,7 +92,7 @@ private class AddDiff(private val storage: MutableEntityStorage) : ImperativeCom
 private class ReplaceBySource(private val storage: MutableEntityStorage) : ImperativeCommand {
   override fun performCommand(env: ImperativeCommand.Environment) {
     env.logMessage("Trying to perform replaceBySource")
-    val backup = storage.toStorage()
+    val backup = storage.toSnapshot()
     val another = createBuilderFrom(backup)
     env.logMessage("Modify original storage:")
     env.executeCommands(getEntityManipulation(another))

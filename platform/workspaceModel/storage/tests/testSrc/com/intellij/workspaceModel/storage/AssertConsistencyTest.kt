@@ -11,13 +11,13 @@ class AssertConsistencyTest {
   fun `check should pass`() {
     val builder = createEmptyBuilder()
     builder.addAssertConsistencyEntity(true)
-    (builder.toStorage() as AbstractEntityStorage).assertConsistency()
+    (builder.toSnapshot() as AbstractEntityStorage).assertConsistency()
   }
 
   @Test
   fun `check should fail`() {
     val builder = createEmptyBuilder()
     builder.addAssertConsistencyEntity(false)
-    (builder.toStorage() as AbstractEntityStorage).assertConsistency()
+    (builder.toSnapshot() as AbstractEntityStorage).assertConsistency()
   }
 }
