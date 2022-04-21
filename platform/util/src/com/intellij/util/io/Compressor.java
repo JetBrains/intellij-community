@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -34,7 +34,7 @@ public abstract class Compressor implements Closeable {
     public enum Compression { GZIP, BZIP2, NONE }
 
     public Tar(@NotNull File file, @NotNull Compression compression) throws IOException {
-      this(new FileOutputStream(file), compression);
+      this(Files.newOutputStream(file.toPath()), compression);
     }
 
     //<editor-fold desc="Implementation">
@@ -60,19 +60,14 @@ public abstract class Compressor implements Closeable {
     }
 
     @Override
-    protected void writeFileEntry(String name, InputStream source, long length, long timestamp) throws IOException {
-      writeFileEntry(name, source, length, timestamp, -1, null);
-    }
-
-    @Override
-    protected void writeFileEntry(String name, InputStream source, long length, long timestamp, int unixMode, String symbolicLinkTarget) throws IOException {
+    protected void writeFileEntry(String name, InputStream source, long length, long timestamp, int mode, @Nullable String symlinkTarget) throws IOException {
       TarArchiveEntry e;
-      if (symbolicLinkTarget == null) {
+      if (symlinkTarget == null) {
         e = new TarArchiveEntry(name);
       }
       else {
         e = new TarArchiveEntry(name, TarConstants.LF_SYMLINK);
-        e.setLinkName(symbolicLinkTarget);
+        e.setLinkName(symlinkTarget);
         length = 0;
       }
       if (length < 0) {
@@ -88,8 +83,8 @@ public abstract class Compressor implements Closeable {
       }
       e.setSize(length);
       e.setModTime(timestamp);
-      if (unixMode > 0) {
-        e.setMode(unixMode);
+      if (mode != 0) {
+        e.setMode(mode);
       }
       myStream.putArchiveEntry(e);
       if (length > 0) {
@@ -105,9 +100,12 @@ public abstract class Compressor implements Closeable {
     //</editor-fold>
   }
 
+  /**
+   * ZIP extensions (file modes, symlinks, etc.) are not supported.
+   */
   public static class Zip extends Compressor {
-    public Zip(@NotNull File file) throws FileNotFoundException {
-      this(new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(file))));
+    public Zip(@NotNull File file) throws IOException {
+      this(new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(file.toPath()))));
     }
 
     public Zip(@NotNull OutputStream stream) {
@@ -138,7 +136,7 @@ public abstract class Compressor implements Closeable {
     }
 
     @Override
-    protected void writeFileEntry(String name, InputStream source, long length, long timestamp) throws IOException {
+    protected void writeFileEntry(String name, InputStream source, long length, long timestamp, int mode, @Nullable String symlinkTarget) throws IOException {
       ZipEntry e = new ZipEntry(name);
       if (length == 0) {
         e.setMethod(ZipEntry.STORED);
@@ -153,15 +151,6 @@ public abstract class Compressor implements Closeable {
       myStream.closeEntry();
     }
 
-    /**
-     * @param unixMode           not supported by {@link ZipEntry} implementation
-     * @param symbolicLinkTarget not supported by {@link ZipEntry} implementation
-     */
-    @Override
-    protected void writeFileEntry(String name, InputStream source, long length, long timestamp, int unixMode, String symbolicLinkTarget) throws IOException {
-      writeFileEntry(name, source, length, timestamp);
-    }
-
     @Override
     public void close() throws IOException {
       myStream.close();
@@ -171,7 +160,7 @@ public abstract class Compressor implements Closeable {
 
   public static class Jar extends Zip {
     public Jar(@NotNull File file) throws IOException {
-      super(new JarOutputStream(new BufferedOutputStream(new FileOutputStream(file))));
+      super(new JarOutputStream(new BufferedOutputStream(Files.newOutputStream(file.toPath()))));
     }
 
     public final void addManifest(@NotNull Manifest manifest) throws IOException {
@@ -201,45 +190,11 @@ public abstract class Compressor implements Closeable {
     addFile(entryName, file, -1);
   }
 
-  public final void addFile(@NotNull String entryName, @NotNull Path file, long timestampInMillis) throws IOException {
+  public final void addFile(@NotNull String entryName, @NotNull Path file, long timestamp) throws IOException {
     entryName = entryName(entryName);
     if (accept(entryName, file)) {
-      try (InputStream source = Files.newInputStream(file)) {
-        BasicFileAttributes attributes = Files.readAttributes(file, BasicFileAttributes.class);
-        long timestamp = timestampInMillis == -1 ? attributes.lastModifiedTime().toMillis() : timestampInMillis;
-        String symbolicLinkTarget = Files.isSymbolicLink(file) ? Files.readSymbolicLink(file).toString() : null;
-        writeFileEntry(entryName, source, attributes.size(), timestamp, getMode(file), symbolicLinkTarget);
-      }
+      addFile(file, Files.readAttributes(file, BasicFileAttributes.class), entryName, timestamp);
     }
-  }
-
-  @SuppressWarnings("OctalInteger")
-  private static int getMode(Path outputFile) throws IOException {
-    int mode = 0;
-    if (SystemInfo.isWindows) {
-      DosFileAttributeView attrs = Files.getFileAttributeView(outputFile, DosFileAttributeView.class);
-      if (attrs != null) {
-        DosFileAttributes dosAttrs = attrs.readAttributes();
-        if (dosAttrs.isReadOnly()) mode = set(mode, Decompressor.Entry.DOS_READ_ONLY, true);
-        if (dosAttrs.isHidden()) mode = set(mode, Decompressor.Entry.DOS_HIDDEN, true);
-      }
-    }
-    else {
-      PosixFileAttributeView attrs = Files.getFileAttributeView(outputFile, PosixFileAttributeView.class);
-      if (attrs != null) {
-        Set<PosixFilePermission> permissions = attrs.readAttributes().permissions();
-        if (permissions.contains(PosixFilePermission.OWNER_READ)) mode = set(mode, 0400, true);
-        if (permissions.contains(PosixFilePermission.OWNER_WRITE)) mode = set(mode, 0200, true);
-        if (permissions.contains(PosixFilePermission.OWNER_EXECUTE)) mode = set(mode, 0100, true);
-        if (permissions.contains(PosixFilePermission.GROUP_READ)) mode = set(mode, 040, true);
-        if (permissions.contains(PosixFilePermission.GROUP_WRITE)) mode = set(mode, 020, true);
-        if (permissions.contains(PosixFilePermission.GROUP_EXECUTE)) mode = set(mode, 010, true);
-        if (permissions.contains(PosixFilePermission.OTHERS_READ)) mode = set(mode, 04, true);
-        if (permissions.contains(PosixFilePermission.OTHERS_WRITE)) mode = set(mode, 02, true);
-        if (permissions.contains(PosixFilePermission.OTHERS_EXECUTE)) mode = set(mode, 01, true);
-      }
-    }
-    return mode;
   }
 
   public final void addFile(@NotNull String entryName, byte @NotNull [] content) throws IOException {
@@ -249,7 +204,7 @@ public abstract class Compressor implements Closeable {
   public final void addFile(@NotNull String entryName, byte @NotNull [] content, long timestamp) throws IOException {
     entryName = entryName(entryName);
     if (accept(entryName, null)) {
-      writeFileEntry(entryName, new ByteArrayInputStream(content), content.length, timestamp(timestamp));
+      writeFileEntry(entryName, new ByteArrayInputStream(content), content.length, timestamp(timestamp), 0, null);
     }
   }
 
@@ -260,7 +215,7 @@ public abstract class Compressor implements Closeable {
   public final void addFile(@NotNull String entryName, @NotNull InputStream content, long timestamp) throws IOException {
     entryName = entryName(entryName);
     if (accept(entryName, null)) {
-      writeFileEntry(entryName, content, -1, timestamp(timestamp));
+      writeFileEntry(entryName, content, -1, timestamp(timestamp), 0, null);
     }
   }
 
@@ -280,7 +235,7 @@ public abstract class Compressor implements Closeable {
   }
 
   public final void addDirectory(@NotNull Path directory) throws IOException {
-    addRecursively("", directory, -1);
+    addDirectory("", directory);
   }
 
   public final void addDirectory(@NotNull String prefix, @NotNull File directory) throws IOException {
@@ -313,6 +268,43 @@ public abstract class Compressor implements Closeable {
     return myFilter == null || myFilter.test(entryName, file);
   }
 
+  private void addFile(Path file, BasicFileAttributes attrs, String name, long explicitTimestamp) throws IOException {
+    try (InputStream source = Files.newInputStream(file)) {
+      long timestamp = explicitTimestamp == -1 ? attrs.lastModifiedTime().toMillis() : explicitTimestamp;
+      String symlinkTarget = attrs.isSymbolicLink() ? Files.readSymbolicLink(file).toString() : null;
+      writeFileEntry(name, source, attrs.size(), timestamp, mode(file), symlinkTarget);
+    }
+  }
+
+  @SuppressWarnings("OctalInteger")
+  private static int mode(Path file) throws IOException {
+    int mode = 0;
+    if (SystemInfo.isWindows) {
+      DosFileAttributeView attrs = Files.getFileAttributeView(file, DosFileAttributeView.class);
+      if (attrs != null) {
+        DosFileAttributes dosAttrs = attrs.readAttributes();
+        if (dosAttrs.isReadOnly()) mode = set(mode, Decompressor.Entry.DOS_READ_ONLY, true);
+        if (dosAttrs.isHidden()) mode = set(mode, Decompressor.Entry.DOS_HIDDEN, true);
+      }
+    }
+    else {
+      PosixFileAttributeView attrs = Files.getFileAttributeView(file, PosixFileAttributeView.class);
+      if (attrs != null) {
+        Set<PosixFilePermission> permissions = attrs.readAttributes().permissions();
+        if (permissions.contains(PosixFilePermission.OWNER_READ)) mode = set(mode, 0400, true);
+        if (permissions.contains(PosixFilePermission.OWNER_WRITE)) mode = set(mode, 0200, true);
+        if (permissions.contains(PosixFilePermission.OWNER_EXECUTE)) mode = set(mode, 0100, true);
+        if (permissions.contains(PosixFilePermission.GROUP_READ)) mode = set(mode, 040, true);
+        if (permissions.contains(PosixFilePermission.GROUP_WRITE)) mode = set(mode, 020, true);
+        if (permissions.contains(PosixFilePermission.GROUP_EXECUTE)) mode = set(mode, 010, true);
+        if (permissions.contains(PosixFilePermission.OTHERS_READ)) mode = set(mode, 04, true);
+        if (permissions.contains(PosixFilePermission.OTHERS_WRITE)) mode = set(mode, 02, true);
+        if (permissions.contains(PosixFilePermission.OTHERS_EXECUTE)) mode = set(mode, 01, true);
+      }
+    }
+    return mode;
+  }
+
   private void addRecursively(String prefix, Path root, long timestampMs) throws IOException {
     Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
       @Override
@@ -334,11 +326,7 @@ public abstract class Compressor implements Closeable {
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
         String name = entryName(file);
         if (accept(name, file)) {
-          try (InputStream source = Files.newInputStream(file)) {
-            long timestamp = timestampMs == -1 ? attrs.lastModifiedTime().toMillis() : timestampMs;
-            String symbolicLinkTarget = Files.isSymbolicLink(file) ? Files.readSymbolicLink(file).toString() : null;
-            writeFileEntry(name, source, attrs.size(), timestamp, getMode(file), symbolicLinkTarget);
-          }
+          addFile(file, attrs, name, timestampMs);
         }
         return FileVisitResult.CONTINUE;
       }
@@ -351,7 +339,6 @@ public abstract class Compressor implements Closeable {
   }
 
   protected abstract void writeDirectoryEntry(String name, long timestamp) throws IOException;
-  protected abstract void writeFileEntry(String name, InputStream source, long length, long timestamp) throws IOException;
-  protected abstract void writeFileEntry(String name, InputStream source, long length, long timestamp, int unixMode, @Nullable String symbolicLinkTarget) throws IOException;
+  protected abstract void writeFileEntry(String name, InputStream source, long length, long timestamp, int mode, @Nullable String symlinkTarget) throws IOException;
   //</editor-fold>
 }
