@@ -42,6 +42,7 @@ import com.intellij.util.ui.IoErrorText;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -368,6 +369,17 @@ public final class ConfigImportHelper {
   /** Returns {@code true} when the IDE is launched for the first time (i.e. there was no config directory). */
   public static boolean isFirstSession() {
     return Boolean.getBoolean(FIRST_SESSION_KEY);
+  }
+
+  @TestOnly
+  public static void executeAsFirstSession(@NotNull Runnable task) {
+    System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
+    try {
+      task.run();
+    }
+    finally {
+      System.clearProperty(FIRST_SESSION_KEY);
+    }
   }
 
   /**

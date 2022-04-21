@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -199,7 +199,9 @@ final class UpdateCheckerService {
       // ensures that the "what's new" page is shown _only_ for users who have updated from a previous version
       // (to detect updates, the method relies on imported settings; users starting from scratch are out of luck)
       properties.setValue(WHATS_NEW_SHOWN_FOR_PROPERTY, current.getBaselineVersion(), 0);
-      return false;
+      if (ConfigImportHelper.isFirstSession()) {
+        return false;
+      }
     }
 
     if (!majorEap && lastShownFor < current.getBaselineVersion() && UpdateSettings.getInstance().isShowWhatsNewEditor()) {

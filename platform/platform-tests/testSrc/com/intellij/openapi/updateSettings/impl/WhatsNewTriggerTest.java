@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -51,7 +52,9 @@ public class WhatsNewTriggerTest extends BareTestFixtureTestCase {
   @Test
   public void newReleaseInstallation() {
     BuildNumber release = fromString("212.4746.92");
-    assertFalse(UpdateCheckerService.shouldShowWhatsNew(release, false));  // release 1st launch
+    ConfigImportHelper.executeAsFirstSession(() -> {
+      assertFalse(UpdateCheckerService.shouldShowWhatsNew(release, false));  // release 1st launch
+    });
     assertFalse(UpdateCheckerService.shouldShowWhatsNew(release, false));  // release 2nd launch
   }
 
