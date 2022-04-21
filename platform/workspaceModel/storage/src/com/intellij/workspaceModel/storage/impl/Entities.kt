@@ -253,7 +253,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
     }
   }
 
-  open fun getEntityClass(): Class<T> = ClassConversion.modifiableEntityToEntity(this::class).java
+  abstract fun getEntityClass(): Class<T>
 
   open fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
     throw NotImplementedError()

@@ -9,6 +9,7 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.SerializationRoundTripChecker
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity2
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.Assert.assertTrue
@@ -58,9 +59,12 @@ class ImlSerializationTest {
   @Test
   fun externalIndexIsNotSerialized() {
     val builder = WorkspaceEntityStorageBuilder.create()
-    val entity = builder.addEntity(ModifiableSampleEntity::class.java, Source) {
+    val entity = SampleEntity2 {
+      this.entitySource = Source
       this.data = "Test"
+      this.boolData = true
     }
+    builder.addEntity(entity)
     val index = builder.getMutableExternalMapping<String>("test.my.index")
     index.addMapping(entity, "Hello")
 
@@ -99,20 +103,6 @@ class ImlSerializationTest {
     @ClassRule
     val appRule = ApplicationRule()
   }
-}
-
-@Suppress("unused")
-internal class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
-  lateinit var data: String
-  override fun createEntity(snapshot: WorkspaceEntityStorage): SampleEntity {
-    return SampleEntity(data).also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class SampleEntity(val data: String) : WorkspaceEntityBase()
-
-internal class ModifiableSampleEntity : ModifiableWorkspaceEntityBase<SampleEntity>() {
-  var data: String by EntityDataDelegation()
 }
 
 internal object Source : EntitySource

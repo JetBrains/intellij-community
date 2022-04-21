@@ -10,6 +10,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactOutputPack
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactOutputPackagingElementEntityImpl
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactPropertiesEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactRootElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactsOrderEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.CustomPackagingElementEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.CustomSourceRootPropertiesEntity
@@ -252,6 +253,7 @@ fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ArtifactExternalSystemIdE
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ArtifactOutputPackagingElementEntity, modification: ArtifactOutputPackagingElementEntity.Builder.() -> Unit) = modifyEntity(ArtifactOutputPackagingElementEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ArtifactPropertiesEntity, modification: ArtifactPropertiesEntity.Builder.() -> Unit) = modifyEntity(ArtifactPropertiesEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ArtifactRootElementEntity, modification: ArtifactRootElementEntity.Builder.() -> Unit) = modifyEntity(ArtifactRootElementEntity.Builder::class.java, entity, modification)
+fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ArtifactsOrderEntity, modification: ArtifactsOrderEntity.Builder.() -> Unit) = modifyEntity(ArtifactsOrderEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: ContentRootEntity, modification: ContentRootEntity.Builder.() -> Unit) = modifyEntity(ContentRootEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: CustomPackagingElementEntity, modification: CustomPackagingElementEntity.Builder.() -> Unit) = modifyEntity(CustomPackagingElementEntity.Builder::class.java, entity, modification)
 fun WorkspaceEntityStorageBuilder.modifyEntity(entity: CustomSourceRootPropertiesEntity, modification: CustomSourceRootPropertiesEntity.Builder.() -> Unit) = modifyEntity(CustomSourceRootPropertiesEntity.Builder::class.java, entity, modification)

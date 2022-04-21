@@ -209,10 +209,6 @@ interface WorkspaceEntityStorage {
 interface WorkspaceEntityStorageBuilder : WorkspaceEntityStorage {
   fun isEmpty(): Boolean
   fun <T : WorkspaceEntity> addEntity(entity: T)
-  @Deprecated("This method was deprecated no need to pass an `EntitySource` method parameter any more")
-  fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> addEntity(clazz: Class<M>,
-                                                                        source: EntitySource,
-                                                                        initializer: M.() -> Unit): T
 
   fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
 

@@ -189,58 +189,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
   }
 
-  override fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> addEntity(clazz: Class<M>,
-                                                                                 source: EntitySource,
-                                                                                 initializer: M.() -> Unit): T {
-    try {
-      lockWrite()
-
-      // Extract entity classes
-      val unmodifiableEntityClass = ClassConversion.modifiableEntityToEntity(clazz.kotlin).java
-      val entityDataClass = ClassConversion.entityToEntityData(unmodifiableEntityClass.kotlin)
-      val unmodifiableEntityClassId = unmodifiableEntityClass.toClassId()
-
-      // Construct entity data
-      val pEntityData = entityDataClass.java.getDeclaredConstructor().newInstance()
-      pEntityData.entitySource = source
-
-      // Add entity data to the structure
-      entitiesByType.add(pEntityData, unmodifiableEntityClassId)
-
-      // Wrap it with modifiable and execute initialization code
-      @Suppress("UNCHECKED_CAST")
-      val modifiableEntity = pEntityData.wrapAsModifiable(this) as M // create modifiable after adding entity data to set
-      (modifiableEntity as ModifiableWorkspaceEntityBase<*>).allowModifications {
-        modifiableEntity.initializer()
-      }
-
-      // Check for persistent id uniqueness
-      assertUniquePersistentId(pEntityData)
-
-      // Add the change to changelog
-      createAddEvent(pEntityData)
-
-      // Update indexes
-      indexes.entityAdded(pEntityData)
-
-      if (LOG.isTraceEnabled) {
-        LOG.trace(
-          "New entity added: $clazz-${pEntityData.id}. PersistentId: ${pEntityData.persistentId()}. Store: $this.\n${
-            currentStackTrace(10)
-          }"
-        )
-      }
-      else {
-        LOG.debug("New entity added: $clazz-${pEntityData.id}. PersistentId: ${pEntityData.persistentId()}.")
-      }
-
-      return pEntityData.createEntity(this)
-    }
-    finally {
-      unlockWrite()
-    }
-  }
-
   private fun <T : WorkspaceEntity> assertUniquePersistentId(pEntityData: WorkspaceEntityData<T>) {
     pEntityData.persistentId()?.let { persistentId ->
       val ids = indexes.persistentIdIndex.getIdsByEntry(persistentId)

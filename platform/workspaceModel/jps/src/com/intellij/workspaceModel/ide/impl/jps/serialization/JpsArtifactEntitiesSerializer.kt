@@ -11,15 +11,12 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
-import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.impl.references.MutableOneToOneChild
-import com.intellij.workspaceModel.storage.impl.references.OneToOneChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -28,6 +25,7 @@ import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.artifact.ArtifactPropertiesState
 import org.jetbrains.jps.model.serialization.artifact.ArtifactState
 import org.jetbrains.jps.util.JpsPathUtil
+import org.jetbrains.workspaceModel.modifyEntity
 
 internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl: String) : JpsDirectoryEntitiesSerializerFactory<ArtifactEntity> {
   override val componentName: String
@@ -137,26 +135,6 @@ internal class JpsArtifactsFileSerializer(fileUrl: VirtualFileUrl, entitySource:
   }
 }
 
-/**
- * This entity stores order of artifacts in ipr file. This is needed to ensure that artifact tags are saved in the same order to avoid
- * unnecessary modifications of ipr file.
- */
-@Suppress("unused")
-internal class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
-  lateinit var orderOfArtifacts: List<String>
-  override fun createEntity(snapshot: WorkspaceEntityStorage): ArtifactsOrderEntity {
-    return ArtifactsOrderEntity(orderOfArtifacts).also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class ArtifactsOrderEntity(
-  val orderOfArtifacts: List<String>
-) : WorkspaceEntityBase()
-
-internal class ModifiableArtifactsOrderEntity : ModifiableWorkspaceEntityBase<ArtifactsOrderEntity>()  {
-  var orderOfArtifacts: List<String> by EntityDataDelegation()
-}
-
 internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualFileUrl,
                                                   override val internalEntitySource: JpsFileEntitySource,
                                                   private val preserveOrder: Boolean,
@@ -198,14 +176,15 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     if (preserveOrder) {
       val entity = builder.entities(ArtifactsOrderEntity::class.java).firstOrNull()
       if (entity != null) {
-        builder.modifyEntity(ModifiableArtifactsOrderEntity::class.java, entity) {
+        builder.modifyEntity(entity) {
           orderOfArtifacts = orderOfItems
         }
       }
       else {
-        builder.addEntity(ModifiableArtifactsOrderEntity::class.java, internalEntitySource) {
-          orderOfArtifacts = orderOfItems
-        }
+        builder.addEntity(ArtifactsOrderEntity {
+          this.entitySource = internalEntitySource
+          this.orderOfArtifacts = orderOfItems
+        })
       }
     }
 

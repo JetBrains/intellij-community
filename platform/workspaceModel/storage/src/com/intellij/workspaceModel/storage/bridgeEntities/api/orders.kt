@@ -9,7 +9,7 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 
 
 /**
@@ -110,3 +110,23 @@ interface LibraryExternalSystemIdEntity: WorkspaceEntity {
 
 val LibraryEntity.externalSystemId: @Child LibraryExternalSystemIdEntity?
   get() = referrersx(LibraryExternalSystemIdEntity::library).singleOrNull()
+
+/**
+ * This entity stores order of artifacts in ipr file. This is needed to ensure that artifact tags are saved in the same order to avoid
+ * unnecessary modifications of ipr file.
+ */
+interface ArtifactsOrderEntity : WorkspaceEntity {
+  val orderOfArtifacts: List<String>
+  //region generated code
+  //@formatter:off
+  @GeneratedCodeApiVersion(0)
+  interface Builder: ArtifactsOrderEntity, ModifiableWorkspaceEntity<ArtifactsOrderEntity>, ObjBuilder<ArtifactsOrderEntity> {
+      override var orderOfArtifacts: List<String>
+      override var entitySource: EntitySource
+  }
+  
+  companion object: Type<ArtifactsOrderEntity, Builder>()
+  //@formatter:on
+  //endregion
+
+}
