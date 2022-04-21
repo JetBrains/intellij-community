@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
@@ -137,7 +138,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void doBuildArtifacts(Path osAndArchSpecificDistPath, JvmArchitecture arch) {
     String baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-    boolean publishArchive = buildContext.proprietaryBuildTools.macHostProperties?.host == null
+    boolean publishArchive = buildContext.proprietaryBuildTools.macHostProperties?.host == null && !SystemInfoRt.isMac
 
     List<String> binariesToSign = customizer.getBinariesToSign(buildContext, arch)
     if (!binariesToSign.isEmpty()) {

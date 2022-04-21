@@ -113,15 +113,9 @@ if [ "$USERNAME" != "" ] && [ "$PASSWORD" != "" ]; then
   # Make sure *.p12 is imported into local KeyChain
   security unlock-keychain -p "$PASSWORD" "/Users/$USERNAME/Library/Keychains/login.keychain"
 fi
-set -x
+set -ex
 
-log "Signing ..."
-retry "Signing" 3 ./sign.sh "$APPLICATION_PATH" "$CODESIGN_STRING" "$JETSIGN_CLIENT" "$SIT_FILE"
-
-set -e
-
-if [ "$NOTARIZE" = "yes" ]; then
-  log "Notarizing..."
+function notarize() {
   set +x
   if [[ -f "$HOME/.notarize_token" ]]; then
     source "$HOME/.notarize_token"
@@ -145,9 +139,20 @@ if [ "$NOTARIZE" = "yes" ]; then
   log "Stapling..."
   # only unzipped application can be stapled
   retry "Stapling" 3 xcrun stapler staple "$APPLICATION_PATH"
+}
+
+if [ "$JETSIGN_CLIENT" != "null" ]; then
+  log "Signing ..."
+  retry "Signing" 3 ./sign.sh "$APPLICATION_PATH" "$CODESIGN_STRING" "$JETSIGN_CLIENT" "$SIT_FILE"
+  if [ "$NOTARIZE" = "yes" ]; then
+    log "Notarizing..."
+    notarize
+  else
+    log "Notarization disabled"
+    log "Stapling disabled"
+  fi
 else
-  log "Notarization disabled"
-  log "Stapling disabled"
+  log "Signing disabled"
 fi
 
 if [ "$COMPRESS_INPUT" != "false" ]; then

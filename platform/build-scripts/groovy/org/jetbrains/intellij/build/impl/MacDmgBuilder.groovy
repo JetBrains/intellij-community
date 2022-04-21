@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
@@ -26,7 +27,7 @@ import java.util.function.Consumer
 final class MacDmgBuilder {
   static void signAndBuildDmg(BuildContext context,
                               MacDistributionCustomizer customizer,
-                              MacHostProperties macHostProperties,
+                              @Nullable MacHostProperties macHostProperties,
                               @Nullable Path macZip,
                               @Nullable Path additionalDir,
                               @Nullable Path jreArchivePath,
@@ -57,16 +58,16 @@ final class MacDmgBuilder {
     SignKt.prepareMacZip(macZip, sitFile, productJson, additionalDir, zipRoot)
 
     boolean sign = !context.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP)
-    if ((!sign || macHostProperties.host == null) && isMac()) {
+    if ((!sign || macHostProperties?.host == null) && SystemInfoRt.isMac) {
       buildLocally(sitFile, targetName, jreArchivePath, sign, notarize, customizer, context)
     }
     else if (!sign) {
       context.messages.info("Build step '${BuildOptions.MAC_SIGN_STEP}' is disabled")
     }
-    else if (macHostProperties.host == null ||
-             macHostProperties.userName == null ||
-             macHostProperties.password == null ||
-             macHostProperties.codesignString == null) {
+    else if (macHostProperties?.host == null ||
+             macHostProperties?.userName == null ||
+             macHostProperties?.password == null ||
+             macHostProperties?.codesignString == null) {
       context.messages.error("Build step '${BuildOptions.MAC_SIGN_STEP}' is enabled, but machost properties were not provided. " +
                              "Probably you want to skip BuildOptions.MAC_SIGN_STEP step")
     }
@@ -80,7 +81,7 @@ final class MacDmgBuilder {
 
   private static void buildAndSignWithMacBuilderHost(Path sitFile,
                                                      Path jreArchivePath,
-                                                     MacHostProperties macHostProperties, boolean notarize,
+                                                     @NotNull MacHostProperties macHostProperties, boolean notarize,
                                                      MacDistributionCustomizer customizer,
                                                      BuildContext context) {
     Path dmgImage = context.options.buildStepsToSkip.contains(BuildOptions.MAC_DMG_STEP)
@@ -191,9 +192,5 @@ final class MacDmgBuilder {
     Path dmgFile = artifactDir.resolve("${targetFileName}.dmg")
     ProcessKt.runProcess(List.of("sh", "makedmg.sh", targetFileName, context.fullBuildNumber, dmgFile.toString()), tempDir)
     context.notifyArtifactBuilt(dmgFile)
-  }
-
-  static boolean isMac() {
-    return (System.properties.get("os.name") as String).toLowerCase().startsWith("mac")
   }
 }
