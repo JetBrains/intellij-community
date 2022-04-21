@@ -13,6 +13,7 @@ import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.dialog.DialogUtils
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -56,6 +57,7 @@ class GithubShareDialog(project: Project,
     title = message("share.on.github")
     setOKButtonText(message("share.button"))
     init()
+    rootPane.preferredSize = JBUI.size(500, 250)
     DialogUtils.invokeLaterAfterDialogShown(this) { switchAccount(getAccount()) }
   }
 
