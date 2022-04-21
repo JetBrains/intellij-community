@@ -67,6 +67,11 @@ public final class FTManager {
     defaultTemplates = List.copyOf(original.defaultTemplates);
   }
 
+  @TestOnly
+  public FTManager(@NotNull @NonNls String name, @NotNull Path defaultTemplatesDirName) {
+    this(name, defaultTemplatesDirName, Collections.emptyList(), false);
+  }
+
   public @NotNull String getName() {
     return name;
   }
@@ -197,7 +202,7 @@ public final class FTManager {
     }
   }
 
-  void loadCustomizedContent() {
+  public void loadCustomizedContent() {
     List<Path> templateWithDefaultExtension = new ArrayList<>();
     Set<String> processedNames = new HashSet<>();
     List<FileTemplateBase> children = new ArrayList<>();
@@ -406,7 +411,7 @@ public final class FTManager {
     return name + " file template manager";
   }
 
-  static @NotNull String encodeFileName(@NotNull String templateName, @NotNull String extension) {
+  public static @NotNull String encodeFileName(@NotNull String templateName, @NotNull String extension) {
     String nameExtDelimiter = extension.contains(".") ? ENCODED_NAME_EXT_DELIMITER : ".";
     return templateName + nameExtDelimiter + extension;
   }
