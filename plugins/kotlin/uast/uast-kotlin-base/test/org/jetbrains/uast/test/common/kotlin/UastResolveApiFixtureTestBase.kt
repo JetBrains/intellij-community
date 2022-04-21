@@ -2,19 +2,26 @@
 package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
+import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUES
 import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUE_OF
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertContainsElements
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertDoesntContain
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
+import org.jetbrains.uast.kotlin.internal.TypedResolveResult
 import org.jetbrains.uast.test.env.findElementByText
 import org.jetbrains.uast.test.env.findElementByTextFromPsi
 import org.jetbrains.uast.test.env.findUElementByTextFromPsi
@@ -228,6 +235,67 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         )
         assertDoesntContain(resolvedDeclarationsStrings, "fun foo(string: String) = TODO()")
         TestCase.assertEquals(PsiType.INT, functionCall.getExpressionType())
+    }
+
+    fun checkResolveToFacade(myFixture: JavaCodeInsightTestFixture) {
+
+        myFixture.project.replaceService(
+            KotlinAsJavaSupport::class.java,
+            object : MockKotlinAsJavaSupport(getInstance(myFixture.project)) {
+                override fun getFacadeClasses(facadeFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> =
+                    // emulating facade classes from different modules
+                    super.getFacadeClasses(facadeFqName, scope).let { it + it }
+            },
+            myFixture.testRootDisposable
+        )
+
+        myFixture.addFileToProject(
+            "pkg/MyFacade.java", """
+                package pkg;
+                
+                public class MyFacade {
+                    public void bar(){}
+                }
+        """.trimIndent()
+        )
+
+
+        for (i in 1..3) {
+            myFixture.addFileToProject(
+                "pkg/mffacade$i.kt", """
+                    @file:JvmMultifileClass
+                    @file:JvmName("MyFacade")
+                    package pkg;
+                    
+                    fun foo$i(vararg args: Int) = TODO()    
+                """.trimIndent()
+            )
+        }
+
+        val file = myFixture.configureByText(
+            "s.kt", """
+                import pkg.*
+                
+                fun main(args: Array<String>) {
+                    foo1(1,2,3)
+                    foo2(1,2,3)
+                    foo3(1,2,3)
+                }
+            """
+        )
+
+        val main = file.toUElement()!!.findElementByTextFromPsi<UElement>("main").getContainingUMethod()!!
+        val functionCalls = (1..3).map { i ->
+            main.findElementByText<UElement>("foo$i").uastParent as KotlinUFunctionCallExpression
+        }
+
+        UsefulTestCase.assertSameElements(
+            functionCalls
+                .map { it.resolve()?.text ?: "<null>" },
+            "fun foo1(vararg args: Int) = TODO()",
+            "fun foo2(vararg args: Int) = TODO()",
+            "fun foo3(vararg args: Int) = TODO()"
+        )
     }
 
     fun checkMultiConstructorResolve(myFixture: JavaCodeInsightTestFixture, project: Project) {

@@ -39,6 +39,10 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkMultiResolveInClass(myFixture)
     }
 
+    fun testResolveToFacade() {
+        checkResolveToFacade(myFixture)
+    }
+
     fun testMultiConstructorResolve() {
         checkMultiConstructorResolve(myFixture, project)
     }

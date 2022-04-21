@@ -93,6 +93,11 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("MultiResolveInClass", ::checkMultiResolveInClass)
     }
 
+    fun testResolveToFacade() {
+        doCheck("ResolveToFacade", ::checkResolveToFacade)
+    }
+
+
     fun testMultiConstructorResolve() {
         doCheck("MultiConstructorResolve", ::checkMultiConstructorResolve)
     }
