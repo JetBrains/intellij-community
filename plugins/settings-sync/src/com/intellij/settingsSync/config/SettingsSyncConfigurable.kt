@@ -236,11 +236,11 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       val messageBuilder = StringBuilder()
       statusLabel.icon = null
       if (SettingsSyncSettings.getInstance().syncEnabled) {
-        val errorMessage = SettingsSyncStatusTracker.getInstance().getErrorMessage()
-        if (errorMessage == null) {
+        val statusTracker = SettingsSyncStatusTracker.getInstance()
+        if (statusTracker.isSyncSuccessful()) {
           messageBuilder
             .append(message("sync.status.enabled"))
-          if (SettingsSyncStatusTracker.getInstance().isSyncSuccessful()) {
+          if (statusTracker.isSynced()) {
             messageBuilder
               .append(' ')
               .append(message("sync.status.last.sync.message", getReadableSyncTime(), getUserName()))
@@ -249,7 +249,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
         else {
           messageBuilder.append(message("sync.status.failed"))
           statusLabel.icon = AllIcons.General.Error
-          messageBuilder.append(' ').append(errorMessage)
+          messageBuilder.append(' ').append(statusTracker.getErrorMessage())
         }
       }
       else {

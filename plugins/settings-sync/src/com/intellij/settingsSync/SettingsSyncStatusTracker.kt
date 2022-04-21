@@ -33,7 +33,9 @@ internal class SettingsSyncStatusTracker : SettingsSyncEnabledStateListener {
     eventDispatcher.multicaster.syncStatusChanged()
   }
 
-  fun isSyncSuccessful() = lastSyncTime >= 0
+  fun isSyncSuccessful() = errorMessage == null
+
+  fun isSynced() = lastSyncTime >= 0
 
   fun getLastSyncTime() = lastSyncTime
 
