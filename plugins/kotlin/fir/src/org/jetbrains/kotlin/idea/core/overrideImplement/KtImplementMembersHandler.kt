@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
@@ -6,25 +6,25 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler.Companion.getUnimplementedMembers
-import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
-import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactoryFromIntentionActions
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyse
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
 import org.jetbrains.kotlin.analysis.api.tokens.hackyAllowRunningOnEdt
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
+import org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler.Companion.getUnimplementedMembers
+import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
+import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactoryFromIntentionActions
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.util.ImplementationStatus
 
-internal open class KtImplementMembersHandler : KtGenerateMembersHandler() {
+internal open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
     override fun getChooserTitle() = KotlinIdeaCoreBundle.message("implement.members.handler.title")
 
     override fun getNoMembersFoundHint() = KotlinIdeaCoreBundle.message("implement.members.handler.no.members.hint")
