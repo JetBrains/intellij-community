@@ -2,11 +2,11 @@
 package org.jetbrains.idea.maven.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector.Companion.JRE_TYPE_FIELD
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
@@ -15,13 +15,12 @@ import org.jetbrains.idea.maven.execution.MavenExternalParameters.resolveMavenHo
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
 import org.jetbrains.idea.maven.project.MavenImportingSettings
+import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesFolder
+import org.jetbrains.idea.maven.project.MavenImportingSettings.UPDATE_FOLDERS_PHASES
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
-import com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector.Companion.JRE_TYPE_FIELD
-import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesFolder
-import org.jetbrains.idea.maven.project.MavenImportingSettings.UPDATE_FOLDERS_PHASES
 
 class MavenSettingsCollector : ProjectUsagesCollector() {
 
@@ -75,6 +74,7 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     usages.add(KEEP_SOURCE_FOLDERS.metric(importingSettings.isKeepSourceFolders))
     usages.add(EXCLUDE_TARGET_FOLDER.metric(importingSettings.isExcludeTargetFolder))
     usages.add(USE_MAVEN_OUTPUT.metric(importingSettings.isUseMavenOutput))
+    usages.add(CREATE_SEPARATE_MODULES_FOR_MAIN_AND_TEST.metric(importingSettings.isImportToTreeStructure))
 
     usages.add(GENERATED_SOURCES_FOLDER.metric(importingSettings.generatedSourcesFolder))
     usages.add(UPDATE_FOLDERS_ON_IMPORT_PHASE.metric(importingSettings.updateFoldersOnImportPhase))
@@ -113,7 +113,7 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("build.maven.state", 2)
+    private val GROUP = EventLogGroup("build.maven.state", 3)
     private val HAS_MAVEN_PROJECT = GROUP.registerEvent("hasMavenProject", EventFields.Enabled)
     private val ALWAYS_UPDATE_SNAPSHOTS = GROUP.registerEvent("alwaysUpdateSnapshots", EventFields.Enabled)
     private val NON_RECURSIVE = GROUP.registerEvent("nonRecursive", EventFields.Enabled)
@@ -131,6 +131,7 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     private val KEEP_SOURCE_FOLDERS = GROUP.registerEvent("keepSourceFolders", EventFields.Enabled)
     private val EXCLUDE_TARGET_FOLDER = GROUP.registerEvent("excludeTargetFolder", EventFields.Enabled)
     private val USE_MAVEN_OUTPUT = GROUP.registerEvent("useMavenOutput", EventFields.Enabled)
+    private val CREATE_SEPARATE_MODULES_FOR_MAIN_AND_TEST = GROUP.registerEvent("createSeparateModulesForMainAndTest", EventFields.Enabled)
     private val DOWNLOAD_DOCS_AUTOMATICALLY = GROUP.registerEvent("downloadDocsAutomatically", EventFields.Enabled)
     private val DOWNLOAD_SOURCES_AUTOMATICALLY = GROUP.registerEvent("downloadSourcesAutomatically", EventFields.Enabled)
     private val CUSTOM_DEPENDENCY_TYPES = GROUP.registerEvent("customDependencyTypes", EventFields.Enabled)
