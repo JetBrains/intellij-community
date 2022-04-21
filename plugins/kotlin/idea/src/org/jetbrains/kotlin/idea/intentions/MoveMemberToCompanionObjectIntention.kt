@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -152,7 +152,8 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
         element: KtNamedDeclaration,
         externalUsages: SmartList<UsageInfo>,
         outerInstanceUsages: SmartList<UsageInfo>,
-        editor: Editor?
+        editor: Editor?,
+        onSuccess: (declaration: KtNamedDeclaration) -> Unit
     ) {
         progressIndicator.isIndeterminate = false
         progressIndicator.text = KotlinBundle.message("moving.to.companion.object")
@@ -254,6 +255,7 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
         ShortenReferences { ShortenReferences.Options.ALL_ENABLED }.process(elementsToShorten)
 
         runTemplateForInstanceParam(newDeclaration, nameSuggestions, editor)
+        onSuccess(newDeclaration)
     }
 
     private fun hasTypeParameterReferences(containingClass: KtClassOrObject, element: KtNamedDeclaration): Boolean {
@@ -266,7 +268,9 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
 
     override fun startInWriteAction() = false
 
-    override fun applyTo(element: KtNamedDeclaration, editor: Editor?) {
+    override fun applyTo(element: KtNamedDeclaration, editor: Editor?) = applyTo(element, editor) { }
+
+    fun applyTo(element: KtNamedDeclaration, editor: Editor?, onSuccess: (declaration: KtNamedDeclaration) -> Unit) {
         val project = element.project
 
         val containingClass = element.containingClassOrObject as KtClass
@@ -381,12 +385,16 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
                         ApplicationManagerEx.getApplicationEx().runWriteActionWithNonCancellableProgressInDispatchThread(
                             KotlinBundle.message("moving.to.companion.object"), project, null
                         ) {
-                            doMove(it, element, externalUsages, outerInstanceUsages, editor)
+                            doMove(it, element, externalUsages, outerInstanceUsages, editor, onSuccess)
                         }
                     }, KotlinBundle.message("move.to.companion.object.command"), null)
                 }
 
-                if (isUnitTestMode()) performMove() else invokeLater { performMove() }
+                if (isUnitTestMode()) {
+                    performMove()
+                } else invokeLater {
+                    performMove()
+                }
             }
         }
     }

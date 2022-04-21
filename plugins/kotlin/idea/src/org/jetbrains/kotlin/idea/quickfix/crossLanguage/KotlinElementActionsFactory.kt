@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.appendModifier
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10
 import org.jetbrains.kotlin.idea.quickfix.MakeFieldPublicFix
-import org.jetbrains.kotlin.idea.quickfix.MakeStaticFix
+import org.jetbrains.kotlin.idea.quickfix.MakeMemberStaticFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -172,7 +172,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             return listOf(MakeFieldPublicFix(kModifierOwner))
         }
         if (modifier == JvmModifier.STATIC && shouldPresent && kModifierOwner is KtNamedDeclaration) {
-            return listOf(MakeStaticFix(kModifierOwner))
+            return listOf(MakeMemberStaticFix(kModifierOwner))
         }
 
         //TODO: make similar to `createAddMethodActions`

@@ -12,15 +12,17 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
-class MakeStaticFix(private val declaration: KtNamedDeclaration) : KotlinQuickFixAction<KtNamedDeclaration>(declaration) {
+class MakeMemberStaticFix(private val declaration: KtNamedDeclaration) : KotlinQuickFixAction<KtNamedDeclaration>(declaration) {
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
+        fun makeStaticAndReformat(declaration: KtNamedDeclaration) {
+            AddJvmStaticIntention().applyTo(declaration, editor)
+            CodeStyleManager.getInstance(declaration.project).reformat(declaration, true)
+        }
+
         val containingClass = declaration.containingClassOrObject ?: return
-        val newDeclaration = if (containingClass is KtClass) {
-            MoveMemberToCompanionObjectIntention().applyTo(declaration, editor)
-            containingClass.companionObjects.flatMap { it.declarations }.find { it.textMatches(declaration) } as KtNamedDeclaration
-        } else declaration
-        AddJvmStaticIntention().applyTo(newDeclaration, editor)
-        CodeStyleManager.getInstance(project).reformat(newDeclaration, true)
+        if (containingClass is KtClass) {
+            MoveMemberToCompanionObjectIntention().applyTo(declaration, editor, ::makeStaticAndReformat)
+        } else makeStaticAndReformat(declaration)
     }
 
     override fun getText(): String = KotlinBundle.message("make.static.quickfix", declaration.name ?: "")
