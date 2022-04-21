@@ -42,14 +42,14 @@ class GradleMigrateTest : GradleImportingTestCase() {
                     ${GradleKotlinTestUtils.listRepositories(false, gradleVersion)}                    
                 }
                 dependencies {
-                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_6_20}"
+                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_6_21}"
                 }
             }
 
             apply plugin: 'kotlin'
 
             dependencies {
-                compile "org.jetbrains.kotlin:kotlin-stdlib:${GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_6_20}"
+                compile "org.jetbrains.kotlin:kotlin-stdlib:${GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_6_21}"
             }
             """
         )
