@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.patterns.StandardPatterns.or
@@ -26,7 +26,8 @@ class GradleDependenciesContributor : GradleMethodContextContributor {
   companion object {
     val dependenciesClosure: GroovyClosurePattern = groovyClosure().inMethod(or(
       psiMethod(GRADLE_API_PROJECT, "dependencies"),
-      psiMethod(GRADLE_API_SCRIPT_HANDLER, "dependencies")
+      psiMethod(GRADLE_API_SCRIPT_HANDLER, "dependencies"),
+      psiMethod(GRADLE_API_PROJECT, "getDependencies")
     )).inMethodResult(saveProjectType)
 
     val dependencyAddClosure: GroovyClosurePattern = groovyClosure().inMethod(
