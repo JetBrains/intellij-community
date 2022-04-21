@@ -22,8 +22,8 @@ import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.EntityStorageSerializer
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -138,7 +138,7 @@ class DelayedProjectSynchronizerTest {
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
     val fileInDirectorySourceNames = FileInDirectorySourceNames.from(projectData.storage)
 
-    val originalBuilder = WorkspaceEntityStorageBuilder.create()
+    val originalBuilder = MutableEntityStorage.create()
     val configLocation = toConfigLocation(projectData.projectDir.toPath(), virtualFileManager)
     val serializers = loadProject(configLocation, originalBuilder, virtualFileManager, fileInDirectorySourceNames) as JpsProjectSerializersImpl
     val loadedProjectData = LoadedProjectData(originalBuilder.toStorage(), serializers, configLocation, projectFile)
@@ -168,11 +168,11 @@ class DelayedProjectSynchronizerTest {
 
     val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(projectModel.project)
     externalStorageConfigurationManager.isEnabled = true
-    val originalBuilder = WorkspaceEntityStorageBuilder.create()
+    val originalBuilder = MutableEntityStorage.create()
     loadProject(toConfigLocation(projectDir.toPath(), virtualFileManager), originalBuilder, virtualFileManager, externalStorageConfigurationManager = externalStorageConfigurationManager)
 
     val fileInDirectorySourceNames = FileInDirectorySourceNames.from(originalBuilder)
-    val builderForAnotherProject = WorkspaceEntityStorageBuilder.create()
+    val builderForAnotherProject = MutableEntityStorage.create()
     loadProject(toConfigLocation(projectDir.toPath(), virtualFileManager), builderForAnotherProject, virtualFileManager,
                 externalStorageConfigurationManager = externalStorageConfigurationManager,
                 fileInDirectorySourceNames = fileInDirectorySourceNames)
@@ -195,7 +195,7 @@ class DelayedProjectSynchronizerTest {
   }
 
 
-  private fun saveToCache(storage: WorkspaceEntityStorage) {
+  private fun saveToCache(storage: EntityStorage) {
     val cacheFile = tempDirectory.newFile("cache.data")
     WorkspaceModelCacheImpl.testCacheFile = cacheFile
 

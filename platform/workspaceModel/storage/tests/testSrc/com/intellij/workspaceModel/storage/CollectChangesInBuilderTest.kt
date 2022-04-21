@@ -13,8 +13,8 @@ import org.junit.Test
 
 @Suppress("UNCHECKED_CAST")
 class CollectChangesInBuilderTest {
-  private lateinit var initialStorage: WorkspaceEntityStorage
-  private lateinit var builder: WorkspaceEntityStorageBuilder
+  private lateinit var initialStorage: EntityStorage
+  private lateinit var builder: MutableEntityStorage
 
   @Before
   fun setUp() {

@@ -37,7 +37,7 @@ interface LinkedListEntity : WorkspaceEntityWithPersistentId {
 
 }
 
-fun WorkspaceEntityStorageBuilder.addLinkedListEntity(name: String, next: LinkedListEntityId): LinkedListEntity {
+fun MutableEntityStorage.addLinkedListEntity(name: String, next: LinkedListEntityId): LinkedListEntity {
   val linkedListEntity = LinkedListEntity {
     this.myName = name
     this.next = next

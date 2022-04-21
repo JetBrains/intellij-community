@@ -6,8 +6,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -40,7 +40,7 @@ open class ModuleOutputPackagingElementEntityImpl: ModuleOutputPackagingElementE
                  
         override fun build(): ModuleOutputPackagingElementEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -242,7 +242,7 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
         return changed
     }
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ModuleOutputPackagingElementEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ModuleOutputPackagingElementEntity> {
         val modifiable = ModuleOutputPackagingElementEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -253,7 +253,7 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): ModuleOutputPackagingElementEntity {
+    override fun createEntity(snapshot: EntityStorage): ModuleOutputPackagingElementEntity {
         val entity = ModuleOutputPackagingElementEntityImpl()
         entity._module = module
         entity.entitySource = entitySource

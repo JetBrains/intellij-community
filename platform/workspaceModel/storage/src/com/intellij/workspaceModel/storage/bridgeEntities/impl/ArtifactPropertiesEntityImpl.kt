@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -39,7 +39,7 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
                  
         override fun build(): ArtifactPropertiesEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -210,7 +210,7 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
 
     fun isProviderTypeInitialized(): Boolean = ::providerType.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ArtifactPropertiesEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ArtifactPropertiesEntity> {
         val modifiable = ArtifactPropertiesEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -221,7 +221,7 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): ArtifactPropertiesEntity {
+    override fun createEntity(snapshot: EntityStorage): ArtifactPropertiesEntity {
         val entity = ArtifactPropertiesEntityImpl()
         entity._providerType = providerType
         entity._propertiesXmlTag = propertiesXmlTag

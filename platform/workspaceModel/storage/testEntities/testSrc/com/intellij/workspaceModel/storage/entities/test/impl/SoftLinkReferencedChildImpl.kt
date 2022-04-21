@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -31,7 +31,7 @@ open class SoftLinkReferencedChildImpl: SoftLinkReferencedChild, WorkspaceEntity
                  
         override fun build(): SoftLinkReferencedChild = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -180,7 +180,7 @@ open class SoftLinkReferencedChildImpl: SoftLinkReferencedChild, WorkspaceEntity
 class SoftLinkReferencedChildData : WorkspaceEntityData<SoftLinkReferencedChild>() {
 
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<SoftLinkReferencedChild> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SoftLinkReferencedChild> {
         val modifiable = SoftLinkReferencedChildImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -191,7 +191,7 @@ class SoftLinkReferencedChildData : WorkspaceEntityData<SoftLinkReferencedChild>
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): SoftLinkReferencedChild {
+    override fun createEntity(snapshot: EntityStorage): SoftLinkReferencedChild {
         val entity = SoftLinkReferencedChildImpl()
         entity.entitySource = entitySource
         entity.snapshot = snapshot

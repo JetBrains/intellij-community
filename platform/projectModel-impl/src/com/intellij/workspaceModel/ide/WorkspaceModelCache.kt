@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.project.Project
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorage
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 interface WorkspaceModelCache {
   val enabled: Boolean
 
-  fun loadCache(): WorkspaceEntityStorage?
+  fun loadCache(): EntityStorage?
 
   /**
    * Save workspace model caches

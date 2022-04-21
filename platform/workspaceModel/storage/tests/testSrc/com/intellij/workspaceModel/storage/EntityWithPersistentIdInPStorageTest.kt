@@ -6,7 +6,7 @@ import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.entities.test.addChildEntity
 import com.intellij.workspaceModel.storage.entities.test.addParentEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
 import org.hamcrest.CoreMatchers
@@ -25,7 +25,7 @@ class EntityWithPersistentIdInPStorageTest {
   @Rule
   val expectedException = ExpectedException.none()
 
-  private lateinit var builder: WorkspaceEntityStorageBuilderImpl
+  private lateinit var builder: MutableEntityStorageImpl
 
   @Before
   fun setUp() {
@@ -88,7 +88,7 @@ class EntityWithPersistentIdInPStorageTest {
 
   @Test
   fun `add entity with existing persistent id`() {
-    builder = WorkspaceEntityStorageBuilderImpl.create()
+    builder = MutableEntityStorageImpl.create()
     expectedException.expectCause(CoreMatchers.isA(PersistentIdAlreadyExistsException::class.java))
     builder.addNamedEntity("MyName")
     builder.addNamedEntity("MyName")
@@ -97,7 +97,7 @@ class EntityWithPersistentIdInPStorageTest {
   @Test
   @Ignore("Incorrect test")
   fun `add entity with existing persistent id - restoring after exception`() {
-    builder = WorkspaceEntityStorageBuilderImpl.create()
+    builder = MutableEntityStorageImpl.create()
     try {
       builder.addNamedEntity("MyName")
       builder.addNamedEntity("MyName")
@@ -110,7 +110,7 @@ class EntityWithPersistentIdInPStorageTest {
 
   @Test
   fun `modify entity to repeat persistent id`() {
-    builder = WorkspaceEntityStorageBuilderImpl.create()
+    builder = MutableEntityStorageImpl.create()
     expectedException.expectCause(CoreMatchers.isA(PersistentIdAlreadyExistsException::class.java))
     builder.addNamedEntity("MyName")
     val namedEntity = builder.addNamedEntity("AnotherId")
@@ -121,7 +121,7 @@ class EntityWithPersistentIdInPStorageTest {
 
   @Test
   fun `modify entity to repeat persistent id - restoring after exception`() {
-    builder = WorkspaceEntityStorageBuilderImpl.create()
+    builder = MutableEntityStorageImpl.create()
     try {
       builder.addNamedEntity("MyName")
       val namedEntity = builder.addNamedEntity("AnotherId")

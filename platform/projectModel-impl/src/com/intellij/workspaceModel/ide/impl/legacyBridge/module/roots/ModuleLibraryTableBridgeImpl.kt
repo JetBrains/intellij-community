@@ -13,7 +13,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeIm
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import org.jetbrains.annotations.ApiStatus
 
@@ -27,7 +27,7 @@ class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : Mod
     Disposer.register(moduleBridge, this)
   }
 
-  fun registerModuleLibraryInstances(builder: WorkspaceEntityStorageBuilder?) {
+  fun registerModuleLibraryInstances(builder: MutableEntityStorage?) {
     libraryEntities().forEach { addLibrary(it, builder) }
   }
 
@@ -54,7 +54,7 @@ class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : Mod
     return false
   }
 
-  fun addLibrary(entity: LibraryEntity, storageBuilder: WorkspaceEntityStorageBuilder?): LibraryBridgeImpl {
+  fun addLibrary(entity: LibraryEntity, storageBuilder: MutableEntityStorage?): LibraryBridgeImpl {
     val library = LibraryBridgeImpl(
       libraryTable = this,
       project = module.project,

@@ -8,7 +8,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -30,7 +30,7 @@ object JpsProjectEntitiesLoader {
   }
 
   @TestOnly
-  fun loadProject(configLocation: JpsProjectConfigLocation, builder: WorkspaceEntityStorageBuilder,
+  fun loadProject(configLocation: JpsProjectConfigLocation, builder: MutableEntityStorage,
                   externalStoragePath: Path, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager,
                   fileInDirectorySourceNames: FileInDirectorySourceNames = FileInDirectorySourceNames.empty(),
                   externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null): JpsProjectSerializers {
@@ -42,7 +42,7 @@ object JpsProjectEntitiesLoader {
     return data
   }
 
-  fun loadModule(moduleFile: Path, configLocation: JpsProjectConfigLocation, builder: WorkspaceEntityStorageBuilder,
+  fun loadModule(moduleFile: Path, configLocation: JpsProjectConfigLocation, builder: MutableEntityStorage,
                  errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager) {
     val source = JpsFileEntitySource.FileInDirectory(moduleFile.parent.toVirtualFileUrl(virtualFileManager), configLocation)
     loadModule(moduleFile, source, configLocation, builder, errorReporter, virtualFileManager)
@@ -51,7 +51,7 @@ object JpsProjectEntitiesLoader {
   internal fun loadModule(moduleFile: Path,
                           source: JpsFileEntitySource.FileInDirectory,
                           configLocation: JpsProjectConfigLocation,
-                          builder: WorkspaceEntityStorageBuilder,
+                          builder: MutableEntityStorage,
                           errorReporter: ErrorReporter,
                           virtualFileManager: VirtualFileUrlManager) {
     val reader = CachingJpsFileContentReader(configLocation)

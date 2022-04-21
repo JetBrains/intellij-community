@@ -6,8 +6,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -27,7 +27,7 @@ open class PersistentIdEntityImpl: PersistentIdEntity, WorkspaceEntityBase() {
                  
         override fun build(): PersistentIdEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -131,7 +131,7 @@ class PersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<Pe
 
     fun isDataInitialized(): Boolean = ::data.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<PersistentIdEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<PersistentIdEntity> {
         val modifiable = PersistentIdEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -142,7 +142,7 @@ class PersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<Pe
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): PersistentIdEntity {
+    override fun createEntity(snapshot: EntityStorage): PersistentIdEntity {
         val entity = PersistentIdEntityImpl()
         entity._data = data
         entity.entitySource = entitySource

@@ -7,7 +7,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -25,7 +25,7 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
    * This function should return void (Unit)
    * The current result value is a temporal solution to find the root cause of https://ea.jetbrains.com/browser/ea_problems/239676
    */
-  internal fun loadFacetEntities(builder: WorkspaceEntityStorageBuilder, moduleEntity: ModuleEntity, reader: JpsFileContentReader): Boolean {
+  internal fun loadFacetEntities(builder: MutableEntityStorage, moduleEntity: ModuleEntity, reader: JpsFileContentReader): Boolean {
     val facetManagerTag = reader.loadComponent(imlFileUrl.url, componentName, baseModuleDirPath) ?: return true
     val facetManagerState = XmlSerializer.deserialize(facetManagerTag, FacetManagerState::class.java)
     val orderOfFacets = ArrayList<String>()
@@ -48,7 +48,7 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
     return res
   }
 
-  private fun loadFacetEntities(facetStates: List<FacetState>, builder: WorkspaceEntityStorageBuilder, moduleEntity: ModuleEntity,
+  private fun loadFacetEntities(facetStates: List<FacetState>, builder: MutableEntityStorage, moduleEntity: ModuleEntity,
                                 underlyingFacet: FacetEntity?, orderOfFacets: MutableList<String>): Boolean {
     var res = true
     for (facetState in facetStates) {

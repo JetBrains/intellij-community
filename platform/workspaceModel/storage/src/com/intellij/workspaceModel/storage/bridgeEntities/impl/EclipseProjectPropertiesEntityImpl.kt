@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -53,7 +53,7 @@ open class EclipseProjectPropertiesEntityImpl: EclipseProjectPropertiesEntity, W
                  
         override fun build(): EclipseProjectPropertiesEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -290,7 +290,7 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
     
     fun isSrcPlaceInitialized(): Boolean = ::srcPlace.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<EclipseProjectPropertiesEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<EclipseProjectPropertiesEntity> {
         val modifiable = EclipseProjectPropertiesEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -301,7 +301,7 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): EclipseProjectPropertiesEntity {
+    override fun createEntity(snapshot: EntityStorage): EclipseProjectPropertiesEntity {
         val entity = EclipseProjectPropertiesEntityImpl()
         entity._variablePaths = variablePaths
         entity._eclipseUrls = eclipseUrls

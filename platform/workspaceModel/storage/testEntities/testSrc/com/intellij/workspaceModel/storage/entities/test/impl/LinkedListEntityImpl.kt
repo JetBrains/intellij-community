@@ -6,8 +6,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
@@ -33,7 +33,7 @@ open class LinkedListEntityImpl: LinkedListEntity, WorkspaceEntityBase() {
                  
         override fun build(): LinkedListEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -188,7 +188,7 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<Link
         return changed
     }
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<LinkedListEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<LinkedListEntity> {
         val modifiable = LinkedListEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -199,7 +199,7 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<Link
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): LinkedListEntity {
+    override fun createEntity(snapshot: EntityStorage): LinkedListEntity {
         val entity = LinkedListEntityImpl()
         entity._myName = myName
         entity._next = next

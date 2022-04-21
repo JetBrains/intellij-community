@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -26,7 +26,7 @@ open class ArtifactsOrderEntityImpl: ArtifactsOrderEntity, WorkspaceEntityBase()
                  
         override fun build(): ArtifactsOrderEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -131,7 +131,7 @@ class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
 
     fun isOrderOfArtifactsInitialized(): Boolean = ::orderOfArtifacts.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ArtifactsOrderEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ArtifactsOrderEntity> {
         val modifiable = ArtifactsOrderEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -142,7 +142,7 @@ class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): ArtifactsOrderEntity {
+    override fun createEntity(snapshot: EntityStorage): ArtifactsOrderEntity {
         val entity = ArtifactsOrderEntityImpl()
         entity._orderOfArtifacts = orderOfArtifacts
         entity.entitySource = entitySource

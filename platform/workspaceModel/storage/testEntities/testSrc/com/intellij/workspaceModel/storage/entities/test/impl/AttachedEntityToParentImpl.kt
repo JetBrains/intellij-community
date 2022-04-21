@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -26,7 +26,7 @@ open class AttachedEntityToParentImpl: AttachedEntityToParent, WorkspaceEntityBa
                  
         override fun build(): AttachedEntityToParent = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -130,7 +130,7 @@ class AttachedEntityToParentData : WorkspaceEntityData<AttachedEntityToParent>()
 
     fun isDataInitialized(): Boolean = ::data.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<AttachedEntityToParent> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<AttachedEntityToParent> {
         val modifiable = AttachedEntityToParentImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -141,7 +141,7 @@ class AttachedEntityToParentData : WorkspaceEntityData<AttachedEntityToParent>()
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): AttachedEntityToParent {
+    override fun createEntity(snapshot: EntityStorage): AttachedEntityToParent {
         val entity = AttachedEntityToParentImpl()
         entity._data = data
         entity.entitySource = entitySource

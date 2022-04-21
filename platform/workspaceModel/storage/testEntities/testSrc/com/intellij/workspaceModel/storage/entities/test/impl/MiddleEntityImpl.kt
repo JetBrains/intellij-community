@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -37,7 +37,7 @@ open class MiddleEntityImpl: MiddleEntity, WorkspaceEntityBase() {
                  
         override fun build(): MiddleEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -190,7 +190,7 @@ class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {
 
     fun isPropertyInitialized(): Boolean = ::property.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<MiddleEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<MiddleEntity> {
         val modifiable = MiddleEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -201,7 +201,7 @@ class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): MiddleEntity {
+    override fun createEntity(snapshot: EntityStorage): MiddleEntity {
         val entity = MiddleEntityImpl()
         entity._property = property
         entity.entitySource = entitySource

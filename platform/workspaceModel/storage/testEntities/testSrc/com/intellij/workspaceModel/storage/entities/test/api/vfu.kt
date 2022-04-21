@@ -92,7 +92,7 @@ interface ListVFUEntity : WorkspaceEntity {
 
 }
 
-fun WorkspaceEntityStorageBuilder.addVFUEntity(
+fun MutableEntityStorage.addVFUEntity(
   data: String,
   fileUrl: String,
   virtualFileManager: VirtualFileUrlManager,
@@ -107,7 +107,7 @@ fun WorkspaceEntityStorageBuilder.addVFUEntity(
   return vfuEntity
 }
 
-fun WorkspaceEntityStorageBuilder.addVFU2Entity(
+fun MutableEntityStorage.addVFU2Entity(
   data: String,
   fileUrl: String,
   secondFileUrl: String,
@@ -124,7 +124,7 @@ fun WorkspaceEntityStorageBuilder.addVFU2Entity(
   return vfuWithTwoPropertiesEntity
 }
 
-fun WorkspaceEntityStorageBuilder.addNullableVFUEntity(
+fun MutableEntityStorage.addNullableVFUEntity(
   data: String,
   fileUrl: String?,
   virtualFileManager: VirtualFileUrlManager,
@@ -139,7 +139,7 @@ fun WorkspaceEntityStorageBuilder.addNullableVFUEntity(
   return nullableVFUEntity
 }
 
-fun WorkspaceEntityStorageBuilder.addListVFUEntity(
+fun MutableEntityStorage.addListVFUEntity(
   data: String,
   fileUrl: List<String>,
   virtualFileManager: VirtualFileUrlManager,

@@ -66,7 +66,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   override fun hashCode() = modulePath.hashCode()
 
-  override fun loadEntities(builder: WorkspaceEntityStorageBuilder,
+  override fun loadEntities(builder: MutableEntityStorage,
                             reader: JpsFileContentReader, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager) {
     val externalStorageEnabled = externalStorageConfigurationManager?.isEnabled ?: false
     if (!externalStorageEnabled) {
@@ -93,7 +93,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   }
 
   private fun loadModuleEntity(reader: JpsFileContentReader,
-                               builder: WorkspaceEntityStorageBuilder,
+                               builder: MutableEntityStorage,
                                errorReporter: ErrorReporter,
                                virtualFileManager: VirtualFileUrlManager): ModuleEntity? {
     if (skipLoadingIfFileDoesNotExist && !fileUrl.toPath().exists()) return null
@@ -187,7 +187,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                                        { it.getAttributeValue("value") })
   }
 
-  protected open fun loadExternalSystemOptions(builder: WorkspaceEntityStorageBuilder,
+  protected open fun loadExternalSystemOptions(builder: MutableEntityStorage,
                                                module: ModuleEntity,
                                                reader: JpsFileContentReader,
                                                externalSystemOptions: Map<String?, String?>,
@@ -215,7 +215,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   private fun loadRootManager(rootManagerElement: Element,
                               moduleEntity: ModuleEntity,
-                              builder: WorkspaceEntityStorageBuilder,
+                              builder: MutableEntityStorage,
                               virtualFileManager: VirtualFileUrlManager) {
     val entitySource = moduleEntity.entitySource
     for (contentElement in rootManagerElement.getChildrenAndDetach(CONTENT_TAG)) {
@@ -361,7 +361,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   override fun saveEntities(mainEntities: Collection<ModuleEntity>,
                             entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
-                            storage: WorkspaceEntityStorage,
+                            storage: EntityStorage,
                             writer: JpsFileContentWriter) {
     val module = mainEntities.singleOrNull()
     if (module != null && acceptsSource(module.entitySource)) {
@@ -389,7 +389,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   private fun saveModuleEntities(module: ModuleEntity,
                                  entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
-                                 storage: WorkspaceEntityStorage,
+                                 storage: EntityStorage,
                                  writer: JpsFileContentWriter) {
     val externalSystemOptions = module.exModuleOptions
     val customImlData = module.customImlData
@@ -743,7 +743,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
 
 fun storeSourceRootsOrder(orderOfItems: List<VirtualFileUrl>,
                           contentRootEntity: ContentRootEntity,
-                          builder: WorkspaceEntityStorageBuilder) {
+                          builder: MutableEntityStorage) {
   if (orderOfItems.size > 1) {
     // Save the order in which sourceRoots appear in the module
     val orderingEntity = contentRootEntity.sourceRootOrder

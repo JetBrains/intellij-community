@@ -13,7 +13,7 @@ import org.junit.Ignore
 import org.junit.Test
 import org.jetbrains.deft.TestEntities.ref
 
-internal fun WorkspaceEntityStorage.singleSampleEntity() = entities(SampleEntity::class.java).single()
+internal fun EntityStorage.singleSampleEntity() = entities(SampleEntity::class.java).single()
 
 class SimplePropertiesInStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager

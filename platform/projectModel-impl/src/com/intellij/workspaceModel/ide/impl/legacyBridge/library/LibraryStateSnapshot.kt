@@ -20,7 +20,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibr
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.FileContainerDescription
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.JarDirectoryDescription
 import com.intellij.workspaceModel.ide.toExternalSource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryPropertiesEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot
@@ -28,7 +28,7 @@ import java.io.StringReader
 
 class LibraryStateSnapshot(
   val libraryEntity: LibraryEntity,
-  val storage: WorkspaceEntityStorage,
+  val storage: EntityStorage,
   val libraryTable: LibraryTable,
   val parentDisposable: Disposable) {
   private val roots = collectFiles(libraryEntity)

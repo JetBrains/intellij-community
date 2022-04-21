@@ -16,9 +16,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
-private fun WorkspaceEntityStorage.singleParent() = entities(XParentEntity::class.java).single()
+private fun EntityStorage.singleParent() = entities(XParentEntity::class.java).single()
 
-private fun WorkspaceEntityStorage.singleChild() = entities(XChildEntity::class.java).single()
+private fun EntityStorage.singleChild() = entities(XChildEntity::class.java).single()
 
 class ReferencesInStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager

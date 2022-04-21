@@ -21,16 +21,16 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.subFacets
 import org.jetbrains.workspaceModel.modifyEntity
 
-class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntityStorage,
-                                     private val diff: WorkspaceEntityStorageBuilder,
+class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
+                                     private val diff: MutableEntityStorage,
                                      private val moduleBridge: ModuleBridge,
                                      private val facetManager: FacetManagerBridge)
   : FacetModelBase(), ModifiableFacetModelBridge {

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
@@ -85,8 +85,8 @@ import kotlin.reflect.KProperty1
 }
 
 /**
- * Base interface for modifiable variant of [Unmodifiable] entity. The implementation can be used to [create a new entity][WorkspaceEntityStorageBuilder.addEntity]
- * or [modify an existing value][WorkspaceEntityStorageBuilder.modifyEntity].
+ * Base interface for modifiable variant of [Unmodifiable] entity. The implementation can be used to [create a new entity][MutableEntityStorage.addEntity]
+ * or [modify an existing value][MutableEntityStorage.modifyEntity].
  *
  * Currently the class must inherit from ModifiableWorkspaceEntityBase.
  */
@@ -113,12 +113,12 @@ interface EntitySource {
 
 /**
  * Marker interface to represent entities which properties aren't loaded and which were added to the storage because other entities requires
- * them. Entities which sources implements this interface don't replace existing entities when [WorkspaceEntityStorageBuilder.replaceBySource]
+ * them. Entities which sources implements this interface don't replace existing entities when [MutableEntityStorage.replaceBySource]
  * is called.
  *
  * For example if we have `FacetEntity` which requires `ModuleEntity`, and need to load facet configuration from *.iml file and load the module
  * configuration from some other source, we may use this interface to mark `entitySource` for `ModuleEntity`. This way when content of *.iml
- * file is applied to the model via [WorkspaceEntityStorageBuilder.replaceBySource], it won't overwrite actual configuration
+ * file is applied to the model via [MutableEntityStorage.replaceBySource], it won't overwrite actual configuration
  * of `ModuleEntity`.
  */
 interface DummyParentEntitySource : EntitySource
@@ -151,14 +151,14 @@ inline fun <E : WorkspaceEntity, reified R : WorkspaceEntity, reified X : List<E
 /**
  * Represents a reference to an entity inside of [WorkspaceEntity].
  *
- * The reference can be obtained via [WorkspaceEntityStorage.createReference].
+ * The reference can be obtained via [EntityStorage.createReference].
  *
  * The reference will return the same entity for the same storage, but the changes in storages should be tracked if the client want to
  *   use this reference between different storages. For example, if the referred entity was removed from the storage, this reference may
  *   return null, but it can also return a different (newly added) entity.
  */
 abstract class EntityReference<out E : WorkspaceEntity> {
-  abstract fun resolve(storage: WorkspaceEntityStorage): E?
+  abstract fun resolve(storage: EntityStorage): E?
 }
 
 /**
@@ -173,7 +173,7 @@ interface PersistentEntityId<out E : WorkspaceEntityWithPersistentId> {
   /** Text which can be shown in an error message if id cannot be resolved */
   val presentableName: String
 
-  fun resolve(storage: WorkspaceEntityStorage): E? = storage.resolve(this)
+  fun resolve(storage: EntityStorage): E? = storage.resolve(this)
   override fun toString(): String
 }
 
@@ -182,9 +182,9 @@ interface PersistentEntityId<out E : WorkspaceEntityWithPersistentId> {
 }
 
 /**
- * Read-only interface to a storage. Use [WorkspaceEntityStorageBuilder] to modify it.
+ * Read-only interface to a storage. Use [MutableEntityStorage] to modify it.
  */
-interface WorkspaceEntityStorage {
+interface EntityStorage {
   fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E>
   fun <E : WorkspaceEntity> entitiesAmount(entityClass: Class<E>): Int
   fun <E : WorkspaceEntity, R : WorkspaceEntity> referrers(e: E, entityClass: KClass<R>, property: KProperty1<R, EntityReference<E>>): Sequence<R>
@@ -208,25 +208,25 @@ interface WorkspaceEntityStorage {
  * Writeable interface to a storage. Use it if you need to build a storage from scratch or modify an existing storage in a way which requires
  * reading its state after modifications.
  */
-interface WorkspaceEntityStorageBuilder : WorkspaceEntityStorage {
+interface MutableEntityStorage : EntityStorage {
   fun isEmpty(): Boolean
   fun <T : WorkspaceEntity> addEntity(entity: T)
 
   fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
 
   fun removeEntity(e: WorkspaceEntity)
-  fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: WorkspaceEntityStorage)
+  fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: EntityStorage)
 
   /**
    * Return changes in entities recorded in this instance. [original] parameter is used to get the old instances of modified
    * and removed entities.
    */
-  fun collectChanges(original: WorkspaceEntityStorage): Map<Class<*>, List<EntityChange<*>>>
-  fun addDiff(diff: WorkspaceEntityStorageBuilder)
-  fun toStorage(): WorkspaceEntityStorage
+  fun collectChanges(original: EntityStorage): Map<Class<*>, List<EntityChange<*>>>
+  fun addDiff(diff: MutableEntityStorage)
+  fun toStorage(): EntityStorage
 
   /**
-   * Please see [WorkspaceEntityStorage.getExternalMapping] for naming conventions
+   * Please see [EntityStorage.getExternalMapping] for naming conventions
    */
   fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T>
   fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex
@@ -235,15 +235,15 @@ interface WorkspaceEntityStorageBuilder : WorkspaceEntityStorage {
 
   companion object {
     @JvmStatic
-    fun create(): WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilderImpl.create()
+    fun create(): MutableEntityStorage = MutableEntityStorageImpl.create()
 
     @JvmStatic
-    fun from(storage: WorkspaceEntityStorage): WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilderImpl.from(storage)
+    fun from(storage: EntityStorage): MutableEntityStorage = MutableEntityStorageImpl.from(storage)
   }
 }
 
-fun WorkspaceEntityStorage.toBuilder(): WorkspaceEntityStorageBuilder {
-  return WorkspaceEntityStorageBuilder.from(this)
+fun EntityStorage.toBuilder(): MutableEntityStorage {
+  return MutableEntityStorage.from(this)
 }
 
 sealed class EntityChange<T : WorkspaceEntity> {

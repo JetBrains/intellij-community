@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -40,7 +40,7 @@ open class RightEntityImpl: RightEntity, WorkspaceEntityBase() {
                  
         override fun build(): RightEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -234,7 +234,7 @@ open class RightEntityImpl: RightEntity, WorkspaceEntityBase() {
 class RightEntityData : WorkspaceEntityData<RightEntity>() {
 
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<RightEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<RightEntity> {
         val modifiable = RightEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -245,7 +245,7 @@ class RightEntityData : WorkspaceEntityData<RightEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): RightEntity {
+    override fun createEntity(snapshot: EntityStorage): RightEntity {
         val entity = RightEntityImpl()
         entity.entitySource = entitySource
         entity.snapshot = snapshot

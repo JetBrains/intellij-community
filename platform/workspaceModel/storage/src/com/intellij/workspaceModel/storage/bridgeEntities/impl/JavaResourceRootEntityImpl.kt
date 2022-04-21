@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -36,7 +36,7 @@ open class JavaResourceRootEntityImpl: JavaResourceRootEntity, WorkspaceEntityBa
                  
         override fun build(): JavaResourceRootEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -208,7 +208,7 @@ class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>()
     
     fun isRelativeOutputPathInitialized(): Boolean = ::relativeOutputPath.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<JavaResourceRootEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<JavaResourceRootEntity> {
         val modifiable = JavaResourceRootEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -219,7 +219,7 @@ class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>()
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): JavaResourceRootEntity {
+    override fun createEntity(snapshot: EntityStorage): JavaResourceRootEntity {
         val entity = JavaResourceRootEntityImpl()
         entity.generated = generated
         entity._relativeOutputPath = relativeOutputPath

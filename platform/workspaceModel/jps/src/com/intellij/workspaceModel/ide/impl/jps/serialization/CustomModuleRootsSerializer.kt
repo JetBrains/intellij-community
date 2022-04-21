@@ -25,7 +25,7 @@ interface CustomModuleRootsSerializer {
                          customDir: String?,
                          virtualFileManager: VirtualFileUrlManager): EntitySource?
 
-  fun loadRoots(builder: WorkspaceEntityStorageBuilder,
+  fun loadRoots(builder: MutableEntityStorage,
                 moduleEntity: ModuleEntity,
                 reader: JpsFileContentReader,
                 customDir: String?,
@@ -39,7 +39,7 @@ interface CustomModuleRootsSerializer {
                 writer: JpsFileContentWriter,
                 customDir: String?,
                 imlFileUrl: VirtualFileUrl,
-                storage: WorkspaceEntityStorage,
+                storage: EntityStorage,
                 virtualFileManager: VirtualFileUrlManager)
 
   companion object {

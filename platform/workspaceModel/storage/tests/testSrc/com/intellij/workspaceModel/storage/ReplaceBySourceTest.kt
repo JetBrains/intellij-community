@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.storage.entities.test.addParentEntity
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.ReplaceBySourceAsGraph
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
 import org.hamcrest.CoreMatchers.isA
@@ -52,7 +52,7 @@ import org.junit.rules.ExpectedException
  */
 class ReplaceBySourceTest {
 
-  private lateinit var builder: WorkspaceEntityStorageBuilderImpl
+  private lateinit var builder: MutableEntityStorageImpl
 
   @JvmField
   @Rule
@@ -609,6 +609,6 @@ class ReplaceBySourceTest {
   }
 
   private fun resetChanges() {
-    builder = builder.toStorage().toBuilder() as WorkspaceEntityStorageBuilderImpl
+    builder = builder.toStorage().toBuilder() as MutableEntityStorageImpl
   }
 }

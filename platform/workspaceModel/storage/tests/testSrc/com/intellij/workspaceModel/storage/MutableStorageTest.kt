@@ -10,7 +10,7 @@ import kotlin.test.assertEquals
 class MutableStorageTest {
   @Test
   fun `simple entity mutation test`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val sampleEntity = SampleEntity2 {
       entitySource = MySource
       this.
@@ -28,7 +28,7 @@ class MutableStorageTest {
     assertEquals("NewParentData", sampleEntity.data)
     assertEquals("NewParentData", simpleEntityFromStore.data)
 
-    val newBuilder = WorkspaceEntityStorageBuilder.from(builder.toStorage())
+    val newBuilder = MutableEntityStorage.from(builder.toStorage())
 
     val entityFromStoreOne = newBuilder.entities(SampleEntity2::class.java).single()
     entityFromStoreOne as SampleEntity2.Builder
@@ -52,13 +52,13 @@ class MutableStorageTest {
 
   @Test
   fun `check exception if request data from entity which was removed`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val sampleEntity = SampleEntity2 {
       entitySource = MySource
       data = "ParentData"
     }
     builder.addEntity(sampleEntity)
-    val newBuilder = WorkspaceEntityStorageBuilder.from(builder.toStorage())
+    val newBuilder = MutableEntityStorage.from(builder.toStorage())
     val entityFromStore = newBuilder.entities(SampleEntity2::class.java).single()
     newBuilder.removeEntity(entityFromStore)
 
@@ -68,7 +68,7 @@ class MutableStorageTest {
 
   @Test
   fun `check parent updates`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val parentEntity = ParentMultipleEntity {
       entitySource = MySource
       parentData = "ParentData"
@@ -102,7 +102,7 @@ class MutableStorageTest {
 
   @Test
   fun `fields modification without lambda not allowed test`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val parentEntity = ParentMultipleEntity {
       entitySource = MySource
       parentData = "ParentData"

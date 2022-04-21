@@ -12,8 +12,8 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.bridgeEntities.asCustomSourceRoot
 import com.intellij.workspaceModel.storage.bridgeEntities.getModuleLibraries
@@ -73,7 +73,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertTrue(orderEntries[0] is ModuleSourceOrderEntry)
   }
 
-  private fun checkSampleProjectConfiguration(storage: WorkspaceEntityStorage, projectDir: File) {
+  private fun checkSampleProjectConfiguration(storage: EntityStorage, projectDir: File) {
     val projectUrl = projectDir.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project))
     val modules = storage.entities(ModuleEntity::class.java).sortedBy { it.name }.toList()
     assertEquals(3, modules.size)
@@ -239,8 +239,8 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
                     </configuration>""".trimIndent(), bar.configurationXmlTag)
   }
 
-  private fun loadProject(projectFile: File): WorkspaceEntityStorage {
-    val storageBuilder = WorkspaceEntityStorageBuilder.create()
+  private fun loadProject(projectFile: File): EntityStorage {
+    val storageBuilder = MutableEntityStorage.create()
     val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
     loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, virtualFileManager)
     return storageBuilder.toStorage()

@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -35,7 +35,7 @@ open class ModuleGroupPathEntityImpl: ModuleGroupPathEntity, WorkspaceEntityBase
                  
         override fun build(): ModuleGroupPathEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -196,7 +196,7 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
 
     fun isPathInitialized(): Boolean = ::path.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ModuleGroupPathEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ModuleGroupPathEntity> {
         val modifiable = ModuleGroupPathEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -207,7 +207,7 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): ModuleGroupPathEntity {
+    override fun createEntity(snapshot: EntityStorage): ModuleGroupPathEntity {
         val entity = ModuleGroupPathEntityImpl()
         entity._path = path
         entity.entitySource = entitySource

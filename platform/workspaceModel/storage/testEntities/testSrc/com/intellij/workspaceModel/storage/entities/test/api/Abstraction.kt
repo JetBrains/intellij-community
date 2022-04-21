@@ -68,7 +68,7 @@ interface MiddleEntity : BaseEntity {
 
 }
 
-fun WorkspaceEntityStorageBuilder.addMiddleEntity(property: String = "prop", source: EntitySource = MySource): MiddleEntity {
+fun MutableEntityStorage.addMiddleEntity(property: String = "prop", source: EntitySource = MySource): MiddleEntity {
   val middleEntity = MiddleEntity {
     this.property = property
     this.entitySource = source
@@ -97,7 +97,7 @@ interface LeftEntity : CompositeBaseEntity {
 
 }
 
-fun WorkspaceEntityStorageBuilder.addLeftEntity(children: Sequence<BaseEntity>, source: EntitySource = MySource): LeftEntity {
+fun MutableEntityStorage.addLeftEntity(children: Sequence<BaseEntity>, source: EntitySource = MySource): LeftEntity {
   val leftEntity = LeftEntity {
     this.children = children.toList()
     this.entitySource = source
@@ -126,7 +126,7 @@ interface RightEntity : CompositeBaseEntity {
 
 }
 
-fun WorkspaceEntityStorageBuilder.addRightEntity(children: Sequence<BaseEntity>, source: EntitySource = MySource): RightEntity {
+fun MutableEntityStorage.addRightEntity(children: Sequence<BaseEntity>, source: EntitySource = MySource): RightEntity {
   val rightEntity = RightEntity {
     this.children = children.toList()
     this.entitySource = source

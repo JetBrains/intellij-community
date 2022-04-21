@@ -19,7 +19,7 @@ class SampleTest {
 
   @Test
   fun `check entity initialized`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     var entity = SampleEntity2 {
       entitySource = MySource
       boolData = true
@@ -51,7 +51,7 @@ class SampleTest {
       this.entitySource = MySource
       this.data = ""
     }
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
     Assertions.assertNull(entity.optionalData)
   }

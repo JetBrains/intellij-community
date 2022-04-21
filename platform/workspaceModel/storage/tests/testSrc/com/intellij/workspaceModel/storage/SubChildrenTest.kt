@@ -37,7 +37,7 @@ class SubChildrenTest {
       }
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     val parentEntity = builder.entities(ParentSubEntity::class.java).single()
@@ -59,7 +59,7 @@ class SubChildrenTest {
     }
 
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     assertEquals("ChildData", entity.child.child.childData)
@@ -79,7 +79,7 @@ class SubChildrenTest {
       }
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     val childEntity = builder.entities(ChildSubSubEntity::class.java).single()

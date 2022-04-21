@@ -96,7 +96,7 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
 
   var id: EntityId = 0
 
-  lateinit var snapshot: WorkspaceEntityStorage
+  lateinit var snapshot: EntityStorage
 
   override fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> {
     val mySnapshot = snapshot as AbstractEntityStorage
@@ -199,7 +199,7 @@ data class ExtRefKey(
 
 abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEntityBase(), ModifiableWorkspaceEntity<T> {
   internal lateinit var original: WorkspaceEntityData<T>
-  var diff: WorkspaceEntityStorageBuilder? = null
+  var diff: MutableEntityStorage? = null
 
   val modifiable = ThreadLocal.withInitial { false }
   val changedProperty: MutableSet<String> = mutableSetOf()
@@ -253,26 +253,26 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
 
   abstract fun getEntityClass(): Class<T>
 
-  open fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+  open fun applyToBuilder(builder: MutableEntityStorage) {
     throw NotImplementedError()
   }
 
   open fun getEntityData(): WorkspaceEntityData<T> {
-    val actualEntityData = (diff as WorkspaceEntityStorageBuilderImpl).entityDataById(id)
+    val actualEntityData = (diff as MutableEntityStorageImpl).entityDataById(id)
       ?: error("Requested entity data doesn't exist at entity family")
     return actualEntityData as WorkspaceEntityData<T>
   }
 
   // For generated entities
   fun addToBuilder() {
-    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    val builder = diff as MutableEntityStorageImpl
     builder.putEntity(this)
   }
 
   // For generated entities
   // TODO:: Can be replaced to the direct calls
   fun applyRef(connectionId: ConnectionId, child: WorkspaceEntity) {
-    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    val builder = diff as MutableEntityStorageImpl
     when (connectionId.connectionType) {
       ConnectionId.ConnectionType.ONE_TO_ONE -> builder.updateOneToOneChildOfParent(connectionId, this, child)
       ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> builder.updateOneToAbstractOneChildOfParent(connectionId, this, child)
@@ -282,7 +282,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
 
   // TODO:: Can be replaced to the direct calls
   fun applyRef(connectionId: ConnectionId, children: List<WorkspaceEntity>) {
-    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    val builder = diff as MutableEntityStorageImpl
     when (connectionId.connectionType) {
       ConnectionId.ConnectionType.ONE_TO_MANY -> builder.updateOneToManyChildrenOfParent(connectionId, this, children)
       ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> builder.updateOneToAbstractManyChildrenOfParent(connectionId, this, children.asSequence())
@@ -292,7 +292,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
 
   // TODO:: Can be replaced to the direct calls
   fun applyParentRef(connectionId: ConnectionId, parent: WorkspaceEntity) {
-    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    val builder = diff as MutableEntityStorageImpl
     when (connectionId.connectionType) {
       ConnectionId.ConnectionType.ONE_TO_ONE -> builder.updateOneToOneParentOfChild(connectionId, this, parent)
       ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> builder.updateOneToAbstractOneParentOfChild(connectionId, this, parent)
@@ -301,28 +301,28 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
     }
   }
 
-  fun existsInBuilder(builder: WorkspaceEntityStorageBuilder): Boolean {
-    builder as WorkspaceEntityStorageBuilderImpl
+  fun existsInBuilder(builder: MutableEntityStorage): Boolean {
+    builder as MutableEntityStorageImpl
     val entityData = getEntityData()
     return builder.entityDataById(entityData.createEntityId()) != null
   }
 
   // For generated entities
   fun index(entity: WorkspaceEntity, propertyName: String, virtualFileUrl: VirtualFileUrl?) {
-    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    val builder = diff as MutableEntityStorageImpl
     builder.getMutableVirtualFileUrlIndex().index(entity, propertyName, virtualFileUrl)
   }
 
   // For generated entities
   fun index(entity: WorkspaceEntity, propertyName: String, virtualFileUrls: Set<VirtualFileUrl>) {
-    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    val builder = diff as MutableEntityStorageImpl
     (builder.getMutableVirtualFileUrlIndex() as VirtualFileIndex.MutableVirtualFileIndex).index((entity as WorkspaceEntityBase).id,
                                                                                                 propertyName, virtualFileUrls)
   }
 
   // For generated entities
   fun indexJarDirectories(entity: WorkspaceEntity, virtualFileUrls: Set<VirtualFileUrl>) {
-    val builder = diff as WorkspaceEntityStorageBuilderImpl
+    val builder = diff as MutableEntityStorageImpl
     (builder.getMutableVirtualFileUrlIndex() as VirtualFileIndex.MutableVirtualFileIndex).indexJarDirectories(
       (entity as WorkspaceEntityBase).id, virtualFileUrls)
   }
@@ -343,9 +343,9 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
 
   fun createEntityId(): EntityId = createEntityId(id, getEntityInterface().toClassId())
 
-  abstract fun createEntity(snapshot: WorkspaceEntityStorage): E
+  abstract fun createEntity(snapshot: EntityStorage): E
 
-  abstract fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<E>
+  abstract fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<E>
 
   abstract fun getEntityInterface(): Class<out WorkspaceEntity>
 
@@ -408,8 +408,8 @@ fun WorkspaceEntityData<*>.persistentId(): PersistentEntityId<*>? = when (this) 
  *
  * Interface should be applied to *entity data*.
  *
- * [assertConsistency] method is called during [WorkspaceEntityStorageBuilderImpl.assertConsistency].
+ * [assertConsistency] method is called during [MutableEntityStorageImpl.assertConsistency].
  */
 interface WithAssertableConsistency {
-  fun assertConsistency(storage: WorkspaceEntityStorage)
+  fun assertConsistency(storage: EntityStorage)
 }

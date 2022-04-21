@@ -9,7 +9,7 @@ import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -147,15 +147,15 @@ class JpsProjectSaveAfterChangesTest {
 
   private fun checkSaveProjectAfterChange(directoryNameForDirectoryBased: String,
                                           directoryNameForFileBased: String,
-                                          change: (WorkspaceEntityStorageBuilder, JpsProjectConfigLocation) -> Unit) {
+                                          change: (MutableEntityStorage, JpsProjectConfigLocation) -> Unit) {
     checkSaveProjectAfterChange(sampleDirBasedProjectFile, directoryNameForDirectoryBased, change)
     checkSaveProjectAfterChange(sampleFileBasedProjectFile, directoryNameForFileBased, change)
   }
 
   private fun checkSaveProjectAfterChange(originalProjectFile: File, changedFilesDirectoryName: String?,
-                                          change: (WorkspaceEntityStorageBuilder, JpsProjectConfigLocation) -> Unit) {
+                                          change: (MutableEntityStorage, JpsProjectConfigLocation) -> Unit) {
     val projectData = copyAndLoadProject(originalProjectFile, virtualFileManager)
-    val builder = WorkspaceEntityStorageBuilder.from(projectData.storage)
+    val builder = MutableEntityStorage.from(projectData.storage)
     change(builder, projectData.configLocation)
     val changesMap = builder.collectChanges(projectData.storage)
     val changedSources = changesMap.values.flatMapTo(HashSet()) { changes -> changes.flatMap { change ->

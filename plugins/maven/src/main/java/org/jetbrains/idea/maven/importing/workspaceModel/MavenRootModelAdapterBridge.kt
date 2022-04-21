@@ -13,7 +13,7 @@ import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -41,7 +41,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
                                   private val project: Project,
                                   initialModuleEntity: ModuleEntity,
                                   private val legacyBridgeModifiableModelsProvider: IdeModifiableModelsProviderBridge,
-                                  private val builder: WorkspaceEntityStorageBuilder) : MavenRootModelAdapterInterface {
+                                  private val builder: MutableEntityStorage) : MavenRootModelAdapterInterface {
 
   private var moduleEntity: ModuleEntity = initialModuleEntity
   private val legacyBridge = ModuleRootComponentBridge.getInstance(module)

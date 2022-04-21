@@ -7,7 +7,7 @@ import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge.Companion.findSdk
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorage
 
 class SdkIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   override fun accepts(builder: IndexableEntityProvider.IndexableIteratorBuilder): Boolean =
@@ -15,7 +15,7 @@ class SdkIndexableIteratorHandler : IndexableIteratorBuilderHandler {
 
   override fun instantiate(builders: Collection<IndexableEntityProvider.IndexableIteratorBuilder>,
                            project: Project,
-                           entityStorage: WorkspaceEntityStorage): List<IndexableFilesIterator> {
+                           entityStorage: EntityStorage): List<IndexableFilesIterator> {
     var hasProjectIterator = false
     val builderSet = builders.toSet()
     val result = mutableListOf<IndexableFilesIterator>()

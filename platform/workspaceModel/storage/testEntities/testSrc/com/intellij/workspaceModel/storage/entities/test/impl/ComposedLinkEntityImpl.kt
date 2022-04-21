@@ -6,8 +6,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
@@ -29,7 +29,7 @@ open class ComposedLinkEntityImpl: ComposedLinkEntity, WorkspaceEntityBase() {
                  
         override fun build(): ComposedLinkEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -177,7 +177,7 @@ class ComposedLinkEntityData : WorkspaceEntityData<ComposedLinkEntity>(), SoftLi
         return changed
     }
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ComposedLinkEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ComposedLinkEntity> {
         val modifiable = ComposedLinkEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -188,7 +188,7 @@ class ComposedLinkEntityData : WorkspaceEntityData<ComposedLinkEntity>(), SoftLi
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): ComposedLinkEntity {
+    override fun createEntity(snapshot: EntityStorage): ComposedLinkEntity {
         val entity = ComposedLinkEntityImpl()
         entity._link = link
         entity.entitySource = entitySource

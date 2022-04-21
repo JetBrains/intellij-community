@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -39,7 +39,7 @@ open class VFUEntity2Impl: VFUEntity2, WorkspaceEntityBase() {
                  
         override fun build(): VFUEntity2 = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -187,7 +187,7 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
     fun isDirectoryPathInitialized(): Boolean = ::directoryPath.isInitialized
     fun isNotNullRootsInitialized(): Boolean = ::notNullRoots.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<VFUEntity2> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<VFUEntity2> {
         val modifiable = VFUEntity2Impl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -198,7 +198,7 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): VFUEntity2 {
+    override fun createEntity(snapshot: EntityStorage): VFUEntity2 {
         val entity = VFUEntity2Impl()
         entity._data = data
         entity._filePath = filePath

@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -35,7 +35,7 @@ open class NamedChildEntityImpl: NamedChildEntity, WorkspaceEntityBase() {
                  
         override fun build(): NamedChildEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -197,7 +197,7 @@ class NamedChildEntityData : WorkspaceEntityData<NamedChildEntity>() {
 
     fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<NamedChildEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<NamedChildEntity> {
         val modifiable = NamedChildEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -208,7 +208,7 @@ class NamedChildEntityData : WorkspaceEntityData<NamedChildEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): NamedChildEntity {
+    override fun createEntity(snapshot: EntityStorage): NamedChildEntity {
         val entity = NamedChildEntityImpl()
         entity._childProperty = childProperty
         entity.entitySource = entitySource

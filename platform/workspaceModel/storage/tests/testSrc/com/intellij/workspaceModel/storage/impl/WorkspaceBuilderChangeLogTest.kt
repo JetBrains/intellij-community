@@ -6,8 +6,8 @@ import org.junit.Before
 
 class WorkspaceBuilderChangeLogTest {
 
-  internal lateinit var builder: WorkspaceEntityStorageBuilderImpl
-  internal lateinit var another: WorkspaceEntityStorageBuilderImpl
+  internal lateinit var builder: MutableEntityStorageImpl
+  internal lateinit var another: MutableEntityStorageImpl
 
   @Before
   fun setUp() {

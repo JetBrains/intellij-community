@@ -188,12 +188,12 @@ class ExternalEntityMappingTest {
     val entity3 = builder.addSampleEntity("3")
     builder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(entity3, 3)
     builder.removeEntity(entity1)
-    val diff = WorkspaceEntityStorageBuilder.from(storage)
+    val diff = MutableEntityStorage.from(storage)
     diff.removeEntity(entity2)
     builder.addDiff(diff)
     builder.removeEntity(entity3)
 
-    fun checkStorage(storage: WorkspaceEntityStorage) {
+    fun checkStorage(storage: EntityStorage) {
       val mapping = storage.getExternalMapping<Int>(INDEX_ID)
       assertNull(mapping.getDataByEntity(entity1))
       assertNull(mapping.getDataByEntity(entity2))
@@ -223,7 +223,7 @@ class ExternalEntityMappingTest {
     val entity1a = builder.modifyEntity(entity1) {
       stringProperty = "1a"
     }
-    val diff = WorkspaceEntityStorageBuilder.from(storage)
+    val diff = MutableEntityStorage.from(storage)
     val entity2a = diff.modifyEntity(entity2) {
       stringProperty = "2a"
     }
@@ -232,7 +232,7 @@ class ExternalEntityMappingTest {
       stringProperty = "3a"
     }
 
-    fun checkStorage(storage: WorkspaceEntityStorage) {
+    fun checkStorage(storage: EntityStorage) {
       val mapping = storage.getExternalMapping<Int>(INDEX_ID)
       assertEquals(1, mapping.getDataByEntity(entity1a))
       assertEquals(2, mapping.getDataByEntity(entity2a))
@@ -249,7 +249,7 @@ class ExternalEntityMappingTest {
   @Test
   fun `update mapping when id changes on adding via diff`() {
     val builder = createEmptyBuilder()
-    val diff = WorkspaceEntityStorageBuilder.from(builder.toStorage())
+    val diff = MutableEntityStorage.from(builder.toStorage())
     val entity1 = builder.addSampleEntity("1")
     builder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(entity1, 1)
     val entity2 = diff.addSampleEntity("2")
@@ -272,10 +272,10 @@ class ExternalEntityMappingTest {
     val initialBuilder = createEmptyBuilder()
     initialBuilder.addSampleEntity("foo")
     val initialStorage = initialBuilder.toStorage()
-    val diff1 = WorkspaceEntityStorageBuilder.from(initialStorage)
+    val diff1 = MutableEntityStorage.from(initialStorage)
     diff1.addSampleEntity("bar")
 
-    val diff2 = WorkspaceEntityStorageBuilder.from(initialStorage)
+    val diff2 = MutableEntityStorage.from(initialStorage)
     diff2.getMutableExternalMapping<Int>(INDEX_ID).addMapping(initialStorage.singleSampleEntity(), 1)
     val updatedBuilder = createBuilderFrom(initialStorage)
     updatedBuilder.addDiff(diff2)

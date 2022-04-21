@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -31,7 +31,7 @@ open class NullableVFUEntityImpl: NullableVFUEntity, WorkspaceEntityBase() {
                  
         override fun build(): NullableVFUEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -147,7 +147,7 @@ class NullableVFUEntityData : WorkspaceEntityData<NullableVFUEntity>() {
 
     fun isDataInitialized(): Boolean = ::data.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<NullableVFUEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<NullableVFUEntity> {
         val modifiable = NullableVFUEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -158,7 +158,7 @@ class NullableVFUEntityData : WorkspaceEntityData<NullableVFUEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): NullableVFUEntity {
+    override fun createEntity(snapshot: EntityStorage): NullableVFUEntity {
         val entity = NullableVFUEntityImpl()
         entity._data = data
         entity._fileProperty = fileProperty

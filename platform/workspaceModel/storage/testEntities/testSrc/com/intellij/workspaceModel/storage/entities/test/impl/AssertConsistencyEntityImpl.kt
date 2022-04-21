@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -24,7 +24,7 @@ open class AssertConsistencyEntityImpl: AssertConsistencyEntity, WorkspaceEntity
                  
         override fun build(): AssertConsistencyEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -125,7 +125,7 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
 
     
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<AssertConsistencyEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<AssertConsistencyEntity> {
         val modifiable = AssertConsistencyEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -136,7 +136,7 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): AssertConsistencyEntity {
+    override fun createEntity(snapshot: EntityStorage): AssertConsistencyEntity {
         val entity = AssertConsistencyEntityImpl()
         entity.passCheck = passCheck
         entity.entitySource = entitySource

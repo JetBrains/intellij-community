@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -46,7 +46,7 @@ open class ArtifactRootElementEntityImpl: ArtifactRootElementEntity, WorkspaceEn
                  
         override fun build(): ArtifactRootElementEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -286,7 +286,7 @@ open class ArtifactRootElementEntityImpl: ArtifactRootElementEntity, WorkspaceEn
 class ArtifactRootElementEntityData : WorkspaceEntityData<ArtifactRootElementEntity>() {
 
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ArtifactRootElementEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ArtifactRootElementEntity> {
         val modifiable = ArtifactRootElementEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -297,7 +297,7 @@ class ArtifactRootElementEntityData : WorkspaceEntityData<ArtifactRootElementEnt
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): ArtifactRootElementEntity {
+    override fun createEntity(snapshot: EntityStorage): ArtifactRootElementEntity {
         val entity = ArtifactRootElementEntityImpl()
         entity.entitySource = entitySource
         entity.snapshot = snapshot

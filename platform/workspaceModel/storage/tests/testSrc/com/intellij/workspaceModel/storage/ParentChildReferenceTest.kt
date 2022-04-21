@@ -26,7 +26,7 @@ class ParentChildReferenceTest {
     assertSame(childEntity._parentEntity, parentEntity)
     assertSame(childEntity.parentEntity, parentEntity)
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(parentEntity)
 
     assertNull(parentEntity._child)
@@ -61,7 +61,7 @@ class ParentChildReferenceTest {
     assertSame(parentEntity._child, childEntity)
     assertSame(parentEntity.child, childEntity)
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(childEntity)
 
     assertNull(parentEntity._child)
@@ -100,7 +100,7 @@ class ParentChildReferenceTest {
     assertSame(parentEntity.child, childEntity)
     assertSame(childEntity.parentEntity, parentEntity)
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(childEntity)
 
     assertNull(parentEntity._child)
@@ -142,7 +142,7 @@ class ParentChildReferenceTest {
       assertEquals(parentEntity, child._parentEntity)
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(parentEntity)
 
     assertNull(parentEntity._children)
@@ -186,7 +186,7 @@ class ParentChildReferenceTest {
     assertEquals(1, children.size)
     assertSame(childEntity, children[0])
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(childEntity)
 
     assertNull(parentEntity._children)
@@ -243,7 +243,7 @@ class ParentChildReferenceTest {
 
   @Test
   fun `check parent and children saved to the store`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val parentEntity = ParentMultipleEntity {
       entitySource = MySource
       parentData = "ParentData"

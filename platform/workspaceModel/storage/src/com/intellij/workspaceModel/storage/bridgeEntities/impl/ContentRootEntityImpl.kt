@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -56,7 +56,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                  
         override fun build(): ContentRootEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -345,7 +345,7 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
     fun isExcludedUrlsInitialized(): Boolean = ::excludedUrls.isInitialized
     fun isExcludedPatternsInitialized(): Boolean = ::excludedPatterns.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ContentRootEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ContentRootEntity> {
         val modifiable = ContentRootEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -356,7 +356,7 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): ContentRootEntity {
+    override fun createEntity(snapshot: EntityStorage): ContentRootEntity {
         val entity = ContentRootEntityImpl()
         entity._url = url
         entity._excludedUrls = excludedUrls

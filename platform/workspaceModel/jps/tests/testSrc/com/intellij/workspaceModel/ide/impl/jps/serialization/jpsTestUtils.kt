@@ -16,8 +16,8 @@ import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -37,7 +37,7 @@ internal val sampleFileBasedProjectFile = File(PathManagerEx.getCommunityHomePat
                                                "jps/model-serialization/testData/sampleProject-ipr/sampleProject.ipr")
 
 internal data class LoadedProjectData(
-  val storage: WorkspaceEntityStorage,
+  val storage: EntityStorage,
   val serializers: JpsProjectSerializersImpl,
   val configLocation: JpsProjectConfigLocation,
   val originalProjectDir: File
@@ -50,7 +50,7 @@ internal data class LoadedProjectData(
 
 internal fun copyAndLoadProject(originalProjectFile: File, virtualFileManager: VirtualFileUrlManager): LoadedProjectData {
   val (projectDir, originalProjectDir) = copyProjectFiles(originalProjectFile)
-  val originalBuilder = WorkspaceEntityStorageBuilder.create()
+  val originalBuilder = MutableEntityStorage.create()
   val projectFile = if (originalProjectFile.isFile) File(projectDir, originalProjectFile.name) else projectDir
   val configLocation = toConfigLocation(projectFile.toPath(), virtualFileManager)
   val serializers = loadProject(configLocation, originalBuilder, virtualFileManager) as JpsProjectSerializersImpl
@@ -66,7 +66,7 @@ internal fun copyProjectFiles(originalProjectFile: File): Pair<File, File> {
   return projectDir to originalProjectDir
 }
 
-internal fun loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: WorkspaceEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager,
+internal fun loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: MutableEntityStorage, virtualFileManager: VirtualFileUrlManager,
                          fileInDirectorySourceNames: FileInDirectorySourceNames = FileInDirectorySourceNames.empty(),
                          externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null): JpsProjectSerializers {
   val cacheDirUrl = configLocation.baseDirectoryUrl.append("cache")
@@ -75,7 +75,7 @@ internal fun loadProject(configLocation: JpsProjectConfigLocation, originalBuild
                                               externalStorageConfigurationManager)
 }
 
-internal fun JpsProjectSerializersImpl.saveAllEntities(storage: WorkspaceEntityStorage, configLocation: JpsProjectConfigLocation) {
+internal fun JpsProjectSerializersImpl.saveAllEntities(storage: EntityStorage, configLocation: JpsProjectConfigLocation) {
   val writer = JpsFileContentWriterImpl(configLocation)
   saveAllEntities(storage, writer)
   writer.writeFiles()
@@ -123,7 +123,7 @@ internal fun createProjectSerializers(projectDir: File,
 }
 
 fun JpsProjectSerializersImpl.checkConsistency(configLocation: JpsProjectConfigLocation,
-                                               storage: WorkspaceEntityStorage,
+                                               storage: EntityStorage,
                                                virtualFileManager: VirtualFileUrlManager) {
   fun getNonNullActualFileUrl(source: EntitySource): String {
     return getActualFileUrl(source) ?: throw AssertionFailedError("file name is not registered for $source")

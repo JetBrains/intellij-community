@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -42,7 +42,7 @@ open class ExtractedDirectoryPackagingElementEntityImpl: ExtractedDirectoryPacka
                  
         override fun build(): ExtractedDirectoryPackagingElementEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -210,7 +210,7 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
     fun isFilePathInitialized(): Boolean = ::filePath.isInitialized
     fun isPathInArchiveInitialized(): Boolean = ::pathInArchive.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ExtractedDirectoryPackagingElementEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ExtractedDirectoryPackagingElementEntity> {
         val modifiable = ExtractedDirectoryPackagingElementEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -221,7 +221,7 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): ExtractedDirectoryPackagingElementEntity {
+    override fun createEntity(snapshot: EntityStorage): ExtractedDirectoryPackagingElementEntity {
         val entity = ExtractedDirectoryPackagingElementEntityImpl()
         entity._filePath = filePath
         entity._pathInArchive = pathInArchive

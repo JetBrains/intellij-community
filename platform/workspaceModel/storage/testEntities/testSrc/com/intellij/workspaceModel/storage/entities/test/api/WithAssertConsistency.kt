@@ -28,7 +28,7 @@ interface AssertConsistencyEntity : WorkspaceEntity {
 
 }
 
-fun WorkspaceEntityStorageBuilder.addAssertConsistencyEntity(passCheck: Boolean, source: EntitySource = MySource): AssertConsistencyEntity {
+fun MutableEntityStorage.addAssertConsistencyEntity(passCheck: Boolean, source: EntitySource = MySource): AssertConsistencyEntity {
   val assertConsistencyEntity = AssertConsistencyEntity {
     this.passCheck = passCheck
     this.entitySource = source

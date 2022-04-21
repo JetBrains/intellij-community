@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -40,7 +40,7 @@ open class LeftEntityImpl: LeftEntity, WorkspaceEntityBase() {
                  
         override fun build(): LeftEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -234,7 +234,7 @@ open class LeftEntityImpl: LeftEntity, WorkspaceEntityBase() {
 class LeftEntityData : WorkspaceEntityData<LeftEntity>() {
 
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<LeftEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<LeftEntity> {
         val modifiable = LeftEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -245,7 +245,7 @@ class LeftEntityData : WorkspaceEntityData<LeftEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): LeftEntity {
+    override fun createEntity(snapshot: EntityStorage): LeftEntity {
         val entity = LeftEntityImpl()
         entity.entitySource = entitySource
         entity.snapshot = snapshot

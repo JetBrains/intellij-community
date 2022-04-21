@@ -14,7 +14,7 @@ import org.junit.Test
 class AbstractEntitiesTest {
   @Test
   fun `simple adding`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
 
     val middleEntity = builder.addMiddleEntity()
     builder.addLeftEntity(sequenceOf(middleEntity))
@@ -27,7 +27,7 @@ class AbstractEntitiesTest {
 
   @Test
   fun `modifying left entity`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
 
     val middleEntity = builder.addMiddleEntity("first")
     val leftEntity = builder.addLeftEntity(sequenceOf(middleEntity))
@@ -47,7 +47,7 @@ class AbstractEntitiesTest {
 
   @Test
   fun `modifying abstract entity`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
 
     val middleEntity = builder.addMiddleEntity()
     val leftEntity = builder.addLeftEntity(sequenceOf(middleEntity))
@@ -67,11 +67,11 @@ class AbstractEntitiesTest {
 
   @Test
   fun `children replace in addDiff`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val middleEntity = builder.addMiddleEntity()
     val leftEntity = builder.addLeftEntity(sequenceOf(middleEntity))
 
-    val anotherBuilder = WorkspaceEntityStorageBuilder.from(builder)
+    val anotherBuilder = MutableEntityStorage.from(builder)
     val anotherMiddleEntity = anotherBuilder.addMiddleEntity("Another")
     anotherBuilder.modifyEntity(leftEntity) {
       this.children = listOf(middleEntity, anotherMiddleEntity)
@@ -93,7 +93,7 @@ class AbstractEntitiesTest {
 
   @Test
   fun `keep children ordering when making storage`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val middleEntity1 = builder.addMiddleEntity("One")
     val middleEntity2 = builder.addMiddleEntity("Two")
     builder.addLeftEntity(sequenceOf(middleEntity1, middleEntity2))
@@ -106,7 +106,7 @@ class AbstractEntitiesTest {
 
   @Test
   fun `keep children ordering when making storage 2`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val middleEntity1 = builder.addMiddleEntity("Two")
     val middleEntity2 = builder.addMiddleEntity("One")
     builder.addLeftEntity(sequenceOf(middleEntity1, middleEntity2))
@@ -126,12 +126,12 @@ class AbstractEntitiesTest {
 
   @Test
   fun `keep children ordering after rbs 1`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val middleEntity1 = builder.addMiddleEntity("One")
     val middleEntity2 = builder.addMiddleEntity("Two")
     builder.addLeftEntity(sequenceOf(middleEntity1, middleEntity2))
 
-    val target = WorkspaceEntityStorageBuilder.create()
+    val target = MutableEntityStorage.create()
 
     target.replaceBySource({ true }, builder)
 
@@ -142,12 +142,12 @@ class AbstractEntitiesTest {
 
   @Test
   fun `keep children ordering after rbs 2`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val middleEntity1 = builder.addMiddleEntity("One")
     val middleEntity2 = builder.addMiddleEntity("Two")
     builder.addLeftEntity(sequenceOf(middleEntity2, middleEntity1))
 
-    val target = WorkspaceEntityStorageBuilder.create()
+    val target = MutableEntityStorage.create()
 
     target.replaceBySource({ true }, builder)
 

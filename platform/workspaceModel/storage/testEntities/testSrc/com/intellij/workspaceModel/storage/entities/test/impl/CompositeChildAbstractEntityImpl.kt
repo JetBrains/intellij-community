@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -46,7 +46,7 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
                  
         override fun build(): CompositeChildAbstractEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -295,7 +295,7 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
 class CompositeChildAbstractEntityData : WorkspaceEntityData<CompositeChildAbstractEntity>() {
 
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<CompositeChildAbstractEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<CompositeChildAbstractEntity> {
         val modifiable = CompositeChildAbstractEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -306,7 +306,7 @@ class CompositeChildAbstractEntityData : WorkspaceEntityData<CompositeChildAbstr
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): CompositeChildAbstractEntity {
+    override fun createEntity(snapshot: EntityStorage): CompositeChildAbstractEntity {
         val entity = CompositeChildAbstractEntityImpl()
         entity.entitySource = entitySource
         entity.snapshot = snapshot

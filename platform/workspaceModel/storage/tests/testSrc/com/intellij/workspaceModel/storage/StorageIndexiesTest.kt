@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -26,7 +26,7 @@ class StorageIndexiesTest {
       }
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
     assertEquals(MySource, entity.entitySource)
 
@@ -58,7 +58,7 @@ class StorageIndexiesTest {
       notNullRoots = listOf(firstRoot, secondRoot)
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     compareEntityByProperty(builder, entity, "entitySource", sourceUrl) { it.entitySource.virtualFileUrl!! }
@@ -74,14 +74,14 @@ class StorageIndexiesTest {
       data = "FirstEntityData"
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
-    builder as WorkspaceEntityStorageBuilderImpl
+    val builder = MutableEntityStorage.create()
+    builder as MutableEntityStorageImpl
     builder.addEntity(entity)
     val entityIds = builder.indexes.persistentIdIndex.getIdsByEntry(entity.persistentId)
     assertNotNull(entityIds)
   }
 
-  private fun compareEntityByProperty(builder: WorkspaceEntityStorageBuilder, originEntity: VFUEntity2,
+  private fun compareEntityByProperty(builder: MutableEntityStorage, originEntity: VFUEntity2,
                                       propertyName: String, virtualFileUrl: VirtualFileUrl,
                                       propertyExtractor: (VFUEntity2) -> VirtualFileUrl) {
     val entities = builder.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl).toList()

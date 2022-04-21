@@ -19,7 +19,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableB
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.toLibraryRootType
 import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
 import com.intellij.workspaceModel.storage.CachedValue
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryPropertiesEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot
@@ -33,8 +33,8 @@ import org.jetbrains.workspaceModel.modifyEntity
 internal class LibraryModifiableModelBridgeImpl(
   private val originalLibrary: LibraryBridgeImpl,
   private val originalLibrarySnapshot: LibraryStateSnapshot,
-  diff: WorkspaceEntityStorageBuilder,
-  private val targetBuilder: WorkspaceEntityStorageBuilder?,
+  diff: MutableEntityStorage,
+  private val targetBuilder: MutableEntityStorage?,
   cacheStorageResult: Boolean = true
 ) : LegacyBridgeModifiableBase(diff, cacheStorageResult), LibraryModifiableModelBridge, RootProvider {
 

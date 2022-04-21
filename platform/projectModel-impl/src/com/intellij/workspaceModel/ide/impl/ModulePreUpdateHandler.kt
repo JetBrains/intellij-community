@@ -3,15 +3,15 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.workspaceModel.ide.WorkspaceModelPreUpdateHandler
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 
 class ModulePreUpdateHandler : WorkspaceModelPreUpdateHandler {
-  override fun update(before: WorkspaceEntityStorage, builder: WorkspaceEntityStorageBuilder): Boolean {
+  override fun update(before: EntityStorage, builder: MutableEntityStorage): Boolean {
     // TODO: 21.12.2020 We need an api to find removed modules faster
     val changes = builder.collectChanges(before)
 

@@ -6,7 +6,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.MySource
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import junit.framework.Assert.*
 import org.junit.Test
@@ -45,7 +45,7 @@ class EntityStorageSerializationTest {
     serializer.serializeCache(stream, builder.toStorage())
 
     val byteArray = stream.toByteArray()
-    val deserialized = (deserializer.deserializeCache(ByteArrayInputStream(byteArray)) as? WorkspaceEntityStorageBuilderImpl)?.toStorage()
+    val deserialized = (deserializer.deserializeCache(ByteArrayInputStream(byteArray)) as? MutableEntityStorageImpl)?.toStorage()
 
     assertNull(deserialized)
   }

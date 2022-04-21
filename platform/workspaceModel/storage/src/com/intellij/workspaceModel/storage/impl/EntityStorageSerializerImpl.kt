@@ -360,7 +360,7 @@ class EntityStorageSerializerImpl(
     return false
   }
 
-  override fun serializeCache(stream: OutputStream, storage: WorkspaceEntityStorage): SerializationResult {
+  override fun serializeCache(stream: OutputStream, storage: EntityStorage): SerializationResult {
     storage as WorkspaceEntityStorageImpl
 
     val output = Output(stream, KRYO_BUFFER_SIZE)
@@ -618,7 +618,8 @@ class EntityStorageSerializerImpl(
     }
   }
 
-  override fun deserializeCache(stream: InputStream): WorkspaceEntityStorageBuilder? {
+  @Suppress("UNCHECKED_CAST")
+  override fun deserializeCache(stream: InputStream): MutableEntityStorage? {
     return Input(stream, KRYO_BUFFER_SIZE).use { input ->
       val kryo = createKryo()
 
@@ -657,7 +658,7 @@ class EntityStorageSerializerImpl(
         val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
 
         val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes)
-        val builder = WorkspaceEntityStorageBuilderImpl.from(storage)
+        val builder = MutableEntityStorageImpl.from(storage)
 
         builder.entitiesByType.entityFamilies.forEach { family ->
           family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData -> builder.createAddEvent(entityData) }
@@ -722,7 +723,7 @@ class EntityStorageSerializerImpl(
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun deserializeCacheAndDiffLog(storeStream: InputStream, diffLogStream: InputStream): WorkspaceEntityStorageBuilder? {
+  fun deserializeCacheAndDiffLog(storeStream: InputStream, diffLogStream: InputStream): MutableEntityStorage? {
     val builder = this.deserializeCache(storeStream) ?: return null
 
     var log: ChangeLog
@@ -743,7 +744,7 @@ class EntityStorageSerializerImpl(
       log = kryo.readClassAndObject(input) as ChangeLog
     }
 
-    builder as WorkspaceEntityStorageBuilderImpl
+    builder as MutableEntityStorageImpl
     builder.changeLog.changeLog.clear()
     builder.changeLog.changeLog.putAll(log)
 

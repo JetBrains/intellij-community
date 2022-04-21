@@ -60,7 +60,7 @@ open class ArtifactBridge(
     })
   }
 
-  private val diffOrNull: WorkspaceEntityStorageBuilder?
+  private val diffOrNull: MutableEntityStorage?
     get() {
       val storage = entityStorage
       if (storage is VersionedEntityStorageOnBuilder) {
@@ -69,7 +69,7 @@ open class ArtifactBridge(
       return null
     }
 
-  private val diff: WorkspaceEntityStorageBuilder
+  private val diff: MutableEntityStorage
     get() = diffOrNull ?: error("")
 
   private var artifactIdRaw = _artifactId
@@ -278,7 +278,7 @@ open class ArtifactBridge(
   }
 
   companion object {
-    internal fun resetProperties(id: ArtifactId, myDiff: WorkspaceEntityStorageBuilder?) {
+    internal fun resetProperties(id: ArtifactId, myDiff: MutableEntityStorage?) {
       // We process only artifact bridges with builder because this logic is applied to the new created artifacts only.
       // If the artifact entity already exists, we suppose that this artifact already has all custom properties filled.
       val builder = myDiff ?: return

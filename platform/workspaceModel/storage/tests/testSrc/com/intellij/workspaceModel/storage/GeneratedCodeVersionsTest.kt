@@ -107,7 +107,7 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
 
     override fun build(): SuperSimpleEntity = this
 
-    override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+    override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
         if (existsInBuilder(builder)) {
           this.diff = builder
@@ -191,7 +191,7 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
 class SuperSimpleEntityData : WorkspaceEntityData<SuperSimpleEntity>() {
 
 
-  override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<SuperSimpleEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SuperSimpleEntity> {
     val modifiable = SuperSimpleEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff
@@ -206,7 +206,7 @@ class SuperSimpleEntityData : WorkspaceEntityData<SuperSimpleEntity>() {
     return SuperSimpleEntity::class.java
   }
 
-  override fun createEntity(snapshot: WorkspaceEntityStorage): SuperSimpleEntity {
+  override fun createEntity(snapshot: EntityStorage): SuperSimpleEntity {
     val entity = SuperSimpleEntityImpl()
     entity.entitySource = entitySource
     entity.snapshot = snapshot

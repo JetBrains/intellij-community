@@ -6,8 +6,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
@@ -33,7 +33,7 @@ open class WithListSoftLinksEntityImpl: WithListSoftLinksEntity, WorkspaceEntity
                  
         override fun build(): WithListSoftLinksEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -202,7 +202,7 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
         return changed
     }
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<WithListSoftLinksEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<WithListSoftLinksEntity> {
         val modifiable = WithListSoftLinksEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -213,7 +213,7 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): WithListSoftLinksEntity {
+    override fun createEntity(snapshot: EntityStorage): WithListSoftLinksEntity {
         val entity = WithListSoftLinksEntityImpl()
         entity._myName = myName
         entity._links = links

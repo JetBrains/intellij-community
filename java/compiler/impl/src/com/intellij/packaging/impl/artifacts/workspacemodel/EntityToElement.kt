@@ -14,7 +14,7 @@ import com.intellij.packaging.impl.artifacts.UnknownPackagingElementTypeExceptio
 import com.intellij.packaging.impl.elements.*
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
@@ -82,7 +82,7 @@ internal fun CompositePackagingElementEntity.toCompositeElement(
         }
         if (addToMapping) {
           val storageBase = storage.base
-          if (storageBase is WorkspaceEntityStorageBuilder) {
+          if (storageBase is MutableEntityStorage) {
             val mutableMapping = storageBase.mutableElements
             mutableMapping.addMapping(this, element)
           }
@@ -211,7 +211,7 @@ fun PackagingElementEntity.toElement(project: Project, storage: VersionedEntityS
         }
 
         val storageBase = storage.base
-        if (storageBase is WorkspaceEntityStorageBuilder) {
+        if (storageBase is MutableEntityStorage) {
           val mutableMapping = storageBase.mutableElements
           mutableMapping.addIfAbsent(this, element)
         }

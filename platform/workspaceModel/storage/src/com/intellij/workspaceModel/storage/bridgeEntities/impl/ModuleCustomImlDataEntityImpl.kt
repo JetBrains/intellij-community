@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -39,7 +39,7 @@ open class ModuleCustomImlDataEntityImpl: ModuleCustomImlDataEntity, WorkspaceEn
                  
         override fun build(): ModuleCustomImlDataEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -208,7 +208,7 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
 
     fun isCustomModuleOptionsInitialized(): Boolean = ::customModuleOptions.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ModuleCustomImlDataEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ModuleCustomImlDataEntity> {
         val modifiable = ModuleCustomImlDataEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -219,7 +219,7 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): ModuleCustomImlDataEntity {
+    override fun createEntity(snapshot: EntityStorage): ModuleCustomImlDataEntity {
         val entity = ModuleCustomImlDataEntityImpl()
         entity._rootManagerTagCustomData = rootManagerTagCustomData
         entity._customModuleOptions = customModuleOptions

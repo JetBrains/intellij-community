@@ -28,8 +28,8 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.storage.CachedValue
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
@@ -46,7 +46,7 @@ import org.jetbrains.workspaceModel.modifyEntity
 import java.util.concurrent.ConcurrentHashMap
 
 internal class ModifiableRootModelBridgeImpl(
-  diff: WorkspaceEntityStorageBuilder,
+  diff: MutableEntityStorage,
   override val moduleBridge: ModuleBridge,
   override val accessor: RootConfigurationAccessor,
   cacheStorageResult: Boolean = true
@@ -69,7 +69,7 @@ internal class ModifiableRootModelBridgeImpl(
                         ?: error("Cannot find module entity for ${module.moduleEntityId}. Bridge: '$moduleBridge'. Store: $diff")
   }
 
-  private fun getModuleEntity(current: WorkspaceEntityStorage, myModuleBridge: ModuleBridge): ModuleEntity? {
+  private fun getModuleEntity(current: EntityStorage, myModuleBridge: ModuleBridge): ModuleEntity? {
     // Try to get entity by module id
     // In some cases this won't work. These cases can happen during maven or gradle import where we provide a general builder.
     //   The case: we rename the module. Since the changes not yet committed, the module will remain with the old persistentId. After that
@@ -163,7 +163,7 @@ internal class ModifiableRootModelBridgeImpl(
     }
   }
 
-  override val storage: WorkspaceEntityStorage
+  override val storage: EntityStorage
     get() = entityStorageOnDiff.current
 
   override fun getOrCreateJpsRootProperties(sourceRootUrl: VirtualFileUrl, creator: () -> JpsModuleSourceRoot): JpsModuleSourceRoot {
@@ -450,7 +450,7 @@ internal class ModifiableRootModelBridgeImpl(
     }
   }
 
-  fun collectChangesAndDispose(): WorkspaceEntityStorageBuilder? {
+  fun collectChangesAndDispose(): MutableEntityStorage? {
     assertModelIsLive()
     Disposer.dispose(moduleLibraryTable)
     if (!isChanged) {

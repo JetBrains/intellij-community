@@ -21,11 +21,11 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSyn
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 
 internal class ModuleBridgeLoaderService(private val project: Project) {
-  private var storeToEntitySources: Pair<WorkspaceEntityStorage, List<EntitySource>>? = null
+  private var storeToEntitySources: Pair<EntityStorage, List<EntitySource>>? = null
   private var activity: Activity? = null
 
   init {

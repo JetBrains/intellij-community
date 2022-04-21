@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -35,7 +35,7 @@ open class FacetExternalSystemIdEntityImpl: FacetExternalSystemIdEntity, Workspa
                  
         override fun build(): FacetExternalSystemIdEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -195,7 +195,7 @@ class FacetExternalSystemIdEntityData : WorkspaceEntityData<FacetExternalSystemI
 
     fun isExternalSystemIdInitialized(): Boolean = ::externalSystemId.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<FacetExternalSystemIdEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<FacetExternalSystemIdEntity> {
         val modifiable = FacetExternalSystemIdEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -206,7 +206,7 @@ class FacetExternalSystemIdEntityData : WorkspaceEntityData<FacetExternalSystemI
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): FacetExternalSystemIdEntity {
+    override fun createEntity(snapshot: EntityStorage): FacetExternalSystemIdEntity {
         val entity = FacetExternalSystemIdEntityImpl()
         entity._externalSystemId = externalSystemId
         entity.entitySource = entitySource

@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -26,7 +26,7 @@ open class MainEntityImpl: MainEntity, WorkspaceEntityBase() {
                  
         override fun build(): MainEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -130,7 +130,7 @@ class MainEntityData : WorkspaceEntityData<MainEntity>() {
 
     fun isXInitialized(): Boolean = ::x.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<MainEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<MainEntity> {
         val modifiable = MainEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -141,7 +141,7 @@ class MainEntityData : WorkspaceEntityData<MainEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): MainEntity {
+    override fun createEntity(snapshot: EntityStorage): MainEntity {
         val entity = MainEntityImpl()
         entity._x = x
         entity.entitySource = entitySource

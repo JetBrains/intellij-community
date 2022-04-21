@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -35,7 +35,7 @@ open class ParentNullableEntityImpl: ParentNullableEntity, WorkspaceEntityBase()
                  
         override fun build(): ParentNullableEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -179,7 +179,7 @@ class ParentNullableEntityData : WorkspaceEntityData<ParentNullableEntity>() {
 
     fun isParentDataInitialized(): Boolean = ::parentData.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ParentNullableEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ParentNullableEntity> {
         val modifiable = ParentNullableEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -190,7 +190,7 @@ class ParentNullableEntityData : WorkspaceEntityData<ParentNullableEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): ParentNullableEntity {
+    override fun createEntity(snapshot: EntityStorage): ParentNullableEntity {
         val entity = ParentNullableEntityImpl()
         entity._parentData = parentData
         entity.entitySource = entitySource

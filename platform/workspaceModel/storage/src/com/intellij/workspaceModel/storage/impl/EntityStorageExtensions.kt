@@ -2,14 +2,15 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorage
 
 // ------------------------- Updating references ------------------------
 
-fun WorkspaceEntityStorage.updateOneToManyChildrenOfParent(connectionId: ConnectionId,
-                                                           parent: WorkspaceEntity,
-                                                           children: List<WorkspaceEntity>) {
-    this as WorkspaceEntityStorageBuilderImpl
+@Suppress("unused")
+fun EntityStorage.updateOneToManyChildrenOfParent(connectionId: ConnectionId,
+                                                  parent: WorkspaceEntity,
+                                                  children: List<WorkspaceEntity>) {
+    this as MutableEntityStorageImpl
     val parentId = (parent as WorkspaceEntityBase).id
     val childrenIds = children.map { (it as WorkspaceEntityBase).id.asChild() }
     if (!connectionId.isParentNullable) {
@@ -23,19 +24,21 @@ fun WorkspaceEntityStorage.updateOneToManyChildrenOfParent(connectionId: Connect
 }
 
 
-fun WorkspaceEntityStorage.updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId,
-                                                                   parentEntity: WorkspaceEntity,
-                                                                   childrenEntity: Sequence<WorkspaceEntity>) {
-    this as WorkspaceEntityStorageBuilderImpl
+@Suppress("unused")
+fun EntityStorage.updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId,
+                                                          parentEntity: WorkspaceEntity,
+                                                          childrenEntity: Sequence<WorkspaceEntity>) {
+    this as MutableEntityStorageImpl
     val parentId = (parentEntity as WorkspaceEntityBase).id.asParent()
     val childrenIds = childrenEntity.map { (it as WorkspaceEntityBase).id.asChild() }
     refs.updateOneToAbstractManyChildrenOfParent(connectionId, parentId, childrenIds)
 }
 
-fun WorkspaceEntityStorage.updateOneToAbstractOneChildOfParent(connectionId: ConnectionId,
-                                                               parentEntity: WorkspaceEntity,
-                                                               childEntity: WorkspaceEntity?) {
-    this as WorkspaceEntityStorageBuilderImpl
+@Suppress("unused")
+fun EntityStorage.updateOneToAbstractOneChildOfParent(connectionId: ConnectionId,
+                                                      parentEntity: WorkspaceEntity,
+                                                      childEntity: WorkspaceEntity?) {
+    this as MutableEntityStorageImpl
     val parentId = (parentEntity as WorkspaceEntityBase).id.asParent()
     val childId = (childEntity as? WorkspaceEntityBase)?.id?.asChild()
     if (childId != null) {
@@ -46,9 +49,9 @@ fun WorkspaceEntityStorage.updateOneToAbstractOneChildOfParent(connectionId: Con
 }
 
 @Suppress("unused")
-fun WorkspaceEntityStorage.updateOneToOneChildOfParent(connectionId: ConnectionId, parentEntity: WorkspaceEntity,
-                                                       childEntity: WorkspaceEntity?) {
-    this as WorkspaceEntityStorageBuilderImpl
+fun EntityStorage.updateOneToOneChildOfParent(connectionId: ConnectionId, parentEntity: WorkspaceEntity,
+                                              childEntity: WorkspaceEntity?) {
+    this as MutableEntityStorageImpl
     val parentId = (parentEntity as WorkspaceEntityBase).id
     val childId = (childEntity as? WorkspaceEntityBase)?.id?.asChild()
     val existingChildId = extractOneToOneChildIds(connectionId, parentId)
@@ -64,10 +67,10 @@ fun WorkspaceEntityStorage.updateOneToOneChildOfParent(connectionId: ConnectionI
 }
 
 @Suppress("unused")
-fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.updateOneToManyParentOfChild(connectionId: ConnectionId,
-                                                                                   childEntity: WorkspaceEntity,
-                                                                                   parentEntity: Parent?) {
-    this as WorkspaceEntityStorageBuilderImpl
+fun <Parent : WorkspaceEntity> EntityStorage.updateOneToManyParentOfChild(connectionId: ConnectionId,
+                                                                          childEntity: WorkspaceEntity,
+                                                                          parentEntity: Parent?) {
+    this as MutableEntityStorageImpl
     val childId = (childEntity as WorkspaceEntityBase).id.asChild()
     val parentId = (parentEntity as? WorkspaceEntityBase)?.id?.asParent()
     if (parentId != null) {
@@ -78,10 +81,10 @@ fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.updateOneToManyParentOfChi
     }
 }
 
-fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.updateOneToAbstractManyParentOfChild(connectionId: ConnectionId,
-                                                                                           child: WorkspaceEntity,
-                                                                                           parent: Parent?) {
-    this as WorkspaceEntityStorageBuilderImpl
+fun <Parent : WorkspaceEntity> EntityStorage.updateOneToAbstractManyParentOfChild(connectionId: ConnectionId,
+                                                                                  child: WorkspaceEntity,
+                                                                                  parent: Parent?) {
+    this as MutableEntityStorageImpl
     val childId = (child as WorkspaceEntityBase).id.asChild()
     val parentId = (parent as? WorkspaceEntityBase)?.id?.asParent()
     if (parentId != null) {
@@ -92,10 +95,10 @@ fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.updateOneToAbstractManyPar
 }
 
 @Suppress("unused")
-fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.updateOneToOneParentOfChild(connectionId: ConnectionId,
-                                                                                  childEntity: WorkspaceEntity,
-                                                                                  parentEntity: Parent?) {
-    this as WorkspaceEntityStorageBuilderImpl
+fun <Parent : WorkspaceEntity> EntityStorage.updateOneToOneParentOfChild(connectionId: ConnectionId,
+                                                                         childEntity: WorkspaceEntity,
+                                                                         parentEntity: Parent?) {
+    this as MutableEntityStorageImpl
     val parentId = (parentEntity as? WorkspaceEntityBase)?.id?.asParent()
     val childId = (childEntity as WorkspaceEntityBase).id
     if (!connectionId.isParentNullable && parentId != null) {
@@ -113,10 +116,10 @@ fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.updateOneToOneParentOfChil
     }
 }
 
-fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.updateOneToAbstractOneParentOfChild(connectionId: ConnectionId,
-    childEntity: WorkspaceEntity, parentEntity: Parent?
+fun <Parent : WorkspaceEntity> EntityStorage.updateOneToAbstractOneParentOfChild(connectionId: ConnectionId,
+                                                                                 childEntity: WorkspaceEntity, parentEntity: Parent?
 ) {
-    this as WorkspaceEntityStorageBuilderImpl
+    this as MutableEntityStorageImpl
     val parentId = (parentEntity as? WorkspaceEntityBase)?.id?.asParent()
     val childId = (childEntity as WorkspaceEntityBase).id.asChild()
     if (!connectionId.isParentNullable && parentId != null) {
@@ -136,8 +139,9 @@ fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.updateOneToAbstractOnePare
 
 // ------------------------- Extracting references references ------------------------
 
-fun <Child : WorkspaceEntity> WorkspaceEntityStorage.extractOneToManyChildren(connectionId: ConnectionId,
-                                                                              parent: WorkspaceEntity): Sequence<Child> {
+@Suppress("unused")
+fun <Child : WorkspaceEntity> EntityStorage.extractOneToManyChildren(connectionId: ConnectionId,
+                                                                     parent: WorkspaceEntity): Sequence<Child> {
   return (this as AbstractEntityStorage).extractOneToManyChildren(connectionId, (parent as WorkspaceEntityBase).id)
 }
 
@@ -172,8 +176,8 @@ internal fun AbstractEntityStorage.extractOneToOneChildIds(connectionId: Connect
 }
 
 @Suppress("unused")
-fun <Child : WorkspaceEntity> WorkspaceEntityStorage.extractOneToAbstractManyChildren(connectionId: ConnectionId,
-                                                                                      parent: WorkspaceEntity): Sequence<Child> {
+fun <Child : WorkspaceEntity> EntityStorage.extractOneToAbstractManyChildren(connectionId: ConnectionId,
+                                                                             parent: WorkspaceEntity): Sequence<Child> {
   return (this as AbstractEntityStorage).extractOneToAbstractManyChildren(connectionId, (parent as WorkspaceEntityBase).id.asParent())
 }
 
@@ -185,7 +189,7 @@ internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstrac
   } as? Sequence<Child> ?: emptySequence()
 }
 
-fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.extractOneToAbstractManyParent(
+fun <Parent : WorkspaceEntity> EntityStorage.extractOneToAbstractManyParent(
     connectionId: ConnectionId,
     child: WorkspaceEntity
 ): Parent? {
@@ -204,8 +208,8 @@ internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstra
 }
 
 @Suppress("unused")
-fun <Child : WorkspaceEntity> WorkspaceEntityStorage.extractOneToAbstractOneChild(connectionId: ConnectionId,
-                                                                                  parent: WorkspaceEntity): Child? {
+fun <Child : WorkspaceEntity> EntityStorage.extractOneToAbstractOneChild(connectionId: ConnectionId,
+                                                                         parent: WorkspaceEntity): Child? {
   return (this as AbstractEntityStorage).extractOneToAbstractOneChild(connectionId, (parent as WorkspaceEntityBase).id.asParent())
 }
 
@@ -216,8 +220,8 @@ internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstrac
 }
 
 @Suppress("unused")
-fun <Child : WorkspaceEntity> WorkspaceEntityStorage.extractAbstractOneToOneChild(connectionId: ConnectionId,
-                                                                                  parent: WorkspaceEntity): Child? {
+fun <Child : WorkspaceEntity> EntityStorage.extractAbstractOneToOneChild(connectionId: ConnectionId,
+                                                                         parent: WorkspaceEntity): Child? {
   return (this as AbstractEntityStorage).extractAbstractOneToOneChild(connectionId, (parent as WorkspaceEntityBase).id.asParent())
 }
 
@@ -228,7 +232,7 @@ internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractAbstractOneT
 }
 
 @Suppress("unused")
-fun <Child : WorkspaceEntity> WorkspaceEntityStorage.extractOneToOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): Child? {
+fun <Child : WorkspaceEntity> EntityStorage.extractOneToOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): Child? {
   return (this as AbstractEntityStorage).extractOneToOneChild(connectionId, (parent as WorkspaceEntityBase).id)
 }
 
@@ -253,8 +257,8 @@ internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToOneChil
 }
 
 @Suppress("unused")
-fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.extractOneToOneParent(connectionId: ConnectionId,
-                                                                            child: WorkspaceEntity): Parent? {
+fun <Parent : WorkspaceEntity> EntityStorage.extractOneToOneParent(connectionId: ConnectionId,
+                                                                   child: WorkspaceEntity): Parent? {
   return (this as AbstractEntityStorage).extractOneToOneParent(connectionId, (child as WorkspaceEntityBase).id)
 }
 
@@ -279,7 +283,7 @@ internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToOnePar
   }
 }
 
-fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.extractOneToAbstractOneParent(
+fun <Parent : WorkspaceEntity> EntityStorage.extractOneToAbstractOneParent(
     connectionId: ConnectionId,
     child: WorkspaceEntity,
 ): Parent? {
@@ -299,8 +303,8 @@ internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstra
 }
 
 @Suppress("unused")
-fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.extractOneToManyParent(connectionId: ConnectionId,
-                                                                             child: WorkspaceEntity): Parent? {
+fun <Parent : WorkspaceEntity> EntityStorage.extractOneToManyParent(connectionId: ConnectionId,
+                                                                    child: WorkspaceEntity): Parent? {
   return (this as AbstractEntityStorage).extractOneToManyParent(connectionId, (child as WorkspaceEntityBase).id)
 }
 

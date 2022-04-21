@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
+import com.intellij.workspaceModel.storage.EntityStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,5 +28,5 @@ public interface IndexableIteratorBuilderHandler {
   @NotNull
   List<? extends IndexableFilesIterator> instantiate(@NotNull Collection<IndexableEntityProvider.IndexableIteratorBuilder> builders,
                                                      @NotNull Project project,
-                                                     @NotNull WorkspaceEntityStorage entityStorage);
+                                                     @NotNull EntityStorage entityStorage);
 }

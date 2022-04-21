@@ -24,7 +24,7 @@ import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
@@ -38,7 +38,7 @@ internal class ModuleBridgeImpl(
   project: Project,
   virtualFileUrl: VirtualFileUrl?,
   override var entityStorage: VersionedEntityStorage,
-  override var diff: WorkspaceEntityStorageBuilder?
+  override var diff: MutableEntityStorage?
 ) : ModuleImpl(name, project, virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge {
   init {
     // default project doesn't have modules
@@ -53,7 +53,7 @@ internal class ModuleBridgeImpl(
             if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
 
             val currentStore = entityStorage.current
-            val storage = if (currentStore is WorkspaceEntityStorageBuilder) currentStore.toStorage() else currentStore
+            val storage = if (currentStore is MutableEntityStorage) currentStore.toStorage() else currentStore
             entityStorage = VersionedEntityStorageOnStorage(storage)
             assert(entityStorage.current.resolve(moduleEntityId) != null) {
               // If we ever get this assertion, replace use `event.storeBefore` instead of current
@@ -126,7 +126,7 @@ internal class ModuleBridgeImpl(
   }
 
   override fun setOption(key: String, value: String?) {
-    fun updateOptionInEntity(diff: WorkspaceEntityStorageBuilder, entity: ModuleEntity) {
+    fun updateOptionInEntity(diff: MutableEntityStorage, entity: ModuleEntity) {
       if (key == Module.ELEMENT_TYPE) {
         diff.modifyEntity(entity) { type = value }
       }

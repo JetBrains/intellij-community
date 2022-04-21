@@ -10,7 +10,7 @@ import org.junit.Test
 class AddChildrenTest {
   @Test
   fun `child added to the store at parent modification`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val entity = ParentNullableEntity {
       entitySource = MySource
       parentData = "ParentData"
@@ -31,7 +31,7 @@ class AddChildrenTest {
 
   @Test
   fun `new child added to the store at list modification`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val parentEntity = ParentMultipleEntity {
       entitySource = MySource
       parentData = "ParentData"
@@ -61,7 +61,7 @@ class AddChildrenTest {
 
   @Test
   fun `child was removed from the store after list update`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val parentEntity = ParentMultipleEntity {
       entitySource = MySource
       parentData = "ParentData"
@@ -90,7 +90,7 @@ class AddChildrenTest {
 
   @Test
   fun `remove child from store at parent modification`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val entity = ParentNullableEntity {
       entitySource = MySource
       parentData = "ParentData"
@@ -110,7 +110,7 @@ class AddChildrenTest {
 
   @Test
   fun `remove old child at parent entity update`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val commonChild = ChildNullableEntity {
       entitySource = MySource
       childData = "ChildDataTwo"

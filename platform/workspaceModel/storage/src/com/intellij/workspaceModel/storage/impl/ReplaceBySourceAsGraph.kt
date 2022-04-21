@@ -25,8 +25,8 @@ internal object ReplaceBySourceAsGraph {
    *  - Restore references between matched entities.
    */
   internal fun replaceBySourceAsGraph(
-    thisBuilder: WorkspaceEntityStorageBuilderImpl,
-    replaceWith: WorkspaceEntityStorage,
+    thisBuilder: MutableEntityStorageImpl,
+    replaceWith: EntityStorage,
     sourceFilter: (EntitySource) -> Boolean,
 
     // This is a super ultra dirty hack to make one test reproducible
@@ -383,12 +383,12 @@ internal object ReplaceBySourceAsGraph {
     }
   }
 
-  private fun WorkspaceEntityData<*>.hasPersistentId(thisBuilder: WorkspaceEntityStorageBuilderImpl): Boolean {
+  private fun WorkspaceEntityData<*>.hasPersistentId(thisBuilder: MutableEntityStorageImpl): Boolean {
     val entity = this.createEntity(thisBuilder)
     return entity is WorkspaceEntityWithPersistentId
   }
 
-  private fun replaceOperation(thisBuilder: WorkspaceEntityStorageBuilderImpl,
+  private fun replaceOperation(thisBuilder: MutableEntityStorageImpl,
                                matchedEntityData: WorkspaceEntityData<out WorkspaceEntity>,
                                replaceWith: AbstractEntityStorage,
                                localNode: WorkspaceEntityData<out WorkspaceEntity>,
@@ -432,11 +432,11 @@ internal object ReplaceBySourceAsGraph {
    * One important notes of the entity remove: we make it only if the second store contains entity which matched by source filter,
    * we don't remove entity which already was replaced and we don't remove the the object itself.
    */
-  private fun WorkspaceEntityStorageBuilderImpl.removeEntitiesByOneToOneRef(sourceFilter: (EntitySource) -> Boolean,
-                                                                            replaceWith: AbstractEntityStorage,
-                                                                            replaceMap: Map<ThisEntityId, NotThisEntityId>,
-                                                                            matchedEntityId: NotThisEntityId,
-                                                                            localEntityId: ThisEntityId): Set<WorkspaceEntityData<out WorkspaceEntity>> {
+  private fun MutableEntityStorageImpl.removeEntitiesByOneToOneRef(sourceFilter: (EntitySource) -> Boolean,
+                                                                   replaceWith: AbstractEntityStorage,
+                                                                   replaceMap: Map<ThisEntityId, NotThisEntityId>,
+                                                                   matchedEntityId: NotThisEntityId,
+                                                                   localEntityId: ThisEntityId): Set<WorkspaceEntityData<out WorkspaceEntity>> {
     val replacingChildrenOneToOneConnections = replaceWith.refs
       .getChildrenOneToOneRefsOfParentBy(matchedEntityId.id.asParent())
       .filter { !it.key.isParentNullable }
@@ -460,9 +460,9 @@ internal object ReplaceBySourceAsGraph {
     return result
   }
 
-  private fun WorkspaceEntityStorageBuilderImpl.rbsFailedAndReport(message: String, sourceFilter: (EntitySource) -> Boolean,
-                                                                   left: WorkspaceEntityStorage?,
-                                                                   right: WorkspaceEntityStorage) {
+  private fun MutableEntityStorageImpl.rbsFailedAndReport(message: String, sourceFilter: (EntitySource) -> Boolean,
+                                                          left: EntityStorage?,
+                                                          right: EntityStorage) {
     reportConsistencyIssue(message, ReplaceBySourceException(message), sourceFilter, left, right, this)
   }
 

@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 class DisposableCachedValue<R : Disposable>(private val entityStorage: () -> VersionedEntityStorage,
                                             private val cachedValue: CachedValue<R>) : Disposable {
@@ -19,7 +19,7 @@ class DisposableCachedValue<R : Disposable>(private val entityStorage: () -> Ver
       val currentValue: R
       val storage = entityStorage()
       if (storage is DummyVersionedEntityStorage) {
-        val storageModificationCount = (storage.current as WorkspaceEntityStorageBuilder).modificationCount
+        val storageModificationCount = (storage.current as MutableEntityStorage).modificationCount
         if (storageModificationCount != latestStorageModificationCount) {
           currentValue = storage.cachedValue(cachedValue)
           latestStorageModificationCount = storageModificationCount

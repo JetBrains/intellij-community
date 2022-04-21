@@ -13,7 +13,10 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.isModuleUnloaded
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.storage.ExternalEntityMapping
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 
@@ -30,7 +33,7 @@ object IndexableEntityProviderMethods {
     return setOf(ModuleIndexableFilesIteratorImpl(module, roots, true))
   }
 
-  fun createIterators(entity: ModuleEntity, entityStorage: WorkspaceEntityStorage, project: Project): Collection<IndexableFilesIterator> {
+  fun createIterators(entity: ModuleEntity, entityStorage: EntityStorage, project: Project): Collection<IndexableFilesIterator> {
     @Suppress("DEPRECATION")
     if (DefaultProjectIndexableFilesContributor.indexProjectBasedOnIndexableEntityProviders()) {
       if (entity.isModuleUnloaded(entityStorage)) return emptyList()

@@ -207,9 +207,9 @@ internal class MutableStorageIndexes(
     }
   }
 
-  fun applyExternalMappingChanges(diff: WorkspaceEntityStorageBuilderImpl,
+  fun applyExternalMappingChanges(diff: MutableEntityStorageImpl,
                                   replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>,
-                                  target: WorkspaceEntityStorageBuilderImpl) {
+                                  target: MutableEntityStorageImpl) {
     diff.indexes.externalMappings.keys.asSequence().filterNot { it in externalMappings.keys }.forEach {
       externalMappings[it] = MutableExternalEntityMappingImpl<Any>()
     }
@@ -241,7 +241,7 @@ internal class MutableStorageIndexes(
     }
   }
 
-  fun <T : WorkspaceEntity> updatePersistentIdIndexes(builder: WorkspaceEntityStorageBuilderImpl,
+  fun <T : WorkspaceEntity> updatePersistentIdIndexes(builder: MutableEntityStorageImpl,
                                                       updatedEntity: WorkspaceEntity,
                                                       beforePersistentId: PersistentEntityId<*>?,
                                                       copiedData: WorkspaceEntityData<T>,
@@ -257,7 +257,7 @@ internal class MutableStorageIndexes(
     simpleUpdateSoftReferences(copiedData, modifiableEntity)
   }
 
-  private fun updateComposedIds(builder: WorkspaceEntityStorageBuilderImpl,
+  private fun updateComposedIds(builder: MutableEntityStorageImpl,
                                 beforePersistentId: PersistentEntityId<*>,
                                 newPersistentId: PersistentEntityId<*>) {
     val idsWithSoftRef = HashSet(this.softLinks.getIdsByEntry(beforePersistentId))

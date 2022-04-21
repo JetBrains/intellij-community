@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -35,7 +35,7 @@ open class VFUWithTwoPropertiesEntityImpl: VFUWithTwoPropertiesEntity, Workspace
                  
         override fun build(): VFUWithTwoPropertiesEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -171,7 +171,7 @@ class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPropertiesE
     fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
     fun isSecondFilePropertyInitialized(): Boolean = ::secondFileProperty.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<VFUWithTwoPropertiesEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<VFUWithTwoPropertiesEntity> {
         val modifiable = VFUWithTwoPropertiesEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -182,7 +182,7 @@ class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPropertiesE
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): VFUWithTwoPropertiesEntity {
+    override fun createEntity(snapshot: EntityStorage): VFUWithTwoPropertiesEntity {
         val entity = VFUWithTwoPropertiesEntityImpl()
         entity._data = data
         entity._fileProperty = fileProperty

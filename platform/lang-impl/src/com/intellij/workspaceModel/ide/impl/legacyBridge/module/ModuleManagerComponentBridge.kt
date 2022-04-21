@@ -298,8 +298,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
                                                  preloadMode = ServiceDescriptor.PreloadMode.FALSE)
   }
 
-  override fun loadModuleToBuilder(moduleName: String, filePath: String, diff: WorkspaceEntityStorageBuilder): ModuleEntity {
-    val builder = WorkspaceEntityStorageBuilder.create()
+  override fun loadModuleToBuilder(moduleName: String, filePath: String, diff: MutableEntityStorage): ModuleEntity {
+    val builder = MutableEntityStorage.create()
     var errorMessage: String? = null
     JpsProjectEntitiesLoader.loadModule(Paths.get(filePath), getJpsProjectConfigLocation(project)!!, builder, object : ErrorReporter {
       override fun reportError(message: String, file: VirtualFileUrl) {
@@ -321,7 +321,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   }
 
   override fun createModule(persistentId: ModuleId, name: String, virtualFileUrl: VirtualFileUrl?, entityStorage: VersionedEntityStorage,
-                            diff: WorkspaceEntityStorageBuilder?): ModuleBridge {
+                            diff: MutableEntityStorage?): ModuleBridge {
     return ModuleBridgeImpl(persistentId, name, project, virtualFileUrl, entityStorage, diff)
   }
 

@@ -31,7 +31,7 @@ class EntityTracingLogger {
     }
   }
 
-  fun printInfoAboutTracedEntity(storage: WorkspaceEntityStorage, storageDescription: String) {
+  fun printInfoAboutTracedEntity(storage: EntityStorage, storageDescription: String) {
     if (entityToTrace != null) {
       LOG.info("Traced entity from $storageDescription: ${storage.resolve(entityToTrace)?.toDebugString()}")
     }

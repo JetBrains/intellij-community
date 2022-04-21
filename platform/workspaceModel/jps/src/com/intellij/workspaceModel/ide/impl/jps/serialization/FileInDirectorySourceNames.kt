@@ -6,7 +6,7 @@ import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
@@ -49,7 +49,7 @@ class FileInDirectorySourceNames private constructor(entitiesBySource: Map<Entit
     mainEntityToSource[entityClass to fileName]
 
   companion object {
-    fun from(storage: WorkspaceEntityStorage) = FileInDirectorySourceNames(
+    fun from(storage: EntityStorage) = FileInDirectorySourceNames(
       storage.entitiesBySource { getInternalFileSource(it) is JpsFileEntitySource.FileInDirectory }
     )
 

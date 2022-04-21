@@ -14,7 +14,7 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.xmlb.annotations.XCollection
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.xml.util.XmlStringUtil
@@ -26,7 +26,7 @@ import com.intellij.xml.util.XmlStringUtil
 @State(name = "AutomaticModuleUnloader", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
 internal class AutomaticModuleUnloaderImpl(private val project: Project) : SimplePersistentStateComponent<LoadedModulesListStorage>(LoadedModulesListStorage()),
                                                                            AutomaticModuleUnloader {
-  override fun processNewModules(currentModules: Set<String>, storage: WorkspaceEntityStorage) {
+  override fun processNewModules(currentModules: Set<String>, storage: EntityStorage) {
     if (currentModules.isEmpty()) return
 
     val oldLoaded = state.modules.toSet()
@@ -61,7 +61,7 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
     unloadedStorage.addUnloadedModuleNames(toUnload)
   }
 
-  private fun processTransitiveDependencies(moduleId: ModuleId, storage: WorkspaceEntityStorage, explicitlyUnloaded: Set<String>,
+  private fun processTransitiveDependencies(moduleId: ModuleId, storage: EntityStorage, explicitlyUnloaded: Set<String>,
                                             result: MutableSet<String>) {
     if (moduleId.name in explicitlyUnloaded) return
     val moduleEntity = storage.resolve(moduleId) ?: return

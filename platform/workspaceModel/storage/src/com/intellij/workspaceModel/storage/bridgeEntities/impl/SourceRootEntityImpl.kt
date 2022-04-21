@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -56,7 +56,7 @@ open class SourceRootEntityImpl: SourceRootEntity, WorkspaceEntityBase() {
                  
         override fun build(): SourceRootEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -382,7 +382,7 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
     fun isUrlInitialized(): Boolean = ::url.isInitialized
     fun isRootTypeInitialized(): Boolean = ::rootType.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<SourceRootEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SourceRootEntity> {
         val modifiable = SourceRootEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -393,7 +393,7 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): SourceRootEntity {
+    override fun createEntity(snapshot: EntityStorage): SourceRootEntity {
         val entity = SourceRootEntityImpl()
         entity._url = url
         entity._rootType = rootType

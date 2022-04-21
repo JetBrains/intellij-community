@@ -10,7 +10,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntities
 import com.intellij.workspaceModel.ide.impl.jps.serialization.TestErrorReporter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.JavaSourceRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
@@ -66,7 +66,7 @@ class ImlReplaceBySourceTest {
     val projectDir = temp.root.toVirtualFileUrl(virtualFileManager)
     val configLocation = JpsProjectConfigLocation.DirectoryBased(projectDir, projectDir.append(PathMacroUtil.DIRECTORY_STORE_NAME))
 
-    var builder = WorkspaceEntityStorageBuilder.create()
+    var builder = MutableEntityStorage.create()
     JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), configLocation, builder, TestErrorReporter, virtualFileManager)
 
     moduleFile.writeText("""
@@ -84,7 +84,7 @@ class ImlReplaceBySourceTest {
       </module>
     """.trimIndent())
 
-    val replaceWith = WorkspaceEntityStorageBuilder.create()
+    val replaceWith = MutableEntityStorage.create()
     val source = builder.entities(ModuleEntity::class.java).first().entitySource as JpsFileEntitySource.FileInDirectory
     JpsProjectEntitiesLoader.loadModule(moduleFile.toPath(), source, configLocation, replaceWith, TestErrorReporter, virtualFileManager)
 
@@ -110,11 +110,11 @@ class ImlReplaceBySourceTest {
   }
 
   private fun replaceBySourceFullReplace(projectFile: File) {
-    var storageBuilder1 = WorkspaceEntityStorageBuilder.create()
+    var storageBuilder1 = MutableEntityStorage.create()
     val data = com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject(projectFile.asConfigLocation(virtualFileManager),
                                                                                   storageBuilder1, virtualFileManager)
 
-    val storageBuilder2 = WorkspaceEntityStorageBuilder.create()
+    val storageBuilder2 = MutableEntityStorage.create()
     val reader = CachingJpsFileContentReader(projectFile.asConfigLocation(virtualFileManager))
     data.loadAll(reader, storageBuilder2, TestErrorReporter, null)
 

@@ -5,7 +5,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleCompon
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentWriter
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.eclipseProperties
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -21,7 +21,7 @@ import org.jetbrains.workspaceModel.modifyEntity
  * Implements loading and saving configuration from [EclipseModuleManagerImpl] in iml file when workspace model is used
  */
 class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
-  override fun loadComponent(builder: WorkspaceEntityStorageBuilder,
+  override fun loadComponent(builder: MutableEntityStorage,
                              moduleEntity: ModuleEntity,
                              reader: JpsFileContentReader,
                              imlFileUrl: VirtualFileUrl,

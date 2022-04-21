@@ -165,7 +165,7 @@ class SoftLinksTest {
 
   @Test
   fun `links change`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
 
     val entity = OneEntityWithPersistentId {
       entitySource = MySource

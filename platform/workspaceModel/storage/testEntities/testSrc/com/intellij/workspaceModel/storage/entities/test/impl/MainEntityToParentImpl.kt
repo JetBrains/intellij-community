@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -35,7 +35,7 @@ open class MainEntityToParentImpl: MainEntityToParent, WorkspaceEntityBase() {
                  
         override fun build(): MainEntityToParent = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -179,7 +179,7 @@ class MainEntityToParentData : WorkspaceEntityData<MainEntityToParent>() {
 
     fun isXInitialized(): Boolean = ::x.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<MainEntityToParent> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<MainEntityToParent> {
         val modifiable = MainEntityToParentImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -190,7 +190,7 @@ class MainEntityToParentData : WorkspaceEntityData<MainEntityToParent>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): MainEntityToParent {
+    override fun createEntity(snapshot: EntityStorage): MainEntityToParent {
         val entity = MainEntityToParentImpl()
         entity._x = x
         entity.entitySource = entitySource

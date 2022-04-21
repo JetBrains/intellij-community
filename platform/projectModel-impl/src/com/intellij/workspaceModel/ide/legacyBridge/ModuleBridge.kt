@@ -7,7 +7,7 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
@@ -27,7 +27,7 @@ interface ModuleBridge : ModuleEx {
    * If it's null related changes should written directly with updateProjectModel.
    * It may change on module transition from modifiable module model to regular module in ModuleManager.
    */
-  var diff: WorkspaceEntityStorageBuilder?
+  var diff: MutableEntityStorage?
 
   fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean)
 

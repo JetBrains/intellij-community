@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -31,7 +31,7 @@ open class SelfLinkedEntityImpl: SelfLinkedEntity, WorkspaceEntityBase() {
                  
         override fun build(): SelfLinkedEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -170,7 +170,7 @@ open class SelfLinkedEntityImpl: SelfLinkedEntity, WorkspaceEntityBase() {
 class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
 
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<SelfLinkedEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SelfLinkedEntity> {
         val modifiable = SelfLinkedEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -181,7 +181,7 @@ class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): SelfLinkedEntity {
+    override fun createEntity(snapshot: EntityStorage): SelfLinkedEntity {
         val entity = SelfLinkedEntityImpl()
         entity.entitySource = entitySource
         entity.snapshot = snapshot

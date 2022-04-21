@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -49,7 +49,7 @@ open class SampleEntityImpl: SampleEntity, WorkspaceEntityBase() {
                  
         override fun build(): SampleEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -256,7 +256,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
     fun isStringListPropertyInitialized(): Boolean = ::stringListProperty.isInitialized
     fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<SampleEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SampleEntity> {
         val modifiable = SampleEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -267,7 +267,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): SampleEntity {
+    override fun createEntity(snapshot: EntityStorage): SampleEntity {
         val entity = SampleEntityImpl()
         entity.booleanProperty = booleanProperty
         entity._stringProperty = stringProperty

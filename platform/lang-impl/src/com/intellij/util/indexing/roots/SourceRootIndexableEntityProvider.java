@@ -3,7 +3,7 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
+import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity;
@@ -25,7 +25,7 @@ class SourceRootIndexableEntityProvider implements IndexableEntityProvider.Modul
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getIteratorBuildersForExistingModule(@NotNull ModuleEntity entity,
-                                                                                                      @NotNull WorkspaceEntityStorage entityStorage,
+                                                                                                      @NotNull EntityStorage entityStorage,
                                                                                                       @NotNull Project project) {
     return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getPersistentId(), collectRootUrls(ExtensionsKt.getSourceRoots(entity)));
   }

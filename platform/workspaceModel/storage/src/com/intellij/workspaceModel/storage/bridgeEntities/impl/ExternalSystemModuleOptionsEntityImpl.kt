@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -59,7 +59,7 @@ open class ExternalSystemModuleOptionsEntityImpl: ExternalSystemModuleOptionsEnt
                  
         override fun build(): ExternalSystemModuleOptionsEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -269,7 +269,7 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
     var externalSystemModuleType: String? = null
 
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ExternalSystemModuleOptionsEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ExternalSystemModuleOptionsEntity> {
         val modifiable = ExternalSystemModuleOptionsEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -280,7 +280,7 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): ExternalSystemModuleOptionsEntity {
+    override fun createEntity(snapshot: EntityStorage): ExternalSystemModuleOptionsEntity {
         val entity = ExternalSystemModuleOptionsEntityImpl()
         entity._externalSystem = externalSystem
         entity._externalSystemModuleVersion = externalSystemModuleVersion

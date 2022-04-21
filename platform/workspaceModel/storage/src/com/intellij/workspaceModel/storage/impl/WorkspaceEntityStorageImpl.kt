@@ -23,7 +23,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 internal data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: EntityId) : EntityReference<E>() {
-  override fun resolve(storage: WorkspaceEntityStorage): E? {
+  override fun resolve(storage: EntityStorage): E? {
     @Suppress("UNCHECKED_CAST")
     return (storage as AbstractEntityStorage).entityDataById(id)?.createEntity(storage) as? E
   }
@@ -50,13 +50,13 @@ internal class WorkspaceEntityStorageImpl constructor(
   }
 }
 
-internal class WorkspaceEntityStorageBuilderImpl(
+internal class MutableEntityStorageImpl(
   override val entitiesByType: MutableEntitiesBarrel,
   override val refs: MutableRefsTable,
   override val indexes: MutableStorageIndexes,
   @Volatile
   private var trackStackTrace: Boolean = false
-) : WorkspaceEntityStorageBuilder, AbstractEntityStorage() {
+) : MutableEntityStorage, AbstractEntityStorage() {
 
   internal val changeLog = WorkspaceBuilderChangeLog()
 
@@ -112,7 +112,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val entityDataById: WorkspaceEntityData<WorkspaceEntity> = this.entityDataById(it) as? WorkspaceEntityData<WorkspaceEntity>
                                                                      ?: run {
                                                                        reportErrorAndAttachStorage("Cannot find an entity by id $it",
-                                                                                                   this@WorkspaceEntityStorageBuilderImpl)
+                                                                                                   this@MutableEntityStorageImpl)
                                                                        error("Cannot find an entity by id $it")
                                                                      }
           entityDataById.wrapAsModifiable(this)
@@ -284,7 +284,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   /**
    *  TODO  Spacial cases: when source filter returns true for all entity sources.
    */
-  override fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: WorkspaceEntityStorage) {
+  override fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: EntityStorage) {
     try {
       lockWrite()
       replaceWith as AbstractEntityStorage
@@ -295,7 +295,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
   }
 
-  override fun collectChanges(original: WorkspaceEntityStorage): Map<Class<*>, List<EntityChange<*>>> {
+  override fun collectChanges(original: EntityStorage): Map<Class<*>, List<EntityChange<*>>> {
     try {
       lockWrite()
       val originalImpl = original as AbstractEntityStorage
@@ -353,10 +353,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
   override fun isEmpty(): Boolean = this.changeLog.changeLog.isEmpty()
 
-  override fun addDiff(diff: WorkspaceEntityStorageBuilder) {
+  override fun addDiff(diff: MutableEntityStorage) {
     try {
       lockWrite()
-      diff as WorkspaceEntityStorageBuilderImpl
+      diff as MutableEntityStorageImpl
       applyDiffProtection(diff, "addDiff")
       AddDiffOperation(this, diff).addDiff()
     }
@@ -391,7 +391,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
   }
 
-  internal fun addDiffAndReport(message: String, left: WorkspaceEntityStorage?, right: WorkspaceEntityStorage) {
+  internal fun addDiffAndReport(message: String, left: EntityStorage?, right: EntityStorage) {
     reportConsistencyIssue(message, AddDiffException(message), null, left, right, this)
   }
 
@@ -493,26 +493,26 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
   companion object {
 
-    private val LOG = logger<WorkspaceEntityStorageBuilderImpl>()
+    private val LOG = logger<MutableEntityStorageImpl>()
 
-    fun create(): WorkspaceEntityStorageBuilderImpl {
+    fun create(): MutableEntityStorageImpl {
       return from(WorkspaceEntityStorageImpl.EMPTY)
     }
 
-    fun from(storage: WorkspaceEntityStorage): WorkspaceEntityStorageBuilderImpl {
+    fun from(storage: EntityStorage): MutableEntityStorageImpl {
       storage as AbstractEntityStorage
       val newBuilder = when (storage) {
         is WorkspaceEntityStorageImpl -> {
           val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType)
           val copiedRefs = MutableRefsTable.from(storage.refs)
           val copiedIndex = storage.indexes.toMutable()
-          WorkspaceEntityStorageBuilderImpl(copiedBarrel, copiedRefs, copiedIndex)
+          MutableEntityStorageImpl(copiedBarrel, copiedRefs, copiedIndex)
         }
-        is WorkspaceEntityStorageBuilderImpl -> {
+        is MutableEntityStorageImpl -> {
           val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType.toImmutable())
           val copiedRefs = MutableRefsTable.from(storage.refs.toImmutable())
           val copiedIndexes = storage.indexes.toMutable()
-          WorkspaceEntityStorageBuilderImpl(copiedBarrel, copiedRefs, copiedIndexes, storage.trackStackTrace)
+          MutableEntityStorageImpl(copiedBarrel, copiedRefs, copiedIndexes, storage.trackStackTrace)
         }
       }
       LOG.trace { "Create new builder $newBuilder from $storage.\n${currentStackTrace(10)}" }
@@ -520,7 +520,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
 
     internal fun addReplaceEvent(
-      builder: WorkspaceEntityStorageBuilderImpl,
+      builder: MutableEntityStorageImpl,
       entityId: EntityId,
       beforeChildren: List<Pair<ConnectionId, ChildEntityId>>,
       beforeParents: Map<ConnectionId, ParentEntityId>,
@@ -560,7 +560,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 }
 
-internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
+internal sealed class AbstractEntityStorage : EntityStorage {
 
   internal abstract val entitiesByType: EntitiesBarrel
   internal abstract val refs: AbstractRefsTable
@@ -642,15 +642,15 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 
   internal fun assertConsistencyInStrictMode(message: String,
                                              sourceFilter: ((EntitySource) -> Boolean)?,
-                                             left: WorkspaceEntityStorage?,
-                                             right: WorkspaceEntityStorage?) {
+                                             left: EntityStorage?,
+                                             right: EntityStorage?) {
     if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) {
       try {
         this.assertConsistency()
       }
       catch (e: Throwable) {
         brokenConsistency = true
-        val storage = if (this is WorkspaceEntityStorageBuilder) this.toStorage() as AbstractEntityStorage else this
+        val storage = if (this is MutableEntityStorage) this.toStorage() as AbstractEntityStorage else this
         val report = { reportConsistencyIssue(message, e, sourceFilter, left, right, storage) }
         if (ConsistencyCheckingMode.current == ConsistencyCheckingMode.ASYNCHRONOUS) {
           consistencyChecker.execute(report)
@@ -670,5 +670,5 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 }
 
 /** This function exposes `brokenConsistency` property to the outside and should be removed along with the property itself */
-val WorkspaceEntityStorage.isConsistent: Boolean
+val EntityStorage.isConsistent: Boolean
   get() = !(this as AbstractEntityStorage).brokenConsistency

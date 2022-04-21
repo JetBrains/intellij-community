@@ -94,7 +94,7 @@ open class VirtualFileUrlWatcher(val project: Project) {
     @JvmStatic
     fun getInstance(project: Project): VirtualFileUrlWatcher = project.getComponent(VirtualFileUrlWatcher::class.java)
 
-    internal fun calculateAffectedEntities(storage: WorkspaceEntityStorage, virtualFileUrl: VirtualFileUrl,
+    internal fun calculateAffectedEntities(storage: EntityStorage, virtualFileUrl: VirtualFileUrl,
                                            aggregator: MutableList<EntityWithVirtualFileUrl>) {
       storage.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl).forEach {
         aggregator.add(EntityWithVirtualFileUrl(it.first, virtualFileUrl, it.second))
@@ -111,7 +111,7 @@ private interface LegacyFileWatcher {
                   newUrl: String,
                   entitiesWithVFU: List<EntityWithVirtualFileUrl>,
                   virtualFileManager: VirtualFileUrlManager,
-                  diff: WorkspaceEntityStorageBuilder)
+                  diff: MutableEntityStorage)
 }
 
 private class EntitySourceFileWatcher<T : EntitySource>(
@@ -123,7 +123,7 @@ private class EntitySourceFileWatcher<T : EntitySource>(
                            newUrl: String,
                            entitiesWithVFU: List<EntityWithVirtualFileUrl>,
                            virtualFileManager: VirtualFileUrlManager,
-                           diff: WorkspaceEntityStorageBuilder) {
+                           diff: MutableEntityStorage) {
     val entities = diff.entitiesBySource { it::class == entitySource }
     for ((entitySource, mapOfEntities) in entities) {
       @Suppress("UNCHECKED_CAST")
@@ -158,7 +158,7 @@ private class EntityVirtualFileUrlWatcher<E : WorkspaceEntity, M : ModifiableWor
                            newUrl: String,
                            entitiesWithVFU: List<EntityWithVirtualFileUrl>,
                            virtualFileManager: VirtualFileUrlManager,
-                           diff: WorkspaceEntityStorageBuilder) {
+                           diff: MutableEntityStorage) {
     entitiesWithVFU.filter { entityClass.isInstance(it.entity) && it.propertyName == propertyName }.forEach { entityWithVFU ->
       val existingVirtualFileUrl = entityWithVFU.virtualFileUrl
       val savedUrl = existingVirtualFileUrl.url
@@ -185,7 +185,7 @@ private class LibraryRootFileWatcher : LegacyFileWatcher {
                            newUrl: String,
                            entitiesWithVFU: List<EntityWithVirtualFileUrl>,
                            virtualFileManager: VirtualFileUrlManager,
-                           diff: WorkspaceEntityStorageBuilder) {
+                           diff: MutableEntityStorage) {
     entitiesWithVFU.filter { LibraryEntity::class.isInstance(it.entity) && it.propertyName == propertyName }.forEach { entityWithVFU ->
       val oldVFU = entityWithVFU.virtualFileUrl
       val newVFU = virtualFileManager.fromUrl(newUrl + oldVFU.url.substring(oldUrl.length))

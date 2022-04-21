@@ -199,7 +199,7 @@ class ProjectLibraryTableBridgeImpl(
       originalStorage = entityStorage.current
     )
 
-  override fun getModifiableModel(diff: WorkspaceEntityStorageBuilder): LibraryTable.ModifiableModel =
+  override fun getModifiableModel(diff: MutableEntityStorage): LibraryTable.ModifiableModel =
     ProjectModifiableLibraryTableBridgeImpl(
       libraryTable = this,
       project = project,
@@ -240,12 +240,12 @@ class ProjectLibraryTableBridgeImpl(
 
     private const val LIBRARY_BRIDGE_MAPPING_ID = "intellij.libraries.bridge"
 
-    val WorkspaceEntityStorage.libraryMap: ExternalEntityMapping<LibraryBridge>
+    val EntityStorage.libraryMap: ExternalEntityMapping<LibraryBridge>
       get() = getExternalMapping(LIBRARY_BRIDGE_MAPPING_ID)
-    val WorkspaceEntityStorageBuilder.mutableLibraryMap: MutableExternalEntityMapping<LibraryBridge>
+    val MutableEntityStorage.mutableLibraryMap: MutableExternalEntityMapping<LibraryBridge>
       get() = getMutableExternalMapping(LIBRARY_BRIDGE_MAPPING_ID)
 
-    fun WorkspaceEntityStorage.findLibraryEntity(library: LibraryBridge) =
+    fun EntityStorage.findLibraryEntity(library: LibraryBridge) =
       libraryMap.getEntities(library).firstOrNull() as LibraryEntity?
 
     private val LOG = logger<ProjectLibraryTableBridgeImpl>()

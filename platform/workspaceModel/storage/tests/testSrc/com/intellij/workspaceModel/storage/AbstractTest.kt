@@ -62,7 +62,7 @@ class AbstractTest {
       })
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     val parent = builder.entities(ParentAbEntity::class.java).single()
@@ -88,7 +88,7 @@ class AbstractTest {
       )
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     val parent = builder.entities(ParentAbEntity::class.java).single()
@@ -112,7 +112,7 @@ class AbstractTest {
       )
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     assertEquals("ChildData1", entity.children.single().commonData)
@@ -131,7 +131,7 @@ class AbstractTest {
       )
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     val child = builder.entities(ChildFirstEntity::class.java).single()
@@ -140,7 +140,7 @@ class AbstractTest {
 
   @Test
   fun `add parent and then child`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val parent = ParentAbEntity {
       entitySource = MySource
       children = emptyList()
@@ -160,7 +160,7 @@ class AbstractTest {
 
   @Test
   fun `add parent and then child 2`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val parent = ParentAbEntity {
       entitySource = MySource
       children = emptyList()
@@ -183,7 +183,7 @@ class AbstractTest {
 
   @Test
   fun `add parent and then child 3`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val parent = ParentAbEntity {
       entitySource = MySource
       children = listOf(

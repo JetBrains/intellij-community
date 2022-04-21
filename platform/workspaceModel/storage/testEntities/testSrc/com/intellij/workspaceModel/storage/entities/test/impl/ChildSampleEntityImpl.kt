@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -35,7 +35,7 @@ open class ChildSampleEntityImpl: ChildSampleEntity, WorkspaceEntityBase() {
                  
         override fun build(): ChildSampleEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -187,7 +187,7 @@ class ChildSampleEntityData : WorkspaceEntityData<ChildSampleEntity>() {
 
     fun isDataInitialized(): Boolean = ::data.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ChildSampleEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChildSampleEntity> {
         val modifiable = ChildSampleEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -198,7 +198,7 @@ class ChildSampleEntityData : WorkspaceEntityData<ChildSampleEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): ChildSampleEntity {
+    override fun createEntity(snapshot: EntityStorage): ChildSampleEntity {
         val entity = ChildSampleEntityImpl()
         entity._data = data
         entity.entitySource = entitySource

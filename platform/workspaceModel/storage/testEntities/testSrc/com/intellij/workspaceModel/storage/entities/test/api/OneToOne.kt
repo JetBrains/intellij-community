@@ -36,7 +36,7 @@ interface OoParentEntity : WorkspaceEntity {
 
 }
 
-fun WorkspaceEntityStorageBuilder.addOoParentEntity(
+fun MutableEntityStorage.addOoParentEntity(
   parentProperty: String = "parent",
   source: EntitySource = MySource
 ): OoParentEntity {
@@ -74,7 +74,7 @@ interface OoChildEntity : WorkspaceEntity {
 }
 
 
-fun WorkspaceEntityStorageBuilder.addOoChildEntity(
+fun MutableEntityStorage.addOoChildEntity(
   OoParentEntity: OoParentEntity,
   childProperty: String = "child",
   source: EntitySource = MySource
@@ -109,7 +109,7 @@ interface OoChildWithNullableParentEntity : WorkspaceEntity {
 
 }
 
-fun WorkspaceEntityStorageBuilder.addOoChildWithNullableParentEntity(
+fun MutableEntityStorage.addOoChildWithNullableParentEntity(
   OoParentEntity: OoParentEntity,
   source: EntitySource = MySource
 ): OoChildWithNullableParentEntity {
@@ -154,7 +154,7 @@ interface OoParentWithPidEntity : WorkspaceEntityWithPersistentId {
 
 }
 
-fun WorkspaceEntityStorageBuilder.addOoParentWithPidEntity(
+fun MutableEntityStorage.addOoParentWithPidEntity(
   parentProperty: String = "parent",
   source: EntitySource = MySource
 ): OoParentWithPidEntity {
@@ -189,7 +189,7 @@ interface OoChildForParentWithPidEntity : WorkspaceEntity {
 
 }
 
-fun WorkspaceEntityStorageBuilder.addOoChildForParentWithPidEntity(
+fun MutableEntityStorage.addOoChildForParentWithPidEntity(
   parentEntity: OoParentWithPidEntity,
   childProperty: String = "child",
   source: EntitySource = MySource
@@ -226,7 +226,7 @@ interface OoChildAlsoWithPidEntity : WorkspaceEntityWithPersistentId {
 
 }
 
-fun WorkspaceEntityStorageBuilder.addOoChildAlsoWithPidEntity(
+fun MutableEntityStorage.addOoChildAlsoWithPidEntity(
   parentEntity: OoParentWithPidEntity,
   childProperty: String = "child",
   source: EntitySource = MySource
@@ -263,7 +263,7 @@ interface OoParentWithoutPidEntity : WorkspaceEntity {
 }
 
 
-fun WorkspaceEntityStorageBuilder.addOoParentWithoutPidEntity(
+fun MutableEntityStorage.addOoParentWithoutPidEntity(
   parentProperty: String = "parent",
   source: EntitySource = MySource
 ): OoParentWithoutPidEntity {
@@ -304,7 +304,7 @@ interface OoChildWithPidEntity : WorkspaceEntityWithPersistentId {
 
 }
 
-fun WorkspaceEntityStorageBuilder.addOoChildWithPidEntity(
+fun MutableEntityStorage.addOoChildWithPidEntity(
   parentEntity: OoParentWithoutPidEntity,
   childProperty: String = "child",
   source: EntitySource = MySource

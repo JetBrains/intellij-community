@@ -35,7 +35,7 @@ class ParentAndNullableChildTest {
       }
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     val single = builder.entities(ParentNullableEntity::class.java).single()
@@ -52,7 +52,7 @@ class ParentAndNullableChildTest {
       child = null
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     val single = builder.entities(ParentNullableEntity::class.java).single()
@@ -70,7 +70,7 @@ class ParentAndNullableChildTest {
       }
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     assertEquals("ChildData", entity.child?.childData)
@@ -84,7 +84,7 @@ class ParentAndNullableChildTest {
       child = null
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     assertNull(entity.child)
@@ -101,7 +101,7 @@ class ParentAndNullableChildTest {
       }
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     val single = builder.entities(ChildNullableEntity::class.java).single()

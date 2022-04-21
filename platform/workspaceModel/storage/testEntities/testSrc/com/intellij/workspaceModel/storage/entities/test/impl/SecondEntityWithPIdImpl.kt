@@ -6,8 +6,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -27,7 +27,7 @@ open class SecondEntityWithPIdImpl: SecondEntityWithPId, WorkspaceEntityBase() {
                  
         override fun build(): SecondEntityWithPId = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -131,7 +131,7 @@ class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<S
 
     fun isDataInitialized(): Boolean = ::data.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<SecondEntityWithPId> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SecondEntityWithPId> {
         val modifiable = SecondEntityWithPIdImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -142,7 +142,7 @@ class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<S
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): SecondEntityWithPId {
+    override fun createEntity(snapshot: EntityStorage): SecondEntityWithPId {
         val entity = SecondEntityWithPIdImpl()
         entity._data = data
         entity.entitySource = entitySource

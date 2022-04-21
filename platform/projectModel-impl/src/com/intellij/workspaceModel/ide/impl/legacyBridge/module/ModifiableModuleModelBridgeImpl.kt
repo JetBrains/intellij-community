@@ -23,7 +23,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.mutableModuleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleGroupPathEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
@@ -38,7 +38,7 @@ import java.nio.file.Path
 internal class ModifiableModuleModelBridgeImpl(
   private val project: Project,
   private val moduleManager: ModuleManagerBridgeImpl,
-  diff: WorkspaceEntityStorageBuilder,
+  diff: MutableEntityStorage,
   cacheStorageResult: Boolean = true
 ) : LegacyBridgeModifiableBase(diff, cacheStorageResult), ModifiableModuleModelBridge {
   override fun getProject(): Project = project
@@ -248,7 +248,7 @@ internal class ModifiableModuleModelBridgeImpl(
     myUncommittedModulesToDispose.forEach { module -> Disposer.dispose(module) }
   }
 
-  override fun collectChanges(): WorkspaceEntityStorageBuilder {
+  override fun collectChanges(): MutableEntityStorage {
     prepareForCommit()
     return diff
   }

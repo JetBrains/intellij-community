@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -31,7 +31,7 @@ open class ListVFUEntityImpl: ListVFUEntity, WorkspaceEntityBase() {
                  
         override fun build(): ListVFUEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -151,7 +151,7 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
     fun isDataInitialized(): Boolean = ::data.isInitialized
     fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ListVFUEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ListVFUEntity> {
         val modifiable = ListVFUEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -162,7 +162,7 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): ListVFUEntity {
+    override fun createEntity(snapshot: EntityStorage): ListVFUEntity {
         val entity = ListVFUEntityImpl()
         entity._data = data
         entity._fileProperty = fileProperty

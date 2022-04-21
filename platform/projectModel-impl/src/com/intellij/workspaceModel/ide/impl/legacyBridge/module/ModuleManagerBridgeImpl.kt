@@ -111,16 +111,16 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     }
   }
 
-  override fun unloadNewlyAddedModulesIfPossible(storage: WorkspaceEntityStorage) {
+  override fun unloadNewlyAddedModulesIfPossible(storage: EntityStorage) {
     val currentModuleNames = storage.entities(ModuleEntity::class.java).mapTo(HashSet()) { it.name }
     AutomaticModuleUnloader.getInstance(project).processNewModules(currentModuleNames, storage)
   }
 
   override fun getModifiableModel(): ModifiableModuleModel {
-    return ModifiableModuleModelBridgeImpl(project, this, WorkspaceEntityStorageBuilder.from(entityStore.current))
+    return ModifiableModuleModelBridgeImpl(project, this, MutableEntityStorage.from(entityStore.current))
   }
 
-  fun getModifiableModel(diff: WorkspaceEntityStorageBuilder): ModifiableModuleModel {
+  fun getModifiableModel(diff: MutableEntityStorage): ModifiableModuleModel {
     return ModifiableModuleModelBridgeImpl(project, this, diff, false)
   }
 
@@ -281,7 +281,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
   fun createModuleInstance(
     moduleEntity: ModuleEntity,
     versionedStorage: VersionedEntityStorage,
-    diff: WorkspaceEntityStorageBuilder?,
+    diff: MutableEntityStorage?,
     isNew: Boolean,
     precomputedExtensionModel: PrecomputedExtensionModel?,
   ): ModuleBridge {
@@ -319,14 +319,14 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
 
   open fun registerNonPersistentModuleStore(module: ModuleBridge) {}
 
-  abstract fun loadModuleToBuilder(moduleName: String, filePath: String, diff: WorkspaceEntityStorageBuilder): ModuleEntity
+  abstract fun loadModuleToBuilder(moduleName: String, filePath: String, diff: MutableEntityStorage): ModuleEntity
 
   abstract fun createModule(
     persistentId: ModuleId,
     name: String,
     virtualFileUrl: VirtualFileUrl?,
     entityStorage: VersionedEntityStorage,
-    diff: WorkspaceEntityStorageBuilder?,
+    diff: MutableEntityStorage?,
   ): ModuleBridge
 
   companion object {
@@ -339,18 +339,18 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     }
 
     @JvmStatic
-    val WorkspaceEntityStorage.moduleMap: ExternalEntityMapping<ModuleBridge>
+    val EntityStorage.moduleMap: ExternalEntityMapping<ModuleBridge>
       get() = getExternalMapping(MODULE_BRIDGE_MAPPING_ID)
 
     @JvmStatic
-    val WorkspaceEntityStorageBuilder.mutableModuleMap: MutableExternalEntityMapping<ModuleBridge>
+    val MutableEntityStorage.mutableModuleMap: MutableExternalEntityMapping<ModuleBridge>
       get() = getMutableExternalMapping(MODULE_BRIDGE_MAPPING_ID)
 
     @JvmStatic
-    fun WorkspaceEntityStorage.findModuleEntity(module: ModuleBridge) = moduleMap.getEntities(module).firstOrNull() as ModuleEntity?
+    fun EntityStorage.findModuleEntity(module: ModuleBridge) = moduleMap.getEntities(module).firstOrNull() as ModuleEntity?
 
     @JvmStatic
-    fun WorkspaceEntityStorage.findModuleByEntity(entity: ModuleEntity): ModuleBridge? = moduleMap.getDataByEntity(entity)
+    fun EntityStorage.findModuleByEntity(entity: ModuleEntity): ModuleBridge? = moduleMap.getDataByEntity(entity)
 
     internal fun getModuleGroupPath(module: Module, entityStorage: VersionedEntityStorage): Array<String>? {
       val moduleEntity = entityStorage.current.findModuleEntity(module as ModuleBridge) ?: return null
@@ -381,12 +381,12 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     @JvmStatic
     fun changeModuleEntitySource(
       module: ModuleBridge,
-      moduleEntityStore: WorkspaceEntityStorage,
+      moduleEntityStore: EntityStorage,
       newSource: EntitySource,
-      moduleDiff: WorkspaceEntityStorageBuilder?,
+      moduleDiff: MutableEntityStorage?,
     ) {
       val oldEntitySource = moduleEntityStore.findModuleEntity(module)?.entitySource ?: return
-      fun changeSources(diffBuilder: WorkspaceEntityStorageBuilder, storage: WorkspaceEntityStorage) {
+      fun changeSources(diffBuilder: MutableEntityStorage, storage: EntityStorage) {
         val entitiesMap = storage.entitiesBySource { it == oldEntitySource }
         entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatten() }.forEach {
           if (it !is FacetEntity) {
@@ -428,7 +428,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
       return paths
     }
 
-    private fun buildModuleGraph(storage: WorkspaceEntityStorage, includeTests: Boolean): Graph<Module> {
+    private fun buildModuleGraph(storage: EntityStorage, includeTests: Boolean): Graph<Module> {
       return GraphGenerator.generate(CachingSemiGraph.cache(object : InboundSemiGraph<Module> {
         override fun getNodes(): Collection<Module> {
           return modules(storage).toList()
@@ -449,7 +449,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
       }))
     }
 
-    private fun modules(storage: WorkspaceEntityStorage): Sequence<ModuleBridge> {
+    private fun modules(storage: EntityStorage): Sequence<ModuleBridge> {
       val moduleMap = storage.moduleMap
       return storage.entities(ModuleEntity::class.java).mapNotNull { moduleMap.getDataByEntity(it) }
     }

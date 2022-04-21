@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -38,7 +38,7 @@ open class DirectoryCopyPackagingElementEntityImpl: DirectoryCopyPackagingElemen
                  
         override fun build(): DirectoryCopyPackagingElementEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -193,7 +193,7 @@ class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCop
 
     fun isFilePathInitialized(): Boolean = ::filePath.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<DirectoryCopyPackagingElementEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<DirectoryCopyPackagingElementEntity> {
         val modifiable = DirectoryCopyPackagingElementEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -204,7 +204,7 @@ class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCop
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): DirectoryCopyPackagingElementEntity {
+    override fun createEntity(snapshot: EntityStorage): DirectoryCopyPackagingElementEntity {
         val entity = DirectoryCopyPackagingElementEntityImpl()
         entity._filePath = filePath
         entity.entitySource = entitySource

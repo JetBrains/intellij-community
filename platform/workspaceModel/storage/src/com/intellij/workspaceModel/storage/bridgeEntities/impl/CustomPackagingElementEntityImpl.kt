@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -54,7 +54,7 @@ open class CustomPackagingElementEntityImpl: CustomPackagingElementEntity, Works
                  
         override fun build(): CustomPackagingElementEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -320,7 +320,7 @@ class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElem
     fun isTypeIdInitialized(): Boolean = ::typeId.isInitialized
     fun isPropertiesXmlTagInitialized(): Boolean = ::propertiesXmlTag.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<CustomPackagingElementEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<CustomPackagingElementEntity> {
         val modifiable = CustomPackagingElementEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -331,7 +331,7 @@ class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElem
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): CustomPackagingElementEntity {
+    override fun createEntity(snapshot: EntityStorage): CustomPackagingElementEntity {
         val entity = CustomPackagingElementEntityImpl()
         entity._typeId = typeId
         entity._propertiesXmlTag = propertiesXmlTag

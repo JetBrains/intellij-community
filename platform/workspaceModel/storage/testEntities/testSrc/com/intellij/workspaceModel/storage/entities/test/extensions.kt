@@ -2,13 +2,13 @@
 package com.intellij.workspaceModel.storage.entities.test
 
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
-fun WorkspaceEntityStorageBuilder.addParentEntity(parentProperty: String = "parent", source: EntitySource = MySource): XParentEntity {
+fun MutableEntityStorage.addParentEntity(parentProperty: String = "parent", source: EntitySource = MySource): XParentEntity {
   val parent = XParentEntity {
     this.parentProperty = parentProperty
     this.entitySource = source
@@ -21,10 +21,10 @@ fun WorkspaceEntityStorageBuilder.addParentEntity(parentProperty: String = "pare
 }
 
 
-fun WorkspaceEntityStorageBuilder.addChildEntity(parentEntity: XParentEntity,
-                                                 childProperty: String = "child",
-                                                 dataClass: DataClassX? = null,
-                                                 source: EntitySource = MySource): XChildEntity {
+fun MutableEntityStorage.addChildEntity(parentEntity: XParentEntity,
+                                        childProperty: String = "child",
+                                        dataClass: DataClassX? = null,
+                                        source: EntitySource = MySource): XChildEntity {
   val child = XChildEntity {
     this.parentEntity = parentEntity
     this.childProperty = childProperty
@@ -36,9 +36,9 @@ fun WorkspaceEntityStorageBuilder.addChildEntity(parentEntity: XParentEntity,
   return child
 }
 
-fun WorkspaceEntityStorageBuilder.addChildWithOptionalParentEntity(parentEntity: XParentEntity?,
-                                                                   childProperty: String = "child",
-                                                                   source: EntitySource = MySource): XChildWithOptionalParentEntity {
+fun MutableEntityStorage.addChildWithOptionalParentEntity(parentEntity: XParentEntity?,
+                                                          childProperty: String = "child",
+                                                          source: EntitySource = MySource): XChildWithOptionalParentEntity {
   val child = XChildWithOptionalParentEntity {
     this.childProperty = childProperty
     this.entitySource = source
@@ -48,7 +48,7 @@ fun WorkspaceEntityStorageBuilder.addChildWithOptionalParentEntity(parentEntity:
   return child
 }
 
-fun WorkspaceEntityStorageBuilder.addChildChildEntity(parent1: XParentEntity, parent2: XChildEntity): XChildChildEntity {
+fun MutableEntityStorage.addChildChildEntity(parent1: XParentEntity, parent2: XChildEntity): XChildChildEntity {
   val child = XChildChildEntity {
     this.parent1 = parent1
     this.parent2 = parent2
@@ -58,7 +58,7 @@ fun WorkspaceEntityStorageBuilder.addChildChildEntity(parent1: XParentEntity, pa
   return child
 }
 
-fun WorkspaceEntityStorageBuilder.addChildSampleEntity(
+fun MutableEntityStorage.addChildSampleEntity(
   stringProperty: String,
   parent: SampleEntity?,
   source: EntitySource = SampleEntitySource("test")
@@ -72,14 +72,14 @@ fun WorkspaceEntityStorageBuilder.addChildSampleEntity(
   return entity
 }
 
-fun WorkspaceEntityStorageBuilder.addSampleEntity(stringProperty: String,
-                                                  source: EntitySource = SampleEntitySource("test"),
-                                                  booleanProperty: Boolean = false,
-                                                  stringListProperty: MutableList<String> = ArrayList(),
-                                                  stringSetProperty: MutableSet<String> = LinkedHashSet(),
-                                                  virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
-                                                  fileProperty: VirtualFileUrl = virtualFileManager.fromUrl("file:///tmp"),
-                                                  info: String = ""
+fun MutableEntityStorage.addSampleEntity(stringProperty: String,
+                                         source: EntitySource = SampleEntitySource("test"),
+                                         booleanProperty: Boolean = false,
+                                         stringListProperty: MutableList<String> = ArrayList(),
+                                         stringSetProperty: MutableSet<String> = LinkedHashSet(),
+                                         virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
+                                         fileProperty: VirtualFileUrl = virtualFileManager.fromUrl("file:///tmp"),
+                                         info: String = ""
 ): SampleEntity {
   val entity = SampleEntity {
     this.booleanProperty = booleanProperty
@@ -93,8 +93,8 @@ fun WorkspaceEntityStorageBuilder.addSampleEntity(stringProperty: String,
   return entity
 }
 
-fun WorkspaceEntityStorageBuilder.addSourceEntity(data: String,
-                                                  source: EntitySource): SourceEntity {
+fun MutableEntityStorage.addSourceEntity(data: String,
+                                         source: EntitySource): SourceEntity {
   val entity = SourceEntity {
     this.children = emptyList()
     this.data = data
@@ -104,7 +104,7 @@ fun WorkspaceEntityStorageBuilder.addSourceEntity(data: String,
   return entity
 }
 
-fun WorkspaceEntityStorageBuilder.addPersistentIdEntity(
+fun MutableEntityStorage.addPersistentIdEntity(
   data: String,
   source: EntitySource = SampleEntitySource("test")
 ): PersistentIdEntity {

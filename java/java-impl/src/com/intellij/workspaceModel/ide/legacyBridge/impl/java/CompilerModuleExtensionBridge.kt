@@ -16,7 +16,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.JavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -25,7 +25,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 class CompilerModuleExtensionBridge(
   private val module: ModuleBridge,
   private val entityStorage: VersionedEntityStorage,
-  private val diff: WorkspaceEntityStorageBuilder?
+  private val diff: MutableEntityStorage?
 ) : CompilerModuleExtension(), ModuleExtensionBridge {
 
   private var changed = false
@@ -165,7 +165,7 @@ class CompilerModuleExtensionBridge(
   companion object : ModuleExtensionBridgeFactory<CompilerModuleExtensionBridge> {
     override fun createExtension(module: ModuleBridge,
                                  entityStorage: VersionedEntityStorage,
-                                 diff: WorkspaceEntityStorageBuilder?): CompilerModuleExtensionBridge {
+                                 diff: MutableEntityStorage?): CompilerModuleExtensionBridge {
       return CompilerModuleExtensionBridge(module, entityStorage, diff)
     }
   }

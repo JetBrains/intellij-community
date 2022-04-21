@@ -6,7 +6,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder
 import com.intellij.util.indexing.roots.IndexableFilesIterator
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -40,7 +40,7 @@ object IndexableIteratorBuilders {
 
   fun instantiateBuilders(builders: List<IndexableIteratorBuilder>,
                           project: Project,
-                          entityStorage: WorkspaceEntityStorage): List<IndexableFilesIterator> {
+                          entityStorage: EntityStorage): List<IndexableFilesIterator> {
     if (builders.isEmpty()) return emptyList()
     val result = ArrayList<IndexableFilesIterator>(builders.size)
     var buildersToProceed = builders

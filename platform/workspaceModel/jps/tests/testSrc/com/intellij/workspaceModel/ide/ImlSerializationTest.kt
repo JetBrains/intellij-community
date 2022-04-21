@@ -7,8 +7,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.SerializationRoundTripChecker
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity2
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -58,7 +57,7 @@ class ImlSerializationTest {
 
   @Test
   fun externalIndexIsNotSerialized() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val entity = SampleEntity2 {
       this.entitySource = Source
       this.data = "Test"
@@ -82,12 +81,12 @@ class ImlSerializationTest {
   }
 
   private fun loadProjectAndCheck(projectFile: File): ByteArray {
-    val storageBuilder = WorkspaceEntityStorageBuilder.create()
+    val storageBuilder = MutableEntityStorage.create()
     loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, virtualFileManager)
     return serializationRoundTrip(storageBuilder)
   }
 
-  private fun serializationRoundTrip(storageBuilder: WorkspaceEntityStorageBuilder): ByteArray {
+  private fun serializationRoundTrip(storageBuilder: MutableEntityStorage): ByteArray {
     val storage = storageBuilder.toStorage()
     val byteArray: ByteArray
     val timeMillis = measureTimeMillis {

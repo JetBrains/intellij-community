@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -35,7 +35,7 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
                  
         override fun build(): XChildChildEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -242,7 +242,7 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
 class XChildChildEntityData : WorkspaceEntityData<XChildChildEntity>() {
 
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<XChildChildEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<XChildChildEntity> {
         val modifiable = XChildChildEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -253,7 +253,7 @@ class XChildChildEntityData : WorkspaceEntityData<XChildChildEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): XChildChildEntity {
+    override fun createEntity(snapshot: EntityStorage): XChildChildEntity {
         val entity = XChildChildEntityImpl()
         entity.entitySource = entitySource
         entity.snapshot = snapshot

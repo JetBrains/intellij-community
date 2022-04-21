@@ -6,8 +6,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -36,7 +36,7 @@ open class OoChildAlsoWithPidEntityImpl: OoChildAlsoWithPidEntity, WorkspaceEnti
                  
         override fun build(): OoChildAlsoWithPidEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -196,7 +196,7 @@ class OoChildAlsoWithPidEntityData : WorkspaceEntityData.WithCalculablePersisten
 
     fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<OoChildAlsoWithPidEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<OoChildAlsoWithPidEntity> {
         val modifiable = OoChildAlsoWithPidEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -207,7 +207,7 @@ class OoChildAlsoWithPidEntityData : WorkspaceEntityData.WithCalculablePersisten
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): OoChildAlsoWithPidEntity {
+    override fun createEntity(snapshot: EntityStorage): OoChildAlsoWithPidEntity {
         val entity = OoChildAlsoWithPidEntityImpl()
         entity._childProperty = childProperty
         entity.entitySource = entitySource

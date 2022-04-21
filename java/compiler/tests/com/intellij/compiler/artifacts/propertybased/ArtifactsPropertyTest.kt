@@ -25,7 +25,7 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactRootElementEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
@@ -120,7 +120,7 @@ class ArtifactsPropertyTest {
             modifiableModel.commit()
 
             WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-              it.replaceBySource({ true }, WorkspaceEntityStorageBuilder.create())
+              it.replaceBySource({ true }, MutableEntityStorage.create())
             }
           }
 
@@ -740,7 +740,7 @@ class ArtifactsPropertyTest {
   }
 
   private fun createCompositeElementEntity(env: ImperativeCommand.Environment,
-                                           builder: WorkspaceEntityStorageBuilder): CompositePackagingElementEntity {
+                                           builder: MutableEntityStorage): CompositePackagingElementEntity {
     return builder.addArtifactRootElementEntity(emptyList(), TestEntitySource)
   }
 

@@ -10,13 +10,13 @@ import org.junit.Test
 
 class WorkspaceEntityEqualityTest {
 
-  private lateinit var builderOne: WorkspaceEntityStorageBuilder
-  private lateinit var builderTwo: WorkspaceEntityStorageBuilder
+  private lateinit var builderOne: MutableEntityStorage
+  private lateinit var builderTwo: MutableEntityStorage
 
   @Before
   fun setUp() {
-    builderOne = WorkspaceEntityStorageBuilder.create()
-    builderTwo = WorkspaceEntityStorageBuilder.create()
+    builderOne = MutableEntityStorage.create()
+    builderTwo = MutableEntityStorage.create()
   }
 
   @Test

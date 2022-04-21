@@ -7,8 +7,8 @@ import java.io.OutputStream
 interface EntityStorageSerializer {
   val serializerDataFormatVersion: String
 
-  fun serializeCache(stream: OutputStream, storage: WorkspaceEntityStorage): SerializationResult
-  fun deserializeCache(stream: InputStream): WorkspaceEntityStorageBuilder?
+  fun serializeCache(stream: OutputStream, storage: EntityStorage): SerializationResult
+  fun deserializeCache(stream: InputStream): MutableEntityStorage?
 }
 
 interface EntityTypesResolver {

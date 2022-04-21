@@ -181,14 +181,14 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     })
   }
 
-  fun loadProjectToEmptyStorage(project: Project): Pair<WorkspaceEntityStorage, List<EntitySource>>? {
+  fun loadProjectToEmptyStorage(project: Project): Pair<EntityStorage, List<EntitySource>>? {
     val configLocation: JpsProjectConfigLocation = getJpsProjectConfigLocation(project)!!
     LOG.debug { "Initial loading of project located at $configLocation" }
     activity = startActivity("project files loading", ActivityCategory.DEFAULT)
     childActivity = activity?.startChild("serializers creation")
     val serializers = prepareSerializers()
     registerListener()
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
       childActivity = childActivity?.endAndStart("loading entities from files")
       val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, it, project) }
@@ -205,7 +205,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
   }
 
-  fun applyLoadedStorage(storeToEntitySources: Pair<WorkspaceEntityStorage, List<EntitySource>>?) {
+  fun applyLoadedStorage(storeToEntitySources: Pair<EntityStorage, List<EntitySource>>?) {
     if (storeToEntitySources == null) return
     WriteAction.runAndWait<RuntimeException> {
       if (project.isDisposed) return@runAndWait
@@ -229,7 +229,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
   fun loadProject(project: Project): Unit = applyLoadedStorage(loadProjectToEmptyStorage(project))
 
-  private fun runAutomaticModuleUnloader(storage: WorkspaceEntityStorage) {
+  private fun runAutomaticModuleUnloader(storage: EntityStorage) {
     ModuleManagerEx.getInstanceEx(project).unloadNewlyAddedModulesIfPossible(storage)
   }
 

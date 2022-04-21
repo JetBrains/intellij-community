@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootPropertiesHelper
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -35,7 +35,7 @@ class WorkspaceModuleImporter(
   private val mavenProject: MavenProject,
   private val virtualFileUrlManager: VirtualFileUrlManager,
   private val projectsTree: MavenProjectsTree,
-  private val builder: WorkspaceEntityStorageBuilder,
+  private val builder: MutableEntityStorage,
   private val importingSettings: MavenImportingSettings,
   private val mavenProjectToModuleName: HashMap<MavenProject, String>,
   private val project: Project) {

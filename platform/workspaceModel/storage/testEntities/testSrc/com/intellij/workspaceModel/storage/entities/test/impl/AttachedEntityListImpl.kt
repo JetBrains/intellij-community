@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -35,7 +35,7 @@ open class AttachedEntityListImpl: AttachedEntityList, WorkspaceEntityBase() {
                  
         override fun build(): AttachedEntityList = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -187,7 +187,7 @@ class AttachedEntityListData : WorkspaceEntityData<AttachedEntityList>() {
 
     fun isDataInitialized(): Boolean = ::data.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<AttachedEntityList> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<AttachedEntityList> {
         val modifiable = AttachedEntityListImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -198,7 +198,7 @@ class AttachedEntityListData : WorkspaceEntityData<AttachedEntityList>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): AttachedEntityList {
+    override fun createEntity(snapshot: EntityStorage): AttachedEntityList {
         val entity = AttachedEntityListImpl()
         entity._data = data
         entity.entitySource = entitySource

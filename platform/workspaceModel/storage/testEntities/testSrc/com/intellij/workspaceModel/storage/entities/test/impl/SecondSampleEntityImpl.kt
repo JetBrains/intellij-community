@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -24,7 +24,7 @@ open class SecondSampleEntityImpl: SecondSampleEntity, WorkspaceEntityBase() {
                  
         override fun build(): SecondSampleEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -125,7 +125,7 @@ class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {
 
     
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<SecondSampleEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SecondSampleEntity> {
         val modifiable = SecondSampleEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -136,7 +136,7 @@ class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): SecondSampleEntity {
+    override fun createEntity(snapshot: EntityStorage): SecondSampleEntity {
         val entity = SecondSampleEntityImpl()
         entity.intProperty = intProperty
         entity.entitySource = entitySource

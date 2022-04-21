@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -35,7 +35,7 @@ open class CustomSourceRootPropertiesEntityImpl: CustomSourceRootPropertiesEntit
                  
         override fun build(): CustomSourceRootPropertiesEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -195,7 +195,7 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
 
     fun isPropertiesXmlTagInitialized(): Boolean = ::propertiesXmlTag.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<CustomSourceRootPropertiesEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<CustomSourceRootPropertiesEntity> {
         val modifiable = CustomSourceRootPropertiesEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -206,7 +206,7 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): CustomSourceRootPropertiesEntity {
+    override fun createEntity(snapshot: EntityStorage): CustomSourceRootPropertiesEntity {
         val entity = CustomSourceRootPropertiesEntityImpl()
         entity._propertiesXmlTag = propertiesXmlTag
         entity.entitySource = entitySource

@@ -4,7 +4,7 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
+import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -76,14 +76,14 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
      */
     @NotNull
     Collection<? extends IndexableIteratorBuilder> getIteratorBuildersForExistingModule(@NotNull ModuleEntity entity,
-                                                                                        @NotNull WorkspaceEntityStorage entityStorage,
+                                                                                        @NotNull EntityStorage entityStorage,
                                                                                         @NotNull Project project);
   }
 
   /**
    * Idea behind this marker interface is to mark that something should be reindexed as cheap as possible,
    * with expensive checks and merges made in batch in corresponding
-   * {@link com.intellij.util.indexing.roots.builders.IndexableIteratorBuilderHandler#instantiate(Collection, Project, WorkspaceEntityStorage)}
+   * {@link com.intellij.util.indexing.roots.builders.IndexableIteratorBuilderHandler#instantiate(Collection, Project, EntityStorage)}
    */
   interface IndexableIteratorBuilder {
   }

@@ -6,8 +6,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
@@ -33,7 +33,7 @@ open class ComposedIdSoftRefEntityImpl: ComposedIdSoftRefEntity, WorkspaceEntity
                  
         override fun build(): ComposedIdSoftRefEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -188,7 +188,7 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistent
         return changed
     }
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<ComposedIdSoftRefEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ComposedIdSoftRefEntity> {
         val modifiable = ComposedIdSoftRefEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -199,7 +199,7 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistent
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): ComposedIdSoftRefEntity {
+    override fun createEntity(snapshot: EntityStorage): ComposedIdSoftRefEntity {
         val entity = ComposedIdSoftRefEntityImpl()
         entity._myName = myName
         entity._link = link

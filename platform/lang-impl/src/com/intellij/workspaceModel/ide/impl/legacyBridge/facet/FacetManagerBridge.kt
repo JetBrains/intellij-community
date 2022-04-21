@@ -56,7 +56,7 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
     return createModifiableModel(module.entityStorage.current.toBuilder())
   }
 
-  fun createModifiableModel(diff: WorkspaceEntityStorageBuilder): ModifiableFacetModel {
+  fun createModifiableModel(diff: MutableEntityStorage): ModifiableFacetModel {
     return ModifiableFacetModelBridgeImpl(module.entityStorage.current, diff, module, this)
   }
 
@@ -201,7 +201,7 @@ internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) :
         throw IllegalStateException("Different set of facets from $entity storage: expected $facetEntitiesSet but was $facetsFromStorage")
       }
     }
-    val usedStore = (moduleBridge.diff as? WorkspaceEntityStorageBuilder) ?: moduleBridge.entityStorage.current
+    val usedStore = (moduleBridge.diff as? MutableEntityStorage) ?: moduleBridge.entityStorage.current
     val mappedFacets = usedStore.resolve(moduleBridge.moduleEntityId)!!.facets?.toSet() ?: emptySet()
     val staleEntity = (mappedFacets - facetEntities).firstOrNull()
     if (staleEntity != null) {
@@ -232,15 +232,15 @@ internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) :
     private const val FACET_BRIDGE_MAPPING_ID = "intellij.facets.bridge"
     private val LOG = logger<FacetModelBridge>()
 
-    internal fun WorkspaceEntityStorage.facetMapping(): ExternalEntityMapping<Facet<*>> {
+    internal fun EntityStorage.facetMapping(): ExternalEntityMapping<Facet<*>> {
       return this.getExternalMapping(FACET_BRIDGE_MAPPING_ID)
     }
 
-    internal fun WorkspaceEntityStorageBuilder.facetMapping(): ExternalEntityMapping<Facet<*>> {
+    internal fun MutableEntityStorage.facetMapping(): ExternalEntityMapping<Facet<*>> {
       return this.getExternalMapping(FACET_BRIDGE_MAPPING_ID)
     }
 
-    internal fun WorkspaceEntityStorageBuilder.mutableFacetMapping(): MutableExternalEntityMapping<Facet<*>> {
+    internal fun MutableEntityStorage.mutableFacetMapping(): MutableExternalEntityMapping<Facet<*>> {
       return this.getMutableExternalMapping(FACET_BRIDGE_MAPPING_ID)
     }
 

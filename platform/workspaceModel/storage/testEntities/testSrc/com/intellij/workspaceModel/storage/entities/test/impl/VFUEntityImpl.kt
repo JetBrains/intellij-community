@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -31,7 +31,7 @@ open class VFUEntityImpl: VFUEntity, WorkspaceEntityBase() {
                  
         override fun build(): VFUEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -151,7 +151,7 @@ class VFUEntityData : WorkspaceEntityData<VFUEntity>() {
     fun isDataInitialized(): Boolean = ::data.isInitialized
     fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<VFUEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<VFUEntity> {
         val modifiable = VFUEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -162,7 +162,7 @@ class VFUEntityData : WorkspaceEntityData<VFUEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): VFUEntity {
+    override fun createEntity(snapshot: EntityStorage): VFUEntity {
         val entity = VFUEntityImpl()
         entity._data = data
         entity._fileProperty = fileProperty

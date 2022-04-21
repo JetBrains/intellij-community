@@ -50,7 +50,7 @@ class ParentAndChildTest {
       }
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     val single = builder.entities(ParentEntity::class.java).single()
@@ -68,7 +68,7 @@ class ParentAndChildTest {
       }
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     val single = builder.entities(ChildEntity::class.java).single()
@@ -86,7 +86,7 @@ class ParentAndChildTest {
       }
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     assertEquals("ChildData", entity.child.childData)

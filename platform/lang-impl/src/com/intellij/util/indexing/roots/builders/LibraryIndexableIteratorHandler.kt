@@ -8,7 +8,7 @@ import com.intellij.util.indexing.roots.LibraryIndexableFilesIterator
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
@@ -20,7 +20,7 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
 
   override fun instantiate(builders: Collection<IndexableEntityProvider.IndexableIteratorBuilder>,
                            project: Project,
-                           entityStorage: WorkspaceEntityStorage): List<IndexableFilesIterator> {
+                           entityStorage: EntityStorage): List<IndexableFilesIterator> {
     @Suppress("UNCHECKED_CAST")
     builders as Collection<LibraryIdIteratorBuilder>
     val idsToIndex = mutableSetOf<LibraryId>()
@@ -46,11 +46,11 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
     return result
   }
 
-  private fun createLibraryIterator(libraryId: LibraryId, entityStorage: WorkspaceEntityStorage, project: Project): LibraryIndexableFilesIterator? {
+  private fun createLibraryIterator(libraryId: LibraryId, entityStorage: EntityStorage, project: Project): LibraryIndexableFilesIterator? {
     return libraryId.findLibraryBridge(entityStorage, project)?.let { LibraryIndexableFilesIteratorImpl.createIterator(it) }
   }
 
-  private class DependencyChecker(val entityStorage: WorkspaceEntityStorage,
+  private class DependencyChecker(val entityStorage: EntityStorage,
                                   val idsToIndex: MutableSet<LibraryId>) {
     private val idsFromDependencies = mutableSetOf<LibraryId>()
     private var moduleIterator: Iterator<ModuleEntity>? = null

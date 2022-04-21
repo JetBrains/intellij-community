@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
@@ -32,7 +32,7 @@ import java.io.File
 class WorkspaceModuleImporter(
   private val importData: MavenModuleImportData,
   private val virtualFileUrlManager: VirtualFileUrlManager,
-  private val builder: WorkspaceEntityStorageBuilder,
+  private val builder: MutableEntityStorage,
   private val importingSettings: MavenImportingSettings,
   private val mavenImportFoldersByMavenId: MutableMap<String, MavenImportFolderHolder>,
   private val project: Project) {

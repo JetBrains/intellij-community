@@ -18,7 +18,7 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import org.junit.Assert.assertEquals
@@ -187,7 +187,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
   @Test
   fun `test base operations in store`()  = WriteCommandAction.runWriteCommandAction(project) {
     val workspaceModel = WorkspaceModel.getInstance(project)
-    var diff = WorkspaceEntityStorageBuilder.from(workspaceModel.entityStorage.current)
+    var diff = MutableEntityStorage.from(workspaceModel.entityStorage.current)
 
     val moduleType = EmptyModuleType.getInstance().id
     val dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency)
@@ -202,7 +202,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
     logExecutionTimeInInNano("Loop thorough the entities from store") { entities.forEach { it.name } }
     assertEquals(modulesCount + 100, entities.toList().size)
 
-    diff = WorkspaceEntityStorageBuilder.from(workspaceModel.entityStorage.current)
+    diff = MutableEntityStorage.from(workspaceModel.entityStorage.current)
     logExecutionTimeInMillis("Remove hundred entities from store") {
       workspaceModel.entityStorage.current.entities(ModuleEntity::class.java).take(100).forEach { diff.removeEntity(it) }
       workspaceModel.updateProjectModel { it.addDiff(diff) }

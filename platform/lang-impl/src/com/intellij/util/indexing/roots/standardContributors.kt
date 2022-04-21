@@ -17,7 +17,7 @@ import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Predicate
@@ -83,7 +83,7 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
 
   companion object {
     private fun <E : WorkspaceEntity> addIteratorBuildersFromProvider(provider: IndexableEntityProvider.Existing<E>,
-                                                                      entityStorage: WorkspaceEntityStorage,
+                                                                      entityStorage: EntityStorage,
                                                                       project: Project,
                                                                       iterators: MutableList<IndexableEntityProvider.IndexableIteratorBuilder>) {
       val entityClass = provider.entityClass

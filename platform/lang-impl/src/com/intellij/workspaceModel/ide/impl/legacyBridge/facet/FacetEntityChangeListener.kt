@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jdom.Element
@@ -42,7 +42,7 @@ internal class FacetEntityChangeListener(private val project: Project) {
   private val publisher
     get() = FacetEventsPublisher.getInstance(project)
 
-  fun processChange(change: EntityChange<FacetEntity>, storageBefore: WorkspaceEntityStorage, addedModulesNames: Set<String>) {
+  fun processChange(change: EntityChange<FacetEntity>, storageBefore: EntityStorage, addedModulesNames: Set<String>) {
     when (change) {
       is EntityChange.Added -> {
         val manager = getFacetManager(change.entity.module) ?: return

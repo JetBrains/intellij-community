@@ -5,8 +5,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -42,7 +42,7 @@ open class FileCopyPackagingElementEntityImpl: FileCopyPackagingElementEntity, W
                  
         override fun build(): FileCopyPackagingElementEntity = this
         
-        override fun applyToBuilder(builder: WorkspaceEntityStorageBuilder) {
+        override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
                 if (existsInBuilder(builder)) {
                     this.diff = builder
@@ -206,7 +206,7 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
 
     fun isFilePathInitialized(): Boolean = ::filePath.isInitialized
 
-    override fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<FileCopyPackagingElementEntity> {
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<FileCopyPackagingElementEntity> {
         val modifiable = FileCopyPackagingElementEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
@@ -217,7 +217,7 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
         return modifiable
     }
 
-    override fun createEntity(snapshot: WorkspaceEntityStorage): FileCopyPackagingElementEntity {
+    override fun createEntity(snapshot: EntityStorage): FileCopyPackagingElementEntity {
         val entity = FileCopyPackagingElementEntityImpl()
         entity._filePath = filePath
         entity._renamedOutputFileName = renamedOutputFileName

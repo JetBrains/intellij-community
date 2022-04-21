@@ -33,7 +33,7 @@ class ParentAndMultipleChildrenTest {
       })
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     val parent = builder.entities(ParentMultipleEntity::class.java).single()
@@ -59,7 +59,7 @@ class ParentAndMultipleChildrenTest {
       )
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     val parent = builder.entities(ParentMultipleEntity::class.java).single()
@@ -84,7 +84,7 @@ class ParentAndMultipleChildrenTest {
       )
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     assertEquals("ChildData1", entity.children.single().childData)
@@ -103,7 +103,7 @@ class ParentAndMultipleChildrenTest {
       )
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
 
     val child = builder.entities(ChildMultipleEntity::class.java).single()
@@ -112,7 +112,7 @@ class ParentAndMultipleChildrenTest {
 
   @Test
   fun `add parent and then child`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val parent = ParentMultipleEntity {
       entitySource = MySource
       parentData = "Parent"
@@ -132,7 +132,7 @@ class ParentAndMultipleChildrenTest {
 
   @Test
   fun `add parent and then child 2`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val parent = ParentMultipleEntity {
       entitySource = MySource
       parentData = "Parent"
@@ -155,7 +155,7 @@ class ParentAndMultipleChildrenTest {
 
   @Test
   fun `add parent and then child 3`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val parent = ParentMultipleEntity {
       entitySource = MySource
       parentData = "Parent"

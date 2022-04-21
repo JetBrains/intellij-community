@@ -22,8 +22,8 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -72,7 +72,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
     return EclipseProjectFile(classpathUrl, internalEntitySource)
   }
 
-  override fun loadRoots(builder: WorkspaceEntityStorageBuilder,
+  override fun loadRoots(builder: MutableEntityStorage,
                          originalModuleEntity: ModuleEntity,
                          reader: JpsFileContentReader,
                          customDir: String?,
@@ -117,7 +117,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
   private fun getEmlFileUrl(imlFileUrl: VirtualFileUrl) = imlFileUrl.url.removeSuffix(".iml") + EclipseXml.IDEA_SETTINGS_POSTFIX
 
   private fun loadClasspathTags(classpathTag: Element,
-                                builder: WorkspaceEntityStorageBuilder,
+                                builder: MutableEntityStorage,
                                 contentRootEntity: ContentRootEntity,
                                 storageRootUrl: VirtualFileUrl,
                                 reader: JpsFileContentReader,
@@ -395,7 +395,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                          writer: JpsFileContentWriter,
                          customDir: String?,
                          imlFileUrl: VirtualFileUrl,
-                         storage: WorkspaceEntityStorage,
+                         storage: EntityStorage,
                          virtualFileManager: VirtualFileUrlManager) {
     fun saveXmlFile(path: Path, root: Element) {
       //todo get rid of WriteAction here

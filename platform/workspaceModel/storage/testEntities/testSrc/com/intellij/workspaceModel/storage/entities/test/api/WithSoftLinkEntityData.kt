@@ -59,7 +59,7 @@ interface NamedEntity : WorkspaceEntityWithPersistentId {
 }
 
 
-fun WorkspaceEntityStorageBuilder.addNamedEntity(
+fun MutableEntityStorage.addNamedEntity(
   name: String,
   additionalProperty: String? = null,
   source: EntitySource = MySource
@@ -102,7 +102,7 @@ interface NamedChildEntity : WorkspaceEntity {
 }
 
 
-fun WorkspaceEntityStorageBuilder.addNamedChildEntity(
+fun MutableEntityStorage.addNamedChildEntity(
   parentEntity: NamedEntity,
   childProperty: String = "child",
   source: EntitySource = MySource
@@ -135,7 +135,7 @@ interface WithSoftLinkEntity : WorkspaceEntity {
 
 }
 
-fun WorkspaceEntityStorageBuilder.addWithSoftLinkEntity(link: NameId, source: EntitySource = MySource): WithSoftLinkEntity {
+fun MutableEntityStorage.addWithSoftLinkEntity(link: NameId, source: EntitySource = MySource): WithSoftLinkEntity {
   val withSoftLinkEntity = WithSoftLinkEntity {
     this.link = link
     this.entitySource = source
@@ -161,7 +161,7 @@ interface ComposedLinkEntity : WorkspaceEntity {
 
 }
 
-fun WorkspaceEntityStorageBuilder.addComposedLinkEntity(link: ComposedId, source: EntitySource = MySource): ComposedLinkEntity {
+fun MutableEntityStorage.addComposedLinkEntity(link: ComposedId, source: EntitySource = MySource): ComposedLinkEntity {
   val composedLinkEntity = ComposedLinkEntity {
     this.link = link
     this.entitySource = source
@@ -194,7 +194,7 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithPersistentId {
 }
 
 
-fun WorkspaceEntityStorageBuilder.addWithListSoftLinksEntity(
+fun MutableEntityStorage.addWithListSoftLinksEntity(
   name: String,
   links: List<NameId>,
   source: EntitySource = MySource
@@ -231,7 +231,7 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithPersistentId {
 
 }
 
-fun WorkspaceEntityStorageBuilder.addComposedIdSoftRefEntity(
+fun MutableEntityStorage.addComposedIdSoftRefEntity(
   name: String,
   link: NameId,
   source: EntitySource = MySource

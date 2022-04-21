@@ -16,7 +16,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.getInstance
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleGroupPathEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
@@ -58,7 +58,7 @@ class ModuleModelProxyWrapper(val delegate: ModifiableModuleModel) : ModuleModel
 
 }
 
-class ModuleModelProxyImpl(private val diff: WorkspaceEntityStorageBuilder,
+class ModuleModelProxyImpl(private val diff: MutableEntityStorage,
                            private val project: Project) : ModuleModelProxy {
   private val virtualFileManager: VirtualFileUrlManager = project.getService(VirtualFileUrlManager::class.java)
   private val versionedStorage: VersionedEntityStorage

@@ -8,7 +8,7 @@ import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModuleOptionsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleCustomImlDataEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
@@ -34,7 +34,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
   override val skipLoadingIfFileDoesNotExist: Boolean
     get() = true
 
-  override fun loadEntities(builder: WorkspaceEntityStorageBuilder,
+  override fun loadEntities(builder: MutableEntityStorage,
                             reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
                             virtualFileManager: VirtualFileUrlManager) {
@@ -51,7 +51,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
     return Pair(options, options["externalSystem"])
   }
 
-  override fun loadExternalSystemOptions(builder: WorkspaceEntityStorageBuilder,
+  override fun loadExternalSystemOptions(builder: MutableEntityStorage,
                                          module: ModuleEntity,
                                          reader: JpsFileContentReader,
                                          externalSystemOptions: Map<String?, String?>,

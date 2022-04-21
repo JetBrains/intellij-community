@@ -21,7 +21,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactId
 import com.intellij.workspaceModel.storage.bridgeEntities.api.CompositePackagingElementEntity
@@ -31,7 +31,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
 class ArtifactModifiableModelBridge(
   private val project: Project,
-  internal val diff: WorkspaceEntityStorageBuilder,
+  internal val diff: MutableEntityStorage,
   private val manager: ArtifactManagerBridge,
 ) : ModifiableArtifactModel {
 
