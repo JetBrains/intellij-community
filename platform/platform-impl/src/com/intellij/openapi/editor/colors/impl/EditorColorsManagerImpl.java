@@ -660,6 +660,10 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       public void projectOpened(@NotNull Project project) {
         connection.disconnect();
         ApplicationManager.getApplication().invokeLater(() -> {
+          if (LafManager.getInstance().getCurrentLookAndFeel().getName().toLowerCase(Locale.ROOT).contains("solarized")) {
+            return;
+          }
+
           @NotNull PluginId pluginId = PluginId.getId("com.4lex4.intellij.solarized");
 
           boolean isDark = ColorUtil.isDark(scheme.getDefaultBackground());
