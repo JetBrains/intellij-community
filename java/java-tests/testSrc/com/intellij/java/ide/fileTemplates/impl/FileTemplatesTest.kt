@@ -1,266 +1,253 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.ide.fileTemplates.impl;
+package com.intellij.java.ide.fileTemplates.impl
 
-import com.intellij.ide.fileTemplates.*;
-import com.intellij.ide.fileTemplates.impl.BundledFileTemplate;
-import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
-import com.intellij.ide.fileTemplates.impl.FTManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.testFramework.JavaProjectTestCase;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.ServiceContainerUtil;
-import com.intellij.util.io.PathKt;
-import org.apache.velocity.runtime.parser.ParseException;
+import com.intellij.ide.fileTemplates.*
+import com.intellij.ide.fileTemplates.impl.CustomFileTemplate
+import com.intellij.ide.fileTemplates.impl.FTManager
+import com.intellij.ide.fileTemplates.impl.FileTemplateBase
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.JavaDirectoryService
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiManager
+import com.intellij.testFramework.JavaProjectTestCase
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.registerExtension
+import com.intellij.util.io.delete
+import org.assertj.core.api.Assertions.assertThat
+import java.io.File
+import java.io.FileReader
+import java.io.IOException
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
+import java.util.*
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.util.*;
+@Suppress("UsePropertyAccessSyntax")
+internal class FileTemplatesTest : JavaProjectTestCase() {
+  private var testConfigDir: Path? = null
 
-import static com.intellij.testFramework.assertions.Assertions.assertThat;
+  override fun tearDown() {
+    super.tearDown()
 
-class FileTemplatesTest extends JavaProjectTestCase {
-  private Path myTestConfigDir;
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-    if (myTestConfigDir != null) {
-      PathKt.delete(myTestConfigDir);
-    }
+    testConfigDir?.delete()
   }
 
-  void testAllTemplates() throws IOException, ParseException {
-    final File testsDir = new File(PathManagerEx.getTestDataPath() + "/ide/fileTemplates");
-
-    final String includeTemplateName = "include1.inc";
-    final String includeTemplateExtension = "txt";
-    final String customIncludeFileName = includeTemplateName + "." + includeTemplateExtension;
-    final File customInclude = new File(testsDir, customIncludeFileName);
-    final String includeText = FileUtil.loadFile(customInclude, FileTemplate.ourEncoding);
-
-    final FileTemplateManager templateManager = FileTemplateManager.getInstance(getProject());
-    final ArrayList<FileTemplate> originalIncludes = new ArrayList<FileTemplate>(Arrays.asList(templateManager.getAllPatterns()));
+  fun testAllTemplates() {
+    val testsDir = File("${PathManagerEx.getTestDataPath()}/ide/fileTemplates")
+    val includeTemplateName = "include1.inc"
+    val includeTemplateExtension = "txt"
+    val customIncludeFileName = "$includeTemplateName.$includeTemplateExtension"
+    val customInclude = File(testsDir, customIncludeFileName)
+    val includeText = FileUtil.loadFile(customInclude, FileTemplate.ourEncoding)
+    val templateManager = FileTemplateManager.getInstance(project)
+    val originalIncludes = ArrayList(Arrays.asList(*templateManager.allPatterns))
     try {
       // configure custom include
-      final List<FileTemplate> allIncludes = new ArrayList<FileTemplate>(originalIncludes);
-      final CustomFileTemplate custom = new CustomFileTemplate(includeTemplateName, includeTemplateExtension);
-      custom.setText(includeText);
-      allIncludes.add(custom);
-      templateManager.setTemplates(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, allIncludes);
-
-      final String txt = ".txt";
-      File[] children = testsDir.listFiles((dir, name) -> name.endsWith(".out" + txt));
-
-      assertTrue(children.length > 0);
-      for (File resultFile : children) {
-        String name = resultFile.getName();
-        String base = name.substring(0, name.length() - txt.length() - ".out".length());
-        File propFile = new File(resultFile.getParent(), base + ".prop" + txt);
-        File inFile = new File(resultFile.getParent(), base + txt);
-
-        String inputText = FileUtil.loadFile(inFile, FileTemplate.ourEncoding);
-        String outputText = FileUtil.loadFile(resultFile, FileTemplate.ourEncoding);
-
-        Properties properties = new Properties();
-
-        properties.load(new FileReader(propFile));
-        properties.put(FileTemplateManager.PROJECT_NAME_VARIABLE, getProject().getName());
-
-        LOG.debug(resultFile.getName());
-        doTestTemplate(inputText, properties, outputText);
+      val allIncludes: MutableList<FileTemplate> = ArrayList(originalIncludes)
+      val custom = CustomFileTemplate(includeTemplateName, includeTemplateExtension)
+      custom.text = includeText
+      allIncludes.add(custom)
+      templateManager.setTemplates(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, allIncludes)
+      val txt = ".txt"
+      val children = testsDir.listFiles { dir: File?, name: String -> name.endsWith(".out$txt") }
+      assertThat(children).isNotEmpty()
+      for (resultFile in children) {
+        val name = resultFile.name
+        val base = name.substring(0, name.length - txt.length - ".out".length)
+        val propFile = File(resultFile.parent, "$base.prop$txt")
+        val inFile = File(resultFile.parent, base + txt)
+        val inputText = FileUtil.loadFile(inFile, FileTemplate.ourEncoding)
+        val outputText = FileUtil.loadFile(resultFile, FileTemplate.ourEncoding)
+        val properties = Properties()
+        properties.load(FileReader(propFile))
+        properties[FileTemplateManager.PROJECT_NAME_VARIABLE] = project.name
+        UsefulTestCase.LOG.debug(resultFile.name)
+        doTestTemplate(inputText, properties, outputText)
       }
     }
     finally {
-      templateManager.setTemplates(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, originalIncludes);
+      templateManager.setTemplates(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, originalIncludes)
     }
   }
 
-  private void doTestTemplate(String inputString, Properties properties, String expected) throws ParseException {
-    inputString = StringUtil.convertLineSeparators(inputString);
-    expected = StringUtil.convertLineSeparators(expected);
-
-    final String result = FileTemplateUtil.mergeTemplate(properties, inputString, false);
-    assertEquals(expected, result);
-
-    List attrs = Arrays.asList(FileTemplateUtil.calculateAttributes(inputString, new Properties(), false, getProject()));
-    assertTrue(properties.size() - 1 <= attrs.size());
-    Enumeration e = properties.propertyNames();
+  private fun doTestTemplate(inputString: String, properties: Properties, expected: String) {
+    var inputString: String? = inputString
+    var expected: String? = expected
+    inputString = StringUtil.convertLineSeparators(inputString!!)
+    expected = StringUtil.convertLineSeparators(expected!!)
+    val result = FileTemplateUtil.mergeTemplate(properties, inputString, false)
+    assertEquals(expected, result)
+    val attrs = FileTemplateUtil.calculateAttributes(inputString, Properties(), false, project).asList()
+    assertThat(properties.size - 1 <= attrs.size).isTrue()
+    val e = properties.propertyNames()
     while (e.hasMoreElements()) {
-      String s = (String)e.nextElement();
-      assertTrue("Attribute '" + s + "' not found in properties", attrs.contains(s) || FileTemplateManager.PROJECT_NAME_VARIABLE == s);
+      val s = e.nextElement() as String
+      assertTrue("Attribute '$s' not found in properties", attrs.contains(s) || FileTemplateManager.PROJECT_NAME_VARIABLE === s)
     }
   }
 
-  public void testFindFileByUrl() {
-    FileTemplate catchBodyTemplate = FileTemplateManager.getInstance(getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
-    assertNotNull(catchBodyTemplate);
+  fun testFindFileByUrl() {
+    val catchBodyTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY)
+    assertNotNull(catchBodyTemplate)
   }
 
-  public void testCollect_undefined_attribute_names() throws FileTemplateParseException {
-    FileTemplate template = addTestTemplate("my_class", "${ABC} ${DEF} ${NAME}");
-    Properties properties = new Properties();
-    properties.put("NAME", "zzz");
-    assertThat(template.getUnsetAttributes(properties, getProject())).containsOnly("ABC", "DEF");
+  fun testCollect_undefined_attribute_names() {
+    val template = addTestTemplate("my_class", "\${ABC} \${DEF} \${NAME}")
+    val properties = Properties()
+    properties["NAME"] = "zzz"
+    assertThat(template.getUnsetAttributes(properties, project)).containsOnly("ABC", "DEF")
   }
 
-  public void test_collect_undefined_attribute_names_from_included_templates() throws FileTemplateParseException {
-    FileTemplate included = addTestTemplate("included", "${ABC} ${DEF}");
-    assert included == FileTemplateManager.getInstance(getProject()).getTemplate("included.java");
-
-    FileTemplate template = addTestTemplate("my_class", "#parse(\"included.java\") ${DEF} ${NAME}");
-    Properties properties = new Properties();
-    properties.put("NAME", "zzz");
-    assertThat(template.getUnsetAttributes(properties, getProject())).contains("ABC", "DEF");
+  fun test_collect_undefined_attribute_names_from_included_templates() {
+    val included = addTestTemplate("included", "\${ABC} \${DEF}")
+    assert(included === FileTemplateManager.getInstance(project).getTemplate("included.java"))
+    val template = addTestTemplate("my_class", "#parse(\"included.java\") \${DEF} \${NAME}")
+    val properties = Properties()
+    properties["NAME"] = "zzz"
+    assertThat(template.getUnsetAttributes(properties, project)).contains("ABC", "DEF")
   }
 
-  void testDefaultPackage() {
-    doClassTest("package ${PACKAGE_NAME}; public class ${NAME} {}", "public class XXX {\n}");
+  fun testDefaultPackage() {
+    doClassTest("package \${PACKAGE_NAME}; public class \${NAME} {}", "public class XXX {\n}")
   }
 
-  private void doClassTest(String templateText, String result) {
-    String name = "my_class";
-    FileTemplate template = addTestTemplate(name, templateText);
-    PsiDirectory psiDirectory = createDirectory();
-    PsiClass psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory, "XXX", name);
-    assertNotNull(psiClass);
-    assertEquals(result, psiClass.getContainingFile().getText());
-    FileTemplateManager.getInstance(getProject()).removeTemplate(template);
+  private fun doClassTest(templateText: String, result: String) {
+    val name = "my_class"
+    val template = addTestTemplate(name, templateText)
+    val psiDirectory = createDirectory()
+    val psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory!!, "XXX", name)
+    assertNotNull(psiClass)
+    assertEquals(result, psiClass.containingFile.text)
+    FileTemplateManager.getInstance(project).removeTemplate(template)
   }
 
-  void testPopulateDefaultProperties() {
-    String name = "my_class";
-    FileTemplate template = addTestTemplate(name, "package ${PACKAGE_NAME}; \n" +
-                                                  "// ${USER} \n" +
-                                                  "public class ${NAME} {}");
-    PsiDirectory psiDirectory = createDirectory();
-    PsiClass psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory, "XXX", name);
-    assertFalse(psiClass.getContainingFile().getText().contains("${USER}"));
-    FileTemplateManager.getInstance(getProject()).removeTemplate(template);
+  fun testPopulateDefaultProperties() {
+    val name = "my_class"
+    val template = addTestTemplate(name, """
+   package ${"$"}{PACKAGE_NAME}; 
+   // ${"$"}{USER} 
+   public class ${"$"}{NAME} {}
+   """.trimIndent())
+    val psiDirectory = createDirectory()
+    val psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory!!, "XXX", name)
+    assertFalse(psiClass.containingFile.text.contains("\${USER}"))
+    FileTemplateManager.getInstance(project).removeTemplate(template)
   }
 
-  void testDirPath() throws Exception {
-    FileTemplate template = FileTemplateManager.getInstance(getProject()).addTemplate(getName(), "txt");
-    disposeOnTearDown(() -> FileTemplateManager.getInstance(getProject()).removeTemplate(template));
-    template.setText("${DIR_PATH}; ${FILE_NAME}");
-
-    VirtualFile tempDir = getTempDir().createVirtualDir();
-    PsiDirectory directory = PsiManager.getInstance(getProject()).findDirectory(tempDir);
-    PsiElement element = FileTemplateUtil.createFromTemplate(template, "foo", new Properties(), directory);
-
-    assertThat(element.getText()).endsWith(tempDir.getNameSequence() + "; foo.txt");
+  fun testDirPath() {
+    val template = FileTemplateManager.getInstance(project).addTemplate(name, "txt")
+    disposeOnTearDown(
+      Disposable { FileTemplateManager.getInstance(project).removeTemplate(template) })
+    template.text = "\${DIR_PATH}; \${FILE_NAME}"
+    val tempDir = tempDir.createVirtualDir()
+    val directory = PsiManager.getInstance(project).findDirectory(tempDir)
+    val element = FileTemplateUtil.createFromTemplate(template, "foo", Properties(), directory!!)
+    com.intellij.testFramework.assertions.Assertions.assertThat(element.text).endsWith(tempDir.nameSequence.toString() + "; foo.txt")
   }
 
-  void testFileNameTrimming() throws Exception {
-    CreateFromTemplateHandler handler = new DefaultCreateFromTemplateHandler();
-    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), CreateFromTemplateHandler.EP_NAME, handler, getTestRootDisposable());
-    FileTemplate template = FileTemplateManager.getInstance(getProject()).addTemplate(getName(), "txt");
-    disposeOnTearDown(() -> FileTemplateManager.getInstance(getProject()).removeTemplate(template));
-    template.setText("${FILE_NAME}");
-
-    VirtualFile tempDir = getTempDir().createVirtualDir();
-    PsiDirectory directory = PsiManager.getInstance(getProject()).findDirectory(tempDir);
-    PsiElement element = FileTemplateUtil.createFromTemplate(template, "foo.txt", new Properties(), directory);
-
-    assertEquals("foo.txt", element.getText());
+  fun testFileNameTrimming() {
+    val handler: CreateFromTemplateHandler = DefaultCreateFromTemplateHandler()
+    ApplicationManager.getApplication().registerExtension(CreateFromTemplateHandler.EP_NAME, handler, testRootDisposable)
+    val template = FileTemplateManager.getInstance(project).addTemplate(name, "txt")
+    disposeOnTearDown(
+      Disposable { FileTemplateManager.getInstance(project).removeTemplate(template) })
+    template.text = "\${FILE_NAME}"
+    val tempDir = tempDir.createVirtualDir()
+    val directory = PsiManager.getInstance(project).findDirectory(tempDir)
+    val element = FileTemplateUtil.createFromTemplate(template, "foo.txt", Properties(), directory!!)
+    assertEquals("foo.txt", element.text)
   }
 
-  private FileTemplate addTestTemplate(String name, String text) {
-    FileTemplate template = FileTemplateManager.getInstance(getProject()).addTemplate(name, "java");
-    disposeOnTearDown(() -> FileTemplateManager.getInstance(getProject()).removeTemplate(template));
-    template.setText(text);
-    return template;
+  private fun addTestTemplate(name: String, text: String): FileTemplate {
+    val template = FileTemplateManager.getInstance(project).addTemplate(name, "java")
+    disposeOnTearDown(Disposable { FileTemplateManager.getInstance(project).removeTemplate(template) })
+    template.text = text
+    return template
   }
 
-  private PsiDirectory createDirectory() {
-    VirtualFile tempDir = getTempDir().createVirtualDir();
-    PsiTestUtil.addSourceRoot(getModule(), tempDir);
-    VirtualFile sourceRoot = ModuleRootManager.getInstance(getModule()).getSourceRoots()[0];
-    return PsiManager.getInstance(getProject()).findDirectory(sourceRoot);
+  private fun createDirectory(): PsiDirectory? {
+    val tempDir = tempDir.createVirtualDir()
+    PsiTestUtil.addSourceRoot(module, tempDir)
+    val sourceRoot = ModuleRootManager.getInstance(module).sourceRoots[0]
+    return PsiManager.getInstance(project).findDirectory(sourceRoot)
   }
 
-  private void doTestSaveLoadTemplate(String name, String ext) throws IOException {
-    FTManager templateManager = new FTManager("test", getTestConfigRoot());
-    BundledFileTemplate template = (BundledFileTemplate)templateManager.addTemplate(name, ext);
-    String qName = template.getQualifiedName();
-    templateManager.saveTemplates();
-    templateManager.removeTemplate(qName);
-    templateManager.loadCustomizedContent();
-    FileTemplate loadedTemplate = templateManager.findTemplateByName(name);
-    assertNotNull("Template '" + qName + "' was not found", loadedTemplate);
-    assertEquals(name, loadedTemplate.getName());
-    assertEquals(ext, loadedTemplate.getExtension());
-    assertNotSame(template, loadedTemplate);
+  private fun doTestSaveLoadTemplate(name: String, ext: String) {
+    val templateManager = FTManager("test", testConfigRoot!!)
+    val template = templateManager.addTemplate(name, ext) as FileTemplateBase
+    val qName = template.qualifiedName
+    templateManager.saveTemplates()
+    templateManager.removeTemplate(qName)
+    templateManager.loadCustomizedContent()
+    val loadedTemplate: FileTemplate? = templateManager.findTemplateByName(name)
+    assertNotNull("Template '$qName' was not found", loadedTemplate)
+    assertEquals(name, loadedTemplate!!.name)
+    assertEquals(ext, loadedTemplate.extension)
+    assertNotSame(template, loadedTemplate)
   }
 
-  private Path getTestConfigRoot() throws IOException {
-    if (myTestConfigDir == null) {
-      myTestConfigDir = FileUtil.createTempDirectory(getTestName(true), "config").toPath();
-    }
-    return myTestConfigDir;
-  }
-
-  void testSaveLoadCustomTemplate() throws IOException {
-    doTestSaveLoadTemplate("name", "ext");
-  }
-
-  void testSaveLoadCustomTemplateDottedName() throws IOException {
-    doTestSaveLoadTemplate("name.has.dots", "ext");
-  }
-
-  void testSaveLoadCustomTemplateDottedExt() throws IOException {
-    if (checkFileWithUnicodeNameCanBeFound()) {
-      doTestSaveLoadTemplate("name", "ext.has.dots");
-    }
-  }
-
-  void testCanCreateDoubleExtension() {
-    FileTemplate template = FileTemplateManager.getInstance(getProject()).addTemplate(getName(), "my.txt");
-    disposeOnTearDown(() -> FileTemplateManager.getInstance(getProject()).removeTemplate(template));
-
-    VirtualFile tempDir = getTempDir().createVirtualDir();
-    PsiDirectory directory = PsiManager.getInstance(getProject()).findDirectory(tempDir);
-    assertTrue(FileTemplateUtil.canCreateFromTemplate(new PsiDirectory[]{directory}, template));
-  }
-
-  private boolean checkFileWithUnicodeNameCanBeFound() {
-    try {
-      //noinspection GroovyAccessibility
-      String name = FTManager.encodeFileName("test", "ext.has.dots");
-      File file = createTempFile(name, "test");
-      FileUtil.loadFile(new File(file.getAbsolutePath()), StandardCharsets.UTF_8);
-      LOG.debug("File loaded: " + file.getAbsolutePath());
-      File dir = new File(file.getParent());
-      File[] files = dir.listFiles();
-      assertNotNull(files);
-      List<String> nameList = new ArrayList<>();
-      for (File child : files) {
-        nameList.add(child.getName());
+  private val testConfigRoot: Path?
+    get() {
+      if (testConfigDir == null) {
+        testConfigDir = FileUtil.createTempDirectory(getTestName(true), "config").toPath()
       }
-      for (String listedName : nameList) {
-        if (listedName.equals(name)) {
-          return true;
+      return testConfigDir
+    }
+
+  fun testSaveLoadCustomTemplate() {
+    doTestSaveLoadTemplate("name", "ext")
+  }
+
+  fun testSaveLoadCustomTemplateDottedName() {
+    doTestSaveLoadTemplate("name.has.dots", "ext")
+  }
+
+  fun testSaveLoadCustomTemplateDottedExt() {
+    if (checkFileWithUnicodeNameCanBeFound()) {
+      doTestSaveLoadTemplate("name", "ext.has.dots")
+    }
+  }
+
+  fun testCanCreateDoubleExtension() {
+    val template = FileTemplateManager.getInstance(project).addTemplate(name, "my.txt")
+    disposeOnTearDown(Disposable { FileTemplateManager.getInstance(project).removeTemplate(template) })
+    val tempDir = tempDir.createVirtualDir()
+    val directory = PsiManager.getInstance(project).findDirectory(tempDir)
+    assertTrue(FileTemplateUtil.canCreateFromTemplate(arrayOf(directory), template))
+  }
+
+  private fun checkFileWithUnicodeNameCanBeFound(): Boolean {
+    try {
+      val name = FTManager.encodeFileName("test", "ext.has.dots")
+      val file = createTempFile(name, "test")
+      FileUtil.loadFile(File(file.absolutePath), StandardCharsets.UTF_8)
+      UsefulTestCase.LOG.debug("File loaded: " + file.absolutePath)
+      val dir = File(file.parent)
+      val files = dir.listFiles()
+      assertNotNull(files)
+      val nameList = ArrayList<String>()
+      for (child in files!!) {
+        nameList.add(child.name)
+      }
+      for (listedName in nameList) {
+        if (listedName == name) {
+          return true
         }
       }
-      LOG.debug("No matching file found, locale: " + Locale.getDefault().getDisplayName());
-      return false;
+      UsefulTestCase.LOG.debug("No matching file found, locale: " + Locale.getDefault().displayName)
     }
-    catch (IOException ignored) {
-      return false;
+    catch (ignored: IOException) {
     }
+    return false
   }
 
-  public void testStringUtilsSpecialVariableWorksAndHasRemoveAndHumpMethod() throws IOException {
-    FileTemplate template = addTestTemplate("my_class", "prefix ${StringUtils.removeAndHump(\"foo_barBar\")} suffix");
-    String evaluated = template.getText(Collections.emptyMap());
-    assert evaluated == "prefix FooBarBar suffix";
+  fun testStringUtilsSpecialVariableWorksAndHasRemoveAndHumpMethod() {
+    val template = addTestTemplate("my_class", "prefix \${StringUtils.removeAndHump(\"foo_barBar\")} suffix")
+    assertThat(template.getText(emptyMap<Any?, Any>())).isEqualTo("prefix FooBarBar suffix")
   }
 }
