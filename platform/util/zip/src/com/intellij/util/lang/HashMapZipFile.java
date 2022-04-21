@@ -25,10 +25,10 @@ public final class HashMapZipFile implements ZipFile {
   ByteBuffer mappedBuffer;
   final int fileSize;
 
-  HashMapZipFile(ImmutableZipEntry[] nameMap,
-                 ImmutableZipEntry[] entries,
-                 ByteBuffer mappedBuffer,
-                 int fileSize) {
+  private HashMapZipFile(ImmutableZipEntry[] nameMap,
+                         ImmutableZipEntry[] entries,
+                         ByteBuffer mappedBuffer,
+                         int fileSize) {
     this.mappedBuffer = mappedBuffer;
     this.fileSize = fileSize;
 

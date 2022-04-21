@@ -44,10 +44,10 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.net.URL;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 public final class AllFileTemplatesConfigurable implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll,
                                                            Configurable.VariableProjectAppLevel, Configurable.WithEpDependencies {
@@ -452,7 +452,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
   }
 
   private void selectTemplate(FileTemplate template) {
-    URL defDesc = null;
+    Supplier<String> defDesc = null;
     if (myCurrentTab == myTemplatesList) {
       defDesc = FileTemplateManagerImpl.getInstanceImpl(myProject).getDefaultTemplateDescription();
     }

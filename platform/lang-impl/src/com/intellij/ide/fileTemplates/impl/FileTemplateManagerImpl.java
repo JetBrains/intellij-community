@@ -282,8 +282,7 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
 
   @Override
   public @NotNull FileTemplate getDefaultTemplate(final @NotNull String name) {
-    final String templateQName = getQualifiedName(name);
-
+    String templateQName = getQualifiedName(name);
     for (FTManager manager : getAllManagers()) {
       FileTemplateBase template = manager.getTemplate(templateQName);
       if (template != null) {

@@ -159,7 +159,7 @@ class FileTemplatesLoader implements Disposable {
     }
 
     FileTemplateLoadResult result = loadDefaultTemplates(new ArrayList<>(MANAGER_TO_DIR.values()));
-    Map<String, FTManager> managers = new HashMap<>();
+    Map<String, FTManager> managers = new HashMap<>(MANAGER_TO_DIR.size());
     for (Map.Entry<String, String> entry: MANAGER_TO_DIR.entrySet()) {
       String name = entry.getKey();
       String pathPrefix = entry.getValue();

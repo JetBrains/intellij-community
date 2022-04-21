@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class FTManager {
+public final class FTManager {
   private static final Logger LOG = Logger.getInstance(FTManager.class);
   private static final String DEFAULT_TEMPLATE_EXTENSION = "ft";
   static final String TEMPLATE_EXTENSION_SUFFIX = "." + DEFAULT_TEMPLATE_EXTENSION;
