@@ -1,72 +1,57 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.PersistentEntityId
-import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
-
+import com.intellij.workspaceModel.storage.*
 import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.impl.ObjType
-import org.jetbrains.deft.impl.TBlob
-import org.jetbrains.deft.impl.TString
-import org.jetbrains.deft.impl.fields.Field
-import org.jetbrains.deft.Obj
-import org.jetbrains.deft.impl.*
-import org.jetbrains.deft.impl.fields.*
+import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 
-import org.jetbrains.deft.Type
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 
 
-
-
-
-
-
-
-interface FirstEntityWithPId  : WorkspaceEntityWithPersistentId {
-    val data: String
-    override val persistentId: FirstPId
-        get() {
-            return FirstPId(data)
-        }
-
-
-    //region generated code
-    //@formatter:off
-    @GeneratedCodeApiVersion(0)
-    interface Builder: FirstEntityWithPId, ModifiableWorkspaceEntity<FirstEntityWithPId>, ObjBuilder<FirstEntityWithPId> {
-        override var data: String
-        override var entitySource: EntitySource
+interface FirstEntityWithPId : WorkspaceEntityWithPersistentId {
+  val data: String
+  override val persistentId: FirstPId
+    get() {
+      return FirstPId(data)
     }
-    
-    companion object: Type<FirstEntityWithPId, Builder>()
-    //@formatter:on
-    //endregion
+
+
+  //region generated code
+  //@formatter:off
+  @GeneratedCodeApiVersion(0)
+  interface Builder: FirstEntityWithPId, ModifiableWorkspaceEntity<FirstEntityWithPId>, ObjBuilder<FirstEntityWithPId> {
+      override var data: String
+      override var entitySource: EntitySource
+  }
+  
+  companion object: Type<FirstEntityWithPId, Builder>()
+  //@formatter:on
+  //endregion
 
 }
 
 data class FirstPId(override val presentableName: String) : PersistentEntityId<FirstEntityWithPId>
 
-interface SecondEntityWithPId  : WorkspaceEntityWithPersistentId {
-    val data: String
-    override val persistentId: SecondPId
-        get() = SecondPId(data)
+interface SecondEntityWithPId : WorkspaceEntityWithPersistentId {
+  val data: String
+  override val persistentId: SecondPId
+    get() = SecondPId(data)
 
 
-    //region generated code
-    //@formatter:off
-    @GeneratedCodeApiVersion(0)
-    interface Builder: SecondEntityWithPId, ModifiableWorkspaceEntity<SecondEntityWithPId>, ObjBuilder<SecondEntityWithPId> {
-        override var data: String
-        override var entitySource: EntitySource
-    }
-    
-    companion object: Type<SecondEntityWithPId, Builder>()
-    //@formatter:on
-    //endregion
+  //region generated code
+  //@formatter:off
+  @GeneratedCodeApiVersion(0)
+  interface Builder: SecondEntityWithPId, ModifiableWorkspaceEntity<SecondEntityWithPId>, ObjBuilder<SecondEntityWithPId> {
+      override var data: String
+      override var entitySource: EntitySource
+  }
+  
+  companion object: Type<SecondEntityWithPId, Builder>()
+  //@formatter:on
+  //endregion
 
 }
 
 data class SecondPId(override val presentableName: String) : PersistentEntityId<SecondEntityWithPId>
-data class TestPId(var presentableName: String, val aaa: Int?, var  angry:  Boolean)
+data class TestPId(var presentableName: String, val aaa: Int?, var angry: Boolean)

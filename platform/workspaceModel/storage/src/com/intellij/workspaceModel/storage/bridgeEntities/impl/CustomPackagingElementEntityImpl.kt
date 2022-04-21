@@ -21,9 +21,6 @@ import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyParentOfC
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractOneParentOfChild
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -314,9 +311,6 @@ open class CustomPackagingElementEntityImpl: CustomPackagingElementEntity, Works
         override fun getEntityData(): CustomPackagingElementEntityData = result ?: super.getEntityData() as CustomPackagingElementEntityData
         override fun getEntityClass(): Class<CustomPackagingElementEntity> = CustomPackagingElementEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(CustomPackagingElementEntityData())
 }
     
 class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElementEntity>() {

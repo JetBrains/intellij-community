@@ -3,18 +3,11 @@ package com.intellij.workspaceModel.storage.entities.test.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.annotations.Child
-import org.jetbrains.deft.impl.*
-import org.jetbrains.deft.impl.fields.Field
-import com.intellij.workspaceModel.storage.EntitySource
-import org.jetbrains.deft.Obj
-import org.jetbrains.deft.impl.fields.*
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-
 import org.jetbrains.deft.Type
+import org.jetbrains.deft.annotations.Child
+import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-
-
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 
 
 
@@ -48,6 +41,7 @@ interface SampleEntity : WorkspaceEntity {
 interface ChildSampleEntity : WorkspaceEntity {
   val data: String
   val parentEntity: SampleEntity?
+
   //region generated code
   //@formatter:off
   @GeneratedCodeApiVersion(0)
@@ -99,6 +93,7 @@ interface SecondSampleEntity : WorkspaceEntity {
 interface SourceEntity : WorkspaceEntity {
   val data: String
   val children: List<@Child ChildSourceEntity>
+
   //region generated code
   //@formatter:off
   @GeneratedCodeApiVersion(0)
@@ -117,6 +112,7 @@ interface SourceEntity : WorkspaceEntity {
 interface ChildSourceEntity : WorkspaceEntity {
   val data: String
   val parentEntity: SourceEntity
+
   //region generated code
   //@formatter:off
   @GeneratedCodeApiVersion(0)
@@ -138,6 +134,7 @@ interface PersistentIdEntity : WorkspaceEntityWithPersistentId {
     get() {
       return LinkedListEntityId(data)
     }
+
   //region generated code
   //@formatter:off
   @GeneratedCodeApiVersion(0)

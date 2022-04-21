@@ -19,9 +19,6 @@ import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyChildrenO
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyParentOfChild
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -232,9 +229,6 @@ open class RightEntityImpl: RightEntity, WorkspaceEntityBase() {
         override fun getEntityData(): RightEntityData = result ?: super.getEntityData() as RightEntityData
         override fun getEntityClass(): Class<RightEntity> = RightEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(RightEntityData())
 }
     
 class RightEntityData : WorkspaceEntityData<RightEntity>() {

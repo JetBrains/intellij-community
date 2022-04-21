@@ -1,20 +1,13 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.*
 import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
-import org.jetbrains.deft.impl.*
-import org.jetbrains.deft.impl.fields.Field
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import org.jetbrains.deft.Obj
-import org.jetbrains.deft.impl.fields.*
-import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-
-
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 
 
 
@@ -41,7 +34,6 @@ interface CompositeBaseEntity : BaseEntity {
   val children: List<@Child BaseEntity>
 
 
-
   //region generated code
   //@formatter:off
   @GeneratedCodeApiVersion(0)
@@ -61,7 +53,6 @@ interface MiddleEntity : BaseEntity {
   val property: String
 
 
-
   //region generated code
   //@formatter:off
   @GeneratedCodeApiVersion(0)
@@ -79,8 +70,8 @@ interface MiddleEntity : BaseEntity {
 
 fun WorkspaceEntityStorageBuilder.addMiddleEntity(property: String = "prop", source: EntitySource = MySource): MiddleEntity {
   val middleEntity = MiddleEntity {
-      this.property = property
-      this.entitySource = source
+    this.property = property
+    this.entitySource = source
   }
   this.addEntity(middleEntity)
   return middleEntity

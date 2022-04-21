@@ -17,9 +17,6 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -291,9 +288,6 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
         override fun getEntityData(): FacetEntityData = result ?: super.getEntityData() as FacetEntityData
         override fun getEntityClass(): Class<FacetEntity> = FacetEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(FacetEntityData())
 }
     
 class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEntity>(), SoftLinkable {

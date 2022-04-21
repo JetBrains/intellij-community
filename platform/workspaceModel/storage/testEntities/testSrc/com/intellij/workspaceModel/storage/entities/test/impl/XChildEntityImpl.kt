@@ -16,9 +16,6 @@ import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -266,9 +263,6 @@ open class XChildEntityImpl: XChildEntity, WorkspaceEntityBase() {
         override fun getEntityData(): XChildEntityData = result ?: super.getEntityData() as XChildEntityData
         override fun getEntityClass(): Class<XChildEntity> = XChildEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(XChildEntityData())
 }
     
 class XChildEntityData : WorkspaceEntityData<XChildEntity>() {

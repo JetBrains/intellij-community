@@ -54,6 +54,7 @@ import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.referrersx
 import org.jetbrains.deft.annotations.Child
 
+
 var ArtifactOutputPackagingElementEntity.Builder.artifactEntity: ArtifactEntity
     get() {
         return referrersx(ArtifactEntity::artifactOutputPackagingElement).single()

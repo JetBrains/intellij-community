@@ -19,9 +19,6 @@ import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -456,9 +453,6 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
         override fun getEntityData(): ModuleEntityData = result ?: super.getEntityData() as ModuleEntityData
         override fun getEntityClass(): Class<ModuleEntity> = ModuleEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(ModuleEntityData())
 }
     
 class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEntity>(), SoftLinkable {

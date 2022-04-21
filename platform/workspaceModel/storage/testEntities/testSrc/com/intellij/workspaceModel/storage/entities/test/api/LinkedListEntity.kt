@@ -1,22 +1,11 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.PersistentEntityId
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
+import com.intellij.workspaceModel.storage.*
 import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.impl.ObjType
-import org.jetbrains.deft.impl.TBlob
-import org.jetbrains.deft.impl.TString
-import org.jetbrains.deft.impl.fields.Field
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import org.jetbrains.deft.Obj
-import org.jetbrains.deft.impl.*
-import org.jetbrains.deft.impl.fields.*
-
 import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 
 
 
@@ -31,7 +20,6 @@ interface LinkedListEntity : WorkspaceEntityWithPersistentId {
 
   override val persistentId: LinkedListEntityId
     get() = LinkedListEntityId(myName)
-
 
 
   //region generated code
@@ -51,9 +39,9 @@ interface LinkedListEntity : WorkspaceEntityWithPersistentId {
 
 fun WorkspaceEntityStorageBuilder.addLinkedListEntity(name: String, next: LinkedListEntityId): LinkedListEntity {
   val linkedListEntity = LinkedListEntity {
-      this.myName = name
-      this.next = next
-      this.entitySource = MySource
+    this.myName = name
+    this.next = next
+    this.entitySource = MySource
   }
   this.addEntity(linkedListEntity)
   return linkedListEntity

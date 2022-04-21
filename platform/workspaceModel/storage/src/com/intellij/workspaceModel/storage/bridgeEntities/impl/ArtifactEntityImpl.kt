@@ -22,9 +22,6 @@ import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -336,9 +333,6 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
         override fun getEntityData(): ArtifactEntityData = result ?: super.getEntityData() as ArtifactEntityData
         override fun getEntityClass(): Class<ArtifactEntity> = ArtifactEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(ArtifactEntityData())
 }
     
 class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<ArtifactEntity>() {

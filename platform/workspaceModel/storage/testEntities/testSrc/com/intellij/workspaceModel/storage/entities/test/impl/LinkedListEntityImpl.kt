@@ -14,9 +14,6 @@ import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -145,9 +142,6 @@ open class LinkedListEntityImpl: LinkedListEntity, WorkspaceEntityBase() {
         override fun getEntityData(): LinkedListEntityData = result ?: super.getEntityData() as LinkedListEntityData
         override fun getEntityClass(): Class<LinkedListEntity> = LinkedListEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(LinkedListEntityData())
 }
     
 class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<LinkedListEntity>(), SoftLinkable {

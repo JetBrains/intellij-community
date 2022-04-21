@@ -19,9 +19,6 @@ import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyParentOfChild
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -187,9 +184,6 @@ open class ArtifactOutputPackagingElementEntityImpl: ArtifactOutputPackagingElem
         override fun getEntityData(): ArtifactOutputPackagingElementEntityData = result ?: super.getEntityData() as ArtifactOutputPackagingElementEntityData
         override fun getEntityClass(): Class<ArtifactOutputPackagingElementEntity> = ArtifactOutputPackagingElementEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(ArtifactOutputPackagingElementEntityData())
 }
     
 class ArtifactOutputPackagingElementEntityData : WorkspaceEntityData<ArtifactOutputPackagingElementEntity>(), SoftLinkable {

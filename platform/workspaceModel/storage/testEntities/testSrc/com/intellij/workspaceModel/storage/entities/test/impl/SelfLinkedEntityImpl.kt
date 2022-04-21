@@ -14,9 +14,6 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -168,9 +165,6 @@ open class SelfLinkedEntityImpl: SelfLinkedEntity, WorkspaceEntityBase() {
         override fun getEntityData(): SelfLinkedEntityData = result ?: super.getEntityData() as SelfLinkedEntityData
         override fun getEntityClass(): Class<SelfLinkedEntity> = SelfLinkedEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(SelfLinkedEntityData())
 }
     
 class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {

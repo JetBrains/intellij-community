@@ -16,9 +16,6 @@ import com.intellij.workspaceModel.storage.impl.extractOneToAbstractManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyParentOfChild
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -186,9 +183,6 @@ open class MiddleEntityImpl: MiddleEntity, WorkspaceEntityBase() {
         override fun getEntityData(): MiddleEntityData = result ?: super.getEntityData() as MiddleEntityData
         override fun getEntityClass(): Class<MiddleEntity> = MiddleEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(MiddleEntityData())
 }
     
 class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {

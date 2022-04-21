@@ -14,9 +14,6 @@ import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -130,9 +127,6 @@ open class WithSoftLinkEntityImpl: WithSoftLinkEntity, WorkspaceEntityBase() {
         override fun getEntityData(): WithSoftLinkEntityData = result ?: super.getEntityData() as WithSoftLinkEntityData
         override fun getEntityClass(): Class<WithSoftLinkEntity> = WithSoftLinkEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(WithSoftLinkEntityData())
 }
     
 class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(), SoftLinkable {

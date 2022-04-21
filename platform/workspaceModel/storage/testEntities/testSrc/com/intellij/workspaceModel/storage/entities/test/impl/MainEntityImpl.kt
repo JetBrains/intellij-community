@@ -11,9 +11,6 @@ import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -126,9 +123,6 @@ open class MainEntityImpl: MainEntity, WorkspaceEntityBase() {
         override fun getEntityData(): MainEntityData = result ?: super.getEntityData() as MainEntityData
         override fun getEntityClass(): Class<MainEntity> = MainEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(MainEntityData())
 }
     
 class MainEntityData : WorkspaceEntityData<MainEntity>() {

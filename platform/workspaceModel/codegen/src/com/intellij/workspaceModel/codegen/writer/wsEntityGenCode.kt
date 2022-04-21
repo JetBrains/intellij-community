@@ -30,11 +30,8 @@ import org.jetbrains.deft.impl.ObjType
  * Перенести тесты идеи к нам или наоборрот <--
  */
 
-fun ObjType<*, *>.implWsCode(simpleTypes: List<DefType>, additionalImports: String? = null): String {
+fun ObjType<*, *>.implWsCode(simpleTypes: List<DefType>): String {
   return """
-import org.jetbrains.deft.ObjBuilder
-${if (additionalImports?.isNotBlank() == true) "\n$additionalImports\n" else ""}
-    
 ${implWsEntityCode()}
     
 ${implWsDataClassCode(simpleTypes)}

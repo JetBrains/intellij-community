@@ -15,9 +15,6 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -237,9 +234,6 @@ open class JavaModuleSettingsEntityImpl: JavaModuleSettingsEntity, WorkspaceEnti
         override fun getEntityData(): JavaModuleSettingsEntityData = result ?: super.getEntityData() as JavaModuleSettingsEntityData
         override fun getEntityClass(): Class<JavaModuleSettingsEntity> = JavaModuleSettingsEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(JavaModuleSettingsEntityData())
 }
     
 class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntity>() {

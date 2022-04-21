@@ -14,9 +14,6 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractOneParentOfChild
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -206,9 +203,6 @@ open class ChildSingleSecondEntityImpl: ChildSingleSecondEntity, WorkspaceEntity
         override fun getEntityData(): ChildSingleSecondEntityData = result ?: super.getEntityData() as ChildSingleSecondEntityData
         override fun getEntityClass(): Class<ChildSingleSecondEntity> = ChildSingleSecondEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(ChildSingleSecondEntityData())
 }
     
 class ChildSingleSecondEntityData : WorkspaceEntityData<ChildSingleSecondEntity>() {

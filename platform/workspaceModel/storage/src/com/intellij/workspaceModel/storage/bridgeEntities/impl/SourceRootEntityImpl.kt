@@ -19,9 +19,6 @@ import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -376,9 +373,6 @@ open class SourceRootEntityImpl: SourceRootEntity, WorkspaceEntityBase() {
         override fun getEntityData(): SourceRootEntityData = result ?: super.getEntityData() as SourceRootEntityData
         override fun getEntityClass(): Class<SourceRootEntity> = SourceRootEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(SourceRootEntityData())
 }
     
 class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {

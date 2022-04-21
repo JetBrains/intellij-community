@@ -1,22 +1,12 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-
 import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.impl.*
-import org.jetbrains.deft.impl.fields.Field
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import org.jetbrains.deft.Obj
-import org.jetbrains.deft.impl.fields.*
-
 import org.jetbrains.deft.Type
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-
-
-
-
 
 
 interface SampleEntity2 : WorkspaceEntity {
@@ -45,6 +35,7 @@ interface VFUEntity2 : WorkspaceEntity {
   val filePath: VirtualFileUrl?
   val directoryPath: VirtualFileUrl
   val notNullRoots: List<VirtualFileUrl>
+
   //region generated code
   //@formatter:off
   @GeneratedCodeApiVersion(0)

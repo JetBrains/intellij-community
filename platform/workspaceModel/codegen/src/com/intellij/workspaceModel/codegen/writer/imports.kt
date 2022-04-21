@@ -1,5 +1,6 @@
 package org.jetbrains.deft.codegen.utils
 
+import org.jetbrains.deft.Obj
 import kotlin.reflect.KClass
 
 val fqnEscape = "#uC03o#"
@@ -64,8 +65,9 @@ class Imports(val scopeFqn: String?) {
   }
 }
 
-fun fileContents(packageName: String?, code: String): String {
+fun fileContents(packageName: String?, code: String, additionalImports: Set<String>? = null): String {
   val imports = Imports(packageName)
+  additionalImports?.let { imports.set.addAll(it.filter { import -> import == Obj::class.java.packageName }) }
   val code1 = imports.findAndRemoveFqns(code)
 
   return buildString {
@@ -75,6 +77,7 @@ fun fileContents(packageName: String?, code: String): String {
     if (imports.set.isNotEmpty()) {
       append("\n")
       imports.set.sorted().joinTo(this, "\n") { "import $it" }
+      append("\n")
     }
     append("\n")
     append(code1)

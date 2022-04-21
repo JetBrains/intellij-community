@@ -14,9 +14,6 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -191,9 +188,6 @@ open class ChildNullableEntityImpl: ChildNullableEntity, WorkspaceEntityBase() {
         override fun getEntityData(): ChildNullableEntityData = result ?: super.getEntityData() as ChildNullableEntityData
         override fun getEntityClass(): Class<ChildNullableEntity> = ChildNullableEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(ChildNullableEntityData())
 }
     
 class ChildNullableEntityData : WorkspaceEntityData<ChildNullableEntity>() {

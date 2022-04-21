@@ -14,9 +14,6 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -205,9 +202,6 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
         override fun getEntityData(): ArtifactPropertiesEntityData = result ?: super.getEntityData() as ArtifactPropertiesEntityData
         override fun getEntityClass(): Class<ArtifactPropertiesEntity> = ArtifactPropertiesEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(ArtifactPropertiesEntityData())
 }
     
 class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntity>() {

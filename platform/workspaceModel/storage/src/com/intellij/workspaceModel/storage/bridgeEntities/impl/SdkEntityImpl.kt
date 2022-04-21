@@ -15,9 +15,6 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -195,9 +192,6 @@ open class SdkEntityImpl: SdkEntity, WorkspaceEntityBase() {
         override fun getEntityData(): SdkEntityData = result ?: super.getEntityData() as SdkEntityData
         override fun getEntityClass(): Class<SdkEntity> = SdkEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(SdkEntityData())
 }
     
 class SdkEntityData : WorkspaceEntityData<SdkEntity>() {

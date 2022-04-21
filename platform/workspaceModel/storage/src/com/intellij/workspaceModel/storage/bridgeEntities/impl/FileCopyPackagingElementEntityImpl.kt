@@ -17,9 +17,6 @@ import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyParentOfC
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -201,9 +198,6 @@ open class FileCopyPackagingElementEntityImpl: FileCopyPackagingElementEntity, W
         override fun getEntityData(): FileCopyPackagingElementEntityData = result ?: super.getEntityData() as FileCopyPackagingElementEntityData
         override fun getEntityClass(): Class<FileCopyPackagingElementEntity> = FileCopyPackagingElementEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(FileCopyPackagingElementEntityData())
 }
     
 class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackagingElementEntity>() {

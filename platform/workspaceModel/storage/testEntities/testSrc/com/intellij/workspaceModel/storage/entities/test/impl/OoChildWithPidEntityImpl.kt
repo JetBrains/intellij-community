@@ -15,9 +15,6 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -192,9 +189,6 @@ open class OoChildWithPidEntityImpl: OoChildWithPidEntity, WorkspaceEntityBase()
         override fun getEntityData(): OoChildWithPidEntityData = result ?: super.getEntityData() as OoChildWithPidEntityData
         override fun getEntityClass(): Class<OoChildWithPidEntity> = OoChildWithPidEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(OoChildWithPidEntityData())
 }
     
 class OoChildWithPidEntityData : WorkspaceEntityData.WithCalculablePersistentId<OoChildWithPidEntity>() {

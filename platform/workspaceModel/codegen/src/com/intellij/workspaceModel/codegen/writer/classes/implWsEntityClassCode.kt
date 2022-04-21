@@ -13,7 +13,6 @@ import org.jetbrains.deft.impl.ObjType
 
 fun ObjType<*, *>.implWsEntityCode(): String {
   return """
-
 @${wsFqn("GeneratedCodeApiVersion")}(${CodeGeneratorVersions.API_VERSION})
 @${wsFqn("GeneratedCodeImplVersion")}(${CodeGeneratorVersions.IMPL_VERSION})
 ${if (abstract) "abstract" else "open"} class $javaImplName: $javaFullName, ${wsFqn("WorkspaceEntityBase")}() {
@@ -28,9 +27,6 @@ ${if (abstract) "abstract" else "open"} class $javaImplName: $javaFullName, ${ws
     ${structure.allFields.filter { it.name !in listOf("entitySource", "persistentId") }.lines("    ") { implWsEntityFieldCode }.trimEnd()}
 
     ${implWsEntityBuilderCode().indentRestOnly("    ")}
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder($javaDataName())
 }
     """.trimIndent()
 }

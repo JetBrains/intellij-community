@@ -19,9 +19,6 @@ import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyChildrenO
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyParentOfChild
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -232,9 +229,6 @@ open class LeftEntityImpl: LeftEntity, WorkspaceEntityBase() {
         override fun getEntityData(): LeftEntityData = result ?: super.getEntityData() as LeftEntityData
         override fun getEntityClass(): Class<LeftEntity> = LeftEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(LeftEntityData())
 }
     
 class LeftEntityData : WorkspaceEntityData<LeftEntity>() {

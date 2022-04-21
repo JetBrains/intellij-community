@@ -11,9 +11,6 @@ import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -121,9 +118,6 @@ open class SecondSampleEntityImpl: SecondSampleEntity, WorkspaceEntityBase() {
         override fun getEntityData(): SecondSampleEntityData = result ?: super.getEntityData() as SecondSampleEntityData
         override fun getEntityClass(): Class<SecondSampleEntity> = SecondSampleEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(SecondSampleEntityData())
 }
     
 class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {

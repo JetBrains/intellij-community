@@ -21,9 +21,6 @@ import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyParentOfC
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractOneParentOfChild
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -293,9 +290,6 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
         override fun getEntityData(): CompositeChildAbstractEntityData = result ?: super.getEntityData() as CompositeChildAbstractEntityData
         override fun getEntityClass(): Class<CompositeChildAbstractEntity> = CompositeChildAbstractEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(CompositeChildAbstractEntityData())
 }
     
 class CompositeChildAbstractEntityData : WorkspaceEntityData<CompositeChildAbstractEntity>() {

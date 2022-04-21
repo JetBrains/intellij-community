@@ -17,7 +17,7 @@ import java.io.File
 fun DefType.implIjWsFileContents(simpleTypes: List<DefType>): String {
   return fileContents(def.file!!.pkg.fqn, """
             ${implWsCode(simpleTypes)}
-        """.trim())
+        """.trim(), def.file?.imports?.list)
 }
 
 object CodeWriter {

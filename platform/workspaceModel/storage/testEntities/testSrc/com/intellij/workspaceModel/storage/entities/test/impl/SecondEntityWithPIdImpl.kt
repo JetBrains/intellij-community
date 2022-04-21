@@ -12,9 +12,6 @@ import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -127,9 +124,6 @@ open class SecondEntityWithPIdImpl: SecondEntityWithPId, WorkspaceEntityBase() {
         override fun getEntityData(): SecondEntityWithPIdData = result ?: super.getEntityData() as SecondEntityWithPIdData
         override fun getEntityClass(): Class<SecondEntityWithPId> = SecondEntityWithPId::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(SecondEntityWithPIdData())
 }
     
 class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<SecondEntityWithPId>() {

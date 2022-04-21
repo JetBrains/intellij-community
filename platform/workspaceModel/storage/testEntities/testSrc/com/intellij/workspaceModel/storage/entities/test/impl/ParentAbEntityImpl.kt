@@ -17,9 +17,6 @@ import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyChildrenOfParent
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -176,9 +173,6 @@ open class ParentAbEntityImpl: ParentAbEntity, WorkspaceEntityBase() {
         override fun getEntityData(): ParentAbEntityData = result ?: super.getEntityData() as ParentAbEntityData
         override fun getEntityClass(): Class<ParentAbEntity> = ParentAbEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(ParentAbEntityData())
 }
     
 class ParentAbEntityData : WorkspaceEntityData<ParentAbEntity>() {

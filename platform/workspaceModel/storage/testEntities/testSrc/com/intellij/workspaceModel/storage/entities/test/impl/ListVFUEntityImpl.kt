@@ -12,9 +12,6 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -145,9 +142,6 @@ open class ListVFUEntityImpl: ListVFUEntity, WorkspaceEntityBase() {
         override fun getEntityData(): ListVFUEntityData = result ?: super.getEntityData() as ListVFUEntityData
         override fun getEntityClass(): Class<ListVFUEntity> = ListVFUEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(ListVFUEntityData())
 }
     
 class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {

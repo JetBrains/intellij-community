@@ -18,9 +18,6 @@ import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -330,9 +327,6 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
         override fun getEntityData(): LibraryEntityData = result ?: super.getEntityData() as LibraryEntityData
         override fun getEntityClass(): Class<LibraryEntity> = LibraryEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(LibraryEntityData())
 }
     
 class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<LibraryEntity>(), SoftLinkable {

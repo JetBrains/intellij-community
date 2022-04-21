@@ -21,9 +21,6 @@ import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyParentOfC
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractOneParentOfChild
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -284,9 +281,6 @@ open class ArtifactRootElementEntityImpl: ArtifactRootElementEntity, WorkspaceEn
         override fun getEntityData(): ArtifactRootElementEntityData = result ?: super.getEntityData() as ArtifactRootElementEntityData
         override fun getEntityClass(): Class<ArtifactRootElementEntity> = ArtifactRootElementEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(ArtifactRootElementEntityData())
 }
     
 class ArtifactRootElementEntityData : WorkspaceEntityData<ArtifactRootElementEntity>() {

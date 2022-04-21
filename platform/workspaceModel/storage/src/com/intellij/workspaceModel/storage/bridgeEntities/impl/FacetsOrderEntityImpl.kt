@@ -14,9 +14,6 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -192,9 +189,6 @@ open class FacetsOrderEntityImpl: FacetsOrderEntity, WorkspaceEntityBase() {
         override fun getEntityData(): FacetsOrderEntityData = result ?: super.getEntityData() as FacetsOrderEntityData
         override fun getEntityClass(): Class<FacetsOrderEntity> = FacetsOrderEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(FacetsOrderEntityData())
 }
     
 class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {

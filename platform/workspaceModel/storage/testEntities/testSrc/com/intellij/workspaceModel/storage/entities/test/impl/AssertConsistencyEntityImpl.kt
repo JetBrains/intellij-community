@@ -11,9 +11,6 @@ import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -121,9 +118,6 @@ open class AssertConsistencyEntityImpl: AssertConsistencyEntity, WorkspaceEntity
         override fun getEntityData(): AssertConsistencyEntityData = result ?: super.getEntityData() as AssertConsistencyEntityData
         override fun getEntityClass(): Class<AssertConsistencyEntity> = AssertConsistencyEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(AssertConsistencyEntityData())
 }
     
 class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>() {

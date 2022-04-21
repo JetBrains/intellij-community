@@ -2,18 +2,11 @@ package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
 import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.annotations.Child
-import org.jetbrains.deft.impl.*
-import org.jetbrains.deft.impl.fields.Field
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import org.jetbrains.deft.Obj
-import org.jetbrains.deft.impl.fields.*
-
 import org.jetbrains.deft.Type
+import org.jetbrains.deft.annotations.Child
+import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-
-
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 
 
 

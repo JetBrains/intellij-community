@@ -128,7 +128,7 @@ var MainEntity.Builder.child: @Child AttachedEntity?
         else {
             val key = ExtRefKey("AttachedEntity", "ref", true, AttachedEntityImpl.REF_CONNECTION_ID)
             this.extReferences[key] = value
-            
+
             if (value != null) {
                 (value as AttachedEntityImpl.Builder)._ref = this
             }

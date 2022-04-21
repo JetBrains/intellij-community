@@ -12,9 +12,6 @@ import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -127,9 +124,6 @@ open class FirstEntityWithPIdImpl: FirstEntityWithPId, WorkspaceEntityBase() {
         override fun getEntityData(): FirstEntityWithPIdData = result ?: super.getEntityData() as FirstEntityWithPIdData
         override fun getEntityClass(): Class<FirstEntityWithPId> = FirstEntityWithPId::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(FirstEntityWithPIdData())
 }
     
 class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<FirstEntityWithPId>() {
@@ -159,8 +153,8 @@ class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<Fi
 
     override fun persistentId(): PersistentEntityId<*> {
         
-            return FirstPId(data)
-        
+      return FirstPId(data)
+    
     }
 
     override fun getEntityInterface(): Class<out WorkspaceEntity> {

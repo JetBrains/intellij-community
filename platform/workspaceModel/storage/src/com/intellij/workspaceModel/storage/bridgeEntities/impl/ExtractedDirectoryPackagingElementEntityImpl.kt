@@ -17,9 +17,6 @@ import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyParentOfC
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -204,9 +201,6 @@ open class ExtractedDirectoryPackagingElementEntityImpl: ExtractedDirectoryPacka
         override fun getEntityData(): ExtractedDirectoryPackagingElementEntityData = result ?: super.getEntityData() as ExtractedDirectoryPackagingElementEntityData
         override fun getEntityClass(): Class<ExtractedDirectoryPackagingElementEntity> = ExtractedDirectoryPackagingElementEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(ExtractedDirectoryPackagingElementEntityData())
 }
     
 class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<ExtractedDirectoryPackagingElementEntity>() {

@@ -14,9 +14,6 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
-import org.jetbrains.deft.ObjBuilder
-
-    
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -191,9 +188,6 @@ open class ChildSubSubEntityImpl: ChildSubSubEntity, WorkspaceEntityBase() {
         override fun getEntityData(): ChildSubSubEntityData = result ?: super.getEntityData() as ChildSubSubEntityData
         override fun getEntityClass(): Class<ChildSubSubEntity> = ChildSubSubEntity::class.java
     }
-    
-    // TODO: Fill with the data from the current entity
-    fun builder(): ObjBuilder<*> = Builder(ChildSubSubEntityData())
 }
     
 class ChildSubSubEntityData : WorkspaceEntityData<ChildSubSubEntity>() {
