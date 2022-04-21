@@ -28,6 +28,7 @@ import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Ref;
@@ -284,14 +285,14 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setMultipleFiles(true);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    final PsiClass baseClass = facade.findClass("A", scope);
-    final PsiClass implClass = facade.findClass("AImpl", scope);
+    PsiClass baseClass = Objects.requireNonNull(facade.findClass("A", scope));
+    PsiClass implClass = Objects.requireNonNull(facade.findClass("AImpl", scope));
     findModel.setCustomScope(new LocalSearchScope(new PsiElement[]{baseClass, implClass}));
 
     List<UsageInfo> usages = findInProject(findModel);
     assertEquals(2, usages.size());
 
-    final PsiClass aClass = facade.findClass("B", scope);
+    PsiClass aClass = Objects.requireNonNull(facade.findClass("B", scope));
     findModel.setCustomScope(new LocalSearchScope(aClass));
 
     assertSize(1, findInProject(findModel));
@@ -703,7 +704,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     VirtualFile root = getTempDir().createVirtualDir();
     addSourceContentToRoots(myModule, root);
     VirtualFile excluded = createChildDirectory(root, "excluded");
-    createFile(myModule, excluded, "a.txt", "foo bar foo");
+    VirtualFile aTxt = createFile(myModule, excluded, "a.txt", "foo bar foo").getVirtualFile();
     PsiTestUtil.addExcludedRoot(myModule, excluded);
 
     FindModel findModel = FindManagerTestUtils.configureFindModel("foo");
@@ -713,6 +714,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertSize(2, findInProject(findModel));
 
     findModel.setDirectoryName(root.getPath());
+    assertTrue(ProjectRootManager.getInstance(getProject()).getFileIndex().isExcluded(aTxt));
     assertSize(0, findInProject(findModel));
     Registry.get("find.search.in.excluded.dirs").setValue(true, getTestRootDisposable());
     assertSize(2, findInProject(findModel));
