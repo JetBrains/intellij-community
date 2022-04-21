@@ -1,149 +1,106 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.fileTemplates.impl;
+package com.intellij.ide.fileTemplates.impl
 
-import com.intellij.DynamicBundle;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.reference.SoftReference;
-import com.intellij.util.ResourceUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.DynamicBundle
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.text.Strings
+import com.intellij.reference.SoftReference
+import com.intellij.util.ResourceUtil
+import java.io.IOException
+import java.lang.ref.Reference
+import java.net.MalformedURLException
+import java.net.URL
+import java.nio.charset.StandardCharsets
+import java.util.function.Supplier
 
-import java.io.IOException;
-import java.lang.ref.Reference;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.function.Supplier;
+class DefaultTemplate constructor(val name: String,
+                                  val extension: String,
+                                  private val textSupplier: Supplier<String>,
+                                  private val descriptionSupplier: Supplier<String>?,
+                                  private val descriptionPath: String?) {
+  private var text: Reference<String?>? = null
 
-import static com.intellij.DynamicBundle.findLanguageBundle;
+  //NON-NLS
+  private var descriptionText: Reference<String>? = null
 
-/**
- * @author Eugene Zhuravlev
- */
-public final class DefaultTemplate {
-  private static final Logger LOG = Logger.getInstance(DefaultTemplate.class);
-  
-  private final String myName;
-  private final String myExtension;
-
-  private final Supplier<String> textSupplier;
-  private final String descriptionPath;
-  private Reference<String> myText;
-  
-  private final @Nullable Supplier<String> descriptionSupplier;
-  private Reference<String> descriptionText;
-
-  /**
-   * @deprecated Use {@link #DefaultTemplate(String, String, Supplier, Supplier, String)}
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public DefaultTemplate(@NotNull String name, @NotNull String extension, @NotNull URL templateUrl, @Nullable URL descriptionUrl) {
-    this(name, extension, () -> {
-      try {
-        return ResourceUtil.loadText(templateUrl.openStream());
-      }
-      catch (IOException e) {
-        LOG.error(e);
-        return "";
-      }
-    }, descriptionUrl == null ? null : () -> {
-      try {
-        return ResourceUtil.loadText(descriptionUrl.openStream());
-      }
-      catch (IOException e) {
-        LOG.error(e);
-        return "";
-      }
-    }, null);
-  }
-
-  DefaultTemplate(@NotNull String name,
-                  @NotNull String extension,
-                  @NotNull Supplier<String> textSupplier,
-                  @Nullable Supplier<String> descriptionSupplier,
-                  @Nullable String descriptionPath) {
-    myName = name;
-    myExtension = extension;
-    this.textSupplier = textSupplier;
-    this.descriptionSupplier = descriptionSupplier;
-    this.descriptionPath = descriptionPath;
-  }
-
-  private static @NotNull @NlsSafe String loadText(@NotNull ThrowableComputable<String, IOException> computable) {
-    String text = "";
+  @Deprecated("Use {@link #DefaultTemplate(String, String, Supplier, Supplier, String)}")
+  constructor(name: String, extension: String, templateUrl: URL, descriptionUrl: URL?) : this(name, extension, Supplier<String> {
     try {
-      text = Strings.convertLineSeparators(computable.compute());
+      ResourceUtil.loadText(templateUrl.openStream())
     }
-    catch (IOException e) {
-      LOG.error(e);
+    catch (e: IOException) {
+      logger<DefaultTemplate>().error(e)
+      ""
     }
-    return text;
-  }
-
-  public @NotNull String getName() {
-    return myName;
-  }
-
-  public @NotNull String getQualifiedName() {
-    return FileTemplateBase.getQualifiedName(getName(), getExtension());
-  }
-
-  public @NotNull String getExtension() {
-    return myExtension;
-  }
-
-  /**
-   * @deprecated Do not use.
-   */
-  @Deprecated
-  public URL getTemplateURL() {
-    // the only external usage - https://github.com/wrdv/testme-idea/blob/8e314aea969619f43f0c6bb17f53f1d95b1072be/src/main/java/com/weirddev/testme/intellij/ui/template/FTManager.java#L200
+  }, if (descriptionUrl == null) null
+                                                                                              else Supplier<String> {
     try {
-      return new URL("https://not.relevant");
+      return@Supplier ResourceUtil.loadText(descriptionUrl.openStream())
     }
-    catch (MalformedURLException e) {
-      throw new RuntimeException(e);
+    catch (e: IOException) {
+      logger<DefaultTemplate>().error(e)
+      return@Supplier ""
     }
+  }, null)
+
+  val qualifiedName: String
+    get() = FileTemplateBase.getQualifiedName(name, this.extension)
+
+  fun getText(): String {
+    var text = SoftReference.dereference(this.text)
+    if (text == null) {
+      text = textSupplier.get()
+      this.text = java.lang.ref.SoftReference(text)
+    }
+    return text
   }
 
-  public @NotNull String getText() {
-    String text = SoftReference.dereference(myText);
-    if (text == null) {
-      text = textSupplier.get();
-      myText = new java.lang.ref.SoftReference<>(text);
+  fun getDescriptionText(): String {
+    if (descriptionSupplier == null) {
+      return ""
     }
-    return text;
-  }
 
-  public @NotNull @Nls String getDescriptionText() {
-    if (descriptionSupplier == null) return "";
-    String text = SoftReference.dereference(descriptionText); //NON-NLS
+    var text = SoftReference.dereference(descriptionText)
     if (text == null) {
-      text = loadText(() -> {
-        DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
-        PluginDescriptor descriptor = langBundle == null ? null : langBundle.pluginDescriptor;
-        ClassLoader langBundleLoader = descriptor == null ? null : descriptor.getPluginClassLoader();
+      text = loadText {
+        val langBundle = DynamicBundle.findLanguageBundle()
+        val descriptor = langBundle?.pluginDescriptor
+        val langBundleLoader = descriptor?.pluginClassLoader
         if (langBundleLoader != null && descriptionPath != null) {
-          byte[] bytes = ResourceUtil.getResourceAsBytes(FileTemplatesLoader.TEMPLATES_DIR + "/" + descriptionPath, langBundleLoader);
+          val bytes = ResourceUtil.getResourceAsBytes("${FileTemplatesLoader.TEMPLATES_DIR}/$descriptionPath", langBundleLoader)
           if (bytes != null) {
-            return new String(bytes, StandardCharsets.UTF_8);
+            return@loadText String(bytes, StandardCharsets.UTF_8)
           }
         }
-        return descriptionSupplier.get();
-      });
-      descriptionText = new java.lang.ref.SoftReference<>(text);
+        descriptionSupplier.get()
+      }
+      descriptionText = java.lang.ref.SoftReference(text)
     }
-    return text;
+    return text
   }
 
-  @Override
-  public String toString() {
-    return textSupplier.toString();
+  // the only external usage - https://github.com/wrdv/testme-idea/blob/8e314aea969619f43f0c6bb17f53f1d95b1072be/src/main/java/com/weirddev/testme/intellij/ui/template/FTManager.java#L200
+  @Deprecated("Do not use.")
+  fun getTemplateURL(): URL {
+    try {
+      return URL("https://not.relevant")
+    }
+    catch (e: MalformedURLException) {
+      throw RuntimeException(e)
+    }
+  }
+
+  override fun toString() = textSupplier.toString()
+}
+
+private fun loadText(computable: ThrowableComputable<String, IOException>): @NlsSafe String {
+  return try {
+    Strings.convertLineSeparators(computable.compute())
+  }
+  catch (e: IOException) {
+    logger<DefaultTemplate>().error(e)
+    ""
   }
 }

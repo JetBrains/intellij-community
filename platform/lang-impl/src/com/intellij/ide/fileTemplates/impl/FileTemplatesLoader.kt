@@ -254,7 +254,11 @@ private inline fun processTemplates(files: Sequence<String>,
       val templateName = filename.substring(0, filename.length - extension.length - 1)
       val descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths)
       val descriptionSupplier = if (descriptionPath == null) null else dataLoader(descriptionPath)
-      result.result.putValue(prefix, DefaultTemplate(templateName, extension, dataLoader(path), descriptionSupplier, descriptionPath))
+      result.result.putValue(prefix, DefaultTemplate(name = templateName,
+                                                     extension = extension,
+                                                     textSupplier = dataLoader(path),
+                                                     descriptionSupplier = descriptionSupplier,
+                                                     descriptionPath = descriptionPath))
     }
   }
 }
