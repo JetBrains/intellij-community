@@ -43,15 +43,21 @@ class MavenProjectTreeImporterToWorkspaceModel(
                                                                   projectsToImportWithChanges, mavenImportingSettings)
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
+    val activity = startImportActivity(project)
     val startTime = System.currentTimeMillis()
-    val postTasks = ArrayList<MavenProjectsProcessorTask>()
-    val context = contextProvider.context
-    if (context.hasChanges) {
-      importModules(context, postTasks)
-      scheduleRefreshResolvedArtifacts(postTasks)
+    try {
+      val postTasks = ArrayList<MavenProjectsProcessorTask>()
+      val context = contextProvider.context
+      if (context.hasChanges) {
+        importModules(context, postTasks)
+        scheduleRefreshResolvedArtifacts(postTasks)
+      }
+      return postTasks
     }
-    LOG.info("[maven import] applying models to workspace model took ${System.currentTimeMillis() - startTime}ms")
-    return postTasks
+    finally {
+      activity.finished()
+      LOG.info("[maven import] applying models to workspace model took ${System.currentTimeMillis() - startTime}ms")
+    }
   }
 
   private fun importModules(context: MavenModuleImportContext, postTasks: ArrayList<MavenProjectsProcessorTask>) {
@@ -157,16 +163,22 @@ class MavenProjectTreeImporterToWorkspaceModel(
     ) { indicator: MavenProgressIndicator ->
       var count = 0f
       val startTime = System.currentTimeMillis()
-      val size = moduleImportDataList.size
-      LOG.info("[maven import] applying " + configurers.size + " configurers to " + size + " Maven projects")
-      for (moduleIMportData in moduleImportDataList) {
-        indicator.setFraction((count++ / size).toDouble())
-        indicator.setText2(MavenProjectBundle.message("progress.details.configuring.module", moduleIMportData.module.name))
-        for (configurer in configurers) {
-          configurer.configure(moduleIMportData.mavenModuleImportData.mavenProject, project, moduleIMportData.module)
+      val activity = startConfiguringProjectsActivity(project)
+      try {
+        val size = moduleImportDataList.size
+        LOG.info("[maven import] applying " + configurers.size + " configurers to " + size + " Maven projects")
+        for (moduleIMportData in moduleImportDataList) {
+          indicator.setFraction((count++ / size).toDouble())
+          indicator.setText2(MavenProjectBundle.message("progress.details.configuring.module", moduleIMportData.module.name))
+          for (configurer in configurers) {
+            configurer.configure(moduleIMportData.mavenModuleImportData.mavenProject, project, moduleIMportData.module)
+          }
         }
       }
-      LOG.info("[maven import] configuring projects took " + (System.currentTimeMillis() - startTime) + "ms")
+      finally {
+        activity.finished()
+        LOG.info("[maven import] configuring projects took " + (System.currentTimeMillis() - startTime) + "ms")
+      }
     }
   }
 

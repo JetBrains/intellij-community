@@ -26,15 +26,21 @@ class MavenProjectImporterToWorkspaceModel(
   private val createdModulesList = ArrayList<Module>()
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
+    val activity = startImportActivity(project)
     val startTime = System.currentTimeMillis()
-    val postTasks = ArrayList<MavenProjectsProcessorTask>()
-    if (projectsToImportHaveChanges()) {
-      val builder = WorkspaceEntityStorageBuilder.create()
-      importModules(builder)
-      scheduleRefreshResolvedArtifacts(postTasks)
+    try {
+      val postTasks = ArrayList<MavenProjectsProcessorTask>()
+      if (projectsToImportHaveChanges()) {
+        val builder = WorkspaceEntityStorageBuilder.create()
+        importModules(builder)
+        scheduleRefreshResolvedArtifacts(postTasks)
+      }
+      return postTasks
     }
-    LOG.info("[maven import] applying models to workspace model took ${System.currentTimeMillis() - startTime}ms")
-    return postTasks
+    finally {
+      activity.finished()
+      LOG.info("[maven import] applying models to workspace model took ${System.currentTimeMillis() - startTime}ms")
+    }
   }
 
   private fun importModules(builder: WorkspaceEntityStorageBuilder) {

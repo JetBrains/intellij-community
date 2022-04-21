@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
@@ -87,17 +88,22 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
   @Override
   @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
+    StructuredIdeActivity activity = startImportActivity(myProject);
     long startTime = System.currentTimeMillis();
-    if (MavenUtil.newModelEnabled(myProject)) {
-      myModelsProvider = new ModifiableModelsProviderProxyImpl(myProject, myDiff);
+    try {
+      if (MavenUtil.newModelEnabled(myProject)) {
+        myModelsProvider = new ModifiableModelsProviderProxyImpl(myProject, myDiff);
+      }
+      else {
+        myModelsProvider = new ModifiableModelsProviderProxyWrapper(myIdeModifiableModelsProvider);
+      }
+      myModuleModel = myModelsProvider.getModuleModelProxy();
+      return importProjectOldWay();
     }
-    else {
-      myModelsProvider = new ModifiableModelsProviderProxyWrapper(myIdeModifiableModelsProvider);
+    finally {
+      activity.finished();
+      LOG.info("[maven import] applying models took " + (System.currentTimeMillis() - startTime) + "ms");
     }
-    myModuleModel = myModelsProvider.getModuleModelProxy();
-    List<MavenProjectsProcessorTask> tasks = importProjectOldWay();
-    LOG.info("[maven import] applying models took " + (System.currentTimeMillis() - startTime) + "ms");
-    return tasks;
   }
 
   @Nullable
