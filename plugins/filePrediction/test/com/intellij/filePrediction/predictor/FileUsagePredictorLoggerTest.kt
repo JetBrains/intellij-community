@@ -10,7 +10,7 @@ import com.intellij.filePrediction.predictor.model.disableFilePredictionModel
 import com.intellij.filePrediction.predictor.model.setConstantFilePredictionModel
 import com.intellij.filePrediction.predictor.model.setCustomCandidateProviderModel
 import com.intellij.filePrediction.predictor.model.setPredefinedProbabilityModel
-import com.intellij.internal.statistic.FUCounterCollectorTestCase.collectLogEvents
+import com.intellij.internal.statistic.FUCollectorTestCase.collectLogEvents
 import com.intellij.internal.statistic.TestStatisticsEventValidatorBuilder
 import com.intellij.internal.statistic.TestStatisticsEventsValidator
 import com.intellij.openapi.Disposable

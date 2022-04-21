@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.logger
 
-import com.intellij.internal.statistic.FUCounterCollectorTestCase
+import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
@@ -447,7 +447,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     val intValue = 43
     val testName = "testName"
     val versionsValue = listOf("1", "2")
-    val events = FUCounterCollectorTestCase.collectLogEvents(testRootDisposable) {
+    val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
       event.log(intValue, ObjectDescription.build(::TestObjDescription) {
         versions = versionsValue
         name = testName
@@ -477,7 +477,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     val intValue = 43
     val testName = "testName"
     val versionsValue = listOf("1", "2")
-    val events = FUCounterCollectorTestCase.collectLogEvents(testRootDisposable) {
+    val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
       event.log(intEventField with intValue, objectEventField with ObjectDescription.build(::TestObjDescription) {
         versions = versionsValue
         name = testName
@@ -503,7 +503,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     val objectListField: EventField<List<ObjectEventData>> = ObjectListEventField("objects", TestObjDescription())
     val event = group.registerVarargEvent("testEvent", objectListField)
 
-    val events = FUCounterCollectorTestCase.collectLogEvents(testRootDisposable) {
+    val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
       val objList = mutableListOf<ObjectEventData>()
       objList.add(ObjectDescription.build(::TestObjDescription) {
         name = "name1"
@@ -549,7 +549,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     val event = group.registerEvent("testEvent", EventFields.Int("intField"),
                                     ObjectEventField("obj1", OuterObjDescription()))
 
-    val events = FUCounterCollectorTestCase.collectLogEvents(testRootDisposable) {
+    val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
       val objectValue = ObjectDescription.build(::OuterObjDescription) {
         name = "testName"
         obj1 = ObjectDescription.build(::InnerObjDescription) {
@@ -583,7 +583,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     val group = EventLogGroup("newGroup", 1)
     val event = group.registerEvent("testEvent", ObjectEventField("obj", TestObjDescription()))
 
-    val events = FUCounterCollectorTestCase.collectLogEvents(testRootDisposable) {
+    val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
       event.log(ObjectDescription.build(::TestObjDescription) {
         enumField = TestEnum.FOO
       })

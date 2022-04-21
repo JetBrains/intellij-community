@@ -18,7 +18,7 @@ import com.intellij.codeInsight.template.macro.CompleteMacro
 import com.intellij.codeInsight.template.macro.ConcatMacro
 import com.intellij.codeInsight.template.macro.FilePathMacroBase
 import com.intellij.codeInsight.template.macro.SplitWordsMacro
-import com.intellij.internal.statistic.FUCounterCollectorTestCase
+import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
@@ -1287,7 +1287,7 @@ class Foo {
   }
 
   void "test log livetemplate started event"() {
-    def events = FUCounterCollectorTestCase.INSTANCE.collectLogEvents(testRootDisposable) {
+    def events = FUCollectorTestCase.INSTANCE.collectLogEvents(testRootDisposable) {
       configureFromFileText("empty.java", "")
       TemplateManager manager = TemplateManager.getInstance(getProject())
       Template template = manager.createTemplate("empty", "user", '$VAR$')
