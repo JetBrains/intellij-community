@@ -36,7 +36,7 @@ abstract class RecentProjectsWelcomeScreenActionBase : DumbAwareAction(), LightE
       val node = tree?.selectionPath?.lastPathComponent.castSafelyTo<DefaultMutableTreeNode>()
                  ?: return null
 
-      return node.userObject as RecentProjectTreeItem
+      return node.userObject as? RecentProjectTreeItem
     }
 
     @JvmStatic
