@@ -74,7 +74,8 @@ if [[ ! -f "$pathToBeSigned" ]]; then
 elif isSigned "$pathToBeSigned" && ! isForced "${jetSignArgs[@]}" ; then
   echo "Already signed: $pathToBeSigned"
 elif [[ "$JETSIGN_CLIENT" == "null" ]]; then
-  codesign "$@"
+  echo "JetSign client is missing, cannot proceed with signing"
+  exit 1
 elif ! isMacOsBinary "$pathToBeSigned" && [[ "$pathToBeSigned" != *.sit ]]; then
   echo "$pathToBeSigned won't be signed, assumed not to be a macOS executable"
 else
