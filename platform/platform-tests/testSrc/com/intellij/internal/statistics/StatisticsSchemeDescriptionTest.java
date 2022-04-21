@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics;
 
-import com.intellij.internal.statistic.FUCounterCollectorTestCase;
+import com.intellij.internal.statistic.FUCollectorTestCase;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.testFramework.UsefulTestCase;
@@ -45,7 +45,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
     EventLogGroup group = new EventLogGroup("group.id", 1);
     EventId1<T> event = group.registerEvent("test.event", field);
 
-    List<LogEvent> events = FUCounterCollectorTestCase.INSTANCE.collectLogEvents(() -> {
+    List<LogEvent> events = FUCollectorTestCase.INSTANCE.collectLogEvents(() -> {
       event.log(value);
       return Unit.INSTANCE;
     });
@@ -75,7 +75,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
     int intValue = 43;
     String testName = "testName";
     List<String> versionsValue = Arrays.asList("1", "2");
-    List<LogEvent> events = FUCounterCollectorTestCase.INSTANCE.collectLogEvents(() -> {
+    List<LogEvent> events = FUCollectorTestCase.INSTANCE.collectLogEvents(() -> {
       event.log(43, new ObjectEventData(nameField.with("testName"), versionsField.with(Arrays.asList("1", "2"))));
       return Unit.INSTANCE;
     });
@@ -95,7 +95,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
     IntEventField notRegisteredField = EventFields.Int("not_registered");
     EventId1<ObjectEventData> event = group.registerEvent("testEvent", new ObjectEventField("obj", nameField));
 
-    FUCounterCollectorTestCase.INSTANCE.collectLogEvents(() -> {
+    FUCollectorTestCase.INSTANCE.collectLogEvents(() -> {
       assertThrows(IllegalArgumentException.class, "Field not_registered is not in allowed object fields", () ->
         event.log(new ObjectEventData(nameField.with("testName"), notRegisteredField.with(1))));
       return Unit.INSTANCE;
@@ -109,7 +109,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
     EventId1<List<? extends ObjectEventData>> event =
       group.registerEvent("testEvent", new ObjectListEventField("objects", nameField, countField));
 
-    List<LogEvent> events = FUCounterCollectorTestCase.INSTANCE.collectLogEvents(() -> {
+    List<LogEvent> events = FUCollectorTestCase.INSTANCE.collectLogEvents(() -> {
       ArrayList<ObjectEventData> objects = new ArrayList<>();
       objects.add(new ObjectEventData(nameField.with("testName1"), countField.with(1)));
       objects.add(new ObjectEventData(nameField.with("testName2"), countField.with(2)));
