@@ -62,6 +62,10 @@ public class MergeAllWindowsAction extends DumbAwareAction {
     public void appStarted() {
       if (JdkEx.isTabbingModeAvailable()) {
         IdeFrame[] frames = WindowManager.getInstance().getAllProjectFrames();
+        if (frames.length == 0) {
+          return;
+        }
+
         if (frames.length > 1) {
           for (IdeFrame frame : frames) {
             if (!frame.isInFullScreen()) {
