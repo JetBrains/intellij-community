@@ -393,7 +393,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
       val path = manager.getProjectPath(project) ?: return
       if (!app.isHeadlessEnvironment) {
-        manager.updateProjectInfo(project, WindowManager.getInstance() as WindowManagerImpl, writLastProjectInfo = false)
+        manager.updateProjectInfo(project, WindowManager.getInstance() as WindowManagerImpl, writLastProjectInfo = false, false)
       }
       manager.nameCache[path] = project.name
     }
@@ -613,7 +613,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
-  private fun updateProjectInfo(project: Project, windowManager: WindowManagerImpl, writLastProjectInfo: Boolean) {
+  private fun updateProjectInfo(project: Project, windowManager: WindowManagerImpl, writLastProjectInfo: Boolean, appClosing: Boolean) {
     val frameHelper = windowManager.getFrameHelper(project)
     if (frameHelper == null) {
       LOG.warn("Cannot update frame info (project=${project.name}, reason=frame helper is not found)")
@@ -624,6 +624,10 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     if (frame == null) {
       LOG.warn("Cannot update frame info (project=${project.name}, reason=frame is null)")
       return
+    }
+
+    if (appClosing) {
+      frameHelper.appClosing()
     }
 
     val workspaceId = project.stateStore.projectWorkspaceId
@@ -770,7 +774,7 @@ int32 "extendedState"
         val manager = instanceEx
         val windowManager = WindowManager.getInstance() as WindowManagerImpl
         for ((index, project) in openProjects.withIndex()) {
-          manager.updateProjectInfo(project, windowManager, writLastProjectInfo = index == 0)
+          manager.updateProjectInfo(project, windowManager, writLastProjectInfo = index == 0, true)
         }
       }
     }

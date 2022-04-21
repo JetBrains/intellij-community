@@ -66,6 +66,9 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
 
     default void frameShow() {
     }
+
+    default void appClosing() {
+    }
   }
 
   @Override

@@ -412,6 +412,12 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     }
   }
 
+  public void appClosing() {
+    if (myFrameDecorator != null) {
+      myFrameDecorator.appClosing();
+    }
+  }
+
   @Override
   public void dispose() {
     MouseGestureManager.getInstance().remove(this);

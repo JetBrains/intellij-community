@@ -257,6 +257,11 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     }
   }
 
+  @Override
+  public void appClosing() {
+    myTabsHandler.appClosing();
+  }
+
   private interface FSListener extends FullScreenListener, EventListener {
   }
 

@@ -1,12 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
+import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
@@ -36,6 +38,7 @@ import java.lang.reflect.Method;
  */
 public class MacWinTabsHandler {
   private static final String WIN_TAB_FILLER = "WIN_TAB_FILLER_KEY";
+  private static final String CLOSE_MARKER = "TABS_CLOSE_MARKER";
 
   private final JFrame myFrame;
   private final boolean myFrameAllowed;
@@ -363,6 +366,57 @@ public class MacWinTabsHandler {
       Foundation.executeOnMainThread(true, false, () -> {
         Foundation.invoke(MacUtil.getWindowFromJavaWindow(frame), next ? "selectNextTab:" : "selectPreviousTab:", ID.NIL);
       });
+    }
+  }
+
+  public void appClosing() {
+    if (!myFrameAllowed) {
+      return;
+    }
+
+    IdeFrame[] frames = WindowManager.getInstance().getAllProjectFrames();
+    int length = frames.length;
+
+    if (length < 2) {
+      return;
+    }
+
+    ID[] windows = new ID[length];
+
+    for (int i = 0; i < length; i++) {
+      IdeFrameImpl frame = ((ProjectFrameHelper)frames[i]).getFrame();
+      if (frame == null) {
+        return;
+      }
+      JRootPane pane = frame.getRootPane();
+      if (pane.getClientProperty(CLOSE_MARKER) != null) {
+        return;
+      }
+      pane.putClientProperty(CLOSE_MARKER, Boolean.TRUE);
+      windows[i] = MacUtil.getWindowFromJavaWindow(frame);
+    }
+
+    ID tabs = Foundation.invoke(windows[0], "tabbedWindows");
+
+    if (Foundation.invoke(tabs, "count").intValue() != length) {
+      return;
+    }
+
+    IdeFrame[] orderedFrames = new IdeFrame[length];
+
+    for (int i = 0; i < length; i++) {
+      int index = Foundation.invoke(tabs, "indexOfObject:", windows[i]).intValue();
+      orderedFrames[index] = frames[i];
+    }
+
+    long time = System.currentTimeMillis();
+    RecentProjectsManagerBase manager = RecentProjectsManagerBase.getInstanceEx();
+
+    for (IdeFrame frame : orderedFrames) {
+      Project project = frame.getProject();
+      if (project != null) {
+        manager.setActivationTimestamp(project, time++);
+      }
     }
   }
 }
