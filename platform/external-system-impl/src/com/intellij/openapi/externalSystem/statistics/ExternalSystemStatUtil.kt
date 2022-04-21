@@ -14,7 +14,11 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 
 fun getAnonymizedSystemId(systemId: ProjectSystemId): String {
-  val manager = ExternalSystemApiUtil.getManager(systemId) ?: return "undefined.system"
+  val manager = ExternalSystemApiUtil.getManager(systemId)
+  if (manager == null) {
+    val isMaven = systemId.id.equals("Maven", ignoreCase = true)
+    return if (isMaven) systemId.readableName else "undefined.system"
+  }
   return if (getPluginInfo(manager.javaClass).isDevelopedByJetBrains()) systemId.readableName else "third.party"
 }
 
