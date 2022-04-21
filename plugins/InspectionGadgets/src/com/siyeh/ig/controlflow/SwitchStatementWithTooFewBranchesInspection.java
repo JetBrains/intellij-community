@@ -132,6 +132,12 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
       }
       boolean patternSwitch = ContainerUtil.exists(SwitchUtils.getSwitchBranches(block), e -> e instanceof PsiPattern);
       if (patternSwitch && ignorePatternSwitch) return null;
+      if (branchCount > 0 && (patternSwitch || block instanceof PsiSwitchExpression)) {
+        // Absence of 'default' branch makes the pattern-switch or expression-switch exhaustive
+        // skip reporting in this case, as conversion to if-else or ?: will remove the compile-time
+        // exhaustiveness check
+        return null;
+      }
       boolean fixIsAvailable;
       if (block instanceof PsiSwitchStatement) {
         fixIsAvailable = ConvertSwitchToIfIntention.isAvailable((PsiSwitchStatement)block);
