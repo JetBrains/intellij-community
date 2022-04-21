@@ -9,7 +9,6 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -23,7 +22,10 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.util.*;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
@@ -31,7 +33,6 @@ import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentHashMapValueStorage;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.*;
 
 import java.io.DataInputStream;
@@ -576,20 +577,7 @@ public final class FSRecords {
 
   public static boolean processFilesWithNames(@NotNull Set<String> names, @NotNull IntPredicate processor) {
     if (names.isEmpty()) return true;
-    if (Registry.is("indexing.filename.over.vfs.with.reverse.index")) {
-      return InvertedNameIndex.processFilesWithNames(names, processor, () -> ourConnection.getRecords());
-    }
-    long start = System.nanoTime();
-    IntOpenHashSet nameIds = new IntOpenHashSet();
-    for (String name : names) {
-      nameIds.add(getNameId(name));
-    }
-    boolean result = readAndHandleErrors(() -> ourConnection.getRecords().processAllNames(
-      (nameId, fileId) -> nameIds.contains(nameId) && !processor.test(fileId) ? 1 : 0));
-    if (LOG.isDebugEnabled()) {
-      LOG.info("FSRecords.processFilesWithNames in " + TimeoutUtil.getDurationMillis(start) + " ms");
-    }
-    return result;
+    return InvertedNameIndex.processFilesWithNames(names, processor);
   }
 
   public static int getNameId(@NotNull String name) {

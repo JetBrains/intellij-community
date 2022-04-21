@@ -1,17 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.TimeoutUtil;
-import com.intellij.util.ui.EDT;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Set;
 import java.util.function.IntPredicate;
-import java.util.function.Supplier;
 
 /**
  * Data layout is either single entry or multiple entries, not both:
@@ -33,14 +29,9 @@ final class InvertedNameIndex {
   private static final Int2ObjectMap<int[]> ourMultiData = new Int2ObjectOpenHashMap<>();
   private static final boolean ourCheckConsistency = SystemProperties.getBooleanProperty("idea.vfs.name.index.check.consistency", false);
 
-  static boolean processFilesWithNames(@NotNull Set<String> names,
-                                       @NotNull IntPredicate processor,
-                                       @NotNull Supplier<PersistentFSRecordsStorage> supplier) {
+  static boolean processFilesWithNames(@NotNull Set<String> names, @NotNull IntPredicate processor) {
     FSRecords.lock.readLock().lock();
     try {
-      if (needsLoading()) {
-        loadData(supplier);
-      }
       return processData(names, processor);
     }
     finally {
@@ -50,9 +41,6 @@ final class InvertedNameIndex {
 
   static void updateFileName(int fileId, int newNameId, int oldNameId) {
     FSRecords.LOG.assertTrue(FSRecords.lock.isWriteLocked(), "no write lock");
-    if (needsLoading()) {
-      return;
-    }
     if (oldNameId != 0) {
       deleteDataInner(fileId, oldNameId);
     }
@@ -65,28 +53,6 @@ final class InvertedNameIndex {
     FSRecords.LOG.assertTrue(FSRecords.lock.isWriteLocked(), "no write lock");
     ourSingleData.clear();
     ourMultiData.clear();
-  }
-
-  private static boolean needsLoading() {
-    return ourSingleData.isEmpty() && ourMultiData.isEmpty();
-  }
-
-  private static void loadData(@NotNull Supplier<PersistentFSRecordsStorage> supplier) {
-    FSRecords.lock.readLock().unlock();
-    FSRecords.lock.writeLock().lock();
-    try {
-      if (needsLoading()) {
-        loadDataInner(supplier);
-      }
-    }
-    catch (ProcessCanceledException ex) {
-      clear();
-      throw ex;
-    }
-    finally {
-      FSRecords.lock.readLock().lock();
-      FSRecords.lock.writeLock().unlock();
-    }
   }
 
   private static boolean processData(@NotNull Set<String> names, @NotNull IntPredicate processor) {
@@ -112,20 +78,7 @@ final class InvertedNameIndex {
     return true;
   }
 
-  private static void loadDataInner(@NotNull Supplier<PersistentFSRecordsStorage> supplier) {
-    long start = System.nanoTime();
-    FSRecords.readAndHandleErrors(() -> {
-      supplier.get().processAllNames((nameId, fileId) -> {
-        updateDataInner(fileId, nameId);
-        return 0;
-      });
-      return null;
-    });
-    FSRecords.LOG.info(InvertedNameIndex.class.getSimpleName() + " rebuilt in " + TimeoutUtil.getDurationMillis(start) + " ms",
-                       EDT.isCurrentThreadEdt() ? new Throwable("### EDT ###") : null);
-  }
-
-  private static void updateDataInner(int fileId, int nameId) {
+  static void updateDataInner(int fileId, int nameId) {
     int single = ourSingleData.get(nameId);
     int[] multi = ourMultiData.get(nameId);
     if (single == 0 && multi == null) {
