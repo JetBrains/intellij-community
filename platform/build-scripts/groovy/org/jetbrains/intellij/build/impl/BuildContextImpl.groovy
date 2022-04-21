@@ -11,6 +11,7 @@ import io.opentelemetry.context.Scope
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.projector.ProjectorPluginKt
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
@@ -118,6 +119,7 @@ final class BuildContextImpl extends BuildContext {
     if (!options.buildStepsToSkip.isEmpty()) {
       messages.info("Build steps to be skipped: ${String.join(", ", options.buildStepsToSkip)}")
     }
+    ProjectorPluginKt.configure(productProperties)
   }
 
   private BuildContextImpl(@NotNull BuildContextImpl parent,
