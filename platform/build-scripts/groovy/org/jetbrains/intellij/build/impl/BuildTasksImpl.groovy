@@ -1,9 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ArrayNode
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
@@ -55,6 +52,7 @@ import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.function.Supplier
+import java.util.stream.Collectors
 
 import static java.nio.file.attribute.PosixFilePermission.*
 import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
@@ -585,12 +583,16 @@ idea.fatal.error.notification=disabled
     return distDirs
   }
 
-  private static Path findMacZip(Path directory, JvmArchitecture arch, BuildContext context) {
+  private static Path find(Path directory, String suffix, BuildContext context) {
     Files.walk(directory).withCloseable { stream ->
-      def suffix = "${arch.name()}.zip"
-      stream.filter { "${it.fileName}".endsWith(suffix) }.findFirst().orElseGet {
+      def found = stream.filter { "${it.fileName}".endsWith(suffix) }.collect(Collectors.toList())
+      if (found.isEmpty()) {
         context.messages.error("No file with suffix $suffix is found in $directory")
       }
+      if (found.size() > 1) {
+        context.messages.error("Multiple files with suffix $suffix are found in $directory:\n" + found.join("\n"))
+      }
+      found.first()
     }
   }
 
@@ -600,8 +602,10 @@ idea.fatal.error.notification=disabled
       createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.x64, new Consumer<BuildContext>() {
         @Override
         void accept(BuildContext context) {
+          def readBuiltinModules = BuiltinModulesFileUtils.readBuiltinModulesFile(find(macZipDir, "builtinModules.json", context))
+          ((BuildContextImpl)context).setBuiltinModules(readBuiltinModules)
           context.macDistributionCustomizer?.with {
-            Path macZip = findMacZip(macZipDir, JvmArchitecture.x64, context)
+            Path macZip = find(macZipDir, "${JvmArchitecture.x64}.zip", context)
             (context.getOsDistributionBuilder(OsFamily.MACOS, null) as MacDistributionBuilder)
               ?.buildAndSignDmgFromZip(macZip, JvmArchitecture.x64)
           }
@@ -610,7 +614,9 @@ idea.fatal.error.notification=disabled
       createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.aarch64, new Consumer<BuildContext>() {
         @Override
         void accept(BuildContext context) {
-          Path macZip = findMacZip(macZipDir, JvmArchitecture.aarch64, context)
+          def readBuiltinModules = BuiltinModulesFileUtils.readBuiltinModulesFile(find(macZipDir, "builtinModules.json", context))
+          ((BuildContextImpl)context).setBuiltinModules(readBuiltinModules)
+          Path macZip = find(macZipDir, "${JvmArchitecture.aarch64}.zip", context)
           (context.getOsDistributionBuilder(OsFamily.MACOS, null) as MacDistributionBuilder)
             ?.buildAndSignDmgFromZip(macZip, JvmArchitecture.aarch64)
         }
