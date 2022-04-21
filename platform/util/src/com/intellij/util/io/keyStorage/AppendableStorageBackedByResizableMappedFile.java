@@ -16,7 +16,6 @@ import java.nio.file.Path;
 import java.util.List;
 
 public class AppendableStorageBackedByResizableMappedFile<Data> extends ResizeableMappedFile implements AppendableObjectStorage<Data> {
-  private static final ThreadLocal<MyDataIS> ourReadStream = ThreadLocal.withInitial(() -> new MyDataIS());
   private volatile byte[] myAppendBuffer;
   private volatile int myFileLength;
   private volatile int myBufferPosition;
@@ -57,16 +56,11 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
 
   @Override
   public void close() throws IOException {
-    try {
-      List<Exception> exceptions = new SmartList<>();
-      ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> flushKeyStoreBuffer()));
-      ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> super.close()));
-      if (!exceptions.isEmpty()) {
-        throw new IOException(new CompoundRuntimeException(exceptions));
-      }
-    }
-    finally {
-      ourReadStream.remove();
+    List<Exception> exceptions = new SmartList<>();
+    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> flushKeyStoreBuffer()));
+    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> super.close()));
+    if (!exceptions.isEmpty()) {
+      throw new IOException(new CompoundRuntimeException(exceptions));
     }
   }
 
@@ -86,11 +80,11 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
 
       return myDataDescriptor.read(new DataInputStream(new UnsyncByteArrayInputStream(myAppendBuffer, bufferOffset, myBufferPosition)));
     }
-    // we do not need to flushKeyBuffer since we store complete records
-    MyDataIS rs = ourReadStream.get();
 
-    rs.setup(this, addr, myFileLength);
-    return myDataDescriptor.read(rs);
+    // we do not need to flushKeyBuffer since we store complete records
+    try (MappedFileInputStream stream = new MappedFileInputStream(this, addr, myFileLength)) {
+      return myDataDescriptor.read(stream);
+    }
   }
 
   @Override
@@ -218,33 +212,4 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
     }
     return comparer;
   }
-
-  private static final class MyDataIS extends DataInputStream {
-    private MyDataIS() {
-      super(new MyBufferedIS());
-    }
-
-    void setup(ResizeableMappedFile is, long pos, long limit) {
-      ((MyBufferedIS)in).setup(is, pos, limit);
-    }
-  }
-
-  private static class MyBufferedIS extends BufferedInputStream {
-    MyBufferedIS() {
-      super(TOMBSTONE, 512);
-    }
-
-    void setup(ResizeableMappedFile in, long pos, long limit) {
-      this.pos = 0;
-      this.count = 0;
-      this.in = new MappedFileInputStream(in, pos, limit);
-    }
-  }
-
-  private static final InputStream TOMBSTONE = new InputStream() {
-    @Override
-    public int read() {
-      throw new IllegalStateException("should not happen");
-    }
-  };
 }
