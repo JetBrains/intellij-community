@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection
+import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.pom.java.LanguageLevel
@@ -816,4 +817,12 @@ interface Bar<T> extends Foo<T> {
     }
   }
 
+  void "test custom tag"() {
+    def inspection = new JavadocDeclarationInspection()
+    inspection.registerAdditionalTag("foobar")
+    myFixture.enableInspections(inspection)
+    myFixture.configureByText "a.java", "/**\n * @fo<caret>\n */\npublic class Demo {}"
+    myFixture.completeBasic()
+    myFixture.checkResult("/**\n * @foobar \n */\npublic class Demo {}")
+  }
 }
