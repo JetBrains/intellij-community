@@ -25,6 +25,7 @@ import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.*
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
+import org.jetbrains.workspaceModel.modifyEntity
 
 internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl: String) : JpsDirectoryEntitiesSerializerFactory<LibraryEntity> {
   override val componentName: String
@@ -49,12 +50,16 @@ internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl:
   override fun changeEntitySourcesToDirectoryBasedFormat(builder: WorkspaceEntityStorageBuilder, configLocation: JpsProjectConfigLocation) {
     builder.entities(LibraryEntity::class.java).forEach {
       if (it.tableId == LibraryTableId.ProjectLibraryTableId) {
-        builder.changeSource(it, JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(configLocation))
+        builder.modifyEntity(it) {
+          this.entitySource = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(configLocation)
+        }
       }
     }
     builder.entities(LibraryPropertiesEntity::class.java).forEach {
       if (it.library.tableId == LibraryTableId.ProjectLibraryTableId) {
-        builder.changeSource(it, it.library.entitySource)
+        builder.modifyEntity(it) {
+          this.entitySource = it.library.entitySource
+        }
       }
     }
   }

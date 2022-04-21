@@ -11,6 +11,7 @@ import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
 import com.intellij.workspaceModel.storage.impl.toClassId
 import org.jetbrains.jetCheck.Generator
@@ -102,8 +103,11 @@ private class ChangeEntitySource(private val storage: WorkspaceEntityStorageBuil
     val newSource = env.generateValue(sources, null)
     val entity = storage.entityDataByIdOrDie(id).createEntity(storage)
     val oldEntitySource = entity.entitySource
-    storage.changeSource(entity, newSource)
+    storage.modifyEntity(ModifiableWorkspaceEntity::class.java, entity) {
+      this.entitySource = newSource
+    }
 
+    storage.assertConsistency()
     env.logMessage("Entity source changed. Entity: $entity, Old source: $oldEntitySource, New source: $newSource")
   }
 

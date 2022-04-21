@@ -134,7 +134,7 @@ class SimplePropertiesInStorageTest {
     val source1 = SampleEntitySource("1")
     val source2 = SampleEntitySource("2")
     val foo = builder.addSampleEntity("foo", source1)
-    val foo2 = builder.changeSource(foo, source2)
+    val foo2 = builder.modifyEntity(foo) { this.entitySource =  source2 }
     assertEquals(source1, foo.entitySource)
     assertEquals(source2, foo2.entitySource)
     assertEquals(source2, builder.singleSampleEntity().entitySource)

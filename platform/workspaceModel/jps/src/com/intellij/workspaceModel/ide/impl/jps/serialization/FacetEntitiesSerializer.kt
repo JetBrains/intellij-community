@@ -64,7 +64,7 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
       if (existingFacet != null && configurationXmlTag != null) {
         if (existingFacet.configurationXmlTag == null) {
           facetEntity = builder.modifyEntity(existingFacet)  { this.configurationXmlTag = configurationXmlTag }
-          facetEntity = builder.changeSource(facetEntity, source)
+          facetEntity = builder.modifyEntity(facetEntity) { this.entitySource = source }
         } else {
           res = false
         }

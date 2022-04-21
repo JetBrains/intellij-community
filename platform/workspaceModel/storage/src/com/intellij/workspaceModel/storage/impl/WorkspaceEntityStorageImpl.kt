@@ -265,30 +265,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
       newSource.virtualFileUrl?.let { indexes.virtualFileIndex.index(entityId, VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY, it) }
   }
 
-  @Deprecated("This method was deprecated due to the movement of method's logic to the `modifyEntity`")
-  override fun <T : WorkspaceEntity> changeSource(e: T, newSource: EntitySource): T {
-    try {
-      lockWrite()
-
-      val originalSource = this.getOriginalSource((e as WorkspaceEntityBase).id)
-
-      @Suppress("UNCHECKED_CAST")
-      val copiedData = entitiesByType.getEntityDataForModification((e as WorkspaceEntityBase).id) as WorkspaceEntityData<T>
-      copiedData.entitySource = newSource
-
-      val entityId = copiedData.createEntityId()
-
-      this.changeLog.addChangeSourceEvent(entityId, copiedData, originalSource)
-
-      indexes.entitySourceIndex.index(entityId, newSource)
-      newSource.virtualFileUrl?.let { indexes.virtualFileIndex.index(entityId, VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY, it) }
-      return copiedData.createEntity(this)
-    }
-    finally {
-      unlockWrite()
-    }
-  }
-
   override fun removeEntity(e: WorkspaceEntity) {
     try {
       lockWrite()

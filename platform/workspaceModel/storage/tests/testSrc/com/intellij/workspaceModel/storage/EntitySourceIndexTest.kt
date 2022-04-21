@@ -9,6 +9,7 @@ import com.intellij.workspaceModel.storage.entities.test.api.SourceEntityImpl
 import com.intellij.workspaceModel.storage.impl.ClassToIntConverter
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.createEntityId
+import org.jetbrains.deft.TestEntities.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -22,7 +23,9 @@ class EntitySourceIndexTest {
     val entity = builder.addSourceEntity("hello", oldSource)
     assertEquals((entity as SourceEntityImpl.Builder).id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
 
-    builder.changeSource(entity, newSource)
+    builder.modifyEntity(entity) {
+      this.entitySource = newSource
+    }
     assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(oldSource))
     assertEquals(entity.id, builder.indexes.entitySourceIndex.getIdsByEntry(newSource)?.single())
 
@@ -83,7 +86,9 @@ class EntitySourceIndexTest {
     assertEquals(firstEntity.id, diff.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
     assertNull(diff.indexes.entitySourceIndex.getIdsByEntry(newSource))
 
-    diff.changeSource(firstEntity, newSource)
+    diff.modifyEntity(firstEntity) {
+      this.entitySource = newSource
+    }
     assertEquals(firstEntity.id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
     assertEquals(firstEntity.id, diff.indexes.entitySourceIndex.getIdsByEntry(newSource)?.single())
     assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(newSource))
@@ -122,6 +127,17 @@ class EntitySourceIndexTest {
 
     builder.indexes.entitySourceIndex.index(createEntityId(1, ClassToIntConverter.INSTANCE.getInt(SourceEntity::class.java)), oldSource)
 
+    builder.assertConsistency()
+  }
+
+  @Test
+  fun `add and change source`() {
+    val oldSource = SampleEntitySource("oldSource")
+    val builder = createEmptyBuilder()
+    val entity = builder.addSourceEntity("one", oldSource)
+    builder.modifyEntity(entity) {
+      this.entitySource = SampleEntitySource("newSource")
+    }
     builder.assertConsistency()
   }
 }

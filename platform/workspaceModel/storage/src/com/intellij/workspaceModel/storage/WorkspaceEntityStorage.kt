@@ -90,7 +90,9 @@ import kotlin.reflect.KProperty1
  *
  * Currently the class must inherit from ModifiableWorkspaceEntityBase.
  */
-interface ModifiableWorkspaceEntity<Unmodifiable : WorkspaceEntity> : WorkspaceEntity
+interface ModifiableWorkspaceEntity<Unmodifiable : WorkspaceEntity> : WorkspaceEntity {
+  override var entitySource: EntitySource
+}
 
 /**
  * Declares a place from which an entity came.
@@ -212,8 +214,6 @@ interface WorkspaceEntityStorageBuilder : WorkspaceEntityStorage {
 
   fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
 
-  @Deprecated("This method was deprecated due to the movement of method's logic to the `modifyEntity`")
-  fun <T : WorkspaceEntity> changeSource(e: T, newSource: EntitySource): T
   fun removeEntity(e: WorkspaceEntity)
   fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: WorkspaceEntityStorage)
 

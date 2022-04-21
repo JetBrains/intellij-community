@@ -6,10 +6,7 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.Compressor
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -90,7 +87,9 @@ internal fun WorkspaceEntityStorage.anonymize(sourceFilter: ((EntitySource) -> B
   if (!isWrapped()) return this
   val builder = WorkspaceEntityStorageBuilder.from(this)
   builder.entitiesBySource { true }.flatMap { it.value.flatMap { it.value } }.forEach { entity ->
-    builder.changeSource(entity, entity.entitySource.anonymize(sourceFilter))
+    builder.modifyEntity(ModifiableWorkspaceEntity::class.java, entity) {
+      this.entitySource = entity.entitySource.anonymize(sourceFilter)
+    }
   }
   return builder.toStorage()
 }

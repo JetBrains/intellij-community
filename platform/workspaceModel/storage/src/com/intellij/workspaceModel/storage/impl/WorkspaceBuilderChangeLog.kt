@@ -197,11 +197,11 @@ internal fun WorkspaceEntityStorageBuilderImpl.getOriginalEntityData(id: EntityI
     when (it) {
       is ChangeEntry.ReplaceEntity -> it.oldData
       is ChangeEntry.AddEntity -> it.entityData
-      is ChangeEntry.ChangeEntitySource -> it.newData.clone()
+      is ChangeEntry.ChangeEntitySource -> it.newData
       is ChangeEntry.RemoveEntity -> it.oldData
       is ChangeEntry.ReplaceAndChangeSource -> it.dataChange.oldData
     }
-  } ?: this.entityDataByIdOrDie(id).clone()
+  }?.clone() ?: this.entityDataByIdOrDie(id).clone()
 }
 
 internal fun WorkspaceEntityStorageBuilderImpl.getOriginalParents(id: ChildEntityId): Map<ConnectionId, ParentEntityId> {

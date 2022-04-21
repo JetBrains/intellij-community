@@ -9,6 +9,7 @@ import com.intellij.openapi.components.State
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 
 @Property(style = Property.Style.ATTRIBUTE)
 class ExternalStorageConfiguration : BaseState() {
@@ -47,7 +48,9 @@ internal class ExternalStorageConfigurationManagerImpl(private val project: Proj
       entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatMap { entities -> entities.asSequence() } }.forEach { entity ->
         val source = entity.entitySource
         if (source is JpsImportedEntitySource) {
-          updater.changeSource(entity, JpsImportedEntitySource(source.internalFile, source.externalSystemId, value))
+          updater.modifyEntity(ModifiableWorkspaceEntity::class.java, entity) {
+            this.entitySource = JpsImportedEntitySource(source.internalFile, source.externalSystemId, value)
+          }
         }
       }
     }

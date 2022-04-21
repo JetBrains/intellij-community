@@ -51,17 +51,23 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
     builder.entities(ArtifactEntity::class.java).forEach {
       // Convert artifact to the new source
       val artifactSource = JpsEntitySourceFactory.createJpsEntitySourceForArtifact(configLocation)
-      builder.changeSource(it, artifactSource)
+      builder.modifyEntity(it) {
+        this.entitySource = artifactSource
+      }
 
       // Convert it's packaging elements
       it.rootElement!!.forThisAndFullTree {
-        builder.changeSource(it, artifactSource)
+        builder.modifyEntity(PackagingElementEntity.Builder::class.java, it) {
+          this.entitySource = artifactSource
+        }
       }
     }
 
     // Convert properties
     builder.entities(ArtifactPropertiesEntity::class.java).forEach {
-      builder.changeSource(it, it.artifact.entitySource)
+      builder.modifyEntity(it) {
+        this.entitySource = it.artifact.entitySource
+      }
     }
   }
 

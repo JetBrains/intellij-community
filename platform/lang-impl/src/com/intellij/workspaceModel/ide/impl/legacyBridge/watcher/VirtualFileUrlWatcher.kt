@@ -133,7 +133,9 @@ private class EntitySourceFileWatcher<T : EntitySource>(
       val newVfurl = virtualFileManager.fromUrl(newUrl + urlFromContainer.substring(oldUrl.length))
       val newEntitySource = createNewSource(entitySource, newVfurl)
 
-      mapOfEntities.values.flatten().forEach { diff.changeSource(it, newEntitySource) }
+      mapOfEntities.values.flatten().forEach {
+        diff.modifyEntity(ModifiableWorkspaceEntity::class.java, it) { this.entitySource = newEntitySource }
+      }
     }
   }
 }
