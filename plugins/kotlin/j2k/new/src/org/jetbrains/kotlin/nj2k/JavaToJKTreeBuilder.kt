@@ -1044,6 +1044,7 @@ class JavaToJKTreeBuilder constructor(
             is PsiJavaFile -> psi.toJK()
             is PsiExpression -> with(expressionTreeMapper) { psi.toJK() }
             is PsiStatement -> with(declarationMapper) { psi.toJK() }
+            is PsiTypeParameter -> with(declarationMapper) { psi.toJK() }
             is PsiClass -> with(declarationMapper) { psi.toJK() }
             is PsiField -> with(declarationMapper) { psi.toJK() }
             is PsiMethod -> with(declarationMapper) { psi.toJK() }
