@@ -4,7 +4,7 @@ class Test {
         renamed();
     }
 
-    private void renamed() {
+    private static void renamed() {
         System.out.println();
     }
 }

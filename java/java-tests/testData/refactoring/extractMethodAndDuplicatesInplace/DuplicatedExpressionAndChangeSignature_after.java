@@ -7,7 +7,7 @@ class Test {
   }
 
     @NotNull
-    private byte[] getBytes(String one) {
+    private static byte[] getBytes(String one) {
         return one.getBytes();
     }
 }

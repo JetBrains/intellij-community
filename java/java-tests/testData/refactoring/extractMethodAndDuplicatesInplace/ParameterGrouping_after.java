@@ -3,7 +3,7 @@ class Test {
         extracted("string", "string");
     }
 
-    private void extracted(String string, String string1) {
+    private static void extracted(String string, String string1) {
         System.out.println(string);
         System.out.println(string1);
     }

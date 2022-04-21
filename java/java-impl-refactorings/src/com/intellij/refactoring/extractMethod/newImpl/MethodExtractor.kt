@@ -137,7 +137,7 @@ class MethodExtractor {
     val annotationAvailable = ExtractMethodHelper.isNullabilityAvailable(options)
     return ExtractMethodPopupProvider(
       annotateDefault = if (hasAnnotation && annotationAvailable) needsNullabilityAnnotations(options.project) else null,
-      makeStaticDefault = if (showStatic) false else null,
+      makeStaticDefault = if (showStatic) !makeStaticAndPassFields else null,
       staticPassFields = makeStaticAndPassFields
     )
   }

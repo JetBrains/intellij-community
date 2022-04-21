@@ -4,7 +4,7 @@ public class Test{
         extracted();
     }
 
-    private void extracted() {
+    private static void extracted() {
         String local = "local";
         System.out.println("one");
         System.out.println("two");

@@ -14,7 +14,7 @@ public class Test {
     }
 
     @Nullable
-    private String getString() {
+    private static String getString() {
         if (new Random().nextBoolean()) {
           System.out.println();
             return "one";

@@ -3,7 +3,7 @@ class Test {
         sayHello("Hello!", "user");
     }
 
-    private void sayHello(String s, String user) {
+    private static void sayHello(String s, String user) {
         System.out.println(s);
         System.out.println(user);
     }

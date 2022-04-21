@@ -4,7 +4,7 @@ class Test {
         System.out.println(x);
     }
 
-    private int getX() {
+    private static int getX() {
         int x = 42;
         return x;
     }
