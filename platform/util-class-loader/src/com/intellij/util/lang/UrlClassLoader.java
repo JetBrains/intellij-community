@@ -317,7 +317,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @Override
-  protected @NotNull Enumeration<URL> findResources(@NotNull String name) throws IOException {
+  public @NotNull Enumeration<URL> findResources(@NotNull String name) throws IOException {
     return classPath.getResources(name);
   }
 

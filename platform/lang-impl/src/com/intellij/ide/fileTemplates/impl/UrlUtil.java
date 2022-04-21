@@ -1,34 +1,28 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
-import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.ResourceUtil;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.lang.HashMapZipFile;
+import com.intellij.util.lang.ImmutableZipEntry;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 public final class UrlUtil {
-  private static final String JAR_SEPARATOR = URLUtil.JAR_SEPARATOR;
   private static final String URL_PATH_SEPARATOR = "/";
-  private static final String FILE_PROTOCOL = URLUtil.FILE_PROTOCOL;
-  private static final String FILE_PROTOCOL_PREFIX = FILE_PROTOCOL + ":";
+  private static final String FILE_PROTOCOL_PREFIX = URLUtil.FILE_PROTOCOL + ":";
 
   public static @NotNull String loadText(@NotNull URL url) throws IOException {
-    try (InputStream stream = new BufferedInputStream(URLUtil.openStream(url))) {
-      return new String(FileUtil.loadBytes(stream), FileTemplate.ourEncoding);
-    }
+    return ResourceUtil.loadText(url.openStream());
   }
 
   public static @NotNull List<String> getChildrenRelativePaths(@NotNull URL root) throws IOException {
@@ -36,7 +30,7 @@ public final class UrlUtil {
     if ("jar".equalsIgnoreCase(protocol)) {
       return getChildPathsFromJar(root);
     }
-    else if (FILE_PROTOCOL.equalsIgnoreCase(protocol)) {
+    else if (URLUtil.FILE_PROTOCOL.equalsIgnoreCase(protocol)) {
       return getChildPathsFromFile(root);
     }
     else {
@@ -68,10 +62,9 @@ public final class UrlUtil {
     return paths;
   }
 
-  private static @NotNull List<String> getChildPathsFromJar(@NotNull URL root) throws IOException {
-    String file = root.getFile();
-    file = Strings.trimStart(file, FILE_PROTOCOL_PREFIX);
-    int jarSeparatorIndex = file.indexOf(JAR_SEPARATOR);
+  static @NotNull List<String> getChildPathsFromJar(@NotNull URL root) throws IOException {
+    String file = Strings.trimStart(root.getFile(), FILE_PROTOCOL_PREFIX);
+    int jarSeparatorIndex = file.indexOf(URLUtil.JAR_SEPARATOR);
     assert jarSeparatorIndex > 0;
 
     String rootDirName = file.substring(jarSeparatorIndex + 2);
@@ -79,19 +72,21 @@ public final class UrlUtil {
       rootDirName += URL_PATH_SEPARATOR;
     }
 
-    try (ZipFile zipFile = new ZipFile(FileUtil.unquote(file.substring(0, jarSeparatorIndex)))) {
-      Enumeration<? extends ZipEntry> entries = zipFile.entries();
-      List<String> paths = new ArrayList<>();
-      while (entries.hasMoreElements()) {
-        ZipEntry entry = entries.nextElement();
-        if (!entry.isDirectory()) {
-          String relPath = entry.getName();
-          if (relPath.startsWith(rootDirName)) {
-            paths.add(relPath.substring(rootDirName.length()));
-          }
+    List<String> paths = new ArrayList<>();
+    try (HashMapZipFile zipFile = HashMapZipFile.load(Path.of(URLUtil.unescapePercentSequences(file.substring(0, jarSeparatorIndex))))) {
+      for (ImmutableZipEntry entry : zipFile.getEntries()) {
+        String path = entry.getName();
+        if (path.startsWith(rootDirName)) {
+          paths.add(path.substring(rootDirName.length()));
         }
       }
       return paths;
+    }
+    catch (RuntimeException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 }

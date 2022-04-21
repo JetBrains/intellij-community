@@ -17,10 +17,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.project.ProjectKt;
+import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.UriUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import org.apache.velocity.runtime.ParserPool;
 import org.apache.velocity.runtime.RuntimeServices;
 import org.apache.velocity.runtime.RuntimeSingleton;
@@ -34,6 +35,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * Serves as a container for all existing template manager types and loads corresponding templates lazily.
@@ -139,11 +141,11 @@ class FileTemplatesLoader implements Disposable {
     return new FTManager(myManagers.getValue().getManager(FileTemplateManager.J2EE_TEMPLATES_CATEGORY));
   }
 
-  URL getDefaultTemplateDescription() {
+  Supplier<String> getDefaultTemplateDescription() {
     return myManagers.getValue().defaultTemplateDescription;
   }
 
-  URL getDefaultIncludeDescription() {
+  Supplier<String> getDefaultIncludeDescription() {
     return myManagers.getValue().defaultIncludeDescription;
   }
 
@@ -161,14 +163,13 @@ class FileTemplatesLoader implements Disposable {
     for (Map.Entry<String, String> entry: MANAGER_TO_DIR.entrySet()) {
       String name = entry.getKey();
       String pathPrefix = entry.getValue();
-      FTManager manager = new FTManager(name, configDir.resolve(pathPrefix),
-                                        name.equals(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY));
-      manager.setDefaultTemplates(result.getResult().get(pathPrefix));
+      FTManager manager = new FTManager(name, configDir.resolve(pathPrefix), name.equals(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY));
+      manager.setDefaultTemplates(result.result.get(pathPrefix));
       manager.loadCustomizedContent();
       managers.put(name, manager);
     }
 
-    return new LoadedConfiguration(managers, result.getDefaultTemplateDescription(), result.getDefaultIncludeDescription());
+    return new LoadedConfiguration(managers, result.defaultTemplateDescription, result.defaultIncludeDescription);
   }
 
   private static @NotNull FileTemplateLoadResult loadDefaultTemplates(@NotNull List<String> prefixes) {
@@ -184,16 +185,30 @@ class FileTemplatesLoader implements Disposable {
       }
 
       try {
-        Enumeration<URL> systemResources = loader.getResources(DEFAULT_TEMPLATES_ROOT);
-        while (systemResources.hasMoreElements()) {
-          URL url = systemResources.nextElement();
+        Enumeration<URL> resourceUrls;
+        if (loader instanceof UrlClassLoader) {
+          // don't use parents from plugin class loader - we process all plugins
+          resourceUrls = ((UrlClassLoader)loader).getClassPath().getResources(DEFAULT_TEMPLATES_ROOT);
+        }
+        else {
+          resourceUrls = loader.getResources(DEFAULT_TEMPLATES_ROOT);
+        }
+
+        while (resourceUrls.hasMoreElements()) {
+          URL url = resourceUrls.nextElement();
           if (!processedUrls.add(url)) {
             continue;
           }
 
-          List<String> children = UrlUtil.getChildrenRelativePaths(url);
-          if (!children.isEmpty()) {
-            loadDefaultsFromRoot(url, children, prefixes, result);
+          String protocol = url.getProtocol();
+          if (URLUtil.JAR_PROTOCOL.equalsIgnoreCase(protocol)) {
+            List<String> children = UrlUtil.getChildPathsFromJar(url);
+            if (!children.isEmpty()) {
+              loadDefaultsFromRoot(path -> FileTemplateLoadResult.createSupplier(url, path), children, prefixes, result);
+             }
+          }
+          else if (URLUtil.FILE_PROTOCOL.equalsIgnoreCase(protocol)) {
+            FileTemplateLoadResult.processDirectory(url, result, prefixes);
           }
         }
       }
@@ -204,18 +219,17 @@ class FileTemplatesLoader implements Disposable {
     return result;
   }
 
-  private static void loadDefaultsFromRoot(@NotNull URL root,
+  private static void loadDefaultsFromRoot(@NotNull Function<String, Supplier<String>> dataProducer,
                                            @NotNull List<String> children,
                                            @NotNull List<String> prefixes,
                                            @NotNull FileTemplateLoadResult result) throws IOException {
     Set<String> descriptionPaths = new HashSet<>();
     for (String path : children) {
       if (path.equals("default.html")) {
-        result.setDefaultTemplateDescription(
-          URLUtil.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path)));
+        result.defaultTemplateDescription = dataProducer.fun(path);
       }
       else if (path.equals("includes/default.html")) {
-        result.setDefaultIncludeDescription(URLUtil.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path)));
+        result.defaultIncludeDescription = dataProducer.fun(path);
       }
       else if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
         descriptionPaths.add(path);
@@ -235,19 +249,16 @@ class FileTemplatesLoader implements Disposable {
         String filename = path.substring(prefix.isEmpty() ? 0 : prefix.length() + 1, path.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
         String extension = FileUtilRt.getExtension(filename);
         String templateName = filename.substring(0, filename.length() - extension.length() - 1);
-        URL templateUrl = URLUtil.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path));
         String descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths);
-        URL descriptionUrl = descriptionPath == null ? null :
-                             URLUtil.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + descriptionPath));
-        assert templateUrl != null;
-        result.getResult().putValue(prefix, new DefaultTemplate(templateName, extension, templateUrl, descriptionUrl, descriptionPath));
+        Supplier<String> descriptionSupplier = descriptionPath == null ? null : dataProducer.fun(descriptionPath);
+        result.result.putValue(prefix, new DefaultTemplate(templateName, extension, dataProducer.fun(path), descriptionSupplier, descriptionPath));
         // FTManagers loop
         break;
       }
     }
   }
 
-  private static boolean matchesPrefix(@NotNull String path, @NotNull String prefix) {
+   static boolean matchesPrefix(@NotNull String path, @NotNull String prefix) {
     if (prefix.isEmpty()) {
       return path.indexOf('/') == -1;
     }
@@ -255,7 +266,7 @@ class FileTemplatesLoader implements Disposable {
   }
 
   //Example: templateName="NewClass"   templateExtension="java"
-  private static @Nullable String getDescriptionPath(@NotNull String pathPrefix,
+  static @Nullable String getDescriptionPath(@NotNull String pathPrefix,
                                                      @NotNull String templateName,
                                                      @NotNull String templateExtension,
                                                      @NotNull Set<String> descriptionPaths) {
@@ -284,14 +295,14 @@ class FileTemplatesLoader implements Disposable {
   }
 
   private static final class LoadedConfiguration {
-    private final URL defaultTemplateDescription;
-    private final URL defaultIncludeDescription;
+    private final Supplier<String> defaultTemplateDescription;
+    private final Supplier<String> defaultIncludeDescription;
 
     private final Map<String, FTManager> managers;
 
     private LoadedConfiguration(@NotNull Map<String, FTManager> managers,
-                                URL defaultTemplateDescription,
-                                URL defaultIncludeDescription) {
+                                Supplier<String> defaultTemplateDescription,
+                                Supplier<String> defaultIncludeDescription) {
 
       this.managers = Collections.unmodifiableMap(managers);
       this.defaultTemplateDescription = defaultTemplateDescription;

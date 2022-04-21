@@ -29,9 +29,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Supplier;
 
 @State(name = "FileTemplateManagerImpl", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class FileTemplateManagerImpl extends FileTemplateManager implements PersistentStateComponent<FileTemplateManagerImpl.State> {
@@ -344,11 +344,11 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
     }
   }
 
-  public URL getDefaultTemplateDescription() {
+  public Supplier<String> getDefaultTemplateDescription() {
     return myDefaultSettings.getDefaultTemplateDescription();
   }
 
-  URL getDefaultIncludeDescription() {
+  Supplier<String> getDefaultIncludeDescription() {
     return myDefaultSettings.getDefaultIncludeDescription();
   }
 

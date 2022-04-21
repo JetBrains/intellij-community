@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.DynamicBundle;
@@ -30,41 +16,66 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.Reference;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.function.Supplier;
 
 import static com.intellij.DynamicBundle.findLanguageBundle;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class DefaultTemplate {
+public final class DefaultTemplate {
   private static final Logger LOG = Logger.getInstance(DefaultTemplate.class);
   
   private final String myName;
   private final String myExtension;
 
-  private final URL myTextURL;
+  private final Supplier<String> textSupplier;
   private final String myDescriptionPath;
   private Reference<String> myText;
   
-  @Nullable
-  private final URL myDescriptionURL;
+  private final @Nullable Supplier<String> descriptionSupplier;
   private Reference<String> myDescriptionText;
 
-  public DefaultTemplate(@NotNull String name, @NotNull String extension, @NotNull URL templateURL, @Nullable URL descriptionURL) {
-    this(name, extension, templateURL, descriptionURL, null);
+  /**
+   * @deprecated Use {@link #DefaultTemplate(String, String, Supplier, Supplier, String)}
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public DefaultTemplate(@NotNull String name, @NotNull String extension, @NotNull URL templateUrl, @Nullable URL descriptionUrl) {
+    this(name, extension, () -> {
+      try {
+        return ResourceUtil.loadText(templateUrl.openStream());
+      }
+      catch (IOException e) {
+        LOG.error(e);
+        return "";
+      }
+    }, descriptionUrl == null ? null : () -> {
+      try {
+        return ResourceUtil.loadText(descriptionUrl.openStream());
+      }
+      catch (IOException e) {
+        LOG.error(e);
+        return "";
+      }
+    }, null);
   }
 
-  DefaultTemplate(@NotNull String name, @NotNull String extension, @NotNull URL templateURL, @Nullable URL descriptionURL, @Nullable String descriptionPath) {
+  DefaultTemplate(@NotNull String name,
+                  @NotNull String extension,
+                  @NotNull Supplier<String> textSupplier,
+                  @Nullable Supplier<String> descriptionSupplier,
+                  @Nullable String descriptionPath) {
     myName = name;
     myExtension = extension;
-    myTextURL = templateURL;
-    myDescriptionURL = descriptionURL;
+    this.textSupplier = textSupplier;
+    this.descriptionSupplier = descriptionSupplier;
     myDescriptionPath = descriptionPath;
   }
 
-  @NotNull
-  private static @NlsSafe String loadText(@NotNull ThrowableComputable<String, IOException> computable) {
+  private static @NotNull @NlsSafe String loadText(@NotNull ThrowableComputable<String, IOException> computable) {
     String text = "";
     try {
       text = StringUtil.convertLineSeparators(computable.compute());
@@ -75,39 +86,43 @@ public class DefaultTemplate {
     return text;
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @NotNull
-  public String getQualifiedName() {
+  public @NotNull String getQualifiedName() {
     return FileTemplateBase.getQualifiedName(getName(), getExtension());
   }
 
-  @NotNull
-  public String getExtension() {
+  public @NotNull String getExtension() {
     return myExtension;
   }
 
-  @NotNull
+  /**
+   * @deprecated Do not use.
+   */
+  @Deprecated
   public URL getTemplateURL() {
-    return myTextURL;
+    // the only external usage - https://github.com/wrdv/testme-idea/blob/8e314aea969619f43f0c6bb17f53f1d95b1072be/src/main/java/com/weirddev/testme/intellij/ui/template/FTManager.java#L200
+    try {
+      return new URL("https://not.relevant");
+    }
+    catch (MalformedURLException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     String text = SoftReference.dereference(myText);
     if (text == null) {
-      text = loadText(() -> UrlUtil.loadText(myTextURL));
+      text = textSupplier.get();
       myText = new java.lang.ref.SoftReference<>(text);
     }
     return text;
   }
 
-  @NotNull
-  public @Nls String getDescriptionText() {
-    if (myDescriptionURL == null) return "";
+  public @NotNull @Nls String getDescriptionText() {
+    if (descriptionSupplier == null) return "";
     String text = SoftReference.dereference(myDescriptionText); //NON-NLS
     if (text == null) {
       text = loadText(() -> {
@@ -120,10 +135,15 @@ public class DefaultTemplate {
             return ResourceUtil.loadText(stream);
           }
         }
-        return UrlUtil.loadText(myDescriptionURL);
+        return descriptionSupplier.get();
       });
       myDescriptionText = new java.lang.ref.SoftReference<>(text);
     }
     return text;
+  }
+
+  @Override
+  public String toString() {
+    return textSupplier.toString();
   }
 }

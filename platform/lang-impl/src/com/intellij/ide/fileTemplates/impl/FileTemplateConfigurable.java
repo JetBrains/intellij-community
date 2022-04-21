@@ -7,7 +7,6 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -58,14 +57,12 @@ import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.function.Supplier;
 
 public final class FileTemplateConfigurable implements Configurable, Configurable.NoScroll {
-  private static final Logger LOG = Logger.getInstance(FileTemplateConfigurable.class);
   private static final @NonNls String EMPTY_HTML = "<html></html>";
 
   private JPanel myMainPanel;
@@ -79,7 +76,7 @@ public final class FileTemplateConfigurable implements Configurable, Configurabl
   private EditorTextField myFileName;
   private JEditorPane myDescriptionComponent;
   private boolean myModified;
-  private URL myDefaultDescriptionUrl;
+  private Supplier<@NonNls String> defaultDescriptionUrl;
   private final Project myProject;
 
   private final List<ChangeListener> myChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -95,12 +92,12 @@ public final class FileTemplateConfigurable implements Configurable, Configurabl
     return myTemplate;
   }
 
-  public void setTemplate(@Nullable FileTemplate template, URL defaultDescription) {
+  public void setTemplate(@Nullable FileTemplate template, @Nullable Supplier<String> defaultDescription) {
     setTemplate(template, defaultDescription, false);
   }
 
-  public void setTemplate(@Nullable FileTemplate template, URL defaultDescription, boolean internalTemplate) {
-    myDefaultDescriptionUrl = defaultDescription;
+  public void setTemplate(@Nullable FileTemplate template, @Nullable Supplier<String> defaultDescription, boolean internalTemplate) {
+    defaultDescriptionUrl = defaultDescription;
     myTemplate = template;
     if (myMainPanel != null) {
       reset();
@@ -345,15 +342,10 @@ public final class FileTemplateConfigurable implements Configurable, Configurabl
     final String text = myTemplate == null ? "" : myTemplate.getText();
     String name = myTemplate == null ? "" : myTemplate.getName();
     String extension = myTemplate == null ? "" : myTemplate.getExtension();
-    String description = myTemplate == null ? "" : myTemplate.getDescription();
+    @NonNls String description = myTemplate == null ? "" : myTemplate.getDescription();
 
-    if (description.isEmpty() && myDefaultDescriptionUrl != null) {
-      try {
-        description = UrlUtil.loadText(myDefaultDescriptionUrl); //NON-NLS
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+    if (description.isEmpty() && defaultDescriptionUrl != null) {
+      description = defaultDescriptionUrl.get();
     }
 
     EditorFactory.getInstance().releaseEditor(myTemplateEditor);
