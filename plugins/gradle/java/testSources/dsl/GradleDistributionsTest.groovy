@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiMethod
@@ -39,6 +39,10 @@ class GradleDistributionsTest extends GradleHighlightingBaseTest implements Expr
   protected List<String> getParentCalls() {
 //    return []
     return super.getParentCalls() + 'buildscript'
+  }
+
+  private String getBaseNameMethodName() {
+    return isGradleAtLeast("7.0") ? "getDistributionBaseName()" : "getBaseName()"
   }
 
   void 'distributions container'() {
@@ -84,7 +88,7 @@ class GradleDistributionsTest extends GradleHighlightingBaseTest implements Expr
   }
 
   void 'distribution member via unqualified method call closure delegate'() {
-    doTest('distributions { foo { <caret>getBaseName() } }') {
+    doTest("distributions { foo { <caret>${getBaseNameMethodName()} } }") {
       def method = resolveMethodTest(PsiMethod)
       assert method.containingClass.qualifiedName == GRADLE_API_DISTRIBUTION
     }
@@ -109,7 +113,7 @@ class GradleDistributionsTest extends GradleHighlightingBaseTest implements Expr
   }
 
   void 'distribution member via qualified method call closure delegate'() {
-    doTest('distributions.foo { <caret>getBaseName() }') {
+    doTest("distributions.foo { <caret>${getBaseNameMethodName()} }") {
       def method = resolveMethodTest(PsiMethod)
       assert method.containingClass.qualifiedName == GRADLE_API_DISTRIBUTION
     }
