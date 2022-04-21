@@ -1053,6 +1053,10 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
         return entity
     }
 
+    override fun getEntityInterface(): Class<out WorkspaceEntity> {
+        return EntityWithSoftLinks::class.java
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false

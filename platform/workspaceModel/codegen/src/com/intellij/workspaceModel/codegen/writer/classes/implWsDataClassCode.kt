@@ -83,6 +83,11 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
         }
       }
 
+      // --- getEntityInterface method
+      sectionNl("override fun getEntityInterface(): Class<out WorkspaceEntity>") {
+        line("return $name::class.java")
+      }
+
       // --- equals
       sectionNl("override fun equals(other: Any?): Boolean") {
         line("if (other == null) return false")

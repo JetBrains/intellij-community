@@ -82,33 +82,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
   private var threadName: String? = null
 
   override fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E> {
-    if (isOldApi(entityClass)) {
-      return super.entities(entityClass)
-    }
     @Suppress("UNCHECKED_CAST")
     return entitiesByType[entityClass.toClassId()]?.all()?.map { it.wrapAsModifiable(this) } as? Sequence<E> ?: emptySequence()
-  }
-
-  private fun <E: WorkspaceEntity> isOldApi(entityClass: Class<E>): Boolean {
-    val entityData: KClass<WorkspaceEntityData<E>> = ClassConversion.entityToEntityData(entityClass.kotlin)
-    val modifiableEntity: KClass<ModifiableWorkspaceEntity<E>> = try {
-      ClassConversion.entityDataToModifiableEntity(entityData)
-    }
-    catch (e: Exception) {
-      return false
-    }
-    return !entityClass.isAssignableFrom(modifiableEntity.java)
-  }
-
-  private fun <E: WorkspaceEntityData<WorkspaceEntity>> isOldApiFromData(entityData: Class<E>): Boolean {
-    val modifiableEntity: KClass<ModifiableWorkspaceEntity<WorkspaceEntity>> = try {
-      ClassConversion.entityDataToModifiableEntity(entityData.kotlin)
-    }
-    catch (e: Exception) {
-      return false
-    }
-    val entityClass = ClassConversion.entityDataToEntity(entityData)
-    return !entityClass.isAssignableFrom(modifiableEntity.java)
   }
 
   override fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>,
@@ -124,9 +99,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
     val entityIds = indexes.persistentIdIndex.getIdsByEntry(id) ?: return null
     val entityData: WorkspaceEntityData<WorkspaceEntity> = entityDataById(entityIds) as? WorkspaceEntityData<WorkspaceEntity> ?: return null
-    if (isOldApiFromData(entityData::class.java)) {
-      return entityData.createEntity(this) as E?
-    }
     @Suppress("UNCHECKED_CAST")
     return entityData.wrapAsModifiable(this) as E?
   }
@@ -143,11 +115,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
                                                                                                    this@WorkspaceEntityStorageBuilderImpl)
                                                                        error("Cannot find an entity by id $it")
                                                                      }
-          if (isOldApiFromData(entityDataById::class.java)) {
-            entityDataById.createEntity(this)
-          } else {
-            entityDataById.wrapAsModifiable(this)
-          }
+          entityDataById.wrapAsModifiable(this)
         }
         .groupBy { (it as WorkspaceEntityBase).getEntityInterface() }
     }

@@ -219,6 +219,10 @@ class MainEntityParentListData : WorkspaceEntityData<MainEntityParentList>() {
         return entity
     }
 
+    override fun getEntityInterface(): Class<out WorkspaceEntity> {
+        return MainEntityParentList::class.java
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false

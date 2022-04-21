@@ -49,6 +49,7 @@ object CodeWriter {
 
   fun generate(dir: File, fromDirectory: String, toDirectory: String, moduleId: String) {
     val generatedDestDir = dir.resolve(toDirectory)
+    generatedDestDir.mkdirs()
     val ktSrcs = dir.resolve(fromDirectory).listFiles()!!
       .toList()
       .filter { it.name.endsWith(".kt") }

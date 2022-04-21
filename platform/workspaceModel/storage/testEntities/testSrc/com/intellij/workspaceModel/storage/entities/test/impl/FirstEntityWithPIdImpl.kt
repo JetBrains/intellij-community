@@ -163,6 +163,10 @@ class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<Fi
         
     }
 
+    override fun getEntityInterface(): Class<out WorkspaceEntity> {
+        return FirstEntityWithPId::class.java
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false

@@ -370,6 +370,10 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
         return FacetId(name, facetType, moduleId)
     }
 
+    override fun getEntityInterface(): Class<out WorkspaceEntity> {
+        return FacetEntity::class.java
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false

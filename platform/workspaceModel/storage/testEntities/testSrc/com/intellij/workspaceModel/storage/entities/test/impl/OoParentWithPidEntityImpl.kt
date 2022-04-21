@@ -254,6 +254,10 @@ class OoParentWithPidEntityData : WorkspaceEntityData.WithCalculablePersistentId
         return OoParentEntityId(parentProperty)
     }
 
+    override fun getEntityInterface(): Class<out WorkspaceEntity> {
+        return OoParentWithPidEntity::class.java
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false

@@ -465,6 +465,10 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
         return LibraryId(name, tableId)
     }
 
+    override fun getEntityInterface(): Class<out WorkspaceEntity> {
+        return LibraryEntity::class.java
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false

@@ -233,6 +233,10 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculablePersistent
         return AnotherNameId(myName)
     }
 
+    override fun getEntityInterface(): Class<out WorkspaceEntity> {
+        return WithListSoftLinksEntity::class.java
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false

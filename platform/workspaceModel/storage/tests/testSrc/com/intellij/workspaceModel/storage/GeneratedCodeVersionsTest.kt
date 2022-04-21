@@ -202,6 +202,10 @@ class SuperSimpleEntityData : WorkspaceEntityData<SuperSimpleEntity>() {
     return modifiable
   }
 
+  override fun getEntityInterface(): Class<out WorkspaceEntity> {
+    return SuperSimpleEntity::class.java
+  }
+
   override fun createEntity(snapshot: WorkspaceEntityStorage): SuperSimpleEntity {
     val entity = SuperSimpleEntityImpl()
     entity.entitySource = entitySource

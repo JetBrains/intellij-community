@@ -178,7 +178,7 @@ internal object ReplaceBySourceAsGraph {
             }
           }
 
-          val entityClass = ClassConversion.entityDataToEntity(matchedEntityData.javaClass).toClassId()
+          val entityClass = matchedEntityData.getEntityInterface().toClassId()
           val newEntity = thisBuilder.entitiesByType.cloneAndAdd(matchedEntityData, entityClass)
           val newEntityId = matchedEntityId.id.copy(arrayId = newEntity.id).asThis()
           replaceMap[newEntityId] = matchedEntityId
@@ -202,7 +202,7 @@ internal object ReplaceBySourceAsGraph {
     //   After previous operation localMatchedEntities contain only entities that exist in local store, but don't exist in replaceWith store.
     //   Those entities should be just removed.
     for ((localEntity, entityId) in localMatchedEntities.values()) {
-      val entityClass = ClassConversion.entityDataToEntity(localEntity.javaClass).toClassId()
+      val entityClass = localEntity.getEntityInterface().toClassId()
       val id = createEntityId(localEntity.id, entityClass)
       val dataToRemove = thisBuilder.entityDataById(id)
       if (dataToRemove != null) {

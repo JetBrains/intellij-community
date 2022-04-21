@@ -161,6 +161,10 @@ class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<S
         return SecondPId(data)
     }
 
+    override fun getEntityInterface(): Class<out WorkspaceEntity> {
+        return SecondEntityWithPId::class.java
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false

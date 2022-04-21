@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.ClassConversion
 
 internal open class ImmutableEntitiesBarrel internal constructor(
   override val entityFamilies: List<ImmutableEntityFamily<out WorkspaceEntity>?>
@@ -116,7 +115,7 @@ internal sealed class EntitiesBarrel {
       val hasPersistentId = WorkspaceEntityWithPersistentId::class.java.isAssignableFrom(clazz)
       family.assertConsistency { entityData ->
         // Assert correctness of the class
-        val immutableClass = ClassConversion.entityDataToEntity(entityData.javaClass)
+        val immutableClass = entityData.getEntityInterface()
         assert(clazz == immutableClass) {
           """EntityFamily contains entity data of wrong type:
                 | - EntityFamily class:   $clazz

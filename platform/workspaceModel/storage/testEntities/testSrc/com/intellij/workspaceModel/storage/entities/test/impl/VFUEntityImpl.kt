@@ -178,6 +178,10 @@ class VFUEntityData : WorkspaceEntityData<VFUEntity>() {
         return entity
     }
 
+    override fun getEntityInterface(): Class<out WorkspaceEntity> {
+        return VFUEntity::class.java
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false

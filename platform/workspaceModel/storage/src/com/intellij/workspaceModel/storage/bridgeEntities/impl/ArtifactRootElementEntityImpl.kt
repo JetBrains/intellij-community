@@ -311,6 +311,10 @@ class ArtifactRootElementEntityData : WorkspaceEntityData<ArtifactRootElementEnt
         return entity
     }
 
+    override fun getEntityInterface(): Class<out WorkspaceEntity> {
+        return ArtifactRootElementEntity::class.java
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false

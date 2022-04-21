@@ -241,6 +241,10 @@ class ChildSecondEntityData : WorkspaceEntityData<ChildSecondEntity>() {
         return entity
     }
 
+    override fun getEntityInterface(): Class<out WorkspaceEntity> {
+        return ChildSecondEntity::class.java
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false

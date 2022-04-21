@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.propertyBased
 
-import com.intellij.workspaceModel.storage.ClassConversion
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -11,7 +10,6 @@ import com.intellij.workspaceModel.storage.entities.test.addParentEntity
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
 import com.intellij.workspaceModel.storage.impl.toClassId
@@ -141,12 +139,7 @@ internal abstract class ModifyEntity<E : WorkspaceEntity, M : ModifiableWorkspac
 
   final override fun performCommand(env: ImperativeCommand.Environment) {
     val modifiableClass: Class<M>
-    if (isOldApi(entityClass.java)) {
-      @Suppress("UNCHECKED_CAST")
-      modifiableClass = ClassConversion.entityDataToModifiableEntity(ClassConversion.entityToEntityData(entityClass)).java as Class<M>
-    } else {
-      modifiableClass = ClassConversion.entityDataToModifiableEntityNew(ClassConversion.entityToEntityData(entityClass)).java as Class<M>
-    }
+    modifiableClass = entityClass.java.toBuilderClass() as Class<M>
 
     val entityId = env.generateValue(EntityIdOfFamilyGenerator.create(storage, entityClass.java.toClassId()), null)
     if (entityId == null) return
@@ -168,18 +161,10 @@ internal abstract class ModifyEntity<E : WorkspaceEntity, M : ModifiableWorkspac
 
     env.logMessage("----------------------------------")
   }
+}
 
-
-  private fun <E: WorkspaceEntity> isOldApi(entityClass: Class<E>): Boolean {
-    val entityData: KClass<WorkspaceEntityData<E>> = ClassConversion.entityToEntityData(entityClass.kotlin)
-    val modifiableEntity: KClass<ModifiableWorkspaceEntity<E>> = try {
-      ClassConversion.entityDataToModifiableEntity(entityData)
-    }
-    catch (e: Exception) {
-      return false
-    }
-    return !entityClass.isAssignableFrom(modifiableEntity.java)
-  }
+private fun Class<*>.toBuilderClass(): Class<*> {
+  return Class.forName("$name\$Builder", true, classLoader)
 }
 
 private object NamedEntityManipulation : EntityManipulation {

@@ -221,6 +221,10 @@ class ChildNullableEntityData : WorkspaceEntityData<ChildNullableEntity>() {
         return entity
     }
 
+    override fun getEntityInterface(): Class<out WorkspaceEntity> {
+        return ChildNullableEntity::class.java
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false

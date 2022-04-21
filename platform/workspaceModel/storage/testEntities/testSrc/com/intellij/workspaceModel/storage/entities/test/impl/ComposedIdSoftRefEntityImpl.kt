@@ -219,6 +219,10 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistent
         return ComposedId(myName, link)
     }
 
+    override fun getEntityInterface(): Class<out WorkspaceEntity> {
+        return ComposedIdSoftRefEntity::class.java
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false

@@ -6,8 +6,6 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KProperty
 
 
 /**
@@ -343,32 +341,13 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
 
   fun isEntitySourceInitialized(): Boolean = ::entitySource.isInitialized
 
-  fun createEntityId(): EntityId = createEntityId(id, ClassConversion.entityDataToEntity(javaClass).toClassId())
+  fun createEntityId(): EntityId = createEntityId(id, getEntityInterface().toClassId())
 
   abstract fun createEntity(snapshot: WorkspaceEntityStorage): E
 
-  fun addMetaData(res: E, snapshot: WorkspaceEntityStorage) {
-    (res as WorkspaceEntityBase).entitySource = entitySource
-    (res as WorkspaceEntityBase).id = createEntityId()
-    (res as WorkspaceEntityBase).snapshot = snapshot as AbstractEntityStorage
-  }
+  abstract fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<E>
 
-  fun addMetaData(res: E, snapshot: WorkspaceEntityStorage, classId: Int) {
-    (res as WorkspaceEntityBase).entitySource = entitySource
-    (res as WorkspaceEntityBase).id = createEntityId(id, classId)
-    (res as WorkspaceEntityBase).snapshot = snapshot as AbstractEntityStorage
-  }
-
-  open fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilder): ModifiableWorkspaceEntity<E> {
-    val returnClass = ClassConversion.entityDataToModifiableEntity(this::class)
-    val res = returnClass.java.getDeclaredConstructor().newInstance()
-    res as ModifiableWorkspaceEntityBase
-    res.original = this
-    res.diff = diff
-    res.id = createEntityId()
-    res.entitySource = this.entitySource
-    return res
-  }
+  abstract fun getEntityInterface(): Class<out WorkspaceEntity>
 
   @Suppress("UNCHECKED_CAST")
   public override fun clone(): WorkspaceEntityData<E> = super.clone() as WorkspaceEntityData<E>
@@ -419,24 +398,6 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
 fun WorkspaceEntityData<*>.persistentId(): PersistentEntityId<*>? = when (this) {
   is WorkspaceEntityData.WithCalculablePersistentId -> this.persistentId()
   else -> null
-}
-
-class EntityDataDelegation<A : ModifiableWorkspaceEntityBase<*>, B> : ReadWriteProperty<A, B> {
-  override fun getValue(thisRef: A, property: KProperty<*>): B {
-    val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    field.isAccessible = true
-    @Suppress("UNCHECKED_CAST")
-    return field.get(thisRef.original) as B
-  }
-
-  override fun setValue(thisRef: A, property: KProperty<*>, value: B) {
-    if (!thisRef.modifiable.get()) {
-      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
-    }
-    val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    field.isAccessible = true
-    field.set(thisRef.original, value)
-  }
 }
 
 /**

@@ -156,6 +156,10 @@ class MainEntityData : WorkspaceEntityData<MainEntity>() {
         return entity
     }
 
+    override fun getEntityInterface(): Class<out WorkspaceEntity> {
+        return MainEntity::class.java
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false
