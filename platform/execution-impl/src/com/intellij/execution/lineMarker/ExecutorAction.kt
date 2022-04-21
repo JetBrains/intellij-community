@@ -83,6 +83,9 @@ class ExecutorAction private constructor(val origin: AnAction,
 
   override fun update(e: AnActionEvent) {
     origin.update(wrapEvent(e, order))
+    if (origin !is ActionGroup) {
+      e.presentation.isPerformGroup = true
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -97,7 +100,7 @@ class ExecutorAction private constructor(val origin: AnAction,
 
   override fun hideIfNoVisibleChildren() = origin is ActionGroup && origin.hideIfNoVisibleChildren()
 
-  override fun disableIfNoVisibleChildren() = origin !is ActionGroup || origin.disableIfNoVisibleChildren()
+  override fun disableIfNoVisibleChildren() = origin is ActionGroup && origin.disableIfNoVisibleChildren()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) {
