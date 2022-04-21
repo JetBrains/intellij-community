@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -43,6 +44,17 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
   @Override
   public @NotNull String getID() {
     return myEP == null ? getTool().getID() : myEP.id == null ? myEP.getShortName() : myEP.id;
+  }
+
+  @Override
+  public TextAttributesKey getEditorAttributes() {
+    if (myEP != null) {
+      String editorAttributes = myEP.editorAttributes;
+      return editorAttributes != null ? TextAttributesKey.find(editorAttributes) : null;
+    }
+    else {
+      return getTool().getEditorAttributes();
+    }
   }
 
   public @Nullable String getAlternativeID() {

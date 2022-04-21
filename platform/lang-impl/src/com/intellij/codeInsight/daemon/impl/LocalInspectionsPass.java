@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -143,21 +143,24 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   };
 
-  private @Nullable static HighlightInfo highlightInfoFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
-                                                                     @NotNull HighlightInfoType highlightInfoType,
-                                                                     @NotNull @NlsContexts.DetailedDescription String message,
-                                                                     @Nullable @NlsContexts.Tooltip String toolTip,
-                                                                     @NotNull PsiElement psiElement,
-                                                                     @NotNull List<IntentionAction> quickFixes,
-                                                                     @NotNull String toolID,
-                                                                     @Nullable EditorColorsScheme editorColorsScheme,
-                                                                     @NotNull SeverityRegistrar severityRegistrar) {
+  private @Nullable HighlightInfo highlightInfoFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
+                                                              @NotNull HighlightInfoType highlightInfoType,
+                                                              @NotNull @NlsContexts.DetailedDescription String message,
+                                                              @Nullable @NlsContexts.Tooltip String toolTip,
+                                                              @NotNull PsiElement psiElement,
+                                                              @NotNull List<IntentionAction> quickFixes,
+                                                              @NotNull HighlightDisplayKey key,
+                                                              @Nullable EditorColorsScheme editorColorsScheme,
+                                                              @NotNull SeverityRegistrar severityRegistrar) {
     TextRange textRange = ((ProblemDescriptorBase)problemDescriptor).getTextRange();
     if (textRange == null) return null;
     boolean isFileLevel = psiElement instanceof PsiFile && textRange.equals(psiElement.getTextRange());
 
     HighlightSeverity severity = highlightInfoType.getSeverity(psiElement);
     TextAttributesKey attributesKey = ((ProblemDescriptorBase)problemDescriptor).getEnforcedTextAttributes();
+     if (problemDescriptor.getHighlightType() == ProblemHighlightType.GENERIC_ERROR_OR_WARNING && attributesKey == null) {
+      attributesKey = myProfileWrapper.getInspectionProfile().getEditorAttributes(key.toString(), myFile);
+    }
     TextAttributes attributes = attributesKey == null || editorColorsScheme == null
                                 ? severityRegistrar.getTextAttributesBySeverity(severity)
                                 : editorColorsScheme.getAttributes(attributesKey);
@@ -165,7 +168,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       .range(psiElement, textRange.getStartOffset(), textRange.getEndOffset())
       .description(message)
       .severity(severity)
-      .inspectionToolId(toolID);
+      .inspectionToolId(key.getID());
     if (toolTip != null) b.escapedToolTip(toolTip);
     if (HighlightSeverity.INFORMATION.equals(severity) && attributes == null && toolTip == null && !quickFixes.isEmpty()) {
       // Hack to avoid filtering this info out in HighlightInfoFilterImpl even though its attributes are empty.
@@ -319,8 +322,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       tooltip = tooltips.intern(DaemonTooltipsUtil.getWrappedTooltip(rendered, shortName, getShortcutText(), showToolDescription(toolWrapper)));
     }
     List<IntentionAction> fixes = getQuickFixes(key, descriptor, emptyActionRegistered);
-    HighlightInfo info = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip, element, fixes, key.getID(),
-                                                     getColorsScheme(), severityRegistrar);
+    HighlightInfo info = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip, element, fixes, key, getColorsScheme(), severityRegistrar);
     if (info == null) return;
     registerQuickFixes(info, fixes, shortName);
 

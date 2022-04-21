@@ -9,6 +9,7 @@ import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -686,6 +687,16 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return toolState != null && toolState.isEnabled(element);
   }
 
+  @Override
+  public @Nullable TextAttributesKey getEditorAttributes(@NotNull String shortName, @Nullable PsiElement element) {
+    return getTools(shortName, element != null ? element.getProject() : null).getAttributesKey(element);
+  }
+
+  public void setTextAttributesKey(@NotNull String shortName, @NotNull String externalName, String scopeName, @Nullable Project project) {
+    getTools(shortName, project).setTextAttributesKey(externalName, scopeName);
+    schemeState = SchemeState.POSSIBLY_CHANGED;
+  }
+  
   @Override
   public boolean isExecutable(@Nullable Project project) {
     initInspectionTools();

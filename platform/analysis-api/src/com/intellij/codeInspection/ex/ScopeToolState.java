@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -31,6 +32,7 @@ public final class ScopeToolState {
   private InspectionToolWrapper<?, ?> myToolWrapper;
   private boolean myEnabled;
   private HighlightDisplayLevel myLevel;
+  private TextAttributesKey myTextAttributesKey;
   private ConfigPanelState myAdditionalConfigPanelState;
 
   public ScopeToolState(@NotNull NamedScope scope,
@@ -39,6 +41,7 @@ public final class ScopeToolState {
                         @NotNull HighlightDisplayLevel level) {
     this(scope.getScopeId(), toolWrapper, enabled, level);
     myScope = scope;
+    myTextAttributesKey = toolWrapper.getEditorAttributes();
   }
 
   public ScopeToolState(@NotNull String scopeName,
@@ -49,6 +52,7 @@ public final class ScopeToolState {
     myToolWrapper = toolWrapper;
     myEnabled = enabled;
     myLevel = level;
+    myTextAttributesKey = toolWrapper.getEditorAttributes();
   }
 
   @NotNull
@@ -89,6 +93,15 @@ public final class ScopeToolState {
 
   public void setLevel(@NotNull HighlightDisplayLevel level) {
     myLevel = level;
+  }
+
+  @Nullable
+  public TextAttributesKey getTextAttributesKey() {
+    return myTextAttributesKey;
+  }
+
+  public void setTextAttributesKey(TextAttributesKey textAttributesKey) {
+    myTextAttributesKey = textAttributesKey;
   }
 
   @Nullable
