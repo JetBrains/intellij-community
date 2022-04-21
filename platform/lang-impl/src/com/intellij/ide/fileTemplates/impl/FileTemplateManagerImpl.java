@@ -18,12 +18,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,12 +38,12 @@ import java.util.function.Supplier;
 public final class FileTemplateManagerImpl extends FileTemplateManager implements PersistentStateComponent<FileTemplateManagerImpl.State> {
   private static final Logger LOG = Logger.getInstance(FileTemplateManagerImpl.class);
 
-  private final State myState = new State();
-  private final ExportableFileTemplateSettings myDefaultSettings;
-  private final Project myProject;
+  private final State state = new State();
+  private final ExportableFileTemplateSettings defaultSettings;
+  private final Project project;
 
   private final FileTemplatesScheme myProjectScheme;
-  private FileTemplatesScheme myScheme = FileTemplatesScheme.DEFAULT;
+  private FileTemplatesScheme scheme = FileTemplatesScheme.DEFAULT;
   private boolean myInitialized;
 
   public static FileTemplateManagerImpl getInstanceImpl(@NotNull Project project) {
@@ -50,8 +51,8 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
   }
 
   FileTemplateManagerImpl(@NotNull Project project) {
-    myDefaultSettings = ApplicationManager.getApplication().getService(ExportableFileTemplateSettings.class);
-    myProject = project;
+    defaultSettings = ApplicationManager.getApplication().getService(ExportableFileTemplateSettings.class);
+    this.project = project;
 
     myProjectScheme = project.isDefault() ? null : new FileTemplatesScheme(IdeBundle.message("project.scheme")) {
       @Override
@@ -78,12 +79,12 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
   }
 
   private FileTemplateSettings getSettings() {
-    return myScheme == FileTemplatesScheme.DEFAULT ? myDefaultSettings : myProject.getService(FileTemplateSettings.class);
+    return scheme == FileTemplatesScheme.DEFAULT ? defaultSettings : project.getService(FileTemplateSettings.class);
   }
 
   @Override
   public @NotNull FileTemplatesScheme getCurrentScheme() {
-    return myScheme;
+    return scheme;
   }
 
   @Override
@@ -95,7 +96,7 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
   }
 
   private void setScheme(@NotNull FileTemplatesScheme scheme) {
-    myScheme = scheme;
+    this.scheme = scheme;
     myInitialized = true;
   }
 
@@ -103,7 +104,7 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
   protected @NotNull FileTemplateManager checkInitialized() {
     if (!myInitialized) {
       // loadState() not called; init default scheme
-      setScheme(myScheme);
+      setScheme(scheme);
     }
     return this;
   }
@@ -115,17 +116,23 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
 
   @Override
   public FileTemplate @NotNull [] getTemplates(@NotNull String category) {
-    if (DEFAULT_TEMPLATES_CATEGORY.equals(category)) return ArrayUtil.mergeArrays(getInternalTemplates(), getAllTemplates());
-    if (INCLUDES_TEMPLATES_CATEGORY.equals(category)) return getAllPatterns();
-    if (CODE_TEMPLATES_CATEGORY.equals(category)) return getAllCodeTemplates();
-    if (J2EE_TEMPLATES_CATEGORY.equals(category)) return getAllJ2eeTemplates();
-    throw new IllegalArgumentException("Unknown category: " + category);
+    switch (category) {
+      case DEFAULT_TEMPLATES_CATEGORY:
+        return ArrayUtil.mergeArrays(getInternalTemplates(), getAllTemplates());
+      case INCLUDES_TEMPLATES_CATEGORY:
+        return getAllPatterns();
+      case CODE_TEMPLATES_CATEGORY:
+        return getAllCodeTemplates();
+      case J2EE_TEMPLATES_CATEGORY:
+        return getAllJ2eeTemplates();
+      default:
+        throw new IllegalArgumentException("Unknown category: " + category);
+    }
   }
 
   @Override
   public FileTemplate @NotNull [] getAllTemplates() {
-    Collection<FileTemplateBase> templates = getSettings().getDefaultTemplatesManager().getAllTemplates(false);
-    return templates.toArray(FileTemplate.EMPTY_ARRAY);
+    return getSettings().getDefaultTemplatesManager().getAllTemplates(false).toArray(FileTemplate.EMPTY_ARRAY);
   }
 
   @Override
@@ -176,7 +183,7 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
 
     props.setProperty("DS", "$"); // Dollar sign, strongly needed for PHP, JS, etc. See WI-8979
 
-    props.setProperty(PROJECT_NAME_VARIABLE, myProject.getName());
+    props.setProperty(PROJECT_NAME_VARIABLE, project.getName());
 
     return props;
   }
@@ -194,12 +201,12 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
   @Override
   public @NotNull Collection<String> getRecentNames() {
     validateRecentNames(); // todo: no need to do it lazily
-    return myState.getRecentNames();
+    return state.getRecentNames();
   }
 
   @Override
   public void addRecentName(@NotNull @NonNls String name) {
-    myState.addName(name);
+    state.addName(name);
   }
 
   private void validateRecentNames() {
@@ -208,7 +215,7 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
     for (FileTemplate fileTemplate : allTemplates) {
       allNames.add(fileTemplate.getName());
     }
-    myState.validateNames(allNames);
+    state.validateNames(allNames);
   }
 
   @Override
@@ -254,7 +261,7 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
         return bean.subject;
       }
     }
-    return StringUtil.toLowerCase(templateName);
+    return Strings.toLowerCase(templateName);
   }
 
   @Override
@@ -267,7 +274,7 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
     return getTemplateFromManager(templateName, getSettings().getJ2eeTemplatesManager());
   }
 
-  private static @NotNull FileTemplate getTemplateFromManager(final @NotNull String templateName, final @NotNull FTManager ftManager) {
+  private static @NotNull FileTemplate getTemplateFromManager(@NotNull String templateName, @NotNull FTManager ftManager) {
     FileTemplateBase template = ftManager.getTemplate(templateName);
     if (template != null) {
       return template;
@@ -281,9 +288,9 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
   }
 
   @Override
-  public @NotNull FileTemplate getDefaultTemplate(final @NotNull String name) {
+  public @NotNull FileTemplate getDefaultTemplate(@NotNull String name) {
     String templateQName = getQualifiedName(name);
-    for (FTManager manager : getAllManagers()) {
+    for (FTManager manager : getSettings().getAllManagers()) {
       FileTemplateBase template = manager.getTemplate(templateQName);
       if (template != null) {
         if (template instanceof BundledFileTemplate) {
@@ -344,11 +351,11 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
   }
 
   public Supplier<String> getDefaultTemplateDescription() {
-    return myDefaultSettings.getDefaultTemplateDescription();
+    return defaultSettings.getDefaultTemplateDescription();
   }
 
   Supplier<String> getDefaultIncludeDescription() {
-    return myDefaultSettings.getDefaultIncludeDescription();
+    return defaultSettings.getDefaultIncludeDescription();
   }
 
   private Date myTestDate;
@@ -360,13 +367,13 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
 
   @Override
   public @NotNull State getState() {
-    myState.SCHEME = myScheme.getName();
-    return myState;
+    state.SCHEME = scheme.getName();
+    return state;
   }
 
   @Override
   public void loadState(@NotNull State state) {
-    XmlSerializerUtil.copyBean(state, myState);
+    XmlSerializerUtil.copyBean(state, this.state);
     FileTemplatesScheme scheme = myProjectScheme != null && myProjectScheme.getName().equals(state.SCHEME) ? myProjectScheme : FileTemplatesScheme.DEFAULT;
     setScheme(scheme);
   }
@@ -421,22 +428,23 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
   }
 
   public static final class State {
-    public List<String> RECENT_TEMPLATES = new ArrayList<>();
+    @OptionTag("RECENT_TEMPLATES")
+    public final List<String> recentTemplates = new ArrayList<>();
     public String SCHEME = FileTemplatesScheme.DEFAULT.getName();
 
     private void addName(@NotNull @NonNls String name) {
-      RECENT_TEMPLATES.remove(name);
-      RECENT_TEMPLATES.add(name);
+      recentTemplates.remove(name);
+      recentTemplates.add(name);
     }
 
     private @NotNull Collection<String> getRecentNames() {
-      int size = RECENT_TEMPLATES.size();
+      int size = recentTemplates.size();
       int resultSize = Math.min(FileTemplateManager.RECENT_TEMPLATES_SIZE, size);
-      return RECENT_TEMPLATES.subList(size - resultSize, size);
+      return recentTemplates.subList(size - resultSize, size);
     }
 
     private void validateNames(List<String> validNames) {
-      RECENT_TEMPLATES.retainAll(validNames);
+      recentTemplates.retainAll(validNames);
     }
   }
 }

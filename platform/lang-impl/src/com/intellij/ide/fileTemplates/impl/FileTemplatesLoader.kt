@@ -4,8 +4,6 @@
 package com.intellij.ide.fileTemplates.impl
 
 import com.intellij.ide.fileTemplates.FileTemplateManager
-import com.intellij.ide.fileTemplates.impl.FileTemplateLoadResult.Companion.createSupplier
-import com.intellij.ide.fileTemplates.impl.FileTemplateLoadResult.Companion.processDirectory
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
@@ -13,16 +11,16 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.project.stateStore
-import com.intellij.util.Function
 import com.intellij.util.ReflectionUtil
+import com.intellij.util.ResourceUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.URLUtil
@@ -30,10 +28,14 @@ import com.intellij.util.lang.UrlClassLoader
 import org.apache.velocity.runtime.ParserPool
 import org.apache.velocity.runtime.RuntimeSingleton
 import org.apache.velocity.runtime.directive.Stop
+import java.io.File
 import java.io.IOException
 import java.net.URL
+import java.nio.file.Files
+import java.nio.file.Path
 import java.text.MessageFormat
 import java.util.*
+import java.util.function.BiPredicate
 import java.util.function.Supplier
 
 private const val DEFAULT_TEMPLATES_ROOT = FileTemplatesLoader.TEMPLATES_DIR
@@ -46,63 +48,28 @@ private const val DESCRIPTION_EXTENSION_SUFFIX = ".$DESCRIPTION_FILE_EXTENSION"
  */
 internal open class FileTemplatesLoader(project: Project?) : Disposable {
   companion object {
-    private val LOG = Logger.getInstance(FileTemplatesLoader::class.java)
     const val TEMPLATES_DIR = "fileTemplates"
-
-    fun matchesPrefix(path: String, prefix: String): Boolean {
-      return if (prefix.isEmpty()) {
-        path.indexOf('/') == -1
-      }
-      else FileUtil.startsWith(path, prefix) && path.indexOf('/', prefix.length + 1) == -1
-    }
-
-    //Example: templateName="NewClass"   templateExtension="java"
-    fun getDescriptionPath(pathPrefix: String,
-                           templateName: String,
-                           templateExtension: String,
-                           descriptionPaths: Set<String>): String? {
-      val locale = Locale.getDefault()
-      var name = MessageFormat.format("{0}.{1}_{2}_{3}$DESCRIPTION_EXTENSION_SUFFIX",
-                                      templateName,
-                                      templateExtension,
-                                      locale.language,
-                                      locale.country)
-      var path = if (pathPrefix.isEmpty()) name else "$pathPrefix/$name"
-      if (descriptionPaths.contains(path)) {
-        return path
-      }
-
-      name = MessageFormat.format("{0}.{1}_{2}$DESCRIPTION_EXTENSION_SUFFIX", templateName, templateExtension, locale.language)
-      path = if (pathPrefix.isEmpty()) name else "$pathPrefix/$name"
-      if (descriptionPaths.contains(path)) {
-        return path
-      }
-
-      name = "$templateName.$templateExtension$DESCRIPTION_EXTENSION_SUFFIX"
-      path = if (pathPrefix.isEmpty()) name else "$pathPrefix/$name"
-      return if (descriptionPaths.contains(path)) path else null
-    }
   }
 
-  private val managers: SynchronizedClearableLazy<LoadedConfiguration>
+  private val managers = SynchronizedClearableLazy { loadConfiguration(project) }
 
   val allManagers: Collection<FTManager>
     get() = managers.value.managers.values
 
   val defaultTemplatesManager: FTManager
-    get() = FTManager(managers.value.getManager(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY)!!)
+    get() = FTManager(managers.value.getManager(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY))
 
   val internalTemplatesManager: FTManager
-    get() = FTManager(managers.value.getManager(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY)!!)
+    get() = FTManager(managers.value.getManager(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY))
 
   val patternsManager: FTManager
-    get() = FTManager(managers.value.getManager(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY)!!)
+    get() = FTManager(managers.value.getManager(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY))
 
   val codeTemplatesManager: FTManager
-    get() = FTManager(managers.value.getManager(FileTemplateManager.CODE_TEMPLATES_CATEGORY)!!)
+    get() = FTManager(managers.value.getManager(FileTemplateManager.CODE_TEMPLATES_CATEGORY))
 
   val j2eeTemplatesManager: FTManager
-    get() = FTManager(managers.value.getManager(FileTemplateManager.J2EE_TEMPLATES_CATEGORY)!!)
+    get() = FTManager(managers.value.getManager(FileTemplateManager.J2EE_TEMPLATES_CATEGORY))
 
   val defaultTemplateDescription: Supplier<String>?
     get() = managers.value.defaultTemplateDescription
@@ -111,7 +78,6 @@ internal open class FileTemplatesLoader(project: Project?) : Disposable {
     get() = managers.value.defaultIncludeDescription
 
   init {
-    managers = SynchronizedClearableLazy { loadConfiguration(project) }
     @Suppress("LeakingThis")
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
@@ -124,14 +90,14 @@ internal open class FileTemplatesLoader(project: Project?) : Disposable {
         val field = ReflectionUtil.getDeclaredField(Stop::class.java, "STOP_ALL") ?: return
         runCatching {
           ThrowableInterner.clearBacktrace((field.get(null) as Throwable))
-        }.getOrLogException(LOG)
+        }.getOrLogException(logger<FileTemplatesLoader>())
       }
 
       private fun resetParserPool() {
         runCatching {
           val ppField = ReflectionUtil.getDeclaredField(RuntimeSingleton.getRuntimeServices().javaClass, "parserPool") ?: return
           (ppField.get(RuntimeSingleton.getRuntimeServices()) as? ParserPool)?.initialize(RuntimeSingleton.getRuntimeServices())
-        }.getOrLogException(LOG)
+        }.getOrLogException(logger<FileTemplatesLoader>())
       }
 
       override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
@@ -148,6 +114,33 @@ internal open class FileTemplatesLoader(project: Project?) : Disposable {
   }
 }
 
+// example: templateName="NewClass"   templateExtension="java"
+private fun getDescriptionPath(pathPrefix: String,
+                       templateName: String,
+                       templateExtension: String,
+                       descriptionPaths: Set<String>): String? {
+  val locale = Locale.getDefault()
+  var name = MessageFormat.format("{0}.{1}_{2}_{3}$DESCRIPTION_EXTENSION_SUFFIX",
+                                  templateName,
+                                  templateExtension,
+                                  locale.language,
+                                  locale.country)
+  var path = if (pathPrefix.isEmpty()) name else "$pathPrefix/$name"
+  if (descriptionPaths.contains(path)) {
+    return path
+  }
+
+  name = MessageFormat.format("{0}.{1}_{2}$DESCRIPTION_EXTENSION_SUFFIX", templateName, templateExtension, locale.language)
+  path = if (pathPrefix.isEmpty()) name else "$pathPrefix/$name"
+  if (descriptionPaths.contains(path)) {
+    return path
+  }
+
+  name = "$templateName.$templateExtension$DESCRIPTION_EXTENSION_SUFFIX"
+  path = if (pathPrefix.isEmpty()) name else "$pathPrefix/$name"
+  return if (descriptionPaths.contains(path)) path else null
+}
+
 private fun loadConfiguration(project: Project?): LoadedConfiguration {
   val configDir = if (project == null || project.isDefault) {
     PathManager.getConfigDir().resolve(FileTemplatesLoader.TEMPLATES_DIR)
@@ -156,7 +149,7 @@ private fun loadConfiguration(project: Project?): LoadedConfiguration {
     project.stateStore.projectFilePath.parent.resolve(FileTemplatesLoader.TEMPLATES_DIR)
   }
 
-  // not a map - force predefined order for stabe performance results
+  // not a map - force predefined order for stable performance results
   val managerToDir = listOf(
     FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY to "",
     FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY to "internal",
@@ -206,13 +199,10 @@ private fun loadDefaultTemplates(prefixes: List<String>): FileTemplateLoadResult
 
         val protocol = url.protocol
         if (URLUtil.JAR_PROTOCOL.equals(protocol, ignoreCase = true)) {
-          val children = UrlUtil.getChildPathsFromJar(url)
-          if (!children.isEmpty()) {
-            loadDefaultsFromRoot({ path: String? -> createSupplier(url, path!!) }, children, prefixes, result)
-          }
+          loadDefaultsFromJar(url, prefixes, result)
         }
         else if (URLUtil.FILE_PROTOCOL.equals(protocol, ignoreCase = true)) {
-          processDirectory(url, result, prefixes)
+          loadDefaultsFromDirectory(url, result, prefixes)
         }
       }
     }
@@ -223,46 +213,108 @@ private fun loadDefaultTemplates(prefixes: List<String>): FileTemplateLoadResult
   return result
 }
 
-private fun loadDefaultsFromRoot(dataProducer: Function<String, Supplier<String>>,
-                                 children: List<String>,
-                                 prefixes: List<String>,
-                                 result: FileTemplateLoadResult) {
+private fun matchesPrefix(path: String, prefix: String): Boolean {
+  return if (prefix.isEmpty()) path.indexOf('/') == -1 else FileUtil.startsWith(path, prefix) && path.indexOf('/', prefix.length + 1) == -1
+}
+
+private fun loadDefaultsFromJar(url: URL, prefixes: List<String>, result: FileTemplateLoadResult) {
+  val children = UrlUtil.getChildPathsFromJar(url)
+  if (children.isEmpty()) {
+    return
+  }
+
   val descriptionPaths: MutableSet<String> = HashSet()
   for (path in children) {
     if (path == "default.html") {
-      result.defaultTemplateDescription = dataProducer.`fun`(path)
+      result.defaultTemplateDescription = createSupplierForUrlSource(url, path)
     }
     else if (path == "includes/default.html") {
-      result.defaultIncludeDescription = dataProducer.`fun`(path)
+      result.defaultIncludeDescription = createSupplierForUrlSource(url, path)
     }
     else if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
       descriptionPaths.add(path)
     }
   }
-  for (path in children) {
-    if (!path.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) {
-      continue
-    }
-    for (prefix in prefixes) {
-      if (!FileTemplatesLoader.matchesPrefix(path, prefix)) {
-        continue
-      }
+
+  processTemplates(children.asSequence().filter { it.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX) }, prefixes, descriptionPaths, result) {
+    createSupplierForUrlSource(url, it)
+  }
+}
+
+private inline fun processTemplates(files: Sequence<String>,
+                                    prefixes: List<String>,
+                                    descriptionPaths: MutableSet<String>,
+                                    result: FileTemplateLoadResult,
+                                    dataLoader: (path: String) -> Supplier<String>) {
+  for (path in files) {
+    prefixes.firstOrNull { matchesPrefix(path, it) }?.let { prefix ->
       val filename = path.substring(if (prefix.isEmpty()) 0 else prefix.length + 1,
                                     path.length - FTManager.TEMPLATE_EXTENSION_SUFFIX.length)
       val extension = FileUtilRt.getExtension(filename)
       val templateName = filename.substring(0, filename.length - extension.length - 1)
-      val descriptionPath = FileTemplatesLoader.getDescriptionPath(prefix, templateName, extension, descriptionPaths)
-      val descriptionSupplier = if (descriptionPath == null) null else dataProducer.`fun`(descriptionPath)
-      result.result.putValue(prefix,
-                             DefaultTemplate(templateName, extension, dataProducer.`fun`(path), descriptionSupplier, descriptionPath))
-      // FTManagers loop
-      break
+      val descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths)
+      val descriptionSupplier = if (descriptionPath == null) null else dataLoader(descriptionPath)
+      result.result.putValue(prefix, DefaultTemplate(templateName, extension, dataLoader(path), descriptionSupplier, descriptionPath))
     }
   }
+}
+
+private fun loadDefaultsFromDirectory(root: URL, result: FileTemplateLoadResult, prefixes: List<String>) {
+  val descriptionPaths = HashSet<String>()
+  val templateFiles = mutableListOf<String>()
+  val rootFile = Path.of(URLUtil.unescapePercentSequences(root.path))
+
+  Files.find(rootFile, Int.MAX_VALUE, BiPredicate { _, a -> a.isRegularFile }).use {
+    it.forEach { file ->
+      val path = rootFile.relativize(file).toString().replace(File.separatorChar, '/')
+      if (path.endsWith("/default.html")) {
+        result.defaultTemplateDescription = Supplier { Files.readString(file) }
+      }
+      else if (path.endsWith("/includes/default.html")) {
+        result.defaultIncludeDescription = Supplier { Files.readString(file) }
+      }
+      else if (path.endsWith(".html")) {
+        descriptionPaths.add(path)
+      }
+      else if (path.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) {
+        templateFiles.add(path)
+      }
+    }
+  }
+
+  processTemplates(templateFiles.asSequence(), prefixes, descriptionPaths, result) {
+    Supplier { Files.readString(rootFile.resolve(it)) }
+  }
+}
+
+private class FileTemplateLoadResult constructor(@JvmField val result: MultiMap<String, DefaultTemplate>) {
+  @JvmField
+  var defaultTemplateDescription: Supplier<String>? = null
+
+  @JvmField
+  var defaultIncludeDescription: Supplier<String>? = null
 }
 
 private class LoadedConfiguration(@JvmField val managers: Map<String, FTManager>,
                                   @JvmField val defaultTemplateDescription: Supplier<String>?,
                                   @JvmField val defaultIncludeDescription: Supplier<String>?) {
-  fun getManager(kind: String) = managers.get(kind)
+  fun getManager(kind: String) = managers.get(kind)!!
+}
+
+private fun createSupplierForUrlSource(root: URL, path: String): Supplier<String> {
+  // no need to cache the result - it is client responsibility, see DefaultTemplate.getDescriptionText for example
+  return object : Supplier<String> {
+    override fun get(): String {
+      // root url should be used as context to use provided handler to load data to avoid using a generic one
+      return try {
+        ResourceUtil.loadText(URL(root, "${FileTemplatesLoader.TEMPLATES_DIR}/${path.trimEnd('/')}").openStream())
+      }
+      catch (e: IOException) {
+        thisLogger().error(e)
+        ""
+      }
+    }
+
+    override fun toString() = "(root=$root, path=$path)"
+  }
 }

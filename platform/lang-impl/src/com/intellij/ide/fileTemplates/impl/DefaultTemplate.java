@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.Nls;
@@ -14,10 +14,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.ref.Reference;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 
 import static com.intellij.DynamicBundle.findLanguageBundle;
@@ -32,11 +32,11 @@ public final class DefaultTemplate {
   private final String myExtension;
 
   private final Supplier<String> textSupplier;
-  private final String myDescriptionPath;
+  private final String descriptionPath;
   private Reference<String> myText;
   
   private final @Nullable Supplier<String> descriptionSupplier;
-  private Reference<String> myDescriptionText;
+  private Reference<String> descriptionText;
 
   /**
    * @deprecated Use {@link #DefaultTemplate(String, String, Supplier, Supplier, String)}
@@ -72,13 +72,13 @@ public final class DefaultTemplate {
     myExtension = extension;
     this.textSupplier = textSupplier;
     this.descriptionSupplier = descriptionSupplier;
-    myDescriptionPath = descriptionPath;
+    this.descriptionPath = descriptionPath;
   }
 
   private static @NotNull @NlsSafe String loadText(@NotNull ThrowableComputable<String, IOException> computable) {
     String text = "";
     try {
-      text = StringUtil.convertLineSeparators(computable.compute());
+      text = Strings.convertLineSeparators(computable.compute());
     }
     catch (IOException e) {
       LOG.error(e);
@@ -123,21 +123,21 @@ public final class DefaultTemplate {
 
   public @NotNull @Nls String getDescriptionText() {
     if (descriptionSupplier == null) return "";
-    String text = SoftReference.dereference(myDescriptionText); //NON-NLS
+    String text = SoftReference.dereference(descriptionText); //NON-NLS
     if (text == null) {
       text = loadText(() -> {
         DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
-        PluginDescriptor descriptor = langBundle != null ? langBundle.pluginDescriptor : null;
-        ClassLoader langBundleLoader = descriptor != null ? descriptor.getPluginClassLoader() : null;
-        if (langBundleLoader != null && myDescriptionPath != null) {
-          InputStream stream = langBundleLoader.getResourceAsStream(FileTemplatesLoader.TEMPLATES_DIR + "/" + myDescriptionPath);
-          if (stream != null) {
-            return ResourceUtil.loadText(stream);
+        PluginDescriptor descriptor = langBundle == null ? null : langBundle.pluginDescriptor;
+        ClassLoader langBundleLoader = descriptor == null ? null : descriptor.getPluginClassLoader();
+        if (langBundleLoader != null && descriptionPath != null) {
+          byte[] bytes = ResourceUtil.getResourceAsBytes(FileTemplatesLoader.TEMPLATES_DIR + "/" + descriptionPath, langBundleLoader);
+          if (bytes != null) {
+            return new String(bytes, StandardCharsets.UTF_8);
           }
         }
         return descriptionSupplier.get();
       });
-      myDescriptionText = new java.lang.ref.SoftReference<>(text);
+      descriptionText = new java.lang.ref.SoftReference<>(text);
     }
     return text;
   }

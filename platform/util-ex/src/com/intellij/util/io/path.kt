@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.intellij.openapi.util.io.NioFiles
@@ -18,8 +18,7 @@ import kotlin.math.min
 
 fun Path.exists(): Boolean = Files.exists(this)
 
-fun Path.createDirectories(): Path =
-  NioFiles.createDirectories(this)
+fun Path.createDirectories(): Path = NioFiles.createDirectories(this)
 
 /**
  * Opposite to Java, parent directories will be created
@@ -60,11 +59,14 @@ fun Path.createSymbolicLink(target: Path): Path {
 }
 
 @JvmOverloads
-fun Path.delete(recursively: Boolean = true) =
-  when {
-    recursively -> NioFiles.deleteRecursively(this)
-    else -> Files.delete(this)
+fun Path.delete(recursively: Boolean = true) {
+  if (recursively) {
+    return NioFiles.deleteRecursively(this)
   }
+  else {
+    return Files.delete(this)
+  }
+}
 
 fun Path.deleteWithParentsIfEmpty(root: Path, isFile: Boolean = true): Boolean {
   var parent = if (isFile) this.parent else null
@@ -101,9 +103,6 @@ fun Path.lastModified(): FileTime = Files.getLastModifiedTime(this)
 
 val Path.systemIndependentPath: String
   get() = toString().replace(File.separatorChar, '/')
-
-val Path.parentSystemIndependentPath: String
-  get() = parent!!.toString().replace(File.separatorChar, '/')
 
 @Throws(IOException::class)
 fun Path.readBytes(): ByteArray = Files.readAllBytes(this)
