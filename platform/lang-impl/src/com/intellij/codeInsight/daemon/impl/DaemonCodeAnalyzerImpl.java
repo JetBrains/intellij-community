@@ -935,7 +935,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
     List<FileEditorInfo> preferredFileEditorMap = createPreferredFileEditorMap(fileEditors, highlighters);
     JobLauncher.getInstance().submitToJobThread(() ->
-      submitInBackground(preferredFileEditorMap, passesToIgnore, modificationCountBefore, progress), ConcurrencyUtil::manifestExceptionsIn);
+      submitInBackground(preferredFileEditorMap, passesToIgnore, modificationCountBefore, progress),
+      // manifest exceptions in EDT to avoid storing them in the Future and abandoning
+      task -> ApplicationManager.getApplication().invokeLater(() -> ConcurrencyUtil.manifestExceptionsIn(task)));
     return session;
   }
 
