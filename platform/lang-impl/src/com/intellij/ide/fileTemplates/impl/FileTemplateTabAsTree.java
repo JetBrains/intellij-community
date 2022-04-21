@@ -161,10 +161,10 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
   @Nullable
   private FileTemplate getTemplate(final FileTemplateNode node) {
     final String templateName = node.getTemplateName();
-    if (templateName == null || myTemplates.isEmpty()) {
+    if (templateName == null || templates.isEmpty()) {
       return null;
     }
-    for (FileTemplateBase template : myTemplates) {
+    for (FileTemplateBase template : templates) {
       if (templateName.equals(template.getQualifiedName()) || templateName.equals(template.getName())) {
         return template;
       }
