@@ -69,7 +69,8 @@ public class FindResultUsageInfo extends UsageInfo {
   public boolean isValid() {
     if (!super.isValid()) return false;
 
-    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(getPsiFile());
+    PsiFile psiFile = getPsiFile();
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
     if (document == null) {
       myCachedResult = null;
       return false;
@@ -88,7 +89,7 @@ public class FindResultUsageInfo extends UsageInfo {
       return false;
     }
 
-    VirtualFile file = getPsiFile().getVirtualFile();
+    VirtualFile file = psiFile.getVirtualFile();
     if (isFileOrBinary) {
       myCachedResult = file.isValid();
       return myCachedResult;
@@ -134,6 +135,6 @@ public class FindResultUsageInfo extends UsageInfo {
 
   @Override
   public String toString() {
-    return "FindResultUsageInfo: myFindModel=" + myFindModel + " in " + getSmartPointer();
+    return "FindResultUsageInfo: myFindModel=" + myFindModel + " in " + getSmartPointer() +"; segment="+getSegment();
   }
 }
