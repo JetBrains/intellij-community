@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.deft.codegen.ijws.classes
 
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.SoftLinkable
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import deft.storage.codegen.implFieldName
 import deft.storage.codegen.javaFullName
 import deft.storage.codegen.javaImplBuilderName
@@ -13,6 +16,7 @@ import org.jetbrains.deft.codegen.ijws.sups
 import org.jetbrains.deft.codegen.ijws.wsFqn
 import org.jetbrains.deft.codegen.model.DefType
 import org.jetbrains.deft.codegen.model.WsEntityWithPersistentId
+import org.jetbrains.deft.codegen.utils.fqn
 import org.jetbrains.deft.codegen.utils.lines
 import org.jetbrains.deft.impl.ObjType
 import org.jetbrains.deft.impl.TOptional
@@ -31,13 +35,13 @@ val ObjType<*, *>.isEntityWithPersistentId: Boolean
 
 fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
   val entityDataBaseClass = if (isEntityWithPersistentId) {
-    "${wsFqn("WorkspaceEntityData")}.WithCalculablePersistentId<$javaFullName>()"
+    "${WorkspaceEntityData::class.fqn}.WithCalculablePersistentId<$javaFullName>()"
   }
   else {
-    "${wsFqn("WorkspaceEntityData")}<$javaFullName>()"
+    "${WorkspaceEntityData::class.fqn}<$javaFullName>()"
   }
   val hasSoftLinks = hasSoftLinks(simpleTypes)
-  val softLinkable = if (hasSoftLinks) wsFqn("SoftLinkable") else null
+  val softLinkable = if (hasSoftLinks) SoftLinkable::class.fqn else null
   return lines {
     section("class $javaDataName : ${sups(entityDataBaseClass, softLinkable)}") label@{
       listNl(structure.allFields.noRefs().noEntitySource().nopersistentId()) { implWsDataFieldCode }
@@ -46,9 +50,7 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
 
       softLinksCode(this@label, hasSoftLinks, simpleTypes)
 
-      sectionNl("override fun wrapAsModifiable(diff: ${wsFqn("WorkspaceEntityStorageBuilder")}): ${
-        wsFqn("ModifiableWorkspaceEntity")
-      }<$javaFullName>") {
+      sectionNl("override fun wrapAsModifiable(diff: ${WorkspaceEntityStorageBuilder::class.fqn}): ${ModifiableWorkspaceEntity::class.fqn}<$javaFullName>") {
         line("val modifiable = $javaImplBuilderName(null)")
         line("modifiable.allowModifications {")
         line("  modifiable.diff = diff")
@@ -60,7 +62,7 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
       }
 
       // --- createEntity
-      sectionNl("override fun createEntity(snapshot: ${wsFqn("WorkspaceEntityStorage")}): $javaFullName") {
+      sectionNl("override fun createEntity(snapshot: ${WorkspaceEntityStorage::class.fqn}): $javaFullName") {
         line("val entity = $javaImplName()")
         list(structure.allFields.noRefs().noEntitySource().nopersistentId()) {
           "entity.$implFieldName = $name"
@@ -71,7 +73,7 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
         line("return entity")
       }
 
-      conditionalLine({ isEntityWithPersistentId }, "override fun persistentId(): ${wsFqn("PersistentEntityId")}<*>") {
+      conditionalLine({ isEntityWithPersistentId }, "override fun persistentId(): ${PersistentEntityId::class.fqn}<*>") {
         val persistentIdField = structure.allFields.first { it.name == "persistentId" }
         assert(persistentIdField.hasDefault == Field.Default.plain)
         val methodBody = persistentIdField.defaultValue!!
@@ -84,7 +86,7 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
       }
 
       // --- getEntityInterface method
-      sectionNl("override fun getEntityInterface(): Class<out WorkspaceEntity>") {
+      sectionNl("override fun getEntityInterface(): Class<out ${WorkspaceEntity::class.simpleName}>") {
         line("return $name::class.java")
       }
 

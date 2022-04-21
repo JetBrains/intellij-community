@@ -1,12 +1,15 @@
 package org.jetbrains.deft.codegen.ijws.fields
 
+import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import deft.storage.codegen.*
 import deft.storage.codegen.field.javaType
+import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.codegen.ijws.classes.`else`
 import org.jetbrains.deft.codegen.ijws.classes.`for`
 import org.jetbrains.deft.codegen.ijws.classes.`if`
 import org.jetbrains.deft.codegen.ijws.getRefType
 import org.jetbrains.deft.codegen.ijws.wsFqn
+import org.jetbrains.deft.codegen.utils.fqn
 import org.jetbrains.deft.codegen.utils.lines
 import org.jetbrains.deft.impl.TList
 import org.jetbrains.deft.impl.TOptional
@@ -16,7 +19,7 @@ import org.jetbrains.deft.impl.fields.ExtField
 val ExtField<*, *>.wsCode: String
   get() = lines {
     val isChild = type.getRefType().child
-    val annotation = if (isChild) "@${wsFqn("Child")} " else ""
+    val annotation = if (isChild) "@${Child::class.fqn} " else ""
     val oppositeField = referencedField
     val isNullable = type is TOptional<*>
     val isList = type is TList<*>
@@ -79,7 +82,7 @@ val ExtField<*, *>.wsCode: String
         }
         `else` {
           line("val key = ${
-            wsFqn("ExtRefKey")
+            ExtRefKey::class.fqn
           }(\"${oppositeField.owner.javaSimpleName}\", \"${oppositeField.javaName}\", ${isChild}, ${oppositeField.owner.javaImplName}.${oppositeField.refsConnectionId})")
           line("this.extReferences[key] = value")
           line()

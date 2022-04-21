@@ -1,36 +1,38 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.deft.codegen.ijws.classes
 
+import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import deft.storage.codegen.field.javaType
 import deft.storage.codegen.javaFullName
 import deft.storage.codegen.javaSimpleName
 import deft.storage.codegen.javaSuperType
-import org.jetbrains.deft.codegen.ijws.wsFqn
 import org.jetbrains.deft.codegen.model.DefType
 import org.jetbrains.deft.codegen.model.WsData
 import org.jetbrains.deft.codegen.model.WsSealed
 import org.jetbrains.deft.codegen.utils.LinesBuilder
+import org.jetbrains.deft.codegen.utils.fqn
 import org.jetbrains.deft.codegen.utils.lines
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.Field
 
 internal fun ObjType<*, *>.softLinksCode(context: LinesBuilder, hasSoftLinks: Boolean, simpleTypes: List<DefType>) {
-  context.conditionalLine({ hasSoftLinks }, "override fun getLinks(): Set<${wsFqn("PersistentEntityId")}<*>>") {
-    line("val result = HashSet<PersistentEntityId<*>>()")
+  context.conditionalLine({ hasSoftLinks }, "override fun getLinks(): Set<${PersistentEntityId::class.fqn}<*>>") {
+    line("val result = HashSet<${PersistentEntityId::class.fqn}<*>>()")
     operate(this@conditionalLine, simpleTypes) { line("result.add($it)") }
     line("return result")
   }
 
   context.conditionalLine(
     { hasSoftLinks },
-    "override fun index(index: ${wsFqn("WorkspaceMutableIndex")}<PersistentEntityId<*>>)"
+    "override fun index(index: ${WorkspaceMutableIndex::class.fqn}<${PersistentEntityId::class.fqn}<*>>)"
   ) {
     operate(this@conditionalLine, simpleTypes) { line("index.index(this, $it)") }
   }
 
   context.conditionalLine(
     { hasSoftLinks },
-    "override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: ${wsFqn("WorkspaceMutableIndex")}<PersistentEntityId<*>>)"
+    "override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: ${WorkspaceMutableIndex::class.fqn}<${PersistentEntityId::class.fqn}<*>>)"
   ) {
     line("// TODO verify logic")
     line("val mutablePreviousSet = HashSet(prev)")
@@ -47,7 +49,7 @@ internal fun ObjType<*, *>.softLinksCode(context: LinesBuilder, hasSoftLinks: Bo
 
   context.conditionalLine(
     { hasSoftLinks },
-    "override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean"
+    "override fun updateLink(oldLink: ${PersistentEntityId::class.fqn}<*>, newLink: ${PersistentEntityId::class.fqn}<*>): Boolean"
   ) {
     line("var changed = false")
     operateUpdateLink(this@conditionalLine, simpleTypes)

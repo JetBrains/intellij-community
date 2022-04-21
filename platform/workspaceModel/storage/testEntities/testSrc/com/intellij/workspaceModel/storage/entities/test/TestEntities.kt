@@ -85,6 +85,32 @@ import com.intellij.workspaceModel.storage.referrersx
 import com.intellij.workspaceModel.storage.referrersy
 import org.jetbrains.deft.annotations.Child
 
+
+var MainEntity.Builder.child: @Child AttachedEntity?
+    get() {
+        return referrersx(AttachedEntity::ref).singleOrNull()
+    }
+    set(value) {
+        val diff = (this as MainEntityImpl.Builder).diff
+        if (diff != null) {
+            if (value != null) {
+                if ((value as AttachedEntityImpl.Builder).diff == null) {
+                    value._ref = this
+                    diff.addEntity(value)
+                }
+            }
+            diff.updateOneToOneChildOfParent(AttachedEntityImpl.REF_CONNECTION_ID, this, value)
+        }
+        else {
+            val key = ExtRefKey("AttachedEntity", "ref", true, AttachedEntityImpl.REF_CONNECTION_ID)
+            this.extReferences[key] = value
+            
+            if (value != null) {
+                (value as AttachedEntityImpl.Builder)._ref = this
+            }
+        }
+    }
+
 var MainEntityList.Builder.child: @Child List<AttachedEntityList>
     get() {
         return referrersx(AttachedEntityList::ref)
@@ -106,31 +132,6 @@ var MainEntityList.Builder.child: @Child List<AttachedEntityList>
             
             for (item in value) {
                 (item as AttachedEntityListImpl.Builder)._ref = this
-            }
-        }
-    }
-
-var MainEntity.Builder.child: @Child AttachedEntity?
-    get() {
-        return referrersx(AttachedEntity::ref).singleOrNull()
-    }
-    set(value) {
-        val diff = (this as MainEntityImpl.Builder).diff
-        if (diff != null) {
-            if (value != null) {
-                if ((value as AttachedEntityImpl.Builder).diff == null) {
-                    value._ref = this
-                    diff.addEntity(value)
-                }
-            }
-            diff.updateOneToOneChildOfParent(AttachedEntityImpl.REF_CONNECTION_ID, this, value)
-        }
-        else {
-            val key = ExtRefKey("AttachedEntity", "ref", true, AttachedEntityImpl.REF_CONNECTION_ID)
-            this.extReferences[key] = value
-
-            if (value != null) {
-                (value as AttachedEntityImpl.Builder)._ref = this
             }
         }
     }

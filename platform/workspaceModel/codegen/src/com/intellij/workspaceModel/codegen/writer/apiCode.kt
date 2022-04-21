@@ -2,9 +2,10 @@
 package deft.storage.codegen
 
 import com.intellij.workspaceModel.storage.CodeGeneratorVersions
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import deft.storage.codegen.field.javaType
 import org.jetbrains.deft.Type
-import org.jetbrains.deft.codegen.ijws.wsFqn
 import org.jetbrains.deft.codegen.model.DefType
 import org.jetbrains.deft.codegen.model.WsEntityInterface
 import org.jetbrains.deft.codegen.utils.fqn
@@ -39,21 +40,21 @@ fun DefType.generatedApiCode(indent: String = "    "): String = lines(indent) {
   line("//region generated code")
   line("//@formatter:off")
 
-  line("@${wsFqn("GeneratedCodeApiVersion")}(${CodeGeneratorVersions.API_VERSION})")
+  line("@${GeneratedCodeApiVersion::class.fqn}(${CodeGeneratorVersions.API_VERSION})")
   val abstractSupertype = if (base?.abstract == true) base else null
   val header = when {
     abstract && abstractSupertype != null -> {
       "interface Builder<T: $javaFullName>: $javaFullName, ${abstractSupertype.name}.Builder<T>, ${
-        wsFqn("ModifiableWorkspaceEntity")
+        ModifiableWorkspaceEntity::class.fqn
       }<T>, ObjBuilder<T>"
     }
     abstractSupertype != null -> {
       "interface Builder: $javaFullName, ${abstractSupertype.name}.Builder<$javaFullName>, ${
-        wsFqn("ModifiableWorkspaceEntity")
+        ModifiableWorkspaceEntity::class.fqn
       }<$javaFullName>, ObjBuilder<$javaFullName>"
     }
-    abstract -> "interface Builder<T: $javaFullName>: $javaFullName, ${wsFqn("ModifiableWorkspaceEntity")}<T>, ObjBuilder<T>"
-    else -> "interface Builder: $javaFullName, ${wsFqn("ModifiableWorkspaceEntity")}<$javaFullName>, ObjBuilder<$javaFullName>"
+    abstract -> "interface Builder<T: $javaFullName>: $javaFullName, ${ModifiableWorkspaceEntity::class.fqn}<T>, ObjBuilder<T>"
+    else -> "interface Builder: $javaFullName, ${ModifiableWorkspaceEntity::class.fqn}<$javaFullName>, ObjBuilder<$javaFullName>"
   }
 
   section(header) {

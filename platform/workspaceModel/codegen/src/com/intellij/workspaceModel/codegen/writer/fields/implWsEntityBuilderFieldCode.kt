@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.deft.codegen.ijws.fields
 
+import com.intellij.workspaceModel.storage.impl.ExtRefKey
+import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import deft.storage.codegen.*
 import deft.storage.codegen.field.javaMutableType
 import deft.storage.codegen.field.javaType
@@ -13,10 +16,12 @@ import org.jetbrains.deft.codegen.ijws.getRefType
 import org.jetbrains.deft.codegen.ijws.isRefType
 import org.jetbrains.deft.codegen.ijws.wsFqn
 import org.jetbrains.deft.codegen.utils.LinesBuilder
+import org.jetbrains.deft.codegen.utils.fqn
 import org.jetbrains.deft.codegen.utils.lines
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.ExtField
 import org.jetbrains.deft.impl.fields.Field
+import kotlin.reflect.KMutableProperty1
 
 val Field<*, *>.implWsBuilderFieldCode: String
   get() = buildString {
@@ -99,11 +104,11 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
         section("set(value)") {
           line("checkModificationAllowed()")
           line("val _diff = diff")
-          `if`("_diff != null && value is ${wsFqn("ModifiableWorkspaceEntityBase")}<*> && value.diff == null") {
+          `if`("_diff != null && value is ${ModifiableWorkspaceEntityBase::class.fqn}<*> && value.diff == null") {
             backrefSetup(this@implWsBuilderBlockingCode, field)
             line("_diff.addEntity(value)")
           }
-          section("if (_diff != null && (value !is ${wsFqn("ModifiableWorkspaceEntityBase")}<*> || value.diff != null))") {
+          section("if (_diff != null && (value !is ${ModifiableWorkspaceEntityBase::class.fqn}<*> || value.diff != null))") {
             line("_diff.${getterSetterNames.setter}($connectionName, this, value)")
           }
           section("else") {
@@ -140,8 +145,8 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
               line("val _diff = diff")
               `if`("_diff != null") {
                 `for`("item_value in value") {
-                  `if`("item_value is ${wsFqn("ModifiableWorkspaceEntityBase")}<*> && (item_value as? ${
-                    wsFqn("ModifiableWorkspaceEntityBase")
+                  `if`("item_value is ${ModifiableWorkspaceEntityBase::class.fqn}<*> && (item_value as? ${
+                    ModifiableWorkspaceEntityBase::class.fqn
                   }<*>)?.diff == null") {
                     line("_diff.addEntity(item_value)")
                   }
@@ -177,8 +182,8 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
               line("val _diff = diff")
               `if`("_diff != null") {
                 `for`("item_value in value") {
-                  `if`("item_value is ${wsFqn("ModifiableWorkspaceEntityBase")}<*> && (item_value as? ${
-                    wsFqn("ModifiableWorkspaceEntityBase")
+                  `if`("item_value is ${ModifiableWorkspaceEntityBase::class.fqn}<*> && (item_value as? ${
+                    ModifiableWorkspaceEntityBase::class.fqn
                   }<*>)?.diff == null") {
                     line("_diff.addEntity(item_value)")
                   }
@@ -252,14 +257,14 @@ private fun LinesBuilder.backrefSetup(
   val javaBuilderType = referencedField.owner.javaImplBuilderName
   val type = referencedField.type
   val isChild = type.getRefType().child
-  val extKey = "${wsFqn("ExtRefKey")}(\"${field.owner.name}\", \"${field.name}\", $isChild, ${field.refsConnectionId})"
+  val extKey = "${ExtRefKey::class.fqn}(\"${field.owner.name}\", \"${field.name}\", $isChild, ${field.refsConnectionId})"
   when (type) {
     is TList<*> -> {
       if (valueType.targetObjType.abstract) {
         `if`("$varName != null") {
           line("val access = $varName::class.${
             wsFqn("memberProperties")
-          }.single { it.name == \"${referencedField.implFieldName}\" } as ${wsFqn("KMutableProperty1")}<*, *>")
+          }.single { it.name == \"${referencedField.implFieldName}\" } as ${KMutableProperty1::class.fqn}<*, *>")
           line("access.setter.call($varName, ((access.getter.call($varName) as? List<*>) ?: emptyList<Any>()) + this)")
         }
       }
@@ -280,7 +285,7 @@ private fun LinesBuilder.backrefSetup(
         `if`("$varName != null") {
           line("val access = $varName::class.${
             wsFqn("memberProperties")
-          }.single { it.name == \"${referencedField.implFieldName}\" } as ${wsFqn("KMutableProperty1")}<*, *>")
+          }.single { it.name == \"${referencedField.implFieldName}\" } as ${KMutableProperty1::class.fqn}<*, *>")
           line("// x")
           line("access.setter.call($varName, this)")
         }
@@ -302,7 +307,7 @@ private fun LinesBuilder.backrefSetup(
         `if`("$varName != null") {
           line("val access = $varName::class.${
             wsFqn("memberProperties")
-          }.single { it.name == \"${referencedField.implFieldName}\" } as ${wsFqn("KMutableProperty1")}<*, *>")
+          }.single { it.name == \"${referencedField.implFieldName}\" } as ${KMutableProperty1::class.fqn}<*, *>")
           line("access.setter.call($varName, this)")
         }
       }
@@ -338,7 +343,7 @@ fun LinesBuilder.implWsBuilderIsInitializedCode(field: Field<*, *>) {
   when (field.type) {
     is TList<*> -> if (field.type.isRefType()) {
       ifElse("_diff != null", {
-        `if`("_diff.${wsFqn("extractOneToManyChildren")}<WorkspaceEntityBase>(${field.refsConnectionId}, this) == null") {
+        `if`("_diff.${wsFqn("extractOneToManyChildren")}<${WorkspaceEntityBase::class.fqn}>(${field.refsConnectionId}, this) == null") {
           line("error(\"Field ${field.owner.name}#$javaName should be initialized\")")
         }
       }) {
@@ -351,7 +356,7 @@ fun LinesBuilder.implWsBuilderIsInitializedCode(field: Field<*, *>) {
     }
     is TRef<*> -> {
       ifElse("_diff != null", {
-        `if`("_diff.${field.refsConnectionMethodCode("<WorkspaceEntityBase>")} == null") {
+        `if`("_diff.${field.refsConnectionMethodCode("<${WorkspaceEntityBase::class.fqn}>")} == null") {
           line("error(\"Field ${field.owner.name}#$javaName should be initialized\")")
         }
       }) {

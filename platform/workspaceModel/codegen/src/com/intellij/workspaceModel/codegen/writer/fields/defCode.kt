@@ -9,22 +9,6 @@ val ValueType<*>.kotlinType: String
 val ValueType<*>.javaBuilderType: String
   get() = javaMutableType
 
-val ValueType<*>.defCode: String
-  get() = when (this) {
-    TBoolean -> "TBoolean"
-    TInt -> "TInt"
-    TString -> "TString"
-    is TRef<*> -> "TRef(\"${targetObjTypeId.module.notation}\", ${targetObjType.id}${childFlag})"
-    is TList<*> -> "TList(${elementType.defCode})"
-    is TMap<*, *> -> "TMap(${keyType.defCode}, ${valueType.defCode})"
-    is TStructure<*, *> -> "${box.javaFullName}.structure"
-    is TOptional<*> -> "TOptional(${type.defCode})"
-    is TBlob<*> -> "TBlob(\"$javaSimpleName\")"
-  }
-
-val TRef<*>.childFlag: String
-  get() = if (child) ", child = true" else ""
-
 val ValueType<*>.javaType: String
   get() = when (this) {
     TBoolean -> "Boolean"

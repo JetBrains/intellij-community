@@ -1,9 +1,11 @@
 package org.jetbrains.deft.codegen.ijws.fields
 
+import com.intellij.workspaceModel.storage.impl.ConnectionId
 import deft.storage.codegen.field.javaType
 import org.jetbrains.deft.codegen.ijws.getRefType
 import org.jetbrains.deft.codegen.ijws.refsFields
 import org.jetbrains.deft.codegen.ijws.wsFqn
+import org.jetbrains.deft.codegen.utils.fqn
 import org.jetbrains.deft.impl.TList
 import org.jetbrains.deft.impl.TOptional
 import org.jetbrains.deft.impl.TRef
@@ -23,7 +25,7 @@ val MemberOrExtField<*, *>.refsConnectionIdCode: String
     val ref = type.getRefType()
     val isListType = type is TList<*> || ((type as? TOptional<*>)?.type is TList<*>)
 
-    append("internal val $refsConnectionId: ${wsFqn("ConnectionId")} = ConnectionId.create(")
+    append("internal val $refsConnectionId: ${ConnectionId::class.fqn} = ConnectionId.create(")
     if (ref.child) {
       append("${owner.name}::class.java, ${ref.javaType}::class.java,")
     }
