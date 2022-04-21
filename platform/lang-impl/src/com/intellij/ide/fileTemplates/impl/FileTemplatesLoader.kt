@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -36,6 +35,7 @@ import java.nio.file.Path
 import java.text.MessageFormat
 import java.util.*
 import java.util.function.BiPredicate
+import java.util.function.Function
 import java.util.function.Supplier
 
 private const val DEFAULT_TEMPLATES_ROOT = FileTemplatesLoader.TEMPLATES_DIR
@@ -236,7 +236,11 @@ private fun loadDefaultsFromJar(url: URL, prefixes: List<String>, result: FileTe
     }
   }
 
-  processTemplates(children.asSequence().filter { it.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX) }, prefixes, descriptionPaths, result) {
+  processTemplates(files = children.asSequence().filter { it.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX) },
+                   prefixes = prefixes,
+                   descriptionPaths = descriptionPaths,
+                   result = result,
+                   descriptionLoader = { loadTemplate(url, it) }) {
     createSupplierForUrlSource(url, it)
   }
 }
@@ -245,6 +249,7 @@ private inline fun processTemplates(files: Sequence<String>,
                                     prefixes: List<String>,
                                     descriptionPaths: MutableSet<String>,
                                     result: FileTemplateLoadResult,
+                                    descriptionLoader: Function<String, String>,
                                     dataLoader: (path: String) -> Supplier<String>) {
   for (path in files) {
     prefixes.firstOrNull { matchesPrefix(path, it) }?.let { prefix ->
@@ -253,11 +258,10 @@ private inline fun processTemplates(files: Sequence<String>,
       val extension = FileUtilRt.getExtension(filename)
       val templateName = filename.substring(0, filename.length - extension.length - 1)
       val descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths)
-      val descriptionSupplier = if (descriptionPath == null) null else dataLoader(descriptionPath)
       result.result.putValue(prefix, DefaultTemplate(name = templateName,
                                                      extension = extension,
                                                      textSupplier = dataLoader(path),
-                                                     descriptionSupplier = descriptionSupplier,
+                                                     descriptionLoader = descriptionLoader.takeIf { descriptionPath != null },
                                                      descriptionPath = descriptionPath))
     }
   }
@@ -286,7 +290,11 @@ private fun loadDefaultsFromDirectory(root: URL, result: FileTemplateLoadResult,
     }
   }
 
-  processTemplates(templateFiles.asSequence(), prefixes, descriptionPaths, result) {
+  processTemplates(files = templateFiles.asSequence(),
+                   prefixes = prefixes,
+                   descriptionPaths = descriptionPaths,
+                   result = result,
+                   descriptionLoader = { Files.readString(rootFile.resolve(it)) }) {
     Supplier { Files.readString(rootFile.resolve(it)) }
   }
 }
@@ -308,17 +316,19 @@ private class LoadedConfiguration(@JvmField val managers: Map<String, FTManager>
 private fun createSupplierForUrlSource(root: URL, path: String): Supplier<String> {
   // no need to cache the result - it is client responsibility, see DefaultTemplate.getDescriptionText for example
   return object : Supplier<String> {
-    override fun get(): String {
-      // root url should be used as context to use provided handler to load data to avoid using a generic one
-      return try {
-        ResourceUtil.loadText(URL(root, "${FileTemplatesLoader.TEMPLATES_DIR}/${path.trimEnd('/')}").openStream())
-      }
-      catch (e: IOException) {
-        thisLogger().error(e)
-        ""
-      }
-    }
+    override fun get() = loadTemplate(root, path)
 
     override fun toString() = "(root=$root, path=$path)"
+  }
+}
+
+private fun loadTemplate(root: URL, path: String): String {
+  // root url should be used as context to use provided handler to load data to avoid using a generic one
+  return try {
+    ResourceUtil.loadText(URL(root, "${FileTemplatesLoader.TEMPLATES_DIR}/${path.trimEnd('/')}").openStream())
+  }
+  catch (e: IOException) {
+    logger<FileTemplatesLoader>().error(e)
+    ""
   }
 }
