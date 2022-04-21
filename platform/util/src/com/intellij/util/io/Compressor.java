@@ -18,16 +18,16 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.*;
-import java.util.Set;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.DosFileAttributeView;
+import java.nio.file.attribute.DosFileAttributes;
+import java.nio.file.attribute.PosixFileAttributeView;
 import java.util.function.BiPredicate;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-import static com.intellij.util.BitUtil.set;
 
 public abstract class Compressor implements Closeable {
   public static class Tar extends Compressor {
@@ -276,33 +276,24 @@ public abstract class Compressor implements Closeable {
     }
   }
 
-  @SuppressWarnings("OctalInteger")
   private static int mode(Path file) throws IOException {
-    int mode = 0;
     if (SystemInfo.isWindows) {
       DosFileAttributeView attrs = Files.getFileAttributeView(file, DosFileAttributeView.class);
       if (attrs != null) {
         DosFileAttributes dosAttrs = attrs.readAttributes();
-        if (dosAttrs.isReadOnly()) mode = set(mode, Decompressor.Entry.DOS_READ_ONLY, true);
-        if (dosAttrs.isHidden()) mode = set(mode, Decompressor.Entry.DOS_HIDDEN, true);
+        int mode = 0;
+        if (dosAttrs.isReadOnly()) mode |= Decompressor.Entry.DOS_READ_ONLY;
+        if (dosAttrs.isHidden()) mode |= Decompressor.Entry.DOS_HIDDEN;
+        return mode;
       }
     }
     else {
       PosixFileAttributeView attrs = Files.getFileAttributeView(file, PosixFileAttributeView.class);
       if (attrs != null) {
-        Set<PosixFilePermission> permissions = attrs.readAttributes().permissions();
-        if (permissions.contains(PosixFilePermission.OWNER_READ)) mode = set(mode, 0400, true);
-        if (permissions.contains(PosixFilePermission.OWNER_WRITE)) mode = set(mode, 0200, true);
-        if (permissions.contains(PosixFilePermission.OWNER_EXECUTE)) mode = set(mode, 0100, true);
-        if (permissions.contains(PosixFilePermission.GROUP_READ)) mode = set(mode, 040, true);
-        if (permissions.contains(PosixFilePermission.GROUP_WRITE)) mode = set(mode, 020, true);
-        if (permissions.contains(PosixFilePermission.GROUP_EXECUTE)) mode = set(mode, 010, true);
-        if (permissions.contains(PosixFilePermission.OTHERS_READ)) mode = set(mode, 04, true);
-        if (permissions.contains(PosixFilePermission.OTHERS_WRITE)) mode = set(mode, 02, true);
-        if (permissions.contains(PosixFilePermission.OTHERS_EXECUTE)) mode = set(mode, 01, true);
+        return PosixFilePermissionsUtil.toUnixMode(attrs.readAttributes().permissions());
       }
     }
-    return mode;
+    return 0;
   }
 
   private void addRecursively(String prefix, Path root, long timestampMs) throws IOException {

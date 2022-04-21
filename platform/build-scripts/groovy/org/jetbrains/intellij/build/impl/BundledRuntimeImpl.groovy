@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -312,7 +312,7 @@ final class BundledRuntimeImpl implements BundledRuntime {
                                    expectedExecutables.join("\n"))
           }
           expectedExecutables
-            .findAll {!(OWNER_EXECUTE in PosixFilePermissionsUtil.fromMode(it.mode)) }
+            .findAll {!(OWNER_EXECUTE in PosixFilePermissionsUtil.fromUnixMode(it.mode)) }
             .collect { "${it.name}: mode is ${it.mode}".toString() }
         }
     }
@@ -332,7 +332,7 @@ final class BundledRuntimeImpl implements BundledRuntime {
                                  expectedExecutables.join("\n"))
         }
         expectedExecutables
-          .findAll {!(OWNER_EXECUTE in PosixFilePermissionsUtil.fromMode(it.unixMode)) }
+          .findAll {!(OWNER_EXECUTE in PosixFilePermissionsUtil.fromUnixMode(it.unixMode)) }
           .collect { "${it.name}: mode is ${it.unixMode}".toString() }
       }
     }

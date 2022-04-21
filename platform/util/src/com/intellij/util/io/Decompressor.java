@@ -26,8 +26,6 @@ import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static com.intellij.util.BitUtil.isSet;
-
 public abstract class Decompressor {
   /**
    * The Tar decompressor automatically detects the compression of an input file/stream.
@@ -181,7 +179,7 @@ public abstract class Decompressor {
           if (platform == ZipArchiveEntry.PLATFORM_FAT) {
             // DOS attributes are converted into Unix permissions
             long attributes = myEntry.getExternalAttributes();
-            @SuppressWarnings("OctalInteger") int unixMode = isSet(attributes, Entry.DOS_READ_ONLY) ? 0444 : 0644;
+            @SuppressWarnings("OctalInteger") int unixMode = (attributes & Entry.DOS_READ_ONLY) != 0 ? 0444 : 0644;
             return new Entry(myEntry.getName(), type(myEntry), unixMode, myZip.getUnixSymlink(myEntry));
           }
         }
@@ -400,14 +398,14 @@ public abstract class Decompressor {
     if (SystemInfo.isWindows) {
       DosFileAttributeView attrs = Files.getFileAttributeView(outputFile, DosFileAttributeView.class);
       if (attrs != null) {
-        if (isSet(mode, Entry.DOS_READ_ONLY)) attrs.setReadOnly(true);
-        if (isSet(mode, Entry.DOS_HIDDEN)) attrs.setHidden(true);
+        if ((mode & Entry.DOS_READ_ONLY) != 0) attrs.setReadOnly(true);
+        if ((mode & Entry.DOS_HIDDEN) != 0) attrs.setHidden(true);
       }
     }
     else {
       PosixFileAttributeView attrs = Files.getFileAttributeView(outputFile, PosixFileAttributeView.class);
       if (attrs != null) {
-        attrs.setPermissions(PosixFilePermissionsUtil.fromMode(mode));
+        attrs.setPermissions(PosixFilePermissionsUtil.fromUnixMode(mode));
       }
     }
   }
