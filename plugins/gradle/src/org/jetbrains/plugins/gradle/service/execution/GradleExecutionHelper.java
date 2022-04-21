@@ -227,7 +227,7 @@ public class GradleExecutionHelper {
 
       if (ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings) != null) {
         // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
-        executeWrapperTask(id, settings, listener, connection, cancellationToken);
+        executeWrapperTask(id, settings, projectPath, listener, connection, cancellationToken);
 
         Path wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath);
         if (wrapperPropertiesFile != null) {
@@ -237,7 +237,7 @@ public class GradleExecutionHelper {
       else {
         Supplier<String> propertiesFile = setupWrapperTaskInInitScript(gradleVersion, settings);
 
-        executeWrapperTask(id, settings, listener, connection, cancellationToken);
+        executeWrapperTask(id, settings, projectPath, listener, connection, cancellationToken);
 
         String wrapperPropertiesFile = propertiesFile.get();
         if (wrapperPropertiesFile != null) {
@@ -271,14 +271,17 @@ public class GradleExecutionHelper {
   private void executeWrapperTask(
     @NotNull ExternalSystemTaskId id,
     @NotNull GradleExecutionSettings settings,
+    @NotNull String projectPath,
     @NotNull ExternalSystemTaskNotificationListener listener,
     @NotNull ProjectConnection connection,
-    @NotNull CancellationToken cancellationToken
-  ) {
-    BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
-    launcher.withCancellationToken(cancellationToken);
-    launcher.forTasks("wrapper");
-    launcher.run();
+    @NotNull CancellationToken cancellationToken) {
+    maybeFixSystemProperties(() -> {
+      BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
+      launcher.withCancellationToken(cancellationToken);
+      launcher.forTasks("wrapper");
+      launcher.run();
+      return null;
+    }, projectPath);
   }
 
   private static @NotNull Supplier<String> setupWrapperTaskInInitScript(
