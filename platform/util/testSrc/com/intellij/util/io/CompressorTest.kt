@@ -1,12 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.intellij.openapi.util.io.IoTestUtil.assumeNioSymLinkCreationIsSupported
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.testFramework.rules.TempDirectory
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assume
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import java.io.ByteArrayInputStream
@@ -17,6 +18,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.attribute.PosixFilePermission
+import java.nio.file.attribute.PosixFilePermissions
 import java.util.jar.Attributes
 import java.util.jar.JarFile
 import java.util.jar.Manifest
@@ -118,45 +120,41 @@ class CompressorTest {
   }
 
   @Test fun tarWithEmptyPrefix() {
-    val dir = tempDir.newDirectory("dir")
-    assert(dir.resolve("file").createNewFile())
+    val file = tempDir.newFile("dir/file").toPath()
     val tar = tempDir.newFile("test.tgz")
-    Compressor.Tar(tar, Compressor.Tar.Compression.GZIP).use { it.addDirectory("", dir) }
-    val out = tempDir.newDirectory("out")
-    Decompressor.Tar(tar).extract(out)
-    assert(out.resolve("file").exists())
+    Compressor.Tar(tar, Compressor.Tar.Compression.GZIP).use { it.addDirectory("", file.parent) }
+    assertTar(tar, file.name to "")
   }
 
   @Test fun tarWithExecutableFiles() {
-    Assume.assumeTrue(FileSystems.getDefault().supportedFileAttributeViews().contains("posix"))
+    assumeTrue(FileSystems.getDefault().supportedFileAttributeViews().contains("posix"))
+
     val dir = tempDir.newDirectory("dir").toPath()
-    val regular = dir.resolve("regular")
-    val executable = dir.resolve("executable")
-    Files.createFile(regular)
-    Files.createFile(executable)
-    Files.setPosixFilePermissions(executable, PosixFilePermission.values().toSet())
+    val regular = Files.createFile(dir.resolve("regular"))
+    val executable = Files.createFile(dir.resolve("executable"), PosixFilePermissions.asFileAttribute(PosixFilePermission.values().toSet()))
 
     val tar = tempDir.newFile("test.tgz")
     Compressor.Tar(tar, Compressor.Tar.Compression.GZIP).use { it.addDirectory(dir) }
     val out = tempDir.newDirectory("out").toPath()
     Decompressor.Tar(tar).extract(out)
-    assert(Files.getPosixFilePermissions(out.resolve(executable.name)).contains(PosixFilePermission.OWNER_EXECUTE))
-    assert(!Files.getPosixFilePermissions(out.resolve(regular.name)).contains(PosixFilePermission.OWNER_EXECUTE))
+    assertThat(Files.getPosixFilePermissions(out.resolve(regular.name))).doesNotContain(PosixFilePermission.OWNER_EXECUTE)
+    assertThat(Files.getPosixFilePermissions(out.resolve(executable.name))).contains(PosixFilePermission.OWNER_EXECUTE)
   }
 
   @Test fun tarWithSymbolicLinks() {
     assumeNioSymLinkCreationIsSupported()
+
     val dir = tempDir.newDirectory("dir").toPath()
-    val origin = dir.resolve("origin")
-    Files.createFile(origin)
-    val link = dir.resolve("link")
-    Files.createSymbolicLink(link, origin)
+    val origin = Files.createFile(dir.resolve("origin"))
+    val link = Files.createSymbolicLink(dir.resolve("link"), origin.fileName)
 
     val tar = tempDir.newFile("test.tgz")
     Compressor.Tar(tar, Compressor.Tar.Compression.GZIP).use { it.addDirectory(dir) }
+    NioFiles.deleteRecursively(dir)
+
     val out = tempDir.newDirectory("out").toPath()
     Decompressor.Tar(tar).extract(out)
-    assertThat(out.resolve(link.name)).isSymbolicLink.hasSameBinaryContentAs(dir.resolve(origin.name))
+    assertThat(out.resolve(link.name)).isSymbolicLink.hasSameBinaryContentAs(out.resolve(origin.name))
   }
 
   @Test fun entryNameTrimming() {
