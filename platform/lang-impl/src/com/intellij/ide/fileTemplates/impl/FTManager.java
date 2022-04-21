@@ -41,10 +41,6 @@ public final class FTManager {
   private volatile List<FileTemplateBase> mySortedTemplates;
   private final List<DefaultTemplate> myDefaultTemplates = new ArrayList<>();
 
-  FTManager(@NotNull @NonNls String name, @NotNull Path defaultTemplatesDirName) {
-    this(name, defaultTemplatesDirName, false);
-  }
-
   FTManager(@NotNull @NonNls String name, @NotNull Path defaultTemplatesDirName, boolean internal) {
     myName = name;
     myInternal = internal;
@@ -211,10 +207,11 @@ public final class FTManager {
   }
 
   void loadCustomizedContent() {
-    final List<Path> templateWithDefaultExtension = new ArrayList<>();
-    final Set<String> processedNames = new HashSet<>();
+    List<Path> templateWithDefaultExtension = new ArrayList<>();
+    Set<String> processedNames = new HashSet<>();
     List<FileTemplateBase> children = new ArrayList<>();
-    try(DirectoryStream<Path> stream = Files.newDirectoryStream(getConfigRoot(), file -> !Files.isDirectory(file) && !Files.isHidden(file))) {
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(getConfigRoot(),
+                                                                 file -> !Files.isDirectory(file) && !Files.isHidden(file))) {
       for (Path file : stream) {
         String fileName = file.getFileName().toString();
         // check it here and not in filter to reuse fileName

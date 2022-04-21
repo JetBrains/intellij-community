@@ -1,320 +1,268 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.fileTemplates.impl;
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ClearableLazyValue;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.objectTree.ThrowableInterner;
-import com.intellij.project.ProjectKt;
-import com.intellij.util.Function;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.util.io.URLUtil;
-import com.intellij.util.lang.UrlClassLoader;
-import org.apache.velocity.runtime.ParserPool;
-import org.apache.velocity.runtime.RuntimeServices;
-import org.apache.velocity.runtime.RuntimeSingleton;
-import org.apache.velocity.runtime.directive.Stop;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.ide.fileTemplates.impl
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.net.URL;
-import java.nio.file.Path;
-import java.text.MessageFormat;
-import java.util.*;
-import java.util.function.Supplier;
+import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.ide.fileTemplates.impl.FileTemplateLoadResult.Companion.createSupplier
+import com.intellij.ide.fileTemplates.impl.FileTemplateLoadResult.Companion.processDirectory
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.objectTree.ThrowableInterner
+import com.intellij.project.stateStore
+import com.intellij.util.Function
+import com.intellij.util.ReflectionUtil
+import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.containers.MultiMap
+import com.intellij.util.io.URLUtil
+import com.intellij.util.lang.UrlClassLoader
+import org.apache.velocity.runtime.ParserPool
+import org.apache.velocity.runtime.RuntimeSingleton
+import org.apache.velocity.runtime.directive.Stop
+import java.io.IOException
+import java.net.URL
+import java.text.MessageFormat
+import java.util.*
+import java.util.function.Supplier
+
+private const val DEFAULT_TEMPLATES_ROOT = FileTemplatesLoader.TEMPLATES_DIR
+private const val DESCRIPTION_FILE_EXTENSION = "html"
+private const val DESCRIPTION_EXTENSION_SUFFIX = ".$DESCRIPTION_FILE_EXTENSION"
 
 /**
  * Serves as a container for all existing template manager types and loads corresponding templates lazily.
  * Reloads templates on plugins change.
  */
-class FileTemplatesLoader implements Disposable {
-  private static final Logger LOG = Logger.getInstance(FileTemplatesLoader.class);
+internal open class FileTemplatesLoader(project: Project?) : Disposable {
+  companion object {
+    private val LOG = Logger.getInstance(FileTemplatesLoader::class.java)
+    const val TEMPLATES_DIR = "fileTemplates"
 
-  static final String TEMPLATES_DIR = "fileTemplates";
-  private static final String DEFAULT_TEMPLATES_ROOT = TEMPLATES_DIR;
-  private static final String DESCRIPTION_FILE_EXTENSION = "html";
-  private static final String DESCRIPTION_EXTENSION_SUFFIX = "." + DESCRIPTION_FILE_EXTENSION;
+    fun matchesPrefix(path: String, prefix: String): Boolean {
+      return if (prefix.isEmpty()) {
+        path.indexOf('/') == -1
+      }
+      else FileUtil.startsWith(path, prefix) && path.indexOf('/', prefix.length + 1) == -1
+    }
 
-  private static final Map<String, String> MANAGER_TO_DIR = Map.of(
-    FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, "",
-    FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY, "internal",
-    FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, "includes",
-    FileTemplateManager.CODE_TEMPLATES_CATEGORY, "code",
-    FileTemplateManager.J2EE_TEMPLATES_CATEGORY, "j2ee"
-  );
+    //Example: templateName="NewClass"   templateExtension="java"
+    fun getDescriptionPath(pathPrefix: String,
+                           templateName: String,
+                           templateExtension: String,
+                           descriptionPaths: Set<String>): String? {
+      val locale = Locale.getDefault()
+      var name = MessageFormat.format("{0}.{1}_{2}_{3}$DESCRIPTION_EXTENSION_SUFFIX",
+                                      templateName,
+                                      templateExtension,
+                                      locale.language,
+                                      locale.country)
+      var path = if (pathPrefix.isEmpty()) name else "$pathPrefix/$name"
+      if (descriptionPaths.contains(path)) {
+        return path
+      }
 
-  private final ClearableLazyValue<LoadedConfiguration> myManagers;
+      name = MessageFormat.format("{0}.{1}_{2}$DESCRIPTION_EXTENSION_SUFFIX", templateName, templateExtension, locale.language)
+      path = if (pathPrefix.isEmpty()) name else "$pathPrefix/$name"
+      if (descriptionPaths.contains(path)) {
+        return path
+      }
 
-  FileTemplatesLoader(@Nullable Project project) {
-    myManagers = ClearableLazyValue.createAtomic(() -> loadConfiguration(project));
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      @Override
-      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+      name = "$templateName.$templateExtension$DESCRIPTION_EXTENSION_SUFFIX"
+      path = if (pathPrefix.isEmpty()) name else "$pathPrefix/$name"
+      return if (descriptionPaths.contains(path)) path else null
+    }
+  }
+
+  private val managers: SynchronizedClearableLazy<LoadedConfiguration>
+
+  val allManagers: Collection<FTManager>
+    get() = managers.value.managers.values
+
+  val defaultTemplatesManager: FTManager
+    get() = FTManager(managers.value.getManager(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY)!!)
+
+  val internalTemplatesManager: FTManager
+    get() = FTManager(managers.value.getManager(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY)!!)
+
+  val patternsManager: FTManager
+    get() = FTManager(managers.value.getManager(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY)!!)
+
+  val codeTemplatesManager: FTManager
+    get() = FTManager(managers.value.getManager(FileTemplateManager.CODE_TEMPLATES_CATEGORY)!!)
+
+  val j2eeTemplatesManager: FTManager
+    get() = FTManager(managers.value.getManager(FileTemplateManager.J2EE_TEMPLATES_CATEGORY)!!)
+
+  val defaultTemplateDescription: Supplier<String>?
+    get() = managers.value.defaultTemplateDescription
+
+  val defaultIncludeDescription: Supplier<String>?
+    get() = managers.value.defaultIncludeDescription
+
+  init {
+    managers = SynchronizedClearableLazy { loadConfiguration(project) }
+    @Suppress("LeakingThis")
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         // this shouldn't be necessary once we update to a new Velocity Engine with this leak fixed (IDEA-240449, IDEABKL-7932)
-        clearClassLeakViaStaticExceptionTrace();
-        resetParserPool();
+        clearClassLeakViaStaticExceptionTrace()
+        resetParserPool()
       }
 
-      private void clearClassLeakViaStaticExceptionTrace() {
-        Field field = ReflectionUtil.getDeclaredField(Stop.class, "STOP_ALL");
-        if (field != null) {
-          try {
-            ThrowableInterner.clearBacktrace((Throwable)field.get(null));
-          }
-          catch (Throwable e) {
-            LOG.info(e);
-          }
-        }
+      private fun clearClassLeakViaStaticExceptionTrace() {
+        val field = ReflectionUtil.getDeclaredField(Stop::class.java, "STOP_ALL") ?: return
+        runCatching {
+          ThrowableInterner.clearBacktrace((field.get(null) as Throwable))
+        }.getOrLogException(LOG)
       }
 
-      private void resetParserPool() {
-        try {
-          RuntimeServices ri = RuntimeSingleton.getRuntimeServices();
-          Field ppField = ReflectionUtil.getDeclaredField(ri.getClass(), "parserPool");
-          if (ppField != null) {
-            Object pp = ppField.get(ri);
-            if (pp instanceof ParserPool) {
-              ((ParserPool)pp).initialize(ri);
-            }
-          }
-        }
-        catch (Throwable e) {
-          LOG.info(e);
-        }
+      private fun resetParserPool() {
+        runCatching {
+          val ppField = ReflectionUtil.getDeclaredField(RuntimeSingleton.getRuntimeServices().javaClass, "parserPool") ?: return
+          (ppField.get(RuntimeSingleton.getRuntimeServices()) as? ParserPool)?.initialize(RuntimeSingleton.getRuntimeServices())
+        }.getOrLogException(LOG)
       }
 
-      @Override
-      public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-        myManagers.drop();
+      override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+        managers.drop()
       }
 
-      @Override
-      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        myManagers.drop();
+      override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+        managers.drop()
       }
-    });
+    })
   }
 
-  @Override
-  public void dispose() {}
+  override fun dispose() {
+  }
+}
 
-  @NotNull Collection<@NotNull FTManager> getAllManagers() {
-    return myManagers.getValue().getManagers();
+private fun loadConfiguration(project: Project?): LoadedConfiguration {
+  val configDir = if (project == null || project.isDefault) {
+    PathManager.getConfigDir().resolve(FileTemplatesLoader.TEMPLATES_DIR)
+  }
+  else {
+    project.stateStore.projectFilePath.parent.resolve(FileTemplatesLoader.TEMPLATES_DIR)
   }
 
-  @NotNull
-  FTManager getDefaultTemplatesManager() {
-    return new FTManager(myManagers.getValue().getManager(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY));
-  }
+  // not a map - force predefined order for stabe performance results
+  val managerToDir = listOf(
+    FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY to "",
+    FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY to "internal",
+    FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY to "includes",
+    FileTemplateManager.CODE_TEMPLATES_CATEGORY to "code",
+    FileTemplateManager.J2EE_TEMPLATES_CATEGORY to "j2ee"
+  )
 
-  @NotNull
-  FTManager getInternalTemplatesManager() {
-    return new FTManager(myManagers.getValue().getManager(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY));
+  val result = loadDefaultTemplates(managerToDir.map { it.second })
+  val managers = HashMap<String, FTManager>(managerToDir.size)
+  for ((name, pathPrefix) in managerToDir) {
+    val manager = FTManager(name, configDir.resolve(pathPrefix), name == FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY)
+    manager.setDefaultTemplates(result.result.get(pathPrefix))
+    manager.loadCustomizedContent()
+    managers.put(name, manager)
   }
+  return LoadedConfiguration(managers = managers,
+                             defaultTemplateDescription = result.defaultTemplateDescription,
+                             defaultIncludeDescription = result.defaultIncludeDescription)
+}
 
-  @NotNull
-  FTManager getPatternsManager() {
-    return new FTManager(myManagers.getValue().getManager(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY));
-  }
-
-  @NotNull
-  FTManager getCodeTemplatesManager() {
-    return new FTManager(myManagers.getValue().getManager(FileTemplateManager.CODE_TEMPLATES_CATEGORY));
-  }
-
-  @NotNull
-  FTManager getJ2eeTemplatesManager() {
-    return new FTManager(myManagers.getValue().getManager(FileTemplateManager.J2EE_TEMPLATES_CATEGORY));
-  }
-
-  Supplier<String> getDefaultTemplateDescription() {
-    return myManagers.getValue().defaultTemplateDescription;
-  }
-
-  Supplier<String> getDefaultIncludeDescription() {
-    return myManagers.getValue().defaultIncludeDescription;
-  }
-
-  private static LoadedConfiguration loadConfiguration(@Nullable Project project) {
-    Path configDir;
-    if (project == null || project.isDefault()) {
-      configDir = PathManager.getConfigDir().resolve(TEMPLATES_DIR);
-    }
-    else {
-      configDir = ProjectKt.getStateStore(project).getProjectFilePath().getParent().resolve(TEMPLATES_DIR);
+private fun loadDefaultTemplates(prefixes: List<String>): FileTemplateLoadResult {
+  val result = FileTemplateLoadResult(MultiMap())
+  val processedUrls = HashSet<URL>()
+  val processedLoaders = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
+  for (plugin in PluginManagerCore.getPluginSet().enabledPlugins) {
+    val loader = plugin.classLoader
+    if (loader is PluginAwareClassLoader && (loader as PluginAwareClassLoader).files.isEmpty() || !processedLoaders.add(loader)) {
+      // test or development mode, when IDEA_CORE's loader contains all the classpath
+      continue
     }
 
-    FileTemplateLoadResult result = loadDefaultTemplates(new ArrayList<>(MANAGER_TO_DIR.values()));
-    Map<String, FTManager> managers = new HashMap<>(MANAGER_TO_DIR.size());
-    for (Map.Entry<String, String> entry: MANAGER_TO_DIR.entrySet()) {
-      String name = entry.getKey();
-      String pathPrefix = entry.getValue();
-      FTManager manager = new FTManager(name, configDir.resolve(pathPrefix), name.equals(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY));
-      manager.setDefaultTemplates(result.result.get(pathPrefix));
-      manager.loadCustomizedContent();
-      managers.put(name, manager);
-    }
-
-    return new LoadedConfiguration(managers, result.defaultTemplateDescription, result.defaultIncludeDescription);
-  }
-
-  private static @NotNull FileTemplateLoadResult loadDefaultTemplates(@NotNull List<String> prefixes) {
-    FileTemplateLoadResult result = new FileTemplateLoadResult(new MultiMap<>());
-    Set<URL> processedUrls = new HashSet<>();
-    Set<ClassLoader> processedLoaders = Collections.newSetFromMap(new IdentityHashMap<>());
-    for (IdeaPluginDescriptorImpl plugin : PluginManagerCore.getPluginSet().enabledPlugins) {
-      ClassLoader loader = plugin.getClassLoader();
-      if (((loader instanceof PluginAwareClassLoader) && ((PluginAwareClassLoader)loader).getFiles().isEmpty()) ||
-          !processedLoaders.add(loader)) {
-        // test or development mode, when IDEA_CORE's loader contains all the classpath
-        continue;
+    try {
+      val resourceUrls = if (loader is UrlClassLoader) {
+        // don't use parents from plugin class loader - we process all plugins
+        loader.classPath.getResources(DEFAULT_TEMPLATES_ROOT)
+      }
+      else {
+        loader.getResources(DEFAULT_TEMPLATES_ROOT)
       }
 
-      try {
-        Enumeration<URL> resourceUrls;
-        if (loader instanceof UrlClassLoader) {
-          // don't use parents from plugin class loader - we process all plugins
-          resourceUrls = ((UrlClassLoader)loader).getClassPath().getResources(DEFAULT_TEMPLATES_ROOT);
-        }
-        else {
-          resourceUrls = loader.getResources(DEFAULT_TEMPLATES_ROOT);
+      while (resourceUrls.hasMoreElements()) {
+        val url = resourceUrls.nextElement()
+        if (!processedUrls.add(url)) {
+          continue
         }
 
-        while (resourceUrls.hasMoreElements()) {
-          URL url = resourceUrls.nextElement();
-          if (!processedUrls.add(url)) {
-            continue;
-          }
-
-          String protocol = url.getProtocol();
-          if (URLUtil.JAR_PROTOCOL.equalsIgnoreCase(protocol)) {
-            List<String> children = UrlUtil.getChildPathsFromJar(url);
-            if (!children.isEmpty()) {
-              loadDefaultsFromRoot(path -> FileTemplateLoadResult.createSupplier(url, path), children, prefixes, result);
-             }
-          }
-          else if (URLUtil.FILE_PROTOCOL.equalsIgnoreCase(protocol)) {
-            FileTemplateLoadResult.processDirectory(url, result, prefixes);
+        val protocol = url.protocol
+        if (URLUtil.JAR_PROTOCOL.equals(protocol, ignoreCase = true)) {
+          val children = UrlUtil.getChildPathsFromJar(url)
+          if (!children.isEmpty()) {
+            loadDefaultsFromRoot({ path: String? -> createSupplier(url, path!!) }, children, prefixes, result)
           }
         }
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-    return result;
-  }
-
-  private static void loadDefaultsFromRoot(@NotNull Function<String, Supplier<String>> dataProducer,
-                                           @NotNull List<String> children,
-                                           @NotNull List<String> prefixes,
-                                           @NotNull FileTemplateLoadResult result) throws IOException {
-    Set<String> descriptionPaths = new HashSet<>();
-    for (String path : children) {
-      if (path.equals("default.html")) {
-        result.defaultTemplateDescription = dataProducer.fun(path);
-      }
-      else if (path.equals("includes/default.html")) {
-        result.defaultIncludeDescription = dataProducer.fun(path);
-      }
-      else if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
-        descriptionPaths.add(path);
-      }
-    }
-
-    for (String path : children) {
-      if (!path.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) {
-        continue;
-      }
-
-      for (String prefix : prefixes) {
-        if (!matchesPrefix(path, prefix)) {
-          continue;
+        else if (URLUtil.FILE_PROTOCOL.equals(protocol, ignoreCase = true)) {
+          processDirectory(url, result, prefixes)
         }
-
-        String filename = path.substring(prefix.isEmpty() ? 0 : prefix.length() + 1, path.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
-        String extension = FileUtilRt.getExtension(filename);
-        String templateName = filename.substring(0, filename.length() - extension.length() - 1);
-        String descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths);
-        Supplier<String> descriptionSupplier = descriptionPath == null ? null : dataProducer.fun(descriptionPath);
-        result.result.putValue(prefix, new DefaultTemplate(templateName, extension, dataProducer.fun(path), descriptionSupplier, descriptionPath));
-        // FTManagers loop
-        break;
       }
     }
-  }
-
-   static boolean matchesPrefix(@NotNull String path, @NotNull String prefix) {
-    if (prefix.isEmpty()) {
-      return path.indexOf('/') == -1;
-    }
-    return FileUtil.startsWith(path, prefix) && path.indexOf('/', prefix.length() + 1) == -1;
-  }
-
-  //Example: templateName="NewClass"   templateExtension="java"
-  static @Nullable String getDescriptionPath(@NotNull String pathPrefix,
-                                                     @NotNull String templateName,
-                                                     @NotNull String templateExtension,
-                                                     @NotNull Set<String> descriptionPaths) {
-    final Locale locale = Locale.getDefault();
-
-    String descName = MessageFormat
-      .format("{0}.{1}_{2}_{3}" + DESCRIPTION_EXTENSION_SUFFIX, templateName, templateExtension,
-              locale.getLanguage(), locale.getCountry());
-    String descPath = pathPrefix.isEmpty() ? descName : pathPrefix + "/" + descName;
-    if (descriptionPaths.contains(descPath)) {
-      return descPath;
-    }
-
-    descName = MessageFormat.format("{0}.{1}_{2}" + DESCRIPTION_EXTENSION_SUFFIX, templateName, templateExtension, locale.getLanguage());
-    descPath = pathPrefix.isEmpty() ? descName : pathPrefix + "/" + descName;
-    if (descriptionPaths.contains(descPath)) {
-      return descPath;
-    }
-
-    descName = templateName + "." + templateExtension + DESCRIPTION_EXTENSION_SUFFIX;
-    descPath = pathPrefix.isEmpty() ? descName : pathPrefix + "/" + descName;
-    if (descriptionPaths.contains(descPath)) {
-      return descPath;
-    }
-    return null;
-  }
-
-  private static final class LoadedConfiguration {
-    private final Supplier<String> defaultTemplateDescription;
-    private final Supplier<String> defaultIncludeDescription;
-
-    private final Map<String, FTManager> managers;
-
-    private LoadedConfiguration(@NotNull Map<String, FTManager> managers,
-                                Supplier<String> defaultTemplateDescription,
-                                Supplier<String> defaultIncludeDescription) {
-
-      this.managers = Collections.unmodifiableMap(managers);
-      this.defaultTemplateDescription = defaultTemplateDescription;
-      this.defaultIncludeDescription = defaultIncludeDescription;
-    }
-
-    private FTManager getManager(@NotNull String kind) {
-      return managers.get(kind);
-    }
-
-    private Collection<FTManager> getManagers() {
-      return managers.values();
+    catch (e: IOException) {
+      logger<FileTemplatesLoader>().error(e)
     }
   }
+  return result
+}
+
+private fun loadDefaultsFromRoot(dataProducer: Function<String, Supplier<String>>,
+                                 children: List<String>,
+                                 prefixes: List<String>,
+                                 result: FileTemplateLoadResult) {
+  val descriptionPaths: MutableSet<String> = HashSet()
+  for (path in children) {
+    if (path == "default.html") {
+      result.defaultTemplateDescription = dataProducer.`fun`(path)
+    }
+    else if (path == "includes/default.html") {
+      result.defaultIncludeDescription = dataProducer.`fun`(path)
+    }
+    else if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
+      descriptionPaths.add(path)
+    }
+  }
+  for (path in children) {
+    if (!path.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) {
+      continue
+    }
+    for (prefix in prefixes) {
+      if (!FileTemplatesLoader.matchesPrefix(path, prefix)) {
+        continue
+      }
+      val filename = path.substring(if (prefix.isEmpty()) 0 else prefix.length + 1,
+                                    path.length - FTManager.TEMPLATE_EXTENSION_SUFFIX.length)
+      val extension = FileUtilRt.getExtension(filename)
+      val templateName = filename.substring(0, filename.length - extension.length - 1)
+      val descriptionPath = FileTemplatesLoader.getDescriptionPath(prefix, templateName, extension, descriptionPaths)
+      val descriptionSupplier = if (descriptionPath == null) null else dataProducer.`fun`(descriptionPath)
+      result.result.putValue(prefix,
+                             DefaultTemplate(templateName, extension, dataProducer.`fun`(path), descriptionSupplier, descriptionPath))
+      // FTManagers loop
+      break
+    }
+  }
+}
+
+private class LoadedConfiguration(@JvmField val managers: Map<String, FTManager>,
+                                  @JvmField val defaultTemplateDescription: Supplier<String>?,
+                                  @JvmField val defaultIncludeDescription: Supplier<String>?) {
+  fun getManager(kind: String) = managers.get(kind)
 }
