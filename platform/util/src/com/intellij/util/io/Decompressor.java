@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -112,7 +112,6 @@ public abstract class Decompressor {
     }
 
     //<editor-fold desc="Implementation">
-
     private final Path mySource;
     private ZipFile myZip;
     private Enumeration<? extends ZipEntry> myEntries;
@@ -167,7 +166,7 @@ public abstract class Decompressor {
         if (myEntry == null) return null;
         int platform = myEntry.getPlatform();
         if (SystemInfo.isWindows) {
-          // Unix permissions are ignored on Windows
+          // UNIX permissions are ignored on Windows
           if (platform == ZipArchiveEntry.PLATFORM_UNIX) {
             return new Entry(myEntry.getName(), type(myEntry), 0, myZip.getUnixSymlink(myEntry));
           }
@@ -220,7 +219,7 @@ public abstract class Decompressor {
     /** An entry name (separators converted to '/' and trimmed); handle with care */
     public final String name;
     public final Type type;
-    /** Depending on a source, could be a POSIX permissions, DOS attributes, or just 0 */
+    /** Depending on the source, could be POSIX permissions, DOS attributes, or just {@code 0} */
     public final int mode;
     public final @Nullable String linkTarget;
 
@@ -241,12 +240,11 @@ public abstract class Decompressor {
   }
 
   private @Nullable Predicate<Entry> myFilter = null;
-  private @Nullable List<String> myPathsPrefix = null;
+  private @Nullable List<String> myPathPrefix = null;
   private boolean myOverwrite = true;
   private boolean myAllowEscapingSymlinks = true;
   private @Nullable BiConsumer<Entry, ? super Path> myPostProcessor;
 
-  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public Decompressor filter(@Nullable Predicate<? super String> filter) {
     myFilter = filter != null ? e -> filter.test(e.type == Entry.Type.DIR ? e.name + '/' : e.name) : null;
     return this;
@@ -278,17 +276,17 @@ public abstract class Decompressor {
   }
 
   /**
-   * Extracts only items whose paths starts with the normalized prefix of {@code prefix + '/'} <br/>
-   * Paths are normalized before comparison. <br/>
-   * The prefix test is applied after {@link #filter} predicate is tested. <br/>
-   * Some entries may clash, so use {@link #overwrite} to control it. <br/>
-   * Some items with path that does not start from the prefix could be ignored
+   * Extracts only items whose path starts with the normalized prefix of {@code prefix + '/'}.
+   * Paths are normalized before comparison.
+   * The prefix test is applied after {@link #filter} predicate is tested.
+   * Some entries may clash, so use {@link #overwrite} to control it.
+   * Some items with a path that does not start from the prefix could be ignored.
    *
-   * @param prefix prefix to remove from every archive entry paths
+   * @param prefix a prefix to remove from every archive entry path
    * @return self
    */
   public Decompressor removePrefixPath(@Nullable String prefix) throws IOException {
-    myPathsPrefix = prefix != null ? normalizePathAndSplit(prefix) : null;
+    myPathPrefix = prefix != null ? normalizePathAndSplit(prefix) : null;
     return this;
   }
 
@@ -305,8 +303,8 @@ public abstract class Decompressor {
           continue;
         }
 
-        if (myPathsPrefix != null) {
-          entry = mapPathPrefix(entry, myPathsPrefix);
+        if (myPathPrefix != null) {
+          entry = mapPathPrefix(entry, myPathPrefix);
           if (entry == null) continue;
         }
 
