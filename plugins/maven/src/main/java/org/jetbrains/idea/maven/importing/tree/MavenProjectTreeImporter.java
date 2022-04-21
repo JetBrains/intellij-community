@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.importing.tree;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
@@ -70,10 +71,16 @@ public class MavenProjectTreeImporter extends MavenProjectImporterBase {
   @Override
   @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
+    StructuredIdeActivity activity = MavenImportStats.startApplyingModelsActivity(myProject);
     long startTime = System.currentTimeMillis();
-    List<MavenProjectsProcessorTask> tasks = importProjectTree();
-    LOG.info("[maven import] applying models took " + (System.currentTimeMillis() - startTime) + "ms");
-    return tasks;
+    try {
+      List<MavenProjectsProcessorTask> tasks = importProjectTree();
+      return tasks;
+    }
+    finally {
+      activity.finished();
+      LOG.info("[maven import] applying models took " + (System.currentTimeMillis() - startTime) + "ms");
+    }
   }
 
   @Nullable
@@ -156,17 +163,23 @@ public class MavenProjectTreeImporter extends MavenProjectImporterBase {
     MavenUtil.runInBackground(myProject, MavenProjectBundle.message("command.name.configuring.projects"), false, indicator -> {
       float count = 0;
       long startTime = System.currentTimeMillis();
-      int size = allModules.size();
-      LOG.info("[maven import] applying " + configurers.size() + " configurers to " + size + " Maven projects");
-      for (MavenModuleImportData importData : allModules) {
-        Module module = importData.getModuleData().getModule();
-        indicator.setFraction(count++ / size);
-        indicator.setText2(MavenProjectBundle.message("progress.details.configuring.module", module.getName()));
-        for (MavenModuleConfigurer configurer : configurers) {
-          configurer.configure(importData.getMavenProject(), myProject, module);
+      StructuredIdeActivity activity = MavenImportStats.startConfiguringProjectsActivity(myProject);
+      try {
+        int size = allModules.size();
+        LOG.info("[maven import] applying " + configurers.size() + " configurers to " + size + " Maven projects");
+        for (MavenModuleImportData importData : allModules) {
+          Module module = importData.getModuleData().getModule();
+          indicator.setFraction(count++ / size);
+          indicator.setText2(MavenProjectBundle.message("progress.details.configuring.module", module.getName()));
+          for (MavenModuleConfigurer configurer : configurers) {
+            configurer.configure(importData.getMavenProject(), myProject, module);
+          }
         }
       }
-      LOG.info("[maven import] configuring projects took " + (System.currentTimeMillis() - startTime) + "ms");
+      finally {
+        activity.finished();
+        LOG.info("[maven import] configuring projects took " + (System.currentTimeMillis() - startTime) + "ms");
+      }
     });
   }
 
