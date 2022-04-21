@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.ExpressionUtil;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.util.IntentionFamilyName;
@@ -101,7 +102,9 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
     if (!EntryStream.zip(components, parameters)
       .mapKeys(c -> ContainerUtil.filter(c.getAnnotations(), anno -> AnnotationTargetUtil.findAnnotationTarget(anno, targets) != null))
       .mapValues(p -> Arrays.asList(p.getAnnotations()))
-      .allMatch(List::equals)) {
+      .allMatch((compAnnotations, paramAnnotations) ->
+        compAnnotations.size() == paramAnnotations.size() &&
+        EntryStream.zip(compAnnotations, paramAnnotations).allMatch(PsiEquivalenceUtil::areElementsEquivalent))) {
       return null;
     }
     PsiStatement[] statements = body.getStatements();
