@@ -68,7 +68,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   private boolean myClosed;
   private boolean myDirty;
-  private boolean myCorrupted;
+  private volatile boolean myCorrupted;
   private RecordBufferHandler<PersistentEnumeratorBase<?>> myRecordHandler;
   private @Nullable Flushable myMarkCleanCallback;
 
@@ -521,13 +521,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public boolean isCorrupted() {
-    lockStorageRead();
-    try {
-      return myCorrupted;
-    }
-    finally {
-      unlockStorageRead();
-    }
+    return myCorrupted;
   }
 
   protected void doFlush() throws IOException {
