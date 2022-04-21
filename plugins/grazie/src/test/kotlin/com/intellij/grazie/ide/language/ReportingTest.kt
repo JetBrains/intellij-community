@@ -31,6 +31,18 @@ class ReportingTest : BasePlatformTestCase() {
     assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*" + Regex.escape(message) + ".*Incorrect:.*Correct:.*")))
   }
 
+  fun `test unpaired parenthesis tooltip`() {
+    val inspection = GrazieInspection()
+    myFixture.enableInspections(inspection)
+    myFixture.configureByText("a.txt", "I have a (new apple here.")
+    val info = assertOneElement(myFixture.doHighlighting().filter { it.inspectionToolId == inspection.id })
+    assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*Incorrect:.*" +
+                                                          "I'm over here, she said" +
+                                                          ".*Correct:.*" +
+                                                          "I'm over here,.*&quot;.*she said" +
+                                                          ".*")))
+  }
+
   fun `test tooltip and description texts in commit annotator`() {
     configureCommit(myFixture, "I have an new apple here.")
     val info = assertOneElement(myFixture.doHighlighting().filter { it.description.contains("vowel") })
