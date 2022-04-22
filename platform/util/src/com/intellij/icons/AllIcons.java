@@ -971,6 +971,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon CockroachDB = load("providers/cockroachDB.svg", 471223242, 0);
     /** 16x16 */ public static final @NotNull Icon Couchbase = load("providers/couchbase.svg", -1313146722, 0);
     /** 16x16 */ public static final @NotNull Icon DB2 = load("providers/DB2.svg", 1246290135, 2);
+    /** 16x16 */ public static final @NotNull Icon DuckDB = load("providers/duckDB.svg", 1595573396, 2);
     /** 16x16 */ public static final @NotNull Icon Eclipse = load("providers/eclipse.svg", 368039171, 2);
     /** 16x16 */ public static final @NotNull Icon Elasticsearch = load("providers/elasticsearch.svg", -797083948, 0);
     /** 16x16 */ public static final @NotNull Icon Exasol = load("providers/exasol.svg", -669364139, 2);
