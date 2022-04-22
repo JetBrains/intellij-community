@@ -286,6 +286,9 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
   public void testJoinLocals4() {doTest();}
   public void testJoinLocals5() {doTest();}
   public void testJoinLocals6() {doTest();}
+  public void testJoinFields1() {doTest();}
+  public void testJoinFields2() {doTest(3);}
+  public void testJoinFields3() {doTest();}
 
   private void doTest() {
     doTest(".java");

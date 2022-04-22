@@ -13,29 +13,37 @@ public class VariableJoinLinesHandler implements JoinLinesHandlerDelegate {
   @Override
   public int tryJoinLines(@NotNull Document document, @NotNull PsiFile file, int start, int end) {
     PsiElement elementAtStartLineEnd = file.findElementAt(start);
-    PsiElement elementAtNextLineStart = file.findElementAt(end);
-    if (elementAtStartLineEnd == null || elementAtNextLineStart == null) return -1;
     if (!PsiUtil.isJavaToken(elementAtStartLineEnd, JavaTokenType.SEMICOLON)) return -1;
+    PsiElement elementAtNextLineStart = file.findElementAt(end);
+    if (elementAtNextLineStart == null) return -1;
     PsiLocalVariable firstVar = ObjectUtils.tryCast(elementAtStartLineEnd.getParent(), PsiLocalVariable.class);
     if (firstVar == null) return -1;
     PsiDeclarationStatement firstDeclaration = ObjectUtils.tryCast(firstVar.getParent(), PsiDeclarationStatement.class);
     if (firstDeclaration == null) return -1;
     PsiLocalVariable leftMostVar = (PsiLocalVariable)firstDeclaration.getDeclaredElements()[0];
-    PsiTypeElement firstTypeElement = leftMostVar.getTypeElement();
-    if (firstTypeElement.isInferredType()) return -1;
     PsiLocalVariable secondVar = PsiTreeUtil.getParentOfType(elementAtNextLineStart, PsiLocalVariable.class);
     if (secondVar == null || secondVar == firstVar) return -1;
     PsiDeclarationStatement secondDeclaration = ObjectUtils.tryCast(secondVar.getParent(), PsiDeclarationStatement.class);
     if (secondDeclaration == null) return -1;
     if (PsiTreeUtil.skipWhitespacesForward(firstDeclaration) != secondDeclaration) return -1;
+    return joinVariables(document, elementAtStartLineEnd, leftMostVar, secondVar);
+  }
+
+  static int joinVariables(@NotNull Document document,
+                           @NotNull PsiElement elementAtStartLineEnd,
+                           @NotNull PsiVariable firstVar,
+                           @NotNull PsiVariable secondVar) {
+    PsiTypeElement firstTypeElement = firstVar.getTypeElement();
+    if (firstTypeElement == null || firstTypeElement.isInferredType()) return -1;
     PsiTypeElement secondTypeElement = secondVar.getTypeElement();
-    if (secondTypeElement.isInferredType()) return -1;
+    if (secondTypeElement == null || secondTypeElement.isInferredType()) return -1;
     if (!PsiEquivalenceUtil.areElementsEquivalent(firstTypeElement, secondTypeElement)) return -1;
-    PsiModifierList firstModifiers = leftMostVar.getModifierList();
+    PsiModifierList firstModifiers = firstVar.getModifierList();
     PsiModifierList secondModifiers = secondVar.getModifierList();
     if (firstModifiers == null) {
       if (secondModifiers != null) return -1;
-    } else {
+    }
+    else {
       if (secondModifiers == null || !PsiEquivalenceUtil.areElementsEquivalent(firstModifiers, secondModifiers)) return -1;
     }
 
