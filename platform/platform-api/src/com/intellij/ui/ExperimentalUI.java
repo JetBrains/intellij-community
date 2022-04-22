@@ -20,10 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
-import javax.swing.plaf.FontUIResource;
-import java.awt.*;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -401,20 +398,24 @@ public final class ExperimentalUI {
   }
 
   private static void installInterFont(UIDefaults defaults) {
-    List<String> keysToPatch = List.of("CheckBoxMenuItem.acceleratorFont",
-                                       "CheckBoxMenuItem.font",
-                                       "Menu.acceleratorFont",
-                                       "Menu.font",
-                                       //"MenuBar.font",
-                                       "MenuItem.acceleratorFont",
-                                       "MenuItem.font",
-                                       "PopupMenu.font",
-                                       "RadioButtonMenuItem.acceleratorFont",
-                                       "RadioButtonMenuItem.font");
-    for (String key : keysToPatch) {
-      Font font = defaults.getFont(key);
-      defaults.put(key, new FontUIResource("Inter", font.getStyle(), font.getSize()));
+    if (UISettings.getInstance().getOverrideLafFonts()) {
+      //todo[kb] add RunOnce
+      UISettings.getInstance().setOverrideLafFonts(false);
     }
+    //List<String> keysToPatch = List.of("CheckBoxMenuItem.acceleratorFont",
+    //                                   "CheckBoxMenuItem.font",
+    //                                   "Menu.acceleratorFont",
+    //                                   "Menu.font",
+    //                                   //"MenuBar.font",
+    //                                   "MenuItem.acceleratorFont",
+    //                                   "MenuItem.font",
+    //                                   "PopupMenu.font",
+    //                                   "RadioButtonMenuItem.acceleratorFont",
+    //                                   "RadioButtonMenuItem.font");
+    //for (String key : keysToPatch) {
+    //  Font font = defaults.getFont(key);
+    //  defaults.put(key, new FontUIResource("Inter", font.getStyle(), font.getSize()));
+    //}
 
     //if (JBColor.isBright()) {
     //  Color menuBg = new ColorUIResource(0x242933);
