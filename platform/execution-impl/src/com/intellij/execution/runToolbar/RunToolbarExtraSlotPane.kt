@@ -189,8 +189,9 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
       }
     })
 
-    slotPane.add(slot.view)
     components.add(slot)
+    slotPane.add(slot.view)
+
   }
 
   fun pack() {

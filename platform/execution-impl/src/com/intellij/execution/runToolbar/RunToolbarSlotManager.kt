@@ -77,7 +77,7 @@ class RunToolbarSlotManager(val project: Project) {
             slotsData[mainSlotData.id] = mainSlotData
           }
           else {
-            addSlot(s).configuration = configurations[s]
+            addSlot(configurations[s], s)
           }
         }
 
@@ -90,8 +90,7 @@ class RunToolbarSlotManager(val project: Project) {
             if (!getUpdateMainBySelected() || mainSlotData.configuration == settings) return
 
             mainSlotData.environment?.let {
-              val slot = addSlot()
-              slot.configuration = settings
+              val slot = addSlot(settings)
               if (RunToolbarProcess.logNeeded) LOG.info("SM runConfigurationSelected: $settings first slot added RunToolbar")
               moveToTop(slot.id)
             } ?: kotlin.run {
@@ -192,6 +191,7 @@ class RunToolbarSlotManager(val project: Project) {
     saveSlotsConfiguration()
     updateState()
 
+    if (!RunToolbarProcess.logNeeded) return
     LOG.trace("!!!!!UPDATE RunToolbar")
   }
 
@@ -290,7 +290,7 @@ class RunToolbarSlotManager(val project: Project) {
                ?: emptySlotsWithConfiguration.firstOrNull()
                ?: kotlin.run {
                  newSlot = true
-                 addSlot()
+                 addSlot(env.runnerAndConfigurationSettings)
                }
 
     slot.environment = env
@@ -357,8 +357,9 @@ class RunToolbarSlotManager(val project: Project) {
     return slot
   }
 
-  private fun addSlot(id: String = UUID.randomUUID().toString()): SlotDate {
+  private fun addSlot(configuration: RunnerAndConfigurationSettings? = null, id: String = UUID.randomUUID().toString()): SlotDate {
     val slot = SlotDate(id)
+    slot.configuration = configuration
     dataIds.add(slot.id)
     slotsData[slot.id] = slot
 
