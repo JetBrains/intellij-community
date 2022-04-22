@@ -10,7 +10,6 @@ import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -27,7 +26,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectUiFrameAllocator
 import com.intellij.openapi.project.impl.ProjectUiFrameManager
 import com.intellij.openapi.project.impl.createNewProjectFrame
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
@@ -53,7 +51,6 @@ import java.awt.AWTEvent
 import java.awt.Toolkit
 import java.awt.event.WindowEvent
 import java.awt.image.BufferedImage
-import java.lang.ref.WeakReference
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
@@ -526,7 +523,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       for ((path, info) in reversedList) {
         val frameInfo = info.frame!!
         val isActive = info == first
-        val ideFrame = createNewProjectFrame(forceDisableAutoRequestFocus = !isActive, frameInfo)
+        val ideFrame = createNewProjectFrame(frameInfo)
         info.frameTitle?.let {
           ideFrame.title = it
         }
@@ -854,18 +851,6 @@ private open class MyProjectUiFrameManager(val frame: IdeFrameImpl) : ProjectUiF
   fun dispose() {
     frame.dispose()
   }
-
-  override fun projectOpened(project: Project) {
-    // allow to grab focus only after fully opened
-    val ref = WeakReference(frame)
-    StartupManager.getInstance(project).runAfterOpened(Runnable {
-      if (ref.get() != null) {
-        ApplicationManager.getApplication().invokeLater(Runnable {
-          ref.get()?.isAutoRequestFocus = true
-        }, ModalityState.NON_MODAL, project.disposed)
-      }
-    })
-  }
 }
 
 private class MyActiveProjectUiFrameManager(frame: IdeFrameImpl,
@@ -910,11 +895,6 @@ private class MyActiveProjectUiFrameManager(frame: IdeFrameImpl,
         }
       }
     }
-  }
-
-  override fun projectOpened(project: Project) {
-    // override default impl of MyProjectUiFrameManager - for active window we don't force setting
-    // isAutoRequestFocus to false, so, no need to set it to true on project open
   }
 }
 

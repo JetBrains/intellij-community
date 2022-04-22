@@ -297,7 +297,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
    */
   fun allocateFrame(project: Project,
                     projectFrameHelperFactory: Supplier<out ProjectFrameHelper> = Supplier {
-                      ProjectFrameHelper(createNewProjectFrame(forceDisableAutoRequestFocus = false, frameInfo = null), null)
+                      ProjectFrameHelper(createNewProjectFrame(null), null)
                     }): ProjectFrameHelper {
     var frame = getFrameHelper(project)
     if (frame != null) {
