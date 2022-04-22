@@ -516,6 +516,9 @@ Includes the following features:</p>
               icon="AllIcons.General.LayoutPreviewOnly">
         <keyboard-shortcut first-keystroke="control U" keymap="$default"/>
       </action>
+      <action id="Markdown.GenerateTableOfContents"
+              class="org.intellij.plugins.markdown.editor.toc.GenerateTableOfContentsAction"
+              icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.BulletList"/>
     </group>
     <action id="Markdown.Insert"
             class="org.intellij.plugins.markdown.ui.actions.InsertAction"
