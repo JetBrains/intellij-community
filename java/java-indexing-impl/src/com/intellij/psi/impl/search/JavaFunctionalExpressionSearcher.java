@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -168,16 +168,17 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
                                                            @NotNull VirtualFile vFile,
                                                            @NotNull Collection<? extends FunExprOccurrence> occurrences,
                                                            @NotNull Project project) {
-    Map<FunExprOccurrence, Confidence> map = new HashMap<>();
-    DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+    return ReadAction.nonBlocking(() -> {
+      Map<FunExprOccurrence, Confidence> map = new HashMap<>();
       for (FunExprOccurrence occurrence : occurrences) {
         ThreeState result = occurrence.checkHasTypeLight(samClasses, vFile);
         if (result != ThreeState.NO) {
           map.put(occurrence, result == ThreeState.YES ? Confidence.sure : Confidence.needsCheck);
         }
       }
-    });
-    return map;
+      return map;
+    }).inSmartMode(project)
+      .executeSynchronously();
   }
 
   private enum Confidence { sure, needsCheck}
