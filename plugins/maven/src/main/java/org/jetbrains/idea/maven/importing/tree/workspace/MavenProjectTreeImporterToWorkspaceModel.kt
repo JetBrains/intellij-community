@@ -15,10 +15,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import org.jetbrains.idea.maven.importing.MavenModuleImporter
-import org.jetbrains.idea.maven.importing.MavenProjectImporterBase
-import org.jetbrains.idea.maven.importing.MavenRootModelAdapter
-import org.jetbrains.idea.maven.importing.MavenRootModelAdapterLegacyImpl
+import org.jetbrains.idea.maven.importing.*
 import org.jetbrains.idea.maven.importing.configurers.MavenModuleConfigurer
 import org.jetbrains.idea.maven.importing.tree.MavenModuleType
 import org.jetbrains.idea.maven.importing.tree.MavenProjectTreeImporter
@@ -43,7 +40,7 @@ class MavenProjectTreeImporterToWorkspaceModel(
                                                                   projectsToImportWithChanges, mavenImportingSettings)
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
-    val activity = startImportActivity(project)
+    val activity = MavenImportStats.startApplyingModelsActivity(project)
     val startTime = System.currentTimeMillis()
     try {
       val postTasks = ArrayList<MavenProjectsProcessorTask>()
@@ -163,7 +160,7 @@ class MavenProjectTreeImporterToWorkspaceModel(
     ) { indicator: MavenProgressIndicator ->
       var count = 0f
       val startTime = System.currentTimeMillis()
-      val activity = startConfiguringProjectsActivity(project)
+      val activity = MavenImportStats.startConfiguringProjectsActivity(project)
       try {
         val size = moduleImportDataList.size
         LOG.info("[maven import] applying " + configurers.size + " configurers to " + size + " Maven projects")

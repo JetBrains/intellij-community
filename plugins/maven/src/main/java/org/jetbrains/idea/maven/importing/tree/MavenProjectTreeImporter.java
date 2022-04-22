@@ -72,7 +72,7 @@ public class MavenProjectTreeImporter extends MavenProjectImporterBase {
   @Override
   @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
-    StructuredIdeActivity activity = startImportActivity(myProject);
+    StructuredIdeActivity activity = MavenImportStats.startApplyingModelsActivity(myProject);
     long startTime = System.currentTimeMillis();
     try {
       List<MavenProjectsProcessorTask> tasks = importProjectTree();
@@ -164,7 +164,7 @@ public class MavenProjectTreeImporter extends MavenProjectImporterBase {
     MavenUtil.runInBackground(myProject, MavenProjectBundle.message("command.name.configuring.projects"), false, indicator -> {
       float count = 0;
       long startTime = System.currentTimeMillis();
-      StructuredIdeActivity activity = startConfiguringProjectsActivity(myProject);
+      StructuredIdeActivity activity = MavenImportStats.startConfiguringProjectsActivity(myProject);
       try {
         int size = allModules.size();
         LOG.info("[maven import] applying " + configurers.size() + " configurers to " + size + " Maven projects");

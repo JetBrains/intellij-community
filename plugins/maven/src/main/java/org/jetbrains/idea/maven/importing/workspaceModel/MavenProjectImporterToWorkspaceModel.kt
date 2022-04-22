@@ -11,6 +11,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenModuleNameMapper
 import org.jetbrains.idea.maven.importing.MavenProjectImporterBase
 import org.jetbrains.idea.maven.project.*
@@ -26,7 +27,7 @@ class MavenProjectImporterToWorkspaceModel(
   private val createdModulesList = ArrayList<Module>()
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
-    val activity = startImportActivity(project)
+    val activity = MavenImportStats.startApplyingModelsActivity(project)
     val startTime = System.currentTimeMillis()
     try {
       val postTasks = ArrayList<MavenProjectsProcessorTask>()

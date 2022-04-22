@@ -88,7 +88,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
   @Override
   @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
-    StructuredIdeActivity activity = startImportActivity(myProject);
+    StructuredIdeActivity activity = MavenImportStats.startApplyingModelsActivity(myProject);
     long startTime = System.currentTimeMillis();
     try {
       if (MavenUtil.newModelEnabled(myProject)) {

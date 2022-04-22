@@ -3,8 +3,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.statistics.ExternalSystemStatUtilKt;
-import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IntellijInternalApi;
@@ -41,30 +39,6 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
       result.add(each);
     }
     return result;
-  }
-
-  @NotNull
-  protected static StructuredIdeActivity startImportActivity(Project project) {
-    // Hacky way to measure report import speed metrics.
-    // The better way would be to use StructuredIdeActivity.stageStared in MavenImportingManager.doImport with the new importing Flow
-    return ExternalSystemStatUtilKt.importActivityStarted(project, MavenUtil.SYSTEM_ID, () ->
-      Collections.singletonList(ProjectImportCollector.TASK_CLASS.with(MavenApplyingModelTask.class))
-    );
-  }
-
-  @NotNull
-  protected static StructuredIdeActivity startConfiguringProjectsActivity(Project project) {
-    // Hacky way to measure report import speed metrics.
-    // The better way would be to use StructuredIdeActivity.stageStared in MavenImportingManager.doImport with the new importing Flow
-    return ExternalSystemStatUtilKt.importActivityStarted(project, MavenUtil.SYSTEM_ID, () ->
-      Collections.singletonList(ProjectImportCollector.TASK_CLASS.with(MavenConfiguringProjectsTask.class))
-    );
-  }
-
-  private static class MavenApplyingModelTask {
-  }
-
-  private static class MavenConfiguringProjectsTask {
   }
 
   protected boolean shouldCreateModuleFor(MavenProject project) {
@@ -125,7 +99,7 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     List<MavenModuleConfigurer> configurers = MavenModuleConfigurer.getConfigurers();
     float count = 0;
     long startTime = System.currentTimeMillis();
-    StructuredIdeActivity activity = startConfiguringProjectsActivity(project);
+    StructuredIdeActivity activity = MavenImportStats.startConfiguringProjectsActivity(project);
     try {
       LOG.info("[maven import] applying " + configurers.size() + " configurers to " + projects.size() + " Maven projects");
       for (MavenProject mavenProject : projects) {

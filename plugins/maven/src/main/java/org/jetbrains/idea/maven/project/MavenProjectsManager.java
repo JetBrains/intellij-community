@@ -5,6 +5,7 @@ import com.intellij.build.BuildProgressListener;
 import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
@@ -52,10 +52,7 @@ import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.CacheForCompilerErrorMessages;
-import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
-import org.jetbrains.idea.maven.importing.MavenModelUtil;
-import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
-import org.jetbrains.idea.maven.importing.MavenProjectImporter;
+import org.jetbrains.idea.maven.importing.*;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
@@ -916,16 +913,18 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   public Promise<List<Module>> scheduleImportAndResolve(MavenImportSpec spec) {
     MavenSyncConsole console = getSyncConsole();
     console.startImport(myProgressListener, spec);
+    StructuredIdeActivity activity = MavenImportStats.startImportActivity(myProject);
     fireImportAndResolveScheduled();
     AsyncPromise<List<Module>> promise = scheduleResolve();
     promise.onProcessed(m -> {
-      completeMavenSyncOnImportCompletion();
+      completeMavenSyncOnImportCompletion(activity);
     });
     return promise;
   }
 
-  private void completeMavenSyncOnImportCompletion() {
+  private void completeMavenSyncOnImportCompletion(StructuredIdeActivity activity) {
     waitForImportCompletion().onProcessed(o -> {
+      activity.finished();
       MavenResolveResultProblemProcessor.notifyMavenProblems(myProject);
       MavenSyncConsole.finishTransaction(myProject);
     });
