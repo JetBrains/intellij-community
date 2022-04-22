@@ -128,9 +128,9 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     commandLine.withInitialColumns(120);
     commandLine.withEnvironment(myRunConfiguration.getEnvData().getEnvs());
     commandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
-    commandLine.setWorkDirectory(convertToWslIfNeeded(myRunConfiguration.getScriptWorkingDirectory(), wslDistribution));
+    commandLine.setWorkDirectory(myRunConfiguration.getScriptWorkingDirectory());
 
-    commandLine.setExePath(myRunConfiguration.getInterpreterPath());
+    commandLine.setExePath(convertToWslIfNeeded(myRunConfiguration.getInterpreterPath(), wslDistribution));
     if (StringUtil.isNotEmpty(myRunConfiguration.getInterpreterOptions())) {
       commandLine.addParameters(ParametersListUtil.parse(myRunConfiguration.getInterpreterOptions()));
     }
@@ -161,20 +161,11 @@ final class ShRunConfigurationProfileState implements RunProfileState {
                                                                                             myRunConfiguration.getScriptPath());
       final List<String> commandLine = new ArrayList<>();
       addIfPresent(commandLine, myRunConfiguration.getEnvData().getEnvs());
-      addIfPresent(commandLine, adaptPathForExecution(myRunConfiguration.getInterpreterPath(), null));
+      addIfPresent(commandLine, adaptPathForExecution(myRunConfiguration.getInterpreterPath(), wslDistribution));
       addIfPresent(commandLine, myRunConfiguration.getInterpreterOptions());
       commandLine.add(adaptPathForExecution(myRunConfiguration.getScriptPath(), wslDistribution));
       addIfPresent(commandLine, myRunConfiguration.getScriptOptions());
-
-      if (wslDistribution != null) {
-        return wslDistribution
-          .patchCommandLine(new GeneralCommandLine(commandLine), myProject,
-                            wslDistribution.getWslPath(myRunConfiguration.getScriptWorkingDirectory()), false)
-          .getCommandLineString();
-      }
-      else {
-        return String.join(" ", commandLine);
-      }
+      return String.join(" ", commandLine);
     }
     else {
       List<String> commandLine = new ArrayList<>();
@@ -219,15 +210,20 @@ final class ShRunConfigurationProfileState implements RunProfileState {
 
   private static String adaptPathForExecution(@NotNull String systemDependentPath,
                                               @Nullable WSLDistribution wslDistribution) {
-    if (wslDistribution != null) return ShStringUtil.quote(wslDistribution.getWslPath(systemDependentPath));
-    WslPath wslPath = WslPath.parseWindowsUncPath(systemDependentPath);
-    if (wslPath != null) return wslPath.getLinuxPath();
-    if (Platform.current() != Platform.WINDOWS) return ShStringUtil.quote(systemDependentPath);
-    String escapedPath = StringUtil.escapeQuotes(systemDependentPath);
-    return StringUtil.containsWhitespaces(systemDependentPath) ? StringUtil.QUOTER.apply(escapedPath) : escapedPath;
+    if (wslDistribution != null) {
+      return wslDistribution.getWslPath(systemDependentPath);
+    } else {
+      if (Platform.current() != Platform.WINDOWS) return ShStringUtil.quote(systemDependentPath);
+      String escapedPath = StringUtil.escapeQuotes(systemDependentPath);
+      return StringUtil.containsWhitespaces(systemDependentPath) ? StringUtil.QUOTER.apply(escapedPath) : escapedPath;
+    }
   }
 
   private static String convertToWslIfNeeded(@NotNull String path, @Nullable WSLDistribution wslDistribution) {
-    return wslDistribution != null ? wslDistribution.getWslPath(path) : path;
+    if (path.isEmpty()) return path;
+    if (wslDistribution != null) {
+      return wslDistribution.getWslPath(path);
+    }
+    return path;
   }
 }
