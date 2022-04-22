@@ -188,7 +188,10 @@ public final class BuildOptions {
    */
   public Boolean compilationLogEnabled = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true);
 
-  static final String CLEAN_OUTPUT_FOLDER_PROPERTY = "intellij.build.clean.output.root";
+  /**
+   * By default, build cleanup output folder before compilation, use this property to change this behaviour.
+   */
+  public static final String CLEAN_OUTPUT_FOLDER_PROPERTY = "intellij.build.clean.output.root";
   public boolean cleanOutputFolder = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_FOLDER_PROPERTY, true);
 
   /**
