@@ -123,7 +123,7 @@ object CodeWithMeClientDownloader {
 
     val jreBuildParts = jreBuild.split("b")
     require(jreBuildParts.size == 2) { "jreBuild format should be like 12_3_45b6789.0" }
-    require(jreBuildParts[0].matches(Regex("^[0-9_]+$"))) { "jreBuild format should be like 12_3_45b6789.0" }
+    require(jreBuildParts[0].matches(Regex("^[0-9_.]+$"))) { "jreBuild format should be like 12_3_45b6789.0" }
     require(jreBuildParts[1].matches(Regex("^[0-9.]+$"))) { "jreBuild format should be like 12_3_45b6789.0" }
 
     val jdkVersion = jreBuildParts[0]
