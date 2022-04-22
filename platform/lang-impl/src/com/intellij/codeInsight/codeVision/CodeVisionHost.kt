@@ -381,6 +381,13 @@ open class CodeVisionHost(val project: Project) {
       if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(it.id)) return@associate it.id to null
       it.id to it.precomputeOnUiThread(editor)
     }
+
+    // dropping all lenses if CV disabled
+    if (lifeSettingModel.isEnabled.value.not()) {
+      consumer(emptyList(), providers.map { it.id })
+      return
+    }
+
     executeOnPooledThread(calcLifetime, inTestSyncMode) {
       ProgressManager.checkCanceled()
       var results = mutableListOf<Pair<TextRange, CodeVisionEntry>>()
