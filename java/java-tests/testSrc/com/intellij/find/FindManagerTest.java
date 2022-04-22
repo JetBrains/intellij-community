@@ -713,8 +713,13 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setDirectoryName(excluded.getPath());
     assertSize(2, findInProject(findModel));
 
+    var fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
+    assertTrue(fileIndex.isExcluded(aTxt));
+    assertTrue(fileIndex.isExcluded(excluded));
+    assertFalse(fileIndex.isExcluded(root));
+    assertFalse(Registry.is("find.search.in.excluded.dirs"));
+
     findModel.setDirectoryName(root.getPath());
-    assertTrue(ProjectRootManager.getInstance(getProject()).getFileIndex().isExcluded(aTxt));
     assertSize(0, findInProject(findModel));
     Registry.get("find.search.in.excluded.dirs").setValue(true, getTestRootDisposable());
     assertSize(2, findInProject(findModel));
