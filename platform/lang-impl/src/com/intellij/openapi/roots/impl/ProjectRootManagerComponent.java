@@ -40,8 +40,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor;
-import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -133,33 +131,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     );
     AdditionalLibraryRootsProvider.EP_NAME.addChangeListener(rootsExtensionPointListener, this);
     OrderEnumerationHandler.EP_NAME.addChangeListener(rootsExtensionPointListener, this);
-
-
-    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> {
-      if (!(FileBasedIndex.getInstance() instanceof FileBasedIndexImpl)) {
-        return;
-      }
-      List<VirtualFile> rootsToIndex = new ArrayList<>(newRoots.size());
-      for (VirtualFile root : newRoots) {
-        boolean shouldIndex = true;
-        for (VirtualFile oldRoot : oldRoots) {
-          if (VfsUtilCore.isAncestor(oldRoot, root, false)) {
-            shouldIndex = false;
-            break;
-          }
-        }
-        if (shouldIndex) {
-          rootsToIndex.add(root);
-        }
-      }
-
-      if (rootsToIndex.isEmpty()) return;
-
-      List<IndexableFilesIterator> indexableFilesIterators =
-        Collections.singletonList(AdditionalLibraryRootsContributor.createIndexingIterator(presentableLibraryName, rootsToIndex, libraryNameForDebug));
-
-      new UnindexedFilesUpdater(myProject, indexableFilesIterators, "On updated roots of library '" + presentableLibraryName + "'").queue(myProject);
-    });
   }
 
   protected void projectClosed() {
@@ -191,6 +162,10 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   protected void fireBeforeRootsChangeEvent(boolean fileTypes) {
     isFiringEvent = true;
     try {
+      DirectoryIndex directoryIndex = DirectoryIndex.getInstance(myProject);
+      if (directoryIndex instanceof DirectoryIndexImpl) {
+        ((DirectoryIndexImpl)directoryIndex).reset();
+      }
       myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, fileTypes));
     }
     finally {
@@ -202,6 +177,10 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   protected void fireRootsChangedEvent(boolean fileTypes, @NotNull List<? extends RootsChangeIndexingInfo> indexingInfos) {
     isFiringEvent = true;
     try {
+      DirectoryIndex directoryIndex = DirectoryIndex.getInstance(myProject);
+      if (directoryIndex instanceof DirectoryIndexImpl) {
+        ((DirectoryIndexImpl)directoryIndex).reset();
+      }
       myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, fileTypes, indexingInfos));
     }
     finally {
