@@ -1,24 +1,24 @@
 --- FIND MODEL ---
-myStringToFind =a
-myStringToReplace =
-isReplaceState =false
-isWholeWordsOnly =false
-searchContext =ANY
-isFromCursor =true
-isForward =true
-isGlobal =true
-isRegularExpressions =false
-isCaseSensitive =false
-isMultipleFiles =false
-isPromptOnReplace =true
-isReplaceAll =false
-isProjectScope =true
-directoryName =null
-isWithSubdirectories =true
-fileFilter =null
-moduleName =null
-customScopeName =null
-searchInProjectFiles =false
+myStringToFind = 'a'
+myStringToReplace = ''
+isReplaceState = false
+isWholeWordsOnly = false
+searchContext = 'ANY'
+isFromCursor = true
+isForward = true
+isGlobal = true
+isRegularExpressions = false
+isCaseSensitive = false
+isMultipleFiles = false
+isPromptOnReplace = true
+isReplaceAll = false
+isProjectScope = true
+directoryName = 'null'
+isWithSubdirectories = true
+fileFilter = null
+moduleName = 'null'
+customScopeName = 'null'
+searchInProjectFiles = false
 
 --
 
