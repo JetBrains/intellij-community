@@ -3429,6 +3429,7 @@
     </annotation>
   </item>
   <item name='java.util.Optional T orElse(T) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
     <annotation name='org.intellij.lang.annotations.Flow'>
       <val name="targetIsContainer" val="true"/>
     </annotation>
