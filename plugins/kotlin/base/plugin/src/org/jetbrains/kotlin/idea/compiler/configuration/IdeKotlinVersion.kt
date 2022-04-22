@@ -93,7 +93,7 @@ class IdeKotlinVersion private constructor(
             error("None of prefixes $prefixes found in kind suffix \"$kindSuffix\"")
         }
 
-        private fun parse(rawVersion: String): Result<IdeKotlinVersion> {
+        fun parse(rawVersion: String): Result<IdeKotlinVersion> {
             val matchResult = KOTLIN_COMPILER_VERSION_PATTERN.matchEntire(rawVersion)
                 ?: return Result.failure(IllegalArgumentException("Unsupported compiler version: $rawVersion"))
 
