@@ -2,10 +2,7 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.IdeBundle
-import com.intellij.ide.RecentProjectListActionProvider
-import com.intellij.ide.RecentProjectsManagerBase
-import com.intellij.ide.ReopenProjectAction
+import com.intellij.ide.*
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
@@ -104,7 +101,7 @@ private class ProjectWidgetUpdater(val proj: Project, val widget: ProjectWidget)
 
 private class ProjectWidget(private val project: Project): ToolbarComboWidget(), Disposable {
   override fun doExpand(e: InputEvent) {
-    val step = MyStep(createActionsList())
+    val step = MyStep(createActionsList(), this)
     val widgetRenderer = ProjectWidgetRenderer(step::getSeparatorAbove)
 
     val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<Any>> { base ->
@@ -151,14 +148,15 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
     return Pair(action, presentation)
   }
 
-  private class MyStep(private val actionsMap: Map<AnAction, Presentation?>): ListPopupStep<AnAction> {
+  private class MyStep(private val actionsMap: Map<AnAction, Presentation?>, private val widget: Component): ListPopupStep<AnAction> {
     private val actions: List<AnAction> = actionsMap.keys.toList()
     private val presentationMapper: (AnAction?) -> Presentation? = { action -> action?.let { actionsMap[it] } }
 
     override fun getTitle(): String? = null
 
     override fun onChosen(selectedValue: AnAction?, finalChoice: Boolean): PopupStep<*>? {
-      selectedValue?.actionPerformed(AnActionEvent.createFromDataContext("", selectedValue.templatePresentation, DataContext.EMPTY_CONTEXT))
+      val context = DataManager.getInstance().getDataContext(widget)
+      selectedValue?.actionPerformed(AnActionEvent.createFromDataContext("", selectedValue.templatePresentation, context))
       return PopupStep.FINAL_CHOICE
     }
 
