@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.idea.Main;
@@ -185,7 +185,7 @@ public final class BootstrapClassLoaderUtil {
       responseCode = connection.getResponseCode();
     }
     catch (ConnectException e) {
-      throw new RuntimeException("Please run Dev Build Server", e);
+      throw new RuntimeException("Please run Dev Build Server. Run build/dev-build-server.cmd in OS terminal. See https://bit.ly/3rMPnUX", e);
     }
 
     connection.disconnect();
@@ -305,16 +305,16 @@ public final class BootstrapClassLoaderUtil {
     private final int myMajor;
     private final int myMinor;
 
-    SimpleVersion(int major, int minor) {
+    private SimpleVersion(int major, int minor) {
       myMajor = major;
       myMinor = minor;
     }
 
-    public boolean isAtLeast(@NotNull Comparable<? super SimpleVersion> ver) {
+    private boolean isAtLeast(@NotNull Comparable<? super SimpleVersion> ver) {
       return ver.compareTo(this) <= 0;
     }
 
-    public boolean isCompatible(@Nullable SimpleVersion since, @Nullable SimpleVersion until) {
+    private boolean isCompatible(@Nullable SimpleVersion since, @Nullable SimpleVersion until) {
       if (since != null && until != null) {
         return compareTo(since) >= 0 && compareTo(until) <= 0;
       }
@@ -332,7 +332,7 @@ public final class BootstrapClassLoaderUtil {
       return myMajor != ver.myMajor? Integer.compare(myMajor, ver.myMajor) : Integer.compare(myMinor, ver.myMinor);
     }
 
-    public static @Nullable SimpleVersion parse(@Nullable String text) {
+    private static @Nullable SimpleVersion parse(@Nullable String text) {
       if (text == null || text.isEmpty()) {
         return null;
       }
