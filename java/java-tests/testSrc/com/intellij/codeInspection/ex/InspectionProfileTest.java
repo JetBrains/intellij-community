@@ -10,6 +10,7 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.ProfileChangeAdapter;
@@ -195,6 +196,23 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   private static void updateProfile(BaseInspectionProfileManager profileManager, InspectionProfileImpl localProfile) {
     profileManager.addProfile(localProfile);
     profileManager.fireProfileChanged(localProfile);
+  }
+
+  public void testCustomTextAttributes() throws IOException, JDOMException {
+    @Language("XML") String content = "<profile version=\"1.0\">\n" +
+                     "  <option name=\"myName\" value=\"default\" />\n" +
+                     "  <inspection_tool class=\"Convert2Lambda\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
+                     "    <option name=\"myExternalName\" value=\"NOT_USED_ELEMENT_ATTRIBUTES\"/>\n" +
+                     "  </inspection_tool>\n" +
+                     "</profile>";
+    InspectionProfileImpl profile = createProfile();
+    readFromXml(profile, content);
+    InspectionToolWrapper tool = profile.getInspectionTool("Convert2Lambda", getProject());
+    assertNotNull(tool);
+    TextAttributesKey editorAttributes = profile.getEditorAttributes("Convert2Lambda", null);
+    assertNotNull(editorAttributes);
+    assertEquals("NOT_USED_ELEMENT_ATTRIBUTES", editorAttributes.getExternalName());
+    assertThat(profile.writeScheme()).isEqualTo(JDOMUtil.load(content));
   }
 
   public void testConvertOldProfile() throws Exception {
