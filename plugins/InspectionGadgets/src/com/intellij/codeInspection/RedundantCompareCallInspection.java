@@ -70,10 +70,21 @@ public class RedundantCompareCallInspection extends AbstractBaseJavaLocalInspect
       if (call == null) return;
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if(args.length != 2) return;
+      String maybeCast = "";
+      if (myRelationType == RelationType.EQ || myRelationType == RelationType.NE) {
+        PsiType leftType = args[0].getType();
+        PsiType rightType = args[1].getType();
+        if (leftType instanceof PsiClassType && rightType instanceof PsiClassType) {
+          PsiPrimitiveType type = PsiPrimitiveType.getOptionallyUnboxedType(leftType);
+          if (type != null) {
+            maybeCast = "(" + type.getCanonicalText() + ")";
+          }
+        }
+      }
       PsiBinaryExpression parent = PsiTreeUtil.getParentOfType(call, PsiBinaryExpression.class);
       if (parent == null) return;
       CommentTracker ct = new CommentTracker();
-      ct.replaceAndRestoreComments(parent, ct.text(args[0], ParenthesesUtils.EQUALITY_PRECEDENCE) +
+      ct.replaceAndRestoreComments(parent, maybeCast + ct.text(args[0], ParenthesesUtils.EQUALITY_PRECEDENCE) +
                                            myRelationType +
                                            ct.text(args[1], ParenthesesUtils.EQUALITY_PRECEDENCE));
     }
