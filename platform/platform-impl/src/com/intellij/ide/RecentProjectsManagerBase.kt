@@ -400,14 +400,6 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
         // appClosing updates project info (even more - on project closed full screen state maybe not correct)
         return
       }
-
-      val openProject = ProjectManager.getInstance().openProjects.lastOrNull()
-      if (openProject != null) {
-        val path = manager.getProjectPath(openProject)
-        if (path != null) {
-          manager.markPathRecent(path, openProject)
-        }
-      }
       updateSystemDockMenu()
     }
   }
@@ -457,8 +449,6 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
 
     disableUpdatingRecentInfo.set(true)
-    // https://youtrack.jetbrains.com/issue/IDEA-121163
-    // pre-allocate frames in reversed order
     val future: CompletableFuture<Boolean>
     if (openPaths.size == 1 ||
         ApplicationManager.getApplication().isHeadlessEnvironment ||
@@ -506,44 +496,55 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   protected open fun isValidProjectPath(file: Path) = ProjectUtil.isValidProjectPath(file)
 
   protected fun openMultiple(openPaths: List<Entry<String, RecentProjectMetaInfo>>): CompletableFuture<Boolean> {
-    val reversedList = ArrayList<Pair<Path, RecentProjectMetaInfo>>(openPaths.size)
-    for (entry in openPaths.reversed()) {
+    val toOpen = ArrayList<Pair<Path, RecentProjectMetaInfo>>(openPaths.size)
+    for (entry in openPaths) {
       val path = Path.of(entry.key)
       if (entry.value.frame == null || !isValidProjectPath(path)) {
         return CompletableFuture.completedFuture(false)
       }
 
-      reversedList.add(Pair(path, entry.value))
+      toOpen.add(Pair(path, entry.value))
     }
 
     // ok, no non-existent project paths and every info has a frame
-    val first = openPaths.first().value
-    val taskList = ArrayList<Pair<Path, OpenProjectTask>>(openPaths.size)
+    val activeInfo = toOpen.maxByOrNull { it.second.activationTimestamp }!!.second
+    val taskList = ArrayList<Pair<Path, OpenProjectTask>>(toOpen.size)
+    val allManagers = ArrayList<MyProjectUiFrameManager>(toOpen.size)
     return CompletableFuture.runAsync({
-      for ((path, info) in reversedList) {
+      var activeTask: Pair<Path, OpenProjectTask>? = null
+      for ((path, info) in toOpen) {
         val frameInfo = info.frame!!
-        val isActive = info == first
+        val isActive = info == activeInfo
         val ideFrame = createNewProjectFrame(frameInfo)
         info.frameTitle?.let {
           ideFrame.title = it
         }
         val frameManager = if (isActive) {
-          MyActiveProjectUiFrameManager(ideFrame, taskList, frameInfo.fullScreen)
+          MyActiveProjectUiFrameManager(ideFrame, allManagers, frameInfo.fullScreen)
         }
         else {
           MyProjectUiFrameManager(ideFrame)
         }
-        taskList.add(Pair(path, OpenProjectTask(
+        allManagers.add(frameManager)
+        val task = Pair(path, OpenProjectTask(
           forceOpenInNewFrame = true,
           showWelcomeScreen = false,
           frameManager = frameManager,
           projectWorkspaceId = info.projectWorkspaceId,
-        )))
+        ))
+        if (isActive) {
+          activeTask = task
+        }
+        else {
+          taskList.add(task)
+        }
       }
+      // we open project windows in the order projects were opened historically (to preserve taskbar order)
+      // but once the windows are created, we start project loading from the latest active project (and put its window at front)
+      taskList.add(activeTask!!)
+      taskList.reverse()
     }, ApplicationManager.getApplication()::invokeLater)
       .thenApplyAsync({
-        taskList.reverse()
-
         val projectManager = ProjectManagerEx.getInstanceEx()
         val iterator = taskList.iterator()
         while (iterator.hasNext()) {
@@ -568,7 +569,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   protected val lastOpenedProjects: List<Entry<String, RecentProjectMetaInfo>>
     get() = synchronized(stateLock) {
-      return state.additionalInfo.entries.filter { it.value.opened }.sortedBy { -it.value.activationTimestamp }
+      return state.additionalInfo.entries.filter { it.value.opened }
     }
 
   override fun getGroups(): List<ProjectGroup> {
@@ -854,32 +855,9 @@ private open class MyProjectUiFrameManager(val frame: IdeFrameImpl) : ProjectUiF
 }
 
 private class MyActiveProjectUiFrameManager(frame: IdeFrameImpl,
-                                            tasks: List<Pair<Path, OpenProjectTask>>,
+                                            allManagers: List<MyProjectUiFrameManager>,
                                             private val isFullScreen: Boolean) : MyProjectUiFrameManager(frame) {
-  companion object {
-    private fun doInit(isFullScreen: Boolean, tasks: List<Pair<Path, OpenProjectTask>>) {
-      for (task in tasks.reversed()) {
-        val manager = task.second.frameManager as MyProjectUiFrameManager
-        val frame = manager.frame
-        val frameHelper = ProjectFrameHelper(frame, null)
-        frame.isVisible = true
-
-        if (isFullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
-          frameHelper.toggleFullScreen(true)
-        }
-
-        manager.frameHelper = frameHelper
-      }
-
-      for (task in tasks) {
-        (task.second.frameManager as MyProjectUiFrameManager).frameHelper!!.init()
-      }
-    }
-  }
-
-  private var tasks: List<Pair<Path, OpenProjectTask>>? = tasks
-
-  override fun getComponent(): JComponent = frame.rootPane
+  private var allManagers: List<MyProjectUiFrameManager>? = allManagers
 
   override fun init(allocator: ProjectUiFrameAllocator) {
     if (frameHelper != null) {
@@ -889,9 +867,28 @@ private class MyActiveProjectUiFrameManager(frame: IdeFrameImpl,
     ApplicationManager.getApplication().invokeLater {
       if (!allocator.cancelled) {
         runActivity("project frame initialization") {
-          val tasks = this.tasks!!
-          this.tasks = null
-          doInit(isFullScreen, tasks)
+          val allManagers = this.allManagers!!.toMutableList()
+          this.allManagers = null
+
+          for (manager in allManagers) {
+            val frame = manager.frame
+            val frameHelper = ProjectFrameHelper(frame, null)
+            frame.isVisible = true
+
+            if (isFullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
+              frameHelper.toggleFullScreen(true)
+            }
+
+            manager.frameHelper = frameHelper
+          }
+
+          this.frame.toFront()
+          allManagers.remove(this)
+          allManagers.add(this)
+
+          for (manager in allManagers.reversed()) {
+            manager.frameHelper!!.init()
+          }
         }
       }
     }
