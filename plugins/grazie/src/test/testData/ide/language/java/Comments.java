@@ -29,6 +29,8 @@ class ForMultiLanguageSupport {
 
   // contains only letters, digits, numbers, underscores ("_")
 
+  // The index is in the range [start, end). Tries to find a group of non-conflicting events in range [`startIndex`..`inEvents.size()`).
+
   // An iterable of bundle instances
 
   // Resolve '../' in paths (like real_path)
