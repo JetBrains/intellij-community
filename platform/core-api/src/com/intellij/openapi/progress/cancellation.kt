@@ -14,7 +14,7 @@ private val LOG: Logger = Logger.getInstance("#com.intellij.openapi.progress")
 fun <X> withJob(job: Job, action: () -> X): X = Cancellation.withJob(job, ThrowableComputable(action))
 
 @JvmField
-val DISABLED_PCE_IN_HEADLESS_MODE = "disabled" == System.getProperty("idea.check.canceled.headless.mode")
+val DISABLED_PCE_IN_HEADLESS_MODE: Boolean = "disabled" == System.getProperty("idea.check.canceled.headless.mode")
 
 /**
  * Ensures that the current thread has an [associated job][Cancellation.currentJob].
