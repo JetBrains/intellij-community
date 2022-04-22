@@ -930,6 +930,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       session = HighlightingSessionImpl.createHighlightingSession(psiFile, editor, scheme, progress);
     }
     if (session == null) {
+      // happens e.g., when we are trying to open a directory and there's a FileEditor supporting this
       stopProcess(true, "Couldn't create session for "+fileEditors);
       return null;
     }
