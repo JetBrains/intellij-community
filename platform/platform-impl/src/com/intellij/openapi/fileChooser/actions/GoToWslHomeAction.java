@@ -6,6 +6,7 @@ import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.fileChooser.FileChooserPanel;
 import com.intellij.openapi.fileChooser.FileSystemTree;
@@ -17,7 +18,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,10 +29,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class GoToWslHomeAction extends FileChooserAction implements LightEditCompatible {
+public final class GoToWslHomeAction extends FileChooserAction implements LightEditCompatible, UpdateInBackground {
+  private static final NotNullLazyValue<Boolean> ourHasWsl = PathExecLazyValue.create("wsl.exe");
+
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
-    var allowed = WSLUtil.isSystemCompatible() && Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser");
+    var allowed = WSLUtil.isSystemCompatible() && ourHasWsl.get() && Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser");
     e.getPresentation().setEnabledAndVisible(allowed);
   }
 
