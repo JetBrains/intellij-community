@@ -2,18 +2,13 @@
 package com.intellij.openapi.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.containers.DisposableWrapperList
 import org.jetbrains.annotations.ApiStatus
 import java.awt.LayoutManager
-import java.util.function.Supplier
 import javax.swing.JComponent
-import javax.swing.text.JTextComponent
 
 class DialogPanel : JBPanel<DialogPanel> {
   var preferredFocusedComponent: JComponent? = null
@@ -27,11 +22,11 @@ class DialogPanel : JBPanel<DialogPanel> {
   var isModifiedCallbacks: Map<JComponent?, List<() -> Boolean>> = emptyMap()
 
   private var parentDisposable: Disposable? = null
-  private val integratedPanels = mutableMapOf<DialogPanel, Disposable?>()
+  private var validator: DialogPanelValidator? = null
 
-  private val applyValidationRequestor = ApplyValidationRequestor()
-  private val componentValidationStatus = hashMapOf<JComponent, ValidationInfo>()
-  private val validationCallbacks = DisposableWrapperList<(Map<JComponent, ValidationInfo>) -> Unit>()
+  private val integratedPanels = LinkedHashSet<DialogPanel>()
+  private val integratedPanelRegisterListeners = DisposableWrapperList<(DialogPanel) -> Unit>()
+  private val integratedPanelUnregisterListeners = DisposableWrapperList<(DialogPanel) -> Unit>()
 
   constructor() : super()
   constructor(layout: LayoutManager?) : super(layout)
@@ -40,88 +35,27 @@ class DialogPanel : JBPanel<DialogPanel> {
     parentDisposable: Disposable,
     componentValidityChangedCallback: ((Map<JComponent, ValidationInfo>) -> Unit)? = null
   ) {
-    if (componentValidityChangedCallback != null) {
-      validationCallbacks.add(componentValidityChangedCallback, parentDisposable)
-    }
     registerValidators(parentDisposable)
+
+    val validator = validator
+    if (componentValidityChangedCallback != null && validator != null) {
+      validator.whenValidationStatusChanged(parentDisposable) {
+        componentValidityChangedCallback(validator.getValidationStatus())
+      }
+    }
   }
 
   fun registerValidators(parentDisposable: Disposable) {
     this.parentDisposable = parentDisposable
-    registerValidatorsForIntegratedPanels(integratedPanels.keys)
-
-    for (component in validationsOnInput.keys + validationsOnApply.keys) {
-      val validator = ComponentValidator(parentDisposable)
-      registerValidators(component, validator)
-      registerValidationRequestors(component, validator, parentDisposable)
-      validator.installOn(component)
-    }
-  }
-
-  private fun registerValidators(component: JComponent, validator: ComponentValidator) {
-    validator.withValidator(Supplier {
-      val validations = if (applyValidationRequestor.isActive) validationsOnApply else validationsOnInput
-      val validationInfo = validations[component]?.let(::applyValidators)
-      fireValidationStatusChanged(component, validationInfo)
-      validationInfo
-    })
-  }
-
-  private fun applyValidators(validations: List<DialogValidation>): ValidationInfo? {
-    var result: ValidationInfo? = null
-    for (validation in validations) {
-      val validationInfo = validation.validate()
-      if (validationInfo != null) {
-        if (!validationInfo.okEnabled) {
-          return validationInfo
-        }
-        if (result == null || !validationInfo.warning) {
-          result = validationInfo
-        }
-      }
-    }
-    return result
-  }
-
-  private fun registerValidationRequestors(component: JComponent, validator: ComponentValidator, parentDisposable: Disposable) {
-    val validationRequestors = validationRequestors[component] ?: emptyList()
-    if (validationRequestors.isEmpty() && component is JTextComponent) {
-      validator.andRegisterOnDocumentListener(component)
-    }
-    for (validationRequestor in validationRequestors) {
-      validationRequestor.subscribe(parentDisposable, validator::revalidate)
-    }
-    applyValidationRequestor.subscribe(parentDisposable, validator::revalidate)
-  }
-
-  private fun fireValidationStatusChanged(component: JComponent, validationInfo: ValidationInfo?) {
-    if (componentValidationStatus[component] != validationInfo) {
-      if (validationInfo != null) {
-        componentValidationStatus[component] = validationInfo
-        logValidationInfoInHeadlessMode(validationInfo)
-      }
-      else {
-        componentValidationStatus.remove(component)
-      }
-      validationCallbacks.forEach { it(componentValidationStatus) }
-    }
-  }
-
-  private fun logValidationInfoInHeadlessMode(info: ValidationInfo) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
-      logger<DialogPanel>().warn(info.message)
-    }
+    validator = DialogPanelValidator(this, parentDisposable)
   }
 
   fun validateAll(): List<ValidationInfo> {
-    applyValidationRequestor.validateAll()
-    val panelValidationInfo = _validateCallbacks.mapNotNull { it.validate() }
-    val integratedPanelValidationInfo = integratedPanels.keys.flatMap { it.validateAll() }
-    return componentValidationStatus.values + panelValidationInfo + integratedPanelValidationInfo
+    return validator?.validateAll() ?: emptyList()
   }
 
   fun apply() {
-    integratedPanels.keys.forEach { it.apply() }
+    integratedPanels.forEach { it.apply() }
 
     for ((component, callbacks) in applyCallbacks.entries) {
       if (component == null) continue
@@ -135,7 +69,7 @@ class DialogPanel : JBPanel<DialogPanel> {
   }
 
   fun reset() {
-    integratedPanels.keys.forEach { it.reset() }
+    integratedPanels.forEach { it.reset() }
 
     for ((component, callbacks) in resetCallbacks.entries) {
       if (component == null) continue
@@ -146,7 +80,11 @@ class DialogPanel : JBPanel<DialogPanel> {
   }
 
   fun isModified(): Boolean {
-    return isModifiedCallbacks.values.any { list -> list.any { it() } } || integratedPanels.keys.any { it.isModified() }
+    return isModifiedCallbacks.values.any { list -> list.any { it() } } || integratedPanels.any { it.isModified() }
+  }
+
+  fun getIntegratedPanels(): List<DialogPanel> {
+    return integratedPanels.toList()
   }
 
   /**
@@ -157,11 +95,10 @@ class DialogPanel : JBPanel<DialogPanel> {
    */
   @ApiStatus.Internal
   fun registerSubPanel(panel: DialogPanel) {
-    if (integratedPanels.contains(panel)) {
+    if (!integratedPanels.add(panel)) {
       throw Exception("Double registration of $panel")
     }
-    integratedPanels[panel] = null
-    registerValidatorsForIntegratedPanels(setOf(panel))
+    integratedPanelRegisterListeners.forEach { it(panel) }
   }
 
   /**
@@ -169,48 +106,18 @@ class DialogPanel : JBPanel<DialogPanel> {
    */
   @ApiStatus.Internal
   fun unregisterSubPanel(panel: DialogPanel) {
-    if (!integratedPanels.contains(panel)) {
+    if (!integratedPanels.remove(panel)) {
       throw Exception("Panel is not registered: $panel")
     }
-    val disposable = integratedPanels.remove(panel)
-    disposable?.let { Disposer.dispose(it) }
+    integratedPanelUnregisterListeners.forEach { it(panel) }
   }
 
-  private fun registerValidatorsForIntegratedPanels(panels: Set<DialogPanel>) {
-    parentDisposable?.let {
-      for (panel in panels) {
-        val disposable = Disposer.newDisposable()
-        integratedPanels.put(panel, disposable)?.let { oldDisposable -> Disposer.dispose(oldDisposable) }
-        Disposer.register(it, disposable)
-        panel.registerValidators(disposable)
-      }
-    }
+  fun whenIntegratedPanelRegistered(parentDisposable: Disposable, listener: (DialogPanel) -> Unit) {
+    integratedPanelRegisterListeners.add(listener, parentDisposable)
   }
 
-  private class ApplyValidationRequestor : DialogValidationRequestor {
-    private val validators = DisposableWrapperList<() -> Unit>()
-
-    var isActive = false
-      private set
-
-    fun validateAll() {
-      isActive = true
-      try {
-        validators.forEach { it() }
-      }
-      finally {
-        isActive = false
-      }
-    }
-
-    override fun subscribe(parentDisposable: Disposable?, validate: () -> Unit) {
-      if (parentDisposable == null) {
-        validators.add(validate)
-      }
-      else {
-        validators.add(validate, parentDisposable)
-      }
-    }
+  fun whenIntegratedPanelUnregistered(parentDisposable: Disposable, listener: (DialogPanel) -> Unit) {
+    integratedPanelUnregisterListeners.add(listener, parentDisposable)
   }
 
   @Deprecated("Use validateOnApply instead")
@@ -219,14 +126,15 @@ class DialogPanel : JBPanel<DialogPanel> {
       val result = mutableListOf<() -> ValidationInfo?>()
       result.addAll(_validateCallbacks.map(::validateCallback))
       result.addAll(validationsOnApply.values.flatten().map(::validateCallback))
-      result.addAll(integratedPanels.keys.flatMap { it.validateCallbacks })
+      result.addAll(integratedPanels.flatMap { it.validateCallbacks })
       return result
     }
     set(value) {
       _validateCallbacks = value.map(::validation)
     }
 
-  private var _validateCallbacks: List<DialogValidation> = emptyList()
+  @Suppress("PropertyName")
+  internal var _validateCallbacks: List<DialogValidation> = emptyList()
 
   @Deprecated("Use registerValidators instead")
   var componentValidateCallbacks: Map<JComponent, () -> ValidationInfo?>

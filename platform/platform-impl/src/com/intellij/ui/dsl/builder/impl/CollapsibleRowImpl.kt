@@ -3,15 +3,17 @@ package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.UiSwitcher
+import com.intellij.openapi.ui.getUserData
+import com.intellij.openapi.ui.putUserData
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.Expandable
-import com.intellij.ui.dsl.builder.CollapsibleRow
-import com.intellij.ui.dsl.builder.DslComponentProperty
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
+import javax.swing.JComponent
 import javax.swing.border.EmptyBorder
 
 @ApiStatus.Internal
@@ -41,17 +43,8 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
                                                    Gaps(top = it.top, left = it.left, bottom = it.bottom))
     }
 
-    collapsibleTitledSeparator.label.putClientProperty(Expandable::class.java, object : Expandable {
-      override fun expand() {
-        expanded = true
-      }
-      override fun collapse() {
-        expanded = false
-      }
-      override fun isExpanded(): Boolean {
-        return expanded
-      }
-    })
+    val expandable = ExpandableImpl(collapsibleTitledSeparator)
+    collapsibleTitledSeparator.label.putClientProperty(Expandable::class.java, expandable)
 
     val action = DumbAwareAction.create { expanded = !expanded }
     action.registerCustomShortcutSet(ActionUtil.getShortcutSet("CollapsiblePanel-toggle"), collapsibleTitledSeparator.label)
@@ -59,13 +52,39 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
     val collapsibleTitledSeparator = this.collapsibleTitledSeparator
     panel {
       row {
-        cell(collapsibleTitledSeparator).horizontalAlign(HorizontalAlign.FILL)
+        cell(collapsibleTitledSeparator)
+          .horizontalAlign(HorizontalAlign.FILL)
       }
-      val expandablePanel = panel {
-        init()
-      }
-      collapsibleTitledSeparator.onAction {
-        expandablePanel.visible(it)
+      val expandablePanel = panel(init)
+      collapsibleTitledSeparator.onAction(expandablePanel::visible)
+      collapsibleTitledSeparator.putUserData(UiSwitcher.UI_SWITCHER, UiSwitcherImpl(expandable, expandablePanel))
+    }
+  }
+
+  private class ExpandableImpl(private val separator: CollapsibleTitledSeparator) : Expandable {
+    override fun expand() {
+      separator.expanded = true
+    }
+
+    override fun collapse() {
+      separator.expanded = false
+    }
+
+    override fun isExpanded(): Boolean {
+      return separator.expanded
+    }
+  }
+
+  private class UiSwitcherImpl(
+    private val expandable: Expandable,
+    private val panel: Panel
+  ) : UiSwitcher {
+    override fun show(component: Component) {
+      if (component is JComponent) {
+        val hierarchy = component.getUserData(DSL_PANEL_HIERARCHY)
+        if (hierarchy != null && panel in hierarchy) {
+          expandable.expand()
+        }
       }
     }
   }

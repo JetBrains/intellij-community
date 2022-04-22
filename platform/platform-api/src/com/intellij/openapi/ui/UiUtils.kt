@@ -6,6 +6,7 @@ package com.intellij.openapi.ui
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
@@ -24,6 +25,14 @@ import javax.swing.text.JTextComponent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
+
+fun <T> JComponent.putUserData(key: Key<T>, data: T?) {
+  putClientProperty(key, data)
+}
+
+inline fun <reified T> JComponent.getUserData(key: Key<T>): T? {
+  return getClientProperty(key) as? T
+}
 
 fun JTextComponent.isTextUnderMouse(e: MouseEvent): Boolean {
   val position = viewToModel2D(e.point)

@@ -317,6 +317,10 @@ internal class CellImpl<T : JComponent>(
     label?.let { it.isEnabled = isEnabled }
   }
 
+  init {
+    component.putUserData(DSL_PANEL_HIERARCHY, buildPanelHierarchy(parent))
+  }
+
   companion object {
     internal fun Cell<*>.installValidationRequestor(property: ObservableProperty<*>) {
       if (this is CellImpl) {
