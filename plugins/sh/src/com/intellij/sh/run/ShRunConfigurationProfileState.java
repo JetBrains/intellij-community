@@ -11,6 +11,7 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -219,6 +220,8 @@ final class ShRunConfigurationProfileState implements RunProfileState {
   private static String adaptPathForExecution(@NotNull String systemDependentPath,
                                               @Nullable WSLDistribution wslDistribution) {
     if (wslDistribution != null) return ShStringUtil.quote(wslDistribution.getWslPath(systemDependentPath));
+    WslPath wslPath = WslPath.parseWindowsUncPath(systemDependentPath);
+    if (wslPath != null) return wslPath.getLinuxPath();
     if (Platform.current() != Platform.WINDOWS) return ShStringUtil.quote(systemDependentPath);
     String escapedPath = StringUtil.escapeQuotes(systemDependentPath);
     return StringUtil.containsWhitespaces(systemDependentPath) ? StringUtil.QUOTER.apply(escapedPath) : escapedPath;
