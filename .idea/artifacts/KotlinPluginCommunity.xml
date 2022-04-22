@@ -141,11 +141,6 @@
         </element>
         <element id="archive" name="kotlin-idea.jar">
           <element id="module-output" name="kotlin.idea" />
-          <element id="directory" name="META-INF">
-            <element id="directory" name="extensions">
-              <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-for-ide/1.7.0-dev-3331/kotlin-compiler-for-ide-1.7.0-dev-3331.jar" path-in-jar="/META-INF/extensions/" />
-            </element>
-          </element>
           <element id="module-output" name="kotlin.resources-fe10" />
         </element>
         <element id="archive" name="kotlin-jps-common.jar">
@@ -183,9 +178,6 @@
         </element>
         <element id="archive" name="kotlin-reflect.jar">
           <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.7.0-dev-3331/kotlin-reflect-1.7.0-dev-3331.jar" path-in-jar="/" />
-        </element>
-        <element id="archive" name="kotlin-plugin.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-for-ide/1.7.0-dev-3331/kotlin-compiler-for-ide-1.7.0-dev-3331.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="kotlin-frontend-independent.jar">
           <element id="module-output" name="kotlin.fir.frontend-independent" />
