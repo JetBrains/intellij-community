@@ -2,24 +2,20 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction
 
-import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringActionHandler
-import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
-import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTemplate
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
+import com.intellij.refactoring.extractMethod.newImpl.inplace.*
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -95,40 +91,39 @@ class ExtractKotlinFunctionHandler(
             val editorState = EditorState(editor)
             fun afterFinish(extraction: ExtractionResult){
                 val callIdentifier = findSingleCallExpression(file, callRange.range)?.calleeExpression ?: throw IllegalStateException()
+                val methodIdentifier = extraction.declaration.nameIdentifier ?: throw IllegalStateException()
                 val methodRange = extraction.declaration.textRange
                 val methodOffset = extraction.declaration.navigationElement.textRange.endOffset
                 val callOffset = callIdentifier.textRange.endOffset
                 val preview = InplaceExtractUtils.createPreview(editor, methodRange, methodOffset, callRange.range!!, callOffset)
-                val templateState = ExtractMethodTemplate(editor, EXTRACT_FUNCTION, extraction.declaration, callIdentifier).runTemplate(LinkedHashSet())
-                Disposer.register(templateState, preview)
-                templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
-                    override fun templateFinished(template: Template, brokenOff: Boolean) {
-                        if (brokenOff) {
-                            editorState.revert()
-                        }
+                ExtractMethodTemplateBuilder(editor, EXTRACT_FUNCTION)
+                    .withCompletionNames(descriptor.suggestedNames)
+                    .onBroken {
+                        editorState.revert()
                     }
-                })
-                InplaceExtractUtils.addTemplateFinishedListener(templateState) {
-                    val call = findSingleCallExpression(file, callRange.range)
-                    val errorMessage = getIdentifierError(it!!, call)
-                    if (errorMessage != null) {
-                            editorState.revert()
-                            ExtractKotlinFunctionHandler(allContainersEnabled, InplaceExtractionHelper(allContainersEnabled))
-                                .invoke(project, editor, descriptorWithConflicts.descriptor.extractionData.originalFile, null)
-                                //CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, EXTRACT_FUNCTION, null)
-                    } else {
-                        Disposer.dispose(preview)
+                    .onSuccess {
                         processDuplicates(extraction.duplicateReplacers, file.project, editor)
                     }
-                }
+                    .withValidation { variableRange ->
+                        val error = getIdentifierError(file, variableRange)
+                        if (error != null) {
+                            CommonRefactoringUtil.showErrorHint(project, editor, error, EXTRACT_FUNCTION, null)
+                        }
+                        error == null
+                    }
+                    .disposeWithTemplate(preview)
+                    .createTemplate(file, methodIdentifier.range, callIdentifier.range)
                 onFinish(extraction)
             }
             val configuration = ExtractionGeneratorConfiguration(descriptor, ExtractionGeneratorOptions.DEFAULT)
             doRefactor(configuration, ::afterFinish)
         }
 
-        private fun getIdentifierError(methodName: String, call: KtCallExpression?): String? {
-            return if (! KotlinNamesValidator().isIdentifier(methodName, null)) {
+        @Nls
+        private fun getIdentifierError(file: PsiFile, variableRange: TextRange): String? {
+            val call = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, KtCallExpression::class.java, false)
+            val name = file.viewProvider.document.getText(variableRange)
+            return if (! KotlinNamesValidator().isIdentifier(name, file.project)) {
                 JavaRefactoringBundle.message("extract.method.error.invalid.name")
             } else if (call?.getResolvedCall(call.analyze())?.resultingDescriptor == null) {
                 JavaRefactoringBundle.message("extract.method.error.method.conflict")
