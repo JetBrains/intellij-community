@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea
 
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.kotlin.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
@@ -20,10 +21,12 @@ object KotlinPluginCompatibilityVerifier {
         if (kotlinPluginVersion.platformVersion != platformVersion || kotlinPluginVersion.isAndroidStudio != isAndroidStudio) {
             val ideName = ApplicationInfo.getInstance().versionName
 
-            Messages.showWarningDialog(
-                KotlinBundle.message("plugin.verifier.compatibility.issue.message", rawVersion, ideName, platformVersion),
-                KotlinBundle.message("plugin.verifier.compatibility.issue.title")
-            )
+            runInEdt {
+                Messages.showWarningDialog(
+                    KotlinBundle.message("plugin.verifier.compatibility.issue.message", rawVersion, ideName, platformVersion),
+                    KotlinBundle.message("plugin.verifier.compatibility.issue.title")
+                )
+            }
         }
     }
 }
