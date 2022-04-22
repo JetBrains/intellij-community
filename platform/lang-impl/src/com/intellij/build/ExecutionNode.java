@@ -7,8 +7,6 @@ import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.lang.LangBundle;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -225,35 +223,6 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     return result;
   }
 
-  public static boolean isFailed(@Nullable EventResult result) {
-    // Android Studio: Warnings from SyncIssues are added to FailureResult for now, will change once SuccessResult#getWarnings is used
-    if (result instanceof FailureResult) {
-      for (Failure failure : ((FailureResult)result).getFailures()) {
-        Notification notification = failure.getNotification();
-        if (notification == null || notification.getType() == NotificationType.ERROR) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  // Android Studio: Check if at least one of the failures is a warning
-  public static boolean hasWarnings(@Nullable EventResult result) {
-    if (result instanceof FailureResult) {
-      for (Failure failure : ((FailureResult)result).getFailures()) {
-        Notification notification = failure.getNotification();
-        if (notification != null && notification.getType() == NotificationType.WARNING) {
-          return true;
-        }
-      }
-    }
-    else if (result instanceof SuccessResult) {
-      return !((SuccessResult)result).getWarnings().isEmpty();
-    }
-    return false;
-  }
-
   @NotNull
   public List<ExecutionNode> getChildList() {
     assert myIsCorrectThread.get();
@@ -302,8 +271,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   public boolean isRunning() {
-    // Android Studio: it is not running if it already has warnings
-    return endTime <= 0 && !isSkipped(myResult) && !isFailed(myResult) && !hasWarnings(myResult);
+    return endTime <= 0 && !isSkipped(myResult) && !isFailed(myResult);
   }
 
   public boolean hasWarnings() {
@@ -422,10 +390,13 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
              isFailed(myResult) ? NODE_ICON_ERROR :
              isSkipped(myResult) ? NODE_ICON_SKIPPED :
              myErrors.get() > 0 ? NODE_ICON_ERROR :
-             // Android Studio: Show warning icon if it is not failed but has warnings
-             hasWarnings(myResult) || myWarnings.get() > 0 ? NODE_ICON_WARNING :
+             myWarnings.get() > 0 ? NODE_ICON_WARNING :
              NODE_ICON_OK;
     }
+  }
+
+  public static boolean isFailed(@Nullable EventResult result) {
+    return result instanceof FailureResult;
   }
 
   public static boolean isSkipped(@Nullable EventResult result) {
