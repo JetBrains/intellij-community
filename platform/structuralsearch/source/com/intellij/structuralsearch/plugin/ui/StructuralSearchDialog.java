@@ -472,6 +472,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       replaceDocument.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
 
       initValidation();
+      updateOptions();
     });
     myFileTypeChooser.setUserActionFileTypeInfoConsumer(info -> {
       myExistingTemplatesComponent.selectFileType(info.getText());
