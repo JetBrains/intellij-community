@@ -436,6 +436,11 @@ public class EditorMouseHoverPopupManager implements Disposable {
       public long getShowingDelay() {
         return showImmediately ? 0 : super.getShowingDelay();
       }
+
+      @Override
+      public boolean showDocumentation() {
+        return false;
+      }
     };
     scheduleProcessing(editor, context, false, true, requestFocus);
   }
@@ -455,6 +460,10 @@ public class EditorMouseHoverPopupManager implements Disposable {
 
     public @Nullable PsiElement getElementForQuickDoc() {
       return SoftReference.dereference(elementForQuickDoc);
+    }
+
+    public boolean showDocumentation() {
+      return true;
     }
 
     public HighlightInfo getHighlightInfo() {
@@ -525,7 +534,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     private @Nullable DocumentationHoverInfo documentationHoverInfo(@NotNull Editor editor) {
       try {
         return isDocumentationV2Enabled()
-               ? EditorSettingsExternalizable.getInstance().isShowQuickDocOnMouseOverElement()
+               ? showDocumentation() && EditorSettingsExternalizable.getInstance().isShowQuickDocOnMouseOverElement()
                  ? calcTargetDocumentationInfo(Objects.requireNonNull(editor.getProject()), editor, targetOffset)
                  : null
                : documentationPsiHoverInfo(editor);
