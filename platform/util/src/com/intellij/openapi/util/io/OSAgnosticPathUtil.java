@@ -20,10 +20,12 @@ public final class OSAgnosticPathUtil {
   private OSAgnosticPathUtil() { }
 
   /**
-   * Compares paths by elements and without taking separators into account. The key difference from {@link String#compareTo} is
-   * that "a/b" is less than "a.b": instead of character-vs-character matching, the paths are compared as ["a", "b"] vs. ["a.b"].
+   * Comparing paths by elements and without taking separators into account.
+   * The key difference from {@link String#compareTo} is that "a/b" is less than "a.b":
+   * instead of character-vs-character matching, the paths are compared as ["a", "b"] vs. ["a.b"].
    */
   public static final Comparator<String> COMPARATOR = (@Nullable String path1, @Nullable String path2) -> {
+    //noinspection StringEquality
     if (path1 == path2) return 0;
     if (path1 == null) return -1;
     if (path2 == null) return 1;
