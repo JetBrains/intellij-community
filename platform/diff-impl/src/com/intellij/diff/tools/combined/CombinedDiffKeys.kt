@@ -5,4 +5,6 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.util.Key
 
 val COMBINED_DIFF_VIEWER = DataKey.create<CombinedDiffViewer>("combined_diff_viewer")
-val COMBINED_DIFF_PROCESSOR = Key.create<CombinedDiffRequestProcessor>("combined_diff_processor")
+val COMBINED_DIFF_VIEWER_KEY = Key.create<CombinedDiffViewer>("combined_diff_viewer")
+val COMBINED_DIFF_MAIN_UI = Key.create<CombinedDiffMainUI>("combined_diff_main_ui")
+val COMBINED_DIFF_MODEL = Key.create<CombinedDiffModel>("combined_diff_model")

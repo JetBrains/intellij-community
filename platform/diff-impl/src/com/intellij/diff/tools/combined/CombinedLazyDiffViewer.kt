@@ -3,7 +3,6 @@ package com.intellij.diff.tools.combined
 
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.FrameDiffTool.DiffViewer
-import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
@@ -12,14 +11,14 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
 
-internal class CombinedLazyDiffViewer(val requestProducer: DiffRequestProducer, size: Dimension? = null) : DiffViewer {
+internal class CombinedLazyDiffViewer(size: Dimension? = null) : DiffViewer {
 
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
     .apply {
       add(JBUI.Panels.simplePanel()
             .apply {
               background = UIUtil.getListBackground()
-              preferredSize = if (size != null) size else HEIGHT.get().let { height -> Dimension(height, height) }
+              preferredSize = size ?: HEIGHT.get().let { height -> Dimension(height, height) }
             })
     }
 

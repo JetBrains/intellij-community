@@ -2,7 +2,7 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.CommonBundle
-import com.intellij.diff.DiffContextEx
+import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.DiffTool
 import com.intellij.diff.FrameDiffTool
@@ -55,9 +55,10 @@ import javax.swing.JProgressBar
 import javax.swing.SwingUtilities
 import kotlin.math.max
 
-internal class CombinedDiffMainUI(private val context: DiffContextEx) : Disposable {
+class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory: () -> AnAction?) : Disposable {
   private val ourDisposable = Disposer.newCheckedDisposable().also { Disposer.register(this, it) }
 
+  private val context: DiffContext = model.context
   private val settings = DiffSettings.getSettings(context.getUserData(DiffUserDataKeys.PLACE))
 
   private val combinedToolOrder = arrayListOf<CombinedDiffTool>()
@@ -81,7 +82,7 @@ internal class CombinedDiffMainUI(private val context: DiffContextEx) : Disposab
 
   private val diffToolChooser: MyDiffToolChooser
 
-  private val combinedDiffRequestProcessor get() = context.getUserData(COMBINED_DIFF_PROCESSOR)!!
+  private val combinedViewer get() = context.getUserData(COMBINED_DIFF_VIEWER_KEY)
 
   //
   // Global, shortcuts only navigation actions
@@ -110,17 +111,17 @@ internal class CombinedDiffMainUI(private val context: DiffContextEx) : Disposab
 
   private val prevDifferenceAction = object : CombinedPrevDifferenceAction(settings, context) {
     override fun getDifferenceIterable(e: AnActionEvent): PrevNextDifferenceIterable? {
-      return combinedDiffRequestProcessor.viewer?.scrollSupport?.currentPrevNextIterable ?: super.getDifferenceIterable(e)
+      return combinedViewer?.scrollSupport?.currentPrevNextIterable ?: super.getDifferenceIterable(e)
     }
   }
 
   private val nextDifferenceAction = object : CombinedNextDifferenceAction(settings, context) {
     override fun getDifferenceIterable(e: AnActionEvent): PrevNextDifferenceIterable? {
-      return combinedDiffRequestProcessor.viewer?.scrollSupport?.currentPrevNextIterable ?: super.getDifferenceIterable(e)
+      return combinedViewer?.scrollSupport?.currentPrevNextIterable ?: super.getDifferenceIterable(e)
     }
   }
 
-  private val goToChangeAction = combinedDiffRequestProcessor.createGoToChangeAction()
+  private val goToChangeAction = goToChangeFactory()
 
   private val differencesLabel by lazy { MyDifferencesLabel(goToChangeAction) }
 
@@ -241,7 +242,7 @@ internal class CombinedDiffMainUI(private val context: DiffContextEx) : Disposab
     DiffUtil.addActionBlock(leftToolbarGroup, navigationActions)
 
     DiffUtil.addActionBlock(rightToolbarGroup, viewerActions, false)
-    val requestContextActions = combinedDiffRequestProcessor.request.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS)
+    val requestContextActions = context.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS)
     DiffUtil.addActionBlock(leftToolbarGroup, requestContextActions)
     val contextActions = context.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS)
     DiffUtil.addActionBlock(leftToolbarGroup, contextActions)
@@ -325,11 +326,11 @@ internal class CombinedDiffMainUI(private val context: DiffContextEx) : Disposab
 
     private val loadedDifferences = hashMapOf<Int, Int>()
 
-    override fun getFileCount(): Int = combinedDiffRequestProcessor.filesSize
+    override fun getFileCount(): Int = combinedViewer?.diffBlocks?.size ?: 0
     override fun getTotalDifferences(): Int = calculateTotalDifferences()
 
     fun countDifferences(blockId: CombinedBlockId, childViewer: DiffViewer) {
-      val combinedViewer = combinedDiffRequestProcessor.viewer ?: return
+      val combinedViewer = combinedViewer ?: return
       val index = combinedViewer.diffBlocksPositions[blockId] ?: return
 
       loadedDifferences[index] = 1
@@ -362,7 +363,7 @@ internal class CombinedDiffMainUI(private val context: DiffContextEx) : Disposab
       activeTool = combinedDiffTool
 
       moveToolOnTop(diffTool)
-      combinedDiffRequestProcessor.buildUI()
+      model.reload()
     }
 
     override fun getTools(): List<FrameDiffTool> = availableTools.toList()
@@ -385,7 +386,7 @@ internal class CombinedDiffMainUI(private val context: DiffContextEx) : Disposab
 
       return when {
         OpenInEditorAction.KEY.`is`(dataId) -> OpenInEditorAction()
-        DiffDataKeys.DIFF_REQUEST.`is`(dataId) -> combinedDiffRequestProcessor.request
+        DiffDataKeys.DIFF_REQUEST.`is`(dataId) -> model.getCurrentRequest()
         CommonDataKeys.PROJECT.`is`(dataId) -> context.project
         PlatformCoreDataKeys.HELP_ID.`is`(dataId) -> {
           if (context.getUserData(DiffUserDataKeys.HELP_ID) != null) {
@@ -396,7 +397,7 @@ internal class CombinedDiffMainUI(private val context: DiffContextEx) : Disposab
           }
         }
         DiffDataKeys.DIFF_CONTEXT.`is`(dataId) -> context
-        else -> combinedDiffRequestProcessor.request.getUserData(DiffUserDataKeys.DATA_PROVIDER)?.getData(dataId)
+        else -> model.getCurrentRequest()?.getUserData(DiffUserDataKeys.DATA_PROVIDER)?.getData(dataId)
                 ?: context.getUserData(DiffUserDataKeys.DATA_PROVIDER)?.getData(dataId)
       }
     }
