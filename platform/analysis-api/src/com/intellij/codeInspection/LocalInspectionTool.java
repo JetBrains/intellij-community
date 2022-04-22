@@ -3,7 +3,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.*;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -70,10 +69,10 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   /**
    * Do not override the method, register attributes in plugin.xml
    * 
-   * @return attributesKey if editor presentation should be different from severity presentation
+   * @return attributesKey's external name if editor presentation should be different from severity presentation
    *         {@code null} if attributes should correspond to chosen severity
    */
-  public TextAttributesKey getEditorAttributes() {
+  public String getEditorAttributesKey() {
     return null;
   }
 

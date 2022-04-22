@@ -32,7 +32,7 @@ public final class ScopeToolState {
   private InspectionToolWrapper<?, ?> myToolWrapper;
   private boolean myEnabled;
   private HighlightDisplayLevel myLevel;
-  private TextAttributesKey myTextAttributesKey;
+  private String myTextAttributesKey;
   private ConfigPanelState myAdditionalConfigPanelState;
 
   public ScopeToolState(@NotNull NamedScope scope,
@@ -41,7 +41,7 @@ public final class ScopeToolState {
                         @NotNull HighlightDisplayLevel level) {
     this(scope.getScopeId(), toolWrapper, enabled, level);
     myScope = scope;
-    myTextAttributesKey = toolWrapper.getEditorAttributes();
+    myTextAttributesKey = toolWrapper.getEditorAttributesKeyExternalName();
   }
 
   public ScopeToolState(@NotNull String scopeName,
@@ -52,7 +52,7 @@ public final class ScopeToolState {
     myToolWrapper = toolWrapper;
     myEnabled = enabled;
     myLevel = level;
-    myTextAttributesKey = toolWrapper.getEditorAttributes();
+    myTextAttributesKey = toolWrapper.getEditorAttributesKeyExternalName();
   }
 
   @NotNull
@@ -95,12 +95,18 @@ public final class ScopeToolState {
     myLevel = level;
   }
 
-  @Nullable
-  public TextAttributesKey getTextAttributesKey() {
+  public @Nullable TextAttributesKey getTextAttributesKey() {
+    if (myTextAttributesKey == null) {
+      return null;
+    }
+    return TextAttributesKey.find(myTextAttributesKey);
+  }
+  
+  public @Nullable String getTextAttributesKeyExternalName() {
     return myTextAttributesKey;
   }
 
-  public void setTextAttributesKey(TextAttributesKey textAttributesKey) {
+  public void setTextAttributesKey(String textAttributesKey) {
     myTextAttributesKey = textAttributesKey;
   }
 

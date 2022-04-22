@@ -14,7 +14,6 @@ import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -142,7 +141,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return myEP != null ? myEP.getShortName() : getTool().getShortName();
   }
   
-  public TextAttributesKey getEditorAttributes() {
+  public String getEditorAttributesKeyExternalName() {
     return null;
   }
 

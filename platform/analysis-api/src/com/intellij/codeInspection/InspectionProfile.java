@@ -69,7 +69,8 @@ public interface InspectionProfile extends Comparable {
    * @return editor attributes if they are different from attributes of chosen severity, {@code null} otherwise
    */
   default @Nullable TextAttributesKey getEditorAttributes(@NotNull String shortName, @Nullable PsiElement element) {
-    return getInspectionTool(shortName, element).getEditorAttributes();
+    String attributesKey = getInspectionTool(shortName, element).getEditorAttributesKeyExternalName();
+    return attributesKey != null ? TextAttributesKey.find(attributesKey) : null;
   }
 
   boolean isExecutable(@Nullable Project project);

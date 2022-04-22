@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -47,13 +46,12 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
   }
 
   @Override
-  public TextAttributesKey getEditorAttributes() {
+  public String getEditorAttributesKeyExternalName() {
     if (myEP != null) {
-      String editorAttributes = myEP.editorAttributes;
-      return editorAttributes != null ? TextAttributesKey.find(editorAttributes) : null;
+      return myEP.editorAttributes;
     }
     else {
-      return getTool().getEditorAttributes();
+      return getTool().getEditorAttributesKey();
     }
   }
 

@@ -132,9 +132,9 @@ public final class ToolsImpl implements Tools {
         scopeElement.setAttribute("name", state.getScopeName());
         scopeElement.setAttribute(LEVEL_ATTRIBUTE, state.getLevel().getName());
         scopeElement.setAttribute(ENABLED_ATTRIBUTE, Boolean.toString(state.isEnabled()));
-        TextAttributesKey attributesKey = state.getTextAttributesKey();
-        if (attributesKey != null) {
-          attributesKey.writeExternal(scopeElement);
+        String keyExternalName = state.getTextAttributesKeyExternalName();
+        if (keyExternalName != null) {
+          JDOMExternalizerUtil.writeField(scopeElement, "myExternalName", keyExternalName);
         }
         InspectionToolWrapper<?,?> toolWrapper = state.getTool();
         if (toolWrapper.isInitialized()) {
@@ -146,9 +146,9 @@ public final class ToolsImpl implements Tools {
     inspectionElement.setAttribute(ENABLED_ATTRIBUTE, Boolean.toString(isEnabled()));
     inspectionElement.setAttribute(LEVEL_ATTRIBUTE, getLevel().getName());
     inspectionElement.setAttribute(ENABLED_BY_DEFAULT_ATTRIBUTE, Boolean.toString(myDefaultState.isEnabled()));
-    TextAttributesKey attributesKey = myDefaultState.getTextAttributesKey();
+    @Nullable String attributesKey = myDefaultState.getTextAttributesKeyExternalName();
     if (attributesKey != null) {
-      attributesKey.writeExternal(inspectionElement);
+      JDOMExternalizerUtil.writeField(inspectionElement, "myExternalName", attributesKey);
     }
     InspectionToolWrapper<?,?> toolWrapper = myDefaultState.getTool();
     if (toolWrapper.isInitialized()) {
@@ -169,7 +169,7 @@ public final class ToolsImpl implements Tools {
     InspectionToolWrapper<?,?> toolWrapper = myDefaultState.getTool();
     String attr = JDOMExternalizerUtil.readField(toolElement, "myExternalName");
     if (attr != null) {
-      myDefaultState.setTextAttributesKey(new TextAttributesKey(toolElement));
+      myDefaultState.setTextAttributesKey(attr);
     }
     String enabled = toolElement.getAttributeValue(ENABLED_ATTRIBUTE);
     boolean isEnabled = Boolean.parseBoolean(enabled);
@@ -212,7 +212,7 @@ public final class ToolsImpl implements Tools {
 
         attr = JDOMExternalizerUtil.readField(scopeElement, "myExternalName");
         if (attr != null) {
-          state.setTextAttributesKey(new TextAttributesKey(scopeElement));
+          state.setTextAttributesKey(attr);
         }
         scopeNames.add(scopeName);
       }
@@ -516,13 +516,13 @@ public final class ToolsImpl implements Tools {
   
   public void setTextAttributesKey(@NotNull String externalName, @Nullable String scopeName) {
     if (scopeName == null) {
-      myDefaultState.setTextAttributesKey(TextAttributesKey.find(externalName));
+      myDefaultState.setTextAttributesKey(externalName);
     }
     else {
       if (myTools == null) return;
       for (ScopeToolState tool : myTools) {
         if (scopeName.equals(tool.getScopeName())) {
-          tool.setTextAttributesKey(TextAttributesKey.find(externalName));
+          tool.setTextAttributesKey(externalName);
           break;
         }
       }

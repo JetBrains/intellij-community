@@ -37,6 +37,9 @@ public class LocalInspectionEP extends InspectionEP implements LocalInspectionTo
   @Attribute("dynamicGroup")
   public boolean dynamicGroup;
 
+  /**
+   * TextAttributesKey's external name
+   */
   @Attribute("editorAttributes")
   public String editorAttributes;
 
