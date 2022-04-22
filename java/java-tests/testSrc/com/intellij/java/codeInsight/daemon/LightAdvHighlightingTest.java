@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ReassignedVariableInspection;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
@@ -51,7 +52,11 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   private UnusedDeclarationInspectionBase myUnusedDeclarationInspection;
 
   private void doTest(boolean checkWarnings) {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+    doTest(checkWarnings, false);
+  }
+
+  private void doTest(boolean checkWarnings, boolean checkInfos) {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
   }
 
   @Override
@@ -61,6 +66,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     enableInspectionTool(myUnusedDeclarationInspection);
     enableInspectionTool(new UnusedImportInspection());
     enableInspectionTool(new AccessStaticViaInstance());
+    enableInspectionTool(new ReassignedVariableInspection());
     setLanguageLevel(LanguageLevel.JDK_1_4);
   }
 
@@ -134,7 +140,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnclosedDecl() { doTest(false); }
   public void testSillyAssignment() {
     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
-    doTest(true);
+    doTest(true, true);
   }
   public void testTernary() { doTest(false); }
   public void testDuplicateClass() { doTest(false); }
@@ -225,7 +231,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testMustBeFinal() { doTest(false); }
 
   public void testXXX() { doTest(false); }
-  public void testUnused() { doTest(true); }
+  public void testUnused() { doTest(true, true); }
   public void testQualifierBeforeClassName() { doTest(false); }
   public void testQualifiedSuper() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), getTestRootDisposable());

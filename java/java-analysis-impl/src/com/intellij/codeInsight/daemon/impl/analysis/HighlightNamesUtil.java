@@ -1,17 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.colors.ScopeAttributesUtil;
 import com.intellij.codeHighlighting.RainbowHighlighter;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ReassignedVariableInspection;
+import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -20,6 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.DependencyValidationManagerImpl;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -32,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 public final class HighlightNamesUtil {
   private static final Logger LOG = Logger.getInstance(HighlightNamesUtil.class);
@@ -241,32 +249,45 @@ public final class HighlightNamesUtil {
   }
 
   @Nullable
-  static HighlightInfo highlightReassignedVariable(@NotNull PsiVariable variable, @NotNull PsiElement elementToHighlight) {
+  static HighlightInfo highlightReassignedVariable(@NotNull PsiVariable variable, @NotNull PsiElement elementToHighlight,
+                                                   HighlightInfoType.HighlightInfoTypeImpl highlightInfoType,
+                                                   InspectionProfileEntry reassignVariableTool) {
     if (variable instanceof PsiLocalVariable) {
-      return createReassignedInfo(elementToHighlight, 
-                                  JavaHighlightingColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES,
-                                  JavaHighlightInfoTypes.REASSIGNED_LOCAL_VARIABLE,
+      return createReassignedInfo(elementToHighlight,
+                                  highlightInfoType,
+                                  reassignVariableTool,
                                   JavaBundle.message("tooltip.reassigned.local.variable"));
     }
     if (variable instanceof PsiParameter) {
-      return createReassignedInfo(elementToHighlight, 
-                                  JavaHighlightingColors.REASSIGNED_PARAMETER_ATTRIBUTES,
-                                  JavaHighlightInfoTypes.REASSIGNED_PARAMETER,
-                                  JavaBundle.message("tooltip.reassigned.parameter"));
+      return createReassignedInfo(elementToHighlight,
+                                  highlightInfoType,
+                                  reassignVariableTool, JavaBundle.message("tooltip.reassigned.parameter"));
     }
     return null;
   }
 
   @Nullable
   private static HighlightInfo createReassignedInfo(@NotNull PsiElement elementToHighlight,
-                                                    @NotNull TextAttributesKey attributesKey,
                                                     @NotNull HighlightInfoType highlightInfoType,
-                                                    @NotNull @NlsContexts.Tooltip String toolTip) {
-    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
+                                                    InspectionProfileEntry reassignVariableTool, @NotNull @NlsContexts.Tooltip String toolTip) {
+    HighlightDisplayKey key = HighlightDisplayKey.find(ReassignedVariableInspection.SHORT_NAME);
+    if (reassignVariableTool != null && SuppressionUtil.inspectionResultSuppressed(elementToHighlight, reassignVariableTool)) {
+      return null;
+    }
+
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(highlightInfoType).range(elementToHighlight);
-    return attributes != null && !attributes.isEmpty()
-           ? builder.escapedToolTip(toolTip).create()
-           : builder.create();
+    InspectionProfileImpl profile = ProjectInspectionProfileManager.getInstance(elementToHighlight.getProject()).getCurrentProfile();
+    TextAttributesKey attributesKey = profile.getEditorAttributes(key.toString(), elementToHighlight);
+    if (attributesKey == null) {
+      attributesKey = highlightInfoType.getAttributesKey();
+    }
+
+    HighlightInfo highlightInfo = builder.descriptionAndTooltip(toolTip).textAttributes(attributesKey).create();
+    if (highlightInfo != null) {
+      QuickFixAction.registerQuickFixAction(highlightInfo, null,
+                                            new EmptyIntentionAction(Objects.requireNonNull(HighlightDisplayKey.getDisplayNameByKey(key))), key);
+    }
+    return highlightInfo;
   }
 
   private static TextAttributes getScopeAttributes(@NotNull PsiElement element, @NotNull TextAttributesScheme colorsScheme) {
