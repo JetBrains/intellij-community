@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-jps-common" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-common-for-ide:1.7.20-dev-338" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-common-for-ide:1.7.20-dev-382" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/1.7.20-dev-338/kotlin-jps-common-for-ide-1.7.20-dev-338.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/1.7.20-dev-382/kotlin-jps-common-for-ide-1.7.20-dev-382.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/1.7.20-dev-338/kotlin-jps-common-for-ide-1.7.20-dev-338-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/1.7.20-dev-382/kotlin-jps-common-for-ide-1.7.20-dev-382-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
