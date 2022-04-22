@@ -49,9 +49,9 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
     init();
   }
 
-  PluginsAdvertiserDialog(@Nullable Project project,
-                          @NotNull Collection<PluginDownloader> pluginsToInstall,
-                          @NotNull List<PluginNode> customPlugins) {
+  public PluginsAdvertiserDialog(@Nullable Project project,
+                                 @NotNull Collection<PluginDownloader> pluginsToInstall,
+                                 @NotNull List<PluginNode> customPlugins) {
     this(project, pluginsToInstall, customPlugins, false, null);
   }
 
