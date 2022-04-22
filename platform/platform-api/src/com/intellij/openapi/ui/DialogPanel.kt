@@ -6,7 +6,8 @@ import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.containers.DisposableWrapperList
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.LayoutManager
 import javax.swing.JComponent
 
@@ -60,12 +61,12 @@ class DialogPanel : JBPanel<DialogPanel> {
     for ((component, callbacks) in applyCallbacks.entries) {
       if (component == null) continue
 
-      val modifiedCallbacks = isModifiedCallbacks.get(component)
+      val modifiedCallbacks = isModifiedCallbacks[component]
       if (modifiedCallbacks.isNullOrEmpty() || modifiedCallbacks.any { it() }) {
         callbacks.forEach { it() }
       }
     }
-    applyCallbacks.get(null)?.forEach { it() }
+    applyCallbacks[null]?.forEach { it() }
   }
 
   fun reset() {
@@ -76,51 +77,54 @@ class DialogPanel : JBPanel<DialogPanel> {
 
       callbacks.forEach { it() }
     }
-    resetCallbacks.get(null)?.forEach { it() }
+    resetCallbacks[null]?.forEach { it() }
   }
 
   fun isModified(): Boolean {
     return isModifiedCallbacks.values.any { list -> list.any { it() } } || integratedPanels.any { it.isModified() }
   }
 
+  /**
+   * Panels that should be integrated into [DialogPanel.apply]/[DialogPanel.reset]/
+   * [DialogPanel.isModified] and validation mechanism.
+   */
+  @Internal
   fun getIntegratedPanels(): List<DialogPanel> {
     return integratedPanels.toList()
   }
 
-  /**
-   * Registers panel that should be integrated into [DialogPanel.apply]/[DialogPanel.reset]/
-   * [DialogPanel.isModified] and validation mechanism
-   *
-   * @see unregisterSubPanel
-   */
-  @ApiStatus.Internal
-  fun registerSubPanel(panel: DialogPanel) {
+  @Internal
+  fun registerIntegratedPanel(panel: DialogPanel) {
     if (!integratedPanels.add(panel)) {
       throw Exception("Double registration of $panel")
     }
     integratedPanelRegisterListeners.forEach { it(panel) }
   }
 
-  /**
-   * @see registerSubPanel
-   */
-  @ApiStatus.Internal
-  fun unregisterSubPanel(panel: DialogPanel) {
+  @Internal
+  fun unregisterIntegratedPanel(panel: DialogPanel) {
     if (!integratedPanels.remove(panel)) {
       throw Exception("Panel is not registered: $panel")
     }
     integratedPanelUnregisterListeners.forEach { it(panel) }
   }
 
+  @Internal
   fun whenIntegratedPanelRegistered(parentDisposable: Disposable, listener: (DialogPanel) -> Unit) {
     integratedPanelRegisterListeners.add(listener, parentDisposable)
   }
 
+  @Internal
   fun whenIntegratedPanelUnregistered(parentDisposable: Disposable, listener: (DialogPanel) -> Unit) {
     integratedPanelUnregisterListeners.add(listener, parentDisposable)
   }
 
   @Deprecated("Use validateOnApply instead")
+  @get:Deprecated("Use validateOnApply instead")
+  @set:Deprecated("Use validateOnApply instead")
+  @get:ScheduledForRemoval
+  @set:ScheduledForRemoval
+  @Suppress("DEPRECATION")
   var validateCallbacks: List<() -> ValidationInfo?>
     get() {
       val result = mutableListOf<() -> ValidationInfo?>()
@@ -136,31 +140,53 @@ class DialogPanel : JBPanel<DialogPanel> {
   @Suppress("PropertyName")
   internal var _validateCallbacks: List<DialogValidation> = emptyList()
 
-  @Deprecated("Use registerValidators instead")
+  @Deprecated("Use validationsOnInput instead")
+  @get:Deprecated("Use validationsOnInput instead")
+  @set:Deprecated("Use validationsOnInput instead")
+  @get:ScheduledForRemoval
+  @set:ScheduledForRemoval
+  @Suppress("DEPRECATION")
   var componentValidateCallbacks: Map<JComponent, () -> ValidationInfo?>
     get() = validationsOnInput.mapValues { validateCallback(it.value.first()) }
     set(value) {
       validationsOnInput = value.mapValues { listOf(validation(it.value)) }
     }
 
-  @Deprecated("Use registerValidators instead")
+  @Deprecated("Use validationRequestors instead")
+  @get:Deprecated("Use validationRequestors instead")
+  @set:Deprecated("Use validationRequestors instead")
+  @get:ScheduledForRemoval
+  @set:ScheduledForRemoval
+  @Suppress("DEPRECATION")
   var customValidationRequestors: Map<JComponent, List<(() -> Unit) -> Unit>>
     get() = validationRequestors.mapValues { it.value.map(::customValidationRequestor) }
     set(value) {
       validationRequestors = value.mapValues { it.value.map(::validationRequestor) }
     }
 
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Migration function")
+  @ScheduledForRemoval
   private fun validateCallback(validator: DialogValidation): () -> ValidationInfo? {
     return validator::validate
   }
 
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Migration function")
+  @ScheduledForRemoval
   private fun validation(validate: () -> ValidationInfo?) =
     DialogValidation { validate() }
 
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Migration function")
+  @ScheduledForRemoval
   private fun customValidationRequestor(requestor: DialogValidationRequestor): (() -> Unit) -> Unit {
     return { validate: () -> Unit -> requestor.subscribe(parentDisposable, validate) }
   }
 
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Migration function")
+  @ScheduledForRemoval
   private fun validationRequestor(requestor: (() -> Unit) -> Unit) =
     DialogValidationRequestor { _, it -> requestor(it) }
 }

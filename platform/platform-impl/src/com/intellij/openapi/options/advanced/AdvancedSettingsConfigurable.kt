@@ -94,7 +94,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
           .verticalAlign(VerticalAlign.FILL)
       }.resizableRow()
     }
-    result.registerSubPanel(extensionsSettings)
+    result.registerIntegratedPanel(extensionsSettings)
     return result
   }
 

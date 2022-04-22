@@ -66,7 +66,7 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
     if (oldComponent != null) {
       placeholderCellData?.let {
         if (oldComponent is DialogPanel) {
-          it.panel.unregisterSubPanel(oldComponent)
+          it.panel.unregisterIntegratedPanel(oldComponent)
         }
         it.panel.remove(oldComponent)
         invalidate = true
@@ -84,7 +84,7 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
         )
         it.panel.add(newComponent, it.constraints)
         if (newComponent is DialogPanel) {
-          it.panel.registerSubPanel(newComponent)
+          it.panel.registerIntegratedPanel(newComponent)
         }
         invalidate = true
       }
