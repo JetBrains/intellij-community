@@ -14,6 +14,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.project.stateStore
@@ -114,9 +115,9 @@ internal open class FileTemplatesLoader(project: Project?) : Disposable {
 
 // example: templateName="NewClass"   templateExtension="java"
 private fun getDescriptionPath(pathPrefix: String,
-                       templateName: String,
-                       templateExtension: String,
-                       descriptionPaths: Set<String>): String? {
+                               templateName: String,
+                               templateExtension: String,
+                               descriptionPaths: Set<String>): String? {
   val locale = Locale.getDefault()
   var name = MessageFormat.format("{0}.{1}_{2}_{3}$DESCRIPTION_EXTENSION_SUFFIX",
                                   templateName,
@@ -159,7 +160,8 @@ private fun loadConfiguration(project: Project?): LoadedConfiguration {
   val result = loadDefaultTemplates(managerToDir.map { it.second })
   val managers = HashMap<String, FTManager>(managerToDir.size)
   for ((name, pathPrefix) in managerToDir) {
-    val manager = FTManager(name, configDir.resolve(pathPrefix), result.prefixToTemplates.get(pathPrefix) ?: emptyList(), name == FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY)
+    val manager = FTManager(name, configDir.resolve(pathPrefix), result.prefixToTemplates.get(pathPrefix) ?: emptyList(),
+                            name == FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY)
     manager.loadCustomizedContent()
     managers.put(name, manager)
   }
@@ -270,7 +272,7 @@ private inline fun processTemplates(files: Sequence<String>,
 private fun loadDefaultsFromDirectory(root: URL, result: FileTemplateLoadResult, prefixes: List<String>) {
   val descriptionPaths = HashSet<String>()
   val templateFiles = mutableListOf<String>()
-  val rootFile = Path.of(root.toURI().schemeSpecificPart)
+  val rootFile = urlToPath(root)
 
   Files.find(rootFile, Int.MAX_VALUE, BiPredicate { _, a -> a.isRegularFile }).use {
     it.forEach { file ->
@@ -297,6 +299,18 @@ private fun loadDefaultsFromDirectory(root: URL, result: FileTemplateLoadResult,
                    descriptionLoader = { Files.readString(rootFile.resolve(it)) }) {
     Supplier { Files.readString(rootFile.resolve(it)) }
   }
+}
+
+private fun urlToPath(root: URL): Path {
+  var path = root.path
+  if (SystemInfoRt.isWindows && path.startsWith("/")) {
+    // trim leading slashes before drive letter
+    val position = path.indexOf(':')
+    if (position > 1) {
+      path = path.substring(position - 1)
+    }
+  }
+  return Path.of(path)
 }
 
 private class FileTemplateLoadResult(@JvmField val prefixToTemplates: MutableMap<String, MutableList<DefaultTemplate>>) {
