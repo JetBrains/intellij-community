@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.containers.ContainerUtil
@@ -120,7 +120,7 @@ final class LibraryLicense {
       additionalLibraryNames: additionalLibraryNames,
       attachedTo: attachedTo,
       transitiveDependency: transitiveDependency,
-      license: "Simplified BSD",
+      license: "BSD 2-Clause",
       licenseUrl: licenseUrl ?: "https://opensource.org/licenses/BSD-2-Clause"
     )
   }
@@ -136,7 +136,7 @@ final class LibraryLicense {
       additionalLibraryNames: additionalLibraryNames,
       attachedTo: attachedTo,
       transitiveDependency: transitiveDependency,
-      license: "New BSD",
+      license: "BSD 3-Clause",
       licenseUrl: licenseUrl ?: "https://opensource.org/licenses/BSD-3-Clause"
     )
   }
