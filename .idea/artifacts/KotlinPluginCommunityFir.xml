@@ -6,9 +6,6 @@
         <element id="archive" name="android-extensions-compiler-plugin-for-ide.jar">
           <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/1.7.20-dev-382/android-extensions-compiler-plugin-for-ide-1.7.20-dev-382.jar" path-in-jar="/" />
         </element>
-        <element id="archive" name="kotlin-android-extensions-runtime.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-android-extensions-runtime/1.7.0-dev-3331/kotlin-android-extensions-runtime-1.7.0-dev-3331.jar" path-in-jar="/" />
-        </element>
         <element id="archive" name="allopen-compiler-plugin-for-ide.jar">
           <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/1.7.20-dev-382/allopen-compiler-plugin-for-ide-1.7.20-dev-382.jar" path-in-jar="/" />
         </element>
@@ -130,11 +127,6 @@
         </element>
         <element id="archive" name="kotlin-idea.jar">
           <element id="module-output" name="kotlin.idea" />
-          <element id="directory" name="META-INF">
-            <element id="directory" name="extensions">
-              <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-for-ide/1.7.0-dev-3331/kotlin-compiler-for-ide-1.7.0-dev-3331.jar" path-in-jar="/META-INF/extensions/" />
-            </element>
-          </element>
         </element>
         <element id="archive" name="kotlin-jps-common.jar">
           <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/1.7.20-dev-382/kotlin-jps-common-for-ide-1.7.20-dev-382.jar" path-in-jar="/" />
@@ -174,9 +166,6 @@
         </element>
         <element id="archive" name="kotlin-reflect.jar">
           <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.7.20-dev-382/kotlin-reflect-1.7.20-dev-382.jar" path-in-jar="/" />
-        </element>
-        <element id="archive" name="kotlin-plugin.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-for-ide/1.7.0-dev-3331/kotlin-compiler-for-ide-1.7.0-dev-3331.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="kotlin-frontend-independent.jar">
           <element id="module-output" name="kotlin.fir.frontend-independent" />
