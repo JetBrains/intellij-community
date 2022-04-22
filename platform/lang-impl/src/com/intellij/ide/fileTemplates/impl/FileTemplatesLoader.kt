@@ -270,7 +270,7 @@ private inline fun processTemplates(files: Sequence<String>,
 private fun loadDefaultsFromDirectory(root: URL, result: FileTemplateLoadResult, prefixes: List<String>) {
   val descriptionPaths = HashSet<String>()
   val templateFiles = mutableListOf<String>()
-  val rootFile = Path.of(URLUtil.unescapePercentSequences(root.path))
+  val rootFile = Path.of(root.toURI().schemeSpecificPart)
 
   Files.find(rootFile, Int.MAX_VALUE, BiPredicate { _, a -> a.isRegularFile }).use {
     it.forEach { file ->
