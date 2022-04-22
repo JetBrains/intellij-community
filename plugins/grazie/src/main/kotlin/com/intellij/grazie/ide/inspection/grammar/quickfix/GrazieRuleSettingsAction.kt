@@ -21,10 +21,6 @@ class GrazieRuleSettingsAction(private val ruleName: String, private val rule: R
 {
   override fun isShowSubmenu(): Boolean = false
 
-  override fun isSelectable(): Boolean = true
-
-  override fun isShowIcon(): Boolean = true
-
   override fun getIcon(flags: Int): Icon = AllIcons.Actions.Edit
 
   override fun getName() = msg("grazie.grammar.quickfix.open.rule.text", ruleName)

@@ -12,32 +12,37 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Intention action UI representation of which can be customized
- *
- * Mostly, it can be used to:
- * * forcefully disable submenu,
- * * make intention action non-selectable
- * * fully remove icon
- * * create custom tooltip text
+ * Intention action with UI representation that can be customized. It can be used to:
+ * <li> forcefully disable submenu
+ * <li> make the intention action non-selectable
+ * <li> fully remove icon
+ * <li> create custom tooltip text
+ * <li> highlight parts of the editor when this action is hovered in the context action popup
  */
 public interface CustomizableIntentionAction extends IntentionAction {
   /**
    * Define if submenu (or so-called options)
    * of intention action should be shown
    */
-  boolean isShowSubmenu();
+  default boolean isShowSubmenu() {
+    return true;
+  }
 
   /**
    * Define if element in popup should be
    * selectable
    */
-  boolean isSelectable();
+  default boolean isSelectable() {
+    return true;
+  }
 
   /**
    * Define if icon should be shown or
    * completely removed
    */
-  boolean isShowIcon();
+  default boolean isShowIcon() {
+    return true;
+  }
 
   /**
    * Get text specifically for tooltip view

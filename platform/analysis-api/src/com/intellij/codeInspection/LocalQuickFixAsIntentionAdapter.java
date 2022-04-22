@@ -84,17 +84,20 @@ public class LocalQuickFixAsIntentionAdapter implements IntentionAction, Customi
 
   @Override
   public boolean isShowSubmenu() {
-    return !(myFix instanceof CustomizableIntentionAction) || ((CustomizableIntentionAction)myFix).isShowSubmenu();
+    return myFix instanceof CustomizableIntentionAction ? ((CustomizableIntentionAction)myFix).isShowSubmenu()
+                                                        : CustomizableIntentionAction.super.isShowSubmenu();
   }
 
   @Override
   public boolean isSelectable() {
-    return !(myFix instanceof CustomizableIntentionAction) || ((CustomizableIntentionAction)myFix).isSelectable();
+    return myFix instanceof CustomizableIntentionAction ? ((CustomizableIntentionAction)myFix).isSelectable()
+                                                        : CustomizableIntentionAction.super.isSelectable();
   }
 
   @Override
   public boolean isShowIcon() {
-    return !(myFix instanceof CustomizableIntentionAction) || ((CustomizableIntentionAction)myFix).isShowIcon();
+    return myFix instanceof CustomizableIntentionAction ? ((CustomizableIntentionAction)myFix).isShowIcon()
+                                                        : CustomizableIntentionAction.super.isShowIcon();
   }
 
   @Override
