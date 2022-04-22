@@ -44,7 +44,7 @@ final class BuildContextImpl extends BuildContext {
   final String buildNumber
   List<String> XBootClassPathJarNames
   List<String> bootClassPathJarNames
-  final UnaryOperator<Set<String>> classpathCustomizer = UnaryOperator.identity()
+  UnaryOperator<Set<String>> classpathCustomizer = UnaryOperator.identity()
 
   final ApplicationInfoProperties applicationInfo
 
@@ -501,5 +501,16 @@ final class BuildContextImpl extends BuildContext {
     }
 
     builtinModulesData = data
+  }
+
+  @Override
+  UnaryOperator<Set<String>> getClasspathCustomizer() {
+    return classpathCustomizer
+  }
+
+  // External use from Rider
+  @SuppressWarnings('unused')
+  void setClasspathCustomizer(UnaryOperator<Set<String>> classpathCustomizer) {
+    this.classpathCustomizer = classpathCustomizer
   }
 }
