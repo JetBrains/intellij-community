@@ -452,7 +452,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   override fun reopenLastProjectsOnStart(): CompletableFuture<Boolean> {
     val openPaths = lastOpenedProjects
-    if (lastOpenedProjects.isEmpty()) {
+    if (openPaths.isEmpty()) {
       return CompletableFuture.completedFuture(false)
     }
 
@@ -464,7 +464,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
         ApplicationManager.getApplication().isHeadlessEnvironment ||
         !System.getProperty("idea.open.multi.projects.correctly", "true").toBoolean() ||
         WindowManagerEx.getInstanceEx().getFrameHelper(null) != null) {
-      future = openOneByOne(java.util.List.copyOf(lastOpenedProjects), index = 0, someProjectWasOpened = false)
+      future = openOneByOne(java.util.List.copyOf(openPaths), index = 0, someProjectWasOpened = false)
     }
     else {
       future = openMultiple(openPaths)
