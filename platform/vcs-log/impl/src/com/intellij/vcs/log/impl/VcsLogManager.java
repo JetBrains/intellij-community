@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
@@ -291,23 +291,19 @@ public class VcsLogManager implements Disposable {
     @Override
     public void consume(@Nullable Object source, @NotNull Throwable e) {
       if (myIsBroken.compareAndSet(false, true)) {
-        processError(source, e);
+        if (myRecreateMainLogHandler != null) {
+          ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(e));
+        }
+        else {
+          LOG.error(e);
+        }
+
+        if (source instanceof VcsLogStorage) {
+          ((VcsLogModifiableIndex)myLogData.getIndex()).markCorrupted();
+        }
       }
       else {
         LOG.debug("Vcs Log storage is broken and is being recreated", e);
-      }
-    }
-
-    protected void processError(@Nullable Object source, @NotNull Throwable e) {
-      if (myRecreateMainLogHandler != null) {
-        ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(e));
-      }
-      else {
-        LOG.error(e);
-      }
-
-      if (source instanceof VcsLogStorage) {
-        ((VcsLogModifiableIndex)myLogData.getIndex()).markCorrupted();
       }
     }
 
