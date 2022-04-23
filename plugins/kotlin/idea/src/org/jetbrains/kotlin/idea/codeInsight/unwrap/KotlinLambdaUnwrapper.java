@@ -8,6 +8,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.psi.*;
 
+import java.util.List;
+
 public class KotlinLambdaUnwrapper extends KotlinUnwrapRemoveBase {
     public KotlinLambdaUnwrapper(String key) {
         super(key);
@@ -52,5 +54,11 @@ public class KotlinLambdaUnwrapper extends KotlinUnwrapRemoveBase {
 
         context.extractFromBlock(body, enclosingExpression);
         context.delete(enclosingExpression);
+    }
+
+    @Override
+    public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
+        super.collectAffectedElements(e, toExtract);
+        return getLambdaEnclosingElement((KtLambdaExpression) e);
     }
 }
