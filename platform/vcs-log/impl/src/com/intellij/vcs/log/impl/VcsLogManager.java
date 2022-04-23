@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -30,6 +31,9 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -286,7 +290,8 @@ public class VcsLogManager implements Disposable {
   }
 
   private class MyFatalErrorsHandler implements FatalErrorHandler {
-    private final AtomicBoolean myIsBroken = new AtomicBoolean(false);
+    private final @NotNull IntSet myErrors = IntSets.synchronize(new IntOpenHashSet());
+    private final @NotNull AtomicBoolean myIsBroken = new AtomicBoolean(false);
 
     @Override
     public void consume(@Nullable Object source, @NotNull Throwable e) {
@@ -303,7 +308,10 @@ public class VcsLogManager implements Disposable {
         }
       }
       else {
-        LOG.debug("Vcs Log storage is broken and is being recreated", e);
+        int errorHashCode = ThrowableInterner.computeTraceHashCode(e);
+        if (myErrors.add(errorHashCode)) {
+          LOG.debug("Vcs Log storage is broken and is being recreated", e);
+        }
       }
     }
 
