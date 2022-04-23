@@ -19,7 +19,14 @@ public class KotlinLambdaUnwrapper extends KotlinUnwrapRemoveBase {
         PsiElement parent = lambda.getParent();
 
         if (parent instanceof KtValueArgument) {
-            return PsiTreeUtil.getParentOfType(parent, KtCallExpression.class, true);
+            KtCallExpression callExpression = PsiTreeUtil.getParentOfType(parent, KtCallExpression.class, true);
+            if (callExpression != null) {
+                PsiElement parentParent = callExpression.getParent();
+                if (parentParent instanceof KtQualifiedExpression) {
+                    return (KtElement) parentParent;
+                }
+            }
+            return callExpression;
         }
 
         if (parent instanceof KtCallExpression) {
@@ -39,7 +46,7 @@ public class KotlinLambdaUnwrapper extends KotlinUnwrapRemoveBase {
 
         KtLambdaExpression lambda = (KtLambdaExpression) e;
         KtBlockExpression body = lambda.getBodyExpression();
-        KtElement enclosingElement = getLambdaEnclosingElement((KtLambdaExpression) e);
+        KtElement enclosingElement = getLambdaEnclosingElement(lambda);
 
         if (body == null || enclosingElement == null) return false;
 
