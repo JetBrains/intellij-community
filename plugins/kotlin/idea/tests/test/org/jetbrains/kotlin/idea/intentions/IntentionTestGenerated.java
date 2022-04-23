@@ -1011,6 +1011,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("ClassConstructor.kt")
+            public void testClassConstructor() throws Exception {
+                runTest("testData/intentions/addFullQualifier/methodReferences/ClassConstructor.kt");
+            }
+
             @TestMetadata("FunctionWithReceiver.kt")
             public void testFunctionWithReceiver() throws Exception {
                 runTest("testData/intentions/addFullQualifier/methodReferences/FunctionWithReceiver.kt");
@@ -1056,6 +1061,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/addFullQualifier/methodReferences/MemberPropertyInRoot2.kt");
             }
 
+            @TestMetadata("NestedClassConstructor.kt")
+            public void testNestedClassConstructor() throws Exception {
+                runTest("testData/intentions/addFullQualifier/methodReferences/NestedClassConstructor.kt");
+            }
+
             @TestMetadata("SimpleClass.kt")
             public void testSimpleClass() throws Exception {
                 runTest("testData/intentions/addFullQualifier/methodReferences/SimpleClass.kt");
@@ -1089,6 +1099,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             @TestMetadata("TopLevelPropertyAndFunction.kt")
             public void testTopLevelPropertyAndFunction() throws Exception {
                 runTest("testData/intentions/addFullQualifier/methodReferences/TopLevelPropertyAndFunction.kt");
+            }
+
+            @TestMetadata("TypeAlias.kt")
+            public void testTypeAlias() throws Exception {
+                runTest("testData/intentions/addFullQualifier/methodReferences/TypeAlias.kt");
             }
         }
 
