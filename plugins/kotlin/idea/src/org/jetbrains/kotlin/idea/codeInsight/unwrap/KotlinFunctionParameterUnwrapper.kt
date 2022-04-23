@@ -196,6 +196,9 @@ class KotlinFunctionParameterUnwrapper(val key: String) : KotlinUnwrapRemoveBase
         // but because we support the caret to be on LPAR/COMMA and other tokens this doesn't work
 
         val target = argumentToUnwrap(e) ?: return "<unknown>" // should not be possible
-        return message(key, getExpressionShortText(target))
+        val callee = target.getStrictParentOfType<KtCallExpression>()?.calleeExpression
+            ?.let(::getExpressionShortText) ?: "?"
+
+        return message(key, callee, getExpressionShortText(target))
     }
 }
