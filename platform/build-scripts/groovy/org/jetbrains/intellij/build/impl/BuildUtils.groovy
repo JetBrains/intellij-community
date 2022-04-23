@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.lang.UrlClassLoader
@@ -18,6 +19,7 @@ import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 
 @CompileStatic
 final class BuildUtils {
@@ -72,7 +74,16 @@ final class BuildUtils {
     for (int i = 0; i < replacements.length; i += 2) {
       text = text.replace(marker + replacements[i] + marker, replacements[i + 1])
     }
-    Files.writeString(file, text)
+    // We need use temp file to avoid modify working-copy on Windows
+    // Because in build scripts when we coping directory via {@link org.jetbrains.intellij.build.io.CopyDirectoryVisitor#visitFile}
+    // CopyDirectoryVisitor will make hard-link to file instead of copy and we could modify origin file.
+    if (SystemInfo.isWindows) {
+      Path tempFile = Files.createTempFile("", ".tmp")
+      Files.writeString(tempFile, text)
+      Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING)
+    } else {
+      Files.writeString(file, text)
+    }
   }
 
   static String replaceAll(String text, String marker, String ...replacements) {
