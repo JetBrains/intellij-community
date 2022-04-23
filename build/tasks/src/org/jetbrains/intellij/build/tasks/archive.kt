@@ -141,7 +141,7 @@ fun crossPlatformZip(macX64DistDir: Path,
 
       val zipFiles = mutableMapOf<String, Path>()
       out.dir(startDir = macX64DistDir, prefix = "", fileFilter = { _, relativeFile ->
-        val p = relativeFile.toString()
+        val p = relativeFile.toString().replace('\\', '/')
         @Suppress("SpellCheckingInspection")
         !p.startsWith("bin/fsnotifier") &&
         !p.startsWith("bin/repair") &&
@@ -154,7 +154,7 @@ fun crossPlatformZip(macX64DistDir: Path,
       }, entryCustomizer = entryCustomizer)
 
       out.dir(startDir = macAarch64DistDir, prefix = "", fileFilter = { _, relativeFile ->
-        val p = relativeFile.toString()
+        val p = relativeFile.toString().replace('\\', '/')
         @Suppress("SpellCheckingInspection")
         !p.startsWith("bin/fsnotifier") &&
         !p.startsWith("bin/repair") &&
@@ -167,7 +167,7 @@ fun crossPlatformZip(macX64DistDir: Path,
       }, entryCustomizer = entryCustomizer)
 
       out.dir(startDir = linuxX64DistDir, prefix = "", fileFilter = { _, relativeFile ->
-        val p = relativeFile.toString()
+        val p = relativeFile.toString().replace('\\', '/')
         @Suppress("SpellCheckingInspection")
         !p.startsWith("bin/fsnotifier") &&
         !p.startsWith("bin/repair") &&
@@ -181,7 +181,7 @@ fun crossPlatformZip(macX64DistDir: Path,
 
       val winExcludes = distFiles.mapTo(HashSet(distFiles.size)) { "${it.value}/${it.key.fileName}" }
       out.dir(startDir = winX64DistDir, prefix = "", fileFilter = { _, relativeFile ->
-        val p = relativeFile.toString()
+        val p = relativeFile.toString().replace('\\', '/')
         @Suppress("SpellCheckingInspection")
         !p.startsWith("bin/fsnotifier") &&
         !p.startsWith("bin/repair") &&
