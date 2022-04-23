@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.auth.ui
 
-import com.intellij.collaboration.auth.Account
-import com.intellij.collaboration.auth.AccountManager
-import com.intellij.collaboration.auth.AccountsListener
-import com.intellij.collaboration.auth.PersistentDefaultAccountHolder
+import com.intellij.collaboration.auth.*
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.collaboration.ui.codereview.avatar.AvatarIconsProvider
@@ -28,8 +25,10 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import java.awt.Image
 import java.awt.event.MouseEvent
+import java.util.concurrent.CompletableFuture
 import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -62,16 +61,19 @@ private constructor(private val disposable: Disposable,
   }
 
   fun accountsPanelCell(row: Row, needAddBtnWithDropdown: Boolean, defaultAvatarIcon: Icon = EmptyIcon.ICON_16): Cell<JComponent> {
-    val detailsMap = mutableMapOf<A, AccountsDetailsLoader.Result<*>>()
-    val detailsProvider = LoadedAccountsDetailsProvider(detailsMap::get)
-    val avatarIconsProvider = LoadingAvatarIconsProvider(detailsLoader, detailsMap, defaultAvatarIcon)
+    val detailsMap = mutableMapOf<A, CompletableFuture<AccountsDetailsLoader.Result<*>>>()
+    val detailsProvider = LoadedAccountsDetailsProvider { account: A ->
+      detailsMap[account]?.getNow(null)
+    }
+    val avatarIconsProvider = LoadingAvatarIconsProvider(detailsLoader, defaultAvatarIcon) { account: A ->
+      val result = detailsMap[account]?.getNow(null) as? AccountsDetailsLoader.Result.Success
+      result?.details?.avatarUrl
+    }
 
     val accountsList = createList {
       SimpleAccountsListCellRenderer(accountsModel, detailsProvider, avatarIconsProvider)
     }
     loadAccountsDetails(disposable, accountsList, detailsLoader, detailsMap)
-
-    accountsModel.addCredentialsChangeListener(detailsMap::remove)
 
     val component = wrapWithToolbar(accountsList, needAddBtnWithDropdown)
 
@@ -169,7 +171,7 @@ private constructor(private val disposable: Disposable,
   private fun <A : Account> loadAccountsDetails(disposable: Disposable,
                                                 accountsList: JBList<A>,
                                                 detailsLoader: AccountsDetailsLoader<A, *>,
-                                                resultsMap: MutableMap<A, AccountsDetailsLoader.Result<*>>) {
+                                                resultsMap: MutableMap<A, CompletableFuture<AccountsDetailsLoader.Result<*>>>) {
     val scope = CoroutineScope(SupervisorJob()).also { Disposer.register(disposable) { it.cancel() } }
 
     val listModel = accountsList.model
@@ -178,25 +180,42 @@ private constructor(private val disposable: Disposable,
         accountsList.setPaintBusy(newValue != 0)
       }
 
-      override fun intervalAdded(e: ListDataEvent) {
-        for (i in e.index0..e.index1) {
+      override fun intervalAdded(e: ListDataEvent) = loadDetails(e.index0, e.index1)
+      override fun contentsChanged(e: ListDataEvent) = loadDetails(e.index0, e.index1)
+
+      override fun intervalRemoved(e: ListDataEvent) {
+        val accounts = listModel.items.toSet()
+        for (account in resultsMap.keys - accounts) {
+          resultsMap.remove(account)?.cancel(true)
+        }
+      }
+
+      private fun loadDetails(startIdx: Int, endIdx: Int) {
+        for (i in startIdx..endIdx) {
           val account = listModel.getElementAt(i)
-          scope.launch(Dispatchers.Main) {
+          resultsMap[account]?.cancel(true)
+          resultsMap[account] = scope.async(Dispatchers.Main) {
             loadingCount++
             try {
-              resultsMap[account] = try {
-                detailsLoader.loadDetails(account)
-              }
-              catch (e: Throwable) {
-                val errorMessage = ExceptionUtil.getPresentableMessage(e)
-                AccountsDetailsLoader.Result.Error(errorMessage, false)
-              }
-              repaint(account)
+              loadAndRepaint(account)
             }
             finally {
               loadingCount--
             }
-          }
+          }.asCompletableFuture()
+        }
+      }
+
+      private suspend fun loadAndRepaint(account: A): AccountsDetailsLoader.Result<*> {
+        return try {
+          detailsLoader.loadDetails(account)
+        }
+        catch (e: Throwable) {
+          val errorMessage = ExceptionUtil.getPresentableMessage(e)
+          AccountsDetailsLoader.Result.Error<AccountDetails>(errorMessage, false)
+        }
+        finally {
+          repaint(account)
         }
       }
 
@@ -206,16 +225,13 @@ private constructor(private val disposable: Disposable,
         accountsList.repaint(cellBounds)
         return false
       }
-
-      override fun intervalRemoved(e: ListDataEvent) = Unit
-      override fun contentsChanged(e: ListDataEvent) = Unit
     })
   }
 }
 
 private class LoadingAvatarIconsProvider<A : Account>(private val detailsLoader: AccountsDetailsLoader<A, *>,
-                                                      private val detailsLoadingResults: Map<A, AccountsDetailsLoader.Result<*>>,
-                                                      private val defaultAvatarIcon: Icon)
+                                                      private val defaultAvatarIcon: Icon,
+                                                      private val avatarUrlSupplier: (A) -> String?)
   : AvatarIconsProvider<A> {
 
   private val cachingDelegate = object : CachingAvatarIconsProvider<Pair<A, String>>(defaultAvatarIcon) {
@@ -225,8 +241,7 @@ private class LoadingAvatarIconsProvider<A : Account>(private val detailsLoader:
 
   override fun getIcon(key: A?, iconSize: Int): Icon {
     val account = key ?: return IconUtil.resizeSquared(defaultAvatarIcon, iconSize)
-    val uri = (detailsLoadingResults[account] as? AccountsDetailsLoader.Result.Success)?.details?.avatarUrl
-              ?: return IconUtil.resizeSquared(defaultAvatarIcon, iconSize)
+    val uri = avatarUrlSupplier(key) ?: return IconUtil.resizeSquared(defaultAvatarIcon, iconSize)
     return cachingDelegate.getIcon(account to uri, iconSize)
   }
 }
@@ -237,3 +252,17 @@ private fun <E> ListModel<E>.findIndex(item: E): Int {
   }
   return -1
 }
+
+private val <E> ListModel<E>.items
+  get() = Iterable {
+    object : Iterator<E> {
+      private var idx = -1
+
+      override fun hasNext(): Boolean = idx < size - 1
+
+      override fun next(): E {
+        idx++
+        return getElementAt(idx)
+      }
+    }
+  }

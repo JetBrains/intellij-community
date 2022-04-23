@@ -18,8 +18,6 @@ abstract class AccountsListModelBase<A : Account, Cred> : AccountsListModel<A, C
 
   override val accountsListModel = CollectionListModel<A>()
 
-  private val credentialsChangesListeners = CopyOnWriteArrayList<(A) -> Unit>()
-
   override fun clearNewCredentials() = newCredentials.clear()
 
   protected fun add(account: A, cred: Cred) {
@@ -34,11 +32,6 @@ abstract class AccountsListModelBase<A : Account, Cred> : AccountsListModel<A, C
   }
 
   private fun notifyCredentialsChanged(account: A) {
-    credentialsChangesListeners.forEach { it(account) }
     accountsListModel.contentsChanged(account)
-  }
-
-  final override fun addCredentialsChangeListener(listener: (A) -> Unit) {
-    credentialsChangesListeners.add(listener)
   }
 }

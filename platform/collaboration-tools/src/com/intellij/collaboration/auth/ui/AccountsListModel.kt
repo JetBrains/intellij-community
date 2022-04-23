@@ -18,8 +18,6 @@ interface AccountsListModel<A: Account, Cred> {
   fun editAccount(parentComponent: JComponent, account: A)
   fun clearNewCredentials()
 
-  fun addCredentialsChangeListener(listener: (A) -> Unit)
-
   interface WithDefault<A: Account, Cred>: AccountsListModel<A, Cred> {
     var defaultAccount: A?
   }
