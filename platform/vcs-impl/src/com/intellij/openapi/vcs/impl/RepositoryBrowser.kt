@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -28,6 +29,8 @@ import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.IconManager
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.PlatformIcons
@@ -66,10 +69,16 @@ object RepositoryBrowser {
       anchor = ToolWindowAnchor.LEFT,
       canCloseContent = true,
       canWorkInDumbMode = true,
-      stripeTitle = { VcsBundle.message("RepositoryBrowser.toolwindow.name") }
+      stripeTitle = { VcsBundle.message("RepositoryBrowser.toolwindow.name") },
+      icon = getIcon()
     ))
     ContentManagerWatcher.watchContentManager(toolWindow, toolWindow.contentManager)
     return toolWindow
+  }
+
+  private fun getIcon(): Icon? = when {
+    ExperimentalUI.isNewUI() -> IconManager.getInstance().getIcon("expui/toolwindow/repositories.svg", AllIcons::class.java)
+    else -> null
   }
 }
 
