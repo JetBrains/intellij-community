@@ -289,6 +289,11 @@ public abstract class UnwrapRemoveTestGenerated extends AbstractUnwrapRemoveTest
         public void testLambdaPropertyInBlock() throws Exception {
             runTest("testData/codeInsight/unwrapAndRemove/unwrapLambda/lambdaPropertyInBlock.kt");
         }
+
+        @TestMetadata("lambdaWithQualifiedReceiver.kt")
+        public void testLambdaWithQualifiedReceiver() throws Exception {
+            runTest("testData/codeInsight/unwrapAndRemove/unwrapLambda/lambdaWithQualifiedReceiver.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
