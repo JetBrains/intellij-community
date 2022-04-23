@@ -1,7 +1,7 @@
-// OPTION: 0
+// OPTION: 1
 fun test() {
     val i = 1
-    foo(bar(<caret>1))
+    bar(1)<caret>
 }
 
 fun foo(i: Int) {}

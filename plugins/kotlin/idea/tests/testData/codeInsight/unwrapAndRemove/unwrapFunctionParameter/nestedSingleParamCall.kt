@@ -1,9 +1,9 @@
 // OPTION: 0
 fun test() {
     val i = 1
-    foo(baz<caret>(i, 2))
+    foo(bar<caret>(1))
 }
 
 fun foo(i: Int) {}
 
-fun baz(i: Int, j: Int) = 1
+fun bar(i: Int) = 1

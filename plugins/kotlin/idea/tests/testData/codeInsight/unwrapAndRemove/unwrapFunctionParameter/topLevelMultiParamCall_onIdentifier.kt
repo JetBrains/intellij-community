@@ -1,7 +1,7 @@
-// OPTION: 0
+// IS_APPLICABLE: false
 fun test() {
     val i = 1
-    foo(baz<caret>(i, 2))
+    fo<caret>o(123, 456)
 }
 
 fun foo(i: Int) {}
