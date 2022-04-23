@@ -1183,7 +1183,7 @@ public class MavenUtil {
     return ExternalSystemUtil.confirmLoadingUntrustedProject(project, SYSTEM_ID);
   }
 
-  public static void restartMavenConnectors(Project project, boolean wait, Predicate<MavenServerConnector> condition) {
+  public static void restartMavenConnectors(@NotNull Project project, boolean wait, Predicate<MavenServerConnector> condition) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       MavenServerManager.getInstance().getAllConnectors().forEach(it -> {
         if (it.getProject().equals(project) && condition.test(it)) {
@@ -1194,7 +1194,7 @@ public class MavenUtil {
     }, SyncBundle.message("maven.sync.restarting"), false, project);
   }
 
-  public static void restartMavenConnectors(Project project, boolean wait) {
+  public static void restartMavenConnectors(@NotNull Project project, boolean wait) {
     restartMavenConnectors(project, wait, c -> Boolean.TRUE);
   }
 
