@@ -1,7 +1,7 @@
 // OPTION: 0
 fun test() {
     val i = 1
-    foo(baz<caret>(i, 2))
+    foo(123, 456<caret>)
 }
 
 fun foo(i: Int) {}

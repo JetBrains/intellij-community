@@ -20,3 +20,6 @@ fun <K, V> merge(vararg maps: Map<K, V>?): Map<K, V> {
     }
     return result
 }
+
+@Suppress("UNCHECKED_CAST")
+inline fun <reified T> Sequence<*>.takeWhileIsInstance(): Sequence<T> = takeWhile { it is T } as Sequence<T>
