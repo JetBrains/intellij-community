@@ -178,7 +178,8 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
 
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.visual.guides"), EditorColors.VISUAL_INDENT_GUIDE_COLOR, ColorDescriptor.Kind.FOREGROUND),
 
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.highlighted.folding.border"), EditorColors.FOLDED_TEXT_BORDER_COLOR, ColorDescriptor.Kind.BACKGROUND)
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.highlighted.folding.border"), EditorColors.FOLDED_TEXT_BORDER_COLOR, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.breadcrumbs.border"), EditorColors.BREADCRUMBS_BORDER_COLOR, ColorDescriptor.Kind.BACKGROUND),
   };
 
   private static final @NonNls Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<>();
