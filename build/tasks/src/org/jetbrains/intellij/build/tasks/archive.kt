@@ -232,7 +232,7 @@ typealias EntryCustomizer = (entry: ZipArchiveEntry, file: Path, relativeFile: P
 internal fun ZipArchiveOutputStream.dir(startDir: Path,
                                         prefix: String,
                                         fileFilter: ((sourceFile: Path, relativeFile: Path) -> Boolean)? = null,
-                                        entryCustomizer: EntryCustomizer = { _, _, _ ->  }) {
+                                        entryCustomizer: EntryCustomizer) {
   val dirCandidates = ArrayDeque<Path>()
   dirCandidates.add(startDir)
   val tempList = ArrayList<Path>()

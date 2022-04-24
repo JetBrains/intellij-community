@@ -46,7 +46,6 @@ private val random by lazy { SecureRandom() }
 fun prepareMacZip(macZip: Path,
                   sitFile: Path,
                   productJson: ByteArray,
-                  macAdditionalDir: Path?,
                   zipRoot: String) {
   Files.newByteChannel(macZip, StandardOpenOption.READ).use { sourceFileChannel ->
     ZipFile(sourceFileChannel).use { zipFile ->
@@ -59,9 +58,6 @@ fun prepareMacZip(macZip: Path,
           // exclude existing product-info.json as a custom one will be added
           val productJsonZipPath = "$zipRoot/Resources/product-info.json"
           zipFile.copyRawEntries(out, ZipArchiveEntryPredicate { it.name != productJsonZipPath })
-          if (macAdditionalDir != null) {
-            out.dir(macAdditionalDir, prefix = "$zipRoot/")
-          }
 
           out.entry(productJsonZipPath, productJson)
         }
