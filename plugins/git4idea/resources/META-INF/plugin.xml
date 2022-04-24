@@ -432,11 +432,9 @@
 
     <action id="git4idea.actions.GitUseSharedLogAction"
             class="git4idea.actions.GitUseSharedLogAction"
-            text="Use Shared Git Log Index"
             internal="true"/>
     <action id="git4idea.actions.GitDumpLogIndexDataAction"
             class="git4idea.actions.GitDumpLogIndexDataAction"
-            text="Use Shared Git Log Index"
             internal="true"/>
     <group id="git4idea.actions.ShareLogIndexData" internal="true">
       <reference id="git4idea.actions.GitUseSharedLogAction"/>
