@@ -27,10 +27,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.UIBundle;
-import com.intellij.ui.UiInterceptors;
+import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
@@ -57,6 +54,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -233,6 +231,10 @@ public abstract class DialogWrapper {
     myCreateSouthSection = createSouth;
     initResizeListener();
     createDefaultActions();
+    if(myPeer.getWindow() != null) {
+      ToolbarUtil.setTransparentTitleBar(myPeer.getWindow(), myPeer.getRootPane(),
+                                         runnable -> Disposer.register(myDisposable, () -> runnable.run()));
+    }
   }
 
   protected final void initResizeListener() {

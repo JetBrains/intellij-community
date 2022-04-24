@@ -153,7 +153,7 @@ public final class ToolbarUtil {
           if (isMacTransparentTitleBarAppearance()) {
             if (window instanceof RootPaneContainer) {
               JRootPane pane = ((RootPaneContainer)window).getRootPane();
-              if (pane == null || pane.getClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY) != Boolean.TRUE) {
+              if (pane == null || pane.getClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY) == Boolean.FALSE) {
                 graphics.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
                 LinePainter2D.paint(graphics, 0, topWindowInset.top - 1, c.getWidth(), topWindowInset.top - 1,
                                     LinePainter2D.StrokeType.INSIDE, 1);
