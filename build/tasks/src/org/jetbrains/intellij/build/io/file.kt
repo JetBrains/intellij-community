@@ -5,15 +5,10 @@ import java.io.IOException
 import java.nio.channels.FileChannel
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.attribute.DosFileAttributeView
 import java.util.*
 import java.util.function.Predicate
 
-internal val RW_CREATE_NEW = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ,
-                                        StandardOpenOption.CREATE_NEW)
 internal val W_CREATE_NEW = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
-
-internal val isWindows = !System.getProperty("os.name").startsWith("windows", ignoreCase = true)
 
 fun copyDir(sourceDir: Path, targetDir: Path, dirFilter: Predicate<Path>? = null, fileFilter: Predicate<Path>? = null) {
   Files.createDirectories(targetDir)
@@ -36,12 +31,10 @@ private class CopyDirectoryVisitor(private val sourceDir: Path,
                                    private val targetDir: Path,
                                    private val dirFilter: Predicate<Path>,
                                    private val fileFilter: Predicate<Path>) : SimpleFileVisitor<Path>() {
-  private val useHardlink: Boolean
   private val sourceToTargetFile: (Path) -> Path
 
   init {
     val isTheSameFileStore = Files.getFileStore(sourceDir) == Files.getFileStore(targetDir)
-    useHardlink = !isWindows && isTheSameFileStore
     // support copying to ZipFS
     if (isTheSameFileStore) {
       sourceToTargetFile = { targetDir.resolve(sourceDir.relativize(it)) }
@@ -70,13 +63,7 @@ private class CopyDirectoryVisitor(private val sourceDir: Path,
     }
 
     val targetFile = sourceToTargetFile(sourceFile)
-
-    if (useHardlink) {
-      Files.createLink(targetFile, sourceFile)
-    }
-    else {
-      Files.copy(sourceFile, targetFile, StandardCopyOption.COPY_ATTRIBUTES)
-    }
+    Files.copy(sourceFile, targetFile, StandardCopyOption.COPY_ATTRIBUTES)
     return FileVisitResult.CONTINUE
   }
 }
@@ -111,13 +98,6 @@ private fun deleteFile(file: Path) {
     catch (e: IOException) {
       if (++attemptCount == maxAttemptCount) {
         throw e
-      }
-
-      if (e is AccessDeniedException && isWindows) {
-        val view = Files.getFileAttributeView(file, DosFileAttributeView::class.java)
-        if (view != null && view.readAttributes().isReadOnly) {
-          view.setReadOnly(false)
-        }
       }
 
       try {

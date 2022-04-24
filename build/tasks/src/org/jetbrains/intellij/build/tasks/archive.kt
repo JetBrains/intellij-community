@@ -8,7 +8,6 @@ import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.io.IOUtils
-import org.jetbrains.intellij.build.io.isWindows
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.writeNewFile
 import org.jetbrains.intellij.build.io.writeNewZip
@@ -230,16 +229,10 @@ fun consumeDataByPrefix(file: Path, prefixWithEndingSlash: String, consumer: BiC
 
 typealias EntryCustomizer = (entry: ZipArchiveEntry, file: Path, relativeFile: Path) -> Unit
 
-private val fsUnixMode: EntryCustomizer = { entry, file, relativeFile ->
-  if (!relativeFile.toString().endsWith(".jar") && Files.isExecutable(file)) {
-    entry.unixMode = executableFileUnixMode
-  }
-}
-
 internal fun ZipArchiveOutputStream.dir(startDir: Path,
                                         prefix: String,
                                         fileFilter: ((sourceFile: Path, relativeFile: Path) -> Boolean)? = null,
-                                        entryCustomizer: EntryCustomizer = if (isWindows) { _, _, _ ->  } else fsUnixMode) {
+                                        entryCustomizer: EntryCustomizer = { _, _, _ ->  }) {
   val dirCandidates = ArrayDeque<Path>()
   dirCandidates.add(startDir)
   val tempList = ArrayList<Path>()
