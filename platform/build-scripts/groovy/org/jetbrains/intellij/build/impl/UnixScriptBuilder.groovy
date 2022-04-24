@@ -3,9 +3,11 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtilRt
 import groovy.transform.CompileStatic
+import kotlin.Pair
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.io.FileKt
 
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -98,19 +100,27 @@ final class UnixScriptBuilder {
                                  BuildContext context) {
     String fullName = context.applicationInfo.productName
 
-    Files.writeString(targetFile, BuildUtils.replaceAll(
-      StringUtilRt.convertLineSeparators(Files.readString(sourceFile)),
+    if (Files.readString(sourceFile).contains("\r")) {
+      throw new IllegalStateException("File must not contain CR (\\r) separators: $sourceFile")
+    }
+
+    FileKt.substituteTemplatePlaceholders(
+      sourceFile,
+      targetFile,
       "__",
-      "product_full", fullName,
-      "product_uc", context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo),
-      "product_vendor", context.applicationInfo.shortCompanyName,
-      "product_code", context.applicationInfo.productCode,
-      "vm_options", vmOptionsFileName,
-      "system_selector", context.systemSelector,
-      "ide_jvm_args", additionalJvmArgs,
-      "ide_default_xmx", defaultXmxParameter.strip(),
-      "class_path", classPath,
-      "script_name", scriptName,
-      ))
+      [
+        new Pair<String, String>("product_full", fullName),
+        new Pair<String, String>("product_uc", context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)),
+        new Pair<String, String>("product_vendor", context.applicationInfo.shortCompanyName),
+        new Pair<String, String>("product_code", context.applicationInfo.productCode),
+        new Pair<String, String>("vm_options", vmOptionsFileName),
+        new Pair<String, String>("system_selector", context.systemSelector),
+        new Pair<String, String>("ide_jvm_args", additionalJvmArgs),
+        new Pair<String, String>("ide_default_xmx", defaultXmxParameter.strip()),
+        new Pair<String, String>("class_path", classPath),
+        new Pair<String, String>("script_name", scriptName),
+      ],
+      false
+    )
   }
 }

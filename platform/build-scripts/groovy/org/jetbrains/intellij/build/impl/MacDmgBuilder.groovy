@@ -29,7 +29,6 @@ final class MacDmgBuilder {
                               MacDistributionCustomizer customizer,
                               @Nullable MacHostProperties macHostProperties,
                               @Nullable Path macZip,
-                              @Nullable Path additionalDir,
                               @Nullable Path jreArchivePath,
                               String suffix,
                               boolean notarize) {
@@ -44,9 +43,6 @@ final class MacDmgBuilder {
     List<Path> installationDirectories = new ArrayList<>()
     List<Pair<Path, String>> installationArchives = new ArrayList<>(2)
     installationArchives.add(new Pair<>(macZip, zipRoot))
-    if (additionalDir != null) {
-      installationDirectories.add(additionalDir)
-    }
     if (jreArchivePath != null) {
       installationArchives.add(new Pair<>(jreArchivePath, ""))
     }
@@ -55,7 +51,7 @@ final class MacDmgBuilder {
     String targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
     Path sitFile = (customizer.publishArchive ? context.paths.artifactDir : context.paths.tempDir).resolve(targetName + ".sit")
 
-    SignKt.prepareMacZip(macZip, sitFile, productJson, additionalDir, zipRoot)
+    SignKt.prepareMacZip(macZip, sitFile, productJson, zipRoot)
 
     boolean sign = !context.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP)
     if ((!sign || macHostProperties?.host == null) && SystemInfoRt.isMac) {

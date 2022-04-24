@@ -5,13 +5,14 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
 import io.opentelemetry.api.trace.Span
+import kotlin.Pair
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
+import org.jetbrains.intellij.build.io.FileKt
 import org.jetbrains.intellij.build.tasks.MacKt
 
 import java.nio.charset.StandardCharsets
@@ -44,7 +45,6 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     return OsFamily.MACOS
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
   String getDocTypes() {
     List<String> associations = new ArrayList<>()
 
@@ -222,7 +222,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           void run() {
             Path jreArchive = jreManager.findArchive(BundledRuntimeImpl.getProductPrefix(context), OsFamily.MACOS, arch)
             MacDmgBuilder.signAndBuildDmg(context, customizer, context.proprietaryBuildTools.macHostProperties, macZip,
-                                          null, jreArchive, suffix, notarize)
+                                          jreArchive, suffix, notarize)
           }
         }))
     }
@@ -236,7 +236,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         @Override
         void run() {
           MacDmgBuilder.signAndBuildDmg(context, customizer, context.proprietaryBuildTools.macHostProperties, macZip,
-                                        null, null, "-no-jdk$suffix", notarize)
+                                        null, "-no-jdk$suffix", notarize)
         }
       }))
     }
@@ -331,25 +331,27 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     }
     String todayYear = LocalDate.now().year.toString()
     //noinspection SpellCheckingInspection
-    BuildUtils.replaceAll(macDistDir.resolve("Info.plist"), "@@",
-      "build", context.fullBuildNumber,
-      "doc_types", docTypes ?: "",
-      "executable", executable,
-      "icns", targetIcnsFileName,
-      "bundle_name", fullName,
-      "product_state", EAP,
-      "bundle_identifier", macCustomizer.bundleIdentifier,
-      "year", todayYear,
-      "company_name", context.applicationInfo.companyName,
-      "min_year", "2000",
-      "max_year", todayYear,
-      "version", version,
-      "vm_options", vmOptionsXml,
-      "vm_properties", vmPropertiesXml,
-      "class_path", classPath,
-      "url_schemes", urlSchemesString,
-      "architectures", archString,
-      "min_osx", macCustomizer.minOSXVersion,
+    FileKt.substituteTemplatePlaceholders(
+      macDistDir.resolve("Info.plist"),
+      macDistDir.resolve("Info.plist"),
+      "@@",
+      [
+        new Pair<String, String>("build", context.fullBuildNumber),
+        new Pair<String, String>("doc_types", docTypes ?: ""),
+        new Pair<String, String>("executable", executable),
+        new Pair<String, String>("icns", targetIcnsFileName),
+        new Pair<String, String>("bundle_name", fullName),
+        new Pair<String, String>("product_state", EAP),
+        new Pair<String, String>("bundle_identifier", macCustomizer.bundleIdentifier),
+        new Pair<String, String>("year", todayYear),
+        new Pair<String, String>("version", version),
+        new Pair<String, String>("vm_options", vmOptionsXml),
+        new Pair<String, String>("vm_properties", vmPropertiesXml),
+        new Pair<String, String>("class_path", classPath),
+        new Pair<String, String>("url_schemes", urlSchemesString),
+        new Pair<String, String>("architectures", archString),
+        new Pair<String, String>("min_osx", macCustomizer.minOSXVersion),
+      ]
     )
 
     Path distBinDir = macDistDir.resolve("bin")
@@ -360,19 +362,27 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       String inspectCommandName = context.productProperties.inspectCommandName
       for (Path file : stream) {
         if (file.toString().endsWith(".sh")) {
-          String content = BuildUtils.replaceAll(
-            Files.readString(file), "@@",
-            "product_full", fullName,
-            "script_name", executable,
-            "inspectCommandName", inspectCommandName,
-          )
-
           String fileName = file.fileName.toString()
           if (fileName == "inspect.sh" && inspectCommandName != "inspect") {
             fileName = "${inspectCommandName}.sh"
           }
 
-          Files.writeString(distBinDir.resolve(fileName), StringUtilRt.convertLineSeparators(content))
+          if (Files.readString(file).contains("\r")) {
+            throw new IllegalStateException("File must not contain CR (\\r) separators: $file")
+          }
+
+          Path target = distBinDir.resolve(fileName)
+          FileKt.substituteTemplatePlaceholders(
+            file,
+            target,
+            "@@",
+            [
+              new Pair<String, String>("product_full", fullName),
+              new Pair<String, String>("script_name", executable),
+              new Pair<String, String>("inspectCommandName", inspectCommandName),
+            ],
+            false,
+          )
         }
       }
     }

@@ -5,25 +5,25 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.io.ProcessKt
 
 import java.nio.file.*
+import java.util.concurrent.TimeUnit
 
 @CompileStatic
 final class WinExeInstallerBuilder {
   private final BuildContext buildContext
-  private final AntBuilder ant
   private final WindowsDistributionCustomizer customizer
   private final @Nullable Path jreDir
 
   WinExeInstallerBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, @Nullable Path jreDir) {
     this.buildContext = buildContext
-    this.ant = buildContext.ant
     this.customizer = customizer
     this.jreDir = jreDir
   }
@@ -66,7 +66,6 @@ final class WinExeInstallerBuilder {
     customizer.fileAssociations.collect {it.startsWith(".") ? it : ("." + it) }
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
   Path buildInstaller(Path winDistPath, Path additionalDirectoryToInclude, String suffix, BuildContext context) {
     if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
       context.messages.warning("Windows installer can be built only under Windows or Linux")
@@ -125,29 +124,43 @@ final class WinExeInstallerBuilder {
     NioFiles.deleteRecursively(nsiLogDir.toPath())
     FileUtil.copyDir(nsiConfDir.toFile(), nsiLogDir)
 
-    ant.unzip(src: "$communityHome/build/tools/NSIS.zip", dest: box)
+    new Decompressor.Zip(Path.of(communityHome, "build/tools/NSIS.zip")).withZipExtensions().extract(box)
     context.messages.block("Running NSIS tool to build .exe installer for Windows") {
+      long timeoutMs = TimeUnit.HOURS.toMillis(2)
       if (SystemInfoRt.isWindows) {
-        ant.exec(executable: "${box}/NSIS/makensis.exe") {
-          arg(value: "/V2")
-          arg(value: "/DCOMMUNITY_DIR=${communityHome}")
-          arg(value: "/DIPR=${customizer.associateIpr}")
-          arg(value: "/DOUT_DIR=${context.paths.artifacts}")
-          arg(value: "/DOUT_FILE=${outFileName}")
-          arg(value: "${box}/nsiconf/idea.nsi")
-        }
+        ProcessKt.runProcess(
+          [
+            "${box}/NSIS/makensis.exe".toString(),
+            "/V2",
+            "/DCOMMUNITY_DIR=${communityHome}".toString(),
+            "/DIPR=${customizer.associateIpr}".toString(),
+            "/DOUT_DIR=${context.paths.artifacts}".toString(),
+            "/DOUT_FILE=${outFileName}".toString(),
+            "${box}/nsiconf/idea.nsi".toString(),
+          ],
+          box,
+          context.messages,
+          timeoutMs,
+        )
       }
       else {
-        ant.chmod(file: "${box}/NSIS/Bin/makensis", perm: "u+x")
-        ant.exec(executable: "${box}/NSIS/Bin/makensis") {
-          arg(value: "-V2")
-          arg(value: "-DCOMMUNITY_DIR=${communityHome}")
-          arg(value: "-DIPR=${customizer.associateIpr}")
-          arg(value: "-DOUT_DIR=${context.paths.artifacts}")
-          arg(value: "-DOUT_FILE=${outFileName}")
-          arg(value: "${box}/nsiconf/idea.nsi")
-          env(key: "NSISDIR", value: "${box}/NSIS")
-        }
+        String makeNsis = "${box}/NSIS/Bin/makensis"
+        NioFiles.setExecutable(Path.of(makeNsis))
+        ProcessKt.runProcess(
+          [
+            makeNsis,
+            "-V2",
+            "-DCOMMUNITY_DIR=${communityHome}".toString(),
+            "-DIPR=${customizer.associateIpr}".toString(),
+            "-DOUT_DIR=${context.paths.artifacts}".toString(),
+            "-DOUT_FILE=${outFileName}".toString(),
+            "${box}/nsiconf/idea.nsi".toString(),
+          ],
+          box,
+          context.messages,
+          timeoutMs,
+          Map.of("NSISDIR", "${box}/NSIS".toString()),
+        )
       }
     }
 

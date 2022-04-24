@@ -41,7 +41,9 @@ final class BuiltInHelpPlugin {
           resourceRoot,
           context.getModuleRuntimeClasspath(context.findRequiredModule(MODULE_NAME), false),
           assetJar,
-          context.messages)
+          context.messages,
+          context.stableJavaExecutable,
+        )
       }
     })
     spec.withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {

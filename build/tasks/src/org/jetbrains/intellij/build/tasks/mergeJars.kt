@@ -153,8 +153,8 @@ fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
               it.put(source.data)
             }
           }
-          else -> {
-            val sourceFile = (source as ZipSource).file
+          is ZipSource -> {
+            val sourceFile = source.file
             val requiresMavenFiles = targetFile.fileName.toString().startsWith("junixsocket-")
             readZipFile(sourceFile) { name, entry ->
               if (forbidNativeFiles && (name.endsWith(".jnilib") || name.endsWith(".dylib") || name.endsWith(".so"))) {
@@ -168,7 +168,7 @@ fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
               }
             }
           }
-        }
+        }.let { } // sealed when
 
         source.sizeConsumer?.accept((zipCreator.resultStream.getChannelPosition() - positionBefore).toInt())
       }

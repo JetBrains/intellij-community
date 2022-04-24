@@ -6,7 +6,7 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import java.nio.file.Path
 
-abstract class OsSpecificDistributionBuilder(protected val buildContext: BuildContext) {
+abstract class OsSpecificDistributionBuilder(@JvmField protected val buildContext: BuildContext) {
   abstract val targetOs: OsFamily
 
   abstract fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture?)

@@ -28,12 +28,11 @@ import java.util.regex.Pattern
 final class LayoutBuilder {
   public static final Pattern JAR_NAME_WITH_VERSION_PATTERN = ~/(.*)-\d+(?:\.\d+)*\.jar*/
 
-  private final AntBuilder ant
+  static final AntBuilder ant = new AntBuilder()
   private final CompilationContext context
 
   @CompileStatic(TypeCheckingMode.SKIP)
   LayoutBuilder(CompilationContext context) {
-    ant = context.ant
     this.context = context
 
     def contextLoaderRef = "GANT_CONTEXT_CLASS_LOADER"

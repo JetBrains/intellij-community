@@ -4,9 +4,9 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.NameUtilCore
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
+import groovy.transform.TypeCheckingMode
 import org.apache.maven.model.Dependency
 import org.apache.maven.model.Exclusion
 import org.apache.maven.model.Model
@@ -21,7 +21,6 @@ import org.jetbrains.jps.model.module.JpsDependencyElement
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
-
 /**
  * Generates Maven artifacts for IDE and plugin modules. Artifacts aren't generated for modules which depends on non-repository libraries.
  * @see org.jetbrains.intellij.build.ProductProperties#mavenArtifacts
@@ -72,9 +71,8 @@ class MavenArtifactsBuilder {
   }
 
   @SuppressWarnings("GrUnresolvedAccess")
-  @CompileDynamic
+  @CompileStatic(TypeCheckingMode.SKIP)
   private void layoutMavenArtifacts(Map<MavenArtifactData, List<JpsModule>> modulesToPublish, String outputDir) {
-    def ant = buildContext.ant
     def publishSourcesFilter = buildContext.productProperties.mavenArtifacts.publishSourcesFilter
     def buildContext = this.buildContext
     Map<MavenArtifactData, String> pomXmlFiles = [:]
@@ -83,6 +81,7 @@ class MavenArtifactsBuilder {
       pomXmlFiles[artifactData] = filePath
       generatePomXmlFile(filePath, artifactData)
     }
+    AntBuilder ant = LayoutBuilder.ant
     new LayoutBuilder(buildContext).layout("$buildContext.paths.artifacts/$outputDir") {
       modulesToPublish.each { artifactData, modules ->
         dir(artifactData.coordinates.directoryPath) {

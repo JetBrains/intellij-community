@@ -73,11 +73,6 @@ class TestingOptions {
   String customRuntimePath = System.getProperty(TEST_JRE_PROPERTY)
 
   /**
-   * Specifies if ant or junit 5 direct runner should be used 
-   */
-  boolean preferAntRunner = SystemProperties.getBooleanProperty("intellij.build.test.ant.runner", false)
-
-  /**
    * Enables capturing traces with IntelliJ test discovery agent.
    * This agent captures lightweight coverage during your testing session
    * and allows to rerun only corresponding tests for desired method or class in your project.

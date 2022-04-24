@@ -1,17 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
+
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.xml.dom.XmlDomReader
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import org.apache.tools.ant.AntClassLoader
-import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.Main
-import org.apache.tools.ant.Project
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
@@ -19,48 +13,9 @@ import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 
 @CompileStatic
 final class BuildUtils {
-  static void addUltimateBuildScriptsToClassPath(String home, AntBuilder ant) {
-    addToClassPath("$home/build/groovy", ant)
-    addToClassPath("$home/build/dependencies/groovy", ant)
-  }
-
-  static void addToClassPath(String path, AntBuilder ant) {
-    addToClassLoaderClassPath(path, ant, BuildUtils.class.classLoader)
-  }
-
-  static void addToJpsClassPath(String path, AntBuilder ant) {
-    //we need to add path to classloader of BuilderService to ensure that classes from that path will be returned by JpsServiceManager.getExtensions
-    addToClassLoaderClassPath(path, ant, Class.forName("org.jetbrains.jps.incremental.BuilderService").classLoader)
-  }
-
-  @CompileDynamic
-  private static void addToClassLoaderClassPath(String path, AntBuilder ant, ClassLoader classLoader) {
-    if (new File(path).exists()) {
-      if (classLoader instanceof GroovyClassLoader) {
-        classLoader.addClasspath(path)
-      }
-      else if (classLoader instanceof AntClassLoader) {
-        classLoader.addPathElement(path)
-      }
-      else if (classLoader instanceof UrlClassLoader) {
-        classLoader.addFiles(List.of(Path.of(path)))
-      }
-      else if (classLoader.metaClass.respondsTo(classLoader, 'addURL', URL)) {
-        classLoader.addURL(FileUtil.fileToUri(new File(path)).toURL())
-      }
-      else {
-        throw new BuildException("Cannot add to classpath: non-groovy or ant classloader $classLoader which doesn't have 'addURL' method")
-      }
-      ant.project.log("'$path' added to classpath", Project.MSG_INFO)
-    }
-    else {
-      throw new BuildException("Cannot add to classpath: $path doesn't exist")
-    }
-  }
 
   static String replaceAll(String text, Map<String, String> replacements, String marker = "__") {
     replacements.each {
@@ -74,16 +29,7 @@ final class BuildUtils {
     for (int i = 0; i < replacements.length; i += 2) {
       text = text.replace(marker + replacements[i] + marker, replacements[i + 1])
     }
-    // We need use temp file to avoid modify working-copy on Windows
-    // Because in build scripts when we coping directory via {@link org.jetbrains.intellij.build.io.CopyDirectoryVisitor#visitFile}
-    // CopyDirectoryVisitor will make hard-link to file instead of copy and we could modify origin file.
-    if (SystemInfo.isWindows) {
-      Path tempFile = Files.createTempFile("", ".tmp")
-      Files.writeString(tempFile, text)
-      Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING)
-    } else {
-      Files.writeString(file, text)
-    }
+    Files.writeString(file, text)
   }
 
   static String replaceAll(String text, String marker, String ...replacements) {
@@ -104,6 +50,12 @@ final class BuildUtils {
       content = StringUtilRt.convertLineSeparators(content, lineSeparator)
     }
     Files.writeString(targetPath, content)
+  }
+
+  static void assertUnixLineEndings(@NotNull Path file) {
+    if (Files.readString(file).contains("\r")) {
+      throw new IllegalStateException("Text file must not contain \r (CR or CRLF) line endings: $file")
+    }
   }
 
   static PrintStream getRealSystemOut() {

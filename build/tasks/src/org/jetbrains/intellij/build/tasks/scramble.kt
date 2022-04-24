@@ -23,6 +23,7 @@ fun runScrambler(scramblerJar: Path,
                  files: List<Path>,
                  args: Iterable<String>,
                  jvmArgs: Iterable<String>,
+                 javaExe: Path,
                  artifactBuilt: Consumer<Path>) {
   val logSpecifier = pluginDir?.fileName?.toString() ?: files.first().fileName.toString().removeSuffix(".jar")
   val logDir = artifactDir.resolve("scramble-logs")
@@ -35,7 +36,8 @@ fun runScrambler(scramblerJar: Path,
       jvmArgs = jvmArgs,
       classPath = List.of(scramblerJar.toString()),
       workingDir = workingDir,
-      outputFile = processOutputFile
+      outputFile = processOutputFile,
+      javaExe = javaExe,
     )
 
     if (pluginDir == null) {

@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Formats
@@ -33,12 +32,10 @@ import org.jetbrains.jps.util.JpsPathUtil
 
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
 
 @CompileStatic
 final class CompilationContextImpl implements CompilationContext {
-  final AntBuilder ant
   final BuildOptions options
   final BuildMessages messages
   final BuildPaths paths
@@ -51,9 +48,10 @@ final class CompilationContextImpl implements CompilationContext {
   final DependenciesProperties dependenciesProperties
   final BundledRuntime bundledRuntime
   JpsCompilationData compilationData
+  final Path stableJavaExecutable
+  final Path stableJdkHome
 
   @SuppressWarnings("GrUnresolvedAccess")
-  @CompileDynamic
   static CompilationContextImpl create(String communityHome, String projectHome, String defaultOutputRoot) {
     //noinspection GroovyAssignabilityCheck
     return create(communityHome, projectHome,
@@ -66,8 +64,7 @@ final class CompilationContextImpl implements CompilationContext {
     // but this is the only place which is called in most build scripts
     BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
 
-    AntBuilder ant = new AntBuilder()
-    BuildMessagesImpl messages = BuildMessagesImpl.create(ant.project)
+    BuildMessagesImpl messages = BuildMessagesImpl.create()
     communityHome = toCanonicalPath(communityHome)
     if (["platform/build-scripts", "bin/idea.properties", "build.txt"].any { !new File(communityHome, it).exists() }) {
       messages.error("communityHome ($communityHome) doesn't point to a directory containing IntelliJ Community sources")
@@ -75,14 +72,13 @@ final class CompilationContextImpl implements CompilationContext {
 
     printEnvironmentDebugInfo()
 
-    def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
     def kotlinBinaries = new KotlinBinaries(communityHome, options, messages)
     def model = loadProject(projectHome, kotlinBinaries, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
 
     projectHome = toCanonicalPath(projectHome)
-    CompilationContextImpl context = new CompilationContextImpl(ant, model, communityHome, projectHome, messages, oldToNewModuleName,
+    CompilationContextImpl context = new CompilationContextImpl(model, communityHome, projectHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     defineJavaSdk(context)
     context.prepareForBuild()
@@ -153,11 +149,10 @@ final class CompilationContextImpl implements CompilationContext {
     return mapping
   }
 
-  private CompilationContextImpl(AntBuilder ant, JpsModel model, String communityHome,
+  private CompilationContextImpl(JpsModel model, String communityHome,
                                  String projectHome, BuildMessages messages,
                                  Map<String, String> oldToNewModuleName,
                                  BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
-    this.ant = ant
     this.projectModel = model
     this.project = model.project
     this.global = model.global
@@ -180,18 +175,20 @@ final class CompilationContextImpl implements CompilationContext {
 
     this.dependenciesProperties = new DependenciesProperties(this)
     this.bundledRuntime = new BundledRuntimeImpl(this)
+
+    stableJdkHome = Jdk11Downloader.getJdkHome(paths.buildDependenciesCommunityRoot)
+    stableJavaExecutable = Jdk11Downloader.getJavaExecutable(stableJdkHome)
   }
 
-  CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
+  CompilationContextImpl createCopy(BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
-    CompilationContextImpl copy = new CompilationContextImpl(ant, projectModel, paths.communityHome, paths.projectHome,
+    CompilationContextImpl copy = new CompilationContextImpl(projectModel, paths.communityHome, paths.projectHome,
                                                              messages, oldToNewModuleName, buildOutputRootEvaluator, options)
     copy.compilationData = compilationData
     return copy
   }
 
-  private CompilationContextImpl(AntBuilder ant, BuildMessages messages, CompilationContextImpl context) {
-    this.ant = ant
+  private CompilationContextImpl(BuildMessages messages, CompilationContextImpl context) {
     this.projectModel = context.projectModel
     this.project = context.project
     this.global = context.global
@@ -204,10 +201,12 @@ final class CompilationContextImpl implements CompilationContext {
     this.compilationData = context.compilationData
     this.dependenciesProperties = context.dependenciesProperties
     this.bundledRuntime = context.bundledRuntime
+    this.stableJavaExecutable = context.stableJavaExecutable
+    this.stableJdkHome = context.stableJdkHome
   }
 
   CompilationContextImpl cloneForContext(BuildMessages messages) {
-    return new CompilationContextImpl(new AntBuilder(ant.project), messages, this)
+    return new CompilationContextImpl(messages, this)
   }
 
   private static JpsModel loadProject(String projectHome, KotlinBinaries kotlinBinaries, BuildMessages messages) {
@@ -287,13 +286,14 @@ final class CompilationContextImpl implements CompilationContext {
   }
 
   void exportModuleOutputProperties() {
-    // defines Ant properties which are used by jetbrains.antlayout.datatypes.IdeaModuleBase class to locate module outputs 
+    // defines Ant properties which are used by jetbrains.antlayout.datatypes.IdeaModuleBase class to locate module outputs
+    // still used, please get rid of LayoutBuilder usages
     for (JpsModule module : project.modules) {
       for (boolean test : [true, false]) {
         [module.name, getOldModuleName(module.name)].findAll { it != null }.each {
           def outputPath = getOutputPath(module, test)
           if (outputPath != null) {
-            ant.project.setProperty("module.${it}.output.${test ? "test" : "main"}", outputPath)
+            LayoutBuilder.ant.project.setProperty("module.${it}.output.${test ? "test" : "main"}", outputPath)
           }
         }
       }
@@ -392,8 +392,6 @@ final class CompilationContextImpl implements CompilationContext {
       .includedIn(JpsJavaClasspathKind.runtime(forTests))
     return enumerator.classes().roots.collect { it.absolutePath }
   }
-
-  private static final AtomicLong totalSizeOfProducedArtifacts = new AtomicLong()
 
   @Override
   void notifyArtifactBuilt(String artifactPath) {

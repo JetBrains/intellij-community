@@ -110,7 +110,42 @@ private fun deleteFile(file: Path) {
   }
 }
 
-internal inline fun transformFile(file: Path, task: (tempFile: Path) -> Unit) {
+@JvmOverloads
+fun substituteTemplatePlaceholders(inputFile: Path, outputFile: Path, placeholderChar: String, values: List<Pair<String, String>>, mustUseAllPlaceholders: Boolean = true) {
+  var result = Files.readString(inputFile)
+
+  val missingPlaceholders = mutableListOf<String>()
+  for ((name, value) in values) {
+    if (name.contains(placeholderChar)) {
+      error("Do not use placeholder '$placeholderChar' in name: $name")
+    }
+
+    val placeholder = "$placeholderChar$name$placeholderChar"
+    if (!result.contains(placeholder)) {
+      missingPlaceholders.add(placeholder)
+    }
+
+    result = result.replace(placeholder, value)
+  }
+
+  if (mustUseAllPlaceholders && missingPlaceholders.isNotEmpty()) {
+    error("Missing placeholders [${missingPlaceholders.joinToString(" ")}] in template file $inputFile")
+  }
+
+  val unsubstituted = result
+    .split('\n')
+    .mapIndexed { line, s -> "line ${line + 1}: $s" }
+    .filter { Regex(Regex.escape(placeholderChar) + ".+" + Regex.escape(placeholderChar)).containsMatchIn(it) }
+    .joinToString("\n")
+  if (unsubstituted.isNotBlank()) {
+    error("Some template parameters were left unsubstituted in template file $inputFile:\n$unsubstituted")
+  }
+
+  Files.createDirectories(outputFile.parent)
+  Files.writeString(outputFile, result)
+}
+
+inline fun transformFile(file: Path, task: (tempFile: Path) -> Unit) {
   val tempFile = file.parent.resolve("${file.fileName}.tmp")
   try {
     task(tempFile)

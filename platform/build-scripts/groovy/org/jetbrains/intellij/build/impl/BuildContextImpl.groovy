@@ -171,11 +171,6 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  AntBuilder getAnt() {
-    compilationContext.ant
-  }
-
-  @Override
   BuildOptions getOptions() {
     compilationContext.options
   }
@@ -213,6 +208,16 @@ final class BuildContextImpl extends BuildContext {
   @Override
   JpsCompilationData getCompilationData() {
     compilationContext.compilationData
+  }
+
+  @Override
+  Path getStableJavaExecutable() {
+    return compilationContext.stableJavaExecutable
+  }
+
+  @Override
+  Path getStableJdkHome() {
+    return compilationContext.stableJdkHome
   }
 
   @Override
@@ -399,7 +404,7 @@ final class BuildContextImpl extends BuildContext {
     BuildOptions options = new BuildOptions()
     options.useCompiledClassesFromProjectOutput = true
     CompilationContextImpl compilationContextCopy = compilationContext
-      .createCopy(ant, messages, options, createBuildOutputRootEvaluator(paths.projectHome, productProperties, options))
+      .createCopy(messages, options, createBuildOutputRootEvaluator(paths.projectHome, productProperties, options))
     BuildContextImpl copy = new BuildContextImpl(compilationContextCopy, productProperties,
                                                  windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
                                                  proprietaryBuildTools, new ConcurrentLinkedQueue<>())

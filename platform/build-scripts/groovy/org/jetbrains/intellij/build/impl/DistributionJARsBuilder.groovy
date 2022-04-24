@@ -15,8 +15,6 @@ import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlin.Triple
-import org.apache.tools.ant.types.FileSet
-import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
@@ -1155,11 +1153,14 @@ final class DistributionJARsBuilder {
   private static boolean containsFileInOutput(@NotNull String moduleName, String filePath, Collection<String> excludes, BuildContext buildContext) {
     Path moduleOutput = buildContext.getModuleOutputDir(buildContext.findRequiredModule(moduleName))
     Path fileInOutput = moduleOutput.resolve(filePath)
-    return Files.exists(fileInOutput) && (excludes == null || excludes.every {
-      createFileSet(it, moduleOutput, buildContext).iterator().every {
-        !(it instanceof FileProvider && FileUtil.pathsEqual(((FileProvider)it).file.toString(), fileInOutput.toString()))
-      }
-    })
+
+    if (!Files.exists(fileInOutput)) {
+      return false
+    }
+
+    FileSet set = new FileSet(moduleOutput).include(filePath)
+    excludes.each { set.exclude(it) }
+    return !set.isEmpty()
   }
 
   /**
@@ -1384,14 +1385,6 @@ final class DistributionJARsBuilder {
         }
       }
     }
-  }
-
-  private static FileSet createFileSet(String pattern, Path baseDir, BuildContext context) {
-    FileSet fileSet = new FileSet()
-    fileSet.setProject(context.ant.antProject)
-    fileSet.setDir(baseDir.toFile())
-    fileSet.createInclude().setName(pattern)
-    return fileSet
   }
 
   static Path basePath(BuildContext buildContext, String moduleName) {

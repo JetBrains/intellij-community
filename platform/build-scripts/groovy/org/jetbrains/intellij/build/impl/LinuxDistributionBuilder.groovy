@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Strings
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
+import kotlin.Pair
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
@@ -12,9 +12,11 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
+import org.jetbrains.intellij.build.io.FileKt
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.*
+import java.nio.file.attribute.PosixFilePermissions
 
 import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
 
@@ -42,7 +44,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   @Override
   void copyFilesForOsDistribution(@NotNull Path unixDistPath, JvmArchitecture arch) {
     BuildHelper buildHelper = BuildHelper.getInstance(buildContext)
-    buildHelper.span(TracerManager.spanBuilder("copy files for os distribution")
+    buildHelper.span(spanBuilder("copy files for os distribution")
                        .setAttribute("os", targetOs.osName)
                        .setAttribute("arch", arch?.name()), new Runnable() {
       @Override
@@ -109,23 +111,32 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     }
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
   private void generateVMOptions(Path distBinDir) {
     String fileName = "${buildContext.productProperties.baseFileName}64.vmoptions"
-    List<String> vmOptions = VmOptionsGenerator.computeVmOptions(buildContext.applicationInfo.isEAP, buildContext.productProperties) +
+    List<String> vmOptions = VmOptionsGenerator.computeVmOptions(buildContext.applicationInfo.isEAP(), buildContext.productProperties) +
                              ['-Dsun.tools.attach.tmp.only=true']
     Files.writeString(distBinDir.resolve(fileName), String.join('\n', vmOptions) + '\n', StandardCharsets.US_ASCII)
   }
 
   private void generateReadme(Path unixDistPath) {
     String fullName = buildContext.applicationInfo.productName
-    BuildUtils.copyAndPatchFile(
-      buildContext.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/Install-Linux-tar.txt"),
-      unixDistPath.resolve("Install-Linux-tar.txt"),
-      ["product_full"   : fullName,
-       "product"        : buildContext.productProperties.baseFileName,
-       "product_vendor" : buildContext.applicationInfo.shortCompanyName,
-       "system_selector": buildContext.systemSelector], "@@", "\n")
+
+    Path sourceFile = buildContext.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/Install-Linux-tar.txt")
+    BuildUtils.assertUnixLineEndings(sourceFile)
+
+    Path targetFile = unixDistPath.resolve("Install-Linux-tar.txt")
+
+    FileKt.substituteTemplatePlaceholders(
+      sourceFile,
+      targetFile,
+      "@@",
+      [
+        new Pair<String, String>("product_full", fullName),
+        new Pair<String, String>("product", buildContext.productProperties.baseFileName),
+        new Pair<String, String>("product_vendor", buildContext.applicationInfo.shortCompanyName),
+        new Pair<String, String>("system_selector", buildContext.systemSelector),
+      ]
+    )
   }
 
   // please keep in sync with `SystemHealthMonitor#checkInstallationIntegrity`
@@ -224,7 +235,6 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     )
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
   private void buildSnapPackage(String jreDirectoryPath, Path unixDistPath) {
     if (!buildContext.options.buildUnixSnaps || customizer.snapName == null) {
       return
@@ -245,46 +255,59 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       Path unixSnapDistPath = buildContext.paths.buildOutputDir.resolve("dist.unix.snap")
       BuildHelper.getInstance(buildContext).copyDir(unixDistPath, unixSnapDistPath)
 
-      def desktopTemplate = "${buildContext.paths.communityHome}/platform/platform-resources/src/entry.desktop"
-      def productName = buildContext.applicationInfo.productNameWithEdition
-      buildContext.ant.copy(file: desktopTemplate, tofile: snapDir.resolve("${customizer.snapName}.desktop").toString()) {
-        filterset(begintoken: '$', endtoken: '$') {
-          filter(token: "NAME", value: productName)
-          filter(token: "ICON", value: "\${SNAP}/bin/${buildContext.productProperties.baseFileName}.png")
-          filter(token: "SCRIPT", value: customizer.snapName)
-          filter(token: "COMMENT", value: buildContext.applicationInfo.motto)
-          filter(token: "WM_CLASS", value: getFrameClass(buildContext))
-        }
-      }
+      String productName = buildContext.applicationInfo.productNameWithEdition
+
+      FileKt.substituteTemplatePlaceholders(
+        buildContext.paths.communityHomeDir.resolve("platform/platform-resources/src/entry.desktop"),
+        snapDir.resolve("${customizer.snapName}.desktop"),
+        "\$",
+        [
+          new Pair<String, String>("NAME", productName),
+          new Pair<String, String>("ICON", "\${SNAP}/bin/${buildContext.productProperties.baseFileName}.png".toString()),
+          new Pair<String, String>("SCRIPT", customizer.snapName),
+          new Pair<String, String>("COMMENT", buildContext.applicationInfo.motto),
+          new Pair<String, String>("WM_CLASS", getFrameClass(buildContext)),
+        ]
+      )
 
       BuildHelper.moveFile(iconPngPath, snapDir.resolve(customizer.snapName + ".png"))
 
-      def snapcraftTemplate = "${buildContext.paths.communityHome}/platform/build-scripts/resources/linux/snap/snapcraft-template.yaml"
-      def versionSuffix = buildContext.applicationInfo.versionSuffix?.replace(' ', '-') ?: ""
-      def version = "${buildContext.applicationInfo.majorVersion}.${buildContext.applicationInfo.minorVersion}${versionSuffix.isEmpty() ? "" : "-${versionSuffix}"}"
-      buildContext.ant.copy(file: snapcraftTemplate, tofile: snapDir.resolve("snapcraft.yaml").toString()) {
-        filterset(begintoken: '$', endtoken: '$') {
-          filter(token: "NAME", value: customizer.snapName)
-          filter(token: "VERSION", value: version)
-          filter(token: "SUMMARY", value: productName)
-          filter(token: "DESCRIPTION", value: customizer.snapDescription)
-          filter(token: "GRADE", value: buildContext.applicationInfo.isEAP ? "devel" : "stable")
-          filter(token: "SCRIPT", value: "bin/${buildContext.productProperties.baseFileName}.sh")
-        }
-      }
+      Path snapcraftTemplate = buildContext.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/snap/snapcraft-template.yaml")
+      String versionSuffix = buildContext.applicationInfo.versionSuffix?.replace(' ', '-') ?: ""
+      String version = "${buildContext.applicationInfo.majorVersion}.${buildContext.applicationInfo.minorVersion}${versionSuffix.isEmpty() ? "" : "-${versionSuffix}"}"
 
-      buildContext.ant.chmod(perm: "755") {
-        fileset(dir: unixSnapDistPath.toString()) {
-          include(name: "bin/*.sh")
-          include(name: "bin/*.py")
-          include(name: "bin/fsnotifier*")
-          customizer.extraExecutables.each { include(name: it) }
-        }
-        fileset(dir: buildContext.paths.distAll){
-          customizer.extraExecutables.each { include(name: it) }
-        }
-        fileset(dir: jreDirectoryPath) {
-          include(name: "jbr/bin/*")
+      FileKt.substituteTemplatePlaceholders(
+        snapcraftTemplate,
+        snapDir.resolve("snapcraft.yaml"),
+        "\$",
+        [
+          new Pair<String, String>("NAME", customizer.snapName),
+          new Pair<String, String>("VERSION", version),
+          new Pair<String, String>("SUMMARY", productName),
+          new Pair<String, String>("DESCRIPTION", customizer.snapDescription),
+          new Pair<String, String>("GRADE", buildContext.applicationInfo.isEAP() ? "devel" : "stable"),
+          new Pair<String, String>("SCRIPT", "bin/${buildContext.productProperties.baseFileName}.sh".toString()),
+        ]
+      )
+
+      [
+        new FileSet(unixSnapDistPath)
+          .include("bin/*.sh")
+          .include("bin/*.py")
+          .include("bin/fsnotifier*")
+          .tap {
+            customizer.extraExecutables.each { include(it) }
+          },
+        new FileSet(buildContext.paths.distAllDir)
+          .tap {
+            customizer.extraExecutables.each { include(it) }
+          },
+        new FileSet(Path.of(jreDirectoryPath))
+          .include("jbr/bin/*"),
+      ].each { FileSet fileSet ->
+        fileSet.enumerate().each { file ->
+          buildContext.messages.debug("Setting file permission of $file to 0755")
+          Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rwxr-xr-x"))
         }
       }
 
@@ -298,27 +321,32 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       Files.createDirectories(resultDir)
       buildContext.messages.progress("Building package")
 
-      String snapArtifact = "${customizer.snapName}_${version}_amd64.snap"
-      buildContext.ant.exec(executable: "docker", dir: snapDir.toString(), failonerror: true) {
-        arg(value: "run")
-        arg(value: "--rm")
-        arg(value: "--volume=${snapDir}/snapcraft.yaml:/build/snapcraft.yaml:ro")
-        arg(value: "--volume=${snapDir}/${customizer.snapName}.desktop:/build/snap/gui/${customizer.snapName}.desktop:ro")
-        arg(value: "--volume=${snapDir}/${customizer.snapName}.png:/build/prime/meta/gui/icon.png:ro")
-        arg(value: "--volume=${snapDir}/result:/build/result")
-        arg(value: "--volume=${buildContext.paths.distAll}:/build/dist.all:ro")
-        arg(value: "--volume=${unixSnapDistPath}:/build/dist.unix:ro")
-        arg(value: "--volume=${jreDirectoryPath}:/build/jre:ro")
-        arg(value: "--workdir=/build")
-        arg(value: buildContext.options.snapDockerImage)
-        arg(value: "snapcraft")
-        arg(value: "snap")
-        arg(value: "-o")
-        arg(value: "result/$snapArtifact")
-      }
+      String snapArtifact = "${customizer.snapName}_${version}_amd64.snap".toString()
+      BuildHelper.runProcess(
+        buildContext,
+        [
+          "docker",
+          "run",
+          "--rm",
+          "--volume=${snapDir}/snapcraft.yaml:/build/snapcraft.yaml:ro".toString(),
+          "--volume=${snapDir}/${customizer.snapName}.desktop:/build/snap/gui/${customizer.snapName}.desktop:ro".toString(),
+          "--volume=${snapDir}/${customizer.snapName}.png:/build/prime/meta/gui/icon.png:ro".toString(),
+          "--volume=${snapDir}/result:/build/result".toString(),
+          "--volume=${buildContext.paths.distAll}:/build/dist.all:ro".toString(),
+          "--volume=${unixSnapDistPath}:/build/dist.unix:ro".toString(),
+          "--volume=${jreDirectoryPath}:/build/jre:ro".toString(),
+          "--workdir=/build",
+          buildContext.options.snapDockerImage,
+          "snapcraft",
+          "snap",
+          "-o",
+          "result/$snapArtifact".toString(),
+        ],
+        snapDir
+      )
 
       BuildHelper.moveFileToDir(resultDir.resolve(snapArtifact), buildContext.paths.artifactDir)
-      buildContext.notifyArtifactBuilt(buildContext.paths.artifactDir.resolve(snapArtifact))
+      buildContext.notifyArtifactWasBuilt(buildContext.paths.artifactDir.resolve(snapArtifact))
     }
   }
 

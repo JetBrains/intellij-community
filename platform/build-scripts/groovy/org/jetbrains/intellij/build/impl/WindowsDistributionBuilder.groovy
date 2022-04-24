@@ -10,8 +10,8 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.PathUtilRt
 import com.intellij.util.Processor
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
 import io.opentelemetry.api.trace.Span
+import kotlin.Pair
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
@@ -19,6 +19,7 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
+import org.jetbrains.intellij.build.io.FileKt
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
@@ -54,19 +55,18 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
-  @CompileStatic(TypeCheckingMode.SKIP)
   void copyFilesForOsDistribution(@NotNull Path winDistPath, JvmArchitecture arch = null) {
     Path distBinDir = winDistPath.resolve("bin")
     Files.createDirectories(distBinDir)
 
     buildContext.messages.progress("build distributions for Windows")
-    buildContext.ant.copy(todir: distBinDir.toString()) {
-      fileset(dir: "$buildContext.paths.communityHome/bin/win") {
-        if (!buildContext.includeBreakGenLibraries()) {
-          exclude(name: "breakgen*")
-        }
-      }
+
+    FileSet binWin = new FileSet(buildContext.paths.communityHomeDir.resolve("bin/win")).includeAll()
+    if (!buildContext.includeBreakGenLibraries()) {
+      binWin.exclude("breakgen*")
     }
+    binWin.copyToDir(distBinDir)
+
     def pty4jNativeDir = BuildTasksImpl.unpackPty4jNative(buildContext, winDistPath, "win")
     BuildTasksImpl.generateBuildTxt(buildContext, winDistPath)
     BuildTasksImpl.copyDistFiles(buildContext, winDistPath)
@@ -172,7 +172,6 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
   private void generateScripts(@NotNull Path distBinDir) {
     String fullName = buildContext.applicationInfo.productName
     String baseName = buildContext.productProperties.baseFileName
@@ -192,31 +191,63 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       additionalJvmArguments.add('"-Xbootclasspath/a:' + bootCp + '"')
     }
 
-    buildContext.ant.copy(todir: distBinDir.toString()) {
-      fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/win/scripts")
-
-      filterset(begintoken: "@@", endtoken: "@@") {
-        filter(token: "product_full", value: fullName)
-        filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
-        filter(token: "product_vendor", value: buildContext.applicationInfo.shortCompanyName)
-        filter(token: "vm_options", value: vmOptionsFileName)
-        filter(token: "system_selector", value: buildContext.systemSelector)
-        filter(token: "ide_jvm_args", value: additionalJvmArguments.join(' '))
-        filter(token: "class_path", value: classPath)
-        filter(token: "script_name", value: scriptName)
-        filter(token: "base_name", value: baseName)
-      }
+    Path winScripts = buildContext.paths.communityHomeDir.resolve("platform/build-scripts/resources/win/scripts")
+    String[] actualScriptNames = winScripts.toFile().list().toSorted()
+    String[] expectedScriptNames = ["executable-template.bat", "format.bat", "inspect.bat", "ltedit.bat"]
+    if (actualScriptNames != expectedScriptNames) {
+      throw new IllegalStateException("Expected script names '${expectedScriptNames.join(" ")}', but got '${actualScriptNames.join(" ")}' in $winScripts. Please review ${WindowsDistributionBuilder.class.name} and update accordingly")
     }
 
-    Files.move(distBinDir.resolve("executable-template.bat"), distBinDir.resolve(scriptName))
+    FileKt.substituteTemplatePlaceholders(
+      winScripts.resolve("executable-template.bat"),
+      distBinDir.resolve(scriptName),
+      "@@",
+      [
+        new Pair<String, String>("product_full", fullName),
+        new Pair<String, String>("product_uc", buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo)),
+        new Pair<String, String>("product_vendor", buildContext.applicationInfo.shortCompanyName),
+        new Pair<String, String>("vm_options", vmOptionsFileName),
+        new Pair<String, String>("system_selector", buildContext.systemSelector),
+        new Pair<String, String>("ide_jvm_args", additionalJvmArguments.join(' ')),
+        new Pair<String, String>("class_path", classPath),
+        new Pair<String, String>("base_name", baseName),
+      ]
+    )
+
     String inspectScript = buildContext.productProperties.inspectCommandName
+    for (String fileName : ["format.bat", "inspect.bat", "ltedit.bat"]) {
+      Path sourceFile = winScripts.resolve(fileName)
+      Path targetFile = distBinDir.resolve(fileName)
+
+      FileKt.substituteTemplatePlaceholders(
+        sourceFile,
+        targetFile,
+        "@@",
+        [
+          new Pair<String, String>("product_full", fullName),
+          new Pair<String, String>("script_name", scriptName),
+        ]
+      )
+    }
+
     if (inspectScript != "inspect") {
       Path targetPath = distBinDir.resolve("${inspectScript}.bat")
       Files.move(distBinDir.resolve("inspect.bat"), targetPath)
       buildContext.patchInspectScript(targetPath)
     }
 
-    buildContext.ant.fixcrlf(srcdir: distBinDir.toString(), includes: "*.bat", eol: "dos")
+    new FileSet(distBinDir)
+      .include("*.bat")
+      .enumerate()
+      .each { file ->
+        FileKt.transformFile(file, { target ->
+          Files.writeString(target, toDosLineEndings(Files.readString(file)))
+        })
+      }
+  }
+
+  private static String toDosLineEndings(String x) {
+    return x.replace("\r", "").replace("\n", "\r\n")
   }
 
   private void generateVMOptions(Path distBinDir) {
@@ -227,7 +258,6 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     Files.writeString(distBinDir.resolve(fileName), String.join('\r\n', vmOptions) + '\r\n', StandardCharsets.US_ASCII)
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
   private void buildWinLauncher(Path winDistPath) {
     buildContext.messages.block("Build Windows executable") {
       def executableBaseName = "${buildContext.productProperties.baseFileName}64"
@@ -262,30 +292,36 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         buildContext.findApplicationInfoModule(),
         buildContext.findModule("intellij.platform.icons"),
       )
-      buildContext.ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
-        sysproperty(key: "java.awt.headless", value: "true")
-        arg(value: inputPath)
-        arg(value: appInfoForLauncher.toString())
-        arg(value: "$communityHome/native/WinLauncher/resource.h")
-        arg(value: launcherPropertiesPath.toString())
-        arg(value: outputPath.toString())
-        classpath {
-          pathelement(location: "$communityHome/build/lib/launcher-generator.jar")
-          ["Guava", "commons-imaging"].each {
-            buildContext.project.libraryCollection.findLibrary(it).getFiles(JpsOrderRootType.COMPILED).each {
-              pathelement(location: it.absolutePath)
-            }
-          }
-          resourceModules.collectMany { it.sourceRoots }.each { JpsModuleSourceRoot root ->
-            pathelement(location: root.file.absolutePath)
-          }
-          buildContext.productProperties.brandingResourcePaths.each {
-            pathelement(location: it)
-          }
-          pathelement(location: icoFilesDirectory.toString())
-          pathelement(location: buildContext.getModuleOutputDir(buildContext.findRequiredModule("intellij.platform.util.jdom")).toString())
+
+      List<String> classpath = new ArrayList<>()
+      classpath.add("$communityHome/build/lib/launcher-generator.jar".toString())
+      ["Guava", "commons-imaging"].each {
+        buildContext.project.libraryCollection.findLibrary(it).getFiles(JpsOrderRootType.COMPILED).each {
+          classpath.add(it.absolutePath)
         }
       }
+      resourceModules.collectMany { it.sourceRoots }.each { JpsModuleSourceRoot root ->
+        classpath.add(root.file.absolutePath)
+      }
+      buildContext.productProperties.brandingResourcePaths.each {
+        classpath.add(it)
+      }
+      classpath.add(icoFilesDirectory.toString())
+      classpath.add(buildContext.getModuleOutputDir(buildContext.findRequiredModule("intellij.platform.util.jdom")).toString())
+
+      BuildHelper.runJava(
+        buildContext,
+        "com.pme.launcher.LauncherGeneratorMain",
+        [
+          inputPath,
+          appInfoForLauncher.toString(),
+          "$communityHome/native/WinLauncher/resource.h".toString(),
+          launcherPropertiesPath.toString(),
+          outputPath.toString(),
+        ],
+        ["-Djava.awt.headless=true"],
+        classpath
+      )
     }
   }
 

@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessages
 
@@ -37,10 +36,9 @@ abstract class RunConfigurationProperties {
   }
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
-  @CompileDynamic
   protected static getConfiguration(File file, BuildMessages messages) {
     Node root = new XmlParser().parse(file)
-    def configuration = first(root.configuration)
+    def configuration = first((NodeList)root.get("configuration"))
     if (configuration == null) {
       messages.error("Cannot load configuration from '$file.name': 'configuration' tag is not found")
     }

@@ -8,7 +8,6 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructur
 import org.jetbrains.jps.model.library.JpsLibrary
 
 import java.nio.file.Path
-
 /**
  * Creates JARs containing classes required to run the external build for IDEA project without IDE.
  */

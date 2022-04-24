@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-import groovy.util.AntBuilder
 import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.DependenciesProperties
 import org.jetbrains.intellij.build.impl.JpsCompilationData
@@ -12,7 +11,6 @@ import java.io.File
 import java.nio.file.Path
 
 interface CompilationContext {
-  val ant: AntBuilder
   val options: BuildOptions
   val messages: BuildMessages
   val paths: BuildPaths
@@ -22,6 +20,18 @@ interface CompilationContext {
   val bundledRuntime: BundledRuntime
 
   val compilationData: JpsCompilationData
+
+  /**
+   * Stable java executable from Java SDK used to compile project and do other stuff,
+   * not a JBR to assert compatibility with a standard Java Runtime
+   */
+  val stableJavaExecutable: Path
+
+  /**
+   * Stable JDK used to compile project and run utilities,
+   * not a JBR to assert compatibility with a standard Java Runtime
+   */
+  val stableJdkHome: Path
 
   /**
    * @return directory with compiled project classes, url attribute value of output tag from .idea/misc.xml by default

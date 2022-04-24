@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.PlatformLayout
 
+import java.nio.file.Path
 import java.util.function.BiConsumer
 
 @CompileStatic
@@ -56,16 +56,15 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
   }
 
   @Override
-  @CompileDynamic
   void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
     super.copyAdditionalFiles(buildContext, targetDirectory)
-    buildContext.ant.copy(todir: targetDirectory) {
-      fileset(file: "$buildContext.paths.communityHome/LICENSE.txt")
-      fileset(file: "$buildContext.paths.communityHome/NOTICE.txt")
-    }
-    buildContext.ant.copy(todir: "$targetDirectory/bin") {
-      fileset(dir: "$buildContext.paths.communityHome/build/conf/ideaCE/common/bin")
-    }
+    new FileSet(buildContext.paths.communityHomeDir)
+      .include("LICENSE.txt")
+      .include("NOTICE.txt")
+      .copyToDir(Path.of(targetDirectory))
+    new FileSet(buildContext.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"))
+      .includeAll()
+      .copyToDir(Path.of(targetDirectory, "bin"))
     bundleExternalPlugins(buildContext, targetDirectory)
   }
 

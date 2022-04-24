@@ -66,35 +66,6 @@ final class BuildTasksImpl extends BuildTasks {
   }
 
   @Override
-  void zipProjectSources() {
-    Path targetFile = buildContext.paths.artifactDir.resolve("sources.zip")
-    buildContext.executeStep(spanBuilder("build sources zip archive")
-                               .setAttribute("path", buildContext.paths.buildOutputDir.relativize(targetFile).toString()),
-                             BuildOptions.SOURCES_ARCHIVE_STEP, new Runnable() {
-      @Override
-      void run() {
-        Files.createDirectories(Path.of(buildContext.paths.artifacts))
-        Files.deleteIfExists(targetFile)
-        doZipProjectSources(targetFile, buildContext)
-      }
-    })
-    logFreeDiskSpace("after building sources archive")
-  }
-
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private static void doZipProjectSources(Path targetFile, BuildContext context) {
-    context.ant.zip(destfile: targetFile.toString()) {
-      fileset(dir: context.paths.projectHome) {
-        ["java", "groovy", "ipr", "iml", "form", "xml", "properties", "kt"].each {
-          include(name: "**/*.$it")
-        }
-        exclude(name: "**/testData/**")
-        exclude(name: "out/**")
-      }
-    }
-  }
-
-  @Override
   void zipSourcesOfModules(Collection<String> modules, Path targetFile, boolean includeLibraries) {
     buildContext.executeStep(spanBuilder("build module sources archives")
                                .setAttribute("path", buildContext.paths.buildOutputDir.relativize(targetFile).toString())
@@ -641,17 +612,21 @@ idea.fatal.error.notification=disabled
     new DistributionJARsBuilder(buildContext).generateProjectStructureMapping(targetFile.toPath(), buildContext)
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
   static @NotNull Path unpackPty4jNative(BuildContext buildContext, @NotNull Path distDir, String pty4jOsSubpackageName) {
     Path pty4jNativeDir = distDir.resolve("lib/pty4j-native")
     def nativePkg = "resources/com/pty4j/native"
     def includedNativePkg = Strings.trimEnd(nativePkg + "/" + Strings.notNullize(pty4jOsSubpackageName), '/')
     buildContext.project.libraryCollection.findLibrary("pty4j").getFiles(JpsOrderRootType.COMPILED).each {
-      buildContext.ant.unzip(src: it, dest: pty4jNativeDir.toString()) {
-        buildContext.ant.patternset() {
-          include(name: "$includedNativePkg/**")
+      Path tempDir = Files.createTempDirectory(buildContext.paths.tempDir, it.name)
+      try {
+        new Decompressor.Zip(it).withZipExtensions().extract(tempDir)
+        Path nativeDir = tempDir.resolve(includedNativePkg)
+        if (Files.isDirectory(nativeDir)) {
+          FileUtil.copyDirContent(nativeDir.toFile(), pty4jNativeDir.toFile())
         }
-        buildContext.ant.mapper(type: "glob", from: "$nativePkg/*", to: "*")
+      }
+      finally {
+        FileUtil.delete(tempDir)
       }
     }
     List<File> files = new ArrayList<>()
