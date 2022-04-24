@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -83,8 +83,7 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider, CacheableAn
       if (history == null) return null;
       // question is whether we need "not moved" path here?
       final ContentRevision fileContent = myVcs.getDiffProvider().createFileContent(revisionNumber, file);
-      final FileAnnotation restored = cacheableAnnotationProvider.
-        restore(vcsAnnotation, history, fileContent.getContent(), currentRevision,
+      final FileAnnotation restored = cacheableAnnotationProvider.restore(vcsAnnotation, history, fileContent.getContent(), currentRevision,
                                                                           revisionNumber);
       if (restored != null) {
         return restored;
@@ -126,7 +125,7 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider, CacheableAn
       final VcsCacheableHistorySessionFactory cacheableHistorySessionFactory = (VcsCacheableHistorySessionFactory)historyProvider;
       final VcsAbstractHistorySession cachedSession =
         myCache.getMaybePartial(filePath, myVcs.getKeyInstanceMethod(), cacheableHistorySessionFactory);
-      if (cachedSession != null && ! cachedSession.getRevisionList().isEmpty()) {
+      if (cachedSession != null && !cachedSession.getRevisionList().isEmpty()) {
         final VcsFileRevision recentRevision = cachedSession.getRevisionList().get(0);
         if (recentRevision.getRevisionNumber().compareTo(revision) >= 0 && (firstRevision == null || cachedSession.getHistoryAsMap().containsKey(firstRevision))) {
           return cachedSession;
@@ -137,8 +136,9 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider, CacheableAn
     final VcsAbstractHistorySession sessionFor;
     if (firstRevision != null) {
       sessionFor = limitedHistory(filePath, firstRevision);
-    } else {
-      sessionFor = (VcsAbstractHistorySession) historyProvider.createSessionFor(filePath);
+    }
+    else {
+      sessionFor = (VcsAbstractHistorySession)historyProvider.createSessionFor(filePath);
     }
     if (sessionFor != null && historyCacheSupported) {
       final VcsCacheableHistorySessionFactory cacheableHistorySessionFactory = (VcsCacheableHistorySessionFactory)historyProvider;
@@ -175,8 +175,9 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider, CacheableAn
           exc[0] = exception;
         }
       });
-    } catch (ProcessCanceledException e) {
-     // ok
+    }
+    catch (ProcessCanceledException e) {
+      // ok
     }
     if (exc[0] != null) {
       throw exc[0];

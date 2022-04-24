@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
@@ -50,8 +50,8 @@ public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShort
                          @NotNull VcsUserRegistry userRegistry,
                          @NotNull FatalErrorHandler consumer,
                          @NotNull Disposable disposableParent) throws IOException {
-    super(storageId, USERS, new UserIndexer(createUsersEnumerator(storageId, storageLockContext, userRegistry)), VoidDataExternalizer.INSTANCE,
-          storageLockContext, consumer, disposableParent);
+    super(storageId, USERS, new UserIndexer(createUsersEnumerator(storageId, storageLockContext, userRegistry)),
+          VoidDataExternalizer.INSTANCE, storageLockContext, consumer, disposableParent);
     myUserIndexer = (UserIndexer)myIndexer;
     ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> consumer.consume(this, e));
   }

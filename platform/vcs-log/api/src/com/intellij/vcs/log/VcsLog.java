@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -67,7 +67,7 @@ public interface VcsLog {
    * or cancel commit selection.
    *
    * @param reference target reference (commit hash, branch or tag)
-   * @param focus focus VCS Log table
+   * @param focus     focus VCS Log table
    */
   @NotNull
   Future<Boolean> jumpToReference(@NotNull String reference, boolean focus);
@@ -76,7 +76,7 @@ public interface VcsLog {
    * {@link #jumpToReference(String, boolean)} with focusing VCS Log table
    */
   @NotNull
-  default Future<Boolean> jumpToReference(@NotNull String reference){
+  default Future<Boolean> jumpToReference(@NotNull String reference) {
     return jumpToReference(reference, true);
   }
 
@@ -86,8 +86,8 @@ public interface VcsLog {
    * or cancel commit selection.
    *
    * @param commitHash target commit
-   * @param root target repository root
-   * @param focus focus VCS Log table
+   * @param root       target repository root
+   * @param focus      focus VCS Log table
    */
   @NotNull
   Future<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root, boolean focus);

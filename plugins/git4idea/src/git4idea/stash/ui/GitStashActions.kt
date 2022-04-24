@@ -47,7 +47,7 @@ class GitApplyStashAction : GitSingleStashAction() {
   }
 }
 
-class GitUnstashAsAction: GitSingleStashAction() {
+class GitUnstashAsAction : GitSingleStashAction() {
   override fun perform(project: Project, stashInfo: StashInfo): Boolean {
     val dialog = GitUnstashAsDialog(project, stashInfo)
     if (dialog.showAndGet()) {
@@ -58,7 +58,7 @@ class GitUnstashAsAction: GitSingleStashAction() {
 
 }
 
-class GitStashOperationsGroup: SavedPatchesOperationsGroup() {
+class GitStashOperationsGroup : SavedPatchesOperationsGroup() {
   override fun isApplicable(patchObject: SavedPatchesProvider.PatchObject<*>): Boolean {
     return patchObject.data is StashInfo
   }

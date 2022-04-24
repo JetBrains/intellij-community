@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
 import com.google.common.util.concurrent.SettableFuture
@@ -136,12 +136,14 @@ private class VcsLogSingleFileHistoryProvider(private val project: Project) : Vc
 
     val logManager = VcsProjectLog.getInstance(project).logManager!!
 
-    var fileHistoryUi = logManager.findLogUi(VcsLogTabLocation.TOOL_WINDOW, FileHistoryUi::class.java, true) { ui -> ui.matches(path, hash) }
+    var fileHistoryUi = logManager.findLogUi(VcsLogTabLocation.TOOL_WINDOW, FileHistoryUi::class.java, true) { ui ->
+      ui.matches(path, hash)
+    }
     val firstTime = fileHistoryUi == null
     if (firstTime) {
       val suffix = if (hash != null) " (" + hash.toShortString() + ")" else ""
       fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, tabGroupId, Function { path.name + suffix },
-        FileHistoryUiFactory(path, root, hash), true)
+                                                   FileHistoryUiFactory(path, root, hash), true)
     }
     selectRowWhenOpen(logManager, hash, root, fileHistoryUi!!, firstTime)
   }

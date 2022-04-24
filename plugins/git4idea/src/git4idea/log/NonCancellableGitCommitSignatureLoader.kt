@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
 import com.intellij.openapi.application.runInEdt
@@ -17,7 +17,7 @@ import java.util.concurrent.*
 internal class NonCancellableGitCommitSignatureLoader(project: Project) : GitCommitSignatureLoaderBase(project) {
 
   private val executor = ThreadPoolExecutor(1, 1, 10, TimeUnit.MILLISECONDS,
-    LinkedBlockingDeque(1), NamingThreadFactory(), ThreadPoolExecutor.DiscardOldestPolicy())
+                                            LinkedBlockingDeque(1), NamingThreadFactory(), ThreadPoolExecutor.DiscardOldestPolicy())
 
   override fun requestData(indicator: ProgressIndicator, commits: List<CommitId>, onChange: (Map<CommitId, GitCommitSignature>) -> Unit) {
     executor.execute {

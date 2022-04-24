@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history.impl;
 
 import com.intellij.CommonBundle;
@@ -63,7 +63,6 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -137,7 +136,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     myFile = file;
     myActiveVcs = vcs;
     myVcsHistoryProvider = vcsHistoryProvider;
-    
+
     myComments = new JEditorPane(UIUtil.HTML_MIME, "");
     myComments.setPreferredSize(new JBDimension(150, 100));
     myComments.setEditable(false);
@@ -606,8 +605,10 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     private String loadContents(@NotNull VcsFileRevision revision) throws VcsException {
       try {
         byte[] bytes = revision.loadContent();
-        if (bytes == null) throw new VcsException(
-          VcsBundle.message("history.failed.to.load.content.for.revision.0", revision.getRevisionNumber().asString()));
+        if (bytes == null) {
+          throw new VcsException(VcsBundle.message("history.failed.to.load.content.for.revision.0",
+                                                   revision.getRevisionNumber().asString()));
+        }
         return new String(bytes, myFile.getCharset());
       }
       catch (IOException e) {

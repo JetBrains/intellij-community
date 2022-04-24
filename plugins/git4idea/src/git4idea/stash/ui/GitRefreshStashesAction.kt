@@ -6,7 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import git4idea.stash.GitStashTracker
 
-class GitRefreshStashesAction: DumbAwareAction() {
+class GitRefreshStashesAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
     if (project == null || !isStashToolWindowEnabled(project)) {

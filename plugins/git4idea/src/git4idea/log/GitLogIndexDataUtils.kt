@@ -77,9 +77,11 @@ object GitLogIndexDataUtils {
         }
       }
 
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, GitBundle.message("vcs.log.archiving.log.index.data"), false, project)
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, GitBundle.message("vcs.log.archiving.log.index.data"),
+                                                                        false, project)
     }
   }
+
   internal fun indexingFinished(logData: VcsLogData?): Boolean {
     logData ?: return false
     val rootsForIndexing = VcsLogPersistentIndex.getRootsForIndexing(logData.logProviders)

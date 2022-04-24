@@ -1,13 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleColoredRenderer;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TableCellState;
+import com.intellij.ui.*;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.render.RenderingUtil;

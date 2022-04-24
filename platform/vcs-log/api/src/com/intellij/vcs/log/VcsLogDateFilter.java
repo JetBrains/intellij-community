@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import com.intellij.util.text.JBDateFormat;
@@ -58,10 +58,12 @@ public interface VcsLogDateFilter extends VcsLogDetailsFilter {
       return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made.between", after, before);
     }
     else if (getAfter() != null) {
-      return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made.after", JBDateFormat.getFormatter().formatDate(getAfter()));
+      return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made.after",
+                                  JBDateFormat.getFormatter().formatDate(getAfter()));
     }
     else if (getBefore() != null) {
-      return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made.before", JBDateFormat.getFormatter().formatDate(getBefore()));
+      return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made.before",
+                                  JBDateFormat.getFormatter().formatDate(getBefore()));
     }
     return "";
   }

@@ -117,8 +117,7 @@ public interface VcsLogProvider {
    * @param <T>      Type of property value.
    * @return Property value or null if unset.
    */
-  @Nullable
-  <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property);
+  @Nullable <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property);
 
   /**
    * Returns currently checked out branch in given root, or null if not on any branch or provided root is not under version control.

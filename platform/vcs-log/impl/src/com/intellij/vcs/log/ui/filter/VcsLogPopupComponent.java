@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.icons.AllIcons;
@@ -176,7 +176,8 @@ public abstract class VcsLogPopupComponent extends JPanel {
   @NotNull
   protected ListPopup createPopupMenu() {
     return JBPopupFactory.getInstance().
-      createActionGroupPopup(null, ActionGroupUtil.forceRecursiveUpdateInBackground(createActionGroup()), DataManager.getInstance().getDataContext(this),
+      createActionGroupPopup(null, ActionGroupUtil.forceRecursiveUpdateInBackground(createActionGroup()),
+                             DataManager.getInstance().getDataContext(this),
                              JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
   }
 

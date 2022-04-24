@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.intellij.openapi.application.runReadAction
@@ -90,7 +90,8 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
       val correctedText = StringUtil.convertLineSeparators(headContent)
 
       return StagedTrackerContent(correctedText, indexDocument)
-    } catch (e : VcsException) {
+    }
+    catch (e: VcsException) {
       LOG.warn("Can't load base revision content for ${file.path} with status $status", e)
       return null
     }

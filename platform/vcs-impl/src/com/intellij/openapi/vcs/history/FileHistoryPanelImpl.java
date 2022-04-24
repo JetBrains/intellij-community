@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.CommonBundle;
@@ -729,7 +729,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     @Override
     protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
       setToolTipText(myTooltipText);
-      if (value != null)  {
+      if (value != null) {
         //noinspection HardCodedStringLiteral
         append(value.toString(), getDefaultAttributes());
       }

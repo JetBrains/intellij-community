@@ -189,7 +189,8 @@ public final class VcsProjectLog implements Disposable {
           if (!myDisposeStarted.get()) {
             beforeCreateLog.run();
           }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
           LOG.error("Unable to execute 'beforeCreateLog'", e);
         }
         finally {
