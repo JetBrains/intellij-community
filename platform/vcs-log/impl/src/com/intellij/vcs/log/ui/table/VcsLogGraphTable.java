@@ -183,7 +183,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   protected void setErrorEmptyText(@NotNull Throwable error, @NlsContexts.StatusText @NotNull String defaultText) {
     String message = ObjectUtils.chooseNotNull(error.getLocalizedMessage(), defaultText);
     String shortenedMessage = StringUtil.shortenTextWithEllipsis(message, 150, 0, true);
-    //noinspection HardCodedStringLiteral
     getEmptyText().setText(shortenedMessage.replace('\n', ' '));
   }
 
