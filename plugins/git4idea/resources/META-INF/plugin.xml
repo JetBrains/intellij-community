@@ -439,6 +439,7 @@
     <group id="git4idea.actions.ShareLogIndexData" internal="true">
       <reference id="git4idea.actions.GitUseSharedLogAction"/>
       <reference id="git4idea.actions.GitDumpLogIndexDataAction"/>
+      <add-to-group group-id="Vcs.Log.Internal"/>
     </group>
   </actions>
 

@@ -239,6 +239,11 @@
       <reference id="VcsHistoryActionsGroup.Toolbar"/>
     </group>
 
+    <group id="Vcs.Log.Internal" internal="true" popup="true">
+      <reference id="Vcs.Log.InvalidateCaches"/>
+      <add-to-group group-id="Internal"/>
+    </group>
+
     <group id="Log.KeymapGroup" searchable="false">
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <reference ref="Vcs.Log.CompareRevisions"/>
