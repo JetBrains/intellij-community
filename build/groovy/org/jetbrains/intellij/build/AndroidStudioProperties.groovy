@@ -155,31 +155,30 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
     super.copyAdditionalFiles(buildContext, targetDirectory)
 
-    buildContext.ant.copy(todir: targetDirectory) {
-      fileset(file: "$buildContext.paths.communityHome/LICENSE.txt")
-      fileset(file: "$buildContext.paths.communityHome/NOTICE.txt")
-    }
-    buildContext.ant.copy(todir: "$targetDirectory/bin") {
-      fileset(dir: "$buildContext.paths.communityHome/build/conf/ideaCE/common/bin")
-    }
-    def root = "$buildContext.paths.communityHome/../.."
-    buildContext.ant.copy(todir: "$targetDirectory/bin/lldb/helpers") {
-      fileset(dir: "$root/tools/vendor/intellij/cidr/cidr-debugger/bin/lldb/helpers/")
-    }
-    buildContext.ant.copy(todir: "$targetDirectory/bin/helpers") {
-      fileset(dir: "$root/tools/vendor/intellij/cidr/cidr-debugger/bin/helpers")
-    }
+    new FileSet(buildContext.paths.communityHomeDir)
+      .include("LICENSE.txt")
+      .include("NOTICE.txt")
+      .copyToDir(Path.of(targetDirectory))
+    new FileSet(buildContext.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"))
+      .includeAll()
+      .copyToDir(Path.of(targetDirectory, "bin"))
+    new FileSet(buildContext.paths.communityHomeDir.resolve("../../tools/vendor/intellij/cidr/cidr-debugger/bin/lldb/helpers"))
+      .includeAll()
+      .copyToDir(Path.of(targetDirectory, "bin/lldb/helpers"))
+    new FileSet(buildContext.paths.communityHomeDir.resolve("../../tools/vendor/intellij/cidr/cidr-debugger/bin/helpers"))
+      .includeAll()
+      .copyToDir(Path.of(targetDirectory, "bin/helpers"))
 
     // Android Studio: copy CIDR license to CIRR plugins
-    buildContext.ant.copy(tofile: "$targetDirectory/plugins/c-clangd/lib/LICENSE.txt") {
-      fileset(file: "$buildContext.paths.communityHome/CIDR_LICENSE.txt")
-    }
-    buildContext.ant.copy(tofile: "$targetDirectory/plugins/c-plugin/lib/LICENSE.txt") {
-      fileset(file: "$buildContext.paths.communityHome/CIDR_LICENSE.txt")
-    }
-    buildContext.ant.copy(tofile: "$targetDirectory/plugins/cidr-base-plugin/lib/LICENSE.txt") {
-      fileset(file: "$buildContext.paths.communityHome/CIDR_LICENSE.txt")
-    }
+    new FileSet(buildContext.paths.communityHomeDir)
+      .include("CIDR_LICENSE.txt")
+      .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/lib/LICENSE.txt"))
+    new FileSet(buildContext.paths.communityHomeDir)
+      .include("CIDR_LICENSE.txt")
+      .copyToDir(Path.of(targetDirectory, "plugins/c-plugin/lib/LICENSE.txt"))
+    new FileSet(buildContext.paths.communityHomeDir)
+      .include("CIDR_LICENSE.txt")
+      .copyToDir(Path.of(targetDirectory, "plugins/cidr-base-plugin/lib/LICENSE.txt"))
   }
 
   @Override
@@ -210,11 +209,10 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
       @Override
       @CompileDynamic
-      void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-        def root = "$context.paths.communityHome/../.."
-        context.ant.copy(todir: "$targetDirectory/plugins/c-clangd/bin/clang/win") {
-          fileset(dir: "$root/prebuilts/tools/clion/bin/clang/win")
-        }
+      void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
+        new FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/win"))
+          .includeAll()
+          .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/bin/clang/win"))
       }
     }
   }
@@ -233,12 +231,10 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
       @Override
       @CompileDynamic
-      void copyAdditionalFiles(BuildContext context, Path targetDirectory, JvmArchitecture arch) {
-        def root = "$context.paths.communityHome/../.."
-
-        context.ant.copy(todir: "$targetDirectory/plugins/c-clangd/bin/clang/linux") {
-          fileset(dir: "$root/prebuilts/tools/clion/bin/clang/linux")
-        }
+      void copyAdditionalFiles(BuildContext buildContext, Path targetDirectory, JvmArchitecture arch) {
+        new FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/linux"))
+          .includeAll()
+          .copyToDir(targetDirectory.resolve("plugins/c-clangd/bin/clang/linux"))
         extraExecutables.add("plugins/c-clangd/bin/clang/linux/clangd")
         extraExecutables.add("plugins/c-clangd/bin/clang/linux/clang-tidy")
       }
@@ -265,12 +261,10 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     @Override
     @CompileDynamic
-    void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-      def root = "$context.paths.communityHome/../.."
-
-      context.ant.copy(todir: "$targetDirectory/plugins/c-clangd/bin/clang/mac") {
-        fileset(dir: "$root/prebuilts/tools/clion/bin/clang/mac")
-      }
+    void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
+      new FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/mac"))
+        .includeAll()
+        .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/bin/clang/mac"))
       extraExecutables.add("plugins/c-clangd/bin/clang/mac/clangd")
       extraExecutables.add("plugins/c-clangd/bin/clang/mac/clang-tidy")
     }
