@@ -2,7 +2,6 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.HashMapZipFile;
@@ -12,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -63,17 +61,31 @@ public final class UrlUtil {
   }
 
   static @NotNull List<String> getChildPathsFromJar(@NotNull URL root) throws IOException {
-    String file = Strings.trimStart(root.getFile(), FILE_PROTOCOL_PREFIX);
-    int jarSeparatorIndex = file.indexOf(URLUtil.JAR_SEPARATOR);
-    assert jarSeparatorIndex > 0;
+    // Parse e.g. the following url: jar:file:/C:/build/idea-sandbox/plugins/lib/jar-2022.1.9999%20-%20Copy.jar!/file Templates/
+    if (!URLUtil.JAR_PROTOCOL.equalsIgnoreCase(root.getProtocol())) {
+      throw new RuntimeException("This function accepts only jar urls: " + root);
+    }
 
-    String rootDirName = file.substring(jarSeparatorIndex + 2);
+    String rootPath = root.getPath();
+    int jarSeparatorIndex = rootPath.indexOf(URLUtil.JAR_SEPARATOR);
+    if (jarSeparatorIndex <= 0) {
+      throw new RuntimeException("This function accepts only urls with '" + URLUtil.JAR_SEPARATOR + "': " + root);
+    }
+
+    String rootDirName = rootPath.substring(jarSeparatorIndex + 2);
     if (!rootDirName.endsWith(URL_PATH_SEPARATOR)) {
       rootDirName += URL_PATH_SEPARATOR;
     }
 
+    String fileUrl = rootPath.substring(0, jarSeparatorIndex);
+    if (!fileUrl.startsWith("file:")) {
+      throw new RuntimeException("This function accepts 'jar:file:' urls: " + root);
+    }
+
+    File file = URLUtil.urlToFile(new URL(fileUrl));
+
     List<String> paths = new ArrayList<>();
-    try (HashMapZipFile zipFile = HashMapZipFile.load(Path.of(URLUtil.unescapePercentSequences(file.substring(0, jarSeparatorIndex))))) {
+    try (HashMapZipFile zipFile = HashMapZipFile.load(file.toPath())) {
       for (ImmutableZipEntry entry : zipFile.getEntries()) {
         String path = entry.getName();
         if (path.startsWith(rootDirName)) {
