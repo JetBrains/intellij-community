@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -299,7 +299,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   /**
    * Makes the log perform refresh for the given root.
-   * This refresh can be optimized, i. e. it can query VCS just for the part of the log.
+   * This refresh can be optimized, i.e. it can query VCS just for the part of the log.
    */
   public void refresh(@NotNull Collection<VirtualFile> roots) {
     initialize();

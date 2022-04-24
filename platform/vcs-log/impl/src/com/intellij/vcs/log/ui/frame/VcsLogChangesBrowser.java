@@ -59,7 +59,7 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES;
 
 /**
- * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
+ * Change browser for commits in the Log. For merge commits, can display changes to the commits parents in separate groups.
  */
 public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
