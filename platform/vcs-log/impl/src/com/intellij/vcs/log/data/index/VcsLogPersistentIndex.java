@@ -68,6 +68,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   @NotNull private final VcsLogIndexCollector myIndexCollector;
   @NotNull private final CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
 
+  @NotNull private final StorageId myIndexStorageId;
+
   @Nullable private final IndexStorage myIndexStorage;
   @Nullable private final IndexDataGetter myDataGetter;
 
@@ -99,9 +101,9 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
     VcsUserRegistry userRegistry = myProject.getService(VcsUserRegistry.class);
 
-    StorageId indexStorageId = new StorageId(myProject.getName(), INDEX, calcIndexId(myProject, myIndexers),
-                                             VcsLogStorageImpl.VERSION + VERSION);
-    myIndexStorage = createIndexStorage(indexStorageId, fatalErrorsConsumer, userRegistry);
+    myIndexStorageId = new StorageId(myProject.getName(), INDEX, calcIndexId(myProject, myIndexers),
+                                     VcsLogStorageImpl.VERSION + VERSION);
+    myIndexStorage = createIndexStorage(myIndexStorageId, fatalErrorsConsumer, userRegistry);
     if (myIndexStorage != null) {
       myDataGetter = new IndexDataGetter(myProject, myRoots, myIndexStorage, myStorage, myFatalErrorsConsumer);
     }
@@ -272,6 +274,11 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   @Override
   public void removeListener(@NotNull IndexingFinishedListener l) {
     myListeners.remove(l);
+  }
+
+  @NotNull
+  public StorageId getIndexStorageId() {
+    return myIndexStorageId;
   }
 
   @Override

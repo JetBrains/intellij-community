@@ -172,8 +172,8 @@ public final class VcsProjectLog implements Disposable {
   }
 
   @CalledInAny
-  private void disposeLog(boolean recreate, @NotNull Runnable beforeCreateLog) {
-    myExecutor.execute(() -> {
+  private Future<?> disposeLog(boolean recreate, @NotNull Runnable beforeCreateLog) {
+    return myExecutor.submit(() -> {
       VcsLogManager logManager = invokeAndWait(() -> {
         VcsLogManager manager = myLogManager.dropValue();
         if (manager != null) {
@@ -231,12 +231,13 @@ public final class VcsProjectLog implements Disposable {
    */
   @ApiStatus.Internal
   @CalledInAny
-  public void runOnDisposedLog(Runnable task) {
+  public @Nullable Future<?> runOnDisposedLog(@NotNull Runnable task) {
     try {
-      disposeLog(true, task);
+      return disposeLog(true, task);
     }
     catch (Exception e) {
       LOG.error("Unable to execute on disposed log: " + task, e);
+      return null;
     }
   }
 

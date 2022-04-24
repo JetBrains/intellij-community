@@ -134,6 +134,7 @@
             icon="AllIcons.Actions.Diff"/>
     <action class="com.intellij.vcs.log.ui.actions.ResumeIndexingAction" id="Vcs.Log.ResumeIndexing"
             icon="AllIcons.Process.ProgressResumeSmall"/>
+    <action class="com.intellij.vcs.log.ui.actions.InvalidateVcsLogCaches" id="Vcs.Log.InvalidateCaches" internal="true"/>
 
     <group id="Vcs.Log.PresentationSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
            icon="AllIcons.Actions.GroupBy" popup="true">
