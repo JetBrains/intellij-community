@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.xml.dom.XmlDomReader
@@ -97,7 +96,7 @@ final class BuildHelper {
   }
 
   static void copyFileToDir(Path file, Path targetDir) {
-    doCopyFile(file, targetDir.resolve(file.fileName), targetDir, true)
+    doCopyFile(file, targetDir.resolve(file.fileName), targetDir)
   }
 
   static void moveFileToDir(Path file, Path targetDir) {
@@ -106,23 +105,13 @@ final class BuildHelper {
   }
 
   static void copyFile(Path file, Path target) {
-    doCopyFile(file, target, target.parent, true)
-  }
-
-  static void copyFile(Path file, Path target, boolean useHardlink) {
-    doCopyFile(file, target, target.parent, useHardlink)
+    doCopyFile(file, target, target.parent)
   }
 
   // target.parent creates new instance of Path every call, pass targetDir explicitly
-  private static void doCopyFile(Path file, Path target, Path targetDir, boolean useHardlink) {
+  private static void doCopyFile(Path file, Path target, Path targetDir) {
     Files.createDirectories(targetDir)
-
-    if (useHardlink && !SystemInfoRt.isWindows && Files.getFileStore(file) == Files.getFileStore(targetDir)) {
-      Files.createLink(target, file)
-    }
-    else {
-      Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES)
-    }
+    Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES)
   }
 
   static void moveFile(Path source, Path target) {
