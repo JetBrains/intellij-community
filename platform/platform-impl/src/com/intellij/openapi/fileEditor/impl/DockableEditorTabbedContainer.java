@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -8,7 +8,6 @@ import com.intellij.internal.statistic.eventLog.events.ObjectEventData;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.Disposer;
@@ -157,7 +156,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     Boolean dropInBetweenPinnedTabs = null;
     boolean dropInPinnedRow = false;
     final int index = myCurrentOver != null ? ((JBTabsEx)myCurrentOver).getDropInfoIndex() : -1;
-    if (myCurrentOver != null && AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
+    if (myCurrentOver != null) {
       if (index >= 0 && index <= myCurrentOver.getTabCount()) {
         TabInfo tabInfo = index == myCurrentOver.getTabCount() ? null : myCurrentOver.getTabAt(index);
         TabInfo previousInfo = index > 0 ? myCurrentOver.getTabAt(index - 1) : null;
