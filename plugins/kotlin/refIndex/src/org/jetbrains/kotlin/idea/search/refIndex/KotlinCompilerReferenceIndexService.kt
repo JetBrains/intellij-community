@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerWorkspaceSettings
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.not
@@ -138,7 +139,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
     }
 
     class KCRIIsUpToDateConsumer : IsUpToDateCheckConsumer {
-        override fun isApplicable(project: Project): Boolean = KotlinCompilerReferenceIndexStorage.hasIndex(project)
+        override fun isApplicable(project: Project): Boolean = isEnabled(project) && KotlinCompilerReferenceIndexStorage.hasIndex(project)
         override fun isUpToDate(project: Project, isUpToDate: Boolean) {
             if (!isUpToDate) return
 
@@ -386,10 +387,14 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
         return overridden
     }
 
-    private fun isServiceEnabledFor(element: PsiElement): Boolean = !isInsideLibraryScope() && storage != null && isEnabled &&
-            runReadAction { element.containingFile }
-                ?.let(InjectedLanguageManager.getInstance(project)::isInjectedFragment)
-                ?.not() == true
+    private fun isServiceEnabledFor(element: PsiElement): Boolean {
+        return !isInsideLibraryScope() &&
+                storage != null &&
+                isEnabled(project) &&
+                runReadAction { element.containingFile }
+                    ?.let(InjectedLanguageManager.getInstance(project)::isInjectedFragment)
+                    ?.not() == true
+    }
 
     private fun buildScopeWithReferences(virtualFiles: Set<VirtualFile>?, element: PsiElement): GlobalSearchScope? {
         if (virtualFiles == null) return null
@@ -435,8 +440,11 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
 
     companion object {
         operator fun get(project: Project): KotlinCompilerReferenceIndexService = project.service()
-        fun getInstanceIfEnabled(project: Project): KotlinCompilerReferenceIndexService? = if (isEnabled) get(project) else null
-        val isEnabled: Boolean get() = AdvancedSettings.getBoolean("kotlin.compiler.ref.index")
+        fun getInstanceIfEnabled(project: Project): KotlinCompilerReferenceIndexService? = if (isEnabled(project)) get(project) else null
+        fun isEnabled(project: Project): Boolean {
+            return AdvancedSettings.getBoolean("kotlin.compiler.ref.index") && KotlinCompilerWorkspaceSettings.getInstance(project).preciseIncrementalEnabled
+        }
+
         private val LOG = logger<KotlinCompilerReferenceIndexService>()
     }
 }
