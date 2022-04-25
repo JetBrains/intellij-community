@@ -37,7 +37,6 @@ bill-to:  &id001
     Актуальный плагин.
     На конференции работали советы по секциям: химия, история.
   city:   "It <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO>"
-  state:  '<warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> error too'
 
 ship-to:  *id001
 

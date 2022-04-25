@@ -15,7 +15,7 @@ Even big fragment with injected code.
 <tag>This is <warning descr="EN_A_VS_AN">a</warning> error in article, making this paragraph so damn big!</tag>
 ```
 
-## Now bad part have <warning descr="HAVE_PART_AGREEMENT">go</warning> there
+## Now <warning descr="EN_A_VS_AN">an</warning> bad part
 
 It <warning descr="IT_VBZ">are</warning> written not many good .
 

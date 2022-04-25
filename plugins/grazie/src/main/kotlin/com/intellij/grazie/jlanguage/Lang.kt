@@ -7,25 +7,13 @@ import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.grazie.remote.RemoteLangDescriptor
 import com.intellij.openapi.util.NlsSafe
 import org.languagetool.Language
+import org.languagetool.language.English
 import org.languagetool.noop.NoopChunker
 
-enum class Lang(val displayName: String, val className: String, val remote: RemoteLangDescriptor, @NlsSafe val nativeName: String,
-                val initialize: (language: Language) -> Unit = { }) {
-  BRITISH_ENGLISH("English (GB)", "BritishEnglish", RemoteLangDescriptor.ENGLISH, "English (Great Britain)", {
-    //it.tagger = GrazieEnglishTagger()
-    it.chunker = NoopChunker()
-    //it.disambiguator = DemoDisambiguator()
-  }),
-  AMERICAN_ENGLISH("English (US)", "AmericanEnglish", RemoteLangDescriptor.ENGLISH, "English (USA)", {
-    //it.tagger = GrazieEnglishTagger()
-    it.chunker = NoopChunker()
-    //it.disambiguator = DemoDisambiguator()
-  }),
-  CANADIAN_ENGLISH("English (Canadian)", "CanadianEnglish", RemoteLangDescriptor.ENGLISH, "English (Canada)", {
-    //it.tagger = GrazieEnglishTagger()
-    it.chunker = NoopChunker()
-    //it.disambiguator = DemoDisambiguator()
-  }),
+enum class Lang(val displayName: String, val className: String, val remote: RemoteLangDescriptor, @NlsSafe val nativeName: String) {
+  BRITISH_ENGLISH("English (GB)", "BritishEnglish", RemoteLangDescriptor.ENGLISH, "English (Great Britain)"),
+  AMERICAN_ENGLISH("English (US)", "AmericanEnglish", RemoteLangDescriptor.ENGLISH, "English (USA)"),
+  CANADIAN_ENGLISH("English (Canadian)", "CanadianEnglish", RemoteLangDescriptor.ENGLISH, "English (Canada)"),
   ARABIC("Arabic", "Arabic", RemoteLangDescriptor.ARABIC, "العربيةُ"),
   ASTURIAN("Asturian", "Asturian", RemoteLangDescriptor.ASTURIAN, "Asturianu"),
   BELARUSIAN("Belarusian", "Belarusian", RemoteLangDescriptor.BELARUSIAN, "Беларуская"),
@@ -63,7 +51,9 @@ enum class Lang(val displayName: String, val className: String, val remote: Remo
 
   companion object {
     fun sortedValues() = values().sortedBy(Lang::nativeName)
-    internal fun isAnyLanguageLoadExceptEnglish() = values().any { if (!it.isEnglish()) it._jLanguage != null else false }
+
+    // the chunker can be very memory-, disk- and CPU-expensive
+    internal fun shouldDisableChunker(language: Language): Boolean = language is English
   }
 
   val iso: LanguageISO
@@ -72,7 +62,9 @@ enum class Lang(val displayName: String, val className: String, val remote: Remo
   private var _jLanguage: Language? = null
   val jLanguage: Language?
     get() = _jLanguage ?: GrazieDynamic.loadLang(this)?.also {
-      initialize(it)
+      if (shouldDisableChunker(it)) {
+        it.chunker = NoopChunker()
+      }
       _jLanguage = it
     }
 
