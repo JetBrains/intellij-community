@@ -1,6 +1,7 @@
 package org.jetbrains.deft.codegen.ijws.fields
 
-import com.intellij.workspaceModel.storage.impl.ExtRefKey
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.impl.*
 import deft.storage.codegen.*
 import deft.storage.codegen.field.javaType
 import org.jetbrains.deft.annotations.Child
@@ -8,9 +9,7 @@ import org.jetbrains.deft.codegen.ijws.classes.`else`
 import org.jetbrains.deft.codegen.ijws.classes.`for`
 import org.jetbrains.deft.codegen.ijws.classes.`if`
 import org.jetbrains.deft.codegen.ijws.getRefType
-import org.jetbrains.deft.codegen.ijws.wsFqn
-import org.jetbrains.deft.codegen.utils.fqn
-import org.jetbrains.deft.codegen.utils.lines
+import org.jetbrains.deft.codegen.utils.*
 import org.jetbrains.deft.impl.TList
 import org.jetbrains.deft.impl.TOptional
 import org.jetbrains.deft.impl.TRef
@@ -25,10 +24,10 @@ val ExtField<*, *>.wsCode: String
     val isList = type is TList<*>
     val singleFunction = if (!isList) if (isNullable) ".singleOrNull()" else ".single()" else ""
     val updateFunction = if (isList) {
-      "updateOneToManyChildrenOfParent"
+      fqn4(WorkspaceEntityStorage::updateOneToManyChildrenOfParent)
     }
     else {
-      if (isChild) "updateOneToOneChildOfParent" else "updateOneToOneParentOfChild"
+      if (isChild) fqn3(WorkspaceEntityStorage::updateOneToOneChildOfParent) else fqn3(WorkspaceEntityStorage::updateOneToOneParentOfChild)
     }
     val oppositeList = oppositeField.type is TList<*>
     val referrFunction = if (oppositeList) "referrersy" else "referrersx"
@@ -78,7 +77,7 @@ val ExtField<*, *>.wsCode: String
               }
             }
           }
-          line("diff.${wsFqn(updateFunction)}(${oppositeField.owner.javaImplName}.${oppositeField.refsConnectionId}, this, value)")
+          line("diff.$updateFunction(${oppositeField.owner.javaImplName}.${oppositeField.refsConnectionId}, this, value)")
         }
         `else` {
           line("val key = ${

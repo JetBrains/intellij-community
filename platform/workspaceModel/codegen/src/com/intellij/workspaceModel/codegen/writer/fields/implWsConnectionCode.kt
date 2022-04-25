@@ -1,11 +1,11 @@
 package org.jetbrains.deft.codegen.ijws.fields
 
-import com.intellij.workspaceModel.storage.impl.ConnectionId
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.impl.*
 import deft.storage.codegen.field.javaType
 import org.jetbrains.deft.codegen.ijws.getRefType
 import org.jetbrains.deft.codegen.ijws.refsFields
-import org.jetbrains.deft.codegen.ijws.wsFqn
-import org.jetbrains.deft.codegen.utils.fqn
+import org.jetbrains.deft.codegen.utils.*
 import org.jetbrains.deft.impl.TList
 import org.jetbrains.deft.impl.TOptional
 import org.jetbrains.deft.impl.TRef
@@ -83,9 +83,9 @@ fun Field<*, *>.refsConnectionMethodCode(genericType: String = ""): String {
   val connectionName = name.uppercase() + "_CONNECTION_ID"
   val getterName = if (ref.child) {
     if (ref.targetObjType.abstract)
-      "${wsFqn("extractOneToAbstractOneChild")}$genericType"
+      "${fqn1(WorkspaceEntityStorage::extractOneToAbstractOneChild)}$genericType"
     else
-      "${wsFqn("extractOneToOneChild")}$genericType"
+      "${fqn1(WorkspaceEntityStorage::extractOneToOneChild)}$genericType"
   }
   else {
     var valueType = referencedField.type
@@ -94,13 +94,13 @@ fun Field<*, *>.refsConnectionMethodCode(genericType: String = ""): String {
     }
     when (valueType) {
       is TList<*> -> if (owner.abstract)
-        "${wsFqn("extractOneToAbstractManyParent")}$genericType"
+        "${fqn1(WorkspaceEntityStorage::extractOneToAbstractManyParent)}$genericType"
       else
-        "${wsFqn("extractOneToManyParent")}$genericType"
+        "${fqn1(WorkspaceEntityStorage::extractOneToManyParent)}$genericType"
       is TRef<*> -> if (owner.abstract)
-        "${wsFqn("extractOneToAbstractOneParent")}$genericType"
+        "${fqn1(WorkspaceEntityStorage::extractOneToAbstractOneParent)}$genericType"
       else
-        "${wsFqn("extractOneToOneParent")}$genericType"
+        "${fqn1(WorkspaceEntityStorage::extractOneToOneParent)}$genericType"
       else -> error("Unsupported reference type")
     }
   }

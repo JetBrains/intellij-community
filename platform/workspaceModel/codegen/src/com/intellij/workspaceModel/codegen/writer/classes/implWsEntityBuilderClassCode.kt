@@ -119,7 +119,7 @@ ${
               if (parentField.type.isList()) {
                 if (parentField.owner.abstract) {
                   line(
-                    "val access = $tmpFieldName::class.${wsFqn("memberProperties")}.single { it.name == \"_${parentField.name}\" } as ${KMutableProperty1::class.fqn}<*, *>"
+                    "val access = $tmpFieldName::class.${fqn(KClass<*>::memberProperties)}.single { it.name == \"_${parentField.name}\" } as ${KMutableProperty1::class.fqn}<*, *>"
                   )
                   line("val $tempPropertyName = (access.getter.call($tmpFieldName) as? List<*>)?.toMutableList()")
                   line("$tempPropertyName?.remove(this)")
@@ -135,7 +135,7 @@ ${
               else {
                 if (parentField.owner.abstract) {
                   line(
-                    "val access = $tmpFieldName::class.${wsFqn("memberProperties")}.single { it.name == \"_${parentField.name}\" } as ${KMutableProperty1::class.fqn}<*, *>"
+                    "val access = $tmpFieldName::class.${fqn(KClass<*>::memberProperties)}.single { it.name == \"_${parentField.name}\" } as ${KMutableProperty1::class.fqn}<*, *>"
                   )
                   line("access.setter.call($tmpFieldName, null)")
                 }

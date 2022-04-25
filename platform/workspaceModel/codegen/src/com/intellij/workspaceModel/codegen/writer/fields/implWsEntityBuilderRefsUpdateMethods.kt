@@ -1,7 +1,12 @@
 package org.jetbrains.deft.codegen.ijws.fields
 
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.impl.*
 import org.jetbrains.deft.codegen.ijws.isRefType
-import org.jetbrains.deft.codegen.ijws.wsFqn
+import org.jetbrains.deft.codegen.utils.fqn1
+import org.jetbrains.deft.codegen.utils.fqn2
+import org.jetbrains.deft.codegen.utils.fqn3
+import org.jetbrains.deft.codegen.utils.fqn4
 import org.jetbrains.deft.impl.TList
 import org.jetbrains.deft.impl.TOptional
 import org.jetbrains.deft.impl.TRef
@@ -17,8 +22,7 @@ fun Field<*, *>.refNames(): RefMethods {
   return when (type) {
     is TRef -> constructCode(type)
     is TOptional -> constructCode((this.type as TOptional<*>).type)
-    /// XXX: it should be updateOneToManyChildrenOfParent, but this method is used now for simplification
-    is TList<*> -> wsFqn("extractOneToManyChildren") getterWithSetter wsFqn("updateOneToManyChildrenOfParentById")
+    is TList<*> -> fqn2(WorkspaceEntityStorage::extractOneToManyChildren) getterWithSetter fqn4(WorkspaceEntityStorage::updateOneToManyChildrenOfParent)
     else -> error("Call this on ref field")
   }
 }
@@ -28,10 +32,10 @@ private fun Field<*, *>.constructCode(type: ValueType<*>): RefMethods {
 
   return if (type.child) {
     if (type.targetObjType.abstract) {
-      wsFqn("extractOneToAbstractOneChild") getterWithSetter wsFqn("updateOneToAbstractOneChildOfParent")
+      fqn1(WorkspaceEntityStorage::extractOneToAbstractOneChild) getterWithSetter fqn3(WorkspaceEntityStorage::updateOneToAbstractOneChildOfParent)
     }
     else {
-      wsFqn("extractOneToOneChild") getterWithSetter wsFqn("updateOneToOneChildOfParent")
+      fqn1(WorkspaceEntityStorage::extractOneToOneChild) getterWithSetter fqn3(WorkspaceEntityStorage::updateOneToOneChildOfParent)
     }
   }
   else {
@@ -42,18 +46,18 @@ private fun Field<*, *>.constructCode(type: ValueType<*>): RefMethods {
     when (valueType) {
       is TList<*> -> {
         if (owner.abstract) {
-          wsFqn("extractOneToAbstractManyParent") getterWithSetter wsFqn("updateOneToAbstractManyParentOfChild")
+          fqn1(WorkspaceEntityStorage::extractOneToAbstractManyParent) getterWithSetter fqn3(WorkspaceEntityStorage::updateOneToAbstractManyParentOfChild)
         }
         else {
-          wsFqn("extractOneToManyParent") getterWithSetter wsFqn("updateOneToManyParentOfChild")
+          fqn1(WorkspaceEntityStorage::extractOneToManyParent) getterWithSetter fqn3(WorkspaceEntityStorage::updateOneToManyParentOfChild)
         }
       }
       is TRef<*> -> {
         if (owner.abstract) {
-          wsFqn("extractOneToAbstractOneParent") getterWithSetter wsFqn("updateOneToAbstractOneParentOfChild")
+          fqn1(WorkspaceEntityStorage::extractOneToAbstractOneParent) getterWithSetter fqn3(WorkspaceEntityStorage::updateOneToAbstractOneParentOfChild)
         }
         else {
-          wsFqn("extractOneToOneParent") getterWithSetter wsFqn("updateOneToOneParentOfChild")
+          fqn1(WorkspaceEntityStorage::extractOneToOneParent) getterWithSetter fqn3(WorkspaceEntityStorage::updateOneToOneParentOfChild)
         }
       }
       else -> error("Unsupported reference type")

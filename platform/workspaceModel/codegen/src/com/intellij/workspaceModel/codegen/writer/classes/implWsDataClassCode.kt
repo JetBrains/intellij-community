@@ -13,7 +13,6 @@ import org.jetbrains.deft.codegen.ijws.fields.implWsDataFieldCode
 import org.jetbrains.deft.codegen.ijws.fields.implWsDataFieldInitializedCode
 import org.jetbrains.deft.codegen.ijws.isRefType
 import org.jetbrains.deft.codegen.ijws.sups
-import org.jetbrains.deft.codegen.ijws.wsFqn
 import org.jetbrains.deft.codegen.model.DefType
 import org.jetbrains.deft.codegen.model.WsEntityWithPersistentId
 import org.jetbrains.deft.codegen.utils.fqn
@@ -86,7 +85,7 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
       }
 
       // --- getEntityInterface method
-      sectionNl("override fun getEntityInterface(): Class<out ${WorkspaceEntity::class.simpleName}>") {
+      sectionNl("override fun getEntityInterface(): Class<out ${WorkspaceEntity::class.fqn}>") {
         line("return $name::class.java")
       }
 

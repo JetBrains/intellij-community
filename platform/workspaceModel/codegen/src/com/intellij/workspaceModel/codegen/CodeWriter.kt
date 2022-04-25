@@ -44,7 +44,6 @@ object CodeWriter {
     }
     val virtualFile = targetFolder.parent.createChildData(this, module.moduleObjName + ".kt")
     documentManager.getDocument(virtualFile)?.setText(result.wsModuleCode())
-    //        dir.resolve("toIjWs/generated.kt").writeCode(result.ijWsCode())
   }
 
   fun generate(dir: File, fromDirectory: String, toDirectory: String, moduleId: String) {
@@ -68,6 +67,5 @@ object CodeWriter {
         .writeText(it.implIjWsFileContents(result.simpleTypes))
     }
     dir.resolve(module.moduleObjName + ".kt").writeText(result.wsModuleCode())
-    //        dir.resolve("toIjWs/generated.kt").writeCode(result.ijWsCode())
   }
 }

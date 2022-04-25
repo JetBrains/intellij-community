@@ -1,13 +1,16 @@
 package org.jetbrains.deft.codegen.ijws.fields
 
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.impl.*
 import deft.storage.codegen.*
 import deft.storage.codegen.field.implSuspendableCode
 import deft.storage.codegen.field.javaType
 import org.jetbrains.deft.codegen.ijws.getRefType
 import org.jetbrains.deft.codegen.ijws.isRefType
 import org.jetbrains.deft.codegen.ijws.refsFields
-import org.jetbrains.deft.codegen.ijws.wsFqn
 import org.jetbrains.deft.codegen.model.KtObjModule
+import org.jetbrains.deft.codegen.utils.fqn1
+import org.jetbrains.deft.codegen.utils.fqn2
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.Field
 import org.jetbrains.deft.impl.fields.MemberOrExtField
@@ -71,14 +74,14 @@ internal fun Field<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, 
         if ((fieldType.elementType as TRef<*>).targetObjType.abstract) {
           """
                 override val $name: ${fieldType.javaType}$optionalSuffix
-                    get() = snapshot.extractOneToAbstractManyChildren<${fieldType.elementType.javaType}>($connectionName, this)$notNullAssertion.toList()
+                    get() = snapshot.${fqn2(WorkspaceEntityStorage::extractOneToAbstractManyChildren)}<${fieldType.elementType.javaType}>($connectionName, this)$notNullAssertion.toList()
                
                 """.trimIndent()
         }
         else {
           """
                 override val $name: ${fieldType.javaType}$optionalSuffix
-                    get() = snapshot.extractOneToManyChildren<${fieldType.elementType.javaType}>($connectionName, this)$notNullAssertion.toList()
+                    get() = snapshot.${fqn2(WorkspaceEntityStorage::extractOneToManyChildren)}<${fieldType.elementType.javaType}>($connectionName, this)$notNullAssertion.toList()
                
                 """.trimIndent()
         }
@@ -121,8 +124,14 @@ internal val Field<*, *>.implWsBlockingCodeOverride: String
       valueType = valueType.type as ValueType<Any?>
     }
     val getterName = when (valueType) {
-      is TList<*> -> if (owner.abstract) wsFqn("extractOneToAbstractManyParent") else wsFqn("extractOneToManyParent")
-      is TRef<*> -> if (owner.abstract) wsFqn("extractOneToAbstractOneParent") else wsFqn("extractOneToOneParent")
+      is TList<*> -> if (owner.abstract)
+        fqn1(WorkspaceEntityStorage::extractOneToAbstractManyParent)
+      else
+        fqn1(WorkspaceEntityStorage::extractOneToManyParent)
+      is TRef<*> -> if (owner.abstract)
+        fqn1(WorkspaceEntityStorage::extractOneToAbstractOneParent)
+      else
+        fqn1(WorkspaceEntityStorage::extractOneToOneParent)
       else -> error("Unsupported reference type")
     }
     return """
