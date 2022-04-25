@@ -2,7 +2,6 @@ package org.intellij.plugins.markdown.editor.toc
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
-import org.junit.Ignore
 
 class GenerateTableOfContentsActionTest: LightPlatformCodeInsightTestCase() {
   fun `test toc idempotence`() {
@@ -16,8 +15,9 @@ class GenerateTableOfContentsActionTest: LightPlatformCodeInsightTestCase() {
 
   fun `test multiple toc sections update`() = doTest()
 
-  @Ignore
   fun `test headers with links`() = doTest()
+
+  fun `test headers with images`() = doTest()
 
   private fun doTest() {
     val name = getTestName(true)

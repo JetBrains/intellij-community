@@ -102,14 +102,14 @@ internal class GenerateTableOfContentsAction: AnAction() {
     }
 
     private fun StringBuilder.appendHeader(header: MarkdownHeader) {
-      val name = header.name ?: return
+      val text = header.buildVisibleText(hideImages = false) ?: return
+      val reference = header.anchorText ?: return
       repeat(header.level - 1) {
         append("  ")
       }
-      val reference = name.split(" ").joinToString(separator = "-").lowercase()
       append("* [")
-      append(name)
-      append("](#")
+      append(text)
+      append("](")
       append(reference)
       append(")")
     }
