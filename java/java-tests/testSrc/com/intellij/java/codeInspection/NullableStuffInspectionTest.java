@@ -124,6 +124,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testOverriddenViaMethodReference() { doTest(); }
+  public void testMethodReferenceListOf() { doTest(); }
   public void testOverridingExternalNotNull() { doTest(); }
 
   public void testIgnoreExternalNotNull() {
