@@ -98,8 +98,8 @@ open class LanguageToolChecker : TextChecker() {
 
     override fun getTooltipTemplate(): String = toTooltipTemplate(match)
 
-    override fun getReplacementRange(): TextRange = highlightRanges[0]
-    override fun getCorrections(): List<String> = match.suggestedReplacements
+    override fun getSuggestions(): List<Suggestion> = match.suggestedReplacements.map { Suggestion.replace(highlightRanges[0], it) }
+
     override fun getPatternRange() = TextRange(match.patternFromPos, match.patternToPos)
 
     override fun fitsGroup(group: RuleGroup): Boolean {
