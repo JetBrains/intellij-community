@@ -308,11 +308,11 @@
       <add-to-group group-id="EditorGutterPopupMenu" anchor="after" relative-to-action="EditorGutterVcsPopupMenu"/>
     </group>
 
-    <group id="popup@ExpandableBookmarkContextMenu" popup="true">
+    <group id="popup@ExpandableBookmarkContextMenu" popup="true" searchable="false">
       <reference ref="popup@BookmarkContextMenu"/>
     </group>
 
-    <group id="EditBookmarksGroup" popup="true">
+    <group id="EditBookmarksGroup" popup="true" searchable="false">
       <reference ref="popup@BookmarkContextMenu"/>
       <separator/>
       <reference ref="GotoPreviousBookmark"/>
