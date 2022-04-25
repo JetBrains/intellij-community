@@ -15,13 +15,12 @@ import com.intellij.psi.PsiNamedElement
 
 class SearchEverywhereClassFeaturesProvider : SearchEverywhereClassOrFileFeaturesProvider(ClassSearchEverywhereContributor::class.java) {
   companion object {
-    internal val PRIORITY = EventFields.Int("priority")
     internal val IS_DEPRECATED = EventFields.Boolean("isDeprecated")
     internal val IS_ACCESSIBLE_FROM_MODULE = EventFields.Boolean("isAccessibleFromModule")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
-    val features = arrayListOf<EventField<*>>(PRIORITY, IS_DEPRECATED, IS_ACCESSIBLE_FROM_MODULE)
+    val features = arrayListOf<EventField<*>>(IS_DEPRECATED, IS_ACCESSIBLE_FROM_MODULE)
     features.addAll(super.getFeaturesDeclarations())
     return features
   }
@@ -32,9 +31,7 @@ class SearchEverywhereClassFeaturesProvider : SearchEverywhereClassOrFileFeature
                                   searchQuery: String,
                                   elementPriority: Int,
                                   cache: Cache?): List<EventPair<*>> {
-    val data = arrayListOf<EventPair<*>>(
-      PRIORITY.with(elementPriority)
-    )
+    val data = arrayListOf<EventPair<*>>()
 
     ReadAction.run<Nothing> {
       (element as? PsiNamedElement)?.name?.let { elementName ->
