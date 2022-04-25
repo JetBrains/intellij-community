@@ -100,7 +100,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
           inspectionManager.createProblemDescriptor(expression.getTypeArgumentList(),
                                                     JavaAnalysisBundle.message(key),
                                                     ourQuickFixAction,
-                                                    ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly);
+                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
         problems.add(descriptor);
       }
     }
@@ -126,7 +126,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
             final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
             LOG.assertTrue(parameterList != null);
             final ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(parameterList, JavaAnalysisBundle
-              .message("inspection.redundant.type.problem.descriptor"), ourQuickFixAction, ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly);
+              .message("inspection.redundant.type.problem.descriptor"), ourQuickFixAction, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
             problems.add(descriptor);
           }
         }
@@ -147,7 +147,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
           final ProblemDescriptor descriptor =
             inspectionManager.createProblemDescriptor(parameterList,
                                                       JavaAnalysisBundle.message(key),
-                                                      new MyQuickFixAction(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly);
+                                                      new MyQuickFixAction(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
             problems.add(descriptor);
         }
       }

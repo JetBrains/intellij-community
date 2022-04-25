@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -27,7 +27,10 @@ import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.BufferedReader;
@@ -481,6 +484,17 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
 
     return null;
   }
+
+  /**
+   * Do not override the method, register attributes in plugin.xml
+   *
+   * @return attributesKey's external name if editor presentation should be different from severity presentation
+   * {@code null} if attributes should correspond to chosen severity
+   */
+  public String getEditorAttributesKey() {
+    return null;
+  }
+
 
   public static @Nls String getGeneralGroupName() {
     return InspectionsBundle.message("inspection.general.tools.group.name");

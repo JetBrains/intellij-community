@@ -41,7 +41,6 @@ public final class ScopeToolState {
                         @NotNull HighlightDisplayLevel level) {
     this(scope.getScopeId(), toolWrapper, enabled, level);
     myScope = scope;
-    myTextAttributesKey = toolWrapper.getEditorAttributesKeyExternalName();
   }
 
   public ScopeToolState(@NotNull String scopeName,

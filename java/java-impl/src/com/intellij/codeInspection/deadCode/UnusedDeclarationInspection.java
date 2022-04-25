@@ -338,7 +338,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
       PsiElement toHighlight = ObjectUtils.notNull(psiVariable.getNameIdentifier(), psiVariable);
       return myInspectionManager.createProblemDescriptor(
         toHighlight, JavaBundle.message("inspection.unused.assignment.problem.descriptor1"), (LocalQuickFix)null,
-        ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
+        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
     }
   }
 }

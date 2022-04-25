@@ -19,7 +19,6 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -140,7 +139,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
     public void visitMethodCallExpression(PsiMethodCallExpression call) {
       final PsiExpression argument = tryUnwrapRedundantConversion(call);
       if (argument == null) return;
-      registerErrorAtOffset(call, 0, call.getArgumentList().getStartOffsetInParent(), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+      registerErrorAtOffset(call, 0, call.getArgumentList().getStartOffsetInParent(),
                     calculateReplacementText(call, argument));
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -136,7 +136,7 @@ class ProjectInspectionManagerTest {
       <component name="InspectionProjectProfileManager">
         <profile version="1.0">
           <option name="myName" value="Project Default" />
-          <inspection_tool class="Convert2Diamond" enabled="false" level="WARNING" enabled_by_default="false" />
+          <inspection_tool class="Convert2Diamond" enabled="false" level="WARNING" enabled_by_default="false" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" />
         </profile>
       </component>""".trimIndent())
 
@@ -251,7 +251,7 @@ class ProjectInspectionManagerTest {
         <component name="InspectionProjectProfileManager">
           <profile version="1.0">
             <option name="myName" value="Project Default" />
-            <inspection_tool class="Convert2Diamond" enabled="false" level="WARNING" enabled_by_default="false" />
+            <inspection_tool class="Convert2Diamond" enabled="false" level="WARNING" enabled_by_default="false" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" />
           </profile>
           <version value="1.0" />
         </component>

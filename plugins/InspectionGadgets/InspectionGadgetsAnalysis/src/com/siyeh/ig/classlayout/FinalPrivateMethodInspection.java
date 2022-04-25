@@ -66,7 +66,7 @@ public class FinalPrivateMethodInspection extends BaseInspection {
       if (!HighlightUtil.isLegalModifierCombination(method.getModifierList())) {
         return;
       }
-      registerModifierError(PsiModifier.FINAL, method, ProblemHighlightType.LIKE_UNUSED_SYMBOL, PsiModifier.FINAL);
+      registerModifierError(PsiModifier.FINAL, method, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, PsiModifier.FINAL);
     }
   }
 }

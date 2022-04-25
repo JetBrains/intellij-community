@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -24,7 +24,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
@@ -51,12 +54,12 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
           PsiIdentifier nameIdentifier = ctor.getNameIdentifier();
           if (nameIdentifier == null) return;
           holder.registerProblem(nameIdentifier, JavaBundle.message("inspection.redundant.record.constructor.canonical.message"),
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, simplifier);
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, simplifier);
         }
         else if (simplifier instanceof MakeCtorCompactSimplifier) {
           holder.registerProblem(ctor.getParameterList(),
                                  JavaBundle.message("inspection.redundant.record.constructor.can.be.compact.message"),
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, simplifier);
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, simplifier);
         }
       }
 
@@ -74,7 +77,7 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
             for (int i = statements.length - count; i < statements.length; i++) {
               holder.registerProblem(statements[i],
                                      JavaBundle.message("inspection.redundant.record.constructor.statement.message"),
-                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteElementFix(statements[i]));
+                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new DeleteElementFix(statements[i]));
             }
             return;
           }
@@ -83,7 +86,7 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
             ctor.getDocComment() == null) {
           holder.registerProblem(ctorNameIdentifier,
                                  JavaBundle.message("inspection.redundant.record.constructor.compact.message"),
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, new RemoveRedundantCtorSimplifier());
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveRedundantCtorSimplifier());
         }
       }
     };

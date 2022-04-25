@@ -17,7 +17,6 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
@@ -138,7 +137,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
           }
         }
       }
-      registerError(expression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      registerError(expression);
     }
 
     private static boolean hasUnnecessarySuperQualifier(PsiReferenceExpression referenceExpression) {

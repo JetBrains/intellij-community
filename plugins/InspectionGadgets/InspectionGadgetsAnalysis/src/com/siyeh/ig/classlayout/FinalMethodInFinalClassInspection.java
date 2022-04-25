@@ -16,7 +16,6 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -67,7 +66,7 @@ public class FinalMethodInFinalClassInspection extends BaseInspection {
       for (final PsiElement child : children) {
         final String text = child.getText();
         if (PsiModifier.FINAL.equals(text)) {
-          registerError(child, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+          registerError(child);
         }
       }
     }

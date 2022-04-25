@@ -2,7 +2,6 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -176,7 +175,7 @@ public class UnnecessaryModifierInspection extends BaseInspection implements Cle
 
     private void registerError(@NotNull PsiKeyword modifier,
                                @NotNull @PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) String key) {
-      registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL, InspectionGadgetsBundle.message(key), modifier.getText());
+      registerError(modifier, InspectionGadgetsBundle.message(key), modifier.getText());
     }
   }
 }

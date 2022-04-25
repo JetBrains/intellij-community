@@ -16,7 +16,6 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -140,7 +139,7 @@ public class ConfusingElseInspection extends BaseInspection {
       if (parentCompletesNormally(statement)) {
         return;
       }
-      registerError(elseToken, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      registerError(elseToken);
     }
 
     private boolean parentCompletesNormally(PsiElement element) {

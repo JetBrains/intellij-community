@@ -3,7 +3,6 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -141,7 +140,7 @@ public class UnnecessaryInitCauseInspection extends BaseInspection implements Cl
       if (nameToken == null) {
         return;
       }
-      registerError(nameToken, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      registerError(nameToken);
     }
 
     private static boolean canExpressionBeMovedBackwards(final PsiExpression cause, final PsiExpression newLocation) {

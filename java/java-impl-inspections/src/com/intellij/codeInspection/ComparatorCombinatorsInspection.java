@@ -56,7 +56,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
           String qualifiedName = Objects.requireNonNull(StringUtil.substringBefore(replacementText, "("));
           @NonNls String methodName = "Comparator." + StringUtil.getShortName(qualifiedName);
           final String problemMessage = InspectionGadgetsBundle.message("inspection.comparator.combinators.description2", methodName);
-          holder.registerProblem(lambda, problemMessage, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix(CommonQuickFixBundle.message("fix.replace.with.x", methodName)));
+          holder.registerProblem(lambda, problemMessage, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithComparatorFix(CommonQuickFixBundle.message("fix.replace.with.x", methodName)));
           return;
         }
         if (lambda.getBody() instanceof PsiCodeBlock) {
@@ -67,7 +67,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
           if (chainCombinator == null) return;
           if (!LambdaUtil.isSafeLambdaReplacement(lambda, chainCombinator)) return;
           final String problemMessage = InspectionGadgetsBundle.message("inspection.comparator.combinators.description");
-          holder.registerProblem(lambda, problemMessage, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix(InspectionGadgetsBundle.message("inspection.comparator.combinators.fix.chain")));
+          holder.registerProblem(lambda, problemMessage, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithComparatorFix(InspectionGadgetsBundle.message("inspection.comparator.combinators.fix.chain")));
         }
       }
     };

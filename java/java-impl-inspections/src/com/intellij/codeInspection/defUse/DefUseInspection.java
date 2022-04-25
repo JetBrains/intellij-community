@@ -142,7 +142,6 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
       isOnTheFlyOrNoSideEffects(holder.isOnTheFly(), psiVariable, psiVariable.getInitializer()) ? new RemoveInitializerFix() : null);
     holder.registerProblem(ObjectUtils.notNull(psiVariable.getInitializer(), psiVariable),
                            JavaBundle.message("inspection.unused.assignment.problem.descriptor2", psiVariable.getName()),
-                           ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                            fixes.toArray(LocalQuickFix.EMPTY_ARRAY)
     );
   }
@@ -155,7 +154,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     holder.registerProblem(assignment.getLExpression(),
                            JavaBundle.message("inspection.unused.assignment.problem.descriptor3",
                                               Objects.requireNonNull(assignment.getRExpression()).getText()),
-                           ProblemHighlightType.LIKE_UNUSED_SYMBOL, fixes.toArray(LocalQuickFix.EMPTY_ARRAY)
+                           fixes.toArray(LocalQuickFix.EMPTY_ARRAY)
     );
   }
 

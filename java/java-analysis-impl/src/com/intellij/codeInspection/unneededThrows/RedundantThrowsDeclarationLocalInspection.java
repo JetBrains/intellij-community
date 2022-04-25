@@ -128,7 +128,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
           final String description = JavaErrorBundle.message("exception.is.never.thrown", JavaHighlightUtil.formatType(exceptionType));
           final RedundantThrowsQuickFix fix = new RedundantThrowsQuickFix(exceptionType.getCanonicalText(), method.getName());
-          myHolder.registerProblem(reference, description, ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
+          myHolder.registerProblem(reference, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
         });
     }
 

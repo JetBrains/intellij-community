@@ -79,7 +79,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
         final PsiElement throwsRef = throwRefType.getReference();
         final String message = getMessage(refMethod);
         final MyQuickFix fix = new MyQuickFix(processor, throwRefType.getType().getClassName(), IGNORE_ENTRY_POINTS);
-        return manager.createProblemDescriptor(throwsRef, message, fix, ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
+        return manager.createProblemDescriptor(throwsRef, message, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
       })
       .toArray(CommonProblemDescriptor.EMPTY_ARRAY);
   }

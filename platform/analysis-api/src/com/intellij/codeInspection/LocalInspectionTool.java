@@ -66,16 +66,6 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     return getID();
   }
 
-  /**
-   * Do not override the method, register attributes in plugin.xml
-   * 
-   * @return attributesKey's external name if editor presentation should be different from severity presentation
-   *         {@code null} if attributes should correspond to chosen severity
-   */
-  public String getEditorAttributesKey() {
-    return null;
-  }
-
   @Override
   @NonNls
   @Nullable

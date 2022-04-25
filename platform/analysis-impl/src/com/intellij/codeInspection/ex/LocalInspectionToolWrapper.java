@@ -45,16 +45,6 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     return myEP == null ? getTool().getID() : myEP.id == null ? myEP.getShortName() : myEP.id;
   }
 
-  @Override
-  public String getEditorAttributesKeyExternalName() {
-    if (myEP != null) {
-      return myEP.editorAttributes;
-    }
-    else {
-      return getTool().getEditorAttributesKey();
-    }
-  }
-
   public @Nullable String getAlternativeID() {
     return myEP == null ? getTool().getAlternativeID() : myEP.alternativeId;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
@@ -43,7 +43,7 @@ public class RedundantCompareCallInspection extends AbstractBaseJavaLocalInspect
         } else if (!ExpressionUtils.isZero(binOp.getROperand())) {
           return;
         }
-        holder.registerProblem(call, InspectionGadgetsBundle.message("redundant.call.problem.descriptor"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+        holder.registerProblem(call, InspectionGadgetsBundle.message("redundant.call.problem.descriptor"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                new TextRange(0, call.getArgumentList().getStartOffsetInParent()),
                                new InlineCompareCallFix(type));
       }

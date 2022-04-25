@@ -237,6 +237,12 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   @Attribute("isInternal")
   public boolean isInternal;
 
+  /**
+   * TextAttributesKey's external name
+   */
+  @Attribute("editorAttributes")
+  public String editorAttributes;
+
   @Override
   public String toString() {
     return "InspectionEP{" +

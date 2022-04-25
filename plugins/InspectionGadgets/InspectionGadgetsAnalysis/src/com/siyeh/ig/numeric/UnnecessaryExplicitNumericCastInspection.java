@@ -2,7 +2,6 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -100,7 +99,7 @@ public final class UnnecessaryExplicitNumericCastInspection extends BaseInspecti
       }
       final PsiTypeElement typeElement = expression.getCastType();
       if (typeElement != null) {
-        registerError(typeElement, ProblemHighlightType.LIKE_UNUSED_SYMBOL, expression.getOperand());
+        registerError(typeElement, expression.getOperand());
       }
     }
   }

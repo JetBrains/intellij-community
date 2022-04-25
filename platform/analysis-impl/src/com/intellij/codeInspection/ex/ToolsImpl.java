@@ -8,7 +8,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.ProfileEx;
@@ -134,7 +133,7 @@ public final class ToolsImpl implements Tools {
         scopeElement.setAttribute(ENABLED_ATTRIBUTE, Boolean.toString(state.isEnabled()));
         String keyExternalName = state.getTextAttributesKeyExternalName();
         if (keyExternalName != null) {
-          JDOMExternalizerUtil.writeField(scopeElement, "myExternalName", keyExternalName);
+          scopeElement.setAttribute("editorAttributes", keyExternalName);
         }
         InspectionToolWrapper<?,?> toolWrapper = state.getTool();
         if (toolWrapper.isInitialized()) {
@@ -148,7 +147,7 @@ public final class ToolsImpl implements Tools {
     inspectionElement.setAttribute(ENABLED_BY_DEFAULT_ATTRIBUTE, Boolean.toString(myDefaultState.isEnabled()));
     @Nullable String attributesKey = myDefaultState.getTextAttributesKeyExternalName();
     if (attributesKey != null) {
-      JDOMExternalizerUtil.writeField(inspectionElement, "myExternalName", attributesKey);
+      inspectionElement.setAttribute("editorAttributes", attributesKey);
     }
     InspectionToolWrapper<?,?> toolWrapper = myDefaultState.getTool();
     if (toolWrapper.isInitialized()) {
@@ -167,9 +166,9 @@ public final class ToolsImpl implements Tools {
     }
     myDefaultState.setLevel(level);
     InspectionToolWrapper<?,?> toolWrapper = myDefaultState.getTool();
-    String attr = JDOMExternalizerUtil.readField(toolElement, "myExternalName");
-    if (attr != null) {
-      myDefaultState.setTextAttributesKey(attr);
+    String editorAttributes = toolElement.getAttributeValue("editorAttributes");
+    if (editorAttributes != null) {
+      myDefaultState.setTextAttributesKey(editorAttributes);
     }
     String enabled = toolElement.getAttributeValue(ENABLED_ATTRIBUTE);
     boolean isEnabled = Boolean.parseBoolean(enabled);
@@ -210,9 +209,9 @@ public final class ToolsImpl implements Tools {
           state = addTool(scopeName, copyToolWrapper, Boolean.parseBoolean(enabledInScope), scopeLevel);
         }
 
-        attr = JDOMExternalizerUtil.readField(scopeElement, "myExternalName");
-        if (attr != null) {
-          state.setTextAttributesKey(attr);
+        editorAttributes = scopeElement.getAttributeValue("editorAttributes");
+        if (editorAttributes != null) {
+          state.setTextAttributesKey(editorAttributes);
         }
         scopeNames.add(scopeName);
       }

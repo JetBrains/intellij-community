@@ -16,7 +16,6 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -103,7 +102,7 @@ public class UnnecessaryLabelOnBreakStatementInspection
         return;
       }
       if (exitedStatement.equals(labelEnabledParent)) {
-        registerError(labelIdentifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+        registerError(labelIdentifier);
       }
     }
   }

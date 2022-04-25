@@ -78,7 +78,7 @@ public class RedundantCastInspection extends AbstractBaseJavaLocalInspectionTool
     }
 
     String message = JavaAnalysisBundle.message("inspection.redundant.cast.problem.descriptor", PsiExpressionTrimRenderer.render(operand));
-    return manager.createProblemDescriptor(castType, message, myQuickFixAction, ProblemHighlightType.LIKE_UNUSED_SYMBOL, onTheFly);
+    return manager.createProblemDescriptor(castType, message, myQuickFixAction, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly);
   }
 
 

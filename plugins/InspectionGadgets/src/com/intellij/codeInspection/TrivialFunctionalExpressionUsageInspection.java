@@ -123,7 +123,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
         if (method == interfaceMethod || interfaceMethod != null && MethodSignatureUtil.isSuperMethod(interfaceMethod, method)) {
           holder.registerProblem(referenceNameElement,
                                  InspectionGadgetsBundle.message("inspection.trivial.functional.expression.usage.description"),
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
+                                 fix);
         }
       }
     };

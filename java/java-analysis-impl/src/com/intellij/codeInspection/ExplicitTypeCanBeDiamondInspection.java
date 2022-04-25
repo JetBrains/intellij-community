@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -54,7 +54,7 @@ public class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLocalIns
           final PsiElement lastChild = parameterList.getLastChild();
           final TextRange range = new TextRange(firstChild != null && firstChild.getNode().getElementType() == JavaTokenType.LT ? 1 : 0,
                                                 parameterList.getTextLength() - (lastChild != null && lastChild.getNode().getElementType() == JavaTokenType.GT ? 1 : 0));
-          holder.registerProblem(parameterList, JavaAnalysisBundle.message("explicit.type.argument.ref.loc.can.be.replaced.with"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, range, new ReplaceWithDiamondFix());
+          holder.registerProblem(parameterList, range, JavaAnalysisBundle.message("explicit.type.argument.ref.loc.can.be.replaced.with"), new ReplaceWithDiamondFix());
         }
       }
     };

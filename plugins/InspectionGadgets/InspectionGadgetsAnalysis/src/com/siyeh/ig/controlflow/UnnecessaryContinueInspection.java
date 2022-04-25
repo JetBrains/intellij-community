@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
@@ -85,11 +84,11 @@ public class UnnecessaryContinueInspection extends BaseInspection {
         final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
         final PsiCodeBlock block = blockStatement.getCodeBlock();
         if (ControlFlowUtils.blockCompletesWithStatement(block, statement)) {
-          registerError(statement.getFirstChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+          registerError(statement.getFirstChild());
         }
       }
       else if (ControlFlowUtils.statementCompletesWithStatement(body, statement)) {
-        registerError(statement.getFirstChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+        registerError(statement.getFirstChild());
       }
     }
   }

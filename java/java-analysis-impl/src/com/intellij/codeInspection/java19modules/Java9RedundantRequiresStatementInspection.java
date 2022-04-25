@@ -75,7 +75,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
                     requiresStatement,
                     message,
                     requiresStatementFix,
-                    ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
+                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
                   descriptors.add(descriptor);
                 }
               }

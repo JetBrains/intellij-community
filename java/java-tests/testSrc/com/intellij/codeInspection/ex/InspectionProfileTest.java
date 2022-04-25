@@ -201,9 +201,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   public void testCustomTextAttributes() throws IOException, JDOMException {
     @Language("XML") String content = "<profile version=\"1.0\">\n" +
                      "  <option name=\"myName\" value=\"default\" />\n" +
-                     "  <inspection_tool class=\"Convert2Lambda\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
-                     "    <option name=\"myExternalName\" value=\"NOT_USED_ELEMENT_ATTRIBUTES\"/>\n" +
-                     "  </inspection_tool>\n" +
+                     "  <inspection_tool class=\"Convert2Lambda\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" editorAttributes=\"NOT_USED_ELEMENT_ATTRIBUTES\"/>\n" +
                      "</profile>";
     InspectionProfileImpl profile = createProfile();
     readFromXml(profile, content);
@@ -727,7 +725,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     });
     String mergedText = "<profile version=\"1.0\">\n" +
                             "  <option name=\"myName\" value=\"ToConvert\" />\n" +
-                            "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" checkParameterExcludingHierarchy=\"false\">\n" +
+                            "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" editorAttributes=\"NOT_USED_ELEMENT_ATTRIBUTES\" checkParameterExcludingHierarchy=\"false\">\n" +
                             "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
                             "    <option name=\"FIELD\" value=\"true\" />\n" +
                             "    <option name=\"METHOD\" value=\"true\" />\n" +

@@ -17,7 +17,6 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -168,7 +167,7 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
         }
         final PsiClass extendedClass = (PsiClass)extendsReferent;
         if (extendedClass.isInheritor(implementedClass, true)) {
-          register(implementsElement);
+          registerError(implementsElement);
           return;
         }
       }
@@ -184,14 +183,10 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
         final PsiClass testImplementedClass =
           (PsiClass)implementsReferent;
         if (testImplementedClass.isInheritor(implementedClass, true)) {
-          register(implementsElement);
+          registerError(implementsElement);
           return;
         }
       }
-    }
-
-    private void register(PsiJavaCodeReferenceElement implementsElement) {
-      registerError(implementsElement, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
     }
 
     private void checkExtendedInterface(PsiJavaCodeReferenceElement extendsElement, PsiJavaCodeReferenceElement[] extendsElements) {
@@ -215,7 +210,7 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
         final PsiClass testExtendedInterface =
           (PsiClass)implementsReferent;
         if (testExtendedInterface.isInheritor(extendedInterface, true)) {
-          register(extendsElement);
+          registerError(extendsElement);
           return;
         }
       }

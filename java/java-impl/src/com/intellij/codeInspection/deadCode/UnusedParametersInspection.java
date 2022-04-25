@@ -64,7 +64,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
                                                                       ? "inspection.unused.parameter.composer"
                                                                       : "inspection.unused.parameter.composer1"),
                                                    new AcceptSuggested(globalContext.getRefManager(), processor, refParameter.getName()),
-                                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, false));
+                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false));
       }
     }
     return result.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
