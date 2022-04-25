@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -9,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.HyperlinkLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +29,6 @@ final class UnknownSdkEditorPanel extends EditorNotificationPanel {
     myFix = fix;
     myAction = myFix.getSuggestedFixAction();
 
-    setProject(project);
-    setProvider(EditorNotificationProvider.EP_NAME.findExtension(SdkSetupNotificationProvider.class, project));
     setText(fix.getNotificationText());
 
     if (myAction != null) {

@@ -200,9 +200,11 @@ public final class EditorNotificationsImpl extends EditorNotifications {
 
     if (component != null) {
       if (component instanceof EditorNotificationPanel) {
-        EditorNotificationPanel panel = (EditorNotificationPanel)component;
-        panel.setProvider(provider);
-        panel.setProject(myProject);
+        ((EditorNotificationPanel)component).setClassConsumer(handlerClass -> {
+          EditorNotificationUsagesCollectorKt.logHandlerInvoked(myProject,
+                                                                provider,
+                                                                handlerClass);
+        });
       }
 
       EditorNotificationUsagesCollectorKt.logNotificationShown(myProject, provider);
@@ -210,14 +212,6 @@ public final class EditorNotificationsImpl extends EditorNotifications {
     }
 
     panels.put(providerClass, component);
-  }
-
-  @Override
-  public void logNotificationActionInvocation(@NotNull EditorNotificationProvider provider,
-                                              @NotNull Class<?> runnableClass) {
-    EditorNotificationUsagesCollectorKt.logHandlerInvoked(myProject,
-                                                          provider,
-                                                          runnableClass);
   }
 
   @Override
