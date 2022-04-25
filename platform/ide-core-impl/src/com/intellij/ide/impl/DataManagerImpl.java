@@ -104,6 +104,7 @@ public class DataManagerImpl extends DataManager {
                                                 @NotNull DataProvider provider) {
     int[] depth = ourGetDataLevel.get();
     try {
+      depth[0]++;
       Set<String> ids = alreadyComputedIds == null ? new HashSet<>() : alreadyComputedIds;
       ids.add(dataId);
       Object data = rule.getData(id -> getDataFromProviderInner(id, ruleType, ids, provider));
