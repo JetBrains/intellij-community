@@ -57,7 +57,6 @@ class GithubShareDialog(project: Project,
     title = message("share.on.github")
     setOKButtonText(message("share.button"))
     init()
-    rootPane.preferredSize = JBUI.size(500, 250)
     DialogUtils.invokeLaterAfterDialogShown(this) { switchAccount(getAccount()) }
   }
 
@@ -109,6 +108,8 @@ class GithubShareDialog(project: Project,
     if (accountsModel.size != 1) {
       accountSelector(message("share.dialog.share.by"), accountsModel) { switchAccount(getAccount()) }
     }
+  }.apply {
+    preferredSize = JBUI.size(500, 250)
   }
 
   override fun doValidateAll(): List<ValidationInfo> {
