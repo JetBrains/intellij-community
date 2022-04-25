@@ -204,6 +204,17 @@ final class InvertedNameIndex {
     }
   }
 
+  static void checkConsistency() {
+    IntIterator keyIt1 = ourSingleData.keySet().intIterator();
+    while (keyIt1.hasNext()) {
+      checkConsistency(keyIt1.nextInt());
+    }
+    IntIterator keyIt2 = ourMultiData.keySet().intIterator();
+    while (keyIt2.hasNext()) {
+      checkConsistency(keyIt2.nextInt());
+    }
+  }
+
   private static void checkConsistency(int nameId) {
     int single = ourSingleData.get(nameId);
     int[] multi = ourMultiData.get(nameId);

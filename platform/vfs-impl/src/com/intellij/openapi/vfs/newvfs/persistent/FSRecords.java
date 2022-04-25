@@ -813,4 +813,9 @@ public final class FSRecords {
       ourConnection.handleError(e);
     }
   }
+
+  @TestOnly
+  public static void checkFilenameIndexConsistency() {
+    InvertedNameIndex.checkConsistency();
+  }
 }
