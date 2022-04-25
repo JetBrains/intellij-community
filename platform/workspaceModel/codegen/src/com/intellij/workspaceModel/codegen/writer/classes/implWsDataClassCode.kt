@@ -49,7 +49,7 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
 
       softLinksCode(this@label, hasSoftLinks, simpleTypes)
 
-      sectionNl("override fun wrapAsModifiable(diff: ${WorkspaceEntityStorageBuilder::class.fqn}): ${ModifiableWorkspaceEntity::class.fqn}<$javaFullName>") {
+      sectionNl("override fun wrapAsModifiable(diff: ${MutableEntityStorage::class.fqn}): ${ModifiableWorkspaceEntity::class.fqn}<$javaFullName>") {
         line("val modifiable = $javaImplBuilderName(null)")
         line("modifiable.allowModifications {")
         line("  modifiable.diff = diff")
@@ -61,7 +61,7 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
       }
 
       // --- createEntity
-      sectionNl("override fun createEntity(snapshot: ${WorkspaceEntityStorage::class.fqn}): $javaFullName") {
+      sectionNl("override fun createEntity(snapshot: ${EntityStorage::class.fqn}): $javaFullName") {
         line("val entity = $javaImplName()")
         list(structure.allFields.noRefs().noEntitySource().nopersistentId()) {
           "entity.$implFieldName = $name"

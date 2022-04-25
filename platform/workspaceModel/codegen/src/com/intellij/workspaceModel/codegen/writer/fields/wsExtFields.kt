@@ -1,6 +1,6 @@
 package org.jetbrains.deft.codegen.ijws.fields
 
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
 import deft.storage.codegen.*
 import deft.storage.codegen.field.javaType
@@ -24,10 +24,10 @@ val ExtField<*, *>.wsCode: String
     val isList = type is TList<*>
     val singleFunction = if (!isList) if (isNullable) ".singleOrNull()" else ".single()" else ""
     val updateFunction = if (isList) {
-      fqn4(WorkspaceEntityStorage::updateOneToManyChildrenOfParent)
+      fqn4(EntityStorage::updateOneToManyChildrenOfParent)
     }
     else {
-      if (isChild) fqn3(WorkspaceEntityStorage::updateOneToOneChildOfParent) else fqn3(WorkspaceEntityStorage::updateOneToOneParentOfChild)
+      if (isChild) fqn3(EntityStorage::updateOneToOneChildOfParent) else fqn3(EntityStorage::updateOneToOneParentOfChild)
     }
     val oppositeList = oppositeField.type is TList<*>
     val referrFunction = if (oppositeList) "referrersy" else "referrersx"

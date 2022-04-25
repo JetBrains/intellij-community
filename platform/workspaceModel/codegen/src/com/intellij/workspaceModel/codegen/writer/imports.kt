@@ -1,7 +1,7 @@
 package org.jetbrains.deft.codegen.utils
 
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import org.jetbrains.deft.Obj
 import kotlin.reflect.*
@@ -10,11 +10,11 @@ import kotlin.reflect.jvm.javaMethod
 val fqnEscape = "#uC03o#"
 
 fun fqn(function: KProperty1<KClass<*>, Collection<Any>>): String = function.fqn
-fun fqn1(function: KFunction3<WorkspaceEntityStorage, ConnectionId, WorkspaceEntity, WorkspaceEntity?>): String = function.fqn
-fun fqn2(function: KFunction3<WorkspaceEntityStorage, ConnectionId, WorkspaceEntity, Sequence<Any>>): String = function.fqn
-fun fqn3(function: KFunction4<WorkspaceEntityStorage, ConnectionId, WorkspaceEntity, WorkspaceEntity?, Unit>): String = function.fqn
-fun fqn4(function: KFunction4<WorkspaceEntityStorage, ConnectionId, WorkspaceEntity, List<WorkspaceEntity>, Unit>): String = function.fqn
-fun fqn5(function: KFunction4<WorkspaceEntityStorage, ConnectionId, WorkspaceEntity, Sequence<WorkspaceEntity>, Unit>): String = function.fqn
+fun fqn1(function: KFunction3<EntityStorage, ConnectionId, WorkspaceEntity, WorkspaceEntity?>): String = function.fqn
+fun fqn2(function: KFunction3<EntityStorage, ConnectionId, WorkspaceEntity, Sequence<Any>>): String = function.fqn
+fun fqn3(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, WorkspaceEntity?, Unit>): String = function.fqn
+fun fqn4(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, List<WorkspaceEntity>, Unit>): String = function.fqn
+fun fqn5(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, Sequence<WorkspaceEntity>, Unit>): String = function.fqn
 
 private val KProperty<*>.fqn: String
   get() {

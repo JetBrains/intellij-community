@@ -1,7 +1,7 @@
 package org.jetbrains.deft.codegen.ijws.classes
 
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import deft.storage.codegen.*
@@ -29,7 +29,7 @@ fun ObjType<*, *>.implWsEntityBuilderCode(): String {
         
 ${
     lines("        ") {
-      section("override fun applyToBuilder(builder: ${WorkspaceEntityStorageBuilder::class.fqn})") {
+      section("override fun applyToBuilder(builder: ${MutableEntityStorage::class.fqn})") {
         `if`("this.diff != null") {
           ifElse("existsInBuilder(builder)", {
             line("this.diff = builder")

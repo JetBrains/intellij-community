@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.deft.codegen.ijws.fields
 
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
 import deft.storage.codegen.*
 import deft.storage.codegen.field.javaMutableType
@@ -131,7 +131,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
             section("get()") {
               line("val _diff = diff")
               line("return if (_diff != null) {")
-              line("    _diff.${fqn2(WorkspaceEntityStorage::extractOneToAbstractManyChildren)}<${elementType.javaType}>($connectionName, this)$notNullAssertion.toList() + (${field.implFieldName} ?: emptyList())")
+              line("    _diff.${fqn2(EntityStorage::extractOneToAbstractManyChildren)}<${elementType.javaType}>($connectionName, this)$notNullAssertion.toList() + (${field.implFieldName} ?: emptyList())")
               line("} else {")
               line("    _${field.javaName}$notNullAssertion")
               line("}")
@@ -147,7 +147,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
                     line("_diff.addEntity(item_value)")
                   }
                 }
-                line("_diff.${fqn5(WorkspaceEntityStorage::updateOneToAbstractManyChildrenOfParent)}($connectionName, this, value.asSequence())")
+                line("_diff.${fqn5(EntityStorage::updateOneToAbstractManyChildrenOfParent)}($connectionName, this, value.asSequence())")
               }
               `else` {
                 backrefListSetup(elementType, field)
@@ -166,7 +166,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
             section("get()") {
               line("val _diff = diff")
               line("return if (_diff != null) {")
-              line("    _diff.${fqn2(WorkspaceEntityStorage::extractOneToManyChildren)}<${elementType.javaType}>($connectionName, this)$notNullAssertion.toList() + (${field.implFieldName} ?: emptyList())")
+              line("    _diff.${fqn2(EntityStorage::extractOneToManyChildren)}<${elementType.javaType}>($connectionName, this)$notNullAssertion.toList() + (${field.implFieldName} ?: emptyList())")
               line("} else {")
               line("    _${field.javaName}$notNullAssertion")
               line("}")
@@ -180,7 +180,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
                     line("_diff.addEntity(item_value)")
                   }
                 }
-                line("_diff.${fqn4(WorkspaceEntityStorage::updateOneToManyChildrenOfParent)}($connectionName, this, value)")
+                line("_diff.${fqn4(EntityStorage::updateOneToManyChildrenOfParent)}($connectionName, this, value)")
               }
               `else` {
                 backrefListSetup(elementType, field)
@@ -335,7 +335,7 @@ fun LinesBuilder.implWsBuilderIsInitializedCode(field: Field<*, *>) {
   when (field.type) {
     is TList<*> -> if (field.type.isRefType()) {
       ifElse("_diff != null", {
-        `if`("_diff.${fqn2(WorkspaceEntityStorage::extractOneToManyChildren)}<${WorkspaceEntityBase::class.fqn}>(${field.refsConnectionId}, this) == null") {
+        `if`("_diff.${fqn2(EntityStorage::extractOneToManyChildren)}<${WorkspaceEntityBase::class.fqn}>(${field.refsConnectionId}, this) == null") {
           line("error(\"Field ${field.owner.name}#$javaName should be initialized\")")
         }
       }) {

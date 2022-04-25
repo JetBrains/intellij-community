@@ -1,6 +1,6 @@
 package org.jetbrains.deft.codegen.ijws.fields
 
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
 import deft.storage.codegen.field.javaType
 import org.jetbrains.deft.codegen.ijws.getRefType
@@ -83,9 +83,9 @@ fun Field<*, *>.refsConnectionMethodCode(genericType: String = ""): String {
   val connectionName = name.uppercase() + "_CONNECTION_ID"
   val getterName = if (ref.child) {
     if (ref.targetObjType.abstract)
-      "${fqn1(WorkspaceEntityStorage::extractOneToAbstractOneChild)}$genericType"
+      "${fqn1(EntityStorage::extractOneToAbstractOneChild)}$genericType"
     else
-      "${fqn1(WorkspaceEntityStorage::extractOneToOneChild)}$genericType"
+      "${fqn1(EntityStorage::extractOneToOneChild)}$genericType"
   }
   else {
     var valueType = referencedField.type
@@ -94,13 +94,13 @@ fun Field<*, *>.refsConnectionMethodCode(genericType: String = ""): String {
     }
     when (valueType) {
       is TList<*> -> if (owner.abstract)
-        "${fqn1(WorkspaceEntityStorage::extractOneToAbstractManyParent)}$genericType"
+        "${fqn1(EntityStorage::extractOneToAbstractManyParent)}$genericType"
       else
-        "${fqn1(WorkspaceEntityStorage::extractOneToManyParent)}$genericType"
+        "${fqn1(EntityStorage::extractOneToManyParent)}$genericType"
       is TRef<*> -> if (owner.abstract)
-        "${fqn1(WorkspaceEntityStorage::extractOneToAbstractOneParent)}$genericType"
+        "${fqn1(EntityStorage::extractOneToAbstractOneParent)}$genericType"
       else
-        "${fqn1(WorkspaceEntityStorage::extractOneToOneParent)}$genericType"
+        "${fqn1(EntityStorage::extractOneToOneParent)}$genericType"
       else -> error("Unsupported reference type")
     }
   }

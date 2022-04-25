@@ -1,6 +1,6 @@
 package org.jetbrains.deft.codegen.ijws.fields
 
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
 import deft.storage.codegen.*
 import deft.storage.codegen.field.implSuspendableCode
@@ -74,14 +74,14 @@ internal fun Field<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, 
         if ((fieldType.elementType as TRef<*>).targetObjType.abstract) {
           """
                 override val $name: ${fieldType.javaType}$optionalSuffix
-                    get() = snapshot.${fqn2(WorkspaceEntityStorage::extractOneToAbstractManyChildren)}<${fieldType.elementType.javaType}>($connectionName, this)$notNullAssertion.toList()
+                    get() = snapshot.${fqn2(EntityStorage::extractOneToAbstractManyChildren)}<${fieldType.elementType.javaType}>($connectionName, this)$notNullAssertion.toList()
                
                 """.trimIndent()
         }
         else {
           """
                 override val $name: ${fieldType.javaType}$optionalSuffix
-                    get() = snapshot.${fqn2(WorkspaceEntityStorage::extractOneToManyChildren)}<${fieldType.elementType.javaType}>($connectionName, this)$notNullAssertion.toList()
+                    get() = snapshot.${fqn2(EntityStorage::extractOneToManyChildren)}<${fieldType.elementType.javaType}>($connectionName, this)$notNullAssertion.toList()
                
                 """.trimIndent()
         }
@@ -125,13 +125,13 @@ internal val Field<*, *>.implWsBlockingCodeOverride: String
     }
     val getterName = when (valueType) {
       is TList<*> -> if (owner.abstract)
-        fqn1(WorkspaceEntityStorage::extractOneToAbstractManyParent)
+        fqn1(EntityStorage::extractOneToAbstractManyParent)
       else
-        fqn1(WorkspaceEntityStorage::extractOneToManyParent)
+        fqn1(EntityStorage::extractOneToManyParent)
       is TRef<*> -> if (owner.abstract)
-        fqn1(WorkspaceEntityStorage::extractOneToAbstractOneParent)
+        fqn1(EntityStorage::extractOneToAbstractOneParent)
       else
-        fqn1(WorkspaceEntityStorage::extractOneToOneParent)
+        fqn1(EntityStorage::extractOneToOneParent)
       else -> error("Unsupported reference type")
     }
     return """
