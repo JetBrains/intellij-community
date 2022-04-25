@@ -70,6 +70,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * @author MYakovlev
@@ -713,13 +714,21 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setDirectoryName(excluded.getPath());
     assertSize(2, findInProject(findModel));
 
+    findModel.setDirectoryName(root.getPath());
+
     var fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
     assertTrue(fileIndex.isExcluded(aTxt));
     assertTrue(fileIndex.isExcluded(excluded));
     assertFalse(fileIndex.isExcluded(root));
     assertFalse(Registry.is("find.search.in.excluded.dirs"));
+    assertEmpty(
+      FindInProjectSearchEngine.EP_NAME.extensions()
+        .map(it -> it.createSearcher(findModel, getProject()))
+        .filter(it -> it != null)
+        .flatMap(it -> it.searchForOccurrences().stream())
+        .collect(Collectors.toList())
+    );
 
-    findModel.setDirectoryName(root.getPath());
     assertSize(0, findInProject(findModel));
     Registry.get("find.search.in.excluded.dirs").setValue(true, getTestRootDisposable());
     assertSize(2, findInProject(findModel));
