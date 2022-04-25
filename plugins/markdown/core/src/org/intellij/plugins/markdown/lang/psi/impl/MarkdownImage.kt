@@ -13,21 +13,21 @@ import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
 import org.intellij.plugins.markdown.util.children
 import org.intellij.plugins.markdown.util.hasType
 
-class MarkdownImage(node: ASTNode): ASTWrapperPsiElement(node), MarkdownPsiElement {
+class MarkdownImage(node: ASTNode): ASTWrapperPsiElement(node), MarkdownPsiElement, MarkdownLink {
   val exclamationMark: PsiElement?
     get() = firstChild
 
   val link: MarkdownInlineLink?
     get() = findChildByType(MarkdownElementTypes.INLINE_LINK)
 
-  val linkText: MarkdownLinkText?
+  override val linkText: MarkdownLinkText?
     get() = link?.children()?.filterIsInstance<MarkdownLinkText>()?.firstOrNull()
+
+  override val linkDestination: MarkdownLinkDestination?
+    get() = link?.children()?.filterIsInstance<MarkdownLinkDestination>()?.firstOrNull()
 
   val linkTitle: PsiElement?
     get() = link?.children()?.find { it.hasType(MarkdownElementTypes.LINK_TITLE) }
-
-  val linkDestination: MarkdownLinkDestination?
-    get() = link?.children()?.filterIsInstance<MarkdownLinkDestination>()?.firstOrNull()
 
   fun collectLinkDescriptionText(): String? {
     return linkText?.let {
