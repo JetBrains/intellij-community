@@ -2,6 +2,8 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.lang.documentation.ide.impl.DocumentationBrowser.Companion.waitForContent
+import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -11,10 +13,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
 internal fun createDocumentationPopup(
   project: Project,
@@ -48,8 +47,10 @@ internal fun CoroutineScope.showPopupLater(
     boundsHandler.updatePopup(popup, resized.get())
   }
   val showJob = launch(ModalityState.current().asContextElement()) {
-    // to avoid flickering: show popup after the UI has anything to show
-    popupUI.waitForContentUpdate()
+    // to avoid flickering: show popup immediately after the request is loaded OR after a timeout
+    withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
+      popupUI.browser.waitForContent()
+    }
     withContext(Dispatchers.EDT) {
       check(!popup.isDisposed) // popup disposal should've cancelled this coroutine
       check(popup.canShow()) // sanity check
