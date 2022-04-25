@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -15,10 +17,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   private static final ExtensionPointName<UnquotingFilter> EP_NAME = ExtensionPointName.create("com.intellij.selectionUnquotingFilter");
+
+  private static final Set<String> COMPARISON_OPERATORS = Set.of("<", ">", "!", "=", "<=", ">=", "==", "!=");
 
   @NotNull
   @Override
@@ -41,6 +48,11 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
       if (!StringUtil.isEmpty(selectedText)) {
         final int selectionStart = selectionModel.getSelectionStart();
         final int selectionEnd = selectionModel.getSelectionEnd();
+
+        if (isReplaceInComparisonOperation(file, selectionStart, selectedText, c)) {
+          return super.beforeSelectionRemoved(c, project, editor, file);
+        }
+
         if (selectedText.length() > 1) {
           final char firstChar = selectedText.charAt(0);
           final char lastChar = selectedText.charAt(selectedText.length() - 1);
@@ -90,6 +102,19 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
       }
     }
     return super.beforeSelectionRemoved(c, project, editor, file);
+  }
+
+  private static boolean isReplaceInComparisonOperation(@NotNull PsiFile file, int offset, @NotNull String selectedText, char c) {
+    PsiElement elementAtOffset = file.findElementAt(offset);
+    if (elementAtOffset != null) {
+      IElementType tokenType = elementAtOffset.getNode().getElementType();
+      ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(elementAtOffset.getLanguage());
+      if (parserDefinition.getCommentTokens().contains(tokenType) ||
+          parserDefinition.getStringLiteralElements().contains(tokenType)) {
+        return false;
+      }
+    }
+    return (c == '<' || c == '>') && COMPARISON_OPERATORS.contains(selectedText);
   }
 
   private static boolean containsQuoteInside(String selectedText, char quote) {
