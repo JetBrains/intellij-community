@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards
 
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logArtifactIdChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logGroupIdChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentChanged
@@ -73,6 +74,7 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     init {
       sdkProperty.afterChange { logSdkChanged(it) }
       parentProperty.afterChange { logParentChanged(!it.isPresent) }
+      addSampleCodeProperty.afterChange { logAddSampleCodeChanged() }
       groupIdProperty.afterChange { logGroupIdChanged() }
       artifactIdProperty.afterChange { logArtifactIdChanged() }
       versionProperty.afterChange { logVersionChanged() }

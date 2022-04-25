@@ -19,6 +19,7 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.chain
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 import com.intellij.openapi.vfs.VfsUtil
@@ -43,6 +44,7 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     BuildSystemGroovyNewProjectWizardData by parent {
 
     private val addSampleCodeProperty = propertyGraph.property(false)
+      .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
 
     var addSampleCode by addSampleCodeProperty
 

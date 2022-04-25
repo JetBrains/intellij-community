@@ -17,6 +17,7 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.chain
+import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
@@ -44,6 +45,8 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         BuildSystemKotlinNewProjectWizardData by parent {
 
         private val addSampleCodeProperty = propertyGraph.property(false)
+            .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
+
         private val addSampleCode by addSampleCodeProperty
 
         init {

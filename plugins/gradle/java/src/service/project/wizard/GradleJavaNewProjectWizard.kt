@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.wizard
 
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logArtifactIdChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logDslChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logGroupIdChanged
@@ -75,6 +76,7 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       sdkProperty.afterChange { logSdkChanged(it) }
       useKotlinDslProperty.afterChange { logDslChanged(it) }
       parentProperty.afterChange { logParentChanged(!it.isPresent) }
+      addSampleCodeProperty.afterChange { logAddSampleCodeChanged() }
       groupIdProperty.afterChange { logGroupIdChanged() }
       artifactIdProperty.afterChange { logArtifactIdChanged() }
       versionProperty.afterChange { logVersionChanged() }

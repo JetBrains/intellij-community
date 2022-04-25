@@ -20,6 +20,7 @@ import com.intellij.ide.wizard.chain
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.DistributionInfo
 import com.intellij.ui.CollectionComboBoxModel
@@ -49,6 +50,7 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     BuildSystemGroovyNewProjectWizardData by parent {
 
     private val addSampleCodeProperty = propertyGraph.property(false)
+      .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
 
     var addSampleCode by addSampleCodeProperty
 

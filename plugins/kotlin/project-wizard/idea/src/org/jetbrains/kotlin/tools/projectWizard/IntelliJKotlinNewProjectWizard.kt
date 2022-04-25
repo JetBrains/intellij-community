@@ -13,6 +13,7 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.chain
 import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
@@ -31,9 +32,13 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
 
     override fun createStep(parent: KotlinNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
 
-    class Step(private val parent: KotlinNewProjectWizard.Step) : AbstractNewProjectWizardStep(parent) {
+    class Step(parent: KotlinNewProjectWizard.Step) :
+        AbstractNewProjectWizardStep(parent),
+        BuildSystemKotlinNewProjectWizardData by parent {
+
         private val sdkProperty = propertyGraph.property<Sdk?>(null)
         private val addSampleCodeProperty = propertyGraph.property(false)
+            .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
 
         private val sdk by sdkProperty
         private val addSampleCode by addSampleCodeProperty
@@ -57,12 +62,16 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
         override fun setupProject(project: Project) =
             KotlinNewProjectWizard.generateProject(
                 project = project,
-                projectPath = "${parent.path}/${parent.name}",
-                projectName = parent.name,
+                projectPath = "$path/$name",
+                projectName = name,
                 sdk = sdk,
                 buildSystemType = BuildSystemType.Jps,
                 addSampleCode = addSampleCode
             )
+
+        init {
+            addSampleCodeProperty.afterChange { logAddSampleCodeChanged() }
+        }
     }
 
     private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
