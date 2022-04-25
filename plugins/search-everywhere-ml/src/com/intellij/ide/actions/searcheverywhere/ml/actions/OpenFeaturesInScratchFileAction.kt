@@ -72,7 +72,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
           mlWeight,
           rankingWeight,
           contributor,
-          state!!.getElementFeatures(elementId, info.element, info.contributor, rankingWeight).features.toSortedMap()
+          state!!.getElementFeatures(elementId, info.element, info.contributor, rankingWeight).featuresAsMap().toSortedMap()
         )
       }
       else {
@@ -82,8 +82,8 @@ class OpenFeaturesInScratchFileAction : AnAction() {
 
     return mapOf(
       SHOULD_ORDER_BY_ML_KEY to mlSessionService.shouldOrderByMl(searchEverywhereUI.selectedTabID),
-      CONTEXT_INFO_KEY to searchSession.cachedContextInfo,
-      SEARCH_STATE_FEATURES_KEY to state!!.searchStateFeatures.toSortedMap(),
+      CONTEXT_INFO_KEY to searchSession.cachedContextInfo.features.associate { it.field.name to it.data },
+      SEARCH_STATE_FEATURES_KEY to state!!.searchStateFeatures.associate { it.field.name to it.data },
       FOUND_ELEMENTS_KEY to features
     )
   }

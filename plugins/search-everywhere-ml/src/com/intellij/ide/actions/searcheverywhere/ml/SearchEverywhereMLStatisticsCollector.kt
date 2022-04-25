@@ -2,19 +2,27 @@
 package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
+import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService.Companion.RECORDER_CODE
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereStateFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
+import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.NonUrgentExecutor
 import kotlin.math.round
 
-internal class SearchEverywhereMLStatisticsCollector {
-  private val loggerProvider = StatisticsEventLogProviderUtil.getEventLogProvider(RECORDER_CODE)
+internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
+
+  override fun getGroup(): EventLogGroup {
+    return GROUP
+  }
 
   fun onItemSelected(project: Project?, seSessionId: Int, searchIndex: Int,
                      experimentGroup: Int, orderByMl: Boolean,
@@ -27,9 +35,9 @@ internal class SearchEverywhereMLStatisticsCollector {
                      timeToFirstResult: Int,
                      elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val experimentFromRegistry = Registry.intValue("search.everywhere.ml.experiment.group") >= 0
-    val data = arrayListOf<Pair<String, Any>>(
-      CLOSE_POPUP_KEY to closePopup,
-      FORCE_EXPERIMENT_GROUP to experimentFromRegistry
+    val data = arrayListOf<EventPair<*>>(
+      CLOSE_POPUP_KEY.with(closePopup),
+      FORCE_EXPERIMENT_GROUP.with(experimentFromRegistry)
     )
     reportElements(
       project, SESSION_FINISHED, seSessionId, searchIndex, experimentGroup, orderByMl,
@@ -47,8 +55,8 @@ internal class SearchEverywhereMLStatisticsCollector {
                        elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val experimentFromRegistry = Registry.intValue("search.everywhere.ml.experiment.group") >= 0
     val additional = listOf(
-      CLOSE_POPUP_KEY to true,
-      FORCE_EXPERIMENT_GROUP to experimentFromRegistry
+      CLOSE_POPUP_KEY.with(true),
+      FORCE_EXPERIMENT_GROUP.with(experimentFromRegistry)
     )
     reportElements(
       project, SESSION_FINISHED, seSessionId, searchIndex, experimentGroup, orderByMl,
@@ -71,47 +79,47 @@ internal class SearchEverywhereMLStatisticsCollector {
     )
   }
 
-  private fun reportElements(project: Project?, eventId: String,
+  private fun reportElements(project: Project?, eventId: VarargEventId,
                              seSessionId: Int, searchIndex: Int,
                              experimentGroup: Int, orderByMl: Boolean,
                              elementIdProvider: SearchEverywhereMlItemIdProvider,
                              context: SearchEverywhereMLContextInfo,
                              state: SearchEverywhereMlSearchState,
                              timeToFirstResult: Int,
-                             additional: List<Pair<String, Any>>,
+                             additional: List<EventPair<*>>,
                              selectedElements: IntArray,
                              selectedItems: List<Any>,
                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val elements = elementsProvider.invoke()
     NonUrgentExecutor.getInstance().execute {
-      val data = hashMapOf<String, Any>()
-      data[PROJECT_OPENED_KEY] = project != null
-      data[SESSION_ID_LOG_DATA_KEY] = seSessionId
-      data[SEARCH_INDEX_DATA_KEY] = searchIndex
-      data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = elements.size
-      data[SE_TAB_ID_KEY] = state.tabId
-      data[EXPERIMENT_GROUP] = experimentGroup
-      data[ORDER_BY_ML_GROUP] = orderByMl
-      data[SEARCH_START_TIME_KEY] = state.searchStartTime
-      data[SEARCH_STATE_FEATURES_DATA_KEY] = state.searchStateFeatures
+      val data = ArrayList<EventPair<*>>()
+      data.add(PROJECT_OPENED_KEY.with(project != null))
+      data.add(SESSION_ID_LOG_DATA_KEY.with(seSessionId))
+      data.add(SEARCH_INDEX_DATA_KEY.with(searchIndex))
+      data.add(TOTAL_NUMBER_OF_ITEMS_DATA_KEY.with(elements.size))
+      data.add(SE_TAB_ID_KEY.with(state.tabId))
+      data.add(EXPERIMENT_GROUP.with(experimentGroup))
+      data.add(ORDER_BY_ML_GROUP.with(orderByMl))
+      data.add(SEARCH_START_TIME_KEY.with(state.searchStartTime))
+      data.add(SEARCH_STATE_FEATURES_DATA_KEY.with(ObjectEventData(state.searchStateFeatures)))
 
       if (timeToFirstResult > -1) {
         // Only report if some results came up in the search
-        data[TIME_TO_FIRST_RESULT_DATA_KEY] = timeToFirstResult
+        data.add(TIME_TO_FIRST_RESULT_DATA_KEY.with(timeToFirstResult))
       }
 
-      data[TYPED_SYMBOL_KEYS] = state.keysTyped
-      data[TYPED_BACKSPACES_DATA_KEY] = state.backspacesTyped
-      data[REBUILD_REASON_KEY] = state.searchStartReason
-      data.putAll(additional)
-      data.putAll(context.features)
+      data.add(TYPED_SYMBOL_KEYS.with(state.keysTyped))
+      data.add(TYPED_BACKSPACES_DATA_KEY.with(state.backspacesTyped))
+      data.add(REBUILD_REASON_KEY.with(state.searchStartReason))
+      data.addAll(additional)
+      data.addAll(context.features)
 
       val elementData = getElementsData(selectedElements, elements, elementIdProvider, selectedItems, project, state)
-      data[IS_PROJECT_DISPOSED_KEY] = elementData == null
+      data.add(IS_PROJECT_DISPOSED_KEY.with(elementData == null))
       if (elementData != null) {
-        data.putAll(elementData)
+        data.addAll(elementData)
       }
-      loggerProvider.logger.logAsync(GROUP, eventId, data, false)
+      eventId.log(data)
     }
   }
 
@@ -120,21 +128,21 @@ internal class SearchEverywhereMLStatisticsCollector {
                               elementIdProvider: SearchEverywhereMlItemIdProvider,
                               selectedItems: List<Any>,
                               project: Project?,
-                              state: SearchEverywhereMlSearchState): Map<String, Any>? {
-    return hashMapOf<String, Any>().apply {
-      putAll(getSelectedElementsData(selectedElements, elements, elementIdProvider, selectedItems))
-      putAll(getCollectedElementsData(elements, project, elementIdProvider, state) ?: return null)
+                              state: SearchEverywhereMlSearchState): List<EventPair<*>>? {
+    return ArrayList<EventPair<*>>().apply {
+      addAll(getSelectedElementsData(selectedElements, elements, elementIdProvider, selectedItems))
+      addAll(getCollectedElementsData(elements, project, elementIdProvider, state) ?: return null)
     }
   }
 
   private fun getSelectedElementsData(selectedElements: IntArray,
                                       elements: List<SearchEverywhereFoundElementInfo>,
                                       elementIdProvider: SearchEverywhereMlItemIdProvider,
-                                      selectedItems: List<Any>): Map<String, Any> {
-    val data = hashMapOf<String, Any>()
+                                      selectedItems: List<Any>): List<EventPair<*>> {
+    val data = ArrayList<EventPair<*>>()
     if (selectedElements.isNotEmpty()) {
-      data[SELECTED_INDEXES_DATA_KEY] = selectedElements.map { it.toString() }
-      data[SELECTED_ELEMENTS_DATA_KEY] = selectedElements.map {
+      data.add(SELECTED_INDEXES_DATA_KEY.with(selectedElements.map { it }))
+      data.add(SELECTED_ELEMENTS_DATA_KEY.with(selectedElements.map {
         if (it < elements.size) {
           val element = elements[it].element
           val elementId = elementIdProvider.getId(element)
@@ -143,8 +151,8 @@ internal class SearchEverywhereMLStatisticsCollector {
           }
         }
         return@map -1
-      }
-      data[SELECTED_ELEMENTS_CONSISTENT] = isSelectionConsistent(selectedElements, selectedItems, elements)
+      }))
+      data.add(SELECTED_ELEMENTS_CONSISTENT.with(isSelectionConsistent(selectedElements, selectedItems, elements)))
     }
 
     return data
@@ -157,16 +165,16 @@ internal class SearchEverywhereMLStatisticsCollector {
   private fun getCollectedElementsData(elements: List<SearchEverywhereFoundElementInfo>,
                                        project: Project?,
                                        elementIdProvider: SearchEverywhereMlItemIdProvider,
-                                       state: SearchEverywhereMlSearchState): Map<String, Any>? {
-    val data = hashMapOf<String, Any>()
+                                       state: SearchEverywhereMlSearchState): ArrayList<EventPair<*>>? {
+    val data = ArrayList<EventPair<*>>()
     val actionManager = ActionManager.getInstance()
-    data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
+    val value = elements.take(REPORTED_ITEMS_LIMIT).map {
       if (project != null && project.isDisposed) {
         return null
       }
 
-      val result: HashMap<String, Any> = hashMapOf(
-        CONTRIBUTOR_ID_KEY to it.contributor.searchProviderId
+      val result = arrayListOf<EventPair<*>>(
+        CONTRIBUTOR_ID_KEY.with(it.contributor.searchProviderId)
       )
 
       val elementId = elementIdProvider.getId(it.element)
@@ -177,8 +185,9 @@ internal class SearchEverywhereMLStatisticsCollector {
         // features for it.
         addElementFeatures(elementId, it, state, result, actionManager)
       }
-      result
+      ObjectEventData(result)
     }
+    data.add(COLLECTED_RESULTS_DATA_KEY.with(value))
 
     return data
   }
@@ -200,22 +209,22 @@ internal class SearchEverywhereMLStatisticsCollector {
   private fun addElementFeatures(elementId: Int,
                                  elementInfo: SearchEverywhereFoundElementInfo,
                                  state: SearchEverywhereMlSearchState,
-                                 result: HashMap<String, Any>,
+                                 result: MutableList<EventPair<*>>,
                                  actionManager: ActionManager) {
     val itemInfo = state.getElementFeatures(elementId, elementInfo.element, elementInfo.contributor, elementInfo.priority)
     if (itemInfo.features.isNotEmpty()) {
-      result[FEATURES_DATA_KEY] = itemInfo.features
+      result.add(FEATURES_DATA_KEY.with(ObjectEventData(itemInfo.features)))
     }
 
     state.getMLWeightIfDefined(elementId)?.let { score ->
-      result[ML_WEIGHT_KEY] = roundDouble(score)
+      result.add(ML_WEIGHT_KEY.with(roundDouble(score)))
     }
 
-    result[ID_KEY] = itemInfo.id
+    result.add(ID_KEY.with(itemInfo.id))
 
     doWhenIsActionWrapper(elementInfo.element) {
       val action = it.action
-      result[ACTION_ID_KEY] = actionManager.getId(action) ?: action.javaClass.name
+      result.add(ACTION_ID_KEY.with(actionManager.getId(action) ?: action.javaClass.name))
     }
   }
 
@@ -235,45 +244,100 @@ internal class SearchEverywhereMLStatisticsCollector {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 20)
+    private val GROUP = EventLogGroup("mlse.log", 20, RECORDER_CODE)
     private val EMPTY_ARRAY = IntArray(0)
     private const val REPORTED_ITEMS_LIMIT = 100
 
-    // events
-    private const val SESSION_FINISHED = "sessionFinished"
-    private const val SEARCH_RESTARTED = "searchRestarted"
+    private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")
+    private val EXPERIMENT_GROUP = EventFields.Int("experimentGroup")
+    private val FORCE_EXPERIMENT_GROUP = EventFields.Boolean("isForceExperiment")
+    private val TIME_TO_FIRST_RESULT_DATA_KEY = EventFields.Int("timeToFirstResult")
 
-    private const val ORDER_BY_ML_GROUP = "orderByMl"
-    private const val EXPERIMENT_GROUP = "experimentGroup"
-    private const val FORCE_EXPERIMENT_GROUP = "isForceExperiment"
-
-    private const val TIME_TO_FIRST_RESULT_DATA_KEY = "timeToFirstResult"
+    private val SE_TABS = listOf(
+      "SearchEverywhereContributor.All", "ClassSearchEverywhereContributor",
+      "FileSearchEverywhereContributor", "RecentFilesSEContributor",
+      "SymbolSearchEverywhereContributor", "ActionSearchEverywhereContributor",
+      "RunConfigurationsSEContributor", "CommandsContributor",
+      "TopHitSEContributor", "com.intellij.ide.actions.searcheverywhere.CalculatorSEContributor",
+      "TmsSearchEverywhereContributor", "YAMLKeysSearchEverywhereContributor",
+      "UrlSearchEverywhereContributor", "Vcs.Git", "AutocompletionContributor",
+      "TextSearchContributor", "DbSETablesContributor", "third.party"
+    )
 
     // context fields
-    private const val PROJECT_OPENED_KEY = "projectOpened"
-    private const val IS_PROJECT_DISPOSED_KEY = "projectDisposed"
-    private const val SE_TAB_ID_KEY = "seTabId"
-    private const val CLOSE_POPUP_KEY = "closePopup"
-    private const val SEARCH_START_TIME_KEY = "startTime"
-    private const val REBUILD_REASON_KEY = "rebuildReason"
-    private const val SESSION_ID_LOG_DATA_KEY = "sessionId"
-    private const val SEARCH_INDEX_DATA_KEY = "searchIndex"
-    private const val TYPED_SYMBOL_KEYS = "typedSymbolKeys"
-    private const val TOTAL_NUMBER_OF_ITEMS_DATA_KEY = "totalItems"
-    private const val TYPED_BACKSPACES_DATA_KEY = "typedBackspaces"
-    private const val COLLECTED_RESULTS_DATA_KEY = "collectedItems"
-    private const val SELECTED_INDEXES_DATA_KEY = "selectedIndexes"
-    private const val SELECTED_ELEMENTS_DATA_KEY = "selectedIds"
-    private const val SELECTED_ELEMENTS_CONSISTENT = "isConsistent"
-
-    private const val SEARCH_STATE_FEATURES_DATA_KEY = "searchStateFeatures"
+    private val PROJECT_OPENED_KEY = EventFields.Boolean("projectOpened")
+    private val IS_PROJECT_DISPOSED_KEY = EventFields.Boolean("projectDisposed")
+    private val SE_TAB_ID_KEY = EventFields.String("seTabId", SE_TABS)
+    private val CLOSE_POPUP_KEY = EventFields.Boolean("closePopup")
+    private val SEARCH_START_TIME_KEY = EventFields.Long("startTime")
+    private val REBUILD_REASON_KEY = EventFields.Enum<SearchRestartReason>("rebuildReason")
+    private val SESSION_ID_LOG_DATA_KEY = EventFields.Int("sessionId")
+    private val SEARCH_INDEX_DATA_KEY = EventFields.Int("searchIndex")
+    private val TYPED_SYMBOL_KEYS = EventFields.Int("typedSymbolKeys")
+    private val TOTAL_NUMBER_OF_ITEMS_DATA_KEY = EventFields.Int("totalItems")
+    private val TYPED_BACKSPACES_DATA_KEY = EventFields.Int("typedBackspaces")
+    private val SELECTED_INDEXES_DATA_KEY = EventFields.IntList("selectedIndexes")
+    private val SELECTED_ELEMENTS_DATA_KEY = EventFields.IntList("selectedIds")
+    private val SELECTED_ELEMENTS_CONSISTENT = EventFields.Boolean("isConsistent")
 
     // item fields
-    internal const val ID_KEY = "id"
-    internal const val ACTION_ID_KEY = "actionId"
-    internal const val FEATURES_DATA_KEY = "features"
-    internal const val CONTRIBUTOR_ID_KEY = "contributorId"
-    internal const val ML_WEIGHT_KEY = "mlWeight"
+    internal val SEARCH_STATE_FEATURES_DATA_KEY =
+      ObjectEventField("searchStateFeatures", *SearchEverywhereStateFeaturesProvider.getFeaturesDefinition().toTypedArray())
+
+    internal val ID_KEY = EventFields.Int("id")
+    internal val ACTION_ID_KEY = EventFields.StringValidatedByCustomRule("actionId", "action")
+    internal val FEATURES_DATA_KEY = createFeaturesEventObject()
+    internal val CONTRIBUTOR_ID_KEY = EventFields.String("contributorId", SE_TABS)
+    internal val ML_WEIGHT_KEY = EventFields.Double("mlWeight")
+
+    private val COLLECTED_RESULTS_DATA_KEY =
+      ObjectListEventField("collectedItems", ID_KEY, ACTION_ID_KEY, FEATURES_DATA_KEY, CONTRIBUTOR_ID_KEY, ML_WEIGHT_KEY)
+
+    // events
+    private val SESSION_FINISHED = registerEvent("sessionFinished", CLOSE_POPUP_KEY, FORCE_EXPERIMENT_GROUP)
+    private val SEARCH_RESTARTED = registerEvent("searchRestarted")
+
+    private fun createFeaturesEventObject(): ObjectEventField {
+      val features = hashMapOf<String, EventField<*>>()
+      for (field in SearchEverywhereElementFeaturesProvider.nameFeatureToField) {
+        features[field.value.name] = field.value
+      }
+
+      val featureProviders = SearchEverywhereElementFeaturesProvider.getFeatureProviders()
+      for (featureProvider in featureProviders) {
+        val declarations = featureProvider.getFeaturesDeclarations()
+        for (declaration in declarations) {
+          features[declaration.name] = declaration
+        }
+      }
+      return ObjectEventField("features", *features.values.toTypedArray())
+    }
+
+    private fun registerEvent(eventId: String, vararg additional: EventField<*>): VarargEventId {
+      val fields = arrayListOf(
+        PROJECT_OPENED_KEY,
+        SESSION_ID_LOG_DATA_KEY,
+        SEARCH_INDEX_DATA_KEY,
+        TOTAL_NUMBER_OF_ITEMS_DATA_KEY,
+        SE_TAB_ID_KEY,
+        EXPERIMENT_GROUP,
+        ORDER_BY_ML_GROUP,
+        SEARCH_START_TIME_KEY,
+        TIME_TO_FIRST_RESULT_DATA_KEY,
+        TYPED_SYMBOL_KEYS,
+        TYPED_BACKSPACES_DATA_KEY,
+        REBUILD_REASON_KEY,
+        IS_PROJECT_DISPOSED_KEY,
+        SELECTED_INDEXES_DATA_KEY,
+        SELECTED_ELEMENTS_DATA_KEY,
+        SELECTED_ELEMENTS_CONSISTENT,
+        SEARCH_STATE_FEATURES_DATA_KEY,
+        COLLECTED_RESULTS_DATA_KEY
+      )
+      fields.addAll(SearchEverywhereContextFeaturesProvider.getContextFields())
+      fields.addAll(additional)
+      return GROUP.registerVarargEvent(eventId, *fields.toTypedArray())
+    }
 
     private fun roundDouble(value: Double): Double {
       if (!value.isFinite()) return -1.0

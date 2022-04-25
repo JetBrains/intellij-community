@@ -8,6 +8,7 @@ import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereRankin
 import com.intellij.ide.util.gotoByName.ChooseByNameModel
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -38,9 +39,14 @@ internal abstract class SearchEverywhereRankingModelTest
 
   private fun getElementFeatures(foundItem: FoundItemDescriptor<*>,
                                  searchQuery: String,
-                                 featuresProviderCache: Any?): Map<String, Any> {
+                                 featuresProviderCache: Any?): Map<String, Any?> {
     return featuresProviders.map {
-      it.getElementFeatures(foundItem.item, System.currentTimeMillis(), searchQuery, foundItem.weight, featuresProviderCache)
+      val features = it.getElementFeatures(foundItem.item, System.currentTimeMillis(), searchQuery, foundItem.weight, featuresProviderCache)
+      val featuresAsMap = hashMapOf<String, Any?>()
+      for (feature in features) {
+        featuresAsMap[feature.field.name] = feature.data
+      }
+      featuresAsMap
     }.fold(emptyMap()) { acc, value -> acc + value }
   }
 

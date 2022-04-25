@@ -11,14 +11,14 @@ internal class SearchEverywhereCommonFeaturesProviderTest
   fun testPriority() {
     val priority = 10101
 
-    checkThatFeature(PRIORITY_DATA_KEY)
+    checkThatFeature(PRIORITY_DATA_KEY.name)
       .ofElement(Any())
       .withPriority(priority)
       .isEqualTo(priority)
   }
 
   fun testQueryLength() {
-    checkThatFeature(TOTAL_SYMBOLS_AMOUNT_DATA_KEY)
+    checkThatFeature(TOTAL_SYMBOLS_AMOUNT_DATA_KEY.name)
       .ofElement(Any())
       .withQuery("test query")
       .isEqualTo(10)

@@ -172,6 +172,15 @@ data class LongListEventField(override val name: String) : ListEventField<Long>(
   }
 }
 
+data class IntListEventField(override val name: String) : ListEventField<Int>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp#integer}")
+
+  override fun addData(fuData: FeatureUsageData, value: List<Int>) {
+    fuData.addListNumberData(name, value)
+  }
+}
+
 abstract class StringListEventField(override val name: String) : ListEventField<String>() {
   override fun addData(fuData: FeatureUsageData, value: List<String>) {
     fuData.addData(name, value)

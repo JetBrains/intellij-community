@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.codeWithMe.ClientId
@@ -275,8 +275,12 @@ class FeatureUsageData(private val recorderId: String) {
    *
    * @param key key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
    */
-  internal fun addListLongData(@NonNls key: String, value: List<Long>): FeatureUsageData {
+  internal fun addListNumberData(@NonNls key: String, value: List<Number>): FeatureUsageData {
     return addDataInternal(key, value)
+  }
+
+  internal fun addListLongData(@NonNls key: String, value: List<Long>): FeatureUsageData {
+    return addListNumberData(key, value)
   }
 
   internal fun addObjectData(@NonNls key: String, value: Map<String, Any>): FeatureUsageData {

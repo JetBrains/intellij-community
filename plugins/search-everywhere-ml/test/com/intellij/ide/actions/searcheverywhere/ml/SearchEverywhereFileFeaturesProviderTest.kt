@@ -75,19 +75,19 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun testIsDirectory() {
     val directory = createTempDirectory().toPsi()
 
-    checkThatFeature(IS_DIRECTORY_DATA_KEY)
+    checkThatFeature(IS_DIRECTORY_DATA_KEY.name)
       .ofElement(directory)
       .isEqualTo(true)
   }
 
   fun testFileIsNotDirectory() {
-    checkThatFeature(IS_DIRECTORY_DATA_KEY)
+    checkThatFeature(IS_DIRECTORY_DATA_KEY.name)
       .ofElement(testFile)
       .isEqualTo(false)
   }
 
   fun testFileType() {
-    checkThatFeature(FILETYPE_DATA_KEY)
+    checkThatFeature(FILETYPE_DATA_KEY.name)
       .ofElement(testFile)
       .isEqualTo(testFile.virtualFile.fileType.name)
   }
@@ -102,14 +102,14 @@ internal class SearchEverywhereFileFeaturesProviderTest
       }
     }
 
-    checkThatFeature(IS_FAVORITE_DATA_KEY)
+    checkThatFeature(IS_FAVORITE_DATA_KEY.name)
       .ofElement(testFile)
       .changes(false, true)
       .after { addFileToFavorites(it) }
   }
 
   fun testIsOpened() {
-    checkThatFeature(SearchEverywhereFileFeaturesProvider.IS_OPENED_DATA_KEY)
+    checkThatFeature(SearchEverywhereFileFeaturesProvider.IS_OPENED_DATA_KEY.name)
       .ofElement(testFile)
       .changes(false, true)
       .after { FileEditorManager.getInstance(project).openFile(it.virtualFile, false) }
@@ -118,7 +118,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun testRecentIndexOfNeverOpenedFile() {
     prepareForRecentIndexTest()
 
-    checkThatFeature(RECENT_INDEX_DATA_KEY)
+    checkThatFeature(RECENT_INDEX_DATA_KEY.name)
       .ofElement(testFile)
       .isEqualTo(-1)
   }
@@ -126,7 +126,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun testMostRecentFileIndex() {
     val openedFiles = prepareForRecentIndexTest()
 
-    checkThatFeature(RECENT_INDEX_DATA_KEY)
+    checkThatFeature(RECENT_INDEX_DATA_KEY.name)
       .ofElement(openedFiles.last()) // Last opened file (i.e. the most recent)
       .isEqualTo(1)
   }
@@ -135,7 +135,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
     val openedFiles = prepareForRecentIndexTest()
     val expectedIndex = openedFiles.size
 
-    checkThatFeature(RECENT_INDEX_DATA_KEY)
+    checkThatFeature(RECENT_INDEX_DATA_KEY.name)
       .ofElement(openedFiles.first()) // First opened file (i.e. the oldest)
       .isEqualTo(expectedIndex)
   }
@@ -146,10 +146,10 @@ internal class SearchEverywhereFileFeaturesProviderTest
       .setStats("Python", FileTypeUsageSummary(2, lastDay))
       .setStats("XML", FileTypeUsageSummary(1, lastMinute))
 
-    val expectedValues = mapOf(
-      FILETYPE_USAGE_RATIO_DATA_KEY to 0.7,
-      FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY to 1.0,
-      FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY to 7.0,
+    val expectedValues = listOf(
+      FILETYPE_USAGE_RATIO_DATA_KEY.with(0.7),
+      FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY.with(1.0),
+      FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY.with(7.0),
     )
 
     checkThatFeatures()
@@ -163,10 +163,10 @@ internal class SearchEverywhereFileFeaturesProviderTest
       .setStats("Python", FileTypeUsageSummary(2, lastDay))
       .setStats("XML", FileTypeUsageSummary(7, lastMinute))
 
-    val expectedValues = mapOf(
-      FILETYPE_USAGE_RATIO_DATA_KEY to 0.1,
-      FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY to roundDouble(1.0 / 7.0),
-      FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY to 1.0,
+    val expectedValues = listOf(
+      FILETYPE_USAGE_RATIO_DATA_KEY.with(0.1),
+      FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY.with(roundDouble(1.0 / 7.0)),
+      FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY.with(1.0),
     )
 
     checkThatFeatures()
@@ -177,14 +177,14 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun testFileTypeUsedInLastMinute() {
     mockedFileStatsProvider.setStats(testFile.virtualFile.fileType.name, FileTypeUsageSummary(1, lastMinute))
 
-    val expectedValues = mapOf(
-      FILETYPE_USAGE_RATIO_DATA_KEY to 1.0,
-      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY to currentTime - lastMinute,
+    val expectedValues = listOf(
+      FILETYPE_USAGE_RATIO_DATA_KEY.with(1.0),
+      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY.with(currentTime - lastMinute),
 
-      FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY to true,
-      FILETYPE_USED_IN_LAST_HOUR_DATA_KEY to true,
-      FILETYPE_USED_IN_LAST_DAY_DATA_KEY to true,
-      FILETYPE_USED_IN_LAST_MONTH_DATA_KEY to true,
+      FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY.with(true),
+      FILETYPE_USED_IN_LAST_HOUR_DATA_KEY.with(true),
+      FILETYPE_USED_IN_LAST_DAY_DATA_KEY.with(true),
+      FILETYPE_USED_IN_LAST_MONTH_DATA_KEY.with(true),
     )
 
     checkThatFeatures()
@@ -196,14 +196,14 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun testFileTypeUsedInLastHour() {
     mockedFileStatsProvider.setStats(testFile.virtualFile.fileType.name, FileTypeUsageSummary(1, lastHour))
 
-    val expectedValues = mapOf(
-      FILETYPE_USAGE_RATIO_DATA_KEY to 1.0,
-      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY to currentTime - lastHour,
+    val expectedValues = listOf(
+      FILETYPE_USAGE_RATIO_DATA_KEY.with(1.0),
+      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY.with(currentTime - lastHour),
 
-      FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY to false,
-      FILETYPE_USED_IN_LAST_HOUR_DATA_KEY to true,
-      FILETYPE_USED_IN_LAST_DAY_DATA_KEY to true,
-      FILETYPE_USED_IN_LAST_MONTH_DATA_KEY to true,
+      FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY.with(false),
+      FILETYPE_USED_IN_LAST_HOUR_DATA_KEY.with(true),
+      FILETYPE_USED_IN_LAST_DAY_DATA_KEY.with(true),
+      FILETYPE_USED_IN_LAST_MONTH_DATA_KEY.with(true),
     )
 
     checkThatFeatures()
@@ -215,14 +215,14 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun testFileTypeUsedInLastDay() {
     mockedFileStatsProvider.setStats(testFile.virtualFile.fileType.name, FileTypeUsageSummary(1, lastDay))
 
-    val expectedValues = mapOf(
-      FILETYPE_USAGE_RATIO_DATA_KEY to 1.0,
-      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY to currentTime - lastDay,
+    val expectedValues = listOf(
+      FILETYPE_USAGE_RATIO_DATA_KEY.with(1.0),
+      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY.with(currentTime - lastDay),
 
-      FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY to false,
-      FILETYPE_USED_IN_LAST_HOUR_DATA_KEY to false,
-      FILETYPE_USED_IN_LAST_DAY_DATA_KEY to true,
-      FILETYPE_USED_IN_LAST_MONTH_DATA_KEY to true,
+      FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY.with(false),
+      FILETYPE_USED_IN_LAST_HOUR_DATA_KEY.with(false),
+      FILETYPE_USED_IN_LAST_DAY_DATA_KEY.with(true),
+      FILETYPE_USED_IN_LAST_MONTH_DATA_KEY.with(true),
     )
 
     checkThatFeatures()
@@ -234,14 +234,14 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun testFileTypeUsedInLastMonth() {
     mockedFileStatsProvider.setStats(testFile.virtualFile.fileType.name, FileTypeUsageSummary(1, lastMonth))
 
-    val expectedValues = mapOf(
-      FILETYPE_USAGE_RATIO_DATA_KEY to 1.0,
-      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY to currentTime - lastMonth,
+    val expectedValues = listOf(
+      FILETYPE_USAGE_RATIO_DATA_KEY.with(1.0),
+      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY.with(currentTime - lastMonth),
 
-      FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY to false,
-      FILETYPE_USED_IN_LAST_HOUR_DATA_KEY to false,
-      FILETYPE_USED_IN_LAST_DAY_DATA_KEY to false,
-      FILETYPE_USED_IN_LAST_MONTH_DATA_KEY to true,
+      FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY.with(false),
+      FILETYPE_USED_IN_LAST_HOUR_DATA_KEY.with(false),
+      FILETYPE_USED_IN_LAST_DAY_DATA_KEY.with(false),
+      FILETYPE_USED_IN_LAST_MONTH_DATA_KEY.with(true),
     )
 
     checkThatFeatures()
@@ -253,32 +253,32 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun testFileTypeNeverUsed() {
     mockedFileStatsProvider.clearStats()
 
-    // We expect these features to be null, i.e. not reported
-    val expectedValues = mapOf(
-      FILETYPE_USAGE_RATIO_DATA_KEY to null,
-      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY to null,
+    // We expect these features will not be reported
+    val features = listOf(
+      FILETYPE_USAGE_RATIO_DATA_KEY,
+      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY,
 
-      FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY to null,
-      FILETYPE_USED_IN_LAST_HOUR_DATA_KEY to null,
-      FILETYPE_USED_IN_LAST_DAY_DATA_KEY to null,
-      FILETYPE_USED_IN_LAST_MONTH_DATA_KEY to null,
+      FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY,
+      FILETYPE_USED_IN_LAST_HOUR_DATA_KEY,
+      FILETYPE_USED_IN_LAST_DAY_DATA_KEY,
+      FILETYPE_USED_IN_LAST_MONTH_DATA_KEY,
     )
 
     checkThatFeatures()
       .ofElement(testFile)
-      .isEqualTo(expectedValues)
+      .withoutFeatures(features)
   }
 
   fun testModifiedInLastMinute() {
     val file = createFileWithModTimestamp(lastMinute)
 
-    val expectedValues = mapOf(
-      TIME_SINCE_LAST_MODIFICATION_DATA_KEY to currentTime - lastMinute,
+    val expectedValues = listOf(
+      TIME_SINCE_LAST_MODIFICATION_DATA_KEY.with(currentTime - lastMinute),
 
-      WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY to true,
-      WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY to true,
-      WAS_MODIFIED_IN_LAST_DAY_DATA_KEY to true,
-      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY to true,
+      WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY.with(true),
+      WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY.with(true),
+      WAS_MODIFIED_IN_LAST_DAY_DATA_KEY.with(true),
+      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY.with(true),
     )
 
     checkThatFeatures()
@@ -290,13 +290,13 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun testModifiedInLastHour() {
     val file = createFileWithModTimestamp(lastHour)
 
-    val expectedValues = mapOf(
-      TIME_SINCE_LAST_MODIFICATION_DATA_KEY to currentTime - lastHour,
+    val expectedValues = listOf(
+      TIME_SINCE_LAST_MODIFICATION_DATA_KEY.with(currentTime - lastHour),
 
-      WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY to false,
-      WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY to true,
-      WAS_MODIFIED_IN_LAST_DAY_DATA_KEY to true,
-      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY to true,
+      WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY.with(true),
+      WAS_MODIFIED_IN_LAST_DAY_DATA_KEY.with(true),
+      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY.with(true),
     )
 
     checkThatFeatures()
@@ -308,13 +308,13 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun testModifiedInLastDay() {
     val file = createFileWithModTimestamp(lastDay)
 
-    val expectedValues = mapOf(
-      TIME_SINCE_LAST_MODIFICATION_DATA_KEY to currentTime - lastDay,
+    val expectedValues = listOf(
+      TIME_SINCE_LAST_MODIFICATION_DATA_KEY.with(currentTime - lastDay),
 
-      WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY to false,
-      WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY to false,
-      WAS_MODIFIED_IN_LAST_DAY_DATA_KEY to true,
-      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY to true,
+      WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_DAY_DATA_KEY.with(true),
+      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY.with(true),
     )
 
     checkThatFeatures()
@@ -326,13 +326,13 @@ internal class SearchEverywhereFileFeaturesProviderTest
   fun testModifiedInLastMonth() {
     val file = createFileWithModTimestamp(lastMonth)
 
-    val expectedValues = mapOf(
-      TIME_SINCE_LAST_MODIFICATION_DATA_KEY to currentTime - lastMonth,
+    val expectedValues = listOf(
+      TIME_SINCE_LAST_MODIFICATION_DATA_KEY.with(currentTime - lastMonth),
 
-      WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY to false,
-      WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY to false,
-      WAS_MODIFIED_IN_LAST_DAY_DATA_KEY to false,
-      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY to true,
+      WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_DAY_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY.with(true),
     )
 
     checkThatFeatures()
@@ -345,13 +345,13 @@ internal class SearchEverywhereFileFeaturesProviderTest
     val modTime = lastMonth - Time.DAY
     val file = createFileWithModTimestamp(modTime)
 
-    val expectedValues = mapOf(
-      TIME_SINCE_LAST_MODIFICATION_DATA_KEY to currentTime - modTime,
+    val expectedValues = listOf(
+      TIME_SINCE_LAST_MODIFICATION_DATA_KEY.with(currentTime - modTime),
 
-      WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY to false,
-      WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY to false,
-      WAS_MODIFIED_IN_LAST_DAY_DATA_KEY to false,
-      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY to false,
+      WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_DAY_DATA_KEY.with(false),
+      WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY.with(false),
     )
 
     checkThatFeatures()
@@ -379,7 +379,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
     FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
     val psiFile = foundFile!!.toPsi()
-    checkThatFeature(IS_SAME_MODULE_DATA_KEY)
+    checkThatFeature(IS_SAME_MODULE_DATA_KEY.name)
       .ofElement(psiFile)
       .isEqualTo(false)
   }
@@ -398,7 +398,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
     FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
     val psiFile = foundFile!!.toPsi()
-    checkThatFeature(IS_SAME_MODULE_DATA_KEY)
+    checkThatFeature(IS_SAME_MODULE_DATA_KEY.name)
       .ofElement(psiFile)
       .isEqualTo(true)
   }
@@ -417,7 +417,7 @@ internal class SearchEverywhereFileFeaturesProviderTest
     FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
     val psiFile = foundDirectory!!.toPsi()
-    checkThatFeature(IS_SAME_MODULE_DATA_KEY)
+    checkThatFeature(IS_SAME_MODULE_DATA_KEY.name)
       .ofElement(psiFile)
       .isEqualTo(true)
 
@@ -438,9 +438,9 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
-    val expected = mapOf(
-      PACKAGE_DISTANCE_DATA_KEY to 1,  // The found directory is considered a subpackage, hence the distance should be 1
-      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(1 / (3 + 4).toDouble()),
+    val expected = listOf(
+      PACKAGE_DISTANCE_DATA_KEY.with(1),  // The found directory is considered a subpackage, hence the distance should be 1
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY.with(roundDouble(1 / (3 + 4).toDouble())),
     )
 
     val psiFile = foundDirectory!!.toPsi()
@@ -464,9 +464,9 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
-    val expected = mapOf(
-      PACKAGE_DISTANCE_DATA_KEY to 0,
-      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to 0.0,
+    val expected = listOf(
+      PACKAGE_DISTANCE_DATA_KEY.with(0),
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY.with(0.0),
     )
 
     val psiFile = foundFile!!.toPsi()
@@ -492,9 +492,9 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
-    val expected = mapOf(
-      PACKAGE_DISTANCE_DATA_KEY to 1,
-      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(1 / (4 + 5).toDouble()),
+    val expected = listOf(
+      PACKAGE_DISTANCE_DATA_KEY.with(1),
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY.with(roundDouble(1 / (4 + 5).toDouble())),
     )
 
     val psiFile = foundFile!!.toPsi()
@@ -520,9 +520,9 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
-    val expected = mapOf(
-      PACKAGE_DISTANCE_DATA_KEY to 1,
-      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(1 / (4 + 3).toDouble()),
+    val expected = listOf(
+      PACKAGE_DISTANCE_DATA_KEY.with(1),
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY.with(roundDouble(1 / (4 + 3).toDouble())),
     )
 
     val psiFile = foundFile!!.toPsi()
@@ -550,9 +550,9 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
-    val expected = mapOf(
-      PACKAGE_DISTANCE_DATA_KEY to 3,
-      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(3 / (4 + 3).toDouble()),
+    val expected = listOf(
+      PACKAGE_DISTANCE_DATA_KEY.with(3),
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY.with(roundDouble(3 / (4 + 3).toDouble())),
     )
 
     val psiFile = foundFile!!.toPsi()
@@ -580,9 +580,9 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
-    val expected = mapOf(
-      PACKAGE_DISTANCE_DATA_KEY to 4,
-      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(4 / (4 + 4).toDouble())
+    val expected = listOf(
+      PACKAGE_DISTANCE_DATA_KEY.with(4),
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY.with(roundDouble(4 / (4 + 4).toDouble()))
     )
 
     val psiFile = foundFile!!.toPsi()
@@ -608,9 +608,9 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
-    val expected = mapOf(
-      PACKAGE_DISTANCE_DATA_KEY to 6,
-      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(6 / (4 + 2).toDouble()),
+    val expected = listOf(
+      PACKAGE_DISTANCE_DATA_KEY.with(6),
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY.with(roundDouble(6 / (4 + 2).toDouble())),
     )
 
     val psiFile = foundFile!!.toPsi()
@@ -632,9 +632,9 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
-    val expected = mapOf(
-      PACKAGE_DISTANCE_DATA_KEY to 0,
-      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to 0.0,
+    val expected = listOf(
+      PACKAGE_DISTANCE_DATA_KEY.with(0),
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY.with(0.0),
     )
 
     val psiFile = foundFile!!.toPsi()
@@ -658,9 +658,9 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
     FileEditorManager.getInstance(project).openFile(openedFile!!, true)
 
-    val expected = mapOf(
-      PACKAGE_DISTANCE_DATA_KEY to 4,
-      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY to roundDouble(4 / (4 + 0).toDouble()),
+    val expected = listOf(
+      PACKAGE_DISTANCE_DATA_KEY.with(4),
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY.with(roundDouble(4 / (4 + 0).toDouble())),
     )
 
     val psiFile = foundFile!!.toPsi()

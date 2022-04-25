@@ -7,11 +7,11 @@ import com.intellij.internal.ml.FeatureMapper
 
 internal class SearchEverywhereRankingModel(private val model: DecisionFunction) {
 
-  fun predict(features: Map<String, Any>): Double {
+  fun predict(features: Map<String, Any?>): Double {
     return model.predict(buildArray(model.featuresOrder, features))
   }
 
-  private fun buildArray(featuresOrder: Array<FeatureMapper>, features: Map<String, Any>): DoubleArray {
+  private fun buildArray(featuresOrder: Array<FeatureMapper>, features: Map<String, Any?>): DoubleArray {
     val array = DoubleArray(featuresOrder.size)
     for (i in featuresOrder.indices) {
       val mapper = featuresOrder[i]

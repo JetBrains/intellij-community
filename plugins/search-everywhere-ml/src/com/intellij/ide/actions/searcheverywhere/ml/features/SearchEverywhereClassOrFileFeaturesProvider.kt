@@ -2,6 +2,9 @@ package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.FileTypeUsageLocalSummary
 import com.intellij.internal.statistic.local.FileTypeUsageSummary
 import com.intellij.internal.statistic.local.FileTypeUsageSummaryProvider
@@ -23,26 +26,26 @@ import com.intellij.util.Time
 abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: Class<out SearchEverywhereContributor<*>>)
   : SearchEverywhereElementFeaturesProvider(*supportedTab) {
   companion object {
-    internal const val IS_INVALID_DATA_KEY = "isInvalid"
+    internal val IS_INVALID_DATA_KEY = EventFields.Boolean("isInvalid")
 
-    internal const val IS_SAME_MODULE_DATA_KEY = "isSameModule"
-    internal const val PACKAGE_DISTANCE_DATA_KEY = "packageDistance"
-    internal const val PACKAGE_DISTANCE_NORMALIZED_DATA_KEY = "packageDistanceNorm"
-    internal const val IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY = "isSameFileTypeAsOpenedFile"
+    internal val IS_SAME_MODULE_DATA_KEY = EventFields.Boolean("isSameModule")
+    internal val PACKAGE_DISTANCE_DATA_KEY = EventFields.Int("packageDistance")
+    internal val PACKAGE_DISTANCE_NORMALIZED_DATA_KEY = EventFields.Double("packageDistanceNorm")
+    internal val IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY = EventFields.Boolean("isSameFileTypeAsOpenedFile")
 
-    internal const val IS_IN_SOURCE_DATA_KEY = "isInSource"
-    internal const val IS_IN_TEST_SOURCES_DATA_KEY = "isInTestSources"
-    internal const val IS_IN_LIBRARY_DATA_KEY = "isFromLibrary"
-    internal const val IS_EXCLUDED_DATA_KEY = "isInExcluded"
+    internal val IS_IN_SOURCE_DATA_KEY = EventFields.Boolean("isInSource")
+    internal val IS_IN_TEST_SOURCES_DATA_KEY = EventFields.Boolean("isInTestSources")
+    internal val IS_IN_LIBRARY_DATA_KEY = EventFields.Boolean("isFromLibrary")
+    internal val IS_EXCLUDED_DATA_KEY = EventFields.Boolean("isInExcluded")
 
-    internal const val FILETYPE_USAGE_RATIO_DATA_KEY = "fileTypeUsageRatio"
-    internal const val FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY = "fileTypeUsageRatioToMax"
-    internal const val FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY = "fileTypeUsageRatioToMin"
-    internal const val TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY = "timeSinceLastFileTypeUsage"
-    internal const val FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY = "fileTypeUsedInLastMinute"
-    internal const val FILETYPE_USED_IN_LAST_HOUR_DATA_KEY = "fileTypeUsedInLastHour"
-    internal const val FILETYPE_USED_IN_LAST_DAY_DATA_KEY = "fileTypeUsedInLastDay"
-    internal const val FILETYPE_USED_IN_LAST_MONTH_DATA_KEY = "fileTypeUsedInLastMonth"
+    internal val FILETYPE_USAGE_RATIO_DATA_KEY = EventFields.Double("fileTypeUsageRatio")
+    internal val FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY = EventFields.Double("fileTypeUsageRatioToMax")
+    internal val FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY = EventFields.Double("fileTypeUsageRatioToMin")
+    internal val TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY = EventFields.Long("timeSinceLastFileTypeUsage")
+    internal val FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY = EventFields.Boolean("fileTypeUsedInLastMinute")
+    internal val FILETYPE_USED_IN_LAST_HOUR_DATA_KEY = EventFields.Boolean("fileTypeUsedInLastHour")
+    internal val FILETYPE_USED_IN_LAST_DAY_DATA_KEY = EventFields.Boolean("fileTypeUsedInLastDay")
+    internal val FILETYPE_USED_IN_LAST_MONTH_DATA_KEY = EventFields.Boolean("fileTypeUsedInLastMonth")
   }
 
   override fun getDataToCache(project: Project?): Any? {
@@ -54,28 +57,41 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
     return Cache(deepCopyFileTypeStats(project), openedFile)
   }
 
+  override fun getFeaturesDeclarations(): List<EventField<*>> {
+    return arrayListOf(
+      IS_INVALID_DATA_KEY, IS_SAME_MODULE_DATA_KEY, PACKAGE_DISTANCE_DATA_KEY,
+      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY, IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY,
+      IS_IN_SOURCE_DATA_KEY, IS_IN_TEST_SOURCES_DATA_KEY, IS_IN_LIBRARY_DATA_KEY,
+      IS_EXCLUDED_DATA_KEY, FILETYPE_USAGE_RATIO_DATA_KEY,
+      FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY, FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY,
+      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY,
+      FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY, FILETYPE_USED_IN_LAST_HOUR_DATA_KEY,
+      FILETYPE_USED_IN_LAST_DAY_DATA_KEY, FILETYPE_USED_IN_LAST_MONTH_DATA_KEY
+    )
+  }
+
   override fun getElementFeatures(element: Any,
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: Any?): Map<String, Any> {
+                                  cache: Any?): List<EventPair<*>> {
     val item = when (element) {
       is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> element.item
       is PsiElement -> element
-      else -> return emptyMap()
+      else -> return emptyList()
     }
 
     val presentation = (element as? PSIPresentationBgRendererWrapper.PsiItemWithPresentation)?.presentation
 
     cache as Cache?
     val file = getContainingFile(item)
-    val project = ReadAction.compute<Project?, Nothing> { item.takeIf { it.isValid }?.project } ?: return mapOf(IS_INVALID_DATA_KEY to true)
+    val project = ReadAction.compute<Project?, Nothing> { item.takeIf { it.isValid }?.project } ?: return listOf(IS_INVALID_DATA_KEY.with(true))
 
-    val data = HashMap<String, Any>()
+    val data = ArrayList<EventPair<*>>()
     if (file != null && cache != null) {
       getFileFeatures(data, file, project, cache, currentTime)
     }
-    data.putAll(getElementFeatures(item, presentation, currentTime, searchQuery, elementPriority, cache))
+    data.addAll(getElementFeatures(item, presentation, currentTime, searchQuery, elementPriority, cache))
     return data
   }
 
@@ -93,19 +109,19 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
     }
   }
 
-  private fun getFileFeatures(data: HashMap<String, Any>,
+  private fun getFileFeatures(data: MutableList<EventPair<*>>,
                               file: VirtualFile,
                               project: Project,
                               cache: Cache,
                               currentTime: Long) {
-    data.putAll(getFileLocationStats(file, project))
+    data.addAll(getFileLocationStats(file, project))
     data.putIfValueNotNull(IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY, isSameFileTypeAsOpenedFile(file, cache.openedFile))
     data.putIfValueNotNull(IS_SAME_MODULE_DATA_KEY, isSameModuleAsOpenedFile(file, project, cache.openedFile))
-    data.putAll(getFileTypeStats(file, currentTime, cache.fileTypeStats))
+    data.addAll(getFileTypeStats(file, currentTime, cache.fileTypeStats))
 
     calculatePackageDistance(file, project, cache.openedFile)?.let { (packageDistance, packageDistanceNorm) ->
-      data[PACKAGE_DISTANCE_DATA_KEY] = packageDistance
-      data[PACKAGE_DISTANCE_NORMALIZED_DATA_KEY] = packageDistanceNorm
+      data.add(PACKAGE_DISTANCE_DATA_KEY.with(packageDistance))
+      data.add(PACKAGE_DISTANCE_NORMALIZED_DATA_KEY.with(packageDistanceNorm))
     }
   }
 
@@ -114,7 +130,7 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
                                             currentTime: Long,
                                             searchQuery: String,
                                             elementPriority: Int,
-                                            cache: Cache?): Map<String, Any>
+                                            cache: Cache?): List<EventPair<*>>
 
   /**
    * Creates a deep copy of the file type stats obtained from the [FileTypeUsageLocalSummary],
@@ -133,12 +149,12 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
 
   private fun getFileTypeStats(file: VirtualFile,
                                currentTime: Long,
-                               fileTypeStats: Map<String, FileTypeUsageSummary>): Map<String, Any> {
+                               fileTypeStats: Map<String, FileTypeUsageSummary>): List<EventPair<*>> {
     val totalUsage = fileTypeStats.values.sumOf { it.usageCount }
     val stats = fileTypeStats[file.fileType.name]
 
     if (stats == null) {
-      return emptyMap()
+      return emptyList()
     }
 
     val timeSinceLastUsage = currentTime - stats.lastUsed
@@ -146,16 +162,16 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
     val min = fileTypeStats.minOf { it.value.usageCount }
     val max = fileTypeStats.maxOf { it.value.usageCount }
 
-    return hashMapOf(
-      FILETYPE_USAGE_RATIO_DATA_KEY to usageRatio,
-      FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY to roundDouble(stats.usageCount.toDouble() / max),
-      FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY to roundDouble(stats.usageCount.toDouble() / min),
+    return arrayListOf(
+      FILETYPE_USAGE_RATIO_DATA_KEY.with(usageRatio),
+      FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY.with(roundDouble(stats.usageCount.toDouble() / max)),
+      FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY.with(roundDouble(stats.usageCount.toDouble() / min)),
 
-      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY to timeSinceLastUsage,
-      FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY to (timeSinceLastUsage <= Time.MINUTE),
-      FILETYPE_USED_IN_LAST_HOUR_DATA_KEY to (timeSinceLastUsage <= Time.HOUR),
-      FILETYPE_USED_IN_LAST_DAY_DATA_KEY to (timeSinceLastUsage <= Time.DAY),
-      FILETYPE_USED_IN_LAST_MONTH_DATA_KEY to (timeSinceLastUsage <= (4 * Time.WEEK.toLong()))
+      TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY.with(timeSinceLastUsage),
+      FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY.with(timeSinceLastUsage <= Time.MINUTE),
+      FILETYPE_USED_IN_LAST_HOUR_DATA_KEY.with(timeSinceLastUsage <= Time.HOUR),
+      FILETYPE_USED_IN_LAST_DAY_DATA_KEY.with(timeSinceLastUsage <= Time.DAY),
+      FILETYPE_USED_IN_LAST_MONTH_DATA_KEY.with(timeSinceLastUsage <= (4 * Time.WEEK.toLong()))
     )
   }
 
@@ -241,15 +257,15 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
     return FileTypeRegistry.getInstance().isFileOfType(file, openedFileType)
   }
 
-  private fun getFileLocationStats(file: VirtualFile, project: Project): Map<String, Any> {
-    return ReadAction.compute<Map<String, Any>, Nothing> {
+  private fun getFileLocationStats(file: VirtualFile, project: Project): List<EventPair<*>> {
+    return ReadAction.compute<List<EventPair<*>>, Nothing> {
       val fileIndex = ProjectFileIndex.getInstance(project)
 
-      return@compute mapOf(
-        IS_IN_SOURCE_DATA_KEY to fileIndex.isInSource(file),
-        IS_IN_TEST_SOURCES_DATA_KEY to fileIndex.isInTestSourceContent(file),
-        IS_IN_LIBRARY_DATA_KEY to fileIndex.isInLibrary(file),
-        IS_EXCLUDED_DATA_KEY to fileIndex.isExcluded(file),
+      return@compute arrayListOf(
+        IS_IN_SOURCE_DATA_KEY.with(fileIndex.isInSource(file)),
+        IS_IN_TEST_SOURCES_DATA_KEY.with(fileIndex.isInTestSourceContent(file)),
+        IS_IN_LIBRARY_DATA_KEY.with(fileIndex.isInLibrary(file)),
+        IS_EXCLUDED_DATA_KEY.with(fileIndex.isExcluded(file)),
       )
     }
   }

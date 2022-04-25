@@ -170,6 +170,9 @@ object EventFields {
   @JvmStatic
   fun LongList(@NonNls name: String): LongListEventField = LongListEventField(name)
 
+  @JvmStatic
+  fun IntList(@NonNls name: String): IntListEventField = IntListEventField(name)
+
   /**
    * Please choose regexp carefully to avoid reporting any sensitive data.
    */

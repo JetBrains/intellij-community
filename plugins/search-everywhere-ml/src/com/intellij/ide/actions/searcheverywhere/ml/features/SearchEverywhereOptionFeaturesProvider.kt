@@ -5,20 +5,29 @@ import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.ide.ui.RegistryTextOptionDescriptor
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.util.text.StringUtil
 
 internal class SearchEverywhereOptionFeaturesProvider : SearchEverywhereBaseActionFeaturesProvider() {
   companion object {
-    private const val IS_OPTION = "isOption"
-    private const val IS_BOOLEAN_OPTION = "isBooleanOption"
-    private const val IS_REGISTRY_OPTION = "isRegistryOption"
-    private const val IS_NOT_DEFAULT = "isNotDefault"
-    private const val FROM_CONFIGURABLE = "fromConfigurable"
+    internal val IS_OPTION = EventFields.Boolean("isOption")
+    internal val IS_BOOLEAN_OPTION = EventFields.Boolean("isBooleanOption")
+    internal val IS_REGISTRY_OPTION = EventFields.Boolean("isRegistryOption")
+    internal val IS_NOT_DEFAULT = EventFields.Boolean("isNotDefault")
+    internal val FROM_CONFIGURABLE = EventFields.Boolean("fromConfigurable")
   }
 
-  override fun getFeatures(data: MutableMap<String, Any>, currentTime: Long, value: Any): Map<String, Any> {
+  override fun getFeaturesDeclarations(): List<EventField<*>> {
+    val features = arrayListOf<EventField<*>>(IS_OPTION, IS_BOOLEAN_OPTION, IS_REGISTRY_OPTION, IS_NOT_DEFAULT, FROM_CONFIGURABLE)
+    features.addAll(super.getFeaturesDeclarations())
+    return features
+  }
+
+  override fun getFeatures(data: MutableList<EventPair<*>>, currentTime: Long, value: Any): List<EventPair<*>> {
     val optionDescription = value as? OptionDescription
-    data[IS_OPTION] = optionDescription != null
+    data.add(IS_OPTION.with(optionDescription != null))
 
     if (optionDescription == null) {
       return data
@@ -27,16 +36,16 @@ internal class SearchEverywhereOptionFeaturesProvider : SearchEverywhereBaseActi
     addIfTrue(data, FROM_CONFIGURABLE, StringUtil.isNotEmpty(optionDescription.configurableId))
     addIfTrue(data, IS_BOOLEAN_OPTION, optionDescription is BooleanOptionDescription)
     if (optionDescription is BooleanOptionDescription) {
-      data[IS_ENABLED] = optionDescription.isOptionEnabled
+      data.add(IS_ENABLED.with(optionDescription.isOptionEnabled))
     }
 
     if (optionDescription is RegistryTextOptionDescriptor) {
-      data[IS_REGISTRY_OPTION] = true
-      data[IS_NOT_DEFAULT] = optionDescription.hasChanged()
+      data.add(IS_REGISTRY_OPTION.with(true))
+      data.add(IS_NOT_DEFAULT.with(optionDescription.hasChanged()))
     }
     else if (optionDescription is RegistryBooleanOptionDescriptor) {
-      data[IS_REGISTRY_OPTION] = true
-      data[IS_NOT_DEFAULT] = optionDescription.hasChanged()
+      data.add(IS_REGISTRY_OPTION.with(true))
+      data.add(IS_NOT_DEFAULT.with(optionDescription.hasChanged()))
     }
     return data
   }

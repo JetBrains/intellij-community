@@ -1,6 +1,9 @@
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.markup.EffectType
@@ -12,9 +15,15 @@ import com.intellij.psi.PsiNamedElement
 
 class SearchEverywhereClassFeaturesProvider : SearchEverywhereClassOrFileFeaturesProvider(ClassSearchEverywhereContributor::class.java) {
   companion object {
-    private const val PRIORITY = "priority"
-    private const val IS_DEPRECATED = "isDeprecated"
-    private const val IS_ACCESSIBLE_FROM_MODULE = "isAccessibleFromModule"
+    internal val PRIORITY = EventFields.Int("priority")
+    internal val IS_DEPRECATED = EventFields.Boolean("isDeprecated")
+    internal val IS_ACCESSIBLE_FROM_MODULE = EventFields.Boolean("isAccessibleFromModule")
+  }
+
+  override fun getFeaturesDeclarations(): List<EventField<*>> {
+    val features = arrayListOf<EventField<*>>(PRIORITY, IS_DEPRECATED, IS_ACCESSIBLE_FROM_MODULE)
+    features.addAll(super.getFeaturesDeclarations())
+    return features
   }
 
   override fun getElementFeatures(element: PsiElement,
@@ -22,19 +31,19 @@ class SearchEverywhereClassFeaturesProvider : SearchEverywhereClassOrFileFeature
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: Cache?): Map<String, Any> {
-    val data = hashMapOf<String, Any>(
-      PRIORITY to elementPriority,
+                                  cache: Cache?): List<EventPair<*>> {
+    val data = arrayListOf<EventPair<*>>(
+      PRIORITY.with(elementPriority)
     )
 
     ReadAction.run<Nothing> {
       (element as? PsiNamedElement)?.name?.let { elementName ->
-        data.putAll(getNameMatchingFeatures(elementName, searchQuery))
+        data.addAll(getNameMatchingFeatures(elementName, searchQuery))
       }
     }
 
     data.putIfValueNotNull(IS_DEPRECATED, isDeprecated(presentation))
-    data.putAll(isAccessibleFromModule(element, cache?.openedFile))
+    data.addAll(isAccessibleFromModule(element, cache?.openedFile))
     return data
   }
 
@@ -47,23 +56,23 @@ class SearchEverywhereClassFeaturesProvider : SearchEverywhereClassOrFileFeature
     return effectType == EffectType.STRIKEOUT
   }
 
-  private fun isAccessibleFromModule(element: PsiElement, openedFile: VirtualFile?): Map<String, Any> {
+  private fun isAccessibleFromModule(element: PsiElement, openedFile: VirtualFile?): List<EventPair<*>> {
     return openedFile?.let {
-      ReadAction.compute<Map<String, Any>, Nothing> {
-        if (!element.isValid) return@compute mapOf(IS_INVALID_DATA_KEY to true)
+      ReadAction.compute<List<EventPair<*>>, Nothing> {
+        if (!element.isValid) return@compute arrayListOf(IS_INVALID_DATA_KEY.with(true))
 
-        val elementFile = element.containingFile?.virtualFile ?: return@compute emptyMap()
+        val elementFile = element.containingFile?.virtualFile ?: return@compute emptyList()
         val fileIndex = ProjectRootManager.getInstance(element.project).fileIndex
 
         val openedFileModule = fileIndex.getModuleForFile(it)
         val elementModule = fileIndex.getModuleForFile(elementFile)
 
-        if (openedFileModule == null || elementModule == null) return@compute emptyMap()
+        if (openedFileModule == null || elementModule == null) return@compute emptyList()
 
-        return@compute mapOf(
-          IS_ACCESSIBLE_FROM_MODULE to (elementModule.name in ModuleRootManager.getInstance(openedFileModule).dependencyModuleNames)
+        return@compute arrayListOf(
+          IS_ACCESSIBLE_FROM_MODULE.with(elementModule.name in ModuleRootManager.getInstance(openedFileModule).dependencyModuleNames)
         )
       }
-    } ?: emptyMap()
+    } ?: emptyList()
   }
 }

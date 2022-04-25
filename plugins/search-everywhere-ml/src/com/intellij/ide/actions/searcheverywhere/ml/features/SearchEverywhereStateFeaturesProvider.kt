@@ -2,40 +2,51 @@ package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
 
 
 class SearchEverywhereStateFeaturesProvider {
   companion object {
-    internal const val QUERY_LENGTH_DATA_KEY = "queryLength"
-    internal const val IS_EMPTY_QUERY_DATA_KEY = "isEmptyQuery"
-    internal const val QUERY_CONTAINS_PATH_DATA_KEY = "queryContainsPath"
-    internal const val QUERY_CONTAINS_COMMAND_CHAR_DATA_KEY = "queryContainsCommandChar"
-    internal const val QUERY_CONTAINS_SPACES_DATA_KEY = "queryContainsSpaces"
-    internal const val QUERY_IS_CAMEL_CASE_DATA_KEY = "queryIsCamelCase"
-    internal const val QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY = "queryContainsAbbreviations"
+    internal val QUERY_LENGTH_DATA_KEY = EventFields.Int("queryLength")
+    internal val IS_EMPTY_QUERY_DATA_KEY = EventFields.Boolean("isEmptyQuery")
+    internal val QUERY_CONTAINS_PATH_DATA_KEY = EventFields.Boolean("queryContainsPath")
+    internal val QUERY_CONTAINS_COMMAND_CHAR_DATA_KEY = EventFields.Boolean("queryContainsCommandChar")
+    internal val QUERY_CONTAINS_SPACES_DATA_KEY = EventFields.Boolean("queryContainsSpaces")
+    internal val QUERY_IS_CAMEL_CASE_DATA_KEY = EventFields.Boolean("queryIsCamelCase")
+    internal val QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY = EventFields.Boolean("queryContainsAbbreviations")
+
+    fun getFeaturesDefinition(): List<EventField<*>> {
+      return arrayListOf(
+        QUERY_LENGTH_DATA_KEY, IS_EMPTY_QUERY_DATA_KEY,
+        QUERY_CONTAINS_PATH_DATA_KEY, QUERY_CONTAINS_COMMAND_CHAR_DATA_KEY,
+        QUERY_CONTAINS_SPACES_DATA_KEY, QUERY_IS_CAMEL_CASE_DATA_KEY, QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY
+      )
+    }
   }
 
-  fun getSearchStateFeatures(tabId: String, query: String): Map<String, Any> {
-    val features = hashMapOf<String, Any>(
-      QUERY_LENGTH_DATA_KEY to query.length,
-      IS_EMPTY_QUERY_DATA_KEY to query.isEmpty(),
-      QUERY_CONTAINS_SPACES_DATA_KEY to query.contains(" "),
-      QUERY_IS_CAMEL_CASE_DATA_KEY to query.isCamelCase(),
-      QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY to query.containsAbbreviations()
+  fun getSearchStateFeatures(tabId: String, query: String): List<EventPair<*>> {
+    val features = arrayListOf(
+      QUERY_LENGTH_DATA_KEY.with(query.length),
+      IS_EMPTY_QUERY_DATA_KEY.with(query.isEmpty()),
+      QUERY_CONTAINS_SPACES_DATA_KEY.with(query.contains(" ")),
+      QUERY_IS_CAMEL_CASE_DATA_KEY.with(query.isCamelCase()),
+      QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY.with(query.containsAbbreviations())
     )
 
-    if (hasSuitableContributor(tabId, FileSearchEverywhereContributor::class.java.simpleName)) features.putAll(getFileQueryFeatures(query))
-    if (hasSuitableContributor(tabId, SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID)) features.putAll(getAllTabQueryFeatures(query))
+    if (hasSuitableContributor(tabId, FileSearchEverywhereContributor::class.java.simpleName)) features.addAll(getFileQueryFeatures(query))
+    if (hasSuitableContributor(tabId, SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID)) features.addAll(getAllTabQueryFeatures(query))
 
     return features
   }
 
-  private fun getFileQueryFeatures(query: String) = mapOf(
-    QUERY_CONTAINS_PATH_DATA_KEY to (query.indexOfLast { it == '/' || it == '\\' } in 1 until query.lastIndex)
+  private fun getFileQueryFeatures(query: String) = listOf(
+    QUERY_CONTAINS_PATH_DATA_KEY.with(query.indexOfLast { it == '/' || it == '\\' } in 1 until query.lastIndex)
   )
 
-  private fun getAllTabQueryFeatures(query: String) = mapOf(
-    QUERY_CONTAINS_COMMAND_CHAR_DATA_KEY to (query.indexOfLast { it == '/' } == 0)
+  private fun getAllTabQueryFeatures(query: String) = listOf(
+    QUERY_CONTAINS_COMMAND_CHAR_DATA_KEY.with(query.indexOfLast { it == '/' } == 0)
   )
 
   private fun hasSuitableContributor(currentTabId: String, featuresTab: String): Boolean {

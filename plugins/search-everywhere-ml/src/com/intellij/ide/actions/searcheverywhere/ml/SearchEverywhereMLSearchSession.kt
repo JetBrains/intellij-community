@@ -10,6 +10,7 @@ import com.intellij.ide.actions.searcheverywhere.ml.features.statistician.Search
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelProvider
 import com.intellij.ide.actions.searcheverywhere.ml.performance.PerformanceTracker
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicReference
@@ -129,7 +130,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
 }
 
 internal class SearchEverywhereMLContextInfo(project: Project?) {
-  val features: Map<String, Any> by lazy {
+  val features: List<EventPair<*>> by lazy {
     val featuresProvider = SearchEverywhereContextFeaturesProvider()
     return@lazy featuresProvider.getContextFeatures(project)
   }
