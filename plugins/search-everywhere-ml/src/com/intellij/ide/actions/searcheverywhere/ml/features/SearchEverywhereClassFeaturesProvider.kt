@@ -24,14 +24,16 @@ class SearchEverywhereClassFeaturesProvider : SearchEverywhereElementFeaturesPro
                                   searchQuery: String,
                                   elementPriority: Int,
                                   cache: Any?): List<EventPair<*>> {
-    val presentation = (element as? PSIPresentationBgRendererWrapper.PsiItemWithPresentation)?.presentation
+    val item = SearchEverywhereClassOrFileFeaturesProvider.getPsiElement(element) ?: return emptyList()
+
     val data = arrayListOf<EventPair<*>>()
     ReadAction.run<Nothing> {
-      (element as? PsiNamedElement)?.name?.let { elementName ->
+      (item as? PsiNamedElement)?.name?.let { elementName ->
         data.addAll(getNameMatchingFeatures(elementName, searchQuery))
       }
     }
 
+    val presentation = (element as? PSIPresentationBgRendererWrapper.PsiItemWithPresentation)?.presentation
     data.putIfValueNotNull(IS_DEPRECATED, isDeprecated(presentation))
     return data
   }
