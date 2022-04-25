@@ -11,6 +11,7 @@ import com.ibm.icu.util.Measure;
 import com.ibm.icu.util.MeasureUnit;
 import com.intellij.DynamicBundle;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -201,16 +202,16 @@ public class NlsMessages {
     }
 
     int finalCount = Math.min(unitValues.size(), maxFragments);
+    CachedFormats formats = getFormats();
     if (narrow) {
       List<String> fragments = new ArrayList<>();
-      LocalizedNumberFormatter formatter = getFormats().shortNumber;
       for (i = 0; i < finalCount; i++) {
-        fragments.add(formatter.unit(
-          TIME_UNITS[unitIndices.getInt(i)]).format(unitValues.getLong(i)).toString().replace(' ', '\u2009'));
+        fragments.add(formats.shortNumberUnitFormatters[unitIndices.getInt(i)]
+                        .format(unitValues.getLong(i)).toString().replace(' ', '\u2009'));
       }
       return StringUtil.join(fragments, " ");
     }
-    MeasureFormat format = getFormats().shortFormat;
+    MeasureFormat format = formats.shortFormat;
     Measure[] measures = new Measure[finalCount];
     for (i = 0; i < finalCount; i++) {
       measures[i] = new Measure(unitValues.getLong(i), TIME_UNITS[unitIndices.getInt(i)]);
@@ -387,7 +388,7 @@ public class NlsMessages {
     final Locale locale;
     final MeasureFormat shortFormat;
     final LocalizedNumberFormatter narrowNumber;
-    final LocalizedNumberFormatter shortNumber;
+    final LocalizedNumberFormatter[] shortNumberUnitFormatters;
     final ListFormatter andWideList;
     final ListFormatter andNarrowList;
     final ListFormatter orWideList;
@@ -396,7 +397,8 @@ public class NlsMessages {
       this.locale = locale;
       this.shortFormat = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.SHORT);
       LocalizedNumberFormatter numberFormatter = NumberFormatter.withLocale(locale);
-      this.shortNumber = numberFormatter.unitWidth(NumberFormatter.UnitWidth.SHORT);
+      LocalizedNumberFormatter shortNumber = numberFormatter.unitWidth(NumberFormatter.UnitWidth.SHORT);
+      this.shortNumberUnitFormatters = ContainerUtil.map2Array(TIME_UNITS, LocalizedNumberFormatter.class, shortNumber::unit);
       this.narrowNumber = numberFormatter.unitWidth(NumberFormatter.UnitWidth.NARROW);
       this.andWideList = ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.AND, ListFormatter.Width.WIDE);
       this.orWideList = ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.OR, ListFormatter.Width.WIDE);
