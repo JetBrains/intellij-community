@@ -174,8 +174,7 @@ class CheckerRunner(val text: TextContent) {
     val spm = SmartPointerManager.getInstance(file.project)
     val underline = fileHighlightRanges(problem).map { spm.createSmartPsiFileRangePointer(file, it) }
 
-    val fixes = problem.corrections
-    if (fixes.isNotEmpty()) {
+    if (problem.suggestions.isNotEmpty()) {
       GrazieFUSCounter.typoFound(problem)
       result.addAll(GrazieReplaceTypoQuickFix.getReplacementFixes(problem, underline))
     }
