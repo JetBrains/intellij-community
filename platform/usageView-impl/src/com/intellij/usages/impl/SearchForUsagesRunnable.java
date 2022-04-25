@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -202,7 +202,7 @@ final class SearchForUsagesRunnable implements Runnable {
                                                    @NotNull final Runnable handler) {
     return new HyperlinkAdapter() {
       @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         if (e.getDescription().equals(hrefTarget)) {
           handler.run();
         }
@@ -243,7 +243,7 @@ final class SearchForUsagesRunnable implements Runnable {
   private HyperlinkListener createGotToOptionsListener(final UsageTarget @NotNull [] targets) {
     return new HyperlinkAdapter() {
       @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         if (e.getDescription().equals(FIND_OPTIONS_HREF_TARGET)) {
           FindManager.getInstance(myProject).showSettingsAndFindUsages(targets);
         }
@@ -254,7 +254,7 @@ final class SearchForUsagesRunnable implements Runnable {
   private HyperlinkListener createSearchInProjectListener() {
     return new HyperlinkAdapter() {
       @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         if (e.getDescription().equals(SEARCH_IN_PROJECT_HREF_TARGET)) {
           PsiElement psiElement = getPsiElement(mySearchFor);
           if (psiElement != null) {

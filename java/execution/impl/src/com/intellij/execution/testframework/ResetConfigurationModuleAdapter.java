@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
@@ -31,6 +31,7 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.HashSet;
@@ -75,7 +76,7 @@ public class ResetConfigurationModuleAdapter extends HyperlinkAdapter {
           .toString();
         ResetConfigurationModuleAdapter listener = new ResetConfigurationModuleAdapter(configuration, project, isDebug, toolWindowManager, testRunDebugId) {
             @Override
-            protected void hyperlinkActivated(HyperlinkEvent e) {
+            protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
               ((JavaTestConfigurationBase)configuration).setSearchScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
               restart();
             }
@@ -112,7 +113,7 @@ public class ResetConfigurationModuleAdapter extends HyperlinkAdapter {
   }
 
   @Override
-  protected void hyperlinkActivated(HyperlinkEvent e) {
+  protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
     final Module moduleByName = ModuleManager.getInstance(myProject).findModuleByName(e.getDescription());
     if (moduleByName != null) {
       myConfiguration.getConfigurationModule().setModule(moduleByName);

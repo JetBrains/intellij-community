@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -143,7 +143,7 @@ public final class PluginManagerMain {
 
   public static class MyHyperlinkListener extends HyperlinkAdapter {
     @Override
-    protected void hyperlinkActivated(HyperlinkEvent e) {
+    protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
       JEditorPane pane = (JEditorPane)e.getSource();
       if (e instanceof HTMLFrameHyperlinkEvent) {
         HTMLDocument doc = (HTMLDocument)pane.getDocument();

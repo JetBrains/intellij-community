@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.execution.filters.ExceptionAnalysisProvider.StackLine;
@@ -291,7 +291,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
       Color background = MessageType.INFO.getPopupBackground();
       Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(content, null, background, new HyperlinkAdapter() {
           @Override
-          protected void hyperlinkActivated(HyperlinkEvent e) {
+          protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
             if (e.getDescription().equals("analyze")) {
               Balloon b = ref.get();
               if (b != null) {

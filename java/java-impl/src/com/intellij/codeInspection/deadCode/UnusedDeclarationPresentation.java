@@ -598,7 +598,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     };
     htmlView.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         URL url = e.getURL();
         if (url == null) {
           return;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.JavaUiBundle;
@@ -79,7 +79,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     project.getMessageBus().connect(this).subscribe(ConfigurationErrors.TOPIC, this);
     myContent.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
-      public void hyperlinkActivated(HyperlinkEvent e) {
+      public void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         final URL url = e.getURL();
         final AWTEvent awtEvent = EventQueue.getCurrentEvent();
         if (!(awtEvent instanceof MouseEvent)) {

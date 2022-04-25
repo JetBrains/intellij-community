@@ -19,7 +19,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.Label;
 import com.intellij.openapi.util.NlsContexts.LinkLabel;
 import com.intellij.openapi.util.Weighted;
@@ -350,8 +349,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
       addHyperlinkListener(new HyperlinkAdapter() {
         @Override
-        protected void hyperlinkActivated(HyperlinkEvent e) {
-          if (e == null) return;
+        protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
           myHandler.handlePanelActionClick(notificationPanel, e);
         }
       });

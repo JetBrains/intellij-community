@@ -406,7 +406,7 @@ private fun createAgreementTextPane(@Nls htmlText: String, customLink: Boolean, 
   return JTextPane().apply {
     contentType = "text/html"
     addHyperlinkListener(object : HyperlinkAdapter() {
-      override fun hyperlinkActivated(e: HyperlinkEvent?) {
+      override fun hyperlinkActivated(e: HyperlinkEvent) {
         showSystemInfo()
       }
     })
