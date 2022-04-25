@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import java.nio.ByteBuffer
@@ -30,9 +30,6 @@ internal inline fun writeNewZip(file: Path, compress: Boolean = false, task: (Zi
 
 // you must pass SeekableByteChannel if files will be written (`file` method)
 internal class ZipFileWriter(channel: WritableByteChannel, private val deflater: Deflater? = null) : AutoCloseable {
-  constructor(channel: WritableByteChannel, compress: Boolean)
-    : this(channel = channel, deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null)
-
   // size is written as part of optimized metadata - so, if compression is enabled, optimized metadata will be incorrect
   val resultStream = ZipArchiveOutputStream(channel, withOptimizedMetadataEnabled = deflater == null)
   private val crc32 = CRC32()

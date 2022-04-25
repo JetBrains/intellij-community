@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.semantic;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -33,15 +33,15 @@ import static java.util.Collections.emptyList;
 public final class SemServiceImpl extends SemService {
   private static final Logger LOG = Logger.getInstance(SemServiceImpl.class);
 
-  private final Object myLock = ObjectUtils.sentinel(getClass().getName());
-  private volatile MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> myProducers;
-  private final Project myProject;
+  private final Object lock = ObjectUtils.sentinel(getClass().getName());
+  private volatile MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> producers;
+  private final Project project;
   private final CachedValuesManager myCVManager;
 
   public SemServiceImpl(Project project) {
-    myProject = project;
-    myCVManager = CachedValuesManager.getManager(myProject);
-    SemContributor.EP_NAME.addChangeListener(() -> myProducers = null, project);
+    this.project = project;
+    myCVManager = CachedValuesManager.getManager(project);
+    SemContributor.EP_NAME.addChangeListener(() -> producers = null, project);
   }
 
   private MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> collectProducers() {
@@ -51,8 +51,8 @@ public final class SemServiceImpl extends SemService {
       @Override
       public <T extends SemElement> void registerSemProvider(
         SemKey<T> key,
-        BiFunction<? super PsiElement, ? super ProcessingContext, ? extends Collection<T>> provider) {
-
+        BiFunction<? super PsiElement, ? super ProcessingContext, ? extends Collection<T>> provider
+      ) {
         map.putValue(key, provider::apply);
       }
     };
@@ -60,7 +60,7 @@ public final class SemServiceImpl extends SemService {
     SemContributor.EP_NAME.processWithPluginDescriptor((contributor, pluginDescriptor) -> {
       SemContributor semContributor;
       try {
-        semContributor = myProject.instantiateClass(contributor.implementation, pluginDescriptor);
+        semContributor = project.instantiateClass(contributor.implementation, pluginDescriptor);
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -72,15 +72,14 @@ public final class SemServiceImpl extends SemService {
         LOG.error(e);
         return;
       }
-      semContributor.registerSemProviders(registrar, myProject);
+      semContributor.registerSemProviders(registrar, project);
     });
 
     return map;
   }
 
-  @NotNull
   @Override
-  public <T extends SemElement> List<T> getSemElements(@NotNull SemKey<T> key, @NotNull PsiElement psi) {
+  public @NotNull <T extends SemElement> List<T> getSemElements(@NotNull SemKey<T> key, @NotNull PsiElement psi) {
     SemCacheChunk chunk = myCVManager.getCachedValue((UserDataHolder)psi, () ->
       Result.create(new SemCacheChunk(), PsiModificationTracker.MODIFICATION_COUNT));
     List<T> cached = findCached(key, chunk);
@@ -88,8 +87,7 @@ public final class SemServiceImpl extends SemService {
   }
 
   @SuppressWarnings("unchecked")
-  @NotNull
-  private <T extends SemElement> List<T> createSemElements(@NotNull SemKey<T> key, @NotNull PsiElement psi, SemCacheChunk chunk) {
+  private @NotNull <T extends SemElement> List<T> createSemElements(@NotNull SemKey<T> key, @NotNull PsiElement psi, SemCacheChunk chunk) {
     ensureInitialized();
 
     RecursionGuard.StackStamp stamp = RecursionManager.markStack();
@@ -114,19 +112,18 @@ public final class SemServiceImpl extends SemService {
   }
 
   private void ensureInitialized() {
-    if (myProducers == null) {
-      synchronized (myLock) {
-        if (myProducers == null) {
-          myProducers = collectProducers();
+    if (producers == null) {
+      synchronized (lock) {
+        if (producers == null) {
+          producers = collectProducers();
         }
       }
     }
   }
 
-  @NotNull
-  private List<SemElement> createSemElements(SemKey<?> key, PsiElement psi, ProcessingContext processingContext) {
+  private @NotNull List<SemElement> createSemElements(SemKey<?> key, PsiElement psi, ProcessingContext processingContext) {
     List<SemElement> result = null;
-    Collection<BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> functions = myProducers.get(key);
+    Collection<BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> functions = producers.get(key);
     if (!functions.isEmpty()) {
       for (BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>> producer : functions) {
         Collection<? extends SemElement> elements = producer.apply(psi, processingContext);
@@ -140,12 +137,10 @@ public final class SemServiceImpl extends SemService {
   }
 
   @SuppressWarnings("unchecked")
-  @Nullable
-  private static <T extends SemElement> List<T> findCached(SemKey<T> key, SemCacheChunk chunk) {
+  private static @Nullable <T extends SemElement> List<T> findCached(SemKey<T> key, SemCacheChunk chunk) {
     List<T> singleList = null;
     LinkedHashSet<T> result = null;
     List<SemKey<?>> inheritors = key.getInheritors();
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < inheritors.size(); i++) {
       List<T> cached = (List<T>)chunk.getSemElements(inheritors.get(i));
       if (cached == null) {
@@ -176,14 +171,14 @@ public final class SemServiceImpl extends SemService {
     return new ArrayList<>(result);
   }
 
-  private static class SemCacheChunk {
+  private static final class SemCacheChunk {
     private final IntObjectMap<List<SemElement>> map = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
-    List<SemElement> getSemElements(SemKey<?> key) {
+    private List<SemElement> getSemElements(SemKey<?> key) {
       return map.get(key.getUniqueId());
     }
 
-    void putSemElements(@NotNull SemKey<?> key, @NotNull List<SemElement> elements) {
+    private void putSemElements(@NotNull SemKey<?> key, @NotNull List<SemElement> elements) {
       map.put(key.getUniqueId(), elements);
     }
   }
