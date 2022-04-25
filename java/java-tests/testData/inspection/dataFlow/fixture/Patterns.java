@@ -1,4 +1,10 @@
 class Test {
+  int testIncomplete(Object obj) {
+    return switch(obj) {
+      case String s &&<EOLError descr="Expression expected"></EOLError><EOLError descr="':' expected"></EOLError>
+    };
+  }
+
   void test1(Object o) {
     int a;
     switch (o) {
