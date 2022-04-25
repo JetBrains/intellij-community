@@ -103,6 +103,15 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
         }
         return myAccessibleContext;
       }
+
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        if (ExperimentalUI.isNewUI()) {
+          size.height = JBUI.CurrentTheme.List.rowHeight();
+        }
+        return size;
+      }
     };
     panel.add(myTextLabel, BorderLayout.WEST);
 
