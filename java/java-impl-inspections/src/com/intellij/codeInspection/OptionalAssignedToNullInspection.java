@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
@@ -13,6 +14,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -22,6 +25,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final CallMatcher MAP_GET = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "get").parameterTypes(
+    CommonClassNames.JAVA_LANG_OBJECT);
+
   public boolean WARN_ON_COMPARISON = true;
 
   @Nullable
@@ -88,7 +94,8 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
         PsiExpression value = ExpressionUtils.getValueComparedWithNull(binOp);
         if (value != null &&
             TypeUtils.isOptional(value.getType()) &&
-            !hasSubsequentIsPresentCall(value, binOp, JavaTokenType.EQEQ.equals(binOp.getOperationTokenType()))) {
+            !hasSubsequentIsPresentCall(value, binOp, JavaTokenType.EQEQ.equals(binOp.getOperationTokenType())) &&
+            !comesFromMapGet(value)) {
           boolean useIsEmpty =
             binOp.getOperationTokenType().equals(JavaTokenType.EQEQ) &&
             PsiUtil.isLanguageLevel11OrHigher(binOp);
@@ -98,6 +105,17 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
                                                             JavaBundle
                                                               .message("inspection.null.value.for.optional.assigned.ignore.fix.name"), false));
         }
+      }
+
+      private boolean comesFromMapGet(PsiExpression value) {
+        PsiLocalVariable local = ExpressionUtils.resolveLocalVariable(value);
+        if (local != null) {
+          PsiExpression initializer = ContainerUtil.getOnlyItem(DfaUtil.getVariableValues(local, value));
+          if (initializer != null) {
+            value = initializer;
+          }
+        }
+        return MAP_GET.matches(ExpressionUtils.resolveExpression(value));
       }
 
       private boolean hasSubsequentIsPresentCall(@NotNull PsiExpression optionalExpression,
