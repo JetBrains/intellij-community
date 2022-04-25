@@ -306,8 +306,9 @@ final class FindInProjectTask {
     SearchScope customScope = myFindModel.isCustomScope() ? myFindModel.getCustomScope() : null;
     GlobalSearchScope globalCustomScope = customScope == null ? null : GlobalSearchScopeUtil.toGlobalSearchScope(customScope, myProject);
 
-    boolean checkExcluded = myDirectory != null && !Registry.is("find.search.in.excluded.dirs") &&
-                            !ReadAction.compute(() -> myProjectFileIndex.isExcluded(myDirectory));
+    boolean ignoreExcluded = myDirectory != null
+                             && !Registry.is("find.search.in.excluded.dirs")
+                             && !ReadAction.compute(() -> myProjectFileIndex.isExcluded(myDirectory));
     boolean withSubdirs = myDirectory != null && myFindModel.isWithSubdirectories();
     boolean locateClassSources = myDirectory != null && myProjectFileIndex.getClassRootForFile(myDirectory) != null;
     boolean searchInLibs = globalCustomScope != null && globalCustomScope.isSearchInLibraries();
@@ -362,7 +363,7 @@ final class FindInProjectTask {
         if (!file.isValid()) {
           return true;
         }
-        if (checkExcluded && myProjectFileIndex.isExcluded(file)) {
+        if (ignoreExcluded && myProjectFileIndex.isExcluded(file)) {
           return true;
         }
         if (((VirtualFile)obj).isDirectory()) {
