@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectUiFrameAllocator
@@ -509,40 +508,45 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     // ok, no non-existent project paths and every info has a frame
     val activeInfo = toOpen.maxByOrNull { it.second.activationTimestamp }!!.second
     val taskList = ArrayList<Pair<Path, OpenProjectTask>>(toOpen.size)
-    val allManagers = ArrayList<MyProjectUiFrameManager>(toOpen.size)
     return CompletableFuture.runAsync({
-      var activeTask: Pair<Path, OpenProjectTask>? = null
-      for ((path, info) in toOpen) {
-        val frameInfo = info.frame!!
-        val isActive = info == activeInfo
-        val ideFrame = createNewProjectFrame(frameInfo)
-        info.frameTitle?.let {
-          ideFrame.title = it
+      runActivity("project frame initialization") {
+        var activeTask: Pair<Path, OpenProjectTask>? = null
+        for ((path, info) in toOpen) {
+          val frameInfo = info.frame!!
+          val isActive = info == activeInfo
+          val ideFrame = createNewProjectFrame(frameInfo)
+          info.frameTitle?.let {
+            ideFrame.title = it
+          }
+          val frameHelper = ProjectFrameHelper(ideFrame, null)
+          val frameManager = MyProjectUiFrameManager(ideFrame, frameHelper)
+
+          ideFrame.isVisible = true
+          if (activeInfo.frame!!.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
+            frameHelper.toggleFullScreen(true)
+          }
+
+          frameHelper.init()
+
+          val task = Pair(path, OpenProjectTask(
+            forceOpenInNewFrame = true,
+            showWelcomeScreen = false,
+            frameManager = frameManager,
+            projectWorkspaceId = info.projectWorkspaceId,
+          ))
+          if (isActive) {
+            activeTask = task
+          }
+          else {
+            taskList.add(task)
+          }
         }
-        val frameManager = if (isActive) {
-          MyActiveProjectUiFrameManager(ideFrame, allManagers, frameInfo.fullScreen)
-        }
-        else {
-          MyProjectUiFrameManager(ideFrame)
-        }
-        allManagers.add(frameManager)
-        val task = Pair(path, OpenProjectTask(
-          forceOpenInNewFrame = true,
-          showWelcomeScreen = false,
-          frameManager = frameManager,
-          projectWorkspaceId = info.projectWorkspaceId,
-        ))
-        if (isActive) {
-          activeTask = task
-        }
-        else {
-          taskList.add(task)
-        }
+        // we open project windows in the order projects were opened historically (to preserve taskbar order)
+        // but once the windows are created, we start project loading from the latest active project (and put its window at front)
+        taskList.add(activeTask!!)
+        taskList.reverse()
+        (activeTask.second.frameManager as MyProjectUiFrameManager).frame.toFront()
       }
-      // we open project windows in the order projects were opened historically (to preserve taskbar order)
-      // but once the windows are created, we start project loading from the latest active project (and put its window at front)
-      taskList.add(activeTask!!)
-      taskList.reverse()
     }, ApplicationManager.getApplication()::invokeLater)
       .thenApplyAsync({
         val projectManager = ProjectManagerEx.getInstanceEx()
@@ -840,58 +844,15 @@ private class OldRecentDirectoryProjectsManager : PersistentStateComponent<Recen
   override fun getState() = emptyState
 }
 
-private open class MyProjectUiFrameManager(val frame: IdeFrameImpl) : ProjectUiFrameManager {
-  override var frameHelper: ProjectFrameHelper? = null
-
+private open class MyProjectUiFrameManager(val frame: IdeFrameImpl, override val frameHelper: ProjectFrameHelper) : ProjectUiFrameManager {
   override fun getComponent(): JComponent = frame.rootPane
 
   override fun init(allocator: ProjectUiFrameAllocator) {
-    // done by active frame manager for all frames
+    // this class is used for pre-initialized frames
   }
 
   fun dispose() {
     frame.dispose()
-  }
-}
-
-private class MyActiveProjectUiFrameManager(frame: IdeFrameImpl,
-                                            allManagers: List<MyProjectUiFrameManager>,
-                                            private val isFullScreen: Boolean) : MyProjectUiFrameManager(frame) {
-  private var allManagers: List<MyProjectUiFrameManager>? = allManagers
-
-  override fun init(allocator: ProjectUiFrameAllocator) {
-    if (frameHelper != null) {
-      return
-    }
-
-    ApplicationManager.getApplication().invokeLater {
-      if (!allocator.cancelled) {
-        runActivity("project frame initialization") {
-          val allManagers = this.allManagers!!.toMutableList()
-          this.allManagers = null
-
-          for (manager in allManagers) {
-            val frame = manager.frame
-            val frameHelper = ProjectFrameHelper(frame, null)
-            frame.isVisible = true
-
-            if (isFullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
-              frameHelper.toggleFullScreen(true)
-            }
-
-            manager.frameHelper = frameHelper
-          }
-
-          this.frame.toFront()
-          allManagers.remove(this)
-          allManagers.add(this)
-
-          for (manager in allManagers.reversed()) {
-            manager.frameHelper!!.init()
-          }
-        }
-      }
-    }
   }
 }
 
