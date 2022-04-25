@@ -88,7 +88,8 @@ public final class ActionsTreeUtil {
       .append(JBIterable.from(PluginId.getRegisteredIds()).sort(PluginId::compareTo))
       .unique().toList();
     for (PluginId pluginId : pluginsIds) {
-      if (PluginManagerCore.CORE_ID.equals(pluginId)) {
+      if (PluginManagerCore.CORE_ID.equals(pluginId)
+          || KeymapExtension.EXTENSION_POINT_NAME.extensions().anyMatch(e -> e.skipPluginGroup(pluginId))) {
         continue;
       }
       String[] pluginActions = actionManager.getPluginActions(pluginId);
@@ -442,7 +443,7 @@ public final class ActionsTreeUtil {
 
     Group group = new Group(KeyMapBundle.message("other.group.title"), AllIcons.Nodes.KeymapOther);
     for (AnAction action : getActions("Other.KeymapGroup")) {
-      addAction(group, action, actionManager, filtered, false);
+      addAction(group, action, actionManager, filtered, false, false);
     }
 
     Set<String> groupIds = group.initIds();
@@ -474,7 +475,7 @@ public final class ActionsTreeUtil {
             StringUtil.containsIgnoreCase(id, "Toolbar"));
   }
 
-  private static String getTextToCompare(String id) {
+  public static String getTextToCompare(String id) {
     AnAction action = ActionManager.getInstance().getActionOrStub(id);
     if (action == null) {
       return id;
@@ -638,17 +639,28 @@ public final class ActionsTreeUtil {
   }
 
   public static void addAction(KeymapGroup group, AnAction action, Condition<? super AnAction> filtered, boolean forceNonPopup) {
-    addAction(group, action, ActionManager.getInstance(), filtered, forceNonPopup);
+    addAction(group, action, ActionManager.getInstance(), filtered, forceNonPopup, false);
   }
 
-  private static void addAction(KeymapGroup group, AnAction action, ActionManager actionManager,
-                                Condition<? super AnAction> filtered, boolean forceNonPopup) {
+  public static void addAction(KeymapGroup group, AnAction action, ActionManager actionManager,
+                               Condition<? super AnAction> filtered, boolean forceNonPopup, boolean skipUnnamedGroups) {
     if (action instanceof ActionGroup) {
-      if (forceNonPopup) {
+      if (forceNonPopup || skipUnnamedGroups) {
+        String text = action.getTemplateText();
+        boolean skip = forceNonPopup || StringUtil.isEmpty(text);
+        KeymapGroup tgtGroup;
+        if (skip) {
+          tgtGroup = group;
+        }
+        else {
+          tgtGroup = new Group(text, actionManager.getId(action), action.getTemplatePresentation().getIcon());
+          group.addGroup(tgtGroup);
+        }
         AnAction[] actions = getActions((ActionGroup)action, actionManager);
         for (AnAction childAction : actions) {
-          addAction(group, childAction, actionManager, filtered, true);
+          addAction(tgtGroup, childAction, actionManager, filtered, forceNonPopup, skipUnnamedGroups);
         }
+        ((Group)tgtGroup).normalizeSeparators();
       }
       else {
         Group subGroup = createGroup((ActionGroup)action, false, filtered);
@@ -665,7 +677,7 @@ public final class ActionsTreeUtil {
     else {
       if (filtered == null || filtered.value(action)) {
         String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
-        group.addActionId(id);
+        if (id != null) group.addActionId(id);
       }
     }
   }
