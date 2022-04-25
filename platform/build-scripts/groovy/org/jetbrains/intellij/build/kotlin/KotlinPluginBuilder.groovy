@@ -68,6 +68,7 @@ final class KotlinPluginBuilder {
     "kotlin.base.compiler-configuration",
     "kotlin.base.plugin",
     "kotlin.base.psi",
+    "kotlin.base.resources",
     "kotlin.base.fe10.analysis",
     "kotlin.base.fe10.kdoc",
     "kotlin.base.fe10.obsolete-compat",

@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="kotlin.base.indices" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.psi" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.base.resources" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.fe10.kdoc" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.common" scope="PROVIDED" />
