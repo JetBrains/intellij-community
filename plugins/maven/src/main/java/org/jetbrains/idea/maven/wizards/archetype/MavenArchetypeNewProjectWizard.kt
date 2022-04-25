@@ -5,8 +5,14 @@ import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.REGULAR_MATCHED_A
 import com.intellij.execution.util.setEmptyState
 import com.intellij.execution.util.setVisibleRowCount
 import com.intellij.icons.AllIcons
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logArtifactIdChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logGroupIdChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.OTHER
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.buildSystem
 import com.intellij.ide.starters.local.StandardAssetsProvider
@@ -112,6 +118,14 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       catalogItemProperty.afterChange { reloadArchetypes() }
       archetypeItemProperty.afterChange { reloadArchetypeVersions() }
       archetypeVersionProperty.afterChange { reloadArchetypeDescriptor() }
+    }
+
+    init {
+      sdkProperty.afterChange { logSdkChanged(context, OTHER, MAVEN, it) }
+      parentProperty.afterChange { logParentChanged(context, OTHER, MAVEN, !it.isPresent) }
+      groupIdProperty.afterChange { logGroupIdChanged(context, OTHER, MAVEN) }
+      artifactIdProperty.afterChange { logArtifactIdChanged(context, OTHER, MAVEN) }
+      versionProperty.afterChange { logVersionChanged(context, OTHER, MAVEN) }
     }
 
     override fun setupSettingsUI(builder: Panel) {
