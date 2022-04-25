@@ -9,19 +9,17 @@ import com.intellij.ide.favoritesTreeView.FavoritesManager
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.PathUtil
 import com.intellij.util.Time.*
 
 internal class SearchEverywhereFileFeaturesProvider
-  : SearchEverywhereClassOrFileFeaturesProvider(FileSearchEverywhereContributor::class.java, RecentFilesSEContributor::class.java) {
+  : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java, RecentFilesSEContributor::class.java) {
   companion object {
     internal val IS_DIRECTORY_DATA_KEY = EventFields.Boolean("isDirectory")
     internal val FILETYPE_DATA_KEY = EventFields.StringValidatedByCustomRule("fileType", "file_type")
@@ -41,23 +39,20 @@ internal class SearchEverywhereFileFeaturesProvider
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
-    val features = arrayListOf<EventField<*>>(
+    return arrayListOf<EventField<*>>(
       IS_DIRECTORY_DATA_KEY, FILETYPE_DATA_KEY, IS_FAVORITE_DATA_KEY, IS_OPENED_DATA_KEY, RECENT_INDEX_DATA_KEY,
       PREDICTION_SCORE_DATA_KEY, IS_EXACT_MATCH_DATA_KEY, FILETYPE_MATCHES_QUERY_DATA_KEY,
       TIME_SINCE_LAST_MODIFICATION_DATA_KEY, WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY, WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY,
       WAS_MODIFIED_IN_LAST_DAY_DATA_KEY, WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY, IS_TOP_LEVEL_DATA_KEY
     )
-    features.addAll(super.getFeaturesDeclarations())
-    return features
   }
 
-  override fun getElementFeatures(element: PsiElement,
-                                  presentation: TargetPresentation?,
+  override fun getElementFeatures(element: Any,
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: Cache?): List<EventPair<*>> {
-    val item = (element as? PsiFileSystemItem) ?: return emptyList()
+                                  cache: Any?): List<EventPair<*>> {
+    val item = (SearchEverywhereClassOrFileFeaturesProvider.getPsiElement(element) as? PsiFileSystemItem) ?: return emptyList()
 
     val data = arrayListOf<EventPair<*>>(
       IS_FAVORITE_DATA_KEY.with(isFavorite(item)),

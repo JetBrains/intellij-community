@@ -71,11 +71,15 @@
 
   <extensions defaultExtensionNs="com.intellij.searcheverywhere.ml">
     <searchEverywhereElementFeaturesProvider
-      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider"/>
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereGeneralActionFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereActionFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereOptionFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider

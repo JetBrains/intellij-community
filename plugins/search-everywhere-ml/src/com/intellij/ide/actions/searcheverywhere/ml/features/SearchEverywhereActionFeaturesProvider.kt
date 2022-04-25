@@ -2,6 +2,10 @@
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.ide.actions.SearchEverywhereBaseAction
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereGeneralActionFeaturesProvider.Companion.IS_ENABLED
+import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
 import com.intellij.ide.util.gotoByName.MatchMode
 import com.intellij.internal.statistic.eventLog.events.EventField
@@ -16,8 +20,10 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.actionSystem.EditorAction
+import com.intellij.util.Time
 
-internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActionFeaturesProvider() {
+internal class SearchEverywhereActionFeaturesProvider :
+  SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java) {
   companion object {
     internal val IS_ACTION_DATA_KEY = EventFields.Boolean("isAction")
     internal val IS_TOGGLE_ACTION_DATA_KEY = EventFields.Boolean("isToggleAction")
@@ -42,24 +48,49 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActi
     internal val USERS_RATIO_DATA_KEY_VERSIONED = EventFields.Double("usersRatio$version")
     internal val USAGES_PER_USER_RATIO_DATA_KEY = EventFields.Double("usagesPerUserRatio")
     internal val USAGES_PER_USER_RATIO_DATA_KEY_VERSIONED = EventFields.Double("usagesPerUserRatio$version")
+
+    internal val USAGE = EventFields.Int("usage")
+    internal val USAGE_SE = EventFields.Int("usageSe")
+    internal val USAGE_TO_MAX = EventFields.Double("usageToMax")
+    internal val USAGE_TO_MAX_SE = EventFields.Double("usageToMaxSe")
+
+    internal val TIME_SINCE_LAST_USAGE = EventFields.Long("timeSinceLastUsage")
+    internal val TIME_SINCE_LAST_USAGE_SE = EventFields.Long("timeSinceLastUsageSe")
+    internal val WAS_USED_IN_LAST_MINUTE = EventFields.Boolean("wasUsedInLastMinute")
+    internal val WAS_USED_IN_LAST_MINUTE_SE = EventFields.Boolean("wasUsedInLastMinuteSe")
+    internal val WAS_USED_IN_LAST_HOUR = EventFields.Boolean("wasUsedInLastHour")
+    internal val WAS_USED_IN_LAST_HOUR_SE = EventFields.Boolean("wasUsedInLastHourSe")
+    internal val WAS_USED_IN_LAST_DAY = EventFields.Boolean("wasUsedInLastDay")
+    internal val WAS_USED_IN_LAST_DAY_SE = EventFields.Boolean("wasUsedInLastDaySe")
+    internal val WAS_USED_IN_LAST_MONTH = EventFields.Boolean("wasUsedInLastMonth")
+    internal val WAS_USED_IN_LAST_MONTH_SE = EventFields.Boolean("wasUsedInLastMonthSe")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
-    val features = arrayListOf<EventField<*>>(
+    return arrayListOf<EventField<*>>(
       IS_ACTION_DATA_KEY, IS_TOGGLE_ACTION_DATA_KEY, IS_EDITOR_ACTION, IS_SEARCH_ACTION,
       MATCH_MODE_KEY, TEXT_LENGTH_KEY, IS_GROUP_KEY, GROUP_LENGTH_KEY, HAS_ICON_KEY, WEIGHT_KEY,
       PLUGIN_TYPE, PLUGIN_ID, GLOBAL_USAGE_COUNT_KEY, GLOBAL_USAGE_COUNT_KEY_VERSIONED, GLOBAL_USAGE_TO_MAX_KEY,
       GLOBAL_USAGE_TO_MAX_KEY_VERSIONED, USERS_RATIO_DATA_KEY, USERS_RATIO_DATA_KEY_VERSIONED,
       USAGES_PER_USER_RATIO_DATA_KEY, USAGES_PER_USER_RATIO_DATA_KEY_VERSIONED,
+      USAGE, USAGE_SE, USAGE_TO_MAX, USAGE_TO_MAX_SE,
+      TIME_SINCE_LAST_USAGE, TIME_SINCE_LAST_USAGE_SE,
+      WAS_USED_IN_LAST_MINUTE, WAS_USED_IN_LAST_MINUTE_SE,
+      WAS_USED_IN_LAST_HOUR, WAS_USED_IN_LAST_HOUR_SE,
+      WAS_USED_IN_LAST_DAY, WAS_USED_IN_LAST_DAY_SE,
+      WAS_USED_IN_LAST_MONTH, WAS_USED_IN_LAST_MONTH_SE,
     )
-    features.addAll(super.getFeaturesDeclarations())
-    return features
   }
 
-  override fun getFeatures(data: MutableList<EventPair<*>>, currentTime: Long, value: Any): List<EventPair<*>> {
-    // 'action' is null if item is an option (OptionDescriptor)
-    val action = getAnAction(value) ?: return data
+  override fun getElementFeatures(element: Any,
+                                  currentTime: Long,
+                                  searchQuery: String,
+                                  elementPriority: Int,
+                                  cache: Any?): List<EventPair<*>> {
+    val value = if (element is GotoActionModel.MatchedValue) element.value else element
+    val action = getAnAction(value) ?: return emptyList()
 
+    val data = arrayListOf<EventPair<*>>()
     data.add(IS_ACTION_DATA_KEY.with(true))
     if (value is ActionWrapper) {
       data.add(MATCH_MODE_KEY.with(value.mode))
@@ -139,11 +170,44 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActi
 
     val result = arrayListOf<EventPair<*>>()
     addTimeAndUsageStatistics(result, summary.usageCount, totalStats.maxUsageCount, currentTime, summary.lastUsedTimestamp, false)
-    addTimeAndUsageStatistics(result,
+    addTimeAndUsageStatistics(
+      result,
       summary.usageFromSearchEverywhere, totalStats.maxUsageFromSearchEverywhere,
       currentTime, summary.lastUsedFromSearchEverywhere,
       true
     )
     return result
+  }
+
+  private fun addTimeAndUsageStatistics(data: MutableList<EventPair<*>>,
+                                        usage: Int, maxUsage: Int,
+                                        time: Long, lastUsedTime: Long,
+                                        isSe: Boolean) {
+    addUsageStatistics(data, usage, maxUsage, isSe)
+    addLastTimeUsedStatistics(data, time, lastUsedTime, isSe)
+  }
+
+  private fun addUsageStatistics(data: MutableList<EventPair<*>>, usage: Int, maxUsage: Int, isSe: Boolean) {
+    if (usage > 0) {
+      val usageEventId = if (isSe) USAGE_SE else USAGE
+      data.add(usageEventId.with(usage))
+      if (maxUsage != 0) {
+        val usageToMaxEventId = if (isSe) USAGE_TO_MAX_SE else USAGE_TO_MAX
+        data.add(usageToMaxEventId.with(roundDouble(usage.toDouble() / maxUsage)))
+      }
+    }
+  }
+
+  private fun addLastTimeUsedStatistics(data: MutableList<EventPair<*>>, time: Long, lastUsedTime: Long, isSe: Boolean) {
+    if (lastUsedTime > 0) {
+      val timeSinceLastUsage = time - lastUsedTime
+      val timeSinceLastUsageEvent = if (isSe) TIME_SINCE_LAST_USAGE_SE else TIME_SINCE_LAST_USAGE
+      data.add(timeSinceLastUsageEvent.with(timeSinceLastUsage))
+
+      addIfTrue(data, if (isSe) WAS_USED_IN_LAST_MINUTE_SE else WAS_USED_IN_LAST_MINUTE, timeSinceLastUsage <= Time.MINUTE)
+      addIfTrue(data, if (isSe) WAS_USED_IN_LAST_HOUR_SE else WAS_USED_IN_LAST_HOUR, timeSinceLastUsage <= Time.HOUR)
+      addIfTrue(data, if (isSe) WAS_USED_IN_LAST_DAY_SE else WAS_USED_IN_LAST_DAY, timeSinceLastUsage <= Time.DAY)
+      addIfTrue(data, if (isSe) WAS_USED_IN_LAST_MONTH_SE else WAS_USED_IN_LAST_MONTH, timeSinceLastUsage <= (4 * Time.WEEK.toLong()))
+    }
   }
 }

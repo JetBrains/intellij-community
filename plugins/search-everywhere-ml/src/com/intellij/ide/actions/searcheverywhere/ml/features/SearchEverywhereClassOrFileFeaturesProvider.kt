@@ -1,20 +1,19 @@
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
-import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.FileTypeUsageLocalSummary
 import com.intellij.internal.statistic.local.FileTypeUsageSummary
 import com.intellij.internal.statistic.local.FileTypeUsageSummaryProvider
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -23,10 +22,14 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiInvalidElementAccessException
 import com.intellij.util.Time
 
-abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: Class<out SearchEverywhereContributor<*>>)
-  : SearchEverywhereElementFeaturesProvider(*supportedTab) {
+internal class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeaturesProvider(
+  ClassSearchEverywhereContributor::class.java,
+  FileSearchEverywhereContributor::class.java,
+  RecentFilesSEContributor::class.java
+) {
   companion object {
     internal val IS_INVALID_DATA_KEY = EventFields.Boolean("isInvalid")
+    internal val IS_ACCESSIBLE_FROM_MODULE = EventFields.Boolean("isAccessibleFromModule")
 
     internal val IS_SAME_MODULE_DATA_KEY = EventFields.Boolean("isSameModule")
     internal val PACKAGE_DISTANCE_DATA_KEY = EventFields.Int("packageDistance")
@@ -46,6 +49,15 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
     internal val FILETYPE_USED_IN_LAST_HOUR_DATA_KEY = EventFields.Boolean("fileTypeUsedInLastHour")
     internal val FILETYPE_USED_IN_LAST_DAY_DATA_KEY = EventFields.Boolean("fileTypeUsedInLastDay")
     internal val FILETYPE_USED_IN_LAST_MONTH_DATA_KEY = EventFields.Boolean("fileTypeUsedInLastMonth")
+
+    internal fun getPsiElement(element: Any): PsiElement? {
+      return when (element) {
+        is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> element.item
+        is PsiElement -> element
+        else -> null
+      }
+    }
+
   }
 
   override fun getDataToCache(project: Project?): Any? {
@@ -59,7 +71,8 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
     return arrayListOf(
-      IS_INVALID_DATA_KEY, IS_SAME_MODULE_DATA_KEY, PACKAGE_DISTANCE_DATA_KEY,
+      IS_INVALID_DATA_KEY, IS_ACCESSIBLE_FROM_MODULE,
+      IS_SAME_MODULE_DATA_KEY, PACKAGE_DISTANCE_DATA_KEY,
       PACKAGE_DISTANCE_NORMALIZED_DATA_KEY, IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY,
       IS_IN_SOURCE_DATA_KEY, IS_IN_TEST_SOURCES_DATA_KEY, IS_IN_LIBRARY_DATA_KEY,
       IS_EXCLUDED_DATA_KEY, FILETYPE_USAGE_RATIO_DATA_KEY,
@@ -75,14 +88,7 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
                                   searchQuery: String,
                                   elementPriority: Int,
                                   cache: Any?): List<EventPair<*>> {
-    val item = when (element) {
-      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> element.item
-      is PsiElement -> element
-      else -> return emptyList()
-    }
-
-    val presentation = (element as? PSIPresentationBgRendererWrapper.PsiItemWithPresentation)?.presentation
-
+    val item = getPsiElement(element) ?: return emptyList()
     cache as Cache?
     val file = getContainingFile(item)
     val project = ReadAction.compute<Project?, Nothing> { item.takeIf { it.isValid }?.project } ?: return listOf(IS_INVALID_DATA_KEY.with(true))
@@ -91,8 +97,31 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
     if (file != null && cache != null) {
       getFileFeatures(data, file, project, cache, currentTime)
     }
-    data.addAll(getElementFeatures(item, presentation, currentTime, searchQuery, elementPriority, cache))
+
+    if (item !is PsiFileSystemItem) {
+      data.addAll(isAccessibleFromModule(item, cache?.openedFile))
+    }
     return data
+  }
+
+  private fun isAccessibleFromModule(element: PsiElement, openedFile: VirtualFile?): List<EventPair<*>> {
+    return openedFile?.let {
+      ReadAction.compute<List<EventPair<*>>, Nothing> {
+        if (!element.isValid) return@compute arrayListOf(IS_INVALID_DATA_KEY.with(true))
+
+        val elementFile = element.containingFile?.virtualFile ?: return@compute emptyList()
+        val fileIndex = ProjectRootManager.getInstance(element.project).fileIndex
+
+        val openedFileModule = fileIndex.getModuleForFile(it)
+        val elementModule = fileIndex.getModuleForFile(elementFile)
+
+        if (openedFileModule == null || elementModule == null) return@compute emptyList()
+
+        return@compute arrayListOf(
+          IS_ACCESSIBLE_FROM_MODULE.with(elementModule.name in ModuleRootManager.getInstance(openedFileModule).dependencyModuleNames)
+        )
+      }
+    } ?: emptyList()
   }
 
   private fun getContainingFile(item: PsiElement) = if (item is PsiFileSystemItem) {
@@ -124,13 +153,6 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
       data.add(PACKAGE_DISTANCE_NORMALIZED_DATA_KEY.with(packageDistanceNorm))
     }
   }
-
-  protected abstract fun getElementFeatures(element: PsiElement,
-                                            presentation: TargetPresentation?,
-                                            currentTime: Long,
-                                            searchQuery: String,
-                                            elementPriority: Int,
-                                            cache: Cache?): List<EventPair<*>>
 
   /**
    * Creates a deep copy of the file type stats obtained from the [FileTypeUsageLocalSummary],
@@ -270,5 +292,5 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(vararg supportedTab: 
     }
   }
 
-  protected data class Cache(val fileTypeStats: Map<String, FileTypeUsageSummary>, val openedFile: VirtualFile?)
+  private data class Cache(val fileTypeStats: Map<String, FileTypeUsageSummary>, val openedFile: VirtualFile?)
 }
