@@ -26,12 +26,16 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.FontSizeModel
 import com.intellij.ui.PopupHandler
+import com.intellij.util.flow.collectLatestUndispatched
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collect
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
@@ -80,8 +84,9 @@ internal class DocumentationUI(
 
     DataManager.registerDataProvider(editorPane, this)
 
-    cs.launch(CoroutineName("DocumentationUI content update")) {
-      browser.pageFlow.collectLatest { page ->
+    fetchingMessage()
+    cs.launch(CoroutineName("DocumentationUI content update"), start = CoroutineStart.UNDISPATCHED) {
+      browser.pageFlow.collectLatestUndispatched { page ->
         handlePage(page)
       }
     }
@@ -120,7 +125,7 @@ internal class DocumentationUI(
 
   private suspend fun handlePage(page: DocumentationPage) {
     val presentation = page.request.presentation
-    page.contentFlow.collectLatest {
+    page.contentFlow.collectLatestUndispatched {
       handleContent(presentation, it)
     }
   }
@@ -131,11 +136,13 @@ internal class DocumentationUI(
         // to avoid flickering: don't show ""Fetching..." message right away, give a chance for documentation to load
         delay(DEFAULT_UI_RESPONSE_TIMEOUT) // this call will be immediately cancelled once a new emission happens
         clearImages()
-        showMessage(CodeInsightBundle.message("javadoc.fetching.progress"))
+        fetchingMessage()
+        applyUIState(UIState.Reset)
       }
       DocumentationPageContent.Empty -> {
         clearImages()
-        showMessage(CodeInsightBundle.message("no.documentation.found"))
+        noDocumentationMessage()
+        applyUIState(UIState.Reset)
       }
       is DocumentationPageContent.Content -> {
         clearImages()
@@ -150,7 +157,14 @@ internal class DocumentationUI(
     val locationChunk = getDefaultLocationChunk(presentation)
     val linkChunk = linkChunk(presentation.presentableText, pageContent.links)
     val decorated = decorate(content.html, locationChunk, linkChunk)
-    update(decorated, pageContent.uiState)
+    if (!updateContent(decorated)) {
+      return
+    }
+    val uiState = pageContent.uiState
+    if (uiState != null) {
+      yield()
+      applyUIState(uiState)
+    }
   }
 
   private fun getDefaultLocationChunk(presentation: TargetPresentation): HtmlChunk? {
@@ -172,27 +186,31 @@ internal class DocumentationUI(
     return key
   }
 
-  private suspend fun showMessage(message: @Nls String) {
-    val element = HtmlChunk.div()
+  private fun fetchingMessage() {
+    updateContent(message(CodeInsightBundle.message("javadoc.fetching.progress")))
+  }
+
+  private fun noDocumentationMessage() {
+    updateContent(message(CodeInsightBundle.message("no.documentation.found")))
+  }
+
+  private fun message(message: @Nls String): @Nls String {
+    return HtmlChunk.div()
       .setClass("content-only")
       .addText(message)
       .wrapWith("body")
       .wrapWith("html")
-    update(element.toString(), UIState.Reset)
+      .toString()
   }
 
-  private suspend fun update(text: @Nls String, uiState: UIState?) {
+  private fun updateContent(text: @Nls String): Boolean {
     EDT.assertIsEdt()
     if (editorPane.text == text) {
-      return
+      return false
     }
     editorPane.text = text
-    myContentUpdates.emit(Unit)
-    if (uiState == null) {
-      return
-    }
-    yield()
-    applyUIState(uiState)
+    check(myContentUpdates.tryEmit(Unit))
+    return true
   }
 
   private fun applyUIState(uiState: UIState) {
