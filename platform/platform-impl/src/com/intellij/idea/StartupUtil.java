@@ -79,7 +79,7 @@ import java.util.logging.Level;
 @SuppressWarnings("LoggerInitializedWithForeignClass")
 public final class StartupUtil {
   public static final String IDE_STARTED =  "------------------------------------------------------ IDE STARTED ------------------------------------------------------";
-  public static final String IDE_SHUTDOWN = "------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------";
+  private static final String IDE_SHUTDOWN = "------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------";
   @SuppressWarnings("StaticNonFinalField")
   public static BiFunction<String, String[], Integer> LISTENER = (integer, s) -> Main.ACTIVATE_NOT_INITIALIZED;
 

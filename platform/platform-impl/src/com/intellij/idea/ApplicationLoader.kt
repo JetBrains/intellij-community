@@ -101,8 +101,8 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
         ForkJoinPool.commonPool()
       )
 
-      ForkJoinPool.commonPool().execute {
-        if (!Main.isHeadless()) {
+      if (!Main.isHeadless()) {
+        ForkJoinPool.commonPool().execute {
           EventQueue.invokeLater {
             WeakFocusStackManager.getInstance()
           }
