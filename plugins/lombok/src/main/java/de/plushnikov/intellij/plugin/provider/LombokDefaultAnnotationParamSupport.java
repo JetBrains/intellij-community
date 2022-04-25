@@ -12,6 +12,6 @@ public class LombokDefaultAnnotationParamSupport implements DefaultAnnotationPar
 
   @Override
   public boolean ignoreAnnotationParam(@Nullable String annotationFQN, @NotNull String annotationParameterName) {
-    return LombokClassNames.EQUALS_AND_HASHCODE.equals(annotationFQN) && "callSuper".equals(annotationParameterName);
+    return LombokClassNames.EQUALS_AND_HASHCODE.equals(annotationFQN) && ("callSuper".equals(annotationParameterName) || "of".equals(annotationParameterName));
   }
 }
