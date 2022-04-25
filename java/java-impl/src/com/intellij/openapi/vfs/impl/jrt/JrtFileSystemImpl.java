@@ -42,41 +42,35 @@ public class JrtFileSystemImpl extends JrtFileSystem implements Disposable {
     myHandlers.clear();
   }
 
-  @NotNull
   @Override
-  public String getProtocol() {
+  public @NotNull String getProtocol() {
     return PROTOCOL;
   }
 
-  @Nullable
   @Override
-  protected String normalize(@NotNull String path) {
+  protected @Nullable String normalize(@NotNull String path) {
     int separatorIndex = path.indexOf(SEPARATOR);
     return separatorIndex > 0 ? FileUtil.normalize(path.substring(0, separatorIndex)) + path.substring(separatorIndex) : null;
   }
 
-  @NotNull
   @Override
-  protected String extractLocalPath(@NotNull String rootPath) {
+  protected @NotNull String extractLocalPath(@NotNull String rootPath) {
     return StringUtil.trimEnd(rootPath, SEPARATOR);
   }
 
-  @NotNull
   @Override
-  protected String composeRootPath(@NotNull String localPath) {
+  protected @NotNull String composeRootPath(@NotNull String localPath) {
     return localPath + SEPARATOR;
   }
 
-  @NotNull
   @Override
-  protected String extractRootPath(@NotNull String normalizedPath) {
+  protected @NotNull String extractRootPath(@NotNull String normalizedPath) {
     int separatorIndex = normalizedPath.indexOf(SEPARATOR);
     return separatorIndex > 0 ? normalizedPath.substring(0, separatorIndex + SEPARATOR.length()) : "";
   }
 
-  @NotNull
   @Override
-  protected ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
+  protected @NotNull ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
     checkSubscription();
 
     String homePath = extractLocalPath(VfsUtilCore.getRootFile(entryFile).getPath());

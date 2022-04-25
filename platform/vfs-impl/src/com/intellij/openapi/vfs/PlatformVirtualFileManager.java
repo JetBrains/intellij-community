@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 
 public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
-  @NotNull private final ManagingFS myManagingFS;
+  private final @NotNull ManagingFS myManagingFS;
 
   public PlatformVirtualFileManager() {
     super(Collections.emptyList());
@@ -58,9 +58,8 @@ public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
     return VfsImplUtil.loadAllChildIds(id);
   }
 
-  @NotNull
   @Override
-  public CharSequence getVFileName(int nameId) {
+  public @NotNull CharSequence getVFileName(int nameId) {
     return FileNameCache.getVFileName(nameId);
   }
 

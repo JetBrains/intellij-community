@@ -39,15 +39,15 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   protected static final Logger LOG = Logger.getInstance(VirtualFileManagerImpl.class);
 
   // do not use extension point name to avoid map lookup on each event publishing
-  private static final ExtensionPointImpl<VirtualFileManagerListener>
-    MANAGER_LISTENER_EP = ((ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea()).getExtensionPoint("com.intellij.virtualFileManagerListener");
+  private static final ExtensionPointImpl<VirtualFileManagerListener> MANAGER_LISTENER_EP =
+    ((ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea()).getExtensionPoint("com.intellij.virtualFileManagerListener");
+
   private final List<? extends VirtualFileSystem> myPreCreatedFileSystems;
 
   private static class VirtualFileSystemBean extends KeyedLazyInstanceEP<VirtualFileSystem> {
     @Attribute
     public boolean physical;
   }
-
 
   private final KeyedExtensionCollector<VirtualFileSystem, String> myCollector = new KeyedExtensionCollector<>(VirtualFileSystem.EP_NAME);
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
@@ -86,12 +86,12 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
         }
       }
     }
+
     return physicalFileSystems;
   }
 
   @Override
-  public void dispose() {
-  }
+  public void dispose() { }
 
   @Override
   public long getStructureModificationCount() {
@@ -100,16 +100,13 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
 
   @Override
   public @Nullable VirtualFileSystem getFileSystem(@Nullable String protocol) {
-    if (protocol == null) {
-      return null;
-    }
+    if (protocol == null) return null;
 
     List<? extends VirtualFileSystem> candidates = getFileSystemsForProtocol(protocol);
     int size = candidates.size();
     if (size == 0) {
       return null;
     }
-
     if (size > 1) {
       LOG.error(protocol + ": " + candidates);
     }
@@ -311,6 +308,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
     }
 
     @Override
+    @SuppressWarnings("IdentifierGrammar")
     public void beforeContentsChange(@NotNull VirtualFileEvent event) {
       if (shouldLog()) {
         LOG.debug("beforeContentsChange: file = " + event.getFile() + ", requestor = " + event.getRequestor());
@@ -366,8 +364,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
     return findByUrl(url, true);
   }
 
-  @Nullable
-  private VirtualFile findByUrl(@NotNull String url, boolean refresh) {
+  private @Nullable VirtualFile findByUrl(@NotNull String url, boolean refresh) {
     int protocolSepIndex = url.indexOf(URLUtil.SCHEME_SEPARATOR);
     VirtualFileSystem fileSystem = protocolSepIndex < 0 ? null : getFileSystem(url.substring(0, protocolSepIndex));
     if (fileSystem == null) return null;
@@ -385,8 +382,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
     return findByNioPath(path, true);
   }
 
-  @Nullable
-  private VirtualFile findByNioPath(@NotNull Path nioPath, boolean refresh) {
+  private @Nullable VirtualFile findByNioPath(@NotNull Path nioPath, boolean refresh) {
     if (!FileSystems.getDefault().equals(nioPath.getFileSystem())) return null;
     VirtualFileSystem fileSystem = getFileSystem(StandardFileSystems.FILE_PROTOCOL);
     if (fileSystem == null) return null;
