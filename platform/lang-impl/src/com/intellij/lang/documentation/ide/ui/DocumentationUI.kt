@@ -113,16 +113,6 @@ internal class DocumentationUI(
     }
   }
 
-  /**
-   * Waits until UI has something to show. One of possible results:
-   * - content was not loaded after [DEFAULT_UI_RESPONSE_TIMEOUT] => "Fetching..." is shown;
-   * - content was loaded and it's empty => "No documentation" is shown;
-   * - content was loaded => content is shown.
-   */
-  suspend fun waitForContentUpdate() {
-    contentUpdates.first()
-  }
-
   private fun clearImages() {
     icons.clear()
     imageResolver = null

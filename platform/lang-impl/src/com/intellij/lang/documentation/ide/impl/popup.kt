@@ -49,7 +49,7 @@ internal fun CoroutineScope.showPopupLater(
   }
   val showJob = launch(ModalityState.current().asContextElement()) {
     // to avoid flickering: show popup after the UI has anything to show
-    popupUI.ui.waitForContentUpdate()
+    popupUI.waitForContentUpdate()
     withContext(Dispatchers.EDT) {
       check(!popup.isDisposed) // popup disposal should've cancelled this coroutine
       check(popup.canShow()) // sanity check
