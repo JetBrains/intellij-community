@@ -21,6 +21,10 @@ import java.io.File
 class MavenSettingsCollector : ProjectUsagesCollector() {
   override fun getGroupId() = "build.maven.state"
 
+  override fun getVersion(): Int {
+    return 3
+  }
+
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val manager = MavenProjectsManager.getInstance(project)
     if (!manager.isMavenizedProject) return emptySet()
@@ -67,6 +71,7 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     usages.add(newBooleanMetric("keepSourceFolders", importingSettings.isKeepSourceFolders))
     usages.add(newBooleanMetric("excludeTargetFolder", importingSettings.isExcludeTargetFolder))
     usages.add(newBooleanMetric("useMavenOutput", importingSettings.isUseMavenOutput))
+    usages.add(newBooleanMetric("createSeparateModulesForMainAndTest", importingSettings.isImportToTreeStructure))
 
     usages.add(newMetric("generatedSourcesFolder", importingSettings.generatedSourcesFolder))
     usages.add(newMetric("updateFoldersOnImportPhase", importingSettings.updateFoldersOnImportPhase))
