@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
@@ -39,6 +40,7 @@ import javax.swing.*;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.CancellationException;
 
 public final class EditorNotificationsImpl extends EditorNotifications {
 
@@ -170,7 +172,18 @@ public final class EditorNotificationsImpl extends EditorNotifications {
         .finishOnUiThread(ModalityState.any(), componentProvider -> {
           JComponent component = componentProvider.apply(fileEditor);
           updateNotification(fileEditor, provider, component);
-        }).submit(NonUrgentExecutor.getInstance());
+        })
+        .submit(NonUrgentExecutor.getInstance())
+        .onError(rejected -> {
+          if (rejected instanceof CancellationException) {
+            return;
+          }
+
+          Class<? extends EditorNotificationProvider> providerClass = provider.getClass();
+          PluginException pluginException = PluginException.createByClass(rejected, providerClass);
+          Logger.getInstance(providerClass).error(pluginException);
+          throw pluginException;
+        });
     }
   }
 
@@ -178,9 +191,6 @@ public final class EditorNotificationsImpl extends EditorNotifications {
                                   @NotNull EditorNotificationProvider provider,
                                   @Nullable JComponent component) {
     Map<Class<? extends EditorNotificationProvider>, JComponent> panels = getNotificationPanels(editor);
-    if (panels == null) {
-      return;
-    }
 
     Class<? extends EditorNotificationProvider> providerClass = provider.getClass();
     JComponent old = panels.get(providerClass);
@@ -268,11 +278,8 @@ public final class EditorNotificationsImpl extends EditorNotifications {
       return panels;
     }
 
-    Class<? extends FileEditor> editorClass = editor.getClass();
-    throw PluginException.createByClass(
-      "User data is not supported; editorClass='" + editorClass.getName() + "'; key='" + EDITOR_NOTIFICATION_PROVIDER + "'",
-      null,
-      editorClass);
+    throw new IllegalStateException("User data is not supported; editorClass='" + editor.getClass().getName() +
+                                    "'; key='" + EDITOR_NOTIFICATION_PROVIDER + "'");
   }
 
   @TestOnly
