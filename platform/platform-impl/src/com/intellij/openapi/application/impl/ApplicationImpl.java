@@ -186,9 +186,11 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     // reset back to null only when all components already disposed
     ApplicationManager.setApplication(this, myLastDisposable);
+
+    preventAwtAutoShutdown(this);
   }
 
-  public static void preventAwtAutoShutdown(@NotNull Disposable parentDisposable) {
+  private static void preventAwtAutoShutdown(@NotNull Disposable parentDisposable) {
     // Instantiate `AppDelayQueue` which starts "periodic tasks thread" which we'll mark busy to prevent this EDT from dying.
     // That thread was chosen because we know for sure it's running.
     Thread thread = AppScheduledExecutorService.getPeriodicTasksThread();
