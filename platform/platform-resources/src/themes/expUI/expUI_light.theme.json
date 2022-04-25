@@ -214,8 +214,9 @@
 
     "EditorTabs": {
       "tabInsets": "-3,12,-4,8",
-      "hoverBackground": "Grey13",
-      "hoverInactiveBackground": "Grey13"
+      "hoverBackground": "#FFFFFF00",
+      "hoverInactiveBackground": "#FFFFFF00",
+      "inactiveColoredFileBackground": "#FFFFFF80"
     },
 
     "Editor": {
@@ -518,7 +519,11 @@
         "unmatchedForeground": "Grey7",
         "hoveredBackground": "#000000F1"
       },
-      "FileHistory.Commit.selectedBranchBackground": "Blue13"
+      "FileHistory.Commit.selectedBranchBackground": "Blue13",
+      "MarkerPopup": {
+        "borderInsets": "6,8,6,10",
+        "borderColor": "Grey10"
+      }
     },
 
     "WelcomeScreen.Details.background": "Grey13"
