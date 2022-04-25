@@ -953,7 +953,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     final VirtualFile myVirtualFile;
     // highlighting-related info for this file editor: BackgroundEditorHighlighter and list of HighlightingPass
     static class FileEditorHighlightingInfo {
+      @NotNull
       final FileEditor myFileEditor;
+      @NotNull
       final BackgroundEditorHighlighter myBackgroundEditorHighlighter;
       HighlightingPass[] myHighlightingPasses;
 
@@ -965,6 +967,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     final List<? extends FileEditorHighlightingInfo> myFileEditors; // opened file editors for this file
 
     FileEditorInfo(@NotNull Document document, @NotNull VirtualFile virtualFile, @NotNull List<? extends FileEditorHighlightingInfo> fileEditorHighlightingInfos) {
+      if (fileEditorHighlightingInfos.isEmpty()) {
+        throw new IllegalArgumentException("fileEditorHighlightingInfos is empty for "+virtualFile+"; "+document);
+      }
       myDocument = document;
       myVirtualFile = virtualFile;
       myFileEditors = fileEditorHighlightingInfos;
@@ -1053,15 +1058,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       List<FileEditorInfo.FileEditorHighlightingInfo> infos = ContainerUtil.mapNotNull(entry.getValue(),
             fileEditor -> {
               BackgroundEditorHighlighter highlighter = highlighters.get(fileEditor);
-              if (highlighter == null) {
-                return null;
-              }
-              return new FileEditorInfo.FileEditorHighlightingInfo(fileEditor, highlighter); // highlighting passes will be created later in background
+              // highlighting passes will be created later in background
+              return highlighter == null ? null : new FileEditorInfo.FileEditorHighlightingInfo(fileEditor, highlighter);
             });
       if (!infos.isEmpty()) {
         putPreferredFileEditorFirst(virtualFile, infos);
+        result.add(new FileEditorInfo(document, virtualFile, infos));
       }
-      result.add(new FileEditorInfo(document, virtualFile, infos));
     }
     return result;
   }
