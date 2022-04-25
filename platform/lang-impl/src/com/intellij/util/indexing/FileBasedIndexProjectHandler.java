@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -144,29 +143,6 @@ public final class FileBasedIndexProjectHandler {
         return this;
       }
       return null;
-    }
-
-    @Override
-    public String toString() {
-      StringBuilder sampleOfChangedFilePathsToBeIndexed = new StringBuilder();
-
-      ((FileBasedIndexImpl)FileBasedIndex.getInstance()).processChangedFiles(myProject, new Processor<>() {
-        int filesInProjectToBeIndexed;
-        final String projectBasePath = myProject.getBasePath();
-
-        @Override
-        public boolean process(VirtualFile file) {
-          if (filesInProjectToBeIndexed != 0) sampleOfChangedFilePathsToBeIndexed.append(", ");
-
-          String filePath = file.getPath();
-          String loggedPath = projectBasePath != null ? FileUtil.getRelativePath(projectBasePath, filePath, '/') : null;
-          loggedPath = loggedPath == null ? filePath : "%project_path%/" + loggedPath;
-          sampleOfChangedFilePathsToBeIndexed.append(loggedPath);
-
-          return ++filesInProjectToBeIndexed < ourMinFilesToStartDumbMode;
-        }
-      });
-      return super.toString() + " [" + myProject + ", " + sampleOfChangedFilePathsToBeIndexed + "]";
     }
   }
 }
