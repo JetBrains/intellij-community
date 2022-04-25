@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.elementType
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
@@ -17,6 +18,7 @@ import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElementTy
 import org.intellij.plugins.markdown.structureView.MarkdownStructureColors
 import org.intellij.plugins.markdown.util.children
 import org.intellij.plugins.markdown.util.hasType
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @Suppress("DEPRECATION")
@@ -84,6 +86,40 @@ class MarkdownHeader: MarkdownHeaderImpl {
     }
     val contentHolder = findContentHolder() ?: return null
     return StringUtil.trim(contentHolder.text)
+  }
+
+  /**
+   * Builds visible text for this header.
+   * Visible text includes text content of all children without starting hash and a whitespace after hash.
+   *
+   * For a child inline link this method will only take it's visible part ([MarkdownLink.linkText]).
+   *
+   * @param hideImages - if true, all child images will be ignored,
+   *  otherwise images will be included as is, with it's visible and invisible parts
+   *  (so rendered result will show actual image).
+   */
+  @ApiStatus.Experimental
+  fun buildVisibleText(hideImages: Boolean = true): String? {
+    val contentHolder = findContentHolder() ?: return null
+    val builder = StringBuilder()
+    val children = contentHolder.children().dropWhile { it.hasType(MarkdownTokenTypeSets.WHITE_SPACES) }
+    traverseNameText(builder, children, hideImages)
+    return builder.toString().trim(' ')
+  }
+
+  private fun traverseNameText(builder: StringBuilder, elements: Sequence<PsiElement>, hideImages: Boolean) {
+    for (child in elements) {
+      when (child) {
+        is LeafPsiElement -> builder.append(child.text)
+        is MarkdownInlineLink -> traverseNameText(builder, child.linkText?.contentElements.orEmpty(), hideImages)
+        is MarkdownImage -> {
+          if (!hideImages) {
+            builder.append(child.text)
+          }
+        }
+        else -> traverseNameText(builder, child.children(), hideImages)
+      }
+    }
   }
 
   private fun buildAnchorText(): String? {
