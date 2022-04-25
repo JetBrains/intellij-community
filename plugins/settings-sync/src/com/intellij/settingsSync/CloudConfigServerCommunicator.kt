@@ -199,7 +199,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   }
 
   @Throws(IOException::class)
-  fun delete() {
+  override fun delete() {
     currentVersionOfFiles.remove(SETTINGS_SYNC_SNAPSHOT_ZIP)
     client.delete(SETTINGS_SYNC_SNAPSHOT_ZIP)
   }

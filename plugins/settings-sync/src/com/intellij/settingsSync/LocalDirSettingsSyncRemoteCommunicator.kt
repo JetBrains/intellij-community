@@ -55,6 +55,8 @@ internal class LocalDirSettingsSyncRemoteCommunicator(private val settingsSyncSt
       return SettingsSyncPushResult.Error(e.message!!)
     }
   }
+
+  override fun delete() {}
 }
 
 internal fun prepareTempZipFile(snapshot: SettingsSnapshot): Path {

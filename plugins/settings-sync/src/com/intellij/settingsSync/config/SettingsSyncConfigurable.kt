@@ -207,19 +207,17 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
   private fun disableAndRemoveData() {
     val remoteCommunicator = SettingsSyncMain.getInstance().getRemoteCommunicator()
-    if (remoteCommunicator is CloudConfigServerCommunicator) {
-      object : Task.Modal(null, message("disable.remove.data.title"), false) {
+    object : Task.Modal(null, message("disable.remove.data.title"), false) {
 
-        override fun run(indicator: ProgressIndicator) {
-          SettingsSyncSettings.getInstance().syncEnabled = false
-          remoteCommunicator.delete()
-        }
+      override fun run(indicator: ProgressIndicator) {
+        SettingsSyncSettings.getInstance().syncEnabled = false
+        remoteCommunicator.delete()
+      }
 
-        override fun onThrowable(error: Throwable) {
-          showError(statusLabel, message("disable.remove.data.failure"), error.localizedMessage)
-        }
-      }.queue()
-    }
+      override fun onThrowable(error: Throwable) {
+        showError(statusLabel, message("disable.remove.data.failure"), error.localizedMessage)
+      }
+    }.queue()
   }
 
   private fun showError(component: JComponent, message: @Nls String, details: @Nls String) {

@@ -25,4 +25,6 @@ internal class TestRemoteCommunicator : SettingsSyncRemoteCommunicator {
     if (::pushedLatch.isInitialized) pushedLatch.countDown()
     return SettingsSyncPushResult.Success
   }
+
+  override fun delete() {}
 }
