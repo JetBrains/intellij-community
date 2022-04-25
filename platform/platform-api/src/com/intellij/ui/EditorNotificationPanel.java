@@ -171,13 +171,6 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     myProject = project;
   }
 
-  /**
-   * @deprecated Please use {@link #setProvider(EditorNotificationProvider)}.
-   */
-  @Deprecated
-  public void setProviderKey(@Nullable Key<?> key) {
-  }
-
   @ApiStatus.Internal
   public void setProvider(@Nullable EditorNotificationProvider provider) {
     myProvider = provider;
