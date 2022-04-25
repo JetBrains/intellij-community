@@ -10,12 +10,18 @@ class SearchEverywhereStateFeaturesProvider {
     internal const val IS_EMPTY_QUERY_DATA_KEY = "isEmptyQuery"
     internal const val QUERY_CONTAINS_PATH_DATA_KEY = "queryContainsPath"
     internal const val QUERY_CONTAINS_COMMAND_CHAR_DATA_KEY = "queryContainsCommandChar"
+    internal const val QUERY_CONTAINS_SPACES_DATA_KEY = "queryContainsSpaces"
+    internal const val QUERY_IS_CAMEL_CASE_DATA_KEY = "queryIsCamelCase"
+    internal const val QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY = "queryContainsAbbreviations"
   }
 
   fun getSearchStateFeatures(tabId: String, query: String): Map<String, Any> {
     val features = hashMapOf<String, Any>(
       QUERY_LENGTH_DATA_KEY to query.length,
       IS_EMPTY_QUERY_DATA_KEY to query.isEmpty(),
+      QUERY_CONTAINS_SPACES_DATA_KEY to query.contains(" "),
+      QUERY_IS_CAMEL_CASE_DATA_KEY to query.isCamelCase(),
+      QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY to query.containsAbbreviations()
     )
 
     if (hasSuitableContributor(tabId, FileSearchEverywhereContributor::class.java.simpleName)) features.putAll(getFileQueryFeatures(query))
@@ -34,5 +40,25 @@ class SearchEverywhereStateFeaturesProvider {
 
   private fun hasSuitableContributor(currentTabId: String, featuresTab: String): Boolean {
     return currentTabId == featuresTab || currentTabId == SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
+  }
+
+  private fun CharSequence.isCamelCase(): Boolean {
+    this.forEachIndexed { index, c ->
+      if (index > 0 && c.isLowerCase() && this[index - 1].isUpperCase()) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  private fun CharSequence.containsAbbreviations(): Boolean {
+    this.forEachIndexed { index, c ->
+      if (index > 0 && c.isUpperCase() && this[index - 1].isUpperCase()) {
+        return true
+      }
+    }
+
+    return false
   }
 }
