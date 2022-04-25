@@ -371,7 +371,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
           LOG.debug("Consuming " + KeyStroke.getKeyStrokeForEvent(e) + ", registered:" + myRegistered);
         }
         JBTerminalPanel.this.dispatchEvent(e);
-        return true;
+        return e.isConsumed();
       }
       return false;
     }
