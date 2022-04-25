@@ -588,13 +588,14 @@ public final class FSRecords {
 
   @NotNull
   static CharSequence getNameSequence(int id) {
-    return readAndHandleErrors(() -> doGetNameSequence(id));
-  }
-
-  @NotNull
-  private static CharSequence doGetNameSequence(int id) throws IOException {
-    int nameId = ourConnection.getRecords().getNameId(id);
-    return nameId == 0 ? "" : FileNameCache.getVFileName(nameId, FSRecords::doGetNameByNameId);
+    int nameId = readAndHandleErrors(() -> ourConnection.getRecords().getNameId(id));
+    try {
+      return nameId == 0 ? "" : FileNameCache.getVFileName(nameId, FSRecords::doGetNameByNameId);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   public static String getNameByNameId(int nameId) {
