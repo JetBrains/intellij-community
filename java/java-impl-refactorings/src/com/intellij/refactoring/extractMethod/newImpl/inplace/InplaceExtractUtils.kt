@@ -3,8 +3,7 @@ package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.codeInsight.hint.EditorCodePreview
-import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.TemplateEditingAdapter
+import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.icons.AllIcons
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
@@ -16,6 +15,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -30,7 +30,8 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.refactoring.suggested.range
@@ -151,37 +152,10 @@ object InplaceExtractUtils {
     descriptor.dispose()
   }
 
-  fun textRangeOf(smartPointer: SmartPsiElementPointer<*>): TextRange? {
-    val segment = smartPointer.range ?: return null
-    return TextRange.create(segment)
-  }
-
-
-  fun getEditedTemplateText(state: TemplateState): String? {
-    val textRange = state.currentVariableRange ?: return null
-    return state.editor.document.getText(textRange)
-  }
-
-  fun addTemplateFinishedListener(templateState: TemplateState, listener: (editedText: String?) -> Unit){
-    templateState.addTemplateStateListener(object : TemplateEditingAdapter() {
-      var editedTemplateText: String? = null
-
-      override fun beforeTemplateFinished(state: TemplateState, template: Template?) {
-        editedTemplateText = getEditedTemplateText(state)
-      }
-
-      override fun templateFinished(template: Template, brokenOff: Boolean) {
-        if (!brokenOff) {
-          listener(editedTemplateText)
-        }
-      }
-    })
-  }
-
-  fun addInlaySettingsElement(templateState: TemplateState, settingsPopup: ExtractMethodPopupProvider){
-    val editor = templateState.editor as? EditorImpl ?: return
-    val project = editor.project ?: return
-    val offset = templateState.currentVariableRange?.endOffset ?: return
+  fun addInlaySettingsElement(templateState: TemplateState, settingsPopup: ExtractMethodPopupProvider): Inlay<PresentationRenderer>? {
+    val editor = templateState.editor as? EditorImpl ?: return null
+    val project = editor.project ?: return null
+    val offset = templateState.currentVariableRange?.endOffset ?: return null
     val presentation = TemplateInlayUtil.createSettingsPresentation(editor) { onClickEvent -> logStatisticsOnShow(editor, onClickEvent) }
 
     val templateElement = object : TemplateInlayUtil.SelectableTemplateElement(presentation) {
@@ -190,9 +164,12 @@ object InplaceExtractUtils {
         logStatisticsOnShow(editor)
       }
     }
-    TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, offset, presentation, settingsPopup.panel, templateElement) {
-      logStatisticsOnHide(project, settingsPopup)
+    presentation.addSelectionListener { isSelected ->
+      if (!isSelected) {
+        logStatisticsOnHide(project, settingsPopup)
+      }
     }
+    return TemplateInlayUtil.createNavigatableButtonWithPopup(templateState.editor, offset, presentation, settingsPopup.panel, templateElement)
   }
 
   fun addPreview(preview: EditorCodePreview, editor: Editor, lines: IntRange, navigatableOffset: Int){

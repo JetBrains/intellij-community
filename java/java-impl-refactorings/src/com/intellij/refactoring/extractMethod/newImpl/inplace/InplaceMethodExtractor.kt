@@ -35,19 +35,18 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
 import com.intellij.refactoring.extractMethod.newImpl.ExtractSelector
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.addInlaySettingsElement
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.addTemplateFinishedListener
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createChangeBasedDisposable
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createChangeSignatureGotIt
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createGreedyRangeMarker
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createNavigationGotIt
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createPreview
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.findElementAt
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.getEditedTemplateText
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.showInEditor
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
 import com.intellij.refactoring.suggested.range
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import org.jetbrains.annotations.Nls
 
 class EditorState(val editor: Editor){
@@ -137,7 +136,6 @@ data class ExtractMethodTemplateBuilder(
   fun createTemplate(file: PsiFile, methodIdentifier: TextRange, callIdentifier: TextRange): TemplateState {
     val project = file.project
     val document = editor.document
-    val editorState = EditorState(editor)
     val defaultText = document.getText(callIdentifier)
     return WriteCommandAction.writeCommandAction(project).withName(commandName).withGroupId(commandName).compute(ThrowableComputable {
       val builder = TemplateBuilderImpl(file)
@@ -156,6 +154,18 @@ data class ExtractMethodTemplateBuilder(
 
       val methodMarker = document.createRangeMarker(methodIdentifier).apply { isGreedyToRight = true }
       val callMarker = document.createRangeMarker(callIdentifier).apply { isGreedyToRight = true }
+      fun setMethodName(text: String){
+        runWriteAction {
+          callMarker.range?.also { range ->
+            editor.document.replaceString(range.startOffset, range.endOffset, text)
+          }
+          methodMarker.range?.also { range ->
+            editor.document.replaceString(range.startOffset, range.endOffset, text)
+          }
+          PsiDocumentManager.getInstance(project).commitDocument(editor.document)
+        }
+      }
+
       var shouldDispose = true
       Disposer.register(templateState) {
         if (shouldDispose) Disposer.dispose(disposable)
@@ -166,25 +176,22 @@ data class ExtractMethodTemplateBuilder(
           val callRange = callMarker.range
           if (brokenOff || methodRange == null || callRange == null){
             onBroken.invoke()
+            return
           }
-          else if (!validator.invoke(callRange)) {
+          val isValid = try {
+            validator.invoke(callRange)
+          } catch (e: RefactoringErrorHintException){
+            false
+          }
+          if (!isValid) {
             shouldDispose = false
-            val oldName = document.getText(callRange)
-            editorState.revert()
-            val state = createTemplate(file, methodIdentifier, callIdentifier)
-            runWriteAction {
-              state.getVariableRange("PrimaryVariable")?.also { range ->
-                editor.document.replaceString(range.startOffset, range.endOffset, oldName)
-              }
-              state.getVariableRange("SecondaryVariable")?.also { range ->
-                editor.document.replaceString(range.startOffset, range.endOffset, oldName)
-              }
-              PsiDocumentManager.getInstance(project).commitDocument(editor.document)
-            }
+            val modifiedText = document.getText(callRange)
+            setMethodName(defaultText)
+            createTemplate(file, methodIdentifier, callIdentifier)
+            setMethodName(modifiedText)
+            return
           }
-          else {
-            onSuccess.invoke()
-          }
+          onSuccess.invoke()
         }
       })
       return@ThrowableComputable templateState
@@ -245,6 +252,24 @@ class InplaceMethodExtractor(private val editor: Editor,
       val templateState = ExtractMethodTemplateBuilder(editor, ExtractMethodHandler.getRefactoringName())
         .withCompletionNames(suggestedNames.toList())
         .withCompletionAdvertisement(InplaceRefactoring.getPopupOptionsAdvertisement())
+        .onBroken { editorState.revert() }
+        .onSuccess {
+          val range = callIdentifierRange?.range ?: return@onSuccess
+          val methodName = editor.document.getText(range)
+          val extractedMethod = findElementAt<PsiMethod>(file, methodIdentifierRange) ?: return@onSuccess
+          InplaceExtractMethodCollector.executed.log(initialMethodName != methodName)
+          installGotItTooltips(editor, callIdentifierRange?.range, methodIdentifierRange?.range)
+          MethodExtractor.sendRefactoringDoneEvent(extractedMethod)
+          extractor.postprocess(editor, extractedMethod)
+        }
+        .disposeWithTemplate(disposable)
+        .withValidation { variableRange ->
+          val errorMessage = getIdentifierError(file, variableRange)
+          if (errorMessage != null) {
+            CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, ExtractMethodHandler.getRefactoringName(), null)
+          }
+          errorMessage == null
+        }
         .createTemplate(file, methodIdentifier.textRange, callIdentifier.textRange)
       afterTemplateStart(templateState)
     } catch (e: Throwable) {
@@ -258,52 +283,29 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   private fun afterTemplateStart(templateState: TemplateState) {
-    templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
-      override fun templateFinished(template: Template, brokenOff: Boolean) {
-        if (brokenOff) {
-          revertState()
-        }
-      }
-    })
     setActiveExtractor(editor, this)
-    Disposer.register(templateState, disposable)
-    addTemplateFinishedListener(templateState, ::afterTemplateFinished)
     popupProvider.setChangeListener {
       val shouldAnnotate = popupProvider.annotate
       if (shouldAnnotate != null) {
         PropertiesComponent.getInstance(project).setValue(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, shouldAnnotate, true)
       }
-      restartInplace(getEditedTemplateText(templateState))
+      restartInplace()
     }
     popupProvider.setShowDialogAction { actionEvent -> restartInDialog(actionEvent == null) }
-    addInlaySettingsElement(templateState, popupProvider)
+    addInlaySettingsElement(templateState, popupProvider)?.also { inlay ->
+      Disposer.register(disposable, inlay)
+    }
   }
 
-  private fun getIdentifierError(methodName: String, methodCall: PsiMethodCallExpression?): @Nls String? {
+  private fun getIdentifierError(file: PsiFile, variableRange: TextRange): @Nls String? {
+    val methodName = file.viewProvider.document.getText(variableRange)
+    val call = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiMethodCallExpression::class.java, false)
     return if (! PsiNameHelper.getInstance(project).isIdentifier(methodName)) {
       JavaRefactoringBundle.message("extract.method.error.invalid.name")
-    } else if (methodCall?.resolveMethod() == null) {
+    } else if (call?.resolveMethod() == null) {
       JavaRefactoringBundle.message("extract.method.error.method.conflict")
     } else {
       null
-    }
-  }
-
-  private fun afterTemplateFinished(templateEditedText: String?) {
-    val methodName = templateEditedText ?: return
-    val call = findElementAt<PsiMethodCallExpression>(file, callIdentifierRange)
-    val errorMessage = getIdentifierError(methodName, call)
-    if (errorMessage != null) {
-      ApplicationManager.getApplication().invokeLater {
-        restartInplace(methodName)
-        CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, ExtractMethodHandler.getRefactoringName(), null)
-      }
-    } else {
-      val extractedMethod = findElementAt<PsiMethod>(file, methodIdentifierRange) ?: return
-      InplaceExtractMethodCollector.executed.log(initialMethodName != methodName)
-      installGotItTooltips(editor, callIdentifierRange?.range, methodIdentifierRange?.range)
-      MethodExtractor.sendRefactoringDoneEvent(extractedMethod)
-      extractor.postprocess(editor, extractedMethod)
     }
   }
 
@@ -326,9 +328,11 @@ class InplaceMethodExtractor(private val editor: Editor,
     extractor.extractInDialog(targetClass, elements, methodName, popupProvider.makeStatic ?: false)
   }
 
-  private fun restartInplace(methodName: String?) {
+  private fun restartInplace() {
+    val identifierRange = callIdentifierRange?.range
+    val methodName = if (identifierRange != null) editor.document.getText(identifierRange) else null
     revertState()
-    WriteCommandAction.runWriteCommandAction(project) {
+    WriteCommandAction.writeCommandAction(project).withName(ExtractMethodHandler.getRefactoringName()).run<Throwable> {
       val inplaceExtractor = InplaceMethodExtractor(editor, range, targetClass, popupProvider, initialMethodName)
       inplaceExtractor.extractAndRunTemplate(linkedSetOf())
       if (methodName != null) {
