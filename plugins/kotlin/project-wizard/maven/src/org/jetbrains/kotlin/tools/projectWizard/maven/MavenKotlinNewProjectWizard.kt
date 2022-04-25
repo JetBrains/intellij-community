@@ -8,6 +8,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logP
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
@@ -29,9 +30,9 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemT
 
 internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
-    override val name = "Maven"
+    override val name = MAVEN
 
-    override val ordinal: Int = 200
+    override val ordinal = 100
 
     override fun createStep(parent: KotlinNewProjectWizard.Step): NewProjectWizardStep {
         return Step(parent).chain(::AssetsStep)

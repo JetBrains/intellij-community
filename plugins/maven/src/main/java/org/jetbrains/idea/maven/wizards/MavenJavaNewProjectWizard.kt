@@ -7,6 +7,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logP
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
@@ -24,10 +25,12 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindSelected
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
+
   override val name = MAVEN
+
+  override val ordinal = 100
 
   override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
 
@@ -86,10 +89,5 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         withJavaSampleCodeAsset("src/main/java", parent.groupId)
       }
     }
-  }
-
-  companion object {
-    @JvmField
-    val MAVEN = MavenUtil.SYSTEM_ID.readableName
   }
 }

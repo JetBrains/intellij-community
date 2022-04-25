@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTELLIJ
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
@@ -23,9 +25,9 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemT
 
 internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
-    override val name = "IntelliJ"
+    override val name = INTELLIJ
 
-    override val ordinal: Int = 100
+    override val ordinal = 0
 
     override fun createStep(parent: KotlinNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
 

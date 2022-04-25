@@ -9,6 +9,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logP
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
@@ -32,9 +33,9 @@ import java.io.File
 
 internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
-    override val name = "Gradle"
+    override val name = GRADLE
 
-    override val ordinal: Int = 300
+    override val ordinal = 200
 
     override fun createStep(parent: KotlinNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
 

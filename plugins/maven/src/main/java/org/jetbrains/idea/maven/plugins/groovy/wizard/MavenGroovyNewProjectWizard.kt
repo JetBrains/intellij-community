@@ -9,6 +9,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logP
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
@@ -26,7 +27,6 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.util.castSafelyTo
 import com.intellij.util.download.DownloadableFileSetVersions
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.config.loadLatestGroovyVersions
@@ -40,7 +40,7 @@ import javax.swing.SwingUtilities
 class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
   override val name = MAVEN
 
-  override val ordinal: Int = 1
+  override val ordinal = 100
 
   override fun createStep(parent: GroovyNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
 
@@ -127,12 +127,6 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       })
       return model
     }
-
-  }
-
-  companion object {
-    @JvmField
-    val MAVEN = MavenUtil.SYSTEM_ID.readableName
   }
 
   private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {

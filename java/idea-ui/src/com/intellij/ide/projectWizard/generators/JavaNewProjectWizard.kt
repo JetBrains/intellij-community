@@ -4,11 +4,14 @@ package com.intellij.ide.projectWizard.generators
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemFinished
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.project.Project
 
 class JavaNewProjectWizard : LanguageNewProjectWizard {
-  override val name: String = JAVA
+
+  override val name = JAVA
+
   override val ordinal = 0
 
   override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
@@ -37,9 +40,5 @@ class JavaNewProjectWizard : LanguageNewProjectWizard {
 
       buildSystemProperty.afterChange { logBuildSystemChanged() }
     }
-  }
-
-  companion object {
-    const val JAVA = "Java"
   }
 }

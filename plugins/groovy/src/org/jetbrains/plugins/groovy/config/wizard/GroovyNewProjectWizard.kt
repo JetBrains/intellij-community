@@ -5,6 +5,7 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemFinished
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.GROOVY
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -14,7 +15,9 @@ import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 
 class GroovyNewProjectWizard : LanguageNewProjectWizard {
-  override val name: String = "Groovy"
+
+  override val name = GROOVY
+
   override val ordinal = 200
 
   override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)

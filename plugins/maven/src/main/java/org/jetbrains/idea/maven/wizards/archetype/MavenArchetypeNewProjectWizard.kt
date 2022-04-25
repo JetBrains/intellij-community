@@ -5,9 +5,10 @@ import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.REGULAR_MATCHED_A
 import com.intellij.execution.util.setEmptyState
 import com.intellij.execution.util.setVisibleRowCount
 import com.intellij.icons.AllIcons
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.buildSystem
-import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
@@ -56,7 +57,6 @@ import org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder
-import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizard
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import java.awt.Component
@@ -84,8 +84,8 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     }
 
     override fun onStepSelected(step: NewProjectWizardStep) {
-      step.language = JavaNewProjectWizard.JAVA
-      step.buildSystem = MavenJavaNewProjectWizard.MAVEN
+      step.language = JAVA
+      step.buildSystem = MAVEN
     }
   }
 

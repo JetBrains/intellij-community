@@ -1,10 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard
 
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.GROOVY
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.OTHER
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.BuildSystemNewProjectWizardData
-import com.intellij.ide.wizard.LanguageNewProjectWizard
-import com.intellij.ide.wizard.NewProjectWizardLanguageStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -27,24 +28,17 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val typedCharsField = IntEventField("typed_chars")
     private val hitsField = IntEventField("hits")
     private val generatorTypeField = ClassEventField("generator")
-
-    private val languageField = object: StringEventField("language") {
-      override val validationRule: List<String>
-      get() {
-        return LanguageNewProjectWizard.EP_NAME.extensionList.map { it.name }
-      }
-    }
-
+    private val languageField = BoundedStringEventField("language", *NewProjectWizardConstants.Language.ALL)
     private val gitField = EventFields.Boolean("git")
     private val isSucceededField = EventFields.Boolean("project_created")
     private val inputMaskField = EventFields.Long("input_mask")
-    private val buildSystemField = BoundedStringEventField("build_system", "intellij", "maven", "gradle")
-    private val buildSystemDslField = BoundedStringEventField("build_system_dsl", "groovy", "kotlin")
+    private val buildSystemField = BoundedStringEventField("build_system", *NewProjectWizardConstants.BuildSystem.ALL)
+    private val buildSystemDslField = BoundedStringEventField("build_system_dsl", *NewProjectWizardConstants.Language.ALL_DSL)
     private val buildSystemSdkField = EventFields.Int("build_system_sdk_version")
     private val buildSystemParentField = EventFields.Boolean("build_system_parent")
     private val groovyVersionField = EventFields.Version
     private val groovySourceTypeField = BoundedStringEventField("groovy_sdk_type", "maven", "local")
-    private val pluginField = EventFields.String("plugin_selected", NewProjectWizardLanguageStep.allLanguages.keys.toList())
+    private val pluginField = BoundedStringEventField("plugin_selected", *NewProjectWizardConstants.Language.ALL)
 
     //events
     private val open = GROUP.registerVarargEvent("wizard.dialog.open", sessionIdField, screenNumField)
@@ -115,7 +109,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     fun logSdkChanged(context: WizardContext, language: String, buildSystem: String, version: Int) = sdkChangedEvent.log(context.project, EventPair(sessionIdField, context.sessionId.id), EventPair(languageField, language), EventPair(buildSystemField, buildSystem), EventPair(buildSystemSdkField, version))
     fun logSdkFinished(context: WizardContext, language: String, buildSystem: String, sdk: Sdk?) = logSdkFinished(context, language, buildSystem, sdk?.featureVersion ?: -1)
     fun logSdkFinished(context: WizardContext, language: String, buildSystem: String, version: Int) = sdkFinishedEvent.log(context.project, EventPair(sessionIdField, context.sessionId.id), EventPair(screenNumField, context.screen), EventPair(languageField, language), EventPair(buildSystemField, buildSystem), EventPair(buildSystemSdkField, version))
-    fun logDslChanged(context: WizardContext, language: String, buildSystem: String, isUseKotlinDsl: Boolean) = logDslChanged(context, language, buildSystem, if (isUseKotlinDsl) "kotlin" else "groovy")
+    fun logDslChanged(context: WizardContext, language: String, buildSystem: String, isUseKotlinDsl: Boolean) = logDslChanged(context, language, buildSystem, if (isUseKotlinDsl) KOTLIN else GROOVY)
     fun logDslChanged(context: WizardContext, language: String, buildSystem: String, dsl: String) = dslChangedEvent.log(context.project, EventPair(sessionIdField, context.sessionId.id), EventPair(screenNumField, context.screen), EventPair(languageField, language), EventPair(buildSystemField, buildSystem), EventPair(buildSystemDslField, dsl))
     fun logParentChanged(context: WizardContext, language: String, buildSystem: String, isNone: Boolean) = parentChangedEvent.log(context.project, EventPair(sessionIdField, context.sessionId.id), EventPair(screenNumField, context.screen), EventPair(languageField, language), EventPair(buildSystemField, buildSystem), EventPair(buildSystemParentField, isNone))
     fun logAddSampleCodeChanged(context: WizardContext, language: String, buildSystem: String) = addSampleCodeChangedEvent.log(context.project, sessionIdField with context.sessionId.id, screenNumField with context.screen, languageField with language, buildSystemField with buildSystem)
@@ -163,9 +157,5 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     }
 
     override val validationRule = EventFields.String(name, myAllowedValues + OTHER).validationRule
-
-    companion object {
-      private const val OTHER = "other"
-    }
   }
 }

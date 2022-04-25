@@ -8,6 +8,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logP
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.generators.*
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
@@ -26,10 +27,12 @@ import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindSelected
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.addSampleCode
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.groupId
-import org.jetbrains.plugins.gradle.util.GradleConstants
 
 internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
-  override val name = GradleConstants.SYSTEM_ID.readableName
+
+  override val name = GRADLE
+
+  override val ordinal = 200
 
   override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
 

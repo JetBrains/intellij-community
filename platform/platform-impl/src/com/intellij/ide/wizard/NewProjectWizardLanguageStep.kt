@@ -3,6 +3,7 @@ package com.intellij.ide.wizard
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Companion.logLanguageFinished
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
@@ -20,7 +21,20 @@ class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
   override val languageProperty by ::stepProperty
   override var language by ::step
 
-  override var additionalStepPlugins = allLanguages
+  override var additionalStepPlugins =
+    if (PlatformUtils.isIdeaCommunity())
+      mapOf(
+        Language.PYTHON to "PythonCore",
+        Language.SCALA to "org.intellij.scala"
+      )
+    else
+      mapOf(
+        Language.GO to "org.jetbrains.plugins.go",
+        Language.RUBY to "org.jetbrains.plugins.ruby",
+        Language.PHP to "com.jetbrains.php",
+        Language.PYTHON to "Pythonid",
+        Language.SCALA to "org.intellij.scala"
+      )
 
   init {
     data.putUserData(LanguageNewProjectWizardData.KEY, this)
@@ -32,18 +46,5 @@ class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
   override fun setupProject(project: Project) {
     super.setupProject(project)
     logLanguageFinished(context, step)
-  }
-
-  companion object {
-    private val ultimate = mapOf(
-      "Go" to "org.jetbrains.plugins.go",
-      "Ruby" to "org.jetbrains.plugins.ruby",
-      "PHP" to "com.jetbrains.php"
-    )
-    private val community = mapOf("Scala" to "org.intellij.scala")
-    private val pythonCommunity = mapOf("Python" to "PythonCore")
-    private val pythonUltimate = mapOf("Python" to "Pythonid")
-
-    val allLanguages = if (PlatformUtils.isIdeaCommunity()) pythonCommunity + community else ultimate + pythonUltimate + community
   }
 }

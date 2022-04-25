@@ -2,6 +2,7 @@
 package com.jetbrains.python.newProject
 
 import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.PYTHON
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.Disposable
@@ -36,7 +37,9 @@ import kotlin.streams.toList
  * It suggests creating a new Python virtual environment for your new project to follow Python best practices.
  */
 class PythonNewProjectWizard : LanguageNewProjectWizard {
-  override val name: String = "Python"
+
+  override val name = PYTHON
+
   override val ordinal = 600
 
   override fun createStep(parent: NewProjectWizardLanguageStep): NewProjectWizardStep = NewPythonProjectStep(parent)

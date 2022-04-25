@@ -10,6 +10,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logM
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logModuleNameChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTELLIJ
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.IntelliJNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
@@ -45,9 +46,9 @@ import java.nio.file.Paths
 
 class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
-  override val name: String = "IntelliJ"
+  override val name = INTELLIJ
 
-  override val ordinal: Int = 0
+  override val ordinal = 0
 
   override fun createStep(parent: GroovyNewProjectWizard.Step): NewProjectWizardStep = Step(parent).chain(::AssetsStep)
 

@@ -8,6 +8,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logM
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logModuleNameChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTELLIJ
 import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.addSampleCode
 import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.contentRoot
 import com.intellij.ide.starters.local.StandardAssetsProvider
@@ -20,7 +21,10 @@ import com.intellij.openapi.util.io.FileUtil
 import java.nio.file.Paths
 
 class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
-  override val name = "IntelliJ"
+
+  override val name = INTELLIJ
+
+  override val ordinal = 0
 
   override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent).chain(::AssetsStep)
 
