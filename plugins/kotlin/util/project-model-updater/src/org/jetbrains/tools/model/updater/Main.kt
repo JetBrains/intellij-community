@@ -67,7 +67,7 @@ private fun patchKotlincLibs(args: Args, isCommunity: Boolean, dotIdea: File) {
     val regexes = KotlincArtifactsMode.values().flatMap { generateKotlincLibraries(it, stubVersion, isCommunity) }
         .flatMap { it.classes }
         .map {
-            it.jpsPath.generateXml().escapeForRegex().replace(stubVersion, """\d+.\d+.\d+(-SNAPSHOT|-M1|-M2|-RC|-release|-dev)?(-\d+)?""")
+            it.jpsPath.generateXml().escapeForRegex().replace(stubVersion, """\d+.\d+.\d+(-SNAPSHOT|-M1|-M2|-RC|-release|-dev|-Beta)?(-\d+)?""")
         }
         .distinct()
         .map { Regex(it) }
