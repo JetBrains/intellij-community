@@ -45,6 +45,7 @@ import com.intellij.util.io.write
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.ImageUtil
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.concurrency.nullPromise
 import org.jetbrains.jps.util.JpsPathUtil
 import java.awt.AWTEvent
 import java.awt.Toolkit
@@ -511,6 +512,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     return CompletableFuture.runAsync({
       runActivity("project frame initialization") {
         var activeTask: Pair<Path, OpenProjectTask>? = null
+        var fullScreenPromise = nullPromise()
         for ((path, info) in toOpen) {
           val frameInfo = info.frame!!
           val isActive = info == activeInfo
@@ -522,8 +524,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
           val frameManager = MyProjectUiFrameManager(ideFrame, frameHelper)
 
           ideFrame.isVisible = true
-          if (activeInfo.frame!!.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
-            frameHelper.toggleFullScreen(true)
+          if (frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
+            fullScreenPromise = fullScreenPromise.thenAsync { frameHelper.toggleFullScreen(true) }
           }
 
           frameHelper.init()
@@ -545,7 +547,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
         // but once the windows are created, we start project loading from the latest active project (and put its window at front)
         taskList.add(activeTask!!)
         taskList.reverse()
-        (activeTask.second.frameManager as MyProjectUiFrameManager).frame.toFront()
+        val frameToActivate = (activeTask.second.frameManager as MyProjectUiFrameManager).frame
+        fullScreenPromise.onProcessed { frameToActivate.toFront() }
       }
     }, ApplicationManager.getApplication()::invokeLater)
       .thenApplyAsync({
