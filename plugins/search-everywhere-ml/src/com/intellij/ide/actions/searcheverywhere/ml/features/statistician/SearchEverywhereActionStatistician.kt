@@ -13,7 +13,7 @@ internal class SearchEverywhereActionStatistician : SearchEverywhereStatistician
     val value = getValue(element) ?: return null
     val context = getContext(element) ?: return null
 
-    return StatisticsInfo(value, context)
+    return StatisticsInfo(context, value)
   }
 
   private fun getValue(element: MatchedValue) = when (val value = element.value) {
