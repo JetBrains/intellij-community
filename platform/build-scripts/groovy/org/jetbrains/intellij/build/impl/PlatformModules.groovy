@@ -29,9 +29,6 @@ final class PlatformModules {
 
   public static final String PRODUCT_JAR = "product.jar"
 
-  /**
-   * List of modules which are included into lib/openapi.jar in all IntelliJ based IDEs.
-   */
   public static final List<String> PLATFORM_API_MODULES = List.of(
     "intellij.platform.analysis",
     "intellij.platform.builtInServer",
@@ -176,7 +173,8 @@ final class PlatformModules {
     }
 
     for (String moduleName : (PLATFORM_API_MODULES)) {
-      if (!productLayout.excludedModuleNames.contains(moduleName)) {
+      // intellij.platform.core is used in Kotlin and Scala JPS plugins (PathUtil) https://youtrack.jetbrains.com/issue/IDEA-292483
+      if (!productLayout.excludedModuleNames.contains(moduleName) && moduleName != "intellij.platform.core") {
         layout.withModule(moduleName, moduleName == "intellij.platform.jps.model" ? "jps-model.jar" : BaseLayout.APP_JAR)
       }
     }
@@ -209,7 +207,6 @@ final class PlatformModules {
       "intellij.platform.util.rt",
       ), productLayout, layout)
 
-
     jar(UTIL_JAR, List.of(
       "intellij.platform.util.rt.java8",
       "intellij.platform.util.zip",
@@ -222,6 +219,9 @@ final class PlatformModules {
       "intellij.platform.util.xmlDom",
       "intellij.platform.extensions",
       "intellij.platform.tracing.rt",
+      "intellij.platform.core",
+      // GeneralCommandLine is used by Scala in JPS plugin
+      "intellij.platform.ide.util.io",
       "intellij.platform.boot",
       ), productLayout, layout)
 
@@ -234,7 +234,6 @@ final class PlatformModules {
     jar(BaseLayout.APP_JAR, List.of(
       "intellij.platform.util.ui",
       "intellij.platform.util.ex",
-      "intellij.platform.ide.util.io",
       "intellij.platform.ide.util.io.impl",
       "intellij.platform.ide.util.netty",
       ), productLayout, layout)
