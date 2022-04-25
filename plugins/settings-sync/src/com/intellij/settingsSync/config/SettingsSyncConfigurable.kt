@@ -14,6 +14,8 @@ import com.intellij.settingsSync.*
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.JBColor
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
@@ -27,7 +29,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
                                           SettingsSyncStatusTracker.Listener {
 
   private lateinit var configPanel: DialogPanel
-  private lateinit var enableButton: CellBuilder<JButton>
+  private lateinit var enableButton: Cell<JButton>
   private lateinit var statusLabel: JLabel
 
   private val syncEnabler = SettingsSyncEnabler()
@@ -90,39 +92,35 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     configPanel = panel {
       val isSyncEnabled = LoggedInPredicate().and(EnabledPredicate())
       row {
-        cell {
-          val statusCell = label("")
-          statusCell.visibleIf(LoggedInPredicate())
-          statusLabel = statusCell.component
-          updateStatusInfo()
-          label(message("sync.status.login.message")).visibleIf(LoggedInPredicate().not())
-        }
+        val statusCell = label("")
+        statusCell.visibleIf(LoggedInPredicate())
+        statusLabel = statusCell.component
+        updateStatusInfo()
+        label(message("sync.status.login.message")).visibleIf(LoggedInPredicate().not())
       }
       row {
         comment(message("settings.sync.info.message"), 80)
           .visibleIf(isSyncEnabled.not())
       }
       row {
-        cell {
-          label("") // The first component must be always visible
-          button(message("config.button.login")) {
-            authService.login()
-          }.visibleIf(LoggedInPredicate().not()).enabled(authService.isLoginAvailable())
-          label(message("error.label.login.not.available")).component.apply {
-            isVisible = !authService.isLoginAvailable()
-            icon = AllIcons.General.Error
-            foreground = JBColor.red
-          }
-          enableButton = button(message("config.button.enable")) {
-            syncEnabler.checkServerState()
-          }.visibleIf(LoggedInPredicate().and(EnabledPredicate().not())).enableIf(SyncEnablerRunning().not())
-          button(message("config.button.disable")) {LoggedInPredicate().and(EnabledPredicate())
-            disableSync()
-          }.visibleIf(isSyncEnabled)
+        button(message("config.button.login")) {
+          authService.login()
+        }.visibleIf(LoggedInPredicate().not()).enabled(authService.isLoginAvailable())
+        label(message("error.label.login.not.available")).component.apply {
+          isVisible = !authService.isLoginAvailable()
+          icon = AllIcons.General.Error
+          foreground = JBColor.red
         }
+        enableButton = button(message("config.button.enable")) {
+          syncEnabler.checkServerState()
+        }.visibleIf(LoggedInPredicate().and(EnabledPredicate().not())).enabledIf(SyncEnablerRunning().not())
+        button(message("config.button.disable")) {
+          LoggedInPredicate().and(EnabledPredicate())
+          disableSync()
+        }.visibleIf(isSyncEnabled)
       }
       row {
-        component(categoriesPanel)
+        cell(categoriesPanel)
           .visibleIf(LoggedInPredicate().and(EnabledPredicate()))
           .onApply { categoriesPanel.apply() }
           .onReset { categoriesPanel.reset() }
@@ -198,9 +196,9 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       }
     }
 
-    when(result) {
-      RESULT_DISABLE->SettingsSyncSettings.getInstance().syncEnabled = false
-      RESULT_REMOVE_DATA_AND_DISABLE-> disableAndRemoveData()
+    when (result) {
+      RESULT_DISABLE -> SettingsSyncSettings.getInstance().syncEnabled = false
+      RESULT_REMOVE_DATA_AND_DISABLE -> disableAndRemoveData()
     }
     updateStatusInfo()
   }
@@ -254,11 +252,11 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
         messageBuilder.append(message("sync.status.disabled"))
       }
       @Suppress("HardCodedStringLiteral") // The above strings are localized
-      statusLabel.text =messageBuilder.toString()
+      statusLabel.text = messageBuilder.toString()
     }
   }
 
-  private fun getReadableSyncTime() : String {
+  private fun getReadableSyncTime(): String {
     return DateFormatUtil.formatPrettyDateTime(SettingsSyncStatusTracker.getInstance().getLastSyncTime()).lowercase()
   }
 
@@ -276,7 +274,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
   }
 }
 
-class SettingsSyncConfigurableProvider: ConfigurableProvider() {
+class SettingsSyncConfigurableProvider : ConfigurableProvider() {
   override fun createConfigurable(): Configurable = SettingsSyncConfigurable()
 
   override fun canCreateConfigurable() = isSettingsSyncEnabledByKey()
