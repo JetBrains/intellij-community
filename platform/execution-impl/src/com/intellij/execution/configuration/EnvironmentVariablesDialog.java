@@ -50,9 +50,9 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
 
     List<EnvironmentVariable> userList = EnvironmentVariablesTextFieldWithBrowseButton.convertToVariables(userMap, false);
     List<EnvironmentVariable> systemList = EnvironmentVariablesTextFieldWithBrowseButton.convertToVariables(parentMap, true);
-    myUserTable = new MyEnvVariablesTable(userList, true);
+    myUserTable = createEnvVariablesTable(userList, true);
 
-    mySystemTable = new MyEnvVariablesTable(systemList, false);
+    mySystemTable = createEnvVariablesTable(systemList, false);
 
     myIncludeSystemVarsCb = new JCheckBox(ExecutionBundle.message("env.vars.system.title"));
     myIncludeSystemVarsCb.setSelected(myParent.isPassParentEnvs());
@@ -74,6 +74,11 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
     updateSysTableState();
     setTitle(ExecutionBundle.message("environment.variables.dialog.title"));
     init();
+  }
+
+  @NotNull
+  protected MyEnvVariablesTable createEnvVariablesTable(@NotNull List<EnvironmentVariable> variables, boolean userList) {
+    return new MyEnvVariablesTable(variables, userList);
   }
 
   @Override
@@ -177,10 +182,10 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  private class MyEnvVariablesTable extends EnvVariablesTable {
-    private final boolean myUserList;
+  protected class MyEnvVariablesTable extends EnvVariablesTable {
+    protected final boolean myUserList;
 
-    MyEnvVariablesTable(List<EnvironmentVariable> list, boolean userList) {
+    protected MyEnvVariablesTable(List<EnvironmentVariable> list, boolean userList) {
       myUserList = userList;
       TableView<EnvironmentVariable> tableView = getTableView();
       tableView.setVisibleRowCount(JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS);
