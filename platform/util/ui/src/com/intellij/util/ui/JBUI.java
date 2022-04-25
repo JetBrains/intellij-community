@@ -1397,6 +1397,10 @@ public final class JBUI {
         return selected ? Selection.foreground(focused) : FOREGROUND;
       }
 
+      static int rowHeight() {
+        return getInt("Tree.rowHeight", JBUIScale.scale(24));
+      }
+
       final class Selection {
         private static final Color BACKGROUND = JBColor.namedColor("Tree.selectionBackground", DEFAULT_RENDERER_SELECTION_BACKGROUND);
         private static final Color FOREGROUND = JBColor.namedColor("Tree.selectionForeground", Label.foreground(true));
