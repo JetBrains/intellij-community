@@ -4,7 +4,6 @@ package com.intellij.ide.ui.html
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -55,9 +54,8 @@ object GlobalStyleSheetHolder {
       }
 
       val newStyle = StyleSheet()
-      val lafCssProvider = service<LafCssProvider>()
-      newStyle.addRule(lafCssProvider.getCssForCurrentLaf())
-      newStyle.addRule(lafCssProvider.getCssForCurrentEditorScheme())
+      newStyle.addRule(LafCssProvider.getCssForCurrentLaf())
+      newStyle.addRule(LafCssProvider.getCssForCurrentEditorScheme())
       currentLafStyleSheet = newStyle
       globalStyleSheet.addStyleSheet(newStyle)
     }
