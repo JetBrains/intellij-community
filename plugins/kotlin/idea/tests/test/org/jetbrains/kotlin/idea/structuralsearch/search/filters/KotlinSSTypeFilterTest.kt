@@ -225,7 +225,7 @@ class KotlinSSTypeFilterTest : KotlinSSResourceInspectionTest() {
         }
     """.trimIndent()) }
 
-    fun testTypeDotQualifiedExpression() { doTest("'_:[exprtype(String)].'_", """
+    fun testTypeDotQualifiedExpressionClassReference() { doTest("'_:[exprtype(String)].'_", """
         val x = "1"
         val y = 1
 
@@ -237,6 +237,19 @@ class KotlinSSTypeFilterTest : KotlinSSResourceInspectionTest() {
             print(<warning descr="SSR">x.hashCode()</warning>)
             print(y.hashCode())
             print(String.Companion.hashCode())
+        }
+    """.trimIndent()) }
+
+    fun testTypeDotQualifiedExpressionEnumReference() { doTest("'_:[exprtype(com.jetbrains.foo.Bar)].'_", """
+        package com.jetbrains.foo
+
+        enum class Bar { FOO }
+        
+        enum class Foo { BAR }
+
+        fun main() {
+            print(<warning descr="SSR">Bar.FOO</warning>)
+            print(Foo.BAR)
         }
     """.trimIndent()) }
 
