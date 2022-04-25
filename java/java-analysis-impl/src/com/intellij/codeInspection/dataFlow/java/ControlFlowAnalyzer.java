@@ -1085,6 +1085,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiExpression expression = ((PsiGuardedPattern)innerPattern).getGuardingExpression();
       if (expression != null) {
         expression.accept(this);
+      } else {
+        addInstruction(new PushValueInstruction(DfTypes.BOOLEAN));
       }
       DeferredOffset condGotoOffset = new DeferredOffset();
       addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.TRUE));
