@@ -5,7 +5,7 @@ import java.util.OptionalInt;
 
 public class Test {
   void test(Optional<String> opt) {
-    if(!opt.isPresent()) {
+    if(opt.isEmpty()) {
       System.out.println("null!");
     }
   }

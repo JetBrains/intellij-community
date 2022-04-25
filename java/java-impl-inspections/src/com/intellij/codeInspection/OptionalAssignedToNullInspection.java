@@ -89,8 +89,11 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
         if (value != null &&
             TypeUtils.isOptional(value.getType()) &&
             !hasSubsequentIsPresentCall(value, binOp, JavaTokenType.EQEQ.equals(binOp.getOperationTokenType()))) {
+          boolean useIsEmpty =
+            binOp.getOperationTokenType().equals(JavaTokenType.EQEQ) &&
+            PsiUtil.isLanguageLevel11OrHigher(binOp);
           holder.registerProblem(binOp, JavaBundle.message("inspection.null.value.for.optional.assigned.message"),
-                                 new ReplaceWithIsPresentFix(),
+                                 new ReplaceWithIsPresentFix(useIsEmpty),
                                  new SetInspectionOptionFix(OptionalAssignedToNullInspection.this, "WARN_ON_COMPARISON",
                                                             JavaBundle
                                                               .message("inspection.null.value.for.optional.assigned.ignore.fix.name"), false));
@@ -177,6 +180,15 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
   }
 
   private static class ReplaceWithIsPresentFix implements LocalQuickFix {
+    private final boolean myUseIsEmpty;
+
+    private ReplaceWithIsPresentFix(boolean useIsEmpty) { myUseIsEmpty = useIsEmpty; }
+
+    @Override
+    public @NotNull String getName() {
+      return CommonQuickFixBundle.message("fix.replace.with.x", myUseIsEmpty ? "isEmpty" : "isPresent()");
+    }
+
     @Nls
     @NotNull
     @Override
@@ -191,8 +203,9 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
       PsiExpression value = ExpressionUtils.getValueComparedWithNull(binOp);
       if (value == null || !TypeUtils.isOptional(value.getType())) return;
       CommentTracker ct = new CommentTracker();
-      String negation = binOp.getOperationTokenType().equals(JavaTokenType.NE) ? "" : "!";
-      ct.replaceAndRestoreComments(binOp, negation + ct.text(value, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + ".isPresent()");
+      String negation = myUseIsEmpty || binOp.getOperationTokenType().equals(JavaTokenType.NE) ? "" : "!";
+      String methodName = myUseIsEmpty ? "isEmpty" : "isPresent";
+      ct.replaceAndRestoreComments(binOp, negation + ct.text(value, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + "." + methodName + "()");
     }
   }
 }
