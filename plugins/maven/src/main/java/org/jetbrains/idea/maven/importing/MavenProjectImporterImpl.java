@@ -7,10 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
-import com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
-import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
@@ -81,7 +78,13 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
     myImportModuleGroupsRequired = importModuleGroupsRequired;
     myDummyModule = dummyModule;
 
-    myDiff = ((IdeModifiableModelsProviderImpl)modelsProvider).getActualStorageBuilder();
+    if (modelsProvider instanceof IdeModifiableModelsProviderImpl) {
+      IdeModifiableModelsProviderImpl impl = (IdeModifiableModelsProviderImpl)modelsProvider;
+      myDiff = impl.getActualStorageBuilder();
+    } else {
+      myDiff = null;
+    }
+    
     myIdeModifiableModelsProvider = modelsProvider;
   }
 
@@ -91,7 +94,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
     StructuredIdeActivity activity = MavenImportStats.startApplyingModelsActivity(myProject);
     long startTime = System.currentTimeMillis();
     try {
-      if (MavenUtil.newModelEnabled(myProject)) {
+      if (MavenUtil.newModelEnabled(myProject) && myDiff != null) {
         myModelsProvider = new ModifiableModelsProviderProxyImpl(myProject, myDiff);
       }
       else {
@@ -164,7 +167,13 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
       });
 
       if (!importers.isEmpty()) {
-        IdeModifiableModelsProvider provider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
+        IdeModifiableModelsProvider provider;
+        if (myIdeModifiableModelsProvider instanceof IdeUIModifiableModelsProvider) {
+          provider = myIdeModifiableModelsProvider; // commit does nothing for this provider, so it should be reused
+        } else {
+          provider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
+        }
+
         try {
           List<MavenModuleImporter> toRun = new ArrayList<>(importers.size());
           for (MavenModuleImporter importer : importers) {
