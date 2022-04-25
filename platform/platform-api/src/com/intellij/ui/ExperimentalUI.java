@@ -356,6 +356,7 @@ public final class ExperimentalUI {
     paths.put("actions/copy.svg", "expui/general/copy.svg");
     paths.put("actions/menu-paste.svg", "expui/general/paste.svg");
     paths.put("debugger/restoreLayout.svg", "expui/general/layout.svg");
+    paths.put("codeWithMe/cwmTerminate.svg", "expui/general/close.svg");
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
