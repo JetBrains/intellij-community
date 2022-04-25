@@ -70,7 +70,7 @@ open class TemporaryDirectory : ExternalResource() {
   }
 
   override fun apply(base: Statement, description: Description): Statement {
-    before(description.methodName)
+    before(description.methodName ?: description.className)
     return super.apply(base, description)
   }
 
