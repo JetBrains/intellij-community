@@ -4,44 +4,60 @@ package com.intellij.codeInspection.test.junit
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
-import com.intellij.codeInspection.InspectionManager
-import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.allClasses
+import com.intellij.execution.junit.JUnitUtil
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiType
+import com.intellij.uast.UastVisitorAdapter
 import com.siyeh.ig.junit.MakePublicStaticVoidFix
 import com.siyeh.ig.psiutils.TestUtils
+import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class JUnitBeforeAfterClassInspection : AbstractBaseUastLocalInspectionTool() {
-  override fun checkMethod(method: UMethod, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
-    val javaMethod = method.javaPsi
-    val annotation = ANNOTATIONS.firstOrNull {
-      AnnotationUtil.isAnnotated(javaMethod, it, AnnotationUtil.CHECK_HIERARCHY)
-    } ?: return emptyArray()
-    val returnType = method.returnType ?: return emptyArray()
-    val targetClass = javaMethod.containingClass ?: return emptyArray()
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    UastVisitorAdapter(Visitor(holder), true)
 
-    val parameterList = method.uastParameters
-    val junit4Annotation = isJunit4Annotation(annotation)
-    if (junit4Annotation && (parameterList.isNotEmpty() || !javaMethod.hasModifier(JvmModifier.PUBLIC)) || returnType != PsiType.VOID ||
-        !javaMethod.hasModifier(JvmModifier.STATIC) && (junit4Annotation || !TestUtils.testInstancePerClass(targetClass))
-    ) {
-      val message = JvmAnalysisBundle.message("jvm.inspections.before.after.descriptor", annotation)
-      val fixes = if (method.sourcePsi?.language == JavaLanguage.INSTANCE) {
-        arrayOf(MakePublicStaticVoidFix(javaMethod, true))
-      } else emptyArray()
-      val place = method.uastAnchor?.sourcePsi ?: return emptyArray()
-      val problemDescriptor = manager.createProblemDescriptor(
-        place, message, isOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-      )
-      return arrayOf(problemDescriptor)
+  private inner class Visitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
+    override fun visitFile(node: UFile): Boolean {
+      // To generate all Java PSI methods we can't use a visitor (Kotlin `JvmStatic` generates 2 Java methods for 1 Kotlin method)
+      node.allClasses().forEach { cls -> cls.methods.forEach { checkJavaMethod(it) } }
+      return true
     }
-    return emptyArray()
-  }
 
-  private fun isJunit4Annotation(annotation: String) = annotation.endsWith("Class")
+    private fun isJunit4Annotation(annotation: String) = annotation.endsWith("Class")
+
+    private fun checkJavaMethod(method: UMethod) {
+      val javaMethod = method.javaPsi
+      val annotation = ANNOTATIONS.firstOrNull { AnnotationUtil.isAnnotated(javaMethod, it, AnnotationUtil.CHECK_HIERARCHY) } ?: return
+      val returnType = method.returnType ?: return
+      val parameterList = method.uastParameters
+      if (returnType != PsiType.VOID || parameterList.isNotEmpty()) return registerError(method, annotation)
+      val isStatic = javaMethod.hasModifier(JvmModifier.STATIC)
+      val containingClass = javaMethod.containingClass ?: return
+      // Check for test class is required here because Kotlin `JvmStatic` generates a non-static delegate
+      if (!isStatic && isJunit4Annotation(annotation) && JUnitUtil.isJUnit4TestClass(containingClass)) {
+        return registerError(method, annotation)
+      }
+      // No need to check for JUnit 5 annotation here because annotation wasn't JUnit 4
+      if (!isStatic && JUnitUtil.isJUnit5TestClass(containingClass, false) && !TestUtils.testInstancePerClass(containingClass)) {
+        return registerError(method, annotation)
+      }
+    }
+
+    private fun registerError(method: UMethod, annotation: String) {
+      val message = JvmAnalysisBundle.message("jvm.inspections.before.after.descriptor", annotation)
+      val fix = if (method.sourcePsi?.language == JavaLanguage.INSTANCE) {
+        MakePublicStaticVoidFix(method.javaPsi, true)
+      } else null
+      val place = method.uastAnchor?.sourcePsi ?: return
+      holder.registerProblem(place, message, fix)
+    }
+  }
 
   companion object {
     // JUnit 4 classes

@@ -19,3 +19,10 @@ fun ULambdaExpression.getReturnType(): PsiType? {
 }
 
 fun UAnnotated.findAnnotations(fqNames: Collection<String>) = uAnnotations.filter { ann -> fqNames.contains(ann.qualifiedName) }
+
+/**
+ * Gets all classes in this file, including inner classes.
+ */
+fun UFile.allClasses() = classes.toTypedArray() + classes.flatMap { it.allInnerClasses().toList() }
+
+fun UClass.allInnerClasses(): Array<UClass> = innerClasses + innerClasses.flatMap { it.allInnerClasses().toList() }
