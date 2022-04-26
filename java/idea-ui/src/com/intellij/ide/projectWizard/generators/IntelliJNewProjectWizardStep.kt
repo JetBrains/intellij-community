@@ -29,11 +29,11 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
-  val sdkProperty = propertyGraph.property<Sdk?>(null)
-  val moduleNameProperty = propertyGraph.lazyProperty(::suggestModuleName)
-  val contentRootProperty = propertyGraph.lazyProperty(::suggestContentRoot)
-  val moduleFileLocationProperty = propertyGraph.lazyProperty(::suggestModuleFilePath)
-  val addSampleCodeProperty = propertyGraph.property(false)
+  final override val sdkProperty = propertyGraph.property<Sdk?>(null)
+  final override val moduleNameProperty = propertyGraph.lazyProperty(::suggestModuleName)
+  final override val contentRootProperty = propertyGraph.lazyProperty(::suggestContentRoot)
+  final override val moduleFileLocationProperty = propertyGraph.lazyProperty(::suggestModuleFilePath)
+  final override val addSampleCodeProperty = propertyGraph.property(false)
     .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
 
   final override var sdk by sdkProperty
