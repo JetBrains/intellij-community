@@ -6,12 +6,14 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.FixedSizeButton
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeMenuBar
@@ -30,6 +32,7 @@ import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
 import com.jetbrains.CustomWindowDecoration.MENU_BAR
 import java.awt.*
 import java.awt.GridBagConstraints.*
+import java.awt.event.KeyEvent
 import javax.swing.*
 import kotlin.math.roundToInt
 
@@ -37,12 +40,17 @@ private enum class ShowMode {
   MENU, TOOLBAR
 }
 
+//private val SHOW_MENU_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, true)
+private val SHOW_MENU_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, KeyEvent.ALT_DOWN_MASK, true)
+
 internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
   private val myMenuBar = ideMenu
   private val myMenuButton = createMenuButton()
+  private val menuAction = ShowMenuAction(myMenuButton)
   private var myToolbar : MainToolbar? = null
   private val myToolbarPlaceholder = NonOpaquePanel()
   private val myHeaderContent = createHeaderContent()
+  private val menuShortcutHandler = MainMenuMnemonicHandler(frame, menuAction)
 
   private var mode = ShowMode.MENU
 
@@ -60,6 +68,8 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     add(buttonsView, gb.next().anchor(EAST))
 
     setCustomFrameTopBorder({ false }, {true})
+
+    Disposer.register(this, menuShortcutHandler)
   }
 
   override fun updateToolbar() {
@@ -77,6 +87,16 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
   override fun removeToolbar() {
     myToolbarPlaceholder.removeAll()
     myToolbarPlaceholder.revalidate()
+  }
+
+  override fun installListeners() {
+    super.installListeners()
+    menuShortcutHandler.registerShortcuts()
+  }
+
+  override fun uninstallListeners() {
+    super.uninstallListeners()
+    menuShortcutHandler.unregisterShortcuts()
   }
 
   override fun updateMenuActions(forceRebuild: Boolean) {} //todo remove
@@ -179,12 +199,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
 
     button.addActionListener {
       DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200)?.let { context ->
-        val mainMenu = ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
-        JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, ActionPlaces.MAIN_MENU_IN_POPUP)
-          .apply { setShowSubmenuOnHover(true) }
-          .apply { setMinimumSize(Dimension(CustomFrameDecorations.menuPopupMinWidth(), 0)) }
-          .showUnderneathOf(button)
+        ActionUtil.invokeAction(menuAction, context, ActionPlaces.MAIN_MENU_IN_POPUP, null, null)
       }
     }
 
@@ -197,3 +212,34 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     return button
   }
 }
+
+private class MainMenuMnemonicHandler(val frame: JFrame, val action: AnAction) : Disposable {
+
+  private var disposable: Disposable? = null
+
+  fun registerShortcuts() {
+    if (disposable == null) disposable = Disposer.newDisposable()
+    action.registerCustomShortcutSet(CustomShortcutSet(SHOW_MENU_KEYSTROKE), frame.rootPane, disposable)
+  }
+
+  fun unregisterShortcuts() {
+    disposable?.let { Disposer.dispose(it) }
+  }
+
+  override fun dispose() = unregisterShortcuts()
+}
+
+private class ShowMenuAction(private val menuButton: AbstractButton) : DumbAwareAction() {
+
+  override fun actionPerformed(e: AnActionEvent) = createPopup(e.dataContext).showUnderneathOf(menuButton)
+
+  private fun createPopup(context: DataContext): JBPopup {
+    val mainMenu = ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
+    return JBPopupFactory.getInstance()
+      .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, ActionPlaces.MAIN_MENU_IN_POPUP)
+      .apply { setShowSubmenuOnHover(true) }
+      .apply { setMinimumSize(Dimension(CustomFrameDecorations.menuPopupMinWidth(), 0)) }
+  }
+}
+
+
