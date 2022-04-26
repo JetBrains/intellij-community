@@ -46,6 +46,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import org.jdom.Element;
+import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,7 +87,7 @@ public class RefManagerImpl extends RefManager {
   private final Map<Language, RefManagerExtension<?>> myLanguageExtensions = new HashMap<>();
   private final Interner<String> myNameInterner = Interner.createStringInterner();
 
-  private volatile BlockingQueue<Runnable> myTasks;
+  private volatile BlockingQueue<@NotNull Runnable> myTasks;
   private volatile List<Future<?>> myFutures;
 
   public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
@@ -433,7 +434,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Override
-  public void executeTask(Runnable runnable) {
+  public void executeTask(@Async.Schedule @NotNull Runnable runnable) {
     if (myTasks != null) {
       try {
         myTasks.put(runnable);
@@ -468,9 +469,7 @@ public class RefManagerImpl extends RefManager {
             final Runnable task = myTasks.poll(50, TimeUnit.MILLISECONDS);
             ProgressManager.checkCanceled();
             if (task != null) {
-              DumbService.getInstance(myProject).runReadActionInSmartMode(
-                () -> progressManager.executeProcessUnderProgress(task, progressIndicator)
-              );
+              runTask(progressIndicator, task);
             }
           }
           catch (InterruptedException ignore) {}
@@ -478,6 +477,12 @@ public class RefManagerImpl extends RefManager {
       });
       myFutures.add(future);
     }
+  }
+
+  private void runTask(ProgressIndicator progressIndicator, @Async.Execute Runnable task) {
+    DumbService.getInstance(myProject).runReadActionInSmartMode(
+      () -> ProgressManager.getInstance().executeProcessUnderProgress(task, progressIndicator)
+    );
   }
 
   public boolean isDeclarationsFound() {
