@@ -666,6 +666,10 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     UIUtil.invokeLaterIfNeeded(() -> {
       WidgetBean bean = myWidgetMap.remove(id);
       if (bean != null) {
+        if (UIUtil.isAncestor(bean.component, myEffectComponent)) {
+          ClientProperty.put(myEffectComponent, WIDGET_EFFECT_KEY, null);
+          myEffectComponent = null;
+        }
         JPanel targetPanel = getTargetPanel(bean.position);
         targetPanel.remove(bean.component);
         targetPanel.revalidate();
