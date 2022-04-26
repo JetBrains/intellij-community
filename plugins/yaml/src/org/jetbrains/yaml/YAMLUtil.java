@@ -301,7 +301,7 @@ public class YAMLUtil {
     while (currentElement != null) {
       final IElementType type = currentElement.getNode().getElementType();
       if (YAMLElementTypes.EOL_ELEMENTS.contains(type)) {
-        return offset - currentElement.getTextOffset() - 1;
+        return offset - currentElement.getTextOffset() - currentElement.getTextLength();
       }
 
       currentElement = PsiTreeUtil.prevLeaf(currentElement);

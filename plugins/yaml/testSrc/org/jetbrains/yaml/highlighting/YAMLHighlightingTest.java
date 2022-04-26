@@ -50,6 +50,14 @@ public class YAMLHighlightingTest extends BasePlatformTestCase {
     doTest();
   }
 
+  public void testInvalidBlockChildren() {
+    doTest();
+  }
+
+  public void testInvalidIndent() {
+    doTest();
+  }
+
   public void testWebUrls() {
     doTest(true);
   }
