@@ -368,6 +368,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
 
     task {
       text(JavaLessonsBundle.message("java.onboarding.indexing.description"))
+      text(JavaLessonsBundle.message("java.onboarding.wait.indexing"), LearningBalloonConfig(Balloon.Position.above, 0))
       waitSmartModeStep()
     }
 
