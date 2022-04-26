@@ -25,7 +25,9 @@ import java.io.File
  * The 'src' module has a compilation dependency on the 'common' module.
  */
 abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluateExpressionTest() {
-    override fun useIrBackend(): Boolean = true
+    override fun useIrBackend() = true
+
+    override fun fragmentCompilerBackend() = FragmentCompilerBackend.JVM
 
     override fun setUpModule() {
         super.setUpModule()
