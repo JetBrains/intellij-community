@@ -599,7 +599,13 @@ public final class FSRecords {
   }
 
   public static String getNameByNameId(int nameId) {
-    return readAndHandleErrors(() -> doGetNameByNameId(nameId));
+    try {
+      return doGetNameByNameId(nameId);
+    }
+    catch (IOException e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   private static String doGetNameByNameId(int nameId) throws IOException {
