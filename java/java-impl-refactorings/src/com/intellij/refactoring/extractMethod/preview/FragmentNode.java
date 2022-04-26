@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,7 +25,7 @@ import java.util.stream.Stream;
  * @author Pavel.Dolgov
  */
 abstract class FragmentNode extends DefaultMutableTreeNode implements Comparable<FragmentNode> {
-  private final TextChunk[] myTextChunks;
+  private final @NotNull TextChunk @NotNull [] myTextChunks;
   private final TextChunk myLineNumberChunk;
   private final int myOffset;
   private final ExtractableFragment myFragment;
@@ -38,20 +39,21 @@ abstract class FragmentNode extends DefaultMutableTreeNode implements Comparable
     setAllowsChildren(false);
   }
 
-  public TextChunk[] getTextChunks() {
+  @NotNull TextChunk @NotNull [] getTextChunks() {
     return myTextChunks;
   }
 
-  public TextChunk getLineNumberChunk() {
+  TextChunk getLineNumberChunk() {
     return myLineNumberChunk;
   }
 
-  protected TextChunk @NotNull [] createTextChunks(@NotNull PsiElement element) {
+  protected @NotNull TextChunk @NotNull [] createTextChunks(@NotNull PsiElement element) {
     UsageInfo2UsageAdapter usageAdapter = new UsageInfo2UsageAdapter(new UsageInfo(element));
     PsiFile file = element.getContainingFile();
     TextRange range = element.getTextRange();
-    return ChunkExtractor.getExtractor(file)
-                  .createTextChunks(usageAdapter, file.getText(), range.getStartOffset(), range.getEndOffset(), false, new ArrayList<>());
+    List<TextChunk> result = new ArrayList<>();
+    ChunkExtractor.getExtractor(file).appendTextChunks(usageAdapter, file.getText(), range.getStartOffset(), range.getEndOffset(), false, result);
+    return result.toArray(TextChunk.EMPTY_ARRAY);
   }
 
   private static TextChunk createNumberChunk(@NotNull PsiElement start, @NotNull PsiElement end) {
@@ -85,8 +87,7 @@ abstract class FragmentNode extends DefaultMutableTreeNode implements Comparable
     return myFragment.getTextRange();
   }
 
-  @Nullable
-  public ElementsRange getElementsRange() {
+  @Nullable ElementsRange getElementsRange() {
     return myFragment.getElementsRange();
   }
 

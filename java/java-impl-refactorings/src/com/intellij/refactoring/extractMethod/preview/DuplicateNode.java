@@ -7,10 +7,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Pavel.Dolgov
  */
-public class DuplicateNode extends FragmentNode {
+class DuplicateNode extends FragmentNode {
   private boolean myExcluded;
 
-  public DuplicateNode(@NotNull Match duplicate) {
+  DuplicateNode(@NotNull Match duplicate) {
     super(duplicate.getMatchStart(), duplicate.getMatchEnd(), new ExtractableFragment(duplicate.getMatchStart(), duplicate.getMatchEnd()));
   }
 
