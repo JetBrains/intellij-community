@@ -34,11 +34,14 @@ class KotlinJavaMavenConfigurator : KotlinMavenConfigurator(TEST_LIB_ID, false, 
     }
 
     override fun configurePlugin(pom: PomFile, plugin: MavenDomPlugin, module: Module, version: IdeKotlinVersion) {
-        val sdk = ModuleRootManager.getInstance(module).sdk
-        val jvmTarget = getDefaultJvmTarget(sdk, version)
-        if (jvmTarget != null) {
-            pom.addPluginConfiguration(plugin, "jvmTarget", jvmTarget.description)
+        val jvmTargetVersion = if (pom.findProperty("maven.compiler.target") != null) {
+            "\${maven.compiler.target}"
+        } else {
+            val sdk = ModuleRootManager.getInstance(module).sdk
+            getDefaultJvmTarget(sdk, version)?.description
         }
+
+        if(jvmTargetVersion != null) pom.addPluginConfiguration(plugin, "jvmTarget", jvmTargetVersion)
     }
 
     override fun configureModule(module: Module, file: PsiFile, version: IdeKotlinVersion, collector: NotificationMessageCollector): Boolean {
