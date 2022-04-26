@@ -31,7 +31,15 @@ interface LinkedListEntity : WorkspaceEntityWithPersistentId {
       override var next: LinkedListEntityId
   }
   
-  companion object: Type<LinkedListEntity, Builder>()
+  companion object: Type<LinkedListEntity, Builder>() {
+      operator fun invoke(myName: String, entitySource: EntitySource, next: LinkedListEntityId, init: Builder.() -> Unit): LinkedListEntity {
+          val builder = builder(init)
+          builder.myName = myName
+          builder.entitySource = entitySource
+          builder.next = next
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

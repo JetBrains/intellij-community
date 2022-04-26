@@ -61,7 +61,14 @@ interface OneEntityWithPersistentId : WorkspaceEntityWithPersistentId {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<OneEntityWithPersistentId, Builder>()
+  companion object: Type<OneEntityWithPersistentId, Builder>() {
+      operator fun invoke(myName: String, entitySource: EntitySource, init: Builder.() -> Unit): OneEntityWithPersistentId {
+          val builder = builder(init)
+          builder.myName = myName
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -108,7 +115,23 @@ interface EntityWithSoftLinks : WorkspaceEntity {
       override var children: List<SoftLinkReferencedChild>
   }
   
-  companion object: Type<EntityWithSoftLinks, Builder>()
+  companion object: Type<EntityWithSoftLinks, Builder>() {
+      operator fun invoke(link: OnePersistentId, entitySource: EntitySource, manyLinks: List<OnePersistentId>, inContainer: Container, inContainerList: List<Container>, deepContainer: List<TooDeepContainer>, sealedContainer: SealedContainer, listSealedContainer: List<SealedContainer>, justProperty: String, justListProperty: List<String>, deepSealedClass: DeepSealedOne, init: Builder.() -> Unit): EntityWithSoftLinks {
+          val builder = builder(init)
+          builder.link = link
+          builder.entitySource = entitySource
+          builder.manyLinks = manyLinks
+          builder.inContainer = inContainer
+          builder.inContainerList = inContainerList
+          builder.deepContainer = deepContainer
+          builder.sealedContainer = sealedContainer
+          builder.listSealedContainer = listSealedContainer
+          builder.justProperty = justProperty
+          builder.justListProperty = justListProperty
+          builder.deepSealedClass = deepSealedClass
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -125,7 +148,13 @@ interface SoftLinkReferencedChild : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<SoftLinkReferencedChild, Builder>()
+  companion object: Type<SoftLinkReferencedChild, Builder>() {
+      operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): SoftLinkReferencedChild {
+          val builder = builder(init)
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

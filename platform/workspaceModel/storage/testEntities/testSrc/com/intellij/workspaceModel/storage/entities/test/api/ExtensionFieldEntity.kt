@@ -22,7 +22,14 @@ interface MainEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<MainEntity, Builder>()
+  companion object: Type<MainEntity, Builder>() {
+      operator fun invoke(x: String, entitySource: EntitySource, init: Builder.() -> Unit): MainEntity {
+          val builder = builder(init)
+          builder.x = x
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -42,7 +49,14 @@ interface AttachedEntity : WorkspaceEntity {
       override var data: String
   }
   
-  companion object: Type<AttachedEntity, Builder>()
+  companion object: Type<AttachedEntity, Builder>() {
+      operator fun invoke(entitySource: EntitySource, data: String, init: Builder.() -> Unit): AttachedEntity {
+          val builder = builder(init)
+          builder.entitySource = entitySource
+          builder.data = data
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

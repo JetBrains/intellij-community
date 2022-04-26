@@ -42,7 +42,16 @@ interface ArtifactEntity : WorkspaceEntityWithPersistentId {
         override var artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity?
     }
     
-    companion object: Type<ArtifactEntity, Builder>()
+    companion object: Type<ArtifactEntity, Builder>() {
+        operator fun invoke(name: String, entitySource: EntitySource, artifactType: String, includeInProjectBuild: Boolean, init: Builder.() -> Unit): ArtifactEntity {
+            val builder = builder(init)
+            builder.name = name
+            builder.entitySource = entitySource
+            builder.artifactType = artifactType
+            builder.includeInProjectBuild = includeInProjectBuild
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -65,7 +74,14 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
         override var propertiesXmlTag: String?
     }
     
-    companion object: Type<ArtifactPropertiesEntity, Builder>()
+    companion object: Type<ArtifactPropertiesEntity, Builder>() {
+        operator fun invoke(entitySource: EntitySource, providerType: String, init: Builder.() -> Unit): ArtifactPropertiesEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            builder.providerType = providerType
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -82,7 +98,13 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<PackagingElementEntity, Builder<PackagingElementEntity>>()
+    companion object: Type<PackagingElementEntity, Builder<PackagingElementEntity>>() {
+        operator fun invoke(entitySource: EntitySource, init: Builder<PackagingElementEntity>.() -> Unit): PackagingElementEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -104,7 +126,13 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
         override var children: List<PackagingElementEntity>
     }
     
-    companion object: Type<CompositePackagingElementEntity, Builder<CompositePackagingElementEntity>>(PackagingElementEntity)
+    companion object: Type<CompositePackagingElementEntity, Builder<CompositePackagingElementEntity>>(PackagingElementEntity) {
+        operator fun invoke(entitySource: EntitySource, init: Builder<CompositePackagingElementEntity>.() -> Unit): CompositePackagingElementEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -125,7 +153,14 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<DirectoryPackagingElementEntity, Builder>(CompositePackagingElementEntity)
+    companion object: Type<DirectoryPackagingElementEntity, Builder>(CompositePackagingElementEntity) {
+        operator fun invoke(directoryName: String, entitySource: EntitySource, init: Builder.() -> Unit): DirectoryPackagingElementEntity {
+            val builder = builder(init)
+            builder.directoryName = directoryName
+            builder.entitySource = entitySource
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -146,7 +181,14 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<ArchivePackagingElementEntity, Builder>(CompositePackagingElementEntity)
+    companion object: Type<ArchivePackagingElementEntity, Builder>(CompositePackagingElementEntity) {
+        operator fun invoke(fileName: String, entitySource: EntitySource, init: Builder.() -> Unit): ArchivePackagingElementEntity {
+            val builder = builder(init)
+            builder.fileName = fileName
+            builder.entitySource = entitySource
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -165,7 +207,13 @@ interface ArtifactRootElementEntity: CompositePackagingElementEntity {
         override var children: List<PackagingElementEntity>
     }
     
-    companion object: Type<ArtifactRootElementEntity, Builder>(CompositePackagingElementEntity)
+    companion object: Type<ArtifactRootElementEntity, Builder>(CompositePackagingElementEntity) {
+        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): ArtifactRootElementEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -184,7 +232,13 @@ interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<ArtifactOutputPackagingElementEntity, Builder>(PackagingElementEntity)
+    companion object: Type<ArtifactOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
+        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): ArtifactOutputPackagingElementEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -206,7 +260,13 @@ interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<ModuleOutputPackagingElementEntity, Builder>(PackagingElementEntity)
+    companion object: Type<ModuleOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
+        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): ModuleOutputPackagingElementEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -224,7 +284,13 @@ interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<LibraryFilesPackagingElementEntity, Builder>(PackagingElementEntity)
+    companion object: Type<LibraryFilesPackagingElementEntity, Builder>(PackagingElementEntity) {
+        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): LibraryFilesPackagingElementEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -246,7 +312,13 @@ interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<ModuleSourcePackagingElementEntity, Builder>(PackagingElementEntity)
+    companion object: Type<ModuleSourcePackagingElementEntity, Builder>(PackagingElementEntity) {
+        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): ModuleSourcePackagingElementEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -265,7 +337,13 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<ModuleTestOutputPackagingElementEntity, Builder>(PackagingElementEntity)
+    companion object: Type<ModuleTestOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
+        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): ModuleTestOutputPackagingElementEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -284,7 +362,14 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<FileOrDirectoryPackagingElementEntity, Builder<FileOrDirectoryPackagingElementEntity>>(PackagingElementEntity)
+    companion object: Type<FileOrDirectoryPackagingElementEntity, Builder<FileOrDirectoryPackagingElementEntity>>(PackagingElementEntity) {
+        operator fun invoke(filePath: VirtualFileUrl, entitySource: EntitySource, init: Builder<FileOrDirectoryPackagingElementEntity>.() -> Unit): FileOrDirectoryPackagingElementEntity {
+            val builder = builder(init)
+            builder.filePath = filePath
+            builder.entitySource = entitySource
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -302,7 +387,14 @@ interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementE
         override var entitySource: EntitySource
     }
     
-    companion object: Type<DirectoryCopyPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity)
+    companion object: Type<DirectoryCopyPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
+        operator fun invoke(filePath: VirtualFileUrl, entitySource: EntitySource, init: Builder.() -> Unit): DirectoryCopyPackagingElementEntity {
+            val builder = builder(init)
+            builder.filePath = filePath
+            builder.entitySource = entitySource
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -322,7 +414,15 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
         override var entitySource: EntitySource
     }
     
-    companion object: Type<ExtractedDirectoryPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity)
+    companion object: Type<ExtractedDirectoryPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
+        operator fun invoke(filePath: VirtualFileUrl, pathInArchive: String, entitySource: EntitySource, init: Builder.() -> Unit): ExtractedDirectoryPackagingElementEntity {
+            val builder = builder(init)
+            builder.filePath = filePath
+            builder.pathInArchive = pathInArchive
+            builder.entitySource = entitySource
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -342,7 +442,14 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
         override var entitySource: EntitySource
     }
     
-    companion object: Type<FileCopyPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity)
+    companion object: Type<FileCopyPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
+        operator fun invoke(filePath: VirtualFileUrl, entitySource: EntitySource, init: Builder.() -> Unit): FileCopyPackagingElementEntity {
+            val builder = builder(init)
+            builder.filePath = filePath
+            builder.entitySource = entitySource
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -365,7 +472,15 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
         override var propertiesXmlTag: String
     }
     
-    companion object: Type<CustomPackagingElementEntity, Builder>(CompositePackagingElementEntity)
+    companion object: Type<CustomPackagingElementEntity, Builder>(CompositePackagingElementEntity) {
+        operator fun invoke(typeId: String, entitySource: EntitySource, propertiesXmlTag: String, init: Builder.() -> Unit): CustomPackagingElementEntity {
+            val builder = builder(init)
+            builder.typeId = typeId
+            builder.entitySource = entitySource
+            builder.propertiesXmlTag = propertiesXmlTag
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 

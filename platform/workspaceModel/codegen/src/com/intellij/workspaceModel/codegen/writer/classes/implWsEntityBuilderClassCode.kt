@@ -188,7 +188,7 @@ ${
 
       section("fun checkInitialization()") {
         line("val _diff = diff")
-        list(structure.allFields.nopersistentId().noOptional()) { lineBuilder, field ->
+        list(structure.allFields.noPersistentId().noOptional()) { lineBuilder, field ->
           lineBuilder.implWsBuilderIsInitializedCode(field)
         }
       }

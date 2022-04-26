@@ -39,7 +39,16 @@ interface FacetEntity: WorkspaceEntityWithPersistentId {
         override var underlyingFacet: FacetEntity?
     }
     
-    companion object: Type<FacetEntity, Builder>()
+    companion object: Type<FacetEntity, Builder>() {
+        operator fun invoke(name: String, entitySource: EntitySource, facetType: String, moduleId: ModuleId, init: Builder.() -> Unit): FacetEntity {
+            val builder = builder(init)
+            builder.name = name
+            builder.entitySource = entitySource
+            builder.facetType = facetType
+            builder.moduleId = moduleId
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 

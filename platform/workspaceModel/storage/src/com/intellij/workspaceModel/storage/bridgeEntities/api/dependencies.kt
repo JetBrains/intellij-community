@@ -42,7 +42,17 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
         override var libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
     }
     
-    companion object: Type<LibraryEntity, Builder>()
+    companion object: Type<LibraryEntity, Builder>() {
+        operator fun invoke(name: String, entitySource: EntitySource, tableId: LibraryTableId, roots: List<LibraryRoot>, excludedRoots: List<VirtualFileUrl>, init: Builder.() -> Unit): LibraryEntity {
+            val builder = builder(init)
+            builder.name = name
+            builder.entitySource = entitySource
+            builder.tableId = tableId
+            builder.roots = roots
+            builder.excludedRoots = excludedRoots
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -65,7 +75,14 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
         override var propertiesXmlTag: String?
     }
     
-    companion object: Type<LibraryPropertiesEntity, Builder>()
+    companion object: Type<LibraryPropertiesEntity, Builder>() {
+        operator fun invoke(entitySource: EntitySource, libraryType: String, init: Builder.() -> Unit): LibraryPropertiesEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            builder.libraryType = libraryType
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -85,7 +102,14 @@ interface SdkEntity : WorkspaceEntity {
         override var homeUrl: VirtualFileUrl
     }
     
-    companion object: Type<SdkEntity, Builder>()
+    companion object: Type<SdkEntity, Builder>() {
+        operator fun invoke(entitySource: EntitySource, homeUrl: VirtualFileUrl, init: Builder.() -> Unit): SdkEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            builder.homeUrl = homeUrl
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 

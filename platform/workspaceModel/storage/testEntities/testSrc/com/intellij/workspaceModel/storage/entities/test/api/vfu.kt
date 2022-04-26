@@ -24,7 +24,15 @@ interface VFUEntity : WorkspaceEntity {
       override var fileProperty: VirtualFileUrl
   }
   
-  companion object: Type<VFUEntity, Builder>()
+  companion object: Type<VFUEntity, Builder>() {
+      operator fun invoke(data: String, entitySource: EntitySource, fileProperty: VirtualFileUrl, init: Builder.() -> Unit): VFUEntity {
+          val builder = builder(init)
+          builder.data = data
+          builder.entitySource = entitySource
+          builder.fileProperty = fileProperty
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -46,7 +54,16 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
       override var secondFileProperty: VirtualFileUrl
   }
   
-  companion object: Type<VFUWithTwoPropertiesEntity, Builder>()
+  companion object: Type<VFUWithTwoPropertiesEntity, Builder>() {
+      operator fun invoke(data: String, entitySource: EntitySource, fileProperty: VirtualFileUrl, secondFileProperty: VirtualFileUrl, init: Builder.() -> Unit): VFUWithTwoPropertiesEntity {
+          val builder = builder(init)
+          builder.data = data
+          builder.entitySource = entitySource
+          builder.fileProperty = fileProperty
+          builder.secondFileProperty = secondFileProperty
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -66,7 +83,14 @@ interface NullableVFUEntity : WorkspaceEntity {
       override var fileProperty: VirtualFileUrl?
   }
   
-  companion object: Type<NullableVFUEntity, Builder>()
+  companion object: Type<NullableVFUEntity, Builder>() {
+      operator fun invoke(data: String, entitySource: EntitySource, init: Builder.() -> Unit): NullableVFUEntity {
+          val builder = builder(init)
+          builder.data = data
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -86,7 +110,15 @@ interface ListVFUEntity : WorkspaceEntity {
       override var fileProperty: List<VirtualFileUrl>
   }
   
-  companion object: Type<ListVFUEntity, Builder>()
+  companion object: Type<ListVFUEntity, Builder>() {
+      operator fun invoke(data: String, entitySource: EntitySource, fileProperty: List<VirtualFileUrl>, init: Builder.() -> Unit): ListVFUEntity {
+          val builder = builder(init)
+          builder.data = data
+          builder.entitySource = entitySource
+          builder.fileProperty = fileProperty
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

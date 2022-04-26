@@ -22,7 +22,13 @@ interface ParentSingleAbEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<ParentSingleAbEntity, Builder>()
+  companion object: Type<ParentSingleAbEntity, Builder>() {
+      operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): ParentSingleAbEntity {
+          val builder = builder(init)
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -44,7 +50,14 @@ interface ChildSingleAbstractBaseEntity : WorkspaceEntity {
       override var parentEntity: ParentSingleAbEntity
   }
   
-  companion object: Type<ChildSingleAbstractBaseEntity, Builder<ChildSingleAbstractBaseEntity>>()
+  companion object: Type<ChildSingleAbstractBaseEntity, Builder<ChildSingleAbstractBaseEntity>>() {
+      operator fun invoke(commonData: String, entitySource: EntitySource, init: Builder<ChildSingleAbstractBaseEntity>.() -> Unit): ChildSingleAbstractBaseEntity {
+          val builder = builder(init)
+          builder.commonData = commonData
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -64,7 +77,15 @@ interface ChildSingleFirstEntity : ChildSingleAbstractBaseEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<ChildSingleFirstEntity, Builder>(ChildSingleAbstractBaseEntity)
+  companion object: Type<ChildSingleFirstEntity, Builder>(ChildSingleAbstractBaseEntity) {
+      operator fun invoke(commonData: String, firstData: String, entitySource: EntitySource, init: Builder.() -> Unit): ChildSingleFirstEntity {
+          val builder = builder(init)
+          builder.commonData = commonData
+          builder.firstData = firstData
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -84,7 +105,15 @@ interface ChildSingleSecondEntity : ChildSingleAbstractBaseEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<ChildSingleSecondEntity, Builder>(ChildSingleAbstractBaseEntity)
+  companion object: Type<ChildSingleSecondEntity, Builder>(ChildSingleAbstractBaseEntity) {
+      operator fun invoke(commonData: String, secondData: String, entitySource: EntitySource, init: Builder.() -> Unit): ChildSingleSecondEntity {
+          val builder = builder(init)
+          builder.commonData = commonData
+          builder.secondData = secondData
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

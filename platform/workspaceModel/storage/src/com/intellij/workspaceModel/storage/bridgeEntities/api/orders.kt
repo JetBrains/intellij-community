@@ -29,7 +29,14 @@ interface FacetsOrderEntity : WorkspaceEntity {
       override var moduleEntity: ModuleEntity
   }
   
-  companion object: Type<FacetsOrderEntity, Builder>()
+  companion object: Type<FacetsOrderEntity, Builder>() {
+      operator fun invoke(orderOfFacets: List<String>, entitySource: EntitySource, init: Builder.() -> Unit): FacetsOrderEntity {
+          val builder = builder(init)
+          builder.orderOfFacets = orderOfFacets
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -54,7 +61,14 @@ interface FacetExternalSystemIdEntity : WorkspaceEntity {
       override var facet: FacetEntity
   }
   
-  companion object: Type<FacetExternalSystemIdEntity, Builder>()
+  companion object: Type<FacetExternalSystemIdEntity, Builder>() {
+      operator fun invoke(externalSystemId: String, entitySource: EntitySource, init: Builder.() -> Unit): FacetExternalSystemIdEntity {
+          val builder = builder(init)
+          builder.externalSystemId = externalSystemId
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -78,7 +92,14 @@ interface ArtifactExternalSystemIdEntity : WorkspaceEntity {
       override var artifactEntity: ArtifactEntity
   }
   
-  companion object: Type<ArtifactExternalSystemIdEntity, Builder>()
+  companion object: Type<ArtifactExternalSystemIdEntity, Builder>() {
+      operator fun invoke(externalSystemId: String, entitySource: EntitySource, init: Builder.() -> Unit): ArtifactExternalSystemIdEntity {
+          val builder = builder(init)
+          builder.externalSystemId = externalSystemId
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -102,7 +123,14 @@ interface LibraryExternalSystemIdEntity: WorkspaceEntity {
       override var library: LibraryEntity
   }
   
-  companion object: Type<LibraryExternalSystemIdEntity, Builder>()
+  companion object: Type<LibraryExternalSystemIdEntity, Builder>() {
+      operator fun invoke(externalSystemId: String, entitySource: EntitySource, init: Builder.() -> Unit): LibraryExternalSystemIdEntity {
+          val builder = builder(init)
+          builder.externalSystemId = externalSystemId
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -125,7 +153,14 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<ArtifactsOrderEntity, Builder>()
+  companion object: Type<ArtifactsOrderEntity, Builder>() {
+      operator fun invoke(orderOfArtifacts: List<String>, entitySource: EntitySource, init: Builder.() -> Unit): ArtifactsOrderEntity {
+          val builder = builder(init)
+          builder.orderOfArtifacts = orderOfArtifacts
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

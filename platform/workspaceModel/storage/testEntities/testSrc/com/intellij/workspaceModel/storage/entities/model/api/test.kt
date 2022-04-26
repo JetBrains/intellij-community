@@ -25,7 +25,14 @@ interface FooEntity: WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<FooEntity, Builder>()
+  companion object: Type<FooEntity, Builder>() {
+      operator fun invoke(name: String, entitySource: EntitySource, init: Builder.() -> Unit): FooEntity {
+          val builder = builder(init)
+          builder.name = name
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -43,7 +50,14 @@ interface AnotherTest: WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<AnotherTest, Builder>()
+  companion object: Type<AnotherTest, Builder>() {
+      operator fun invoke(name: String, entitySource: EntitySource, init: Builder.() -> Unit): AnotherTest {
+          val builder = builder(init)
+          builder.name = name
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

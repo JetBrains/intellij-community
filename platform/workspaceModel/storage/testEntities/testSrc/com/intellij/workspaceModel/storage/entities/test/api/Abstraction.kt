@@ -23,7 +23,13 @@ interface BaseEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<BaseEntity, Builder<BaseEntity>>()
+  companion object: Type<BaseEntity, Builder<BaseEntity>>() {
+      operator fun invoke(entitySource: EntitySource, init: Builder<BaseEntity>.() -> Unit): BaseEntity {
+          val builder = builder(init)
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -43,7 +49,13 @@ interface CompositeBaseEntity : BaseEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<CompositeBaseEntity, Builder<CompositeBaseEntity>>(BaseEntity)
+  companion object: Type<CompositeBaseEntity, Builder<CompositeBaseEntity>>(BaseEntity) {
+      operator fun invoke(entitySource: EntitySource, init: Builder<CompositeBaseEntity>.() -> Unit): CompositeBaseEntity {
+          val builder = builder(init)
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -62,7 +74,14 @@ interface MiddleEntity : BaseEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<MiddleEntity, Builder>(BaseEntity)
+  companion object: Type<MiddleEntity, Builder>(BaseEntity) {
+      operator fun invoke(property: String, entitySource: EntitySource, init: Builder.() -> Unit): MiddleEntity {
+          val builder = builder(init)
+          builder.property = property
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -91,7 +110,13 @@ interface LeftEntity : CompositeBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<LeftEntity, Builder>(CompositeBaseEntity)
+    companion object: Type<LeftEntity, Builder>(CompositeBaseEntity) {
+        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): LeftEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -120,7 +145,13 @@ interface RightEntity : CompositeBaseEntity {
         override var entitySource: EntitySource
     }
     
-    companion object: Type<RightEntity, Builder>(CompositeBaseEntity)
+    companion object: Type<RightEntity, Builder>(CompositeBaseEntity) {
+        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): RightEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 

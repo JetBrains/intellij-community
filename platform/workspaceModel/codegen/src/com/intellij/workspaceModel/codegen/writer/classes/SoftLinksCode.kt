@@ -58,7 +58,7 @@ internal fun ObjType<*, *>.softLinksCode(context: LinesBuilder, hasSoftLinks: Bo
 }
 
 internal fun ObjType<*, *>.hasSoftLinks(simpleTypes: List<DefType>): Boolean {
-  return structure.declaredFields.nopersistentId().noRefs().any { field ->
+  return structure.declaredFields.noPersistentId().noRefs().any { field ->
     field.hasSoftLinks(simpleTypes)
   }
 }
@@ -160,7 +160,7 @@ private fun ObjType<*, *>.operate(
   simpleTypes: List<DefType>,
   operation: LinesBuilder.(String) -> Unit
 ) {
-  structure.allFields.nopersistentId().noRefs().forEach { field ->
+  structure.allFields.noPersistentId().noRefs().forEach { field ->
     field.type.operate(field.name, simpleTypes, context, operation)
   }
 }
@@ -230,7 +230,7 @@ private fun processSealedClass(simpleTypes: List<DefType>,
 
 
 private fun ObjType<*, *>.operateUpdateLink(context: LinesBuilder, simpleTypes: List<DefType>) {
-  structure.allFields.nopersistentId().noRefs().forEach { field ->
+  structure.allFields.noPersistentId().noRefs().forEach { field ->
     val type = field.type
     val retType = type.processType(simpleTypes, context, field.name)
     if (retType != null) {

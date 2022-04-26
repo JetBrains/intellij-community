@@ -29,7 +29,14 @@ interface XParentEntity : WorkspaceEntity {
       override var childChild: List<XChildChildEntity>
   }
   
-  companion object: Type<XParentEntity, Builder>()
+  companion object: Type<XParentEntity, Builder>() {
+      operator fun invoke(parentProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): XParentEntity {
+          val builder = builder(init)
+          builder.parentProperty = parentProperty
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -56,7 +63,14 @@ interface XChildEntity : WorkspaceEntity {
       override var childChild: List<XChildChildEntity>
   }
   
-  companion object: Type<XChildEntity, Builder>()
+  companion object: Type<XChildEntity, Builder>() {
+      operator fun invoke(childProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): XChildEntity {
+          val builder = builder(init)
+          builder.childProperty = childProperty
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -75,7 +89,14 @@ interface XChildWithOptionalParentEntity : WorkspaceEntity {
       override var optionalParent: XParentEntity?
   }
   
-  companion object: Type<XChildWithOptionalParentEntity, Builder>()
+  companion object: Type<XChildWithOptionalParentEntity, Builder>() {
+      operator fun invoke(childProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): XChildWithOptionalParentEntity {
+          val builder = builder(init)
+          builder.childProperty = childProperty
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -95,7 +116,13 @@ interface XChildChildEntity : WorkspaceEntity {
       override var parent2: XChildEntity
   }
   
-  companion object: Type<XChildChildEntity, Builder>()
+  companion object: Type<XChildChildEntity, Builder>() {
+      operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): XChildChildEntity {
+          val builder = builder(init)
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

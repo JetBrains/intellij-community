@@ -49,7 +49,20 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
       override var srcPlace: Map<String, Int>
   }
   
-  companion object: Type<EclipseProjectPropertiesEntity, Builder>()
+  companion object: Type<EclipseProjectPropertiesEntity, Builder>() {
+      operator fun invoke(entitySource: EntitySource, variablePaths: Map<String, String>, eclipseUrls: List<VirtualFileUrl>, unknownCons: List<String>, knownCons: List<String>, forceConfigureJdk: Boolean, expectedModuleSourcePlace: Int, srcPlace: Map<String, Int>, init: Builder.() -> Unit): EclipseProjectPropertiesEntity {
+          val builder = builder(init)
+          builder.entitySource = entitySource
+          builder.variablePaths = variablePaths
+          builder.eclipseUrls = eclipseUrls
+          builder.unknownCons = unknownCons
+          builder.knownCons = knownCons
+          builder.forceConfigureJdk = forceConfigureJdk
+          builder.expectedModuleSourcePlace = expectedModuleSourcePlace
+          builder.srcPlace = srcPlace
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

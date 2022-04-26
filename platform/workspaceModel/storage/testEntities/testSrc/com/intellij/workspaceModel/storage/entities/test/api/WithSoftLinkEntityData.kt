@@ -52,7 +52,14 @@ interface NamedEntity : WorkspaceEntityWithPersistentId {
       override var children: List<NamedChildEntity>
   }
   
-  companion object: Type<NamedEntity, Builder>()
+  companion object: Type<NamedEntity, Builder>() {
+      operator fun invoke(myName: String, entitySource: EntitySource, init: Builder.() -> Unit): NamedEntity {
+          val builder = builder(init)
+          builder.myName = myName
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -95,7 +102,14 @@ interface NamedChildEntity : WorkspaceEntity {
       override var parentEntity: NamedEntity
   }
   
-  companion object: Type<NamedChildEntity, Builder>()
+  companion object: Type<NamedChildEntity, Builder>() {
+      operator fun invoke(childProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): NamedChildEntity {
+          val builder = builder(init)
+          builder.childProperty = childProperty
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -129,7 +143,14 @@ interface WithSoftLinkEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<WithSoftLinkEntity, Builder>()
+  companion object: Type<WithSoftLinkEntity, Builder>() {
+      operator fun invoke(link: NameId, entitySource: EntitySource, init: Builder.() -> Unit): WithSoftLinkEntity {
+          val builder = builder(init)
+          builder.link = link
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -155,7 +176,14 @@ interface ComposedLinkEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<ComposedLinkEntity, Builder>()
+  companion object: Type<ComposedLinkEntity, Builder>() {
+      operator fun invoke(link: ComposedId, entitySource: EntitySource, init: Builder.() -> Unit): ComposedLinkEntity {
+          val builder = builder(init)
+          builder.link = link
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -187,7 +215,15 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithPersistentId {
       override var links: List<NameId>
   }
   
-  companion object: Type<WithListSoftLinksEntity, Builder>()
+  companion object: Type<WithListSoftLinksEntity, Builder>() {
+      operator fun invoke(myName: String, entitySource: EntitySource, links: List<NameId>, init: Builder.() -> Unit): WithListSoftLinksEntity {
+          val builder = builder(init)
+          builder.myName = myName
+          builder.entitySource = entitySource
+          builder.links = links
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -225,7 +261,15 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithPersistentId {
       override var link: NameId
   }
   
-  companion object: Type<ComposedIdSoftRefEntity, Builder>()
+  companion object: Type<ComposedIdSoftRefEntity, Builder>() {
+      operator fun invoke(myName: String, entitySource: EntitySource, link: NameId, init: Builder.() -> Unit): ComposedIdSoftRefEntity {
+          val builder = builder(init)
+          builder.myName = myName
+          builder.entitySource = entitySource
+          builder.link = link
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

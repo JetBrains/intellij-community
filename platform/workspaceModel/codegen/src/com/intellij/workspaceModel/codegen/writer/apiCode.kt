@@ -6,6 +6,10 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import deft.storage.codegen.field.javaType
 import org.jetbrains.deft.Type
+import org.jetbrains.deft.codegen.ijws.classes.noDefaultValue
+import org.jetbrains.deft.codegen.ijws.classes.noOptional
+import org.jetbrains.deft.codegen.ijws.classes.noRefs
+import org.jetbrains.deft.codegen.ijws.classes.noPersistentId
 import org.jetbrains.deft.codegen.model.DefType
 import org.jetbrains.deft.codegen.model.WsEntityInterface
 import org.jetbrains.deft.codegen.utils.fqn
@@ -58,18 +62,33 @@ fun DefType.generatedApiCode(indent: String = "    "): String = lines(indent) {
   }
 
   section(header) {
-    list(structure.allFields.filter { it.hasSetter }) {
+    list(structure.allFields.noPersistentId()) {
       if (def.kind is WsEntityInterface) wsBuilderApi else builderApi
     }
   }
 
   line()
   val builderGeneric = if (abstract) "<$javaFullName>" else ""
-  line(buildString {
+  val companionObjectHeader = buildString {
     append("companion object: ${Type::class.fqn}<$javaFullName, Builder$builderGeneric>(")
     if (base != null) append(base.javaFullName)
     append(")")
-  })
+  }
+  val mandatoryFields = structure.allFields.noRefs().noOptional().noPersistentId().noDefaultValue()
+  if (!mandatoryFields.isEmpty()) {
+    val fields = mandatoryFields.joinToString { "${it.name}: ${it.type.javaType}" }
+    section(companionObjectHeader) {
+      section("operator fun invoke($fields, init: Builder$builderGeneric.() -> Unit): $javaFullName") {
+        line("val builder = builder(init)")
+        list(mandatoryFields) {
+          "builder.$name = $name"
+        }
+        line("return builder")
+      }
+    }
+  } else {
+    line(companionObjectHeader)
+  }
   line("//@formatter:on")
   lineNoNl("//endregion")
 }

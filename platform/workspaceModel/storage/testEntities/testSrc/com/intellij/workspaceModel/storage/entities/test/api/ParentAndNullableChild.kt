@@ -25,7 +25,14 @@ interface ParentNullableEntity : WorkspaceEntity {
       override var child: ChildNullableEntity?
   }
   
-  companion object: Type<ParentNullableEntity, Builder>()
+  companion object: Type<ParentNullableEntity, Builder>() {
+      operator fun invoke(parentData: String, entitySource: EntitySource, init: Builder.() -> Unit): ParentNullableEntity {
+          val builder = builder(init)
+          builder.parentData = parentData
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -46,7 +53,14 @@ interface ChildNullableEntity : WorkspaceEntity {
       override var parentEntity: ParentNullableEntity
   }
   
-  companion object: Type<ChildNullableEntity, Builder>()
+  companion object: Type<ChildNullableEntity, Builder>() {
+      operator fun invoke(childData: String, entitySource: EntitySource, init: Builder.() -> Unit): ChildNullableEntity {
+          val builder = builder(init)
+          builder.childData = childData
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

@@ -25,7 +25,14 @@ interface FirstEntityWithPId : WorkspaceEntityWithPersistentId {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<FirstEntityWithPId, Builder>()
+  companion object: Type<FirstEntityWithPId, Builder>() {
+      operator fun invoke(data: String, entitySource: EntitySource, init: Builder.() -> Unit): FirstEntityWithPId {
+          val builder = builder(init)
+          builder.data = data
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -47,7 +54,14 @@ interface SecondEntityWithPId : WorkspaceEntityWithPersistentId {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<SecondEntityWithPId, Builder>()
+  companion object: Type<SecondEntityWithPId, Builder>() {
+      operator fun invoke(data: String, entitySource: EntitySource, init: Builder.() -> Unit): SecondEntityWithPId {
+          val builder = builder(init)
+          builder.data = data
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

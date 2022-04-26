@@ -23,7 +23,14 @@ interface ParentMultipleEntity : WorkspaceEntity {
       override var children: List<ChildMultipleEntity>
   }
   
-  companion object: Type<ParentMultipleEntity, Builder>()
+  companion object: Type<ParentMultipleEntity, Builder>() {
+      operator fun invoke(parentData: String, entitySource: EntitySource, init: Builder.() -> Unit): ParentMultipleEntity {
+          val builder = builder(init)
+          builder.parentData = parentData
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -44,7 +51,14 @@ interface ChildMultipleEntity : WorkspaceEntity {
       override var parentEntity: ParentMultipleEntity
   }
   
-  companion object: Type<ChildMultipleEntity, Builder>()
+  companion object: Type<ChildMultipleEntity, Builder>() {
+      operator fun invoke(childData: String, entitySource: EntitySource, init: Builder.() -> Unit): ChildMultipleEntity {
+          val builder = builder(init)
+          builder.childData = childData
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

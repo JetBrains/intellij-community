@@ -22,7 +22,13 @@ interface SelfLinkedEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<SelfLinkedEntity, Builder>()
+  companion object: Type<SelfLinkedEntity, Builder>() {
+      operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): SelfLinkedEntity {
+          val builder = builder(init)
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

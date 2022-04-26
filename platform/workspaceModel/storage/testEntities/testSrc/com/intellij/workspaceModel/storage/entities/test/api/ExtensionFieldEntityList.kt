@@ -21,7 +21,14 @@ interface MainEntityList : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<MainEntityList, Builder>()
+  companion object: Type<MainEntityList, Builder>() {
+      operator fun invoke(x: String, entitySource: EntitySource, init: Builder.() -> Unit): MainEntityList {
+          val builder = builder(init)
+          builder.x = x
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 }
@@ -40,7 +47,14 @@ interface AttachedEntityList : WorkspaceEntity {
       override var data: String
   }
   
-  companion object: Type<AttachedEntityList, Builder>()
+  companion object: Type<AttachedEntityList, Builder>() {
+      operator fun invoke(entitySource: EntitySource, data: String, init: Builder.() -> Unit): AttachedEntityList {
+          val builder = builder(init)
+          builder.entitySource = entitySource
+          builder.data = data
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

@@ -30,7 +30,14 @@ interface OoParentEntity : WorkspaceEntity {
       override var anotherChild: OoChildWithNullableParentEntity?
   }
   
-  companion object: Type<OoParentEntity, Builder>()
+  companion object: Type<OoParentEntity, Builder>() {
+      operator fun invoke(parentProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): OoParentEntity {
+          val builder = builder(init)
+          builder.parentProperty = parentProperty
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -67,7 +74,14 @@ interface OoChildEntity : WorkspaceEntity {
       override var parentEntity: OoParentEntity
   }
   
-  companion object: Type<OoChildEntity, Builder>()
+  companion object: Type<OoChildEntity, Builder>() {
+      operator fun invoke(childProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): OoChildEntity {
+          val builder = builder(init)
+          builder.childProperty = childProperty
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -103,7 +117,13 @@ interface OoChildWithNullableParentEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<OoChildWithNullableParentEntity, Builder>()
+  companion object: Type<OoChildWithNullableParentEntity, Builder>() {
+      operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): OoChildWithNullableParentEntity {
+          val builder = builder(init)
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -148,7 +168,14 @@ interface OoParentWithPidEntity : WorkspaceEntityWithPersistentId {
       override var childThree: OoChildAlsoWithPidEntity?
   }
   
-  companion object: Type<OoParentWithPidEntity, Builder>()
+  companion object: Type<OoParentWithPidEntity, Builder>() {
+      operator fun invoke(parentProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): OoParentWithPidEntity {
+          val builder = builder(init)
+          builder.parentProperty = parentProperty
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -183,7 +210,14 @@ interface OoChildForParentWithPidEntity : WorkspaceEntity {
       override var parentEntity: OoParentWithPidEntity
   }
   
-  companion object: Type<OoChildForParentWithPidEntity, Builder>()
+  companion object: Type<OoChildForParentWithPidEntity, Builder>() {
+      operator fun invoke(childProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): OoChildForParentWithPidEntity {
+          val builder = builder(init)
+          builder.childProperty = childProperty
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -220,7 +254,14 @@ interface OoChildAlsoWithPidEntity : WorkspaceEntityWithPersistentId {
       override var parentEntity: OoParentWithPidEntity
   }
   
-  companion object: Type<OoChildAlsoWithPidEntity, Builder>()
+  companion object: Type<OoChildAlsoWithPidEntity, Builder>() {
+      operator fun invoke(childProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): OoChildAlsoWithPidEntity {
+          val builder = builder(init)
+          builder.childProperty = childProperty
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -256,7 +297,14 @@ interface OoParentWithoutPidEntity : WorkspaceEntity {
       override var childOne: OoChildWithPidEntity?
   }
   
-  companion object: Type<OoParentWithoutPidEntity, Builder>()
+  companion object: Type<OoParentWithoutPidEntity, Builder>() {
+      operator fun invoke(parentProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): OoParentWithoutPidEntity {
+          val builder = builder(init)
+          builder.parentProperty = parentProperty
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -298,7 +346,14 @@ interface OoChildWithPidEntity : WorkspaceEntityWithPersistentId {
       override var parentEntity: OoParentWithoutPidEntity
   }
   
-  companion object: Type<OoChildWithPidEntity, Builder>()
+  companion object: Type<OoChildWithPidEntity, Builder>() {
+      operator fun invoke(childProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): OoChildWithPidEntity {
+          val builder = builder(init)
+          builder.childProperty = childProperty
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

@@ -46,7 +46,15 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
         override var facets: List<FacetEntity>
     }
     
-    companion object: Type<ModuleEntity, Builder>()
+    companion object: Type<ModuleEntity, Builder>() {
+        operator fun invoke(name: String, entitySource: EntitySource, dependencies: List<ModuleDependencyItem>, init: Builder.() -> Unit): ModuleEntity {
+            val builder = builder(init)
+            builder.name = name
+            builder.entitySource = entitySource
+            builder.dependencies = dependencies
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -69,7 +77,14 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
         override var customModuleOptions: Map<String, String>
     }
     
-    companion object: Type<ModuleCustomImlDataEntity, Builder>()
+    companion object: Type<ModuleCustomImlDataEntity, Builder>() {
+        operator fun invoke(entitySource: EntitySource, customModuleOptions: Map<String, String>, init: Builder.() -> Unit): ModuleCustomImlDataEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            builder.customModuleOptions = customModuleOptions
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -90,7 +105,14 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
         override var path: List<String>
     }
     
-    companion object: Type<ModuleGroupPathEntity, Builder>()
+    companion object: Type<ModuleGroupPathEntity, Builder>() {
+        operator fun invoke(entitySource: EntitySource, path: List<String>, init: Builder.() -> Unit): ModuleGroupPathEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            builder.path = path
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -119,7 +141,15 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
         override var languageLevelId: String?
     }
     
-    companion object: Type<JavaModuleSettingsEntity, Builder>()
+    companion object: Type<JavaModuleSettingsEntity, Builder>() {
+        operator fun invoke(entitySource: EntitySource, inheritedCompilerOutput: Boolean, excludeOutput: Boolean, init: Builder.() -> Unit): JavaModuleSettingsEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            builder.inheritedCompilerOutput = inheritedCompilerOutput
+            builder.excludeOutput = excludeOutput
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -153,7 +183,13 @@ interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
         override var externalSystemModuleType: String?
     }
     
-    companion object: Type<ExternalSystemModuleOptionsEntity, Builder>()
+    companion object: Type<ExternalSystemModuleOptionsEntity, Builder>() {
+        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): ExternalSystemModuleOptionsEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 

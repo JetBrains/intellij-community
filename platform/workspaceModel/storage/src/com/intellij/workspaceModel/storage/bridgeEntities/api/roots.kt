@@ -36,7 +36,16 @@ interface ContentRootEntity : WorkspaceEntity {
         override var sourceRootOrder: SourceRootOrderEntity?
     }
     
-    companion object: Type<ContentRootEntity, Builder>()
+    companion object: Type<ContentRootEntity, Builder>() {
+        operator fun invoke(entitySource: EntitySource, url: VirtualFileUrl, excludedUrls: List<VirtualFileUrl>, excludedPatterns: List<String>, init: Builder.() -> Unit): ContentRootEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            builder.url = url
+            builder.excludedUrls = excludedUrls
+            builder.excludedPatterns = excludedPatterns
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -66,7 +75,15 @@ interface SourceRootEntity : WorkspaceEntity {
         override var javaResourceRoots: List<JavaResourceRootEntity>
     }
     
-    companion object: Type<SourceRootEntity, Builder>()
+    companion object: Type<SourceRootEntity, Builder>() {
+        operator fun invoke(entitySource: EntitySource, url: VirtualFileUrl, rootType: String, init: Builder.() -> Unit): SourceRootEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            builder.url = url
+            builder.rootType = rootType
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -87,7 +104,14 @@ interface SourceRootOrderEntity : WorkspaceEntity {
         override var orderOfSourceRoots: List<VirtualFileUrl>
     }
     
-    companion object: Type<SourceRootOrderEntity, Builder>()
+    companion object: Type<SourceRootOrderEntity, Builder>() {
+        operator fun invoke(entitySource: EntitySource, orderOfSourceRoots: List<VirtualFileUrl>, init: Builder.() -> Unit): SourceRootOrderEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            builder.orderOfSourceRoots = orderOfSourceRoots
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -107,7 +131,14 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
         override var propertiesXmlTag: String
     }
     
-    companion object: Type<CustomSourceRootPropertiesEntity, Builder>()
+    companion object: Type<CustomSourceRootPropertiesEntity, Builder>() {
+        operator fun invoke(entitySource: EntitySource, propertiesXmlTag: String, init: Builder.() -> Unit): CustomSourceRootPropertiesEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            builder.propertiesXmlTag = propertiesXmlTag
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -130,7 +161,15 @@ interface JavaSourceRootEntity : WorkspaceEntity {
         override var packagePrefix: String
     }
     
-    companion object: Type<JavaSourceRootEntity, Builder>()
+    companion object: Type<JavaSourceRootEntity, Builder>() {
+        operator fun invoke(entitySource: EntitySource, generated: Boolean, packagePrefix: String, init: Builder.() -> Unit): JavaSourceRootEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            builder.generated = generated
+            builder.packagePrefix = packagePrefix
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 
@@ -153,7 +192,15 @@ interface JavaResourceRootEntity: WorkspaceEntity {
         override var relativeOutputPath: String
     }
     
-    companion object: Type<JavaResourceRootEntity, Builder>()
+    companion object: Type<JavaResourceRootEntity, Builder>() {
+        operator fun invoke(entitySource: EntitySource, generated: Boolean, relativeOutputPath: String, init: Builder.() -> Unit): JavaResourceRootEntity {
+            val builder = builder(init)
+            builder.entitySource = entitySource
+            builder.generated = generated
+            builder.relativeOutputPath = relativeOutputPath
+            return builder
+        }
+    }
     //@formatter:on
     //endregion
 

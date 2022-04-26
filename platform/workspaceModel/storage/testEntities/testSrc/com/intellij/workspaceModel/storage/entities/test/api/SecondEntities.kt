@@ -24,7 +24,15 @@ interface SampleEntity2 : WorkspaceEntity {
       override var optionalData: String?
   }
   
-  companion object: Type<SampleEntity2, Builder>()
+  companion object: Type<SampleEntity2, Builder>() {
+      operator fun invoke(data: String, entitySource: EntitySource, boolData: Boolean, init: Builder.() -> Unit): SampleEntity2 {
+          val builder = builder(init)
+          builder.data = data
+          builder.entitySource = entitySource
+          builder.boolData = boolData
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -47,7 +55,16 @@ interface VFUEntity2 : WorkspaceEntity {
       override var notNullRoots: List<VirtualFileUrl>
   }
   
-  companion object: Type<VFUEntity2, Builder>()
+  companion object: Type<VFUEntity2, Builder>() {
+      operator fun invoke(data: String, entitySource: EntitySource, directoryPath: VirtualFileUrl, notNullRoots: List<VirtualFileUrl>, init: Builder.() -> Unit): VFUEntity2 {
+          val builder = builder(init)
+          builder.data = data
+          builder.entitySource = entitySource
+          builder.directoryPath = directoryPath
+          builder.notNullRoots = notNullRoots
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

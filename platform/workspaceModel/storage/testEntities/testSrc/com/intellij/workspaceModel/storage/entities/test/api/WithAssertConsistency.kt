@@ -22,7 +22,14 @@ interface AssertConsistencyEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<AssertConsistencyEntity, Builder>()
+  companion object: Type<AssertConsistencyEntity, Builder>() {
+      operator fun invoke(passCheck: Boolean, entitySource: EntitySource, init: Builder.() -> Unit): AssertConsistencyEntity {
+          val builder = builder(init)
+          builder.passCheck = passCheck
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 

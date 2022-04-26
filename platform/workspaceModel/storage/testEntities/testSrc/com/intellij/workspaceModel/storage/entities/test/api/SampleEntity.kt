@@ -32,7 +32,17 @@ interface SampleEntity : WorkspaceEntity {
       override var nullableData: String?
   }
   
-  companion object: Type<SampleEntity, Builder>()
+  companion object: Type<SampleEntity, Builder>() {
+      operator fun invoke(booleanProperty: Boolean, entitySource: EntitySource, stringProperty: String, stringListProperty: List<String>, fileProperty: VirtualFileUrl, init: Builder.() -> Unit): SampleEntity {
+          val builder = builder(init)
+          builder.booleanProperty = booleanProperty
+          builder.entitySource = entitySource
+          builder.stringProperty = stringProperty
+          builder.stringListProperty = stringListProperty
+          builder.fileProperty = fileProperty
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -51,7 +61,14 @@ interface ChildSampleEntity : WorkspaceEntity {
       override var parentEntity: SampleEntity?
   }
   
-  companion object: Type<ChildSampleEntity, Builder>()
+  companion object: Type<ChildSampleEntity, Builder>() {
+      operator fun invoke(data: String, entitySource: EntitySource, init: Builder.() -> Unit): ChildSampleEntity {
+          val builder = builder(init)
+          builder.data = data
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -84,7 +101,14 @@ interface SecondSampleEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<SecondSampleEntity, Builder>()
+  companion object: Type<SecondSampleEntity, Builder>() {
+      operator fun invoke(intProperty: Int, entitySource: EntitySource, init: Builder.() -> Unit): SecondSampleEntity {
+          val builder = builder(init)
+          builder.intProperty = intProperty
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -103,7 +127,14 @@ interface SourceEntity : WorkspaceEntity {
       override var children: List<ChildSourceEntity>
   }
   
-  companion object: Type<SourceEntity, Builder>()
+  companion object: Type<SourceEntity, Builder>() {
+      operator fun invoke(data: String, entitySource: EntitySource, init: Builder.() -> Unit): SourceEntity {
+          val builder = builder(init)
+          builder.data = data
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -122,7 +153,14 @@ interface ChildSourceEntity : WorkspaceEntity {
       override var parentEntity: SourceEntity
   }
   
-  companion object: Type<ChildSourceEntity, Builder>()
+  companion object: Type<ChildSourceEntity, Builder>() {
+      operator fun invoke(data: String, entitySource: EntitySource, init: Builder.() -> Unit): ChildSourceEntity {
+          val builder = builder(init)
+          builder.data = data
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
@@ -143,7 +181,14 @@ interface PersistentIdEntity : WorkspaceEntityWithPersistentId {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<PersistentIdEntity, Builder>()
+  companion object: Type<PersistentIdEntity, Builder>() {
+      operator fun invoke(data: String, entitySource: EntitySource, init: Builder.() -> Unit): PersistentIdEntity {
+          val builder = builder(init)
+          builder.data = data
+          builder.entitySource = entitySource
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
