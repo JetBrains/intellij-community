@@ -56,6 +56,7 @@ class KotlinJavaMavenConfigurator : KotlinMavenConfigurator(TEST_LIB_ID, false, 
     companion object {
         private const val NAME = "maven"
         const val TEST_LIB_ID = "kotlin-test"
+        const val JUNIT_TEST_LIB_ID = "kotlin-test-junit"
         private val PRESENTABLE_TEXT get() = KotlinMavenBundle.message("configure.java.with.maven")
     }
 }
