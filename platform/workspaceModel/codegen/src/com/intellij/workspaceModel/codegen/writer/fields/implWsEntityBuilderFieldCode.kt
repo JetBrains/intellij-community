@@ -22,42 +22,6 @@ import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
 
 val Field<*, *>.implWsBuilderFieldCode: String
-  get() = buildString {
-    if (hasSetter) {
-      append(implWsBuilderBlockingCode)
-    }
-    else {
-      if (suspendable == true) {
-        append("""
-                        @Deprecated("Use suspendable getter")                
-                        override val $javaName: ${type.javaType}
-                            get() = getEntityData().$javaName
-                                
-            """.trimIndent())
-      }
-      else {
-        append("""                
-                        override var $javaName: ${type.javaType}
-                            get() = parent
-                            set(value) {
-                                checkModificationAllowed()
-                                parent = value
-                            }
-                                
-            """.trimIndent())
-      }
-    }
-
-    if (suspendable == true) append("\n").append(builderImplSuspendableCode)
-  }
-
-private val Field<*, *>.builderImplSuspendableCode: String
-  get() = """
-        override suspend fun $suspendableGetterName(): ${type.javaType} = 
-                result.$suspendableGetterName()
-    """.trimIndent()
-
-private val Field<*, *>.implWsBuilderBlockingCode: String
   get() = type.implWsBuilderBlockingCode(this)
 
 private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalSuffix: String = ""): String = when (this) {

@@ -24,6 +24,7 @@ import com.intellij.workspaceModel.storage.entities.test.api.ChildSubSubEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ComposedIdSoftRefEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ComposedLinkEntity
 import com.intellij.workspaceModel.storage.entities.test.api.CompositeChildAbstractEntity
+import com.intellij.workspaceModel.storage.entities.test.api.DefaultValueEntity
 import com.intellij.workspaceModel.storage.entities.test.api.EntityWithSoftLinks
 import com.intellij.workspaceModel.storage.entities.test.api.FirstEntityWithPId
 import com.intellij.workspaceModel.storage.entities.test.api.LeftEntity
@@ -227,6 +228,7 @@ fun MutableEntityStorage.modifyEntity(entity: ChildSubSubEntity, modification: C
 fun MutableEntityStorage.modifyEntity(entity: ComposedIdSoftRefEntity, modification: ComposedIdSoftRefEntity.Builder.() -> Unit) = modifyEntity(ComposedIdSoftRefEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: ComposedLinkEntity, modification: ComposedLinkEntity.Builder.() -> Unit) = modifyEntity(ComposedLinkEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: CompositeChildAbstractEntity, modification: CompositeChildAbstractEntity.Builder.() -> Unit) = modifyEntity(CompositeChildAbstractEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: DefaultValueEntity, modification: DefaultValueEntity.Builder.() -> Unit) = modifyEntity(DefaultValueEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: EntityWithSoftLinks, modification: EntityWithSoftLinks.Builder.() -> Unit) = modifyEntity(EntityWithSoftLinks.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: FirstEntityWithPId, modification: FirstEntityWithPId.Builder.() -> Unit) = modifyEntity(FirstEntityWithPId.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: LeftEntity, modification: LeftEntity.Builder.() -> Unit) = modifyEntity(LeftEntity.Builder::class.java, entity, modification)

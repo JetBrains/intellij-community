@@ -22,27 +22,9 @@ val Field<*, *>.implWsEntityFieldCode: String
         append(implWsBlockingCodeOverride)
       }
       else append(implWsBlockingCode)
-
       if (suspendable == true) append("\n").append(implSuspendableCode)
-    }
-    else {
-      when (hasDefault) {
-        Field.Default.none -> unreachable()
-        Field.Default.plain -> append("""
-                        override val $javaName: ${type.javaType}
-                            get() = super<${owner.javaFullName}>.$javaName
-                                                                                           
-                    """.trimIndent())
-        Field.Default.suspend -> append("""
-                        @Deprecated("Use suspendable getter")
-                        override val $javaName: ${type.javaType}
-                            get() = runBlocking { $suspendableGetterName() }
-                            
-                        override suspend fun $suspendableGetterName(): ${type.javaType} = 
-                            super<${owner.javaFullName}>.$suspendableGetterName() 
-                                                                       
-                    """.trimIndent())
-      }
+    } else {
+      append("override var $javaName: ${type.javaType} = super<${owner.javaFullName}>.$javaName\n")
     }
   }
 

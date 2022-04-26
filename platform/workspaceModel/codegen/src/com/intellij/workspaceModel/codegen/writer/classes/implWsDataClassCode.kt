@@ -45,7 +45,7 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
     section("class $javaDataName : ${sups(entityDataBaseClass, softLinkable)}") label@{
       listNl(structure.allFields.noRefs().noEntitySource().noPersistentId()) { implWsDataFieldCode }
 
-      listNl(structure.allFields.noRefs().noEntitySource().noPersistentId().noOptional()) { implWsDataFieldInitializedCode }
+      listNl(structure.allFields.noRefs().noEntitySource().noPersistentId().noOptional().noDefaultValue()) { implWsDataFieldInitializedCode }
 
       softLinksCode(this@label, hasSoftLinks, simpleTypes)
 
@@ -64,7 +64,11 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
       sectionNl("override fun createEntity(snapshot: ${EntityStorage::class.fqn}): $javaFullName") {
         line("val entity = $javaImplName()")
         list(structure.allFields.noRefs().noEntitySource().noPersistentId()) {
-          "entity.$implFieldName = $name"
+          if (hasSetter) {
+            "entity.$implFieldName = $name"
+          } else {
+            "entity.$name = $name"
+          }
         }
         line("entity.entitySource = entitySource")
         line("entity.snapshot = snapshot")
