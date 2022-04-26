@@ -367,6 +367,32 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
            "}");
   }
 
+  public void testRecord() {
+    doTest("class Demo {\n" +
+           "    public static void main(String... args) {\n" +
+           "        User user = new User(null, null);\n" +
+           "        System.out.println(user.email());\n" +
+           "        user.xylophone();\n" +
+           "    }\n" +
+           "\n" +
+           "    public record User(String email, String phone){\n" +
+           "        public User {\n" +
+           "            if (email == null && phone == null) {\n" +
+           "                throw new IllegalArgumentException();\n" +
+           "            }\n" +
+           "        }\n" +
+           "\n" +
+           "        public String email() {\n" +
+           "            return email;\n" +
+           "        }\n" +
+           "\n" +
+           "        /*Access can be 'private'*/public/**/ void xylophone() {\n" +
+           "\n" +
+           "        }\n" +
+           "    }\n" +
+           "}");
+  }
+
   public void testSuggestPackagePrivateForTopLevelClassSetting() {
     myFixture.allowTreeAccessForAllFiles();
     myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;

@@ -19,10 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.fixes.ChangeModifierFix;
@@ -157,7 +154,8 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
           }
           return currentLevel;
         }
-        if (FindSuperElementsHelper.getSiblingInfoInheritedViaSubClass(method) != null) {
+        if (FindSuperElementsHelper.getSiblingInfoInheritedViaSubClass(method) != null ||
+            JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
           return currentLevel;
         }
       }
@@ -173,6 +171,11 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       }
 
       if (memberClass != null && member instanceof PsiMethod) {
+        if (memberClass.isRecord()) if (((PsiMethod)member).isConstructor()) {
+          final PsiModifierList modifierList = memberClass.getModifierList();
+          assert modifierList != null; // anonymous records don't exist
+          return PsiUtil.getAccessLevel(modifierList);
+        }
         // If class will be subclassed by some framework then it could apply some specific requirements for methods visibility
         // so we just skip it here (IDEA-182709, IDEA-160602)
         for (ImplicitSubclassProvider subclassProvider : ImplicitSubclassProvider.EP_NAME.getExtensions()) {
