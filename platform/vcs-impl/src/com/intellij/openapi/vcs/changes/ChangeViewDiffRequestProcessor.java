@@ -214,6 +214,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
     @Override
     protected void onSelected(@NotNull Wrapper change) {
+      setCurrentChange(change);
       selectChange(change);
     }
   }
