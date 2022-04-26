@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.digest
@@ -273,5 +273,15 @@ internal class RCInArbitraryFileManager(private val project: Project) {
 
       file.getOutputStream(this@RCInArbitraryFileManager).use { byteOut.writeTo(it) }
     }
+  }
+
+  /**
+   *  This function should be called with RunManagerImpl.lock.write
+   */
+  internal fun clearAllAndReturnFilePaths(): Collection<String> {
+    val filePaths = filePathToRunConfigs.keys.toList()
+    filePathToRunConfigs.clear()
+    filePathToDigests.clear()
+    return filePaths
   }
 }
