@@ -18,7 +18,6 @@ import java.io.IOException
 object DefaultIndexStorageLayout {
   private val log = logger<DefaultIndexStorageLayout>()
   private val forcedLayout: String? = System.getProperty("idea.index.storage.forced.layout")
-  private val contentLessIndexLock: StorageLockContext = StorageLockContext(false, true)
 
   @JvmStatic
   @Throws(IOException::class)
@@ -67,7 +66,7 @@ object DefaultIndexStorageLayout {
   }
 
   @Throws(IOException::class)
-  fun <K, V> createIndexStorage(extension: FileBasedIndexExtension<K, V>): VfsAwareIndexStorage<K, V> {
+  fun <K, V> createIndexStorage(extension: FileBasedIndexExtension<K, V>, storageLockContext: StorageLockContext): VfsAwareIndexStorage<K, V> {
     val storageFile = IndexInfrastructure.getStorageFile(extension.name)
     return object : VfsAwareMapIndexStorage<K, V>(
       storageFile,
@@ -81,7 +80,7 @@ object DefaultIndexStorageLayout {
       override fun initMapAndCache() {
         assert(PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get() == null)
         if (!extension.dependsOnFileContent()) {
-          PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(contentLessIndexLock)
+          PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(storageLockContext)
         }
         try {
           super.initMapAndCache()
@@ -95,15 +94,16 @@ object DefaultIndexStorageLayout {
   }
 
   class DefaultStorageLayout<K, V>(private val extension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {
+    private val storageLockContext = StorageLockContext()
+
     @Throws(IOException::class)
     override fun openIndexStorage(): IndexStorage<K, V> {
-      return createIndexStorage(extension)
+      return createIndexStorage(extension, storageLockContext)
     }
 
     @Throws(IOException::class)
     override fun openForwardIndex(): ForwardIndex {
       val indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(extension.name)
-      val storageLockContext = if (extension.dependsOnFileContent()) null else contentLessIndexLock
       return PersistentMapBasedForwardIndex(indexStorageFile,
                                             false,
                                             false,
@@ -121,6 +121,7 @@ object DefaultIndexStorageLayout {
 
   class SnapshotMappingsStorageLayout<K, V> internal constructor(private val extension: FileBasedIndexExtension<K, V>,
                                                                  contentHashEnumeratorReopen: Boolean) : VfsAwareIndexStorageLayout<K, V> {
+    private val storageLockContext = StorageLockContext()
     private val mySnapshotInputMappings: SnapshotInputMappings<K, V> by lazy(LazyThreadSafetyMode.NONE) {
       SnapshotInputMappings<K, V>(extension, getForwardIndexAccessor(extension))
     }
@@ -138,7 +139,7 @@ object DefaultIndexStorageLayout {
     @Throws(IOException::class)
     override fun openIndexStorage(): IndexStorage<K, V> {
       mySnapshotInputMappings
-      return createIndexStorage(extension)
+      return createIndexStorage(extension, storageLockContext)
     }
 
     @Throws(IOException::class)
@@ -162,9 +163,11 @@ object DefaultIndexStorageLayout {
   }
 
   class SingleEntryStorageLayout<K, V> internal constructor(private val extension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {
+    private val storageLockContext = StorageLockContext()
+
     @Throws(IOException::class)
     override fun openIndexStorage(): IndexStorage<K, V> {
-      return createIndexStorage(extension)
+      return createIndexStorage(extension, storageLockContext)
     }
 
     override fun openForwardIndex(): ForwardIndex {
