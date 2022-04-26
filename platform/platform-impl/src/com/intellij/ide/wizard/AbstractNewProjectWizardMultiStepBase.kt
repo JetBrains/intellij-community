@@ -28,24 +28,25 @@ abstract class AbstractNewProjectWizardMultiStepBase(
 
   protected open fun initSteps() = emptyMap<String, NewProjectWizardStep>()
 
-  protected open fun setupSwitcherUi(builder: Row) {
-    with(builder) {
-      val segmentedButton = segmentedButton(steps.keys) { it }
-        .bind(stepProperty)
-        .gap(RightGap.SMALL)
-      stepsProperty.afterChange {
-        segmentedButton.items(steps.keys)
-      }
-    }
+  protected open fun setupSwitcherUi(builder: Panel) {
+    builder.row(label) {
+      createAndSetupSwitcher(this@row)
+    }.bottomGap(BottomGap.SMALL)
+  }
+
+  protected open fun createAndSetupSwitcher(builder: Row): SegmentedButton<String> {
+    return builder.segmentedButton(steps.keys) { it }
+      .bind(stepProperty)
+      .gap(RightGap.SMALL)
+      .apply { stepsProperty.afterChange { items(steps.keys) } }
   }
 
   override fun setupUI(builder: Panel) {
     steps = initSteps()
 
+    setupSwitcherUi(builder)
+
     with(builder) {
-      row(label) {
-        setupSwitcherUi(this@row)
-      }.bottomGap(BottomGap.SMALL)
       row {
         val placeholder = placeholder()
           .horizontalAlign(HorizontalAlign.FILL)

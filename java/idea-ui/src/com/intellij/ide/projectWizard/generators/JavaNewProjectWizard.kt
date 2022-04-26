@@ -7,6 +7,8 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logB
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.project.Project
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.SegmentedButton
 
 class JavaNewProjectWizard : LanguageNewProjectWizard {
 
@@ -28,6 +30,10 @@ class JavaNewProjectWizard : LanguageNewProjectWizard {
     override val buildSystemProperty by ::stepProperty
     override var buildSystem by ::step
 
+    override fun createAndSetupSwitcher(builder: Row): SegmentedButton<String> {
+      return super.createAndSetupSwitcher(builder)
+        .whenItemSelectedFromUi { logBuildSystemChanged() }
+    }
 
     override fun setupProject(project: Project) {
       super.setupProject(project)
@@ -37,8 +43,6 @@ class JavaNewProjectWizard : LanguageNewProjectWizard {
 
     init {
       data.putUserData(BuildSystemJavaNewProjectWizardData.KEY, this)
-
-      buildSystemProperty.afterChange { logBuildSystemChanged() }
     }
   }
 }

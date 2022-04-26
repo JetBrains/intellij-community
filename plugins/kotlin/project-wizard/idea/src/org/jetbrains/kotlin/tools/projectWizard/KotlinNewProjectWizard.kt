@@ -9,10 +9,7 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.HyperlinkEventAction
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBUI
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -88,6 +85,11 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
         override val buildSystemProperty by ::stepProperty
         override var buildSystem by ::step
 
+        override fun createAndSetupSwitcher(builder: Row): SegmentedButton<String> {
+            return super.createAndSetupSwitcher(builder)
+                .whenItemSelectedFromUi { logBuildSystemChanged() }
+        }
+
         override fun setupProject(project: Project) {
             super.setupProject(project)
 
@@ -96,8 +98,6 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
 
         init {
             data.putUserData(BuildSystemKotlinNewProjectWizardData.KEY, this)
-
-            buildSystemProperty.afterChange { logBuildSystemChanged() }
         }
     }
 }

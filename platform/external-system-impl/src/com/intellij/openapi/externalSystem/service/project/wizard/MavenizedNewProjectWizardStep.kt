@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.wizard
 
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logArtifactIdChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logGroupIdChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentChanged
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -66,6 +69,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
           comboBox(parentComboBoxModel, ParentRenderer())
             .bindItem(parentProperty)
             .columns(COLUMNS_MEDIUM)
+            .whenItemSelectedFromUi { logParentChanged(!it.isPresent) }
         }.topGap(TopGap.SMALL)
       }
     }
@@ -79,6 +83,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
           .columns(COLUMNS_MEDIUM)
           .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_GROUP_ID)
           .validation { validateGroupId() }
+          .whenTextChangedFromUi { logGroupIdChanged() }
       }.bottomGap(BottomGap.SMALL)
       row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label")) {
         textField()
@@ -86,6 +91,7 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
           .columns(COLUMNS_MEDIUM)
           .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_ARTIFACT_ID)
           .validation { validateArtifactId() }
+          .whenTextChangedFromUi { logArtifactIdChanged() }
       }.bottomGap(BottomGap.SMALL)
     }
   }

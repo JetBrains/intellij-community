@@ -2,13 +2,6 @@
 package org.jetbrains.plugins.gradle.service.project.wizard
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logArtifactIdChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logDslChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logGroupIdChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logVersionChanged
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.generators.*
 import com.intellij.ide.starters.local.StandardAssetsProvider
@@ -26,6 +19,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.addSampleCode
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.groupId
 
@@ -52,10 +46,13 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       builder.row {
         checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
           .bindSelected(addSampleCodeProperty)
+          .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
       }.topGap(TopGap.SMALL)
     }
 
     override fun setupProject(project: Project) {
+      super.setupProject(project)
+
       val builder = generateModuleBuilder()
       builder.gradleVersion = suggestGradleVersion()
 
@@ -66,20 +63,10 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
       ExternalProjectsManagerImpl.setupCreatedProject(project)
       builder.commit(project)
-
-      logSdkFinished(sdk)
     }
 
     init {
       data.putUserData(GradleJavaNewProjectWizardData.KEY, this)
-
-      sdkProperty.afterChange { logSdkChanged(it) }
-      useKotlinDslProperty.afterChange { logDslChanged(it) }
-      parentProperty.afterChange { logParentChanged(!it.isPresent) }
-      addSampleCodeProperty.afterChange { logAddSampleCodeChanged() }
-      groupIdProperty.afterChange { logGroupIdChanged() }
-      artifactIdProperty.afterChange { logArtifactIdChanged() }
-      versionProperty.afterChange { logVersionChanged() }
     }
   }
 

@@ -2,13 +2,19 @@
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logContentRootChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logModuleFileLocationChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logModuleNameChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.observable.util.bindBooleanStorage
-import com.intellij.openapi.observable.util.toUiPathProperty
+import com.intellij.openapi.observable.util.*
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
@@ -21,8 +27,6 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
-import java.awt.event.KeyEvent
-import java.awt.event.KeyListener
 
 abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) :
   AbstractNewProjectWizardStep(parent), IntelliJNewProjectWizardData
@@ -66,17 +70,23 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     moduleFileLocationProperty.dependsOn(contentRootProperty, ::suggestModuleFilePath)
   }
 
+  open fun Panel.customOptions() {}
+
+  open fun Panel.customAdditionalOptions() {}
+
   override fun setupUI(builder: Panel) {
     with(builder) {
       row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
         val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
         sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
           .columns(COLUMNS_MEDIUM)
+          .whenItemSelectedFromUi { logSdkChanged(sdk) }
       }
       customOptions()
       row {
         checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
           .bindSelected(addSampleCodeProperty)
+          .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
       }.topGap(TopGap.SMALL)
       collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
         row(UIBundle.message("label.project.wizard.new.project.module.name")) {
@@ -85,6 +95,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
             .horizontalAlign(HorizontalAlign.FILL)
             .validationOnInput { validateModuleName() }
             .validationOnApply { validateModuleName() }
+            .whenTextChangedFromUi { logModuleNameChanged() }
         }.bottomGap(BottomGap.SMALL)
         row(UIBundle.message("label.project.wizard.new.project.content.root")) {
           val browseDialogTitle = UIBundle.message("label.project.wizard.new.project.content.root.title")
@@ -93,16 +104,8 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
             .bindText(contentRootProperty.toUiPathProperty())
             .horizontalAlign(HorizontalAlign.FILL)
             .validationOnApply { validateContentRoot() }
-            .apply {
-              component.textField.addKeyListener(object : KeyListener {
-                override fun keyTyped(e: KeyEvent?) {}
-                override fun keyPressed(e: KeyEvent?) {
-                  userDefinedContentRoot = true
-                }
-
-                override fun keyReleased(e: KeyEvent?) {}
-              })
-            }
+            .whenTextChangedFromUi { userDefinedContentRoot = true }
+            .whenTextChangedFromUi { logContentRootChanged() }
         }.bottomGap(BottomGap.SMALL)
         row(UIBundle.message("label.project.wizard.new.project.module.file.location")) {
           val browseDialogTitle = UIBundle.message("label.project.wizard.new.project.module.file.location.title")
@@ -111,16 +114,8 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
             .bindText(moduleFileLocationProperty.toUiPathProperty())
             .horizontalAlign(HorizontalAlign.FILL)
             .validationOnApply { validateModuleFileLocation() }
-            .apply {
-              component.textField.addKeyListener(object : KeyListener {
-                override fun keyTyped(e: KeyEvent?) {}
-                override fun keyPressed(e: KeyEvent?) {
-                  userDefinedModuleFileLocation = true
-                }
-
-                override fun keyReleased(e: KeyEvent?) {}
-              })
-            }
+            .whenTextChangedFromUi { userDefinedModuleFileLocation = true }
+            .whenTextChangedFromUi { logModuleFileLocationChanged() }
         }.bottomGap(BottomGap.SMALL)
 
         customAdditionalOptions()
@@ -128,9 +123,9 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     }
   }
 
-  open fun Panel.customOptions() {}
-
-  open fun Panel.customAdditionalOptions() {}
+  override fun setupProject(project: Project) {
+    logSdkFinished(sdk)
+  }
 
   private fun ValidationInfoBuilder.validateModuleName(): ValidationInfo? {
     if (moduleName.isEmpty()) return error(JavaUiBundle.message("module.name.location.dialog.message.enter.module.name"))

@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.wizard
 
-import com.intellij.ide.projectWizard.NewProjectWizardCollector
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Companion.logLanguageChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Companion.logLanguageFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.util.PlatformUtils
 
 class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
@@ -36,11 +38,13 @@ class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
         Language.SCALA to "org.intellij.scala"
       )
 
+  override fun createAndSetupSwitcher(builder: Row): SegmentedButton<String> {
+    return super.createAndSetupSwitcher(builder)
+      .whenItemSelectedFromUi { logLanguageChanged() }
+  }
+
   init {
     data.putUserData(LanguageNewProjectWizardData.KEY, this)
-    languageProperty.afterChange {
-      NewProjectWizardCollector.logLanguageChanged(context, step)
-    }
   }
 
   override fun setupProject(project: Project) {

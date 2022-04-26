@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.lockOrSkip
@@ -21,6 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JTextField
 import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty0
+import com.intellij.openapi.observable.util.whenTextChangedFromUi as whenTextChangedFromUiImpl
 
 /**
  * Columns for text components with tiny width. Used for [Row.intTextField] by default
@@ -137,3 +139,7 @@ fun <T : JTextComponent> Cell<T>.trimmedTextValidation(vararg validations: Dialo
 
 fun <T : JTextComponent> Cell<T>.textValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =
   validation(*validations.map2Array { it.forTextComponent() })
+
+fun <T: JTextComponent> Cell<T>.whenTextChangedFromUi(parentDisposable: Disposable? = null, listener: (String) -> Unit): Cell<T> {
+  return applyToComponent { whenTextChangedFromUiImpl(parentDisposable, listener) }
+}

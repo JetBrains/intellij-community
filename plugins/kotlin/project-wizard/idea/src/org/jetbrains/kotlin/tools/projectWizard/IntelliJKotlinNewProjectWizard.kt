@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTELLIJ
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
@@ -49,10 +50,12 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                     val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
                     sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
                         .columns(COLUMNS_MEDIUM)
+                        .whenItemSelectedFromUi { logSdkChanged(sdk) }
                 }
                 row {
                     checkBox(message("label.project.wizard.new.project.add.sample.code"))
                         .bindSelected(addSampleCodeProperty)
+                        .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
                 }.topGap(TopGap.SMALL)
 
                 kmpWizardLink(context)
@@ -68,10 +71,6 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 buildSystemType = BuildSystemType.Jps,
                 addSampleCode = addSampleCode
             )
-
-        init {
-            addSampleCodeProperty.afterChange { logAddSampleCodeChanged() }
-        }
     }
 
     private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {

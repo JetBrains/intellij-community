@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -9,6 +10,12 @@ import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.util.addMouseListener
+import com.intellij.openapi.observable.util.lockOrSkip
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
@@ -24,27 +31,16 @@ import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.RenderingHints
-import java.awt.event.FocusEvent
-import java.awt.event.FocusListener
+import java.awt.*
+import java.awt.event.*
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JPanel
 
 private const val PLACE = "SegmentedButton"
 
 @ApiStatus.Internal
 internal class SegmentedButtonComponent<T>(items: Collection<T>, private val renderer: (T) -> String) : JPanel(GridLayout()) {
-
-
-  companion object {
-    @ApiStatus.Internal
-    internal fun interface SelectedItemListener: EventListener {
-      fun onChanged()
-    }
-  }
 
   var spacing: SpacingConfiguration = EmptySpacingConfiguration()
     set(value) {
@@ -59,8 +55,8 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>, private val ren
         setSelectedState(field, false)
         setSelectedState(value, true)
         field = value
-        for (listener in listenerList.getListeners(SelectedItemListener::class.java)) {
-          listener.onChanged()
+        for (listener in listenerList.getListeners(ModelListener::class.java)) {
+          listener.onItemSelected()
         }
 
         repaint()
@@ -95,12 +91,12 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>, private val ren
     actionRight.registerCustomShortcutSet(ActionUtil.getShortcutSet("SegmentedButton-right"), this)
   }
 
-  fun addSelectedItemListener(l: SelectedItemListener) {
-    listenerList.add(SelectedItemListener::class.java, l)
+  fun addModelListener(l: ModelListener) {
+    listenerList.add(ModelListener::class.java, l)
   }
 
-  fun removeSelectedItemListener(l: SelectedItemListener) {
-    listenerList.remove(SelectedItemListener::class.java, l)
+  fun removeModelListener(l: ModelListener) {
+    listenerList.remove(ModelListener::class.java, l)
   }
 
   override fun setEnabled(enabled: Boolean) {
@@ -141,6 +137,10 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>, private val ren
       val button = SegmentedButton(action, presentationFactory.getPresentation(action), spacing)
       builder.cell(button)
     }
+
+    for (listener in listenerList.getListeners(ModelListener::class.java)) {
+      listener.onRebuild()
+    }
   }
 
   private fun setSelectedState(item: T?, selectedState: Boolean) {
@@ -157,6 +157,80 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>, private val ren
     val selectedIndex = items.indexOf(selectedItem)
     val newSelectedIndex = if (selectedIndex < 0) 0 else (selectedIndex + step).coerceIn(0, items.size - 1)
     selectedItem = items.elementAt(newSelectedIndex)
+  }
+
+  companion object {
+
+    fun <T> SegmentedButtonComponent<T>.bind(property: ObservableMutableProperty<T>) {
+      val mutex = AtomicBoolean()
+      property.afterChange {
+        mutex.lockOrSkip {
+          selectedItem = it
+        }
+      }
+      whenItemSelected {
+        mutex.lockOrSkip {
+          property.set(it)
+        }
+      }
+    }
+
+    fun <T> SegmentedButtonComponent<T>.whenItemSelected(parentDisposable: Disposable? = null, listener: (T) -> Unit) {
+      addModelListener(parentDisposable, object : ModelListener {
+        override fun onItemSelected() {
+          selectedItem?.let(listener)
+        }
+      })
+    }
+
+    private fun SegmentedButtonComponent<*>.whenRebuild(parentDisposable: Disposable?, listener: () -> Unit) {
+      addModelListener(parentDisposable, object : ModelListener {
+        override fun onRebuild() = listener()
+      })
+    }
+
+    fun <T> SegmentedButtonComponent<T>.addModelListener(parentDisposable: Disposable? = null, listener: ModelListener) {
+      addModelListener(listener)
+      parentDisposable?.whenDisposed {
+        removeModelListener(listener)
+      }
+    }
+
+    fun <T> SegmentedButtonComponent<T>.whenItemSelectedFromUi(parentDisposable: Disposable? = null, listener: (T) -> Unit) {
+      for (button in components) {
+        whenButtonTouchedFromUi(button, parentDisposable, listener)
+      }
+      whenRebuild(parentDisposable) {
+        for (button in components) {
+          whenButtonTouchedFromUi(button, parentDisposable, listener)
+        }
+      }
+    }
+
+    private fun <T> SegmentedButtonComponent<T>.whenButtonTouchedFromUi(
+      button: Component,
+      parentDisposable: Disposable?,
+      listener: (T) -> Unit
+    ) {
+      val mouseListener = object : MouseAdapter() {
+        override fun mouseReleased(e: MouseEvent) {
+          invokeLater(ModalityState.stateForComponent(button)) {
+            selectedItem?.let(listener)
+          }
+        }
+      }
+      button.addMouseListener(parentDisposable, mouseListener)
+      whenRebuild(parentDisposable) {
+        button.removeMouseListener(mouseListener)
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  internal interface ModelListener : EventListener {
+    fun onItemSelected() {}
+
+    fun onRebuild() {}
   }
 }
 

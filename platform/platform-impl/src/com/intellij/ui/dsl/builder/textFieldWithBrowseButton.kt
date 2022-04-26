@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
@@ -12,6 +13,7 @@ import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequ
 import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KMutableProperty0
+import com.intellij.openapi.observable.util.whenTextChangedFromUi as whenTextChangedFromUiImpl
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.columns(columns: Int): Cell<T> {
   component.textField.columns = columns
@@ -49,3 +51,7 @@ fun <T : TextFieldWithBrowseButton> Cell<T>.trimmedTextValidation(vararg validat
 
 fun <T : TextFieldWithBrowseButton> Cell<T>.textValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =
   validation(*validations.map2Array { it.forTextFieldWithBrowseButton() })
+
+fun <T : TextFieldWithBrowseButton> Cell<T>.whenTextChangedFromUi(parentDisposable: Disposable? = null, listener: (String) -> Unit): Cell<T> {
+  return applyToComponent { whenTextChangedFromUiImpl(parentDisposable, listener) }
+}
