@@ -44,9 +44,10 @@ class SearchEverywhereStateFeaturesProvider {
 
   private fun CharSequence.isCamelCase(): Boolean {
     this.forEachIndexed { index, c ->
-      if (index > 0 && c.isLowerCase() && this[index - 1].isUpperCase()) {
-        return true
-      }
+      if (index == 0) return@forEachIndexed
+
+      // Check if there's a case change between this character and the previous one
+      if (c.isUpperCase() != this[index - 1].isUpperCase()) return true
     }
 
     return false
