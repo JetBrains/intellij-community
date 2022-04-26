@@ -77,6 +77,7 @@ class RollingFileHandler @JvmOverloads constructor(
 
   private fun rotate() {
     onRotate?.run()
+
     try {
       Files.deleteIfExists(logPathWithIndex(count))
       for (i in count-1 downTo 1) {
@@ -88,17 +89,25 @@ class RollingFileHandler @JvmOverloads constructor(
     }
     catch (e: IOException) {
       // rotate failed, keep writing to existing log
-      super.publish(LogRecord(Level.SEVERE, "Log rotate failed: ${e.message}"))
+      super.publish(LogRecord(Level.SEVERE, "Log rotate failed: ${e.message}").also { it.thrown = e })
       return
     }
+
     close()
-    try {
-      Files.move(logPath, logPathWithIndex(1))
+
+    val e = try {
+      Files.move(logPath, logPathWithIndex(1), StandardCopyOption.ATOMIC_MOVE)
+      null
     }
     catch (e: IOException) {
-      // ignore?
+      e
     }
+
     open(false)
+
+    if (e != null) {
+      super.publish(LogRecord(Level.SEVERE, "Log rotate failed: ${e.message}").also { it.thrown = e })
+    }
   }
 
   private fun logPathWithIndex(index: Int): Path {
