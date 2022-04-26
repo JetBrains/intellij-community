@@ -32,8 +32,6 @@ open class MainEntityParentListImpl: MainEntityParentList, WorkspaceEntityBase()
 
     class Builder(val result: MainEntityParentListData?): ModifiableWorkspaceEntityBase<MainEntityParentList>(), MainEntityParentList.Builder {
         constructor(): this(MainEntityParentListData())
-                 
-        override fun build(): MainEntityParentList = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

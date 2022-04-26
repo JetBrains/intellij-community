@@ -32,8 +32,6 @@ open class ModuleGroupPathEntityImpl: ModuleGroupPathEntity, WorkspaceEntityBase
 
     class Builder(val result: ModuleGroupPathEntityData?): ModifiableWorkspaceEntityBase<ModuleGroupPathEntity>(), ModuleGroupPathEntity.Builder {
         constructor(): this(ModuleGroupPathEntityData())
-                 
-        override fun build(): ModuleGroupPathEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

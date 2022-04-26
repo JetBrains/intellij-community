@@ -26,10 +26,11 @@ interface ParentSubEntity : WorkspaceEntity {
   }
   
   companion object: Type<ParentSubEntity, Builder>() {
-      operator fun invoke(parentData: String, entitySource: EntitySource, init: Builder.() -> Unit): ParentSubEntity {
-          val builder = builder(init)
+      operator fun invoke(parentData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentSubEntity {
+          val builder = builder()
           builder.parentData = parentData
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -55,9 +56,10 @@ interface ChildSubEntity : WorkspaceEntity {
   }
   
   companion object: Type<ChildSubEntity, Builder>() {
-      operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): ChildSubEntity {
-          val builder = builder(init)
+      operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildSubEntity {
+          val builder = builder()
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -82,10 +84,11 @@ interface ChildSubSubEntity : WorkspaceEntity {
   }
   
   companion object: Type<ChildSubSubEntity, Builder>() {
-      operator fun invoke(entitySource: EntitySource, childData: String, init: Builder.() -> Unit): ChildSubSubEntity {
-          val builder = builder(init)
+      operator fun invoke(entitySource: EntitySource, childData: String, init: (Builder.() -> Unit)? = null): ChildSubSubEntity {
+          val builder = builder()
           builder.entitySource = entitySource
           builder.childData = childData
+          init?.invoke(builder)
           return builder
       }
   }

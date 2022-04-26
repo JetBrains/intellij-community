@@ -39,8 +39,6 @@ open class FileCopyPackagingElementEntityImpl: FileCopyPackagingElementEntity, W
 
     class Builder(val result: FileCopyPackagingElementEntityData?): ModifiableWorkspaceEntityBase<FileCopyPackagingElementEntity>(), FileCopyPackagingElementEntity.Builder {
         constructor(): this(FileCopyPackagingElementEntityData())
-                 
-        override fun build(): FileCopyPackagingElementEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

@@ -156,13 +156,8 @@ class SimplePropertiesInStorageTest {
 class ExtensionParentListTest {
   @Test
   fun `access by extension without builder`() {
-    val entity = AttachedEntityParentList {
-      this.entitySource = MySource
-      data = "xyz"
-      ref = MainEntityParentList {
-        this.entitySource = MySource
-        this.x = "123"
-      }
+    val entity = AttachedEntityParentList("xyz", MySource) {
+      ref = MainEntityParentList("123", MySource)
     }
 
     kotlin.test.assertEquals("xyz", entity.data)
@@ -173,14 +168,9 @@ class ExtensionParentListTest {
 
   @Test
   fun `access by extension without builder on parent`() {
-    val entity = MainEntityParentList {
-      this.entitySource = MySource
-      this.x = "123"
+    val entity = MainEntityParentList("123", MySource) {
       this.children = listOf(
-        AttachedEntityParentList {
-          this.entitySource = MySource
-          data = "xyz"
-        }
+        AttachedEntityParentList("xyz", MySource)
       )
     }
 
@@ -192,18 +182,12 @@ class ExtensionParentListTest {
 
   @Test
   fun `access by extension without builder on parent with an additional children`() {
-    val entity = MainEntityParentList {
-      this.entitySource = MySource
-      this.x = "123"
+    val entity = MainEntityParentList("123", MySource) {
       this.children = listOf(
-        AttachedEntityParentList {
-          this.entitySource = MySource
-          data = "xyz"
-        }
+        AttachedEntityParentList("xyz", MySource)
       )
     }
-    val newChild = AttachedEntityParentList {
-      this.data = "abc"
+    val newChild = AttachedEntityParentList("abc", MySource) {
       this.ref = entity
     }
 
@@ -217,13 +201,8 @@ class ExtensionParentListTest {
 
   @Test
   fun `access by extension`() {
-    val entity = AttachedEntityParentList {
-      this.entitySource = MySource
-      data = "xyz"
-      ref = MainEntityParentList {
-        this.entitySource = MySource
-        this.x = "123"
-      }
+    val entity = AttachedEntityParentList("xyz", MySource) {
+      ref = MainEntityParentList("123", MySource)
     }
     val builder = createEmptyBuilder()
     builder.addEntity(entity)
@@ -241,14 +220,9 @@ class ExtensionParentListTest {
 
   @Test
   fun `access by extension on parent`() {
-    val entity = MainEntityParentList {
-      this.entitySource = MySource
-      this.x = "123"
+    val entity = MainEntityParentList("123", MySource) {
       this.children = listOf(
-        AttachedEntityParentList {
-          this.entitySource = MySource
-          data = "xyz"
-        }
+        AttachedEntityParentList("xyz", MySource)
       )
     }
     val builder = createEmptyBuilder()
@@ -267,18 +241,10 @@ class ExtensionParentListTest {
 
   @Test
   fun `add via single children`() {
-    val child = AttachedEntityParentList {
-      this.entitySource = MySource
-      data = "abc"
-    }
-    val entity = MainEntityParentList {
-      this.entitySource = MySource
-      this.x = "123"
+    val child = AttachedEntityParentList("abc", MySource)
+    val entity = MainEntityParentList("123", MySource) {
       this.children = listOf(
-        AttachedEntityParentList {
-          this.entitySource = MySource
-          data = "xyz"
-        },
+        AttachedEntityParentList("xyz", MySource),
         child
       )
     }
@@ -298,21 +264,14 @@ class ExtensionParentListTest {
 
   @Test
   fun `partially in builder`() {
-    val entity = MainEntityParentList {
-      this.entitySource = MySource
-      this.x = "123"
+    val entity = MainEntityParentList("123", MySource) {
       this.children = listOf(
-        AttachedEntityParentList {
-          this.entitySource = MySource
-          data = "xyz"
-        },
+        AttachedEntityParentList("xyz", MySource),
       )
     }
     val builder = createEmptyBuilder()
     builder.addEntity(entity)
-    val children = AttachedEntityParentList {
-      this.entitySource = MySource
-      this.data = "abc"
+    val children = AttachedEntityParentList("abc", MySource) {
       this.ref = entity
     }
 

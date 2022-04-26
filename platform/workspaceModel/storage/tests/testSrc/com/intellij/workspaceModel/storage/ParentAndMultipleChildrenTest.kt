@@ -11,11 +11,8 @@ import kotlin.test.assertTrue
 class ParentAndMultipleChildrenTest {
   @Test
   fun `parent with multiple children`() {
-    val entity = ParentMultipleEntity {
-      parentData = "ParentData"
-      children = listOf(ChildMultipleEntity {
-        childData = "ChildData"
-      })
+    val entity = ParentMultipleEntity("ParentData", MySource) {
+      children = listOf(ChildMultipleEntity("ChildData", MySource))
     }
 
     assertTrue(entity.children.isNotEmpty())
@@ -24,13 +21,8 @@ class ParentAndMultipleChildrenTest {
 
   @Test
   fun `parent with multiple children in builder`() {
-    val entity = ParentMultipleEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-      children = listOf(ChildMultipleEntity {
-        entitySource = MySource
-        childData = "ChildData"
-      })
+    val entity = ParentMultipleEntity("ParentData", MySource) {
+      children = listOf(ChildMultipleEntity("ChildData", MySource))
     }
 
     val builder = MutableEntityStorage.create()
@@ -44,18 +36,10 @@ class ParentAndMultipleChildrenTest {
 
   @Test
   fun `parent with three children in builder`() {
-    val entity = ParentMultipleEntity {
-      entitySource = MySource
-      parentData = "ParentData"
+    val entity = ParentMultipleEntity("ParentData", MySource) {
       children = listOf(
-        ChildMultipleEntity {
-          entitySource = MySource
-          childData = "ChildData1"
-        },
-        ChildMultipleEntity {
-          entitySource = MySource
-          childData = "ChildData2"
-        },
+        ChildMultipleEntity("ChildData1", MySource),
+        ChildMultipleEntity("ChildData2", MySource),
       )
     }
 
@@ -73,14 +57,9 @@ class ParentAndMultipleChildrenTest {
 
   @Test
   fun `parent with multiple children in builder and accessing`() {
-    val entity = ParentMultipleEntity {
-      entitySource = MySource
-      parentData = "ParentData"
+    val entity = ParentMultipleEntity("ParentData", MySource) {
       children = listOf(
-        ChildMultipleEntity {
-          entitySource = MySource
-          childData = "ChildData1"
-        },
+        ChildMultipleEntity("ChildData1", MySource),
       )
     }
 
@@ -92,14 +71,9 @@ class ParentAndMultipleChildrenTest {
 
   @Test
   fun `get parent from the child`() {
-    val entity = ParentMultipleEntity {
-      entitySource = MySource
-      parentData = "ParentData"
+    val entity = ParentMultipleEntity("ParentData", MySource) {
       children = listOf(
-        ChildMultipleEntity {
-          entitySource = MySource
-          childData = "ChildData1"
-        },
+        ChildMultipleEntity("ChildData1", MySource),
       )
     }
 
@@ -113,16 +87,12 @@ class ParentAndMultipleChildrenTest {
   @Test
   fun `add parent and then child`() {
     val builder = MutableEntityStorage.create()
-    val parent = ParentMultipleEntity {
-      entitySource = MySource
-      parentData = "Parent"
+    val parent = ParentMultipleEntity("ParentData", MySource) {
       children = emptyList()
     }
     builder.addEntity(parent)
 
-    val child = ChildMultipleEntity {
-      entitySource = MySource
-      childData = "data"
+    val child = ChildMultipleEntity("data", MySource) {
       this.parentEntity = parent
     }
     builder.addEntity(child)
@@ -133,16 +103,12 @@ class ParentAndMultipleChildrenTest {
   @Test
   fun `add parent and then child 2`() {
     val builder = MutableEntityStorage.create()
-    val parent = ParentMultipleEntity {
-      entitySource = MySource
-      parentData = "Parent"
+    val parent = ParentMultipleEntity("Parent", MySource) {
       children = emptyList()
     }
     builder.addEntity(parent)
 
-    val child = ChildMultipleEntity {
-      entitySource = MySource
-      childData = "data"
+    val child = ChildMultipleEntity("data", MySource) {
       this.parentEntity = parent
     }
 
@@ -156,19 +122,12 @@ class ParentAndMultipleChildrenTest {
   @Test
   fun `add parent and then child 3`() {
     val builder = MutableEntityStorage.create()
-    val parent = ParentMultipleEntity {
-      entitySource = MySource
-      parentData = "Parent"
-      children = listOf(ChildMultipleEntity {
-        entitySource = MySource
-        childData = "data1"
-      })
+    val parent = ParentMultipleEntity("Parent", MySource) {
+      children = listOf(ChildMultipleEntity("data1", MySource))
     }
     builder.addEntity(parent)
 
-    val child = ChildMultipleEntity {
-      entitySource = MySource
-      childData = "data"
+    val child = ChildMultipleEntity("data", MySource) {
       this.parentEntity = parent
     }
 
@@ -182,18 +141,11 @@ class ParentAndMultipleChildrenTest {
 
   @Test
   fun `add parent and then child 4`() {
-    val parent = ParentMultipleEntity {
-      entitySource = MySource
-      parentData = "Parent"
-      children = listOf(ChildMultipleEntity {
-        entitySource = MySource
-        childData = "data1"
-      })
+    val parent = ParentMultipleEntity("Parent", MySource) {
+      children = listOf(ChildMultipleEntity("data1", MySource))
     }
 
-    val child = ChildMultipleEntity {
-      entitySource = MySource
-      childData = "data"
+    val child = ChildMultipleEntity("data", MySource) {
       this.parentEntity = parent
     }
 

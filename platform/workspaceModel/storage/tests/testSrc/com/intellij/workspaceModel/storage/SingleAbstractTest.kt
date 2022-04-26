@@ -11,10 +11,8 @@ import kotlin.test.assertEquals
 class SingleAbstractTest {
   @Test
   fun `parent with child`() {
-    val entity = ParentSingleAbEntity {
-      child = ChildSingleFirstEntity {
-        firstData = "ChildData"
-      }
+    val entity = ParentSingleAbEntity(MySource) {
+      child = ChildSingleFirstEntity("", "ChildData", MySource)
     }
 
     assertEquals("ChildData", (entity.child as ChildSingleFirstEntity).firstData)
@@ -22,10 +20,8 @@ class SingleAbstractTest {
 
   @Test
   fun `parent with child and common data`() {
-    val entity = ParentSingleAbEntity {
-      child = ChildSingleFirstEntity {
-        commonData = "ChildData"
-      }
+    val entity = ParentSingleAbEntity(MySource) {
+      child = ChildSingleFirstEntity("ChildData", "Data", MySource)
     }
 
     assertEquals("ChildData", (entity.child as ChildSingleFirstEntity).commonData)
@@ -33,13 +29,8 @@ class SingleAbstractTest {
 
   @Test
   fun `parent with multiple child in builder`() {
-    val entity = ParentSingleAbEntity {
-      entitySource = MySource
-      child = ChildSingleFirstEntity {
-        entitySource = MySource
-        commonData = "ChildData"
-        firstData = "Data"
-      }
+    val entity = ParentSingleAbEntity(MySource) {
+      child = ChildSingleFirstEntity("ChildData", "Data", MySource)
     }
 
     val builder = MutableEntityStorage.create()
@@ -51,13 +42,8 @@ class SingleAbstractTest {
 
   @Test
   fun `parent with three child in builder`() {
-    val entity = ParentSingleAbEntity {
-      entitySource = MySource
-      child = ChildSingleFirstEntity {
-        entitySource = MySource
-        commonData = "Data"
-        firstData = "ChildData1"
-      }
+    val entity = ParentSingleAbEntity(MySource) {
+      child = ChildSingleFirstEntity("Data", "ChildData1", MySource)
     }
 
     val builder = MutableEntityStorage.create()
@@ -69,13 +55,8 @@ class SingleAbstractTest {
 
   @Test
   fun `parent with multiple child in builder and accessing`() {
-    val entity = ParentSingleAbEntity {
-      entitySource = MySource
-      child = ChildSingleFirstEntity {
-        entitySource = MySource
-        firstData = "FirstData"
-        commonData = "ChildData1"
-      }
+    val entity = ParentSingleAbEntity(MySource) {
+      child = ChildSingleFirstEntity("ChildData1", "FirstData", MySource)
     }
 
     val builder = MutableEntityStorage.create()
@@ -86,13 +67,8 @@ class SingleAbstractTest {
 
   @Test
   fun `get parent from the child`() {
-    val entity = ParentSingleAbEntity {
-      entitySource = MySource
-      child = ChildSingleFirstEntity {
-        entitySource = MySource
-        commonData = "Data"
-        firstData = "ChildData1"
-      }
+    val entity = ParentSingleAbEntity(MySource) {
+      child = ChildSingleFirstEntity("Data", "ChildData1", MySource)
     }
 
     val builder = MutableEntityStorage.create()

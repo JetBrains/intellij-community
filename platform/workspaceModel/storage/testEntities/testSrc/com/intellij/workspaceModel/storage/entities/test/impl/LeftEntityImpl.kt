@@ -37,8 +37,6 @@ open class LeftEntityImpl: LeftEntity, WorkspaceEntityBase() {
 
     class Builder(val result: LeftEntityData?): ModifiableWorkspaceEntityBase<LeftEntity>(), LeftEntity.Builder {
         constructor(): this(LeftEntityData())
-                 
-        override fun build(): LeftEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

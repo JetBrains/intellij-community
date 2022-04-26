@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.test.api.DefaultValueEntity
+import com.intellij.workspaceModel.storage.entities.test.api.MySource
 import com.intellij.workspaceModel.storage.entities.test.api.SampleEntitySource
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -10,14 +11,14 @@ class DefaultValueTest {
 
   @Test
   fun simpleCheckDefaultValue() {
-    val entity = DefaultValueEntity()
+    val entity = DefaultValueEntity("", MySource)
     assertEquals(true, entity.isGenerated)
     assertEquals("Another Text", entity.anotherName)
   }
 
   @Test
   fun checkChangedDefaultValue() {
-    val entity = DefaultValueEntity() {
+    val entity = DefaultValueEntity("", MySource) {
       isGenerated = false
     }
     assertEquals(false, entity.isGenerated)

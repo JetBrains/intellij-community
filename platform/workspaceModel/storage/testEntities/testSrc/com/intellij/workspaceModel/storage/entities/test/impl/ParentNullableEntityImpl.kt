@@ -32,8 +32,6 @@ open class ParentNullableEntityImpl: ParentNullableEntity, WorkspaceEntityBase()
 
     class Builder(val result: ParentNullableEntityData?): ModifiableWorkspaceEntityBase<ParentNullableEntity>(), ParentNullableEntity.Builder {
         constructor(): this(ParentNullableEntityData())
-                 
-        override fun build(): ParentNullableEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

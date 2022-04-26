@@ -87,7 +87,13 @@ interface SuperSimpleEntity : WorkspaceEntity {
   interface Builder: SuperSimpleEntity, ModifiableWorkspaceEntity<SuperSimpleEntity>, ObjBuilder<SuperSimpleEntity> {
   }
 
-  companion object: Type<SuperSimpleEntity, Builder>()
+  companion object: Type<SuperSimpleEntity, Builder>() {
+    operator fun invoke(init: (Builder.() -> Unit)? = null):SuperSimpleEntity {
+      val builder = builder()
+      init?.invoke(builder)
+      return builder
+    }
+  }
   //@formatter:on
   //endregion
 
@@ -104,8 +110,6 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
 
   class Builder(val result: SuperSimpleEntityData?): ModifiableWorkspaceEntityBase<SuperSimpleEntity>(), SuperSimpleEntity.Builder {
     constructor(): this(SuperSimpleEntityData())
-
-    override fun build(): SuperSimpleEntity = this
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {

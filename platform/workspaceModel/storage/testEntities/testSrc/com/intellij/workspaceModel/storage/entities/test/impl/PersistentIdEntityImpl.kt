@@ -24,8 +24,6 @@ open class PersistentIdEntityImpl: PersistentIdEntity, WorkspaceEntityBase() {
 
     class Builder(val result: PersistentIdEntityData?): ModifiableWorkspaceEntityBase<PersistentIdEntity>(), PersistentIdEntity.Builder {
         constructor(): this(PersistentIdEntityData())
-                 
-        override fun build(): PersistentIdEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

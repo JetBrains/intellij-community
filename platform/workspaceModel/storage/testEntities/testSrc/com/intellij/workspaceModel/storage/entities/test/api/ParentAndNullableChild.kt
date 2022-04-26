@@ -26,10 +26,11 @@ interface ParentNullableEntity : WorkspaceEntity {
   }
   
   companion object: Type<ParentNullableEntity, Builder>() {
-      operator fun invoke(parentData: String, entitySource: EntitySource, init: Builder.() -> Unit): ParentNullableEntity {
-          val builder = builder(init)
+      operator fun invoke(parentData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentNullableEntity {
+          val builder = builder()
           builder.parentData = parentData
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -54,10 +55,11 @@ interface ChildNullableEntity : WorkspaceEntity {
   }
   
   companion object: Type<ChildNullableEntity, Builder>() {
-      operator fun invoke(childData: String, entitySource: EntitySource, init: Builder.() -> Unit): ChildNullableEntity {
-          val builder = builder(init)
+      operator fun invoke(childData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildNullableEntity {
+          val builder = builder()
           builder.childData = childData
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }

@@ -26,10 +26,11 @@ interface FirstEntityWithPId : WorkspaceEntityWithPersistentId {
   }
   
   companion object: Type<FirstEntityWithPId, Builder>() {
-      operator fun invoke(data: String, entitySource: EntitySource, init: Builder.() -> Unit): FirstEntityWithPId {
-          val builder = builder(init)
+      operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FirstEntityWithPId {
+          val builder = builder()
           builder.data = data
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -55,10 +56,11 @@ interface SecondEntityWithPId : WorkspaceEntityWithPersistentId {
   }
   
   companion object: Type<SecondEntityWithPId, Builder>() {
-      operator fun invoke(data: String, entitySource: EntitySource, init: Builder.() -> Unit): SecondEntityWithPId {
-          val builder = builder(init)
+      operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SecondEntityWithPId {
+          val builder = builder()
           builder.data = data
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }

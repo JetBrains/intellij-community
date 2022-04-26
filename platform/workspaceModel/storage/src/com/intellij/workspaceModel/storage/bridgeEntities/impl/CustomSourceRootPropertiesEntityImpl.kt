@@ -32,8 +32,6 @@ open class CustomSourceRootPropertiesEntityImpl: CustomSourceRootPropertiesEntit
 
     class Builder(val result: CustomSourceRootPropertiesEntityData?): ModifiableWorkspaceEntityBase<CustomSourceRootPropertiesEntity>(), CustomSourceRootPropertiesEntity.Builder {
         constructor(): this(CustomSourceRootPropertiesEntityData())
-                 
-        override fun build(): CustomSourceRootPropertiesEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

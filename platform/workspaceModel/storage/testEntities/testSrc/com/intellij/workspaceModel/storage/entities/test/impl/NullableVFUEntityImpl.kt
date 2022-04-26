@@ -28,8 +28,6 @@ open class NullableVFUEntityImpl: NullableVFUEntity, WorkspaceEntityBase() {
 
     class Builder(val result: NullableVFUEntityData?): ModifiableWorkspaceEntityBase<NullableVFUEntity>(), NullableVFUEntity.Builder {
         constructor(): this(NullableVFUEntityData())
-                 
-        override fun build(): NullableVFUEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

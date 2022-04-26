@@ -21,8 +21,6 @@ open class SecondSampleEntityImpl: SecondSampleEntity, WorkspaceEntityBase() {
 
     class Builder(val result: SecondSampleEntityData?): ModifiableWorkspaceEntityBase<SecondSampleEntity>(), SecondSampleEntity.Builder {
         constructor(): this(SecondSampleEntityData())
-                 
-        override fun build(): SecondSampleEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

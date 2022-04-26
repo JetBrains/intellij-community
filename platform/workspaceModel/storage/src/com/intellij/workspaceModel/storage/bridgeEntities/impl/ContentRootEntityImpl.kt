@@ -53,8 +53,6 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
 
     class Builder(val result: ContentRootEntityData?): ModifiableWorkspaceEntityBase<ContentRootEntity>(), ContentRootEntity.Builder {
         constructor(): this(ContentRootEntityData())
-                 
-        override fun build(): ContentRootEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

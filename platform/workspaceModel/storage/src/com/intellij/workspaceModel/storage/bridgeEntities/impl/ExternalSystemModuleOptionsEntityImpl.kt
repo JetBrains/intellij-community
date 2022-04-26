@@ -56,8 +56,6 @@ open class ExternalSystemModuleOptionsEntityImpl: ExternalSystemModuleOptionsEnt
 
     class Builder(val result: ExternalSystemModuleOptionsEntityData?): ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity>(), ExternalSystemModuleOptionsEntity.Builder {
         constructor(): this(ExternalSystemModuleOptionsEntityData())
-                 
-        override fun build(): ExternalSystemModuleOptionsEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

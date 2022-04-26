@@ -32,8 +32,6 @@ open class VFUWithTwoPropertiesEntityImpl: VFUWithTwoPropertiesEntity, Workspace
 
     class Builder(val result: VFUWithTwoPropertiesEntityData?): ModifiableWorkspaceEntityBase<VFUWithTwoPropertiesEntity>(), VFUWithTwoPropertiesEntity.Builder {
         constructor(): this(VFUWithTwoPropertiesEntityData())
-                 
-        override fun build(): VFUWithTwoPropertiesEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

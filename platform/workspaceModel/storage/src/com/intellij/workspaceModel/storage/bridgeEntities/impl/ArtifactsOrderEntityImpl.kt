@@ -23,8 +23,6 @@ open class ArtifactsOrderEntityImpl: ArtifactsOrderEntity, WorkspaceEntityBase()
 
     class Builder(val result: ArtifactsOrderEntityData?): ModifiableWorkspaceEntityBase<ArtifactsOrderEntity>(), ArtifactsOrderEntity.Builder {
         constructor(): this(ArtifactsOrderEntityData())
-                 
-        override fun build(): ArtifactsOrderEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

@@ -46,8 +46,6 @@ open class SampleEntityImpl: SampleEntity, WorkspaceEntityBase() {
 
     class Builder(val result: SampleEntityData?): ModifiableWorkspaceEntityBase<SampleEntity>(), SampleEntity.Builder {
         constructor(): this(SampleEntityData())
-                 
-        override fun build(): SampleEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

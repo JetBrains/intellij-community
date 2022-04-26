@@ -39,21 +39,7 @@ abstract class Type<T : Obj, B : ObjBuilder<T>>(val base: Type<*, *>? = null) : 
         loadBuilderFactory()
     }
 
-    fun builder(): B = _builder()
-
-    inline fun builder(init: B.() -> Unit): B {
-        val builder = builder()
-        builder.init()
-        return builder
-    }
-
-    operator fun invoke(): B = builder()
-
-    inline operator fun invoke(init: B.() -> Unit): T {
-        val builder = builder()
-        builder.init()
-        return builder.build()
-    }
+    protected fun builder(): B = _builder()
 
     override fun toString(): String = name
 }

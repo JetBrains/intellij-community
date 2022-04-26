@@ -211,10 +211,8 @@ internal fun loadLibrary(name: String, libraryElement: Element, libraryTableId: 
   }
   val externalSystemId = libraryElement.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE)
   if (externalSystemId != null && !isExternalStorage) {
-    builder.addEntity(LibraryExternalSystemIdEntity {
-      this.externalSystemId = externalSystemId
+    builder.addEntity(LibraryExternalSystemIdEntity(externalSystemId, source) {
       this.library = libraryEntity
-      this.entitySource = source
     })
   }
 

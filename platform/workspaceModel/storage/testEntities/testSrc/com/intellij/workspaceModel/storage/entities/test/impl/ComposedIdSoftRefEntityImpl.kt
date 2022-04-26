@@ -30,8 +30,6 @@ open class ComposedIdSoftRefEntityImpl: ComposedIdSoftRefEntity, WorkspaceEntity
 
     class Builder(val result: ComposedIdSoftRefEntityData?): ModifiableWorkspaceEntityBase<ComposedIdSoftRefEntity>(), ComposedIdSoftRefEntity.Builder {
         constructor(): this(ComposedIdSoftRefEntityData())
-                 
-        override fun build(): ComposedIdSoftRefEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

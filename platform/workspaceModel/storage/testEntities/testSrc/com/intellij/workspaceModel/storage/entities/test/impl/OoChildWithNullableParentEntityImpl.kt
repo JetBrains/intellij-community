@@ -28,8 +28,6 @@ open class OoChildWithNullableParentEntityImpl: OoChildWithNullableParentEntity,
 
     class Builder(val result: OoChildWithNullableParentEntityData?): ModifiableWorkspaceEntityBase<OoChildWithNullableParentEntity>(), OoChildWithNullableParentEntity.Builder {
         constructor(): this(OoChildWithNullableParentEntityData())
-                 
-        override fun build(): OoChildWithNullableParentEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

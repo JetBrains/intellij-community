@@ -30,8 +30,6 @@ open class SimpleChildAbstractEntityImpl: SimpleChildAbstractEntity, WorkspaceEn
 
     class Builder(val result: SimpleChildAbstractEntityData?): ModifiableWorkspaceEntityBase<SimpleChildAbstractEntity>(), SimpleChildAbstractEntity.Builder {
         constructor(): this(SimpleChildAbstractEntityData())
-                 
-        override fun build(): SimpleChildAbstractEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

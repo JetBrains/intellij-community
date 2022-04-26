@@ -56,8 +56,6 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
 
     class Builder(val result: LibraryEntityData?): ModifiableWorkspaceEntityBase<LibraryEntity>(), LibraryEntity.Builder {
         constructor(): this(LibraryEntityData())
-                 
-        override fun build(): LibraryEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

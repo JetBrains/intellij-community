@@ -38,10 +38,8 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
         }
       }
       else {
-        builder.addEntity(FacetsOrderEntity {
+        builder.addEntity(FacetsOrderEntity(orderOfFacets, internalSource) {
           this.moduleEntity = moduleEntity
-          this.orderOfFacets = orderOfFacets
-          this.entitySource = internalSource
         })
       }
     }
@@ -75,10 +73,8 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
       }
 
       if (facetEntity != null && externalSystemId != null && !externalStorage) {
-        builder.addEntity(FacetExternalSystemIdEntity {
+        builder.addEntity(FacetExternalSystemIdEntity(externalSystemId, source) {
           this.facet = facetEntity
-          this.externalSystemId = externalSystemId
-          this.entitySource = source
         })
       }
       res = res && loadFacetEntities(facetState.subFacets, builder, moduleEntity, facetEntity, orderOfFacets)

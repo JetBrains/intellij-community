@@ -35,8 +35,6 @@ open class DirectoryCopyPackagingElementEntityImpl: DirectoryCopyPackagingElemen
 
     class Builder(val result: DirectoryCopyPackagingElementEntityData?): ModifiableWorkspaceEntityBase<DirectoryCopyPackagingElementEntity>(), DirectoryCopyPackagingElementEntity.Builder {
         constructor(): this(DirectoryCopyPackagingElementEntityData())
-                 
-        override fun build(): DirectoryCopyPackagingElementEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

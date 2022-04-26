@@ -32,8 +32,6 @@ open class XChildWithOptionalParentEntityImpl: XChildWithOptionalParentEntity, W
 
     class Builder(val result: XChildWithOptionalParentEntityData?): ModifiableWorkspaceEntityBase<XChildWithOptionalParentEntity>(), XChildWithOptionalParentEntity.Builder {
         constructor(): this(XChildWithOptionalParentEntityData())
-                 
-        override fun build(): XChildWithOptionalParentEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

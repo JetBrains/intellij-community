@@ -27,8 +27,6 @@ open class DefaultValueEntityImpl: DefaultValueEntity, WorkspaceEntityBase() {
 
     class Builder(val result: DefaultValueEntityData?): ModifiableWorkspaceEntityBase<DefaultValueEntity>(), DefaultValueEntity.Builder {
         constructor(): this(DefaultValueEntityData())
-                 
-        override fun build(): DefaultValueEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

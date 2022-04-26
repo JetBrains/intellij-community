@@ -20,10 +20,7 @@ class CollectChangesInBuilderTest {
   fun setUp() {
     initialStorage = createEmptyBuilder().apply {
       addSampleEntity("initial")
-      addEntity(SecondSampleEntity {
-        this.entitySource = SampleEntitySource("test")
-        intProperty = 1
-      })
+      addEntity(SecondSampleEntity(1, SampleEntitySource("test")))
     }.toSnapshot()
     builder = createBuilderFrom(initialStorage)
   }
@@ -31,10 +28,7 @@ class CollectChangesInBuilderTest {
   @Test
   fun `add remove entity`() {
     builder.addSampleEntity("added")
-    builder.addEntity(SecondSampleEntity {
-      this.entitySource = SampleEntitySource("test")
-      this.intProperty = 2
-    })
+    builder.addEntity(SecondSampleEntity(2, SampleEntitySource("test")))
     builder.removeEntity(initialStorage.singleSampleEntity())
     builder.removeEntity(initialStorage.entities(SecondSampleEntity::class.java).single())
     val changes = builder.collectChanges(initialStorage).getValue(SampleEntity::class.java) as List<EntityChange<SampleEntity>>

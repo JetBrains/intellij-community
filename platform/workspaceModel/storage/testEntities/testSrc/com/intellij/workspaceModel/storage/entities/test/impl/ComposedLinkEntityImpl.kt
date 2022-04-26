@@ -26,8 +26,6 @@ open class ComposedLinkEntityImpl: ComposedLinkEntity, WorkspaceEntityBase() {
 
     class Builder(val result: ComposedLinkEntityData?): ModifiableWorkspaceEntityBase<ComposedLinkEntity>(), ComposedLinkEntity.Builder {
         constructor(): this(ComposedLinkEntityData())
-                 
-        override fun build(): ComposedLinkEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

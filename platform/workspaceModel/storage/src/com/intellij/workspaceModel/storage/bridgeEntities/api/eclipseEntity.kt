@@ -50,8 +50,8 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
   }
   
   companion object: Type<EclipseProjectPropertiesEntity, Builder>() {
-      operator fun invoke(entitySource: EntitySource, variablePaths: Map<String, String>, eclipseUrls: List<VirtualFileUrl>, unknownCons: List<String>, knownCons: List<String>, forceConfigureJdk: Boolean, expectedModuleSourcePlace: Int, srcPlace: Map<String, Int>, init: Builder.() -> Unit): EclipseProjectPropertiesEntity {
-          val builder = builder(init)
+      operator fun invoke(entitySource: EntitySource, variablePaths: Map<String, String>, eclipseUrls: List<VirtualFileUrl>, unknownCons: List<String>, knownCons: List<String>, forceConfigureJdk: Boolean, expectedModuleSourcePlace: Int, srcPlace: Map<String, Int>, init: (Builder.() -> Unit)? = null): EclipseProjectPropertiesEntity {
+          val builder = builder()
           builder.entitySource = entitySource
           builder.variablePaths = variablePaths
           builder.eclipseUrls = eclipseUrls
@@ -60,6 +60,7 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
           builder.forceConfigureJdk = forceConfigureJdk
           builder.expectedModuleSourcePlace = expectedModuleSourcePlace
           builder.srcPlace = srcPlace
+          init?.invoke(builder)
           return builder
       }
   }

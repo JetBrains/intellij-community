@@ -11,17 +11,11 @@ class AddChildrenTest {
   @Test
   fun `child added to the store at parent modification`() {
     val builder = MutableEntityStorage.create()
-    val entity = ParentNullableEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-    }
+    val entity = ParentNullableEntity("ParentData", MySource)
     builder.addEntity(entity)
 
     builder.modifyEntity(entity) {
-      this.child = ChildNullableEntity {
-        entitySource = MySource
-        childData = "ChildData"
-      }
+      this.child = ChildNullableEntity("ChildData", MySource)
     }
     assertNotNull(entity.child)
     val entities = builder.entities(ChildNullableEntity::class.java).single()
@@ -32,21 +26,14 @@ class AddChildrenTest {
   @Test
   fun `new child added to the store at list modification`() {
     val builder = MutableEntityStorage.create()
-    val parentEntity = ParentMultipleEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-    }
+    val parentEntity = ParentMultipleEntity("ParentData", MySource)
 
-    val firstChild = ChildMultipleEntity {
-      this.entitySource = MySource
-      this.childData = "ChildOneData"
+    val firstChild = ChildMultipleEntity("ChildOneData", MySource) {
       this.parentEntity = parentEntity
     }
     builder.addEntity(parentEntity)
 
-    val secondChild = ChildMultipleEntity {
-      this.entitySource = MySource
-      this.childData = "ChildTwoData"
+    val secondChild = ChildMultipleEntity("ChildTwoData", MySource) {
       this.parentEntity = parentEntity
     }
 
@@ -62,19 +49,12 @@ class AddChildrenTest {
   @Test
   fun `child was removed from the store after list update`() {
     val builder = MutableEntityStorage.create()
-    val parentEntity = ParentMultipleEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-    }
+    val parentEntity = ParentMultipleEntity("ParentData", MySource)
 
-    val firstChild = ChildMultipleEntity {
-      this.entitySource = MySource
-      this.childData = "ChildOneData"
+    val firstChild = ChildMultipleEntity("ChildOneData", MySource) {
       this.parentEntity = parentEntity
     }
-    val secondChild = ChildMultipleEntity {
-      this.entitySource = MySource
-      this.childData = "ChildTwoData"
+    val secondChild = ChildMultipleEntity("ChildTwoData", MySource) {
       this.parentEntity = parentEntity
     }
     builder.addEntity(parentEntity)
@@ -91,13 +71,8 @@ class AddChildrenTest {
   @Test
   fun `remove child from store at parent modification`() {
     val builder = MutableEntityStorage.create()
-    val entity = ParentNullableEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-      child = ChildNullableEntity {
-        entitySource = MySource
-        childData = "ChildData"
-      }
+    val entity = ParentNullableEntity("ParentData", MySource) {
+      child = ChildNullableEntity("ChildData", MySource)
     }
     builder.addEntity(entity)
 
@@ -111,24 +86,14 @@ class AddChildrenTest {
   @Test
   fun `remove old child at parent entity update`() {
     val builder = MutableEntityStorage.create()
-    val commonChild = ChildNullableEntity {
-      entitySource = MySource
-      childData = "ChildDataTwo"
-    }
-    val entity = ParentNullableEntity {
-      entitySource = MySource
-      parentData = "ParentData"
+    val commonChild = ChildNullableEntity("ChildDataTwo", MySource)
+    val entity = ParentNullableEntity("ParentData", MySource) {
       child = commonChild
     }
     builder.addEntity(entity)
 
-    val anotherParent = ParentNullableEntity {
-      entitySource = MySource
-      parentData = "AnotherParentData"
-      child = ChildNullableEntity {
-        entitySource = MySource
-        childData = "ChildDataTwo"
-      }
+    val anotherParent = ParentNullableEntity("AnotherParentData", MySource) {
+      child = ChildNullableEntity("ChildDataTwo", MySource)
     }
     builder.addEntity(anotherParent)
     val children = builder.entities(ChildNullableEntity::class.java).toList()

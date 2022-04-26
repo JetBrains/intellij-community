@@ -24,8 +24,6 @@ open class FirstEntityWithPIdImpl: FirstEntityWithPId, WorkspaceEntityBase() {
 
     class Builder(val result: FirstEntityWithPIdData?): ModifiableWorkspaceEntityBase<FirstEntityWithPId>(), FirstEntityWithPId.Builder {
         constructor(): this(FirstEntityWithPIdData())
-                 
-        override fun build(): FirstEntityWithPId = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

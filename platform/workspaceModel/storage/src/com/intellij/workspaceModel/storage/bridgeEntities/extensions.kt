@@ -14,13 +14,10 @@ fun MutableEntityStorage.addModuleEntity(name: String,
                                          dependencies: List<ModuleDependencyItem>,
                                          source: EntitySource,
                                          type: String? = null): ModuleEntity {
-  val entity = ModuleEntity {
-    this.name = name
+  val entity = ModuleEntity(name, source, dependencies) {
     this.type = type
-    this.dependencies = dependencies
     this.contentRoots = emptyList()
     this.facets = emptyList()
-    this.entitySource = source
   }
   this.addEntity(entity)
   return entity
@@ -33,14 +30,11 @@ fun MutableEntityStorage.addJavaModuleSettingsEntity(inheritedCompilerOutput: Bo
                                                      languageLevelId: String?,
                                                      module: ModuleEntity,
                                                      source: EntitySource): JavaModuleSettingsEntity {
-  val entity = JavaModuleSettingsEntity {
-    this.inheritedCompilerOutput = inheritedCompilerOutput
-    this.excludeOutput = excludeOutput
+  val entity = JavaModuleSettingsEntity(source, inheritedCompilerOutput, excludeOutput) {
     this.compilerOutput = compilerOutput
     this.compilerOutputForTests = compilerOutputForTests
     this.languageLevelId = languageLevelId
     this.module = module
-    this.entitySource = source
   }
   this.addEntity(entity)
   return entity
@@ -50,11 +44,9 @@ fun MutableEntityStorage.addModuleCustomImlDataEntity(rootManagerTagCustomData: 
                                                       customModuleOptions: Map<String, String>,
                                                       module: ModuleEntity,
                                                       source: EntitySource): ModuleCustomImlDataEntity {
-  val entity = ModuleCustomImlDataEntity {
+  val entity = ModuleCustomImlDataEntity(source, HashMap(customModuleOptions)) {
     this.rootManagerTagCustomData = rootManagerTagCustomData
-    this.customModuleOptions = HashMap(customModuleOptions)
     this.module = module
-    this.entitySource = source
   }
   this.addEntity(entity)
   return entity
@@ -63,10 +55,8 @@ fun MutableEntityStorage.addModuleCustomImlDataEntity(rootManagerTagCustomData: 
 fun MutableEntityStorage.addModuleGroupPathEntity(path: List<String>,
                                                   module: ModuleEntity,
                                                   source: EntitySource): ModuleGroupPathEntity {
-  val entity = ModuleGroupPathEntity {
-    this.path = path
+  val entity = ModuleGroupPathEntity(source, path) {
     this.module = module
-    this.entitySource = source
   }
   this.addEntity(entity)
   return entity
@@ -76,11 +66,8 @@ fun MutableEntityStorage.addSourceRootEntity(contentRoot: ContentRootEntity,
                                              url: VirtualFileUrl,
                                              rootType: String,
                                              source: EntitySource): SourceRootEntity {
-  val entity = SourceRootEntity {
+  val entity = SourceRootEntity(source, url, rootType) {
     this.contentRoot = contentRoot
-    this.url = url
-    this.rootType = rootType
-    this.entitySource = source
     this.javaSourceRoots = emptyList()
     this.javaResourceRoots = emptyList()
   }
@@ -96,11 +83,8 @@ fun MutableEntityStorage.addSourceRootEntity(contentRoot: ContentRootEntity,
 fun MutableEntityStorage.addJavaSourceRootEntity(sourceRoot: SourceRootEntity,
                                                  generated: Boolean,
                                                  packagePrefix: String): JavaSourceRootEntity {
-  val entity = JavaSourceRootEntity {
+  val entity = JavaSourceRootEntity(sourceRoot.entitySource, generated, packagePrefix) {
     this.sourceRoot = sourceRoot
-    this.generated = generated
-    this.packagePrefix = packagePrefix
-    this.entitySource = sourceRoot.entitySource
   }
   this.addEntity(entity)
   return entity
@@ -109,11 +93,8 @@ fun MutableEntityStorage.addJavaSourceRootEntity(sourceRoot: SourceRootEntity,
 fun MutableEntityStorage.addJavaResourceRootEntity(sourceRoot: SourceRootEntity,
                                                    generated: Boolean,
                                                    relativeOutputPath: String): JavaResourceRootEntity {
-  val entity = JavaResourceRootEntity {
+  val entity = JavaResourceRootEntity(sourceRoot.entitySource, generated, relativeOutputPath) {
     this.sourceRoot = sourceRoot
-    this.generated = generated
-    this.relativeOutputPath = relativeOutputPath
-    this.entitySource = sourceRoot.entitySource
   }
   this.addEntity(entity)
   return entity
@@ -121,10 +102,8 @@ fun MutableEntityStorage.addJavaResourceRootEntity(sourceRoot: SourceRootEntity,
 
 fun MutableEntityStorage.addCustomSourceRootPropertiesEntity(sourceRoot: SourceRootEntity,
                                                              propertiesXmlTag: String): CustomSourceRootPropertiesEntity {
-  val entity = CustomSourceRootPropertiesEntity {
+  val entity = CustomSourceRootPropertiesEntity(sourceRoot.entitySource, propertiesXmlTag) {
     this.sourceRoot = sourceRoot
-    this.propertiesXmlTag = propertiesXmlTag
-    this.entitySource = sourceRoot.entitySource
   }
   this.addEntity(entity)
   return entity
@@ -146,12 +125,8 @@ fun MutableEntityStorage.addContentRootEntityWithCustomEntitySource(url: Virtual
                                                                     excludedPatterns: List<String>,
                                                                     module: ModuleEntity,
                                                                     source: EntitySource): ContentRootEntity {
-  val entity = ContentRootEntity {
-    this.url = url
-    this.excludedUrls = excludedUrls
-    this.excludedPatterns = excludedPatterns
+  val entity = ContentRootEntity(source, url, excludedUrls, excludedPatterns) {
     this.module = module
-    this.entitySource = source
     this.sourceRoots = emptyList()
   }
   this.addEntity(entity)
@@ -160,13 +135,7 @@ fun MutableEntityStorage.addContentRootEntityWithCustomEntitySource(url: Virtual
 
 fun MutableEntityStorage.addLibraryEntity(name: String, tableId: LibraryTableId, roots: List<LibraryRoot>,
                                           excludedRoots: List<VirtualFileUrl>, source: EntitySource): LibraryEntity {
-  val entity = LibraryEntity {
-    this.tableId = tableId
-    this.name = name
-    this.roots = roots
-    this.excludedRoots = excludedRoots
-    this.entitySource = source
-  }
+  val entity = LibraryEntity(name, source, tableId, roots, excludedRoots)
   this.addEntity(entity)
   return entity
 }
@@ -179,11 +148,9 @@ fun MutableEntityStorage.addLibraryEntity(name: String, tableId: LibraryTableId,
 fun MutableEntityStorage.addLibraryPropertiesEntity(library: LibraryEntity,
                                                     libraryType: String,
                                                     propertiesXmlTag: String?): LibraryPropertiesEntity {
-  val entity = LibraryPropertiesEntity {
+  val entity = LibraryPropertiesEntity(library.entitySource, libraryType) {
     this.library = library
-    this.libraryType = libraryType
     this.propertiesXmlTag = propertiesXmlTag
-    this.entitySource = library.entitySource
   }
   this.addEntity(entity)
   return entity
@@ -191,10 +158,8 @@ fun MutableEntityStorage.addLibraryPropertiesEntity(library: LibraryEntity,
 
 fun MutableEntityStorage.addSdkEntity(library: LibraryEntity,
                                       homeUrl: VirtualFileUrl, source: EntitySource): SdkEntity {
-  val entity = SdkEntity {
+  val entity = SdkEntity(source, homeUrl) {
     this.library = library
-    this.homeUrl = homeUrl
-    this.entitySource = source
   }
   this.addEntity(entity)
   return entity
@@ -203,9 +168,8 @@ fun MutableEntityStorage.addSdkEntity(library: LibraryEntity,
 fun MutableEntityStorage.getOrCreateExternalSystemModuleOptions(module: ModuleEntity,
                                                                 source: EntitySource): ExternalSystemModuleOptionsEntity {
   return module.exModuleOptions ?: run {
-    val entity = ExternalSystemModuleOptionsEntity {
+    val entity = ExternalSystemModuleOptionsEntity(source) {
       this.module = module
-      this.entitySource = source
     }
     this.addEntity(entity)
     entity
@@ -218,14 +182,10 @@ fun MutableEntityStorage.addFacetEntity(name: String,
                                         module: ModuleEntity,
                                         underlyingFacet: FacetEntity?,
                                         source: EntitySource): FacetEntity {
-  val entity = FacetEntity {
-    this.name = name
-    this.facetType = facetType
+  val entity = FacetEntity(name, source, facetType, module.persistentId) {
     this.configurationXmlTag = configurationXmlTag
     this.module = module
     this.underlyingFacet = underlyingFacet
-    this.moduleId = module.persistentId
-    this.entitySource = source
   }
   this.addEntity(entity)
   return entity
@@ -237,13 +197,9 @@ fun MutableEntityStorage.addArtifactEntity(name: String,
                                            outputUrl: VirtualFileUrl?,
                                            rootElement: CompositePackagingElementEntity,
                                            source: EntitySource): ArtifactEntity {
-  val entity = ArtifactEntity {
-    this.name = name
-    this.artifactType = artifactType
-    this.includeInProjectBuild = includeInProjectBuild
+  val entity = ArtifactEntity(name, source, artifactType, includeInProjectBuild) {
     this.outputUrl = outputUrl
     this.rootElement = rootElement
-    this.entitySource = source
     this.customProperties = emptyList()
   }
   this.addEntity(entity)
@@ -254,11 +210,9 @@ fun MutableEntityStorage.addArtifactPropertiesEntity(artifact: ArtifactEntity,
                                                      providerType: String,
                                                      propertiesXmlTag: String?,
                                                      source: EntitySource): ArtifactPropertiesEntity {
-  val entity = ArtifactPropertiesEntity {
+  val entity = ArtifactPropertiesEntity(source, providerType) {
     this.artifact = artifact
-    this.providerType = providerType
     this.propertiesXmlTag = propertiesXmlTag
-    this.entitySource = source
   }
   this.addEntity(entity)
   return entity
@@ -266,9 +220,8 @@ fun MutableEntityStorage.addArtifactPropertiesEntity(artifact: ArtifactEntity,
 
 fun MutableEntityStorage.addArtifactRootElementEntity(children: List<PackagingElementEntity>,
                                                       source: EntitySource): ArtifactRootElementEntity {
-  val entity = ArtifactRootElementEntity {
+  val entity = ArtifactRootElementEntity(source) {
     this.children = children
-    this.entitySource = source
   }
   this.addEntity(entity)
   return entity
@@ -277,10 +230,8 @@ fun MutableEntityStorage.addArtifactRootElementEntity(children: List<PackagingEl
 fun MutableEntityStorage.addDirectoryPackagingElementEntity(directoryName: String,
                                                             children: List<PackagingElementEntity>,
                                                             source: EntitySource): DirectoryPackagingElementEntity {
-  val entity = DirectoryPackagingElementEntity {
-    this.directoryName = directoryName
+  val entity = DirectoryPackagingElementEntity(directoryName, source) {
     this.children = children
-    this.entitySource = source
   }
   this.addEntity(entity)
   return entity
@@ -289,10 +240,8 @@ fun MutableEntityStorage.addDirectoryPackagingElementEntity(directoryName: Strin
 fun MutableEntityStorage.addArchivePackagingElementEntity(fileName: String,
                                                           children: List<PackagingElementEntity>,
                                                           source: EntitySource): ArchivePackagingElementEntity {
-  val entity = ArchivePackagingElementEntity {
-    this.fileName = fileName
+  val entity = ArchivePackagingElementEntity(fileName, source) {
     this.children = children
-    this.entitySource = source
   }
   this.addEntity(entity)
   return entity
@@ -300,9 +249,8 @@ fun MutableEntityStorage.addArchivePackagingElementEntity(fileName: String,
 
 fun MutableEntityStorage.addArtifactOutputPackagingElementEntity(artifact: ArtifactId?,
                                                                  source: EntitySource): ArtifactOutputPackagingElementEntity {
-  val entity = ArtifactOutputPackagingElementEntity {
+  val entity = ArtifactOutputPackagingElementEntity(source) {
     this.artifact = artifact
-    this.entitySource = source
   }
   this.addEntity(entity)
   return entity
@@ -310,9 +258,8 @@ fun MutableEntityStorage.addArtifactOutputPackagingElementEntity(artifact: Artif
 
 fun MutableEntityStorage.addModuleOutputPackagingElementEntity(module: ModuleId?,
                                                                source: EntitySource): ModuleOutputPackagingElementEntity {
-  val entity = ModuleOutputPackagingElementEntity {
+  val entity = ModuleOutputPackagingElementEntity(source) {
     this.module = module
-    this.entitySource = source
   }
   this.addEntity(entity)
   return entity
@@ -320,9 +267,8 @@ fun MutableEntityStorage.addModuleOutputPackagingElementEntity(module: ModuleId?
 
 fun MutableEntityStorage.addLibraryFilesPackagingElementEntity(library: LibraryId?,
                                                                source: EntitySource): LibraryFilesPackagingElementEntity {
-  val entity = LibraryFilesPackagingElementEntity {
+  val entity = LibraryFilesPackagingElementEntity(source) {
     this.library = library
-    this.entitySource = source
   }
   this.addEntity(entity)
   return entity
@@ -330,9 +276,8 @@ fun MutableEntityStorage.addLibraryFilesPackagingElementEntity(library: LibraryI
 
 fun MutableEntityStorage.addModuleSourcePackagingElementEntity(module: ModuleId?,
                                                                source: EntitySource): ModuleSourcePackagingElementEntity {
-  val entity = ModuleSourcePackagingElementEntity {
+  val entity = ModuleSourcePackagingElementEntity(source) {
     this.module = module
-    this.entitySource = source
   }
   this.addEntity(entity)
   return entity
@@ -340,9 +285,8 @@ fun MutableEntityStorage.addModuleSourcePackagingElementEntity(module: ModuleId?
 
 fun MutableEntityStorage.addModuleTestOutputPackagingElementEntity(module: ModuleId?,
                                                                    source: EntitySource): ModuleTestOutputPackagingElementEntity {
-  val entity = ModuleTestOutputPackagingElementEntity {
+  val entity = ModuleTestOutputPackagingElementEntity(source) {
     this.module = module
-    this.entitySource = source
   }
   this.addEntity(entity)
   return entity
@@ -350,10 +294,7 @@ fun MutableEntityStorage.addModuleTestOutputPackagingElementEntity(module: Modul
 
 fun MutableEntityStorage.addDirectoryCopyPackagingElementEntity(filePath: VirtualFileUrl,
                                                                 source: EntitySource): DirectoryCopyPackagingElementEntity {
-  val entity = DirectoryCopyPackagingElementEntity {
-    this.filePath = filePath
-    this.entitySource = source
-  }
+  val entity = DirectoryCopyPackagingElementEntity(filePath, source)
   this.addEntity(entity)
   return entity
 }
@@ -361,11 +302,7 @@ fun MutableEntityStorage.addDirectoryCopyPackagingElementEntity(filePath: Virtua
 fun MutableEntityStorage.addExtractedDirectoryPackagingElementEntity(filePath: VirtualFileUrl,
                                                                      pathInArchive: String,
                                                                      source: EntitySource): ExtractedDirectoryPackagingElementEntity {
-  val entity = ExtractedDirectoryPackagingElementEntity {
-    this.filePath = filePath
-    this.pathInArchive = pathInArchive
-    this.entitySource = source
-  }
+  val entity = ExtractedDirectoryPackagingElementEntity(filePath, pathInArchive, source)
   this.addEntity(entity)
   return entity
 }
@@ -373,10 +310,8 @@ fun MutableEntityStorage.addExtractedDirectoryPackagingElementEntity(filePath: V
 fun MutableEntityStorage.addFileCopyPackagingElementEntity(filePath: VirtualFileUrl,
                                                            renamedOutputFileName: String?,
                                                            source: EntitySource): FileCopyPackagingElementEntity {
-  val entity = FileCopyPackagingElementEntity {
-    this.filePath = filePath
+  val entity = FileCopyPackagingElementEntity(filePath, source) {
     this.renamedOutputFileName = renamedOutputFileName
-    this.entitySource = source
   }
   this.addEntity(entity)
   return entity
@@ -386,11 +321,8 @@ fun MutableEntityStorage.addCustomPackagingElementEntity(typeId: String,
                                                          propertiesXmlTag: String,
                                                          children: List<PackagingElementEntity>,
                                                          source: EntitySource): CustomPackagingElementEntity {
-  val entity = CustomPackagingElementEntity {
-    this.typeId = typeId
-    this.propertiesXmlTag = propertiesXmlTag
+  val entity = CustomPackagingElementEntity(typeId, source, propertiesXmlTag) {
     this.children = children
-    this.entitySource = source
   }
   this.addEntity(entity)
   return entity

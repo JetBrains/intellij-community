@@ -32,8 +32,6 @@ open class FacetsOrderEntityImpl: FacetsOrderEntity, WorkspaceEntityBase() {
 
     class Builder(val result: FacetsOrderEntityData?): ModifiableWorkspaceEntityBase<FacetsOrderEntity>(), FacetsOrderEntity.Builder {
         constructor(): this(FacetsOrderEntityData())
-                 
-        override fun build(): FacetsOrderEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

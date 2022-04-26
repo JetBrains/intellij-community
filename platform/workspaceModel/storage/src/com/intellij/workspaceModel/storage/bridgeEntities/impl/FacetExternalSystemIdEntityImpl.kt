@@ -32,8 +32,6 @@ open class FacetExternalSystemIdEntityImpl: FacetExternalSystemIdEntity, Workspa
 
     class Builder(val result: FacetExternalSystemIdEntityData?): ModifiableWorkspaceEntityBase<FacetExternalSystemIdEntity>(), FacetExternalSystemIdEntity.Builder {
         constructor(): this(FacetExternalSystemIdEntityData())
-                 
-        override fun build(): FacetExternalSystemIdEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

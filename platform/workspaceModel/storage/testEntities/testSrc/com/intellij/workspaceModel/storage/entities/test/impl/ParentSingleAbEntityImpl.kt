@@ -30,8 +30,6 @@ open class ParentSingleAbEntityImpl: ParentSingleAbEntity, WorkspaceEntityBase()
 
     class Builder(val result: ParentSingleAbEntityData?): ModifiableWorkspaceEntityBase<ParentSingleAbEntity>(), ParentSingleAbEntity.Builder {
         constructor(): this(ParentSingleAbEntityData())
-                 
-        override fun build(): ParentSingleAbEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

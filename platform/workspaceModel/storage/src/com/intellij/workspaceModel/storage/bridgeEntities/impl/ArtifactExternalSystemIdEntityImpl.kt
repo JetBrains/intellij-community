@@ -32,8 +32,6 @@ open class ArtifactExternalSystemIdEntityImpl: ArtifactExternalSystemIdEntity, W
 
     class Builder(val result: ArtifactExternalSystemIdEntityData?): ModifiableWorkspaceEntityBase<ArtifactExternalSystemIdEntity>(), ArtifactExternalSystemIdEntity.Builder {
         constructor(): this(ArtifactExternalSystemIdEntityData())
-                 
-        override fun build(): ArtifactExternalSystemIdEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

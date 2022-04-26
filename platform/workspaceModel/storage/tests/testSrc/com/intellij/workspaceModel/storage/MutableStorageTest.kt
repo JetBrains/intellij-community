@@ -11,11 +11,7 @@ class MutableStorageTest {
   @Test
   fun `simple entity mutation test`() {
     val builder = MutableEntityStorage.create()
-    val sampleEntity = SampleEntity2 {
-      entitySource = MySource
-      this.
-      data = "ParentData"
-    }
+    val sampleEntity = SampleEntity2("ParentData", MySource, true)
 
     builder.addEntity(sampleEntity)
     val simpleEntityFromStore = builder.entities(SampleEntity2::class.java).single()
@@ -53,10 +49,7 @@ class MutableStorageTest {
   @Test
   fun `check exception if request data from entity which was removed`() {
     val builder = MutableEntityStorage.create()
-    val sampleEntity = SampleEntity2 {
-      entitySource = MySource
-      data = "ParentData"
-    }
+    val sampleEntity = SampleEntity2("ParentData", MySource, false)
     builder.addEntity(sampleEntity)
     val newBuilder = MutableEntityStorage.from(builder.toSnapshot())
     val entityFromStore = newBuilder.entities(SampleEntity2::class.java).single()
@@ -69,20 +62,13 @@ class MutableStorageTest {
   @Test
   fun `check parent updates`() {
     val builder = MutableEntityStorage.create()
-    val parentEntity = ParentMultipleEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-      children = listOf(ChildMultipleEntity {
-        this.entitySource = MySource
-        this.childData = "ChildOneData"
-      })
+    val parentEntity = ParentMultipleEntity("ParentData", MySource) {
+      children = listOf(ChildMultipleEntity("ChildOneData", MySource))
     }
     builder.addEntity(parentEntity)
 
     val parentEntityFromStore = builder.entities(ParentMultipleEntity::class.java).single()
-    val child = ChildMultipleEntity {
-      entitySource = MySource
-      childData = "ChildData"
+    val child = ChildMultipleEntity("ChildData", MySource) {
       this.parentEntity = parentEntityFromStore
     }
     builder.addEntity(child)
@@ -103,13 +89,8 @@ class MutableStorageTest {
   @Test
   fun `fields modification without lambda not allowed test`() {
     val builder = MutableEntityStorage.create()
-    val parentEntity = ParentMultipleEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-      children = listOf(ChildMultipleEntity {
-        this.entitySource = MySource
-        this.childData = "ChildOneData"
-      })
+    val parentEntity = ParentMultipleEntity("ParentData", MySource) {
+      children = listOf(ChildMultipleEntity("ChildOneData", MySource))
     }
     builder.addEntity(parentEntity)
 
@@ -122,10 +103,7 @@ class MutableStorageTest {
     assertEquals("ParentData", parentEntity.parentData)
 
     assertThrows<IllegalStateException> {
-      parentEntityFromStore.children = listOf(ChildMultipleEntity {
-        this.entitySource = MySource
-        this.childData = "ChildTwoData"
-      })
+      parentEntityFromStore.children = listOf(ChildMultipleEntity("ChildTwoData", MySource))
     }
   }
 }

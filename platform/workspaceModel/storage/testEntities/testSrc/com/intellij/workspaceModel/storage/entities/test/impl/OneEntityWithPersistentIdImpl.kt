@@ -24,8 +24,6 @@ open class OneEntityWithPersistentIdImpl: OneEntityWithPersistentId, WorkspaceEn
 
     class Builder(val result: OneEntityWithPersistentIdData?): ModifiableWorkspaceEntityBase<OneEntityWithPersistentId>(), OneEntityWithPersistentId.Builder {
         constructor(): this(OneEntityWithPersistentIdData())
-                 
-        override fun build(): OneEntityWithPersistentId = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

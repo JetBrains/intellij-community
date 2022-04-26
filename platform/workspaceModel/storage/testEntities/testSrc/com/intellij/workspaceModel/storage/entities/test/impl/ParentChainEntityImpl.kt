@@ -30,8 +30,6 @@ open class ParentChainEntityImpl: ParentChainEntity, WorkspaceEntityBase() {
 
     class Builder(val result: ParentChainEntityData?): ModifiableWorkspaceEntityBase<ParentChainEntity>(), ParentChainEntity.Builder {
         constructor(): this(ParentChainEntityData())
-                 
-        override fun build(): ParentChainEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

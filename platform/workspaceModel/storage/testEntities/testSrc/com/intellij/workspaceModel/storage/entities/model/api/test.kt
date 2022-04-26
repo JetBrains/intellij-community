@@ -26,10 +26,11 @@ interface FooEntity: WorkspaceEntity {
   }
   
   companion object: Type<FooEntity, Builder>() {
-      operator fun invoke(name: String, entitySource: EntitySource, init: Builder.() -> Unit): FooEntity {
-          val builder = builder(init)
+      operator fun invoke(name: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FooEntity {
+          val builder = builder()
           builder.name = name
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -51,10 +52,11 @@ interface AnotherTest: WorkspaceEntity {
   }
   
   companion object: Type<AnotherTest, Builder>() {
-      operator fun invoke(name: String, entitySource: EntitySource, init: Builder.() -> Unit): AnotherTest {
-          val builder = builder(init)
+      operator fun invoke(name: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): AnotherTest {
+          val builder = builder()
           builder.name = name
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }

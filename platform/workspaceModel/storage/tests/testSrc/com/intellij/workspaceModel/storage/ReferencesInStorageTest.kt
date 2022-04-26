@@ -30,13 +30,9 @@ class ReferencesInStorageTest {
   @Test
   fun `add entity`() {
     val builder = createEmptyBuilder()
-    val child = XChildEntity {
-      childProperty = "child"
+    val child = XChildEntity("child", MySource) {
       dataClass = null
-      entitySource = MySource
-      parentEntity = XParentEntity {
-        parentProperty = "foo"
-        entitySource = MySource
+      parentEntity = XParentEntity("foo", MySource) {
         this.optionalChildren = emptyList()
         this.childChild = emptyList()
       }
@@ -53,9 +49,7 @@ class ReferencesInStorageTest {
   @Test
   fun `add entity via diff`() {
     val builder = createEmptyBuilder()
-    val parentEntity = XParentEntity {
-      parentProperty = "foo"
-      entitySource = MySource
+    val parentEntity = XParentEntity("foo", MySource) {
       children = emptyList()
       this.optionalChildren = emptyList()
       this.childChild = emptyList()
@@ -63,10 +57,8 @@ class ReferencesInStorageTest {
     builder.addEntity(parentEntity)
 
     val diff = createBuilderFrom(builder.toSnapshot())
-    val childEntity = XChildEntity {
-      childProperty = "child"
+    val childEntity = XChildEntity("child", MySource) {
       dataClass = null
-      entitySource = MySource
       this.parentEntity = parentEntity
       this.childChild = emptyList()
     }
@@ -84,16 +76,12 @@ class ReferencesInStorageTest {
   @Test
   fun `add remove reference inside data class`() {
     val builder = createEmptyBuilder()
-    val parent1 = XParentEntity {
-      parentProperty = "parent1"
-      entitySource = MySource
+    val parent1 = XParentEntity("parent1", MySource) {
       children = emptyList()
       this.optionalChildren = emptyList()
       this.childChild = emptyList()
     }
-    val parent2 = XParentEntity {
-      parentProperty = "parent2"
-      entitySource = MySource
+    val parent2 = XParentEntity("parent2", MySource) {
       children = emptyList()
       this.optionalChildren = emptyList()
       this.childChild = emptyList()
@@ -101,10 +89,8 @@ class ReferencesInStorageTest {
     builder.addEntity(parent1)
     builder.addEntity(parent2)
     builder.assertConsistency()
-    val child = XChildEntity {
-      childProperty = "child"
+    val child = XChildEntity("child", MySource) {
       dataClass = DataClassX("data", builder.createReference(parent2))
-      entitySource = MySource
       this.parentEntity = parent1
       this.childChild = emptyList()
     }

@@ -25,11 +25,12 @@ interface SampleEntity2 : WorkspaceEntity {
   }
   
   companion object: Type<SampleEntity2, Builder>() {
-      operator fun invoke(data: String, entitySource: EntitySource, boolData: Boolean, init: Builder.() -> Unit): SampleEntity2 {
-          val builder = builder(init)
+      operator fun invoke(data: String, entitySource: EntitySource, boolData: Boolean, init: (Builder.() -> Unit)? = null): SampleEntity2 {
+          val builder = builder()
           builder.data = data
           builder.entitySource = entitySource
           builder.boolData = boolData
+          init?.invoke(builder)
           return builder
       }
   }
@@ -56,12 +57,13 @@ interface VFUEntity2 : WorkspaceEntity {
   }
   
   companion object: Type<VFUEntity2, Builder>() {
-      operator fun invoke(data: String, entitySource: EntitySource, directoryPath: VirtualFileUrl, notNullRoots: List<VirtualFileUrl>, init: Builder.() -> Unit): VFUEntity2 {
-          val builder = builder(init)
+      operator fun invoke(data: String, entitySource: EntitySource, directoryPath: VirtualFileUrl, notNullRoots: List<VirtualFileUrl>, init: (Builder.() -> Unit)? = null): VFUEntity2 {
+          val builder = builder()
           builder.data = data
           builder.entitySource = entitySource
           builder.directoryPath = directoryPath
           builder.notNullRoots = notNullRoots
+          init?.invoke(builder)
           return builder
       }
   }

@@ -748,10 +748,8 @@ fun storeSourceRootsOrder(orderOfItems: List<VirtualFileUrl>,
     // Save the order in which sourceRoots appear in the module
     val orderingEntity = contentRootEntity.sourceRootOrder
     if (orderingEntity == null) {
-      builder.addEntity(SourceRootOrderEntity {
+      builder.addEntity(SourceRootOrderEntity(contentRootEntity.entitySource, orderOfItems) {
         this.contentRootEntity = contentRootEntity
-        this.orderOfSourceRoots = orderOfItems
-        this.entitySource = contentRootEntity.entitySource
       })
     }
     else {

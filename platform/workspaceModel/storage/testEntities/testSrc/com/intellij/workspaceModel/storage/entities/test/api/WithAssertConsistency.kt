@@ -23,10 +23,11 @@ interface AssertConsistencyEntity : WorkspaceEntity {
   }
   
   companion object: Type<AssertConsistencyEntity, Builder>() {
-      operator fun invoke(passCheck: Boolean, entitySource: EntitySource, init: Builder.() -> Unit): AssertConsistencyEntity {
-          val builder = builder(init)
+      operator fun invoke(passCheck: Boolean, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): AssertConsistencyEntity {
+          val builder = builder()
           builder.passCheck = passCheck
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -36,10 +37,7 @@ interface AssertConsistencyEntity : WorkspaceEntity {
 }
 
 fun MutableEntityStorage.addAssertConsistencyEntity(passCheck: Boolean, source: EntitySource = MySource): AssertConsistencyEntity {
-  val assertConsistencyEntity = AssertConsistencyEntity {
-    this.passCheck = passCheck
-    this.entitySource = source
-  }
+  val assertConsistencyEntity = AssertConsistencyEntity(passCheck, source)
   this.addEntity(assertConsistencyEntity)
   return assertConsistencyEntity
 }

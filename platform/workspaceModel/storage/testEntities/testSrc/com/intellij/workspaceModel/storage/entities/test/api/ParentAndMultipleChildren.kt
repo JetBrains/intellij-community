@@ -24,10 +24,11 @@ interface ParentMultipleEntity : WorkspaceEntity {
   }
   
   companion object: Type<ParentMultipleEntity, Builder>() {
-      operator fun invoke(parentData: String, entitySource: EntitySource, init: Builder.() -> Unit): ParentMultipleEntity {
-          val builder = builder(init)
+      operator fun invoke(parentData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentMultipleEntity {
+          val builder = builder()
           builder.parentData = parentData
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -52,10 +53,11 @@ interface ChildMultipleEntity : WorkspaceEntity {
   }
   
   companion object: Type<ChildMultipleEntity, Builder>() {
-      operator fun invoke(childData: String, entitySource: EntitySource, init: Builder.() -> Unit): ChildMultipleEntity {
-          val builder = builder(init)
+      operator fun invoke(childData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildMultipleEntity {
+          val builder = builder()
           builder.childData = childData
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }

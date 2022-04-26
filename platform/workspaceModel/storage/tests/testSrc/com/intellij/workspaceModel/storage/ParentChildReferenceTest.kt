@@ -8,13 +8,8 @@ import kotlin.test.*
 class ParentChildReferenceTest {
   @Test
   fun `check parent and child both set at field while they are not in the store case one`() {
-    val parentEntity = ParentEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-      child = ChildEntity {
-        entitySource = MySource
-        childData = "ChildData"
-      }
+    val parentEntity = ParentEntity("ParentData", MySource) {
+      child = ChildEntity("ChildData", MySource)
     }
     parentEntity as ParentEntityImpl.Builder
     assertNotNull(parentEntity._child)
@@ -43,13 +38,8 @@ class ParentChildReferenceTest {
 
   @Test
   fun `check parent and child both set at field while they are not in the store case two`() {
-    val childEntity = ChildEntity {
-      entitySource = MySource
-      childData = "ChildData"
-      parentEntity = ParentEntity {
-        entitySource = MySource
-        parentData = "ParentData"
-      }
+    val childEntity = ChildEntity("ChildData", MySource) {
+      parentEntity = ParentEntity("ParentData", MySource)
     }
     childEntity as ChildEntityImpl.Builder
     assertNotNull(childEntity._parentEntity)
@@ -78,14 +68,9 @@ class ParentChildReferenceTest {
 
   @Test
   fun `check parent and child both set at field while they are not in the store case three`() {
-    val childEntity = ChildEntity {
-      entitySource = MySource
-      childData = "ChildData"
-    }
+    val childEntity = ChildEntity("ChildData", MySource)
 
-    val parentEntity = ParentEntity {
-      entitySource = MySource
-      parentData = "ParentData"
+    val parentEntity = ParentEntity("ParentData", MySource) {
       child = childEntity
     }
 
@@ -117,18 +102,10 @@ class ParentChildReferenceTest {
 
   @Test
   fun `check parent and children both set at field while they are not in the store case one`() {
-    val parentEntity = ParentMultipleEntity {
-      entitySource = MySource
-      parentData = "ParentData"
+    val parentEntity = ParentMultipleEntity("ParentData", MySource) {
       children = listOf(
-        ChildMultipleEntity {
-          entitySource = MySource
-          childData = "ChildOneData"
-        },
-        ChildMultipleEntity {
-          entitySource = MySource
-          childData = "ChildTwoData"
-        }
+        ChildMultipleEntity("ChildOneData", MySource),
+        ChildMultipleEntity("ChildTwoData", MySource)
       )
     }
     parentEntity as ParentMultipleEntityImpl.Builder
@@ -166,13 +143,8 @@ class ParentChildReferenceTest {
 
   @Test
   fun `check parent and children both set at field while they are not in the store case two`() {
-    val childEntity = ChildMultipleEntity {
-      entitySource = MySource
-      childData = "ChildOneData"
-      parentEntity = ParentMultipleEntity {
-        entitySource = MySource
-        parentData = "ParentData"
-      }
+    val childEntity = ChildMultipleEntity("ChildOneData", MySource) {
+      parentEntity = ParentMultipleEntity("ParentData", MySource)
     }
 
     childEntity as ChildMultipleEntityImpl.Builder
@@ -205,15 +177,10 @@ class ParentChildReferenceTest {
 
   @Test
   fun `check parent and children both set at field while they are not in the store case three`() {
-    val parentEntity = ParentMultipleEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-    }
+    val parentEntity = ParentMultipleEntity("ParentData", MySource)
     parentEntity as ParentMultipleEntityImpl.Builder
 
-    val firstChild = ChildMultipleEntity {
-      this.entitySource = MySource
-      this.childData = "ChildOneData"
+    val firstChild = ChildMultipleEntity("ChildOneData", MySource) {
       this.parentEntity = parentEntity
     }
 
@@ -222,9 +189,7 @@ class ParentChildReferenceTest {
     assertEquals(1, children.size)
     assertSame(firstChild, children[0])
 
-    val secondChild = ChildMultipleEntity {
-      this.entitySource = MySource
-      this.childData = "ChildTwoData"
+    val secondChild = ChildMultipleEntity("ChildTwoData", MySource) {
       this.parentEntity = parentEntity
     }
 
@@ -244,15 +209,10 @@ class ParentChildReferenceTest {
   @Test
   fun `check parent and children saved to the store`() {
     val builder = MutableEntityStorage.create()
-    val parentEntity = ParentMultipleEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-    }
+    val parentEntity = ParentMultipleEntity("ParentData", MySource)
     parentEntity as ParentMultipleEntityImpl.Builder
 
-    val firstChild = ChildMultipleEntity {
-      this.entitySource = MySource
-      this.childData = "ChildOneData"
+    val firstChild = ChildMultipleEntity("ChildOneData", MySource) {
       this.parentEntity = parentEntity
     }
     firstChild as ChildMultipleEntityImpl.Builder
@@ -273,9 +233,7 @@ class ParentChildReferenceTest {
     assertEquals(parentEntityFromStore.children.map { it.childData }.single(), childEntityFromStore.childData)
 
     // Set parent from store
-    val secondChild = ChildMultipleEntity {
-      this.entitySource = MySource
-      this.childData = "ChildTwoData"
+    val secondChild = ChildMultipleEntity("ChildTwoData", MySource) {
       this.parentEntity = parentEntityFromStore
     }
 
@@ -292,9 +250,7 @@ class ParentChildReferenceTest {
 
 
     // Set modifiable parent
-    val thirdChild = ChildMultipleEntity {
-      this.entitySource = MySource
-      this.childData = "ChildThreeData"
+    val thirdChild = ChildMultipleEntity("ChildThreeData", MySource) {
       this.parentEntity = parentEntity
     }
     builder.addEntity(thirdChild)

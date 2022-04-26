@@ -37,8 +37,6 @@ open class ModuleSourcePackagingElementEntityImpl: ModuleSourcePackagingElementE
 
     class Builder(val result: ModuleSourcePackagingElementEntityData?): ModifiableWorkspaceEntityBase<ModuleSourcePackagingElementEntity>(), ModuleSourcePackagingElementEntity.Builder {
         constructor(): this(ModuleSourcePackagingElementEntityData())
-                 
-        override fun build(): ModuleSourcePackagingElementEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

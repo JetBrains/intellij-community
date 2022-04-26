@@ -32,8 +32,6 @@ open class LibraryExternalSystemIdEntityImpl: LibraryExternalSystemIdEntity, Wor
 
     class Builder(val result: LibraryExternalSystemIdEntityData?): ModifiableWorkspaceEntityBase<LibraryExternalSystemIdEntity>(), LibraryExternalSystemIdEntity.Builder {
         constructor(): this(LibraryExternalSystemIdEntityData())
-                 
-        override fun build(): LibraryExternalSystemIdEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

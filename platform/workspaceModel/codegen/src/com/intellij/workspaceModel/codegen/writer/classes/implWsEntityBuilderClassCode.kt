@@ -24,8 +24,6 @@ fun ObjType<*, *>.implWsEntityBuilderCode(): String {
   return """
     class Builder(val result: $javaDataName?): ${ModifiableWorkspaceEntityBase::class.fqn}<$javaFullName>(), $javaBuilderName {
         constructor(): this($javaDataName())
-                 
-        override fun build(): $javaFullName = this
         
 ${
     lines("        ") {

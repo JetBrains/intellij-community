@@ -103,10 +103,8 @@ class EntitySourceIndexTest {
     val entitySource = SampleEntitySource("oldSource")
     val builder = createEmptyBuilder()
     val firstEntity = builder.addSourceEntity("one", entitySource)
-    val entity = ChildSourceEntity {
-      this.data = "firstChild"
+    val entity = ChildSourceEntity("firstChild", entitySource) {
       this.parentEntity = firstEntity
-      this.entitySource = entitySource
     }
     builder.addEntity(entity)
 

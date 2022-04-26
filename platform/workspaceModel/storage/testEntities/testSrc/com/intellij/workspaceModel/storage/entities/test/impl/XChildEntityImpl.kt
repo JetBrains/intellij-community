@@ -42,8 +42,6 @@ open class XChildEntityImpl: XChildEntity, WorkspaceEntityBase() {
 
     class Builder(val result: XChildEntityData?): ModifiableWorkspaceEntityBase<XChildEntity>(), XChildEntity.Builder {
         constructor(): this(XChildEntityData())
-                 
-        override fun build(): XChildEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

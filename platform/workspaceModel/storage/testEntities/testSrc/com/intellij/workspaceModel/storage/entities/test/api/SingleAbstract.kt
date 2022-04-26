@@ -23,9 +23,10 @@ interface ParentSingleAbEntity : WorkspaceEntity {
   }
   
   companion object: Type<ParentSingleAbEntity, Builder>() {
-      operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): ParentSingleAbEntity {
-          val builder = builder(init)
+      operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentSingleAbEntity {
+          val builder = builder()
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -51,10 +52,11 @@ interface ChildSingleAbstractBaseEntity : WorkspaceEntity {
   }
   
   companion object: Type<ChildSingleAbstractBaseEntity, Builder<ChildSingleAbstractBaseEntity>>() {
-      operator fun invoke(commonData: String, entitySource: EntitySource, init: Builder<ChildSingleAbstractBaseEntity>.() -> Unit): ChildSingleAbstractBaseEntity {
-          val builder = builder(init)
+      operator fun invoke(commonData: String, entitySource: EntitySource, init: (Builder<ChildSingleAbstractBaseEntity>.() -> Unit)? = null): ChildSingleAbstractBaseEntity {
+          val builder = builder()
           builder.commonData = commonData
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -78,11 +80,12 @@ interface ChildSingleFirstEntity : ChildSingleAbstractBaseEntity {
   }
   
   companion object: Type<ChildSingleFirstEntity, Builder>(ChildSingleAbstractBaseEntity) {
-      operator fun invoke(commonData: String, firstData: String, entitySource: EntitySource, init: Builder.() -> Unit): ChildSingleFirstEntity {
-          val builder = builder(init)
+      operator fun invoke(commonData: String, firstData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildSingleFirstEntity {
+          val builder = builder()
           builder.commonData = commonData
           builder.firstData = firstData
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -106,11 +109,12 @@ interface ChildSingleSecondEntity : ChildSingleAbstractBaseEntity {
   }
   
   companion object: Type<ChildSingleSecondEntity, Builder>(ChildSingleAbstractBaseEntity) {
-      operator fun invoke(commonData: String, secondData: String, entitySource: EntitySource, init: Builder.() -> Unit): ChildSingleSecondEntity {
-          val builder = builder(init)
+      operator fun invoke(commonData: String, secondData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildSingleSecondEntity {
+          val builder = builder()
           builder.commonData = commonData
           builder.secondData = secondData
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }

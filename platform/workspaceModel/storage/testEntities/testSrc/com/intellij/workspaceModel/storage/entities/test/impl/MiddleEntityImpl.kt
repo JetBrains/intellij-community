@@ -34,8 +34,6 @@ open class MiddleEntityImpl: MiddleEntity, WorkspaceEntityBase() {
 
     class Builder(val result: MiddleEntityData?): ModifiableWorkspaceEntityBase<MiddleEntity>(), MiddleEntity.Builder {
         constructor(): this(MiddleEntityData())
-                 
-        override fun build(): MiddleEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

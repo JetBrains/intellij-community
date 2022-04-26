@@ -23,8 +23,6 @@ open class MainEntityImpl: MainEntity, WorkspaceEntityBase() {
 
     class Builder(val result: MainEntityData?): ModifiableWorkspaceEntityBase<MainEntity>(), MainEntity.Builder {
         constructor(): this(MainEntityData())
-                 
-        override fun build(): MainEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

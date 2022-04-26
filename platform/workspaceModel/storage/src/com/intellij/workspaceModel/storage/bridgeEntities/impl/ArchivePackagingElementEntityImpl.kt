@@ -47,8 +47,6 @@ open class ArchivePackagingElementEntityImpl: ArchivePackagingElementEntity, Wor
 
     class Builder(val result: ArchivePackagingElementEntityData?): ModifiableWorkspaceEntityBase<ArchivePackagingElementEntity>(), ArchivePackagingElementEntity.Builder {
         constructor(): this(ArchivePackagingElementEntityData())
-                 
-        override fun build(): ArchivePackagingElementEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

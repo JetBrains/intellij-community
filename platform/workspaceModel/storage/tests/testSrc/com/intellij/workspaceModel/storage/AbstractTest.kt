@@ -13,10 +13,8 @@ import org.junit.jupiter.api.assertDoesNotThrow
 class AbstractTest {
   @Test
   fun `parent with child`() {
-    val entity = ParentAbEntity {
-      children = listOf(ChildFirstEntity {
-        firstData = "ChildData"
-      })
+    val entity = ParentAbEntity(MySource) {
+      children = listOf(ChildFirstEntity("", "ChildData", MySource))
     }
 
     assertTrue(entity.children.isNotEmpty())
@@ -25,10 +23,8 @@ class AbstractTest {
 
   @Test
   fun `parent with child and common data`() {
-    val entity = ParentAbEntity {
-      children = listOf(ChildFirstEntity {
-        commonData = "ChildData"
-      })
+    val entity = ParentAbEntity(MySource) {
+      children = listOf(ChildFirstEntity("ChildData", "", MySource))
     }
 
     assertTrue(entity.children.isNotEmpty())
@@ -37,14 +33,10 @@ class AbstractTest {
 
   @Test
   fun `parent with child multiple types`() {
-    val entity = ParentAbEntity {
+    val entity = ParentAbEntity(MySource) {
       children = listOf(
-        ChildFirstEntity {
-          commonData = "ChildData"
-        },
-        ChildSecondEntity {
-          secondData = "ChildData"
-        },
+        ChildFirstEntity("ChildData", "", MySource),
+        ChildSecondEntity("ChildData", "", MySource),
       )
     }
 
@@ -53,13 +45,8 @@ class AbstractTest {
 
   @Test
   fun `parent with multiple children in builder`() {
-    val entity = ParentAbEntity {
-      entitySource = MySource
-      children = listOf(ChildFirstEntity {
-        entitySource = MySource
-        commonData = "ChildData"
-        firstData = "Data"
-      })
+    val entity = ParentAbEntity(MySource) {
+      children = listOf(ChildFirstEntity("ChildData", "Data", MySource))
     }
 
     val builder = MutableEntityStorage.create()
@@ -72,19 +59,10 @@ class AbstractTest {
 
   @Test
   fun `parent with three children in builder`() {
-    val entity = ParentAbEntity {
-      entitySource = MySource
+    val entity = ParentAbEntity(MySource) {
       children = listOf(
-        ChildFirstEntity {
-          entitySource = MySource
-          commonData = "Data"
-          firstData = "ChildData1"
-        },
-        ChildSecondEntity {
-          entitySource = MySource
-          commonData = "Data"
-          secondData = "ChildData2"
-        },
+        ChildFirstEntity("Data", "ChildData1", MySource),
+        ChildSecondEntity("Data", "ChildData2", MySource),
       )
     }
 
@@ -101,15 +79,8 @@ class AbstractTest {
 
   @Test
   fun `parent with multiple children in builder and accessing`() {
-    val entity = ParentAbEntity {
-      entitySource = MySource
-      children = listOf(
-        ChildFirstEntity {
-          entitySource = MySource
-          firstData = "FirstData"
-          commonData = "ChildData1"
-        },
-      )
+    val entity = ParentAbEntity(MySource) {
+      children = listOf(ChildFirstEntity("ChildData1", "FirstData", MySource))
     }
 
     val builder = MutableEntityStorage.create()
@@ -120,15 +91,8 @@ class AbstractTest {
 
   @Test
   fun `get parent by child`() {
-    val entity = ParentAbEntity {
-      entitySource = MySource
-      children = listOf(
-        ChildFirstEntity {
-          entitySource = MySource
-          commonData = "Data"
-          firstData = "ChildData1"
-        },
-      )
+    val entity = ParentAbEntity(MySource) {
+      children = listOf(ChildFirstEntity("Data", "ChildData1", MySource))
     }
 
     val builder = MutableEntityStorage.create()
@@ -141,16 +105,12 @@ class AbstractTest {
   @Test
   fun `add parent and then child`() {
     val builder = MutableEntityStorage.create()
-    val parent = ParentAbEntity {
-      entitySource = MySource
+    val parent = ParentAbEntity(MySource) {
       children = emptyList()
     }
     builder.addEntity(parent)
 
-    val child = ChildFirstEntity {
-      entitySource = MySource
-      commonData = "data"
-      firstData = "data"
+    val child = ChildFirstEntity("data", "data", MySource) {
       this.parentEntity = parent
     }
     builder.addEntity(child)
@@ -161,16 +121,12 @@ class AbstractTest {
   @Test
   fun `add parent and then child 2`() {
     val builder = MutableEntityStorage.create()
-    val parent = ParentAbEntity {
-      entitySource = MySource
+    val parent = ParentAbEntity(MySource) {
       children = emptyList()
     }
     builder.addEntity(parent)
 
-    val child = ChildFirstEntity {
-      entitySource = MySource
-      commonData = "data"
-      firstData = "data"
+    val child = ChildFirstEntity("data", "data", MySource) {
       this.parentEntity = parent
     }
 
@@ -184,22 +140,12 @@ class AbstractTest {
   @Test
   fun `add parent and then child 3`() {
     val builder = MutableEntityStorage.create()
-    val parent = ParentAbEntity {
-      entitySource = MySource
-      children = listOf(
-        ChildFirstEntity {
-          entitySource = MySource
-          commonData = "Data"
-          firstData = "ChildData1"
-        },
-      )
+    val parent = ParentAbEntity(MySource) {
+      children = listOf(ChildFirstEntity("Data", "ChildData1", MySource))
     }
     builder.addEntity(parent)
 
-    val child = ChildFirstEntity {
-      entitySource = MySource
-      commonData = "data"
-      firstData = "data"
+    val child = ChildFirstEntity("data", "data", MySource) {
       this.parentEntity = parent
     }
 
@@ -214,19 +160,11 @@ class AbstractTest {
 
   @Test
   fun `add parent and then child 4`() {
-    val parent = ParentAbEntity {
-      entitySource = MySource
-      children = listOf(ChildFirstEntity {
-        entitySource = MySource
-        commonData = "data1"
-        firstData = "data1"
-      })
+    val parent = ParentAbEntity(MySource) {
+      children = listOf(ChildFirstEntity("data1", "data1", MySource))
     }
 
-    val child = ChildFirstEntity {
-      entitySource = MySource
-      commonData = "data2"
-      firstData = "data2"
+    val child = ChildFirstEntity("data2", "data2", MySource) {
       this.parentEntity = parent
     }
 

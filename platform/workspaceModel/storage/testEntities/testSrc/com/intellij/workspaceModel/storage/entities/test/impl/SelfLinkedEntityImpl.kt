@@ -28,8 +28,6 @@ open class SelfLinkedEntityImpl: SelfLinkedEntity, WorkspaceEntityBase() {
 
     class Builder(val result: SelfLinkedEntityData?): ModifiableWorkspaceEntityBase<SelfLinkedEntity>(), SelfLinkedEntity.Builder {
         constructor(): this(SelfLinkedEntityData())
-                 
-        override fun build(): SelfLinkedEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

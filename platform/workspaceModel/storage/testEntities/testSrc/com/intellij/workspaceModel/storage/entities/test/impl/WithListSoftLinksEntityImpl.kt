@@ -30,8 +30,6 @@ open class WithListSoftLinksEntityImpl: WithListSoftLinksEntity, WorkspaceEntity
 
     class Builder(val result: WithListSoftLinksEntityData?): ModifiableWorkspaceEntityBase<WithListSoftLinksEntity>(), WithListSoftLinksEntity.Builder {
         constructor(): this(WithListSoftLinksEntityData())
-                 
-        override fun build(): WithListSoftLinksEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

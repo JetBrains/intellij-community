@@ -51,8 +51,6 @@ open class CustomPackagingElementEntityImpl: CustomPackagingElementEntity, Works
 
     class Builder(val result: CustomPackagingElementEntityData?): ModifiableWorkspaceEntityBase<CustomPackagingElementEntity>(), CustomPackagingElementEntity.Builder {
         constructor(): this(CustomPackagingElementEntityData())
-                 
-        override fun build(): CustomPackagingElementEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

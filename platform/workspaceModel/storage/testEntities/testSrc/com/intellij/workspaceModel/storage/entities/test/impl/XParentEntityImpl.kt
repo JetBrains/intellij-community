@@ -40,8 +40,6 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
 
     class Builder(val result: XParentEntityData?): ModifiableWorkspaceEntityBase<XParentEntity>(), XParentEntity.Builder {
         constructor(): this(XParentEntityData())
-                 
-        override fun build(): XParentEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

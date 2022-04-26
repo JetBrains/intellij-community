@@ -50,8 +50,6 @@ open class EclipseProjectPropertiesEntityImpl: EclipseProjectPropertiesEntity, W
 
     class Builder(val result: EclipseProjectPropertiesEntityData?): ModifiableWorkspaceEntityBase<EclipseProjectPropertiesEntity>(), EclipseProjectPropertiesEntity.Builder {
         constructor(): this(EclipseProjectPropertiesEntityData())
-                 
-        override fun build(): EclipseProjectPropertiesEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

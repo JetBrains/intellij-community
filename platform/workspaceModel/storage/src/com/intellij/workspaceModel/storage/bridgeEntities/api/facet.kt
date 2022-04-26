@@ -40,12 +40,13 @@ interface FacetEntity: WorkspaceEntityWithPersistentId {
     }
     
     companion object: Type<FacetEntity, Builder>() {
-        operator fun invoke(name: String, entitySource: EntitySource, facetType: String, moduleId: ModuleId, init: Builder.() -> Unit): FacetEntity {
-            val builder = builder(init)
+        operator fun invoke(name: String, entitySource: EntitySource, facetType: String, moduleId: ModuleId, init: (Builder.() -> Unit)? = null): FacetEntity {
+            val builder = builder()
             builder.name = name
             builder.entitySource = entitySource
             builder.facetType = facetType
             builder.moduleId = moduleId
+            init?.invoke(builder)
             return builder
         }
     }

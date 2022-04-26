@@ -24,9 +24,10 @@ interface BaseEntity : WorkspaceEntity {
   }
   
   companion object: Type<BaseEntity, Builder<BaseEntity>>() {
-      operator fun invoke(entitySource: EntitySource, init: Builder<BaseEntity>.() -> Unit): BaseEntity {
-          val builder = builder(init)
+      operator fun invoke(entitySource: EntitySource, init: (Builder<BaseEntity>.() -> Unit)? = null): BaseEntity {
+          val builder = builder()
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -50,9 +51,10 @@ interface CompositeBaseEntity : BaseEntity {
   }
   
   companion object: Type<CompositeBaseEntity, Builder<CompositeBaseEntity>>(BaseEntity) {
-      operator fun invoke(entitySource: EntitySource, init: Builder<CompositeBaseEntity>.() -> Unit): CompositeBaseEntity {
-          val builder = builder(init)
+      operator fun invoke(entitySource: EntitySource, init: (Builder<CompositeBaseEntity>.() -> Unit)? = null): CompositeBaseEntity {
+          val builder = builder()
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -75,10 +77,11 @@ interface MiddleEntity : BaseEntity {
   }
   
   companion object: Type<MiddleEntity, Builder>(BaseEntity) {
-      operator fun invoke(property: String, entitySource: EntitySource, init: Builder.() -> Unit): MiddleEntity {
-          val builder = builder(init)
+      operator fun invoke(property: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): MiddleEntity {
+          val builder = builder()
           builder.property = property
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -88,10 +91,7 @@ interface MiddleEntity : BaseEntity {
 }
 
 fun MutableEntityStorage.addMiddleEntity(property: String = "prop", source: EntitySource = MySource): MiddleEntity {
-  val middleEntity = MiddleEntity {
-    this.property = property
-    this.entitySource = source
-  }
+  val middleEntity = MiddleEntity(property, source)
   this.addEntity(middleEntity)
   return middleEntity
 }
@@ -111,9 +111,10 @@ interface LeftEntity : CompositeBaseEntity {
     }
     
     companion object: Type<LeftEntity, Builder>(CompositeBaseEntity) {
-        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): LeftEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): LeftEntity {
+            val builder = builder()
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }
@@ -123,9 +124,8 @@ interface LeftEntity : CompositeBaseEntity {
 }
 
 fun MutableEntityStorage.addLeftEntity(children: Sequence<BaseEntity>, source: EntitySource = MySource): LeftEntity {
-  val leftEntity = LeftEntity {
+  val leftEntity = LeftEntity(source) {
     this.children = children.toList()
-    this.entitySource = source
   }
   this.addEntity(leftEntity)
   return leftEntity
@@ -146,9 +146,10 @@ interface RightEntity : CompositeBaseEntity {
     }
     
     companion object: Type<RightEntity, Builder>(CompositeBaseEntity) {
-        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): RightEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): RightEntity {
+            val builder = builder()
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }
@@ -158,9 +159,8 @@ interface RightEntity : CompositeBaseEntity {
 }
 
 fun MutableEntityStorage.addRightEntity(children: Sequence<BaseEntity>, source: EntitySource = MySource): RightEntity {
-  val rightEntity = RightEntity {
+  val rightEntity = RightEntity(source) {
     this.children = children.toList()
-    this.entitySource = source
   }
   this.addEntity(rightEntity)
   return rightEntity

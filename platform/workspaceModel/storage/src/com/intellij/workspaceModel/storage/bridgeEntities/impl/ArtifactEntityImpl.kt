@@ -57,8 +57,6 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
 
     class Builder(val result: ArtifactEntityData?): ModifiableWorkspaceEntityBase<ArtifactEntity>(), ArtifactEntity.Builder {
         constructor(): this(ArtifactEntityData())
-                 
-        override fun build(): ArtifactEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

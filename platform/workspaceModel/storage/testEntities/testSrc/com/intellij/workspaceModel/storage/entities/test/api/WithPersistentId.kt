@@ -62,10 +62,11 @@ interface OneEntityWithPersistentId : WorkspaceEntityWithPersistentId {
   }
   
   companion object: Type<OneEntityWithPersistentId, Builder>() {
-      operator fun invoke(myName: String, entitySource: EntitySource, init: Builder.() -> Unit): OneEntityWithPersistentId {
-          val builder = builder(init)
+      operator fun invoke(myName: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OneEntityWithPersistentId {
+          val builder = builder()
           builder.myName = myName
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -116,8 +117,8 @@ interface EntityWithSoftLinks : WorkspaceEntity {
   }
   
   companion object: Type<EntityWithSoftLinks, Builder>() {
-      operator fun invoke(link: OnePersistentId, entitySource: EntitySource, manyLinks: List<OnePersistentId>, inContainer: Container, inContainerList: List<Container>, deepContainer: List<TooDeepContainer>, sealedContainer: SealedContainer, listSealedContainer: List<SealedContainer>, justProperty: String, justListProperty: List<String>, deepSealedClass: DeepSealedOne, init: Builder.() -> Unit): EntityWithSoftLinks {
-          val builder = builder(init)
+      operator fun invoke(link: OnePersistentId, entitySource: EntitySource, manyLinks: List<OnePersistentId>, inContainer: Container, inContainerList: List<Container>, deepContainer: List<TooDeepContainer>, sealedContainer: SealedContainer, listSealedContainer: List<SealedContainer>, justProperty: String, justListProperty: List<String>, deepSealedClass: DeepSealedOne, init: (Builder.() -> Unit)? = null): EntityWithSoftLinks {
+          val builder = builder()
           builder.link = link
           builder.entitySource = entitySource
           builder.manyLinks = manyLinks
@@ -129,6 +130,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
           builder.justProperty = justProperty
           builder.justListProperty = justListProperty
           builder.deepSealedClass = deepSealedClass
+          init?.invoke(builder)
           return builder
       }
   }
@@ -149,9 +151,10 @@ interface SoftLinkReferencedChild : WorkspaceEntity {
   }
   
   companion object: Type<SoftLinkReferencedChild, Builder>() {
-      operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): SoftLinkReferencedChild {
-          val builder = builder(init)
+      operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SoftLinkReferencedChild {
+          val builder = builder()
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }

@@ -51,8 +51,6 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
 
     class Builder(val result: FacetEntityData?): ModifiableWorkspaceEntityBase<FacetEntity>(), FacetEntity.Builder {
         constructor(): this(FacetEntityData())
-                 
-        override fun build(): FacetEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

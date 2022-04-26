@@ -32,8 +32,6 @@ open class NamedChildEntityImpl: NamedChildEntity, WorkspaceEntityBase() {
 
     class Builder(val result: NamedChildEntityData?): ModifiableWorkspaceEntityBase<NamedChildEntity>(), NamedChildEntity.Builder {
         constructor(): this(NamedChildEntityData())
-                 
-        override fun build(): NamedChildEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

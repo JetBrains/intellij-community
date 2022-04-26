@@ -32,8 +32,6 @@ open class OoChildForParentWithPidEntityImpl: OoChildForParentWithPidEntity, Wor
 
     class Builder(val result: OoChildForParentWithPidEntityData?): ModifiableWorkspaceEntityBase<OoChildForParentWithPidEntity>(), OoChildForParentWithPidEntity.Builder {
         constructor(): this(OoChildForParentWithPidEntityData())
-                 
-        override fun build(): OoChildForParentWithPidEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

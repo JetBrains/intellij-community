@@ -14,15 +14,9 @@ import kotlin.test.assertTrue
 class StorageIndexiesTest {
   @Test
   fun `check entity source index`() {
-    val entity = ParentSubEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-      child = ChildSubEntity {
-        entitySource = MySource
-        child = ChildSubSubEntity {
-          entitySource = MySource
-          childData = "ChildData"
-        }
+    val entity = ParentSubEntity("ParentData", MySource) {
+      child = ChildSubEntity(MySource) {
+        child = ChildSubSubEntity(MySource, "ChildData")
       }
     }
 
@@ -51,12 +45,7 @@ class StorageIndexiesTest {
     val firstRoot = virtualFileUrlManager.fromPath("/m2/root/one")
     val secondRoot = virtualFileUrlManager.fromPath("/m2/root/second")
 
-    val entity = VFUEntity2 {
-      entitySource = VFUEntitySource(sourceUrl)
-      data = "VFUEntityData"
-      directoryPath = directory
-      notNullRoots = listOf(firstRoot, secondRoot)
-    }
+    val entity = VFUEntity2("VFUEntityData", VFUEntitySource(sourceUrl), directory, listOf(firstRoot, secondRoot))
 
     val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
@@ -69,10 +58,7 @@ class StorageIndexiesTest {
 
   @Test
   fun `check persistent id index`() {
-    val entity = FirstEntityWithPId {
-      entitySource = MySource
-      data = "FirstEntityData"
-    }
+    val entity = FirstEntityWithPId("FirstEntityData", MySource)
 
     val builder = MutableEntityStorage.create()
     builder as MutableEntityStorageImpl

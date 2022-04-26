@@ -37,8 +37,6 @@ open class NamedEntityImpl: NamedEntity, WorkspaceEntityBase() {
 
     class Builder(val result: NamedEntityData?): ModifiableWorkspaceEntityBase<NamedEntity>(), NamedEntity.Builder {
         constructor(): this(NamedEntityData())
-                 
-        override fun build(): NamedEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

@@ -106,11 +106,8 @@ class ModuleModelProxyImpl(private val diff: MutableEntityStorage,
                                                                       PathUtil.getParentPath(
                                                                         systemIndependentPath)), ExternalProjectSystemRegistry.getInstance().getSourceById(
       ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID))
-    val moduleEntity = ModuleEntity {
-      this.name = name
-      entitySource = source
+    val moduleEntity = ModuleEntity(name, source, listOf(ModuleDependencyItem.ModuleSourceDependency)) {
       type = moduleTypeId
-      dependencies =  listOf(ModuleDependencyItem.ModuleSourceDependency)
     }
     diff.addEntity(moduleEntity)
     val moduleManager = getInstance(project)

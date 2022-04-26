@@ -23,8 +23,6 @@ open class AttachedEntityToParentImpl: AttachedEntityToParent, WorkspaceEntityBa
 
     class Builder(val result: AttachedEntityToParentData?): ModifiableWorkspaceEntityBase<AttachedEntityToParent>(), AttachedEntityToParent.Builder {
         constructor(): this(AttachedEntityToParentData())
-                 
-        override fun build(): AttachedEntityToParent = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

@@ -37,8 +37,6 @@ open class RightEntityImpl: RightEntity, WorkspaceEntityBase() {
 
     class Builder(val result: RightEntityData?): ModifiableWorkspaceEntityBase<RightEntity>(), RightEntity.Builder {
         constructor(): this(RightEntityData())
-                 
-        override fun build(): RightEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

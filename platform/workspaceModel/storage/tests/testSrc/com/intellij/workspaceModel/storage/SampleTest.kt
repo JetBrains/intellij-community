@@ -11,45 +11,14 @@ import kotlin.test.assertTrue
 class SampleTest {
   @Test
   fun `entity creation`() {
-    val entity = SampleEntity2 {
-      data = "myData"
-    }
+    val entity = SampleEntity2("myData", MySource, true)
     assertEquals("myData", entity.data)
   }
 
   @Test
-  fun `check entity initialized`() {
-    val builder = MutableEntityStorage.create()
-    var entity = SampleEntity2 {
-      entitySource = MySource
-      boolData = true
-    }
-    try {
-      builder.addEntity(entity)
-    }
-    catch (e: IllegalStateException) {
-      assertEquals("Field SampleEntity2#data should be initialized", e.message)
-    }
-
-    entity = SampleEntity2 {
-      data = "TestData"
-      boolData = true
-    }
-    try {
-      builder.addEntity(entity)
-    }
-    catch (e: Throwable) {
-      assertTrue("entitySource" in e.message!!)
-      assertTrue("initialized" in e.message!!)
-    }
-  }
-
-  @Test
   fun `optional field`() {
-    val entity = SampleEntity2 {
+    val entity = SampleEntity2("", MySource, true){
       this.optionalData = null
-      this.entitySource = MySource
-      this.data = ""
     }
     val builder = MutableEntityStorage.create()
     builder.addEntity(entity)

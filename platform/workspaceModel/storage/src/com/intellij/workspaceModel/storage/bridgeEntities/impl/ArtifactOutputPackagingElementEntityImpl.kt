@@ -37,8 +37,6 @@ open class ArtifactOutputPackagingElementEntityImpl: ArtifactOutputPackagingElem
 
     class Builder(val result: ArtifactOutputPackagingElementEntityData?): ModifiableWorkspaceEntityBase<ArtifactOutputPackagingElementEntity>(), ArtifactOutputPackagingElementEntity.Builder {
         constructor(): this(ArtifactOutputPackagingElementEntityData())
-                 
-        override fun build(): ArtifactOutputPackagingElementEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

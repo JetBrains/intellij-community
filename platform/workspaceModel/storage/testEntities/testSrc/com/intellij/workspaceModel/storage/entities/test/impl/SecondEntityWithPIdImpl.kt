@@ -24,8 +24,6 @@ open class SecondEntityWithPIdImpl: SecondEntityWithPId, WorkspaceEntityBase() {
 
     class Builder(val result: SecondEntityWithPIdData?): ModifiableWorkspaceEntityBase<SecondEntityWithPId>(), SecondEntityWithPId.Builder {
         constructor(): this(SecondEntityWithPIdData())
-                 
-        override fun build(): SecondEntityWithPId = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

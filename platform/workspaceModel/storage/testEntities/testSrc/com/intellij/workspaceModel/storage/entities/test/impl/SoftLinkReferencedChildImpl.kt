@@ -28,8 +28,6 @@ open class SoftLinkReferencedChildImpl: SoftLinkReferencedChild, WorkspaceEntity
 
     class Builder(val result: SoftLinkReferencedChildData?): ModifiableWorkspaceEntityBase<SoftLinkReferencedChild>(), SoftLinkReferencedChild.Builder {
         constructor(): this(SoftLinkReferencedChildData())
-                 
-        override fun build(): SoftLinkReferencedChild = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

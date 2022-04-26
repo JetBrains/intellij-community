@@ -28,11 +28,8 @@ import kotlin.test.assertNotNull
 class ParentAndChildTest {
   @Test
   fun `parent with child`() {
-    val entity = ParentEntity {
-      parentData = "ParentData"
-      child = ChildEntity {
-        childData = "ChildData"
-      }
+    val entity = ParentEntity("ParentData", MySource) {
+      child = ChildEntity("ChildData", MySource)
     }
 
     assertNotNull(entity.child)
@@ -41,14 +38,8 @@ class ParentAndChildTest {
 
   @Test
   fun `parent with child in builder`() {
-    val entity = ParentEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-      child = ChildEntity {
-        entitySource = MySource
-        childData = "ChildData"
-      }
-    }
+    val entity = ParentEntity("ParentData", MySource) {
+      child = ChildEntity("ChildData", MySource)    }
 
     val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
@@ -59,14 +50,8 @@ class ParentAndChildTest {
 
   @Test
   fun `get parent from child`() {
-    val entity = ParentEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-      child = ChildEntity {
-        entitySource = MySource
-        childData = "ChildData"
-      }
-    }
+    val entity = ParentEntity("ParentData", MySource) {
+      child = ChildEntity("ChildData", MySource)    }
 
     val builder = MutableEntityStorage.create()
     builder.addEntity(entity)
@@ -77,13 +62,8 @@ class ParentAndChildTest {
 
   @Test
   fun `parent with child in builder and accessing original`() {
-    val entity = ParentEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-      child = ChildEntity {
-        entitySource = MySource
-        childData = "ChildData"
-      }
+    val entity = ParentEntity("ParentData", MySource) {
+      child = ChildEntity("ChildData", MySource)
     }
 
     val builder = MutableEntityStorage.create()

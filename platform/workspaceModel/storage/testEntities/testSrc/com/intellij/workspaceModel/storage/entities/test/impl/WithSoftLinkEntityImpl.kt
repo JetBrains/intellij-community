@@ -26,8 +26,6 @@ open class WithSoftLinkEntityImpl: WithSoftLinkEntity, WorkspaceEntityBase() {
 
     class Builder(val result: WithSoftLinkEntityData?): ModifiableWorkspaceEntityBase<WithSoftLinkEntity>(), WithSoftLinkEntity.Builder {
         constructor(): this(WithSoftLinkEntityData())
-                 
-        override fun build(): WithSoftLinkEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

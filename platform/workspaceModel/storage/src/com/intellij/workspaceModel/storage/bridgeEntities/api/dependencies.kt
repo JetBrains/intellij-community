@@ -43,13 +43,14 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
     }
     
     companion object: Type<LibraryEntity, Builder>() {
-        operator fun invoke(name: String, entitySource: EntitySource, tableId: LibraryTableId, roots: List<LibraryRoot>, excludedRoots: List<VirtualFileUrl>, init: Builder.() -> Unit): LibraryEntity {
-            val builder = builder(init)
+        operator fun invoke(name: String, entitySource: EntitySource, tableId: LibraryTableId, roots: List<LibraryRoot>, excludedRoots: List<VirtualFileUrl>, init: (Builder.() -> Unit)? = null): LibraryEntity {
+            val builder = builder()
             builder.name = name
             builder.entitySource = entitySource
             builder.tableId = tableId
             builder.roots = roots
             builder.excludedRoots = excludedRoots
+            init?.invoke(builder)
             return builder
         }
     }
@@ -76,10 +77,11 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
     }
     
     companion object: Type<LibraryPropertiesEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, libraryType: String, init: Builder.() -> Unit): LibraryPropertiesEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, libraryType: String, init: (Builder.() -> Unit)? = null): LibraryPropertiesEntity {
+            val builder = builder()
             builder.entitySource = entitySource
             builder.libraryType = libraryType
+            init?.invoke(builder)
             return builder
         }
     }
@@ -103,10 +105,11 @@ interface SdkEntity : WorkspaceEntity {
     }
     
     companion object: Type<SdkEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, homeUrl: VirtualFileUrl, init: Builder.() -> Unit): SdkEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, homeUrl: VirtualFileUrl, init: (Builder.() -> Unit)? = null): SdkEntity {
+            val builder = builder()
             builder.entitySource = entitySource
             builder.homeUrl = homeUrl
+            init?.invoke(builder)
             return builder
         }
     }

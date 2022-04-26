@@ -53,10 +53,11 @@ interface NamedEntity : WorkspaceEntityWithPersistentId {
   }
   
   companion object: Type<NamedEntity, Builder>() {
-      operator fun invoke(myName: String, entitySource: EntitySource, init: Builder.() -> Unit): NamedEntity {
-          val builder = builder(init)
+      operator fun invoke(myName: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): NamedEntity {
+          val builder = builder()
           builder.myName = myName
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -71,10 +72,8 @@ fun MutableEntityStorage.addNamedEntity(
   additionalProperty: String? = null,
   source: EntitySource = MySource
 ): NamedEntity {
-  val namedEntity = NamedEntity {
-    this.myName = name
+  val namedEntity = NamedEntity(name, source) {
     this.additionalProperty = additionalProperty
-    this.entitySource = source
     this.children = emptyList()
   }
   this.addEntity(namedEntity)
@@ -103,10 +102,11 @@ interface NamedChildEntity : WorkspaceEntity {
   }
   
   companion object: Type<NamedChildEntity, Builder>() {
-      operator fun invoke(childProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): NamedChildEntity {
-          val builder = builder(init)
+      operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): NamedChildEntity {
+          val builder = builder()
           builder.childProperty = childProperty
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -121,10 +121,8 @@ fun MutableEntityStorage.addNamedChildEntity(
   childProperty: String = "child",
   source: EntitySource = MySource
 ): NamedChildEntity {
-  val namedChildEntity = NamedChildEntity {
+  val namedChildEntity = NamedChildEntity(childProperty, source) {
     this.parentEntity = parentEntity
-    this.childProperty = childProperty
-    this.entitySource = source
   }
   this.addEntity(namedChildEntity)
   return namedChildEntity
@@ -144,10 +142,11 @@ interface WithSoftLinkEntity : WorkspaceEntity {
   }
   
   companion object: Type<WithSoftLinkEntity, Builder>() {
-      operator fun invoke(link: NameId, entitySource: EntitySource, init: Builder.() -> Unit): WithSoftLinkEntity {
-          val builder = builder(init)
+      operator fun invoke(link: NameId, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): WithSoftLinkEntity {
+          val builder = builder()
           builder.link = link
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -157,10 +156,7 @@ interface WithSoftLinkEntity : WorkspaceEntity {
 }
 
 fun MutableEntityStorage.addWithSoftLinkEntity(link: NameId, source: EntitySource = MySource): WithSoftLinkEntity {
-  val withSoftLinkEntity = WithSoftLinkEntity {
-    this.link = link
-    this.entitySource = source
-  }
+  val withSoftLinkEntity = WithSoftLinkEntity(link, source)
   this.addEntity(withSoftLinkEntity)
   return withSoftLinkEntity
 }
@@ -177,10 +173,11 @@ interface ComposedLinkEntity : WorkspaceEntity {
   }
   
   companion object: Type<ComposedLinkEntity, Builder>() {
-      operator fun invoke(link: ComposedId, entitySource: EntitySource, init: Builder.() -> Unit): ComposedLinkEntity {
-          val builder = builder(init)
+      operator fun invoke(link: ComposedId, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ComposedLinkEntity {
+          val builder = builder()
           builder.link = link
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -190,10 +187,7 @@ interface ComposedLinkEntity : WorkspaceEntity {
 }
 
 fun MutableEntityStorage.addComposedLinkEntity(link: ComposedId, source: EntitySource = MySource): ComposedLinkEntity {
-  val composedLinkEntity = ComposedLinkEntity {
-    this.link = link
-    this.entitySource = source
-  }
+  val composedLinkEntity = ComposedLinkEntity(link, source)
   this.addEntity(composedLinkEntity)
   return composedLinkEntity
 }
@@ -216,11 +210,12 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithPersistentId {
   }
   
   companion object: Type<WithListSoftLinksEntity, Builder>() {
-      operator fun invoke(myName: String, entitySource: EntitySource, links: List<NameId>, init: Builder.() -> Unit): WithListSoftLinksEntity {
-          val builder = builder(init)
+      operator fun invoke(myName: String, entitySource: EntitySource, links: List<NameId>, init: (Builder.() -> Unit)? = null): WithListSoftLinksEntity {
+          val builder = builder()
           builder.myName = myName
           builder.entitySource = entitySource
           builder.links = links
+          init?.invoke(builder)
           return builder
       }
   }
@@ -235,11 +230,7 @@ fun MutableEntityStorage.addWithListSoftLinksEntity(
   links: List<NameId>,
   source: EntitySource = MySource
 ): WithListSoftLinksEntity {
-  val withListSoftLinksEntity = WithListSoftLinksEntity {
-    this.myName = name
-    this.links = links
-    this.entitySource = source
-  }
+  val withListSoftLinksEntity = WithListSoftLinksEntity(name, source, links)
   this.addEntity(withListSoftLinksEntity)
   return withListSoftLinksEntity
 }
@@ -262,11 +253,12 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithPersistentId {
   }
   
   companion object: Type<ComposedIdSoftRefEntity, Builder>() {
-      operator fun invoke(myName: String, entitySource: EntitySource, link: NameId, init: Builder.() -> Unit): ComposedIdSoftRefEntity {
-          val builder = builder(init)
+      operator fun invoke(myName: String, entitySource: EntitySource, link: NameId, init: (Builder.() -> Unit)? = null): ComposedIdSoftRefEntity {
+          val builder = builder()
           builder.myName = myName
           builder.entitySource = entitySource
           builder.link = link
+          init?.invoke(builder)
           return builder
       }
   }
@@ -280,11 +272,7 @@ fun MutableEntityStorage.addComposedIdSoftRefEntity(
   link: NameId,
   source: EntitySource = MySource
 ): ComposedIdSoftRefEntity {
-  val composedIdSoftRefEntity = ComposedIdSoftRefEntity {
-    this.myName = name
-    this.link = link
-    this.entitySource = source
-  }
+  val composedIdSoftRefEntity = ComposedIdSoftRefEntity(name, source, link)
   this.addEntity(composedIdSoftRefEntity)
   return composedIdSoftRefEntity
 }

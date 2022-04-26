@@ -39,8 +39,6 @@ open class ExtractedDirectoryPackagingElementEntityImpl: ExtractedDirectoryPacka
 
     class Builder(val result: ExtractedDirectoryPackagingElementEntityData?): ModifiableWorkspaceEntityBase<ExtractedDirectoryPackagingElementEntity>(), ExtractedDirectoryPackagingElementEntity.Builder {
         constructor(): this(ExtractedDirectoryPackagingElementEntityData())
-                 
-        override fun build(): ExtractedDirectoryPackagingElementEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

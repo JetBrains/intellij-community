@@ -13,11 +13,8 @@ import kotlin.test.assertTrue
 class ParentAndNullableChildTest {
   @Test
   fun `parent with child`() {
-    val entity = ParentNullableEntity {
-      parentData = "ParentData"
-      child = ChildNullableEntity {
-        childData = "ChildData"
-      }
+    val entity = ParentNullableEntity("ParentData", MySource) {
+      child = ChildNullableEntity("ChildData", MySource)
     }
 
     assertNotNull(entity.child)
@@ -26,13 +23,8 @@ class ParentAndNullableChildTest {
 
   @Test
   fun `parent with child in builder`() {
-    val entity = ParentNullableEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-      child = ChildNullableEntity {
-        entitySource = MySource
-        childData = "ChildData"
-      }
+    val entity = ParentNullableEntity("ParentData", MySource) {
+      child = ChildNullableEntity("ChildData", MySource)
     }
 
     val builder = MutableEntityStorage.create()
@@ -46,9 +38,7 @@ class ParentAndNullableChildTest {
 
   @Test
   fun `parent with null child in builder`() {
-    val entity = ParentNullableEntity {
-      entitySource = MySource
-      parentData = "ParentData"
+    val entity = ParentNullableEntity("ParentData", MySource) {
       child = null
     }
 
@@ -61,13 +51,8 @@ class ParentAndNullableChildTest {
 
   @Test
   fun `parent with child in builder and accessing`() {
-    val entity = ParentNullableEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-      child = ChildNullableEntity {
-        entitySource = MySource
-        childData = "ChildData"
-      }
+    val entity = ParentNullableEntity("ParentData", MySource) {
+      child = ChildNullableEntity("ChildData", MySource)
     }
 
     val builder = MutableEntityStorage.create()
@@ -78,9 +63,7 @@ class ParentAndNullableChildTest {
 
   @Test
   fun `parent with null child in builder and accessing`() {
-    val entity = ParentNullableEntity {
-      entitySource = MySource
-      parentData = "ParentData"
+    val entity = ParentNullableEntity("ParentData", MySource) {
       child = null
     }
 
@@ -92,13 +75,8 @@ class ParentAndNullableChildTest {
 
   @Test
   fun `get parent from the child`() {
-    val entity = ParentNullableEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-      child = ChildNullableEntity {
-        entitySource = MySource
-        childData = "data"
-      }
+    val entity = ParentNullableEntity("ParentData", MySource) {
+      child = ChildNullableEntity("data", MySource)
     }
 
     val builder = MutableEntityStorage.create()
@@ -110,13 +88,8 @@ class ParentAndNullableChildTest {
 
   @Test
   fun `parent and child refs`() {
-    val entity = ParentNullableEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-      child = ChildNullableEntity {
-        entitySource = MySource
-        childData = "data"
-      }
+    val entity = ParentNullableEntity("ParentData", MySource) {
+      child = ChildNullableEntity("data", MySource)
     }
 
     assertNotNull(entity.child)
@@ -125,16 +98,11 @@ class ParentAndNullableChildTest {
 
   @Test
   fun `parent in store and child`() {
-    val entity = ParentNullableEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-    }
+    val entity = ParentNullableEntity("ParentData", MySource)
     val builder = createEmptyBuilder()
     builder.addEntity(entity)
 
-    val child = ChildNullableEntity {
-      entitySource = MySource
-      childData = "data"
+    val child = ChildNullableEntity("data", MySource) {
       parentEntity = entity
     }
 
@@ -146,16 +114,11 @@ class ParentAndNullableChildTest {
 
   @Test
   fun `parent in store and child add to store`() {
-    val entity = ParentNullableEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-    }
+    val entity = ParentNullableEntity("ParentData", MySource)
     val builder = createEmptyBuilder()
     builder.addEntity(entity)
 
-    val child = ChildNullableEntity {
-      entitySource = MySource
-      childData = "data"
+    val child = ChildNullableEntity("data", MySource) {
       parentEntity = entity
     }
     builder.addEntity(child)

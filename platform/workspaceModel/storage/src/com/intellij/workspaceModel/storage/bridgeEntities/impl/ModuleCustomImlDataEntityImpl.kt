@@ -36,8 +36,6 @@ open class ModuleCustomImlDataEntityImpl: ModuleCustomImlDataEntity, WorkspaceEn
 
     class Builder(val result: ModuleCustomImlDataEntityData?): ModifiableWorkspaceEntityBase<ModuleCustomImlDataEntity>(), ModuleCustomImlDataEntity.Builder {
         constructor(): this(ModuleCustomImlDataEntityData())
-                 
-        override fun build(): ModuleCustomImlDataEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

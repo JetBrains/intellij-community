@@ -47,11 +47,12 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
     }
     
     companion object: Type<ModuleEntity, Builder>() {
-        operator fun invoke(name: String, entitySource: EntitySource, dependencies: List<ModuleDependencyItem>, init: Builder.() -> Unit): ModuleEntity {
-            val builder = builder(init)
+        operator fun invoke(name: String, entitySource: EntitySource, dependencies: List<ModuleDependencyItem>, init: (Builder.() -> Unit)? = null): ModuleEntity {
+            val builder = builder()
             builder.name = name
             builder.entitySource = entitySource
             builder.dependencies = dependencies
+            init?.invoke(builder)
             return builder
         }
     }
@@ -78,10 +79,11 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
     }
     
     companion object: Type<ModuleCustomImlDataEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, customModuleOptions: Map<String, String>, init: Builder.() -> Unit): ModuleCustomImlDataEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, customModuleOptions: Map<String, String>, init: (Builder.() -> Unit)? = null): ModuleCustomImlDataEntity {
+            val builder = builder()
             builder.entitySource = entitySource
             builder.customModuleOptions = customModuleOptions
+            init?.invoke(builder)
             return builder
         }
     }
@@ -106,10 +108,11 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
     }
     
     companion object: Type<ModuleGroupPathEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, path: List<String>, init: Builder.() -> Unit): ModuleGroupPathEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, path: List<String>, init: (Builder.() -> Unit)? = null): ModuleGroupPathEntity {
+            val builder = builder()
             builder.entitySource = entitySource
             builder.path = path
+            init?.invoke(builder)
             return builder
         }
     }
@@ -142,11 +145,12 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
     }
     
     companion object: Type<JavaModuleSettingsEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, inheritedCompilerOutput: Boolean, excludeOutput: Boolean, init: Builder.() -> Unit): JavaModuleSettingsEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, inheritedCompilerOutput: Boolean, excludeOutput: Boolean, init: (Builder.() -> Unit)? = null): JavaModuleSettingsEntity {
+            val builder = builder()
             builder.entitySource = entitySource
             builder.inheritedCompilerOutput = inheritedCompilerOutput
             builder.excludeOutput = excludeOutput
+            init?.invoke(builder)
             return builder
         }
     }
@@ -184,9 +188,10 @@ interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
     }
     
     companion object: Type<ExternalSystemModuleOptionsEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): ExternalSystemModuleOptionsEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ExternalSystemModuleOptionsEntity {
+            val builder = builder()
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }

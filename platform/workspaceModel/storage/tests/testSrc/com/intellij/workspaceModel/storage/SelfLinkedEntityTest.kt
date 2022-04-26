@@ -11,17 +11,14 @@ class SelfLinkedEntityTest {
   @Test
   fun `simple test`() {
     val builder = createEmptyBuilder()
-    val parent = SelfLinkedEntity {
+    val parent = SelfLinkedEntity(MySource) {
       this.parentEntity = null
-      this.entitySource = MySource
     }
-    SelfLinkedEntity {
+    SelfLinkedEntity(MySource) {
       this.parentEntity = parent
-      this.entitySource = MySource
     }
-    SelfLinkedEntity {
+    SelfLinkedEntity(MySource) {
       this.parentEntity = parent
-      this.entitySource = MySource
     }
     builder.addEntity(parent)
 

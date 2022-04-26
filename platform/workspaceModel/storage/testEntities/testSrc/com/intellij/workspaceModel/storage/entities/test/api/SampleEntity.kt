@@ -33,13 +33,14 @@ interface SampleEntity : WorkspaceEntity {
   }
   
   companion object: Type<SampleEntity, Builder>() {
-      operator fun invoke(booleanProperty: Boolean, entitySource: EntitySource, stringProperty: String, stringListProperty: List<String>, fileProperty: VirtualFileUrl, init: Builder.() -> Unit): SampleEntity {
-          val builder = builder(init)
+      operator fun invoke(booleanProperty: Boolean, entitySource: EntitySource, stringProperty: String, stringListProperty: List<String>, fileProperty: VirtualFileUrl, init: (Builder.() -> Unit)? = null): SampleEntity {
+          val builder = builder()
           builder.booleanProperty = booleanProperty
           builder.entitySource = entitySource
           builder.stringProperty = stringProperty
           builder.stringListProperty = stringListProperty
           builder.fileProperty = fileProperty
+          init?.invoke(builder)
           return builder
       }
   }
@@ -62,10 +63,11 @@ interface ChildSampleEntity : WorkspaceEntity {
   }
   
   companion object: Type<ChildSampleEntity, Builder>() {
-      operator fun invoke(data: String, entitySource: EntitySource, init: Builder.() -> Unit): ChildSampleEntity {
-          val builder = builder(init)
+      operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildSampleEntity {
+          val builder = builder()
           builder.data = data
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -102,10 +104,11 @@ interface SecondSampleEntity : WorkspaceEntity {
   }
   
   companion object: Type<SecondSampleEntity, Builder>() {
-      operator fun invoke(intProperty: Int, entitySource: EntitySource, init: Builder.() -> Unit): SecondSampleEntity {
-          val builder = builder(init)
+      operator fun invoke(intProperty: Int, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SecondSampleEntity {
+          val builder = builder()
           builder.intProperty = intProperty
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -128,10 +131,11 @@ interface SourceEntity : WorkspaceEntity {
   }
   
   companion object: Type<SourceEntity, Builder>() {
-      operator fun invoke(data: String, entitySource: EntitySource, init: Builder.() -> Unit): SourceEntity {
-          val builder = builder(init)
+      operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SourceEntity {
+          val builder = builder()
           builder.data = data
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -154,10 +158,11 @@ interface ChildSourceEntity : WorkspaceEntity {
   }
   
   companion object: Type<ChildSourceEntity, Builder>() {
-      operator fun invoke(data: String, entitySource: EntitySource, init: Builder.() -> Unit): ChildSourceEntity {
-          val builder = builder(init)
+      operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildSourceEntity {
+          val builder = builder()
           builder.data = data
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -182,10 +187,11 @@ interface PersistentIdEntity : WorkspaceEntityWithPersistentId {
   }
   
   companion object: Type<PersistentIdEntity, Builder>() {
-      operator fun invoke(data: String, entitySource: EntitySource, init: Builder.() -> Unit): PersistentIdEntity {
-          val builder = builder(init)
+      operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): PersistentIdEntity {
+          val builder = builder()
           builder.data = data
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }

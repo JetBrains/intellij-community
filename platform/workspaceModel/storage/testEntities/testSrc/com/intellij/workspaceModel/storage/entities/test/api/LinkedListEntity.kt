@@ -32,11 +32,12 @@ interface LinkedListEntity : WorkspaceEntityWithPersistentId {
   }
   
   companion object: Type<LinkedListEntity, Builder>() {
-      operator fun invoke(myName: String, entitySource: EntitySource, next: LinkedListEntityId, init: Builder.() -> Unit): LinkedListEntity {
-          val builder = builder(init)
+      operator fun invoke(myName: String, entitySource: EntitySource, next: LinkedListEntityId, init: (Builder.() -> Unit)? = null): LinkedListEntity {
+          val builder = builder()
           builder.myName = myName
           builder.entitySource = entitySource
           builder.next = next
+          init?.invoke(builder)
           return builder
       }
   }
@@ -46,11 +47,7 @@ interface LinkedListEntity : WorkspaceEntityWithPersistentId {
 }
 
 fun MutableEntityStorage.addLinkedListEntity(name: String, next: LinkedListEntityId): LinkedListEntity {
-  val linkedListEntity = LinkedListEntity {
-    this.myName = name
-    this.next = next
-    this.entitySource = MySource
-  }
+  val linkedListEntity = LinkedListEntity(name, MySource, next)
   this.addEntity(linkedListEntity)
   return linkedListEntity
 }

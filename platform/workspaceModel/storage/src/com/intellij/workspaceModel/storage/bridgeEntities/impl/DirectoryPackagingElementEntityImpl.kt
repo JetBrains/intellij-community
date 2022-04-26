@@ -47,8 +47,6 @@ open class DirectoryPackagingElementEntityImpl: DirectoryPackagingElementEntity,
 
     class Builder(val result: DirectoryPackagingElementEntityData?): ModifiableWorkspaceEntityBase<DirectoryPackagingElementEntity>(), DirectoryPackagingElementEntity.Builder {
         constructor(): this(DirectoryPackagingElementEntityData())
-                 
-        override fun build(): DirectoryPackagingElementEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

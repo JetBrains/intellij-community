@@ -43,8 +43,6 @@ open class JavaModuleSettingsEntityImpl: JavaModuleSettingsEntity, WorkspaceEnti
 
     class Builder(val result: JavaModuleSettingsEntityData?): ModifiableWorkspaceEntityBase<JavaModuleSettingsEntity>(), JavaModuleSettingsEntity.Builder {
         constructor(): this(JavaModuleSettingsEntityData())
-                 
-        override fun build(): JavaModuleSettingsEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

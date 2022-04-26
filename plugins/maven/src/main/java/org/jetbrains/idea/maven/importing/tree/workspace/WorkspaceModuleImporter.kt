@@ -49,8 +49,7 @@ class WorkspaceModuleImporter(
     val dependencies = collectDependencies(importData, entitySource)
     val moduleName = importData.moduleData.moduleName
     val moduleEntity = builder.addModuleEntity(moduleName, dependencies, entitySource, ModuleTypeId.JAVA_MODULE)
-    val externalSystemModuleOptionsEntity = ExternalSystemModuleOptionsEntity {
-      this.entitySource = entitySource
+    val externalSystemModuleOptionsEntity = ExternalSystemModuleOptionsEntity(entitySource) {
       module = moduleEntity
       externalSystem = externalSource.id
     }

@@ -11,12 +11,9 @@ import kotlin.test.assertEquals
 class SubChildrenTest {
   @Test
   fun `parent with child`() {
-    val entity = ParentSubEntity {
-      parentData = "ParentData"
-      child = ChildSubEntity {
-        child = ChildSubSubEntity {
-          childData = "ChildData"
-        }
+    val entity = ParentSubEntity("ParentData", MySource) {
+      child = ChildSubEntity(MySource) {
+        child = ChildSubSubEntity(MySource, "ChildData")
       }
     }
 
@@ -25,15 +22,9 @@ class SubChildrenTest {
 
   @Test
   fun `parent with child in builder`() {
-    val entity = ParentSubEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-      child = ChildSubEntity {
-        entitySource = MySource
-        child = ChildSubSubEntity {
-          entitySource = MySource
-          childData = "ChildData"
-        }
+    val entity = ParentSubEntity("ParentData", MySource) {
+      child = ChildSubEntity(MySource) {
+        child = ChildSubSubEntity(MySource, "ChildData")
       }
     }
 
@@ -46,15 +37,9 @@ class SubChildrenTest {
 
   @Test
   fun `parent with child in builder and accessing`() {
-    val entity = ParentSubEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-      child = ChildSubEntity {
-        entitySource = MySource
-        child = ChildSubSubEntity {
-          entitySource = MySource
-          childData = "ChildData"
-        }
+    val entity = ParentSubEntity("ParentData", MySource) {
+      child = ChildSubEntity(MySource) {
+        child = ChildSubSubEntity(MySource, "ChildData")
       }
     }
 
@@ -67,15 +52,9 @@ class SubChildrenTest {
 
   @Test
   fun `get parent from child`() {
-    val entity = ParentSubEntity {
-      entitySource = MySource
-      parentData = "ParentData"
-      child = ChildSubEntity {
-        entitySource = MySource
-        child = ChildSubSubEntity {
-          entitySource = MySource
-          childData = "ChildData"
-        }
+    val entity = ParentSubEntity("ParentData", MySource) {
+      child = ChildSubEntity(MySource) {
+        child = ChildSubSubEntity(MySource, "ChildData")
       }
     }
 

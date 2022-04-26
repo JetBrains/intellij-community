@@ -78,16 +78,23 @@ fun DefType.generatedApiCode(indent: String = "    "): String = lines(indent) {
   if (!mandatoryFields.isEmpty()) {
     val fields = mandatoryFields.joinToString { "${it.name}: ${it.type.javaType}" }
     section(companionObjectHeader) {
-      section("operator fun invoke($fields, init: Builder$builderGeneric.() -> Unit): $javaFullName") {
-        line("val builder = builder(init)")
+      section("operator fun invoke($fields, init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
+        line("val builder = builder()")
         list(mandatoryFields) {
           "builder.$name = $name"
         }
+        line("init?.invoke(builder)")
         line("return builder")
       }
     }
   } else {
-    line(companionObjectHeader)
+    section(companionObjectHeader) {
+      section("operator fun invoke(init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
+        line("val builder = builder()")
+        line("init?.invoke(builder)")
+        line("return builder")
+      }
+    }
   }
   line("//@formatter:on")
   lineNoNl("//endregion")

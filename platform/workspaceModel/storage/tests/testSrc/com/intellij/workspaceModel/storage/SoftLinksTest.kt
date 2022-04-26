@@ -23,13 +23,8 @@ class SoftLinksTest {
 
     // Setup builder for test
     val builder = createEmptyBuilder()
-    builder.addEntity(WithSoftLinkEntity {
-      this.entitySource = MySource
-      this.link = NameId(id)
-    })
-    builder.addEntity(NamedEntity {
-      this.entitySource = MySource
-      this.myName = id
+    builder.addEntity(WithSoftLinkEntity(NameId(id), MySource))
+    builder.addEntity(NamedEntity(id, MySource) {
       this.children = emptyList()
     })
 
@@ -55,13 +50,8 @@ class SoftLinksTest {
 
     // Setup builder for test
     val builder = createEmptyBuilder()
-    builder.addEntity(WithSoftLinkEntity {
-      this.entitySource = MySource
-      this.link = NameId(id)
-    })
-    builder.addEntity(NamedEntity {
-      this.entitySource = MySource
-      this.myName = id
+    builder.addEntity(WithSoftLinkEntity(NameId(id), MySource))
+    builder.addEntity(NamedEntity(id, MySource) {
       this.children = emptyList()
     })
 
@@ -129,11 +119,7 @@ class SoftLinksTest {
   fun `change persistent id in list`() {
     val builder = createEmptyBuilder()
     val entity = builder.addNamedEntity("Name")
-    builder.addEntity(WithListSoftLinksEntity {
-      this.myName = "xyz"
-      this.entitySource = MySource
-      this.links = listOf(NameId("Name"))
-    })
+    builder.addEntity(WithListSoftLinksEntity("xyz", MySource, listOf(NameId("Name"))))
 
     builder.modifyEntity(entity) {
       this.myName = "newName"
@@ -167,33 +153,25 @@ class SoftLinksTest {
   fun `links change`() {
     val builder = MutableEntityStorage.create()
 
-    val entity = OneEntityWithPersistentId {
-      entitySource = MySource
-      myName = "Data"
-    }
+    val entity = OneEntityWithPersistentId("Data", MySource)
     builder.addEntity(entity)
     val persistentId = entity.persistentId
-    val softLinkEntity = EntityWithSoftLinks {
-      entitySource = MySource
-      link = persistentId
-      manyLinks = listOf(persistentId)
+    val softLinkEntity = EntityWithSoftLinks(persistentId,
+                                             MySource,
+                                             listOf(persistentId),
+                                             Container(persistentId),
+                                             listOf(Container(persistentId)),
+                                             listOf(TooDeepContainer(listOf(DeepContainer(listOf(Container(persistentId)), persistentId)))),
+                                             SealedContainer.BigContainer(persistentId),
+                                             listOf(SealedContainer.SmallContainer(persistentId)),
+                                             "Hello",
+                                             listOf("Hello"),
+                                             DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour(persistentId)
+    ) {
       optionalLink = persistentId
-      inContainer = Container(persistentId)
       inOptionalContainer = Container(persistentId)
-      inContainerList = listOf(Container(persistentId))
-      deepContainer =
-        listOf(TooDeepContainer(listOf(DeepContainer(listOf(Container(persistentId)), persistentId))))
-
-      sealedContainer = SealedContainer.BigContainer(persistentId)
-      listSealedContainer = listOf(SealedContainer.SmallContainer(persistentId))
-
-      justProperty = "Hello"
       justNullableProperty = "Hello"
-      justListProperty = listOf("Hello")
-
       this.children = emptyList()
-
-      this.deepSealedClass = DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour(persistentId)
     }
     builder.addEntity(softLinkEntity)
 

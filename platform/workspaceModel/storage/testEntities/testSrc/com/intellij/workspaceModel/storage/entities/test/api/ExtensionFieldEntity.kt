@@ -23,10 +23,11 @@ interface MainEntity : WorkspaceEntity {
   }
   
   companion object: Type<MainEntity, Builder>() {
-      operator fun invoke(x: String, entitySource: EntitySource, init: Builder.() -> Unit): MainEntity {
-          val builder = builder(init)
+      operator fun invoke(x: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): MainEntity {
+          val builder = builder()
           builder.x = x
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -50,10 +51,11 @@ interface AttachedEntity : WorkspaceEntity {
   }
   
   companion object: Type<AttachedEntity, Builder>() {
-      operator fun invoke(entitySource: EntitySource, data: String, init: Builder.() -> Unit): AttachedEntity {
-          val builder = builder(init)
+      operator fun invoke(entitySource: EntitySource, data: String, init: (Builder.() -> Unit)? = null): AttachedEntity {
+          val builder = builder()
           builder.entitySource = entitySource
           builder.data = data
+          init?.invoke(builder)
           return builder
       }
   }

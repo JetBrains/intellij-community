@@ -31,10 +31,11 @@ interface OoParentEntity : WorkspaceEntity {
   }
   
   companion object: Type<OoParentEntity, Builder>() {
-      operator fun invoke(parentProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): OoParentEntity {
-          val builder = builder(init)
+      operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoParentEntity {
+          val builder = builder()
           builder.parentProperty = parentProperty
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -47,10 +48,7 @@ fun MutableEntityStorage.addOoParentEntity(
   parentProperty: String = "parent",
   source: EntitySource = MySource
 ): OoParentEntity {
-  val ooParentEntity = OoParentEntity {
-    this.parentProperty = parentProperty
-    this.entitySource = source
-  }
+  val ooParentEntity = OoParentEntity(parentProperty, source)
   this.addEntity(ooParentEntity)
   return ooParentEntity
 }
@@ -75,10 +73,11 @@ interface OoChildEntity : WorkspaceEntity {
   }
   
   companion object: Type<OoChildEntity, Builder>() {
-      operator fun invoke(childProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): OoChildEntity {
-          val builder = builder(init)
+      operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildEntity {
+          val builder = builder()
           builder.childProperty = childProperty
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -93,10 +92,8 @@ fun MutableEntityStorage.addOoChildEntity(
   childProperty: String = "child",
   source: EntitySource = MySource
 ): OoChildEntity {
-  val ooChildEntity = OoChildEntity {
-    this.childProperty = childProperty
+  val ooChildEntity = OoChildEntity(childProperty, source) {
     this.parentEntity = OoParentEntity
-    this.entitySource = source
   }
   this.addEntity(ooChildEntity)
   return ooChildEntity
@@ -118,9 +115,10 @@ interface OoChildWithNullableParentEntity : WorkspaceEntity {
   }
   
   companion object: Type<OoChildWithNullableParentEntity, Builder>() {
-      operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): OoChildWithNullableParentEntity {
-          val builder = builder(init)
+      operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildWithNullableParentEntity {
+          val builder = builder()
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -133,9 +131,8 @@ fun MutableEntityStorage.addOoChildWithNullableParentEntity(
   OoParentEntity: OoParentEntity,
   source: EntitySource = MySource
 ): OoChildWithNullableParentEntity {
-  val ooChildWithNullableParentEntity = OoChildWithNullableParentEntity {
+  val ooChildWithNullableParentEntity = OoChildWithNullableParentEntity(source) {
     this.parentEntity = OoParentEntity
-    this.entitySource = source
   }
   this.addEntity(ooChildWithNullableParentEntity)
   return ooChildWithNullableParentEntity
@@ -169,10 +166,11 @@ interface OoParentWithPidEntity : WorkspaceEntityWithPersistentId {
   }
   
   companion object: Type<OoParentWithPidEntity, Builder>() {
-      operator fun invoke(parentProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): OoParentWithPidEntity {
-          val builder = builder(init)
+      operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoParentWithPidEntity {
+          val builder = builder()
           builder.parentProperty = parentProperty
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -185,10 +183,7 @@ fun MutableEntityStorage.addOoParentWithPidEntity(
   parentProperty: String = "parent",
   source: EntitySource = MySource
 ): OoParentWithPidEntity {
-  val ooParentWithPidEntity = OoParentWithPidEntity {
-    this.parentProperty = parentProperty
-    this.entitySource = source
-  }
+  val ooParentWithPidEntity = OoParentWithPidEntity(parentProperty, source)
   this.addEntity(ooParentWithPidEntity)
   return ooParentWithPidEntity
 }
@@ -211,10 +206,11 @@ interface OoChildForParentWithPidEntity : WorkspaceEntity {
   }
   
   companion object: Type<OoChildForParentWithPidEntity, Builder>() {
-      operator fun invoke(childProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): OoChildForParentWithPidEntity {
-          val builder = builder(init)
+      operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildForParentWithPidEntity {
+          val builder = builder()
           builder.childProperty = childProperty
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -228,10 +224,8 @@ fun MutableEntityStorage.addOoChildForParentWithPidEntity(
   childProperty: String = "child",
   source: EntitySource = MySource
 ): OoChildForParentWithPidEntity {
-  val ooChildForParentWithPidEntity = OoChildForParentWithPidEntity {
+  val ooChildForParentWithPidEntity = OoChildForParentWithPidEntity(childProperty, source) {
     this.parentEntity = parentEntity
-    this.childProperty = childProperty
-    this.entitySource = source
   }
   this.addEntity(ooChildForParentWithPidEntity)
   return ooChildForParentWithPidEntity
@@ -255,10 +249,11 @@ interface OoChildAlsoWithPidEntity : WorkspaceEntityWithPersistentId {
   }
   
   companion object: Type<OoChildAlsoWithPidEntity, Builder>() {
-      operator fun invoke(childProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): OoChildAlsoWithPidEntity {
-          val builder = builder(init)
+      operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildAlsoWithPidEntity {
+          val builder = builder()
           builder.childProperty = childProperty
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -272,10 +267,8 @@ fun MutableEntityStorage.addOoChildAlsoWithPidEntity(
   childProperty: String = "child",
   source: EntitySource = MySource
 ): OoChildAlsoWithPidEntity {
-  val ooChildAlsoWithPidEntity = OoChildAlsoWithPidEntity {
+  val ooChildAlsoWithPidEntity = OoChildAlsoWithPidEntity(childProperty, source) {
     this.parentEntity = parentEntity
-    this.childProperty = childProperty
-    this.entitySource = source
   }
   this.addEntity(ooChildAlsoWithPidEntity)
   return ooChildAlsoWithPidEntity
@@ -298,10 +291,11 @@ interface OoParentWithoutPidEntity : WorkspaceEntity {
   }
   
   companion object: Type<OoParentWithoutPidEntity, Builder>() {
-      operator fun invoke(parentProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): OoParentWithoutPidEntity {
-          val builder = builder(init)
+      operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoParentWithoutPidEntity {
+          val builder = builder()
           builder.parentProperty = parentProperty
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -315,10 +309,7 @@ fun MutableEntityStorage.addOoParentWithoutPidEntity(
   parentProperty: String = "parent",
   source: EntitySource = MySource
 ): OoParentWithoutPidEntity {
-  val ooParentWithoutPidEntity = OoParentWithoutPidEntity {
-    this.parentProperty = parentProperty
-    this.entitySource = source
-  }
+  val ooParentWithoutPidEntity = OoParentWithoutPidEntity(parentProperty, source)
   this.addEntity(ooParentWithoutPidEntity)
   return ooParentWithoutPidEntity
 }
@@ -347,10 +338,11 @@ interface OoChildWithPidEntity : WorkspaceEntityWithPersistentId {
   }
   
   companion object: Type<OoChildWithPidEntity, Builder>() {
-      operator fun invoke(childProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): OoChildWithPidEntity {
-          val builder = builder(init)
+      operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildWithPidEntity {
+          val builder = builder()
           builder.childProperty = childProperty
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -364,10 +356,8 @@ fun MutableEntityStorage.addOoChildWithPidEntity(
   childProperty: String = "child",
   source: EntitySource = MySource
 ): OoChildWithPidEntity {
-  val ooChildWithPidEntity = OoChildWithPidEntity {
+  val ooChildWithPidEntity = OoChildWithPidEntity(childProperty, source) {
     this.parentEntity = parentEntity
-    this.childProperty = childProperty
-    this.entitySource = source
   }
   this.addEntity(ooChildWithPidEntity)
   return ooChildWithPidEntity

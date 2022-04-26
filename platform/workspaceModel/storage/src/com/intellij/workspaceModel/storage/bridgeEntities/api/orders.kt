@@ -30,10 +30,11 @@ interface FacetsOrderEntity : WorkspaceEntity {
   }
   
   companion object: Type<FacetsOrderEntity, Builder>() {
-      operator fun invoke(orderOfFacets: List<String>, entitySource: EntitySource, init: Builder.() -> Unit): FacetsOrderEntity {
-          val builder = builder(init)
+      operator fun invoke(orderOfFacets: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FacetsOrderEntity {
+          val builder = builder()
           builder.orderOfFacets = orderOfFacets
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -62,10 +63,11 @@ interface FacetExternalSystemIdEntity : WorkspaceEntity {
   }
   
   companion object: Type<FacetExternalSystemIdEntity, Builder>() {
-      operator fun invoke(externalSystemId: String, entitySource: EntitySource, init: Builder.() -> Unit): FacetExternalSystemIdEntity {
-          val builder = builder(init)
+      operator fun invoke(externalSystemId: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FacetExternalSystemIdEntity {
+          val builder = builder()
           builder.externalSystemId = externalSystemId
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -93,10 +95,11 @@ interface ArtifactExternalSystemIdEntity : WorkspaceEntity {
   }
   
   companion object: Type<ArtifactExternalSystemIdEntity, Builder>() {
-      operator fun invoke(externalSystemId: String, entitySource: EntitySource, init: Builder.() -> Unit): ArtifactExternalSystemIdEntity {
-          val builder = builder(init)
+      operator fun invoke(externalSystemId: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArtifactExternalSystemIdEntity {
+          val builder = builder()
           builder.externalSystemId = externalSystemId
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -124,10 +127,11 @@ interface LibraryExternalSystemIdEntity: WorkspaceEntity {
   }
   
   companion object: Type<LibraryExternalSystemIdEntity, Builder>() {
-      operator fun invoke(externalSystemId: String, entitySource: EntitySource, init: Builder.() -> Unit): LibraryExternalSystemIdEntity {
-          val builder = builder(init)
+      operator fun invoke(externalSystemId: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): LibraryExternalSystemIdEntity {
+          val builder = builder()
           builder.externalSystemId = externalSystemId
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -154,10 +158,11 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
   }
   
   companion object: Type<ArtifactsOrderEntity, Builder>() {
-      operator fun invoke(orderOfArtifacts: List<String>, entitySource: EntitySource, init: Builder.() -> Unit): ArtifactsOrderEntity {
-          val builder = builder(init)
+      operator fun invoke(orderOfArtifacts: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArtifactsOrderEntity {
+          val builder = builder()
           builder.orderOfArtifacts = orderOfArtifacts
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }

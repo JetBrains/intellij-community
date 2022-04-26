@@ -28,8 +28,6 @@ open class ListVFUEntityImpl: ListVFUEntity, WorkspaceEntityBase() {
 
     class Builder(val result: ListVFUEntityData?): ModifiableWorkspaceEntityBase<ListVFUEntity>(), ListVFUEntity.Builder {
         constructor(): this(ListVFUEntityData())
-                 
-        override fun build(): ListVFUEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

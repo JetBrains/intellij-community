@@ -33,8 +33,6 @@ open class JavaResourceRootEntityImpl: JavaResourceRootEntity, WorkspaceEntityBa
 
     class Builder(val result: JavaResourceRootEntityData?): ModifiableWorkspaceEntityBase<JavaResourceRootEntity>(), JavaResourceRootEntity.Builder {
         constructor(): this(JavaResourceRootEntityData())
-                 
-        override fun build(): JavaResourceRootEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

@@ -43,8 +43,6 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
 
     class Builder(val result: CompositeChildAbstractEntityData?): ModifiableWorkspaceEntityBase<CompositeChildAbstractEntity>(), CompositeChildAbstractEntity.Builder {
         constructor(): this(CompositeChildAbstractEntityData())
-                 
-        override fun build(): CompositeChildAbstractEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

@@ -120,19 +120,21 @@ internal class LibraryModifiableModelBridgeImpl(
     diff.modifyEntity(currentLibrary.libraryEntity, updater)
   }
 
-  private fun updateProperties(updater: LibraryPropertiesEntity.Builder.() -> Unit) {
+  private fun updateProperties(libraryType: String, propertiesXmlTag: String? = null) {
     val entity = currentLibrary.libraryEntity
 
     val referrers = entity.referrersx(LibraryPropertiesEntity::library).toList()
     if (referrers.isEmpty()) {
-      diff.addEntity(LibraryPropertiesEntity {
+      diff.addEntity(LibraryPropertiesEntity(entity.entitySource, libraryType) {
         library = entity
-        this.entitySource = entity.entitySource
-        updater()
+        if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
       })
     }
     else {
-      diff.modifyEntity(referrers.first(), updater)
+      diff.modifyEntity(referrers.first()) {
+        this.libraryType = libraryType
+        if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
+      }
       referrers.drop(1).forEach { diff.removeEntity(it) }
     }
   }
@@ -280,11 +282,7 @@ internal class LibraryModifiableModelBridgeImpl(
       return
     }
 
-    updateProperties {
-      libraryType = kind.kindId
-      propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, properties)
-    }
-
+    updateProperties(kind.kindId, serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, properties))
     if (assertChangesApplied && currentLibrary.properties != properties) {
       error("setProperties: properties are not equal after changing")
     }
@@ -295,9 +293,7 @@ internal class LibraryModifiableModelBridgeImpl(
 
     if (kind == type) return
 
-    updateProperties {
-      libraryType = type.kindId
-    }
+    updateProperties(type.kindId)
 
     if (assertChangesApplied && currentLibrary.kind?.kindId != type.kindId) {
       error("setKind: expected kindId ${type.kindId}, but got ${currentLibrary.kind?.kindId}. Original kind: ${originalLibrarySnapshot.kind?.kindId}")

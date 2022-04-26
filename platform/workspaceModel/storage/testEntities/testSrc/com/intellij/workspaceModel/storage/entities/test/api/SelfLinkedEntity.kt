@@ -23,9 +23,10 @@ interface SelfLinkedEntity : WorkspaceEntity {
   }
   
   companion object: Type<SelfLinkedEntity, Builder>() {
-      operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): SelfLinkedEntity {
-          val builder = builder(init)
+      operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SelfLinkedEntity {
+          val builder = builder()
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }

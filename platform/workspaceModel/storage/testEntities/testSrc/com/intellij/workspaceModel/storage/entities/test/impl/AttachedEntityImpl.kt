@@ -32,8 +32,6 @@ open class AttachedEntityImpl: AttachedEntity, WorkspaceEntityBase() {
 
     class Builder(val result: AttachedEntityData?): ModifiableWorkspaceEntityBase<AttachedEntity>(), AttachedEntity.Builder {
         constructor(): this(AttachedEntityData())
-                 
-        override fun build(): AttachedEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

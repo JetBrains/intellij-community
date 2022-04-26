@@ -30,10 +30,11 @@ interface XParentEntity : WorkspaceEntity {
   }
   
   companion object: Type<XParentEntity, Builder>() {
-      operator fun invoke(parentProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): XParentEntity {
-          val builder = builder(init)
+      operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): XParentEntity {
+          val builder = builder()
           builder.parentProperty = parentProperty
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -64,10 +65,11 @@ interface XChildEntity : WorkspaceEntity {
   }
   
   companion object: Type<XChildEntity, Builder>() {
-      operator fun invoke(childProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): XChildEntity {
-          val builder = builder(init)
+      operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): XChildEntity {
+          val builder = builder()
           builder.childProperty = childProperty
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -90,10 +92,11 @@ interface XChildWithOptionalParentEntity : WorkspaceEntity {
   }
   
   companion object: Type<XChildWithOptionalParentEntity, Builder>() {
-      operator fun invoke(childProperty: String, entitySource: EntitySource, init: Builder.() -> Unit): XChildWithOptionalParentEntity {
-          val builder = builder(init)
+      operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): XChildWithOptionalParentEntity {
+          val builder = builder()
           builder.childProperty = childProperty
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -117,9 +120,10 @@ interface XChildChildEntity : WorkspaceEntity {
   }
   
   companion object: Type<XChildChildEntity, Builder>() {
-      operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): XChildChildEntity {
-          val builder = builder(init)
+      operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): XChildChildEntity {
+          val builder = builder()
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }

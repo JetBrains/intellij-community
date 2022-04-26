@@ -21,8 +21,6 @@ open class AssertConsistencyEntityImpl: AssertConsistencyEntity, WorkspaceEntity
 
     class Builder(val result: AssertConsistencyEntityData?): ModifiableWorkspaceEntityBase<AssertConsistencyEntity>(), AssertConsistencyEntity.Builder {
         constructor(): this(AssertConsistencyEntityData())
-                 
-        override fun build(): AssertConsistencyEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

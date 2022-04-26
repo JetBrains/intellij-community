@@ -23,9 +23,10 @@ interface ParentChainEntity : WorkspaceEntity {
   }
   
   companion object: Type<ParentChainEntity, Builder>() {
-      operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): ParentChainEntity {
-          val builder = builder(init)
+      operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentChainEntity {
+          val builder = builder()
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -49,9 +50,10 @@ interface SimpleAbstractEntity : WorkspaceEntity {
   }
   
   companion object: Type<SimpleAbstractEntity, Builder<SimpleAbstractEntity>>() {
-      operator fun invoke(entitySource: EntitySource, init: Builder<SimpleAbstractEntity>.() -> Unit): SimpleAbstractEntity {
-          val builder = builder(init)
+      operator fun invoke(entitySource: EntitySource, init: (Builder<SimpleAbstractEntity>.() -> Unit)? = null): SimpleAbstractEntity {
+          val builder = builder()
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -78,9 +80,10 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
   }
   
   companion object: Type<CompositeAbstractEntity, Builder<CompositeAbstractEntity>>(SimpleAbstractEntity) {
-      operator fun invoke(entitySource: EntitySource, init: Builder<CompositeAbstractEntity>.() -> Unit): CompositeAbstractEntity {
-          val builder = builder(init)
+      operator fun invoke(entitySource: EntitySource, init: (Builder<CompositeAbstractEntity>.() -> Unit)? = null): CompositeAbstractEntity {
+          val builder = builder()
           builder.entitySource = entitySource
+          init?.invoke(builder)
           return builder
       }
   }
@@ -102,9 +105,10 @@ interface CompositeChildAbstractEntity : CompositeAbstractEntity {
     }
     
     companion object: Type<CompositeChildAbstractEntity, Builder>(CompositeAbstractEntity) {
-        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): CompositeChildAbstractEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): CompositeChildAbstractEntity {
+            val builder = builder()
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }
@@ -124,9 +128,10 @@ interface SimpleChildAbstractEntity : SimpleAbstractEntity {
     }
     
     companion object: Type<SimpleChildAbstractEntity, Builder>(SimpleAbstractEntity) {
-        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): SimpleChildAbstractEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SimpleChildAbstractEntity {
+            val builder = builder()
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }

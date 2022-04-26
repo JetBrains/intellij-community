@@ -43,12 +43,13 @@ interface ArtifactEntity : WorkspaceEntityWithPersistentId {
     }
     
     companion object: Type<ArtifactEntity, Builder>() {
-        operator fun invoke(name: String, entitySource: EntitySource, artifactType: String, includeInProjectBuild: Boolean, init: Builder.() -> Unit): ArtifactEntity {
-            val builder = builder(init)
+        operator fun invoke(name: String, entitySource: EntitySource, artifactType: String, includeInProjectBuild: Boolean, init: (Builder.() -> Unit)? = null): ArtifactEntity {
+            val builder = builder()
             builder.name = name
             builder.entitySource = entitySource
             builder.artifactType = artifactType
             builder.includeInProjectBuild = includeInProjectBuild
+            init?.invoke(builder)
             return builder
         }
     }
@@ -75,10 +76,11 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
     }
     
     companion object: Type<ArtifactPropertiesEntity, Builder>() {
-        operator fun invoke(entitySource: EntitySource, providerType: String, init: Builder.() -> Unit): ArtifactPropertiesEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, providerType: String, init: (Builder.() -> Unit)? = null): ArtifactPropertiesEntity {
+            val builder = builder()
             builder.entitySource = entitySource
             builder.providerType = providerType
+            init?.invoke(builder)
             return builder
         }
     }
@@ -99,9 +101,10 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
     }
     
     companion object: Type<PackagingElementEntity, Builder<PackagingElementEntity>>() {
-        operator fun invoke(entitySource: EntitySource, init: Builder<PackagingElementEntity>.() -> Unit): PackagingElementEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, init: (Builder<PackagingElementEntity>.() -> Unit)? = null): PackagingElementEntity {
+            val builder = builder()
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }
@@ -127,9 +130,10 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
     }
     
     companion object: Type<CompositePackagingElementEntity, Builder<CompositePackagingElementEntity>>(PackagingElementEntity) {
-        operator fun invoke(entitySource: EntitySource, init: Builder<CompositePackagingElementEntity>.() -> Unit): CompositePackagingElementEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, init: (Builder<CompositePackagingElementEntity>.() -> Unit)? = null): CompositePackagingElementEntity {
+            val builder = builder()
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }
@@ -154,10 +158,11 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
     }
     
     companion object: Type<DirectoryPackagingElementEntity, Builder>(CompositePackagingElementEntity) {
-        operator fun invoke(directoryName: String, entitySource: EntitySource, init: Builder.() -> Unit): DirectoryPackagingElementEntity {
-            val builder = builder(init)
+        operator fun invoke(directoryName: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): DirectoryPackagingElementEntity {
+            val builder = builder()
             builder.directoryName = directoryName
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }
@@ -182,10 +187,11 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
     }
     
     companion object: Type<ArchivePackagingElementEntity, Builder>(CompositePackagingElementEntity) {
-        operator fun invoke(fileName: String, entitySource: EntitySource, init: Builder.() -> Unit): ArchivePackagingElementEntity {
-            val builder = builder(init)
+        operator fun invoke(fileName: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArchivePackagingElementEntity {
+            val builder = builder()
             builder.fileName = fileName
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }
@@ -208,9 +214,10 @@ interface ArtifactRootElementEntity: CompositePackagingElementEntity {
     }
     
     companion object: Type<ArtifactRootElementEntity, Builder>(CompositePackagingElementEntity) {
-        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): ArtifactRootElementEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArtifactRootElementEntity {
+            val builder = builder()
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }
@@ -233,9 +240,10 @@ interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
     }
     
     companion object: Type<ArtifactOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
-        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): ArtifactOutputPackagingElementEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ArtifactOutputPackagingElementEntity {
+            val builder = builder()
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }
@@ -261,9 +269,10 @@ interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
     }
     
     companion object: Type<ModuleOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
-        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): ModuleOutputPackagingElementEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleOutputPackagingElementEntity {
+            val builder = builder()
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }
@@ -285,9 +294,10 @@ interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
     }
     
     companion object: Type<LibraryFilesPackagingElementEntity, Builder>(PackagingElementEntity) {
-        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): LibraryFilesPackagingElementEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): LibraryFilesPackagingElementEntity {
+            val builder = builder()
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }
@@ -313,9 +323,10 @@ interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
     }
     
     companion object: Type<ModuleSourcePackagingElementEntity, Builder>(PackagingElementEntity) {
-        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): ModuleSourcePackagingElementEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleSourcePackagingElementEntity {
+            val builder = builder()
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }
@@ -338,9 +349,10 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
     }
     
     companion object: Type<ModuleTestOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
-        operator fun invoke(entitySource: EntitySource, init: Builder.() -> Unit): ModuleTestOutputPackagingElementEntity {
-            val builder = builder(init)
+        operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleTestOutputPackagingElementEntity {
+            val builder = builder()
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }
@@ -363,10 +375,11 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
     }
     
     companion object: Type<FileOrDirectoryPackagingElementEntity, Builder<FileOrDirectoryPackagingElementEntity>>(PackagingElementEntity) {
-        operator fun invoke(filePath: VirtualFileUrl, entitySource: EntitySource, init: Builder<FileOrDirectoryPackagingElementEntity>.() -> Unit): FileOrDirectoryPackagingElementEntity {
-            val builder = builder(init)
+        operator fun invoke(filePath: VirtualFileUrl, entitySource: EntitySource, init: (Builder<FileOrDirectoryPackagingElementEntity>.() -> Unit)? = null): FileOrDirectoryPackagingElementEntity {
+            val builder = builder()
             builder.filePath = filePath
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }
@@ -388,10 +401,11 @@ interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementE
     }
     
     companion object: Type<DirectoryCopyPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
-        operator fun invoke(filePath: VirtualFileUrl, entitySource: EntitySource, init: Builder.() -> Unit): DirectoryCopyPackagingElementEntity {
-            val builder = builder(init)
+        operator fun invoke(filePath: VirtualFileUrl, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): DirectoryCopyPackagingElementEntity {
+            val builder = builder()
             builder.filePath = filePath
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }
@@ -415,11 +429,12 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
     }
     
     companion object: Type<ExtractedDirectoryPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
-        operator fun invoke(filePath: VirtualFileUrl, pathInArchive: String, entitySource: EntitySource, init: Builder.() -> Unit): ExtractedDirectoryPackagingElementEntity {
-            val builder = builder(init)
+        operator fun invoke(filePath: VirtualFileUrl, pathInArchive: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ExtractedDirectoryPackagingElementEntity {
+            val builder = builder()
             builder.filePath = filePath
             builder.pathInArchive = pathInArchive
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }
@@ -443,10 +458,11 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
     }
     
     companion object: Type<FileCopyPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
-        operator fun invoke(filePath: VirtualFileUrl, entitySource: EntitySource, init: Builder.() -> Unit): FileCopyPackagingElementEntity {
-            val builder = builder(init)
+        operator fun invoke(filePath: VirtualFileUrl, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FileCopyPackagingElementEntity {
+            val builder = builder()
             builder.filePath = filePath
             builder.entitySource = entitySource
+            init?.invoke(builder)
             return builder
         }
     }
@@ -473,11 +489,12 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
     }
     
     companion object: Type<CustomPackagingElementEntity, Builder>(CompositePackagingElementEntity) {
-        operator fun invoke(typeId: String, entitySource: EntitySource, propertiesXmlTag: String, init: Builder.() -> Unit): CustomPackagingElementEntity {
-            val builder = builder(init)
+        operator fun invoke(typeId: String, entitySource: EntitySource, propertiesXmlTag: String, init: (Builder.() -> Unit)? = null): CustomPackagingElementEntity {
+            val builder = builder()
             builder.typeId = typeId
             builder.entitySource = entitySource
             builder.propertiesXmlTag = propertiesXmlTag
+            init?.invoke(builder)
             return builder
         }
     }

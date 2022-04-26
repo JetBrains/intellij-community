@@ -65,8 +65,6 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
 
     class Builder(val result: ModuleEntityData?): ModifiableWorkspaceEntityBase<ModuleEntity>(), ModuleEntity.Builder {
         constructor(): this(ModuleEntityData())
-                 
-        override fun build(): ModuleEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

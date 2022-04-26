@@ -37,8 +37,6 @@ open class LibraryFilesPackagingElementEntityImpl: LibraryFilesPackagingElementE
 
     class Builder(val result: LibraryFilesPackagingElementEntityData?): ModifiableWorkspaceEntityBase<LibraryFilesPackagingElementEntity>(), LibraryFilesPackagingElementEntity.Builder {
         constructor(): this(LibraryFilesPackagingElementEntityData())
-                 
-        override fun build(): LibraryFilesPackagingElementEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

@@ -33,8 +33,6 @@ open class SourceRootOrderEntityImpl: SourceRootOrderEntity, WorkspaceEntityBase
 
     class Builder(val result: SourceRootOrderEntityData?): ModifiableWorkspaceEntityBase<SourceRootOrderEntity>(), SourceRootOrderEntity.Builder {
         constructor(): this(SourceRootOrderEntityData())
-                 
-        override fun build(): SourceRootOrderEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

@@ -43,8 +43,6 @@ open class ArtifactRootElementEntityImpl: ArtifactRootElementEntity, WorkspaceEn
 
     class Builder(val result: ArtifactRootElementEntityData?): ModifiableWorkspaceEntityBase<ArtifactRootElementEntity>(), ArtifactRootElementEntity.Builder {
         constructor(): this(ArtifactRootElementEntityData())
-                 
-        override fun build(): ArtifactRootElementEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

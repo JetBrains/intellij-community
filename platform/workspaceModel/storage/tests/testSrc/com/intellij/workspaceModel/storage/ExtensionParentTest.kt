@@ -14,13 +14,8 @@ class ExtensionParentTest {
   @Test
   fun `access by extension`() {
     val builder = createEmptyBuilder()
-    builder.addEntity(AttachedEntityToParent {
-      this.entitySource = MySource
-      data = "xyz"
-      ref = MainEntityToParent {
-        this.entitySource = MySource
-        this.x = "123"
-      }
+    builder.addEntity(AttachedEntityToParent("xyz", MySource) {
+      ref = MainEntityToParent(MySource, "123")
     })
     val child: AttachedEntityToParent = builder.toSnapshot().entities(MainEntityToParent::class.java).single().child!!
     assertEquals("xyz", child.data)
@@ -31,13 +26,8 @@ class ExtensionParentTest {
 
   @Test
   fun `access by extension without builder`() {
-    val entity = AttachedEntityToParent {
-      this.entitySource = MySource
-      data = "xyz"
-      ref = MainEntityToParent {
-        this.entitySource = MySource
-        this.x = "123"
-      }
+    val entity = AttachedEntityToParent("xyz", MySource) {
+      ref = MainEntityToParent(MySource, "123")
     }
 
     assertEquals("xyz", entity.data)
@@ -49,13 +39,8 @@ class ExtensionParentTest {
   @Test
   fun `access by extension opposite`() {
     val builder = createEmptyBuilder()
-    builder.addEntity(MainEntityToParent {
-      this.x = "123"
-      this.entitySource = MySource
-      this.child = AttachedEntityToParent {
-        this.entitySource = MySource
-        data = "xyz"
-      }
+    builder.addEntity(MainEntityToParent(MySource, "123") {
+      this.child = AttachedEntityToParent("xyz", MySource)
     })
     val child: AttachedEntityToParent = builder.toSnapshot().entities(MainEntityToParent::class.java).single().child!!
     assertEquals("xyz", child.data)
@@ -67,13 +52,8 @@ class ExtensionParentTest {
   @Test
   fun `access by extension opposite in builder`() {
     val builder = createEmptyBuilder()
-    val entity = MainEntityToParent {
-      this.x = "123"
-      this.entitySource = MySource
-      this.child = AttachedEntityToParent {
-        this.entitySource = MySource
-        data = "xyz"
-      }
+    val entity = MainEntityToParent(MySource, "123") {
+      this.child = AttachedEntityToParent("xyz", MySource)
     }
     builder.addEntity(entity)
     assertEquals("xyz", entity.child!!.data)
@@ -82,19 +62,11 @@ class ExtensionParentTest {
   @Test
   fun `access by extension opposite in modification`() {
     val builder = createEmptyBuilder()
-    val entity = MainEntityToParent {
-      this.x = "123"
-      this.entitySource = MySource
-      this.child = AttachedEntityToParent {
-        this.entitySource = MySource
-        data = "xyz"
-      }
+    val entity = MainEntityToParent(MySource, "123") {
+      this.child = AttachedEntityToParent("xyz", MySource)
     }
     builder.addEntity(entity)
-    val anotherChild = AttachedEntityToParent {
-      this.entitySource = MySource
-      data = "abc"
-    }
+    val anotherChild = AttachedEntityToParent("abc", MySource)
 
     builder.modifyEntity(entity) {
       assertEquals("xyz", this.child!!.data)
@@ -107,13 +79,8 @@ class ExtensionParentTest {
 
   @Test
   fun `access by extension opposite without builder`() {
-    val entity = MainEntityToParent {
-      this.x = "123"
-      this.entitySource = MySource
-      this.child = AttachedEntityToParent {
-        this.entitySource = MySource
-        data = "xyz"
-      }
+    val entity = MainEntityToParent(MySource, "123") {
+      this.child = AttachedEntityToParent("xyz", MySource)
     }
 
     assertEquals("123", entity.x)

@@ -171,10 +171,8 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
       }
       val externalSystemId = actifactElement.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE)
       if (externalSystemId != null && !isExternalStorage) {
-        builder.addEntity(ArtifactExternalSystemIdEntity {
-          this.externalSystemId = externalSystemId
+        builder.addEntity(ArtifactExternalSystemIdEntity(externalSystemId, entitySource) {
           this.artifactEntity = artifactEntity
-          this.entitySource = entitySource
         })
       }
       orderOfItems += state.name
@@ -187,10 +185,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
         }
       }
       else {
-        builder.addEntity(ArtifactsOrderEntity {
-          this.entitySource = internalEntitySource
-          this.orderOfArtifacts = orderOfItems
-        })
+        builder.addEntity(ArtifactsOrderEntity(orderOfItems, internalEntitySource))
       }
     }
 

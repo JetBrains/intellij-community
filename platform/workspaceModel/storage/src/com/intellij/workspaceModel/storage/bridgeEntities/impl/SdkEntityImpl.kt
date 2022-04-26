@@ -33,8 +33,6 @@ open class SdkEntityImpl: SdkEntity, WorkspaceEntityBase() {
 
     class Builder(val result: SdkEntityData?): ModifiableWorkspaceEntityBase<SdkEntity>(), SdkEntity.Builder {
         constructor(): this(SdkEntityData())
-                 
-        override fun build(): SdkEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
