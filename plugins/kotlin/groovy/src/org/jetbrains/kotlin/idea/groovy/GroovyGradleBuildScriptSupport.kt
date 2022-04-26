@@ -207,7 +207,7 @@ class GroovyBuildScriptManipulator(
     ) {
         val dependencyString = String.format(
             "%s \"%s:%s:%s\"",
-            scope.toGradleCompileScope(scriptFile.module?.getBuildSystemType() == BuildSystemType.AndroidGradle),
+            scope.toGradleCompileScope(scriptFile.isAndroidModule()),
             libraryDescriptor.libraryGroupId,
             libraryDescriptor.libraryArtifactId,
             libraryDescriptor.maxVersion
@@ -341,7 +341,12 @@ class GroovyBuildScriptManipulator(
             return kotlinOptions.parent.parent
         }
 
-        val kotlinBlock = gradleFile.getBlockOrCreate(if (forTests) "compileTestKotlin" else "compileKotlin")
+        val kotlinBlock: GrClosableBlock =
+            if (gradleFile.isAndroidModule() && gradleFile.getBlockByName("android") != null) {
+                gradleFile.getBlockOrCreate("tasks.withType(org.jetbrains.kotlin.gradle.tasks.${if (forTests) "KotlinTest" else "KotlinCompile"}).all")
+            } else {
+                gradleFile.getBlockOrCreate(if (forTests) "compileTestKotlin" else "compileKotlin")
+            }
 
         for (stmt in kotlinBlock.statements) {
             if ((stmt as? GrAssignmentExpression)?.lValue?.text == "kotlinOptions.$parameterName") {
@@ -400,6 +405,8 @@ class GroovyBuildScriptManipulator(
         }
         return addLastExpressionInBlockIfNeeded(snippet)
     }
+
+    private fun GroovyFile.isAndroidModule() = module?.getBuildSystemType() == BuildSystemType.AndroidGradle
 
     private fun GrStatementOwner.getBuildScriptBlock() = getBlockOrCreate("buildscript") { newBlock ->
         val pluginsBlock = getBlockByName("plugins") ?: return@getBlockOrCreate false
