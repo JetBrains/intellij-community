@@ -297,7 +297,7 @@ private fun makeCall(
         return anchor.replaced(wrappedCall)
     }
 
-    if (rangeToReplace.empty) return
+    if (rangeToReplace.isEmpty) return
 
     val anchor = rangeToReplace.elements.first()
     val anchorParent = anchor.parent!!

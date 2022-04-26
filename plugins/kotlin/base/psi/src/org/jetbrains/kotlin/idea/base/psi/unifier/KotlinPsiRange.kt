@@ -3,9 +3,7 @@
 package org.jetbrains.kotlin.idea.base.psi.unifier
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.*
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.siblings
@@ -21,16 +19,34 @@ sealed interface KotlinPsiRange {
     }
 
     class ListRange(override val elements: List<PsiElement>) : KotlinPsiRange {
-        val startElement: PsiElement = elements.first()
-        val endElement: PsiElement = elements.last()
-
         override val textRange: TextRange
             get() {
-                val startRange = startElement.textRange
-                val endRange = endElement.textRange
+                val startRange = elements.first().textRange
+                val endRange = elements.last().textRange
                 if (startRange == null || endRange == null) return TextRange.EMPTY_RANGE
 
                 return TextRange(startRange.startOffset, endRange.endOffset)
+            }
+    }
+
+    class SmartListRange(elements: List<PsiElement>) : KotlinPsiRange {
+
+        private val pointers: List<SmartPsiElementPointer<PsiElement>> = elements.map { SmartPointerManager.createPointer(it) }
+
+        override val elements: List<PsiElement>
+            get() {
+                val elements: List<PsiElement> = pointers.mapNotNull { pointer -> pointer.element }
+                return elements.takeIf { elements.size == pointers.size } ?: emptyList()
+            }
+
+        override val textRange: TextRange
+            get() {
+                val elements = this.elements
+                return if (elements.isNotEmpty()) {
+                    TextRange(elements.first().textRange.startOffset, elements.last().textRange.endOffset)
+                } else {
+                    TextRange.EMPTY_RANGE
+                }
             }
     }
 

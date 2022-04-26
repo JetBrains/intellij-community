@@ -65,7 +65,7 @@ class KotlinPsiUnifier(
         var targetSubstringInfo: ExtractableSubstringInfo? = null
 
         private fun KotlinPsiRange.getBindingContext(): BindingContext {
-            val element = (this as? KotlinPsiRange.ListRange)?.startElement as? KtElement
+            val element = elements.firstOrNull() as? KtElement
             if ((element?.containingFile as? KtFile)?.doNotAnalyze != null) return BindingContext.EMPTY
             return element?.analyze() ?: BindingContext.EMPTY
         }
