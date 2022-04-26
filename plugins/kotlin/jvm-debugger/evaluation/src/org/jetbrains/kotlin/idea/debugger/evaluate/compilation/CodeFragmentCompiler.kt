@@ -147,74 +147,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
             bindingContext, filesToCompile, compilerConfiguration
         ).apply {
             if (fragmentCompilerBackend == FragmentCompilerBackend.JVM_IR) {
-                val mangler = JvmDescriptorMangler(MainFunctionDetector(bindingContext, compilerConfiguration.languageVersionSettings))
-                val evaluatorFragmentInfo = EvaluatorFragmentInfo(
-                    codegenInfo.classDescriptor,
-                    codegenInfo.methodDescriptor,
-                    codegenInfo.parameters.map { EvaluatorFragmentParameterInfo(it.targetDescriptor, it.isLValue) }
-                )
-                codegenFactory(
-                    JvmIrCodegenFactory(
-                        configuration = compilerConfiguration,
-                        phaseConfig = null,
-                        externalMangler = mangler,
-                        externalSymbolTable = FragmentCompilerSymbolTableDecorator(
-                            JvmIdSignatureDescriptor(mangler),
-                            IrFactoryImpl,
-                            evaluatorFragmentInfo,
-                            NameProvider.DEFAULT,
-                        ),
-                        prefixPhases = fragmentSharedVariablesLowering then reflectiveAccessLowering,
-                        jvmGeneratorExtensions = object : JvmGeneratorExtensionsImpl(compilerConfiguration) {
-                            // Top-level declarations in the project being debugged is served to the compiler as
-                            // PSI, not as class files. PSI2IR generate these as "external declarations" and
-                            // here we provide a shim from the PSI structures serving the names of facade classes
-                            // for top level declarations (as the facade classes do not exist in the PSI but are
-                            // created and _named_ during compilation).
-                            override fun getContainerSource(descriptor: DeclarationDescriptor): DeserializedContainerSource? {
-                                val psiSourceFile =
-                                    descriptor.toSourceElement.containingFile as? PsiSourceFile ?: return super.getContainerSource(
-                                        descriptor
-                                    )
-                                return FacadeClassSourceShimForFragmentCompilation(psiSourceFile)
-                            }
-
-                            @OptIn(ObsoleteDescriptorBasedAPI::class)
-                            override fun isAccessorWithExplicitImplementation(accessor: IrSimpleFunction): Boolean {
-                                return (accessor.descriptor as? PropertyAccessorDescriptor)?.hasBody() == true
-                            }
-
-                            override fun remapDebuggerFieldPropertyDescriptor(propertyDescriptor: PropertyDescriptor): PropertyDescriptor {
-                                return when (propertyDescriptor) {
-                                    is DebuggerFieldPropertyDescriptor -> {
-                                        val fieldDescriptor = JavaPropertyDescriptor.create(
-                                            propertyDescriptor.containingDeclaration,
-                                            propertyDescriptor.annotations,
-                                            propertyDescriptor.modality,
-                                            propertyDescriptor.visibility,
-                                            propertyDescriptor.isVar,
-                                            Name.identifier(propertyDescriptor.fieldName.removeSuffix("_field")),
-                                            propertyDescriptor.source,
-                                            /*isStaticFinal= */ false
-                                        )
-                                        fieldDescriptor.setType(
-                                            propertyDescriptor.type,
-                                            propertyDescriptor.typeParameters,
-                                            propertyDescriptor.dispatchReceiverParameter,
-                                            propertyDescriptor.extensionReceiverParameter,
-                                            propertyDescriptor.contextReceiverParameters
-                                        )
-                                        fieldDescriptor
-                                    }
-                                    else ->
-                                        propertyDescriptor
-                                }
-                            }
-                        },
-                        evaluatorFragmentInfoForPsi2Ir = evaluatorFragmentInfo,
-                        shouldStubAndNotLinkUnboundSymbols = true
-                    )
-                )
+                error("IR-based evaluator is disabled in kt branches with platform 221 and before")
             }
             generateDeclaredClassFilter(GeneratedClassFilterForCodeFragment(codeFragment))
         }.build()

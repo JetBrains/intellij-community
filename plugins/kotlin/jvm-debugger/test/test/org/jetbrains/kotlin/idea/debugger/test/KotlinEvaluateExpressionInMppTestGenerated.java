@@ -1514,7 +1514,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
     @TestMetadata("testData/evaluation/multiplatform")
     public static class Multiplatform extends AbstractKotlinEvaluateExpressionInMppTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
         }
 
         @TestMetadata("diamond.kt")
