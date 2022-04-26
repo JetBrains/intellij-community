@@ -133,10 +133,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   protected void doCheckCanceled() throws ProcessCanceledException {
-    if (CancellationKt.DISABLED_PCE_IN_HEADLESS_MODE) {
-      return;
-    }
-
     if (Cancellation.isCancelled() && !isInNonCancelableSection()) {
       Cancellation.checkCancelled();
     }
@@ -778,9 +774,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   public boolean isInNonCancelableSection() {
-    if (CancellationKt.DISABLED_PCE_IN_HEADLESS_MODE) {
-      return true;
-    }
     return isInNonCancelableSection.get() != null;
   }
 
