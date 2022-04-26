@@ -40,13 +40,13 @@ fun generateKotlincLibraries(
         kotlincForIdeWithStandardNaming("kotlinc.parcelize-compiler-plugin", kotlincVersion),
         kotlincForIdeWithStandardNaming("kotlinc.sam-with-receiver-compiler-plugin", kotlincVersion),
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-common", kotlincVersion),
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", kotlincVersion),
 
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-common", kotlincVersion),
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-compiler-impl", kotlincVersion),
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-jvm", kotlincVersion),
         kotlincWithStandardNaming("kotlinc.kotlin-script-runtime", kotlincVersion, transitive = true),
 
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", jpsPluginVersion),
         kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginVersion, postfix = "-for-ide"),
         kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginVersion),
 
