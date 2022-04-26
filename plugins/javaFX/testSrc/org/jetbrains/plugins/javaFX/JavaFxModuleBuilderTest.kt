@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX
 
 import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.setupTestModule
@@ -66,12 +66,12 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
               <dependency>
                   <groupId>org.openjfx</groupId>
                   <artifactId>javafx-controls</artifactId>
-                  <version>11.0.2</version>
+                  <version>17.0.2</version>
               </dependency>
               <dependency>
                   <groupId>org.openjfx</groupId>
                   <artifactId>javafx-fxml</artifactId>
-                  <version>11.0.2</version>
+                  <version>17.0.2</version>
               </dependency>
 
               <dependency>
@@ -179,7 +179,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
       }
 
       javafx {
-          version = '11.0.2'
+          version = '17.0.2'
           modules = ['javafx.controls', 'javafx.fxml']
       }
 
