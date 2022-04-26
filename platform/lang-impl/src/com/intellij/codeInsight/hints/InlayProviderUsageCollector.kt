@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.codeVision.CodeVisionProvider
+import com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProvider
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.InlaySettingsProvider
 import com.intellij.codeInsight.hints.settings.language.ParameterInlayProviderSettingsModel
@@ -12,9 +14,10 @@ import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
+import kotlin.streams.toList
 
 class InlayProviderUsageCollector : ProjectUsagesCollector() {
-  private val INLAY_CONFIGURATION_GROUP = EventLogGroup("inlay.configuration", 16)
+  private val INLAY_CONFIGURATION_GROUP = EventLogGroup("inlay.configuration", 17)
 
   private val GLOBAL_SETTINGS_EVENT = INLAY_CONFIGURATION_GROUP.registerEvent(
     "global.inlays.settings",
@@ -34,7 +37,12 @@ class InlayProviderUsageCollector : ProjectUsagesCollector() {
         val models = arrayListOf(ParameterInlayProviderSettingsModel.ID)
         models.add("oc.type.hints")
         models.add("tms.local.md.hints")
-        InlayHintsProviderExtension.findProviders().mapTo(models) { it.provider.key.id }
+        val providerInfos = InlayHintsProviderFactory.EP.extensions()
+          .flatMap { it.getProvidersInfo().stream() }
+          .toList()
+        providerInfos.mapTo(models) { it.provider.key.id }
+        CodeVisionProvider.providersExtensionPoint.extensionList.mapTo(models) { it.groupId }
+        DaemonBoundCodeVisionProvider.extensionPoint.extensionList.mapTo(models) { it.groupId }
         return models
       }
   }
