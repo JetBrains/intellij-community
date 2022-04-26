@@ -43,6 +43,7 @@ public final class ThemeEditorToolbar extends EditorNotifications.Provider<Edito
                                         : JBColor.PanelBackground);
       EditorNotificationPanel panel = new EditorNotificationPanel(bg);
       panel.removeAll();
+      panel.setBorder(null);
       DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("DevKit.ThemeEditorToolbar");
       ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("ThemeEditor", group, true);
       actionToolbar.setTargetComponent(panel);
