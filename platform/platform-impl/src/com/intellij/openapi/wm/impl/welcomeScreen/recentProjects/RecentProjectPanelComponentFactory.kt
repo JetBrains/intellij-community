@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.SimpleTextAttributes.STYLE_BOLD
 import com.intellij.ui.SmartExpander
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.render.RenderingUtil
@@ -33,6 +34,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import java.awt.BorderLayout
@@ -198,104 +200,9 @@ internal object RecentProjectPanelComponentFactory {
   private class ProjectActionRenderer(
     private val isProjectPathValid: (String) -> Boolean
   ) : TreeCellRenderer {
-    private val recentProjectsManager: RecentProjectsManagerBase
-      get() = RecentProjectsManagerBase.instanceEx
-
-    // Recent project component
-    private val recentProjectNameLabel = JLabel()
-    private val recentProjectPathLabel = JLabel().apply {
-      foreground = UIUtil.getInactiveTextColor()
-    }
-    private val recentProjectIconLabel = JLabel().apply {
-      border = JBUI.Borders.empty(8, 0, 0, 8)
-      horizontalAlignment = SwingConstants.LEFT
-      verticalAlignment = SwingConstants.TOP
-    }
-    private val recentProjectActions = JLabel().apply {
-      border = JBUI.Borders.empty(0, 0, 0, 10)
-      icon = IconUtil.toSize(AllIcons.Ide.Notification.Gear,
-                             ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
-                             ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
-    }
-    private val recentProjectNamePanel = JBUI.Panels.simplePanel().apply {
-      isOpaque = false
-      border = JBUI.Borders.empty(4)
-
-      add(recentProjectNameLabel, BorderLayout.NORTH)
-      add(recentProjectPathLabel, BorderLayout.SOUTH)
-    }
-    private val recentProjectComponent = JBUI.Panels.simplePanel().apply {
-      border = JBUI.Borders.empty(4)
-
-      add(recentProjectNamePanel, BorderLayout.CENTER)
-      add(recentProjectIconLabel, BorderLayout.WEST)
-      add(recentProjectActions, BorderLayout.EAST)
-    }
-
-    // Project group component
-    private val projectGroupLabel = SimpleColoredComponent().apply {
-      isOpaque = false
-      border = JBUI.Borders.empty(4)
-    }
-    private val projectGroupActions = JLabel().apply {
-      border = JBUI.Borders.empty(0, 0, 0, 14)
-      icon = IconUtil.toSize(AllIcons.Ide.Notification.Gear,
-                             ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
-                             ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
-    }
-    private val projectGroupComponent = JBUI.Panels.simplePanel().apply {
-      isOpaque = false
-
-      add(projectGroupLabel, BorderLayout.WEST)
-      add(projectGroupActions, BorderLayout.EAST)
-    }
-
-    // Cloneable project component
-    private val cloneableProjectNameLabel = JLabel().apply {
-      foreground = UIUtil.getInactiveTextColor()
-    }
-    private val cloneableProjectPathLabel = JLabel().apply {
-      foreground = UIUtil.getInactiveTextColor()
-    }
-    private val cloneableProjectNamePanel = JBUI.Panels.simplePanel().apply {
-      isOpaque = false
-      border = JBUI.Borders.empty(4)
-
-      add(cloneableProjectNameLabel, BorderLayout.NORTH)
-      add(cloneableProjectPathLabel, BorderLayout.SOUTH)
-    }
-    private val cloneableProjectIconLabel = JLabel().apply {
-      border = JBUI.Borders.empty(8, 0, 0, 8)
-      horizontalAlignment = SwingConstants.LEFT
-      verticalAlignment = SwingConstants.TOP
-    }
-    private val cloneableProjectCancelButton = JLabel().apply {
-      icon = AllIcons.Actions.DeleteTag
-      border = JBUI.Borders.empty(0, 0, 0, 17)
-    }
-    private val cloneableProjectProgressBar = JProgressBar().apply {
-      isOpaque = false
-
-      border = JBUI.Borders.empty(4)
-    }
-    private val cloneableProjectProgressLabel = JLabel().apply {
-      text = IdeBundle.message("welcome.screen.projects.cloning")
-      foreground = UIUtil.getInactiveTextColor()
-    }
-    private val cloneableProjectCloneStatusPanel = JBUI.Panels.simplePanel().apply {
-      isOpaque = false
-
-      add(cloneableProjectProgressLabel, BorderLayout.WEST)
-      add(cloneableProjectProgressBar, BorderLayout.CENTER)
-      add(cloneableProjectCancelButton, BorderLayout.EAST)
-    }
-    private val cloneableProjectComponent = JBUI.Panels.simplePanel().apply {
-      isOpaque = false
-
-      add(cloneableProjectNamePanel, BorderLayout.CENTER)
-      add(cloneableProjectIconLabel, BorderLayout.WEST)
-      add(cloneableProjectCloneStatusPanel, BorderLayout.EAST)
-    }
+    private val recentProjectComponent = RecentProjectComponent()
+    private val projectGroupComponent = ProjectGroupComponent()
+    private val cloneableProjectComponent = CloneableProjectComponent()
 
     override fun getTreeCellRendererComponent(
       tree: JTree, value: Any,
@@ -306,72 +213,173 @@ internal object RecentProjectPanelComponentFactory {
 
       return when (val item = (value as DefaultMutableTreeNode).userObject as RecentProjectTreeItem) {
         is RootItem -> JBUI.Panels.simplePanel()
-        is ProjectsGroupItem -> createProjectGroupComponent(item, isHovered)
-        is RecentProjectItem -> createReopenProjectComponent(item, isHovered)
-        is CloneableProjectItem -> createCloneableProjectComponent(item)
+        is RecentProjectItem -> recentProjectComponent.customizeComponent(item, isHovered, isProjectPathValid(item.projectPath))
+        is ProjectsGroupItem -> projectGroupComponent.customizeComponent(item, isHovered)
+        is CloneableProjectItem -> cloneableProjectComponent.customizeComponent(item)
       }
     }
 
-    private fun createReopenProjectComponent(item: RecentProjectItem, isHovered: Boolean): JComponent = recentProjectComponent.apply {
-      val isProjectPathValid = isProjectPathValid(item.projectPath)
+    private class RecentProjectComponent : BorderLayoutPanel() {
+      private val recentProjectsManager: RecentProjectsManagerBase
+        get() = RecentProjectsManagerBase.instanceEx
 
-      recentProjectNameLabel.apply {
-        text = item.displayName
-        foreground = if (isProjectPathValid) UIUtil.getListForeground() else UIUtil.getInactiveTextColor()
+      private val projectNameLabel = JLabel()
+      private val projectPathLabel = JLabel().apply {
+        foreground = UIUtil.getInactiveTextColor()
       }
-      recentProjectPathLabel.apply {
-        text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(item.projectPath), false)
+      private val projectIconLabel = JLabel().apply {
+        border = JBUI.Borders.empty(8, 0, 0, 8)
+        horizontalAlignment = SwingConstants.LEFT
+        verticalAlignment = SwingConstants.TOP
       }
-      recentProjectIconLabel.apply {
-        icon = recentProjectsManager.getProjectIcon(item.projectPath, true)
-        disabledIcon = IconUtil.desaturate(icon)
-        isEnabled = isProjectPathValid
+      private val projectActions = JLabel().apply {
+        border = JBUI.Borders.empty(0, 0, 0, 10)
+        icon = IconUtil.toSize(AllIcons.Ide.Notification.Gear,
+                               ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
+                               ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
       }
-      recentProjectActions.isVisible = isHovered
+      private val projectNamePanel = JBUI.Panels.simplePanel().apply {
+        isOpaque = false
+        border = JBUI.Borders.empty(4)
 
-      val toolTipPath = PathUtil.toSystemDependentName(item.projectPath)
-      toolTipText = if (isProjectPathValid) toolTipPath else "$toolTipPath ${IdeBundle.message("recent.project.unavailable")}"
+        add(projectNameLabel, BorderLayout.NORTH)
+        add(projectPathLabel, BorderLayout.SOUTH)
+      }
 
-      AccessibleContextUtil.setCombinedName(this, recentProjectNameLabel, "-", recentProjectPathLabel) // NON-NLS
-      AccessibleContextUtil.setCombinedDescription(this, recentProjectNameLabel, "-", recentProjectPathLabel) // NON-NLS
+      init {
+        border = JBUI.Borders.empty(4)
+
+        add(projectNamePanel, BorderLayout.CENTER)
+        add(projectIconLabel, BorderLayout.WEST)
+        add(projectActions, BorderLayout.EAST)
+      }
+
+      fun customizeComponent(item: RecentProjectItem, isHovered: Boolean, isProjectPathValid: Boolean): JComponent {
+        projectNameLabel.apply {
+          text = item.displayName
+          foreground = if (isProjectPathValid) UIUtil.getListForeground() else UIUtil.getInactiveTextColor()
+        }
+        projectPathLabel.apply {
+          text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(item.projectPath), false)
+        }
+        projectIconLabel.apply {
+          icon = recentProjectsManager.getProjectIcon(item.projectPath, true)
+          disabledIcon = IconUtil.desaturate(icon)
+          isEnabled = isProjectPathValid
+        }
+        projectActions.isVisible = isHovered
+
+        val toolTipPath = PathUtil.toSystemDependentName(item.projectPath)
+        toolTipText = if (isProjectPathValid) toolTipPath else "$toolTipPath ${IdeBundle.message("recent.project.unavailable")}"
+
+        AccessibleContextUtil.setCombinedName(this, projectNameLabel, "-", projectPathLabel) // NON-NLS
+        AccessibleContextUtil.setCombinedDescription(this, projectNameLabel, "-", projectPathLabel) // NON-NLS
+
+        return this
+      }
     }
 
-    private fun createProjectGroupComponent(item: ProjectsGroupItem, isHovered: Boolean): JComponent {
-      projectGroupLabel.apply {
-        clear()
-        append(item.displayName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES) // NON-NLS
+    private class ProjectGroupComponent : BorderLayoutPanel() {
+      private val projectGroupNameLabel = SimpleColoredComponent().apply {
+        isOpaque = false
+        border = JBUI.Borders.empty(4)
       }
-      projectGroupActions.isVisible = isHovered
+      private val projectGroupActions = JLabel().apply {
+        border = JBUI.Borders.empty(0, 0, 0, 14)
+        icon = IconUtil.toSize(AllIcons.Ide.Notification.Gear,
+                               ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
+                               ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
+      }
 
-      return projectGroupComponent.apply {
-        AccessibleContextUtil.setName(this, projectGroupLabel) // NON-NLS
-        AccessibleContextUtil.setDescription(this, projectGroupLabel) // NON-NLS
+      init {
+        isOpaque = false
+
+        add(projectGroupNameLabel, BorderLayout.WEST)
+        add(projectGroupActions, BorderLayout.EAST)
+      }
+
+      fun customizeComponent(item: ProjectsGroupItem, isHovered: Boolean): JComponent {
+        projectGroupNameLabel.apply {
+          clear()
+          append(item.displayName(), SimpleTextAttributes(STYLE_BOLD, UIUtil.getListForeground())) // NON-NLS
+        }
+        projectGroupActions.isVisible = isHovered
+
+        AccessibleContextUtil.setName(this, projectGroupNameLabel) // NON-NLS
+        AccessibleContextUtil.setDescription(this, projectGroupNameLabel) // NON-NLS
+
+        return this
       }
     }
 
-    private fun createCloneableProjectComponent(item: CloneableProjectItem): JComponent {
-      cloneableProjectNameLabel.apply {
-        text = item.displayName() // NON-NLS
+    private class CloneableProjectComponent : BorderLayoutPanel() {
+      private val recentProjectsManager: RecentProjectsManagerBase
+        get() = RecentProjectsManagerBase.instanceEx
+
+      private val projectNameLabel = JLabel().apply {
+        foreground = UIUtil.getInactiveTextColor()
       }
-      cloneableProjectPathLabel.apply {
-        text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(item.projectPath), false)
+      private val projectPathLabel = JLabel().apply {
+        foreground = UIUtil.getInactiveTextColor()
       }
-      cloneableProjectIconLabel.apply {
-        icon = IconUtil.desaturate(recentProjectsManager.getProjectIcon(item.projectPath, true))
+      private val projectNamePanel = JBUI.Panels.simplePanel().apply {
+        isOpaque = false
+        border = JBUI.Borders.empty(4)
+
+        add(projectNameLabel, BorderLayout.NORTH)
+        add(projectPathLabel, BorderLayout.SOUTH)
       }
-      cloneableProjectProgressBar.apply {
-        val progressIndicator = item.progressIndicator
-        if (progressIndicator.isCanceled) {
-          cloneableProjectCloneStatusPanel.isVisible = false
-          cloneableProjectPathLabel.text = IdeBundle.message("welcome.screen.projects.clone.failed")
-          return@apply
+      private val projectIconLabel = JLabel().apply {
+        border = JBUI.Borders.empty(8, 0, 0, 8)
+        horizontalAlignment = SwingConstants.LEFT
+        verticalAlignment = SwingConstants.TOP
+      }
+      private val projectCancelButton = JLabel().apply {
+        icon = AllIcons.Actions.DeleteTag
+        border = JBUI.Borders.empty(0, 0, 0, 17)
+      }
+      private val projectProgressBar = JProgressBar().apply {
+        isOpaque = false
+        border = JBUI.Borders.empty(4)
+      }
+      private val projectProgressLabel = JLabel().apply {
+        text = IdeBundle.message("welcome.screen.projects.cloning")
+        foreground = UIUtil.getInactiveTextColor()
+      }
+      private val projectCloneStatusPanel = JBUI.Panels.simplePanel().apply {
+        isOpaque = false
+
+        add(projectProgressLabel, BorderLayout.WEST)
+        add(projectProgressBar, BorderLayout.CENTER)
+        add(projectCancelButton, BorderLayout.EAST)
+      }
+
+      init {
+        isOpaque = false
+
+        add(projectNamePanel, BorderLayout.CENTER)
+        add(projectIconLabel, BorderLayout.WEST)
+        add(projectCloneStatusPanel, BorderLayout.EAST)
+      }
+
+      fun customizeComponent(item: CloneableProjectItem): JComponent {
+        projectNameLabel.text = item.displayName() // NON-NLS
+        projectPathLabel.text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(item.projectPath), false)
+        projectIconLabel.icon = IconUtil.desaturate(recentProjectsManager.getProjectIcon(item.projectPath, true))
+        projectProgressBar.apply {
+          val progressIndicator = item.progressIndicator
+          if (progressIndicator.isCanceled) {
+            projectCloneStatusPanel.isVisible = false
+            projectPathLabel.text = IdeBundle.message("welcome.screen.projects.clone.failed")
+            return@apply
+          }
+
+          value = (item.progressIndicator.fraction * 100).toInt()
         }
 
-        value = (item.progressIndicator.fraction * 100).toInt()
-      }
-
-      return cloneableProjectComponent.apply {
         toolTipText = item.progressIndicator.text2
+
+        return this
       }
     }
   }
