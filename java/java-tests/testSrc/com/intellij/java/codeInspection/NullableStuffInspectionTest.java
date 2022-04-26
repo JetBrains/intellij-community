@@ -300,10 +300,6 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
 
-  public void testAnnotateQuickFixOnMethodReference() {
-    doTestWithFix("Annotate");
-  }
-
   public void testAnnotateOverridingParametersOnNotNullMethod() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     doTestWithFix("Annotate overridden method parameters");
