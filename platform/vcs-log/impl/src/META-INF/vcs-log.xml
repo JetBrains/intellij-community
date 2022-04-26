@@ -135,6 +135,8 @@
     <action class="com.intellij.vcs.log.ui.actions.ResumeIndexingAction" id="Vcs.Log.ResumeIndexing"
             icon="AllIcons.Process.ProgressResumeSmall"/>
     <action class="com.intellij.vcs.log.ui.actions.InvalidateVcsLogCaches" id="Vcs.Log.InvalidateCaches" internal="true"/>
+    <action class="com.intellij.vcs.log.ui.actions.CheckSelectedCommits" id="Vcs.Log.CheckSelectedCommitsIndexData" internal="true"/>
+    <action class="com.intellij.vcs.log.ui.actions.CheckOldCommits" id="Vcs.Log.CheckFirstCommitsIndexData" internal="true"/>
 
     <group id="Vcs.Log.PresentationSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
            icon="AllIcons.Actions.GroupBy" popup="true">
@@ -241,6 +243,8 @@
 
     <group id="Vcs.Log.Internal" internal="true" popup="true">
       <reference id="Vcs.Log.InvalidateCaches"/>
+      <reference id="Vcs.Log.CheckFirstCommitsIndexData"/>
+      <reference id="Vcs.Log.CheckSelectedCommitsIndexData"/>
       <add-to-group group-id="Internal"/>
     </group>
 
