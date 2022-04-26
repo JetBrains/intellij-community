@@ -11,7 +11,15 @@
       <version major="1" minor="4" micro="0" patch="7" full="{0}.{1} RC 1" eap="false" />
                      ~~~       ~~~       ~~~       ~~~      ~~~~~~~~~~~~~~
     ```
-    Make sure `version.full` value contains words `beta` or `RC` (case doesn't matter) for beta, RC releases, and don't have either for stable releases.
+    Make sure `version.full` value contains words `canary`, `beta` or `RC` (case doesn't matter) for canary, beta, RC releases, and don't have either for stable releases.
+    Code in AndroidStudioUpdateStrategyCustomization.java computes update channel from `version.full` value:
+    ```
+      <version major="1" minor="4" micro="0" patch="7" full="{0}.{1} RC 1" eap="false" />
+                                                       ~~~~~~~~~~~~~~~~~~~
+    ```
+   * If it contains words `canary` or `dev` then update channel is `EAP`
+   * If it contains words `RC` or `beta` then update channel is `BETA`
+   * Otherwise, update channel is `RELEASE`
 
  2. Also make sure that the `eap=` flag in the same file is correct.
     It should be `true` for canary and beta builds, `false` for rc and final:
@@ -23,12 +31,9 @@
     Among other things, in `VmOptionsGenerator.groovy` this causes the `isEAP`
     conditional to disable assertions.
 
-    Code in AndroidStudioUpdateStrategyCustomization.java computes update channel from `version.eap` and `version.full` values:
-      * If ```eap="true"``` or `version` contains words `canary` or `dev` then update channel is `EAP`
-      * If ```eap="false"``` and `version` contains words `RC` or `beta` then update channel is `BETA`
-      * If ```eap="false"``` and there is neither `canary`, `dev`, `RC` or`beta` in full versions then update channel is `RELEASE`
+ 3. IMPORTANT: After any change to ApplicationInfo.xml request the prebuilts to be updated
 
- 1. Replace `dev` with the appropriate release designator in
+ 4. Replace `dev` with the appropriate release designator in
     ../buildSrc/base/version.properties:
 
     ```
@@ -38,7 +43,7 @@
     ```
 
 --------------------------------------------------------------------------------
-When a new dev branch (like studio-3.1-dev) is created, update studio-master-dev:
+When a new dev branch (like studio-3.1-dev) is created, update studio-main:
 
  1. Make sure the major/minor version is correctly encoded in the build number
     listed in build.txt file. It is the second number from the end. If major
