@@ -735,7 +735,7 @@ final class DistributionJARsBuilder {
       return false
     }
 
-    if (arch != null && (bundlingRestrictions.supportedArch == JvmArchitecture.ALL || !bundlingRestrictions.supportedArch.contains(arch))) {
+    if (arch != null && !bundlingRestrictions.supportedArch.contains(arch)) {
       return false
     }
 
