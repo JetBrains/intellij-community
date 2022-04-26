@@ -16,6 +16,7 @@ import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.tools.util.side.OnesideTextDiffViewer
+import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
@@ -376,6 +377,7 @@ val DiffViewer.editor: EditorEx?
   get() = when (this) {
     is OnesideTextDiffViewer -> editor
     is TwosideTextDiffViewer -> currentEditor
+    is ThreesideTextDiffViewer -> currentEditor
     is UnifiedDiffViewer -> editor
     else -> null
   }
@@ -384,6 +386,7 @@ val DiffViewer.editors: List<EditorEx>
   get() = when (this) {
     is OnesideTextDiffViewer -> editors
     is TwosideTextDiffViewer -> editors
+    is ThreesideTextDiffViewer -> editors
     is UnifiedDiffViewer -> listOf(editor)
     else -> emptyList()
   }
