@@ -18,7 +18,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.usages.ChunkExtractor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -66,7 +66,7 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (!(element instanceof LeafPsiElement)
+        if (!(element instanceof LeafElement)
             // optimization: ignore very frequent white space element
             || element instanceof PsiWhiteSpace) {
           return;
@@ -218,64 +218,44 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
     return !(charset instanceof Native2AsciiCharset);
   }
 
+  private static boolean isAsciiCodePoint(int codePoint) {
+    return codePoint < 128;
+  }
+
   private static void reportMixedLanguages(@NotNull PsiElement element,
                                            @NotNull String text,
                                            @NotNull ProblemsHolder holder,
                                            @Nullable("null means natural range") TextRange elementRange) {
-    Character.UnicodeScript first = null;
-    Character.UnicodeScript second = null;
-    int i;
-    int codePoint = -1;
+    int nonAsciiStart = -1;
+    int codePoint;
     int endOffset = elementRange == null ? text.length() : elementRange.getEndOffset();
     int startOffset = elementRange == null ? 0 : elementRange.getStartOffset();
-    for (i = startOffset; i < endOffset; i += Character.charCount(codePoint)) {
-      codePoint = text.codePointAt(i);
-      Character.UnicodeScript currentScript = Character.UnicodeScript.of(codePoint);
-      if (ignoreScript(currentScript)) {
-        if (i == startOffset) startOffset += Character.charCount(codePoint);
-        continue; // ignore '123.(&$'...
-      }
-      second = currentScript;
-      if (first == null) {
-        first = second;
-      }
-      else if (first != second) {
-        break;
-      }
-    }
 
-    if (first == null || first == second) {
-      return;
-    }
-    // found two scripts
-    // now [startOffset..i) are of 'first' script
-    int j;
-    for (j = i + Character.charCount(codePoint); j < endOffset; j += Character.charCount(codePoint)) {
-      codePoint = text.codePointAt(j);
-      Character.UnicodeScript currentScript = Character.UnicodeScript.of(codePoint);
-      if (ignoreScript(currentScript)) continue;
-      if (currentScript != second) {
-        break;
+    for (int i = startOffset; i <= endOffset; i += Character.charCount(codePoint)) {
+      codePoint = i == endOffset ? 0 : text.codePointAt(i);
+      if (codePoint != 0 && ignoreScript(Character.UnicodeScript.of(codePoint))) {
+        if (i==startOffset) startOffset++; // to calculate "isHighlightWholeWord" correctly
+        continue;
+      }
+      if (isAsciiCodePoint(codePoint)) {
+        boolean isHighlightWholeWord = i - nonAsciiStart == endOffset - startOffset;
+        if (nonAsciiStart != -1 && !isHighlightWholeWord) {
+          // report non-ascii range [nonAsciiStart..i) inside ascii word
+          // but trim the trailing COMMON script characters first
+          int j = i;
+          for (; j > nonAsciiStart; j -= Character.charCount(codePoint)) {
+            codePoint = text.codePointAt(j-Character.charCount(codePoint));
+            if (!ignoreScript(Character.UnicodeScript.of(codePoint))) break;
+          }
+          
+          holder.registerProblem(element, new TextRange(nonAsciiStart, j), CodeInsightBundle.message("non.ascii.chars.inspection.message.symbols.from.different.languages.found"));
+          nonAsciiStart = -1;
+        }
+      }
+      else if (nonAsciiStart == -1) {
+        nonAsciiStart = i;
       }
     }
-    // ignore trailing COMMON script characters
-    for (; j > i; j -= Character.charCount(codePoint)) {
-      codePoint = text.codePointAt(j-Character.charCount(codePoint));
-      if (!ignoreScript(Character.UnicodeScript.of(codePoint))) break;
-    }
-    // now [i..j) are of 'second' script
-    // try to report the range which is the least latin
-    TextRange toReport;
-    if (first == Character.UnicodeScript.LATIN) {
-      toReport = new TextRange(i, j);
-    }
-    else {
-      toReport = new TextRange(startOffset, i);
-      Character.UnicodeScript t = second;
-      second = first;
-      first = t;
-    }
-    holder.registerProblem(element, toReport, CodeInsightBundle.message("non.ascii.chars.inspection.message.symbols.from.different.languages.found", second, first));
   }
 
   private static boolean ignoreScript(@NotNull Character.UnicodeScript script) {
@@ -317,7 +297,8 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
   @NotNull
   private static PsiElementKind getKind(@NotNull PsiElement element, SyntaxHighlighter syntaxHighlighter) {
     TextAttributesKey[] keys;
-    if (element.getParent() instanceof PsiLiteralValue || ChunkExtractor.isHighlightedAsString(keys = syntaxHighlighter.getTokenHighlights(((LeafPsiElement)element).getElementType()))) {
+    if (element.getParent() instanceof PsiLiteralValue
+        || ChunkExtractor.isHighlightedAsString(keys = syntaxHighlighter.getTokenHighlights(((LeafElement)element).getElementType()))) {
       return PsiElementKind.STRING;
     }
     if (isIdentifier(element)) {

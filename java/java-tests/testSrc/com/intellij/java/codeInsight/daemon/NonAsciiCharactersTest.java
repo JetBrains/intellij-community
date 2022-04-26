@@ -115,4 +115,17 @@ public class NonAsciiCharactersTest extends DaemonAnalyzerTestCase {
     myInspection.CHECK_FOR_FILES_CONTAINING_BOM = false;
     doTest(".groovy");
   }
+
+  public void testMixedLanguagesPlainTextInAnyWord() throws Exception {
+    myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_ANY_OTHER_WORD = true;
+    myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME = true;
+    myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_COMMENTS = true;
+    myInspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_STRING = true;
+    myInspection.CHECK_FOR_NOT_ASCII_IN_ANY_OTHER_WORD = false;
+    myInspection.CHECK_FOR_NOT_ASCII_IDENTIFIER_NAME = false;
+    myInspection.CHECK_FOR_NOT_ASCII_COMMENT = false;
+    myInspection.CHECK_FOR_NOT_ASCII_STRING_LITERAL = false;
+    myInspection.CHECK_FOR_FILES_CONTAINING_BOM = false;
+    doTest(".txt");
+  }
 }
