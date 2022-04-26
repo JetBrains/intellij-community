@@ -20,12 +20,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
 public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   private static final ExtensionPointName<UnquotingFilter> EP_NAME = ExtensionPointName.create("com.intellij.selectionUnquotingFilter");
-
-  private static final Set<String> COMPARISON_OPERATORS = Set.of("<", ">", "!", "=", "<=", ">=", "==", "!=");
 
   @NotNull
   @Override
@@ -105,16 +101,29 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   }
 
   private static boolean isReplaceInComparisonOperation(@NotNull PsiFile file, int offset, @NotNull String selectedText, char c) {
-    PsiElement elementAtOffset = file.findElementAt(offset);
-    if (elementAtOffset != null) {
-      IElementType tokenType = elementAtOffset.getNode().getElementType();
-      ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(elementAtOffset.getLanguage());
-      if (parserDefinition.getCommentTokens().contains(tokenType) ||
-          parserDefinition.getStringLiteralElements().contains(tokenType)) {
+    if ((c == '<' || c == '>') && selectedText.length() <= 3 && isOnlyComparisons(selectedText)) {
+      PsiElement elementAtOffset = file.findElementAt(offset);
+      if (elementAtOffset != null) {
+        IElementType tokenType = elementAtOffset.getNode().getElementType();
+        ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(elementAtOffset.getLanguage());
+        if (parserDefinition.getCommentTokens().contains(tokenType) ||
+            parserDefinition.getStringLiteralElements().contains(tokenType)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  private static boolean isOnlyComparisons(@NotNull String text) {
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
+      if (c != '>' && c != '<' && c != '=' && c != '!') {
         return false;
       }
     }
-    return (c == '<' || c == '>') && COMPARISON_OPERATORS.contains(selectedText);
+    return true;
   }
 
   private static boolean containsQuoteInside(String selectedText, char quote) {
