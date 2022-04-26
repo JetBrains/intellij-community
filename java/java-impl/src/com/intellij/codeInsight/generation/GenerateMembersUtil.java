@@ -766,13 +766,13 @@ public final class GenerateMembersUtil {
     String visibility = javaSettings.VISIBILITY;
 
     @PsiModifier.ModifierConstant String newVisibility;
+    final PsiClass containingClass = member.getContainingClass();
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) {
-      PsiClass aClass = member instanceof PsiClass ? (PsiClass)member : member.getContainingClass();
+      PsiClass aClass = member instanceof PsiClass ? (PsiClass)member : containingClass;
       newVisibility = PsiUtil.getMaximumModifierForMember(aClass, false);
     }
     else {
-      //noinspection MagicConstant
-      newVisibility = visibility;
+      newVisibility = (containingClass != null && containingClass.isRecord()) ? PsiModifier.PUBLIC : visibility;
     }
     VisibilityUtil.setVisibility(prototype.getModifierList(), newVisibility);
 
