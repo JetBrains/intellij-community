@@ -44,6 +44,9 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       SettingsSyncAuthService.getInstance().addListener(object : SettingsSyncAuthService.Listener {
         override fun stateChanged() {
           listener(invoke())
+          if (SettingsSyncAuthService.getInstance().isLoggedIn() && !SettingsSyncSettings.getInstance().syncEnabled) {
+            syncEnabler.checkServerState()
+          }
         }
       }, disposable!!)
 
