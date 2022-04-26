@@ -11,6 +11,7 @@ fun generateKotlincLibraries(
     jpsPluginVersion: String,
     isCommunity: Boolean,
 ): List<JpsLibrary> {
+    @Suppress("NAME_SHADOWING") val jpsPluginVersion = jpsPluginVersion.takeUnless { it == "dev" } ?: kotlincVersion
     return listOf(
         kotlincForIdeWithStandardNaming("kotlinc.allopen-compiler-plugin", kotlincVersion),
         kotlincForIdeWithStandardNaming("kotlinc.android-extensions-compiler-plugin", kotlincVersion),
