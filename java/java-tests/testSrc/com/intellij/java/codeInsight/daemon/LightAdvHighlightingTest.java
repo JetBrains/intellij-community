@@ -419,4 +419,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest(true);
   }
+
+  public void testUninitializedVarComplexTernary() {
+    doTest(false);
+  }
 }
