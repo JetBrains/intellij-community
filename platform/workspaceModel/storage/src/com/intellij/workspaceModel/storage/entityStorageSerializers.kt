@@ -20,3 +20,12 @@ sealed class SerializationResult {
   object Success : SerializationResult()
   class Fail<T>(val info: T) : SerializationResult()
 }
+
+sealed interface EntityInformation {
+  interface Serializer : EntityInformation {
+    fun saveInt(i: Int)
+    fun saveString(s: String)
+    fun saveBoolean(b: Boolean)
+  }
+  interface Deserializer : EntityInformation
+}

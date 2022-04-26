@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
+import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
@@ -232,6 +233,14 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
 
     override fun getEntityInterface(): Class<out WorkspaceEntity> {
         return ArtifactPropertiesEntity::class.java
+    }
+
+    fun serialize(ser: EntityInformation.Serializer) {
+        ser.saveString(providerType)
+        val _propertiesXmlTag = propertiesXmlTag
+        if (_propertiesXmlTag != null) {
+            ser.saveString(_propertiesXmlTag)
+        }
     }
 
     override fun equals(other: Any?): Boolean {

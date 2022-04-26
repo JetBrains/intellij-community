@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
@@ -210,6 +211,10 @@ class ParentEntityData : WorkspaceEntityData<ParentEntity>() {
 
     override fun getEntityInterface(): Class<out WorkspaceEntity> {
         return ParentEntity::class.java
+    }
+
+    fun serialize(ser: EntityInformation.Serializer) {
+        ser.saveString(parentData)
     }
 
     override fun equals(other: Any?): Boolean {

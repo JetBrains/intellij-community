@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
+import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
@@ -296,6 +297,37 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
 
     override fun getEntityInterface(): Class<out WorkspaceEntity> {
         return ExternalSystemModuleOptionsEntity::class.java
+    }
+
+    fun serialize(ser: EntityInformation.Serializer) {
+        val _externalSystem = externalSystem
+        if (_externalSystem != null) {
+            ser.saveString(_externalSystem)
+        }
+        val _externalSystemModuleVersion = externalSystemModuleVersion
+        if (_externalSystemModuleVersion != null) {
+            ser.saveString(_externalSystemModuleVersion)
+        }
+        val _linkedProjectPath = linkedProjectPath
+        if (_linkedProjectPath != null) {
+            ser.saveString(_linkedProjectPath)
+        }
+        val _linkedProjectId = linkedProjectId
+        if (_linkedProjectId != null) {
+            ser.saveString(_linkedProjectId)
+        }
+        val _rootProjectPath = rootProjectPath
+        if (_rootProjectPath != null) {
+            ser.saveString(_rootProjectPath)
+        }
+        val _externalSystemModuleGroup = externalSystemModuleGroup
+        if (_externalSystemModuleGroup != null) {
+            ser.saveString(_externalSystemModuleGroup)
+        }
+        val _externalSystemModuleType = externalSystemModuleType
+        if (_externalSystemModuleType != null) {
+            ser.saveString(_externalSystemModuleType)
+        }
     }
 
     override fun equals(other: Any?): Boolean {

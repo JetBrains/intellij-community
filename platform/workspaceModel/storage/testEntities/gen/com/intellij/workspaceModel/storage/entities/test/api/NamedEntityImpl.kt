@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
@@ -233,6 +234,14 @@ class NamedEntityData : WorkspaceEntityData.WithCalculablePersistentId<NamedEnti
 
     override fun getEntityInterface(): Class<out WorkspaceEntity> {
         return NamedEntity::class.java
+    }
+
+    fun serialize(ser: EntityInformation.Serializer) {
+        ser.saveString(myName)
+        val _additionalProperty = additionalProperty
+        if (_additionalProperty != null) {
+            ser.saveString(_additionalProperty)
+        }
     }
 
     override fun equals(other: Any?): Boolean {

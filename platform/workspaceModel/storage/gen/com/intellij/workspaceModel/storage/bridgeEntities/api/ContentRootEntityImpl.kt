@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
+import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
@@ -368,6 +369,12 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
 
     override fun getEntityInterface(): Class<out WorkspaceEntity> {
         return ContentRootEntity::class.java
+    }
+
+    fun serialize(ser: EntityInformation.Serializer) {
+        for (_excludedPatterns in excludedPatterns) {
+            ser.saveString(_excludedPatterns)
+        }
     }
 
     override fun equals(other: Any?): Boolean {

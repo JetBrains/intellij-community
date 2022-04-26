@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
+import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
@@ -365,6 +366,15 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
 
     override fun getEntityInterface(): Class<out WorkspaceEntity> {
         return FacetEntity::class.java
+    }
+
+    fun serialize(ser: EntityInformation.Serializer) {
+        ser.saveString(name)
+        ser.saveString(facetType)
+        val _configurationXmlTag = configurationXmlTag
+        if (_configurationXmlTag != null) {
+            ser.saveString(_configurationXmlTag)
+        }
     }
 
     override fun equals(other: Any?): Boolean {

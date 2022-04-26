@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
+import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
@@ -230,6 +231,17 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
 
     override fun getEntityInterface(): Class<out WorkspaceEntity> {
         return ModuleCustomImlDataEntity::class.java
+    }
+
+    fun serialize(ser: EntityInformation.Serializer) {
+        val _rootManagerTagCustomData = rootManagerTagCustomData
+        if (_rootManagerTagCustomData != null) {
+            ser.saveString(_rootManagerTagCustomData)
+        }
+        for ((key_customModuleOptions, value_customModuleOptions) in customModuleOptions) {
+            ser.saveString(key_customModuleOptions)
+            ser.saveString(value_customModuleOptions)
+        }
     }
 
     override fun equals(other: Any?): Boolean {

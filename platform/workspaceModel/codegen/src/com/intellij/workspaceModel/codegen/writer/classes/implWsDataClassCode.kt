@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.deft.codegen.ijws.classes
 
+import com.intellij.workspaceModel.codegen.InterfaceTraverser
+import com.intellij.workspaceModel.codegen.InterfaceVisitor
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
@@ -15,11 +17,14 @@ import org.jetbrains.deft.codegen.ijws.isRefType
 import org.jetbrains.deft.codegen.ijws.sups
 import org.jetbrains.deft.codegen.model.DefType
 import org.jetbrains.deft.codegen.model.WsEntityWithPersistentId
+import org.jetbrains.deft.codegen.utils.LinesBuilder
 import org.jetbrains.deft.codegen.utils.fqn
 import org.jetbrains.deft.codegen.utils.lines
 import org.jetbrains.deft.impl.ObjType
 import org.jetbrains.deft.impl.TOptional
+import org.jetbrains.deft.impl.ValueType
 import org.jetbrains.deft.impl.fields.Field
+import org.jetbrains.kotlin.utils.addToStdlib.popLast
 
 /**
  * - Soft links
@@ -49,7 +54,8 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
 
       softLinksCode(this@label, hasSoftLinks, simpleTypes)
 
-      sectionNl("override fun wrapAsModifiable(diff: ${MutableEntityStorage::class.fqn}): ${ModifiableWorkspaceEntity::class.fqn}<$javaFullName>") {
+      sectionNl(
+        "override fun wrapAsModifiable(diff: ${MutableEntityStorage::class.fqn}): ${ModifiableWorkspaceEntity::class.fqn}<$javaFullName>") {
         line("val modifiable = $javaImplBuilderName(null)")
         line("modifiable.allowModifications {")
         line("  modifiable.diff = diff")
@@ -93,6 +99,11 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
         line("return $name::class.java")
       }
 
+      sectionNl("fun serialize(ser: ${EntityInformation.Serializer::class.fqn})") {
+        InterfaceTraverser(simpleTypes)
+          .traverse(this@implWsDataClassCode, SerializatorVisitor(this@sectionNl))
+      }
+
       // --- equals
       sectionNl("override fun equals(other: Any?): Boolean") {
         line("if (other == null) return false")
@@ -130,6 +141,99 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
         line("return result")
       }
     }
+  }
+}
+
+class SerializatorVisitor private constructor(private val linesBuilder: ArrayDeque<LinesBuilder>) : InterfaceVisitor {
+
+  constructor(linesBuilder: LinesBuilder) : this(ArrayDeque<LinesBuilder>().also { it.add(linesBuilder) })
+
+  val builder: LinesBuilder
+    get() = linesBuilder.last()
+
+  override fun visitBoolean(varName: String): Boolean {
+    builder.line("ser.saveBoolean($varName)")
+    return true
+  }
+
+  override fun visitInt(varName: String): Boolean {
+    builder.line("ser.saveInt($varName)")
+    return true
+  }
+
+  override fun visitString(varName: String): Boolean {
+    builder.line("ser.saveString($varName)")
+    return true
+  }
+
+  override fun visitListStart(varName: String, itemVarName: String, listArgumentType: ValueType<*>): Boolean {
+    if (listArgumentType.isRefType()) return true
+
+    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
+    linesBuilder.add(sub)
+    return true
+  }
+
+  override fun visitListEnd(varName: String, itemVarName: String, traverseResult: Boolean, listArgumentType: ValueType<*>): Boolean {
+    if (listArgumentType.isRefType()) return true
+
+    val myInListBuilder = linesBuilder.popLast()
+    if (myInListBuilder.result.isNotBlank()) {
+      builder.line("for ($itemVarName in $varName) {")
+      builder.result.append(myInListBuilder.result)
+      builder.line("}")
+    }
+    return true
+  }
+
+  override fun visitMapStart(varName: String,
+                             keyVarName: String,
+                             valueVarName: String,
+                             keyType: ValueType<*>,
+                             valueType: ValueType<*>): Boolean {
+    if (keyType.isRefType() || valueType.isRefType()) return true
+
+    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
+    linesBuilder.add(sub)
+    return true
+  }
+
+  override fun visitMapEnd(varName: String,
+                           keyVarName: String,
+                           valueVarName: String,
+                           keyType: ValueType<*>,
+                           valueType: ValueType<*>,
+                           traverseResult: Boolean): Boolean {
+    if (keyType.isRefType() || valueType.isRefType()) return true
+
+    val inMapBuilder = linesBuilder.popLast()
+    if (inMapBuilder.result.isNotBlank()) {
+      builder.line("for (($keyVarName, $valueVarName) in $varName) {")
+      builder.result.append(inMapBuilder.result)
+      builder.line("}")
+    }
+    return true
+  }
+
+  override fun visitOptionalStart(varName: String, notNullVarName: String, type: ValueType<*>): Boolean {
+    if (type.isRefType()) return true
+
+    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
+    linesBuilder.add(sub)
+    return true
+  }
+
+  override fun visitOptionalEnd(varName: String, notNullVarName: String, type: ValueType<*>, traverseResult: Boolean): Boolean {
+    if (type.isRefType()) return true
+
+    val inMapBuilder = linesBuilder.popLast()
+    if (inMapBuilder.result.isNotBlank()) {
+      builder.line("val $notNullVarName = $varName")
+      builder.line("if ($notNullVarName != null) {")
+      builder.result.append(inMapBuilder.result)
+      builder.line("}")
+    }
+    return true
   }
 }
 
