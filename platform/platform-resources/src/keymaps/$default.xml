@@ -1278,4 +1278,8 @@
   <action id="ActivateNuGetToolWindow">
     <keyboard-shortcut first-keystroke="alt shift 7"/>
   </action>
+
+  <action id="MainMenuButton.ShowMenu">
+    <keyboard-shortcut first-keystroke="alt BACK_SLASH"/>
+  </action>
 </keymap>

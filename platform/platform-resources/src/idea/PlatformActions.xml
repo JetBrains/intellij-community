@@ -1487,5 +1487,7 @@
     </group>
 
     <action id="CheckSuggestedPlugins" class="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.CheckSuggestedPluginsAction"/>
+
+    <action id="MainMenuButton.ShowMenu" class="com.intellij.ide.actions.searcheverywhere.SEActionStub"/>
   </actions>
 </idea-plugin>

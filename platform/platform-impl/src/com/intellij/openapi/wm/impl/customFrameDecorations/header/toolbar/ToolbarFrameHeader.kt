@@ -32,16 +32,12 @@ import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
 import com.jetbrains.CustomWindowDecoration.MENU_BAR
 import java.awt.*
 import java.awt.GridBagConstraints.*
-import java.awt.event.KeyEvent
 import javax.swing.*
 import kotlin.math.roundToInt
 
 private enum class ShowMode {
   MENU, TOOLBAR
 }
-
-//private val SHOW_MENU_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, true)
-private val SHOW_MENU_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, KeyEvent.ALT_DOWN_MASK, true)
 
 internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
   private val myMenuBar = ideMenu
@@ -219,7 +215,9 @@ private class MainMenuMnemonicHandler(val frame: JFrame, val action: AnAction) :
 
   fun registerShortcuts() {
     if (disposable == null) disposable = Disposer.newDisposable()
-    action.registerCustomShortcutSet(CustomShortcutSet(SHOW_MENU_KEYSTROKE), frame.rootPane, disposable)
+
+    val shortcutSet = ActionUtil.getShortcutSet("MainMenuButton.ShowMenu")
+    action.registerCustomShortcutSet(shortcutSet, frame.rootPane, disposable)
   }
 
   fun unregisterShortcuts() {
