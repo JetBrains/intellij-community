@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.BuildSystemNewProjectWizardData
+import com.intellij.ide.wizard.LanguageNewProjectWizard
 import com.intellij.ide.wizard.NewProjectWizardLanguageStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -19,14 +20,21 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   companion object {
     // @formatter:off
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 7)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions", 8)
 
     private val sessionIdField = EventFields.Int("wizard_session_id")
     private val screenNumField = EventFields.Int("screen")
     private val typedCharsField = IntEventField("typed_chars")
     private val hitsField = IntEventField("hits")
     private val generatorTypeField = ClassEventField("generator")
-    private val languageField = EventFields.String("language", NewProjectWizardLanguageStep.allLanguages.keys.toList())
+
+    private val languageField = object: StringEventField("language") {
+      override val validationRule: List<String>
+      get() {
+        return LanguageNewProjectWizard.EP_NAME.extensionList.map { it.name }
+      }
+    }
+
     private val gitField = EventFields.Boolean("git")
     private val isSucceededField = EventFields.Boolean("project_created")
     private val inputMaskField = EventFields.Long("input_mask")
