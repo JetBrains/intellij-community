@@ -295,10 +295,10 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
 
   enum PsiElementKind { IDENTIFIER, STRING, COMMENT, OTHER}
   @NotNull
-  private static PsiElementKind getKind(@NotNull PsiElement element, SyntaxHighlighter syntaxHighlighter) {
+  private static PsiElementKind getKind(@NotNull PsiElement element, @Nullable SyntaxHighlighter syntaxHighlighter) {
     TextAttributesKey[] keys;
     if (element.getParent() instanceof PsiLiteralValue
-        || ChunkExtractor.isHighlightedAsString(keys = syntaxHighlighter.getTokenHighlights(((LeafElement)element).getElementType()))) {
+        || ChunkExtractor.isHighlightedAsString(keys = syntaxHighlighter == null ? TextAttributesKey.EMPTY_ARRAY : syntaxHighlighter.getTokenHighlights(((LeafElement)element).getElementType()))) {
       return PsiElementKind.STRING;
     }
     if (isIdentifier(element)) {
