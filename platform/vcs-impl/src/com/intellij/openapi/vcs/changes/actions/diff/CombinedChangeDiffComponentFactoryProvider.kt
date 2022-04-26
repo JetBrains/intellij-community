@@ -37,14 +37,16 @@ class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryP
         val changes = model.requests.values.filterIsInstance<PresentableChange>()
         val selected = viewer?.getCurrentBlockId() as? CombinedPathBlockId
         val selectedIndex = when {
-          selected != null -> changes.indexOfFirst { it.fileStatus == selected.fileStatus && it.filePath == selected.path }
+          selected != null -> changes.indexOfFirst { it.tag == selected.tag
+                                                     && it.fileStatus == selected.fileStatus
+                                                     && it.filePath == selected.path }
           else -> -1
         }
         return ListSelection.createAt(changes, selectedIndex)
       }
 
       override fun onSelected(change: PresentableChange) {
-        viewer?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus), ScrollPolicy.DIFF_BLOCK)
+        viewer?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), ScrollPolicy.DIFF_BLOCK)
       }
     }
   }

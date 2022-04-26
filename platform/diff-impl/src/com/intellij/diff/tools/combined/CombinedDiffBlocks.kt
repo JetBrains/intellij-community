@@ -64,7 +64,7 @@ interface CombinedDiffBlockFactory<ID: CombinedBlockId> {
 class CombinedSimpleDiffBlockFactory : CombinedDiffBlockFactory<CombinedPathBlockId> {
   override fun isApplicable(content: CombinedDiffBlockContent) = true //default factory
   override fun createBlock(content: CombinedDiffBlockContent, withBorder: Boolean): CombinedDiffBlock<CombinedPathBlockId> =
-    with(content.blockId as CombinedPathBlockId) { CombinedSimpleDiffBlock(content.viewer.component, path, fileStatus, withBorder) }
+    with(content.blockId as CombinedPathBlockId) { CombinedSimpleDiffBlock(this, content.viewer.component, withBorder) }
 }
 
 private class CombinedSimpleDiffHeader(blockId: CombinedPathBlockId, withBorder: Boolean) : BorderLayoutPanel() {
@@ -132,13 +132,11 @@ private class CombinedSimpleDiffHeader(blockId: CombinedPathBlockId, withBorder:
   }
 }
 
-data class CombinedPathBlockId(val path: FilePath, val fileStatus: FileStatus) : CombinedBlockId
+data class CombinedPathBlockId(val path: FilePath, val fileStatus: FileStatus, val tag: Any? = null) : CombinedBlockId
 
-private class CombinedSimpleDiffBlock(initialContent: JComponent, path: FilePath, status: FileStatus, notFirstBlock: Boolean) :
+private class CombinedSimpleDiffBlock(override val id: CombinedPathBlockId, initialContent: JComponent, notFirstBlock: Boolean) :
   JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)),
   CombinedDiffBlock<CombinedPathBlockId>, CombinedDiffGlobalBlockHeaderProvider {
-
-  override val id = CombinedPathBlockId(path, status)
 
   override val header = CombinedSimpleDiffHeader(id, notFirstBlock)
   override val globalHeader = if (notFirstBlock) CombinedSimpleDiffHeader(id, false) else header
