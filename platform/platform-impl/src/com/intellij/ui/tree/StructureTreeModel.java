@@ -575,6 +575,40 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     public LeafState getLeafState() {
       return leafState;
     }
+
+    @Override
+    public @Nullable TreeNode getFirstChild() {
+      if (leafState == LeafState.ASYNC) return ContainerUtil.getFirstItem(getChildren());
+      return super.getLastChild();
+    }
+
+    @Override
+    public @Nullable TreeNode getLastChild() {
+      if (leafState == LeafState.ASYNC) return ContainerUtil.getLastItem(getChildren());
+      return super.getLastChild();
+    }
+
+    @Override
+    public @Nullable DefaultMutableTreeNode getFirstLeaf() {
+      DefaultMutableTreeNode node = this;
+      while (!node.isLeaf()) {
+        DefaultMutableTreeNode next = (DefaultMutableTreeNode)node.getFirstChild();
+        if (next == null) return node == this ? null : node;
+        node = next;
+      }
+      return node;
+    }
+
+    @Override
+    public @Nullable DefaultMutableTreeNode getLastLeaf() {
+      DefaultMutableTreeNode node = this;
+      while (!node.isLeaf()) {
+        DefaultMutableTreeNode next = (DefaultMutableTreeNode)node.getLastChild();
+        if (next == null) return node == this ? null : node;
+        node = next;
+      }
+      return node;
+    }
   }
 
   /**
