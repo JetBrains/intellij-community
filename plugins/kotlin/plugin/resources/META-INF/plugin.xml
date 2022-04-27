@@ -18,6 +18,17 @@ The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
 
   <!--suppress PluginXmlValidity -->
   <change-notes><![CDATA[
+    <h3>1.7.0-Beta</h3>
+    <ul>
+      <li>Language: changes in builder inference, allowed implementation by delegation to inlined value of inline class, changes in Opt-in annotations</li>
+      <li>Kotlin/JVM: performance improvements, removed `1.6` target version</li>
+      <li>Kotlin/Native: performance improvement for the new memory manager, embeddable compiler jar for Kotlin/Native by default, returning `Void` instead of `KotlinUnit` from `suspend` functions by default, generation of standalone executable for androidNative targets by default, prohibited exceptions through Objective-C bridges</li>
+      <li>Kotlin/JS: performance improvements, smaller bundle size, generated `.js` compatible with old browsers and engines</li>
+      <li>Libraries: extensions for `java.util.Optional` in stdlib, min/max(By/With) functions for non-empty collections, stable `Regex.matchAt()`, `Regex.matchesAt()`, `findAnnotations()`, `DeepRecursiveFunction` functions, getting named groups of a regex match in JS and Native</li>
+      <li>Gradle: minimal supported Gradle version is `6.7.1` and Android Gradle plugin is `3.6.4`, allow to override default Kotlin/Native compiler download URL, deprecated `kotlin.compiler.execution.strategy`, removed `useExperimentalAnnotation`, `experimentalAnnotationInUse`, `kotlin.coroutines` (and related `kotlin.experimental.coroutines` Gradle DSL option) properties</li>
+    </ul>
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.7.0-Beta">changelog</a>.
+    <br><br>
     <h3>1.6.20</h3>
     <ul>
       <li>Language: prototype of context receivers, definitely non-nullable types</li>
