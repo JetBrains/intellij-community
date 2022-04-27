@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class DebuggerDfaRunner {
   private final @NotNull PsiElement myBody;
@@ -44,7 +45,10 @@ public class DebuggerDfaRunner {
   private final DfaValueFactory myFactory;
   private final DfaAssistProvider myProvider;
 
-  DebuggerDfaRunner(@NotNull DfaAssistProvider provider, @NotNull PsiElement body, @NotNull PsiElement anchor, @NotNull StackFrameProxyEx proxy) throws EvaluateException {
+  DebuggerDfaRunner(@NotNull DfaAssistProvider provider,
+                    @NotNull PsiElement body,
+                    @NotNull PsiElement anchor,
+                    @NotNull StackFrameProxyEx proxy) throws EvaluateException {
     myFactory = new DfaValueFactory(body.getProject());
     myBody = body;
     myAnchor = anchor;
@@ -79,142 +83,150 @@ public class DebuggerDfaRunner {
     if (myFlow == null) return null;
     int offset = myFlow.getStartOffset(myAnchor).getInstructionOffset();
     if (offset < 0) return null;
-    StateBuilder builder = new StateBuilder(proxy);
-    for (DfaValue dfaValue : myFactory.getValues().toArray(new DfaValue[0])) {
-      if (dfaValue instanceof DfaVariableValue) {
-        DfaVariableValue var = (DfaVariableValue)dfaValue;
-        builder.resolveJdi(var);
-      }
-    }
-    DfaMemoryState state = builder.finish(myFactory);
-    if (state != null) {
-      return new DfaInstructionState(myFlow.getInstruction(offset), state);
-    }
-    return null;
+    Map<Value, List<DfaVariableValue>> jdiToDfa = createPreliminaryJdiMap(proxy);
+    if (jdiToDfa.isEmpty()) return null;
+    // No read-action, only JDI
+    Map<Value, JdiValueInfo> map = requestJdi(proxy, jdiToDfa);
+    // No JDI, only read-action
+    DfaMemoryState state = createMemoryState(myFactory, jdiToDfa, map);
+    return new DfaInstructionState(myFlow.getInstruction(offset), state);
   }
 
-  private class StateBuilder {
-    private final @NotNull PsiElementFactory myPsiFactory = JavaPsiFacade.getElementFactory(myProject);
-    private final @Nullable ClassLoaderReference myContextLoader;
-    private final @NotNull Map<Value, List<DfaVariableValue>> myMap = new HashMap<>();
-    private final @NotNull StackFrameProxyEx myProxy;
-    private final @NotNull Location myLocation;
-    private @Nullable List<ClassLoaderReference> myParentLoaders = null;
-
-    StateBuilder(@NotNull StackFrameProxyEx proxy) throws EvaluateException {
-      myProxy = proxy;
-      myLocation = proxy.location();
-      myContextLoader = proxy.getClassLoader();
-    }
-
-    void resolveJdi(@NotNull DfaVariableValue var) throws EvaluateException {
-      Value jdiValue = findJdiValue(var);
-      if (jdiValue != null) {
-        add(var, jdiValue);
-      }
-    }
-
-    @Nullable
-    private Value findJdiValue(@NotNull DfaVariableValue var) throws EvaluateException {
-      if (var.getDescriptor() instanceof AssertionDisabledDescriptor) {
-        ThreeState status = DebuggerUtilsEx.getEffectiveAssertionStatus(myLocation);
-        // Assume that assertions are enabled if we cannot fetch the status
-        return myLocation.virtualMachine().mirrorOf(status == ThreeState.NO);
-      }
-      return myProvider.getJdiValueForDfaVariable(myProxy, var, myAnchor);
-    }
-
-    void add(@NotNull DfaVariableValue var, @NotNull Value jdiValue) {
-      myMap.computeIfAbsent(jdiValue, v -> new ArrayList<>()).add(var);
-    }
-
-    DfaMemoryState finish(DfaValueFactory factory) {
-      if (myMap.isEmpty()) return null;
-      Map<Value, JdiValueInfo> map = StreamEx.ofKeys(myMap).mapToEntry(JdiValueInfo::from).nonNullValues().toMap();
-
-      DfaMemoryState state = new JvmDfaMemoryStateImpl(factory);
-      List<DfaVariableValue> distinctValues = new ArrayList<>();
-      myMap.forEach((jdiValue, vars) -> {
-        DfaVariableValue canonical = vars.get(0);
-        if (!TypeConstraint.fromDfType(canonical.getDfType()).isComparedByEquals()) {
-          distinctValues.add(canonical);
+  @NotNull
+  private Map<Value, List<DfaVariableValue>> createPreliminaryJdiMap(@NotNull StackFrameProxyEx proxy) throws EvaluateException {
+    Map<Value, List<DfaVariableValue>> myMap = new HashMap<>();
+    for (DfaValue dfaValue : myFactory.getValues().toArray(new DfaValue[0])) {
+      if (dfaValue instanceof DfaVariableValue) {
+        DfaVariableValue dfaVar = (DfaVariableValue)dfaValue;
+        Value jdiValue = resolveJdiValue(proxy, dfaVar);
+        if (jdiValue != null) {
+          myMap.computeIfAbsent(jdiValue, v -> new ArrayList<>()).add(dfaVar);
         }
-        for (DfaVariableValue var : vars) {
-          state.applyCondition(var.eq(canonical));
-          addConditions(var, map.get(jdiValue), state);
-        }
-      });
-      EntryStream.ofPairs(distinctValues)
-        .filterKeyValue((left, right) -> left.getDfType().meet(right.getDfType()) != DfType.BOTTOM)
-        .limit(20) // avoid too complex state
-        .forKeyValue((left, right) -> state.applyCondition(left.cond(RelationType.NE, right)));
-      return state;
+      }
     }
+    return myMap;
+  }
 
-    private void addConditions(@NotNull DfaVariableValue var, @Nullable JdiValueInfo valueInfo, @NotNull DfaMemoryState state) {
-      if (valueInfo instanceof JdiValueInfo.PrimitiveConstant) {
-        state.applyCondition(var.eq(((JdiValueInfo.PrimitiveConstant)valueInfo).getDfType()));
+  @Nullable
+  private Value resolveJdiValue(@NotNull StackFrameProxyEx proxy, DfaVariableValue var) throws EvaluateException {
+    if (var.getDescriptor() instanceof AssertionDisabledDescriptor) {
+      Location location = proxy.location();
+      ThreeState status = DebuggerUtilsEx.getEffectiveAssertionStatus(location);
+      // Assume that assertions are enabled if we cannot fetch the status
+      return location.virtualMachine().mirrorOf(status == ThreeState.NO);
+    }
+    return myProvider.getJdiValueForDfaVariable(proxy, var, myAnchor);
+  }
+
+
+  @NotNull
+  private DfaMemoryState createMemoryState(@NotNull DfaValueFactory factory,
+                                           @NotNull Map<Value, List<DfaVariableValue>> valueMap,
+                                           @NotNull Map<Value, JdiValueInfo> infoMap) {
+    DfaMemoryState state = new JvmDfaMemoryStateImpl(factory);
+    List<DfaVariableValue> distinctValues = new ArrayList<>();
+    valueMap.forEach((jdiValue, vars) -> {
+      DfaVariableValue canonical = vars.get(0);
+      if (!TypeConstraint.fromDfType(canonical.getDfType()).isComparedByEquals()) {
+        distinctValues.add(canonical);
       }
-      else if (valueInfo instanceof JdiValueInfo.StringConstant) {
-        PsiType stringType = myPsiFactory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, myBody.getResolveScope());
-        state.applyCondition(var.eq(DfTypes.referenceConstant(((JdiValueInfo.StringConstant)valueInfo).getValue(), stringType)));
+      for (DfaVariableValue var : vars) {
+        state.applyCondition(var.eq(canonical));
+        addConditions(var, infoMap.get(jdiValue), state);
       }
-      else if (valueInfo instanceof JdiValueInfo.ObjectRef) {
-        ReferenceType type = ((JdiValueInfo.ObjectRef)valueInfo).getType();
-        ClassLoaderReference typeLoader = type.classLoader();
-        if (!isCompatibleClassLoader(typeLoader)) return;
-        PsiType psiType = getType(type, myProject, myBody.getResolveScope());
-        if (psiType == null) return;
-        TypeConstraint exactType = TypeConstraints.exact(psiType);
-        state.meetDfType(var, exactType.asDfType().meet(DfTypes.NOT_NULL_OBJECT));
-        if (valueInfo instanceof JdiValueInfo.EnumConstant) {
-          String name = ((JdiValueInfo.EnumConstant)valueInfo).getName();
-          PsiClass enumClass = ((PsiClassType)psiType).resolve();
-          if (enumClass != null && enumClass.isEnum()) {
-            PsiField enumConst = enumClass.findFieldByName(name, false);
-            if (enumConst instanceof PsiEnumConstant) {
-              state.applyCondition(var.eq(DfTypes.referenceConstant(enumConst, exactType)));
+    });
+    EntryStream.ofPairs(distinctValues)
+      .filterKeyValue((left, right) -> left.getDfType().meet(right.getDfType()) != DfType.BOTTOM)
+      .limit(20) // avoid too complex state
+      .forKeyValue((left, right) -> state.applyCondition(left.cond(RelationType.NE, right)));
+    return state;
+  }
+
+  private void addConditions(@NotNull DfaVariableValue var, @Nullable JdiValueInfo valueInfo, @NotNull DfaMemoryState state) {
+    if (valueInfo instanceof JdiValueInfo.PrimitiveConstant) {
+      state.applyCondition(var.eq(((JdiValueInfo.PrimitiveConstant)valueInfo).getDfType()));
+    }
+    else if (valueInfo instanceof JdiValueInfo.StringConstant) {
+      PsiType stringType = JavaPsiFacade.getElementFactory(myProject)
+        .createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, myBody.getResolveScope());
+      state.applyCondition(var.eq(DfTypes.referenceConstant(((JdiValueInfo.StringConstant)valueInfo).getValue(), stringType)));
+    }
+    else if (valueInfo instanceof JdiValueInfo.ObjectRef) {
+      ReferenceType type = ((JdiValueInfo.ObjectRef)valueInfo).getType();
+      PsiType psiType = getType(type, myProject, myBody.getResolveScope());
+      if (psiType == null) return;
+      TypeConstraint exactType = TypeConstraints.exact(psiType);
+      state.meetDfType(var, exactType.asDfType().meet(DfTypes.NOT_NULL_OBJECT));
+      if (valueInfo instanceof JdiValueInfo.EnumConstant) {
+        String name = ((JdiValueInfo.EnumConstant)valueInfo).getName();
+        PsiClass enumClass = ((PsiClassType)psiType).resolve();
+        if (enumClass != null && enumClass.isEnum()) {
+          PsiField enumConst = enumClass.findFieldByName(name, false);
+          if (enumConst instanceof PsiEnumConstant) {
+            state.applyCondition(var.eq(DfTypes.referenceConstant(enumConst, exactType)));
+          }
+        }
+      }
+      if (valueInfo instanceof JdiValueInfo.ObjectWithSpecialField) {
+        JdiValueInfo.ObjectWithSpecialField withSpecialField = (JdiValueInfo.ObjectWithSpecialField)valueInfo;
+        SpecialField field = withSpecialField.getField();
+        JdiValueInfo fieldValue = withSpecialField.getValue();
+        DfaVariableValue dfaField = ObjectUtils.tryCast(field.createValue(myFactory, var), DfaVariableValue.class);
+        if (dfaField != null) {
+          addConditions(dfaField, fieldValue, state);
+        }
+      }
+    }
+  }
+
+  @NotNull
+  private static Map<Value, JdiValueInfo> requestJdi(@NotNull StackFrameProxyEx proxy, @NotNull Map<Value, List<DfaVariableValue>> map)
+    throws EvaluateException {
+    ClassLoaderReference classLoader = proxy.getClassLoader();
+    Predicate<JdiValueInfo> classLoaderFilter = new Predicate<JdiValueInfo>() {
+      private @Nullable List<ClassLoaderReference> myParentLoaders = null;
+
+      @Override
+      public boolean test(JdiValueInfo info) {
+        if (!(info instanceof JdiValueInfo.ObjectRef)) return true;
+        ClassLoaderReference loader = ((JdiValueInfo.ObjectRef)info).getType().classLoader();
+        return isCompatibleClassLoader(loader);
+      }
+
+      private boolean isCompatibleClassLoader(ClassLoaderReference loader) {
+        if (loader == null || loader.equals(classLoader)) return true;
+        return getParentLoaders().contains(loader);
+      }
+
+      @NotNull
+      private List<ClassLoaderReference> getParentLoaders() {
+        if (myParentLoaders == null) {
+          List<ClassLoaderReference> loaders = Collections.emptyList();
+          if (classLoader != null) {
+            ClassType classLoaderClass = (ClassType)classLoader.referenceType();
+            while (classLoaderClass != null && !"java.lang.ClassLoader".equals(classLoaderClass.name())) {
+              classLoaderClass = classLoaderClass.superclass();
+            }
+            if (classLoaderClass != null) {
+              Field parent = classLoaderClass.fieldByName("parent");
+              if (parent != null) {
+                loaders = StreamEx.iterate(
+                    classLoader, Objects::nonNull, loader -> ObjectUtils.tryCast(loader.getValue(parent), ClassLoaderReference.class))
+                  .toList();
+              }
             }
           }
+          myParentLoaders = loaders;
         }
-        if (valueInfo instanceof JdiValueInfo.ObjectWithSpecialField) {
-          JdiValueInfo.ObjectWithSpecialField withSpecialField = (JdiValueInfo.ObjectWithSpecialField)valueInfo;
-          SpecialField field = withSpecialField.getField();
-          JdiValueInfo fieldValue = withSpecialField.getValue();
-          DfaVariableValue dfaField = ObjectUtils.tryCast(field.createValue(myFactory, var), DfaVariableValue.class);
-          if (dfaField != null) {
-            addConditions(dfaField, fieldValue, state);
-          }
-        }
+        return myParentLoaders;
       }
-    }
+    };
 
-    private boolean isCompatibleClassLoader(ClassLoaderReference loader) {
-      if (loader == null || loader.equals(myContextLoader)) return true;
-      return getParentLoaders().contains(loader);
-    }
-
-    @NotNull
-    private List<ClassLoaderReference> getParentLoaders() {
-      if (myParentLoaders == null) {
-        List<ClassLoaderReference> loaders = Collections.emptyList();
-        if (myContextLoader != null) {
-          ClassType classLoaderClass = (ClassType)myContextLoader.referenceType();
-          while (classLoaderClass != null && !"java.lang.ClassLoader".equals(classLoaderClass.name())) {
-            classLoaderClass = classLoaderClass.superclass();
-          }
-          if (classLoaderClass != null) {
-            Field parent = classLoaderClass.fieldByName("parent");
-            if (parent != null) {
-              loaders = StreamEx.iterate(
-                myContextLoader, Objects::nonNull, loader -> ObjectUtils.tryCast(loader.getValue(parent), ClassLoaderReference.class)).toList();
-            }
-          }
-        }
-        myParentLoaders = loaders;
-      }
-      return myParentLoaders;
-    }
+    return StreamEx.ofKeys(map)
+      .mapToEntry(value -> JdiValueInfo.from(value))
+      .nonNullValues()
+      .filterValues(classLoaderFilter)
+      .toMap();
   }
 
   private static @Nullable PsiType getType(@NotNull Type type,
