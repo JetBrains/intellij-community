@@ -161,7 +161,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
         return
       }
       dragPane = findLayeredPane(e) ?: return
-      val image = ToolWindowDragHelper.createDragImage(this)
+      val image = ToolWindowDragHelper.createThumbnailDragImage(this)
       val dragButtonImage = object : JLabel(IconUtil.createImageIcon((image as Image))) {
         override fun toString() = "Image for: " + this@StripeButton
       }

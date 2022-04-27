@@ -33,34 +33,33 @@ internal class ToolWindowLeftToolbar : ToolWindowToolbar() {
     override fun toString() = "StripeNewUi(anchor=$anchor)"
   }
 
-  private val topPane = StripeV2(this, ToolWindowAnchor.LEFT)
-  private val bottomPane = StripeV2(this, ToolWindowAnchor.BOTTOM)
+  private val topLeftStripe = StripeV2(this, ToolWindowAnchor.LEFT)
+  private val bottomLeftStripe = StripeV2(this, ToolWindowAnchor.BOTTOM)
 
   val moreButton = MoreSquareStripeButton(this)
 
   init {
     val topWrapper = JPanel(BorderLayout())
     border = JBUI.Borders.customLine(JBUI.CurrentTheme.ToolWindow.borderColor(), 1, 0, 0, 1)
-    topPane.background = JBUI.CurrentTheme.ToolWindow.background()
-    bottomPane.background = JBUI.CurrentTheme.ToolWindow.background()
+    topLeftStripe.background = JBUI.CurrentTheme.ToolWindow.background()
+    bottomLeftStripe.background = JBUI.CurrentTheme.ToolWindow.background()
     topWrapper.background = JBUI.CurrentTheme.ToolWindow.background()
 
-    topWrapper.add(topPane, BorderLayout.NORTH)
+    topWrapper.add(topLeftStripe, BorderLayout.NORTH)
     add(topWrapper, BorderLayout.NORTH)
-    add(bottomPane, BorderLayout.SOUTH)
+    add(bottomLeftStripe, BorderLayout.SOUTH)
   }
 
   override fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe {
     return when (anchor) {
-      ToolWindowAnchor.LEFT -> topPane
-      ToolWindowAnchor.BOTTOM -> bottomPane
-      ToolWindowAnchor.TOP -> bottomPane
+      ToolWindowAnchor.LEFT -> topLeftStripe
+      ToolWindowAnchor.BOTTOM -> bottomLeftStripe
       else -> throw IllegalArgumentException("Wrong anchor $anchor")
     }
   }
 
   fun initMoreButton() {
-    topPane.parent?.add(moreButton, BorderLayout.CENTER)
+    topLeftStripe.parent?.add(moreButton, BorderLayout.CENTER)
   }
 
   override fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? {
@@ -69,25 +68,25 @@ internal class ToolWindowLeftToolbar : ToolWindowToolbar() {
     }
 
     val moreButtonRect = Rectangle(moreButton.locationOnScreen, moreButton.size)
-    if (Rectangle(topPane.locationOnScreen, topPane.size).contains(screenPoint) ||
-        topPane.getButtons().isEmpty() && moreButtonRect.contains(screenPoint)) {
-      return topPane
+    return if (Rectangle(topLeftStripe.locationOnScreen, topLeftStripe.size).contains(screenPoint) ||
+               topLeftStripe.getButtons().isEmpty() && moreButtonRect.contains(screenPoint)) {
+      topLeftStripe
     }
     else if (!moreButtonRect.contains(screenPoint) &&
              Rectangle(locationOnScreen, size).also { JBInsets.removeFrom(it, insets) }.contains(screenPoint)) {
-      return bottomPane
+      bottomLeftStripe
     }
     else {
-      return null
+      null
     }
   }
 
   override fun reset() {
-    topPane.reset()
-    bottomPane.reset()
+    topLeftStripe.reset()
+    bottomLeftStripe.reset()
   }
 
   override fun getButtonFor(toolWindowId: String): StripeButtonManager? {
-    return topPane.getButtons().find { it.id == toolWindowId } ?: bottomPane.getButtons().find { it.id == toolWindowId }
+    return topLeftStripe.getButtons().find { it.id == toolWindowId } ?: bottomLeftStripe.getButtons().find { it.id == toolWindowId }
   }
 }

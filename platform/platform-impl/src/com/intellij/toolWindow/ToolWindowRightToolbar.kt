@@ -12,7 +12,7 @@ import java.awt.Rectangle
 import javax.swing.JComponent
 
 internal class ToolWindowRightToolbar : ToolWindowToolbar() {
-  val topPane = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
+  private val rightStripe = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
     override val isNewStripes: Boolean
       get() = true
     override val anchor: ToolWindowAnchor
@@ -29,13 +29,13 @@ internal class ToolWindowRightToolbar : ToolWindowToolbar() {
 
   init {
     border = JBUI.Borders.customLine(JBUI.CurrentTheme.ToolWindow.borderColor(), 1, 1, 0, 0)
-    topPane.background = JBUI.CurrentTheme.ToolWindow.background()
-    add(topPane)
+    rightStripe.background = JBUI.CurrentTheme.ToolWindow.background()
+    add(rightStripe)
   }
 
   override fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe {
     return when (anchor) {
-      ToolWindowAnchor.RIGHT -> topPane
+      ToolWindowAnchor.RIGHT -> rightStripe
       else -> throw IllegalArgumentException("Wrong anchor $anchor")
     }
   }
@@ -45,20 +45,20 @@ internal class ToolWindowRightToolbar : ToolWindowToolbar() {
       return null
     }
 
-    val toolBarRect = Rectangle(topPane.locationOnScreen, topPane.size).also {
+    val toolBarRect = Rectangle(rightStripe.locationOnScreen, rightStripe.size).also {
       if (it.width == 0) {
         it.width = SHADOW_WIDTH
         it.x -= SHADOW_WIDTH
       }
     }
-    return if (toolBarRect.contains(screenPoint)) topPane else null
+    return if (toolBarRect.contains(screenPoint)) rightStripe else null
   }
 
   override fun reset() {
-    topPane.reset()
+    rightStripe.reset()
   }
 
-  override fun getButtonFor(toolWindowId: String): StripeButtonManager? = topPane.getButtons().find { it.id == toolWindowId }
+  override fun getButtonFor(toolWindowId: String): StripeButtonManager? = rightStripe.getButtons().find { it.id == toolWindowId }
 
   companion object {
     val SHADOW_WIDTH = JBUI.scale(40)

@@ -125,6 +125,8 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
 
   override fun getStripeFor(screenPoint: Point, preferred: AbstractDroppableStripe, pane: JComponent): AbstractDroppableStripe? {
     if (Rectangle(pane.locationOnScreen, pane.size).contains(screenPoint)) {
+      // Find the stripe that owns this point. Depending on implementation, this could be just the physical bounds of the stripe, or could
+      // include the virtual bounds of the drop area for the stripe. Because these bounds might overlap, check the preferred stripe first
       if (preferred.containsPoint(screenPoint)) {
         return preferred
       }

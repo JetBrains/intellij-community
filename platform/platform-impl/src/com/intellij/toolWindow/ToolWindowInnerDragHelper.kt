@@ -7,8 +7,8 @@ import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.openapi.wm.impl.content.ContentTabLabel
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDragImage
-import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createHighlighterComponent
+import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createThumbnailDragImage
+import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDropTargetHighlightComponent
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.MouseDragHelper
@@ -36,7 +36,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
   private var myDialog = null as MyDialog?
   private var currentDropSide = -1
   private var currentDropIndex = -1
-  private val highlighter = createHighlighterComponent()
+  private val highlighter = createDropTargetHighlightComponent()
   private val myInitialOffset = Point()
 
   override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean {
@@ -76,7 +76,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
     sourceDecorator = InternalDecoratorImpl.findNearestDecorator(contentTabLabel)
     myInitialIndex = contentTabLabel.getIndex()
     myCurrentDecorator = sourceDecorator
-    myDialog = MyDialog(pane, this, createDragImage(contentTabLabel, -1))
+    myDialog = MyDialog(pane, this, createThumbnailDragImage(contentTabLabel, -1))
   }
 
   fun ContentTabLabel.getIndex() = content.manager!!.getIndexOfContent(content)

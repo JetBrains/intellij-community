@@ -3,7 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.toolWindow.StripeButtonManager
-import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDragImage
+import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createThumbnailDragImage
 import com.intellij.ui.paint.RectanglePainter
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.VisibleForTesting
@@ -117,7 +117,7 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
 
   fun processDropButton(button: JComponent, buttonImage: JComponent, screenPoint: Point) {
     if (!isDroppingButton()) {
-      buttonImage.paint(createDragImage(button).graphics)
+      buttonImage.paint(createThumbnailDragImage(button).graphics)
 
       dragButton = button
       dragButtonImage = buttonImage
