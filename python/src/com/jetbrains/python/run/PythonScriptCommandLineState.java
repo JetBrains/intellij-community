@@ -71,14 +71,14 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     Project project = myConfig.getProject();
 
     if (myConfig.showCommandLineAfterwards() && !emulateTerminal()) {
-      if (executor.getId() != DefaultDebugExecutor.EXECUTOR_ID && executor.getId() != DefaultRunExecutor.EXECUTOR_ID) {
+      if (!DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId()) && !DefaultRunExecutor.EXECUTOR_ID.equals(executor.getId())) {
         // disable "Show command line" for all executors except of Run and Debug, because it's useless
         return super.execute(executor, processStarter, patchers);
       }
 
       PyRunFileInConsoleAction.configExecuted(myConfig);
 
-      if (executor.getId() == DefaultDebugExecutor.EXECUTOR_ID) {
+      if (DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId())) {
         return super.execute(executor, processStarter, ArrayUtil.append(patchers, new CommandLinePatcher() {
           @Override
           public void patchCommandLine(GeneralCommandLine commandLine) {
