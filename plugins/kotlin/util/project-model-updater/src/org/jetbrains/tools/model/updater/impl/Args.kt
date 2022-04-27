@@ -13,9 +13,7 @@ class Args(args: Map<String, String>) {
     val kotlincArtifactsMode: KotlincArtifactsMode by mapDelegate(mutableArgs, KotlincArtifactsMode::valueOf)
 
     init {
-        this::class.members.filterIsInstance<KProperty<*>>()
-            .filter { it.visibility == KVisibility.PUBLIC }
-            .forEach { it.getter.call(this) } // Initialize all the values
+        declaredProperties().forEach { it.getter.call(this) } // Initialize all the values
         check(mutableArgs.isEmpty()) {
             "Unknown args: " + mutableArgs.map { (key, value) -> "$key=$value" }.joinToString()
         }
@@ -27,10 +25,17 @@ class Args(args: Map<String, String>) {
             private var value: T? = null
 
             override fun getValue(thisRef: Any?, property: KProperty<*>): T {
-                return value ?: map.remove(property.name)?.let(transform).also { value = it }
+                return value
+                    ?: map.remove(property.name)?.let(transform).also { value = it }
                     ?: error("Cannot find ${property.name} in $map}")
             }
         }
+
+    private fun declaredProperties(): List<KProperty<*>> {
+        return this::class.members.filterIsInstance<KProperty<*>>().filter { it.visibility == KVisibility.PUBLIC }
+    }
+
+    override fun toString(): String = declaredProperties().joinToString { "${it.name}=${it.getter.call(this)}" }
 }
 
 enum class KotlincArtifactsMode {

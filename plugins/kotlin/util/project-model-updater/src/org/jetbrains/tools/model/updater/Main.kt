@@ -15,9 +15,10 @@ fun main(args: Array<String>) {
     }
     val monorepoRoot = communityRoot.resolve("..").takeIf { it.resolve(".idea").isDirectory }
 
+    val parsedArgs = Args(defaultArgs + manualArgs)
+    println("Args: $parsedArgs")
     for ((root, isCommunity) in listOf(monorepoRoot to false, communityRoot to true)) {
         if (root == null) continue
-        val parsedArgs = Args(defaultArgs + manualArgs)
         generateProjectModelFiles(root.resolve(".idea"), parsedArgs, isCommunity)
         patchProjectModelFiles(root.resolve(".idea"), parsedArgs, isCommunity)
     }
