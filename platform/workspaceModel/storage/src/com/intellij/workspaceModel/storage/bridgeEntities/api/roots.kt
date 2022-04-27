@@ -9,6 +9,8 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+
 
 
 
@@ -51,6 +53,9 @@ interface ContentRootEntity : WorkspaceEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ContentRootEntity, modification: ContentRootEntity.Builder.() -> Unit) = modifyEntity(ContentRootEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface SourceRootEntity : WorkspaceEntity {
     val contentRoot: ContentRootEntity
@@ -90,6 +95,9 @@ interface SourceRootEntity : WorkspaceEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: SourceRootEntity, modification: SourceRootEntity.Builder.() -> Unit) = modifyEntity(SourceRootEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface SourceRootOrderEntity : WorkspaceEntity {
     val contentRootEntity: ContentRootEntity
@@ -119,6 +127,9 @@ interface SourceRootOrderEntity : WorkspaceEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: SourceRootOrderEntity, modification: SourceRootOrderEntity.Builder.() -> Unit) = modifyEntity(SourceRootOrderEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
     val sourceRoot: SourceRootEntity
@@ -147,6 +158,9 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: CustomSourceRootPropertiesEntity, modification: CustomSourceRootPropertiesEntity.Builder.() -> Unit) = modifyEntity(CustomSourceRootPropertiesEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface JavaSourceRootEntity : WorkspaceEntity {
     val sourceRoot: SourceRootEntity
@@ -179,6 +193,9 @@ interface JavaSourceRootEntity : WorkspaceEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: JavaSourceRootEntity, modification: JavaSourceRootEntity.Builder.() -> Unit) = modifyEntity(JavaSourceRootEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface JavaResourceRootEntity: WorkspaceEntity {
     val sourceRoot: SourceRootEntity
@@ -211,3 +228,6 @@ interface JavaResourceRootEntity: WorkspaceEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: JavaResourceRootEntity, modification: JavaResourceRootEntity.Builder.() -> Unit) = modifyEntity(JavaResourceRootEntity.Builder::class.java, entity, modification)
+//endregion

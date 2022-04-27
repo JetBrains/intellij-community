@@ -7,6 +7,8 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+
 
 
 interface ParentMultipleEntity : WorkspaceEntity {
@@ -36,6 +38,9 @@ interface ParentMultipleEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ParentMultipleEntity, modification: ParentMultipleEntity.Builder.() -> Unit) = modifyEntity(ParentMultipleEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface ChildMultipleEntity : WorkspaceEntity {
   val childData: String
@@ -65,3 +70,6 @@ interface ChildMultipleEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ChildMultipleEntity, modification: ChildMultipleEntity.Builder.() -> Unit) = modifyEntity(ChildMultipleEntity.Builder::class.java, entity, modification)
+//endregion

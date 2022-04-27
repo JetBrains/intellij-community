@@ -10,7 +10,7 @@ import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
 import org.hamcrest.CoreMatchers
-import org.jetbrains.deft.TestEntities.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before

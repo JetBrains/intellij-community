@@ -10,6 +10,12 @@ import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.impl.ExtRefKey
+import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
+import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
+import com.intellij.workspaceModel.storage.referrersx
+
 
 
 
@@ -57,6 +63,34 @@ interface ArtifactEntity : WorkspaceEntityWithPersistentId {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ArtifactEntity, modification: ArtifactEntity.Builder.() -> Unit) = modifyEntity(ArtifactEntity.Builder::class.java, entity, modification)
+var ArtifactEntity.Builder.artifactExternalSystemIdEntity: @Child ArtifactExternalSystemIdEntity?
+    get() {
+        return referrersx(ArtifactExternalSystemIdEntity::artifactEntity).singleOrNull()
+    }
+    set(value) {
+        val diff = (this as ArtifactEntityImpl.Builder).diff
+        if (diff != null) {
+            if (value != null) {
+                if ((value as ArtifactExternalSystemIdEntityImpl.Builder).diff == null) {
+                    value._artifactEntity = this
+                    diff.addEntity(value)
+                }
+            }
+            diff.updateOneToOneChildOfParent(ArtifactExternalSystemIdEntityImpl.ARTIFACTENTITY_CONNECTION_ID, this, value)
+        }
+        else {
+            val key = ExtRefKey("ArtifactExternalSystemIdEntity", "artifactEntity", true, ArtifactExternalSystemIdEntityImpl.ARTIFACTENTITY_CONNECTION_ID)
+            this.extReferences[key] = value
+            
+            if (value != null) {
+                (value as ArtifactExternalSystemIdEntityImpl.Builder)._artifactEntity = this
+            }
+        }
+    }
+
+//endregion
 
 interface ArtifactPropertiesEntity : WorkspaceEntity {
     val artifact: ArtifactEntity
@@ -88,6 +122,9 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ArtifactPropertiesEntity, modification: ArtifactPropertiesEntity.Builder.() -> Unit) = modifyEntity(ArtifactPropertiesEntity.Builder::class.java, entity, modification)
+//endregion
 
 @Abstract interface PackagingElementEntity : WorkspaceEntity {
     val parentEntity: CompositePackagingElementEntity?
@@ -170,6 +207,9 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: DirectoryPackagingElementEntity, modification: DirectoryPackagingElementEntity.Builder.() -> Unit) = modifyEntity(DirectoryPackagingElementEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
     val fileName: String
@@ -199,6 +239,9 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ArchivePackagingElementEntity, modification: ArchivePackagingElementEntity.Builder.() -> Unit) = modifyEntity(ArchivePackagingElementEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface ArtifactRootElementEntity: CompositePackagingElementEntity {
 
@@ -225,6 +268,9 @@ interface ArtifactRootElementEntity: CompositePackagingElementEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ArtifactRootElementEntity, modification: ArtifactRootElementEntity.Builder.() -> Unit) = modifyEntity(ArtifactRootElementEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
     val artifact: ArtifactId?
@@ -251,6 +297,30 @@ interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ArtifactOutputPackagingElementEntity, modification: ArtifactOutputPackagingElementEntity.Builder.() -> Unit) = modifyEntity(ArtifactOutputPackagingElementEntity.Builder::class.java, entity, modification)
+var ArtifactOutputPackagingElementEntity.Builder.artifactEntity: ArtifactEntity
+    get() {
+        return referrersx(ArtifactEntity::artifactOutputPackagingElement).single()
+    }
+    set(value) {
+        val diff = (this as ArtifactOutputPackagingElementEntityImpl.Builder).diff
+        if (diff != null) {
+            if ((value as ArtifactEntityImpl.Builder).diff == null) {
+                value._artifactOutputPackagingElement = this
+                diff.addEntity(value)
+            }
+            diff.updateOneToOneParentOfChild(ArtifactEntityImpl.ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID, this, value)
+        }
+        else {
+            val key = ExtRefKey("ArtifactEntity", "artifactOutputPackagingElement", false, ArtifactEntityImpl.ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)
+            this.extReferences[key] = value
+            
+            (value as ArtifactEntityImpl.Builder)._artifactOutputPackagingElement = this
+        }
+    }
+
+//endregion
 
 val ArtifactOutputPackagingElementEntity.artifactEntity: ArtifactEntity
   get() = referrersx(ArtifactEntity::artifactOutputPackagingElement).single()
@@ -280,6 +350,9 @@ interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ModuleOutputPackagingElementEntity, modification: ModuleOutputPackagingElementEntity.Builder.() -> Unit) = modifyEntity(ModuleOutputPackagingElementEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
     val library: LibraryId?
@@ -305,6 +378,30 @@ interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: LibraryFilesPackagingElementEntity, modification: LibraryFilesPackagingElementEntity.Builder.() -> Unit) = modifyEntity(LibraryFilesPackagingElementEntity.Builder::class.java, entity, modification)
+var LibraryFilesPackagingElementEntity.Builder.libraryEntity: LibraryEntity
+    get() {
+        return referrersx(LibraryEntity::libraryFilesPackagingElement).single()
+    }
+    set(value) {
+        val diff = (this as LibraryFilesPackagingElementEntityImpl.Builder).diff
+        if (diff != null) {
+            if ((value as LibraryEntityImpl.Builder).diff == null) {
+                value._libraryFilesPackagingElement = this
+                diff.addEntity(value)
+            }
+            diff.updateOneToOneParentOfChild(LibraryEntityImpl.LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID, this, value)
+        }
+        else {
+            val key = ExtRefKey("LibraryEntity", "libraryFilesPackagingElement", false, LibraryEntityImpl.LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)
+            this.extReferences[key] = value
+            
+            (value as LibraryEntityImpl.Builder)._libraryFilesPackagingElement = this
+        }
+    }
+
+//endregion
 
 val LibraryFilesPackagingElementEntity.libraryEntity: LibraryEntity
   get() = referrersx(LibraryEntity::libraryFilesPackagingElement).single()
@@ -334,6 +431,9 @@ interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ModuleSourcePackagingElementEntity, modification: ModuleSourcePackagingElementEntity.Builder.() -> Unit) = modifyEntity(ModuleSourcePackagingElementEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
     val module: ModuleId?
@@ -360,6 +460,9 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ModuleTestOutputPackagingElementEntity, modification: ModuleTestOutputPackagingElementEntity.Builder.() -> Unit) = modifyEntity(ModuleTestOutputPackagingElementEntity.Builder::class.java, entity, modification)
+//endregion
 
 @Abstract interface FileOrDirectoryPackagingElementEntity : PackagingElementEntity {
     val filePath: VirtualFileUrl
@@ -413,6 +516,9 @@ interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementE
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: DirectoryCopyPackagingElementEntity, modification: DirectoryCopyPackagingElementEntity.Builder.() -> Unit) = modifyEntity(DirectoryCopyPackagingElementEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElementEntity {
     val pathInArchive: String
@@ -442,6 +548,9 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ExtractedDirectoryPackagingElementEntity, modification: ExtractedDirectoryPackagingElementEntity.Builder.() -> Unit) = modifyEntity(ExtractedDirectoryPackagingElementEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity {
     val renamedOutputFileName: String?
@@ -470,6 +579,9 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: FileCopyPackagingElementEntity, modification: FileCopyPackagingElementEntity.Builder.() -> Unit) = modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface CustomPackagingElementEntity : CompositePackagingElementEntity {
     val typeId: String
@@ -502,3 +614,6 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: CustomPackagingElementEntity, modification: CustomPackagingElementEntity.Builder.() -> Unit) = modifyEntity(CustomPackagingElementEntity.Builder::class.java, entity, modification)
+//endregion

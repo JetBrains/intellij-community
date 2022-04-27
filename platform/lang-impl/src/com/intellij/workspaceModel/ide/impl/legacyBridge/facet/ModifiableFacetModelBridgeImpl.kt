@@ -27,7 +27,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.subFacets
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
                                      private val diff: MutableEntityStorage,

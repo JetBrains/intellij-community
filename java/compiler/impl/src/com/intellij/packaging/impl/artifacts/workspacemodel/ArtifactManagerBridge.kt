@@ -30,7 +30,7 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactId
 import com.intellij.workspaceModel.storage.bridgeEntities.api.CustomPackagingElementEntity
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), Disposable {
 

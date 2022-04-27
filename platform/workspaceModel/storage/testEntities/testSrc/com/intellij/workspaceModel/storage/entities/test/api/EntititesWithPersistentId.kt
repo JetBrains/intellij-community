@@ -6,6 +6,8 @@ import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+
 
 
 
@@ -38,6 +40,9 @@ interface FirstEntityWithPId : WorkspaceEntityWithPersistentId {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: FirstEntityWithPId, modification: FirstEntityWithPId.Builder.() -> Unit) = modifyEntity(FirstEntityWithPId.Builder::class.java, entity, modification)
+//endregion
 
 data class FirstPId(override val presentableName: String) : PersistentEntityId<FirstEntityWithPId>
 
@@ -68,6 +73,9 @@ interface SecondEntityWithPId : WorkspaceEntityWithPersistentId {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: SecondEntityWithPId, modification: SecondEntityWithPId.Builder.() -> Unit) = modifyEntity(SecondEntityWithPId.Builder::class.java, entity, modification)
+//endregion
 
 data class SecondPId(override val presentableName: String) : PersistentEntityId<SecondEntityWithPId>
 data class TestPId(var presentableName: String, val aaa: Int?, var angry: Boolean)

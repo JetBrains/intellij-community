@@ -8,6 +8,8 @@ import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+
 
 
 
@@ -89,6 +91,9 @@ interface MiddleEntity : BaseEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: MiddleEntity, modification: MiddleEntity.Builder.() -> Unit) = modifyEntity(MiddleEntity.Builder::class.java, entity, modification)
+//endregion
 
 fun MutableEntityStorage.addMiddleEntity(property: String = "prop", source: EntitySource = MySource): MiddleEntity {
   val middleEntity = MiddleEntity(property, source)
@@ -122,6 +127,9 @@ interface LeftEntity : CompositeBaseEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: LeftEntity, modification: LeftEntity.Builder.() -> Unit) = modifyEntity(LeftEntity.Builder::class.java, entity, modification)
+//endregion
 
 fun MutableEntityStorage.addLeftEntity(children: Sequence<BaseEntity>, source: EntitySource = MySource): LeftEntity {
   val leftEntity = LeftEntity(source) {
@@ -157,6 +165,9 @@ interface RightEntity : CompositeBaseEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: RightEntity, modification: RightEntity.Builder.() -> Unit) = modifyEntity(RightEntity.Builder::class.java, entity, modification)
+//endregion
 
 fun MutableEntityStorage.addRightEntity(children: Sequence<BaseEntity>, source: EntitySource = MySource): RightEntity {
   val rightEntity = RightEntity(source) {

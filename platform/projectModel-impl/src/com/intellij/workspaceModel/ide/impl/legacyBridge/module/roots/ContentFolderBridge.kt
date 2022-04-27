@@ -19,7 +19,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 internal abstract class ContentFolderBridge(private val entry: ContentEntryBridge, private val contentFolderUrl: VirtualFileUrl) : ContentFolder {
   override fun getContentEntry(): ContentEntryBridge = entry

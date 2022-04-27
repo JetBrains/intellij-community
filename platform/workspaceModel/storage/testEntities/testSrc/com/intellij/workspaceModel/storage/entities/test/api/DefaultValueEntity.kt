@@ -7,6 +7,8 @@ import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+
 
 interface DefaultValueEntity: WorkspaceEntity {
   val name: String
@@ -37,3 +39,6 @@ interface DefaultValueEntity: WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: DefaultValueEntity, modification: DefaultValueEntity.Builder.() -> Unit) = modifyEntity(DefaultValueEntity.Builder::class.java, entity, modification)
+//endregion

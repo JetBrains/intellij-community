@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
-import org.jetbrains.deft.TestEntities.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test

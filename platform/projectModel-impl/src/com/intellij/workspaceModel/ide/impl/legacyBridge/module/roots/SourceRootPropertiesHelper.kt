@@ -21,7 +21,7 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
 import org.jetbrains.jps.model.serialization.module.UnknownSourceRootPropertiesSerializer
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 object SourceRootPropertiesHelper {
   @Suppress("UNCHECKED_CAST")

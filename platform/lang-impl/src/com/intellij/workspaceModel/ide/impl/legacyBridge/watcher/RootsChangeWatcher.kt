@@ -35,7 +35,7 @@ import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import java.nio.file.Path
 import java.nio.file.Paths
 

@@ -8,6 +8,8 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+
 
 
 interface ParentChainEntity : WorkspaceEntity {
@@ -34,6 +36,9 @@ interface ParentChainEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ParentChainEntity, modification: ParentChainEntity.Builder.() -> Unit) = modifyEntity(ParentChainEntity.Builder::class.java, entity, modification)
+//endregion
 
 @Abstract
 interface SimpleAbstractEntity : WorkspaceEntity {
@@ -116,6 +121,9 @@ interface CompositeChildAbstractEntity : CompositeAbstractEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: CompositeChildAbstractEntity, modification: CompositeChildAbstractEntity.Builder.() -> Unit) = modifyEntity(CompositeChildAbstractEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface SimpleChildAbstractEntity : SimpleAbstractEntity {
 
@@ -139,3 +147,6 @@ interface SimpleChildAbstractEntity : SimpleAbstractEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: SimpleChildAbstractEntity, modification: SimpleChildAbstractEntity.Builder.() -> Unit) = modifyEntity(SimpleChildAbstractEntity.Builder::class.java, entity, modification)
+//endregion

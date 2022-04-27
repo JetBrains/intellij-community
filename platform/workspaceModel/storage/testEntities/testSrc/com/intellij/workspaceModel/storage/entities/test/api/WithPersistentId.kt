@@ -9,6 +9,8 @@ import org.jetbrains.deft.annotations.Open
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+
 
 
 
@@ -74,6 +76,9 @@ interface OneEntityWithPersistentId : WorkspaceEntityWithPersistentId {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: OneEntityWithPersistentId, modification: OneEntityWithPersistentId.Builder.() -> Unit) = modifyEntity(OneEntityWithPersistentId.Builder::class.java, entity, modification)
+//endregion
 
 interface EntityWithSoftLinks : WorkspaceEntity {
   val link: OnePersistentId
@@ -138,6 +143,9 @@ interface EntityWithSoftLinks : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: EntityWithSoftLinks, modification: EntityWithSoftLinks.Builder.() -> Unit) = modifyEntity(EntityWithSoftLinks.Builder::class.java, entity, modification)
+//endregion
 
 interface SoftLinkReferencedChild : WorkspaceEntity {
   val parentEntity: EntityWithSoftLinks
@@ -162,3 +170,6 @@ interface SoftLinkReferencedChild : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: SoftLinkReferencedChild, modification: SoftLinkReferencedChild.Builder.() -> Unit) = modifyEntity(SoftLinkReferencedChild.Builder::class.java, entity, modification)
+//endregion

@@ -496,19 +496,50 @@ class KotlinReader(val file: KtFile) {
     pos++
     pos++
     val comment = untilNewLine()
-    val b = leafBlock
+    var b = leafBlock
+    var isExtensionBlock = false
     when (comment) {
-      "region generated code" -> if (b._generatedCode == null) {
+      "region generated code" -> {
+        if (leafBlock.parent == null) {
+          b = leafBlock.children.last()
+          isExtensionBlock = true
+        }
         var lineStart = commentStart
         while (lineStart > 1 && text[lineStart - 1].isWhitespace()) {
           if (text[lineStart - 1] == '\n') break
           lineStart--
         }
-        b._generatedCode = lineStart..Int.MAX_VALUE
+        if (isExtensionBlock) {
+          b._extensionCode = lineStart..Int.MAX_VALUE
+          untilEndRegion(b)
+        } else if (b._generatedCode == null) {
+          b._generatedCode = lineStart..Int.MAX_VALUE
+        }
       }
-      "endregion" -> if (b._generatedCode != null)
-        b._generatedCode = b._generatedCode!!.first..pos
+      "endregion" -> {
+        if (b._generatedCode != null) {
+          b._generatedCode = b._generatedCode!!.first..pos
+        }
+      }
       else -> Unit
+    }
+  }
+
+  private fun untilEndRegion(block: KtBlock) {
+    while (!end) {
+      when {
+        c == '/' && preview() == '/' ->  {
+          pos++
+          pos++
+          if (untilNewLine() == "endregion") {
+            block._extensionCode = block._extensionCode!!.first..pos
+            return
+          } else {
+            pos++
+          }
+        }
+        else -> pos++
+      }
     }
   }
 

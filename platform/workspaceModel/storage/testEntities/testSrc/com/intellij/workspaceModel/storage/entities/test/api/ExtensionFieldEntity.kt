@@ -7,6 +7,11 @@ import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.impl.ExtRefKey
+import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
+import com.intellij.workspaceModel.storage.referrersx
+
 
 
 
@@ -35,6 +40,34 @@ interface MainEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: MainEntity, modification: MainEntity.Builder.() -> Unit) = modifyEntity(MainEntity.Builder::class.java, entity, modification)
+var MainEntity.Builder.child: @Child AttachedEntity?
+    get() {
+        return referrersx(AttachedEntity::ref).singleOrNull()
+    }
+    set(value) {
+        val diff = (this as MainEntityImpl.Builder).diff
+        if (diff != null) {
+            if (value != null) {
+                if ((value as AttachedEntityImpl.Builder).diff == null) {
+                    value._ref = this
+                    diff.addEntity(value)
+                }
+            }
+            diff.updateOneToOneChildOfParent(AttachedEntityImpl.REF_CONNECTION_ID, this, value)
+        }
+        else {
+            val key = ExtRefKey("AttachedEntity", "ref", true, AttachedEntityImpl.REF_CONNECTION_ID)
+            this.extReferences[key] = value
+            
+            if (value != null) {
+                (value as AttachedEntityImpl.Builder)._ref = this
+            }
+        }
+    }
+
+//endregion
 
 interface AttachedEntity : WorkspaceEntity {
   val ref: MainEntity
@@ -63,6 +96,9 @@ interface AttachedEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: AttachedEntity, modification: AttachedEntity.Builder.() -> Unit) = modifyEntity(AttachedEntity.Builder::class.java, entity, modification)
+//endregion
 
 val MainEntity.child: @Child AttachedEntity?
   get() = referrersx(AttachedEntity::ref).singleOrNull()

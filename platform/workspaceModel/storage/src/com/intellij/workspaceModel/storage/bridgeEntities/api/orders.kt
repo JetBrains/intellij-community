@@ -10,6 +10,8 @@ import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+
 
 
 /**
@@ -42,6 +44,9 @@ interface FacetsOrderEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: FacetsOrderEntity, modification: FacetsOrderEntity.Builder.() -> Unit) = modifyEntity(FacetsOrderEntity.Builder::class.java, entity, modification)
+//endregion
 
 val ModuleEntity.facetOrder: @Child FacetsOrderEntity?
   get() = referrersx(FacetsOrderEntity::moduleEntity).singleOrNull()
@@ -75,6 +80,9 @@ interface FacetExternalSystemIdEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: FacetExternalSystemIdEntity, modification: FacetExternalSystemIdEntity.Builder.() -> Unit) = modifyEntity(FacetExternalSystemIdEntity.Builder::class.java, entity, modification)
+//endregion
 
 val FacetEntity.facetExternalSystemIdEntity: @Child FacetExternalSystemIdEntity?
   get() = referrersx(FacetExternalSystemIdEntity::facet).singleOrNull()
@@ -107,6 +115,9 @@ interface ArtifactExternalSystemIdEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ArtifactExternalSystemIdEntity, modification: ArtifactExternalSystemIdEntity.Builder.() -> Unit) = modifyEntity(ArtifactExternalSystemIdEntity.Builder::class.java, entity, modification)
+//endregion
 
 val ArtifactEntity.artifactExternalSystemIdEntity: @Child ArtifactExternalSystemIdEntity?
   get() = referrersx(ArtifactExternalSystemIdEntity::artifactEntity).singleOrNull()
@@ -139,6 +150,9 @@ interface LibraryExternalSystemIdEntity: WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: LibraryExternalSystemIdEntity, modification: LibraryExternalSystemIdEntity.Builder.() -> Unit) = modifyEntity(LibraryExternalSystemIdEntity.Builder::class.java, entity, modification)
+//endregion
 
 val LibraryEntity.externalSystemId: @Child LibraryExternalSystemIdEntity?
   get() = referrersx(LibraryExternalSystemIdEntity::library).singleOrNull()
@@ -170,3 +184,6 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ArtifactsOrderEntity, modification: ArtifactsOrderEntity.Builder.() -> Unit) = modifyEntity(ArtifactsOrderEntity.Builder::class.java, entity, modification)
+//endregion

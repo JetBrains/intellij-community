@@ -5,7 +5,7 @@ import com.intellij.workspaceModel.storage.entities.test.addChildEntity
 import com.intellij.workspaceModel.storage.entities.test.addParentEntity
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
-import org.jetbrains.deft.TestEntities.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before

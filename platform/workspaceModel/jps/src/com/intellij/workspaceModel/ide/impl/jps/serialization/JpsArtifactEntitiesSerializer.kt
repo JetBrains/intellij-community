@@ -25,7 +25,7 @@ import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.artifact.ArtifactPropertiesState
 import org.jetbrains.jps.model.serialization.artifact.ArtifactState
 import org.jetbrains.jps.util.JpsPathUtil
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl: String) : JpsDirectoryEntitiesSerializerFactory<ArtifactEntity> {
   override val componentName: String

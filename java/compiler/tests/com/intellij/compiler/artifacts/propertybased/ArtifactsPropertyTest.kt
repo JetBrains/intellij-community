@@ -35,7 +35,7 @@ import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import org.junit.Assert.*
 import org.junit.Assume.assumeTrue
 import org.junit.ClassRule

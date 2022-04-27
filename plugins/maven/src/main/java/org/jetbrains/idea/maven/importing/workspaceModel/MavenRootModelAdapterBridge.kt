@@ -30,7 +30,7 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import java.io.File
 
 @Retention(AnnotationRetention.SOURCE)

@@ -23,7 +23,7 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.jps.model.serialization.facet.FacetState
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 class FacetManagerBridge(module: Module) : FacetManagerBase() {
   internal val module = module as ModuleBridge

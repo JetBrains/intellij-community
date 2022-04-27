@@ -7,6 +7,11 @@ import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.impl.ExtRefKey
+import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
+import com.intellij.workspaceModel.storage.referrersx
+
 
 
 
@@ -33,6 +38,34 @@ interface MainEntityList : WorkspaceEntity {
   //@formatter:on
   //endregion
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: MainEntityList, modification: MainEntityList.Builder.() -> Unit) = modifyEntity(MainEntityList.Builder::class.java, entity, modification)
+var MainEntityList.Builder.child: @Child List<AttachedEntityList>
+    get() {
+        return referrersx(AttachedEntityList::ref)
+    }
+    set(value) {
+        val diff = (this as MainEntityListImpl.Builder).diff
+        if (diff != null) {
+            for (item in value) {
+                if ((item as AttachedEntityListImpl.Builder).diff == null) {
+                    item._ref = this
+                    diff.addEntity(item)
+                }
+            }
+            diff.updateOneToManyChildrenOfParent(AttachedEntityListImpl.REF_CONNECTION_ID, this, value)
+        }
+        else {
+            val key = ExtRefKey("AttachedEntityList", "ref", true, AttachedEntityListImpl.REF_CONNECTION_ID)
+            this.extReferences[key] = value
+            
+            for (item in value) {
+                (item as AttachedEntityListImpl.Builder)._ref = this
+            }
+        }
+    }
+
+//endregion
 
 interface AttachedEntityList : WorkspaceEntity {
   val ref: MainEntityList?
@@ -61,6 +94,9 @@ interface AttachedEntityList : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: AttachedEntityList, modification: AttachedEntityList.Builder.() -> Unit) = modifyEntity(AttachedEntityList.Builder::class.java, entity, modification)
+//endregion
 
 val MainEntityList.child: List<@Child AttachedEntityList>
   get() = referrersx(AttachedEntityList::ref)

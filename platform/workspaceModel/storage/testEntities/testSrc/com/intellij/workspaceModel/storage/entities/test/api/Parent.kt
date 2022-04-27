@@ -7,6 +7,8 @@ import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+
 
 
 
@@ -42,6 +44,9 @@ interface XParentEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: XParentEntity, modification: XParentEntity.Builder.() -> Unit) = modifyEntity(XParentEntity.Builder::class.java, entity, modification)
+//endregion
 
 data class DataClassX(val stringProperty: String, val parent: EntityReference<XParentEntity>)
 
@@ -77,6 +82,9 @@ interface XChildEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: XChildEntity, modification: XChildEntity.Builder.() -> Unit) = modifyEntity(XChildEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface XChildWithOptionalParentEntity : WorkspaceEntity {
   val childProperty: String
@@ -104,6 +112,9 @@ interface XChildWithOptionalParentEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: XChildWithOptionalParentEntity, modification: XChildWithOptionalParentEntity.Builder.() -> Unit) = modifyEntity(XChildWithOptionalParentEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface XChildChildEntity : WorkspaceEntity {
   val parent1: XParentEntity
@@ -131,3 +142,6 @@ interface XChildChildEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: XChildChildEntity, modification: XChildChildEntity.Builder.() -> Unit) = modifyEntity(XChildChildEntity.Builder::class.java, entity, modification)
+//endregion

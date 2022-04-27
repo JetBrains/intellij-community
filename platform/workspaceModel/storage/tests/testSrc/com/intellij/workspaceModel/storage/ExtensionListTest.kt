@@ -7,7 +7,6 @@ import com.intellij.workspaceModel.storage.entities.test.api.MySource
 import com.intellij.workspaceModel.storage.entities.test.api.child
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
-import org.jetbrains.deft.TestEntities.child
 
 class ExtensionListTest {
   @Test

@@ -29,7 +29,7 @@ import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import java.util.function.Supplier
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(project) {
   companion object {

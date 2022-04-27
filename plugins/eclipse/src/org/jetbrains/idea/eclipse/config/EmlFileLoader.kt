@@ -20,7 +20,7 @@ import org.jetbrains.idea.eclipse.conversion.IdeaSpecificSettings
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.util.JpsPathUtil
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 /**
  * Loads additional module configuration from *.eml file to [ModuleEntity]

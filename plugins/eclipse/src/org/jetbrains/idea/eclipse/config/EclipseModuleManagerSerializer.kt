@@ -15,7 +15,7 @@ import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.*
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 /**
  * Implements loading and saving configuration from [EclipseModuleManagerImpl] in iml file when workspace model is used

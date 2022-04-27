@@ -20,27 +20,7 @@ abstract class ObjModule(
    * - `org.jetbrains.deft.intellijWs.IntellijWs` object name
    **/
   @JvmInline
-  value class Id(val notation: String) {
-    val javaPackage
-      get() = notation
-
-    val objName
-      get() = notation.substringAfterLast(".")
-        .replaceFirstChar { it.titlecaseChar() }
-
-    val objFqn
-      get() = "$javaPackage.$objName"
-
-    fun check() {
-      check(objName.first().isUpperCase()) {
-        "`$notation` should be and id notation like `org.jetbrains.deft.IntellijWs`.\n" +
-        "Will be parsed as:\n" +
-        "- `org.jetbrains.deft.intellijWs` package\n" +
-        "- `IntellijWs` object name"
-      }
-    }
-
-    override fun toString(): String = "ObjModule.Id($notation)"
+  value class Id(val notation: String = "default") {
   }
 
   @RequiresOptIn

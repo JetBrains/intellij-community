@@ -10,6 +10,11 @@ import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.impl.ExtRefKey
+import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
+import com.intellij.workspaceModel.storage.referrersx
+
 
 
 
@@ -58,6 +63,34 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: LibraryEntity, modification: LibraryEntity.Builder.() -> Unit) = modifyEntity(LibraryEntity.Builder::class.java, entity, modification)
+var LibraryEntity.Builder.externalSystemId: @Child LibraryExternalSystemIdEntity?
+    get() {
+        return referrersx(LibraryExternalSystemIdEntity::library).singleOrNull()
+    }
+    set(value) {
+        val diff = (this as LibraryEntityImpl.Builder).diff
+        if (diff != null) {
+            if (value != null) {
+                if ((value as LibraryExternalSystemIdEntityImpl.Builder).diff == null) {
+                    value._library = this
+                    diff.addEntity(value)
+                }
+            }
+            diff.updateOneToOneChildOfParent(LibraryExternalSystemIdEntityImpl.LIBRARY_CONNECTION_ID, this, value)
+        }
+        else {
+            val key = ExtRefKey("LibraryExternalSystemIdEntity", "library", true, LibraryExternalSystemIdEntityImpl.LIBRARY_CONNECTION_ID)
+            this.extReferences[key] = value
+            
+            if (value != null) {
+                (value as LibraryExternalSystemIdEntityImpl.Builder)._library = this
+            }
+        }
+    }
+
+//endregion
 
 interface LibraryPropertiesEntity : WorkspaceEntity {
     val library: LibraryEntity
@@ -89,6 +122,9 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: LibraryPropertiesEntity, modification: LibraryPropertiesEntity.Builder.() -> Unit) = modifyEntity(LibraryPropertiesEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface SdkEntity : WorkspaceEntity {
     val library: LibraryEntity
@@ -117,6 +153,9 @@ interface SdkEntity : WorkspaceEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: SdkEntity, modification: SdkEntity.Builder.() -> Unit) = modifyEntity(SdkEntity.Builder::class.java, entity, modification)
+//endregion
 
 data class LibraryRootTypeId(val name: String) : Serializable {
     companion object {

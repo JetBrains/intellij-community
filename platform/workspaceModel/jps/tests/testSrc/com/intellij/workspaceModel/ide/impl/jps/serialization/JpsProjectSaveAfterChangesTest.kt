@@ -14,7 +14,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule

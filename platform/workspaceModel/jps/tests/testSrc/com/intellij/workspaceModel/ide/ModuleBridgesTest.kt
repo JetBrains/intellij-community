@@ -45,7 +45,7 @@ import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootTypeProperties
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule

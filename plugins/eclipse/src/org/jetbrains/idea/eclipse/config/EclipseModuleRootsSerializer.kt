@@ -43,7 +43,7 @@ import org.jetbrains.idea.eclipse.importWizard.EclipseNatureImporter
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID
 import org.jetbrains.jps.util.JpsPathUtil
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import java.io.IOException
 import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets

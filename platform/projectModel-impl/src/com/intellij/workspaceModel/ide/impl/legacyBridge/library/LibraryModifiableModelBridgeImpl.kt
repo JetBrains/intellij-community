@@ -28,7 +28,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 internal class LibraryModifiableModelBridgeImpl(
   private val originalLibrary: LibraryBridgeImpl,

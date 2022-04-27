@@ -11,6 +11,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+
 
 
 
@@ -38,6 +40,9 @@ interface FooEntity: WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: FooEntity, modification: FooEntity.Builder.() -> Unit) = modifyEntity(FooEntity.Builder::class.java, entity, modification)
+//endregion
 
 
 interface AnotherTest: WorkspaceEntity {
@@ -64,6 +69,9 @@ interface AnotherTest: WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: AnotherTest, modification: AnotherTest.Builder.() -> Unit) = modifyEntity(AnotherTest.Builder::class.java, entity, modification)
+//endregion
 
 val TestEntity.anotherTest: @Child AnotherTest?
   get() = referrersx(AnotherTest::testField).singleOrNull()

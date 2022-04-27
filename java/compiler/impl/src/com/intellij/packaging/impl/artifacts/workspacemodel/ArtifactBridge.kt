@@ -25,7 +25,7 @@ import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.util.JpsPathUtil
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 open class ArtifactBridge(
   _artifactId: ArtifactId,

@@ -42,7 +42,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import java.util.concurrent.ConcurrentHashMap
 
 internal class ModifiableRootModelBridgeImpl(

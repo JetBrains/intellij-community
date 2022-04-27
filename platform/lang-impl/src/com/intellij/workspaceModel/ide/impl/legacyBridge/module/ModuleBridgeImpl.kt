@@ -30,7 +30,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 internal class ModuleBridgeImpl(
   override var moduleEntityId: ModuleId,

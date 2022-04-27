@@ -6,7 +6,7 @@ import com.intellij.workspaceModel.storage.entities.test.api.LeftEntity
 import com.intellij.workspaceModel.storage.entities.test.api.MiddleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.addLeftEntity
 import com.intellij.workspaceModel.storage.entities.test.api.addMiddleEntity
-import org.jetbrains.deft.TestEntities.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -33,6 +33,9 @@ class AbstractEntitiesTest {
     val leftEntity = builder.addLeftEntity(sequenceOf(middleEntity))
 
     val anotherMiddleEntity = builder.addMiddleEntity("second")
+    builder.modifyEntity(leftEntity) {
+      
+    }
     builder.modifyEntity(leftEntity) {
       this.children = listOf(anotherMiddleEntity)
     }

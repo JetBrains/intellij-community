@@ -6,6 +6,8 @@ import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+
 
 
 
@@ -45,6 +47,9 @@ interface LinkedListEntity : WorkspaceEntityWithPersistentId {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: LinkedListEntity, modification: LinkedListEntity.Builder.() -> Unit) = modifyEntity(LinkedListEntity.Builder::class.java, entity, modification)
+//endregion
 
 fun MutableEntityStorage.addLinkedListEntity(name: String, next: LinkedListEntityId): LinkedListEntity {
   val linkedListEntity = LinkedListEntity(name, MySource, next)

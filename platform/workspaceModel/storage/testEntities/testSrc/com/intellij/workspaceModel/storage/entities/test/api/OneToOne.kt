@@ -7,6 +7,8 @@ import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+
 
 
 
@@ -43,6 +45,9 @@ interface OoParentEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: OoParentEntity, modification: OoParentEntity.Builder.() -> Unit) = modifyEntity(OoParentEntity.Builder::class.java, entity, modification)
+//endregion
 
 fun MutableEntityStorage.addOoParentEntity(
   parentProperty: String = "parent",
@@ -85,6 +90,9 @@ interface OoChildEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: OoChildEntity, modification: OoChildEntity.Builder.() -> Unit) = modifyEntity(OoChildEntity.Builder::class.java, entity, modification)
+//endregion
 
 
 fun MutableEntityStorage.addOoChildEntity(
@@ -126,6 +134,9 @@ interface OoChildWithNullableParentEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: OoChildWithNullableParentEntity, modification: OoChildWithNullableParentEntity.Builder.() -> Unit) = modifyEntity(OoChildWithNullableParentEntity.Builder::class.java, entity, modification)
+//endregion
 
 fun MutableEntityStorage.addOoChildWithNullableParentEntity(
   OoParentEntity: OoParentEntity,
@@ -178,6 +189,9 @@ interface OoParentWithPidEntity : WorkspaceEntityWithPersistentId {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: OoParentWithPidEntity, modification: OoParentWithPidEntity.Builder.() -> Unit) = modifyEntity(OoParentWithPidEntity.Builder::class.java, entity, modification)
+//endregion
 
 fun MutableEntityStorage.addOoParentWithPidEntity(
   parentProperty: String = "parent",
@@ -218,6 +232,9 @@ interface OoChildForParentWithPidEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: OoChildForParentWithPidEntity, modification: OoChildForParentWithPidEntity.Builder.() -> Unit) = modifyEntity(OoChildForParentWithPidEntity.Builder::class.java, entity, modification)
+//endregion
 
 fun MutableEntityStorage.addOoChildForParentWithPidEntity(
   parentEntity: OoParentWithPidEntity,
@@ -261,6 +278,9 @@ interface OoChildAlsoWithPidEntity : WorkspaceEntityWithPersistentId {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: OoChildAlsoWithPidEntity, modification: OoChildAlsoWithPidEntity.Builder.() -> Unit) = modifyEntity(OoChildAlsoWithPidEntity.Builder::class.java, entity, modification)
+//endregion
 
 fun MutableEntityStorage.addOoChildAlsoWithPidEntity(
   parentEntity: OoParentWithPidEntity,
@@ -303,6 +323,9 @@ interface OoParentWithoutPidEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: OoParentWithoutPidEntity, modification: OoParentWithoutPidEntity.Builder.() -> Unit) = modifyEntity(OoParentWithoutPidEntity.Builder::class.java, entity, modification)
+//endregion
 
 
 fun MutableEntityStorage.addOoParentWithoutPidEntity(
@@ -350,6 +373,9 @@ interface OoChildWithPidEntity : WorkspaceEntityWithPersistentId {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: OoChildWithPidEntity, modification: OoChildWithPidEntity.Builder.() -> Unit) = modifyEntity(OoChildWithPidEntity.Builder::class.java, entity, modification)
+//endregion
 
 fun MutableEntityStorage.addOoChildWithPidEntity(
   parentEntity: OoParentWithoutPidEntity,

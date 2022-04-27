@@ -27,7 +27,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
 import com.intellij.workspaceModel.storage.toBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.AssertionFailedError
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.ClassRule

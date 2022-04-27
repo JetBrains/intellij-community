@@ -4,41 +4,20 @@ package deft.storage.codegen
 import com.intellij.workspaceModel.storage.CodeGeneratorVersions
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import deft.storage.codegen.field.javaType
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.codegen.ijws.classes.noDefaultValue
 import org.jetbrains.deft.codegen.ijws.classes.noOptional
 import org.jetbrains.deft.codegen.ijws.classes.noRefs
 import org.jetbrains.deft.codegen.ijws.classes.noPersistentId
+import org.jetbrains.deft.codegen.ijws.fields.wsCode
 import org.jetbrains.deft.codegen.model.DefType
 import org.jetbrains.deft.codegen.model.WsEntityInterface
 import org.jetbrains.deft.codegen.utils.fqn
 import org.jetbrains.deft.codegen.utils.lines
 import org.jetbrains.deft.impl.fields.Field
-import storage.codegen.field.api
 import storage.codegen.field.builderApi
-
-fun DefType.apiCode(moduleName: String) = """     
-interface $javaSimpleName: $javaSuperType {
-    ${structure.allFields.lines("    ") { api }}
-    
-    ${innerModelsCode("    ", moduleName)}${generatedApiCode()}
-}
-""".trimIndent()
-
-val DefType.innerModels: Collection<DefType>
-  get() = module
-    .types
-    .filter { it.name.startsWith("$name.") }
-    .map { it as DefType }
-
-fun DefType.innerModelsCode(indent: String, moduleName: String): String {
-  val innerModels = innerModels
-  if (innerModels.isEmpty()) return ""
-  return innerModels.joinToString("\n\n") {
-    it.apiCode(moduleName).indentRestOnly(indent)
-  } + "\n\n$indent"
-}
 
 fun DefType.generatedApiCode(indent: String = "    "): String = lines(indent) {
   line("//region generated code")
@@ -98,6 +77,21 @@ fun DefType.generatedApiCode(indent: String = "    "): String = lines(indent) {
   }
   line("//@formatter:on")
   lineNoNl("//endregion")
+}
+
+fun DefType.generatedExtensionCode(indent: String = "    "): String {
+  val extFields = ktModule.extFields.filter { it.owner is DefType && this === it.owner }
+  if (extFields.isEmpty() && abstract) return ""
+  return lines(indent) {
+    line("//region generated code")
+    if (!abstract) {
+      line("fun ${MutableEntityStorage::class.fqn}.modifyEntity(entity: $name, modification: $name.Builder.() -> Unit) = modifyEntity($name.Builder::class.java, entity, modification)")
+    }
+    if (extFields.isNotEmpty()) {
+      extFields.forEach { line(it.wsCode) }
+    }
+    lineNoNl("//endregion")
+  }
 }
 
 val Field<*, *>.wsBuilderApi: String

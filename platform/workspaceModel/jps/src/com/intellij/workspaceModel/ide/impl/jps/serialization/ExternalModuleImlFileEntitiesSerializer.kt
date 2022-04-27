@@ -18,7 +18,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.util.JpsPathUtil
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 private val MODULE_OPTIONS_TO_CHECK = setOf(
   "externalSystemModuleVersion", "linkedProjectPath", "linkedProjectId", "rootProjectPath", "externalSystemModuleGroup",

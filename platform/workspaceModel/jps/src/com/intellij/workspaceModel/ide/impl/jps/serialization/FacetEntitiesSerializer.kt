@@ -14,7 +14,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.facet.FacetManagerState
 import org.jetbrains.jps.model.serialization.facet.FacetState
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
                                        private val internalSource: JpsFileEntitySource,

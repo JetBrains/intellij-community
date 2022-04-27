@@ -25,7 +25,7 @@ import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.*
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl: String) : JpsDirectoryEntitiesSerializerFactory<LibraryEntity> {
   override val componentName: String

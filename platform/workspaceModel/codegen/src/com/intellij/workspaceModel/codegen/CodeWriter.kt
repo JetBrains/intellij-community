@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import deft.storage.codegen.javaImplName
 import org.jetbrains.deft.codegen.ijws.implWsCode
-import org.jetbrains.deft.codegen.ijws.wsModuleCode
 import org.jetbrains.deft.codegen.model.DefType
 import org.jetbrains.deft.codegen.model.KtObjModule
 import org.jetbrains.deft.codegen.patcher.rewrite
@@ -21,14 +20,14 @@ fun DefType.implIjWsFileContents(simpleTypes: List<DefType>): String {
 }
 
 object CodeWriter {
-  fun generate(project: Project, sourceFolder: VirtualFile, targetFolder: VirtualFile, moduleId: String) {
+  fun generate(project: Project, sourceFolder: VirtualFile, targetFolder: VirtualFile) {
     val documentManager = FileDocumentManager.getInstance()
     val ktSrcs = sourceFolder.children.filter { it.extension == "kt" }.mapNotNull {
       val document = documentManager.getDocument(it) ?: return@mapNotNull null
       it to document
     }
 
-    val module = KtObjModule(project, ObjModule.Id(moduleId))
+    val module = KtObjModule(project, ObjModule.Id())
     ktSrcs.forEach { (vfu, document) ->
       module.addFile(vfu.name, vfu) { document.text }
     }
@@ -42,18 +41,16 @@ object CodeWriter {
       val virtualFile = targetFolder.createChildData(this, it.javaImplName + ".kt")
       documentManager.getDocument(virtualFile)?.setText(it.implIjWsFileContents(result.simpleTypes))
     }
-    val virtualFile = targetFolder.parent.createChildData(this, module.moduleObjName + ".kt")
-    documentManager.getDocument(virtualFile)?.setText(result.wsModuleCode())
   }
 
-  fun generate(dir: File, fromDirectory: String, toDirectory: String, moduleId: String) {
+  fun generate(dir: File, fromDirectory: String, toDirectory: String) {
     val generatedDestDir = dir.resolve(toDirectory)
     generatedDestDir.mkdirs()
     val ktSrcs = dir.resolve(fromDirectory).listFiles()!!
       .toList()
       .filter { it.name.endsWith(".kt") }
 
-    val module = KtObjModule(null, ObjModule.Id(moduleId))
+    val module = KtObjModule(null, ObjModule.Id())
     ktSrcs.forEach {
       module.addFile(it.relativeTo(dir).path, null) { it.readText() }
     }
@@ -66,6 +63,5 @@ object CodeWriter {
         .resolve(it.javaImplName + ".kt")
         .writeText(it.implIjWsFileContents(result.simpleTypes))
     }
-    dir.resolve(module.moduleObjName + ".kt").writeText(result.wsModuleCode())
   }
 }

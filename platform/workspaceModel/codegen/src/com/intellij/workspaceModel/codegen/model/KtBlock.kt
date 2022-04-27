@@ -10,6 +10,7 @@ open class KtBlock(
   val children = mutableListOf<KtBlock>()
   val defs = mutableListOf<DefField>()
   var _generatedCode: IntRange? = null
+  var _extensionCode: IntRange? = null
   val generatedCode: SrcRange? get() = _generatedCode?.let { src.range(it) }
   lateinit var prevElementEnd: SrcPos
   var range: SrcRange? = null

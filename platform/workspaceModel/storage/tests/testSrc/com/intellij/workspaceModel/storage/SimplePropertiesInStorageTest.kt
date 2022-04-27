@@ -5,13 +5,12 @@ import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import org.jetbrains.deft.TestEntities.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
-import org.jetbrains.deft.TestEntities.ref
 
 internal fun EntityStorage.singleSampleEntity() = entities(SampleEntity::class.java).single()
 

@@ -7,6 +7,11 @@ import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.impl.ExtRefKey
+import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
+import com.intellij.workspaceModel.storage.referrersy
+
 
 
 
@@ -37,6 +42,9 @@ interface MainEntityParentList : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: MainEntityParentList, modification: MainEntityParentList.Builder.() -> Unit) = modifyEntity(MainEntityParentList.Builder::class.java, entity, modification)
+//endregion
 
 interface AttachedEntityParentList : WorkspaceEntity {
   val data: String
@@ -63,6 +71,34 @@ interface AttachedEntityParentList : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: AttachedEntityParentList, modification: AttachedEntityParentList.Builder.() -> Unit) = modifyEntity(AttachedEntityParentList.Builder::class.java, entity, modification)
+var AttachedEntityParentList.Builder.ref: MainEntityParentList?
+    get() {
+        return referrersy(MainEntityParentList::children).singleOrNull()
+    }
+    set(value) {
+        val diff = (this as AttachedEntityParentListImpl.Builder).diff
+        if (diff != null) {
+            if (value != null) {
+                if ((value as MainEntityParentListImpl.Builder).diff == null) {
+                    value._children = (value._children ?: emptyList()) + this
+                    diff.addEntity(value)
+                }
+            }
+            diff.updateOneToOneParentOfChild(MainEntityParentListImpl.CHILDREN_CONNECTION_ID, this, value)
+        }
+        else {
+            val key = ExtRefKey("MainEntityParentList", "children", false, MainEntityParentListImpl.CHILDREN_CONNECTION_ID)
+            this.extReferences[key] = value
+            
+            if (value != null) {
+                (value as MainEntityParentListImpl.Builder)._children = ((value as MainEntityParentListImpl.Builder)._children ?: emptyList()) + this
+            }
+        }
+    }
+
+//endregion
 
 val AttachedEntityParentList.ref: MainEntityParentList?
   get() = referrersy(MainEntityParentList::children).singleOrNull()

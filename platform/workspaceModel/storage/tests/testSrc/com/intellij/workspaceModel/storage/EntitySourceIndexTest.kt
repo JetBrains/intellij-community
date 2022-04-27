@@ -9,7 +9,7 @@ import com.intellij.workspaceModel.storage.entities.test.api.SourceEntityImpl
 import com.intellij.workspaceModel.storage.impl.ClassToIntConverter
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.createEntityId
-import org.jetbrains.deft.TestEntities.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

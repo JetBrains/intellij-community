@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.test.api.*
-import org.jetbrains.deft.TestEntities.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals

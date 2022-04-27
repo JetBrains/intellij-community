@@ -7,6 +7,8 @@ import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+
 
 
 
@@ -65,6 +67,9 @@ interface NamedEntity : WorkspaceEntityWithPersistentId {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: NamedEntity, modification: NamedEntity.Builder.() -> Unit) = modifyEntity(NamedEntity.Builder::class.java, entity, modification)
+//endregion
 
 
 fun MutableEntityStorage.addNamedEntity(
@@ -114,6 +119,9 @@ interface NamedChildEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: NamedChildEntity, modification: NamedChildEntity.Builder.() -> Unit) = modifyEntity(NamedChildEntity.Builder::class.java, entity, modification)
+//endregion
 
 
 fun MutableEntityStorage.addNamedChildEntity(
@@ -154,6 +162,9 @@ interface WithSoftLinkEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: WithSoftLinkEntity, modification: WithSoftLinkEntity.Builder.() -> Unit) = modifyEntity(WithSoftLinkEntity.Builder::class.java, entity, modification)
+//endregion
 
 fun MutableEntityStorage.addWithSoftLinkEntity(link: NameId, source: EntitySource = MySource): WithSoftLinkEntity {
   val withSoftLinkEntity = WithSoftLinkEntity(link, source)
@@ -185,6 +196,9 @@ interface ComposedLinkEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ComposedLinkEntity, modification: ComposedLinkEntity.Builder.() -> Unit) = modifyEntity(ComposedLinkEntity.Builder::class.java, entity, modification)
+//endregion
 
 fun MutableEntityStorage.addComposedLinkEntity(link: ComposedId, source: EntitySource = MySource): ComposedLinkEntity {
   val composedLinkEntity = ComposedLinkEntity(link, source)
@@ -223,6 +237,9 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithPersistentId {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: WithListSoftLinksEntity, modification: WithListSoftLinksEntity.Builder.() -> Unit) = modifyEntity(WithListSoftLinksEntity.Builder::class.java, entity, modification)
+//endregion
 
 
 fun MutableEntityStorage.addWithListSoftLinksEntity(
@@ -266,6 +283,9 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithPersistentId {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ComposedIdSoftRefEntity, modification: ComposedIdSoftRefEntity.Builder.() -> Unit) = modifyEntity(ComposedIdSoftRefEntity.Builder::class.java, entity, modification)
+//endregion
 
 fun MutableEntityStorage.addComposedIdSoftRefEntity(
   name: String,

@@ -5,8 +5,7 @@ import com.intellij.workspaceModel.storage.entities.test.api.AttachedEntity
 import com.intellij.workspaceModel.storage.entities.test.api.MainEntity
 import com.intellij.workspaceModel.storage.entities.test.api.MySource
 import com.intellij.workspaceModel.storage.entities.test.api.child
-import org.jetbrains.deft.TestEntities.child
-import org.jetbrains.deft.TestEntities.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

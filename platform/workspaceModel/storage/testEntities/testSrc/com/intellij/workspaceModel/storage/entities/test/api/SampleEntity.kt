@@ -8,6 +8,8 @@ import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+
 
 
 
@@ -48,6 +50,9 @@ interface SampleEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: SampleEntity, modification: SampleEntity.Builder.() -> Unit) = modifyEntity(SampleEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface ChildSampleEntity : WorkspaceEntity {
   val data: String
@@ -75,6 +80,9 @@ interface ChildSampleEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ChildSampleEntity, modification: ChildSampleEntity.Builder.() -> Unit) = modifyEntity(ChildSampleEntity.Builder::class.java, entity, modification)
+//endregion
 
 abstract class MyData(val myData: MyContainer)
 
@@ -116,6 +124,9 @@ interface SecondSampleEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: SecondSampleEntity, modification: SecondSampleEntity.Builder.() -> Unit) = modifyEntity(SecondSampleEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface SourceEntity : WorkspaceEntity {
   val data: String
@@ -143,6 +154,9 @@ interface SourceEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: SourceEntity, modification: SourceEntity.Builder.() -> Unit) = modifyEntity(SourceEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface ChildSourceEntity : WorkspaceEntity {
   val data: String
@@ -170,6 +184,9 @@ interface ChildSourceEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ChildSourceEntity, modification: ChildSourceEntity.Builder.() -> Unit) = modifyEntity(ChildSourceEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface PersistentIdEntity : WorkspaceEntityWithPersistentId {
   val data: String
@@ -199,4 +216,7 @@ interface PersistentIdEntity : WorkspaceEntityWithPersistentId {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: PersistentIdEntity, modification: PersistentIdEntity.Builder.() -> Unit) = modifyEntity(PersistentIdEntity.Builder::class.java, entity, modification)
+//endregion
 

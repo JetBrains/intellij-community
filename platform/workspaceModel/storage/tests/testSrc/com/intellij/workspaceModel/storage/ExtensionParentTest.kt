@@ -4,11 +4,10 @@ import com.intellij.workspaceModel.storage.entities.test.api.AttachedEntityToPar
 import com.intellij.workspaceModel.storage.entities.test.api.MainEntityToParent
 import com.intellij.workspaceModel.storage.entities.test.api.MySource
 import com.intellij.workspaceModel.storage.entities.test.api.ref
-import org.jetbrains.deft.TestEntities.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import org.jetbrains.deft.TestEntities.ref
 
 class ExtensionParentTest {
   @Test

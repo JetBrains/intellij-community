@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import junit.framework.TestCase.*
-import org.jetbrains.deft.TestEntities.modifyEntity
+import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Test
 
 class AddChildrenTest {

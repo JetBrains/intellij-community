@@ -8,6 +8,8 @@ import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+
 
 
 
@@ -38,6 +40,9 @@ interface VFUEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: VFUEntity, modification: VFUEntity.Builder.() -> Unit) = modifyEntity(VFUEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
   val data: String
@@ -70,6 +75,9 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: VFUWithTwoPropertiesEntity, modification: VFUWithTwoPropertiesEntity.Builder.() -> Unit) = modifyEntity(VFUWithTwoPropertiesEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface NullableVFUEntity : WorkspaceEntity {
   val data: String
@@ -98,6 +106,9 @@ interface NullableVFUEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: NullableVFUEntity, modification: NullableVFUEntity.Builder.() -> Unit) = modifyEntity(NullableVFUEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface ListVFUEntity : WorkspaceEntity {
   val data: String
@@ -127,6 +138,9 @@ interface ListVFUEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ListVFUEntity, modification: ListVFUEntity.Builder.() -> Unit) = modifyEntity(ListVFUEntity.Builder::class.java, entity, modification)
+//endregion
 
 fun MutableEntityStorage.addVFUEntity(
   data: String,

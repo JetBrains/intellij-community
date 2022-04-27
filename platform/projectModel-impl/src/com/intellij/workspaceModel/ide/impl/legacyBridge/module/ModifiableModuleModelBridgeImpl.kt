@@ -31,7 +31,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyIt
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import java.io.IOException
 import java.nio.file.Path
 

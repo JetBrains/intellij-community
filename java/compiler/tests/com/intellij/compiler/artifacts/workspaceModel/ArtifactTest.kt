@@ -41,7 +41,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactProperties
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactRootElementEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import org.junit.Assume.assumeTrue
 import org.junit.runner.RunWith
 import java.util.concurrent.Callable

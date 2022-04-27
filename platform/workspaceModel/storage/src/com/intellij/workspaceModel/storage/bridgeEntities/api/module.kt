@@ -9,6 +9,11 @@ import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.impl.ExtRefKey
+import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
+import com.intellij.workspaceModel.storage.referrersx
+
 
 
 
@@ -60,6 +65,59 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ModuleEntity, modification: ModuleEntity.Builder.() -> Unit) = modifyEntity(ModuleEntity.Builder::class.java, entity, modification)
+var ModuleEntity.Builder.facetOrder: @Child FacetsOrderEntity?
+    get() {
+        return referrersx(FacetsOrderEntity::moduleEntity).singleOrNull()
+    }
+    set(value) {
+        val diff = (this as ModuleEntityImpl.Builder).diff
+        if (diff != null) {
+            if (value != null) {
+                if ((value as FacetsOrderEntityImpl.Builder).diff == null) {
+                    value._moduleEntity = this
+                    diff.addEntity(value)
+                }
+            }
+            diff.updateOneToOneChildOfParent(FacetsOrderEntityImpl.MODULEENTITY_CONNECTION_ID, this, value)
+        }
+        else {
+            val key = ExtRefKey("FacetsOrderEntity", "moduleEntity", true, FacetsOrderEntityImpl.MODULEENTITY_CONNECTION_ID)
+            this.extReferences[key] = value
+            
+            if (value != null) {
+                (value as FacetsOrderEntityImpl.Builder)._moduleEntity = this
+            }
+        }
+    }
+
+var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntity?
+    get() {
+        return referrersx(EclipseProjectPropertiesEntity::module).singleOrNull()
+    }
+    set(value) {
+        val diff = (this as ModuleEntityImpl.Builder).diff
+        if (diff != null) {
+            if (value != null) {
+                if ((value as EclipseProjectPropertiesEntityImpl.Builder).diff == null) {
+                    value._module = this
+                    diff.addEntity(value)
+                }
+            }
+            diff.updateOneToOneChildOfParent(EclipseProjectPropertiesEntityImpl.MODULE_CONNECTION_ID, this, value)
+        }
+        else {
+            val key = ExtRefKey("EclipseProjectPropertiesEntity", "module", true, EclipseProjectPropertiesEntityImpl.MODULE_CONNECTION_ID)
+            this.extReferences[key] = value
+            
+            if (value != null) {
+                (value as EclipseProjectPropertiesEntityImpl.Builder)._module = this
+            }
+        }
+    }
+
+//endregion
 
 interface ModuleCustomImlDataEntity : WorkspaceEntity {
     val module: ModuleEntity
@@ -91,6 +149,9 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ModuleCustomImlDataEntity, modification: ModuleCustomImlDataEntity.Builder.() -> Unit) = modifyEntity(ModuleCustomImlDataEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface ModuleGroupPathEntity : WorkspaceEntity {
     val module: ModuleEntity
@@ -120,6 +181,9 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ModuleGroupPathEntity, modification: ModuleGroupPathEntity.Builder.() -> Unit) = modifyEntity(ModuleGroupPathEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface JavaModuleSettingsEntity: WorkspaceEntity {
     val module: ModuleEntity
@@ -158,6 +222,9 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: JavaModuleSettingsEntity, modification: JavaModuleSettingsEntity.Builder.() -> Unit) = modifyEntity(JavaModuleSettingsEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
     val module: ModuleEntity
@@ -199,3 +266,6 @@ interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
     //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ExternalSystemModuleOptionsEntity, modification: ExternalSystemModuleOptionsEntity.Builder.() -> Unit) = modifyEntity(ExternalSystemModuleOptionsEntity.Builder::class.java, entity, modification)
+//endregion

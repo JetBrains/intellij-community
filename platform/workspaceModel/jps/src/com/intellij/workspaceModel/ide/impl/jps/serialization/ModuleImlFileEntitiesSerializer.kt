@@ -31,7 +31,7 @@ import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
 import org.jetbrains.jps.util.JpsPathUtil
-import org.jetbrains.workspaceModel.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import java.io.StringReader
 import java.nio.file.Path
 import java.util.*

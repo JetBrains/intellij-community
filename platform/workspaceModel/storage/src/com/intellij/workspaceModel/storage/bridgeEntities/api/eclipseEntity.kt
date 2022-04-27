@@ -12,6 +12,8 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+
 
 
 
@@ -68,6 +70,9 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: EclipseProjectPropertiesEntity, modification: EclipseProjectPropertiesEntity.Builder.() -> Unit) = modifyEntity(EclipseProjectPropertiesEntity.Builder::class.java, entity, modification)
+//endregion
 
 val ModuleEntity.eclipseProperties: @Child EclipseProjectPropertiesEntity?
   get() = referrersx(EclipseProjectPropertiesEntity::module).singleOrNull()

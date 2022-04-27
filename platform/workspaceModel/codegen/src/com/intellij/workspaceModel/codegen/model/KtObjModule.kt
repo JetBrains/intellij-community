@@ -12,7 +12,6 @@ class KtObjModule(
     fqn: Id,
     val addDependencies: List<KtObjModule> = listOf()
 ) : ObjModule(fqn) {
-  val moduleObjName = fqn.objName
   val packages = mutableMapOf<String?, KtPackage>()
   val files = mutableListOf<KtFile>()
   val extFields = mutableListOf<ExtField<*, *>>()
