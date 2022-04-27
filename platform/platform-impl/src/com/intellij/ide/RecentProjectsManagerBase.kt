@@ -281,7 +281,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     return RecentProjectListActionProvider.getInstance().getActions(addClearListItem = addClearListItem, useGroups = useGroups).toTypedArray()
   }
 
-  private fun markPathRecent(path: String, project: Project) {
+  fun markPathRecent(path: String, project: Project) {
     synchronized(stateLock) {
       for (group in state.groups) {
         if (group.markProjectFirst(path)) {

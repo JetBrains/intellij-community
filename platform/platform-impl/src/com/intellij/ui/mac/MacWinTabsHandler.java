@@ -409,13 +409,15 @@ public class MacWinTabsHandler {
       orderedFrames[index] = frames[i];
     }
 
-    long time = System.currentTimeMillis();
     RecentProjectsManagerBase manager = RecentProjectsManagerBase.getInstanceEx();
 
     for (IdeFrame frame : orderedFrames) {
       Project project = frame.getProject();
       if (project != null) {
-        manager.setActivationTimestamp(project, time++);
+        String path = manager.getProjectPath(project);
+        if (path != null) {
+          manager.markPathRecent(path, project);
+        }
       }
     }
   }
