@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
@@ -24,7 +25,6 @@ import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.RecordUniqueVa
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
 import java.awt.Component
 import java.util.regex.Pattern
-import javax.swing.JTextArea
 
 
 class GithubShareDialog(project: Project,
@@ -42,7 +42,7 @@ class GithubShareDialog(project: Project,
   @NlsSafe
   private val remoteName = if (existingRemotes.isEmpty()) "origin" else "github"
   private val remoteTextField = JBTextField(remoteName)
-  private val descriptionTextArea = JTextArea()
+  private val descriptionTextArea = JBTextArea().apply { lineWrap = true }
   private val existingRepoValidator = RecordUniqueValidator(repositoryTextField,
                                                             message("share.error.repo.with.selected.name.exists"))
   private val existingRemoteValidator = RecordUniqueValidator(remoteTextField,

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.EMPTY_LABEL
 import com.intellij.ui.dsl.builder.RowLayout
@@ -17,7 +18,6 @@ import org.jetbrains.plugins.github.authentication.ui.GHAccountsComboBoxModel
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsHost
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import javax.swing.JComponent
-import javax.swing.JTextArea
 
 class GithubCreateGistDialog(
   project: Project,
@@ -31,7 +31,7 @@ class GithubCreateGistDialog(
     DataProvider {
 
   private val fileNameField = if (fileName != null) JBTextField(fileName) else null
-  private val descriptionField = JTextArea()
+  private val descriptionField = JBTextArea().apply { lineWrap = true }
   private val secretCheckBox = JBCheckBox(message("create.gist.dialog.secret"), secret)
   private val browserCheckBox = JBCheckBox(message("create.gist.dialog.open.browser"), openInBrowser)
   private val copyLinkCheckBox = JBCheckBox(message("create.gist.dialog.copy.url"), copyLink)
