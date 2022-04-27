@@ -508,7 +508,7 @@ object CodeWithMeClientDownloader {
         if (SystemInfo.isMac) {
           val app = guestRoot.toFile().listFiles { file -> file.name.endsWith(".app") && file.isDirectory }!!.singleOrNull()
           if (app != null) {
-            return app.toPath() to listOf("open", "-n", "-a", app.toString(), "--args")
+            return app.toPath() to listOf("open", "-n", "-W", "-a", app.toString(), "--args")
           }
         }
 
@@ -605,16 +605,22 @@ object CodeWithMeClientDownloader {
             super.processTerminated(event)
             LOG.info("Guest process terminated, exit code " + event.exitCode)
 
-            // if process exited abnormally but took longer than 10 seconds, it's likely to be an issue with connection instead of Mac-specific bug
-            if (event.exitCode != 0 && (System.currentTimeMillis() - lastProcessStartTime) < 10_000) {
-              if (attemptCount > 0) {
-                LOG.info("Previous attempt to start guest process failed, will try again in one second")
-                EdtScheduledExecutorService.getInstance().schedule({ doRunProcess() }, ModalityState.any(), 1, TimeUnit.SECONDS)
+            if (event.exitCode == 0) {
+              application.invokeLater {
+                processLifetimeDef.terminate()
               }
-              else {
-                LOG.warn("Running client process failed after specified number of attempts")
-                application.invokeLater {
-                  processLifetimeDef.terminate()
+            } else {
+              // if process exited abnormally but took longer than 10 seconds, it's likely to be an issue with connection instead of Mac-specific bug
+              if ((System.currentTimeMillis() - lastProcessStartTime) < 10_000 ) {
+                if (attemptCount > 0) {
+                  LOG.info("Previous attempt to start guest process failed, will try again in one second")
+                  EdtScheduledExecutorService.getInstance().schedule({ doRunProcess() }, ModalityState.any(), 1, TimeUnit.SECONDS)
+                }
+                else {
+                  LOG.warn("Running client process failed after specified number of attempts")
+                  application.invokeLater {
+                    processLifetimeDef.terminate()
+                  }
                 }
               }
             }
