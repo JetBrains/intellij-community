@@ -1,13 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
-import com.intellij.openapi.util.NlsSafe
+import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiType
 import com.intellij.uast.UastHintedVisitorAdapter
-import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.callMatcher.CallMatcher
 import com.siyeh.ig.psiutils.InconvertibleTypesChecker
 import com.siyeh.ig.psiutils.InconvertibleTypesChecker.Convertible
@@ -18,7 +17,9 @@ import com.siyeh.ig.testFrameworks.UAssertHint.Companion.createAssertEqualsUHint
 import com.siyeh.ig.testFrameworks.UAssertHint.Companion.createAssertNotEqualsUHint
 import com.siyeh.ig.testFrameworks.UAssertHint.Companion.createAssertNotSameUHint
 import com.siyeh.ig.testFrameworks.UAssertHint.Companion.createAssertSameUHint
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import java.util.*
@@ -65,18 +66,17 @@ class AssertBetweenInconvertibleTypesInspection : AbstractBaseUastLocalInspectio
       val type2 = secondArgument.getExpressionType() ?: return
       val mismatch = InconvertibleTypesChecker.checkTypes(type1, type2, LookForMutualSubclass.IF_CHEAP)
       if (mismatch != null) {
-        val name = Objects.requireNonNull(expression.methodIdentifier?.sourcePsi)
+        val name = expression.methodIdentifier?.sourcePsi ?: return
         val convertible = mismatch.isConvertible
         if (convertible == Convertible.CONVERTIBLE_MUTUAL_SUBCLASS_UNKNOWN) {
           holder.registerPossibleProblem(name)
         }
         else {
-          val methodName = expression.methodName
-          if (methodName == null) return
+          val methodName = expression.methodName ?: return
           val highlightType = if (isAssertNotEqualsMethod(methodName)) ProblemHighlightType.WEAK_WARNING
           else ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-          val errorString = buildErrorString(methodName, mismatch.getLeft(), mismatch.getRight())
-          holder.registerProblem(name!!, errorString, highlightType)
+          val errorString = buildErrorString(methodName, mismatch.left, mismatch.right)
+          holder.registerProblem(name, errorString, highlightType)
         }
       }
     }
@@ -106,19 +106,18 @@ class AssertBetweenInconvertibleTypesInspection : AbstractBaseUastLocalInspectio
       checkConvertibleTypes(call, call.valueArguments[0], qualifier.valueArguments[0], holder)
     }
   }
-  @NlsSafe
-  fun buildErrorString(vararg infos: Any): String {
-    val methodName = infos[0] as String
-    val comparedTypeText = (infos[1] as PsiType).presentableText
-    val comparisonTypeText = (infos[2] as PsiType).presentableText
+  @Nls
+  fun buildErrorString(methodName: @NotNull String, left: @NotNull PsiType, right: @NotNull PsiType): String {
+    val comparedTypeText = left.presentableText
+    val comparisonTypeText = right.presentableText
     if (isAssertNotEqualsMethod(methodName)) {
-      return InspectionGadgetsBundle.message("assertnotequals.between.inconvertible.types.problem.descriptor", comparedTypeText,
+      return JvmAnalysisBundle.message("jvm.inspections.assertnotequals.between.inconvertible.types.problem.descriptor", comparedTypeText,
                                              comparisonTypeText)
     }
     return if (isAssertNotSameMethod(methodName)) {
-      InspectionGadgetsBundle.message("assertnotsame.between.inconvertible.types.problem.descriptor", comparedTypeText, comparisonTypeText)
+      JvmAnalysisBundle.message("jvm.inspections.assertnotsame.between.inconvertible.types.problem.descriptor", comparedTypeText, comparisonTypeText)
     }
-    else InspectionGadgetsBundle.message("assertequals.between.inconvertible.types.problem.descriptor",
+    else JvmAnalysisBundle.message("jvm.inspections.assertequals.between.inconvertible.types.problem.descriptor",
                                          StringUtil.escapeXmlEntities(comparedTypeText),
                                          StringUtil.escapeXmlEntities(comparisonTypeText))
   }
