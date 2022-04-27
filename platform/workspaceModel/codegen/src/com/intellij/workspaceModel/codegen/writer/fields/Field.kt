@@ -2,6 +2,7 @@ package deft.storage.codegen
 
 import org.jetbrains.deft.impl.TBoolean
 import org.jetbrains.deft.impl.TInt
+import org.jetbrains.deft.impl.TOptional
 import org.jetbrains.deft.impl.fields.Field
 import org.jetbrains.deft.impl.fields.MemberOrExtField
 import java.util.*
@@ -12,6 +13,14 @@ val MemberOrExtField<*, *>.javaName: String
 val MemberOrExtField<*, *>.implFieldName: String
   get() = when (type) {
     is TInt, is TBoolean -> javaName
+
+    is TOptional<*> -> {
+      when (type.type) {
+        is TInt, is TBoolean -> javaName
+        else -> "_$javaName"
+      }
+    }
+
     else -> "_$javaName"
   }
 

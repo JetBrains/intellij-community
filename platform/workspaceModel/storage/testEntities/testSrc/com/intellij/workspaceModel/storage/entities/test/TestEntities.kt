@@ -10,6 +10,7 @@ import com.intellij.workspaceModel.storage.entities.test.api.AttachedEntityParen
 import com.intellij.workspaceModel.storage.entities.test.api.AttachedEntityParentListImpl
 import com.intellij.workspaceModel.storage.entities.test.api.AttachedEntityToParent
 import com.intellij.workspaceModel.storage.entities.test.api.AttachedEntityToParentImpl
+import com.intellij.workspaceModel.storage.entities.test.api.BooleanEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ChildEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ChildFirstEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ChildMultipleEntity
@@ -26,8 +27,10 @@ import com.intellij.workspaceModel.storage.entities.test.api.ComposedLinkEntity
 import com.intellij.workspaceModel.storage.entities.test.api.CompositeChildAbstractEntity
 import com.intellij.workspaceModel.storage.entities.test.api.EntityWithSoftLinks
 import com.intellij.workspaceModel.storage.entities.test.api.FirstEntityWithPId
+import com.intellij.workspaceModel.storage.entities.test.api.IntEntity
 import com.intellij.workspaceModel.storage.entities.test.api.LeftEntity
 import com.intellij.workspaceModel.storage.entities.test.api.LinkedListEntity
+import com.intellij.workspaceModel.storage.entities.test.api.ListEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ListVFUEntity
 import com.intellij.workspaceModel.storage.entities.test.api.MainEntity
 import com.intellij.workspaceModel.storage.entities.test.api.MainEntityImpl
@@ -50,6 +53,8 @@ import com.intellij.workspaceModel.storage.entities.test.api.OoChildWithPidEntit
 import com.intellij.workspaceModel.storage.entities.test.api.OoParentEntity
 import com.intellij.workspaceModel.storage.entities.test.api.OoParentWithPidEntity
 import com.intellij.workspaceModel.storage.entities.test.api.OoParentWithoutPidEntity
+import com.intellij.workspaceModel.storage.entities.test.api.OptionalIntEntity
+import com.intellij.workspaceModel.storage.entities.test.api.OptionalStringEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ParentAbEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ParentChainEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ParentEntity
@@ -68,6 +73,7 @@ import com.intellij.workspaceModel.storage.entities.test.api.SelfLinkedEntityImp
 import com.intellij.workspaceModel.storage.entities.test.api.SimpleChildAbstractEntity
 import com.intellij.workspaceModel.storage.entities.test.api.SoftLinkReferencedChild
 import com.intellij.workspaceModel.storage.entities.test.api.SourceEntity
+import com.intellij.workspaceModel.storage.entities.test.api.StringEntity
 import com.intellij.workspaceModel.storage.entities.test.api.VFUEntity
 import com.intellij.workspaceModel.storage.entities.test.api.VFUEntity2
 import com.intellij.workspaceModel.storage.entities.test.api.VFUWithTwoPropertiesEntity
@@ -213,6 +219,7 @@ fun MutableEntityStorage.modifyEntity(entity: AttachedEntity, modification: Atta
 fun MutableEntityStorage.modifyEntity(entity: AttachedEntityList, modification: AttachedEntityList.Builder.() -> Unit) = modifyEntity(AttachedEntityList.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: AttachedEntityParentList, modification: AttachedEntityParentList.Builder.() -> Unit) = modifyEntity(AttachedEntityParentList.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: AttachedEntityToParent, modification: AttachedEntityToParent.Builder.() -> Unit) = modifyEntity(AttachedEntityToParent.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: BooleanEntity, modification: BooleanEntity.Builder.() -> Unit) = modifyEntity(BooleanEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: ChildEntity, modification: ChildEntity.Builder.() -> Unit) = modifyEntity(ChildEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: ChildFirstEntity, modification: ChildFirstEntity.Builder.() -> Unit) = modifyEntity(ChildFirstEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: ChildMultipleEntity, modification: ChildMultipleEntity.Builder.() -> Unit) = modifyEntity(ChildMultipleEntity.Builder::class.java, entity, modification)
@@ -229,8 +236,10 @@ fun MutableEntityStorage.modifyEntity(entity: ComposedLinkEntity, modification: 
 fun MutableEntityStorage.modifyEntity(entity: CompositeChildAbstractEntity, modification: CompositeChildAbstractEntity.Builder.() -> Unit) = modifyEntity(CompositeChildAbstractEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: EntityWithSoftLinks, modification: EntityWithSoftLinks.Builder.() -> Unit) = modifyEntity(EntityWithSoftLinks.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: FirstEntityWithPId, modification: FirstEntityWithPId.Builder.() -> Unit) = modifyEntity(FirstEntityWithPId.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: IntEntity, modification: IntEntity.Builder.() -> Unit) = modifyEntity(IntEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: LeftEntity, modification: LeftEntity.Builder.() -> Unit) = modifyEntity(LeftEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: LinkedListEntity, modification: LinkedListEntity.Builder.() -> Unit) = modifyEntity(LinkedListEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: ListEntity, modification: ListEntity.Builder.() -> Unit) = modifyEntity(ListEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: ListVFUEntity, modification: ListVFUEntity.Builder.() -> Unit) = modifyEntity(ListVFUEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: MainEntity, modification: MainEntity.Builder.() -> Unit) = modifyEntity(MainEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: MainEntityList, modification: MainEntityList.Builder.() -> Unit) = modifyEntity(MainEntityList.Builder::class.java, entity, modification)
@@ -249,6 +258,8 @@ fun MutableEntityStorage.modifyEntity(entity: OoChildWithPidEntity, modification
 fun MutableEntityStorage.modifyEntity(entity: OoParentEntity, modification: OoParentEntity.Builder.() -> Unit) = modifyEntity(OoParentEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: OoParentWithPidEntity, modification: OoParentWithPidEntity.Builder.() -> Unit) = modifyEntity(OoParentWithPidEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: OoParentWithoutPidEntity, modification: OoParentWithoutPidEntity.Builder.() -> Unit) = modifyEntity(OoParentWithoutPidEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: OptionalIntEntity, modification: OptionalIntEntity.Builder.() -> Unit) = modifyEntity(OptionalIntEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: OptionalStringEntity, modification: OptionalStringEntity.Builder.() -> Unit) = modifyEntity(OptionalStringEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: ParentAbEntity, modification: ParentAbEntity.Builder.() -> Unit) = modifyEntity(ParentAbEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: ParentChainEntity, modification: ParentChainEntity.Builder.() -> Unit) = modifyEntity(ParentChainEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: ParentEntity, modification: ParentEntity.Builder.() -> Unit) = modifyEntity(ParentEntity.Builder::class.java, entity, modification)
@@ -266,6 +277,7 @@ fun MutableEntityStorage.modifyEntity(entity: SelfLinkedEntity, modification: Se
 fun MutableEntityStorage.modifyEntity(entity: SimpleChildAbstractEntity, modification: SimpleChildAbstractEntity.Builder.() -> Unit) = modifyEntity(SimpleChildAbstractEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: SoftLinkReferencedChild, modification: SoftLinkReferencedChild.Builder.() -> Unit) = modifyEntity(SoftLinkReferencedChild.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: SourceEntity, modification: SourceEntity.Builder.() -> Unit) = modifyEntity(SourceEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: StringEntity, modification: StringEntity.Builder.() -> Unit) = modifyEntity(StringEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: VFUEntity, modification: VFUEntity.Builder.() -> Unit) = modifyEntity(VFUEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: VFUEntity2, modification: VFUEntity2.Builder.() -> Unit) = modifyEntity(VFUEntity2.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: VFUWithTwoPropertiesEntity, modification: VFUWithTwoPropertiesEntity.Builder.() -> Unit) = modifyEntity(VFUWithTwoPropertiesEntity.Builder::class.java, entity, modification)

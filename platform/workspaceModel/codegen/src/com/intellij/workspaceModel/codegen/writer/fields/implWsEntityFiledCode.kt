@@ -81,7 +81,7 @@ internal fun Field<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, 
                 get() = $implFieldName${if (optionalSuffix.isBlank()) "!!" else ""}
         """.trimIndent()
     is TOptional<*> -> when (fieldType.type) {
-      TInt, TBoolean -> "override var $javaName: ${fieldType.javaType}? = null"
+      TInt, TBoolean -> "override var $javaName: ${fieldType.javaType} = null"
       else -> implWsBlockCode(fieldType.type, name, "?")
     }
     is TBlob<*> -> """            
