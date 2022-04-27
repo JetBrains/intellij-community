@@ -18,7 +18,6 @@ import com.intellij.util.ui.dialog.DialogUtils
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsComboBoxModel
-import org.jetbrains.plugins.github.authentication.ui.GHAccountsComboBoxModel.Companion.accountSelector
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsHost
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.RecordUniqueValidator
@@ -106,7 +105,17 @@ class GithubShareDialog(project: Project,
     }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
 
     if (accountsModel.size != 1) {
-      accountSelector(message("share.dialog.share.by"), accountsModel) { switchAccount(getAccount()) }
+      row(message("share.dialog.share.by")) {
+        comboBox(accountsModel)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .validationOnApply { if (accountsModel.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }
+          .applyToComponent { addActionListener { switchAccount(getAccount()) } }
+          .resizableColumn()
+
+        if (accountsModel.size == 0) {
+          cell(GHAccountsHost.createAddAccountLink())
+        }
+      }
     }
   }.apply {
     preferredSize = JBUI.size(500, 250)

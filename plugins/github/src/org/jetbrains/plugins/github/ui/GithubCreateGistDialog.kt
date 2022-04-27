@@ -14,7 +14,6 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsComboBoxModel
-import org.jetbrains.plugins.github.authentication.ui.GHAccountsComboBoxModel.Companion.accountSelector
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsHost
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import javax.swing.JComponent
@@ -73,7 +72,16 @@ class GithubCreateGistDialog(
     }
 
     if (accountsModel.size != 1) {
-      accountSelector(message("create.gist.dialog.create.for.field"), accountsModel)
+      row(message("create.gist.dialog.create.for.field")) {
+        comboBox(accountsModel)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .validationOnApply { if (accountsModel.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }
+          .resizableColumn()
+
+        if (accountsModel.size == 0) {
+          cell(GHAccountsHost.createAddAccountLink())
+        }
+      }
     }
   }
 
