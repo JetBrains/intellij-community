@@ -1,4 +1,4 @@
-package com.intellij.workspaceModel.storage.entities.model.api
+package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
@@ -15,17 +15,17 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
-open class FooEntityImpl: FooEntity, WorkspaceEntityBase() {
+open class OptionalListIntEntityImpl: OptionalListIntEntity, WorkspaceEntityBase() {
     
         
-    @JvmField var _name: String? = null
-    override val name: String
-        get() = _name!!
+    @JvmField var _data: List<Int>? = null
+    override val data: List<Int>
+        get() = _data!!
 
-    class Builder(val result: FooEntityData?): ModifiableWorkspaceEntityBase<FooEntity>(), FooEntity.Builder {
-        constructor(): this(FooEntityData())
+    class Builder(val result: OptionalListIntEntityData?): ModifiableWorkspaceEntityBase<OptionalListIntEntity>(), OptionalListIntEntity.Builder {
+        constructor(): this(OptionalListIntEntityData())
                  
-        override fun build(): FooEntity = this
+        override fun build(): OptionalListIntEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
@@ -34,7 +34,7 @@ open class FooEntityImpl: FooEntity, WorkspaceEntityBase() {
                     return
                 }
                 else {
-                    error("Entity FooEntity is already created in a different builder")
+                    error("Entity OptionalListIntEntity is already created in a different builder")
                 }
             }
             
@@ -95,21 +95,22 @@ open class FooEntityImpl: FooEntity, WorkspaceEntityBase() {
     
         fun checkInitialization() {
             val _diff = diff
-            if (!getEntityData().isNameInitialized()) {
-                error("Field FooEntity#name should be initialized")
+            if (!getEntityData().isDataInitialized()) {
+                error("Field OptionalListIntEntity#data should be initialized")
             }
             if (!getEntityData().isEntitySourceInitialized()) {
-                error("Field FooEntity#entitySource should be initialized")
+                error("Field OptionalListIntEntity#entitySource should be initialized")
             }
         }
     
         
-        override var name: String
-            get() = getEntityData().name
+        override var data: List<Int>
+            get() = getEntityData().data
             set(value) {
                 checkModificationAllowed()
-                getEntityData().name = value
-                changedProperty.add("name")
+                getEntityData().data = value
+                
+                changedProperty.add("data")
             }
             
         override var entitySource: EntitySource
@@ -121,18 +122,18 @@ open class FooEntityImpl: FooEntity, WorkspaceEntityBase() {
                 
             }
         
-        override fun getEntityData(): FooEntityData = result ?: super.getEntityData() as FooEntityData
-        override fun getEntityClass(): Class<FooEntity> = FooEntity::class.java
+        override fun getEntityData(): OptionalListIntEntityData = result ?: super.getEntityData() as OptionalListIntEntityData
+        override fun getEntityClass(): Class<OptionalListIntEntity> = OptionalListIntEntity::class.java
     }
 }
     
-class FooEntityData : WorkspaceEntityData<FooEntity>() {
-    lateinit var name: String
+class OptionalListIntEntityData : WorkspaceEntityData<OptionalListIntEntity>() {
+    lateinit var data: List<Int>
 
-    fun isNameInitialized(): Boolean = ::name.isInitialized
+    fun isDataInitialized(): Boolean = ::data.isInitialized
 
-    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<FooEntity> {
-        val modifiable = FooEntityImpl.Builder(null)
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<OptionalListIntEntity> {
+        val modifiable = OptionalListIntEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
           modifiable.snapshot = diff
@@ -142,9 +143,9 @@ class FooEntityData : WorkspaceEntityData<FooEntity>() {
         return modifiable
     }
 
-    override fun createEntity(snapshot: EntityStorage): FooEntity {
-        val entity = FooEntityImpl()
-        entity._name = name
+    override fun createEntity(snapshot: EntityStorage): OptionalListIntEntity {
+        val entity = OptionalListIntEntityImpl()
+        entity._data = data
         entity.entitySource = entitySource
         entity.snapshot = snapshot
         entity.id = createEntityId()
@@ -152,20 +153,22 @@ class FooEntityData : WorkspaceEntityData<FooEntity>() {
     }
 
     override fun getEntityInterface(): Class<out WorkspaceEntity> {
-        return FooEntity::class.java
+        return OptionalListIntEntity::class.java
     }
 
     fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(name)
+        for (_data in data) {
+            ser.saveInt(_data)
+        }
     }
 
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false
         
-        other as FooEntityData
+        other as OptionalListIntEntityData
         
-        if (this.name != other.name) return false
+        if (this.data != other.data) return false
         if (this.entitySource != other.entitySource) return false
         return true
     }
@@ -174,15 +177,15 @@ class FooEntityData : WorkspaceEntityData<FooEntity>() {
         if (other == null) return false
         if (this::class != other::class) return false
         
-        other as FooEntityData
+        other as OptionalListIntEntityData
         
-        if (this.name != other.name) return false
+        if (this.data != other.data) return false
         return true
     }
 
     override fun hashCode(): Int {
         var result = entitySource.hashCode()
-        result = 31 * result + name.hashCode()
+        result = 31 * result + data.hashCode()
         return result
     }
 }

@@ -54,6 +54,7 @@ import com.intellij.workspaceModel.storage.entities.test.api.OoParentEntity
 import com.intellij.workspaceModel.storage.entities.test.api.OoParentWithPidEntity
 import com.intellij.workspaceModel.storage.entities.test.api.OoParentWithoutPidEntity
 import com.intellij.workspaceModel.storage.entities.test.api.OptionalIntEntity
+import com.intellij.workspaceModel.storage.entities.test.api.OptionalListIntEntity
 import com.intellij.workspaceModel.storage.entities.test.api.OptionalStringEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ParentAbEntity
 import com.intellij.workspaceModel.storage.entities.test.api.ParentChainEntity
@@ -259,6 +260,7 @@ fun MutableEntityStorage.modifyEntity(entity: OoParentEntity, modification: OoPa
 fun MutableEntityStorage.modifyEntity(entity: OoParentWithPidEntity, modification: OoParentWithPidEntity.Builder.() -> Unit) = modifyEntity(OoParentWithPidEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: OoParentWithoutPidEntity, modification: OoParentWithoutPidEntity.Builder.() -> Unit) = modifyEntity(OoParentWithoutPidEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: OptionalIntEntity, modification: OptionalIntEntity.Builder.() -> Unit) = modifyEntity(OptionalIntEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: OptionalListIntEntity, modification: OptionalListIntEntity.Builder.() -> Unit) = modifyEntity(OptionalListIntEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: OptionalStringEntity, modification: OptionalStringEntity.Builder.() -> Unit) = modifyEntity(OptionalStringEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: ParentAbEntity, modification: ParentAbEntity.Builder.() -> Unit) = modifyEntity(ParentAbEntity.Builder::class.java, entity, modification)
 fun MutableEntityStorage.modifyEntity(entity: ParentChainEntity, modification: ParentChainEntity.Builder.() -> Unit) = modifyEntity(ParentChainEntity.Builder::class.java, entity, modification)
