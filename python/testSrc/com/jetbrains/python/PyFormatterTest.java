@@ -1244,4 +1244,18 @@ public class PyFormatterTest extends PyTestCase {
     getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 20);
     doTest();
   }
+
+  // PY-28496
+  public void testHangingIndentsInMultilineCallChainInParenthesis() {
+    doTest();
+  }
+
+  // PY-27660
+  public void testHangingIndentsInMultilineCallChainInSquareBrackets() {
+    doTest();
+  }
+
+  public void testMultiLineCallChainSplitByBackslashes() {
+    doTest();
+  }
 }
