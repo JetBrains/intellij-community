@@ -106,8 +106,9 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
       if (elementAtOffset != null) {
         IElementType tokenType = elementAtOffset.getNode().getElementType();
         ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(elementAtOffset.getLanguage());
-        if (parserDefinition.getCommentTokens().contains(tokenType) ||
-            parserDefinition.getStringLiteralElements().contains(tokenType)) {
+        if (parserDefinition != null &&
+            (parserDefinition.getCommentTokens().contains(tokenType) ||
+             parserDefinition.getStringLiteralElements().contains(tokenType))) {
           return false;
         }
       }
