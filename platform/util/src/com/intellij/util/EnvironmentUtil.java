@@ -343,6 +343,9 @@ public final class EnvironmentUtil {
         final String envData = new String(Files.readAllBytes(envDataFile), Charset.defaultCharset());
         final String log = new String(Files.readAllBytes(logFile), Charset.defaultCharset());
         if (exitCode != 0 || envData.isEmpty()) {
+          if (!log.isEmpty()) {
+            LOG.info("stdout/stderr: " + log);
+          }
           throw new EnvironmentReaderException("command " + command + ", exit code: " + exitCode, envData, log);
         }
         return new AbstractMap.SimpleImmutableEntry<>(log, parseEnv(envData));
