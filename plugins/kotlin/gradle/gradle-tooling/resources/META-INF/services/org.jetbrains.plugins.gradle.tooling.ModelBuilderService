@@ -2,7 +2,6 @@
 org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptTaskModelBuilder
 org.jetbrains.kotlin.idea.gradleTooling.KotlinGradleModelBuilder
 org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
-org.jetbrains.kotlin.idea.gradleTooling.KotlinKPMGradleModelBuilder
 org.jetbrains.kotlin.idea.gradleTooling.PrepareKotlinIdeaImportTaskModelBuilder
 org.jetbrains.kotlin.idea.gradleTooling.model.allopen.AllOpenModelBuilderService
 org.jetbrains.kotlin.idea.gradleTooling.model.kapt.KaptModelBuilderService
