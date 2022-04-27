@@ -7,20 +7,21 @@ import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.AbstractNamedData
 import com.intellij.serialization.PropertyMapping
-import org.jetbrains.kotlin.idea.projectModel.KotlinFragmentResolvedDependency
-import org.jetbrains.kotlin.idea.projectModel.KotlinLanguageSettings
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKotlinDependency
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKotlinLanguageSettings
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKotlinPlatformDetails
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class KotlinFragmentData @PropertyMapping("externalName") constructor(externalName: String) :
     AbstractNamedData(GradleConstants.SYSTEM_ID, externalName) {
     var platform: KotlinPlatform = KotlinPlatform.COMMON
+    val platformDetails: MutableSet<IdeaKotlinPlatformDetails> = hashSetOf()
     val refinesFragmentIds: MutableSet<String> = hashSetOf()
-    val resolvedFragmentDependencies: MutableSet<KotlinFragmentResolvedDependency> = hashSetOf()
-    var languageSettings: KotlinLanguageSettings? = null
+    val fragmentDependencies: MutableSet<IdeaKotlinDependency> = hashSetOf()
+    var languageSettings: IdeaKotlinLanguageSettings? = null
 
     companion object {
         val KEY = Key.create(KotlinFragmentData::class.java, ProjectKeys.MODULE.processingWeight + 1)
     }
-
 }

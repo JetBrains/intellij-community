@@ -11,7 +11,7 @@ import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
-import org.jetbrains.kotlin.idea.projectModel.KotlinVariant
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportAction
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
@@ -59,7 +59,7 @@ fun <T : Any> buildGradleModel(projectPath: File, gradleVersion: GradleVersion, 
                 setOf(
                     clazz.java,
                     /* Representative of the `kotlin.project-module` module */
-                    KotlinVariant::class.java,
+                    KotlinCompilation::class.java,
                     /* Representative of the kotlin stdlib */
                     Unit::class.java
                 ), setOf(IdeaProject::class.java)
@@ -75,7 +75,7 @@ fun <T : Any> buildGradleModel(projectPath: File, gradleVersion: GradleVersion, 
                         KotlinMPPGradleModelBuilder::class.java,
 
                         /* Representative of the `kotlin.project-module` module */
-                        KotlinVariant::class.java,
+                        KotlinCompilation::class.java,
 
                         /* Representative of the kotlin stdlib */
                         Unit::class.java

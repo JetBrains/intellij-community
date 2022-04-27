@@ -13,7 +13,6 @@ import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKotlinFragment
 import org.jetbrains.kotlin.gradle.kpm.idea.name
 import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer
-import org.jetbrains.kotlin.idea.projectModel.KotlinModule
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
@@ -59,11 +58,11 @@ class KotlinGradleSourceSetDataInitializer : ModuleDataInitializer {
                     it.version = externalProject.version
 
                     when (module.coordinates.moduleName) {
-                        KotlinModule.MAIN_MODULE_NAME -> {
+                        "main" -> {
                             it.publication = ProjectId(externalProject.group, externalProject.name, externalProject.version)
                         }
 
-                        KotlinModule.TEST_MODULE_NAME -> {
+                        "test" -> {
                             it.productionModuleId = moduleInternalName
                         }
                     }
