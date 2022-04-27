@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere.ml;
 
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
+import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.ml.settings.SearchEverywhereMlSettings;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
@@ -30,6 +31,7 @@ public class SearchEverywhereMlExperiment {
       SearchEverywhereTabWithMl.ACTION.getTabId(),
       SearchEverywhereTabWithMl.FILES.getTabId(),
       ClassSearchEverywhereContributor.class.getSimpleName(),
+      SymbolSearchEverywhereContributor.class.getSimpleName(),
       SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
     );
   }
