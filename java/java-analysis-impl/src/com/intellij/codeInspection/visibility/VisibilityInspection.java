@@ -160,7 +160,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     //ignore library override methods.
     if (refElement instanceof RefMethod) {
       RefMethod refMethod = (RefMethod) refElement;
-      if (refMethod.isExternalOverride()) return null;
+      if (refMethod.isExternalOverride() || refMethod.isRecordAccessor()) return null;
     }
 
     //ignore anonymous classes. They do not have access modifiers.
@@ -268,9 +268,17 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     if (isTopLevelClass(refElement) || isCalledOnSubClasses(refElement)) {
       weakestAccess = PsiModifier.PACKAGE_LOCAL;
     }
-
     if (isAbstractMethod(refElement)) {
       weakestAccess = PsiModifier.PROTECTED;
+    }
+    if (refElement instanceof RefMethod) {
+      final RefMethod refMethod = (RefMethod)refElement;
+      if (refMethod.isConstructor()) {
+        final RefClass ownerClass = refMethod.getOwnerClass();
+        if (ownerClass != null && ownerClass.isRecord()) {
+          weakestAccess = ownerClass.getAccessModifier();
+        }
+      }
     }
 
     if (curAccess == weakestAccess) return curAccess;

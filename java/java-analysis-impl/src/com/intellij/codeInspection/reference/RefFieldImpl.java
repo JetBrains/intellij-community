@@ -21,9 +21,6 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
 
   RefFieldImpl(UField field, PsiElement psi, RefManager manager) {
     super(field, psi, manager);
-    if (psi instanceof UElement) {
-      LOG.error(new Exception("psi should not be uast element: " + psi));
-    }
 
     if (field instanceof UEnumConstant) {
       setEnumConstant(true);
@@ -36,13 +33,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     LOG.assertTrue(psi != null);
     UField uElement = getUastElement();
     LOG.assertTrue(uElement != null);
-    RefElement owner = RefMethodImpl.findParentRef(psi, uElement, myManager);
-    this.setOwner((WritableRefEntity)owner);
-
-    if (owner instanceof RefClass && ((RefClass)owner).isInterface()) {
-      setIsStatic(true);
-      setIsFinal(true);
-    }
+    this.setOwner((WritableRefEntity)RefMethodImpl.findParentRef(psi, uElement, myManager));
   }
 
   @Deprecated
@@ -57,10 +48,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   }
 
   @Override
-  protected void markReferenced(@NotNull RefElementImpl refFrom,
-                                boolean forWriting,
-                                boolean forReading,
-                                UExpression expressionFrom) {
+  protected void markReferenced(@NotNull RefElementImpl refFrom, boolean forWriting, boolean forReading, UExpression expressionFrom) {
     addInReference(refFrom);
 
     boolean referencedFromClassInitializer = false;

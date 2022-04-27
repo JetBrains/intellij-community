@@ -23,15 +23,16 @@ import java.util.*;
 public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private static final RefParameter[] EMPTY_PARAMS_ARRAY = new RefParameter[0];
 
-  private static final int IS_APPMAIN_MASK = 0b1_00000000_00000000;
-  private static final int IS_LIBRARY_OVERRIDE_MASK = 0b10_00000000_00000000;
-  private static final int IS_CONSTRUCTOR_MASK = 0b100_00000000_00000000;
-  private static final int IS_ABSTRACT_MASK = 0b1000_00000000_00000000;
-  private static final int IS_BODY_EMPTY_MASK = 0b10000_00000000_00000000;
-  private static final int IS_ONLY_CALLS_SUPER_MASK = 0b100000_00000000_00000000;
-  private static final int IS_RETURN_VALUE_USED_MASK = 0b1000000_00000000_00000000;
+  private static final int IS_APPMAIN_MASK            = 0b1_00000000_00000000; // 17th bit
+  private static final int IS_LIBRARY_OVERRIDE_MASK   = 0b10_00000000_00000000; // 18th bit
+  private static final int IS_CONSTRUCTOR_MASK        = 0b100_00000000_00000000; // 19th bit
+  private static final int IS_ABSTRACT_MASK           = 0b1000_00000000_00000000; // 20th bit
+  private static final int IS_BODY_EMPTY_MASK         = 0b10000_00000000_00000000; // 21st bit
+  private static final int IS_ONLY_CALLS_SUPER_MASK   = 0b100000_00000000_00000000; // 22nd bit
+  private static final int IS_RETURN_VALUE_USED_MASK  = 0b1000000_00000000_00000000; // 23rd bit
+  private static final int IS_RECORD_ACCESSOR_MASK    = 0b10000000_00000000_00000000; // 24rd bit
 
-  private static final int IS_CALLED_ON_SUBCLASS_MASK = 0b1000_00000000_00000000_00000000;
+  private static final int IS_CALLED_ON_SUBCLASS_MASK = 0b1000_00000000_00000000_00000000; // 28th bit
 
   private static final String RETURN_VALUE_UNDEFINED = "#";
 
@@ -121,10 +122,10 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       setAbstract(javaPsi.hasModifierProperty(PsiModifier.ABSTRACT));
 
       setLibraryOverride(javaPsi.hasModifierProperty(PsiModifier.NATIVE));
-      if (javaPsi.hasModifierProperty(PsiModifier.PUBLIC)) {
+      if (PsiModifier.PUBLIC == getAccessModifier()) {
         setAppMain(isAppMain(javaPsi, this));
       }
-      if (!javaPsi.hasModifierProperty(PsiModifier.PRIVATE)) {
+      if (PsiModifier.PRIVATE != getAccessModifier() && !isStatic()) {
         initializeSuperMethods(javaPsi);
         if (ownerClass != null && isExternalOverride()) {
           getRefManager().executeTask(() -> ((RefClassImpl)ownerClass).addLibraryOverrideMethod(this));
@@ -133,6 +134,10 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
 
     if (sourcePsi instanceof PsiMethod && sourcePsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+      if (ownerClass != null && ownerClass.isRecord() && !isConstructor() &&
+          JavaPsiRecordUtil.getRecordComponentForAccessor((PsiMethod)sourcePsi) != null) {
+        setRecordAccessor(true);
+      }
       collectUncaughtExceptions((PsiMethod)sourcePsi);
     }
   }
@@ -660,10 +665,19 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     setFlag(constructor, IS_CONSTRUCTOR_MASK);
   }
 
+  private void setRecordAccessor(boolean accessor) {
+    setFlag(accessor, IS_RECORD_ACCESSOR_MASK);
+  }
+
   @Override
   public boolean isTestMethod() {
     UMethod method = (UMethod)getUastElement();
     return TestFrameworks.getInstance().isTestMethod(method.getJavaPsi());
+  }
+
+  @Override
+  public boolean isRecordAccessor() {
+    return checkFlag(IS_RECORD_ACCESSOR_MASK);
   }
 
   @Override

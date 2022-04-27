@@ -28,15 +28,15 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private static final Set<RefElement> EMPTY_SET = Collections.emptySet();
   private static final Set<RefClass> EMPTY_CLASS_SET = Collections.emptySet();
   private static final List<RefMethod> EMPTY_METHOD_LIST = ContainerUtil.emptyList();
-  private static final int IS_ANONYMOUS_MASK = 0b1_00000000_00000000;
-  private static final int IS_INTERFACE_MASK = 0b10_00000000_00000000;
-  private static final int IS_UTILITY_MASK   = 0b100_00000000_00000000;
-  private static final int IS_ABSTRACT_MASK  = 0b1000_00000000_00000000;
-
-  private static final int IS_APPLET_MASK    = 0b100000_00000000_00000000;
-  private static final int IS_SERVLET_MASK   = 0b1000000_00000000_00000000;
-  private static final int IS_TESTCASE_MASK  = 0b10000000_00000000_00000000;
-  private static final int IS_LOCAL_MASK     = 0b1_00000000_00000000_00000000;
+  private static final int IS_ANONYMOUS_MASK = 0b1_00000000_00000000; // 17th bit
+  private static final int IS_INTERFACE_MASK = 0b10_00000000_00000000; // 18th bit
+  private static final int IS_UTILITY_MASK   = 0b100_00000000_00000000; // 19th bit
+  private static final int IS_ABSTRACT_MASK  = 0b1000_00000000_00000000; // 20th bit
+  private static final int IS_RECORD_MASK    = 0b10000_00000000_00000000; // 21st bit
+  private static final int IS_APPLET_MASK    = 0b100000_00000000_00000000; // 22nd bit
+  private static final int IS_SERVLET_MASK   = 0b1000000_00000000_00000000; // 23rd bit
+  private static final int IS_TESTCASE_MASK  = 0b10000000_00000000_00000000; // 24th bit
+  private static final int IS_LOCAL_MASK     = 0b1_00000000_00000000_00000000; // 25th bit
 
   private Set<RefClass> myBases; // singleton (to conserve memory) or HashSet. guarded by this
   private Set<RefOverridable> myDerivedReferences; // singleton (to conserve memory) or HashSet. guarded by this
@@ -52,7 +52,9 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     myRefModule = manager.getRefModule(ModuleUtilCore.findModuleForPsiElement(psi));
 
     setInterface(uClass.isInterface());
-    setAbstract(uClass.getJavaPsi().hasModifier(JvmModifier.ABSTRACT));
+    final PsiClass psiClass = uClass.getJavaPsi();
+    setRecord(psiClass.isRecord());
+    setAbstract(psiClass.hasModifier(JvmModifier.ABSTRACT));
     setAnonymous(uClass.getName() == null);
   }
 
@@ -439,6 +441,11 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   @Override
+  public boolean isRecord() {
+    return checkFlag(IS_RECORD_MASK);
+  }
+
+  @Override
   public boolean isSuspicious() {
     return !(isUtilityClass() && getOutReferences().isEmpty()) && super.isSuspicious();
   }
@@ -563,8 +570,12 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     setFlag(anonymous, IS_ANONYMOUS_MASK);
   }
 
-  private void setInterface(boolean anInterface) {
-    setFlag(anInterface, IS_INTERFACE_MASK);
+  private void setInterface(boolean isInterface) {
+    setFlag(isInterface, IS_INTERFACE_MASK);
+  }
+
+  private void setRecord(boolean record) {
+    setFlag(record, IS_RECORD_MASK);
   }
 
   /**
