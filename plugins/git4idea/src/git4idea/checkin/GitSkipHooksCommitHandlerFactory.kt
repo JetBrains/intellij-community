@@ -50,15 +50,11 @@ private class GitSkipHooksConfigurationPanel(
     mnemonic = KeyEvent.VK_H
     toolTipText = GitBundle.message("tooltip.run.git.hooks")
   }
-  private var lastSelectedState = true
 
   override fun getComponent(): JComponent = JBUI.Panels.simplePanel(runHooks)
 
   private fun refreshAvailability() {
-    if (runHooks.isEnabled) lastSelectedState = runHooks.isSelected
     runHooks.isVisible = repositoryManager.repositories.any { it.hasCommitHooks() }
-    runHooks.isEnabled = panel.roots.any { repositoryManager.getRepositoryForRootQuick(it)?.hasCommitHooks() == true }
-    runHooks.isSelected = if (runHooks.isEnabled) lastSelectedState else false
   }
 
   override fun onChangeListSelected(list: LocalChangeList) {
@@ -66,7 +62,7 @@ private class GitSkipHooksConfigurationPanel(
   }
 
   override fun saveState() {
-    commitContext.isSkipHooks = runHooks.isEnabled && !runHooks.isSelected
+    commitContext.isSkipHooks = runHooks.isVisible && !runHooks.isSelected
   }
 
   override fun restoreState() {
