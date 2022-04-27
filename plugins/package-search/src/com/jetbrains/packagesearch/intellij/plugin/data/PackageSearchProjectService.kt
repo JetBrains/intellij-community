@@ -5,7 +5,9 @@ package com.jetbrains.packagesearch.intellij.plugin.data
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiManager
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
@@ -46,6 +48,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.consumeAsFlow
@@ -54,6 +57,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -269,7 +273,12 @@ internal class PackageSearchProjectService(private val project: Project) {
         // allows rerunning PKGS inspections on already opened files
         // when the data is finally available or changes for PackageUpdateInspection
         // or when a build file changes
-        packageUpgradesStateFlow.onEach { DaemonCodeAnalyzer.getInstance(project).restart() }
+        packageUpgradesStateFlow.throttle(5.seconds)
+            .map { projectModulesStateFlow.value.map { it.buildFile.path }.toSet() }
+            .filter { it.isNotEmpty() }
+            .flatMapLatest { knownBuildFiles -> FileEditorManager.getInstance(project).openFiles.filter { it.path in knownBuildFiles }.asFlow() }
+            .mapNotNull { PsiManager.getInstance(project).findFile(it) }
+            .onEach { DaemonCodeAnalyzer.getInstance(project).restart(it) }
             .launchIn(project.lifecycleScope)
 
         var controller: BackgroundLoadingBarController? = null
@@ -294,7 +303,6 @@ internal class PackageSearchProjectService(private val project: Project) {
                     )
                 }.launchIn(project.lifecycleScope)
         }
-
     }
 
     fun notifyOperationExecuted(successes: List<ProjectModule>) {
