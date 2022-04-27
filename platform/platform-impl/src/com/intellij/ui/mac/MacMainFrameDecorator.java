@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarKt;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ToolbarUtil;
+import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Native;
@@ -31,8 +32,11 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Method;
 import java.util.EventListener;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class MacMainFrameDecorator extends IdeFrameDecorator {
+  private static final Logger LOG = Logger.getInstance(MacMainFrameDecorator.class);
+
   public static final String FULL_SCREEN = "Idea.Is.In.FullScreen.Mode.Now";
   private static Method toggleFullScreenMethod;
 
@@ -43,7 +47,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       toggleFullScreenMethod = Application.class.getMethod("requestToggleFullScreen", Window.class);
     }
     catch (Exception e) {
-      Logger.getInstance(MacMainFrameDecorator.class).warn(e);
+      LOG.warn(e);
     }
   }
   interface MyCoreFoundation extends CoreFoundation {
@@ -214,6 +218,9 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
   @Override
   public @NotNull Promise<Boolean> toggleFullScreen(boolean state) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Full screen state " + state + " requested for " + myFrame);
+    }
     AsyncPromise<Boolean> promise = new AsyncPromise<>();
     // We delay the execution using 'invokeLater' to account for the case when window might be made visible in the same EDT event.
     // macOS can auto-open that window in full-screen mode, but we won't find this out till the notification arrives.
@@ -222,27 +229,80 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     // such usage scenarios are not known at the moment.
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myInFullScreen == state) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Full screen is already at state " + state + " for " + myFrame);
+        }
         promise.setResult(state);
       }
       else if (toggleFullScreenMethod == null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Full screen transitioning isn't supported for " + myFrame);
+        }
         promise.setResult(null);
       }
       else {
-        myDispatcher.addListener(new FSAdapter() {
+        AtomicBoolean preEventReceived = new AtomicBoolean();
+        FSAdapter listener = new FSAdapter() {
+          @Override
+          public void windowEnteringFullScreen(FullScreenEvent e) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("entering full screen: " + myFrame);
+            }
+            preEventReceived.set(true);
+          }
+
+          @Override
+          public void windowExitingFullScreen(FullScreenEvent e) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("exiting full screen: " + myFrame);
+            }
+            preEventReceived.set(true);
+          }
+
           @Override
           public void windowExitedFullScreen(FullScreenEvent event) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("exited full screen: " + myFrame);
+            }
             promise.setResult(false);
-            myDispatcher.removeListener(this);
           }
 
           @Override
           public void windowEnteredFullScreen(FullScreenEvent event) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("entered full screen: " + myFrame);
+            }
             promise.setResult(true);
-            myDispatcher.removeListener(this);
           }
-        });
+        };
+        promise.onProcessed(s -> myDispatcher.removeListener(listener));
+        myDispatcher.addListener(listener);
 
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Toggling full screen for " + myFrame);
+        }
         invokeAppMethod(toggleFullScreenMethod);
+
+        Foundation.executeOnMainThread(false, false, () -> {
+          SwingUtilities.invokeLater(() -> {
+            // At this point, after a 'round-trip' to AppKit thread and back to EDT,
+            // we know that [NSWindow toggleFullScreen:] method has definitely started execution.
+            // If it hasn't dispatched pre-transitioning event (windowWillEnterFullScreen/windowWillExitFullScreen), we assume that
+            // the transitioning won't happen at all, and complete the promise. One known case when [NSWindow toggleFullScreen:] method
+            // does nothing is when it's invoked for an 'inactive' tab in a 'tabbed' window group.
+            if (preEventReceived.get()) {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("pre-transitioning event received for: " + myFrame);
+              }
+            }
+            else {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("pre-transitioning event not received for: " + myFrame);
+              }
+              promise.setResult(myInFullScreen);
+            }
+          });
+        });
       }
     });
     return promise;
@@ -253,7 +313,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       method.invoke(Application.getApplication(), myFrame);
     }
     catch (Exception e) {
-      Logger.getInstance(MacMainFrameDecorator.class).warn(e);
+      LOG.warn(e);
     }
   }
 
