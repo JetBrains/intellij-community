@@ -956,29 +956,11 @@ public final class HighlightUtil {
       String message = JavaErrorBundle.message("incompatible.modifiers", modifier, incompatible);
       HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message).create();
-      String modifierToRemove = getModifierToRemove(modifierList, modifier, incompatible);
-      IntentionAction fix =
-        modifierToRemove == null ? null : getFixFactory().createModifierListFix(modifierList, modifierToRemove, false, false);
-      QuickFixAction.registerQuickFixAction(highlightInfo, fix);
+      QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createModifierListFix(modifierList, modifier, false, false));
       return highlightInfo;
     }
 
     return null;
-  }
-
-  @PsiModifier.ModifierConstant @Nullable
-  private static String getModifierToRemove(@NotNull PsiModifierList modifierList,
-                                            @PsiModifier.ModifierConstant @NotNull String modifier,
-                                            String incompatible) {
-    if (PsiModifier.FINAL.equals(incompatible)) {
-      PsiElement parent = modifierList.getParent();
-      if (parent instanceof PsiMethod) {
-        PsiClass aClass = ((PsiMethod)parent).getContainingClass();
-        if (aClass == null) return null;
-        if (aClass.isInterface()) return PsiModifier.FINAL;
-      }
-    }
-    return modifier;
   }
 
   /**
