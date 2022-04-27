@@ -290,25 +290,22 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         ]
       )
 
-      [
-        new FileSet(unixSnapDistPath)
-          .include("bin/*.sh")
-          .include("bin/*.py")
-          .include("bin/fsnotifier*")
+      new FileSet(unixSnapDistPath)
+        .include("bin/*.sh")
+        .include("bin/*.py")
+        .include("bin/fsnotifier*")
+        .enumerate().each {makeFileExecutable(it) }
+
+      new FileSet(Path.of(jreDirectoryPath))
+        .include("jbr/bin/*")
+        .enumerate().each {makeFileExecutable(it) }
+
+      for (Path distPath: [unixSnapDistPath, buildContext.paths.distAllDir]) {
+        new FileSet(distPath)
           .tap {
             customizer.extraExecutables.each { include(it) }
-          },
-        new FileSet(buildContext.paths.distAllDir)
-          .tap {
-            customizer.extraExecutables.each { include(it) }
-          },
-        new FileSet(Path.of(jreDirectoryPath))
-          .include("jbr/bin/*"),
-      ].each { FileSet fileSet ->
-        fileSet.enumerate().each { file ->
-          buildContext.messages.debug("Setting file permission of $file to 0755")
-          Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rwxr-xr-x"))
-        }
+          }
+          .enumerateNoAssertUnusedPatterns().each {makeFileExecutable(it) }
       }
 
       generateProductJson(unixSnapDistPath, "jbr/bin/java")
@@ -348,6 +345,11 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       BuildHelper.moveFileToDir(resultDir.resolve(snapArtifact), buildContext.paths.artifactDir)
       buildContext.notifyArtifactWasBuilt(buildContext.paths.artifactDir.resolve(snapArtifact))
     }
+  }
+
+  private void makeFileExecutable(Path file) {
+    buildContext.messages.debug("Setting file permission of $file to 0755")
+    Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rwxr-xr-x"))
   }
 
   // keep in sync with AppUIUtil#getFrameClass

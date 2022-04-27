@@ -48,6 +48,8 @@ class FileSet(private val root: Path) {
 
   fun enumerate(): List<Path> = toPathListImpl(assertUnusedPatterns = true)
 
+  fun enumerateNoAssertUnusedPatterns(): List<Path> = toPathListImpl(assertUnusedPatterns = false)
+
   private fun toPathListImpl(assertUnusedPatterns: Boolean): List<Path> {
     if (includePatterns.isEmpty()) {
       // Prevent accidental coding errors, do not remove
@@ -98,13 +100,12 @@ class FileSet(private val root: Path) {
     if (assertUnusedPatterns && unusedExcludePatterns.isNotEmpty()) {
       // Prevent accidental coding errors, do not remove
       error("The following exclude patterns were not matched while traversing $this:\n" + unusedExcludePatterns.joinToString("\n"))
-
     }
 
     return result
   }
 
-  fun isEmpty(): Boolean = toPathListImpl(assertUnusedPatterns = false).isEmpty()
+  fun isEmpty(): Boolean = enumerateNoAssertUnusedPatterns().isEmpty()
 
   override fun toString() = "FileSet(" +
                             "root='$root', " +
