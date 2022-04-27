@@ -57,7 +57,7 @@ class ReactJsClientTemplate : JsClientTemplate() {
             val kotlinVersion = KotlinPlugin.version.propertyValue
             +Dependencies.KOTLIN_REACT
             +Dependencies.KOTLIN_REACT_DOM
-            +Dependencies.KOTLIN_REACT_CSS
+            +Dependencies.KOTLIN_EMOTION
             if (useReactRouterDom.reference.settingValue) {
                 +Dependencies.KOTLIN_REACT_ROUTER_DOM
             }
@@ -95,9 +95,9 @@ class ReactJsClientTemplate : JsClientTemplate() {
             Versions.JS_WRAPPERS.KOTLIN_REACT_DOM
         )
 
-        val KOTLIN_REACT_CSS = wrapperDependency(
-            "kotlin-react-css",
-            Versions.JS_WRAPPERS.KOTLIN_REACT_CSS
+        val KOTLIN_EMOTION = wrapperDependency(
+            "kotlin-emotion",
+            Versions.JS_WRAPPERS.KOTLIN_EMOTION
         )
 
         val KOTLIN_REACT_ROUTER_DOM = wrapperDependency(
