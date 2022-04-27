@@ -79,16 +79,15 @@ public class DebuggerDfaRunner {
     if (myFlow == null) return null;
     int offset = myFlow.getStartOffset(myAnchor).getInstructionOffset();
     if (offset < 0) return null;
-    DfaMemoryState state = new JvmDfaMemoryStateImpl(myFactory);
-    StateBuilder builder = new StateBuilder(proxy, state);
+    StateBuilder builder = new StateBuilder(proxy);
     for (DfaValue dfaValue : myFactory.getValues().toArray(new DfaValue[0])) {
       if (dfaValue instanceof DfaVariableValue) {
         DfaVariableValue var = (DfaVariableValue)dfaValue;
         builder.resolveJdi(var);
       }
     }
-    builder.finish();
-    if (builder.myChanged) {
+    DfaMemoryState state = builder.finish(myFactory);
+    if (state != null) {
       return new DfaInstructionState(myFlow.getInstruction(offset), state);
     }
     return null;
@@ -97,18 +96,15 @@ public class DebuggerDfaRunner {
   private class StateBuilder {
     private final @NotNull PsiElementFactory myPsiFactory = JavaPsiFacade.getElementFactory(myProject);
     private final @Nullable ClassLoaderReference myContextLoader;
-    private final @NotNull DfaMemoryState myMemState;
-    private final @NotNull Map<Value, DfaVariableValue> myCanonicalMap = new HashMap<>();
+    private final @NotNull Map<Value, List<DfaVariableValue>> myMap = new HashMap<>();
     private final @NotNull StackFrameProxyEx myProxy;
     private final @NotNull Location myLocation;
     private @Nullable List<ClassLoaderReference> myParentLoaders = null;
-    private boolean myChanged;
 
-    StateBuilder(@NotNull StackFrameProxyEx proxy, @NotNull DfaMemoryState memState) throws EvaluateException {
+    StateBuilder(@NotNull StackFrameProxyEx proxy) throws EvaluateException {
       myProxy = proxy;
       myLocation = proxy.location();
       myContextLoader = proxy.getClassLoader();
-      myMemState = memState;
     }
 
     void resolveJdi(@NotNull DfaVariableValue var) throws EvaluateException {
@@ -129,39 +125,39 @@ public class DebuggerDfaRunner {
     }
 
     void add(@NotNull DfaVariableValue var, @NotNull Value jdiValue) {
-      DfaVariableValue canonicalVar = jdiValue instanceof ObjectReference ? myCanonicalMap.putIfAbsent(jdiValue, var) : null;
-      if (canonicalVar != null) {
-        myMemState.applyCondition(var.eq(canonicalVar));
-      } else {
-        addConditions(var, jdiValue);
-      }
-      myChanged = true;
+      myMap.computeIfAbsent(jdiValue, v -> new ArrayList<>()).add(var);
     }
 
-    void finish() {
-      if (myChanged) {
-        DfaVariableValue[] distinctValues = StreamEx.ofValues(myCanonicalMap)
-            .filter(v -> !TypeConstraint.fromDfType(v.getDfType()).isComparedByEquals())
-            .toArray(new DfaVariableValue[0]);
-        EntryStream.ofPairs(distinctValues)
-          .filterKeyValue((left, right) -> left.getDfType().meet(right.getDfType()) != DfType.BOTTOM)
-          .limit(20) // avoid too complex state
-          .forKeyValue((left, right) -> myMemState.applyCondition(left.cond(RelationType.NE, right)));
-      }
+    DfaMemoryState finish(DfaValueFactory factory) {
+      if (myMap.isEmpty()) return null;
+      Map<Value, JdiValueInfo> map = StreamEx.ofKeys(myMap).mapToEntry(JdiValueInfo::from).nonNullValues().toMap();
+
+      DfaMemoryState state = new JvmDfaMemoryStateImpl(factory);
+      List<DfaVariableValue> distinctValues = new ArrayList<>();
+      myMap.forEach((jdiValue, vars) -> {
+        DfaVariableValue canonical = vars.get(0);
+        if (!TypeConstraint.fromDfType(canonical.getDfType()).isComparedByEquals()) {
+          distinctValues.add(canonical);
+        }
+        for (DfaVariableValue var : vars) {
+          state.applyCondition(var.eq(canonical));
+          addConditions(var, map.get(jdiValue), state);
+        }
+      });
+      EntryStream.ofPairs(distinctValues)
+        .filterKeyValue((left, right) -> left.getDfType().meet(right.getDfType()) != DfType.BOTTOM)
+        .limit(20) // avoid too complex state
+        .forKeyValue((left, right) -> state.applyCondition(left.cond(RelationType.NE, right)));
+      return state;
     }
 
-    private void addConditions(DfaVariableValue var, Value jdiValue) {
-      JdiValueInfo valueInfo = JdiValueInfo.from(jdiValue);
-      addConditions(var, valueInfo);
-    }
-
-    private void addConditions(DfaVariableValue var, JdiValueInfo valueInfo) {
+    private void addConditions(@NotNull DfaVariableValue var, @Nullable JdiValueInfo valueInfo, @NotNull DfaMemoryState state) {
       if (valueInfo instanceof JdiValueInfo.PrimitiveConstant) {
-        myMemState.applyCondition(var.eq(((JdiValueInfo.PrimitiveConstant)valueInfo).getDfType()));
+        state.applyCondition(var.eq(((JdiValueInfo.PrimitiveConstant)valueInfo).getDfType()));
       }
       else if (valueInfo instanceof JdiValueInfo.StringConstant) {
         PsiType stringType = myPsiFactory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, myBody.getResolveScope());
-        myMemState.applyCondition(var.eq(DfTypes.referenceConstant(((JdiValueInfo.StringConstant)valueInfo).getValue(), stringType)));
+        state.applyCondition(var.eq(DfTypes.referenceConstant(((JdiValueInfo.StringConstant)valueInfo).getValue(), stringType)));
       }
       else if (valueInfo instanceof JdiValueInfo.ObjectRef) {
         ReferenceType type = ((JdiValueInfo.ObjectRef)valueInfo).getType();
@@ -170,14 +166,14 @@ public class DebuggerDfaRunner {
         PsiType psiType = getType(type, myProject, myBody.getResolveScope());
         if (psiType == null) return;
         TypeConstraint exactType = TypeConstraints.exact(psiType);
-        myMemState.meetDfType(var, exactType.asDfType().meet(DfTypes.NOT_NULL_OBJECT));
+        state.meetDfType(var, exactType.asDfType().meet(DfTypes.NOT_NULL_OBJECT));
         if (valueInfo instanceof JdiValueInfo.EnumConstant) {
           String name = ((JdiValueInfo.EnumConstant)valueInfo).getName();
           PsiClass enumClass = ((PsiClassType)psiType).resolve();
           if (enumClass != null && enumClass.isEnum()) {
             PsiField enumConst = enumClass.findFieldByName(name, false);
             if (enumConst instanceof PsiEnumConstant) {
-              myMemState.applyCondition(var.eq(DfTypes.referenceConstant(enumConst, exactType)));
+              state.applyCondition(var.eq(DfTypes.referenceConstant(enumConst, exactType)));
             }
           }
         }
@@ -187,7 +183,7 @@ public class DebuggerDfaRunner {
           JdiValueInfo fieldValue = withSpecialField.getValue();
           DfaVariableValue dfaField = ObjectUtils.tryCast(field.createValue(myFactory, var), DfaVariableValue.class);
           if (dfaField != null) {
-            addConditions(dfaField, fieldValue);
+            addConditions(dfaField, fieldValue, state);
           }
         }
       }
