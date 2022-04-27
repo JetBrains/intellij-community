@@ -22,6 +22,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -158,6 +159,7 @@ public class DebuggerDfaRunner {
      * Only JDI access (no read lock) is required to create a pupa
      */
     @NotNull Pupa pupate() throws EvaluateException {
+      ApplicationManager.getApplication().assertReadAccessNotAllowed();
       return new Pupa(this);
     }
   }

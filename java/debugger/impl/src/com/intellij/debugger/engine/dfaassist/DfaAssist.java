@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Segment;
@@ -136,7 +135,7 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
           cleanUp();
           return;
         }
-        DebuggerDfaRunner runner = createRunner(proxy);
+        DebuggerDfaRunner runner = createDfaRunner(proxy, pointer);
         if (runner == null) {
           cleanUp();
           return;
@@ -145,19 +144,6 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
           .coalesceBy(DfaAssist.this)
           .finishOnUiThread(ModalityState.NON_MODAL, hints -> DfaAssist.this.displayInlays(hints))
           .submit(AppExecutorUtil.getAppExecutorService());
-      }
-
-      private @Nullable DebuggerDfaRunner createRunner(StackFrameProxyImpl proxy) {
-        Callable<DebuggerDfaRunner> action = () -> {
-          try {
-            return createDfaRunner(proxy, pointer.getElement());
-          }
-          catch (VMDisconnectedException | VMOutOfMemoryException | InternalException |
-            EvaluateException | InconsistentDebugInfoException | InvalidStackFrameException ignore) {
-            return null;
-          }
-        };
-        return ReadAction.nonBlocking(action).withDocumentsCommitted(myProject).executeSynchronously();
       }
     });
   }
@@ -231,12 +217,29 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
     return interceptor.computeHints();
   }
 
-  public static @Nullable DebuggerDfaRunner createDfaRunner(@NotNull StackFrameProxyEx proxy, @Nullable PsiElement element)
-    throws EvaluateException {
-    DebuggerDfaRunner.Larva larva = DebuggerDfaRunner.Larva.hatch(proxy, element);
+  public static @Nullable DebuggerDfaRunner createDfaRunner(@NotNull StackFrameProxyEx proxy,
+                                                            @NotNull SmartPsiElementPointer<PsiElement> pointer) {
+    Callable<DebuggerDfaRunner.Larva> action = () -> {
+      try {
+        return DebuggerDfaRunner.Larva.hatch(proxy, pointer.getElement());
+      }
+      catch (VMDisconnectedException | VMOutOfMemoryException | InternalException |
+             EvaluateException | InconsistentDebugInfoException | InvalidStackFrameException ignore) {
+        return null;
+      }
+    };
+    Project project = pointer.getProject();
+    DebuggerDfaRunner.Larva larva = ReadAction.nonBlocking(action).withDocumentsCommitted(project).executeSynchronously();
     if (larva == null) return null;
-    DebuggerDfaRunner.Pupa pupa = larva.pupate();
-    return pupa.transform();
+    DebuggerDfaRunner.Pupa pupa;
+    try {
+      pupa = larva.pupate();
+    }
+    catch (VMDisconnectedException | VMOutOfMemoryException | InternalException |
+           EvaluateException | InconsistentDebugInfoException | InvalidStackFrameException ignore) {
+      return null;
+    }
+    return ReadAction.nonBlocking(pupa::transform).withDocumentsCommitted(project).executeSynchronously();
   }
 
   private final class TurnOffDfaProcessorAction extends AnAction {

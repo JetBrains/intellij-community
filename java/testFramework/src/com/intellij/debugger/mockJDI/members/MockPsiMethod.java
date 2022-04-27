@@ -4,6 +4,7 @@ import com.intellij.debugger.mockJDI.MockLocalVariable;
 import com.intellij.debugger.mockJDI.MockMirror;
 import com.intellij.debugger.mockJDI.MockVirtualMachine;
 import com.intellij.debugger.mockJDI.types.MockType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameter;
@@ -13,6 +14,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 public class MockPsiMethod extends MockMirror implements Method {
   private final PsiMethod myPsiMethod;
@@ -157,7 +159,7 @@ public class MockPsiMethod extends MockMirror implements Method {
 
   @Override
   public ReferenceType declaringType() {
-    return myVirtualMachine.createReferenceType(myPsiMethod.getContainingClass());
+    return ReadAction.compute(() -> myVirtualMachine.createReferenceType(Objects.requireNonNull(myPsiMethod.getContainingClass())));
   }
 
   @Override

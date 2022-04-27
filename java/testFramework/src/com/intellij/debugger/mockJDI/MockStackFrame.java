@@ -9,6 +9,7 @@ import com.intellij.debugger.mockJDI.members.MockPsiMethod;
 import com.intellij.debugger.mockJDI.types.MockType;
 import com.intellij.debugger.mockJDI.values.MockObjectReference;
 import com.intellij.debugger.mockJDI.values.MockValue;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -52,23 +53,26 @@ public class MockStackFrame extends MockMirror implements StackFrame {
     if (myContext == null) {
       throw new IllegalStateException("Context is not specified");
     }
-    int offset = myContext.getTextRange().getStartOffset();
-    PsiFile file = myContext.getContainingFile();
-    int lineNumber = StringUtil.offsetToLineNumber(file.getText(), offset);
-    String name = file.getName();
-    PsiParameterListOwner psiMethod = PsiTreeUtil.getParentOfType(myContext, PsiMethod.class, PsiLambdaExpression.class);
-    if (psiMethod == null) {
-      UMethod uMethod = UastContextKt.getUastParentOfType(myContext, UMethod.class);
-      if (uMethod != null) {
-        psiMethod = uMethod.getJavaPsi();
-      } else {
-        throw new IllegalStateException("Method/lambda not found");
+    return ReadAction.compute(() -> {
+      int offset = myContext.getTextRange().getStartOffset();
+      PsiFile file = myContext.getContainingFile();
+      int lineNumber = StringUtil.offsetToLineNumber(file.getText(), offset);
+      String name = file.getName();
+      PsiParameterListOwner psiMethod = PsiTreeUtil.getParentOfType(myContext, PsiMethod.class, PsiLambdaExpression.class);
+      if (psiMethod == null) {
+        UMethod uMethod = UastContextKt.getUastParentOfType(myContext, UMethod.class);
+        if (uMethod != null) {
+          psiMethod = uMethod.getJavaPsi();
+        }
+        else {
+          throw new IllegalStateException("Method/lambda not found");
+        }
       }
-    }
-    Method method = psiMethod instanceof PsiMethod ? 
-                    new MockPsiMethod(myVirtualMachine, (PsiMethod)psiMethod) : 
-                    new MockPsiLambda(myVirtualMachine, (PsiLambdaExpression)psiMethod);
-    return new MockLocation(lineNumber, 0, method, name, name);
+      Method method = psiMethod instanceof PsiMethod ?
+                      new MockPsiMethod(myVirtualMachine, (PsiMethod)psiMethod) :
+                      new MockPsiLambda(myVirtualMachine, (PsiLambdaExpression)psiMethod);
+      return new MockLocation(lineNumber, 0, method, name, name);
+    });
   }
 
   @Override

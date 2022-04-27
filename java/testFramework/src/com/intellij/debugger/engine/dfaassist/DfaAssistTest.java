@@ -7,10 +7,11 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.mockJDI.MockStackFrame;
 import com.intellij.debugger.mockJDI.MockVirtualMachine;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
@@ -30,18 +31,20 @@ public abstract class DfaAssistTest extends LightPlatformCodeInsightTestCase {
     PsiFile file = getFile();
     int offset = getEditor().getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
+    assertNotNull(element);
     MockVirtualMachine vm = new MockVirtualMachine();
     MockStackFrame frame = new MockStackFrame(vm, element);
     mockValues.accept(vm, frame);
 
     Ref<DebuggerDfaRunner> runnerRef = Ref.create();
     MockDebugProcess process = new MockDebugProcess(getProject(), vm, getTestRootDisposable());
+    SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(element);
     process.getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
       @Override
-      protected void action() throws Exception {
+      protected void action() {
         ThreadReferenceProxyImpl threadProxy = ContainerUtil.getFirstItem(process.getVirtualMachineProxy().allThreads());
         StackFrameProxyImpl frameProxy = new StackFrameProxyImpl(threadProxy, frame, 1);
-        DebuggerDfaRunner runner = ReadAction.compute(() -> DfaAssist.createDfaRunner(frameProxy, element));
+        DebuggerDfaRunner runner = DfaAssist.createDfaRunner(frameProxy, pointer);
         runnerRef.set(runner);
       }
     });
