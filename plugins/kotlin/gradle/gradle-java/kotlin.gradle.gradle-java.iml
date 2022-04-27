@@ -65,5 +65,6 @@
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
     <orderEntry type="module" module-name="intellij.gradle.java" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />
+    <orderEntry type="library" name="kotlin-gradle-plugin-idea" level="project" />
   </component>
 </module>

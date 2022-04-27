@@ -66,5 +66,6 @@
     <orderEntry type="module" module-name="intellij.gradle.common" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />
     <orderEntry type="library" name="kotlinc.kotlin-reflect" level="project" />
+    <orderEntry type="library" name="kotlin-gradle-plugin-idea" level="project" />
   </component>
 </module>
