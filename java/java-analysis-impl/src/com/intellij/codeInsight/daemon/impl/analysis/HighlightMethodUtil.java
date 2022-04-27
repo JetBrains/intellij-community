@@ -499,11 +499,17 @@ public final class HighlightMethodUtil {
       PsiExpression[] expressions = list.getExpressions();
       PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
       mismatchedExpressions = mismatchedArgs(expressions, substitutor, parameters, candidateInfo.isVarargs());
-      if (mismatchedExpressions.size() == 1) {
+      if (mismatchedExpressions.size() == 1 && parameters.length > 0) {
         toolTip = createOneArgMismatchTooltip(candidateInfo, mismatchedExpressions, expressions, parameters);
       }
       if (toolTip == null) {
-        toolTip = mismatchedExpressions.isEmpty() ? description : createMismatchedArgumentsHtmlTooltip(candidateInfo, list);
+        if ((parameters.length == 0 || !parameters[parameters.length - 1].isVarArgs()) &&
+            parameters.length != expressions.length) {
+          toolTip = createMismatchedArgumentCountTooltip(parameters, expressions);
+        }
+        else {
+          toolTip = mismatchedExpressions.isEmpty() ? description : createMismatchedArgumentsHtmlTooltip(candidateInfo, list);
+        }
       }
     }
     else {
@@ -542,11 +548,8 @@ public final class HighlightMethodUtil {
                                                                          PsiExpression[] expressions,
                                                                          PsiParameter[] parameters) {
     PsiExpression wrongArg = mismatchedExpressions.get(0);
-    PsiType argType = wrongArg.getType();
+    PsiType argType = wrongArg != null ? wrongArg.getType() : null;
     if (argType != null) {
-      if ((parameters.length == 0 || !parameters[parameters.length - 1].isVarArgs()) && parameters.length != expressions.length) {
-        return createMismatchedArgumentCountTooltip(parameters, expressions);
-      }
       int idx = ArrayUtil.find(expressions, wrongArg);
       PsiType paramType = candidateInfo.getSubstitutor().substitute(PsiTypesUtil.getParameterType(parameters, idx, candidateInfo.isVarargs()));
       String errorMessage = candidateInfo.getInferenceErrorMessage();
@@ -718,13 +721,10 @@ public final class HighlightMethodUtil {
                                                     PsiSubstitutor substitutor,
                                                     PsiParameter @NotNull [] parameters,
                                                     boolean varargs) {
-    if ((parameters.length == 0 || !parameters[parameters.length - 1].isVarArgs()) && parameters.length > expressions.length) {
-      return Collections.emptyList();
-    }
-
     List<PsiExpression> result = new ArrayList<>();
     for (int i = 0; i < Math.max(parameters.length, expressions.length); i++) {
-      if (parameters.length == 0 || !assignmentCompatible(i, parameters, expressions, substitutor, varargs)) {
+      if (parameters.length == 0 ||
+          !assignmentCompatible(i, parameters, expressions, substitutor, varargs)) {
         result.add(i < expressions.length ? expressions[i] : null);
       }
     }
