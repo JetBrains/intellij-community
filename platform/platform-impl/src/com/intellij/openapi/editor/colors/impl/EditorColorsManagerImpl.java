@@ -13,6 +13,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UITheme;
@@ -56,6 +57,7 @@ import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ComponentTreeEventDispatcher;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -654,16 +656,22 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       return;
     }
 
+    PluginId[] solarizedPluginsContainingSchemesWithTheSameName = {
+      PluginId.getId("solarized"),
+      PluginId.getId("com.tylerthrailkill.intellij.solarized")
+    };
+    if ((name.equals("Solarized Dark") || name.equals("Solarized Light")) &&
+        ContainerUtil.exists(solarizedPluginsContainingSchemesWithTheSameName,
+                             (PluginId pluginId) -> PluginManager.getInstance().findEnabledPlugin(pluginId) != null)) {
+      return;
+    }
+
     @NotNull MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
         connection.disconnect();
         ApplicationManager.getApplication().invokeLater(() -> {
-          if (LafManager.getInstance().getCurrentLookAndFeel().getName().toLowerCase(Locale.ROOT).contains("solarized")) {
-            return;
-          }
-
           @NotNull PluginId pluginId = PluginId.getId("com.4lex4.intellij.solarized");
 
           boolean isDark = ColorUtil.isDark(scheme.getDefaultBackground());
