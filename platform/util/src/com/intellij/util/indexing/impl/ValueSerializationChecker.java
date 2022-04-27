@@ -3,13 +3,11 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
 import com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,9 +30,11 @@ final class ValueSerializationChecker<Value, Input> {
   }
 
   void checkValueSerialization(@NotNull Map<?, Value> data, @NotNull Input input) {
-    Exception problem = getValueSerializationProblem(data, input);
-    if (problem != null) {
-      myProblemReporter.reportProblem(problem);
+    if (IndexDebugProperties.DEBUG && !IndexDebugProperties.IS_IN_STRESS_TESTS) {
+      Exception problem = getValueSerializationProblem(data, input);
+      if (problem != null) {
+        myProblemReporter.reportProblem(problem);
+      }
     }
   }
 

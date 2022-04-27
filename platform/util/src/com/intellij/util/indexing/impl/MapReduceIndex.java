@@ -84,7 +84,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     LOG.assertTrue(myForwardIndex instanceof IntForwardIndex == myForwardIndexAccessor instanceof IntForwardIndexAccessor,
                    "Invalid index configuration for " + myIndexId);
     myLock = lock == null ? new ReentrantReadWriteLock() : lock;
-    myValueSerializationChecker = IndexDebugProperties.DEBUG ? new ValueSerializationChecker<>(extension, getSerializationProblemReporter()) : null;
+    myValueSerializationChecker = new ValueSerializationChecker<>(extension, getSerializationProblemReporter());
     myLowMemoryFlusher = LowMemoryWatcher.register(() -> clearCaches());
   }
 

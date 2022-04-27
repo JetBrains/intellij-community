@@ -25,7 +25,8 @@ import java.util.function.IntPredicate;
 @ApiStatus.Internal
 public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
   static final Logger LOG = Logger.getInstance(ValueContainerImpl.class);
-  private static final boolean DO_EXPENSIVE_CHECKS = IndexDebugProperties.IS_UNIT_TEST_MODE || IndexDebugProperties.EXTRA_SANITY_CHECKS;
+  private static final boolean DO_EXPENSIVE_CHECKS = (IndexDebugProperties.IS_UNIT_TEST_MODE ||
+                                                     IndexDebugProperties.EXTRA_SANITY_CHECKS) && !IndexDebugProperties.IS_IN_STRESS_TESTS;
 
   // there is no volatile as we modify under write lock and read under read lock
   // Most often (80%) we store 0 or one mapping, then we store them in two fields: myInputIdMapping, myInputIdMappingValue
