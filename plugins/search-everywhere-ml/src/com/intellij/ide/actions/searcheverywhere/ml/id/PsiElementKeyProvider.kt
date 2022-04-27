@@ -3,7 +3,7 @@ package com.intellij.ide.actions.searcheverywhere.ml.id
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.psi.PsiElement
 
-private class ClassAndFileKeyProvider: ElementKeyForIdProvider() {
+private class PsiElementKeyProvider : ElementKeyForIdProvider() {
   override fun getKey(element: Any): Any? {
     return when (element) {
       is PsiElement -> element

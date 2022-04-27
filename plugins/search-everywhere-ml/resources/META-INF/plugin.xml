@@ -90,7 +90,7 @@
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereRunConfigurationFeaturesProvider"/>
 
     <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ActionKeyProvider"/>
-    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ClassAndFileKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.PsiElementKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.RunConfigurationsKeyProvider"/>
 
     <rankingModelLoader
