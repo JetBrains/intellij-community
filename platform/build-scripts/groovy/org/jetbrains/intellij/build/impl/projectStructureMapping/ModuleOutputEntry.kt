@@ -6,7 +6,7 @@ import java.nio.file.Path
 /**
  * Represents production classes of a module
  */
-class ModuleOutputEntry @JvmOverloads constructor(path: Path?,
+class ModuleOutputEntry @JvmOverloads constructor(path: Path,
                                                   val moduleName: String,
                                                   val size: Int,
                                                   val reason: String? = null) : DistributionFileEntry(path, "module-output")
