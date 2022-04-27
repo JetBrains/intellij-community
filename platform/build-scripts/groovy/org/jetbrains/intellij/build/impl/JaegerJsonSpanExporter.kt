@@ -90,7 +90,6 @@ class JaegerJsonSpanExporter : SpanExporter {
         }
     }
 
-    @JvmStatic
     fun finish(tracerProvider: SdkTracerProvider?): Path? {
       val w = writer.getAndSet(null) ?: return null
       val f = file
