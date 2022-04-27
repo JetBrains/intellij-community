@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * An object that encapsulates information about JDI value necessary to fill the DfaMemoryState without requesting the debugged process.
@@ -47,14 +48,14 @@ interface JdiValueInfo {
   }
 
   class ObjectRef implements JdiValueInfo {
-    private final @NotNull ReferenceType myType;
+    private final @NotNull String mySignature;
 
     ObjectRef(@NotNull ReferenceType type) {
-      myType = type;
+      mySignature = type.signature();
     }
 
-    public @NotNull ReferenceType getType() {
-      return myType;
+    public @NotNull String getSignature() {
+      return mySignature;
     }
   }
 
@@ -91,11 +92,13 @@ interface JdiValueInfo {
     }
   }
 
-  static @Nullable JdiValueInfo from(@NotNull Value value) {
-    return from(value, true);
+  static @Nullable JdiValueInfo from(@NotNull Value value, @NotNull Predicate<ClassLoaderReference> classLoaderFilter) {
+    return from(value, classLoaderFilter, true);
   }
 
-  private static @Nullable JdiValueInfo from(@NotNull Value value, boolean fillSpecial) {
+  private static @Nullable JdiValueInfo from(@NotNull Value value,
+                                             @NotNull Predicate<ClassLoaderReference> classLoaderFilter,
+                                             boolean fillSpecial) {
     DfConstantType<?> constant = primitiveConstant(value);
     if (constant != null) {
       return new PrimitiveConstant(constant);
@@ -106,6 +109,7 @@ interface JdiValueInfo {
     if (value instanceof ObjectReference) {
       ObjectReference ref = (ObjectReference)value;
       ReferenceType type = ref.referenceType();
+      if (!classLoaderFilter.test(type.classLoader())) return null;
       String name = type.name();
       String enumConstantName = getEnumConstantName(ref);
       if (enumConstantName != null) {
@@ -159,7 +163,7 @@ interface JdiValueInfo {
         else if (CommonClassNames.JAVA_UTIL_OPTIONAL.equals(name)) {
           Value wrappedValue = getField(ref, "value");
           if (wrappedValue != null) {
-            JdiValueInfo wrappedInfo = from(wrappedValue, false);
+            JdiValueInfo wrappedInfo = from(wrappedValue, classLoaderFilter, false);
             if (wrappedInfo != null) {
               return new ObjectWithSpecialField(type, SpecialField.OPTIONAL_VALUE, wrappedInfo);
             }

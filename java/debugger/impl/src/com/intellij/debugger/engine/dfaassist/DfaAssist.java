@@ -233,22 +233,10 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
 
   public static @Nullable DebuggerDfaRunner createDfaRunner(@NotNull StackFrameProxyEx proxy, @Nullable PsiElement element)
     throws EvaluateException {
-    if (element == null || !element.isValid() || DumbService.isDumb(element.getProject())) return null;
-
-    DfaAssistProvider provider = DfaAssistProvider.EP_NAME.forLanguage(element.getLanguage());
-    if (provider == null) return null;
-    try {
-      if (!provider.locationMatches(element, proxy.location())) return null;
-    }
-    catch (IllegalArgumentException iea) {
-      throw new EvaluateException(iea.getMessage(), iea);
-    }
-    PsiElement anchor = provider.getAnchor(element);
-    if (anchor == null) return null;
-    PsiElement body = provider.getCodeBlock(anchor);
-    if (body == null) return null;
-    DebuggerDfaRunner runner = new DebuggerDfaRunner(provider, body, anchor, proxy);
-    return runner.isValid() ? runner : null;
+    DebuggerDfaRunner.Larva larva = DebuggerDfaRunner.Larva.hatch(proxy, element);
+    if (larva == null) return null;
+    DebuggerDfaRunner.Pupa pupa = larva.pupate();
+    return pupa.transform();
   }
 
   private final class TurnOffDfaProcessorAction extends AnAction {
