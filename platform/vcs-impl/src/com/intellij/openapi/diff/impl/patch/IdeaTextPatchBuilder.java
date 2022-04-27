@@ -114,8 +114,9 @@ public final class IdeaTextPatchBuilder {
     if (actualTextContent != null) {
       return new PartialTextAirContentRevision(actualTextContent, cr, filePath);
     }
-    else if (isBinaryRevision(cr)) {
-      return new BinaryAirContentRevision((BinaryContentRevision)cr, filePath);
+    else if (cr instanceof ByteBackedContentRevision &&
+             isBinaryRevision(cr)) {
+      return new BinaryAirContentRevision((ByteBackedContentRevision)cr, filePath);
     }
     else {
       return new TextAirContentRevision(cr, filePath);
@@ -139,10 +140,10 @@ public final class IdeaTextPatchBuilder {
 
 
   private static class BinaryAirContentRevision implements AirContentRevision {
-    @NotNull private final BinaryContentRevision myRevision;
+    @NotNull private final ByteBackedContentRevision myRevision;
     @NotNull private final FilePath myFilePath;
 
-    BinaryAirContentRevision(@NotNull BinaryContentRevision revision,
+    BinaryAirContentRevision(@NotNull ByteBackedContentRevision revision,
                              @NotNull FilePath filePath) {
       myRevision = revision;
       myFilePath = filePath;
@@ -160,7 +161,7 @@ public final class IdeaTextPatchBuilder {
 
     @Override
     public byte[] getContentAsBytes() throws VcsException {
-      return myRevision.getBinaryContent();
+      return myRevision.getContentAsBytes();
     }
 
     @Override
