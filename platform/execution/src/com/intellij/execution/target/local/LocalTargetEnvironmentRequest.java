@@ -4,7 +4,6 @@ package com.intellij.execution.target.local;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Platform;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.execution.target.*;
 import com.intellij.execution.target.value.TargetValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,7 +20,6 @@ public class LocalTargetEnvironmentRequest extends BaseTargetEnvironmentRequest 
   private Volume myDefaultVolume;
   private final Map<String, LocalDownloadVolume> myDownloadRoots = new LinkedHashMap<>();
   private final Map<String, LocalUploadVolume> myUploadRoots = new LinkedHashMap<>();
-  private LocalPtyOptions myPtyOptions;
 
   public LocalTargetEnvironmentRequest() {
     super();
@@ -117,14 +115,6 @@ public class LocalTargetEnvironmentRequest extends BaseTargetEnvironmentRequest 
 
   public void setParentEnvironmentType(@NotNull GeneralCommandLine.ParentEnvironmentType parentEnvironmentType) {
     myParentEnvironmentType = parentEnvironmentType;
-  }
-
-  public @Nullable LocalPtyOptions getPtyOptions() {
-    return myPtyOptions;
-  }
-
-  public void setPtyOptions(@Nullable LocalPtyOptions ptyOptions) {
-    myPtyOptions = ptyOptions;
   }
 
   private static class LocalUploadVolume implements TargetEnvironmentRequest.Volume {

@@ -6,6 +6,7 @@ import com.intellij.execution.Platform
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.target.*
+import com.intellij.execution.target.local.toLocalPtyOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslProxy
 import com.intellij.execution.wsl.runCommand
@@ -121,7 +122,7 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
 
   @Throws(ExecutionException::class)
   override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process {
-    val ptyOptions = request.ptyOptions
+    val ptyOptions = commandLine.ptyOptions?.toLocalPtyOptions()
     val generalCommandLine = if (ptyOptions != null) {
       PtyCommandLine(commandLine.collectCommandsSynchronously()).withOptions(ptyOptions)
     }

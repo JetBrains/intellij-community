@@ -14,7 +14,10 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -33,6 +36,7 @@ public final class TargetedCommandLine {
   private final @NotNull List<? extends TargetValue<String>> myParameters;
   @NotNull private final Map<String, TargetValue<String>> myEnvironment;
   private final boolean myRedirectErrorStream;
+  private final @Nullable PtyOptions myPtyOptions;
 
   TargetedCommandLine(@NotNull TargetValue<String> exePath,
                       @NotNull TargetValue<String> workingDirectory,
@@ -40,7 +44,8 @@ public final class TargetedCommandLine {
                       @NotNull Charset charset,
                       @NotNull List<? extends TargetValue<String>> parameters,
                       @NotNull Map<String, TargetValue<String>> environment,
-                      boolean redirectErrorStream) {
+                      boolean redirectErrorStream,
+                      @Nullable PtyOptions ptyOptions) {
     myExePath = exePath;
     myWorkingDirectory = workingDirectory;
     myInputFilePath = inputFilePath;
@@ -48,6 +53,7 @@ public final class TargetedCommandLine {
     myParameters = parameters;
     myEnvironment = environment;
     myRedirectErrorStream = redirectErrorStream;
+    myPtyOptions = ptyOptions;
   }
 
   /**
@@ -115,6 +121,10 @@ public final class TargetedCommandLine {
 
   public boolean isRedirectErrorStream() {
     return myRedirectErrorStream;
+  }
+
+  public @Nullable PtyOptions getPtyOptions() {
+    return myPtyOptions;
   }
 
   @Nullable

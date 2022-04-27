@@ -26,6 +26,8 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
   @NotNull private final TargetEnvironmentRequest myRequest;
   private boolean myRedirectErrorStream = false;
 
+  private @Nullable PtyOptions myPtyOptions = null;
+
   public TargetedCommandLineBuilder(@NotNull TargetEnvironmentRequest request) {
     myRequest = request;
   }
@@ -43,7 +45,8 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
                                    myCharset,
                                    new ArrayList<>(myParameters),
                                    new HashMap<>(myEnvironment),
-                                   myRedirectErrorStream);
+                                   myRedirectErrorStream,
+                                   myPtyOptions);
   }
 
   public void setCharset(@NotNull Charset charset) {
@@ -149,5 +152,13 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
 
   public void setRedirectErrorStream(boolean redirectErrorStream) {
     myRedirectErrorStream = redirectErrorStream;
+  }
+
+  public @Nullable PtyOptions getPtyOptions() {
+    return myPtyOptions;
+  }
+
+  public void setPtyOptions(@Nullable PtyOptions ptyOptions) {
+    myPtyOptions = ptyOptions;
   }
 }

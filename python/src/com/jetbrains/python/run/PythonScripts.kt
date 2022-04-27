@@ -11,6 +11,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.*
 import com.intellij.execution.target.TargetEnvironment.TargetPath
 import com.intellij.execution.target.TargetEnvironment.UploadRoot
+import com.intellij.execution.target.local.LocalTargetPtyOptions
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.execution.target.value.getRelativeTargetPath
