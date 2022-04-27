@@ -6,11 +6,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.intellij.build.impl.BuildContextImpl
-import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
-import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.PluginLayoutGroovy
-import org.jetbrains.intellij.build.impl.ProjectLibraryData
+import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.tasks.ArchiveKt
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -172,7 +168,7 @@ final class KotlinPluginBuilder {
         withProjectLibraryUnpackedIntoJar(library, mainJarName)
       }
       for (String library : COMPILER_PLUGINS) {
-        withProjectLibrary(library, ProjectLibraryData.PackMode.STANDALONE_MERGED)
+        withProjectLibrary(library, LibraryPackMode.STANDALONE_MERGED)
       }
 
       if (isUltimate && kind == KotlinPluginKind.IJ) {
@@ -186,7 +182,7 @@ final class KotlinPluginBuilder {
       }
 
       String kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
-      withProjectLibrary(kotlincKotlinCompilerCommon, ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary(kotlincKotlinCompilerCommon, LibraryPackMode.STANDALONE_MERGED)
 
       withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
         @Override
@@ -217,9 +213,9 @@ final class KotlinPluginBuilder {
       withProjectLibrary("kotlinc.kotlin-stdlib", "kotlinc-lib.jar")
       withProjectLibrary("kotlinc.kotlin-jps-common")
       //noinspection SpellCheckingInspection
-      withProjectLibrary("javaslang", ProjectLibraryData.PackMode.STANDALONE_MERGED)
-      withProjectLibrary("kotlinx-collections-immutable-jvm", ProjectLibraryData.PackMode.STANDALONE_MERGED)
-      withProjectLibrary("javax-inject", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary("javaslang", LibraryPackMode.STANDALONE_MERGED)
+      withProjectLibrary("kotlinx-collections-immutable-jvm", LibraryPackMode.STANDALONE_MERGED)
+      withProjectLibrary("javax-inject", LibraryPackMode.STANDALONE_MERGED)
       withProjectLibrary("completion-ranking-kotlin")
 
       withGeneratedResources(new BiConsumer<Path, BuildContext>() {

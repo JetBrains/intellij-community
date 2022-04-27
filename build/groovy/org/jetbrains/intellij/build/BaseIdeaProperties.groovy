@@ -3,8 +3,8 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BaseLayout
+import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PlatformLayout
-import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 
 import java.nio.file.Files
@@ -158,9 +158,9 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
         //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
         layout.withModule("intellij.java.rt", "idea_rt.jar")
         // for compatibility with users' projects which take these libraries from IDEA installation
-        layout.withProjectLibrary("jetbrains-annotations", ProjectLibraryData.PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
+        layout.withProjectLibrary("jetbrains-annotations", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
         // for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
-        layout.withProjectLibrary("JUnit3", ProjectLibraryData.PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
+        layout.withProjectLibrary("JUnit3", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
         layout.withProjectLibrary("commons-net")
 
         layout.withoutProjectLibrary("Ant")

@@ -16,8 +16,6 @@ import java.nio.file.Path
 import java.util.function.BiConsumer
 import java.util.function.Function
 
-import static org.jetbrains.intellij.build.impl.ProjectLibraryData.PackMode
-
 @CompileStatic
 final class PlatformModules {
   public static final Function<String, List<String>> LIST_PRODUCER = new Function<String, List<String>>() {
@@ -127,13 +125,13 @@ final class PlatformModules {
 
   private static final String UTIL_RT_JAR = "util_rt.jar"
 
-  public static final Map<String, PackMode> CUSTOM_PACK_MODE = Map.of(
+  public static final Map<String, LibraryPackMode> CUSTOM_PACK_MODE = Map.of(
     // jna uses native lib
-    "jna", PackMode.STANDALONE_MERGED,
-    "lz4-java", PackMode.STANDALONE_MERGED,
-    "jetbrains-annotations-java5", PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
-    "intellij-coverage", PackMode.STANDALONE_SEPARATE,
-    "github.jnr.ffi", PackMode.STANDALONE_SEPARATE,
+    "jna", LibraryPackMode.STANDALONE_MERGED,
+    "lz4-java", LibraryPackMode.STANDALONE_MERGED,
+    "jetbrains-annotations-java5", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
+    "intellij-coverage", LibraryPackMode.STANDALONE_SEPARATE,
+    "github.jnr.ffi", LibraryPackMode.STANDALONE_SEPARATE,
     )
 
   static jar(String relativeJarPath,
@@ -165,8 +163,8 @@ final class PlatformModules {
                                              BuildContext context) {
     PlatformLayout layout = new PlatformLayout()
     // used only in modules that packed into Java
-    layout.excludedProjectLibraries.add("jps-javac-extension")
-    layout.excludedProjectLibraries.add("Eclipse")
+    layout.withoutProjectLibrary("jps-javac-extension")
+    layout.withoutProjectLibrary("Eclipse")
     productLayout.platformLayoutCustomizer.accept(layout, context)
 
     Set<String> alreadyPackedModules = new HashSet<>()
@@ -315,7 +313,7 @@ final class PlatformModules {
       @Override
       void accept(JpsLibrary lib, JpsModule module) {
         String name = lib.name
-        layout.includedProjectLibraries.addOrGet(new ProjectLibraryData(name, null, CUSTOM_PACK_MODE.getOrDefault(name, PackMode.MERGED)))
+        layout.includedProjectLibraries.addOrGet(new ProjectLibraryData(name, CUSTOM_PACK_MODE.getOrDefault(name, LibraryPackMode.MERGED)))
           .dependentModules.computeIfAbsent("core", LIST_PRODUCER).add(module.name)
       }
     })

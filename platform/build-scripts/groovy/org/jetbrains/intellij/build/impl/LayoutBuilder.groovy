@@ -1,16 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.text.Strings
+
 import com.intellij.util.PathUtilRt
-import com.intellij.util.io.URLUtil
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.apache.tools.ant.AntClassLoader
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.jps.model.library.JpsLibrary
-import org.jetbrains.jps.model.library.JpsLibraryRoot
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
@@ -59,20 +57,6 @@ final class LayoutBuilder {
   @Deprecated
   LayoutBuilder(CompilationContext context, boolean compressJars) {
     this(context)
-  }
-
-  static String getLibraryName(JpsLibrary lib) {
-    String name = lib.name
-    if (!name.startsWith("#")) {
-      return name
-    }
-
-    List<JpsLibraryRoot> roots = lib.getRoots(JpsOrderRootType.COMPILED)
-    if (roots.size() != 1) {
-      List<String> urls = roots.collect { it.url }
-      throw new IllegalStateException("Non-single entry module library $name: $urls")
-    }
-    return PathUtilRt.getFileName(Strings.trimEnd(roots.get(0).url, URLUtil.JAR_SEPARATOR))
   }
 
   /**
@@ -241,7 +225,7 @@ final class LayoutBuilder {
      */
     void moduleLibrary(String moduleName, String libraryName, Function<String, String> nameMapper = Function.identity()) {
       JpsModule module = findModule(moduleName)
-      JpsLibrary library = module.libraryCollection.libraries.find {getLibraryName(it) == libraryName}
+      JpsLibrary library = module.libraryCollection.libraries.find {JarPackager.getLibraryName(it) == libraryName}
       if (library == null) {
         throw new IllegalArgumentException("Cannot find library $libraryName in '$moduleName' module")
       }
@@ -262,7 +246,7 @@ final class LayoutBuilder {
             ant.renamedFile(filePath: file.absolutePath, newName: newName)
           }
           addLibraryMapping(library, newName, file.toPath())
-          context.messages.debug(" include $newName (renamed from $file.absolutePath) from library '${getLibraryName(library)}'")
+          context.messages.debug(" include $newName (renamed from $file.absolutePath) from library '${JarPackager.getLibraryName(library)}'")
         }
         else {
           String outputFileName = nameMapper.apply(file.name)
@@ -275,7 +259,7 @@ final class LayoutBuilder {
             }
           }
           addLibraryMapping(library, outputFileName, file.toPath())
-          context.messages.debug(" include $outputFileName ($file.absolutePath) from library '${getLibraryName(library)}'")
+          context.messages.debug(" include $outputFileName ($file.absolutePath) from library '${JarPackager.getLibraryName(library)}'")
         }
       }
     }
@@ -300,7 +284,7 @@ final class LayoutBuilder {
                                                                     ((JpsModuleReference)parentReference).moduleName, libraryFile, 0))
       }
       else {
-        ProjectLibraryData libraryData = new ProjectLibraryData(library.name, null, ProjectLibraryData.PackMode.MERGED)
+        ProjectLibraryData libraryData = new ProjectLibraryData(library.name, LibraryPackMode.MERGED)
         projectStructureMapping.addEntry(new ProjectLibraryEntry(Path.of(getOutputFilePath(outputFileName)), libraryData, libraryFile, 0))
       }
     }

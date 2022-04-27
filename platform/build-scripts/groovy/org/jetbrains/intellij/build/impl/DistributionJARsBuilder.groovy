@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
@@ -20,13 +19,7 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
-import org.jetbrains.intellij.build.tasks.ArchiveKt
-import org.jetbrains.intellij.build.tasks.AsmKt
-import org.jetbrains.intellij.build.tasks.BrokenPluginsKt
-import org.jetbrains.intellij.build.tasks.JarBuilder
-import org.jetbrains.intellij.build.tasks.KeymapPluginKt
-import org.jetbrains.intellij.build.tasks.ReorderJarsKt
-import org.jetbrains.intellij.build.tasks.Source
+import org.jetbrains.intellij.build.tasks.*
 import org.jetbrains.jps.model.JpsCompositeElement
 import org.jetbrains.jps.model.JpsElementReference
 import org.jetbrains.jps.model.artifact.JpsArtifact
@@ -51,6 +44,7 @@ import java.util.stream.Collectors
 import java.util.stream.Stream
 
 import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
+
 /**
  * Assembles output of modules to platform JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAllDir}/lib directory),
  * bundled plugins' JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAllDir distAll}/plugins directory) and zip archives with
@@ -148,8 +142,8 @@ final class DistributionJARsBuilder {
             }
 
             String name = library.name
-            ProjectLibraryData.PackMode packMode = PlatformModules.CUSTOM_PACK_MODE.getOrDefault(name, ProjectLibraryData.PackMode.MERGED)
-            result.addOrGet(new ProjectLibraryData(name, null, packMode))
+            LibraryPackMode packMode = PlatformModules.CUSTOM_PACK_MODE.getOrDefault(name, LibraryPackMode.MERGED)
+            result.addOrGet(new ProjectLibraryData(name, packMode))
               .dependentModules.computeIfAbsent(Objects.requireNonNull(plugin.directoryName), PlatformModules.LIST_PRODUCER).add(moduleName)
           }
         })
@@ -383,7 +377,7 @@ final class DistributionJARsBuilder {
         List<DistributionFileEntry> get() {
           List<Source> sources = new ArrayList<>()
           List<DistributionFileEntry> result = new ArrayList<>()
-          ProjectLibraryData libraryData = new ProjectLibraryData("Ant", null, ProjectLibraryData.PackMode.MERGED)
+          ProjectLibraryData libraryData = new ProjectLibraryData("Ant", LibraryPackMode.MERGED)
           buildHelper.copyDir(
             context.paths.communityHomeDir.resolve("lib/ant"), antDir,
             new Predicate<Path>() {
@@ -1043,9 +1037,7 @@ final class DistributionJARsBuilder {
     boolean isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
 
     List<ForkJoinTask<?>> scrambleTasks = new ArrayList<>()
-
     List<ForkJoinTask<List<DistributionFileEntry>>> tasks = new ArrayList<>()
-
 
     BuildHelper buildHelper = BuildHelper.getInstance(context)
     // must be as a closure, dont' use "for in" here - to capture supplier variables.
@@ -1366,7 +1358,7 @@ final class DistributionJARsBuilder {
           entries.add(new ModuleLibraryFileEntry(artifactFile, ((JpsModuleReference)parentReference).moduleName, null, 0))
         }
         else {
-          ProjectLibraryData libraryData = new ProjectLibraryData(library.name, null, ProjectLibraryData.PackMode.MERGED)
+          ProjectLibraryData libraryData = new ProjectLibraryData(library.name, LibraryPackMode.MERGED)
           entries.add(new ProjectLibraryEntry(artifactFile, libraryData, null, 0))
         }
       }

@@ -1,37 +1,68 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl.projectStructureMapping;
+package org.jetbrains.intellij.build.impl.projectStructureMapping
 
-import java.nio.file.Path;
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
+import java.nio.file.Path
 
 /**
- * Base class for entries in {@link ProjectStructureMapping}.
+ * Base class for entries in [ProjectStructureMapping].
  */
-public abstract class DistributionFileEntry {
-  public DistributionFileEntry(Path path, String type) {
-    this.path = path;
-    this.type = type;
-  }
-
-  public final Path getPath() {
-    return path;
-  }
-
-  public final String getType() {
-    return type;
-  }
-
+interface DistributionFileEntry {
   /**
    * Path to a file in IDE distribution
    */
-  private final Path path;
+  val path: Path
+
   /**
-   * Type of the element in the project configuration which was copied to {@link #path}
+   * Type of the element in the project configuration which was copied to [.path]
    */
-  private final String type;
+  val type: String
+}
 
-  public static interface LibraryFileEntry {
-    public abstract Path getLibraryFile();
+interface LibraryFileEntry {
+  val libraryFile: Path?
+  val size: Int
+}
 
-    public abstract int getSize();
-  }
+/**
+ * Represents a file in module-level library
+ */
+class ModuleLibraryFileEntry(override val path: Path,
+                             val moduleName: String,
+                             override val libraryFile: Path,
+                             override val size: Int) : DistributionFileEntry, LibraryFileEntry {
+  override val type: String
+    get() = "module-library-file"
+}
+
+/**
+ * Represents test classes of a module
+ */
+class ModuleTestOutputEntry(override val path: Path, val moduleName: String) : DistributionFileEntry {
+  override val type: String
+    get() = "module-test-output"
+}
+
+/**
+ * Represents a project-level library
+ */
+class ProjectLibraryEntry(override val path: Path,
+                          val data: ProjectLibraryData,
+                          override val libraryFile: Path,
+                          override val size: Int) : DistributionFileEntry, LibraryFileEntry {
+  override val type: String
+    get() = "project-library"
+
+  override fun toString() = "ProjectLibraryEntry(data='$data\', libraryFile=$libraryFile, size=$size)"
+}
+
+/**
+ * Represents production classes of a module
+ */
+class ModuleOutputEntry @JvmOverloads constructor(override val path: Path,
+                                                  val moduleName: String,
+                                                  val size: Int,
+                                                  val reason: String? = null) : DistributionFileEntry {
+  override val type: String
+    get() = "module-output"
 }

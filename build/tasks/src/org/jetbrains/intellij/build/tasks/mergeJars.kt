@@ -24,7 +24,9 @@ sealed interface Source {
 private val USER_HOME = Path.of(System.getProperty("user.home"))
 private val MAVEN_REPO = USER_HOME.resolve(".m2/repository")
 
-data class ZipSource(val file: Path, val excludes: List<Regex>, override val sizeConsumer: IntConsumer? = null) : Source, Comparable<ZipSource> {
+data class ZipSource(val file: Path,
+                     val excludes: List<Regex> = emptyList(),
+                     override val sizeConsumer: IntConsumer? = null) : Source, Comparable<ZipSource> {
   override fun compareTo(other: ZipSource) = file.compareTo(other.file)
 
   override fun toString(): String {
@@ -75,8 +77,9 @@ data class InMemoryContentSource(val relativePath: String, val data: ByteArray, 
   }
 }
 
-fun createZipSource(file: Path, sizeConsumer: IntConsumer?): ZipSource =
-  ZipSource(file = file, excludes = emptyList(), sizeConsumer = sizeConsumer)
+fun createZipSource(file: Path, sizeConsumer: IntConsumer?): ZipSource {
+  return ZipSource(file = file, sizeConsumer = sizeConsumer)
+}
 
 fun buildJars(descriptors: List<Triple<Path, String, List<Source>>>, dryRun: Boolean) {
   val uniqueFiles = HashMap<Path, List<Source>>()
@@ -235,28 +238,6 @@ private fun checkName(name: String,
          !name.startsWith("META-INF/INDEX.LIST") &&
          (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA"))) &&
          uniqueNames.add(name)
-}
-
-@Suppress("SpellCheckingInspection")
-private val excludedFromMergeLibs = java.util.Set.of(
-  "sqlite", "async-profiler",
-  "dexlib2", // android-only lib
-  "intellij-test-discovery", // used as an agent
-  "winp", "junixsocket-core", "pty4j", "grpc-netty-shaded", // these contain a native library
-  "protobuf", // https://youtrack.jetbrains.com/issue/IDEA-268753
-)
-
-fun isLibraryMergeable(libName: String): Boolean {
-  return !excludedFromMergeLibs.contains(libName) &&
-         !libName.startsWith("kotlin-") &&
-         !libName.startsWith("kotlinc.") &&
-         !libName.startsWith("projector-") &&
-         !libName.contains("-agent-") &&
-         !libName.startsWith("rd-") &&
-         !libName.contains("annotations", ignoreCase = true) &&
-         !libName.startsWith("junit", ignoreCase = true) &&
-         !libName.startsWith("cucumber-", ignoreCase = true) &&
-         !libName.contains("groovy", ignoreCase = true)
 }
 
 private val commonModuleExcludes = java.util.List.of(

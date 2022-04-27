@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -8,7 +9,6 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.util.function.BiConsumer
-import java.util.function.Consumer
 
 /**
  * Describes layout of the platform (*.jar files in IDE_HOME/lib directory).
@@ -20,19 +20,16 @@ import java.util.function.Consumer
  * project libraries which are explicitly included into layouts of all plugins depending on them by {@link BaseLayoutSpec#withProjectLibrary}).
  */
 class PlatformLayout: BaseLayout() {
-  val excludedProjectLibraries: MutableSet<String> = mutableSetOf()
-
-  fun customize(body: Consumer<PlatformLayoutSpec>) {
-    val spec = PlatformLayoutSpec(this)
-    body.accept(spec)
-  }
+  @Internal
+  @JvmField
+  val excludedProjectLibraries: MutableSet<String> = HashSet()
 
   fun withProjectLibrary(libraryName: String) {
-    includedProjectLibraries.add(ProjectLibraryData(libraryName, null, ProjectLibraryData.PackMode.MERGED))
+    includedProjectLibraries.add(ProjectLibraryData(libraryName, LibraryPackMode.MERGED))
   }
 
-  fun withProjectLibrary(libraryName: String, packMode: ProjectLibraryData.PackMode) {
-    includedProjectLibraries.add(ProjectLibraryData(libraryName, null, packMode))
+  fun withProjectLibrary(libraryName: String, packMode: LibraryPackMode) {
+    includedProjectLibraries.add(ProjectLibraryData(libraryName, packMode))
   }
 
   fun withProjectLibrary(data: ProjectLibraryData) {
@@ -44,15 +41,6 @@ class PlatformLayout: BaseLayout() {
    */
   fun withoutProjectLibrary(libraryName: String) {
     excludedProjectLibraries.add(libraryName)
-  }
-
-  class PlatformLayoutSpec(private val layout: PlatformLayout): BaseLayoutSpec(layout) {
-    /**
-     * Exclude project library {@code libraryName} even if it's added to dependencies of some module or plugin included into the product
-     */
-    fun withoutProjectLibrary(libraryName: String) {
-      layout.withoutProjectLibrary(libraryName)
-    }
   }
 
   fun collectProjectLibrariesFromIncludedModules(context: BuildContext, consumer: BiConsumer<JpsLibrary, JpsModule>) {

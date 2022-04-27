@@ -753,7 +753,7 @@ idea.fatal.error.notification=disabled
     checkProjectLibraries(layout.includedProjectLibraries.collect { it.libraryName }, "includedProjectLibraries in $description", buildContext)
     for (data in layout.includedModuleLibraries) {
       checkModules([data.moduleName], "includedModuleLibraries in $description")
-      if (buildContext.findRequiredModule(data.moduleName).libraryCollection.libraries.find { LayoutBuilder.getLibraryName(it) == data.libraryName } == null) {
+      if (buildContext.findRequiredModule(data.moduleName).libraryCollection.libraries.find { JarPackager.getLibraryName(it) == data.libraryName } == null) {
         buildContext.messages.error("Cannot find library '$data.libraryName' in '$data.moduleName' (used in $description)")
       }
     }
@@ -761,7 +761,7 @@ idea.fatal.error.notification=disabled
     for (entry in layout.excludedModuleLibraries.entrySet()) {
       def libraries = buildContext.findRequiredModule(entry.key).libraryCollection.libraries
       for (libraryName in entry.value) {
-      if (libraries.find { LayoutBuilder.getLibraryName(it) == libraryName } == null) {
+      if (libraries.find { JarPackager.getLibraryName(it) == libraryName } == null) {
           buildContext.messages.error("Cannot find library '$libraryName' in '$entry.key' (used in 'excludedModuleLibraries' in $description)")
         }
       }

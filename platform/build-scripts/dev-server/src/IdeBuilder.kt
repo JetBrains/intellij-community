@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package org.jetbrains.intellij.build.devServer
 
@@ -7,8 +7,11 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
-import org.jetbrains.intellij.build.impl.*
-import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry.LibraryFileEntry
+import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
+import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
+import org.jetbrains.intellij.build.impl.PluginLayoutGroovy
+import org.jetbrains.intellij.build.impl.projectStructureMapping.LibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.library.JpsOrderRootType

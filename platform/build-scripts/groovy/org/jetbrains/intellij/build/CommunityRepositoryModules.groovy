@@ -4,8 +4,8 @@ package org.jetbrains.intellij.build
 import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader
+import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.jps.model.module.JpsModule
@@ -124,7 +124,7 @@ final class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingExtension", "gradle-tooling-extension-api.jar")
       withModule("intellij.gradle.toolingExtension.impl", "gradle-tooling-extension-impl.jar")
       withModule("intellij.gradle.toolingProxy")
-      withProjectLibrary("Gradle", ProjectLibraryData.PackMode.STANDALONE_SEPARATE)
+      withProjectLibrary("Gradle", LibraryPackMode.STANDALONE_SEPARATE)
     },
     plugin("intellij.packageSearch") {
       withModule("intellij.packageSearch.gradle")

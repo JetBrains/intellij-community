@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 open class BaseLayoutSpec(private val layout: BaseLayout) {
@@ -22,27 +22,24 @@ open class BaseLayoutSpec(private val layout: BaseLayout) {
     layout.withModule(moduleName, relativeJarPath)
   }
 
-  @SuppressWarnings("unused")
-  @Deprecated(message = "localizable resources are now put to the module JAR, so {@code localizableResourcesJars} parameter is ignored now")
-  fun withModule(moduleName: String, relativeJarPath: String, localizableResourcesJar: String) {
-    withModule(moduleName, relativeJarPath)
-  }
-
   /**
    * Include the project library to 'lib' directory or its subdirectory of the plugin distribution
    * @relativeOutputPath path relative to 'lib' plugin directory
    */
-  @JvmOverloads
-  fun withProjectLibrary(libraryName: String, outPath: String? = null) {
-    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName, outPath, ProjectLibraryData.PackMode.MERGED))
+  fun withProjectLibrary(libraryName: String) {
+    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = LibraryPackMode.MERGED))
   }
 
-  fun withProjectLibrary(libraryName: String, packMode: ProjectLibraryData.PackMode) {
-    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName, null, packMode))
+  fun withProjectLibrary(libraryName: String, outPath: String) {
+    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = LibraryPackMode.MERGED, outPath = outPath))
   }
 
-  fun withProjectLibrary(libraryName: String, outPath: String?, packMode: ProjectLibraryData.PackMode) {
-    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName, outPath, packMode))
+  fun withProjectLibrary(libraryName: String, packMode: LibraryPackMode) {
+    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode))
+  }
+
+  fun withProjectLibrary(libraryName: String, outPath: String, packMode: LibraryPackMode) {
+    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode, outPath = outPath))
   }
 
   /**
@@ -59,16 +56,9 @@ open class BaseLayoutSpec(private val layout: BaseLayout) {
   }
 
   /**
-   * Exclude the module library from plugin distribution.
-   */
-  fun withoutModuleLibrary(moduleName: String, libraryName: String) {
-    layout.excludedModuleLibraries.putValue(moduleName, libraryName)
-  }
-
-  /**
    * Exclude the specified files when {@code moduleName} is packed into JAR file.
    * <strong>This is a temporary method added to keep layout of some old plugins. If some files from a module shouldn't be included into the
-   * module JAR it's strongly recommended to move these files outside of the module source roots.</strong>
+   * module JAR it's strongly recommended to move these files outside the module source roots.</strong>
    * @param excludedPattern Ant-like pattern describing files to be excluded (relatively to the module output root); e.g. foo&#47;**
    * to exclude `foo` directory
   */
