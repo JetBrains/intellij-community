@@ -1,6 +1,5 @@
 package org.jetbrains.deft.codegen.model
 
-import deft.storage.codegen.suspendable
 import org.jetbrains.deft.impl.TBlob
 import org.jetbrains.deft.impl.TRef
 import org.jetbrains.deft.impl.fields.ExtField
@@ -100,7 +99,6 @@ class DefField(
     }
     field.constructorField = constructorParam
     field.content = content
-    field.suspendable = suspend
   }
 
 

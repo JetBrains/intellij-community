@@ -3,7 +3,6 @@ package org.jetbrains.deft.codegen.ijws.fields
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
 import deft.storage.codegen.*
-import deft.storage.codegen.field.implSuspendableCode
 import deft.storage.codegen.field.javaType
 import org.jetbrains.deft.codegen.ijws.getRefType
 import org.jetbrains.deft.codegen.ijws.isRefType
@@ -22,7 +21,6 @@ val Field<*, *>.implWsEntityFieldCode: String
         append(implWsBlockingCodeOverride)
       }
       else append(implWsBlockingCode)
-      if (suspendable == true) append("\n").append(implSuspendableCode)
     } else {
       append("override var $javaName: ${type.javaType} = super<${owner.javaFullName}>.$javaName\n")
     }

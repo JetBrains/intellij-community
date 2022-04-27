@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.deft.codegen.model
 
-import deft.storage.codegen.suspendable
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.TBlob
 import org.jetbrains.deft.impl.TPsiRef
@@ -30,7 +29,6 @@ open class WsEntityInterface : KtInterfaceKind() {
           else Field.Default.plain
       }
       entitySource.content = field.content
-      entitySource.suspendable = field.suspend
     }
   }
 

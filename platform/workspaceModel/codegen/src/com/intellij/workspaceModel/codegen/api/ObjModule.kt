@@ -57,18 +57,6 @@ abstract class ObjModule(
 
   private var extFields: Array<ExtField<*, *>?>? = null
 
-  fun getExtField(localId: Int): ExtField<*, *>? =
-    extFields?.getOrNull(localId - 1)
-
-  fun beginExtFieldsInit(maxId: Int) {
-    extFields = arrayOfNulls(maxId)
-  }
-
-  fun registerExtField(f: ExtField<*, *>) {
-    check(f.id.moduleId == id)
-    extFields!![f.id.localId - 1] = f
-  }
-
   @Volatile
   private var initialized = false
 

@@ -1,7 +1,6 @@
 package org.jetbrains.deft.codegen.ijws.fields
 
 import deft.storage.codegen.*
-import deft.storage.codegen.field.implSuspendableCode
 import deft.storage.codegen.field.javaType
 import org.jetbrains.deft.codegen.ijws.isRefType
 import org.jetbrains.deft.impl.*
@@ -12,8 +11,6 @@ val Field<*, *>.implWsDataFieldCode: String
     if (hasSetter) {
       if (isOverride && name !in listOf("name", "entitySource")) append(implWsBlockingCodeOverride)
       else append(implWsDataBlockingCode)
-
-      if (suspendable == true) append("\n").append(implSuspendableCode)
     }
     else {
       append("var $javaName: ${type.javaType} ${defaultValue}")
