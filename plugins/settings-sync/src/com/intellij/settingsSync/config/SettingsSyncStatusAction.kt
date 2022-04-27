@@ -9,6 +9,7 @@ import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.settingsSync.SettingsSyncStatusTracker
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.isSettingsSyncEnabledByKey
+import icons.SettingsSyncIcons
 
 class SettingsSyncStatusAction : DumbAwareAction(message("title.settings.sync")) {
   override fun actionPerformed(e: AnActionEvent) {
@@ -23,12 +24,12 @@ class SettingsSyncStatusAction : DumbAwareAction(message("title.settings.sync"))
     }
     when(getStatus()) {
       SyncStatus.ON -> {
-        p.icon = AllIcons.General.InspectionsOK // TODO<rv>: Change icon
+        p.icon = SettingsSyncIcons.StatusEnabled
         @Suppress("DialogTitleCapitalization") // we use "is", not "Is
         p.text = message("status.action.settings.sync.is.on")
       }
       SyncStatus.OFF -> {
-        p.icon = AllIcons.Actions.Cancel // TODO<rv>: Change icon
+        p.icon = SettingsSyncIcons.StatusDisabled
         @Suppress("DialogTitleCapitalization") // we use "is", not "Is
         p.text = message("status.action.settings.sync.is.off")
       }
