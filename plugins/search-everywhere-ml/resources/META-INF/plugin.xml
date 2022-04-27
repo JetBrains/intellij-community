@@ -50,11 +50,13 @@
                   implementationClass="com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereFileStatistician"/>
     <statistician key="searchEverywhere"
                   implementationClass="com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereActionStatistician"/>
+    <statistician key="searchEverywhere"
+                  implementationClass="com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereSymbolStatistician"/>
 
     <statistics.validation.customValidationRule
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereRunConfigurationFeaturesProvider$RunConfigurationTypeValidator"/>
     <statistics.counterUsagesCollector
-              implementationClass="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLStatisticsCollector"/>
+      implementationClass="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLStatisticsCollector"/>
   </extensions>
 
   <extensionPoints>
