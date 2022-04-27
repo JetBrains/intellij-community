@@ -38,6 +38,7 @@ fun logWarn(traceInfo: TraceInfo? = null, contextName: String? = null, throwable
 }
 
 fun logWarn(message: String, throwable: Throwable? = null) {
+    if (throwable is CancellationException) return
     logger.warn(message, throwable)
 }
 
