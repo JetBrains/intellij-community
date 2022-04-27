@@ -12,6 +12,15 @@
     <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.gradleBuildScriptSupport"
                     interface="org.jetbrains.kotlin.idea.extensions.gradle.GradleBuildScriptSupport"
                     dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kpm.moduleInitialize"
+            interface="org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kpm.createRoots"
+            interface="org.jetbrains.kotlin.idea.gradle.configuration.kpm.ContentRootsCreator"
+            dynamic="true"/>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
