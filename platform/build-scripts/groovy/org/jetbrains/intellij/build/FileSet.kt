@@ -11,7 +11,6 @@ import java.util.stream.Collectors
 
 class FileSet(private val root: Path) {
   private val includePatterns: MutableMap<String, Regex> = mutableMapOf()
-  private val optionalIncludePatterns: MutableMap<String, Regex> = mutableMapOf()
   private val excludePatterns: MutableMap<String, Regex> = mutableMapOf()
 
   private fun toRegex(pattern: String): Regex = pattern
@@ -19,15 +18,8 @@ class FileSet(private val root: Path) {
     .let { FileUtil.convertAntToRegexp(it) }
     .let { Regex(it) }
 
-  @JvmOverloads
-  fun include(pattern: String, optional: Boolean = false): FileSet {
-    val regex = toRegex(pattern)
-    if (optional) {
-      optionalIncludePatterns[pattern] = regex
-    }
-    else {
-      includePatterns[pattern] = regex
-    }
+  fun include(pattern: String): FileSet {
+    includePatterns[pattern] = toRegex(pattern)
     return this
   }
 
@@ -59,7 +51,7 @@ class FileSet(private val root: Path) {
   fun enumerateNoAssertUnusedPatterns(): List<Path> = toPathListImpl(assertUnusedPatterns = false)
 
   private fun toPathListImpl(assertUnusedPatterns: Boolean): List<Path> {
-    if (includePatterns.isEmpty() && optionalIncludePatterns.isEmpty()) {
+    if (includePatterns.isEmpty()) {
       // Prevent accidental coding errors, do not remove
       error("No include patterns in $this. Please add some or call includeAll()")
     }
@@ -74,7 +66,7 @@ class FileSet(private val root: Path) {
       val relative = root.relativize(path)
 
       var included = false
-      for ((pattern, pathMatcher) in (includePatterns + optionalIncludePatterns)) {
+      for ((pattern, pathMatcher) in includePatterns) {
         if (pathMatcher.matches(FileUtil.toSystemIndependentName(relative.toString()))) {
           included = true
           usedIncludePatterns.add(pattern)
@@ -117,7 +109,7 @@ class FileSet(private val root: Path) {
 
   override fun toString() = "FileSet(" +
                             "root='$root', " +
-                            "included=[${(includePatterns.keys + optionalIncludePatterns.keys).sorted().joinToString(", ")}], " +
+                            "included=[${includePatterns.keys.sorted().joinToString(", ")}], " +
                             "excluded=[${excludePatterns.keys.sorted().joinToString(", ")}]" +
                             ")"
 
