@@ -19,6 +19,8 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -66,12 +68,14 @@ public class MavenIdeaPluginConfigurer extends MavenModuleConfigurer {
 
     String autoscrollToSource = cfg.getChildTextTrim("autoscrollToSource");
     if (!StringUtil.isEmptyOrSpaces(autoscrollToSource)) {
-      ((ProjectViewImpl)ProjectView.getInstance(project)).setAutoscrollToSource(Boolean.parseBoolean(autoscrollToSource), ProjectViewPane.ID);
+      ((ProjectViewImpl)ProjectView.getInstance(project)).setAutoscrollToSource(Boolean.parseBoolean(autoscrollToSource),
+                                                                                ProjectViewPane.ID);
     }
 
     String autoscrollFromSource = cfg.getChildTextTrim("autoscrollFromSource");
     if (!StringUtil.isEmptyOrSpaces(autoscrollFromSource)) {
-      ((ProjectViewImpl)ProjectView.getInstance(project)).setAutoscrollFromSource(Boolean.parseBoolean(autoscrollFromSource), ProjectViewPane.ID);
+      ((ProjectViewImpl)ProjectView.getInstance(project)).setAutoscrollFromSource(Boolean.parseBoolean(autoscrollFromSource),
+                                                                                  ProjectViewPane.ID);
     }
 
     String hideEmptyPackages = cfg.getChildTextTrim("hideEmptyPackages");
@@ -81,12 +85,14 @@ public class MavenIdeaPluginConfigurer extends MavenModuleConfigurer {
 
     String optimizeImportsBeforeCommit = cfg.getChildTextTrim("optimizeImportsBeforeCommit");
     if (!StringUtil.isEmptyOrSpaces(optimizeImportsBeforeCommit)) {
-      VcsConfiguration.getInstance(module.getProject()).OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT = Boolean.parseBoolean(optimizeImportsBeforeCommit);
+      VcsConfiguration.getInstance(module.getProject()).OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT =
+        Boolean.parseBoolean(optimizeImportsBeforeCommit);
     }
 
     String performCodeAnalisisBeforeCommit = cfg.getChildTextTrim("performCodeAnalisisBeforeCommit");
     if (!StringUtil.isEmptyOrSpaces(performCodeAnalisisBeforeCommit)) {
-      VcsConfiguration.getInstance(module.getProject()).CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = Boolean.parseBoolean(performCodeAnalisisBeforeCommit);
+      VcsConfiguration.getInstance(module.getProject()).CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT =
+        Boolean.parseBoolean(performCodeAnalisisBeforeCommit);
     }
 
     String reformatCodeBeforeCommit = cfg.getChildTextTrim("reformatCodeBeforeCommit");
@@ -124,9 +130,16 @@ public class MavenIdeaPluginConfigurer extends MavenModuleConfigurer {
         }
       }
 
-      WriteAction.run(() ->
-                        model.commit()
-      );
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+
+      }
+      else {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          WriteAction.run(() ->
+                            model.commit()
+          );
+        });
+      }
     }
   }
 }

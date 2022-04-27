@@ -21,6 +21,8 @@ class MavenInitialImportContext internal constructor(project: Project,
                                                      val profiles: MavenExplicitProfiles,
                                                      val generalSettings: MavenGeneralSettings,
                                                      val importingSettings: MavenImportingSettings,
+                                                     val ignorePaths: List<String>,
+                                                     val ignorePatterns: List<String>,
                                                      indicator: MavenProgressIndicator
 ) : MavenImportContext(project, indicator)
 
@@ -50,13 +52,14 @@ class MavenPluginResolvedContext internal constructor(project: Project,
                                                                                                                       resolvedContext.indicator)
 
 class MavenSourcesGeneratedContext internal constructor(val resolvedContext: MavenResolvedContext,
-                                                        val projectsFoldersResolved: ArrayList<MavenProject>) : MavenImportContext(
+                                                        val projectsFoldersResolved: List<MavenProject>) : MavenImportContext(
   resolvedContext.project, resolvedContext.indicator)
 
 class MavenImportedContext internal constructor(project: Project,
                                                 val modulesCreated: List<Module>,
                                                 val postImportTasks: List<MavenProjectsProcessorTask>?,
-                                                val readContext: MavenReadContext) : MavenImportContext(project,
+                                                val readContext: MavenReadContext,
+                                                val resolvedContext: MavenResolvedContext) : MavenImportContext(project,
                                                                                                         readContext.indicator)
 
 class MavenImportFinishedContext internal constructor(val context: MavenImportedContext?,

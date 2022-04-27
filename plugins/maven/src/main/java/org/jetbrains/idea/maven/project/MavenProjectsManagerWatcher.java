@@ -40,7 +40,7 @@ public class MavenProjectsManagerWatcher {
   private static final Logger LOG = Logger.getInstance(MavenProjectsManagerWatcher.class);
 
   private final Project myProject;
-  private final MavenProjectsTree myProjectsTree;
+  private MavenProjectsTree myProjectsTree;
   private final MavenGeneralSettings myGeneralSettings;
   private final MavenProjectsProcessor myReadingProcessor;
   private final MavenProjectsAware myProjectsAware;
@@ -84,6 +84,11 @@ public class MavenProjectsManagerWatcher {
   public synchronized void addManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
     myProjectsTree.addManagedFilesWithProfiles(files, explicitProfiles);
     scheduleUpdateAll(new MavenImportSpec(false, true, true));
+  }
+
+
+  public void setProjectsTree(MavenProjectsTree tree) {
+    myProjectsTree = tree;
   }
 
   @TestOnly

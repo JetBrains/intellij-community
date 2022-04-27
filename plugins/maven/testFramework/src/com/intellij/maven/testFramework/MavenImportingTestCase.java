@@ -3,10 +3,7 @@ package com.intellij.maven.testFramework;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.compiler.CompilerTestUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -36,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
@@ -53,6 +51,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -65,8 +64,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectsManager myProjectsManager;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
   protected final boolean isNewImportingProcess = Boolean.parseBoolean(System.getProperty("maven.linear.import"));
-  private List<String> myIgnorePaths;
-  private List<String> myIgnorePatterns;
   protected MavenReadContext myReadContext;
   protected MavenResolvedContext myResolvedContext;
   protected MavenImportedContext myImportedContext;
@@ -442,21 +439,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void setIgnoredFilesPathForNextImport(@NotNull List<String> paths) {
-    if (isNewImportingProcess) {
-      myIgnorePaths = paths;
-    }
-    else {
-      myProjectsManager.setIgnoredFilesPaths(paths);
-    }
+    myProjectsManager.setIgnoredFilesPaths(paths);
   }
 
   protected void setIgnoredPathPatternsForNextImport(@NotNull List<String> patterns) {
-    if (isNewImportingProcess) {
-      myIgnorePatterns = patterns;
-    }
-    else {
-      myProjectsManager.setIgnoredFilesPatterns(patterns);
-    }
+    myProjectsManager.setIgnoredFilesPatterns(patterns);
   }
 
   protected void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError, String... profiles) {
@@ -472,31 +459,57 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected final void importViaNewFlow(final List<VirtualFile> files, boolean failOnReadingError,
                                         List<String> disabledProfiles, String... profiles) {
 
-    MavenImportFlow flow = new MavenImportFlow();
-    MavenInitialImportContext initialImportContext =
-      flow.prepareNewImport(myProject, getMavenProgressIndicator(),
-                            new FilesList(files),
-                            getMavenGeneralSettings(),
-                            getMavenImporterSettings(),
-                            Arrays.asList(profiles),
-                            disabledProfiles);
     myProjectsManager.initForTests();
-    myReadContext = flow.readMavenFiles(initialImportContext, myIgnorePaths, myIgnorePatterns);
-    if (failOnReadingError) {
-      assertFalse("Failed to import Maven project: " + myReadContext.collectProblems(), myReadContext.hasReadingProblems());
-    }
+    myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList(profiles), disabledProfiles));
+    Promise<MavenImportFinishedContext> promise = MavenImportingManager.getInstance(myProject).openProjectAndImport(
+      new FilesList(files),
+      getMavenImporterSettings(),
+      getMavenGeneralSettings(),
+      MavenImportSpec.EXPLICIT_IMPORT
+    ).onSuccess(p -> {
+      Throwable t = p.getError();
+      if (t != null) {
+        if (t instanceof RuntimeException) throw (RuntimeException)t;
+        throw new RuntimeException(t);
+      }
+      myImportedContext = p.getContext();
+      myReadContext = myImportedContext.getReadContext();
+      myResolvedContext = myImportedContext.getResolvedContext();
+      myProjectsTree = myReadContext.getProjectsTree();
+      DependencySearchService depService = myProject.getServiceIfCreated(DependencySearchService.class);
+      if (depService != null) {
+        depService.updateProviders();
+      }
+    });
 
-    myResolvedContext = flow.resolveDependencies(myReadContext);
-    mySourcesGeneratedContext = flow.resolveFolders(myResolvedContext);
-    flow.resolvePlugins(myResolvedContext);
-    myImportedContext = flow.commitToWorkspaceModel(myResolvedContext);
-    myProjectsTree = myReadContext.getProjectsTree();
-    flow.updateProjectManager(myReadContext);
-    flow.configureMavenProject(myImportedContext);
-    DependencySearchService depService = myProject.getServiceIfCreated(DependencySearchService.class);
-    if (depService != null) {
-      depService.updateProviders();
-    }
+    PlatformTestUtil.waitForPromise(promise);
+
+
+    /*Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> { // we have not use EDT for import in tests
+
+      MavenImportFlow flow = new MavenImportFlow();
+      MavenInitialImportContext initialImportContext =
+        flow.prepareNewImport(myProject, getMavenProgressIndicator(),
+                              new FilesList(files),
+                              getMavenGeneralSettings(),
+                              getMavenImporterSettings(),
+                              Arrays.asList(profiles),
+                              disabledProfiles);
+      myProjectsManager.initForTests();
+      myReadContext = flow.readMavenFiles(initialImportContext, myIgnorePaths, myIgnorePatterns);
+      if (failOnReadingError) {
+        assertFalse("Failed to import Maven project: " + myReadContext.collectProblems(), myReadContext.hasReadingProblems());
+      }
+
+      myResolvedContext = flow.resolveDependencies(myReadContext);
+      mySourcesGeneratedContext = flow.resolveFolders(myResolvedContext);
+      flow.resolvePlugins(myResolvedContext);
+      myImportedContext = flow.commitToWorkspaceModel(myResolvedContext);
+      myProjectsTree = myReadContext.getProjectsTree();
+      flow.updateProjectManager(myReadContext);
+      flow.configureMavenProject(myImportedContext);
+    });
+    PlatformTestUtil.waitForFuture(future, 60_000);*/
   }
 
   protected void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError,
@@ -541,7 +554,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
                               Arrays.asList(profiles),
                               disabledProfiles);
       myProjectsManager.initForTests();
-      myReadContext = flow.readMavenFiles(initialImportContext, myIgnorePaths, myIgnorePatterns);
+      myReadContext = flow.readMavenFiles(initialImportContext);
       flow.updateProjectManager(myReadContext);
     }
     else {
@@ -621,7 +634,17 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void resolvePlugins() {
     if (isNewImportingProcess) {
       assertNotNull(myResolvedContext);
-      myPluginResolvedContext = new MavenImportFlow().resolvePlugins(myResolvedContext);
+      AsyncPromise<MavenPluginResolvedContext> promise = new AsyncPromise<>();
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        try {
+          promise.setResult(new MavenImportFlow().resolvePlugins(myResolvedContext));
+        }
+        catch (Exception e) {
+          promise.setError(e);
+        }
+      });
+      PlatformTestUtil.waitForPromise(promise);
+      myPluginResolvedContext = promise.get();
       return;
     }
 
@@ -629,19 +652,13 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void downloadArtifacts() {
-    if (isNewImportingProcess) {
-      new MavenImportFlow().downloadArtifacts(myResolvedContext, true, true);
-    }
-    else {
-      downloadArtifacts(myProjectsManager.getProjects(), null);
-    }
+    downloadArtifacts(myProjectsManager.getProjects(), null);
   }
 
   protected MavenArtifactDownloader.DownloadResult downloadArtifacts(Collection<MavenProject> projects,
                                                                      List<MavenArtifact> artifacts) {
     if (isNewImportingProcess) {
-      return new MavenImportFlow().downloadSpecificArtifacts(myProject, projects, artifacts, true, true,
-                                                             new MavenProgressIndicator(myProject, null));
+      return downloadArtifactAndWaitForResult(projects, artifacts);
     }
     final MavenArtifactDownloader.DownloadResult[] unresolved = new MavenArtifactDownloader.DownloadResult[1];
 
@@ -653,12 +670,29 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return unresolved[0];
   }
 
+  @NotNull
+  private MavenArtifactDownloader.DownloadResult downloadArtifactAndWaitForResult(Collection<MavenProject> projects,
+                                                                                  List<MavenArtifact> artifacts) {
+    AsyncPromise<MavenArtifactDownloader.DownloadResult> promise = new AsyncPromise<>();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        promise.setResult(new MavenImportFlow().downloadSpecificArtifacts(myProject, projects, artifacts, true, true,
+                                                                          new MavenProgressIndicator(myProject, null)));
+      }
+      catch (Throwable e) {
+        promise.setError(e);
+      }
+    });
+    PlatformTestUtil.waitForPromise(promise);
+    return promise.get();
+  }
+
   protected void performPostImportTasks() {
-    if (isNewImportingProcess) {
+    /*if (isNewImportingProcess) {
       assertNotNull(myImportedContext);
       new MavenImportFlow().runPostImportTasks(myImportedContext);
       return;
-    }
+    }*/
     myProjectsManager.waitForPostImportTasksCompletion();
   }
 

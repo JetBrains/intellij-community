@@ -16,8 +16,10 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.idea.maven.project.importing.FilesList;
 import org.jetbrains.idea.maven.project.importing.MavenImportFlow;
 import org.jetbrains.idea.maven.project.importing.MavenInitialImportContext;
@@ -362,7 +364,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
                               getMavenGeneralSettings(),
                               getMavenImporterSettings(),
                               Collections.emptyList(), Collections.emptyList());
-      MavenReadContext readContext = flow.readMavenFiles(initialImportContext, Collections.emptyList(), Collections.emptyList());
+      MavenReadContext readContext = flow.readMavenFiles(initialImportContext);
       flow.updateProjectManager(readContext);
       myNavigator.scheduleStructureUpdate();
 

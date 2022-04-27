@@ -842,6 +842,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   @ApiStatus.Internal
   public void setProjectsTree(MavenProjectsTree newTree) {
     myProjectsTree = newTree;
+    myWatcher.setProjectsTree(newTree);
   }
 
   @ApiStatus.Internal
@@ -866,6 +867,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles() {
     forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec.EXPLICIT_IMPORT);
   }
+
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec spec) {
     if (MavenUtil.isLinearImportEnabled()) {
       MavenImportingManager.getInstance(myProject)
@@ -940,7 +942,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public Promise<?> waitForImportCompletion() {
-    if(MavenUtil.isLinearImportEnabled()) return MavenImportingManager.getInstance(myProject).getImportFinishPromise();
+    if (MavenUtil.isLinearImportEnabled()) return MavenImportingManager.getInstance(myProject).getImportFinishPromise();
 
     AsyncPromise<?> promise = new AsyncPromise<>();
     MavenUtil.runInBackground(myProject, SyncBundle.message("maven.sync.waiting.for.completion"), false, indicator -> {

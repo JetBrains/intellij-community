@@ -63,7 +63,9 @@ class MavenImportingManager(val project: Project) {
                            generalSettings: MavenGeneralSettings,
                            spec: MavenImportSpec): Promise<MavenImportFinishedContext> {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    assertNoCurrentImport()
+    if (currentContext != null && currentContext !is MavenImportFinishedContext) {
+      getImportFinishPromise();
+    }
     MavenUtil.setupProjectSdk(project)
     currentContext = MavenStartedImport(project)
     ApplicationManager.getApplication().executeOnPooledThread {
@@ -100,7 +102,7 @@ class MavenImportingManager(val project: Project) {
   private fun assertNoCurrentImport() {
     if (currentContext != null) {
       if (currentContext !is MavenImportFinishedContext) {
-        throw IllegalStateException("Importing is in progress already")
+        throw IllegalStateException("Importing is in progress already: " + currentContext)
       }
     }
   }
@@ -115,12 +117,14 @@ class MavenImportingManager(val project: Project) {
     val flow = MavenImportFlow()
 
     return runSync(spec) {
+      val enabledProfiles = MavenProjectsManager.getInstance(project).explicitProfiles.enabledProfiles
+      val disabledProfiles = MavenProjectsManager.getInstance(project).explicitProfiles.disabledProfiles
       @Suppress("HardCodedStringLiteral")
       console.addWarning("New Maven importing flow is enabled", "New Maven importing flow is enabled, it is experimental feature. " +
                                                                 "\n\n" +
                                                                 "To revert to old importing flow, set \"maven.linear.import\" registry flag to false");
-      val initialImport = flow.prepareNewImport(project, indicator, importPaths, generalSettings, importingSettings, emptyList(),
-                                                emptyList())
+      val initialImport = flow.prepareNewImport(project, indicator, importPaths, generalSettings, importingSettings, enabledProfiles,
+                                                disabledProfiles)
       currentContext = initialImport
 
       val readMavenFiles = doTask(MavenProjectBundle.message("maven.reading")) {
@@ -138,10 +142,10 @@ class MavenImportingManager(val project: Project) {
         flow.resolvePlugins(dependenciesContext)
       }
 
-      val foldersResolved = doTask(MavenProjectBundle.message("maven.updating.folders")) {
+      /*val foldersResolved = doTask(MavenProjectBundle.message("maven.updating.folders")) {
         currentContext?.indicator?.checkCanceled()
         flow.resolveFolders(dependenciesContext)
-      }
+      }*/
 
       val importContext = doTask(MavenProjectBundle.message("maven.project.importing")) {
         currentContext?.indicator?.checkCanceled()

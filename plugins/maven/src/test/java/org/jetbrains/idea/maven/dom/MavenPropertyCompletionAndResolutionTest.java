@@ -1024,7 +1024,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                             Arrays.asList(profiles),
                             Collections.emptyList());
     myProjectsManager.initForTests();
-    myReadContext = flow.readMavenFiles(initialImportContext, null, null);
+    myReadContext = flow.readMavenFiles(initialImportContext);
     myProjectsManager.setProjectsTree(myReadContext.getProjectsTree());
   }
 }
