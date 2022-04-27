@@ -19,14 +19,14 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 @Suppress("LeakingThis")
-abstract class DiffRequestProcessorEditorBase(
+abstract class DiffEditorBase(
   private val file: DiffVirtualFileBase,
   component: JComponent,
   private val disposable: CheckedDisposable,
   private val context: DiffContext
 ) : FileEditorBase() {
   companion object {
-    private val LOG = logger<DiffRequestProcessorEditorBase>()
+    private val LOG = logger<DiffEditorBase>()
   }
 
   private val panel = MyPanel(component)
