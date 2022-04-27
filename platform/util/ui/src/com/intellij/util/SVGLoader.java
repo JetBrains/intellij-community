@@ -401,9 +401,12 @@ public final class SVGLoader {
         String opacity = svg.getAttribute(attrName + "-opacity");
         if (!Strings.isEmpty(color)) {
           int alpha = 255;
-          try {
-            alpha = (int)Math.ceil(255f * Float.parseFloat(opacity));
-          }catch (Exception ignore){}
+          if (!Strings.isEmpty(opacity)) {
+            try {
+              alpha = (int)Math.ceil(255f * Float.parseFloat(opacity));
+            }
+            catch (Exception ignore) { }
+          }
           String newColor = null;
           String key = toCanonicalColor(color);
           if (alpha != 255) {
