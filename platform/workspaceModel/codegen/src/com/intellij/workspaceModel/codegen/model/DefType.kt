@@ -50,14 +50,14 @@ class DefType(
   private fun verify(diagnostics: Diagnostics, it: Field<out Obj, Any?>) {
     val base = it.base
     if (base != null) {
-      if (!base.open) diagnostics.add(it.def!!.nameRange,
+      if (!base.open) diagnostics.add(it.exDef!!.nameRange,
                                       "Inheritance not allowed: ${fieldDef(base)} is not `@Open`"
       )
     }
   }
 
   private fun fieldDef(field: Field<*, *>): String {
-    val def = field.def
+    val def = field.exDef
     return if (def != null) "`$def` of ${field.owner}" else "`$field`"
   }
 

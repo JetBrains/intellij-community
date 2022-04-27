@@ -1,7 +1,6 @@
 package org.jetbrains.deft.impl.fields
 
 import org.jetbrains.deft.Obj
-import org.jetbrains.deft.impl.ObjModule
 import org.jetbrains.deft.impl.ObjType
 import org.jetbrains.deft.impl.ValueType
 
@@ -14,7 +13,7 @@ class Field<T : Obj, V>(
   name: String,
   type: ValueType<V>
 ) : MemberOrExtField<T, V>(owner, name, type) {
-  data class Id(val module: ObjModule.Id, val typeId: Int, val fieldId: Int)
+  data class Id(val typeId: Int, val fieldId: Int)
 
   init {
     owner.structure.addField(this)

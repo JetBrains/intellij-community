@@ -1,11 +1,10 @@
 package org.jetbrains.deft.impl.fields
 
 import org.jetbrains.deft.Obj
-import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.codegen.model.DefField
 import org.jetbrains.deft.impl.ExtensibleImpl
 import org.jetbrains.deft.impl.ObjType
 import org.jetbrains.deft.impl.ValueType
-import org.jetbrains.deft.obj.impl.fields.MetaTypes
 
 abstract class MemberOrExtField<P : Obj, V>(
   val owner: ObjType<P, *>,
@@ -19,11 +18,14 @@ abstract class MemberOrExtField<P : Obj, V>(
   var constructorField = false
   var hasDefault: Field.Default = Field.Default.none
   var defaultValue: String? = null
+  var exDef: DefField?
+    get() = unsafeGetExtension()
+    set(value) {
+      unsafeAddExtension(value!!)
+    }
 
   val hasSetter: Boolean
     get() =
       if (open) true
       else hasDefault == Field.Default.none // final fields: setter allowed only for fields without default value
-
-  companion object : ObjType<MemberOrExtField<*, *>, ObjBuilder<MemberOrExtField<*, *>>>(MetaTypes, 0)
 }

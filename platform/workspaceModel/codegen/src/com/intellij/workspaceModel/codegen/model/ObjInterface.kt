@@ -30,7 +30,7 @@ object ObjInterface : KtInterfaceKind() {
       return null
     }
 
-    return TRef<Obj>(type.def.module.id.notation, type.id, child = childAnnotation != null).also {
+    return TRef<Obj>(type.id, child = childAnnotation != null).also {
       it.targetObjType = type
     }
   }

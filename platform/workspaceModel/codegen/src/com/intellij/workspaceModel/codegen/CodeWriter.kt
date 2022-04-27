@@ -27,7 +27,7 @@ object CodeWriter {
       it to document
     }
 
-    val module = KtObjModule(project, ObjModule.Id())
+    val module = KtObjModule(project)
     ktSrcs.forEach { (vfu, document) ->
       module.addFile(vfu.name, vfu) { document.text }
     }
@@ -50,7 +50,7 @@ object CodeWriter {
       .toList()
       .filter { it.name.endsWith(".kt") }
 
-    val module = KtObjModule(null, ObjModule.Id())
+    val module = KtObjModule(null)
     ktSrcs.forEach {
       module.addFile(it.relativeTo(dir).path, null) { it.readText() }
     }

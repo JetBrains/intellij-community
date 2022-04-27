@@ -2,10 +2,7 @@ package org.jetbrains.deft.codegen.model
 
 import org.jetbrains.deft.impl.TBlob
 import org.jetbrains.deft.impl.TRef
-import org.jetbrains.deft.impl.fields.ExtField
-import org.jetbrains.deft.impl.fields.ExtFieldId
-import org.jetbrains.deft.impl.fields.Field
-import org.jetbrains.deft.impl.fields.MemberOrExtField
+import org.jetbrains.deft.impl.fields.*
 
 class DefField(
   val nameRange: SrcRange,
@@ -83,13 +80,13 @@ class DefField(
     val receiverObjType = resolvedReceiver.targetObjType
 
     val valueType = type.build(scope, diagnostics, annotations) ?: return
-    val field = ExtField(ExtFieldId(module.id, id), receiverObjType, name, valueType)
+    val field = ExtField(ExtFieldId(id), receiverObjType, name, valueType)
     module.extFields.add(field)
     configure(field)
   }
 
   private fun configure(field: MemberOrExtField<*, *>) {
-    field.def = this
+    field.exDef = this
     field.open = open
     if (expr) {
       field.hasDefault =

@@ -21,7 +21,7 @@ open class WsEntityInterface : KtInterfaceKind() {
     field.toMemberField(scope, type, diagnostics)
     if (fieldNumber == 0) {
       val entitySource = Field(type, field.id, "entitySource", TBlob<Any>("EntitySource"))
-      entitySource.def = field
+      entitySource.exDef = field
       entitySource.open = field.open
       if (field.expr) {
         entitySource.hasDefault =
@@ -36,7 +36,7 @@ open class WsEntityInterface : KtInterfaceKind() {
                               childAnnotation: KtAnnotation?): ValueType<*>? {
     val type = ktInterface?.objType
     return if (type != null)
-      TRef<Obj>(type.def.module.id.notation, type.id, child = childAnnotation != null).also {
+      TRef<Obj>(type.id, child = childAnnotation != null).also {
         it.targetObjType = type
       }
     else if (ktType.classifier in listOf("VirtualFileUrl", "EntitySource", "PersistentEntityId"))
@@ -56,7 +56,7 @@ object WsPsiEntityInterface: WsEntityInterface() {
                               childAnnotation: KtAnnotation?): ValueType<*>? {
     val type = ktInterface?.objType
     if (type != null)
-      return TPsiRef<Obj>(type.def.module.id.notation, type.id, child = childAnnotation != null).also { it.targetObjType = type }
+      return TPsiRef<Obj>(type.id, child = childAnnotation != null).also { it.targetObjType = type }
     return super.buildValueType(ktInterface, diagnostics, ktType, childAnnotation)
   }
 }

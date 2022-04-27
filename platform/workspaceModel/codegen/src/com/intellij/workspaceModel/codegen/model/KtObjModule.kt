@@ -9,9 +9,8 @@ import storage.codegen.patcher.KotlinReader
 
 class KtObjModule(
     val project: Project?,
-    fqn: Id,
     val addDependencies: List<KtObjModule> = listOf()
-) : ObjModule(fqn) {
+) : ObjModule() {
   val packages = mutableMapOf<String?, KtPackage>()
   val files = mutableListOf<KtFile>()
   val extFields = mutableListOf<ExtField<*, *>>()

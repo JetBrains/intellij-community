@@ -9,9 +9,9 @@ abstract class ObjType<T : Obj, B : ObjBuilder<T>>(private val _module: ObjModul
   val module: ObjModule
     get() = _module.require()
 
-  val fullId get() = Id<T, B>(module.id, id)
+  val fullId get() = Id(id)
 
-  data class Id<T : Obj, B : ObjBuilder<T>>(val module: ObjModule.Id, val id: Int)
+  data class Id(val id: Int)
 
   val structure: TStructure<T, B> = TStructure(this, base?.structure)
 
@@ -19,7 +19,7 @@ abstract class ObjType<T : Obj, B : ObjBuilder<T>>(private val _module: ObjModul
     get() = super.name
 
   @ObjModule.InitApi
-  fun link(linker: ObjModules) {
+  fun link(linker: ObjModule) {
     structure.link(linker)
   }
 }

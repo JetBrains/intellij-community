@@ -1,48 +1,14 @@
 package org.jetbrains.deft.impl
 
-import org.jetbrains.deft.Obj
 import org.jetbrains.deft.impl.fields.ExtField
-import org.jetbrains.deft.impl.fields.ExtFieldId
-import org.jetbrains.deft.obj.api.ExtFieldKotlinId
-import kotlin.reflect.KProperty
 
-abstract class ObjModule(
-  val id: Id,
-  //val version: SemVer = SemVer(0, 0)
-) {
-  val modules: ObjModules
-    get() = ObjModule.modules
-
-  /**
-   * Example: `org.jetbrains.deft.intellijWs`
-   * will be parsed as:
-   * - `org.jetbrains.deft.intellijWs` package
-   * - `org.jetbrains.deft.intellijWs.IntellijWs` object name
-   **/
-  @JvmInline
-  value class Id(val notation: String = "default") {
-  }
-
+abstract class ObjModule {
   @RequiresOptIn
   annotation class InitApi
 
-  companion object {
-    val modules = ObjModules()
-  }
-
-  init {
-    modules.byId[id] = this
-  }
 
   internal lateinit var byId: Array<ObjType<*, *>?>
   private val _dependencies = mutableListOf<ObjModule>()
-  val dependencies: List<ObjModule>
-    get() = _dependencies.toList()
-  val types: Collection<ObjType<*, *>>
-    get() = byId.filterNotNull()
-  val lastId: Int
-    get() = byId.size
-
   @InitApi
   protected abstract fun init()
 
@@ -52,7 +18,7 @@ abstract class ObjModule(
 
   @InitApi
   protected fun add(type: ObjType<*, *>) {
-    byId[modules.typeIndex(type.id)] = type
+    byId[typeIndex(type.id)] = type
   }
 
   private var extFields: Array<ExtField<*, *>?>? = null
@@ -69,7 +35,7 @@ abstract class ObjModule(
   @OptIn(InitApi::class)
   fun require(): ObjModule {
     if (!initialized) {
-      synchronized(modules) {
+      synchronized(this) {
         if (!initialized) {
           init()
           link()
@@ -89,45 +55,19 @@ abstract class ObjModule(
     }
 
     byId.forEach {
-      it?.link(modules)
+      it?.link(this)
     }
 
     extFields?.forEach {
-      it?.type?.link(modules)
+      it?.type?.link(this)
     }
 
     initialized = true
   }
 
   internal fun type(typeId: Int): ObjType<*, *> =
-    byId[modules.typeIndex(typeId)]!!
+    byId[typeIndex(typeId)]!!
 
-  val _extKotlinProps = mutableMapOf<ExtFieldKotlinId, ExtField<*, *>>()
-
-  fun <T : Obj, V> defExt(
-    id: Int,
-    receiver: ObjType<T, *>,
-    type: ValueType<V>,
-  ): ExtFieldProvider<T, V> =
-    ExtFieldProvider(extFieldId(id), receiver, type)
-
-  private fun extFieldId(i: Int): ExtFieldId = ExtFieldId(id, i)
-
-  inner class ExtFieldProvider<T : Obj, V>(
-    val id: ExtFieldId,
-    val receiver: ObjType<T, *>,
-    val type: ValueType<V>
-  ) {
-    operator fun provideDelegate(
-      nothing: Nothing?,
-      prop: KProperty<*>,
-    ): ExtField<T, V> {
-      val extField = ExtField(id, receiver, prop.name, type)
-      check(_extKotlinProps.put(ExtFieldKotlinId(receiver, prop.name), extField) == null) {
-        "`${prop.name}` ext field redeclaration"
-      }
-      return extField
-    }
-  }
+  internal fun typeIndex(id: Int) = id - 1
 }
 
