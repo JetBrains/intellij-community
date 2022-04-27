@@ -8,7 +8,6 @@ import com.apple.eawt.FullScreenUtilities;
 import com.apple.eawt.event.FullScreenEvent;
 import com.intellij.ide.ActiveWindowsWatcher;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -227,7 +226,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     // That notification comes as a priority event, so such an 'invokeLater' is enough to fix the problem.
     // Note, that subsequent invocations of current method in the same or close enough EDT events isn't supported well, but
     // such usage scenarios are not known at the moment.
-    ApplicationManager.getApplication().invokeLater(() -> {
+    SwingUtilities.invokeLater(() -> {
       if (myInFullScreen == state) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Full screen is already at state " + state + " for " + myFrame);
