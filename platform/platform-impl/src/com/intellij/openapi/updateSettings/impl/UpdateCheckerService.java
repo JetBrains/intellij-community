@@ -199,9 +199,7 @@ final class UpdateCheckerService {
       // ensures that the "what's new" page is shown _only_ for users who have updated from a previous version
       // (to detect updates, the method relies on imported settings; users starting from scratch are out of luck)
       properties.setValue(WHATS_NEW_SHOWN_FOR_PROPERTY, current.getBaselineVersion(), 0);
-      if (ConfigImportHelper.isFirstSession()) {
-        return false;
-      }
+      return false;
     }
 
     if (!majorEap && lastShownFor < current.getBaselineVersion() && UpdateSettings.getInstance().isShowWhatsNewEditor()) {
