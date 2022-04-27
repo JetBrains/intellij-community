@@ -12,7 +12,6 @@ import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -22,14 +21,7 @@ public class TrigramTextSearchService implements TextSearchService {
   public @NotNull TextSearchResult processFilesWithText(@NotNull String text,
                                                         Processor<? super VirtualFile> processor,
                                                         @NotNull GlobalSearchScope scope) {
-    IntSet keys = new IntOpenHashSet();
-    TrigramBuilder.processTrigrams(text, new TrigramBuilder.TrigramProcessor() {
-      @Override
-      public boolean test(int value) {
-        keys.add(value);
-        return true;
-      }
-    });
+    IntSet keys = TrigramBuilder.getTrigrams(text);
     if (keys.isEmpty()) return TextSearchResult.NO_TRIGRAMS;
     return FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, f -> {
       ProgressManager.checkCanceled();

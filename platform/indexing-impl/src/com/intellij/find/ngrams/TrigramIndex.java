@@ -10,8 +10,6 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,9 +51,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
       @Override
       @NotNull
       public Map<Integer, Void> map(@NotNull FileContent inputData) {
-        MyTrigramProcessor trigramProcessor = new MyTrigramProcessor();
-        TrigramBuilder.processTrigrams(inputData.getContentAsText(), trigramProcessor);
-        return trigramProcessor.map;
+        return TrigramBuilder.getTrigramsAsMap(inputData.getContentAsText());
       }
     };
   }
@@ -131,21 +127,5 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
         return result;
       }
     };
-  }
-
-  private static final class MyTrigramProcessor extends TrigramBuilder.TrigramProcessor {
-    Int2ObjectMap<Void> map;
-
-    @Override
-    public boolean consumeTrigramsCount(int count) {
-      map = new Int2ObjectOpenHashMap<>(count);
-      return true;
-    }
-
-    @Override
-    public boolean test(int value) {
-      map.put(value, null);
-      return true;
-    }
   }
 }

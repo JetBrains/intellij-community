@@ -10,8 +10,6 @@ import com.intellij.util.io.VoidDataExternalizer;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,38 +31,15 @@ public final class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Voi
 
   @Nullable
   public IntSet getCommitsForSubstring(@NotNull CharSequence string) throws StorageException {
-    MyTrigramProcessor trigramProcessor = new MyTrigramProcessor();
-    TrigramBuilder.processTrigrams(string, trigramProcessor);
-
-    if (trigramProcessor.map.isEmpty()) {
-      return null;
-    }
-    return getCommitsWithAllKeys(trigramProcessor.map.keySet());
+    IntSet trigrams = TrigramBuilder.getTrigrams(string);
+    return trigrams.isEmpty() ? null : getCommitsWithAllKeys(trigrams);
   }
 
   public static final class TrigramMessageIndexer implements DataIndexer<Integer, Void, VcsCommitMetadata> {
     @NotNull
     @Override
     public Map<Integer, Void> map(@NotNull VcsCommitMetadata inputData) {
-      MyTrigramProcessor trigramProcessor = new MyTrigramProcessor();
-      TrigramBuilder.processTrigrams(inputData.getFullMessage(), trigramProcessor);
-      return trigramProcessor.map;
-    }
-  }
-
-  private static final class MyTrigramProcessor extends TrigramBuilder.TrigramProcessor {
-    Int2ObjectMap<Void> map;
-
-    @Override
-    public boolean consumeTrigramsCount(int count) {
-      map = new Int2ObjectOpenHashMap<>(count);
-      return true;
-    }
-
-    @Override
-    public boolean test(int value) {
-      map.put(value, null);
-      return true;
+      return TrigramBuilder.getTrigramsAsMap(inputData.getFullMessage());
     }
   }
 }
