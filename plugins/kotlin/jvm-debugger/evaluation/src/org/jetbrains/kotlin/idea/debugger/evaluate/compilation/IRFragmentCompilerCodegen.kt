@@ -236,7 +236,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
                 signature: String?,
                 exceptions: Array<out String>?
             ): MethodVisitor? {
-                if (name?.startsWith(GENERATED_FUNCTION_NAME) == true) {
+                if (name?.isMainMethod == true) {
                     Type.getArgumentTypes(descriptor).forEach { parameters.add(it) }
                     returnType = Type.getReturnType(descriptor)
                 }
@@ -246,4 +246,22 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
 
         return CompiledDataDescriptor.MethodSignature(parameters, returnType!!)
     }
+
+    // Short of inspecting the metadata, there are no indications in the bytecode of what precisely is the entrypoint
+    // to the compiled fragment. It's either:
+    //
+    //   - named precisely GENERATED_FUNCTION_NAME
+    //   - named GENERATED_FUNCTION_NAME-abcdefg, as a result of inline class mangling
+    //       if the fragment captures a value of inline class type.
+    //
+    // and should not be confused with
+    //
+    //   - GENERATED_FUNCTION_NAME$lambda-nn, introduced by SAM conversion
+    //   - GENERATED_FUNCTION_NAME$foo, introduced by local functions in the fragment
+    //
+    val String.isMainMethod: Boolean
+      get() {
+          return equals(GENERATED_FUNCTION_NAME) || startsWith("$GENERATED_FUNCTION_NAME-")
+      }
 }
+
