@@ -8,6 +8,7 @@ import com.intellij.debugger.mockJDI.MockMirror;
 import com.intellij.debugger.mockJDI.MockVirtualMachine;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class MockValue extends MockMirror implements Value {
   public MockValue(final MockVirtualMachine virtualMachine) {
@@ -19,6 +20,10 @@ public abstract class MockValue extends MockMirror implements Value {
   @Override
   public Type type() {
     throw new UnsupportedOperationException("Not implemented: \"type\" in " + getClass().getName());
+  }
+
+  public static MockValue createValue(@NotNull Object o, final MockVirtualMachine virtualMachine) {
+    return MockObjectReference.createObjectReference(o, o.getClass(), virtualMachine);
   }
 
   public static MockValue createValue(Object o, Class<?> type, final MockVirtualMachine virtualMachine) {

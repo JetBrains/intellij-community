@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.sun.jdi.*;
@@ -36,8 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class DebuggerDfaRunner {
-  private static final Set<String> COLLECTIONS_WITH_SIZE_FIELD = Set.of(
-    CommonClassNames.JAVA_UTIL_ARRAY_LIST, CommonClassNames.JAVA_UTIL_LINKED_LIST, CommonClassNames.JAVA_UTIL_HASH_MAP, "java.util.TreeMap");
   private final @NotNull PsiElement myBody;
   private final @NotNull PsiElement myAnchor;
   private final @NotNull Project myProject;
@@ -97,21 +94,6 @@ public class DebuggerDfaRunner {
     return null;
   }
 
-  private static String getEnumConstantName(ObjectReference ref) {
-    ReferenceType type = ref.referenceType();
-    if (!(type instanceof ClassType) || !((ClassType)type).isEnum()) return null;
-    ClassType superclass = ((ClassType)type).superclass();
-    if (superclass == null) return null;
-    if (!superclass.name().equals(CommonClassNames.JAVA_LANG_ENUM)) {
-      superclass = superclass.superclass();
-    }
-    if (superclass == null || !superclass.name().equals(CommonClassNames.JAVA_LANG_ENUM)) return null;
-    Field nameField = superclass.fieldByName("name");
-    if (nameField == null) return null;
-    Value nameValue = ref.getValue(nameField);
-    return nameValue instanceof StringReference ? ((StringReference)nameValue).value() : null;
-  }
-
   private class StateBuilder {
     private final @NotNull PsiElementFactory myPsiFactory = JavaPsiFacade.getElementFactory(myProject);
     private final @Nullable ClassLoaderReference myContextLoader;
@@ -169,39 +151,44 @@ public class DebuggerDfaRunner {
     }
 
     private void addConditions(DfaVariableValue var, Value jdiValue) {
-      DfType val = getConstantValue(jdiValue);
-      if (val != DfType.TOP) {
-        myMemState.applyCondition(var.eq(val));
+      JdiValueInfo valueInfo = JdiValueInfo.from(jdiValue);
+      addConditions(var, valueInfo);
+    }
+
+    private void addConditions(DfaVariableValue var, JdiValueInfo valueInfo) {
+      if (valueInfo instanceof JdiValueInfo.PrimitiveConstant) {
+        myMemState.applyCondition(var.eq(((JdiValueInfo.PrimitiveConstant)valueInfo).getDfType()));
       }
-      if (jdiValue instanceof ObjectReference) {
-        ObjectReference ref = (ObjectReference)jdiValue;
-        ReferenceType type = ref.referenceType();
+      else if (valueInfo instanceof JdiValueInfo.StringConstant) {
+        PsiType stringType = myPsiFactory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, myBody.getResolveScope());
+        myMemState.applyCondition(var.eq(DfTypes.referenceConstant(((JdiValueInfo.StringConstant)valueInfo).getValue(), stringType)));
+      }
+      else if (valueInfo instanceof JdiValueInfo.ObjectRef) {
+        ReferenceType type = ((JdiValueInfo.ObjectRef)valueInfo).getType();
         ClassLoaderReference typeLoader = type.classLoader();
         if (!isCompatibleClassLoader(typeLoader)) return;
         PsiType psiType = getType(type, myProject, myBody.getResolveScope());
         if (psiType == null) return;
         TypeConstraint exactType = TypeConstraints.exact(psiType);
-        String name = type.name();
         myMemState.meetDfType(var, exactType.asDfType().meet(DfTypes.NOT_NULL_OBJECT));
-        if (jdiValue instanceof ArrayReference) {
-          DfaValue dfaLength = SpecialField.ARRAY_LENGTH.createValue(myFactory, var);
-          int jdiLength = ((ArrayReference)jdiValue).length();
-          myMemState.applyCondition(dfaLength.eq(DfTypes.intValue(jdiLength)));
+        if (valueInfo instanceof JdiValueInfo.EnumConstant) {
+          String name = ((JdiValueInfo.EnumConstant)valueInfo).getName();
+          PsiClass enumClass = ((PsiClassType)psiType).resolve();
+          if (enumClass != null && enumClass.isEnum()) {
+            PsiField enumConst = enumClass.findFieldByName(name, false);
+            if (enumConst instanceof PsiEnumConstant) {
+              myMemState.applyCondition(var.eq(DfTypes.referenceConstant(enumConst, exactType)));
+            }
+          }
         }
-        else if (TypeConversionUtil.isPrimitiveWrapper(name)) {
-          setSpecialField(var, ref, type, "value", SpecialField.UNBOX);
-        }
-        else if (COLLECTIONS_WITH_SIZE_FIELD.contains(name)) {
-          setSpecialField(var, ref, type, "size", SpecialField.COLLECTION_SIZE);
-        }
-        else if (name.startsWith("java.util.Collections$Empty")) {
-          myMemState.applyCondition(SpecialField.COLLECTION_SIZE.createValue(myFactory, var).eq(DfTypes.intValue(0)));
-        }
-        else if (name.startsWith("java.util.Collections$Singleton")) {
-          myMemState.applyCondition(SpecialField.COLLECTION_SIZE.createValue(myFactory, var).eq(DfTypes.intValue(1)));
-        }
-        else if (CommonClassNames.JAVA_UTIL_OPTIONAL.equals(name) && !(var.getDescriptor() instanceof SpecialField)) {
-          setSpecialField(var, ref, type, "value", SpecialField.OPTIONAL_VALUE);
+        if (valueInfo instanceof JdiValueInfo.ObjectWithSpecialField) {
+          JdiValueInfo.ObjectWithSpecialField withSpecialField = (JdiValueInfo.ObjectWithSpecialField)valueInfo;
+          SpecialField field = withSpecialField.getField();
+          JdiValueInfo fieldValue = withSpecialField.getValue();
+          DfaVariableValue dfaField = ObjectUtils.tryCast(field.createValue(myFactory, var), DfaVariableValue.class);
+          if (dfaField != null) {
+            addConditions(dfaField, fieldValue);
+          }
         }
       }
     }
@@ -231,65 +218,6 @@ public class DebuggerDfaRunner {
         myParentLoaders = loaders;
       }
       return myParentLoaders;
-    }
-
-    private void setSpecialField(DfaVariableValue dfaQualifier,
-                                 ObjectReference jdiQualifier,
-                                 ReferenceType type,
-                                 String fieldName,
-                                 SpecialField specialField) {
-      Field value = type.fieldByName(fieldName);
-      if (value != null) {
-        DfaVariableValue dfaUnboxed = ObjectUtils.tryCast(specialField.createValue(myFactory, dfaQualifier), DfaVariableValue.class);
-        Value jdiUnboxed = jdiQualifier.getValue(value);
-        if (jdiUnboxed != null && dfaUnboxed != null) {
-          addConditions(dfaUnboxed, jdiUnboxed);
-        }
-      }
-    }
-
-    @NotNull
-    private DfType getConstantValue(Value jdiValue) {
-      if (jdiValue == DfaAssistProvider.NullConst) {
-        return DfTypes.NULL;
-      }
-      if (jdiValue instanceof BooleanValue) {
-        return DfTypes.booleanValue(((BooleanValue)jdiValue).value());
-      }
-      if (jdiValue instanceof LongValue) {
-        return DfTypes.longValue(((LongValue)jdiValue).longValue());
-      }
-      if (jdiValue instanceof ShortValue || jdiValue instanceof CharValue ||
-          jdiValue instanceof ByteValue || jdiValue instanceof IntegerValue) {
-        return DfTypes.intValue(((PrimitiveValue)jdiValue).intValue());
-      }
-      if (jdiValue instanceof FloatValue) {
-        return DfTypes.floatValue(((FloatValue)jdiValue).floatValue());
-      }
-      if (jdiValue instanceof DoubleValue) {
-        return DfTypes.doubleValue(((DoubleValue)jdiValue).doubleValue());
-      }
-      if (jdiValue instanceof StringReference) {
-        PsiType stringType = myPsiFactory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, myBody.getResolveScope());
-        return DfTypes.referenceConstant(((StringReference)jdiValue).value(), stringType);
-      }
-      if (jdiValue instanceof ObjectReference) {
-        ReferenceType type = ((ObjectReference)jdiValue).referenceType();
-        String enumConstantName = getEnumConstantName((ObjectReference)jdiValue);
-        if (enumConstantName != null) {
-          PsiType psiType = getType(type, myProject, myBody.getResolveScope());
-          if (psiType instanceof PsiClassType) {
-            PsiClass enumClass = ((PsiClassType)psiType).resolve();
-            if (enumClass != null && enumClass.isEnum()) {
-              PsiField enumConst = enumClass.findFieldByName(enumConstantName, false);
-              if (enumConst instanceof PsiEnumConstant) {
-                return DfTypes.referenceConstant(enumConst, psiType);
-              }
-            }
-          }
-        }
-      }
-      return DfType.TOP;
     }
   }
 

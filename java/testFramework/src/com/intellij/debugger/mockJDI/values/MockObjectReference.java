@@ -37,7 +37,8 @@ public class MockObjectReference extends MockValue implements ObjectReference {
     try {
       java.lang.reflect.Field refField = ((MockField) field).getField();
       refField.setAccessible(true);
-      return MockValue.createValue(refField.get(myObject), refField.getType(), myVirtualMachine);
+      Object value = refField.get(myObject);
+      return value == null ? null : MockValue.createValue(value, refField.getType(), myVirtualMachine);
     }
     catch (IllegalAccessException e) {
       throw new RuntimeException(e);
