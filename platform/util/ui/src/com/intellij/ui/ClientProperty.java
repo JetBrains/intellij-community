@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,14 @@ public final class ClientProperty {
     return put(window, (Object)key, value);
   }
 
+  public static <T> void remove(@NotNull JComponent component, @NotNull Key<T> key) {
+    put(component, key, null);
+  }
+
+  public static <T> void remove(@NotNull Window window, @NotNull Key<T> key) {
+    put(window, key, null);
+  }
+
   /**
    * Sets the value for the client property of the window.
    * All these properties will be put into the corresponding root pane.
@@ -50,12 +59,14 @@ public final class ClientProperty {
    * @param value  new value for the client property
    * @return {@code true} if property is set to the corresponding root pane, {@code false} otherwise
    */
+  @Contract("null,_,_ -> false")
   public static boolean put(@Nullable Window window, @NotNull @NonNls Object key, @Nullable Object value) {
     JComponent holder = getPropertiesHolder(window);
     if (holder != null) holder.putClientProperty(key, value);
     return holder != null;
   }
 
+  @Contract("null -> null")
   private static @Nullable JComponent getPropertiesHolder(@Nullable Component component) {
     if (component instanceof JComponent) return (JComponent)component;
     if (component instanceof Window && component instanceof RootPaneContainer) {
@@ -71,6 +82,7 @@ public final class ClientProperty {
    * @param key       a key corresponding to a client property
    * @return the property value from the specified component or {@code null}
    */
+  @Contract("null,_ -> null")
   public static @Nullable Object get(@Nullable Component component, @NotNull @NonNls Object key) {
     JComponent holder = getPropertiesHolder(component);
     return holder == null ? null : holder.getClientProperty(key);
@@ -81,6 +93,7 @@ public final class ClientProperty {
    * @param key       a key corresponding to a client property
    * @return the property value from the specified component or {@code null}
    */
+  @Contract("null,_ -> null")
   public static @Nullable Object findInHierarchy(@Nullable Component component, @NotNull @NonNls Object key) {
     while (component != null) {
       Object value = get(component, key);
@@ -98,6 +111,7 @@ public final class ClientProperty {
    * @return the property value from the specified component or {@code null}
    */
   @SuppressWarnings("unchecked")
+  @Contract("null,_ -> null")
   public static <T> @Nullable T get(@Nullable Component component, @NotNull Key<T> key) {
     Object value = get(component, (Object)key);
     return value != null ? (T)value : null;
@@ -109,6 +123,7 @@ public final class ClientProperty {
    * @return the property value from the specified component or {@code null}
    */
   @SuppressWarnings("unchecked")
+  @Contract("null,_ -> null")
   public static <T> @Nullable T findInHierarchy(@Nullable Component component, @NotNull Key<T> key) {
     Object value = findInHierarchy(component, (Object)key);
     return value != null ? (T)value : null;
