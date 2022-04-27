@@ -130,7 +130,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
   @Override
   public int append(Data value) throws IOException {
     final BufferExposingByteArrayOutputStream bos = new BufferExposingByteArrayOutputStream();
-    DataOutput out = new com.intellij.util.io.DataOutputStream(bos);
+    DataOutput out = new DataOutputStream(bos);
     myDataDescriptor.save(out, value);
     final int size = bos.size();
     final byte[] buffer = bos.getInternalBuffer();
@@ -158,40 +158,37 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
 
   @Override
   public boolean checkBytesAreTheSame(final int addr, Data value) throws IOException {
-    final boolean[] sameValue = new boolean[1];
-    try (OutputStream comparer = buildOldComparerStream(addr, sameValue)) {
+    try (CheckerOutputStream comparer = buildOldComparerStream(addr)) {
       DataOutput out = new DataOutputStream(comparer);
       myDataDescriptor.save(out, value);
+      return comparer.same;
     }
-    return sameValue[0];
+  }
+
+  private abstract static class CheckerOutputStream extends OutputStream {
+    boolean same = true;
   }
 
   @NotNull
-  private OutputStream buildOldComparerStream(final int addr, final boolean[] sameValue) throws IOException {
-    OutputStream comparer;
+  private CheckerOutputStream buildOldComparerStream(final int addr) throws IOException {
+    CheckerOutputStream comparer;
     final PagedFileStorage storage = getPagedFileStorage();
 
     if (myFileLength <= addr) {
-      comparer = new OutputStream() {
+      comparer = new CheckerOutputStream() {
         int address = addr - myFileLength;
-        boolean same = true;
         @Override
         public void write(int b) {
           if (same) {
             same = address < myBufferPosition && myAppendBuffer[address++] == (byte)b;
           }
         }
-        @Override
-        public void close() {
-          sameValue[0]  = same;
-        }
       };
     }
     else {
-      comparer = new OutputStream() {
+      comparer = new CheckerOutputStream() {
         int base = addr;
         int address = storage.getOffsetInPage(addr);
-        boolean same = true;
         DirectBufferWrapper buffer = storage.getByteBuffer(addr, false);
         final int myPageSize = storage.getPageSize();
 
@@ -210,7 +207,6 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
 
         @Override
         public void close() {
-          sameValue[0]  = same;
           buffer.unlock();
         }
       };
