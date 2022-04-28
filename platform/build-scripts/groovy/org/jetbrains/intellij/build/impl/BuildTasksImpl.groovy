@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Formats
-import com.intellij.openapi.util.text.Strings
 import com.intellij.util.io.Decompressor
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.system.CpuArch
@@ -40,12 +39,7 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
 
 import java.lang.reflect.UndeclaredThrowableException
-import java.nio.file.FileSystems
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.PathMatcher
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
+import java.nio.file.*
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
 import java.util.concurrent.ForkJoinTask
@@ -615,14 +609,20 @@ idea.fatal.error.notification=disabled
   static @NotNull Path unpackPty4jNative(BuildContext buildContext, @NotNull Path distDir, String pty4jOsSubpackageName) {
     Path pty4jNativeDir = distDir.resolve("lib/pty4j-native")
     def nativePkg = "resources/com/pty4j/native"
-    def includedNativePkg = Strings.trimEnd(nativePkg + "/" + Strings.notNullize(pty4jOsSubpackageName), '/')
     buildContext.project.libraryCollection.findLibrary("pty4j").getFiles(JpsOrderRootType.COMPILED).each {
       Path tempDir = Files.createTempDirectory(buildContext.paths.tempDir, it.name)
       try {
         new Decompressor.Zip(it).withZipExtensions().extract(tempDir)
-        Path nativeDir = tempDir.resolve(includedNativePkg)
+        Path nativeDir = tempDir.resolve(nativePkg)
         if (Files.isDirectory(nativeDir)) {
-          FileUtil.copyDirContent(nativeDir.toFile(), pty4jNativeDir.toFile())
+          nativeDir.toFile().listFiles().each { child ->
+            String childName = child.getName()
+            if (pty4jOsSubpackageName == null || pty4jOsSubpackageName == childName) {
+              File dest = new File(pty4jNativeDir.toFile(), childName)
+              FileUtil.createDirectory(dest)
+              FileUtil.copyDir(child, dest)
+            }
+          }
         }
       }
       finally {
