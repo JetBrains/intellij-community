@@ -615,21 +615,19 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       centerPanel.addContent(layoutData.welcomeScreen ? text : pane);
     }
 
-    if (!layoutData.welcomeScreen) {
-      Icon icon = NotificationsUtil.getIcon(notification);
-      JComponent iconComponent = new JComponent() {
-        @Override
-        protected void paintComponent(Graphics g) {
-          super.paintComponent(g);
-          icon.paintIcon(this, g, layoutData.configuration.iconOffset.width, layoutData.configuration.iconOffset.height);
-        }
-      };
-      iconComponent.setOpaque(false);
-      iconComponent.setPreferredSize(
-        new Dimension(layoutData.configuration.iconPanelWidth, 2 * layoutData.configuration.iconOffset.height + icon.getIconHeight()));
+    Icon icon = NotificationsUtil.getIcon(notification);
+    JComponent iconComponent = new JComponent() {
+      @Override
+      protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        icon.paintIcon(this, g, layoutData.configuration.iconOffset.width, layoutData.configuration.iconOffset.height);
+      }
+    };
+    iconComponent.setOpaque(false);
+    iconComponent.setPreferredSize(
+      new Dimension(layoutData.configuration.iconPanelWidth, 2 * layoutData.configuration.iconOffset.height + icon.getIconHeight()));
 
-      content.add(iconComponent, BorderLayout.WEST);
-    }
+    content.add(iconComponent, BorderLayout.WEST);
 
     HoverAdapter hoverAdapter = new HoverAdapter();
     hoverAdapter.addSource(content);
