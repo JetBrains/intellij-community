@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.jshell;
 
 import com.intellij.ProjectTopics;
@@ -8,7 +8,9 @@ import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -22,9 +24,8 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorNotifications;
+import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.util.Alarm;
-import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -33,20 +34,27 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author Eugene Zhuravlev
  */
-public final class SnippetEditorDecorator extends EditorNotifications.Provider<SnippetEditorDecorator.ConfigurationPane>{
-  public static final Key<ConfigurationPane> CONTEXT_KEY = Key.create("jshell.editor.toolbar");
+public final class SnippetEditorDecorator implements EditorNotificationProvider {
 
-  public static class ConfigurationPane extends EditorHeaderComponent {
+  static final class ConfigurationPane extends EditorHeaderComponent {
+
+    private static final Key<ConfigurationPane> EDITOR_TOOLBAR_KEY = Key.create("jshell.editor.toolbar");
+
     private final Alarm myUpdateAlarm = new Alarm();
-    private final JrePathEditor myJreEditor;
-    private final ConfigurationModuleSelector myModuleSelector;
+    private final @NotNull JrePathEditor myJreEditor;
+    private final @NotNull ConfigurationModuleSelector myModuleSelector;
+    private final @NotNull FileEditor myFileEditor;
     private MessageBusConnection myBusConnection;
 
-    ConfigurationPane(@NotNull Project project) {
+    ConfigurationPane(@NotNull FileEditor fileEditor,
+                      @NotNull Project project) {
+      myFileEditor = fileEditor;
+
       final DefaultActionGroup actions = new DefaultActionGroup(ExecuteJShellAction.getSharedInstance(), DropJShellStateAction.getSharedInstance());
       final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("JShellSnippetEditor", actions, true);
 
@@ -71,6 +79,8 @@ public final class SnippetEditorDecorator extends EditorNotifications.Provider<S
     @Override
     public void addNotify() {
       super.addNotify();
+      myFileEditor.putUserData(EDITOR_TOOLBAR_KEY, this);
+
       myBusConnection = myModuleSelector.getProject().getMessageBus().connect();
       myBusConnection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
         @Override
@@ -84,7 +94,9 @@ public final class SnippetEditorDecorator extends EditorNotifications.Provider<S
         }
 
         @Override
-        public void modulesRenamed(@NotNull Project project, @NotNull List<? extends Module> modules, @NotNull Function<? super Module, String> oldNameProvider) {
+        public void modulesRenamed(@NotNull Project project,
+                                   @NotNull List<? extends Module> modules,
+                                   @NotNull com.intellij.util.Function<? super Module, String> oldNameProvider) {
           reloadModules();
         }
       });
@@ -94,6 +106,8 @@ public final class SnippetEditorDecorator extends EditorNotifications.Provider<S
     @Override
     public void removeNotify() {
       super.removeNotify();
+      myFileEditor.putUserData(EDITOR_TOOLBAR_KEY, null);
+
       final MessageBusConnection conn = myBusConnection;
       if (conn != null) {
         myBusConnection = null;
@@ -134,28 +148,19 @@ public final class SnippetEditorDecorator extends EditorNotifications.Provider<S
       }
       return null;
     }
+
+    public static @Nullable ConfigurationPane getJShellConfiguration(@NotNull FileEditor editor) {
+      return editor.getUserData(EDITOR_TOOLBAR_KEY);
+    }
   }
 
-  @NotNull
   @Override
-  public Key<ConfigurationPane> getKey() {
-    return CONTEXT_KEY;
-  }
+  public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+                                                                                                                @NotNull VirtualFile file) {
+    if (ScratchFileService.findRootType(file) instanceof JShellRootType) {
+      return editor -> new ConfigurationPane(editor, project);
+    }
 
-  @Nullable
-  @Override
-  public ConfigurationPane createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
-    if (!(ScratchFileService.findRootType(file) instanceof JShellRootType)) return null;
-    return new ConfigurationPane(project);
-  }
-
-  @Nullable
-  public static ConfigurationPane getJShellConfiguration(DataContext context) {
-    return getJShellConfiguration(PlatformCoreDataKeys.FILE_EDITOR.getData(context));
-  }
-
-  @Nullable
-  public static ConfigurationPane getJShellConfiguration(FileEditor fileEditor) {
-    return CONTEXT_KEY.get(fileEditor);
+    return CONST_NULL;
   }
 }
