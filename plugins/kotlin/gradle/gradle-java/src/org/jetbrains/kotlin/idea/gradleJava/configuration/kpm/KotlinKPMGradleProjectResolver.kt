@@ -119,11 +119,10 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
         internal fun addModuleDependency(
             dependentModule: DataNode<out ModuleData>,
             dependencyModule: DataNode<out ModuleData>,
-            isPropagated: Boolean = false
         ) {
             val moduleDependencyData = ModuleDependencyData(dependentModule.data, dependencyModule.data)
             //TODO Replace with proper scope from dependency
-            moduleDependencyData.scope = if (isPropagated) DependencyScope.PROVIDED else DependencyScope.COMPILE
+            moduleDependencyData.scope = DependencyScope.COMPILE
             moduleDependencyData.isExported = false
             moduleDependencyData.isProductionOnTestDependency = dependencyModule.sourceSetName == "test"
             dependentModule.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData)
