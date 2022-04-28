@@ -5,7 +5,7 @@ import com.intellij.build.events.impl.*
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentsManager
 import com.intellij.execution.wsl.WSLUtil
-import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
@@ -134,8 +134,8 @@ class LocalGradleExecutionAware : GradleExecutionAware {
 
   private fun checkForWslJdkOnWindows(homePath: String, externalProjectPath: String, task: ExternalSystemTask) {
     if (WSLUtil.isSystemCompatible() &&
-        WslDistributionManager.isWslPath(homePath) &&
-        !WslDistributionManager.isWslPath(externalProjectPath)) {
+        WslPath.isWslUncPath(homePath) &&
+        !WslPath.isWslUncPath(externalProjectPath)) {
       val isResolveProjectTask = task is ExternalSystemResolveProjectTask
       val message = GradleBundle.message("gradle.incorrect.jvm.wslJdk.on.win.issue.description")
       throw BuildIssueException(IncorrectGradleJdkIssue(externalProjectPath, homePath, message, isResolveProjectTask))

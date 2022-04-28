@@ -17,7 +17,7 @@ import com.intellij.execution.target.RunTargetsEnabled;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.java.coverage.JavaCoverageBundle;
@@ -107,7 +107,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       return false;
     }
     String projectSdkHomePath = projectSdk.getHomePath();
-    return projectSdkHomePath != null && WslDistributionManager.isWslPath(projectSdkHomePath);
+    return projectSdkHomePath != null && WslPath.isWslUncPath(projectSdkHomePath);
   }
 
   @Override

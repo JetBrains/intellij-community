@@ -5,7 +5,6 @@ import com.google.common.hash.Hashing
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
@@ -379,7 +378,7 @@ abstract class JdkInstallerBase {
       if (jdkPath == null) return null
       if (!jdkPath.isDirectory()) return null
       val predicate = when {
-        WslDistributionManager.isWslPath(jdkPath.toString()) -> JdkPredicate.forWSL()
+        WslPath.isWslUncPath(jdkPath.toString()) -> JdkPredicate.forWSL()
         else -> JdkPredicate.default()
       }
 
