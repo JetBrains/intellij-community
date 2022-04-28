@@ -133,9 +133,9 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11)
              Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
         <depends>com.intellij.modules.platform</depends>
 
-        <extensionPoints defaultExtensionNs="com.intellij">
+        <extensions defaultExtensionNs="com.intellij">
             <themeProvider id="demo" path="/theme/demo.theme.json"/>
-        </extensionPoints>
+        </extensions>
     </idea-plugin>
   """.trimIndent()
 
