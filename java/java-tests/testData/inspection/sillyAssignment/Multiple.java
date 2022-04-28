@@ -20,6 +20,10 @@ public class Test extends Super {
       (arr[arr.length - 1]) = ((<warning descr="Array element is assigned to itself">arr[arr.length - 1]</warning>)) = 42;
       arr[arr.length - 1] = arr[arr.length - 2];
       arr[arr.length - 1] = arr[arr.length - 2] = 42;
+      int i = 0;
+      arr[i++] = arr[i++];
+      arr[i += 1] = arr[i += 1];
+      new int[]{1, 2, 3}[0] = new int[]{1, 2, 3}[0];
     }
 }
 class Super {

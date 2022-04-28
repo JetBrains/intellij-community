@@ -108,7 +108,7 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
     if (rightExpression == null) return;
 
     EquivalenceChecker checker = EquivalenceChecker.getCanonicalPsiEquivalence();
-    if (!checker.expressionsAreEquivalent(leftExpression, rightExpression) || SideEffectChecker.mayHaveSideEffects(lRef)) return;
+    if (!checker.expressionsAreEquivalent(leftExpression, rightExpression) || SideEffectChecker.mayHaveSideEffects(leftExpression)) return;
     String message = leftExpression instanceof PsiArrayAccessExpression
                      ? JavaBundle.message("assignment.array.element.to.itself.problem.descriptor")
                      : JavaBundle.message("assignment.to.itself.problem.descriptor", variable.getName());
