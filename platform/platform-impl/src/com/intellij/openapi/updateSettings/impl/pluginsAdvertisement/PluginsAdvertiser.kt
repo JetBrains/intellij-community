@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.util.PlatformUtils.isIdeaUltimate
 import org.jetbrains.annotations.ApiStatus
@@ -69,10 +70,22 @@ fun installAndEnable(
   modalityState: ModalityState? = null,
   onSuccess: Runnable,
 ) {
+  ProgressManager.getInstance().run(getInstallAndEnableTask(project, pluginIds, showDialog, selectAlInDialog, modalityState, onSuccess))
+}
+
+@JvmOverloads
+fun getInstallAndEnableTask(
+  project: Project?,
+  pluginIds: Set<PluginId>,
+  showDialog: Boolean = false,
+  selectAlInDialog: Boolean = false,
+  modalityState: ModalityState? = null,
+  onSuccess: Runnable,
+): InstallAndEnableTask {
   require(!showDialog || modalityState == null) {
     "`modalityState` can be not null only if plugin installation won't show the dialog"
   }
-  ProgressManager.getInstance().run(InstallAndEnableTask(project, pluginIds, showDialog, selectAlInDialog, modalityState, onSuccess))
+  return InstallAndEnableTask(project, pluginIds, showDialog, selectAlInDialog, modalityState, onSuccess)
 }
 
 

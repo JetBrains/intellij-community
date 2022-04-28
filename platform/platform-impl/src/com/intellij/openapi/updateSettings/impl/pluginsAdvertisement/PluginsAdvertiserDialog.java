@@ -89,67 +89,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   }
 
   private boolean doInstallPlugins(@NotNull Predicate<? super PluginDownloader> predicate, @NotNull ModalityState modalityState) {
-    ArrayList<IdeaPluginDescriptor> pluginsToEnable = new ArrayList<>();
-    ArrayList<PluginNode> nodes = new ArrayList<>();
-    for (PluginDownloader downloader : myPluginToInstall) {
-      if (predicate.test(downloader)) {
-        IdeaPluginDescriptor plugin = downloader.getDescriptor();
-        pluginsToEnable.add(plugin);
-        if (plugin.isEnabled()) {
-          nodes.add(downloader.toPluginNode());
-        }
-      }
-    }
-
-    if (!PluginManagerMain.checkThirdPartyPluginsAllowed(nodes)) {
-      return false;
-    }
-
-    var org = PluginManagerFilters.getInstance();
-    var notAllowedToInstallPlugins = nodes
-      .stream()
-      .filter(descriptor -> !org.allowInstallingPlugin(descriptor))
-      .map(e -> e.getPluginId().getIdString())
-      .collect(Collectors.toCollection(TreeSet<String>::new));
-
-    if (!notAllowedToInstallPlugins.isEmpty()) {
-      LOG.warn("Some advertised plugins were not allowed to install for " +
-               "the organization: " + StringUtil.join(notAllowedToInstallPlugins, ", "));
-      return false;
-    }
-
-    PluginManagerMain.suggestToEnableInstalledDependantPlugins(PluginEnabler.HEADLESS, nodes);
-
-    Runnable notifyRunnable = () -> {
-      boolean notInstalled = nodes.stream()
-        .map(PluginNode::getPluginId)
-        .map(PluginManagerCore::getPlugin)
-        .anyMatch(Objects::isNull);
-      if (notInstalled) {
-        PluginManagerMain.notifyPluginsUpdated(myProject);
-      }
-    };
-
-    PluginEnabler.HEADLESS.enable(pluginsToEnable);
-    if (!nodes.isEmpty()) {
-      try {
-        PluginManagerMain.downloadPlugins(nodes,
-                                          myCustomPlugins,
-                                          true,
-                                          notifyRunnable,
-                                          PluginEnabler.HEADLESS,
-                                          modalityState,
-                                          myFinishFunction);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-    else {
-      if (!pluginsToEnable.isEmpty()) {
-        notifyRunnable.run();
-      }
-    }
-    return true;
+    return new PluginsAdvertiserDialogPluginInstaller(myProject, myPluginToInstall, myCustomPlugins, myFinishFunction)
+      .doInstallPlugins(predicate, modalityState);
   }
 }
