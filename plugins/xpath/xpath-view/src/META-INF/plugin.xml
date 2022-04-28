@@ -10,7 +10,7 @@
   <!-- Description -->
   <description><![CDATA[
     Provides a possibility to evaluate XPath expressions against any XML document
-    opened in IDEA. It can also generate and show an XPath expression that matches the current node.
+    opened in IDE. It can also generate and show an XPath expression that matches the current node.
     <p>
     Adds syntax highlighting, analysis, completion, navigation and refactoring of XPath
     expressions and named templates for XSLT documents.</p>
