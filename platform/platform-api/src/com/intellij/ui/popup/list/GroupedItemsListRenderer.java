@@ -18,6 +18,7 @@ package com.intellij.ui.popup.list;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ErrorLabel;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
@@ -78,7 +79,7 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
 
   protected void createLabel() {
     myTextLabel = new ErrorLabel();
-    myTextLabel.setBorder(JBUI.Borders.emptyBottom(1));
+    myTextLabel.setBorder(ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.emptyBottom(1));
     myTextLabel.setOpaque(true);
   }
 

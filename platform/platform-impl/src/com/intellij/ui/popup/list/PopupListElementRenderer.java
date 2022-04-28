@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListPopupStepEx;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -117,24 +118,32 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     myValueLabel = new JLabel();
     myValueLabel.setEnabled(false);
-    myValueLabel.setBorder(JBUI.Borders.empty(0, JBUIScale.scale(8), 1, 0));
+    JBEmptyBorder valueBorder = ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0, JBUIScale.scale(8), 1, 0);
+    myValueLabel.setBorder(valueBorder);
     myValueLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
     myValueLabel.setOpaque(false);
     panel.add(myValueLabel, BorderLayout.CENTER);
 
     myShortcutLabel = new JLabel();
-    myShortcutLabel.setBorder(JBUI.Borders.empty(0,0,1,3));
+    JBEmptyBorder shortcutBorder = ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0,0,1,3);
+    myShortcutLabel.setBorder(shortcutBorder);
     myShortcutLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
     myShortcutLabel.setOpaque(false);
     panel.add(myShortcutLabel, BorderLayout.EAST);
 
     myMnemonicLabel = new JLabel();
     //noinspection HardCodedStringLiteral
-    Dimension preferredSize = new JLabel("W").getPreferredSize();
     Insets insets = JBUI.CurrentTheme.ActionsList.numberMnemonicInsets();
-    JBInsets.addTo(preferredSize, insets);
-    myMnemonicLabel.setPreferredSize(preferredSize);
-    myMnemonicLabel.setBorder(new JBEmptyBorder(insets));
+    myMnemonicLabel.setBorder(JBUI.Borders.empty(insets));
+    if (!ExperimentalUI.isNewUI()) {
+      Dimension preferredSize = new JLabel("W").getPreferredSize();
+      JBInsets.addTo(preferredSize, insets);
+      myMnemonicLabel.setPreferredSize(preferredSize);
+    }
+    else {
+      myMnemonicLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+    }
+
     myMnemonicLabel.setFont(JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(myMnemonicLabel.getFont()));
     myMnemonicLabel.setVisible(false);
 
@@ -169,12 +178,24 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     }
 
     JPanel result = new JPanel();
+    if (ExperimentalUI.isNewUI()) {
+      result = new SelectablePanel();
+      result.setOpaque(false);
+      PopupUtil.configSelectablePanel(((SelectablePanel)result));
+    }
+    else {
+      result.setBorder(JBUI.Borders.empty());
+    }
     result.setLayout(new GridBagLayout());
-    result.setBorder(JBUI.Borders.empty());
 
     Insets insets = getDefaultItemComponentBorder().getBorderInsets(result);
-    left.setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, 0));
-    right.setBorder(JBUI.Borders.empty(insets.top, leftRightInset, insets.bottom, insets.right));
+    if (ExperimentalUI.isNewUI()) {
+      left.setBorder(JBUI.Borders.empty(insets.top, 0, insets.bottom, 0));
+      right.setBorder(JBUI.Borders.empty(insets.top, 0, insets.bottom, 0));
+    } else {
+      left.setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, 0));
+      right.setBorder(JBUI.Borders.empty(insets.top, leftRightInset, insets.bottom, insets.right));
+    }
 
     GridBag gbc = new GridBag()
       .setDefaultAnchor(0, GridBagConstraints.WEST)
@@ -254,12 +275,18 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       }
       else {
         myNextStepLabel.setIcon(isSelectable && isSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
-        myComponent.setBackground(calcBackground(isSelected && isSelectable, false));
+        if (!ExperimentalUI.isNewUI() ) {
+          myComponent.setBackground(calcBackground(isSelected && isSelectable, false));
+        }
         setForegroundSelected(myTextLabel, isSelected && isSelectable);
       }
     }
     else {
       myNextStepLabel.setVisible(false);
+    }
+
+    if (ExperimentalUI.isNewUI() && myComponent instanceof SelectablePanel) {
+      ((SelectablePanel)myComponent).setSelectionColor(isSelected && isSelectable ? UIUtil.getListSelectionBackground(true) : null);
     }
 
     if (step instanceof BaseListPopupStep) {
@@ -327,13 +354,29 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       boolean selected = isSelected && isSelectable && !nextStepButtonSelected;
       setForegroundSelected(myValueLabel, selected);
     }
+
+    if (ExperimentalUI.isNewUI() && myComponent instanceof SelectablePanel) {
+      ((SelectablePanel)myComponent).setSelectionColor(isSelected && isSelectable ? UIUtil.getListSelectionBackground(true) : null);
+      setSelected(myMainPane, isSelected && isSelectable);
+    }
   }
 
   protected JComponent createIconBar() {
     Box res = Box.createHorizontalBox();
-    res.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap()));
     res.add(myIconLabel);
-    res.add(myMnemonicLabel);
+
+    if (!ExperimentalUI.isNewUI()) {
+      res.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap()));
+      res.add(myMnemonicLabel);
+    } else {
+      JPanel wrapper = new JPanel(new BorderLayout());
+      wrapper.add(myMnemonicLabel);
+      Dimension preferredSize = new JLabel("W").getPreferredSize();
+      JBInsets.addTo(preferredSize, JBUI.CurrentTheme.ActionsList.numberMnemonicInsets());
+      wrapper.setPreferredSize(preferredSize);
+
+      res.add(wrapper);
+    }
 
     return res;
   }

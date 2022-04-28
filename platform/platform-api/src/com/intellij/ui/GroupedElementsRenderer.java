@@ -52,7 +52,9 @@ public abstract class GroupedElementsRenderer implements Accessible {
 
     setComponentIcon(icon, disabledIcon);
 
-    setSelected(myComponent, isSelected);
+    if (!ExperimentalUI.isNewUI()) {
+      setSelected(myComponent, isSelected);
+    }
     setSelected(myTextLabel, isSelected);
 
     myRendererComponent.setPreferredWidth(preferredForcedWidth);

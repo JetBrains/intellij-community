@@ -361,7 +361,7 @@ public final class JBUI {
       public static final Color MNEMONIC_FOREGROUND = JBColor.namedColor("Component.infoForeground", new JBColor(Gray.x99, Gray.x78));
 
       public static @NotNull Insets numberMnemonicInsets() {
-        return insets("ActionsList.mnemonicsBorderInsets", insets(0, 8, 1, 6));
+        return insets("ActionsList.mnemonicsBorderInsets", insets(0, 0, 0, 8));
       }
 
       public static @NotNull Insets cellPadding() {
@@ -957,7 +957,7 @@ public final class JBUI {
 
         @NotNull
         public static Insets innerInsets() {
-          return insets("Popup.Selection.innerInsets", insets(2, 8));
+          return insets("Popup.Selection.innerInsets", insets(0, 8));
         }
       }
     }
