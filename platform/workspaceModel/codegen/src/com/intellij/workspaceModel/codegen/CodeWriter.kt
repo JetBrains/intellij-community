@@ -4,15 +4,16 @@ package com.intellij.workspaceModel.codegen
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import deft.storage.codegen.javaImplName
 import org.jetbrains.deft.codegen.ijws.implWsCode
 import org.jetbrains.deft.codegen.model.DefType
 import org.jetbrains.deft.codegen.model.KtObjModule
 import org.jetbrains.deft.codegen.patcher.rewrite
 import org.jetbrains.deft.codegen.utils.fileContents
-import org.jetbrains.deft.impl.ObjModule
 import java.io.File
 
 fun DefType.implIjWsFileContents(simpleTypes: List<DefType>): String {
@@ -22,7 +23,8 @@ fun DefType.implIjWsFileContents(simpleTypes: List<DefType>): String {
 }
 
 object CodeWriter {
-  fun generate(project: Project, sourceFolder: VirtualFile, targetFolder: VirtualFile) {
+  @RequiresWriteLock
+  fun generate(project: Project, sourceFolder: VirtualFile, genFolder: VirtualFile) {
     val documentManager = FileDocumentManager.getInstance()
     val ktSrcs = mutableListOf<Pair<VirtualFile, Document>>()
     val fileMapping = mutableMapOf<String, VirtualFile>()
@@ -46,7 +48,9 @@ object CodeWriter {
     }
 
     result.typeDefs.filterNot { it.name == "WorkspaceEntity" || it.name == "WorkspaceEntityWithPersistentId" || it.abstract }.forEach {
-      val virtualFile = targetFolder.createChildData(this, it.javaImplName + ".kt")
+      val sourceFile = it.def.file?.virtualFile ?: error("Source file for ${it.def.name} doesn't exist")
+      val packageFolder = createPackageFolderIfMissing(sourceFolder, sourceFile, genFolder)
+      val virtualFile = packageFolder.createChildData(this, it.javaImplName + ".kt")
       documentManager.getDocument(virtualFile)?.setText(it.implIjWsFileContents(result.simpleTypes))
     }
   }
@@ -71,5 +75,10 @@ object CodeWriter {
         .resolve(it.javaImplName + ".kt")
         .writeText(it.implIjWsFileContents(result.simpleTypes))
     }
+  }
+
+  private fun createPackageFolderIfMissing(sourceRoot: VirtualFile, sourceFile: VirtualFile, genFolder: VirtualFile): VirtualFile {
+    val relativePath = VfsUtil.getRelativePath(sourceFile.parent, sourceRoot, '/')
+    return VfsUtil.createDirectoryIfMissing(genFolder, "$relativePath")
   }
 }
