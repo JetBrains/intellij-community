@@ -32,12 +32,34 @@ object AdditionalKotlinArtifacts {
 
     @JvmStatic
     val compilerTestDataDir: File by lazy {
-        val testDataJar = getLibraryFile(KOTLIN_MAVEN_GROUP_ID, "kotlin-compiler-testdata-for-ide", "kotlinc_kotlin_compiler_testdata.xml")
-        lazyUnpackJar(testDataJar, File(PathManager.getCommunityHomePath()).resolve("out").resolve("kotlinc-testdata-2"))
+        unpackTestData(
+            artifactId = "kotlin-compiler-testdata-for-ide",
+            libraryFileName = "kotlinc_kotlin_compiler_testdata.xml",
+            dirName = "kotlinc-testdata-2",
+        )
     }
 
     @JvmStatic
     fun compilerTestData(compilerTestDataPath: String): String {
         return compilerTestDataDir.resolve(compilerTestDataPath).canonicalPath
+    }
+
+    @JvmStatic
+    val jpsPluginTestDataDir: File by lazy {
+        unpackTestData(
+            artifactId = "kotlin-jps-plugin-testdata-for-ide",
+            libraryFileName = "kotlinc_kotlin_jps_plugin_testdata.xml",
+            dirName = "kotlinc-jps-testdata",
+        )
+    }
+
+    @JvmStatic
+    fun jpsPluginTestData(jpsTestDataPath: String): String {
+        return jpsPluginTestDataDir.resolve(jpsTestDataPath).canonicalPath
+    }
+
+    private fun unpackTestData(artifactId: String, libraryFileName: String, dirName: String): File {
+        val testDataJar = getLibraryFile(KOTLIN_MAVEN_GROUP_ID, artifactId, libraryFileName)
+        return lazyUnpackJar(testDataJar, File(PathManager.getCommunityHomePath()).resolve("out").resolve(dirName))
     }
 }

@@ -48,6 +48,7 @@ fun generateKotlincLibraries(
         kotlincWithStandardNaming("kotlinc.kotlin-script-runtime", kotlincVersion, transitive = true),
 
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", jpsPluginVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-testdata", jpsPluginVersion, includeSources = false),
         kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginVersion, postfix = "-for-ide"),
         kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginVersion),
 

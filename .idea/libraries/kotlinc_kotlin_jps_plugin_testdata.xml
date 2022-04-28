@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="kotlinc.kotlin-jps-plugin-testdata" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-testdata-for-ide:1.6.21-release-345" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-testdata-for-ide/1.6.21-release-345/kotlin-jps-plugin-testdata-for-ide-1.6.21-release-345.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
