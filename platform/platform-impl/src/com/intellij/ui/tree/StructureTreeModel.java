@@ -420,16 +420,19 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   }
 
   private static final class Node extends DefaultMutableTreeNode implements LeafState.Supplier {
+    /**
+     * {@link DefaultMutableTreeNode#children} is not used, all methods are overridden.
+     */
     @SuppressWarnings("FieldNameHidesFieldInSuperclass")
     private final Reference<List<Node>> children = new Reference<>();
     private LeafState leafState; // NB!: modify in #canReuse only
     private final int hashCode;
 
-    private Node(@NotNull AbstractTreeStructure structure, @NotNull Object element, NodeDescriptor<?> parent) {
+    Node(@NotNull AbstractTreeStructure structure, @NotNull Object element, NodeDescriptor<?> parent) {
       this(structure.createDescriptor(element, parent), structure.getLeafState(element), element.hashCode());
     }
 
-    private Node(@NotNull NodeDescriptor descriptor, @NotNull LeafState leafState, int hashCode) {
+    Node(@NotNull NodeDescriptor descriptor, @NotNull LeafState leafState, int hashCode) {
       super(descriptor, leafState != LeafState.ALWAYS);
       this.hashCode = hashCode;
       setLeafState(leafState);
@@ -577,22 +580,20 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     }
 
     @Override
-    public @Nullable TreeNode getFirstChild() {
-      if (leafState == LeafState.ASYNC) return ContainerUtil.getFirstItem(getChildren());
-      return super.getLastChild();
+    public @Nullable Node getFirstChild() {
+      return ContainerUtil.getFirstItem(getChildren());
     }
 
     @Override
-    public @Nullable TreeNode getLastChild() {
-      if (leafState == LeafState.ASYNC) return ContainerUtil.getLastItem(getChildren());
-      return super.getLastChild();
+    public @Nullable Node getLastChild() {
+      return ContainerUtil.getLastItem(getChildren());
     }
 
     @Override
-    public @Nullable DefaultMutableTreeNode getFirstLeaf() {
-      DefaultMutableTreeNode node = this;
+    public @Nullable Node getFirstLeaf() {
+      Node node = this;
       while (!node.isLeaf()) {
-        DefaultMutableTreeNode next = (DefaultMutableTreeNode)node.getFirstChild();
+        Node next = node.getFirstChild();
         if (next == null) return node == this ? null : node;
         node = next;
       }
@@ -600,10 +601,10 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     }
 
     @Override
-    public @Nullable DefaultMutableTreeNode getLastLeaf() {
-      DefaultMutableTreeNode node = this;
+    public @Nullable Node getLastLeaf() {
+      Node node = this;
       while (!node.isLeaf()) {
-        DefaultMutableTreeNode next = (DefaultMutableTreeNode)node.getLastChild();
+        Node next = node.getLastChild();
         if (next == null) return node == this ? null : node;
         node = next;
       }
