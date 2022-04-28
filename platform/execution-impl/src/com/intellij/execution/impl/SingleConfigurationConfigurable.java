@@ -125,12 +125,11 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     snapshot.setFolderName(getFolderName());
     RunnerAndConfigurationSettings original = getSettings();
     snapshot.setTemporary(original.isTemporary());
-    if (original.isStoredInDotIdeaFolder()) {
-      snapshot.storeInDotIdeaFolder();
+
+    if (myComponent != null && myComponent.myRCStorageUi != null) {
+      myComponent.myRCStorageUi.apply(snapshot);
     }
-    else if (original.isStoredInArbitraryFileInProject() && original.getPathIfStoredInArbitraryFileInProject() != null) {
-      snapshot.storeInArbitraryFileInProject(original.getPathIfStoredInArbitraryFileInProject());
-    }
+
     return snapshot;
   }
 
@@ -167,6 +166,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     if (myComponent.myRCStorageUi != null) {
       myComponent.myRCStorageUi.apply(settings);
+      myComponent.myRCStorageUi.reset(settings); // to reset its internal state
     }
 
     super.apply();

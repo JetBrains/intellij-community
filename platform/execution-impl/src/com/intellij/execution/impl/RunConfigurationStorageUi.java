@@ -378,8 +378,6 @@ public class RunConfigurationStorageUi {
   }
 
   public void apply(@NotNull RunnerAndConfigurationSettings settings) {
-    if (!isModified()) return;
-
     switch (myRCStorageType) {
       case Workspace:
         settings.storeInLocalWorkspace();
@@ -401,8 +399,6 @@ public class RunConfigurationStorageUi {
       default:
         throw new IllegalStateException("Unexpected value: " + myRCStorageType);
     }
-    myRCStorageTypeInitial = myRCStorageType;
-    myFolderPathIfStoredInArbitraryFileInitial = myFolderPathIfStoredInArbitraryFile;
   }
 
   private static class RunConfigurationStoragePopup {
