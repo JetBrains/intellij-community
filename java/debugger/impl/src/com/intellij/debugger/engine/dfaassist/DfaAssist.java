@@ -135,12 +135,12 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
           cleanUp();
           return;
         }
-        DebuggerDfaRunner runner = createDfaRunner(proxy, pointer);
-        if (runner == null) {
+        DebuggerDfaRunner.Pupa runnerPupa = makePupa(proxy, pointer);
+        if (runnerPupa == null) {
           cleanUp();
           return;
         }
-        myComputation = ReadAction.nonBlocking(() -> computeHints(runner)).withDocumentsCommitted(myProject)
+        myComputation = ReadAction.nonBlocking(() -> computeHints(runnerPupa.transform())).withDocumentsCommitted(myProject)
           .coalesceBy(DfaAssist.this)
           .finishOnUiThread(ModalityState.NON_MODAL, hints -> DfaAssist.this.displayInlays(hints))
           .submit(AppExecutorUtil.getAppExecutorService());
@@ -211,7 +211,8 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
     }
   }
 
-  private static @NotNull Map<PsiElement, DfaHint> computeHints(@NotNull DebuggerDfaRunner runner) {
+  private static @NotNull Map<PsiElement, DfaHint> computeHints(@Nullable DebuggerDfaRunner runner) {
+    if (runner == null) return Collections.emptyMap();
     DebuggerDfaListener interceptor = runner.interpret();
     if (interceptor == null) return Collections.emptyMap();
     return interceptor.computeHints();
@@ -219,6 +220,13 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
 
   public static @Nullable DebuggerDfaRunner createDfaRunner(@NotNull StackFrameProxyEx proxy,
                                                             @NotNull SmartPsiElementPointer<PsiElement> pointer) {
+    DebuggerDfaRunner.Pupa pupa = makePupa(proxy, pointer);
+    if (pupa == null) return null;
+    return ReadAction.nonBlocking(pupa::transform).withDocumentsCommitted(pointer.getProject()).executeSynchronously();
+  }
+
+  @Nullable
+  private static DebuggerDfaRunner.Pupa makePupa(@NotNull StackFrameProxyEx proxy, @NotNull SmartPsiElementPointer<PsiElement> pointer) {
     Callable<DebuggerDfaRunner.Larva> action = () -> {
       try {
         return DebuggerDfaRunner.Larva.hatch(proxy, pointer.getElement());
@@ -239,7 +247,7 @@ public final class DfaAssist implements DebuggerContextListener, Disposable {
            EvaluateException | InconsistentDebugInfoException | InvalidStackFrameException ignore) {
       return null;
     }
-    return ReadAction.nonBlocking(pupa::transform).withDocumentsCommitted(project).executeSynchronously();
+    return pupa;
   }
 
   private final class TurnOffDfaProcessorAction extends AnAction {
