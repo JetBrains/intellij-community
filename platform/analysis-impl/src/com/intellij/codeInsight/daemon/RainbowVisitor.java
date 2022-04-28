@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Provides semantic ("rainbow") coloring highlighting.
+ * Provides an additional coloring layer to improve the visual distinction of several related items (e.g., method parameters, local variables).
  * <p/>
  * Register in {@code com.intellij.highlightVisitor} extension point.
  * <p/>
