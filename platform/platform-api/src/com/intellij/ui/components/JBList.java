@@ -2,6 +2,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
@@ -11,6 +12,7 @@ import com.intellij.ui.*;
 import com.intellij.util.NotNullFunction;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -307,6 +309,24 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
         setBackground(UIUtil.getDecoratedRowColor());
       }
       return this;
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleContextDelegateWithContextMenu(super.getAccessibleContext()) {
+          @Override
+          protected void doShowContextMenu() {
+            ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true);
+          }
+
+          @Override
+          protected Container getDelegateParent() {
+            return getParent();
+          }
+        };
+      }
+      return accessibleContext;
     }
   }
 

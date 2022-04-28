@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.ui.CellRendererPanel
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate
+import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
@@ -66,7 +68,11 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
     val accessibleComponent = component as? Accessible ?: return super.getAccessibleContext()
 
     if (accessibleContext == null) {
-      accessibleContext = object : AccessibleContextDelegate(accessibleComponent.accessibleContext) {
+      accessibleContext = object : AccessibleContextDelegateWithContextMenu(accessibleComponent.accessibleContext) {
+        override fun doShowContextMenu() {
+          ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true)
+        }
+
         override fun getDelegateParent(): Container? = parent
 
         override fun getAccessibleName(): String? {

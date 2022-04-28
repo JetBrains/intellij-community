@@ -13,11 +13,13 @@
 // limitations under the License.
 package com.intellij.ui;
 
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -275,5 +277,23 @@ public class CheckboxTreeBase extends Tree {
       this.checkParentWithCheckedChild = checkParentWithCheckedChild;
       this.uncheckParentWithUncheckedChild = uncheckParentWithUncheckedChild;
     }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleContextDelegateWithContextMenu(super.getAccessibleContext()) {
+        @Override
+        protected void doShowContextMenu() {
+          ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true);
+        }
+
+        @Override
+        protected Container getDelegateParent() {
+          return getParent();
+        }
+      };
+    }
+    return accessibleContext;
   }
 }
