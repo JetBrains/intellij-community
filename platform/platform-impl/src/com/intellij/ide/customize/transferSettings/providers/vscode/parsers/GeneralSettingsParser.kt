@@ -13,9 +13,9 @@ import com.intellij.ide.customize.transferSettings.providers.vscode.mappings.The
 import com.intellij.openapi.diagnostic.logger
 import java.io.File
 
-class GeneralSettingsParser(private val settings: Settings) {
-  private val logger = logger<GeneralSettingsParser>()
+private val logger = logger<GeneralSettingsParser>()
 
+class GeneralSettingsParser(private val settings: Settings) {
   companion object {
     private const val COLOR_THEME = "workbench.colorTheme"
     private const val AUTODETECT_THEME = "window.autoDetectColorScheme"
