@@ -38,7 +38,7 @@ object GradleKotlinTestUtils {
         val V_1_6_10 = KotlinVersion(1, 6, 10)
         val V_1_6_21 = KotlinVersion(1, 6, 21)
 
-        val LAST_SNAPSHOT = KotlinVersion(1, 6, 255, "SNAPSHOT")
+        val LAST_SNAPSHOT = KotlinVersion(1, 7, 255, "SNAPSHOT")
 
         val ALL_PUBLIC = listOf(
             V_1_3_30,
