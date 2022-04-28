@@ -107,7 +107,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
   /**
    * @param function a function to process current structure on a valid thread
-   * @return a promise that will be succeed if the specified function returns non-null value
+   * @return a promise that will succeed when the specified function returns non-null value
    */
   @NotNull
   private <Result> Promise<Result> onValidThread(@NotNull Function<? super Structure, ? extends Result> function) {
@@ -125,7 +125,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   /**
    * @param path     a path to the node
    * @param function a function to process corresponding node on a valid thread
-   * @return a promise that will be succeed if the specified function returns non-null value
+   * @return a promise that will succeed when the specified function returns non-null value
    */
   @NotNull
   private <Result> Promise<Result> onValidThread(@NotNull TreePath path, @NotNull Function<? super Node, ? extends Result> function) {
@@ -140,7 +140,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   /**
    * @param element  an element of the internal tree structure
    * @param function a function to process corresponding node on a valid thread
-   * @return a promise that will be succeed if the specified function returns non-null value
+   * @return a promise that will succeed when the specified function returns non-null value
    */
   @NotNull
   private <Result> Promise<Result> onValidThread(@NotNull Object element, @NotNull Function<? super Node, ? extends Result> function) {
@@ -173,7 +173,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @param path      a path to the node to invalidate
    * @param structure {@code true} means that all child nodes must be invalidated;
    *                  {@code false} means that only the node specified by {@code path} must be updated
-   * @return a promise that will be succeed if path to invalidate is found
+   * @return a promise that will succeed when path is invalidated
    * @see #invalidate(Object, boolean)
    */
   @NotNull
@@ -188,7 +188,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @param element   an element of the internal tree structure
    * @param structure {@code true} means that all child nodes must be invalidated;
    *                  {@code false} means that only the node specified by {@code path} must be updated
-   * @return a promise that will be succeed if path to invalidate is found
+   * @return a promise that will succeed when the path is invalidated
    * @see #invalidate(TreePath, boolean)
    */
   @NotNull
@@ -264,7 +264,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * Promises to create default visitor to find the specified element.
    *
    * @param element an element of the internal tree structure
-   * @return a promise that will be succeed if visitor is created
+   * @return a promise that will succeed when the visitor is created
    * @see TreeUtil#promiseExpand(JTree, TreeVisitor)
    * @see TreeUtil#promiseSelect(JTree, TreeVisitor)
    */
