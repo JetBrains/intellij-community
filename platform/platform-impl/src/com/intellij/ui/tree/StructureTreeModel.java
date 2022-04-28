@@ -332,7 +332,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   @Override
   public final boolean isLeaf(Object object) {
     Node node = getNode(object, false);
-    return node == null || node.isLeaf(this::validateChildren);
+    return node == null || node.isLeaf(this::validateChildren, true);
   }
 
   @Override
@@ -550,17 +550,17 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
     @Override
     public boolean isLeaf() {
-      return isLeaf(null);
+      return isLeaf(null, false);
     }
 
-    private boolean isLeaf(@Nullable Consumer<? super Node> validator) {
+    private boolean isLeaf(@Nullable Consumer<? super Node> validator, boolean forModel) {
       // root node should not be a leaf node when it is not visible in a tree
       // javax.swing.tree.VariableHeightLayoutCache.TreeStateNode.expand(boolean)
       if (null == getParent()) return false;
       if (leafState == LeafState.ALWAYS) return true;
       if (leafState == LeafState.NEVER) return false;
       if (leafState == LeafState.DEFAULT && validator != null) validator.accept(this);
-      return children.isValid() && super.isLeaf();
+      return (!forModel || children.isValid()) && super.isLeaf();
     }
 
     private void setLeafState(@NotNull LeafState leafState) {
@@ -579,37 +579,6 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       return leafState;
     }
 
-    @Override
-    public @Nullable Node getFirstChild() {
-      return ContainerUtil.getFirstItem(getChildren());
-    }
-
-    @Override
-    public @Nullable Node getLastChild() {
-      return ContainerUtil.getLastItem(getChildren());
-    }
-
-    @Override
-    public @Nullable Node getFirstLeaf() {
-      Node node = this;
-      while (!node.isLeaf()) {
-        Node next = node.getFirstChild();
-        if (next == null) return node == this ? null : node;
-        node = next;
-      }
-      return node;
-    }
-
-    @Override
-    public @Nullable Node getLastLeaf() {
-      Node node = this;
-      while (!node.isLeaf()) {
-        Node next = node.getLastChild();
-        if (next == null) return node == this ? null : node;
-        node = next;
-      }
-      return node;
-    }
   }
 
   /**
