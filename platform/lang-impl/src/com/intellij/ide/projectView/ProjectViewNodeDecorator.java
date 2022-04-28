@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView;
 
@@ -7,7 +7,7 @@ import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 
 /**
- * Allows to modify the presentation of project view and package dependencies view nodes.
+ * Allows modifying the presentation of project view and package dependencies view nodes.
  *
  * @see TreeStructureProvider
  */
