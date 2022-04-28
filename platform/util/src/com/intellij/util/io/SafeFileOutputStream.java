@@ -40,6 +40,7 @@ public class SafeFileOutputStream extends OutputStream {
   private final @Nullable Future<Path> myBackupFuture;
   private final BufferExposingByteArrayOutputStream myBuffer;
   private boolean myClosed = false;
+  private boolean myFailed = false;
 
   public SafeFileOutputStream(@NotNull File target) {
     this(target.toPath(), DEFAULT_BACKUP_EXT);
@@ -75,12 +76,26 @@ public class SafeFileOutputStream extends OutputStream {
 
   @Override
   public void write(int b) throws IOException {
-    myBuffer.write(b);
+    if (myFailed) return;
+    try {
+      myBuffer.write(b);
+    }
+    catch (OutOfMemoryError err) {
+      myFailed = true;
+      throw err;
+    }
   }
 
   @Override
   public void write(byte[] b, int off, int len) throws IOException {
-    myBuffer.write(b, off, len);
+    if (myFailed) return;
+    try {
+      myBuffer.write(b, off, len);
+    }
+    catch (OutOfMemoryError err) {
+      myFailed = true;
+      throw err;
+    }
   }
 
   public void abort() throws IOException {
@@ -92,6 +107,11 @@ public class SafeFileOutputStream extends OutputStream {
   public void close() throws IOException {
     if (myClosed) return;
     myClosed = true;
+
+    if (myFailed) {
+      abort();
+      return;
+    }
 
     @Nullable Path backup = waitForBackup();
     OutputStream sink = openFile();
