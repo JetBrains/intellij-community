@@ -51,6 +51,7 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
         JPanel mainPanel;
         if (RecentProjectListActionProvider.getInstance().getActions(false, true).isEmpty()) {
           mainPanel = new EmptyStateProjectsPanel(parentDisposable);
+          initDnD(mainPanel);
         }
         else {
           mainPanel = JBUI.Panels.simplePanel().withBorder(JBUI.Borders.empty(13, 12)).withBackground(getProjectsBackground());
@@ -75,15 +76,21 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
           mainPanel.add(northPanel, BorderLayout.NORTH);
           mainPanel.add(scrollPane, BorderLayout.CENTER);
           mainPanel.add(createNotificationPanel(parentDisposable), BorderLayout.SOUTH);
+
+          initDnD(treeComponent);
         }
+
+        return mainPanel;
+      }
+
+      private void initDnD(JComponent component) {
         DnDNativeTarget target = createDropFileTarget();
-        DnDSupport.createBuilder(mainPanel)
+        DnDSupport.createBuilder(component)
           .enableAsNativeTarget()
           .setTargetChecker(target)
           .setDropHandler(target)
           .setDisposableParent(parentDisposable)
           .install();
-        return mainPanel;
       }
 
       @NotNull
