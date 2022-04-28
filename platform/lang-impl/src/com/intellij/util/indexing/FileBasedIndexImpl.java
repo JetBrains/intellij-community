@@ -79,6 +79,7 @@ import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.CorruptedException;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
@@ -634,7 +635,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           try {
             UpdatableIndex<?, ?, FileContent, ?> index = getIndex(indexId);
             if (!RebuildStatus.isOk(indexId)) {
-              index.clear(); // if the index was scheduled for rebuild, only clean it
+              clearIndex(indexId); // if the index was scheduled for rebuild, only clean it
             }
             index.dispose();
           }
@@ -920,7 +921,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     waitUntilIndicesAreInitialized();
     for (ID<?, ?> indexId : getState().getIndexIDs()) {
       try {
-        RebuildStatus.clearIndexIfNecessary(indexId, getIndex(indexId)::clear);
+        RebuildStatus.clearIndexIfNecessary(indexId, () -> clearIndex(indexId));
       }
       catch (StorageException e) {
         LOG.error(e);
@@ -929,9 +930,17 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  void clearIndex(@NotNull final ID<?, ?> indexId) throws StorageException {
-    advanceIndexVersion(indexId);
-    getIndex(indexId).clear();
+  void clearIndex(@NotNull ID<?, ?> indexId) throws StorageException {
+    if (IOUtil.isSharedCachesEnabled()) {
+      IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
+    }
+    try {
+      advanceIndexVersion(indexId);
+      getIndex(indexId).clear();
+    }
+    finally {
+      IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.remove();
+    }
   }
 
   private void advanceIndexVersion(ID<?, ?> indexId) {

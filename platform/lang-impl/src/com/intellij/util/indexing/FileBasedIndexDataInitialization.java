@@ -77,6 +77,9 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       myRegisteredIndexes.registerIndexExtension(extension);
 
       tasks.add(() -> {
+        if (IOUtil.isSharedCachesEnabled()) {
+          IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
+        }
         try {
           FileBasedIndexImpl.registerIndexer(extension,
                                              myState,
@@ -88,6 +91,9 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
         }
         catch (Throwable t) {
           handleComponentError(t, extension.getClass().getName(), null);
+        }
+        finally {
+          IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.remove();
         }
       });
     }

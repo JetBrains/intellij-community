@@ -108,6 +108,10 @@ public class PagedFileStorage implements Forceable {
     return myFile;
   }
 
+  public boolean isNativeBytesOrder() {
+    return myNativeBytesOrder;
+  }
+
   public <R> @NotNull R readInputStream(@NotNull ThrowableNotNullFunction<? super InputStream, R, ? extends IOException> consumer) throws IOException {
     synchronized (myInputStreamLock) {
       try {

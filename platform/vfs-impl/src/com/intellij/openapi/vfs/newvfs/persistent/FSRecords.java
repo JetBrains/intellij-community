@@ -143,17 +143,25 @@ public final class FSRecords {
   }
 
   static void connect() {
-    ourCurrentVersion = calculateVersion();
-    ourConnection = PersistentFSConnector.connect(getCachesDir(), ourCurrentVersion, useContentHashes);
-    ourContentAccessor = new PersistentFSContentAccessor(useContentHashes, ourConnection);
-    ourAttributeAccessor = new PersistentFSAttributeAccessor(bulkAttrReadSupport, inlineAttributes, ourConnection);
-    ourTreeAccessor = new PersistentFSTreeAccessor(ourAttributeAccessor, ourConnection);
-    ourRecordAccessor = new PersistentFSRecordAccessor(ourContentAccessor, ourAttributeAccessor, ourConnection);
-    try {
-      ourTreeAccessor.ensureLoaded();
+    if (IOUtil.isSharedCachesEnabled()) {
+      IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
     }
-    catch (IOException e) {
-      handleError(e);
+    try {
+      ourCurrentVersion = calculateVersion();
+      ourConnection = PersistentFSConnector.connect(getCachesDir(), ourCurrentVersion, useContentHashes);
+      ourContentAccessor = new PersistentFSContentAccessor(useContentHashes, ourConnection);
+      ourAttributeAccessor = new PersistentFSAttributeAccessor(bulkAttrReadSupport, inlineAttributes, ourConnection);
+      ourTreeAccessor = new PersistentFSTreeAccessor(ourAttributeAccessor, ourConnection);
+      ourRecordAccessor = new PersistentFSRecordAccessor(ourContentAccessor, ourAttributeAccessor, ourConnection);
+      try {
+        ourTreeAccessor.ensureLoaded();
+      }
+      catch (IOException e) {
+        handleError(e);
+      }
+    }
+    finally {
+      IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.remove();
     }
   }
 
