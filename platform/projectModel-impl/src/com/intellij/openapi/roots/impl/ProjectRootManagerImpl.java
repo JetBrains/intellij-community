@@ -308,7 +308,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     projectJdkChanged();
   }
 
-  protected void projectJdkChanged() {
+  public void projectJdkChanged() {
     incModificationCount();
     mergeRootsChangesDuring(getActionToRunWhenProjectJdkChanges());
     fireJdkChanged();

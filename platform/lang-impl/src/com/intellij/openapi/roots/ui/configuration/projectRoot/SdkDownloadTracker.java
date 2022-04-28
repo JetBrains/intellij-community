@@ -13,11 +13,14 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorListener;
 import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -436,6 +439,14 @@ public class SdkDownloadTracker {
               }
 
               sdkType.setupSdkPaths(sdk);
+
+              for (Project project: ProjectManager.getInstance().getOpenProjects()) {
+                final var rootManager = ProjectRootManagerImpl.getInstanceImpl(project);
+                final Sdk projectSdk = rootManager.getProjectSdk();
+                if (projectSdk != null && projectSdk.getName().equals(sdk.getName())) {
+                  rootManager.projectJdkChanged();
+                }
+              }
             }
             catch (Exception e) {
               LOG.warn("Failed to set up SDK " + sdk + ". " + e.getMessage(), e);
