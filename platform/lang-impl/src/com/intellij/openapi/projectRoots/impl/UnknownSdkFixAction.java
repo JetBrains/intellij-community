@@ -65,8 +65,8 @@ public interface UnknownSdkFixAction {
     void onSdkResolved(@NotNull Sdk sdk);
 
     /**
-     * One of the final events of the reoslution. It is caleld when a given SDK
-     * failed to be resolved
+     * One of the final events of the resolution. It is called when a given SDK
+     * failed to be resolved.
      * @see #onSdkResolved(Sdk)
      */
     void onResolveFailed();
