@@ -32,7 +32,7 @@
        Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
   <depends>com.intellij.modules.platform</depends>
 
-  <extensionPoints defaultExtensionNs="com.intellij">
+  <extensions defaultExtensionNs="com.intellij">
     <themeProvider id="${context.artifact}" path="/theme/${context.getProperty("themeName")}.theme.json"/>
-  </extensionPoints>
+  </extensions>
 </idea-plugin>
