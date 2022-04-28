@@ -27,6 +27,8 @@ data class UnattendedHostStatus(
   val appVersion: String,
   val runtimeVersion: String,
   val unattendedMode: Boolean,
+  val backendUnresponsive: Boolean,
+  val modalDialogIsOpened: Boolean,
   val idePath: String,
   val projects: List<UnattendedHostPerProjectStatus>? = null
 ) {
