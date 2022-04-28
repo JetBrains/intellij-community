@@ -30,8 +30,9 @@ object CacheSwitcher {
           setupProp("caches_dir", cachesDir)
           setupProp("index_root_path", indexDir)
 
-          ID.reloadEnumFile()
         }
+
+        ID.reloadEnumFile()
       }
     }
   }
