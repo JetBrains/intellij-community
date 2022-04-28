@@ -65,7 +65,7 @@ val CHECK_GROUP_ID_FORMAT = CHECK_NO_WHITESPACES and CHECK_NAME_FORMAT and valid
   }
 }
 
-private val artifactIdPattern = "[a-zA-Z\\d-_]*".toRegex()
+private val artifactIdPattern = "[a-zA-Z\\d_.-]*".toRegex()
 private val firstSymbolArtifactIdPattern = "[a-zA-Z_].*".toRegex()
 val CHECK_ARTIFACT_ID_FORMAT = validationErrorFor<String> { text ->
   if (!artifactIdPattern.matches(text)) {
