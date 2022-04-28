@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-script-runtime" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:1.7.20-dev-525" />
+    <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:1.7.20-dev-657" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.7.20-dev-525/kotlin-script-runtime-1.7.20-dev-525.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.7.20-dev-657/kotlin-script-runtime-1.7.20-dev-657.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.7.20-dev-525/kotlin-script-runtime-1.7.20-dev-525-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.7.20-dev-657/kotlin-script-runtime-1.7.20-dev-657-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
