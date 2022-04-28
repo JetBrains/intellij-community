@@ -1,16 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.jshell;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -55,7 +57,12 @@ final class ExecuteJShellAction extends AnAction{
     try {
       JShellHandler handler = JShellHandler.getAssociatedHandler(vFile);
       if (handler == null) {
-        final SnippetEditorDecorator.ConfigurationPane config = SnippetEditorDecorator.getJShellConfiguration(e.getDataContext());
+        final FileEditor fileEditor = e.getData(PlatformCoreDataKeys.FILE_EDITOR);
+        final SnippetEditorDecorator.ConfigurationPane config =
+          fileEditor != null ?
+          SnippetEditorDecorator.ConfigurationPane.getJShellConfiguration(fileEditor) :
+          null;
+
         final Module module = config != null ? config.getContextModule() : null;
         final Sdk sdk = config != null ? config.getRuntimeSdk() : null;
         handler = JShellHandler.create(project, vFile, module, sdk);
