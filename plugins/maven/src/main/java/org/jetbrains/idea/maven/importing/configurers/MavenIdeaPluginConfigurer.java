@@ -131,7 +131,9 @@ public class MavenIdeaPluginConfigurer extends MavenModuleConfigurer {
       }
 
       if (ApplicationManager.getApplication().isDispatchThread()) {
-
+        WriteAction.run(() ->
+                          model.commit()
+        );
       }
       else {
         ApplicationManager.getApplication().invokeAndWait(() -> {
