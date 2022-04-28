@@ -375,4 +375,6 @@ public interface IdeActions {
   String BREADCRUMBS_HIDE_BOTH = "EditorBreadcrumbsHideBoth";
 
   String ACTION_RESTORE_FONT_PREVIEW_TEXT = "RestoreFontPreviewTextAction";
+
+  String ACTION_FOCUS_EDITOR = "FocusEditor";
 }

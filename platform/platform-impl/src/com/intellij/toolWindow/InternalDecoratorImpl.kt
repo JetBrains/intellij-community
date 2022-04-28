@@ -424,7 +424,7 @@ class InternalDecoratorImpl internal constructor(
 
   public override fun processKeyBinding(ks: KeyStroke, e: KeyEvent, condition: Int, pressed: Boolean): Boolean {
     if (condition == WHEN_ANCESTOR_OF_FOCUSED_COMPONENT && pressed) {
-      val keyStrokes = KeymapUtil.getKeyStrokes(ActionManager.getInstance().getAction("FocusEditor").shortcutSet)
+      val keyStrokes = KeymapUtil.getKeyStrokes(ActionManager.getInstance().getAction(IdeActions.ACTION_FOCUS_EDITOR).shortcutSet)
       if (keyStrokes.contains(ks)) {
         toolWindow.toolWindowManager.activateEditorComponent()
         return true
