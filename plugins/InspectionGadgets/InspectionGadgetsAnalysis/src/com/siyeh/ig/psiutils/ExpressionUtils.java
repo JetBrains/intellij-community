@@ -966,11 +966,14 @@ public final class ExpressionUtils {
    * @param ref    a reference expression to get an effective qualifier for
    * @param member a member the reference is resolved to
    * @return a qualifier or created (non-physical) {@link PsiThisExpression}.
-   * May return null if reference points to member of anonymous class referred from inner class
+   * May return null if the reference points to a member of an anonymous class referred from an inner class or if
+   * the reference points to a non-static class member from static context
    */
   public static PsiExpression getEffectiveQualifier(@NotNull PsiReferenceExpression ref, @NotNull PsiMember member) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
     PsiClass memberClass = member.getContainingClass();
+    PsiMethod containingMethod = PsiTreeUtil.getContextOfType(ref, PsiMethod.class);
+    if (!member.hasModifierProperty(PsiModifier.STATIC) && isStaticMember(containingMethod)) return null;
     if (memberClass != null) {
       if (member.hasModifierProperty(PsiModifier.STATIC)) {
         return factory.createReferenceExpression(memberClass);
@@ -979,9 +982,11 @@ public final class ExpressionUtils {
       if (containingClass == null) {
         containingClass = PsiTreeUtil.getContextOfType(ref, PsiClass.class);
       }
+      if (!member.hasModifierProperty(PsiModifier.STATIC) && isStaticMember(containingClass)) return null;
       if (!InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
         containingClass = ClassUtils.getContainingClass(containingClass);
         while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
+          if (!member.hasModifierProperty(PsiModifier.STATIC) && isStaticMember(containingClass)) return null;
           containingClass = ClassUtils.getContainingClass(containingClass);
         }
         if (containingClass != null) {
@@ -1000,6 +1005,10 @@ public final class ExpressionUtils {
       }
     }
     return factory.createExpressionFromText(PsiKeyword.THIS, ref);
+  }
+
+  private static boolean isStaticMember(@Nullable PsiMember member) {
+    return member != null && member.hasModifierProperty(PsiModifier.STATIC);
   }
 
   /**
