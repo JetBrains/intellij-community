@@ -4,8 +4,8 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.ConfigurationWithAlternativeJre;
 import com.intellij.execution.configurations.ModuleBasedConfigurationOptions;
 import com.intellij.execution.impl.statistics.FusAwareRunConfiguration;
+import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector;
 import com.intellij.execution.util.JavaParametersUtil;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +50,7 @@ public interface CommonJavaRunConfigurationParameters extends CommonProgramRunCo
     if (jrePath != null) {
       JavaVersion version = JavaParametersUtil.getJavaVersion(jrePath);
       if (version != null) {
-        return Collections.singletonList(EventFields.Int("ALTERNATIVE_JRE_VERSION").with(version.feature));
+        return Collections.singletonList(RunConfigurationUsageTriggerCollector.ALTERNATIVE_JRE_VERSION.with(version.feature));
       }
     }
     return Collections.emptyList();
