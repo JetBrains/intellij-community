@@ -30,7 +30,7 @@ public class MissingMethodBodyFixer implements Fixer {
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof PsiField) {
-      // replace something like `int x` with `int x() {...}`
+      // replace something like `void x` with `void x() {...}`
       // while it's ambiguous whether user wants a field or a method, declaring a field is easier (just append a semicolon),
       // so completing a method looks more useful
       PsiField field = (PsiField)psiElement;
@@ -42,11 +42,7 @@ public class MissingMethodBodyFixer implements Fixer {
       if (modifiers == null) return;
       // Impossible modifiers for a method
       if (modifiers.hasExplicitModifier(TRANSIENT) || modifiers.hasExplicitModifier(VOLATILE)) return;
-      // Modifier combination which is unlikely to see on methods but quite reasonable on fields
-      if ((modifiers.hasExplicitModifier(STATIC) || modifiers.hasExplicitModifier(PRIVATE)) &&
-          modifiers.hasExplicitModifier(FINAL)) {
-        return;
-      }
+      if (!PsiType.VOID.equals(field.getType())) return;
       int endOffset = field.getTextRange().getEndOffset();
       editor.getDocument().insertString(endOffset, "(){}");
       editor.getCaretModel().moveToOffset(endOffset + 1);

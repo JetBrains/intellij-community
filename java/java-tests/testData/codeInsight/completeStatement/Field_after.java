@@ -1,4 +1,3 @@
 public class Test {
-    String s(<caret>) {
-    }
+    String s;<caret>
 }
