@@ -8,6 +8,7 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.light.LightTypeParameterListBuilder;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import icons.LombokIcons;
 import org.jetbrains.annotations.NonNls;
@@ -26,6 +27,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
   private PsiCodeBlock myBodyCodeBlock;
   // used to simplify comparing of returnType in equal method
   private String myReturnTypeAsText;
+  private Function<LombokLightMethodBuilder, String> myBuilderBodyFunction;
 
   public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE, name,
@@ -110,6 +112,12 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
     return this;
   }
 
+  public LombokLightMethodBuilder withBodyText(@NotNull Function<LombokLightMethodBuilder, String> builderStringFunction) {
+    myBuilderBodyFunction = builderStringFunction;
+    myBodyCodeBlock = null;
+    return this;
+  }
+
   public LombokLightMethodBuilder withAnnotation(@NotNull String annotation) {
     getModifierList().addAnnotation(annotation);
     return this;
@@ -141,10 +149,15 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
   @Override
   public PsiCodeBlock getBody() {
     String bodyAsText = myBodyAsText;
-    if (null == myBodyCodeBlock && bodyAsText != null) {
+    Function<LombokLightMethodBuilder, String> builderBodyFunction = myBuilderBodyFunction;
+    if (null == myBodyCodeBlock && (bodyAsText != null || builderBodyFunction != null)) {
+      if (bodyAsText == null) {
+        bodyAsText = builderBodyFunction.fun(this);
+      }
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
       myBodyCodeBlock = elementFactory.createCodeBlockFromText("{" + bodyAsText + "}", this);
       myBodyAsText = null;
+      myBuilderBodyFunction = null;
     }
     return myBodyCodeBlock;
   }
