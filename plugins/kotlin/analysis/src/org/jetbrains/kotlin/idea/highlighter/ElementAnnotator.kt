@@ -201,7 +201,7 @@ internal class ElementAnnotator(
                 moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useIR) &&
                         !moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useOldBackend)
             Errors.FIR_COMPILED_CLASS ->
-                moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useFir)
+                moduleFacetSettings.isCompilerSettingPresent(K2JVMCompilerArguments::useK2)
             else -> error(factory)
         }
     }
