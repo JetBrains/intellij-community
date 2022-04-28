@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.jshell;
 
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
@@ -47,22 +35,25 @@ public class LaunchJShellConsoleAction extends AnAction{
       ScratchFileService.Option.create_new_always
     );
     assert contentFile != null;
-    try {
-      final FileEditor[] editors = FileEditorManager.getInstance(project).openFile(contentFile, true);
-      Sdk alternateSdk = null;
-      Module module = null;
-      for (FileEditor editor : editors) {
-        final SnippetEditorDecorator.ConfigurationPane config = SnippetEditorDecorator.getJShellConfiguration(editor);
-        if (config != null) {
-          alternateSdk = config.getRuntimeSdk();
-          module = config.getContextModule();
-          break;
+    final FileEditor[] editors = FileEditorManager.getInstance(project).openFile(contentFile, true);
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      try {
+        Sdk alternateSdk = null;
+        Module module = null;
+        for (FileEditor editor : editors) {
+          final SnippetEditorDecorator.ConfigurationPane config = SnippetEditorDecorator.ConfigurationPane.getJShellConfiguration(editor);
+          if (config != null) {
+            alternateSdk = config.getRuntimeSdk();
+            module = config.getContextModule();
+            break;
+          }
         }
+        JShellHandler.create(project, contentFile, module, alternateSdk);
       }
-      JShellHandler.create(project, contentFile, module, alternateSdk);
-    }
-    catch (Exception ex) {
-      JShellDiagnostic.notifyError(ex, project);
-    }
+      catch (Exception ex) {
+        JShellDiagnostic.notifyError(ex, project);
+      }
+    }, ModalityState.any(), project.getDisposed());
   }
 }
