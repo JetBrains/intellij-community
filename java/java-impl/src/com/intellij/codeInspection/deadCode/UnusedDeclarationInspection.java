@@ -318,7 +318,10 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
           if (lambdaRef instanceof RefFunctionalExpression) {
             ULambdaExpression lambda = ObjectUtils.tryCast(((RefFunctionalExpression)lambdaRef).getUastElement(), ULambdaExpression.class);
             if (lambda != null) {
-              findUnusedLocalVariables(lambda.getBody(), lambdaRef);
+              PsiCodeBlock lambdaBody = ObjectUtils.tryCast(lambda.getBody().getSourcePsi(), PsiCodeBlock.class);
+              if (lambdaBody != null) {
+                findUnusedLocalVariablesInCodeBlock(lambdaBody, descriptors);
+              }
             }
           }
         }
