@@ -10,7 +10,7 @@ The code that follows this guideline is easier to maintain, adapt, and refactor,
     int dollars = c.getWallet().getDollars(); // violation
     if (dollars >= invoice.getAmount()) {
       Wallet w = c.getWallet();
-      w.subtract(invoice.getAmount()); // violation;
+      w.subtract(invoice.getAmount()); // violation
       return true;
     }
     return false;
