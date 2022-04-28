@@ -26,7 +26,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.subFacets
+import com.intellij.workspaceModel.storage.bridgeEntities.api.childrenFacets
 import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
@@ -80,7 +80,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   private fun removeFacetEntityWithSubFacets(entity: FacetEntity) {
     if (diff.facetMapping().getDataByEntity(entity) == null) return
 
-    entity.subFacets.forEach {
+    entity.childrenFacets.forEach {
       removeFacetEntityWithSubFacets(it)
     }
     diff.mutableFacetMapping().removeMapping(entity)

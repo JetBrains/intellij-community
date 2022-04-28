@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package deft.storage.codegen
 
-import com.intellij.workspaceModel.storage.CodeGeneratorVersions
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.*
 import deft.storage.codegen.field.javaType
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.codegen.ijws.classes.noDefaultValue

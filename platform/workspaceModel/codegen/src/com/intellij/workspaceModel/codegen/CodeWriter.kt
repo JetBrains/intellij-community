@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen
 
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import deft.storage.codegen.javaImplName
 import org.jetbrains.deft.codegen.ijws.implWsCode
@@ -22,9 +24,15 @@ fun DefType.implIjWsFileContents(simpleTypes: List<DefType>): String {
 object CodeWriter {
   fun generate(project: Project, sourceFolder: VirtualFile, targetFolder: VirtualFile) {
     val documentManager = FileDocumentManager.getInstance()
-    val ktSrcs = sourceFolder.children.filter { it.extension == "kt" }.mapNotNull {
-      val document = documentManager.getDocument(it) ?: return@mapNotNull null
-      it to document
+    val ktSrcs = mutableListOf<Pair<VirtualFile, Document>>()
+    val fileMapping = mutableMapOf<String, VirtualFile>()
+    VfsUtilCore.processFilesRecursively(sourceFolder) {
+      if (it.extension == "kt") {
+        val document = documentManager.getDocument(it) ?: return@processFilesRecursively true
+        ktSrcs.add(it to document)
+        fileMapping[it.name] = it
+      }
+      return@processFilesRecursively true
     }
 
     val module = KtObjModule(project)
@@ -33,7 +41,7 @@ object CodeWriter {
     }
     val result = module.build()
     module.files.forEach {
-      val virtualFile = sourceFolder.findChild(it.name) ?: return@forEach
+      val virtualFile = fileMapping[it.name] ?: return@forEach
       documentManager.getDocument(virtualFile)?.setText(it.rewrite())
     }
 

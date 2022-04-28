@@ -1,5 +1,8 @@
 package org.jetbrains.deft.codegen.model
 
+import org.jetbrains.deft.codegen.ijws.fields.referencedField
+import org.jetbrains.deft.codegen.ijws.getRefType
+import org.jetbrains.deft.codegen.ijws.refsFields
 import org.jetbrains.deft.impl.TBlob
 import org.jetbrains.deft.impl.TRef
 import org.jetbrains.deft.impl.fields.*

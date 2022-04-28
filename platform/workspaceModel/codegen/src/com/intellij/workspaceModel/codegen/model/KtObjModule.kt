@@ -8,20 +8,16 @@ import org.jetbrains.deft.impl.fields.ExtField
 import storage.codegen.patcher.KotlinReader
 
 class KtObjModule(
-    val project: Project?,
-    val addDependencies: List<KtObjModule> = listOf()
+    val project: Project?
 ) : ObjModule() {
   val packages = mutableMapOf<String?, KtPackage>()
   val files = mutableListOf<KtFile>()
-  val extFields = mutableListOf<ExtField<*, *>>()
   fun getOrCreatePackage(p: String?): KtPackage = packages.getOrPut(p) { KtPackage(p) }
 
   init {
-    addDependencies.forEach { otherModule ->
-      otherModule.packages.values.forEach { packageToImport ->
-        getOrCreatePackage(packageToImport.fqn)
-          .scope.importedScopes.add(packageToImport.scope)
-      }
+    packages.values.forEach { packageToImport ->
+      getOrCreatePackage(packageToImport.fqn)
+        .scope.importedScopes.add(packageToImport.scope)
     }
   }
 
@@ -33,17 +29,8 @@ class KtObjModule(
         return file
     }
 
-  @InitApi
-  override fun init() {
-    // everything should be done in build method
-  }
-
   @OptIn(InitApi::class)
   fun build(diagnostics: Diagnostics = Diagnostics()): Built {
-    addDependencies.forEach {
-      requireDependency(it)
-    }
-
     val simpleTypes = mutableListOf<DefType>()
     files.forEach {
       it.scope.visitSimpleTypes(simpleTypes)

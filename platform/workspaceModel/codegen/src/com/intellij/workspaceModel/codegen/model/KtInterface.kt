@@ -69,7 +69,7 @@ class KtInterface(
       val superType = scope.resolve(it.classifier)
       val ktInterface = superType?.ktInterface
       if (ktInterface?.kind != null) {
-        base = ktInterface.simpleType!!
+        base = ktInterface.simpleType
       }
     }
 

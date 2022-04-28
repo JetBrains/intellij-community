@@ -27,7 +27,7 @@ class WorkspaceModelGenerationAction: AnAction() {
     val sourceRoot = getSourceRoot(module, selectedFolder) ?: return
     createGeneratedSourceFolder(module, sourceRoot)
     val packageFolder = createPackageFolder(sourceRoot.file!!, selectedFolder) ?: return
-    WriteAction.run<RuntimeException> { CodeWriter.generate(project, selectedFolder, packageFolder, "org.jetbrains.workspaceModel") }
+    WriteAction.run<RuntimeException> { CodeWriter.generate(project, selectedFolder, packageFolder) }
     println("Selected module ${module.name}")
   }
 

@@ -336,8 +336,6 @@ fun LibraryEntity.getCustomProperties() = referrersx(LibraryPropertiesEntity::li
 val ModuleEntity.sourceRoots: List<SourceRootEntity>
   get() = contentRoots.flatMap { it.sourceRoots }
 
-val FacetEntity.subFacets: List<FacetEntity>
-  get() = referrersx(FacetEntity::underlyingFacet)
 
 fun ModuleEntity.getModuleLibraries(storage: EntityStorage): Sequence<LibraryEntity> {
   return storage.entities(LibraryEntity::class.java)
