@@ -426,7 +426,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             if (!request.isValid) return
             val target = pointer.element ?: return
             val oldType = target.typeReference
-            val typeName = request.qualifiedName ?: target.typeName() ?: return
+            val typeName = if (request.qualifiedName == PsiType.VOID.name) "kotlin.Unit" else request.qualifiedName ?: target.typeName() ?: return
             val psiFactory = KtPsiFactory(target)
             val annotations = request.annotations.joinToString(" ") { "@${renderAnnotation(target, it, psiFactory)}" }
             val newType = psiFactory.createType("$annotations $typeName".trim())
