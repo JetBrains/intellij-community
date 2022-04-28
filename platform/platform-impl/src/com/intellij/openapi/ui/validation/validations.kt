@@ -20,8 +20,11 @@ val CHECK_NO_RESERVED_WORDS = validationErrorIf<String>(UIBundle.message("kotlin
 }
 
 private val namePattern = "[a-zA-Z\\d\\s_.-]*".toRegex()
+private val firstSymbolNamePattern = "[a-zA-Z_].*".toRegex()
 val CHECK_NAME_FORMAT = validationErrorIf<String>(UIBundle.message("kotlin.dsl.validation.name.allowed.symbols")) {
   !namePattern.matches(it)
+} and validationErrorIf<String>(UIBundle.message("kotlin.dsl.validation.name.leading.symbols")) {
+  !firstSymbolNamePattern.matches(it)
 }
 
 val CHECK_NON_EMPTY_DIRECTORY = validationFileErrorFor { file ->
@@ -50,8 +53,7 @@ val CHECK_DIRECTORY = validationErrorFor<String> { text ->
     }
 }
 
-private val groupIdPartPattern = "[a-zA-Z_].*".toRegex()
-val CHECK_GROUP_ID_FORMAT = CHECK_NO_WHITESPACES and CHECK_NAME_FORMAT and validationErrorFor { text ->
+private val CHECK_GROUP_ID_FORMAT = validationErrorFor<String> { text ->
   if (text.startsWith('.') || text.endsWith('.')) {
     UIBundle.message("kotlin.dsl.validation.groupId.leading.trailing.dot")
   }
@@ -59,29 +61,15 @@ val CHECK_GROUP_ID_FORMAT = CHECK_NO_WHITESPACES and CHECK_NAME_FORMAT and valid
     UIBundle.message("kotlin.dsl.validation.groupId.double.dot")
   }
   else {
-    text.split("\\.")
-      .find { !groupIdPartPattern.matches(it) }
+    text.split(".")
+      .find { !firstSymbolNamePattern.matches(it) }
       ?.let { UIBundle.message("kotlin.dsl.validation.groupId.part.allowed.symbols", it) }
   }
 }
 
-private val artifactIdPattern = "[a-zA-Z\\d_.-]*".toRegex()
-private val firstSymbolArtifactIdPattern = "[a-zA-Z_].*".toRegex()
-val CHECK_ARTIFACT_ID_FORMAT = validationErrorFor<String> { text ->
-  if (!artifactIdPattern.matches(text)) {
-    UIBundle.message("kotlin.dsl.validation.artifactId.allowed.symbols")
-  }
-  else if (!firstSymbolArtifactIdPattern.matches(text)) {
-    UIBundle.message("kotlin.dsl.validation.artifactId.leading.symbols")
-  }
-  else {
-    null
-  }
-}
+val CHECK_GROUP_ID = CHECK_NO_WHITESPACES and CHECK_NAME_FORMAT and CHECK_GROUP_ID_FORMAT and CHECK_NO_RESERVED_WORDS
 
-val CHECK_GROUP_ID = CHECK_NO_WHITESPACES and CHECK_GROUP_ID_FORMAT and CHECK_NO_RESERVED_WORDS
-
-val CHECK_ARTIFACT_ID = CHECK_NO_WHITESPACES and CHECK_ARTIFACT_ID_FORMAT and CHECK_NO_RESERVED_WORDS
+val CHECK_ARTIFACT_ID = CHECK_NO_WHITESPACES and CHECK_NAME_FORMAT and CHECK_NO_RESERVED_WORDS
 
 private fun Project.getModules() = ModuleManager.getInstance(this).modules
 
@@ -107,7 +95,7 @@ val CHECK_FREE_PROJECT_PATH = validationPathErrorFor { path ->
   }
 }
 
-val CHECK_MODULE_NAME = CHECK_NO_WHITESPACES and CHECK_NAME_FORMAT and CHECK_FREE_MODULE_NAME and CHECK_NO_RESERVED_WORDS
+val CHECK_MODULE_NAME = CHECK_NAME_FORMAT and CHECK_FREE_MODULE_NAME and CHECK_NO_RESERVED_WORDS
 
 val CHECK_MODULE_PATH = CHECK_DIRECTORY and CHECK_NON_EMPTY_DIRECTORY and CHECK_FREE_MODULE_PATH
 
