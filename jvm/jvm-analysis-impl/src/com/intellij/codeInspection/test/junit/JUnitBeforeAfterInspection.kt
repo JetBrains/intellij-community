@@ -4,14 +4,11 @@ package com.intellij.codeInspection.test.junit
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInspection.*
-import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.lang.jvm.actions.modifierRequest
-import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifier.ModifierConstant
 import com.intellij.psi.PsiType
-import com.siyeh.ig.junit.MakePublicStaticVoidFix
 import org.jetbrains.uast.UMethod
 
 class JUnitBeforeAfterInspection : AbstractBaseUastLocalInspectionTool() {
@@ -24,7 +21,7 @@ class JUnitBeforeAfterInspection : AbstractBaseUastLocalInspectionTool() {
     val parameterList = method.uastParameters
     if ((parameterList.isNotEmpty() || returnType != PsiType.VOID || javaMethod.hasModifier(JvmModifier.STATIC))
         || (isJUnit4(annotation) && !javaMethod.hasModifier(JvmModifier.PUBLIC))
-    ) return makeStaticVoidFix(method, manager, isOnTheFly, annotation, if (isJUnit4(annotation)) PsiModifier.PUBLIC else null)
+    ) return makeStaticVoidFix(method, manager, isOnTheFly, annotation, if (isJUnit4(annotation)) JvmModifier.PUBLIC else null)
     if (isJUnit5(annotation) && javaMethod.hasModifier(JvmModifier.PRIVATE)) {
       return removePrivateModifierFix(method, manager, isOnTheFly, annotation)
     }
@@ -36,13 +33,10 @@ class JUnitBeforeAfterInspection : AbstractBaseUastLocalInspectionTool() {
     manager: InspectionManager,
     isOnTheFly: Boolean,
     annotation: String,
-    @ModifierConstant modifier: String? // null means unchanged
+    @ModifierConstant modifier: JvmModifier? // null means unchanged
   ): Array<ProblemDescriptor> {
-    val javaMethod = method.javaPsi
     val message = JvmAnalysisBundle.message("jvm.inspections.before.after.descriptor", annotation)
-    val fixes = if (method.sourcePsi?.language == JavaLanguage.INSTANCE) {
-      arrayOf(MakePublicStaticVoidFix(javaMethod, false, modifier))
-    } else emptyArray()
+    val fixes = arrayOf(MakeNoArgVoidFix(method.name, false, modifier))
     val place = method.uastAnchor?.sourcePsi ?: return emptyArray()
     val problemDescriptor = manager.createProblemDescriptor(
       place, message, isOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING

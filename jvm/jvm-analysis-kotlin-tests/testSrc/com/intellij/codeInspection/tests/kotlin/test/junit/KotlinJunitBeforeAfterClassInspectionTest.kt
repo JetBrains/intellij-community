@@ -43,4 +43,27 @@ class KotlinJunitBeforeAfterClassInspectionTest : JUnitBeforeAfterClassInspectio
       }
     """.trimIndent())
   }
+
+  fun testQuickFixFull() {
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+      import org.junit.jupiter.api.BeforeAll
+      
+      class MainTest {
+        @BeforeAll
+        fun before<caret>All(i: Int): String { return "" }
+      }
+    """.trimIndent(), """
+      import org.junit.jupiter.api.BeforeAll
+      
+      class MainTest {
+          companion object {
+              @JvmStatic
+              @BeforeAll
+              fun beforeAll(): Unit {
+                  return ""
+              }
+          }
+      }
+    """.trimIndent(), "Fix 'beforeAll' method signature")
+  }
 }

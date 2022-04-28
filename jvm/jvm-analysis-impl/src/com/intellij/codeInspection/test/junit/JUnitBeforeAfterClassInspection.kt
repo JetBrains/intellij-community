@@ -7,12 +7,10 @@ import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.allClasses
 import com.intellij.execution.junit.JUnitUtil
-import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiType
 import com.intellij.uast.UastVisitorAdapter
-import com.siyeh.ig.junit.MakePublicStaticVoidFix
 import com.siyeh.ig.psiutils.TestUtils
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UMethod
@@ -51,9 +49,7 @@ class JUnitBeforeAfterClassInspection : AbstractBaseUastLocalInspectionTool() {
 
     private fun registerError(method: UMethod, annotation: String) {
       val message = JvmAnalysisBundle.message("jvm.inspections.before.after.descriptor", annotation)
-      val fix = if (method.sourcePsi?.language == JavaLanguage.INSTANCE) {
-        MakePublicStaticVoidFix(method.javaPsi, true)
-      } else null
+      val fix = MakeNoArgVoidFix(method.name, true, JvmModifier.PUBLIC)
       val place = method.uastAnchor?.sourcePsi ?: return
       holder.registerProblem(place, message, fix)
     }

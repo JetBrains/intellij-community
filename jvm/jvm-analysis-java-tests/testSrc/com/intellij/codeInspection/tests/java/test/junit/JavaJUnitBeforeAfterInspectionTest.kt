@@ -41,7 +41,7 @@ class JavaJUnitBeforeAfterInspectionTest : JUnitBeforeAfterInspectionTestBase() 
         @Before
         public void before() { return ""; }
       }
-    """.trimIndent(), "Change signature of 'String before(int)' to 'public void before()'")
+    """.trimIndent(), "Fix 'before' method signature")
   }
 
   fun testQuickFixChangeRemoveModifier() {

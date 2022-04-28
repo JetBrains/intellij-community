@@ -30,6 +30,6 @@ class JavaJUnitBeforeAfterClassInspectionTest : JUnitBeforeAfterClassInspectionT
         @BeforeAll
         public static void beforeAll() { return ""; }
       }
-    """.trimIndent(), "Change signature of 'String beforeAll(int)' to 'public static void beforeAll()'")
+    """.trimIndent(), "Fix 'beforeAll' method signature")
   }
 }
