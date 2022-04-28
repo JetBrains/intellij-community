@@ -111,7 +111,7 @@ set +x
 if [ "$USERNAME" != "" ] && [ "$PASSWORD" != "" ]; then
   log "Unlocking keychain..."
   # Make sure *.p12 is imported into local KeyChain
-  security unlock-keychain -p "$PASSWORD" "/Users/$USERNAME/Library/Keychains/login.keychain"
+  security unlock-keychain -p "$PASSWORD" "/Users/$USERNAME/Library/Keychains/login.keychain" || true
 fi
 set -ex
 
