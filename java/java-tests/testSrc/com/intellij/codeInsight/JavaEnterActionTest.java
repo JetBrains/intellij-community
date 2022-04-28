@@ -1719,6 +1719,46 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
     );
   }
 
+  public void testSCR2024() {
+    doTextTest("java", "class Foo {\n" + "    void foo() {\n" + "        switch (a) {\n" + "            case 1:<caret>\n" + "        }\n" +
+                       "    }\n" + "}", "class Foo {\n" + "    void foo() {\n" + "        switch (a) {\n" + "            case 1:\n" +
+                                        "                <caret>\n" + "        }\n" + "    }\n" + "}");
+  }
+
+  public void testSCR2124() {
+    doTextTest("java", "class Foo {\n" + "    public final int f() { \n" + "        A:<caret>\n" + "        int i;\n" + "    }\n" + "}",
+               "class Foo {\n" + "    public final int f() { \n" + "        A:\n" + "        <caret>\n" + "        int i;\n" + "    }\n" +
+               "}");
+  }
+  public void testCStyleCommentCompletion() {
+
+    doTextTest("java",
+
+               "public class Foo {\n" + "    public void foo() {\n" + "        /*<caret>\n" + "    }\n",
+
+               "public class Foo {\n" + "    public void foo() {\n" + "        /*\n" + "        <caret>\n" + "         */\n" + "    }\n");
+  }
+
+  public void testInsideCStyleComment() {
+    doTextTest("java",
+
+               "public class Foo {\n" + "    public void foo() {\n" + "        /*\n" + "         Some comment<caret>\n" + "         */\n" +
+               "    }\n",
+
+               "public class Foo {\n" + "    public void foo() {\n" + "        /*\n" + "         Some comment\n" + "         <caret>\n" +
+               "         */\n" + "    }\n");
+  }
+
+  public void testInsideCStyleCommentWithStars() {
+    doTextTest("java",
+
+               "public class Foo {\n" + "    public void foo() {\n" + "        /*\n" + "         * Some comment<caret>\n" +
+               "         */\n" + "    }\n",
+
+               "public class Foo {\n" + "    public void foo() {\n" + "        /*\n" + "         * Some comment\n" +
+               "         * <caret>\n" + "         */\n" + "    }\n");
+  }
+
   protected void doTest() throws Exception {
     doTest("java");
   }
