@@ -3,15 +3,14 @@ package com.intellij.jdkEx;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.MethodInvocator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 /**
  * Provides extensions for OpenJDK API, implemented in JetBrains JDK.
@@ -106,7 +105,8 @@ public final class JdkEx {
   private static MethodInvocator mySetTabbingMode;
 
   private static @Nullable MethodInvocator getTabbingModeInvocator() {
-    if (!SystemInfo.isJetBrainsJvm || !SystemInfo.isMacOSBigSur || !Registry.is("ide.mac.bigsur.window.with.tabs.enabled", true)) {
+    if (!SystemInfo.isJetBrainsJvm || !SystemInfo.isMacOSBigSur || !Registry.is("ide.mac.bigsur.window.with.tabs.enabled", true) ||
+        ExperimentalUI.isNewUI()) {
       return null;
     }
     if (mySetTabbingMode == null) {
