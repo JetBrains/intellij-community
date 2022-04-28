@@ -265,15 +265,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     dropTargetHighlightComponent.isVisible = !dragOut
   }
 
-  override fun mouseReleased(e: MouseEvent?) {
-    if (getToolWindow() == null) return
-    super.mouseReleased(e)
-    stopDrag()
-  }
-
-  override fun processDragOutFinish(event: MouseEvent) {
-    processDragFinish(event, false)
-  }
+  override fun processDragOutFinish(event: MouseEvent) = processDragFinish(event, false)
 
   override fun processDragFinish(event: MouseEvent, willDragOutStart: Boolean) {
     val toolWindow = getToolWindow() ?: return
@@ -282,64 +274,64 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       return
     }
 
-    val dropTargetPane = dragSourcePane
+    try {
+      val dropTargetPane = dragSourcePane
 
-    val screenPoint = event.locationOnScreen
-    val preferredStripe = dropTargetPane.buttonManager.getStripeFor(initialAnchor!!)
+      val screenPoint = event.locationOnScreen
+      val preferredStripe = dropTargetPane.buttonManager.getStripeFor(initialAnchor!!)
 
-    // If the drop point is not inside a stripe bounds, but is inside the visible tool window bounds, do nothing - we're not moving
-    if (dropTargetPane.getStripeFor(screenPoint, preferredStripe) == null &&
-        toolWindow.getBoundsOnScreen(initialAnchor!!, screenPoint).contains(screenPoint)) {
-      cancelDragging()
-      return
-    }
+      // If the drop point is not inside a stripe bounds, but is inside the visible tool window bounds, do nothing - we're not moving
+      if (dropTargetPane.getStripeFor(screenPoint, preferredStripe) == null &&
+          toolWindow.getBoundsOnScreen(initialAnchor!!, screenPoint).contains(screenPoint)) {
+        return
+      }
 
-    val stripe = lastStripe
-    if (stripe != null) {
-      stripe.finishDrop(toolWindow.toolWindowManager)
-    }
-    else {
-      toolWindow.toolWindowManager.setToolWindowType(toolWindow.id, ToolWindowType.FLOATING)
-      toolWindow.toolWindowManager.activateToolWindow(toolWindow.id, {
-        val w = ComponentUtil.getWindow(toolWindow.component)
-        if (w is JDialog) {
-          val locationOnScreen = event.locationOnScreen
-          if (sourceIsHeader) {
-            val decorator = InternalDecoratorImpl.findTopLevelDecorator(toolWindow.component)
-            if (decorator != null) {
-              val shift = SwingUtilities.convertPoint(decorator, decorator.location, w)
-              locationOnScreen.translate(-shift.x, -shift.y)
+      val stripe = lastStripe
+      if (stripe != null) {
+        stripe.finishDrop(toolWindow.toolWindowManager)
+      }
+      else {
+        toolWindow.toolWindowManager.setToolWindowType(toolWindow.id, ToolWindowType.FLOATING)
+        toolWindow.toolWindowManager.activateToolWindow(toolWindow.id, {
+          val w = ComponentUtil.getWindow(toolWindow.component)
+          if (w is JDialog) {
+            val locationOnScreen = event.locationOnScreen
+            if (sourceIsHeader) {
+              val decorator = InternalDecoratorImpl.findTopLevelDecorator(toolWindow.component)
+              if (decorator != null) {
+                val shift = SwingUtilities.convertPoint(decorator, decorator.location, w)
+                locationOnScreen.translate(-shift.x, -shift.y)
+              }
+              locationOnScreen.translate(-initialOffset.x, -initialOffset.y)
             }
-            locationOnScreen.translate(-initialOffset.x, -initialOffset.y)
+            w.location = locationOnScreen
+            val bounds = w.bounds
+            bounds.size = floatingWindowSize
+            ScreenUtil.fitToScreen(bounds)
+            w.bounds = bounds
           }
-          w.location = locationOnScreen
-          val bounds = w.bounds
-          bounds.size = floatingWindowSize
-          ScreenUtil.fitToScreen(bounds)
-          w.bounds = bounds
-        }
-      }, true, null)
+        }, true, null)
 
-      if (isNewUi) {
-        val info = toolWindow.toolWindowManager.getLayout().getInfo(toolWindow.id)
-        toolWindow.toolWindowManager.setSideToolAndAnchor(id = toolWindow.id,
-                                                          anchor = preferredStripe.anchor,
-                                                          order = info?.order ?: -1,
-                                                          isSplit = false)
+        if (isNewUi) {
+          val info = toolWindow.toolWindowManager.getLayout().getInfo(toolWindow.id)
+          toolWindow.toolWindowManager.setSideToolAndAnchor(id = toolWindow.id,
+                                                            anchor = preferredStripe.anchor,
+                                                            order = info?.order ?: -1,
+                                                            isSplit = false)
+        }
       }
     }
+    finally {
+      stopDrag()
+    }
   }
 
-  override fun cancelDragging(): Boolean {
-    if (super.cancelDragging()) {
-      stopDrag()
-      return true
-    }
-    return false
-  }
+  override fun processDragOutCancel() = stopDrag()
+  override fun processDragCancel() = stopDrag()
 
   override fun stop() {
     super.stop()
+    // Would stop ever be called in the middle of a drag? This implies the project is disposed mid-drag
     stopDrag()
   }
 
