@@ -277,7 +277,7 @@ internal class PackageSearchProjectService(private val project: Project) {
             .map { projectModulesStateFlow.value.map { it.buildFile.path }.toSet() }
             .filter { it.isNotEmpty() }
             .flatMapLatest { knownBuildFiles -> FileEditorManager.getInstance(project).openFiles.filter { it.path in knownBuildFiles }.asFlow() }
-            .mapNotNull { PsiManager.getInstance(project).findFile(it) }
+            .mapNotNull { readAction { PsiManager.getInstance(project).findFile(it) } }
             .onEach { DaemonCodeAnalyzer.getInstance(project).restart(it) }
             .launchIn(project.lifecycleScope)
 
