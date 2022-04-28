@@ -115,9 +115,8 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       getSourceStripe(toolWindow.anchor).let {
         lastStripe = it
         initialButton = if (!it.isNewStripes && it.isShowing) it.getButtonFor(toolWindow.id)?.getComponent() else component
-        // Size to make the floating toolbar. If the screen point is inside the anchor's drop area, this will be the default size of that
-        // drop area. If not, but the tool window is visible and the point is inside the tool window, use the bounds of the tool window
-        floatingWindowSize.size = toolWindow.getBoundsOnScreen(toolWindow.anchor, relativePoint.screenPoint).size
+        floatingWindowSize.size = toolWindow.windowInfo.floatingBounds?.size
+                                  ?: getDefaultFloatingToolWindowBounds(toolWindow).size
       }
     }
 
@@ -375,6 +374,40 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       is StripeButton -> clickedComponent.toolWindow
       is SquareStripeButton -> clickedComponent.toolWindow
       else -> null
+    }
+  }
+
+  private fun getPaneContentScreenBounds(pane: ToolWindowPane): Rectangle {
+    val location = pane.locationOnScreen
+    location.x += getStripeWidth(pane, LEFT)
+    location.y += getStripeHeight(pane, TOP)
+    val width = pane.width - getStripeWidth(pane, LEFT) - getStripeWidth(pane, RIGHT)
+    val height = pane.height - getStripeHeight(pane, TOP) - getStripeHeight(pane, BOTTOM)
+    return Rectangle(location.x, location.y, width, height)
+  }
+
+  private fun getDefaultFloatingToolWindowBounds(toolWindow: ToolWindowImpl): Rectangle {
+    // We can't just use toolWindow.component.bounds, as this doesn't include the tool window header, etc.
+    return getPaneContentScreenBounds(dragSourcePane).also {
+      val paneHeight = it.height
+      val paneWidth = it.width
+
+      // Note that this doesn't modify width/height for splits
+      if (toolWindow.anchor.isHorizontal) {
+        it.height = (dragSourcePane.rootPane.height * toolWindow.windowInfo.weight).toInt()
+      }
+      else {
+        it.width = (dragSourcePane.rootPane.width * toolWindow.windowInfo.weight).toInt()
+      }
+
+      when (toolWindow.anchor) {
+        BOTTOM -> it.y = it.y + paneHeight - it.height
+        RIGHT -> it.x = it.x + paneWidth - it.width
+      }
+
+      // TODO: Adjust for half height/width tool windows
+      // This means that drop target highlight, drag out boundaries and default floating size use the full height/width for split tool
+      // windows. The same for the bounds used to ignore a drop over a tool window
     }
   }
 
