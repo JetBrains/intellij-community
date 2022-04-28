@@ -556,8 +556,8 @@ public final class ActionsTreeUtil {
     mainGroup.addGroup(createPluginsActionsGroup(wrappedFilter));
     mainGroup.addGroup(createOtherGroup(wrappedFilter, mainGroup, keymap));
     if (!StringUtil.isEmpty(filter) || filtered != null) {
-      final ArrayList list = mainGroup.getChildren();
-      for (Iterator i = list.iterator(); i.hasNext();) {
+      final ArrayList<Object> list = mainGroup.getChildren();
+      for (Iterator<Object> i = list.iterator(); i.hasNext();) {
         final Object o = i.next();
         if (o instanceof Group) {
           final Group group = (Group)o;

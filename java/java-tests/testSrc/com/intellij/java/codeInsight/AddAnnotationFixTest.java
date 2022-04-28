@@ -67,7 +67,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
     final String dataPath = PathManagerEx.getTestDataPath() + "/codeInsight/externalAnnotations";
     myFixture.setTestDataPath(dataPath);
-    final JavaModuleFixtureBuilder builder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+    final JavaModuleFixtureBuilder<?> builder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
 
     myFixture.setUp();

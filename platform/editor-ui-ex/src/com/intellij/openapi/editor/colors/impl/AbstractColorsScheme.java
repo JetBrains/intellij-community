@@ -508,11 +508,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
                                 @Nullable Float fontScale,
                                 boolean clearFonts) {
     if (clearFonts) preferences.clearFonts();
-    List children = element.getChildren(OPTION_ELEMENT);
+    List<Element> children = element.getChildren(OPTION_ELEMENT);
     String fontFamily = null;
     float size = -1;
-    for (Object child : children) {
-      Element e = (Element)child;
+    for (Element e : children) {
       if (EDITOR_FONT_NAME.equals(e.getAttributeValue(NAME_ATTR))) {
         fontFamily = myValueReader.read(String.class, e);
       }

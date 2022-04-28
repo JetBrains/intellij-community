@@ -73,7 +73,7 @@ public abstract class AbstractDelombokAction extends AnAction implements UpdateI
   }
 
   private void processDirectory(@NotNull final Project project, @NotNull VirtualFile vFile) {
-    VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory()) {
@@ -162,7 +162,7 @@ public abstract class AbstractDelombokAction extends AnAction implements UpdateI
   }
 
   @Nullable
-  private PsiClass getTargetClass(Editor editor, PsiFile file) {
+  private static PsiClass getTargetClass(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) {
