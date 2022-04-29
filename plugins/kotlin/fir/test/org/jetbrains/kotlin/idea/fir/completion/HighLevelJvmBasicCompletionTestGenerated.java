@@ -1045,6 +1045,39 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/tests/testData/basic/common/lambdaAndTypeParams")
+        public static class LambdaAndTypeParams extends AbstractHighLevelJvmBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("LambdaAndErrorType.kt")
+            public void testLambdaAndErrorType() throws Exception {
+                runTest("../completion/tests/testData/basic/common/lambdaAndTypeParams/LambdaAndErrorType.kt");
+            }
+
+            @TestMetadata("LambdaAndNothingCommon.kt")
+            public void testLambdaAndNothingCommon() throws Exception {
+                runTest("../completion/tests/testData/basic/common/lambdaAndTypeParams/LambdaAndNothingCommon.kt");
+            }
+
+            @TestMetadata("LambdaAndNothingList.kt")
+            public void testLambdaAndNothingList() throws Exception {
+                runTest("../completion/tests/testData/basic/common/lambdaAndTypeParams/LambdaAndNothingList.kt");
+            }
+
+            @TestMetadata("LambdaAndNothingMap.kt")
+            public void testLambdaAndNothingMap() throws Exception {
+                runTest("../completion/tests/testData/basic/common/lambdaAndTypeParams/LambdaAndNothingMap.kt");
+            }
+
+            @TestMetadata("LambdaAndTypeVariable.kt")
+            public void testLambdaAndTypeVariable() throws Exception {
+                runTest("../completion/tests/testData/basic/common/lambdaAndTypeParams/LambdaAndTypeVariable.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../completion/tests/testData/basic/common/lambdaSignature")
         public static class LambdaSignature extends AbstractHighLevelJvmBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
