@@ -244,18 +244,15 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   private static PyType getWithItemVariableType(@NotNull PyWithItem item, @NotNull TypeEvalContext context) {
     final PyExpression withExpression = item.getExpression();
-    if (withExpression != null) {
-      final PyType withType = context.getType(withExpression);
-      final PyWithStatement withStatement = PsiTreeUtil.getParentOfType(item, PyWithStatement.class);
-      final boolean isAsync = withStatement != null && withStatement.isAsync();
+    final PyType withType = context.getType(withExpression);
+    final PyWithStatement withStatement = PsiTreeUtil.getParentOfType(item, PyWithStatement.class);
+    final boolean isAsync = withStatement != null && withStatement.isAsync();
 
-      return PyTypeUtil
-        .toStream(withType)
-        .select(PyClassType.class)
-        .map(t -> getEnterTypeFromPyClass(withExpression, t, isAsync, context))
-        .collect(PyTypeUtil.toUnion());
-    }
-    return null;
+    return PyTypeUtil
+      .toStream(withType)
+      .select(PyClassType.class)
+      .map(t -> getEnterTypeFromPyClass(withExpression, t, isAsync, context))
+      .collect(PyTypeUtil.toUnion());
   }
 
   @Nullable
