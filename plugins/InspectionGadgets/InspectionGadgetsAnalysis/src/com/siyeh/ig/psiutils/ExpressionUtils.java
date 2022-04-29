@@ -945,7 +945,8 @@ public final class ExpressionUtils {
    *
    * @param ref a reference expression to get an effective qualifier for
    * @return a qualifier or created (non-physical) {@link PsiThisExpression}.
-   *         May return null if reference points to local or member of anonymous class referred from inner class
+   * May return null if reference points to local or member of anonymous class referred from inner class
+   * or if reference points to non-static member of class from static context
    */
   @Nullable
   public static PsiExpression getEffectiveQualifier(@NotNull PsiReferenceExpression ref) {
@@ -966,14 +967,17 @@ public final class ExpressionUtils {
    * @param ref    a reference expression to get an effective qualifier for
    * @param member a member the reference is resolved to
    * @return a qualifier or created (non-physical) {@link PsiThisExpression}.
-   * May return null if the reference points to a member of an anonymous class referred from an inner class or if
-   * the reference points to a non-static class member from static context
+   * May return null if reference points to local or member of anonymous class referred from inner class
+   * or if reference points to non-static member of class from static context
    */
   public static PsiExpression getEffectiveQualifier(@NotNull PsiReferenceExpression ref, @NotNull PsiMember member) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
     PsiClass memberClass = member.getContainingClass();
-    PsiMethod containingMethod = PsiTreeUtil.getContextOfType(ref, PsiMethod.class);
-    if (!member.hasModifierProperty(PsiModifier.STATIC) && isStaticMember(containingMethod)) return null;
+    PsiMethod containingMethod = PsiTreeUtil.getParentOfType(ref, PsiMethod.class);
+    PsiClassInitializer classInitializer = PsiTreeUtil.getParentOfType(ref, PsiClassInitializer.class);
+    if (!member.hasModifierProperty(PsiModifier.STATIC) && (isStaticMember(containingMethod) || isStaticMember(classInitializer))) {
+      return null;
+    }
     if (memberClass != null) {
       if (member.hasModifierProperty(PsiModifier.STATIC)) {
         return factory.createReferenceExpression(memberClass);
