@@ -3,8 +3,13 @@ package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEventsNls
+import com.intellij.internal.statistic.StructuredIdeActivity
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector
+import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
+import com.intellij.openapi.externalSystem.statistics.findPluginInfoBySystemId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -16,6 +21,7 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
+import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
@@ -23,6 +29,11 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 
 @ApiStatus.Experimental
 class MavenImportingManager(val project: Project) {
+
+  private val mavenPluginInfo by lazy {
+    findPluginInfoBySystemId(MavenUtil.SYSTEM_ID)
+  }
+
   var currentContext: MavenImportContext? = null
     private set(value) {
       if (ApplicationManager.getApplication().isDispatchThread) {
@@ -112,11 +123,11 @@ class MavenImportingManager(val project: Project) {
                        generalSettings: MavenGeneralSettings,
                        importingSettings: MavenImportingSettings,
                        spec: MavenImportSpec
-  ): MavenImportFinishedContext {
+  ): MavenImportFinishedContext = withStructuredIdeActivity { activity ->
 
     val flow = MavenImportFlow()
 
-    return runSync(spec) {
+    return@withStructuredIdeActivity runSync(spec) {
       val enabledProfiles = MavenProjectsManager.getInstance(project).explicitProfiles.enabledProfiles
       val disabledProfiles = MavenProjectsManager.getInstance(project).explicitProfiles.disabledProfiles
       @Suppress("HardCodedStringLiteral")
@@ -127,32 +138,32 @@ class MavenImportingManager(val project: Project) {
                                                 disabledProfiles)
       currentContext = initialImport
 
-      val readMavenFiles = doTask(MavenProjectBundle.message("maven.reading")) {
+      val readMavenFiles = doTask(MavenProjectBundle.message("maven.reading"), activity, MavenImportStats.ReadingTask::class.java) {
         currentContext?.indicator?.checkCanceled()
         flow.readMavenFiles(initialImport)
       }
 
-      val dependenciesContext = doTask(MavenProjectBundle.message("maven.resolving")) {
+      val dependenciesContext = doTask(MavenProjectBundle.message("maven.resolving"), activity,
+                                       MavenImportStats.ResolvingTask::class.java) {
         currentContext?.indicator?.checkCanceled()
         flow.resolveDependencies(readMavenFiles)
       }
 
-      val resolvePlugins = doTask(MavenProjectBundle.message("maven.downloading.plugins")) {
+      val resolvePlugins = doTask(MavenProjectBundle.message("maven.downloading.plugins"), activity,
+                                  MavenImportStats.PluginsResolvingTask::class.java) {
         currentContext?.indicator?.checkCanceled()
         flow.resolvePlugins(dependenciesContext)
       }
 
-      /*val foldersResolved = doTask(MavenProjectBundle.message("maven.updating.folders")) {
-        currentContext?.indicator?.checkCanceled()
-        flow.resolveFolders(dependenciesContext)
-      }*/
 
-      val importContext = doTask(MavenProjectBundle.message("maven.project.importing")) {
+      val importContext = doTask(MavenProjectBundle.message("maven.project.importing"), activity,
+                                 MavenImportStats.ApplyingModelTask::class.java) {
         currentContext?.indicator?.checkCanceled()
         flow.commitToWorkspaceModel(dependenciesContext)
       }
 
-      return@runSync doTask(MavenProjectBundle.message("maven.post.processing")) {
+      return@runSync doTask(MavenProjectBundle.message("maven.post.processing"), activity,
+                            MavenImportStats.ConfiguringProjectsTask::class.java) {
         currentContext?.indicator?.checkCanceled()
         flow.runPostImportTasks(importContext)
         flow.updateProjectManager(readMavenFiles)
@@ -199,11 +210,14 @@ class MavenImportingManager(val project: Project) {
                                 settings.settings.getGeneralSettings(), spec)
   }
 
+  // Action: Show statistic/events in Console
 
-  private fun <Result> doTask(message: @BuildEventsNls.Message String,
-                              init: () -> Result): Result where Result : MavenImportContext {
-    return console.runTask(message, init).also { currentContext = it }
-  }
+  private fun <Result> doTask(message: @BuildEventsNls.Message String, parentActivity: StructuredIdeActivity, activityKlass: Class<*>,
+                              init: () -> Result): Result where Result : MavenImportContext =
+    withStructuredIdeActivity(parentActivity, activityKlass) {
+      return@withStructuredIdeActivity console.runTask(message, init).also { ctx -> currentContext = ctx }
+    }
+
 
   private fun runSync(spec: MavenImportSpec, init: () -> MavenImportFinishedContext): MavenImportFinishedContext {
     console.startImport(project.getService(SyncViewManager::class.java), spec)
@@ -222,6 +236,41 @@ class MavenImportingManager(val project: Project) {
   fun forceStopImport() {
     currentContext?.let { it.indicator.cancel() }
   }
+
+
+  private fun <T> withStructuredIdeActivity(f: (StructuredIdeActivity) -> T): T {
+    val startedActivity = ProjectImportCollector.IMPORT_ACTIVITY.started(project, withData(MavenImportStats.ImportingTask::class.java))
+
+    try {
+      return f(startedActivity)
+    }
+    finally {
+      startedActivity.finished()
+    }
+  }
+
+  private fun <T> withStructuredIdeActivity(parent: StructuredIdeActivity, klass: Class<*>, f: (StructuredIdeActivity) -> T): T {
+    val startedActivity = ProjectImportCollector.IMPORT_STAGE.startedWithParent(project, parent,
+                                                                                { listOf(ProjectImportCollector.TASK_CLASS.with(klass)) })
+    try {
+      return f(startedActivity)
+    }
+    finally {
+      startedActivity.finished()
+    }
+
+  }
+
+  private fun withData(klass: Class<*>): () -> List<EventPair<*>> = {
+    val data: MutableList<EventPair<*>> = mutableListOf(
+      ExternalSystemActionsCollector.EXTERNAL_SYSTEM_ID.with(MavenUtil.MAVEN_NAME))
+    if (mavenPluginInfo != null) {
+      data.add(EventFields.PluginInfo.with(mavenPluginInfo))
+    }
+    data.add(ProjectImportCollector.TASK_CLASS.with(klass))
+    data
+  }
+
 
   companion object {
     @JvmStatic
