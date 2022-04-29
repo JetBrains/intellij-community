@@ -756,20 +756,24 @@ public final class PluginManagerCore {
 
   public static @Nullable PluginLoadingError checkBuildNumberCompatibility(@NotNull IdeaPluginDescriptor descriptor,
                                                                            @NotNull BuildNumber ideBuildNumber) {
-    String sinceBuild = descriptor.getSinceBuild();
-    String untilBuild = descriptor.getUntilBuild();
     try {
+      String sinceBuild = descriptor.getSinceBuild();
       BuildNumber sinceBuildNumber = sinceBuild == null ? null : BuildNumber.fromString(sinceBuild, descriptor.getName(), null);
-      //if (sinceBuildNumber != null && sinceBuildNumber.compareTo(ideBuildNumber) > 0) {
-      //  return new PluginLoadingError(descriptor, message("plugin.loading.error.long.incompatible.since.build", descriptor.getName(), descriptor.getVersion(), sinceBuild, ideBuildNumber),
-      //                                   message("plugin.loading.error.short.incompatible.since.build", sinceBuild));
-      //}
-      //
-      //BuildNumber untilBuildNumber = untilBuild == null ? null : BuildNumber.fromString(untilBuild, descriptor.getName(), null);
-      //if (untilBuildNumber != null && untilBuildNumber.compareTo(ideBuildNumber) < 0) {
-      //  return new PluginLoadingError(descriptor, message("plugin.loading.error.long.incompatible.until.build", descriptor.getName(), descriptor.getVersion(), untilBuild, ideBuildNumber),
-      //                                   message("plugin.loading.error.short.incompatible.until.build", untilBuild));
-      //}
+      if (sinceBuildNumber != null && sinceBuildNumber.compareTo(ideBuildNumber) > 0) {
+        return new PluginLoadingError(descriptor,
+                                      message("plugin.loading.error.long.incompatible.since.build", descriptor.getName(),
+                                              descriptor.getVersion(), sinceBuild, ideBuildNumber),
+                                      message("plugin.loading.error.short.incompatible.since.build", sinceBuild));
+      }
+
+      String untilBuild = descriptor.getUntilBuild();
+      BuildNumber untilBuildNumber = untilBuild == null ? null : BuildNumber.fromString(untilBuild, descriptor.getName(), null);
+      if (untilBuildNumber != null && untilBuildNumber.compareTo(ideBuildNumber) < 0) {
+        return new PluginLoadingError(descriptor,
+                                      message("plugin.loading.error.long.incompatible.until.build", descriptor.getName(),
+                                              descriptor.getVersion(), untilBuild, ideBuildNumber),
+                                      message("plugin.loading.error.short.incompatible.until.build", untilBuild));
+      }
       return null;
     }
     catch (Exception e) {
