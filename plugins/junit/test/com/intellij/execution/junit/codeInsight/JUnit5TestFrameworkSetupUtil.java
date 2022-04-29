@@ -7,6 +7,8 @@ public class JUnit5TestFrameworkSetupUtil {
   public static JavaCodeInsightTestFixture setupJUnit5Library(JavaCodeInsightTestFixture fixture) {
     fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
                         "public @interface MethodSource {String[] value() default \"\";}");
+    fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
+                      "public @interface EmptySource {}");
     fixture.addClass( "package org.junit.jupiter.params;\n" +
                         "@org.junit.platform.commons.annotation.Testable\n" +
                         "public @interface ParameterizedTest {String name() default  \"\";}");
