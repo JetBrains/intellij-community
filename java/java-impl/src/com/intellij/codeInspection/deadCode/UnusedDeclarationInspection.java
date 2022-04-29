@@ -266,35 +266,30 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
         UField field = ((RefField)refElement).getUastElement();
         if (field != null) {
           UExpression initializer = field.getUastInitializer();
-          if (initializer != null) {
-            initializer = UastUtils.skipParenthesizedExprDown(initializer);
-            if (initializer instanceof ULambdaExpression) {
-              findUnusedLocalVariables(((ULambdaExpression)initializer).getBody(), refElement);
-            }
-          }
+          findUnusedLocalVariables(initializer, refElement);
         }
       }
     }
 
     private void findUnusedLocalVariables(UExpression body, RefElement refElement) {
       if (body == null) return;
-      PsiCodeBlock bodySourcePsi = ObjectUtils.tryCast(body.getSourcePsi(), PsiCodeBlock.class);
-      if (bodySourcePsi == null) return;
-      if (!myTools.isEnabled(bodySourcePsi)) return;
-      InspectionToolWrapper toolWrapper = myTools.getInspectionTool(bodySourcePsi);
+      PsiElement psiBody = body.getSourcePsi();
+      if (psiBody == null) return;
+      if (!myTools.isEnabled(psiBody)) return;
+      InspectionToolWrapper toolWrapper = myTools.getInspectionTool(psiBody);
       InspectionToolPresentation presentation = myContext.getPresentation(toolWrapper);
       if (((UnusedDeclarationInspection)toolWrapper.getTool()).getSharedLocalInspectionTool().LOCAL_VARIABLE) {
         List<CommonProblemDescriptor> descriptors = new ArrayList<>();
-        findUnusedLocalVariablesInCodeBlock(bodySourcePsi, descriptors);
+        findUnusedLocalVariablesInElement(psiBody, descriptors);
         if (!descriptors.isEmpty()) {
           presentation.addProblemElement(refElement, descriptors.toArray(CommonProblemDescriptor.EMPTY_ARRAY));
         }
       }
     }
 
-    private void findUnusedLocalVariablesInCodeBlock(@NotNull PsiCodeBlock codeBlock, @NotNull List<CommonProblemDescriptor> descriptors) {
+    private void findUnusedLocalVariablesInElement(@NotNull PsiElement element, @NotNull List<CommonProblemDescriptor> descriptors) {
       Set<PsiVariable> usedVariables = new HashSet<>();
-      List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(codeBlock, usedVariables);
+      List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(element, usedVariables);
       if (unusedDefs != null && !unusedDefs.isEmpty()) {
         for (DefUseUtil.Info varDefInfo : unusedDefs) {
           PsiElement parent = varDefInfo.getContext();
@@ -306,7 +301,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
           }
         }
       }
-      codeBlock.accept(new JavaRecursiveElementWalkingVisitor() {
+      element.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitClass(PsiClass aClass) {
           // prevent going to local classes
@@ -314,16 +309,9 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
 
         @Override
         public void visitLambdaExpression(PsiLambdaExpression lambdaExpr) {
-          RefElement lambdaRef = myContext.getRefManager().getReference(lambdaExpr);
-          if (lambdaRef instanceof RefFunctionalExpression) {
-            ULambdaExpression lambda = ObjectUtils.tryCast(((RefFunctionalExpression)lambdaRef).getUastElement(), ULambdaExpression.class);
-            if (lambda != null) {
-              PsiCodeBlock lambdaBody = ObjectUtils.tryCast(lambda.getBody().getSourcePsi(), PsiCodeBlock.class);
-              if (lambdaBody != null) {
-                findUnusedLocalVariablesInCodeBlock(lambdaBody, descriptors);
-              }
-            }
-          }
+          final PsiElement body = lambdaExpr.getBody();
+          if (body == null) return;
+          findUnusedLocalVariablesInElement(body, descriptors);
         }
 
         @Override
