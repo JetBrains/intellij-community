@@ -900,6 +900,9 @@
                     serviceImplementation="com.intellij.internal.statistic.local.FileTypeUsageLocalSummary"
                     testServiceImplementation="com.intellij.internal.statistic.local.TestFileTypeUsageSummaryProvider"/>
 
+    <projectService serviceInterface="com.intellij.internal.statistic.local.LanguageUsageStatisticsProvider"
+                    serviceImplementation="com.intellij.internal.statistic.local.LanguageUsageStatisticsProviderImpl"/>
+
     <projectService serviceInterface="com.intellij.workspaceModel.ide.WorkspaceModelCache"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl"/>
     <cachesInvalidator implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator"/>
