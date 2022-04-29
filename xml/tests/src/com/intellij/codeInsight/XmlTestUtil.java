@@ -25,7 +25,7 @@ public class XmlTestUtil {
   }
 
   @NotNull
-  static String getXmlTestDataPath() {
+  public static String getXmlTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData";
   }
 }
