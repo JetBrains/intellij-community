@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.style
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -27,7 +26,6 @@ abstract class GrUnnecessaryModifierInspection(@GrModifier.GrModifierConstant va
         holder.registerProblem(
           element,
           GroovyBundle.message("unnecessary.modifier.description", modifier),
-          ProblemHighlightType.LIKE_UNUSED_SYMBOL,
           getFix()
         )
       }

@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.codeInspection.unused;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
@@ -147,8 +146,7 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
         LocalQuickFix fix = PropertiesQuickFixFactory.getInstance().createRemovePropertyLocalFix();
         holder.registerProblem(key, isOnTheFly ? PropertiesBundle.message("unused.property.problem.descriptor.name")
                                                : PropertiesBundle
-                                      .message("unused.property.problem.descriptor.name.offline", property.getUnescapedKey()),
-                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
+                                      .message("unused.property.problem.descriptor.name.offline", property.getUnescapedKey()), fix);
       }
     };
   }

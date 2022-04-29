@@ -1,7 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sillyAssignment;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -75,7 +78,6 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
           if (refExpr.isReferenceTo(variable)) {
             holder.registerProblem(refExpr,
                                    JavaBundle.message("assignment.to.declared.variable.problem.descriptor", variable.getName()),
-                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                    createRemoveAssignmentFix(refExpr));
           }
         }
@@ -112,7 +114,7 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
     String message = leftExpression instanceof PsiArrayAccessExpression
                      ? JavaBundle.message("assignment.array.element.to.itself.problem.descriptor")
                      : JavaBundle.message("assignment.to.itself.problem.descriptor", variable.getName());
-    holder.registerProblem(rightExpression, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, createRemoveAssignmentFix(rightExpression));
+    holder.registerProblem(rightExpression, message, createRemoveAssignmentFix(rightExpression));
   }
 
   private static PsiExpression getArrayExpressionOrItself(PsiExpression expression) {

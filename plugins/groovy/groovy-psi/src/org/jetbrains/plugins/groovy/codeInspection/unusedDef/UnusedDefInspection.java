@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.unusedDef;
 
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -130,7 +129,7 @@ public final class UnusedDefInspection extends GroovyLocalInspectionBase {
     if (!checked.add(element)) return;
     if (isLocalAssignment(element) && isUsedInTopLevelFlowOnly(element) && !isIncOrDec(element)) {
       PsiElement toHighlight = getHighlightElement(element);
-      problemsHolder.registerProblem(toHighlight, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      problemsHolder.registerProblem(toHighlight, message);
     }
   }
 

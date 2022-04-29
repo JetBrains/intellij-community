@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.unused.defaultParameter;
 
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.FindSuperElementsHelper;
@@ -43,7 +42,7 @@ public class GrUnusedDefaultParameterInspection extends GroovyLocalInspectionToo
 
         if (isInitializerUnused(parameter, method)) {
           holder.registerProblem(
-            expression, GroovyBundle.message("unused.default.parameter.message"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+            expression, GroovyBundle.message("unused.default.parameter.message"),
             QuickFixFactory.getInstance().createDeleteFix(expression, GroovyBundle.message("unused.default.parameter.fix"))
           );
         }

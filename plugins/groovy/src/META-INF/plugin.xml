@@ -791,9 +791,11 @@
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall.SecondUnsafeCallInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnusedAssignment"
                      key="inspection.display.name.unused.assignment" groupKey="inspection.data.flow" enabledByDefault="true"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnusedIncOrDec"
                      key="inspection.display.name.unused.inc.dec" groupKey="inspection.data.flow" enabledByDefault="true"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyVariableNotAssigned"
                      key="inspection.display.name.unassigned.access" groupKey="inspection.data.flow" enabledByDefault="true"
@@ -944,24 +946,31 @@
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
                      key="inspection.display.name.unnecessary.def.modifier" cleanupTool="true" enabledByDefault="true"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryDefModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
                      key="inspection.display.name.unnecessary.final.modifier" cleanupTool="true" enabledByDefault="true"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryFinalModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
                      key="inspection.display.name.unnecessary.sealed.modifier" cleanupTool="true" enabledByDefault="true"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessarySealedModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
                      key="inspection.display.name.unnecessary.non.sealed.modifier" cleanupTool="true" enabledByDefault="true"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryNonSealedModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
                      key="inspection.display.name.unnecessary.public.modifier" cleanupTool="true" enabledByDefault="true"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryPublicModifierInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
                      key="inspection.display.name.unnecessary.semicolon" cleanupTool="true" enabledByDefault="true"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessarySemicolonInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
                      key="inspection.display.name.unnecessary.alias" cleanupTool="true" enabledByDefault="true" level="WEAK WARNING"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryAliasInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.change.to.operator"
