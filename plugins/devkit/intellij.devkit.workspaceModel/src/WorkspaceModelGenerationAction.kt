@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen
 
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -19,28 +16,24 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 
 private val LOG = logger<WorkspaceModelGenerationAction>()
 
-class WorkspaceModelGenerationAction: AnAction() {
+class WorkspaceModelGenerationAction: AnAction(), UpdateInBackground {
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
-    val module = event.getData(PlatformCoreDataKeys.MODULE) ?: return
-    val virtualFiles = event.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return
-    if (virtualFiles.size != 1 || !virtualFiles[0].isDirectory) return
-    val selectedFolder = virtualFiles[0]
+    val module = event.getData(LangDataKeys.MODULE) ?: return
 
-    val acceptedSourceRoots = getSourceRoot(module, selectedFolder)
+    val acceptedSourceRoots = getSourceRoot(module)
     if (acceptedSourceRoots.isEmpty()) {
       LOG.info("Acceptable module source roots not found")
       return
     }
     acceptedSourceRoots.forEach{ sourceRoot ->
-      val generatedSourceFolder = createGeneratedSourceFolder(module, sourceRoot)
-      if (generatedSourceFolder == null) {
-        LOG.info("Generated source folder doesn't exist. Skip processing source folder with path: ${sourceRoot.file}")
-        return@forEach
-      }
-      WriteAction.run<RuntimeException> { CodeWriter.generate(project, selectedFolder, generatedSourceFolder) }
+      WriteAction.run<RuntimeException> { CodeWriter.generate(project, sourceRoot.file!!) { createGeneratedSourceFolder(module, sourceRoot) } }
     }
     println("Selected module ${module.name}")
+  }
+
+  override fun update(event: AnActionEvent) {
+    event.presentation.isEnabledAndVisible = event.getData(LangDataKeys.MODULE_CONTEXT) != null
   }
 
   private fun createGeneratedSourceFolder(module: Module, sourceFolder: SourceFolder): VirtualFile? {
@@ -76,14 +69,13 @@ class WorkspaceModelGenerationAction: AnAction() {
     return null
   }
 
-  private fun getSourceRoot(module: Module, selectedFolder: VirtualFile): List<SourceFolder> {
+  private fun getSourceRoot(module: Module): List<SourceFolder> {
     val moduleRootManager = ModuleRootManager.getInstance(module)
     val contentEntries = moduleRootManager.contentEntries
     if (contentEntries.size != 1) {
       LOG.info("Unsupported cont of content roots for the module ${module.name}. Expected: 1, actual: ${contentEntries.size}")
       return emptyList()
     }
-    val contentEntry = contentEntries[0]
     //val contentEntryFile = contentEntry.file
     //val sourceFolders = contentEntry.sourceFolders
     //  if (contentEntryFile != null && VfsUtilCore.isAncestor(contentEntryFile, selectedFolder, false)) {
@@ -91,7 +83,7 @@ class WorkspaceModelGenerationAction: AnAction() {
     //    if (sourceFolder != null) return sourceFolder
     //  }
     //}
-    return contentEntry.sourceFolders.filter {
+    return contentEntries[0].sourceFolders.filter {
       if (it.file == null)  return@filter false
       val javaSourceRootProperties = it.jpsElement.properties as? JavaSourceRootProperties
       if (javaSourceRootProperties == null) return@filter true

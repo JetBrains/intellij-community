@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -22,9 +23,11 @@ fun DefType.implIjWsFileContents(simpleTypes: List<DefType>): String {
         """.trim(), def.file?.imports?.list)
 }
 
+private val LOG = logger<CodeWriter>()
+
 object CodeWriter {
   @RequiresWriteLock
-  fun generate(project: Project, sourceFolder: VirtualFile, genFolder: VirtualFile) {
+  fun generate(project: Project, sourceFolder: VirtualFile, targetFolderGenerator: () -> VirtualFile?) {
     val documentManager = FileDocumentManager.getInstance()
     val ktSrcs = mutableListOf<Pair<VirtualFile, Document>>()
     val fileMapping = mutableMapOf<String, VirtualFile>()
@@ -42,16 +45,26 @@ object CodeWriter {
       module.addFile(vfu.name, vfu) { document.text }
     }
     val result = module.build()
-    module.files.forEach {
-      val virtualFile = fileMapping[it.name] ?: return@forEach
-      documentManager.getDocument(virtualFile)?.setText(it.rewrite())
-    }
+    val entitiesForGeneration = result.typeDefs.filterNot { it.name == "WorkspaceEntity" || it.name == "WorkspaceEntityWithPersistentId" || it.abstract }
+    if (!entitiesForGeneration.isEmpty()) {
+      val genFolder = targetFolderGenerator.invoke()
+      if (genFolder == null) {
+        LOG.info("Generated source folder doesn't exist. Skip processing source folder with path: ${sourceFolder}")
+        return
+      }
+      module.files.forEach {
+        val virtualFile = fileMapping[it.name] ?: return@forEach
+        documentManager.getDocument(virtualFile)?.setText(it.rewrite())
+      }
 
-    result.typeDefs.filterNot { it.name == "WorkspaceEntity" || it.name == "WorkspaceEntityWithPersistentId" || it.abstract }.forEach {
-      val sourceFile = it.def.file?.virtualFile ?: error("Source file for ${it.def.name} doesn't exist")
-      val packageFolder = createPackageFolderIfMissing(sourceFolder, sourceFile, genFolder)
-      val virtualFile = packageFolder.createChildData(this, it.javaImplName + ".kt")
-      documentManager.getDocument(virtualFile)?.setText(it.implIjWsFileContents(result.simpleTypes))
+      entitiesForGeneration.forEach {
+        val sourceFile = it.def.file?.virtualFile ?: error("Source file for ${it.def.name} doesn't exist")
+        val packageFolder = createPackageFolderIfMissing(sourceFolder, sourceFile, genFolder)
+        val virtualFile = packageFolder.createChildData(this, it.javaImplName + ".kt")
+        documentManager.getDocument(virtualFile)?.setText(it.implIjWsFileContents(result.simpleTypes))
+      }
+    } else {
+      LOG.info("Not found types for generation")
     }
   }
 
