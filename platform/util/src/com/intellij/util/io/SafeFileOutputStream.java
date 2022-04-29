@@ -82,6 +82,7 @@ public class SafeFileOutputStream extends OutputStream {
     }
     catch (OutOfMemoryError err) {
       myFailed = true;
+      throw suppressOOM(err);
     }
   }
 
@@ -93,7 +94,14 @@ public class SafeFileOutputStream extends OutputStream {
     }
     catch (OutOfMemoryError err) {
       myFailed = true;
+      throw suppressOOM(err);
     }
+  }
+
+  private IOException suppressOOM(OutOfMemoryError oom) {
+    IOException e = new IOException(UtilBundle.message("safe.write.oom", myTarget));
+    e.addSuppressed(oom);
+    return e;
   }
 
   public void abort() throws IOException {
@@ -107,15 +115,8 @@ public class SafeFileOutputStream extends OutputStream {
     myClosed = true;
 
     if (myFailed) {
-      IOException e = new IOException(UtilBundle.message("safe.write.oom", myTarget));
-      e.addSuppressed(new OutOfMemoryError("SafeFileOutputStream"));
-      try {
-        abort();
-      }
-      catch (Throwable r) {
-        e.addSuppressed(r);
-      }
-      throw e;
+      abort();
+      return;
     }
 
     @Nullable Path backup = waitForBackup();
