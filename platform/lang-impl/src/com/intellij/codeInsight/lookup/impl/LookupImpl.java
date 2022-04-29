@@ -323,7 +323,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return consumer.getResult();
   }
 
-  public JList getList() {
+  public JList<LookupElement> getList() {
     return myList;
   }
 
