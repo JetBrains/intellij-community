@@ -640,7 +640,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   public boolean isFocusTraversable(JComboBox<?> c) {
-    return !comboBox.isEditable() || !(editor instanceof ComboBoxCompositeEditor && ((ComboBoxCompositeEditor<?, ?>)editor).isEditable());
+    return !comboBox.isEditable() || editor instanceof ComboBoxCompositeEditor && !((ComboBoxCompositeEditor<?, ?>)editor).isEditable();
   }
 
   @Override
