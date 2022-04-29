@@ -1173,8 +1173,8 @@ public class GitBranchPopupActions {
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[]{
-        new DeleteTagAction(myProject, myRepositories, myTagName),
         new MergeAction(myProject, myRepositories, myTagName, false),
+        new DeleteTagAction(myProject, myRepositories, myTagName),
       };
     }
 
