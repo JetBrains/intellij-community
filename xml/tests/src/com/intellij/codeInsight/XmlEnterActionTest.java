@@ -3,10 +3,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
 
 public class XmlEnterActionTest extends AbstractEnterActionTestCase {
   @Override
