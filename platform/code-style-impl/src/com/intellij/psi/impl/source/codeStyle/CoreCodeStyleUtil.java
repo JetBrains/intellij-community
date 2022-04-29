@@ -18,11 +18,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -37,15 +39,15 @@ public class CoreCodeStyleUtil {
   private CoreCodeStyleUtil() {
   }
 
-  public static PsiElement postProcessElement(@NotNull PsiFile file, @NotNull final PsiElement formatted) {
+  public static PsiElement postProcessElement(@NotNull PsiFile file, @NotNull final PsiElement formatted, boolean isWhitespaceOnly) {
     PsiElement result = formatted;
     CodeStyleSettings settingsForFile = CodeStyle.getSettings(file);
     if (settingsForFile.FORMATTER_TAGS_ENABLED && formatted instanceof PsiFile) {
-      postProcessEnabledRanges((PsiFile) formatted, formatted.getTextRange(), settingsForFile);
+      postProcessEnabledRanges((PsiFile)formatted, formatted.getTextRange(), settingsForFile, isWhitespaceOnly);
     }
     else {
       boolean brokenProcFound = false;
-      for (PostFormatProcessor postFormatProcessor : PostFormatProcessor.EP_NAME.getExtensionList()) {
+      for (PostFormatProcessor postFormatProcessor : getPostProcessors(isWhitespaceOnly)) {
         try {
           result = postFormatProcessor.processElement(result, settingsForFile);
           if (!result.isValid() && !brokenProcFound) {
@@ -65,6 +67,14 @@ public class CoreCodeStyleUtil {
     return result;
   }
 
+  private static Collection<PostFormatProcessor> getPostProcessors(boolean isWhitespaceOnly) {
+    if (isWhitespaceOnly) {
+      return ContainerUtil.filter(PostFormatProcessor.EP_NAME.getExtensionList(), processor -> processor.isWhitespaceOnly());
+    }
+    else {
+      return PostFormatProcessor.EP_NAME.getExtensionList();
+    }
+  }
 
   public static List<RangeFormatInfo> getRangeFormatInfoList(@NotNull PsiFile file, @NotNull FormattingRangesInfo ranges) {
     final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(file.getProject());
@@ -108,24 +118,27 @@ public class CoreCodeStyleUtil {
     }
   }
 
-  public static void postProcessText(@NotNull final PsiFile file, @NotNull final TextRange textRange) {
+  public static void postProcessText(@NotNull final PsiFile file, @NotNull final TextRange textRange, boolean isWhitespaceOnly) {
     if (!getSettings(file).FORMATTER_TAGS_ENABLED) {
       TextRange currentRange = textRange;
-      for (final PostFormatProcessor myPostFormatProcessor : PostFormatProcessor.EP_NAME.getExtensionList()) {
+      for (final PostFormatProcessor myPostFormatProcessor : getPostProcessors(isWhitespaceOnly)) {
         currentRange = myPostFormatProcessor.processText(file, currentRange, getSettings(file));
       }
     }
     else {
-      postProcessEnabledRanges(file, textRange, getSettings(file));
+      postProcessEnabledRanges(file, textRange, getSettings(file), isWhitespaceOnly);
     }
   }
 
-  private static void postProcessEnabledRanges(@NotNull final PsiFile file, @NotNull TextRange range, CodeStyleSettings settings) {
+  private static void postProcessEnabledRanges(@NotNull final PsiFile file,
+                                               @NotNull TextRange range,
+                                               CodeStyleSettings settings,
+                                               boolean isWhitespaceOnly) {
     List<TextRange> enabledRanges = new FormatterTagHandler(getSettings(file)).getEnabledRanges(file.getNode(), range);
     int delta = 0;
     for (TextRange enabledRange : enabledRanges) {
       enabledRange = enabledRange.shiftRight(delta);
-      for (PostFormatProcessor processor : PostFormatProcessor.EP_NAME.getExtensionList()) {
+      for (PostFormatProcessor processor : getPostProcessors(isWhitespaceOnly)) {
         TextRange processedRange = processor.processText(file, enabledRange, settings);
         delta += processedRange.getLength() - enabledRange.getLength();
       }
