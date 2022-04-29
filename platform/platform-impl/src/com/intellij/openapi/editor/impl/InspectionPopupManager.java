@@ -18,6 +18,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AncestorListenerAdapter;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -72,7 +73,7 @@ final class InspectionPopupManager {
     this.compactViewAction = compactViewAction;
 
     myContent.setOpaque(true);
-    myContent.setBackground(UIUtil.getToolTipBackground());
+    myContent.setBackground(ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Editor.Tooltip.BACKGROUND : UIUtil.getToolTipBackground());
 
     myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null).
       setCancelOnClickOutside(true).
