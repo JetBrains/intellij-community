@@ -359,6 +359,43 @@ public final class ExperimentalUI {
     paths.put("actions/menu-paste.svg", "expui/general/paste.svg");
     paths.put("debugger/restoreLayout.svg", "expui/general/layout.svg");
     paths.put("codeWithMe/cwmTerminate.svg", "expui/general/close.svg");
+    paths.put("debugger/db_set_breakpoint.svg", "expui/breakpoints/breakpoint.svg");
+    paths.put("debugger/db_dep_line_breakpoint.svg", "expui/breakpoints/breakpointDependent.svg");
+    paths.put("debugger/db_disabled_breakpoint.svg", "expui/breakpoints/breakpointDisabled.svg");
+    paths.put("debugger/db_exception_breakpoint.svg", "expui/breakpoints/breakpointException.svg");
+    paths.put("debugger/db_disabled_exception_breakpoint.svg", "expui/breakpoints/breakpointExceptionDisabled.svg");
+    paths.put("debugger/db_field_breakpoint.svg", "expui/breakpoints/breakpointField.svg");
+    paths.put("debugger/db_dep_field_breakpoint.svg", "expui/breakpoints/breakpointFieldDependent.svg");
+    paths.put("debugger/db_disabled_field_breakpoint.svg", "expui/breakpoints/breakpointFieldDisabled.svg");
+    paths.put("debugger/db_muted_field_breakpoint.svg", "expui/breakpoints/breakpointFieldMuted.svg");
+    paths.put("debugger/db_muted_dep_field_breakpoint.svg", "expui/breakpoints/breakpointFieldMutedDependent.svg");
+    paths.put("debugger/db_muted_disabled_field_breakpoint.svg", "expui/breakpoints/breakpointFieldMutedDisabled.svg");
+    paths.put("debugger/db_no_suspend_field_breakpoint.svg", "expui/breakpoints/breakpointFieldUnsuspendent.svg");
+    paths.put("debugger/db_verified_no_suspend_field_breakpoint.svg", "expui/breakpoints/breakpointFieldUnsuspendentValid.svg");
+    paths.put("debugger/db_verified_field_breakpoint.svg", "expui/breakpoints/breakpointFieldValid.svg");
+    paths.put("debugger/db_invalid_breakpoint.svg", "expui/breakpoints/breakpointInvalid.svg");
+    paths.put("debugger/LambdaBreakpoint.svg", "expui/breakpoints/breakpointLambda.svg");
+    paths.put("debugger/db_method_breakpoint.svg", "expui/breakpoints/breakpointMethod.svg");
+    paths.put("debugger/db_dep_method_breakpoint.svg", "expui/breakpoints/breakpointMethodDependent.svg");
+    paths.put("debugger/db_disabled_method_breakpoint.svg", "expui/breakpoints/breakpointMethodDisabled.svg");
+    paths.put("debugger/db_muted_method_breakpoint.svg", "expui/breakpoints/breakpointMethodMuted.svg");
+    paths.put("debugger/db_muted_dep_method_breakpoint.svg", "expui/breakpoints/breakpointMethodMutedDependent.svg");
+    paths.put("debugger/db_muted_disabled_method_breakpoint.svg", "expui/breakpoints/breakpointMethodMutedDisabled.svg");
+    paths.put("debugger/db_no_suspend_method_breakpoint.svg", "expui/breakpoints/breakpointMethodUnsuspendent.svg");
+    //paths.put("debugger/", "expui/breakpoints/breakpointMethodUnsuspendentDisabled.svg");
+    paths.put("debugger/db_verified_no_suspend_method_breakpoint.svg", "expui/breakpoints/breakpointMethodUnsuspendentValid.svg");
+    paths.put("debugger/db_verified_method_breakpoint.svg", "expui/breakpoints/breakpointMethodValid.svg");
+    paths.put("debugger/db_muted_breakpoint.svg", "expui/breakpoints/breakpointMuted.svg");
+    paths.put("debugger/db_muted_dep_line_breakpoint.svg", "expui/breakpoints/breakpointMutedDependent.svg");
+    paths.put("debugger/db_muted_disabled_breakpoint.svg", "expui/breakpoints/breakpointMutedDisabled.svg");
+    paths.put("debugger/db_obsolete.svg", "expui/breakpoints/breakpointObsolete.svg");
+    paths.put("debugger/db_no_suspend_breakpoint.svg", "expui/breakpoints/breakpointUnsuspendent.svg");
+    //paths.put("debugger/", "expui/breakpoints/breakpointUnsuspendentDisabled.svg");
+    //paths.put("debugger/", "expui/breakpoints/breakpointUnsuspendentValid.svg");
+    paths.put("debugger/db_verified_breakpoint.svg", "expui/breakpoints/breakpointValid.svg");
+    paths.put("debugger/MultipleBreakpoints.svg", "expui/breakpoints/multipleBreakpoints.svg");
+    paths.put("debugger/question_badge.svg", "expui/breakpoints/questionBadge.svg");
+
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
