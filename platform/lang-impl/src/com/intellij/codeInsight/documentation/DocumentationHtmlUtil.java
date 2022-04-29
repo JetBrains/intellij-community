@@ -13,11 +13,14 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
 import java.util.List;
+import java.util.function.Function;
 
 import static com.intellij.codeInsight.documentation.DocumentationComponent.SECTION_COLOR;
 
@@ -27,8 +30,12 @@ public final class DocumentationHtmlUtil {
   private DocumentationHtmlUtil() {
   }
 
-  public static ExtendableHTMLViewFactory.Extension getModuleIconsExtension() {
+  public static ExtendableHTMLViewFactory.Extension getIconsExtension(@NotNull Function<@NotNull String, @Nullable Icon> iconResolver) {
     return ExtendableHTMLViewFactory.Extensions.icons(key -> {
+      Icon resolved = iconResolver.apply(key);
+      if (resolved != null) {
+        return resolved;
+      }
       ModuleType<?> moduleType = ModuleTypeManager.getInstance().findByID(key);
       return moduleType instanceof UnknownModuleType
              ? null
