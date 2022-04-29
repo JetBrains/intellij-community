@@ -460,9 +460,9 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
     private void invalidate() {
       if (leafState != LeafState.ALWAYS) {
+        getChildren().forEach(Node::invalidate);
         children.invalidate();
         if (LOG.isTraceEnabled()) LOG.debug("node invalidated: ", this);
-        getChildren().forEach(Node::invalidate);
       }
     }
 
