@@ -13,6 +13,7 @@ import com.intellij.internal.statistic.uploader.util.ExtraHTTPHeadersParser
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.Strings
 import com.intellij.util.ArrayUtil
 import org.jetbrains.annotations.NotNull
 import java.io.File
@@ -73,6 +74,10 @@ object EventLogExternalUploader {
     try {
       val command = prepareUploadCommand(config, recorder, application)
       EventLogSystemLogger.logFinishedCreatingExternalSendCommand(recorderId, null)
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Starting external process: '${command.joinToString(separator = " ")}'")
+      }
+
       Runtime.getRuntime().exec(command)
       LOG.info("Started external process for uploading event log")
     }
@@ -109,13 +114,11 @@ object EventLogExternalUploader {
     args += UPLOADER_MAIN_CLASS
 
     addArgument(args, IDE_TOKEN, Paths.get(PathManager.getSystemPath(), "token").toAbsolutePath().toString())
-    addArgument(args, RECORDER_OPTION, recorder.getRecorderId())
 
-    addArgument(args, LOGS_OPTION, logFiles.joinToString(separator = File.pathSeparator))
-    addArgument(args, DEVICE_OPTION, config.deviceId)
-    addArgument(args, BUCKET_OPTION, config.bucket.toString())
-    addArgument(args, MACHINE_ID_OPTION, config.machineId.id)
-    addArgument(args, ID_REVISION_OPTION, config.machineId.revision.toString())
+    val recorderId = recorder.getRecorderId()
+    addArgument(args, RECORDER_OPTION, recorderId)
+    addRecorderConfiguration(args, recorderId, config, logFiles)
+
     addArgument(args, URL_OPTION, applicationInfo.templateUrl)
     addArgument(args, PRODUCT_OPTION, applicationInfo.productCode)
     addArgument(args, PRODUCT_VERSION_OPTION, applicationInfo.productVersion)
@@ -134,6 +137,18 @@ object EventLogExternalUploader {
       args += EAP_OPTION
     }
     return ArrayUtil.toStringArray(args)
+  }
+
+  private fun addRecorderConfiguration(args: ArrayList<String>,
+                                       recorderId: String,
+                                       config: EventLogRecorderConfiguration,
+                                       logFiles: List<String>) {
+    val recorderIdLowerCase = Strings.toLowerCase(recorderId)
+    addArgument(args, DEVICE_OPTION + recorderIdLowerCase, config.deviceId)
+    addArgument(args, BUCKET_OPTION + recorderIdLowerCase, config.bucket.toString())
+    addArgument(args, MACHINE_ID_OPTION + recorderIdLowerCase, config.machineId.id)
+    addArgument(args, ID_REVISION_OPTION + recorderIdLowerCase, config.machineId.revision.toString())
+    addArgument(args, LOGS_OPTION + recorderIdLowerCase, logFiles.joinToString(separator = File.pathSeparator))
   }
 
   private fun addArgument(args: ArrayList<String>, name: String, value: String) {

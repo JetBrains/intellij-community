@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -49,24 +50,23 @@ public final class EventLogUploader {
     }
 
     Map<String, String> options = EventLogUploaderCliParser.parseOptions(args);
-    DeviceConfiguration device = newDeviceConfig(options);
-    if (device == null) {
+    EventLogApplicationInfo appInfo = newApplicationInfo(options, logger, eventsLogger);
+    if (appInfo == null) {
+      logger.warn("Failed creating application info from arguments");
+      eventsLogger.logSendingLogsFinished("NO_APPLICATION_CONFIG");
+      return;
+    }
+
+    SendConfiguration config = newSendConfiguration(options);
+    if (config.deviceConfig == null) {
       logger.warn("Failed creating device config from arguments");
       eventsLogger.logSendingLogsFinished("NO_DEVICE_CONFIG");
       return;
     }
 
-    EventLogRecorderConfig recorder = newRecorderConfig(options);
-    if (recorder == null) {
+    if (config.recorderConfig == null) {
       logger.warn("Failed creating recorder config from arguments");
       eventsLogger.logSendingLogsFinished("NO_RECORDER_CONFIG");
-      return;
-    }
-
-    EventLogApplicationInfo appInfo = newApplicationInfo(options, logger, eventsLogger);
-    if (appInfo == null) {
-      logger.warn("Failed creating application info from arguments");
-      eventsLogger.logSendingLogsFinished("NO_APPLICATION_CONFIG");
       return;
     }
 
@@ -81,20 +81,22 @@ public final class EventLogUploader {
     logger.info("{url:" + appInfo.getTemplateUrl() + ", product:" + appInfo.getProductCode() +
                 ", userAgent:" + connectionSettings.getUserAgent() +
                 ", internal:" + appInfo.isInternal() + ", isTest:" + appInfo.isTest() + "}");
-    String logs = recorder.getFilesToSendProvider().getFilesToSend().stream().
-      map(file -> file.getFile().getAbsolutePath()).collect(Collectors.joining(File.pathSeparator));
 
-    logger.info("{recorder:" + recorder.getRecorderId() + ", files:" + logs + "}");
-    logger.info("{device:" + device.getDeviceId() + ", bucket:" + device.getBucket() + "}");
+    String logs = config.recorderConfig.getFilesToSendProvider().getFilesToSend().stream().
+      map(file -> file.getFile().getAbsolutePath()).collect(Collectors.joining(File.pathSeparator));
+    logger.info("{recorder:" + config.recorderConfig.getRecorderId() + ", files:" + logs + "}");
+    logger.info("{device:" + config.deviceConfig.getDeviceId() + ", bucket:" + config.deviceConfig.getBucket() + "}");
     try {
-      EventLogStatisticsService service = new EventLogStatisticsService(device, recorder, appInfo, new EventLogSendListener() {
-        @Override
-        public void onLogsSend(@NotNull List<String> successfullySentFiles,
-                               @NotNull List<Integer> errors,
-                               int totalLocalFiles) {
-          eventsLogger.logSendingLogsSucceed(successfullySentFiles, errors, totalLocalFiles);
-        }
-      });
+      EventLogStatisticsService service = new EventLogStatisticsService(
+        config.deviceConfig, config.recorderConfig, appInfo,
+        new EventLogSendListener() {
+          @Override
+          public void onLogsSend(@NotNull List<String> successfullySentFiles,
+                                 @NotNull List<Integer> errors,
+                                 int totalLocalFiles) {
+            eventsLogger.logSendingLogsSucceed(successfullySentFiles, errors, totalLocalFiles);
+          }
+        });
 
       StatisticsResult result = service.send();
       eventsLogger.logSendingLogsFinished(result.getCode());
@@ -107,38 +109,6 @@ public final class EventLogUploader {
       logger.warn("Failed sending files: " + e.getMessage());
       eventsLogger.logSendingLogsFinished("ERROR_ON_SEND");
     }
-  }
-
-  @Nullable
-  private static DeviceConfiguration newDeviceConfig(Map<String, String> options) {
-    try {
-      String bucketOption = options.get(EventLogUploaderOptions.BUCKET_OPTION);
-      String deviceOption = options.get(EventLogUploaderOptions.DEVICE_OPTION);
-      String machineIdOption = options.get(EventLogUploaderOptions.MACHINE_ID_OPTION);
-      String idRevisionOption = options.get(EventLogUploaderOptions.ID_REVISION_OPTION);
-      int bucketInt = bucketOption != null ? Integer.parseInt(bucketOption) : -1;
-      int idRevision = idRevisionOption != null ? Integer.parseInt(idRevisionOption) : -1;
-      if (deviceOption != null && bucketInt >= 0 && bucketInt < 256 && machineIdOption != null && idRevision >= 0) {
-        return new DeviceConfiguration(deviceOption, bucketInt, new MachineId(machineIdOption, idRevision));
-      }
-    }
-    catch (NumberFormatException e) {
-      // ignore
-    }
-    return null;
-  }
-
-  @Nullable
-  private static EventLogRecorderConfig newRecorderConfig(Map<String, String> options) {
-    String recorder = options.get(EventLogUploaderOptions.RECORDER_OPTION);
-    if (recorder != null) {
-      String logs = options.get(EventLogUploaderOptions.LOGS_OPTION);
-      if (logs != null) {
-        List<String> files = split(logs, File.pathSeparatorChar);
-        return new EventLogExternalRecorderConfig(recorder, files);
-      }
-    }
-    return null;
   }
 
   @Nullable
@@ -162,6 +132,11 @@ public final class EventLogUploader {
     return null;
   }
 
+  private static SendConfiguration newSendConfiguration(@NotNull Map<String, String> options) {
+    String recorder = options.get(EventLogUploaderOptions.RECORDER_OPTION);
+    return new SendConfiguration(recorder, options);
+  }
+
   private static boolean waitForIde(DataCollectorDebugLogger logger, Map<String, String> options, int maxAttempts) {
     String ideToken = options.get(EventLogUploaderOptions.IDE_TOKEN);
     if (ideToken == null) {
@@ -183,5 +158,49 @@ public final class EventLogUploader {
       // ignore
     }
     return !token.exists();
+  }
+
+  private static class SendConfiguration {
+    @Nullable
+    protected final DeviceConfiguration deviceConfig;
+
+    @Nullable
+    protected final EventLogRecorderConfig recorderConfig;
+
+
+    private SendConfiguration(@NotNull String recorder, @NotNull Map<String, String> options) {
+      deviceConfig = newDeviceConfig(recorder, options);
+      recorderConfig = newRecorderConfig(recorder, options);
+    }
+
+    @Nullable
+    protected DeviceConfiguration newDeviceConfig(@NotNull String recorder, @NotNull Map<String, String> options) {
+      String recorderLowerCase = recorder.toLowerCase(Locale.ENGLISH);
+      try {
+        String bucketOption = options.get(EventLogUploaderOptions.BUCKET_OPTION + recorderLowerCase);
+        String deviceOption = options.get(EventLogUploaderOptions.DEVICE_OPTION + recorderLowerCase);
+        String machineIdOption = options.get(EventLogUploaderOptions.MACHINE_ID_OPTION + recorderLowerCase);
+        String idRevisionOption = options.get(EventLogUploaderOptions.ID_REVISION_OPTION + recorderLowerCase);
+        int bucketInt = bucketOption != null ? Integer.parseInt(bucketOption) : -1;
+        int idRevision = idRevisionOption != null ? Integer.parseInt(idRevisionOption) : -1;
+        if (deviceOption != null && bucketInt >= 0 && bucketInt < 256 && machineIdOption != null && idRevision >= 0) {
+          return new DeviceConfiguration(deviceOption, bucketInt, new MachineId(machineIdOption, idRevision));
+        }
+      }
+      catch (NumberFormatException e) {
+        // ignore
+      }
+      return null;
+    }
+
+    @Nullable
+    protected EventLogRecorderConfig newRecorderConfig(@NotNull String recorder, @NotNull Map<String, String> options) {
+      String logs = options.get(EventLogUploaderOptions.LOGS_OPTION + recorder.toLowerCase(Locale.ENGLISH));
+      if (logs != null) {
+        List<String> files = split(logs, File.pathSeparatorChar);
+        return new EventLogExternalRecorderConfig(recorder, files);
+      }
+      return null;
+    }
   }
 }
