@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer
 import org.jetbrains.kotlin.idea.gradle.ui.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.roots.findAll
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -134,8 +133,9 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
             ideProject: DataNode<ProjectData>,
             resolverCtx: ProjectResolverContext
         ) {
-            val allModules = ExternalSystemApiUtil.findAll(ideProject, ProjectKeys.MODULE)
-            val allFragmentModulesById = allModules.flatMap { ExternalSystemApiUtil.findAll(it, GradleSourceSetData.KEY) }
+            val allGradleModules = gradleModule.project.modules
+            val allModuleDataNodes = ExternalSystemApiUtil.findAll(ideProject, ProjectKeys.MODULE)
+            val allFragmentModulesById = allModuleDataNodes.flatMap { ExternalSystemApiUtil.findAll(it, GradleSourceSetData.KEY) }
                 .associateBy { it.data.id }
 
             val sourceSetDataWithFragmentData = ExternalSystemApiUtil.findAll(ideModule, GradleSourceSetData.KEY)
@@ -150,7 +150,13 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
 
                 val sourceDependencyIds = kpmFragmentData.fragmentDependencies
                     .filterIsInstance<IdeaKotlinFragmentDependency>()
-                    .map { dependency -> calculateKotlinFragmentModuleId(gradleModule, dependency.coordinates, resolverCtx) }
+                    .mapNotNull { fragmentDependency ->
+                        val foundGradleModule = allGradleModules.singleOrNull { dependencyGradleModule ->
+                            dependencyGradleModule.name == fragmentDependency.coordinates.module.projectName
+                        } ?: return@mapNotNull null // Probably it's worth to log
+                        fragmentDependency to foundGradleModule
+                    }
+                    .map { (dependency, module) -> calculateKotlinFragmentModuleId(module, dependency.coordinates, resolverCtx) }
 
                 val dependencyModuleNodes = sourceDependencyIds.mapNotNull { allFragmentModulesById[it] }
                 dependencyModuleNodes.forEach { addModuleDependency(fragmentSourceSetNode, it) }
