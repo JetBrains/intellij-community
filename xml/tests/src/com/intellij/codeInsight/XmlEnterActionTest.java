@@ -11,7 +11,7 @@ import java.io.File;
 public class XmlEnterActionTest extends AbstractEnterActionTestCase {
   @Override
   protected @NotNull String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData";
+    return XmlTestUtil.getXmlTestDataPath();
   }
 
   public void testInXml1() {

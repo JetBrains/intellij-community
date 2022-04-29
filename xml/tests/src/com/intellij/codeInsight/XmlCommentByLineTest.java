@@ -11,7 +11,7 @@ import java.io.File;
 public class XmlCommentByLineTest extends CommentByLineTestBase {
   @Override
   protected @NotNull String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData";
+    return XmlTestUtil.getXmlTestDataPath();
   }
 
   public void testXml1() {

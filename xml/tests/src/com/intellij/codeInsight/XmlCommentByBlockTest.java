@@ -4,15 +4,12 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
 
 public class XmlCommentByBlockTest extends LightPlatformCodeInsightTestCase {
   @Override
   protected @NotNull String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData";
+    return XmlTestUtil.getXmlTestDataPath();
   }
 
   public void testXml1() {
