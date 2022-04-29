@@ -7,12 +7,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.application.impl.ModalContextProjectLocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.impl.BlockingProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
@@ -39,7 +41,8 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, TitledIndicator, ProgressIndicatorWithDelayedPresentation, Disposable {
+public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, TitledIndicator, ProgressIndicatorWithDelayedPresentation, Disposable,
+                                                                     ModalContextProjectLocator {
   private static final Logger LOG = Logger.getInstance(ProgressWindow.class);
 
   private Runnable myDialogInitialization;
@@ -365,6 +368,20 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     if (dialog != null) {
       dialog.enableCancelButtonIfNeeded(enable);
     }
+  }
+
+  @Override
+  public boolean isPartOf(@NotNull JFrame frame, @Nullable Project project) {
+    if (project != null && myProject != null) {
+      return project == myProject;
+    }
+    if (myDialog != null) {
+      DialogWrapper popup = myDialog.getPopup();
+      if (popup != null) {
+        return UIUtil.isAncestor(frame, popup.getOwner());
+      }
+    }
+    return false;
   }
 
   @Override

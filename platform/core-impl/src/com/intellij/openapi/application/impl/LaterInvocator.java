@@ -295,6 +295,34 @@ public final class LaterInvocator {
     return isInModalContextForProject(null);
   }
 
+  public static boolean isInModalContext(@NotNull JFrame frame, @Nullable Project project) {
+    Object[] entities = getCurrentModalEntities();
+    int forOtherProjects = 0;
+
+    for (Object entity : entities) {
+      if (entity instanceof ModalContextProjectLocator && !((ModalContextProjectLocator)entity).isPartOf(frame, project)) {
+        forOtherProjects++;
+      }
+      else if (entity instanceof Component && !isAncestor(frame, (Component)entity)) {
+        forOtherProjects++;
+      }
+    }
+    if (forOtherProjects == entities.length) {
+      return false;
+    }
+    return true;
+  }
+
+  private static boolean isAncestor(@NotNull Component ancestor, @Nullable Component descendant) {
+    while (descendant != null) {
+      if (descendant == ancestor) {
+        return true;
+      }
+      descendant = descendant.getParent();
+    }
+    return false;
+  }
+
   private static void assertIsDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }

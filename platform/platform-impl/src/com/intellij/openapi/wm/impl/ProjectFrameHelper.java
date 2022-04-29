@@ -223,7 +223,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     frame.addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(@NotNull WindowEvent e) {
-        if (isTemporaryDisposed(frame) || LaterInvocator.isInModalContext()) {
+        if (isTemporaryDisposed(frame) || LaterInvocator.isInModalContext(frame, project)) {
           return;
         }
 
