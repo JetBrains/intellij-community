@@ -31,6 +31,8 @@ import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
 import com.jetbrains.CustomWindowDecoration.MENU_BAR
 import java.awt.*
 import java.awt.GridBagConstraints.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import javax.swing.Box
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -49,6 +51,12 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
   private val myToolbarPlaceholder = NonOpaquePanel()
   private val myHeaderContent = createHeaderContent()
   private val menuShortcutHandler = MainMenuMnemonicHandler(frame, menuAction)
+
+  private val contentResizeListener = object : ComponentAdapter() {
+    override fun componentResized(e: ComponentEvent?) {
+      updateCustomDecorationHitTestSpots()
+    }
+  }
 
   private var mode = ShowMode.MENU
 
@@ -76,6 +84,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     val toolbar = MainToolbar()
     toolbar.init((frame as? IdeFrame)?.project)
     toolbar.isOpaque = false
+    toolbar.addComponentListener(contentResizeListener)
     myToolbar = toolbar
 
     myToolbarPlaceholder.add(myToolbar)
@@ -83,6 +92,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
   }
 
   override fun removeToolbar() {
+    myToolbar?.let { it.removeComponentListener(contentResizeListener) }
     myToolbarPlaceholder.removeAll()
     myToolbarPlaceholder.revalidate()
   }
@@ -90,11 +100,14 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
   override fun installListeners() {
     super.installListeners()
     menuShortcutHandler.registerShortcuts()
+    myMenuBar.addComponentListener(contentResizeListener)
   }
 
   override fun uninstallListeners() {
     super.uninstallListeners()
     menuShortcutHandler.unregisterShortcuts()
+    myMenuBar.removeComponentListener(contentResizeListener)
+    myToolbar?.let { it.removeComponentListener(contentResizeListener) }
   }
 
   override fun updateMenuActions(forceRebuild: Boolean) {} //todo remove
