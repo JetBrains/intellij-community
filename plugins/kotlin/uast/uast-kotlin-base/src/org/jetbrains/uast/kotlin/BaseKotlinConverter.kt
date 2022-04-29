@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -20,10 +20,10 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
+import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.internal.UElementAlternative
 import org.jetbrains.uast.internal.accommodate
 import org.jetbrains.uast.internal.alternative
-import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.kotlin.psi.*
 
 @ApiStatus.Internal
@@ -296,6 +296,17 @@ interface BaseKotlinConverter {
     ): Sequence<UElement> {
         return requiredTypes.accommodate(
             *convertToPropertyAlternatives(LightClassUtil.getLightClassPropertyMethods(property), givenParent)
+        )
+    }
+
+    fun convertJvmStaticMethod(
+        function: KtFunction,
+        givenParent: UElement?,
+        requiredTypes: Array<out Class<out UElement>>
+    ): Sequence<UElement> {
+        val functions = LightClassUtil.getLightClassMethods(function)
+        return requiredTypes.accommodate(
+            *functions.map { alternative { convertDeclaration(it, null, arrayOf(UMethod::class.java)) as? UMethod } }.toTypedArray()
         )
     }
 

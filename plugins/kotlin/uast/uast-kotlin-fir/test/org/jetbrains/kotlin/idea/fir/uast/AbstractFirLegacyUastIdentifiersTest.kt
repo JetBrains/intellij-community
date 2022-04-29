@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.uast
 
@@ -15,6 +15,7 @@ abstract class AbstractFirLegacyUastIdentifiersTest : AbstractFirUastIdentifiers
         "uast-kotlin/tests/testData/DestructuringDeclaration.kt",
         "uast-kotlin/tests/testData/LambdaReturn.kt",
         "uast-kotlin/tests/testData/WhenAndDestructing.kt",
+        "uast-kotlin/tests/testData/ManyAlternatives.kt",
 
         // TODO: this file fails 'testIdentifiersParents' check
         "uast-kotlin/tests/testData/DataClassInheritsAbstractClassWithEquals.kt",

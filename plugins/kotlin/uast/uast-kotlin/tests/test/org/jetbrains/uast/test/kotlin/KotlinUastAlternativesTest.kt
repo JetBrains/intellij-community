@@ -1,12 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.test.kotlin
 
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase.assertInstanceOf
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase.assertInstanceOf
 import org.jetbrains.uast.*
 import org.junit.Test
 
@@ -153,4 +154,20 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
         }
     }
 
+    @Test
+    fun testStaticMethodAlternatives() {
+        doTest("ManyAlternatives") { name, file ->
+            val index = file.psi.text.indexOf("foo")
+            val ktFunction = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index), KtNamedFunction::class.java)!!
+            val plugin = UastLanguagePlugin.byLanguage(ktFunction.language)!!
+            val alternatives = plugin.convertToAlternatives<UElement>(ktFunction, arrayOf(UMethod::class.java, UMethod::class.java))
+            assertEquals("""
+                @kotlin.jvm.JvmStatic
+                public final fun foo() : void {
+                }, @kotlin.jvm.JvmStatic
+                public static final fun foo() : void {
+                }
+            """.trimIndent(), alternatives.joinToString(transform = UElement::asRenderString).replace("\r", ""))
+        }
+    }
 }
