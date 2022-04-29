@@ -15,10 +15,15 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
     override fun check(testName: String, file: UFile) {
     }
 
+    private fun UFile.findIndexOfElement(elem: String): Int = javaPsi?.text?.indexOf(elem) ?: let {
+        fail("Could not retrieve element $elem.")
+        0
+    }
+
     @Test
     fun testPropertyAlternatives() {
         doTest("ManyAlternatives") { name, file ->
-            val index = file.psi.text.indexOf("writebleProp")
+            val index = file.findIndexOfElement("writebleProp")
             val ktProperty = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index), KtProperty::class.java)!!
             val plugin = UastLanguagePlugin.byLanguage(ktProperty.language)!!
 
@@ -63,7 +68,7 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
     @Test
     fun testParamAndPropertylternatives() {
         doTest("ManyAlternatives") { name, file ->
-            val index = file.psi.text.indexOf("paramAndProp")
+            val index = file.findIndexOfElement("paramAndProp")
             val ktProperty = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index), KtParameter::class.java)!!
             val plugin = UastLanguagePlugin.byLanguage(ktProperty.language)!!
 
@@ -98,7 +103,7 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
     @Test
     fun testJustParamAlternatives() {
         doTest("ManyAlternatives") { name, file ->
-            val index = file.psi.text.indexOf("justParam")
+            val index = file.findIndexOfElement("justParam")
             val ktProperty = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index), KtParameter::class.java)!!
             val plugin = UastLanguagePlugin.byLanguage(ktProperty.language)!!
 
@@ -127,7 +132,7 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
     @Test
     fun testPrimaryConstructorAlternatives() {
         doTest("ManyAlternatives") { name, file ->
-            val index = file.psi.text.indexOf("ClassA")
+            val index = file.findIndexOfElement("ClassA")
             val ktProperty = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index), KtClass::class.java)!!
             val plugin = UastLanguagePlugin.byLanguage(ktProperty.language)!!
 
@@ -157,7 +162,7 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
     @Test
     fun testStaticMethodAlternatives() {
         doTest("ManyAlternatives") { name, file ->
-            val index = file.psi.text.indexOf("foo")
+            val index = file.findIndexOfElement("foo")
             val ktFunction = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index), KtNamedFunction::class.java)!!
             val plugin = UastLanguagePlugin.byLanguage(ktFunction.language)!!
             val alternatives = plugin.convertToAlternatives<UElement>(ktFunction, arrayOf(UMethod::class.java, UMethod::class.java))
