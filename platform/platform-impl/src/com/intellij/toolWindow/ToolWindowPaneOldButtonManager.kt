@@ -105,7 +105,7 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
 
   override fun revalidateNotEmptyStripes() {
     for (stripe in stripes) {
-      if (!stripe.getButtons().isEmpty()) {
+      if (stripe.getButtons().isNotEmpty()) {
         stripe.revalidate()
       }
     }
@@ -133,6 +133,18 @@ internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
       return stripes.firstOrNull { it.containsPoint(screenPoint)  }
     }
     return null
+  }
+
+  override fun getStripeWidth(anchor: ToolWindowAnchor): Int {
+    val stripe = getStripeFor(anchor)
+    return if (stripe.isVisible && stripe.isShowing) stripe.width else 0
+  }
+
+  override fun getStripeHeight(anchor: ToolWindowAnchor): Int {
+    // We no longer support the top stripe
+    if (anchor == ToolWindowAnchor.TOP) return 0
+    val stripe = getStripeFor(anchor)
+    return if (stripe.isVisible && stripe.isShowing) stripe.height else 0
   }
 
   override fun startDrag() {

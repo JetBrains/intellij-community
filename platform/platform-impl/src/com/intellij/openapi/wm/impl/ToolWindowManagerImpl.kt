@@ -1238,8 +1238,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     get() = IdeFocusManager.getInstance(project)!!
 
   override fun canShowNotification(toolWindowId: String): Boolean {
-    val stripe = toolWindowPane?.buttonManager?.getStripeFor(idToEntry.get(toolWindowId)?.readOnlyWindowInfo?.anchor ?: return false)
-    return stripe?.getButtonFor(toolWindowId) != null
+    val anchor = idToEntry.get(toolWindowId)?.readOnlyWindowInfo?.anchor ?: return false
+    return toolWindowPane?.buttonManager?.getStripeFor(anchor)?.getButtonFor(toolWindowId) != null
   }
 
   override fun notifyByBalloon(options: ToolWindowBalloonShowOptions) {

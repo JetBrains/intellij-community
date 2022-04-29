@@ -58,12 +58,23 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
   }
 
   override fun getStripeFor(screenPoint: Point, preferred: AbstractDroppableStripe, pane: JComponent): AbstractDroppableStripe? {
-    if (preferred.containsPoint(screenPoint)) {
-      return preferred
+    return if (preferred.containsPoint(screenPoint)) {
+      preferred
     }
     else {
-      return left.getStripeFor(screenPoint) ?: right.getStripeFor(screenPoint)
+      left.getStripeFor(screenPoint) ?: right.getStripeFor(screenPoint)
     }
+  }
+
+  override fun getStripeWidth(anchor: ToolWindowAnchor): Int {
+    if (anchor == ToolWindowAnchor.BOTTOM || anchor == ToolWindowAnchor.TOP) return 0
+    val stripe = getStripeFor(anchor)
+    return if (stripe.isVisible && stripe.isShowing) stripe.width else 0
+  }
+
+  override fun getStripeHeight(anchor: ToolWindowAnchor): Int {
+    // New UI only shows stripes on the LEFT + RIGHT. There is no TOP, and while BOTTOM is used, it is shown on the left, so has no height
+    return 0
   }
 
   fun getSquareStripeFor(anchor: ToolWindowAnchor): ToolWindowToolbar {

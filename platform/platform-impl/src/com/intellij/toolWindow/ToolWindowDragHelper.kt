@@ -148,20 +148,12 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
   override fun isDragOut(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) = isDragOut(dragToScreenPoint)
 
   private fun isDragOut(dragToScreenPoint: Point): Boolean {
-    if (isNewUi) {
-      // TODO: This is the same as lastStripe, which is set to getTargetStripeByDropLocation in relocate
-      return getTargetStripeByDropLocation(dragToScreenPoint) == null
+    if (!isNewUi && isPointInVisibleToolWindow(dragToScreenPoint)) {
+      return false
     }
-    else {
-      // It's a drag out operation if the point is not inside any stripe drop area, and also not inside the tool window, if visible
-      val toolWindow = getToolWindow()
-      if (toolWindow != null && toolWindow.getBoundsOnScreen(toolWindow.anchor, dragToScreenPoint).contains(dragToScreenPoint)) {
-        return false
-      }
 
-      // If we've got a stripe, we're within its bounds
-      return lastStripe == null
-    }
+    // If we've got a stripe, we're within its bounds
+    return lastStripe == null
   }
 
   override fun processDragOut(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point, justStarted: Boolean) {
@@ -200,7 +192,9 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     dialog.setLocation(screenPoint.x - initialOffset.x, screenPoint.y - initialOffset.y)
     setDragOut(isDragOut(screenPoint))
 
-    val targetStripe = getTargetStripeByDropLocation(screenPoint)
+    val preferredStripe = getSourceStripe(toolWindow.anchor)
+    val targetStripe = getTargetStripeByDropLocation(screenPoint, preferredStripe)
+                       ?: if (!isNewUi && isPointInVisibleToolWindow(screenPoint)) preferredStripe else null
     lastStripe?.let { if (it != targetStripe) it.resetDrop() }
 
     dropTargetHighlightComponent.isVisible = targetStripe != null
@@ -228,13 +222,16 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
         SwingUtilities.invokeLater(Runnable {
           if (initialAnchor == null) return@Runnable
 
-          // Get the bounds of the drop target highlight. This will be a default size if the point is inside a stripe's drop area, or the
-          // bounds of the tool window if instead it's within the bounds of the tool window (and the tool window is visible)
-          val bounds = toolWindow.getBoundsOnScreen(targetStripe.anchor, screenPoint)
-          val p = bounds.location
           val dropTargetPane = dragSourcePane
-          SwingUtilities.convertPointFromScreen(p, dropTargetPane.rootPane.layeredPane)
-          bounds.location = p
+
+          // Get the bounds of the drop target highlight. If the point is inside the drop target bounds, use those bounds. If it's not, but
+          // it's inside the bounds of the tool window (and the tool window is visible), then use the tool window bounds
+          val toolWindowBounds = getToolWindowScreenBoundsIfVisible(toolWindow)?.takeIf {
+            getTargetStripeByDropLocation(screenPoint, preferredStripe) == null && it.contains(screenPoint)
+          }
+          val bounds = toolWindowBounds ?: getDropTargetScreenBounds(dropTargetPane, targetStripe.anchor)
+
+          bounds.location = bounds.location.also { SwingUtilities.convertPointFromScreen(it, dropTargetPane.rootPane.layeredPane) }
 
           val dropToSide = targetStripe.getDropToSide()
           if (dropToSide != null) {
@@ -279,9 +276,9 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       val screenPoint = event.locationOnScreen
       val preferredStripe = dropTargetPane.buttonManager.getStripeFor(initialAnchor!!)
 
-      // If the drop point is not inside a stripe bounds, but is inside the visible tool window bounds, do nothing - we're not moving
-      if (dropTargetPane.getStripeFor(screenPoint, preferredStripe) == null &&
-          toolWindow.getBoundsOnScreen(initialAnchor!!, screenPoint).contains(screenPoint)) {
+      // If the drop point is not inside a stripe bounds, but is inside the visible tool window bounds, do nothing - we're not moving.
+      // Note that we must check the stripe because we might be moving from top to bottom or left to right
+      if (!isNewUi && dropTargetPane.getStripeFor(screenPoint, preferredStripe) == null && isPointInVisibleToolWindow(screenPoint)) {
         return
       }
 
@@ -386,86 +383,69 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     return Rectangle(location.x, location.y, width, height)
   }
 
-  private fun getDefaultFloatingToolWindowBounds(toolWindow: ToolWindowImpl): Rectangle {
-    // We can't just use toolWindow.component.bounds, as this doesn't include the tool window header, etc.
-    return getPaneContentScreenBounds(dragSourcePane).also {
+  /**
+   * Gets the screen bounds of the pane, minus stripes. Adjusts the height for horizontal tool windows and the width for vertical
+   */
+  private fun getAdjustedPaneContentsScreenBounds(pane: ToolWindowPane,
+                                                  anchor: ToolWindowAnchor,
+                                                  adjustedHorizontalHeight: Int,
+                                                  adjustedVerticalWidth: Int): Rectangle {
+    return getPaneContentScreenBounds(pane).also {
       val paneHeight = it.height
       val paneWidth = it.width
 
       // Note that this doesn't modify width/height for splits
-      if (toolWindow.anchor.isHorizontal) {
-        it.height = (dragSourcePane.rootPane.height * toolWindow.windowInfo.weight).toInt()
+      if (anchor.isHorizontal) {
+        it.height = adjustedHorizontalHeight
       }
       else {
-        it.width = (dragSourcePane.rootPane.width * toolWindow.windowInfo.weight).toInt()
+        it.width = adjustedVerticalWidth
       }
 
-      when (toolWindow.anchor) {
+      when (anchor) {
         BOTTOM -> it.y = it.y + paneHeight - it.height
         RIGHT -> it.x = it.x + paneWidth - it.width
       }
 
-      // TODO: Adjust for half height/width tool windows
+      // TODO: Adjust for half height/width tool windows?
       // This means that drop target highlight, drag out boundaries and default floating size use the full height/width for split tool
       // windows. The same for the bounds used to ignore a drop over a tool window
+      // Would this be the right place for that?
     }
   }
 
-  // When the point is inside an anchor's drop area, returns a default size for the resulting tool window or floating window. If it's not
-  // inside an anchor's drop area, and the tool window is visible, and the point is inside the tool window's bounds, return those bounds
-  // TODO: Split up this method - it's hard to reason about
-  // Can simplify if we split the check for anchor bounds from the subsequent visible tool window bounds check
-  private fun ToolWindowImpl.getBoundsOnScreen(anchor: ToolWindowAnchor, screenPoint: Point): Rectangle {
-    if (isNewUi) return Rectangle()
 
-    // Semantically, we don't know if we're being asked for the current tool window bounds (e.g. to set the size of the floating window, or
-    // to see if it's a drag out operation) or for the bounds of the drop target for highlighting, etc.
-    // Another reason to split this into more explicit methods
-    val pane = dragSourcePane
+  private fun getToolWindowScreenBoundsIfVisible(toolWindow: ToolWindowImpl): Rectangle? {
+    if (!toolWindow.isVisible) return null
 
-    // Remember that the pane covers the entire frame, not just the bounds of the tool window
-    val location = pane.locationOnScreen
-    var width = pane.width
-    var height = pane.height
-
-    // Get the bounds of the content area of the pane, i.e. minus the bounds of the stripes
-    location.x += getStripeWidth(pane, LEFT)
-    location.y += getStripeHeight(pane, TOP)
-    width -= getStripeWidth(pane, LEFT) + getStripeWidth(pane, RIGHT)
-    height -= getStripeHeight(pane, TOP) + getStripeHeight(pane, BOTTOM)
-
-    // Try to find the stripe for the point, preferring the tool window's current stripe to avoid overlaps
-    val targetStripe = pane.getStripeFor(screenPoint, pane.buttonManager.getStripeFor(initialAnchor!!))
-
-    if (anchor === initialAnchor && targetStripe == null && isVisible) {
-      if (anchor.isHorizontal) height = (pane.rootPane.height * windowInfo.weight).toInt()
-      else width = (pane.rootPane.width * windowInfo.weight).toInt()
-    }
-    else {
-      if (anchor.isHorizontal) height = AbstractDroppableStripe.DROP_DISTANCE_SENSITIVITY
-      else width = AbstractDroppableStripe.DROP_DISTANCE_SENSITIVITY
-    }
-
-    when (anchor) {
-      BOTTOM -> {
-        location.y = pane.locationOnScreen.y + pane.height - height - getStripeHeight(pane, BOTTOM)
-      }
-      RIGHT -> {
-        location.x = pane.locationOnScreen.x + pane.width - width - getStripeWidth(pane, RIGHT)
-      }
-    }
-    return Rectangle(location.x, location.y, width, height)
+    // We can't just use toolWindow.component.bounds, as this doesn't include headers, etc.
+    return getAdjustedPaneContentsScreenBounds(dragSourcePane, toolWindow.anchor,
+                                               (dragSourcePane.rootPane.height * toolWindow.windowInfo.weight).toInt(),
+                                               (dragSourcePane.rootPane.width * toolWindow.windowInfo.weight).toInt())
   }
 
-  private fun getStripeWidth(pane: ToolWindowPane, anchor: ToolWindowAnchor): Int {
-    val stripe = pane.buttonManager.getStripeFor(anchor)
-    return if (stripe.isVisible && stripe.isShowing) stripe.width else 0
+  /**
+   * Calculates the default size for the tool window if the visible bounds are not available.
+   *
+   * The default size is the same as its drop target size as measured on the source pane (the tool window always belongs to the source pane)
+   */
+  private fun getDefaultFloatingToolWindowBounds(toolWindow: ToolWindowImpl): Rectangle {
+    return getAdjustedPaneContentsScreenBounds(dragSourcePane, toolWindow.anchor,
+                                               (dragSourcePane.rootPane.height * toolWindow.windowInfo.weight).toInt(),
+                                               (dragSourcePane.rootPane.width * toolWindow.windowInfo.weight).toInt())
   }
 
-  private fun getStripeHeight(pane: ToolWindowPane, anchor: ToolWindowAnchor): Int {
-    val stripe = pane.buttonManager.getStripeFor(anchor)
-    return if (stripe.isVisible && stripe.isShowing) stripe.height else 0
-  }
+  /**
+   * Gets the screen bounds for the drop area of the given anchor
+   */
+  private fun getDropTargetScreenBounds(dropTargetPane: ToolWindowPane, anchor: ToolWindowAnchor) =
+    getAdjustedPaneContentsScreenBounds(dropTargetPane, anchor, AbstractDroppableStripe.DROP_DISTANCE_SENSITIVITY, AbstractDroppableStripe.DROP_DISTANCE_SENSITIVITY)
+
+  private fun isPointInVisibleToolWindow(dragToScreenPoint: Point) =
+    getToolWindow()?.let { getToolWindowScreenBoundsIfVisible(it)?.contains(dragToScreenPoint) } ?: false
+
+  private fun getStripeWidth(pane: ToolWindowPane, anchor: ToolWindowAnchor) = pane.buttonManager.getStripeWidth(anchor)
+  private fun getStripeHeight(pane: ToolWindowPane, anchor: ToolWindowAnchor) = pane.buttonManager.getStripeHeight(anchor)
 
   private fun getStripeButtonForToolWindow(window: ToolWindowImpl?): JComponent? {
     return window?.let { dragSourcePane.buttonManager.getStripeFor(it.anchor).getButtonFor(it.id)?.getComponent() }
@@ -478,14 +458,8 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
    *
    * The drop area of a stripe is implementation defined, and might be just the stripe, or the stripe plus extended bounds
    */
-  private fun getTargetStripeByDropLocation(screenPoint: Point): AbstractDroppableStripe? {
-    val preferred = getSourceStripe(initialAnchor!!)
-    val dropTargetPane = dragSourcePane
-    // Get the stripe whose (possibly extended) bounds contains the screen point. If we can't find a stripe, check if the point is inside
-    // the visible bounds of the tool window, in which case use the tool window's anchor
-    val stripe = dropTargetPane.getStripeFor(screenPoint, preferred)
-                 ?: if (getToolWindow()!!.getBoundsOnScreen(initialAnchor!!, screenPoint).contains(screenPoint)) preferred else null
-
+  private fun getTargetStripeByDropLocation(screenPoint: Point, preferredStripe: AbstractDroppableStripe): AbstractDroppableStripe? {
+    val stripe = dragSourcePane.getStripeFor(screenPoint, preferredStripe)
     // TODO: If we want to get rid of the top stripe, we should remove it in the button managers
     return if (stripe?.anchor == TOP) null else stripe
   }

@@ -35,6 +35,9 @@ internal interface ToolWindowButtonManager {
 
   fun getStripeFor(screenPoint: Point, preferred: AbstractDroppableStripe, pane: JComponent): AbstractDroppableStripe?
 
+  fun getStripeWidth(anchor: ToolWindowAnchor): Int
+  fun getStripeHeight(anchor: ToolWindowAnchor): Int
+
   fun startDrag()
 
   fun stopDrag()
