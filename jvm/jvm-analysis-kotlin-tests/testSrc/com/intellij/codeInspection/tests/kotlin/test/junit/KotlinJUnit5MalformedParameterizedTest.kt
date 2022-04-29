@@ -54,6 +54,10 @@ class KotlinJUnit5MalformedParameterizedTest : JavaCodeInsightFixtureTestCase() 
     myFixture.testHighlighting("CantResolveTarget.kt")
   }
 
+  fun `test MalformedParameterizedCollectionKt`() {
+    myFixture.testHighlighting("MalformedParameterizedCollectionKt.kt")
+  }
+
   fun `test CantResolveTarget highlighting`() {
     myFixture.testHighlighting("CantResolveTarget.kt")
   }

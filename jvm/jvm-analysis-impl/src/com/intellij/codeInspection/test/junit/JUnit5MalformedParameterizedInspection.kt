@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl
 import com.intellij.psi.search.searches.ClassInheritorsSearch
@@ -233,7 +234,10 @@ private class NullOrEmptySourceChecker(val holder: ProblemsHolder) {
     val size = method.uastParameters.size
     val shortName = psiAnnotation.qualifiedName ?: return
     if (size == 1) {
-      val type = method.uastParameters[0].type
+      var type = method.uastParameters[0].type
+      if (type is PsiClassReferenceType) {
+        type = type.rawType()
+      }
       if (type is PsiArrayType ||
           type.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
           type.equalsToText(CommonClassNames.JAVA_UTIL_LIST) ||

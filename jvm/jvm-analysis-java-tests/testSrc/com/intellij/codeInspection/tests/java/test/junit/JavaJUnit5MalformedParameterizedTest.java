@@ -30,6 +30,7 @@ public class JavaJUnit5MalformedParameterizedTest extends LightJavaInspectionTes
   public void testMalformedSourcesImplicitConversion() { doTest(); }
   public void testMalformedSourcesImplicitParameters() { doTest(); }
   public void testMalformedSourcesTestInstancePerClass() { doTest(); }
+  public void testMalformedParameterizedCollection() { doTest(); }
 
   @Override
   protected String getBasePath() {
