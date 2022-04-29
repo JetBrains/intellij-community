@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.html
 
+import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.ui.ImageUtil
@@ -15,7 +16,7 @@ import javax.swing.text.html.ImageView
 class HiDpiScalingImageView(elem: Element) : ImageView(elem) {
 
   private val scaleContext: ScaleContext?
-    get() = container?.let(ScaleContext::create)
+    get() = container?.takeIf(StartupUiUtil::isJreHiDPI)?.let(ScaleContext::create)
 
   private val sysScale: Float
     get() = scaleContext?.getScale(ScaleType.SYS_SCALE)?.toFloat() ?: 1f
@@ -34,10 +35,12 @@ class HiDpiScalingImageView(elem: Element) : ImageView(elem) {
     }
 
     val bounds = a.bounds
-    val width = super.getPreferredSpan(X_AXIS).toInt()
-    val height = super.getPreferredSpan(Y_AXIS).toInt()
+    val width = super.getPreferredSpan(X_AXIS).toDouble()
+    val height = super.getPreferredSpan(Y_AXIS).toDouble()
     if (width <= 0 || height <= 0) return
-    val image = ImageUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB)
+    val image = ImageUtil.createImage(ScaleContext.createIdentity(), width, height,
+                                      BufferedImage.TYPE_INT_ARGB,
+                                      PaintUtil.RoundingMode.ROUND)
     val graphics = image.createGraphics()
     super.paint(graphics, Rectangle(image.width, image.height))
     StartupUiUtil.drawImage(g, ImageUtil.ensureHiDPI(image, scaleContext), bounds.x, bounds.y, null)
