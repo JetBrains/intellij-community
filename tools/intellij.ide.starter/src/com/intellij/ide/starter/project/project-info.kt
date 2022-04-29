@@ -8,6 +8,7 @@ import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.ide.starter.utils.logOutput
 import org.kodein.di.instance
 import java.nio.file.Path
+import kotlin.io.path.div
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
@@ -29,7 +30,7 @@ data class ProjectInfo(
   /**
    * relative path inside Image file, where project home is located
    */
-  val testProjectImageRelPath: (Path) -> Path = { it }
+  val testProjectImageRelPath: (Path) -> Path = { it / (testProjectURL?.split("/")?.last()?.split(".")?.first() ?: "") }
 ) : ProjectInfoSpec {
   init {
     require(listOfNotNull(testProjectURL, testProjectDir, testProjectImage).size <= 1) {
