@@ -436,6 +436,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       ActionMenu actionMenu =
         new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, isDarkMenu);
 
+      actionMenu.setHeaderMenuItem();
       if (IdeFrameDecorator.isCustomDecorationActive()) {
         actionMenu.setOpaque(false);
         actionMenu.setFocusable(false);

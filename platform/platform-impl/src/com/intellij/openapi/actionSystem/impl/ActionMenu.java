@@ -142,6 +142,10 @@ public final class ActionMenu extends JBMenu {
 
   public @Nullable Menu getScreenMenuPeer() { return myScreenMenuPeer; }
 
+  public void setHeaderMenuItem() {
+    ((IdeaMenuUI)getUI()).updateForHeaderMenuItem();
+  }
+
   private void init() {
     boolean macSystemMenu = SystemInfo.isMacSystemMenu && isMainMenuPlace();
 

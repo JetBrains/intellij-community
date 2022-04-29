@@ -60,6 +60,12 @@ public class IdeaMenuUI extends BasicMenuUI {
     myMaxGutterIconWidth = getAllowedIcon() == null && IdeaPopupMenuUI.hideEmptyIcon(comp) ? 0 : myMaxGutterIconWidth2;
   }
 
+  public void updateForHeaderMenuItem() {
+    menuItem.setForeground(JBColor.namedColor("MainMenu.foreground", menuItem.getForeground()));
+    selectionForeground = JBColor.namedColor("MainMenu.selectionForeground", selectionForeground);
+    selectionBackground = JBColor.namedColor("MainMenu.selectionBackground", selectionBackground);
+  }
+
   @Override
   public void paint(Graphics g, JComponent comp) {
     UISettings.setupAntialiasing(g);

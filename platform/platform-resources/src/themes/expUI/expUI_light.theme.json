@@ -265,6 +265,12 @@
 
     "MenuItem.background": "Grey13",
 
+    "MainMenu": {
+      "foreground": "Grey11",
+      "selectionForeground": "Grey11",
+      "selectionBackground": "Grey1"
+    },
+
     "MemoryIndicator": {
       "allocatedBackground": "Grey10",
       "usedBackground": "#B7CEFA75"
