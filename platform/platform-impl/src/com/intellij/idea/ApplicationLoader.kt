@@ -405,8 +405,8 @@ private fun handleExternalCommand(args: List<String>, currentDirectory: String?)
         }
       }
       else {
-        windowManager.getFrame(result.project)?.let {
-          AppIcon.getInstance().requestFocus()
+        windowManager.getIdeFrame(result.project)?.let {
+          AppIcon.getInstance().requestFocus(it)
         }
       }
     }
