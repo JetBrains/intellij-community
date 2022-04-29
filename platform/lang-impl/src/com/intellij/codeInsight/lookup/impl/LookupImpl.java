@@ -259,9 +259,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     final List<LookupElement> items = getItems();
 
     myPresentableArranger.prefixChanged(this);
-    synchronized (myUiLock) {
-      getListModel().removeAll();
-    }
+    getListModel().performBatchUpdate(model -> {
+      synchronized (myUiLock) {
+        model.removeAll();
+      }
+    });
 
     if (addAgain) {
       for (final LookupElement item : items) {
@@ -439,16 +441,18 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myOffsets.checkMinPrefixLengthChanges(items, this);
     List<LookupElement> oldModel = listModel.toList();
 
-    synchronized (myUiLock) {
-      listModel.removeAll();
-      if (!items.isEmpty()) {
-        listModel.add(items);
-        addDummyItems(myDummyItemCount.get());
+    listModel.performBatchUpdate(model -> {
+      synchronized (myUiLock) {
+        model.removeAll();
+        if (!items.isEmpty()) {
+          model.add(items);
+          addDummyItems(myDummyItemCount.get());
+        }
+        else {
+          addEmptyItem(model);
+        }
       }
-      else {
-        addEmptyItem(listModel);
-      }
-    }
+    });
 
     updateListHeight(listModel);
 
