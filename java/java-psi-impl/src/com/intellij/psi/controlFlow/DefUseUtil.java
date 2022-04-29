@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -125,7 +125,7 @@ public final class DefUseUtil {
   }
 
   @Nullable
-  public static List<Info> getUnusedDefs(PsiCodeBlock body, Set<? super PsiVariable> outUsedVariables) {
+  public static List<Info> getUnusedDefs(PsiElement body, Set<? super PsiVariable> outUsedVariables) {
     if (body == null) {
       return null;
     }

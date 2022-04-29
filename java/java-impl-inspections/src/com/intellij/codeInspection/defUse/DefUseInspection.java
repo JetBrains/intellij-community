@@ -41,20 +41,17 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     return new JavaElementVisitor() {
       @Override
       public void visitMethod(PsiMethod method) {
-        checkCodeBlock(method.getBody(), holder);
+        checkBody(method.getBody(), holder);
       }
 
       @Override
       public void visitClassInitializer(PsiClassInitializer initializer) {
-        checkCodeBlock(initializer.getBody(), holder);
+        checkBody(initializer.getBody(), holder);
       }
 
       @Override
       public void visitLambdaExpression(PsiLambdaExpression expression) {
-        PsiElement body = expression.getBody();
-        if (body instanceof PsiCodeBlock) {
-          checkCodeBlock((PsiCodeBlock)body, holder);
-        }
+        checkBody(expression.getBody(), holder);
       }
 
       @Override
@@ -64,8 +61,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     };
   }
 
-  private void checkCodeBlock(final PsiCodeBlock body,
-                              final ProblemsHolder holder) {
+  private void checkBody(PsiElement body, ProblemsHolder holder) {
     if (body == null) return;
     final Set<PsiVariable> usedVariables = new HashSet<>();
     List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(body, usedVariables);
@@ -107,7 +103,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     processFieldsViaDfa(body, holder);
   }
 
-  private void processFieldsViaDfa(PsiCodeBlock body, ProblemsHolder holder) {
+  private void processFieldsViaDfa(PsiElement body, ProblemsHolder holder) {
     DfaValueFactory factory = new DfaValueFactory(holder.getProject());
     var flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
     if (flow != null) {
