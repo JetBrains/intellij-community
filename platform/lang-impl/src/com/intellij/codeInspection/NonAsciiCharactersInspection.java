@@ -40,7 +40,7 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
   public boolean CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME = true;
   public boolean CHECK_FOR_DIFFERENT_LANGUAGES_IN_STRING;
   public boolean CHECK_FOR_DIFFERENT_LANGUAGES_IN_COMMENTS;
-  public boolean CHECK_FOR_DIFFERENT_LANGUAGES_IN_ANY_OTHER_WORD = true;
+  public boolean CHECK_FOR_DIFFERENT_LANGUAGES_IN_ANY_OTHER_WORD;
   public boolean CHECK_FOR_FILES_CONTAINING_BOM;
 
   @Override
