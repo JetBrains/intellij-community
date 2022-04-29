@@ -26,6 +26,10 @@ import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
+import org.jetbrains.intellij.build.tasks.DirSource
+import org.jetbrains.intellij.build.tasks.JarBuilder
+import org.jetbrains.intellij.build.tasks.Source
+import org.jetbrains.intellij.build.tasks.ZipSource
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
@@ -948,15 +952,33 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
-  @CompileStatic
   void buildUpdaterJar() {
     doBuildUpdaterJar("updater.jar")
   }
 
   @Override
-  @CompileStatic
   void buildFullUpdaterJar() {
     doBuildUpdaterJar("updater-full.jar")
+    doBuildUpdaterJarWithJarBuilder("updater-full-jarbuilder-preview.jar")
+  }
+
+  private void doBuildUpdaterJarWithJarBuilder(String artifactName) {
+    String updaterModuleName = "intellij.platform.updater"
+    JpsModule updaterModule = buildContext.findRequiredModule(updaterModuleName)
+    Source updaterModuleSource = new DirSource(buildContext.getModuleOutputDir(updaterModule), [], null)
+
+    List<Source> librarySources = JpsJavaExtensionService.dependencies(updaterModule)
+      .productionOnly()
+      .runtimeOnly()
+      .libraries
+      .collectMany { it.getFiles(JpsOrderRootType.COMPILED) }
+      .collect { File zipFile -> (Source)new ZipSource(zipFile.toPath(), null) }
+
+    JarBuilder.buildJar(
+      buildContext.paths.artifactDir.resolve(artifactName),
+      List.of(updaterModuleSource) + librarySources,
+      false
+    )
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
