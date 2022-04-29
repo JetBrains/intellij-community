@@ -34,7 +34,7 @@ public final class LogSetup {
       try (InputStream in = new BufferedInputStream(Files.newInputStream(configFile))) {
         LogManager.getLogManager().readConfiguration(in);
       }
-      JulLogger.configureLogFileAndConsole(logFilePath, true, true, null);
+      JulLogger.configureLogFileAndConsole(logFilePath, true, true, true, null);
     }
     catch (IOException e) {
       //noinspection UseOfSystemOutOrSystemErr

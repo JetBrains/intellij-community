@@ -80,7 +80,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
       Path logFile = logDir.resolve("idea.log");
       JulLogger.clearHandlers();
-      JulLogger.configureLogFileAndConsole(logFile, false, false, null);
+      JulLogger.configureLogFileAndConsole(logFile, false, false, true, null);
 
       if (Files.exists(logFile) && Files.size(logFile) >= LOG_SIZE_LIMIT) {
         Files.writeString(logFile, "");

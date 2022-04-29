@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.io
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.StatusCode
 import org.jetbrains.intellij.build.tasks.tracer
@@ -13,6 +14,7 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Executes a Java class in a forked JVM.
@@ -28,30 +30,36 @@ fun runJava(mainClass: String,
   val timeout = Timeout(timeoutMillis)
   var errorReader: CompletableFuture<Void>? = null
   val classpathFile = Files.createTempFile("classpath-", ".txt")
+  val jvmArgsWithJson = (jvmArgs + "-Dintellij.log.to.json.stdout=true")
   tracer.spanBuilder("runJava")
     .setAttribute("mainClass", mainClass)
     .setAttribute(AttributeKey.stringArrayKey("args"), args.toList())
-    .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgs.toList())
+    .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgsWithJson.toList())
     .setAttribute("workingDir", workingDir?.toString() ?: "")
     .setAttribute("timeoutMillis", timeoutMillis)
     .startSpan()
     .use { span ->
       try {
         val classPathStringBuilder = createClassPathFile(classPath, classpathFile)
-        val processArgs = createProcessArgs(javaExe = javaExe, jvmArgs = jvmArgs, classpathFile = classpathFile, mainClass = mainClass, args = args)
+        val processArgs = createProcessArgs(javaExe = javaExe, jvmArgs = jvmArgsWithJson, classpathFile = classpathFile, mainClass = mainClass, args = args)
         span.setAttribute(AttributeKey.stringArrayKey("processArgs"), processArgs)
         val process = ProcessBuilder(processArgs).directory(workingDir?.toFile()).start()
 
+        val firstError = AtomicReference<String>()
         errorReader = readErrorOutput(process, timeout, logger)
-        readOutputAndBlock(process, timeout, logger)
+        readOutputAndBlock(process, timeout, logger, firstError)
 
         fun javaRunFailed(reason: String) {
           // do not throw error, but log as error to reduce bloody groovy stacktrace
           logger.debug { "classPath=${classPathStringBuilder.substring("-classpath".length)})" }
 
-          val message = "Cannot execute $mainClass (args=$args, vmOptions=$jvmArgs): $reason"
+          val message = "Cannot execute $mainClass (args=$args, vmOptions=$jvmArgsWithJson):\n\t$reason"
           span.setStatus(StatusCode.ERROR, message)
           logger.log(Logger.Level.ERROR, null as ResourceBundle?, message)
+        }
+        val errorMessage = firstError.get()
+        if (errorMessage != null) {
+          javaRunFailed("Error reported from child process logger: $errorMessage")
         }
 
         if (!process.waitFor(timeout.remainingTime, TimeUnit.MILLISECONDS)) {
@@ -208,10 +216,52 @@ fun runProcess(args: List<String>,
     }
 }
 
-private fun readOutputAndBlock(process: Process, timeout: Timeout, logger: Logger) {
+private fun readOutputAndBlock(process: Process, timeout: Timeout, logger: Logger, firstError: AtomicReference<String>? = null) {
+  val mapper = ObjectMapper()
   // join on CompletableFuture will help to process other tasks in FJP_
   runAsync {
-    consume(process.inputStream, process, timeout, logger::info)
+    consume(process.inputStream, process, timeout) {
+      if (it.startsWith("{")) {
+        try {
+          val jObject = mapper.readTree(it)
+          val message = jObject.get("message")?.asText() ?: error("Missing field: 'message'")
+          when (val level = jObject.get("level")?.asText() ?: error("Missing field: 'level'")) {
+            "SEVERE" -> {
+              try {
+                firstError?.compareAndSet(null, message)
+                logger.error(message)
+                // BuildMessageImpl will fire BuildException when we are logging error
+              } catch(_: Throwable) {}
+            }
+            "WARNING" -> {
+              logger.warn(message)
+            }
+            "INFO" -> {
+              logger.info(message)
+            }
+            "CONFIG" -> {
+              logger.debug(message)
+            }
+            "FINE" -> {
+              logger.debug(message)
+            }
+            "FINEST" -> {
+              logger.debug(message)
+            }
+            "FINER" -> {
+              logger.debug(message)
+            }
+            else -> {
+              error("Unable parse log level: $level")
+            }
+          }
+        } catch (e: Throwable)  {
+          logger.error("Unable to parse line: ${it}, error: ${e.message}")
+        }
+      } else {
+        logger.info(it)
+      }
+    }
   }.join()
 }
 
@@ -224,23 +274,31 @@ private fun readErrorOutput(process: Process, timeout: Timeout, logger: Logger):
 private fun consume(inputStream: InputStream, process: Process, timeout: Timeout, consume: (String) -> Unit) {
   inputStream.bufferedReader().use { reader ->
     var linesCount = 0
-    var linesBuffer = StringBuilder()
+    val lines = mutableListOf<String>()
+    val lineBuffer = StringBuilder()
     val flushTimeoutMs = 5000L
-    var lastCharReceived = System.currentTimeMillis()
+    var lastCharReceived = System.nanoTime() * 1_000_000
     while (!timeout.isElapsed && (process.isAlive || reader.ready())) {
       if (reader.ready()) {
         val char = reader.read().takeIf { it != -1 }?.toChar()
-        if (char == '\n' || char == '\r') linesCount++
         if (char != null) {
-          linesBuffer.append(char)
-          lastCharReceived = System.currentTimeMillis()
-        }
-        if (char == null || !reader.ready() || linesCount > 100 || (System.currentTimeMillis() - lastCharReceived) > flushTimeoutMs) {
-          if (linesBuffer.isNotEmpty()) {
-            consume(linesBuffer.toString())
-            linesBuffer = StringBuilder()
-            linesCount = 0
+          if (char == '\n' || char == '\r') {
+            if (lineBuffer.isNotEmpty()) {
+              lines.add(lineBuffer.toString())
+              lineBuffer.clear()
+              linesCount++
+            }
+          } else {
+            lineBuffer.append(char)
           }
+          lastCharReceived = System.nanoTime() * 1_000_000
+        }
+        if (char == null || !reader.ready() || linesCount > 100 || (System.nanoTime() * 1_000_000 - lastCharReceived) > flushTimeoutMs) {
+          for (line in lines) {
+            consume(line)
+          }
+          lines.clear()
+          linesCount = 0
         }
       }
       else {
@@ -248,8 +306,8 @@ private fun consume(inputStream: InputStream, process: Process, timeout: Timeout
       }
     }
 
-    if (linesBuffer.isNotBlank()) {
-      consume(linesBuffer.toString())
+    if (lineBuffer.isNotBlank()) {
+      consume(lineBuffer.toString())
     }
    }
 }
