@@ -373,7 +373,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       wrapper.add(myMnemonicLabel);
       Dimension preferredSize = new JLabel("W").getPreferredSize();
       JBInsets.addTo(preferredSize, JBUI.CurrentTheme.ActionsList.numberMnemonicInsets());
-      wrapper.setPreferredSize(preferredSize);
+      //wrapper.setPreferredSize(preferredSize);
 
       res.add(wrapper);
     }
