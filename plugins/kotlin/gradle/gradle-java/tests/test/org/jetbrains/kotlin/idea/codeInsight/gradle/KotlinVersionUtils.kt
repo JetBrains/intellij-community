@@ -20,19 +20,19 @@ val KotlinVersion.isDev: Boolean
 
 val KotlinVersion.isMilestone: Boolean
     get() = this.classifier != null &&
-            this.classifier.lowercase().matches(Regex("""m\d+(-\d*)?"""))
+            this.classifier.lowercase().matches(Regex("""m\d+(-release)?(-\d*)?"""))
 
 val KotlinVersion.isAlpha: Boolean
     get() = this.classifier != null &&
-            this.classifier.lowercase().matches(Regex("""alpha(\d*)?-?\d*"""))
+            this.classifier.lowercase().matches(Regex("""alpha(\d*)?(-release)?-?\d*"""))
 
 val KotlinVersion.isBeta: Boolean
     get() = this.classifier != null &&
-            this.classifier.lowercase().matches(Regex("""beta(\d*)?-?\d*"""))
+            this.classifier.lowercase().matches(Regex("""beta(\d*)?(-release)?-?\d*"""))
 
 val KotlinVersion.isRC: Boolean
     get() = this.classifier != null &&
-            this.classifier.lowercase().matches(Regex("""(rc)(\d*)?-?\d*"""))
+            this.classifier.lowercase().matches(Regex("""(rc)(\d*)?(-release)?-?\d*"""))
 
 val KotlinVersion.isStable: Boolean
     get() = this.classifier == null ||
