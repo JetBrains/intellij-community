@@ -5,8 +5,10 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
+import com.intellij.refactoring.makeStatic.MakeStaticHandler;
 import com.intellij.refactoring.makeStatic.MakeStaticUtil;
 import com.intellij.refactoring.makeStatic.Settings;
 import com.intellij.refactoring.util.VariableData;
@@ -217,7 +219,13 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
   }
 
   public void testMethodReferenceInAnonymousClass() {
-    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> {
+      configureByFile("/refactoring/makeMethodStatic/before" + getTestName(false) + ".java");
+      PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+      assertNull(MakeStaticHandler.validateTarget((PsiTypeParameterListOwner)element));
+      perform(false, false);
+      checkResultByFile("/refactoring/makeMethodStatic/after" + getTestName(false) + ".java");
+    });
   }
 
   private void doTest() {
