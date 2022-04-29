@@ -24,7 +24,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.messages.Topic;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +57,7 @@ public final class VcsRepositoryManager implements Disposable {
 
   private final @NotNull Map<VirtualFile, Repository> myRepositories = new HashMap<>();
   private final @NotNull Map<VirtualFile, Repository> myExternalRepositories = new HashMap<>();
-  private final @NotNull Map<FilePath, VirtualFile> myPathToRootMap = new HashMap<>();
+  private final @NotNull Map<String, VirtualFile> myPathToRootMap = new HashMap<>();
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private volatile boolean myDisposed;
@@ -180,9 +179,11 @@ public final class VcsRepositoryManager implements Disposable {
 
   @Nullable
   private VirtualFile getVirtualFileForRoot(@Nullable FilePath rootPath) {
+    if (rootPath == null) return null;
+
     REPO_LOCK.readLock().lock();
     try {
-      return myPathToRootMap.get(rootPath);
+      return myPathToRootMap.get(rootPath.getPath());
     }
     finally {
       REPO_LOCK.readLock().unlock();
@@ -192,10 +193,10 @@ public final class VcsRepositoryManager implements Disposable {
   private void updatePathToRootMap() {
     myPathToRootMap.clear();
     for (VirtualFile root : myRepositories.keySet()) {
-      myPathToRootMap.put(VcsUtil.getFilePath(root), root);
+      myPathToRootMap.put(root.getPath(), root);
     }
     for (VirtualFile root : myExternalRepositories.keySet()) {
-      myPathToRootMap.put(VcsUtil.getFilePath(root), root);
+      myPathToRootMap.put(root.getPath(), root);
     }
   }
 
