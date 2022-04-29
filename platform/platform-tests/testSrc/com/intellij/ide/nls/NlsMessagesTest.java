@@ -152,4 +152,19 @@ public class NlsMessagesTest {
     formatter.setDurationTimeUnit(TimeUnit.MILLISECONDS);
     assertEquals("1m 00s 100ms", formatter.formatDuration(60100));
   }
+
+  @Test
+  public void testMaxFragmentsTimeUnitNonMilliseconds() {
+    NlsMessages.NlsDurationFormatter formatter = new NlsMessages.NlsDurationFormatter()
+      .setDurationTimeUnit(TimeUnit.MICROSECONDS)
+      .setMaxFragments(2);
+    assertEquals("2\u2009min 10\u2009sec", formatter.formatDuration(129600000L)); // 2 min 9 sec 600 ms
+    assertEquals("2\u2009min 53\u2009sec", formatter.formatDuration(172800000L)); // 2 min 52 sec 800 ms
+    assertEquals("1\u2009min 30\u2009sec", formatter.formatDuration(60000000L + 30000000L + 500000L + 501L)); // 1 min 30 sec 500 ms 501 ns
+    formatter = new NlsMessages.NlsDurationFormatter()
+      .setDurationTimeUnit(TimeUnit.HOURS)
+      .setMaxFragments(1);
+    assertEquals("2\u2009days", formatter.formatDuration(47L)); // 1 day 23 hours
+    assertEquals("1\u2009day", formatter.formatDuration(36L)); // 1 day 12 hours
+  }
 }
