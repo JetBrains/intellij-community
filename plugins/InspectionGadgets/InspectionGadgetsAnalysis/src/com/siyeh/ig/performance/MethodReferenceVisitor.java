@@ -59,8 +59,8 @@ class MethodReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
     if (qualifier == null || qualifier instanceof PsiQualifiedExpression) {
       final PsiElement element = expression.resolve();
       if (element != null) {
-        if (element instanceof PsiLocalVariable || 
-            element instanceof PsiParameter && PsiTreeUtil.isAncestor(((PsiParameter)element).getDeclarationScope(), m_method, true)) {
+        if ((element instanceof PsiLocalVariable || element instanceof PsiParameter) && 
+            PsiTreeUtil.isAncestor(PsiUtil.getVariableCodeBlock((PsiVariable)element, null), m_method, true)) {
           m_referencesStaticallyAccessible = false;
           return;
         }

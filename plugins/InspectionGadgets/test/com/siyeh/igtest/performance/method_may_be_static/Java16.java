@@ -26,7 +26,7 @@ public class Java16 {
     }
   };
   
-  void foo(int a) {
+  void <warning descr="Method 'foo()' may be 'static'">foo</warning>(int a) {
     int b = 42;
     Runnable r2 = new Runnable() {
       public void run() {
