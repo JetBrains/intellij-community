@@ -15,6 +15,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.copyTo
 
 /**
  * Executes a Java class in a forked JVM.
@@ -26,7 +27,8 @@ fun runJava(mainClass: String,
             javaExe: Path,
             logger: Logger = System.getLogger(mainClass),
             timeoutMillis: Long = Timeout.DEFAULT,
-            workingDir: Path? = null) {
+            workingDir: Path? = null,
+            onError: (() -> Unit)? = null) {
   val timeout = Timeout(timeoutMillis)
   var errorReader: CompletableFuture<Void>? = null
   val classpathFile = Files.createTempFile("classpath-", ".txt")
@@ -52,9 +54,11 @@ fun runJava(mainClass: String,
         fun javaRunFailed(reason: String) {
           // do not throw error, but log as error to reduce bloody groovy stacktrace
           logger.debug { "classPath=${classPathStringBuilder.substring("-classpath".length)})" }
-
-          val message = "Cannot execute $mainClass (args=$args, vmOptions=$jvmArgsWithJson):\n\t$reason"
+          val message = "$reason\nCannot execute $mainClass (args=$args, vmOptions=$jvmArgsWithJson)"
           span.setStatus(StatusCode.ERROR, message)
+          if (onError != null) {
+            onError()
+          }
           logger.log(Logger.Level.ERROR, null as ResourceBundle?, message)
         }
         val errorMessage = firstError.get()
@@ -271,9 +275,8 @@ private fun readErrorOutput(process: Process, timeout: Timeout, logger: Logger):
   }
 }
 
-private fun consume(inputStream: InputStream, process: Process, timeout: Timeout, consume: (String) -> Unit) {
+internal fun consume(inputStream: InputStream, process: Process, timeout: Timeout, consume: (String) -> Unit) {
   inputStream.bufferedReader().use { reader ->
-    var linesCount = 0
     val lines = mutableListOf<String>()
     val lineBuffer = StringBuilder()
     val flushTimeoutMs = 5000L
@@ -286,19 +289,17 @@ private fun consume(inputStream: InputStream, process: Process, timeout: Timeout
             if (lineBuffer.isNotEmpty()) {
               lines.add(lineBuffer.toString())
               lineBuffer.clear()
-              linesCount++
             }
           } else {
             lineBuffer.append(char)
           }
           lastCharReceived = System.nanoTime() * 1_000_000
         }
-        if (char == null || !reader.ready() || linesCount > 100 || (System.nanoTime() * 1_000_000 - lastCharReceived) > flushTimeoutMs) {
+        if (char == null || !reader.ready() || lines.size > 100 || (System.nanoTime() * 1_000_000 - lastCharReceived) > flushTimeoutMs) {
           for (line in lines) {
             consume(line)
           }
           lines.clear()
-          linesCount = 0
         }
       }
       else {

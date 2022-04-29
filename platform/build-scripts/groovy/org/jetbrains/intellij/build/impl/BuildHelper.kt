@@ -17,11 +17,13 @@ import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.runJava
 import org.jetbrains.intellij.build.tasks.createTask
 import org.jetbrains.intellij.build.tasks.useWithScope
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
 import java.util.function.Predicate
+import kotlin.io.path.copyTo
 
 val DEFAULT_TIMEOUT = TimeUnit.MINUTES.toMillis(10L)
 
@@ -83,7 +85,8 @@ fun runJava(context: CompilationContext,
             jvmArgs: Iterable<String>,
             classPath: Iterable<String>,
             timeoutMillis: Long = DEFAULT_TIMEOUT,
-            workingDir: Path? = null) {
+            workingDir: Path? = null,
+            onError: (() -> Unit)? = null) {
   runJava(mainClass = mainClass,
           args = args,
           jvmArgs = getCommandLineArguments(context) + jvmArgs,
@@ -91,7 +94,8 @@ fun runJava(context: CompilationContext,
           javaExe = context.stableJavaExecutable,
           logger = context.messages,
           timeoutMillis = timeoutMillis,
-          workingDir = workingDir)
+          workingDir = workingDir,
+          onError = onError)
 }
 
 /**
@@ -145,8 +149,9 @@ fun runApplicationStarter(context: BuildContext,
                           classpathCustomizer: ((MutableSet<String>) -> Unit)? = null) {
   Files.createDirectories(tempDir)
   val jvmArgs = ArrayList<String>()
+  val systemDir = tempDir.resolve("system")
   BuildUtils.addVmProperty(jvmArgs, "idea.home.path", context.paths.projectHome)
-  BuildUtils.addVmProperty(jvmArgs, "idea.system.path", FileUtilRt.toSystemIndependentName(tempDir.toString()) + "/system")
+  BuildUtils.addVmProperty(jvmArgs, "idea.system.path", FileUtilRt.toSystemIndependentName(systemDir.toString()))
   BuildUtils.addVmProperty(jvmArgs, "idea.config.path", FileUtilRt.toSystemIndependentName(tempDir.toString()) + "/config")
   // reproducible build - avoid touching module outputs, do no write classpath.index
   BuildUtils.addVmProperty(jvmArgs, "idea.classpath.index.enabled", "false")
@@ -176,7 +181,13 @@ fun runApplicationStarter(context: BuildContext,
   }
   classpathCustomizer?.invoke(effectiveIdeClasspath)
   disableCompatibleIgnoredPlugins(context, tempDir.resolve("config"), additionalPluginIds)
-  runJava(context, "com.intellij.idea.Main", arguments, jvmArgs, effectiveIdeClasspath, timeoutMillis)
+  runJava(context, "com.intellij.idea.Main", arguments, jvmArgs, effectiveIdeClasspath, timeoutMillis) {
+    val logFile = systemDir.resolve("log").resolve("idea.log")
+    val logFileToPublish = File.createTempFile("idea-", ".log")
+    logFile.copyTo(logFileToPublish.toPath(), true)
+    context.notifyArtifactBuilt(logFileToPublish.toPath())
+    context.messages.error("Log file: ${logFileToPublish.canonicalPath} attached to build artifacts")
+  }
 }
 
 private fun disableCompatibleIgnoredPlugins(context: BuildContext,
