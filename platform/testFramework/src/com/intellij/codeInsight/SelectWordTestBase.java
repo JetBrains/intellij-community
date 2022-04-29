@@ -6,7 +6,6 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
@@ -27,7 +26,7 @@ public abstract class SelectWordTestBase extends LightPlatformCodeInsightTestCas
     while (true) {
       final String fileName = "/after" + i + "." + ext;
       @NonNls String resultPath = path + fileName;
-      if (new File(PathManagerEx.getTestDataPath() + resultPath).exists()) {
+      if (new File(getTestDataPath() + resultPath).exists()) {
         getHandler().execute(getEditor(), null, DataManager.getInstance().getDataContextFromFocus().getResultSync());
         checkResultByFile(fileName, resultPath, true);
         i++;
