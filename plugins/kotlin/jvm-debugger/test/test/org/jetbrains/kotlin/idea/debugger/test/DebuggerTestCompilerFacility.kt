@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import java.io.File
 
 class DebuggerTestCompilerFacility(
@@ -208,7 +209,7 @@ class DebuggerTestCompilerFacility(
     }
 
     private fun analyzeAndCompileFiles(project: Project, files: List<KtFile>, compile: (AnalysisResult) -> Unit): String {
-        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacade(files)
+        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacadeWithForcedPlatform(files, JvmPlatforms.unspecifiedJvmPlatform)
 
         val analysisResult = resolutionFacade.analyzeWithAllCompilerChecks(files)
         analysisResult.throwIfError()

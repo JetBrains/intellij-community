@@ -27,8 +27,6 @@ import java.io.File
 abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluateExpressionTest() {
     override fun useIrBackend() = true
 
-    override fun fragmentCompilerBackend() = FragmentCompilerBackend.JVM
-
     override fun setUpModule() {
         super.setUpModule()
         val jvmSrcPath = testAppPath + File.separator + ExecutionTestCase.SOURCES_DIRECTORY_NAME
