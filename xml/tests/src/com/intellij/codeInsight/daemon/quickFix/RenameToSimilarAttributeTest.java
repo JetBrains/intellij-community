@@ -3,21 +3,23 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.XmlTestUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.xml.util.CheckTagEmptyBodyInspection;
+import com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection;
+import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceTagEmptyBodyTest extends LightQuickFixParameterizedTestCase {
-
+public class RenameToSimilarAttributeTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[] {
-      new CheckTagEmptyBodyInspection()
+    return new LocalInspectionTool[]{
+      new RequiredAttributesInspection(),
+      new HtmlUnknownAttributeInspection()
     };
   }
 
+
   @Override
   protected String getBasePath() {
-    return "/quickFix/replaceTagEmptyBodyWithEmptyEnd";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/renameToSimilarAttribute";
   }
 
   @NotNull

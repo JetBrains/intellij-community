@@ -3,21 +3,21 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.XmlTestUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.xml.util.CheckTagEmptyBodyInspection;
+import com.intellij.codeInspection.htmlInspections.HtmlExtraClosingTagInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceTagEmptyBodyTest extends LightQuickFixParameterizedTestCase {
+public class RemoveExtraClosingTagTest extends LightQuickFixParameterizedTestCase {
+
 
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[] {
-      new CheckTagEmptyBodyInspection()
-    };
+    return new LocalInspectionTool[] {new HtmlExtraClosingTagInspection()};
   }
+
 
   @Override
   protected String getBasePath() {
-    return "/quickFix/replaceTagEmptyBodyWithEmptyEnd";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/removeExtraClosingTag";
   }
 
   @NotNull
