@@ -974,11 +974,14 @@ idea.fatal.error.notification=disabled
       .collectMany { it.getFiles(JpsOrderRootType.COMPILED) }
       .collect { File zipFile -> (Source)new ZipSource(zipFile.toPath(), null) }
 
+    Path updaterJar = buildContext.paths.artifactDir.resolve(artifactName)
     JarBuilder.buildJar(
-      buildContext.paths.artifactDir.resolve(artifactName),
+      updaterJar,
       List.of(updaterModuleSource) + librarySources,
       false
     )
+
+    buildContext.notifyArtifactBuilt(updaterJar)
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
@@ -996,6 +999,9 @@ idea.fatal.error.notification=disabled
         }
       }
     }
+
+    Path updaterJar = buildContext.paths.artifactDir.resolve(artifactName)
+    buildContext.notifyArtifactBuilt(updaterJar)
   }
 
   @Override
