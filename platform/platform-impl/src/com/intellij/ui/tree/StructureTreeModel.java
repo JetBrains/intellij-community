@@ -332,7 +332,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   @Override
   public final boolean isLeaf(Object object) {
     Node node = getNode(object, false);
-    return node == null || node.isLeaf(this::validateChildren, true);
+    return node == null || node.isModelLeaf(this::validateChildren);
   }
 
   @Override
@@ -548,19 +548,14 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       return getChildren().size();
     }
 
-    @Override
-    public boolean isLeaf() {
-      return isLeaf(null, false);
-    }
-
-    private boolean isLeaf(@Nullable Consumer<? super Node> validator, boolean forModel) {
+    boolean isModelLeaf(@Nullable Consumer<? super Node> validator) {
       // root node should not be a leaf node when it is not visible in a tree
       // javax.swing.tree.VariableHeightLayoutCache.TreeStateNode.expand(boolean)
       if (null == getParent()) return false;
       if (leafState == LeafState.ALWAYS) return true;
       if (leafState == LeafState.NEVER) return false;
       if (leafState == LeafState.DEFAULT && validator != null) validator.accept(this);
-      return (!forModel || children.isValid()) && super.isLeaf();
+      return children.isValid() && super.isLeaf();
     }
 
     private void setLeafState(@NotNull LeafState leafState) {
@@ -578,7 +573,6 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     public LeafState getLeafState() {
       return leafState;
     }
-
   }
 
   /**
