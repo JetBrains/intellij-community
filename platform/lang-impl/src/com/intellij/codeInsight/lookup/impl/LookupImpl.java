@@ -251,10 +251,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return myDummyItem;
   }
 
-  public void repaintLookup(boolean onExplicitAction, boolean reused, boolean selectionVisible, boolean itemsChanged) {
-    myUi.refreshUi(selectionVisible, itemsChanged, reused, onExplicitAction);
-  }
-
   public void resort(boolean addAgain) {
     final List<LookupElement> items = getItems();
 
@@ -288,6 +284,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return true;
   }
 
+  // Used by external plugins
+  @SuppressWarnings("unused")
   public void scheduleItemUpdate(@NotNull LookupElement item) {
     LOG.assertTrue(getItems().contains(item), "Item isn't present in lookup");
     myCellRenderer.updateItemPresentation(item);
