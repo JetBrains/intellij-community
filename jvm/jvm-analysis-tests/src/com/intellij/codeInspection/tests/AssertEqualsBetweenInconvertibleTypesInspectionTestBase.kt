@@ -1,10 +1,7 @@
-package com.intellij.codeInspection.tests.test.junit
+package com.intellij.codeInspection.tests
 
 import com.intellij.codeInspection.AssertBetweenInconvertibleTypesInspection
 import com.intellij.codeInspection.InspectionProfileEntry
-import com.intellij.codeInspection.tests.UastInspectionTestBase
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
-import com.intellij.pom.java.LanguageLevel
 
 open class AssertEqualsBetweenInconvertibleTypesInspectionTestBase : UastInspectionTestBase() {
 
@@ -12,8 +9,6 @@ open class AssertEqualsBetweenInconvertibleTypesInspectionTestBase : UastInspect
 
   override fun setUp() {
     super.setUp()
-    LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.JDK_1_8
-    myFixture.enableInspections(AssertBetweenInconvertibleTypesInspection())
 
     myFixture.addClass("""
       package org.junit.jupiter.api;
@@ -98,14 +93,5 @@ open class AssertEqualsBetweenInconvertibleTypesInspectionTestBase : UastInspect
         default SELF as(String description, Object... args);
         SELF isEqualTo(Object expected);}
     """.trimIndent())
-  }
-
-  override fun tearDown() {
-    try {
-      myFixture.disableInspections(AssertBetweenInconvertibleTypesInspection())
-    }
-    finally {
-      super.tearDown()
-    }
   }
 }

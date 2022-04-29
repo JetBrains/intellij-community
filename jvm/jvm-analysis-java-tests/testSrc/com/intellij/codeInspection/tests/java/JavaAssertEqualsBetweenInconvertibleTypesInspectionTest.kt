@@ -1,15 +1,11 @@
-package com.intellij.codeInspection.tests.java.test.junit
+package com.intellij.codeInspection.tests.java
 
-import com.intellij.codeInspection.tests.test.junit.AssertEqualsBetweenInconvertibleTypesInspectionTestBase
+import com.intellij.codeInspection.tests.AssertEqualsBetweenInconvertibleTypesInspectionTestBase
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
-import com.intellij.openapi.application.PathManager
-import java.io.File
 
 class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetweenInconvertibleTypesInspectionTestBase() {
 
   override fun getBasePath() = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/assert_equals_between_inconvertible_types"
-
-  override fun getTestDataPath(): String = PathManager.getCommunityHomePath().replace(File.separatorChar, '/') + basePath
 
   fun `test AssertEqualsBetweenInconvertibleTypes`() {
     myFixture.testHighlighting("AssertEqualsBetweenInconvertibleTypes.java")
