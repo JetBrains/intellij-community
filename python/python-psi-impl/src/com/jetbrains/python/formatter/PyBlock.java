@@ -621,7 +621,7 @@ public class PyBlock implements ASTBlock {
         }
         else if (firstItem instanceof PyWithItem) {
           PyExpression contextExpression = ((PyWithItem)firstItem).getExpression();
-          return contextExpression != null && hasHangingIndent(contextExpression);
+          return hasHangingIndent(contextExpression);
         }
         return hasHangingIndent(firstItem);
       }
