@@ -1500,7 +1500,10 @@ public class JBTabsImpl extends JComponent
       Component owner = myFocusManager.getFocusOwner();
       JComponent c = info.getComponent();
       if (c != null && owner != null && (c == owner || SwingUtilities.isDescendingFrom(owner, c))) {
-        return ActionCallback.DONE;
+        // This might look like a no-op, but in some cases it's not. In particular, it's required when a focus transfer has just been
+        // requested to another component. E.g. this happens on 'unsplit' operation when we remove an editor component from UI hierarchy and
+        // re-add it at once in a different layout, and want that editor component to preserve focus afterwards.
+        return requestFocus(owner);
       }
       return requestFocus(getToFocus());
     }
@@ -1599,7 +1602,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @NotNull
-  private ActionCallback requestFocus(final JComponent toFocus) {
+  private ActionCallback requestFocus(final Component toFocus) {
     if (toFocus == null) return ActionCallback.DONE;
 
     if (isShowing()) {
