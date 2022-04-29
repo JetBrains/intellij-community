@@ -2,10 +2,7 @@
 package org.jetbrains.deft.codegen.model
 
 import org.jetbrains.deft.Obj
-import org.jetbrains.deft.impl.TBlob
-import org.jetbrains.deft.impl.TPsiRef
-import org.jetbrains.deft.impl.TRef
-import org.jetbrains.deft.impl.ValueType
+import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.Field
 
 abstract class KtInterfaceKind {

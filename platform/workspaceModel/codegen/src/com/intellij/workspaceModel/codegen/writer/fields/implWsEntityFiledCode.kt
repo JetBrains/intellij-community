@@ -67,10 +67,11 @@ internal fun Field<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: String, 
         }
       }
       else {
+        val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else ""
         """
                 @JvmField var $implFieldName: ${fieldType.javaType}? = null
                 override val $javaName: ${fieldType.javaType}$optionalSuffix
-                    get() = $implFieldName!!   
+                    get() = $implFieldName$notNullAssertion   
                 
                 """.trimIndent()
       }

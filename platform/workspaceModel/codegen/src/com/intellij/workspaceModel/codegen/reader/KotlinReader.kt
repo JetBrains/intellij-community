@@ -163,7 +163,12 @@ class KotlinReader(val file: KtFile) {
         }
         inArgs && c == '>' -> {
           args.add(lastType())
-          return KtType(classifer!!, args)
+          if (preview() == '?') {
+            pos++
+            return KtType(classifer!!, args, optional = true)
+          } else {
+            return KtType(classifer!!, args)
+          }
         }
         else -> {
           var optional = false

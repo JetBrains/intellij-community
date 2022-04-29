@@ -27,10 +27,15 @@ class KtType(
       "Int" -> TInt
       "Boolean" -> TBoolean
       "List" -> {
-        val target = args.singleOrNull()
-        if (target == null) diagnostics.add(classifierRange, "List should have 1 type argument: $this")
-        val elementType = target?.build(scope, diagnostics, annotations)
-        if (elementType != null) TList(elementType) else null
+        if (optional) {
+          diagnostics.add(classifierRange, "Nullable lists are not supported")
+          null
+        } else {
+          val target = args.singleOrNull()
+          if (target == null) diagnostics.add(classifierRange, "List should have 1 type argument: $this")
+          val elementType = target?.build(scope, diagnostics, annotations)
+          if (elementType != null) TList(elementType) else null
+        }
       }
       "Map" -> {
         if (args.size != 2) {

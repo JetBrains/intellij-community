@@ -107,18 +107,9 @@ interface OptionalStringEntity : WorkspaceEntity {
 
 }
 
+// Not supported at the moment
+/*
 interface OptionalListIntEntity : WorkspaceEntity {
   val data: List<Int>?
-  //region generated code
-  //@formatter:off
-  @GeneratedCodeApiVersion(0)
-  interface Builder: OptionalListIntEntity, ModifiableWorkspaceEntity<OptionalListIntEntity>, ObjBuilder<OptionalListIntEntity> {
-      override var data: List<Int>
-      override var entitySource: EntitySource
-  }
-  
-  companion object: Type<OptionalListIntEntity, Builder>()
-  //@formatter:on
-  //endregion
-
 }
+*/
