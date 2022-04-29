@@ -21,8 +21,6 @@ import java.util.*
 private val LOG: Logger
   get() = PluginManagerCore.getLogger()
 
-private val checkCompatibilityFlag = System.getProperty("idea.plugin.check.compatibility", "true") != "false"
-
 fun Iterable<IdeaPluginDescriptor>.toPluginSet(): Set<PluginId> = mapTo(LinkedHashSet()) { it.pluginId }
 
 fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> = mapNotNull { PluginManagerCore.findPlugin(it) }
@@ -317,11 +315,9 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       return
     }
 
-    if (checkCompatibilityFlag && (sinceBuild != null || untilBuild != null)) {
-      PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get())?.let {
-        markAsIncompatible(it)
-        return
-      }
+    PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get())?.let {
+      markAsIncompatible(it)
+      return
     }
 
     // "Show broken plugins in Settings | Plugins so that users can uninstall them and resolve "Plugin Error" (IDEA-232675)"

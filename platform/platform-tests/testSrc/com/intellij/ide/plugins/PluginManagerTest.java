@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.TriConsumer;
 import com.intellij.util.xml.dom.XmlDomReader;
 import com.intellij.util.xml.dom.XmlElement;
 import org.easymock.EasyMock;
@@ -82,6 +83,25 @@ public class PluginManagerTest {
     assertCompatible("145.2", null, "145.2.3");
     assertCompatible("145.2.2", "145.2.0", null);
     assertCompatible("145.2.2", null, "145.2.3");
+  }
+
+  @Test
+  public void ignoredCompatibility() {
+    TriConsumer<String, String, String> checkCompatibility = (String ideVersion, String sinceBuild, String untilBuild) -> {
+      boolean ignoreCompatibility = PluginManagerCore.isIgnoreCompatibility();
+      try {
+        assertIncompatible(ideVersion, sinceBuild, untilBuild);
+
+        PluginManagerCore.setIgnoreCompatibility(true);
+        assertCompatible(ideVersion, sinceBuild, untilBuild);
+      }
+      finally {
+        PluginManagerCore.setIgnoreCompatibility(ignoreCompatibility);
+      }
+    };
+
+    checkCompatibility.accept("42", "43", null);
+    checkCompatibility.accept("43", null, "42");
   }
 
   @Test
@@ -226,25 +246,32 @@ public class PluginManagerTest {
     assertEquals(result, PluginManager.convertExplicitBigNumberInUntilBuildToStar(untilBuild));
   }
 
-  private static void assertIncompatible(String ideVersion, String sinceBuild, String untilBuild) {
+  private static void assertIncompatible(@NotNull String ideVersion,
+                                         @Nullable String sinceBuild,
+                                         @Nullable String untilBuild) {
     assertNotNull(checkCompatibility(ideVersion, sinceBuild, untilBuild));
   }
 
-  private static @Nullable String checkCompatibility(String ideVersion, String sinceBuild, String untilBuild) {
+  private static @Nullable PluginLoadingError checkCompatibility(@NotNull String ideVersion,
+                                                                 @Nullable String sinceBuild,
+                                                                 @Nullable String untilBuild) {
     IdeaPluginDescriptor mock = EasyMock.niceMock(IdeaPluginDescriptor.class);
     expect(mock.getSinceBuild()).andReturn(sinceBuild).anyTimes();
     expect(mock.getUntilBuild()).andReturn(untilBuild).anyTimes();
     replay(mock);
-    PluginLoadingError error =
-      PluginManagerCore.checkBuildNumberCompatibility(mock, Objects.requireNonNull(BuildNumber.fromString(ideVersion)));
-    return error != null ? error.getDetailedMessage() : null;
+
+    return PluginManagerCore.checkBuildNumberCompatibility(mock,
+                                                           Objects.requireNonNull(BuildNumber.fromString(ideVersion)));
   }
 
-  private static void assertCompatible(String ideVersion, String sinceBuild, String untilBuild) {
+  private static void assertCompatible(@NotNull String ideVersion,
+                                       @Nullable String sinceBuild,
+                                       @Nullable String untilBuild) {
     assertNull(checkCompatibility(ideVersion, sinceBuild, untilBuild));
   }
 
-  private static PluginManagerState loadAndInitializeDescriptors(String testDataName, boolean isBundled) throws IOException, XMLStreamException {
+  private static PluginManagerState loadAndInitializeDescriptors(String testDataName, boolean isBundled)
+    throws IOException, XMLStreamException {
     Path file = Path.of(getTestDataPath(), testDataName);
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(Set.of(),
                                                                                   createPluginLoadingResult(true),
