@@ -452,7 +452,6 @@ class MavenSyncConsole(private val myProject: Project) {
 
   fun <Result> runTask(@NlsSafe taskName: String, task: () -> Result): Result {
     startTask(mySyncId, taskName)
-    val startTime = System.currentTimeMillis()
     try {
       return task().also {
         completeTask(mySyncId, taskName, SuccessResultImpl())
@@ -461,9 +460,6 @@ class MavenSyncConsole(private val myProject: Project) {
     catch (e: Exception) {
       completeTask(mySyncId, taskName, FailureResultImpl(e))
       throw e
-    }
-    finally {
-      MavenLog.LOG.info("[maven import] $taskName took ${System.currentTimeMillis() - startTime}ms")
     }
   }
 

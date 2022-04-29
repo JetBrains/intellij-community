@@ -36,25 +36,12 @@ public class MavenImportStats {
     );
   }
 
-
-  public static class ReadingTask {
-
+  private static class ImportingTask {
   }
 
-  public static class ResolvingTask {
-
+  private static class ApplyingModelTask {
   }
 
-  public static class PluginsResolvingTask {
-
-  }
-
-  public static class ImportingTask {
-  }
-
-  public static class ApplyingModelTask {
-  }
-
-  public static class ConfiguringProjectsTask {
+  private static class ConfiguringProjectsTask {
   }
 }
