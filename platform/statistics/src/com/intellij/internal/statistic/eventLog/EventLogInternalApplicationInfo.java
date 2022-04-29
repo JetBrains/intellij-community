@@ -3,11 +3,9 @@ package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
-import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -22,39 +20,26 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   private final EventLogAppConnectionSettings myConnectionSettings;
   private final String myRecorderId;
 
+  /**
+   * @param recorderId is used here for backward compatibility with TBE
+   * see: {@link EventLogApplicationInfo#getTemplateUrl}
+   */
   public EventLogInternalApplicationInfo(@NotNull String recorderId, boolean isTest) {
     myIsTest = isTest;
     myRecorderId = recorderId;
     myConnectionSettings = new EventLogAppConnectionSettings();
     myEventLogger = new DataCollectorSystemEventLogger() {
       @Override
-      public void logErrorEvent(@NotNull String eventId, @NotNull Throwable exception) {
+      public void logErrorEvent(@NotNull String recorderId, @NotNull String eventId, @NotNull Throwable exception) {
         EventLogSystemLogger.logSystemError(recorderId, eventId, exception.getClass().getName(), -1);
       }
     };
   }
 
-  @NotNull
   @Override
-  @SuppressWarnings("deprecation") // remove together with EventLogEndpointSubstitutor
-  public String getTemplateUrl() {
-    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
-    if (externalEventLogSettings != null) {
-      String result = externalEventLogSettings.getTemplateUrl(myRecorderId);
-      return result == null ? getDefaultTemplateUrl() : result;
-    } else if (ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(EventLogEndpointSubstitutor.EP_NAME.getName())) {
-      EventLogEndpointSubstitutor validSubstitutor = EventLogEndpointSubstitutor.EP_NAME.findFirstSafe(substitutor -> {
-        return PluginInfoDetectorKt.getPluginInfo(substitutor.getClass()).isAllowedToInjectIntoFUS();
-      });
-
-      String result = validSubstitutor == null ? null : validSubstitutor.getTemplateUrl(myRecorderId);
-      return result == null ? getDefaultTemplateUrl() : result;
-    }
-    return getDefaultTemplateUrl();
-  }
-
-  private static String getDefaultTemplateUrl() {
-    return ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEventLogSettingsUrl();
+  @Deprecated(forRemoval = true)
+  public @NotNull String getTemplateUrl() {
+    return new EventLogInternalRecorderConfig(myRecorderId).getTemplateUrl();
   }
 
   @NotNull

@@ -69,10 +69,9 @@ object EventLogExternalUploader {
     }
 
     EventLogSystemLogger.logCreatingExternalSendCommand(recorderId)
-    val config = EventLogConfiguration.getInstance().getOrCreate(recorderId)
     val application = EventLogInternalApplicationInfo(recorderId, isTest)
     try {
-      val command = prepareUploadCommand(config, recorder, application)
+      val command = prepareUploadCommand(recorder, application)
       EventLogSystemLogger.logFinishedCreatingExternalSendCommand(recorderId, null)
       if (LOG.isDebugEnabled) {
         LOG.debug("Starting external process: '${command.joinToString(separator = " ")}'")
@@ -87,9 +86,7 @@ object EventLogExternalUploader {
     }
   }
 
-  private fun prepareUploadCommand(config: EventLogRecorderConfiguration,
-                                   recorder: EventLogRecorderConfig,
-                                   applicationInfo: EventLogApplicationInfo): Array<out String> {
+  private fun prepareUploadCommand(recorder: EventLogRecorderConfig, applicationInfo: EventLogApplicationInfo): Array<out String> {
     val logFiles = recorder.getFilesToSendProvider().getFilesToSend().map { it.file.absolutePath }
     if (logFiles.isEmpty()) {
       throw EventLogUploadException("No available logs to send", NO_LOGS)
@@ -117,9 +114,8 @@ object EventLogExternalUploader {
 
     val recorderId = recorder.getRecorderId()
     addArgument(args, RECORDER_OPTION, recorderId)
-    addRecorderConfiguration(args, recorderId, config, logFiles)
+    addRecorderConfiguration(args, recorderId, recorder.getTemplateUrl(), logFiles)
 
-    addArgument(args, URL_OPTION, applicationInfo.templateUrl)
     addArgument(args, PRODUCT_OPTION, applicationInfo.productCode)
     addArgument(args, PRODUCT_VERSION_OPTION, applicationInfo.productVersion)
     addArgument(args, USER_AGENT_OPTION, applicationInfo.connectionSettings.getUserAgent())
@@ -139,16 +135,16 @@ object EventLogExternalUploader {
     return ArrayUtil.toStringArray(args)
   }
 
-  private fun addRecorderConfiguration(args: ArrayList<String>,
-                                       recorderId: String,
-                                       config: EventLogRecorderConfiguration,
-                                       logFiles: List<String>) {
+  private fun addRecorderConfiguration(args: ArrayList<String>, recorderId: String, templateUrl: String, logFiles: List<String>) {
+    val config = EventLogConfiguration.getInstance().getOrCreate(recorderId)
+
     val recorderIdLowerCase = Strings.toLowerCase(recorderId)
     addArgument(args, DEVICE_OPTION + recorderIdLowerCase, config.deviceId)
     addArgument(args, BUCKET_OPTION + recorderIdLowerCase, config.bucket.toString())
     addArgument(args, MACHINE_ID_OPTION + recorderIdLowerCase, config.machineId.id)
     addArgument(args, ID_REVISION_OPTION + recorderIdLowerCase, config.machineId.revision.toString())
     addArgument(args, LOGS_OPTION + recorderIdLowerCase, logFiles.joinToString(separator = File.pathSeparator))
+    addArgument(args, URL_OPTION + recorderIdLowerCase, templateUrl)
   }
 
   private fun addArgument(args: ArrayList<String>, name: String, value: String) {

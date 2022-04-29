@@ -96,7 +96,8 @@ public final class StatisticsUploadAssistant {
   }
 
   public static EventLogUploadSettingsService createExternalSettings(@NotNull String recorderId, boolean isTest, long cacheTimeoutMs) {
-    return new EventLogUploadSettingsService(recorderId, new EventLogInternalApplicationInfo(recorderId, isTest), cacheTimeoutMs);
+    EventLogInternalRecorderConfig recorderConfig = new EventLogInternalRecorderConfig(recorderId, true);
+    return new EventLogUploadSettingsService(recorderConfig, new EventLogInternalApplicationInfo(recorderId, isTest), cacheTimeoutMs);
   }
 
   public static boolean isTeamcityDetected() {

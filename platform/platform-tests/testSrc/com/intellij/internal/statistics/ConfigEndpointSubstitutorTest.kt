@@ -4,7 +4,7 @@
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogEndpointSubstitutor
-import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
+import com.intellij.internal.statistic.eventLog.EventLogInternalRecorderConfig
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
@@ -26,7 +26,7 @@ class ConfigEndpointSubstitutorTest : BasePlatformTestCase() {
   }
 
   fun testSubstitution() {
-    val applicationInfo = EventLogInternalApplicationInfo("FUS", true)
-    assertThat(applicationInfo.templateUrl).isEqualTo(URL)
+    val recorderConfig = EventLogInternalRecorderConfig("FUS", true)
+    assertThat(recorderConfig.getTemplateUrl()).isEqualTo(URL)
   }
 }

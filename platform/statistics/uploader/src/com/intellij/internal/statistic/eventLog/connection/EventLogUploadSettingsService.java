@@ -7,6 +7,8 @@ import com.intellij.internal.statistic.config.eventLog.EventLogBuildType;
 import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
 import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
+import com.intellij.internal.statistic.eventLog.EventLogRecorderConfig;
+import com.intellij.internal.statistic.eventLog.config.EventLogExternalRecorderConfig;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
 import com.intellij.internal.statistic.eventLog.filters.*;
@@ -15,6 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 @ApiStatus.Internal
@@ -26,13 +29,31 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   @NotNull
   private final EventLogApplicationInfo myApplicationInfo;
 
+  /**
+   * @deprecated Use "EventLogUploadSettingsService(EventLogRecorderConfig, EventLogApplicationInfo)" constructor
+   */
+  @Deprecated(forRemoval = true)
   public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo appInfo) {
-    this(recorderId, appInfo, TimeUnit.MINUTES.toMillis(10));
+    this(createRecorderConfig(recorderId, appInfo), appInfo, TimeUnit.MINUTES.toMillis(10));
   }
 
-  public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo appInfo, long settingsCacheTimeoutMs) {
-    super(getConfigUrl(recorderId, appInfo.getProductCode(), appInfo.getTemplateUrl(), appInfo.isTest()), appInfo, settingsCacheTimeoutMs);
+  public EventLogUploadSettingsService(@NotNull EventLogRecorderConfig recorder, @NotNull EventLogApplicationInfo appInfo) {
+    this(recorder, appInfo, TimeUnit.MINUTES.toMillis(10));
+  }
+
+  public EventLogUploadSettingsService(@NotNull EventLogRecorderConfig recorder,
+                                       @NotNull EventLogApplicationInfo appInfo,
+                                       long settingsCacheTimeoutMs) {
+    super(
+      getConfigUrl(recorder.getRecorderId(), appInfo.getProductCode(), recorder.getTemplateUrl(), appInfo.isTest()),
+      recorder.getRecorderId(), appInfo, settingsCacheTimeoutMs
+    );
     myApplicationInfo = appInfo;
+  }
+
+  @NotNull
+  private static EventLogRecorderConfig createRecorderConfig(@NotNull String recorderId, @NotNull EventLogApplicationInfo appInfo) {
+    return new EventLogExternalRecorderConfig(recorderId, appInfo.getTemplateUrl(), Collections.emptyList());
   }
 
   @NotNull

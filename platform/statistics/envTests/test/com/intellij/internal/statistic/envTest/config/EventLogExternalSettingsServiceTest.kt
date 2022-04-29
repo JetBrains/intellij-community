@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.config.EventLogOptions.MACHINE_ID_SALT_RE
 import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
 import com.intellij.internal.statistic.envTest.upload.RECORDER_ID
 import com.intellij.internal.statistic.envTest.upload.TestEventLogApplicationInfo
+import com.intellij.internal.statistic.envTest.upload.TestEventLogRecorderConfig
 import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService
 import junit.framework.TestCase
 import java.util.concurrent.TimeUnit
@@ -49,8 +50,9 @@ internal class EventLogExternalSettingsServiceTest : StatisticsServiceBaseTest()
   }
 
   private fun configureDynamicConfig(configCacheTimeoutMs: Long): EventLogUploadSettingsService {
-    val applicationInfo = TestEventLogApplicationInfo(RECORDER_ID, container.getBaseUrl("config/dynamic_config.php").toString())
-    return EventLogUploadSettingsService(RECORDER_ID, applicationInfo, configCacheTimeoutMs)
+    val applicationInfo = TestEventLogApplicationInfo(RECORDER_ID)
+    val recorderConfig = TestEventLogRecorderConfig(RECORDER_ID, container.getBaseUrl("config/dynamic_config.php").toString())
+    return EventLogUploadSettingsService(recorderConfig, applicationInfo, configCacheTimeoutMs)
   }
 
   private fun loadMetadata(metadata: String?): String {

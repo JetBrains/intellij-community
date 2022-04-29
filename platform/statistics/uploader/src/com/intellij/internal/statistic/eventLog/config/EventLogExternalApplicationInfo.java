@@ -40,9 +40,9 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
     myEventLogger = eventLogger;
   }
 
-  @NotNull
   @Override
-  public String getTemplateUrl() {
+  @Deprecated(forRemoval = true)
+  public @NotNull String getTemplateUrl() {
     return myTemplateUrl;
   }
 

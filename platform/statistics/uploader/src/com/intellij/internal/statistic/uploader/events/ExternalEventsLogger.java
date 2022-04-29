@@ -73,7 +73,7 @@ public class ExternalEventsLogger implements DataCollectorSystemEventLogger {
   }
 
   @Override
-  public void logErrorEvent(@NotNull String eventId, @NotNull Throwable exception) {
+  public void logErrorEvent(@NotNull String recorderId, @NotNull String eventId, @NotNull Throwable exception) {
     logEvent(new ExternalSystemErrorEvent(System.currentTimeMillis(), eventId, exception));
   }
 

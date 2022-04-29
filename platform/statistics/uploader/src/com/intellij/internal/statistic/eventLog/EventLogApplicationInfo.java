@@ -7,7 +7,13 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public interface EventLogApplicationInfo {
+  /**
+   * @deprecated Use "EventLogExternalRecorderConfig#getTemplateUrl()" because url depends on the recorder.
+   * <br/>
+   * Temporary keep this method for backward compatibility with TBE.
+   */
   @NotNull
+  @Deprecated(forRemoval = true)
   String getTemplateUrl();
 
   @NotNull

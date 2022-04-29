@@ -14,14 +14,21 @@ internal const val RECORDER_ID = "FUS"
 internal const val PRODUCT_VERSION = "2020.1"
 internal const val PRODUCT_CODE = "IC"
 
-internal class TestEventLogApplicationInfo(recorderId: String, private val settingsUrl: String)
+internal class TestEventLogApplicationInfo(recorderId: String)
   : EventLogInternalApplicationInfo(recorderId, false) {
   override fun getProductVersion(): String = PRODUCT_VERSION
   override fun getProductCode(): String = PRODUCT_CODE
-  override fun getTemplateUrl(): String = settingsUrl
+  @Deprecated(
+    replaceWith = ReplaceWith("EventLogInternalRecorderConfig.getTemplateUrl()"),
+    message = "Get template url from recorder configuration, because it depends on the recorder code"
+  )
+  override fun getTemplateUrl(): String = ""
 }
 
-internal class TestEventLogRecorderConfig(recorderId: String, logFiles: List<File>, val sendEnabled: Boolean = true)
+internal class TestEventLogRecorderConfig(recorderId: String,
+                                          private val settingsUrl: String,
+                                          private val sendEnabled: Boolean = true,
+                                          logFiles: List<File> = emptyList())
   : EventLogInternalRecorderConfig(recorderId) {
   private val evenLogFilesProvider = object : FilesToSendProvider {
     override fun getFilesToSend(): List<EventLogFile> = logFiles.map { EventLogFile(it) }
@@ -30,6 +37,8 @@ internal class TestEventLogRecorderConfig(recorderId: String, logFiles: List<Fil
   override fun isSendEnabled(): Boolean = sendEnabled
 
   override fun getFilesToSendProvider(): FilesToSendProvider = evenLogFilesProvider
+
+  override fun getTemplateUrl(): String = settingsUrl
 }
 
 internal fun newSendService(container: ApacheContainer,
@@ -37,12 +46,13 @@ internal fun newSendService(container: ApacheContainer,
                             settingsResponseFile: String = SETTINGS_ROOT,
                             sendEnabled: Boolean = true,
                             machineId: MachineId? = null): EventLogStatisticsService {
-  val applicationInfo = TestEventLogApplicationInfo(RECORDER_ID, container.getBaseUrl(settingsResponseFile).toString())
+  val settingsUrl = container.getBaseUrl(settingsResponseFile).toString()
   val config = EventLogConfiguration.getInstance().getOrCreate(RECORDER_ID)
+  val recorderConfig = TestEventLogRecorderConfig(RECORDER_ID, settingsUrl, sendEnabled, logFiles)
   return EventLogStatisticsService(
     DeviceConfiguration(config.deviceId, config.bucket, machineId ?: config.machineId),
-    TestEventLogRecorderConfig(RECORDER_ID, logFiles, sendEnabled),
-    EventLogSendListener { _, _, _ -> Unit },
-    EventLogUploadSettingsService(RECORDER_ID, applicationInfo)
+    recorderConfig,
+    EventLogSendListener { _, _, _ -> },
+    EventLogUploadSettingsService(recorderConfig, TestEventLogApplicationInfo(RECORDER_ID))
   )
 }
