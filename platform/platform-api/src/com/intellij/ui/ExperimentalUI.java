@@ -395,6 +395,12 @@ public final class ExperimentalUI {
     paths.put("debugger/db_verified_breakpoint.svg", "expui/breakpoints/breakpointValid.svg");
     paths.put("debugger/MultipleBreakpoints.svg", "expui/breakpoints/multipleBreakpoints.svg");
     paths.put("debugger/question_badge.svg", "expui/breakpoints/questionBadge.svg");
+    paths.put("actions/inlayRenameInComments.svg", "expui/editor/inlayRenameInComments.svg");
+    paths.put("actions/inlayRenameInCommentsActive.svg", "expui/editor/inlayRenameInCommentsActive.svg");
+    paths.put("actions/inlayRenameInNoCodeFiles.svg", "expui/editor/inlayRenameInNoCodeFiles.svg");
+    paths.put("actions/inlayRenameInNoCodeFilesActive.svg", "expui/editor/inlayRenameInNoCodeFilesActive.svg");
+    paths.put("actions/inlayGlobe.svg", "expui/editor/inlayGlobe.svg");
+    paths.put("actions/gear.svg", "expui/editor/inlaySettings.svg");
 
     return new IconPathPatcher() {
       @Override
