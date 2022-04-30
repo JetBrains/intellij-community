@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInDecompiler
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinClassFileDecompiler
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinMetadataStubBuilder
+import org.jetbrains.kotlin.idea.decompiler.KotlinIDEClassFileDecompiler
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -28,7 +29,7 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase() {
-    private val classFileDecompiler = KotlinClassFileDecompiler()
+    private val classFileDecompiler = KotlinIDEClassFileDecompiler()
     private val builtInsDecompiler = KotlinBuiltInDecompiler()
 
     override fun setUp() {
