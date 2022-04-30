@@ -2,11 +2,14 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -25,7 +28,7 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
 
   @NotNull
   @Override
-  public ScheduledFuture<?> schedule(@NotNull Runnable command, @NotNull ModalityState modalityState, long delay, TimeUnit unit) {
+  public ScheduledFuture<?> schedule(@NotNull Runnable command, @NotNull ModalityState modalityState, long delay, TimeUnit unit, @Nullable Disposable parentDisposable) {
     MyScheduledFutureTask<?> task = new MyScheduledFutureTask<Void>(ClientId.decorateRunnable(command), null, triggerTime(delayQueue, delay, unit)){
       @Override
       void executeMeInBackendExecutor() {
@@ -35,6 +38,9 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
         });
       }
     };
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, task);
+    }
     return delayedExecute(task);
   }
 

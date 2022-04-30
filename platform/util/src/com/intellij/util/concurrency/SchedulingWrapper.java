@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.util.IncorrectOperationException;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +107,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
     return backendExecutorService.awaitTermination(timeout, unit);
   }
 
-  class MyScheduledFutureTask<V> extends FutureTask<V> implements RunnableScheduledFuture<V> {
+  class MyScheduledFutureTask<V> extends FutureTask<V> implements RunnableScheduledFuture<V>, Disposable {
     /**
      * Sequence number to break ties FIFO
      */
@@ -242,6 +243,11 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
     void executeMeInBackendExecutor() {
       backendExecutorService.execute(this);
+    }
+
+    @Override
+    public void dispose() {
+      delayQueue.remove(this);
     }
   }
 

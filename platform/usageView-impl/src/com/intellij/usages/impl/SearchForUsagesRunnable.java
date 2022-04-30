@@ -374,7 +374,7 @@ final class SearchForUsagesRunnable implements Runnable {
                             Collections.singletonList(StringUtil.escapeXmlEntities(UsageViewManagerImpl.getProgressTitle(myPresentation))));
         findStartedBalloonShown.set(true);
       }
-    }, ModalityState.NON_MODAL, 300, TimeUnit.MILLISECONDS);
+    }, ModalityState.NON_MODAL, 300, TimeUnit.MILLISECONDS, myProject);
     UsageSearcher usageSearcher = mySearcherFactory.create();
     long startSearchStamp = System.currentTimeMillis();
     usageSearcher.generate(usage -> {
@@ -438,7 +438,7 @@ final class SearchForUsagesRunnable implements Runnable {
         }
       }
       showBalloon.set(false);
-    }, ModalityState.NON_MODAL, 3000, TimeUnit.MILLISECONDS);
+    }, ModalityState.NON_MODAL, 3000, TimeUnit.MILLISECONDS, myProject);
   }
 
   private void endSearchForUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {
