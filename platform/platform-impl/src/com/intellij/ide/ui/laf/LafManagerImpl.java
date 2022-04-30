@@ -277,12 +277,31 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           lafInfo.uninstallTheme();
         }
         myLafInfosToUnload.clear();
+        if (isNewUIPlugin(pluginDescriptor)) {
+          Registry.get("ide.experimental.ui").setValue(false);
+          ApplicationManager.getApplication().invokeLater(() -> RegistryBooleanOptionDescriptor.suggestRestart(null),
+                                                          ModalityState.NON_MODAL);
+        }
       }
 
       @Override
       public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
         isUpdatingPlugin = false;
         themeIdBeforePluginUpdate = null;
+        if (isNewUIPlugin(pluginDescriptor)) {
+          enableExpUI();
+        }
+      }
+
+      private boolean isNewUIPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        return pluginDescriptor.getPluginId().getIdString().equals("com.intellij.plugins.expui");
+      }
+
+      private void enableExpUI() {
+        if (!Registry.is("ide.experimental.ui")) {
+          Registry.get("ide.experimental.ui").setValue(true);
+          RegistryBooleanOptionDescriptor.suggestRestart(null);
+        }
       }
     });
   }
