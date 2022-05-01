@@ -142,6 +142,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     }
     else {
       myMnemonicLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+      myIconLabel.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap()));
     }
 
     myMnemonicLabel.setFont(JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(myMnemonicLabel.getFont()));
@@ -306,6 +307,11 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     if (myMnemonicLabel != null && value instanceof NumericMnemonicItem && ((NumericMnemonicItem)value).digitMnemonicsEnabled()) {
       Character mnemonic = ((NumericMnemonicItem)value).getMnemonicChar();
       myMnemonicLabel.setText(mnemonic != null ? String.valueOf(mnemonic) : "");
+      if (ExperimentalUI.isNewUI() && mnemonic == null) {
+        Dimension preferredSize = new JLabel("W").getPreferredSize();
+        JBInsets.addTo(preferredSize, JBUI.CurrentTheme.ActionsList.numberMnemonicInsets());
+        myMnemonicLabel.setText("  ");
+      }
       myMnemonicLabel.setForeground(isSelected && isSelectable && !nextStepButtonSelected ? getSelectionForeground() : JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND);
       myMnemonicLabel.setVisible(true);
     }
@@ -369,12 +375,9 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       res.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap()));
       res.add(myMnemonicLabel);
     } else {
+      //need to wrap to align mnemonics to the right
       JPanel wrapper = new JPanel(new BorderLayout());
       wrapper.add(myMnemonicLabel);
-      Dimension preferredSize = new JLabel("W").getPreferredSize();
-      JBInsets.addTo(preferredSize, JBUI.CurrentTheme.ActionsList.numberMnemonicInsets());
-      //wrapper.setPreferredSize(preferredSize);
-
       res.add(wrapper);
     }
 
