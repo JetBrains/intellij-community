@@ -19,34 +19,34 @@ fun showFeedbackSystemInfoDialog(project: Project?,
 ) {
   val infoPanel = panel {
     addSpecificRows()
-    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.os.version")) {
+    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.os.version")) {
       label(systemInfoData.osVersion) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.memory")) {
+    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.memory")) {
       label(systemInfoData.getMemorySizeForDialog()) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.cores")) {
+    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.cores")) {
       label(systemInfoData.coresNumber.toString()) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.app.version")) {
+    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.app.version")) {
       cell(MultiLineLabel(systemInfoData.appVersionWithBuild)) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.license.evaluation")) {
+    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.license.evaluation")) {
       label(systemInfoData.getIsLicenseEvaluationForDialog()) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.license.restrictions")) {
+    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.license.restrictions")) {
       cell(MultiLineLabel(systemInfoData.getLicenseRestrictionsForDialog())) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.runtime.version")) {
+    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.runtime.version")) {
       label(systemInfoData.runtimeVersion) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.registry")) {
+    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.registry")) {
       cell(MultiLineLabel(systemInfoData.getRegistryKeysForDialog())) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.disabled.plugins")) {
+    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.disabled.plugins")) {
       cell(MultiLineLabel(systemInfoData.getDisabledBundledPluginsForDialog())) //NON-NLS
     }
-    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.nonbundled.plugins")) {
+    row(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.nonbundled.plugins")) {
       cell(MultiLineLabel(systemInfoData.getNonBundledPluginsForDialog())) //NON-NLS
     }.bottomGap(BottomGap.MEDIUM)
   }.also {
@@ -56,7 +56,7 @@ fun showFeedbackSystemInfoDialog(project: Project?,
   val dialog = object : DialogWrapper(project) {
     init {
       init()
-      title = CommonFeedbackBundle.message("dialog.created.project.system.info.title")
+      title = CommonFeedbackBundle.message("dialog.feedback.system.info.title")
     }
 
     override fun createCenterPanel(): JComponent = JBScrollPane(infoPanel, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,

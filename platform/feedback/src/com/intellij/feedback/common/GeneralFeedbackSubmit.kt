@@ -78,20 +78,20 @@ fun createFeedbackAgreementComponent(project: Project?, systemInfo: () -> Unit) 
   JPanel().apply {
     layout = GridLayout(4, 1, 0, 0)
 
-    add(createLineOfConsent(CommonFeedbackBundle.message("dialog.created.project.consent.1.1"),
-                            CommonFeedbackBundle.message("dialog.created.project.consent.1.2"),
-                            CommonFeedbackBundle.message("dialog.created.project.consent.1.3"), systemInfo))
+    add(createLineOfConsent(CommonFeedbackBundle.message("dialog.feedback.consent.1.1"),
+                            CommonFeedbackBundle.message("dialog.feedback.consent.1.2"),
+                            CommonFeedbackBundle.message("dialog.feedback.consent.1.3"), systemInfo))
 
-    add(createLineOfConsent(CommonFeedbackBundle.message("dialog.created.project.consent.2")))
+    add(createLineOfConsent(CommonFeedbackBundle.message("dialog.feedback.consent.2")))
 
-    add(createLineOfConsent(CommonFeedbackBundle.message("dialog.created.project.consent.3.1"),
-                            CommonFeedbackBundle.message("dialog.created.project.consent.3.2"),
-                            CommonFeedbackBundle.message("dialog.created.project.consent.3.3")) {
+    add(createLineOfConsent(CommonFeedbackBundle.message("dialog.feedback.consent.3.1"),
+                            CommonFeedbackBundle.message("dialog.feedback.consent.3.2"),
+                            CommonFeedbackBundle.message("dialog.feedback.consent.3.3")) {
       BrowserUtil.browse(PRIVACY_POLICY_THIRD_PARTIES_URL, project)
     })
 
-    add(createLineOfConsent(linkText = CommonFeedbackBundle.message("dialog.created.project.consent.4.2"),
-                            postfix = CommonFeedbackBundle.message("dialog.created.project.consent.4.3")) {
+    add(createLineOfConsent(linkText = CommonFeedbackBundle.message("dialog.feedback.consent.4.2"),
+                            postfix = CommonFeedbackBundle.message("dialog.feedback.consent.4.3")) {
       BrowserUtil.browse(PRIVACY_POLICY_URL, project)
     })
   }

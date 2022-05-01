@@ -65,15 +65,15 @@ data class CommonFeedbackSystemInfoData(
         appVersion += " ($edition)"
       }
       val appBuild = appInfoEx.build
-      appVersion += CommonFeedbackBundle.message("dialog.created.project.system.info.panel.app.version.build", appBuild.asString())
+      appVersion += CommonFeedbackBundle.message("dialog.feedback.system.info.panel.app.version.build", appBuild.asString())
       val timestamp: Date = appInfoEx.buildDate.time
       if (appBuild.isSnapshot) {
         val time = SimpleDateFormat("HH:mm").format(timestamp)
-        appVersion += CommonFeedbackBundle.message("dialog.created.project.system.info.panel.app.version.build.date.time",
+        appVersion += CommonFeedbackBundle.message("dialog.feedback.system.info.panel.app.version.build.date.time",
                                                    NlsMessages.formatDateLong(timestamp), time)
       }
       else {
-        appVersion += CommonFeedbackBundle.message("dialog.created.project.system.info.panel.app.version.build.date",
+        appVersion += CommonFeedbackBundle.message("dialog.feedback.system.info.panel.app.version.build.date",
                                                    NlsMessages.formatDateLong(timestamp))
       }
       return appVersion
@@ -116,7 +116,7 @@ data class CommonFeedbackSystemInfoData(
 
   fun getMemorySizeForDialog() = memorySize.toString() + "M"
   fun getLicenseRestrictionsForDialog() = if (licenseRestrictions.isEmpty())
-    CommonFeedbackBundle.message("dialog.created.project.system.info.panel.license.no.info")
+    CommonFeedbackBundle.message("dialog.feedback.system.info.panel.license.no.info")
   else
     licenseRestrictions.joinToString("\n")
 
@@ -134,7 +134,7 @@ data class CommonFeedbackSystemInfoData(
       registryKeys
     }
     else {
-      CommonFeedbackBundle.message("dialog.created.project.system.info.panel.registry.empty")
+      CommonFeedbackBundle.message("dialog.feedback.system.info.panel.registry.empty")
     }
   }
 
@@ -144,7 +144,7 @@ data class CommonFeedbackSystemInfoData(
       disabledPlugins
     }
     else {
-      CommonFeedbackBundle.message("dialog.created.project.system.info.panel.disabled.plugins.empty")
+      CommonFeedbackBundle.message("dialog.feedback.system.info.panel.disabled.plugins.empty")
     }
   }
 
@@ -154,7 +154,7 @@ data class CommonFeedbackSystemInfoData(
       nonBundledPluginsString
     }
     else {
-      CommonFeedbackBundle.message("dialog.created.project.system.info.panel.nonbundled.plugins.empty")
+      CommonFeedbackBundle.message("dialog.feedback.system.info.panel.nonbundled.plugins.empty")
     }
   }
 }
