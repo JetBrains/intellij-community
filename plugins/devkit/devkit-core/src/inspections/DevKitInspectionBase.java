@@ -63,6 +63,12 @@ public abstract class DevKitInspectionBase extends AbstractBaseJavaLocalInspecti
   private static boolean isPluginFile(@NotNull PsiFile file) {
     String path = file.getVirtualFile().getPath();
     boolean isPlatform = path.contains("/platform/") && !path.contains("/platform/cwm-") && !path.contains("/platform/rd-");
-    return !isPlatform;
+
+    // Rider lives in other repository, but also kind-of platform for Rider IDE
+    boolean isRider = path.contains("/Rider/Frontend/rider/") ||
+                      path.contains("/Rider/Frontend/rider-cpp-core/") ||
+                      path.contains("/Rider/Frontend/rdclient-dotnet/");
+
+    return !isPlatform && !isRider;
   }
 }
