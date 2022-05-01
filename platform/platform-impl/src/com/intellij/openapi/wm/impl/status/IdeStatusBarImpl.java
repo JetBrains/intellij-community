@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.diagnostic.IdeMessagePanel;
@@ -47,6 +47,7 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -161,7 +162,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     setLayout(new BorderLayout());
     setBorder(ExperimentalUI.isNewUI() ?
               JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.StatusBar.BORDER_COLOR, 1, 0, 0, 0),
-                                    JBUI.Borders.empty(0, 10, 1, 10)) :
+                                    JBUI.Borders.empty(0, 10)) :
               JBUI.Borders.empty(1, 0, 0, 6));
 
     myInfoAndProgressPanel = new InfoAndProgressPanel(UISettings.getShadowInstance());
@@ -213,6 +214,11 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     for (IdeStatusBarImpl child : myChildren) {
       child.setVisible(aFlag);
     }
+  }
+
+  @Override
+  public void setBorder(Border border) {
+    super.setBorder(border);
   }
 
   @Override
