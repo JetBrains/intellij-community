@@ -36,11 +36,6 @@ public class BreadcrumbsXmlWrapper extends BreadcrumbsPanel implements Border {
     setBorder(this);
   }
 
-  @Override
-  public void setBorder(Border border) {
-    super.setBorder(border);
-  }
-
   @Nullable
   @Override
   protected Iterable<? extends Crumb> computeCrumbs(int offset) {
@@ -66,7 +61,7 @@ public class BreadcrumbsXmlWrapper extends BreadcrumbsPanel implements Border {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    if (ExperimentalUI.isNewUI() || getBorderColor() != null) {
+    if (ExperimentalUI.isNewUI()) {
       return breadcrumbs.above ? JBUI.insetsBottom(1) : JBUI.insetsTop(1);
     }
     return JBUI.emptyInsets();
