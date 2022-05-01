@@ -20,6 +20,9 @@
       <action id="com.intellij.feedback.npw.TestShowNewProjectFeedbackDialogAction"
               class="com.intellij.feedback.npw.TestShowNewProjectFeedbackDialogAction"
               text="Show New Project Feedback Dialog" internal="true"/>
+      <action id="com.intellij.feedback.disabledKotlinPlugin.TestShowDisabledKotlinPluginFeedbackDialogAction"
+              class="com.intellij.feedback.disabledKotlinPlugin.TestShowDisabledKotlinPluginFeedbackDialogAction"
+              text="Show Feedback Dialog About Disabled Kotlin Plugin" internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
   </actions>
