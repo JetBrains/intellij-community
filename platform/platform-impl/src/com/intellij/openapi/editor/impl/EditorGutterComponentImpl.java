@@ -1964,6 +1964,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         new HintHint(this, location)
           .setAwtTooltip(true)
           .setPreferredPosition(relativePosition)
+          .setTextBg(ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Editor.Tooltip.BACKGROUND : null)
+          .setTextFg(ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND : null)
           .setRequestFocus(ScreenReader.isActive());
       if (myEditor.getComponent().getRootPane() != null) {
         controller.showTooltipByMouseMove(myEditor, showPoint, tr, false, GUTTER_TOOLTIP_GROUP, hint);
