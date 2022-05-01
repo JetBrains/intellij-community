@@ -127,15 +127,16 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       }
       if (PsiModifier.PRIVATE != getAccessModifier() && !isStatic()) {
         initializeSuperMethods(javaPsi);
-        if (ownerClass != null && isExternalOverride()) {
-          getRefManager().executeTask(() -> ((RefClassImpl)ownerClass).addLibraryOverrideMethod(this));
-        }
+        getRefManager().executeTask(() -> {
+          if (ownerClass != null && isExternalOverride()) {
+            ((RefClassImpl)ownerClass).addLibraryOverrideMethod(this);
+          }
+        });
       }
     }
 
     if (sourcePsi instanceof PsiMethod && sourcePsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
-      if (ownerClass != null && ownerClass.isRecord() && !isConstructor() &&
-          JavaPsiRecordUtil.getRecordComponentForAccessor((PsiMethod)sourcePsi) != null) {
+      if (!isConstructor() && JavaPsiRecordUtil.getRecordComponentForAccessor((PsiMethod)sourcePsi) != null) {
         setRecordAccessor(true);
       }
       collectUncaughtExceptions((PsiMethod)sourcePsi);
@@ -364,7 +365,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (checkFlag(IS_LIBRARY_OVERRIDE_MASK)) return true;
     for (RefMethod superMethod : getSuperMethods()) {
       if (((RefMethodImpl)superMethod).isLibraryOverride(processed)) {
-        setFlag(true, IS_LIBRARY_OVERRIDE_MASK);
+        setLibraryOverride(true);
         return true;
       }
     }
