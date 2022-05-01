@@ -3,7 +3,7 @@
 
     <applicationService serviceImplementation="com.intellij.feedback.common.state.DontShowAgainFeedbackService"/>
 
-     <notificationGroup displayType="BALLOON" id="Feedback In IDE" bundle="messages.CommonFeedbackMessages"/>
+    <notificationGroup displayType="BALLOON" id="Feedback In IDE" bundle="messages.CommonFeedbackMessages"/>
 
     <typedHandler implementation="com.intellij.feedback.common.track.EditorTypingEventTracker"/>
     <editorFactoryMouseListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>

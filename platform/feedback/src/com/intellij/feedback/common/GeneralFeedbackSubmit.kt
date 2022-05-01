@@ -12,9 +12,9 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.util.PlatformUtils
-import com.intellij.util.xml.dom.readXmlAsModel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.xml.dom.readXmlAsModel
 import java.awt.Dimension
 import java.awt.GridLayout
 import javax.swing.JPanel
@@ -47,7 +47,7 @@ fun submitGeneralFeedback(project: Project?,
 ) {
   ApplicationManager.getApplication().executeOnPooledThread {
     // Any class from this module will fit
-    val pathToFeedbackFormXml = when(feedbackRequestType) {
+    val pathToFeedbackFormXml = when (feedbackRequestType) {
       FeedbackRequestType.NO_REQUEST -> return@executeOnPooledThread
       FeedbackRequestType.TEST_REQUEST -> PATH_TO_TEST_FEEDBACK_REQUEST_FORM_XML
       FeedbackRequestType.PRODUCTION_REQUEST -> PATH_TO_PRODUCTION_FEEDBACK_REQUEST_FORM_XML

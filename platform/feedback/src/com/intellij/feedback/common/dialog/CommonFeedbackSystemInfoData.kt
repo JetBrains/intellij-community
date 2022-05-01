@@ -82,7 +82,7 @@ data class CommonFeedbackSystemInfoData(
     private fun getLicenseRestrictionsInfo(): List<String> {
       return LicensingFacade.getInstance()?.licenseRestrictionsMessages ?: emptyList()
     }
-    
+
     private fun getLicenseEvaluationInfo(): Boolean? {
       return LicensingFacade.getInstance()?.isEvaluationLicense
     }
@@ -125,9 +125,9 @@ data class CommonFeedbackSystemInfoData(
       true -> "True"
       false -> "False"
       null -> "No Info"
-    } 
-  } 
-  
+    }
+  }
+
   fun getRegistryKeysForDialog(): String {
     val registryKeys: String = registry.joinToString("\n")
     return if (!StringUtil.isEmpty(registryKeys)) {

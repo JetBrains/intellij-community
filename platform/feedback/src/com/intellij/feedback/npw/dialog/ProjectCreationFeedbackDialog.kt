@@ -9,7 +9,6 @@ import com.intellij.feedback.npw.bundle.NPWFeedbackBundle
 import com.intellij.feedback.npw.state.ProjectCreationInfoService
 import com.intellij.ide.feedback.RatingComponent
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -56,16 +55,16 @@ class ProjectCreationFeedbackDialog(
   private val systemInfoData: ProjectCreationFeedbackSystemInfoData = createProjectCreationFeedbackSystemInfoData(createdProjectTypeName)
 
   private val propertyGraph = PropertyGraph()
-  private val ratingProperty = propertyGraph.graphProperty { 0 }
-  private val checkBoxNoProblemProperty = propertyGraph.graphProperty { false }
-  private val checkBoxEmptyProjectDontWorkProperty = propertyGraph.graphProperty { false }
-  private val checkBoxHardFindDesireProjectProperty = propertyGraph.graphProperty { false }
-  private val checkBoxFrameworkProperty = propertyGraph.graphProperty { false }
-  private val checkBoxOtherProperty = propertyGraph.graphProperty { false }
-  private val textFieldOtherProblemProperty = propertyGraph.graphProperty { "" }
-  private val textAreaOverallFeedbackProperty = propertyGraph.graphProperty { "" }
-  private val checkBoxEmailProperty = propertyGraph.graphProperty { false }
-  private val textFieldEmailProperty = propertyGraph.graphProperty { LicensingFacade.INSTANCE?.getLicenseeEmail().orEmpty() }
+  private val ratingProperty = propertyGraph.property(0)
+  private val checkBoxNoProblemProperty = propertyGraph.property(false)
+  private val checkBoxEmptyProjectDontWorkProperty = propertyGraph.property(false)
+  private val checkBoxHardFindDesireProjectProperty = propertyGraph.property(false)
+  private val checkBoxFrameworkProperty = propertyGraph.property(false)
+  private val checkBoxOtherProperty = propertyGraph.property(false)
+  private val textFieldOtherProblemProperty = propertyGraph.property("")
+  private val textAreaOverallFeedbackProperty = propertyGraph.property("")
+  private val checkBoxEmailProperty = propertyGraph.property(false)
+  private val textFieldEmailProperty = propertyGraph.lazyProperty { LicensingFacade.INSTANCE?.getLicenseeEmail().orEmpty() }
   private var ratingComponent: RatingComponent? = null
   private var missingRatingTooltip: JComponent? = null
 
@@ -83,10 +82,6 @@ class ProjectCreationFeedbackDialog(
     init()
     title = NPWFeedbackBundle.message("dialog.creation.project.top.title")
     isResizable = false
-  }
-
-  override fun doCancelAction() {
-    super.doCancelAction()
   }
 
   override fun doOKAction() {

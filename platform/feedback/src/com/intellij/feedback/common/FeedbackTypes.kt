@@ -3,8 +3,8 @@ package com.intellij.feedback.common
 
 import com.intellij.feedback.common.FeedbackTypeResolver.isFeedbackNotificationDisabled
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
-import com.intellij.feedback.npw.dialog.ProjectCreationFeedbackDialog
 import com.intellij.feedback.common.notification.RequestFeedbackNotification
+import com.intellij.feedback.npw.dialog.ProjectCreationFeedbackDialog
 import com.intellij.feedback.npw.state.ProjectCreationInfoService
 import com.intellij.feedback.npw.state.ProjectCreationInfoState
 import com.intellij.notification.Notification
@@ -82,7 +82,7 @@ enum class FeedbackTypes {
   protected abstract fun createFeedbackDialog(project: Project?, forTest: Boolean): DialogWrapper
 
   protected abstract fun updateStateAfterNotificationShowed()
-  
+
   fun showNotification(project: Project?, forTest: Boolean = false) {
     val notification = createNotification(forTest)
     notification.addAction(

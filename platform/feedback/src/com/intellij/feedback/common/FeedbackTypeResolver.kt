@@ -13,8 +13,7 @@ object FeedbackTypeResolver {
   // 10 minutes
   private const val MIN_INACTIVE_TIME = 600
 
-  var lastActivityTime: LocalDateTime = LocalDateTime.now()
-    private set
+  private var lastActivityTime: LocalDateTime = LocalDateTime.now()
 
   fun checkActivity(project: Project?) {
     if (Duration.between(lastActivityTime, LocalDateTime.now()).toSeconds() >=
