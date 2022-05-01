@@ -15,8 +15,8 @@ import java.util.List;
 /**
  * This filter includes decorations not only for stack-trace lines, but also for exception names
  */
-public class AdvancedExceptionFilter extends ExceptionFilter {
-  public AdvancedExceptionFilter(@NotNull Project project, @NotNull GlobalSearchScope scope) {
+class AdvancedExceptionFilter extends ExceptionFilter {
+  AdvancedExceptionFilter(@NotNull Project project, @NotNull GlobalSearchScope scope) {
     super(project, scope);
   }
 
