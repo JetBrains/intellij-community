@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.IdeCoreBundle
 import com.intellij.ide.plugins.marketplace.FeatureImpl
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -27,6 +29,8 @@ private class LanguagePluginDetectionStartupActivity : StartupActivity.Backgroun
       return
     }
 
+    if (asked) return
+
     val pluginId = try {
       findLanguagePluginToInstall() ?: return
     }
@@ -34,7 +38,6 @@ private class LanguagePluginDetectionStartupActivity : StartupActivity.Backgroun
       LOG.info("Failed to detect recommended language plugin: ${e.message}")
       return
     }
-
     val notification = NotificationGroupManager.getInstance()
       .getNotificationGroup("Language Plugins Notifications")
       .createNotification(
@@ -48,11 +51,21 @@ private class LanguagePluginDetectionStartupActivity : StartupActivity.Backgroun
         notification.expire()
         application.restart(true)
       }
-    }).notify(project)
+    })
+      .addAction(NotificationAction.create(IdeCoreBundle.message("dialog.options.do.not.ask")) { _, notification ->
+        asked = true
+        notification.expire()
+      })
+      .notify(project)
   }
 
   companion object {
     val LOG = Logger.getInstance(LanguagePluginDetectionStartupActivity::class.java)
+
+    private const val askedProperty = "LANGUAGE_DETECTOR_ASKED_BEFORE"
+    var asked: Boolean
+      get() = PropertiesComponent.getInstance().getBoolean(askedProperty, false)
+      set(value) = PropertiesComponent.getInstance().setValue(askedProperty, value)
   }
 }
 
