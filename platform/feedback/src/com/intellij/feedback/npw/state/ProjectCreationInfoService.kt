@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.feedback.state.projectCreation
+package com.intellij.feedback.npw.state
 
 import com.intellij.openapi.components.*
 import kotlinx.serialization.Serializable

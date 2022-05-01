@@ -1,9 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.feedback.dialog
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.feedback.npw.dialog
 
-import com.intellij.feedback.*
 import com.intellij.feedback.bundle.FeedbackBundle
-import com.intellij.feedback.state.projectCreation.ProjectCreationInfoService
+import com.intellij.feedback.common.*
+import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
+import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
+import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
+import com.intellij.feedback.npw.state.ProjectCreationInfoService
 import com.intellij.ide.feedback.RatingComponent
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
@@ -40,7 +43,7 @@ class ProjectCreationFeedbackDialog(
 
   /** Increase the additional number when onboarding feedback format is changed */
   private val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 0
-  
+
   private val TICKET_TITLE_ZENDESK = "Project Creation Feedback"
   private val FEEDBACK_TYPE_ZENDESK = "Project Creation Feedback"
 

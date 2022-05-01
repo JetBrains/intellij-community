@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui
 
-import com.intellij.feedback.FEEDBACK_REPORT_ID_KEY
-import com.intellij.feedback.FeedbackRequestType
-import com.intellij.feedback.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
-import com.intellij.feedback.dialog.CommonFeedbackSystemInfoData
-import com.intellij.feedback.dialog.showFeedbackSystemInfoDialog
-import com.intellij.feedback.submitGeneralFeedback
+import com.intellij.feedback.common.FEEDBACK_REPORT_ID_KEY
+import com.intellij.feedback.common.FeedbackRequestType
+import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
+import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
+import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
+import com.intellij.feedback.common.submitGeneralFeedback
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.notification.Notification

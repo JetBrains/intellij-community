@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.feedback
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.feedback.common
 
-import com.intellij.feedback.FeedbackTypeResolver.isFeedbackNotificationDisabled
+import com.intellij.feedback.common.FeedbackTypeResolver.isFeedbackNotificationDisabled
 import com.intellij.feedback.bundle.FeedbackBundle
-import com.intellij.feedback.dialog.ProjectCreationFeedbackDialog
-import com.intellij.feedback.notification.RequestFeedbackNotification
-import com.intellij.feedback.state.projectCreation.ProjectCreationInfoService
-import com.intellij.feedback.state.projectCreation.ProjectCreationInfoState
+import com.intellij.feedback.npw.dialog.ProjectCreationFeedbackDialog
+import com.intellij.feedback.common.notification.RequestFeedbackNotification
+import com.intellij.feedback.npw.state.ProjectCreationInfoService
+import com.intellij.feedback.npw.state.ProjectCreationInfoState
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ex.ApplicationInfoEx

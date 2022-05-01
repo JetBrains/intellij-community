@@ -1,7 +1,8 @@
-package com.intellij.feedback.track.active
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.feedback.common.track
 
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
-import com.intellij.feedback.FeedbackTypeResolver.checkActivity
+import com.intellij.feedback.common.FeedbackTypeResolver.checkActivity
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile

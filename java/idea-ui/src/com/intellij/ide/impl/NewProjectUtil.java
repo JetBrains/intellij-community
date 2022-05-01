@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
-import com.intellij.feedback.state.projectCreation.ProjectCreationInfoService;
-import com.intellij.feedback.state.projectCreation.ProjectCreationInfoState;
+import com.intellij.feedback.npw.state.ProjectCreationInfoService;
+import com.intellij.feedback.npw.state.ProjectCreationInfoState;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.projectWizard.NewProjectWizardCollector;
@@ -10,7 +10,6 @@ import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.projectWizard.AbstractModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;

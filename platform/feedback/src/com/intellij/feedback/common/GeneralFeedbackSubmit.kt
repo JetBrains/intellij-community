@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.feedback
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.feedback.common
 
 import com.intellij.feedback.bundle.FeedbackBundle
-import com.intellij.feedback.notification.ThanksForFeedbackNotification
+import com.intellij.feedback.common.notification.ThanksForFeedbackNotification
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.feedback.ZenDeskRequests
 import com.intellij.openapi.application.ApplicationManager
