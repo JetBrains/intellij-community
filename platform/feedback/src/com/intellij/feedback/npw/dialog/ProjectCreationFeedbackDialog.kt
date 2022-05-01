@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback.npw.dialog
 
-import com.intellij.feedback.bundle.FeedbackBundle
 import com.intellij.feedback.common.*
 import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
 import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
+import com.intellij.feedback.npw.bundle.NPWFeedbackBundle
 import com.intellij.feedback.npw.state.ProjectCreationInfoService
 import com.intellij.ide.feedback.RatingComponent
 import com.intellij.openapi.application.ApplicationBundle
@@ -81,7 +81,7 @@ class ProjectCreationFeedbackDialog(
 
   init {
     init()
-    title = FeedbackBundle.message("dialog.creation.project.top.title")
+    title = NPWFeedbackBundle.message("dialog.creation.project.top.title")
     isResizable = false
   }
 
@@ -108,16 +108,16 @@ class ProjectCreationFeedbackDialog(
 
   private fun createRequestDescription(): String {
     return buildString {
-      appendLine(FeedbackBundle.message("dialog.creation.project.zendesk.title"))
-      appendLine(FeedbackBundle.message("dialog.creation.project.zendesk.description"))
+      appendLine(NPWFeedbackBundle.message("dialog.creation.project.zendesk.title"))
+      appendLine(NPWFeedbackBundle.message("dialog.creation.project.zendesk.description"))
       appendLine()
-      appendLine(FeedbackBundle.message("dialog.created.project.zendesk.rating.label"))
+      appendLine(NPWFeedbackBundle.message("dialog.created.project.zendesk.rating.label"))
       appendLine(" ${ratingProperty.get()}")
       appendLine()
-      appendLine(FeedbackBundle.message("dialog.created.project.zendesk.problems.title"))
+      appendLine(NPWFeedbackBundle.message("dialog.created.project.zendesk.problems.title"))
       appendLine(createProblemsList())
       appendLine()
-      appendLine(FeedbackBundle.message("dialog.created.project.zendesk.overallExperience.label"))
+      appendLine(NPWFeedbackBundle.message("dialog.created.project.zendesk.overallExperience.label"))
       appendLine(textAreaOverallFeedbackProperty.get())
     }
   }
@@ -125,16 +125,16 @@ class ProjectCreationFeedbackDialog(
   private fun createProblemsList(): String {
     val resultProblemsList = mutableListOf<String>()
     if (checkBoxNoProblemProperty.get()) {
-      resultProblemsList.add(FeedbackBundle.message("dialog.created.project.zendesk.problem.1.label"))
+      resultProblemsList.add(NPWFeedbackBundle.message("dialog.created.project.zendesk.problem.1.label"))
     }
     if (checkBoxEmptyProjectDontWorkProperty.get()) {
-      resultProblemsList.add(FeedbackBundle.message("dialog.created.project.zendesk.problem.2.label"))
+      resultProblemsList.add(NPWFeedbackBundle.message("dialog.created.project.zendesk.problem.2.label"))
     }
     if (checkBoxHardFindDesireProjectProperty.get()) {
-      resultProblemsList.add(FeedbackBundle.message("dialog.created.project.zendesk.problem.3.label"))
+      resultProblemsList.add(NPWFeedbackBundle.message("dialog.created.project.zendesk.problem.3.label"))
     }
     if (checkBoxFrameworkProperty.get()) {
-      resultProblemsList.add(FeedbackBundle.message("dialog.created.project.zendesk.problem.4.label"))
+      resultProblemsList.add(NPWFeedbackBundle.message("dialog.created.project.zendesk.problem.4.label"))
     }
     if (checkBoxOtherProperty.get()) {
       resultProblemsList.add(textFieldOtherProblemProperty.get())
@@ -183,12 +183,12 @@ class ProjectCreationFeedbackDialog(
   override fun createCenterPanel(): JComponent {
     val mainPanel = panel {
       row {
-        label(FeedbackBundle.message("dialog.creation.project.title")).applyToComponent {
+        label(NPWFeedbackBundle.message("dialog.creation.project.title")).applyToComponent {
           font = JBFont.h1()
         }
       }
       row {
-        label(FeedbackBundle.message("dialog.creation.project.description"))
+        label(NPWFeedbackBundle.message("dialog.creation.project.description"))
       }.bottomGap(BottomGap.MEDIUM)
 
       row {
@@ -198,10 +198,10 @@ class ProjectCreationFeedbackDialog(
             missingRatingTooltip?.isVisible = false
           }
           cell(it)
-            .label(FeedbackBundle.message("dialog.created.project.rating.label"), LabelPosition.TOP)
+            .label(NPWFeedbackBundle.message("dialog.created.project.rating.label"), LabelPosition.TOP)
         }
 
-        missingRatingTooltip = label(FeedbackBundle.message("dialog.created.project.rating.required")).applyToComponent {
+        missingRatingTooltip = label(NPWFeedbackBundle.message("dialog.created.project.rating.required")).applyToComponent {
           border = JBUI.Borders.compound(PopupBorder.Factory.createColored(JBUI.CurrentTheme.Validator.errorBorderColor()),
                                          JBUI.Borders.empty(JBUI.scale(4), JBUI.scale(8)))
           background = JBUI.CurrentTheme.Validator.errorBackgroundColor()
@@ -211,17 +211,17 @@ class ProjectCreationFeedbackDialog(
       }.bottomGap(BottomGap.MEDIUM)
 
       row {
-        checkBox(FeedbackBundle.message("dialog.created.project.checkbox.1.label")).bindSelected(checkBoxNoProblemProperty)
-          .label(FeedbackBundle.message("dialog.created.project.group.checkbox.title"), LabelPosition.TOP)
+        checkBox(NPWFeedbackBundle.message("dialog.created.project.checkbox.1.label")).bindSelected(checkBoxNoProblemProperty)
+          .label(NPWFeedbackBundle.message("dialog.created.project.group.checkbox.title"), LabelPosition.TOP)
       }.topGap(TopGap.MEDIUM)
       row {
-        checkBox(FeedbackBundle.message("dialog.created.project.checkbox.2.label")).bindSelected(checkBoxEmptyProjectDontWorkProperty)
+        checkBox(NPWFeedbackBundle.message("dialog.created.project.checkbox.2.label")).bindSelected(checkBoxEmptyProjectDontWorkProperty)
       }
       row {
-        checkBox(FeedbackBundle.message("dialog.created.project.checkbox.3.label")).bindSelected(checkBoxHardFindDesireProjectProperty)
+        checkBox(NPWFeedbackBundle.message("dialog.created.project.checkbox.3.label")).bindSelected(checkBoxHardFindDesireProjectProperty)
       }
       row {
-        checkBox(FeedbackBundle.message("dialog.created.project.checkbox.4.label")).bindSelected(checkBoxFrameworkProperty)
+        checkBox(NPWFeedbackBundle.message("dialog.created.project.checkbox.4.label")).bindSelected(checkBoxFrameworkProperty)
       }
 
       row {
@@ -232,11 +232,11 @@ class ProjectCreationFeedbackDialog(
         textField()
           .bindText(textFieldOtherProblemProperty)
           .columns(textFieldOtherColumnSize)
-          .errorOnApply(FeedbackBundle.message("dialog.created.project.checkbox.5.required")) {
+          .errorOnApply(NPWFeedbackBundle.message("dialog.created.project.checkbox.5.required")) {
             checkBoxOtherProperty.get() && it.text.isBlank()
           }
           .applyToComponent {
-            emptyText.text = FeedbackBundle.message("dialog.created.project.checkbox.5.placeholder")
+            emptyText.text = NPWFeedbackBundle.message("dialog.created.project.checkbox.5.placeholder")
             textFieldOtherProblemProperty.afterChange {
               if (it.isNotBlank()) {
                 checkBoxOtherProperty.set(true)
@@ -255,7 +255,7 @@ class ProjectCreationFeedbackDialog(
           .bindText(textAreaOverallFeedbackProperty)
           .rows(textAreaRowSize)
           .columns(textAreaOverallFeedbackColumnSize)
-          .label(FeedbackBundle.message("dialog.created.project.textarea.label"), LabelPosition.TOP)
+          .label(NPWFeedbackBundle.message("dialog.created.project.textarea.label"), LabelPosition.TOP)
           .applyToComponent {
             wrapStyleWord = true
             lineWrap = true
@@ -276,7 +276,7 @@ class ProjectCreationFeedbackDialog(
       }.bottomGap(BottomGap.MEDIUM).topGap(TopGap.SMALL)
 
       row {
-        checkBox(FeedbackBundle.message("dialog.created.project.checkbox.email"))
+        checkBox(NPWFeedbackBundle.message("dialog.created.project.checkbox.email"))
           .bindSelected(checkBoxEmailProperty).applyToComponent {
             checkBoxEmail = this
           }
@@ -284,7 +284,7 @@ class ProjectCreationFeedbackDialog(
       indent {
         row {
           textField().bindText(textFieldEmailProperty).columns(textFieldEmailColumnSize).applyToComponent {
-            emptyText.text = FeedbackBundle.message("dialog.created.project.textfield.email.placeholder")
+            emptyText.text = NPWFeedbackBundle.message("dialog.created.project.textfield.email.placeholder")
             isEnabled = checkBoxEmailProperty.get()
 
             checkBoxEmail?.addActionListener { _ ->
@@ -292,7 +292,7 @@ class ProjectCreationFeedbackDialog(
             }
             putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
                               Predicate<JBTextField> { textField -> textField.text.isEmpty() })
-          }.errorOnApply(FeedbackBundle.message("dialog.created.project.textfield.email.required")) {
+          }.errorOnApply(NPWFeedbackBundle.message("dialog.created.project.textfield.email.required")) {
             checkBoxEmailProperty.get() && it.text.isBlank()
           }.errorOnApply(ApplicationBundle.message("feedback.form.email.invalid")) {
             checkBoxEmailProperty.get() && it.text.isNotBlank() && !it.text.matches(Regex(".+@.+\\..+"))
@@ -320,7 +320,7 @@ class ProjectCreationFeedbackDialog(
   override fun getOKAction(): Action {
     return object : DialogWrapper.OkAction() {
       init {
-        putValue(Action.NAME, FeedbackBundle.message("dialog.created.project.ok"))
+        putValue(Action.NAME, NPWFeedbackBundle.message("dialog.created.project.ok"))
       }
 
       override fun doAction(e: ActionEvent) {
@@ -349,7 +349,7 @@ private data class ProjectCreationFeedbackSystemInfoData(
 private fun showProjectCreationFeedbackSystemInfoDialog(project: Project?,
                                                         systemInfoData: ProjectCreationFeedbackSystemInfoData
 ) = showFeedbackSystemInfoDialog(project, systemInfoData.commonSystemInfo) {
-  row(FeedbackBundle.message("dialog.created.project.system.info.panel.project.type")) {
+  row(NPWFeedbackBundle.message("dialog.created.project.system.info.panel.project.type")) {
     label(systemInfoData.createdProjectTypeName) //NON-NLS
   }
 }

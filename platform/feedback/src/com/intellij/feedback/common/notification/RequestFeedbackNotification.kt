@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback.common.notification
 
-import com.intellij.feedback.bundle.FeedbackBundle
+import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 
@@ -11,7 +11,7 @@ import com.intellij.notification.NotificationType
 
 class RequestFeedbackNotification : Notification(
   "Feedback In IDE",
-  FeedbackBundle.message("notification.request.feedback.title"),
-  FeedbackBundle.message("notification.request.feedback.content"),
+  CommonFeedbackBundle.message("notification.request.feedback.title"),
+  CommonFeedbackBundle.message("notification.request.feedback.content"),
   NotificationType.INFORMATION
 )

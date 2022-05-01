@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback.common
 
-import com.intellij.feedback.bundle.FeedbackBundle
+import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.notification.ThanksForFeedbackNotification
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.feedback.ZenDeskRequests
@@ -78,20 +78,20 @@ fun createFeedbackAgreementComponent(project: Project?, systemInfo: () -> Unit) 
   JPanel().apply {
     layout = GridLayout(4, 1, 0, 0)
 
-    add(createLineOfConsent(FeedbackBundle.message("dialog.created.project.consent.1.1"),
-                            FeedbackBundle.message("dialog.created.project.consent.1.2"),
-                            FeedbackBundle.message("dialog.created.project.consent.1.3"), systemInfo))
+    add(createLineOfConsent(CommonFeedbackBundle.message("dialog.created.project.consent.1.1"),
+                            CommonFeedbackBundle.message("dialog.created.project.consent.1.2"),
+                            CommonFeedbackBundle.message("dialog.created.project.consent.1.3"), systemInfo))
 
-    add(createLineOfConsent(FeedbackBundle.message("dialog.created.project.consent.2")))
+    add(createLineOfConsent(CommonFeedbackBundle.message("dialog.created.project.consent.2")))
 
-    add(createLineOfConsent(FeedbackBundle.message("dialog.created.project.consent.3.1"),
-                            FeedbackBundle.message("dialog.created.project.consent.3.2"),
-                            FeedbackBundle.message("dialog.created.project.consent.3.3")) {
+    add(createLineOfConsent(CommonFeedbackBundle.message("dialog.created.project.consent.3.1"),
+                            CommonFeedbackBundle.message("dialog.created.project.consent.3.2"),
+                            CommonFeedbackBundle.message("dialog.created.project.consent.3.3")) {
       BrowserUtil.browse(PRIVACY_POLICY_THIRD_PARTIES_URL, project)
     })
 
-    add(createLineOfConsent(linkText = FeedbackBundle.message("dialog.created.project.consent.4.2"),
-                            postfix = FeedbackBundle.message("dialog.created.project.consent.4.3")) {
+    add(createLineOfConsent(linkText = CommonFeedbackBundle.message("dialog.created.project.consent.4.2"),
+                            postfix = CommonFeedbackBundle.message("dialog.created.project.consent.4.3")) {
       BrowserUtil.browse(PRIVACY_POLICY_URL, project)
     })
   }

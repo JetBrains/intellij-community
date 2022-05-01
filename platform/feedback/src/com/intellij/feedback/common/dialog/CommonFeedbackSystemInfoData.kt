@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback.common.dialog
 
-import com.intellij.feedback.bundle.FeedbackBundle
+import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
@@ -65,16 +65,16 @@ data class CommonFeedbackSystemInfoData(
         appVersion += " ($edition)"
       }
       val appBuild = appInfoEx.build
-      appVersion += FeedbackBundle.message("dialog.created.project.system.info.panel.app.version.build", appBuild.asString())
+      appVersion += CommonFeedbackBundle.message("dialog.created.project.system.info.panel.app.version.build", appBuild.asString())
       val timestamp: Date = appInfoEx.buildDate.time
       if (appBuild.isSnapshot) {
         val time = SimpleDateFormat("HH:mm").format(timestamp)
-        appVersion += FeedbackBundle.message("dialog.created.project.system.info.panel.app.version.build.date.time",
-                                             NlsMessages.formatDateLong(timestamp), time)
+        appVersion += CommonFeedbackBundle.message("dialog.created.project.system.info.panel.app.version.build.date.time",
+                                                   NlsMessages.formatDateLong(timestamp), time)
       }
       else {
-        appVersion += FeedbackBundle.message("dialog.created.project.system.info.panel.app.version.build.date",
-                                             NlsMessages.formatDateLong(timestamp))
+        appVersion += CommonFeedbackBundle.message("dialog.created.project.system.info.panel.app.version.build.date",
+                                                   NlsMessages.formatDateLong(timestamp))
       }
       return appVersion
     }
@@ -116,7 +116,7 @@ data class CommonFeedbackSystemInfoData(
 
   fun getMemorySizeForDialog() = memorySize.toString() + "M"
   fun getLicenseRestrictionsForDialog() = if (licenseRestrictions.isEmpty())
-    FeedbackBundle.message("dialog.created.project.system.info.panel.license.no.info")
+    CommonFeedbackBundle.message("dialog.created.project.system.info.panel.license.no.info")
   else
     licenseRestrictions.joinToString("\n")
 
@@ -134,7 +134,7 @@ data class CommonFeedbackSystemInfoData(
       registryKeys
     }
     else {
-      FeedbackBundle.message("dialog.created.project.system.info.panel.registry.empty")
+      CommonFeedbackBundle.message("dialog.created.project.system.info.panel.registry.empty")
     }
   }
 
@@ -144,7 +144,7 @@ data class CommonFeedbackSystemInfoData(
       disabledPlugins
     }
     else {
-      FeedbackBundle.message("dialog.created.project.system.info.panel.disabled.plugins.empty")
+      CommonFeedbackBundle.message("dialog.created.project.system.info.panel.disabled.plugins.empty")
     }
   }
 
@@ -154,7 +154,7 @@ data class CommonFeedbackSystemInfoData(
       nonBundledPluginsString
     }
     else {
-      FeedbackBundle.message("dialog.created.project.system.info.panel.nonbundled.plugins.empty")
+      CommonFeedbackBundle.message("dialog.created.project.system.info.panel.nonbundled.plugins.empty")
     }
   }
 }

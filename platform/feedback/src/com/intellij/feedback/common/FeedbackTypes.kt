@@ -2,7 +2,7 @@
 package com.intellij.feedback.common
 
 import com.intellij.feedback.common.FeedbackTypeResolver.isFeedbackNotificationDisabled
-import com.intellij.feedback.bundle.FeedbackBundle
+import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.npw.dialog.ProjectCreationFeedbackDialog
 import com.intellij.feedback.common.notification.RequestFeedbackNotification
 import com.intellij.feedback.npw.state.ProjectCreationInfoService
@@ -86,13 +86,13 @@ enum class FeedbackTypes {
   fun showNotification(project: Project?, forTest: Boolean = false) {
     val notification = createNotification(forTest)
     notification.addAction(
-      NotificationAction.createSimpleExpiring(FeedbackBundle.message("notification.request.feedback.action.respond.text")) {
+      NotificationAction.createSimpleExpiring(CommonFeedbackBundle.message("notification.request.feedback.action.respond.text")) {
         val dialog = createFeedbackDialog(project, forTest)
         dialog.show()
       }
     )
     notification.addAction(
-      NotificationAction.createSimpleExpiring(FeedbackBundle.message("notification.request.feedback.action.dont.show.text")) {
+      NotificationAction.createSimpleExpiring(CommonFeedbackBundle.message("notification.request.feedback.action.dont.show.text")) {
         if (!forTest) {
           isFeedbackNotificationDisabled = true
         }

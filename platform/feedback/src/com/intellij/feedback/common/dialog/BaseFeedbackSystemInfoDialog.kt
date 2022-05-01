@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback.common.dialog
 
-import com.intellij.feedback.bundle.FeedbackBundle
+import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ex.MultiLineLabel
@@ -19,34 +19,34 @@ fun showFeedbackSystemInfoDialog(project: Project?,
 ) {
   val infoPanel = panel {
     addSpecificRows()
-    row(FeedbackBundle.message("dialog.created.project.system.info.panel.os.version")) {
+    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.os.version")) {
       label(systemInfoData.osVersion) //NON-NLS
     }
-    row(FeedbackBundle.message("dialog.created.project.system.info.panel.memory")) {
+    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.memory")) {
       label(systemInfoData.getMemorySizeForDialog()) //NON-NLS
     }
-    row(FeedbackBundle.message("dialog.created.project.system.info.panel.cores")) {
+    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.cores")) {
       label(systemInfoData.coresNumber.toString()) //NON-NLS
     }
-    row(FeedbackBundle.message("dialog.created.project.system.info.panel.app.version")) {
+    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.app.version")) {
       cell(MultiLineLabel(systemInfoData.appVersionWithBuild)) //NON-NLS
     }
-    row(FeedbackBundle.message("dialog.created.project.system.info.panel.license.evaluation")) {
+    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.license.evaluation")) {
       label(systemInfoData.getIsLicenseEvaluationForDialog()) //NON-NLS
     }
-    row(FeedbackBundle.message("dialog.created.project.system.info.panel.license.restrictions")) {
+    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.license.restrictions")) {
       cell(MultiLineLabel(systemInfoData.getLicenseRestrictionsForDialog())) //NON-NLS
     }
-    row(FeedbackBundle.message("dialog.created.project.system.info.panel.runtime.version")) {
+    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.runtime.version")) {
       label(systemInfoData.runtimeVersion) //NON-NLS
     }
-    row(FeedbackBundle.message("dialog.created.project.system.info.panel.registry")) {
+    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.registry")) {
       cell(MultiLineLabel(systemInfoData.getRegistryKeysForDialog())) //NON-NLS
     }
-    row(FeedbackBundle.message("dialog.created.project.system.info.panel.disabled.plugins")) {
+    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.disabled.plugins")) {
       cell(MultiLineLabel(systemInfoData.getDisabledBundledPluginsForDialog())) //NON-NLS
     }
-    row(FeedbackBundle.message("dialog.created.project.system.info.panel.nonbundled.plugins")) {
+    row(CommonFeedbackBundle.message("dialog.created.project.system.info.panel.nonbundled.plugins")) {
       cell(MultiLineLabel(systemInfoData.getNonBundledPluginsForDialog())) //NON-NLS
     }.bottomGap(BottomGap.MEDIUM)
   }.also {
@@ -56,7 +56,7 @@ fun showFeedbackSystemInfoDialog(project: Project?,
   val dialog = object : DialogWrapper(project) {
     init {
       init()
-      title = FeedbackBundle.message("dialog.created.project.system.info.title")
+      title = CommonFeedbackBundle.message("dialog.created.project.system.info.title")
     }
 
     override fun createCenterPanel(): JComponent = JBScrollPane(infoPanel, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
