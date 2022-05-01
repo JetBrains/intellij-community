@@ -32,6 +32,10 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
     return oldSquareVisible != showButtons
   }
 
+  override fun initMoreButton() {
+    left.initMoreButton()
+  }
+
   override fun layout(size: Dimension, layeredPane: JComponent) {
     layeredPane.setBounds(0, 0, size.width, size.height)
   }

@@ -45,7 +45,6 @@ internal class ToolWindowLeftToolbar : ToolWindowToolbar() {
 
     val topWrapper = JPanel(BorderLayout())
     topWrapper.add(topPane, BorderLayout.NORTH)
-    topWrapper.add(moreButton, BorderLayout.CENTER)
     add(topWrapper, BorderLayout.NORTH)
     add(bottomPane, BorderLayout.SOUTH)
   }
@@ -57,6 +56,10 @@ internal class ToolWindowLeftToolbar : ToolWindowToolbar() {
       ToolWindowAnchor.TOP -> bottomPane
       else -> throw IllegalArgumentException("Wrong anchor $anchor")
     }
+  }
+
+  fun initMoreButton() {
+    topPane.parent?.add(moreButton, BorderLayout.CENTER)
   }
 
   override fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? {

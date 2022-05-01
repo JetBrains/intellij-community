@@ -195,6 +195,8 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
         }
       }
 
+      toolWindowPane.buttonManager.initMoreButton()
+
       project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(entries, manager)
       toolWindowPane.buttonManager.revalidateNotEmptyStripes()
     }
