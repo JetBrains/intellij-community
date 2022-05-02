@@ -5,15 +5,20 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.impl.FinishMarkAction
+import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringActionHandler
+import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.inplace.*
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.Nls
@@ -89,6 +94,11 @@ class ExtractKotlinFunctionHandler(
             val callRange = editor.document.createRangeMarker(elements.first().textRange.startOffset, elements.last().textRange.endOffset)
                 .apply { isGreedyToLeft = true; isGreedyToRight = true }
             val editorState = EditorState(editor)
+            val disposable = Disposer.newDisposable()
+            WriteCommandAction.writeCommandAction(project).run<Throwable> {
+                val startMarkAction = StartMarkAction.start(editor, project, ExtractMethodHandler.getRefactoringName())
+                Disposer.register(disposable) { FinishMarkAction.finish(project, editor, startMarkAction) }
+            }
             fun afterFinish(extraction: ExtractionResult){
                 val callIdentifier = findSingleCallExpression(file, callRange.range)?.calleeExpression ?: throw IllegalStateException()
                 val methodIdentifier = extraction.declaration.nameIdentifier ?: throw IllegalStateException()
@@ -96,10 +106,11 @@ class ExtractKotlinFunctionHandler(
                 val methodOffset = extraction.declaration.navigationElement.textRange.endOffset
                 val callOffset = callIdentifier.textRange.endOffset
                 val preview = InplaceExtractUtils.createPreview(editor, methodRange, methodOffset, callRange.range!!, callOffset)
+                Disposer.register(disposable, preview)
                 ExtractMethodTemplateBuilder(editor, EXTRACT_FUNCTION)
                     .withCompletionNames(descriptor.suggestedNames)
                     .onBroken {
-                        editorState.revert()
+                        WriteCommandAction.writeCommandAction(project).run<Throwable> { editorState.revert() }
                     }
                     .onSuccess {
                         processDuplicates(extraction.duplicateReplacers, file.project, editor)
@@ -111,12 +122,17 @@ class ExtractKotlinFunctionHandler(
                         }
                         error == null
                     }
-                    .disposeWithTemplate(preview)
-                    .createTemplate(file, methodIdentifier.range, callIdentifier.range)
+                    .disposeWithTemplate(disposable)
+                    .createTemplate(file, methodIdentifier.textRange, callIdentifier.textRange)
                 onFinish(extraction)
             }
-            val configuration = ExtractionGeneratorConfiguration(descriptor, ExtractionGeneratorOptions.DEFAULT)
-            doRefactor(configuration, ::afterFinish)
+            try {
+                val configuration = ExtractionGeneratorConfiguration(descriptor, ExtractionGeneratorOptions.DEFAULT)
+                doRefactor(configuration, ::afterFinish)
+            } catch (e: Throwable) {
+                Disposer.dispose(disposable)
+                throw e
+            }
         }
 
         @Nls
