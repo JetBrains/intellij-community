@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.noarg-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:noarg-compiler-plugin-for-ide:1.7.20-dev-382" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:noarg-compiler-plugin-for-ide:1.7.20-dev-750" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/1.7.20-dev-382/noarg-compiler-plugin-for-ide-1.7.20-dev-382.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/1.7.20-dev-750/noarg-compiler-plugin-for-ide-1.7.20-dev-750.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/1.7.20-dev-382/noarg-compiler-plugin-for-ide-1.7.20-dev-382-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/1.7.20-dev-750/noarg-compiler-plugin-for-ide-1.7.20-dev-750-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
