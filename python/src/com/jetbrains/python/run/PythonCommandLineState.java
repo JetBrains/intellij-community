@@ -220,9 +220,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return (ConsoleView)consoleRef.get();
   }
 
-  @NotNull
-  public ExecutionResult execute(/*TODO @NotNull ?*/Executor executor,
-                                                    @NotNull PythonScriptTargetedCommandLineBuilder converter) throws ExecutionException {
+  /**
+   * Please do not overuse {@code null} return value. {@code null} value is utilized by {@link PythonScriptCommandLineState} when starting
+   * Python run configurations with "Run with Python Console" flag. It is more a workaround, so please annotate the overridden methods with
+   * {@link NotNull} where possible.
+   */
+  public @Nullable ExecutionResult execute(@NotNull Executor executor,
+                                           @NotNull PythonScriptTargetedCommandLineBuilder converter) throws ExecutionException {
     final ProcessHandler processHandler = startProcess(converter);
     final ConsoleView console = createAndAttachConsoleInEDT(myConfig.getProject(), processHandler, executor);
     return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
