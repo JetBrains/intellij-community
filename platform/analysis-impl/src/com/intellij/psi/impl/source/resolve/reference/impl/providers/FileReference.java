@@ -32,10 +32,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.net.URI;
 import java.text.Normalizer;
@@ -309,7 +306,8 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   /**
    * Converts a wrapper like WebDirectoryElement into plain PsiFile
    */
-  protected static PsiFileSystemItem getOriginalFile(PsiFileSystemItem fileSystemItem) {
+  @ApiStatus.Internal
+  public static PsiFileSystemItem getOriginalFile(PsiFileSystemItem fileSystemItem) {
     final VirtualFile file = fileSystemItem.getVirtualFile();
     if (file != null && !file.isDirectory()) {
       final PsiManager psiManager = fileSystemItem.getManager();
