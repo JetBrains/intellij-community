@@ -107,8 +107,6 @@ public class HtmlEmmetAbbreviationTest extends EmmetAbbreviationTestSuite {
     addTest("div{&nbsp;}", "<div>&nbsp;</div>");
     addTest("div[data-object=]", "<div data-object=\"\"></div>");
     addTest("div[data-object={id:2}]", "<div data-object=\"{id:2}\"></div>");
-    addTestWithPositionCheck("var s = '<div>div>table+<caret></div>';",
-                             "var s = '<div><div><table><tr><td>|</td></tr></table></div></div>';", "js");
     addTest("ul>li(a)*2", "<ul>\n" +
                           "    <li><a href=\"\"></a></li>\n" +
                           "    <li><a href=\"\"></a></li>\n" +
