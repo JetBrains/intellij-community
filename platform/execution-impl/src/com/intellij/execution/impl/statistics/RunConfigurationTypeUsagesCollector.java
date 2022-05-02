@@ -35,7 +35,7 @@ import java.util.*;
 
 public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
   public static final String CONFIGURED_IN_PROJECT = "configured.in.project";
-  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 12);
+  public static final EventLogGroup GROUP = new EventLogGroup("run.configuration.type", 13);
   public static final StringEventField ID_FIELD = EventFields.StringValidatedByCustomRule("id", RunConfigurationUtilValidator.class);
   public static final StringEventField FACTORY_FIELD = EventFields.StringValidatedByCustomRule("factory",
                                                                                                RunConfigurationUtilValidator.class);
