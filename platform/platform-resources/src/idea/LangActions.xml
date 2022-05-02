@@ -353,6 +353,7 @@
       These actions are added to the context menu, to the popup menu, and to the toolbar.
       This group should be used to register additional documentation actions.
       -->
+      <reference ref="QuickDocCopy"/>
       <reference ref="Documentation.Navigation"/>
       <reference ref="Documentation.ViewExternal"/>
     </group>

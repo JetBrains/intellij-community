@@ -190,7 +190,7 @@
     <action id="TextComponent.ClearAction" class="com.intellij.ui.ClearTextAction"/>
     <action id="ToolwindowSwitcher" class="com.intellij.ide.actions.ToolwindowSwitcher" internal="true"/>
     <action id="QuickDocCopy" class="com.intellij.codeInsight.documentation.actions.CopyQuickDocAction"
-            use-shortcut-of="$Copy"/>
+            icon="AllIcons.Actions.Copy" use-shortcut-of="$Copy"/>
     <action id="EditSourceInNewWindow" class="com.intellij.ide.actions.EditSourceInNewWindowAction">
       <override-text place="EditorTabPopup"/>
     </action>
