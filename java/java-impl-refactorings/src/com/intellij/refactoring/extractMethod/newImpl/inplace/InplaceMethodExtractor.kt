@@ -15,6 +15,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.impl.FinishMarkAction
+import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.CaretEvent
@@ -233,6 +235,8 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   fun extractAndRunTemplate(suggestedNames: LinkedHashSet<String>) {
     try {
+      val startMarkAction = StartMarkAction.start(editor, project, ExtractMethodHandler.getRefactoringName())
+      Disposer.register(disposable) { FinishMarkAction.finish(project, editor, startMarkAction) }
       val elements = ExtractSelector().suggestElementsToExtract(file, range)
       MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
       val (callElements, method) = extractor.extract(targetClass, elements, initialMethodName, popupProvider.makeStatic ?: false)
@@ -252,7 +256,9 @@ class InplaceMethodExtractor(private val editor: Editor,
       val templateState = ExtractMethodTemplateBuilder(editor, ExtractMethodHandler.getRefactoringName())
         .withCompletionNames(suggestedNames.toList())
         .withCompletionAdvertisement(InplaceRefactoring.getPopupOptionsAdvertisement())
-        .onBroken { editorState.revert() }
+        .onBroken {
+          WriteCommandAction.writeCommandAction(project).run<Throwable> { editorState.revert()  }
+        }
         .onSuccess {
           val range = callIdentifierRange?.range ?: return@onSuccess
           val methodName = editor.document.getText(range)
@@ -276,10 +282,6 @@ class InplaceMethodExtractor(private val editor: Editor,
       Disposer.dispose(disposable)
       throw e
     }
-  }
-
-  private fun revertState() {
-    editorState.revert()
   }
 
   private fun afterTemplateStart(templateState: TemplateState) {
@@ -321,7 +323,7 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   fun restartInDialog(isLinkUsed: Boolean = false) {
     InplaceExtractMethodCollector.openExtractDialog.log(project, isLinkUsed)
-    revertState()
+    TemplateManagerImpl.getTemplateState(editor)?.gotoEnd(true)
     val elements = ExtractSelector().suggestElementsToExtract(targetClass.containingFile, range)
     val methodRange = callIdentifierRange?.range
     val methodName = if (methodRange != null) editor.document.getText(methodRange) else ""
@@ -331,7 +333,7 @@ class InplaceMethodExtractor(private val editor: Editor,
   private fun restartInplace() {
     val identifierRange = callIdentifierRange?.range
     val methodName = if (identifierRange != null) editor.document.getText(identifierRange) else null
-    revertState()
+    TemplateManagerImpl.getTemplateState(editor)?.gotoEnd(true)
     WriteCommandAction.writeCommandAction(project).withName(ExtractMethodHandler.getRefactoringName()).run<Throwable> {
       val inplaceExtractor = InplaceMethodExtractor(editor, range, targetClass, popupProvider, initialMethodName)
       inplaceExtractor.extractAndRunTemplate(linkedSetOf())
