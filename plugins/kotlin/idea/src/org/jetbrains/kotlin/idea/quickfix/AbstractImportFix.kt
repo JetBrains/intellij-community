@@ -24,7 +24,6 @@ import com.intellij.psi.util.elementType
 import com.intellij.util.Processors
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
@@ -35,8 +34,8 @@ import org.jetbrains.kotlin.idea.actions.KotlinAddImportAction
 import org.jetbrains.kotlin.idea.actions.createGroupedImportsAction
 import org.jetbrains.kotlin.idea.actions.createSingleImportAction
 import org.jetbrains.kotlin.idea.actions.createSingleImportActionForConstructor
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.util.getResolveScope
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
@@ -53,15 +52,15 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtPsiUtil.isSelectorInQualified
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
-import org.jetbrains.kotlin.resolve.calls.util.getParentCall
 import org.jetbrains.kotlin.resolve.calls.context.ContextDependency
+import org.jetbrains.kotlin.resolve.calls.util.getParentCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.ExplicitImportsScope
@@ -301,19 +300,19 @@ internal abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, f
             ) { it == name }
         )
 
-        val importedFqNamesAsAlias = getImportedFqNamesAsAlias(element)
-        return result.filterNot {
-            val importableFqName = it.importableFqName
-            importableFqName?.parentOrNull() in StandardNames.BUILT_INS_PACKAGE_FQ_NAMES && importableFqName !in importedFqNamesAsAlias
+        val ktFile = element?.containingKtFile ?: return emptyList()
+        val importedFqNamesAsAlias = getImportedFqNamesAsAlias(ktFile)
+        return result.filter {
+            val importableFqName = it.importableFqName ?: return@filter true
+            val importPath = ImportPath(importableFqName, isAllUnder = false)
+            !ImportInsertHelperImpl.isInDefaultImports(importPath, ktFile) || importableFqName in importedFqNamesAsAlias
         }
     }
 
-    private fun getImportedFqNamesAsAlias(element: KtElement?) =
-        element?.containingKtFile
-            ?.importDirectives
-            ?.filter { it.alias != null }
-            ?.mapNotNull { it.importedFqName }
-            ?: emptyList()
+    private fun getImportedFqNamesAsAlias(ktFile: KtFile) =
+        ktFile.importDirectives
+            .filter { it.alias != null }
+            .mapNotNull { it.importedFqName }
 }
 
 // This is required to be abstract to reduce bunch file size

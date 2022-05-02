@@ -2334,6 +2334,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/autoImports/importFunctionWithMultipleReceivers.kt");
             }
 
+            @TestMetadata("importTypeOf.kt")
+            public void testImportTypeOf() throws Exception {
+                runTest("testData/quickfix/autoImports/importTypeOf.kt");
+            }
+
             @TestMetadata("inPrimaryConstructor.kt")
             public void testInPrimaryConstructor() throws Exception {
                 runTest("testData/quickfix/autoImports/inPrimaryConstructor.kt");

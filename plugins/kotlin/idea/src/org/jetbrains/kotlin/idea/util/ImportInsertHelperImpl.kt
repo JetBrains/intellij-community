@@ -42,20 +42,8 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
         getCodeStyleSettings(contextFile).PACKAGES_IMPORT_LAYOUT
     )
 
-    override fun isImportedWithDefault(importPath: ImportPath, contextFile: KtFile): Boolean {
-        val languageVersionSettings = contextFile.getResolutionFacade().languageVersionSettings
-        val platform = TargetPlatformDetector.getPlatform(contextFile)
-        val analyzerServices = platform.findAnalyzerServices(contextFile.project)
-        val allDefaultImports = analyzerServices.getDefaultImports(languageVersionSettings, includeLowPriorityImports = true)
-
-        val scriptExtraImports = contextFile.takeIf { it.isScript() }?.let { ktFile ->
-            val scriptDependencies = ScriptDependenciesProvider.getInstance(ktFile.project)
-                ?.getScriptConfiguration(ktFile.originalFile as KtFile)
-            scriptDependencies?.defaultImports?.map { ImportPath.fromString(it) }
-        }.orEmpty()
-
-        return importPath.isImported(allDefaultImports + scriptExtraImports, analyzerServices.excludedImports)
-    }
+    override fun isImportedWithDefault(importPath: ImportPath, contextFile: KtFile): Boolean =
+        isInDefaultImports(importPath, contextFile)
 
     override fun isImportedWithLowPriorityDefaultImport(importPath: ImportPath, contextFile: KtFile): Boolean {
         val platform = TargetPlatformDetector.getPlatform(contextFile)
@@ -464,6 +452,21 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
                 this.safeAs<ClassifierDescriptor>()?.classId?.isNestedClass == true
 
     companion object {
+        fun isInDefaultImports(importPath: ImportPath, contextFile: KtFile): Boolean {
+            val languageVersionSettings = contextFile.getResolutionFacade().languageVersionSettings
+            val platform = TargetPlatformDetector.getPlatform(contextFile)
+            val analyzerServices = platform.findAnalyzerServices(contextFile.project)
+            val allDefaultImports = analyzerServices.getDefaultImports(languageVersionSettings, includeLowPriorityImports = true)
+
+            val scriptExtraImports = contextFile.takeIf { it.isScript() }?.let { ktFile ->
+                val scriptDependencies = ScriptDependenciesProvider.getInstance(ktFile.project)
+                    ?.getScriptConfiguration(ktFile.originalFile as KtFile)
+                scriptDependencies?.defaultImports?.map { ImportPath.fromString(it) }
+            }.orEmpty()
+
+            return importPath.isImported(allDefaultImports + scriptExtraImports, analyzerServices.excludedImports)
+        }
+
         fun addImport(project: Project, file: KtFile, fqName: FqName, allUnder: Boolean = false, alias: Name? = null): KtImportDirective {
             val importPath = ImportPath(fqName, allUnder, alias)
 
