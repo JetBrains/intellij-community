@@ -318,6 +318,8 @@
     <stacktrace.fold substring="at org.jetbrains.jetCheck."/>
     <stacktrace.fold substring="at com.intellij.testFramework.propertyBased."/>
 
+    <spellchecker.bundledDictionaryProvider implementation="org.jetbrains.idea.devkit.DevKitBundledDictionaryProvider"/>
+
     <codeInsight.lineMarkerProvider language="UAST"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.DescriptionTypeRelatedItemLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA"
