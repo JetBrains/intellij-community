@@ -18,6 +18,7 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.Scope
+import kotlin.text.Regex
 import org.eclipse.aether.repository.RemoteRepository
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -972,12 +973,13 @@ idea.fatal.error.notification=disabled
       .runtimeOnly()
       .libraries
       .collectMany { it.getFiles(JpsOrderRootType.COMPILED) }
-      .collect { File zipFile -> (Source)new ZipSource(zipFile.toPath(), [], null) }
+      .collect { File zipFile -> (Source)new ZipSource(zipFile.toPath(), List.of(new Regex("^META-INF/.*")), null) }
 
     Path updaterJar = buildContext.paths.artifactDir.resolve(artifactName)
     JarBuilder.buildJar(
       updaterJar,
-      List.of(updaterModuleSource) + librarySources
+      List.of(updaterModuleSource) + librarySources,
+      /*compress = */ true
     )
 
     buildContext.notifyArtifactBuilt(updaterJar)
