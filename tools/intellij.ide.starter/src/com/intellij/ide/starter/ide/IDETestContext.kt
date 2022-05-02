@@ -154,6 +154,13 @@ data class IDETestContext(
     }
   }
 
+  fun setPathForSnapshots(): IDETestContext {
+    return this.addVMOptionsPatch {
+      this
+        .addSystemProperty("snapshots.path", paths.snapshotsDir)
+    }
+  }
+
   fun collectMemorySnapshotOnFailedPluginUnload(): IDETestContext =
     addVMOptionsPatch {
       addSystemProperty("ide.plugins.snapshot.on.unload.fail", true)
