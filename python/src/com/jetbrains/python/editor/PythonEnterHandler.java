@@ -25,6 +25,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.*;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,7 +190,8 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       // if we're in middle of typing, it's expected that we will have error elements
     }
 
-    if (inFromImportParentheses(statementBefore, nodeAtCaret.getTextRange().getStartOffset())) {
+    final int offset = nodeAtCaret.getTextRange().getStartOffset();
+    if (inFromImportParentheses(statementBefore, offset) || inWithItemsParentheses(statementBefore, offset)) {
       return false;
     }
 
@@ -312,6 +314,15 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       return true;
     }
     return false;
+  }
+
+  private static boolean inWithItemsParentheses(@NotNull PsiElement statement, int offset) {
+    if (!(statement instanceof PyWithStatement)) {
+      return false;
+    }
+
+    final PsiElement leftParen = PyPsiUtils.getFirstChildOfType(statement, PyTokenTypes.LPAR);
+    return leftParen != null && offset >= leftParen.getTextRange().getEndOffset();
   }
 
   @Override

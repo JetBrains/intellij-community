@@ -105,20 +105,12 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
-  public void testWithStatement() {
-    doTest();
-  }
-
   public void testDecoratedFunction() {
     doTest();
   }
 
   public void testTryExceptAs() {   // PY-293
     doTest();
-  }
-
-  public void testWithStatement26() {
-    doTest(LanguageLevel.PYTHON26);
   }
 
   public void testPrintAsFunction26() {
@@ -203,10 +195,6 @@ public class PythonParsingTest extends ParsingTestCase {
 
   public void testFloorDiv() {
     doTest();
-  }
-
-  public void testWithStatement31() {
-    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testLongString() {
@@ -419,10 +407,6 @@ public class PythonParsingTest extends ParsingTestCase {
 
   public void testIfInList() {  // PY-9561
     doTest();
-  }
-
-  public void testWithMissingID() {  // PY-9853
-    doTest(LanguageLevel.PYTHON27);
   }
 
   public void testOverIndentedComment() {  // PY-1909
@@ -1196,6 +1180,51 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.getLatest());
   }
 
+  // PY-42200
+  public void testWithStatementParenthesizedWithItems() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-43505
+  public void testWithStatementMultipleWithItemsWithoutParentheses() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-42200
+  public void testWithStatementWithItemsOwnParentheses() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-42200
+  public void testWithStatementContextExpressionStartsWithParenthesis() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  public void testWithStatementRecoveryDanglingComma() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  public void testWithStatementRecoveryIncompleteParentheses() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  public void testWithStatementRecoveryMissingColon() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  public void testWithStatementRecoveryEmptyParentheses() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-9853
+  public void testWithStatementRecoveryMissingAsName() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  public void testWithStatementRecoveryNoWithItems() {
+    doTest(LanguageLevel.getLatest());
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }
@@ -1227,6 +1256,4 @@ public class PythonParsingTest extends ParsingTestCase {
       functionToCheck.getStatementList(); //To make sure each function has statement list (does not throw exception)
     }
   }
-  
-  
 }
