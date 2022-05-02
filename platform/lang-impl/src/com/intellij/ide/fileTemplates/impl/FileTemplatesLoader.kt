@@ -302,7 +302,7 @@ private fun loadDefaultsFromDirectory(root: URL, result: FileTemplateLoadResult,
 }
 
 private fun urlToPath(root: URL): Path {
-  var path = root.path
+  var path = root.toURI().path
   if (SystemInfoRt.isWindows && path.startsWith("/")) {
     // trim leading slashes before drive letter
     val position = path.indexOf(':')
