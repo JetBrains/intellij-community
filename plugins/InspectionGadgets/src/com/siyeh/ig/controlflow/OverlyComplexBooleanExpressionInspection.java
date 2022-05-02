@@ -18,6 +18,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -32,14 +33,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class OverlyComplexBooleanExpressionInspection extends BaseInspection {
-  private static final Set<IElementType> s_booleanOperators = new HashSet<>(5);
-  static {
-    s_booleanOperators.add(JavaTokenType.ANDAND);
-    s_booleanOperators.add(JavaTokenType.OROR);
-    s_booleanOperators.add(JavaTokenType.XOR);
-    s_booleanOperators.add(JavaTokenType.AND);
-    s_booleanOperators.add(JavaTokenType.OR);
-  }
+  private static final TokenSet s_booleanOperators =
+    TokenSet.create(JavaTokenType.ANDAND, JavaTokenType.OROR, JavaTokenType.XOR, JavaTokenType.AND, JavaTokenType.OR);
 
   /**
    * @noinspection PublicField

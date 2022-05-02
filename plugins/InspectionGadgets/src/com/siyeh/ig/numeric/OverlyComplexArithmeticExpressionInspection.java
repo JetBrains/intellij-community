@@ -17,7 +17,7 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,21 +28,12 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.HashSet;
-import java.util.Set;
 
 public class OverlyComplexArithmeticExpressionInspection extends BaseInspection {
 
-  private static final Set<IElementType> arithmeticTokens = new HashSet<>(5);
+  private static final TokenSet arithmeticTokens =
+    TokenSet.create(JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.ASTERISK, JavaTokenType.DIV, JavaTokenType.PERC);
   private static final int TERM_LIMIT = 6;
-
-  static {
-    arithmeticTokens.add(JavaTokenType.PLUS);
-    arithmeticTokens.add(JavaTokenType.MINUS);
-    arithmeticTokens.add(JavaTokenType.ASTERISK);
-    arithmeticTokens.add(JavaTokenType.DIV);
-    arithmeticTokens.add(JavaTokenType.PERC);
-  }
 
   /**
    * @noinspection PublicField

@@ -38,7 +38,7 @@ import java.util.function.Predicate;
 public class JShellParser extends JavaParser {
   public static final JShellParser INSTANCE = new JShellParser();
 
-  private static final Set<IElementType> TOP_LEVEL_DECLARATIONS = ContainerUtil.set(
+  private static final TokenSet TOP_LEVEL_DECLARATIONS = TokenSet.create(
     JavaElementType.FIELD, JavaElementType.METHOD, JavaElementType.CLASS
   );
   private static final Predicate<IElementType> IMPORT_PARSED_CONDITION = tokenType -> JavaElementType.IMPORT_STATEMENT.equals(tokenType);

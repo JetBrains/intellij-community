@@ -17,33 +17,30 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 public final class ComparisonUtils {
 
   private ComparisonUtils() {}
 
-  private static final Set<IElementType> s_comparisonTokens = new HashSet<>(6);
+  private static final @NotNull TokenSet s_comparisonTokens = TokenSet.create(JavaTokenType.EQEQ,
+                                                                              JavaTokenType.NE,
+                                                                              JavaTokenType.GT,
+                                                                              JavaTokenType.LT,
+                                                                              JavaTokenType.GE,
+                                                                              JavaTokenType.LE);
 
   private static final Map<IElementType, String> s_swappedComparisons = new HashMap<>(6);
 
   private static final Map<IElementType, String> s_invertedComparisons = new HashMap<>(6);
 
   static {
-    s_comparisonTokens.add(JavaTokenType.EQEQ);
-    s_comparisonTokens.add(JavaTokenType.NE);
-    s_comparisonTokens.add(JavaTokenType.GT);
-    s_comparisonTokens.add(JavaTokenType.LT);
-    s_comparisonTokens.add(JavaTokenType.GE);
-    s_comparisonTokens.add(JavaTokenType.LE);
-
     s_swappedComparisons.put(JavaTokenType.EQEQ, "==");
     s_swappedComparisons.put(JavaTokenType.NE, "!=");
     s_swappedComparisons.put(JavaTokenType.GT, "<");

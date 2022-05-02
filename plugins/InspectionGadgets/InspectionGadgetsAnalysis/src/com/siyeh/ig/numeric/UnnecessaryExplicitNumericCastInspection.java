@@ -6,6 +6,7 @@ import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -14,13 +15,11 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
 /**
  * @author Bas Leijdekkers
  */
 public final class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
-  private static final Set<IElementType> binaryPromotionOperators = Set.of(
+  private static final TokenSet binaryPromotionOperators = TokenSet.create(
     JavaTokenType.ASTERISK,
     JavaTokenType.DIV,
     JavaTokenType.PERC,
