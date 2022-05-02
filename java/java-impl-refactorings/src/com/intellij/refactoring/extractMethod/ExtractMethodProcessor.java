@@ -2114,7 +2114,8 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  protected @NlsContexts.DialogMessage String buildMultipleOutputMessageError(PsiType expressionType) {
+  @NotNull
+  protected @NlsContexts.DialogMessage String buildMultipleOutputMessageError(@NotNull PsiType expressionType) {
     @Nls
     StringBuilder buffer = new StringBuilder();
     buffer.append(RefactoringBundle.getCannotRefactorMessage(
