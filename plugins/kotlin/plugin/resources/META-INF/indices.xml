@@ -59,5 +59,13 @@
             serviceInterface="org.jetbrains.kotlin.psi.stubs.elements.StubIndexService"
             serviceImplementation="org.jetbrains.kotlin.idea.stubindex.IdeStubIndexService"/>
 
+    <globalIndexFilter implementation="org.jetbrains.kotlin.idea.stubindex.KotlinNonSourceRootIndexFilter"/>
+
+    <registryKey
+            key="kotlin.index.non.source.roots"
+            description="Index Kotlin files outside of source roots"
+            defaultValue="true"
+            restartRequired="true"/>
+
   </extensions>
 </idea-plugin>

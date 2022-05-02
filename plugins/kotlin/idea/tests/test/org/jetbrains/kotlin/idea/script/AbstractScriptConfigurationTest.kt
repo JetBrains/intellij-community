@@ -26,14 +26,11 @@ import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingUtil
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationTest.Companion.useDefaultTemplate
-import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
-import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.projectStructure.getModuleDir
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
-import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TestJdkKind
 import org.jetbrains.kotlin.test.util.addDependency
 import org.jetbrains.kotlin.test.util.projectLibrary
@@ -123,28 +120,34 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
                 module.addDependency(
                     projectLibrary(
                         "script-template-library",
-                        classesRoot = VfsUtil.findFileByIoFile(environment["template-classes"] as File, true)
+                        classesRoot = environment.toVirtualFile("template-classes")
                     )
                 )
             }
         }
 
         if (configureConflictingModule in environment) {
-            val sharedLib = VfsUtil.findFileByIoFile(environment["lib-classes"] as File, true)!!
+            val sharedLib = environment.toVirtualFile("lib-classes")
+            val sharedLibSources = environment.toVirtualFile("lib-source")
             if (module == null) {
                 // Force create module if it doesn't exist
                 myModule = createTestModuleByName("mainModule")
             }
-            module.addDependency(projectLibrary("sharedLib", classesRoot = sharedLib))
+            module.addDependency(projectLibrary("sharedLib", classesRoot = sharedLib, sourcesRoot = sharedLibSources))
         }
 
-        if (module != null) {
-            ModuleRootModificationUtil.updateModel(module) { model ->
+        module?.let {
+            ModuleRootModificationUtil.updateModel(it) { model ->
                 model.sdk = sdk
             }
         }
 
         return createFileAndSyncDependencies(mainScriptFile)
+    }
+
+    private fun Environment.toVirtualFile(name: String): VirtualFile {
+        val value = this[name] as? File ?: error("no file value for '$name'")
+        return VfsUtil.findFileByIoFile(value, true) ?: error("unable to look up a virtual file for $name: $value")
     }
 
     private val oldScripClasspath: String? = System.getProperty("kotlin.script.classpath")

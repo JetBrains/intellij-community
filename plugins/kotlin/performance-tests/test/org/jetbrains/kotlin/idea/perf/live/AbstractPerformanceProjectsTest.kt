@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
@@ -21,7 +20,6 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.testFramework.Stats
 import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.WARM_UP
@@ -33,6 +31,7 @@ import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import org.jetbrains.kotlin.idea.performance.tests.utils.project.*
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
+import org.jetbrains.kotlin.idea.test.waitIndexingComplete
 import org.jetbrains.kotlin.idea.testFramework.*
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.openFixture
 import org.jetbrains.kotlin.test.KotlinRoot
@@ -217,11 +216,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
 
         logMessage { "project $name is ${if (project.isInitialized) "initialized" else "not initialized"}" }
 
-        with(DumbService.getInstance(project)) {
-            queueTask(UnindexedFilesUpdater(project))
-            completeJustSubmittedTasks()
-        }
-        dispatchAllInvocationEvents()
+        project.waitIndexingComplete("index project")
 
         Fixture.enableAnnotatorsAndLoadDefinitions(project)
 
