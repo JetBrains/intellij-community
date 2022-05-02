@@ -986,6 +986,7 @@ idea.fatal.error.notification=disabled
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
+  @SuppressWarnings(['GroovyAccessibility', 'GrUnresolvedAccess'])
   private void doBuildUpdaterJar(String artifactName) {
     String updaterModule = "intellij.platform.updater"
     List<File> libraryFiles = JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(updaterModule))

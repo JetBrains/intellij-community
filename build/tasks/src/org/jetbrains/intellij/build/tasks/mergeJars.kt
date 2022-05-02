@@ -128,6 +128,7 @@ fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false,
   writeNewFile(targetFile) { outChannel ->
     ZipFileWriter(outChannel, if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null).use { zipCreator ->
       val uniqueNames = HashSet<String>()
+
       for (source in sources) {
         val positionBefore = outChannel.position()
         when (source) {
@@ -145,6 +146,7 @@ fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false,
             archiver.setRootDir(normalizedDir, "")
             compressDir(normalizedDir, archiver, excludes = source.excludes.takeIf { it.isNotEmpty() })
           }
+
           is InMemoryContentSource -> {
             if (!uniqueNames.add(source.relativePath)) {
               throw IllegalStateException("in-memory source must always be first " +
@@ -156,6 +158,7 @@ fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false,
               it.put(source.data)
             }
           }
+
           is ZipSource -> {
             val sourceFile = source.file
             val requiresMavenFiles = targetFile.fileName.toString().startsWith("junixsocket-")
@@ -238,8 +241,8 @@ private fun checkName(name: String,
 private val excludedFromMergeLibs = java.util.Set.of(
   "sqlite", "async-profiler",
   "dexlib2", // android-only lib
-  "intellij-test-discovery", // used as agent
-  "winp", "junixsocket-core", "pty4j", "grpc-netty-shaded", // contains native library
+  "intellij-test-discovery", // used as an agent
+  "winp", "junixsocket-core", "pty4j", "grpc-netty-shaded", // these contain a native library
   "protobuf", // https://youtrack.jetbrains.com/issue/IDEA-268753
 )
 

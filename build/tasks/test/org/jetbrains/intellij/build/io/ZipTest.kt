@@ -319,7 +319,7 @@ class ZipTest {
     }
   }
 
-  // check both IKV- and non-IKV varians of immutable zip file
+  // check both IKV- and non-IKV variants of immutable zip file
   private fun checkZip(file: Path, checker: (ZipFile) -> Unit) {
     HashMapZipFile.load(file).use { zipFile ->
       checker(zipFile)
