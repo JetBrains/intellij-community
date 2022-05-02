@@ -24,7 +24,7 @@ import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addMetricI
 
 @NonNls
 public class JavaRefactoringUsageCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("java.refactoring.settings", 5);
+  private static final EventLogGroup GROUP = new EventLogGroup("java.refactoring.settings", 6);
   private static final VarargEventId RENAME_SEARCH_IN_COMMENTS_FOR_FIELD =
     GROUP.registerVarargEvent("rename.search.in.comments.for.field", EventFields.Enabled);
   private static final VarargEventId RENAME_SEARCH_IN_COMMENTS_FOR_METHOD =
