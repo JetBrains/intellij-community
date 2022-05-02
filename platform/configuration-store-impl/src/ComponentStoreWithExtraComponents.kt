@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.AppUIExecutor
@@ -101,9 +101,11 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
         continue
       }
 
-      val storage = (storageManager as StateStorageManagerImpl).getOrCreateStorage(bean.file ?: continue, RoamingType.DISABLED)
-      for (componentName in bean.components) {
-        session.getProducer(storage)?.setState(null, componentName, null)
+      val storage = (storageManager as? StateStorageManagerImpl)?.getOrCreateStorage(bean.file ?: continue, RoamingType.DISABLED)
+      if (storage != null) {
+        for (componentName in bean.components) {
+          session.getProducer(storage)?.setState(null, componentName, null)
+        }
       }
     }
   }

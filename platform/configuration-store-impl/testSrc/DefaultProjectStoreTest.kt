@@ -2,7 +2,10 @@
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -14,6 +17,7 @@ import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.rules.checkDefaultProjectAsTemplate
 import com.intellij.testFramework.use
 import com.intellij.util.io.getDirectoryTree
+import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -50,6 +54,26 @@ internal class DefaultProjectStoreTest {
       project.use {
         checkTask(project, true)
       }
+    }
+  }
+
+  @Test
+  fun `save default project configuration changes`() {
+    runBlocking {
+      val defaultTestComponent = TestComponentCustom()
+      val defaultProject = ProjectManager.getInstance().defaultProject
+      val defaultStateStore = defaultProject.service<IComponentStore>()
+      defaultStateStore.initComponent(defaultTestComponent, null, null)
+      saveSettings(ApplicationManager.getApplication())
+      assertThat(defaultTestComponent.saved).isTrue
+    }
+  }
+
+  @Suppress("DEPRECATION")
+  private class TestComponentCustom : com.intellij.openapi.components.SettingsSavingComponent {
+    var saved = false
+    override fun save() {
+      saved = true
     }
   }
 
