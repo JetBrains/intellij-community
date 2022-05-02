@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.diagnostic.ITNReporter;
 import com.intellij.icons.AllIcons;
+import com.intellij.notification.impl.NotificationGroupEP;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Iconable;
@@ -41,6 +42,7 @@ public class PluginConfigReferenceTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP.class))
       .resolveSibling("intellij.platform.resources").toString());
     moduleBuilder.addLibrary("ide-core", PathUtil.getJarPathForClass(Configurable.class));
+    moduleBuilder.addLibrary("ide-core-impl", PathUtil.getJarPathForClass(NotificationGroupEP.class));
     moduleBuilder.addLibrary("editor-ui-api", PathUtil.getJarPathForClass(AdvancedSettings.class));
   }
 
