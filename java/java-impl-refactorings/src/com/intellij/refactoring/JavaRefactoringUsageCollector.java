@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfDiffers;
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addMetricIfDiffers;
@@ -140,9 +141,9 @@ public class JavaRefactoringUsageCollector extends ApplicationUsagesCollector {
                        s -> getReplaceGettersOption(settings.INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS),
                        javadoc -> INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS.metric(javadoc));
 
-    addJavadoc(result, settings, defaultSettings, EXTRACT_INTERFACE_JAVADOC, settings.EXTRACT_INTERFACE_JAVADOC);
-    addJavadoc(result, settings, defaultSettings, EXTRACT_SUPERCLASS_JAVADOC, settings.EXTRACT_SUPERCLASS_JAVADOC);
-    addJavadoc(result, settings, defaultSettings, PULL_UP_MEMBERS_JAVADOC, settings.PULL_UP_MEMBERS_JAVADOC);
+    addJavadoc(result, settings, defaultSettings, EXTRACT_INTERFACE_JAVADOC, s -> s.EXTRACT_INTERFACE_JAVADOC);
+    addJavadoc(result, settings, defaultSettings, EXTRACT_SUPERCLASS_JAVADOC, s -> s.EXTRACT_SUPERCLASS_JAVADOC);
+    addJavadoc(result, settings, defaultSettings, PULL_UP_MEMBERS_JAVADOC, s -> s.PULL_UP_MEMBERS_JAVADOC);
 
     addBoolIfDiffers(result, settings, defaultSettings, s -> s.INTRODUCE_PARAMETER_DELETE_LOCAL_VARIABLE, INTRODUCE_PARAMETER_DELETE_LOCAL);
     addBoolIfDiffers(result, settings, defaultSettings, s -> s.INTRODUCE_PARAMETER_USE_INITIALIZER, INTRODUCE_PARAMETER_USE_INITIALIZER);
@@ -175,9 +176,10 @@ public class JavaRefactoringUsageCollector extends ApplicationUsagesCollector {
   private static void addJavadoc(Set<MetricEvent> result,
                                  JavaRefactoringSettings settings,
                                  JavaRefactoringSettings defaultSettings,
-                                 VarargEventId eventId, int javadocOption) {
+                                 VarargEventId eventId, 
+                                 Function<JavaRefactoringSettings, Integer> javadocOption) {
     addMetricIfDiffers(result, settings, defaultSettings,
-                       s -> getJavadocOption(javadocOption),
+                       s -> getJavadocOption(javadocOption.apply(s)),
                        javadoc -> eventId.metric(JAVADOC.with(javadoc)));
   }
 
