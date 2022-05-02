@@ -124,7 +124,8 @@ final class KotlinPluginBuilder {
     "kotlinc.kotlin-scripting-compiler-impl",
     "kotlinc.kotlin-scripting-common",
     "kotlinc.kotlin-scripting-jvm",
-    "kotlinc.kotlin-gradle-statistics"
+    "kotlinc.kotlin-gradle-statistics",
+    "kotlin-gradle-plugin-idea"
   )
 
   private static final List<String> COMPILER_PLUGINS = List.of(
