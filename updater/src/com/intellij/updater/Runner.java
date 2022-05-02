@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.*;
@@ -614,7 +614,7 @@ public class Runner {
   }
 
   private static String resolveJarFile() {
-    URL url = Runner.class.getResource("");
+    URL url = Runner.class.getResource(Runner.class.getSimpleName() + ".class");
     if (url == null) throw new IllegalArgumentException("Cannot resolve JAR file path");
     if (!"jar".equals(url.getProtocol())) throw new IllegalArgumentException("Patch file is not a JAR file");
 
