@@ -401,6 +401,10 @@ public final class ExperimentalUI {
     paths.put("actions/inlayRenameInNoCodeFilesActive.svg", "expui/editor/inlayRenameInNoCodeFilesActive.svg");
     paths.put("actions/inlayGlobe.svg", "expui/editor/inlayGlobe.svg");
     paths.put("actions/gear.svg", "expui/editor/inlaySettings.svg");
+    paths.put("actions/intentionBulb.svg", "expui/editor/intentionBulb.svg");
+    paths.put("actions/intentionBulbGrey.svg", "expui/editor/intentionBulbGrey.svg");
+    paths.put("actions/quickfixBulb.svg", "expui/editor/quickfixBulb.svg");
+    paths.put("actions/quickfixOffBulb.svg", "expui/editor/quickfixOffBulb.svg");
 
     return new IconPathPatcher() {
       @Override
