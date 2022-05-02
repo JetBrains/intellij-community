@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -13,7 +16,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -24,15 +26,12 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
 import junit.framework.TestSuite;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public abstract class EmmetAbbreviationTestSuite extends TestSuite {
@@ -43,18 +42,35 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
     EmmetOptions.getInstance().loadState(new EmmetOptions());
   }
 
-  protected void addTestFromJson(String filePath, String... extensions) throws IOException, JSONException {
-    JSONObject jsonObject = new JSONObject(FileUtil.loadFile(new File(filePath)));
-    Iterator iterator = jsonObject.keys();
-    while (iterator.hasNext()) {
-      String key = (String)iterator.next();
+  protected void addTestFromJson(String filePath, String... extensions) throws IOException {
+    JsonFactory factory = JsonFactory.builder().build();
+    JsonParser parser = factory.createParser(new File(filePath));
+    if (parser.nextToken() != JsonToken.START_OBJECT) {
+      throw new IOException("Unexpected JSON format");
+    }
+    while (parser.nextToken() != JsonToken.END_OBJECT) {
+      String key = parser.getText();
+      parser.nextToken();
+      String expected = parser.getText();
       for (String source : StringUtil.split(key, "|")) {
-        String expected = jsonObject.getString(key);
         // replace ${1:hello} with hello
         expected = expected.replaceAll("\\$\\{\\d(:([^}]+))?}", "$2");
         addTest(source, expected, extensions);
       }
     }
+    /*
+      JsonObject jsonObject = new GsonBuilder().setLenient().create()
+        .fromJson(FileUtil.loadFile(), JsonObject.class);
+    for (String key : jsonObject.keySet()) {
+      for (String source : StringUtil.split(key, "|")) {
+        String expected = jsonObject.get(key).getAsString();
+        // replace ${1:hello} with hello
+        expected = expected.replaceAll("\\$\\{\\d(:([^}]+))?}", "$2");
+        addTest(source, expected, extensions);
+      }
+    }
+
+     */
   }
 
   protected void addTest(String source, String expected, String... extensions) {

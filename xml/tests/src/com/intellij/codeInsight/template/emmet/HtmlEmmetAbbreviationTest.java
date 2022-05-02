@@ -18,7 +18,6 @@ import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import junit.framework.Test;
-import org.codehaus.jettison.json.JSONException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +32,7 @@ import java.io.IOException;
  */
 public class HtmlEmmetAbbreviationTest extends EmmetAbbreviationTestSuite {
 
-  public HtmlEmmetAbbreviationTest() throws IOException, JSONException {
+  public HtmlEmmetAbbreviationTest() throws IOException {
     addHtmlAbbreviationTests();
     addPlusOperatorTests();
     addGreaterThanOperatorTests();
@@ -69,14 +68,14 @@ public class HtmlEmmetAbbreviationTest extends EmmetAbbreviationTestSuite {
     CodeInsightTestUtil.addTemplate(al2, project);
   }
 
-  public static Test suite() throws IOException, JSONException {
+  public static Test suite() throws IOException {
     return new HtmlEmmetAbbreviationTest();
   }
 
   /**
    * Testing all abbreviations from https://github.com/emmetio/emmet/blob/master/snippets.json
    */
-  private void addHtmlAbbreviationTests() throws IOException, JSONException {
+  private void addHtmlAbbreviationTests() throws IOException {
     addTestFromJson(getTestDataPath() + "/html.abbreviation.json", "html");
   }
 

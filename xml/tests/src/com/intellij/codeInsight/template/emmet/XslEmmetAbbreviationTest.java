@@ -4,26 +4,25 @@ package com.intellij.codeInsight.template.emmet;
 import com.google.common.base.Joiner;
 import com.intellij.codeInsight.XmlTestUtil;
 import junit.framework.Test;
-import org.codehaus.jettison.json.JSONException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 
 public class XslEmmetAbbreviationTest extends EmmetAbbreviationTestSuite {
-  public XslEmmetAbbreviationTest() throws IOException, JSONException {
+  public XslEmmetAbbreviationTest() throws IOException {
     addXslAbbreviationTests();
     addXslTests();
   }
 
-  public static Test suite() throws IOException, JSONException {
+  public static Test suite() throws IOException {
     return new XslEmmetAbbreviationTest();
   }
 
   /**
    * Testing all abbreviations from https://github.com/emmetio/emmet/blob/master/snippets.json
    */
-  public void addXslAbbreviationTests() throws IOException, JSONException {
+  public void addXslAbbreviationTests() throws IOException {
     addTestFromJson(getTestDataPath() + "/xsl.abbreviation.json", "xsl");
   }
 
