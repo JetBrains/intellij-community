@@ -127,7 +127,7 @@
 
     <search.topHitProvider implementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptionsTopHitProvider"/>
 
-    <psi.classFileDecompiler implementation="org.jetbrains.kotlin.idea.decompiler.KotlinIDEClassFileDecompiler"/>
+    <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinClassFileDecompiler"/>
     <psi.classFileDecompiler implementation="org.jetbrains.kotlin.idea.decompiler.js.KotlinJavaScriptMetaFileDecompiler"/>
     <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInDecompiler"/>
 
