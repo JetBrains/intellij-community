@@ -47,9 +47,9 @@ private fun <T> ensureCurrentJobInner(allowOrphan: Boolean, action: (Job) -> T):
   if (currentJob != null) {
     return action(currentJob)
   }
-  //if (!allowOrphan) {
-  //  LOG.error("There is no ProgressIndicator or Job in this thread, the current job is not cancellable.")
-  //}
+  if (!allowOrphan) {
+    LOG.error("There is no ProgressIndicator or Job in this thread, the current job is not cancellable.")
+  }
   val orphanJob = Job(parent = null)
   return executeWithJobAndCompleteIt(orphanJob) {
     action(orphanJob)
