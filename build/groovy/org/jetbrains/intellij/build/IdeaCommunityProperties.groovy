@@ -47,7 +47,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       "intellij.platform.externalSystem.testFramework",
       "intellij.maven.testFramework"
     ]
-    mavenArtifacts.squashedModules = [
+    mavenArtifacts.squashedModules += [
       "intellij.platform.util.base",
       "intellij.platform.util.zip",
     ]
