@@ -126,7 +126,13 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
 
     val dropPoint = screenPoint.location.also {
       SwingUtilities.convertPointFromScreen(it, this)
-      it.y = max(it.y, 0)
+      // If the major axis of the drop point is not within the bounds of a stripe, the drop highlight isn't drawn. This isn't a problem for
+      // the old UI (x is always valid for full width horizontal stripe, etc.), but it is for the new UI's TOP and BOTTOM stripes, which are
+      // treated as vertical, and are not full height. Coerce the drop point to be within the stripe's bounds' major axis. Take into account
+      // hidden and empty stripes. (And remember that height is the number of pixels, so 0 <= y < h)
+      if (isNewStripes) {
+        it.y = if (height > 0) it.y.coerceIn(0, height - 1) else max(it.y, 0)
+      }
     }
     dropRectangle = if (isNewStripes) Rectangle(dropPoint, button.preferredSize) else Rectangle(dropPoint, buttonImage.size)
 

@@ -59,8 +59,4 @@ internal class ToolWindowRightToolbar(paneId: String) : ToolWindowToolbar() {
   }
 
   override fun getButtonFor(toolWindowId: String): StripeButtonManager? = rightStripe.getButtons().find { it.id == toolWindowId }
-
-  companion object {
-    val SHADOW_WIDTH = JBUI.scale(40)
-  }
 }

@@ -537,7 +537,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
         final ToolWindowButtonManager buttonManager;
         if (ExperimentalUI.isNewUI()) {
-          buttonManager = new ToolWindowPaneNewButtonManager(paneId);
+          buttonManager = new ToolWindowPaneNewButtonManager(paneId, false);
           buttonManager.add(myDockContentUiContainer);
           buttonManager.initMoreButton();
         }

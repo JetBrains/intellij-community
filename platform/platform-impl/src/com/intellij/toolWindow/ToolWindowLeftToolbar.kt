@@ -14,7 +14,7 @@ import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class ToolWindowLeftToolbar(paneId: String) : ToolWindowToolbar() {
+internal class ToolWindowLeftToolbar(paneId: String, private val isPrimary: Boolean) : ToolWindowToolbar() {
   private class StripeV2(private val toolBar: ToolWindowLeftToolbar,
                          paneId: String,
                          override val anchor: ToolWindowAnchor) : AbstractDroppableStripe(paneId, VerticalFlowLayout(0, 0)) {
@@ -60,25 +60,50 @@ internal class ToolWindowLeftToolbar(paneId: String) : ToolWindowToolbar() {
   }
 
   fun initMoreButton() {
-    topLeftStripe.parent?.add(moreButton, BorderLayout.CENTER)
+    if (isPrimary) topLeftStripe.parent?.add(moreButton, BorderLayout.CENTER)
   }
 
   override fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? {
-    if (!isVisible || !moreButton.isVisible) {
+    if (!isVisible) {
       return null
     }
 
-    val moreButtonRect = Rectangle(moreButton.locationOnScreen, moreButton.size)
-    return if (Rectangle(topLeftStripe.locationOnScreen, topLeftStripe.size).contains(screenPoint)
-               || moreButtonRect.contains(screenPoint)) {
-      topLeftStripe
-    }
-    else if (!moreButtonRect.contains(screenPoint) &&
-             Rectangle(locationOnScreen, size).also { JBInsets.removeFrom(it, insets) }.contains(screenPoint)) {
-      bottomLeftStripe
+    if (isPrimary) {
+      // We have a more button, so the stripe is always visible, and always has a size
+      val moreButtonRect = Rectangle(moreButton.locationOnScreen, moreButton.size)
+      return if (Rectangle(topLeftStripe.locationOnScreen, topLeftStripe.size).contains(screenPoint)
+                 || moreButtonRect.contains(screenPoint)) {
+        topLeftStripe
+      }
+      else if (!moreButtonRect.contains(screenPoint) &&
+               Rectangle(locationOnScreen, size).also { JBInsets.removeFrom(it, insets) }.contains(screenPoint)) {
+        bottomLeftStripe
+      }
+      else {
+        null
+      }
     }
     else {
-      null
+      // Note that this has different behaviour to when we have a more button. In that case, we treat the more button as a separator.
+      // Anything above the separator is part of the top/left stripe, anything below is part of the bottom/left stripe. But without the more
+      // button, we don't have that separator, so it feels more natural to try and dock to the top/left by default. We also give the
+      // bottom/left stripe a bit of extra space to make it easier to drop onto the top position
+      val topLeftRect = Rectangle(topLeftStripe.locationOnScreen, topLeftStripe.size).also {
+        if (it.width == 0) it.width = SHADOW_WIDTH
+        it.height = height - maxOf(SHADOW_WIDTH, bottomLeftStripe.height + SHADOW_WIDTH)
+      }
+      return if (topLeftRect.contains(screenPoint)) {
+        topLeftStripe
+      }
+      else if (Rectangle(locationOnScreen, size).also {
+          it.y -= SHADOW_WIDTH
+          it.height += SHADOW_WIDTH
+        }.contains(screenPoint)) {
+        bottomLeftStripe
+      }
+      else {
+        null
+      }
     }
   }
 

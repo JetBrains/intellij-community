@@ -58,6 +58,8 @@ internal abstract class ToolWindowToolbar : JPanel() {
   }
 
   companion object {
+    val SHADOW_WIDTH = JBUI.scale(40)
+
     fun updateButtons(panel: JComponent) {
       ComponentUtil.findComponentsOfType(panel, SquareStripeButton::class.java).forEach { it.update() }
       panel.revalidate()

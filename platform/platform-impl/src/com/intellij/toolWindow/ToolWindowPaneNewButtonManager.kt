@@ -13,8 +13,11 @@ import java.awt.Point
 import javax.swing.Icon
 import javax.swing.JComponent
 
-internal class ToolWindowPaneNewButtonManager(paneId: String) : ToolWindowButtonManager {
-  private val left = ToolWindowLeftToolbar(paneId)
+internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean) : ToolWindowButtonManager {
+
+  constructor(paneId: String) : this(paneId, true)
+
+  private val left = ToolWindowLeftToolbar(paneId, isPrimary)
   private val right = ToolWindowRightToolbar(paneId)
 
   override val isNewUi: Boolean
