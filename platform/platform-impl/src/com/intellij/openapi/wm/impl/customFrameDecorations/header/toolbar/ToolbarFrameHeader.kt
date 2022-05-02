@@ -2,15 +2,15 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.FixedSizeButton
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
@@ -25,14 +25,16 @@ import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.ui.IconManager
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.hover.addHoverAndPressStateListener
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
 import com.jetbrains.CustomWindowDecoration.MENU_BAR
 import java.awt.*
 import java.awt.GridBagConstraints.*
-import javax.swing.*
+import javax.swing.Box
+import javax.swing.JComponent
+import javax.swing.JFrame
+import javax.swing.JPanel
 import kotlin.math.roundToInt
 
 private enum class ShowMode {
@@ -41,8 +43,8 @@ private enum class ShowMode {
 
 internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
   private val myMenuBar = ideMenu
-  private val myMenuButton = createMenuButton()
-  private val menuAction = ShowMenuAction(myMenuButton)
+  private val menuAction = ShowMenuAction()
+  private val myMenuButton = createMenuButton(menuAction)
   private var myToolbar : MainToolbar? = null
   private val myToolbarPlaceholder = NonOpaquePanel()
   private val myHeaderContent = createHeaderContent()
@@ -165,48 +167,32 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     layout.show(myHeaderContent, mode.name)
   }
 
-  private fun createMenuButton(): AbstractButton {
-    val button = FixedSizeButton(36)
-    button.icon = IconManager.getInstance().getIcon("expui/general/windowsMenu@20x20.svg", AllIcons::class.java)
+  private fun createMenuButton(action: AnAction): JComponent {
+    return ActionButton(action, PresentationFactory().getPresentation(action),
+                        ActionPlaces.MAIN_MENU_IN_POPUP, Dimension(40, 40))
+      .apply { setLook(HeaderToolbarButtonLook()) }
+  }
 
-    button.isContentAreaFilled = false
-    button.background = CustomFrameDecorations.mainToolbarBackground(true)
-    addHoverAndPressStateListener(button,
-                                  hoveredStateCallback = { cmp, hovered ->
-                                    if (cmp !is AbstractButton) return@addHoverAndPressStateListener
-                                    if (hovered) {
-                                      cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.Icon.hoverBackground"))
-                                      cmp.isContentAreaFilled = true
-                                    }
-                                    else {
-                                      cmp.putClientProperty("JButton.backgroundColor", CustomFrameDecorations.mainToolbarBackground(true))
-                                      cmp.isContentAreaFilled = false
-                                    }
-                                  },
-                                  pressedStateCallback = { cmp, pressed ->
-                                    if (cmp !is JComponent) return@addHoverAndPressStateListener
-                                    if (pressed) {
-                                      cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.Icon.pressedBackground"))
-                                    }
-                                    else {
-                                      cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.Icon.hoverBackground"))
-                                    }
-                                  })
+  private inner class ShowMenuAction : DumbAwareAction() {
 
-    button.addActionListener {
-      DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200)?.let { context ->
-        ActionUtil.invokeAction(menuAction, context, ActionPlaces.MAIN_MENU_IN_POPUP, null, null)
-      }
+    private val icon = IconManager.getInstance().getIcon("expui/general/windowsMenu@20x20.svg", AllIcons::class.java)
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.icon = icon
+      e.presentation.text = IdeBundle.message("main.toolbar.menu.button")
     }
 
-    button.border = JBUI.Borders.empty()
-    button.putClientProperty("JButton.backgroundColor", getHeaderBackground())
-    button.putClientProperty("ActionToolbar.smallVariant", true)
+    override fun actionPerformed(e: AnActionEvent) = createPopup(e.dataContext).showUnderneathOf(myMenuButton)
 
-    button.toolTipText = IdeBundle.message("main.toolbar.menu.button")
-
-    return button
+    private fun createPopup(context: DataContext): JBPopup {
+      val mainMenu = ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
+      return JBPopupFactory.getInstance()
+        .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, ActionPlaces.MAIN_MENU_IN_POPUP)
+        .apply { setShowSubmenuOnHover(true) }
+        .apply { setMinimumSize(Dimension(CustomFrameDecorations.menuPopupMinWidth(), 0)) }
+    }
   }
+
 }
 
 private class MainMenuMnemonicHandler(val frame: JFrame, val action: AnAction) : Disposable {
@@ -227,17 +213,5 @@ private class MainMenuMnemonicHandler(val frame: JFrame, val action: AnAction) :
   override fun dispose() = unregisterShortcuts()
 }
 
-private class ShowMenuAction(private val menuButton: AbstractButton) : DumbAwareAction() {
-
-  override fun actionPerformed(e: AnActionEvent) = createPopup(e.dataContext).showUnderneathOf(menuButton)
-
-  private fun createPopup(context: DataContext): JBPopup {
-    val mainMenu = ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
-    return JBPopupFactory.getInstance()
-      .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, ActionPlaces.MAIN_MENU_IN_POPUP)
-      .apply { setShowSubmenuOnHover(true) }
-      .apply { setMinimumSize(Dimension(CustomFrameDecorations.menuPopupMinWidth(), 0)) }
-  }
-}
 
 

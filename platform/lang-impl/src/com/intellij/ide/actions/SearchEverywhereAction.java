@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook;
 import com.intellij.openapi.wm.impl.headertoolbar.TitleActionToolbarKt;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.FontUtil;
@@ -75,7 +76,7 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
     button.setBorder(calcBorder(place));
     if (isExperimentalToolbar(place)) {
       TitleActionToolbarKt.scalePresentationIcons(presentation);
-      button.setLook(TitleActionToolbarKt.getExpToolbarButtonLook());
+      button.setLook(new HeaderToolbarButtonLook());
     }
     return button;
   }
