@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("JarBuilder")
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 package org.jetbrains.intellij.build.tasks
@@ -13,6 +13,7 @@ import java.nio.file.PathMatcher
 import java.util.*
 import java.util.concurrent.ForkJoinTask
 import java.util.function.IntConsumer
+import java.util.zip.Deflater
 
 private const val DO_NOT_EXPORT_TO_CONSOLE = "_CES_"
 
@@ -113,7 +114,8 @@ fun buildJars(descriptors: List<Triple<Path, String, List<Source>>>, dryRun: Boo
   })
 }
 
-fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
+@JvmOverloads
+fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false, dryRun: Boolean = false) {
   if (dryRun) {
     for (source in sources) {
       source.sizeConsumer?.accept(0)
@@ -122,9 +124,9 @@ fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
   }
 
   val forbidNativeFiles = targetFile.fileName.toString() == "app.jar"
-  val packageIndexBuilder = PackageIndexBuilder()
+  val packageIndexBuilder = if (!compress) PackageIndexBuilder() else null
   writeNewFile(targetFile) { outChannel ->
-    ZipFileWriter(outChannel).use { zipCreator ->
+    ZipFileWriter(outChannel, if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null).use { zipCreator ->
       val uniqueNames = HashSet<String>()
       for (source in sources) {
         val positionBefore = outChannel.position()
@@ -132,7 +134,7 @@ fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
           is DirSource -> {
             val archiver = ZipArchiver(zipCreator, fileAdded = {
               if (uniqueNames.add(it)) {
-                packageIndexBuilder.addFile(it)
+                packageIndexBuilder?.addFile(it)
                 true
               }
               else {
@@ -149,7 +151,7 @@ fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
                                           "(targetFile=$targetFile, source=${source.relativePath}, sources=${sources.joinToString()})")
             }
 
-            packageIndexBuilder.addFile(source.relativePath)
+            packageIndexBuilder?.addFile(source.relativePath)
             zipCreator.uncompressedData(source.relativePath, source.data.size) {
               it.put(source.data)
             }
@@ -164,7 +166,7 @@ fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
               }
 
               if (checkName(name, uniqueNames, source.excludes, includeManifest = sources.size == 1, requiresMavenFiles = requiresMavenFiles)) {
-                packageIndexBuilder.addFile(name)
+                packageIndexBuilder?.addFile(name)
                 zipCreator.uncompressedData(name, entry.getByteBuffer())
               }
             }
@@ -173,7 +175,8 @@ fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
 
         source.sizeConsumer?.accept((zipCreator.resultStream.getChannelPosition() - positionBefore).toInt())
       }
-      packageIndexBuilder.writePackageIndex(zipCreator)
+
+      packageIndexBuilder?.writePackageIndex(zipCreator)
     }
   }
 }

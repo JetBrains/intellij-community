@@ -189,6 +189,23 @@ class ZipTest {
   }
 
   @Test
+  fun skipIndex(@TempDir tempDir: Path) {
+    val dir = Files.createDirectories(tempDir.resolve("dir"))
+    Files.writeString(dir.resolve("file1"), "1")
+    Files.writeString(dir.resolve("file2"), "2")
+
+    val archiveFile = tempDir.resolve("archive.zip")
+    buildJar(archiveFile, listOf(DirSource(dir = dir, excludes = emptyList())), compress = true)
+
+    java.util.zip.ZipFile(archiveFile.toString()).use { zipFile ->
+      assertThat(zipFile.entries().asSequence().map { it.name }.toList())
+        .containsExactlyInAnyOrder("file1", "file2")
+    }
+
+    checkZip(archiveFile) { }
+  }
+
+  @Test
   fun `small file`(@TempDir tempDir: Path) {
     val dir = tempDir.resolve("dir")
     val file = dir.resolve("samples/nested_dir/__init__.py")

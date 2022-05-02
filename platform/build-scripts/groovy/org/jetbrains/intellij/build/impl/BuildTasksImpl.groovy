@@ -977,8 +977,7 @@ idea.fatal.error.notification=disabled
     Path updaterJar = buildContext.paths.artifactDir.resolve(artifactName)
     JarBuilder.buildJar(
       updaterJar,
-      List.of(updaterModuleSource) + librarySources,
-      false
+      List.of(updaterModuleSource) + librarySources
     )
 
     buildContext.notifyArtifactBuilt(updaterJar)
