@@ -13,9 +13,9 @@ import java.awt.Point
 import javax.swing.Icon
 import javax.swing.JComponent
 
-internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
-  private val left = ToolWindowLeftToolbar()
-  private val right = ToolWindowRightToolbar()
+internal class ToolWindowPaneNewButtonManager(paneId: String) : ToolWindowButtonManager {
+  private val left = ToolWindowLeftToolbar(paneId)
+  private val right = ToolWindowRightToolbar(paneId)
 
   override val isNewUi: Boolean
     get() = true
@@ -52,7 +52,7 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
   override fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe {
     return when (anchor) {
       ToolWindowAnchor.LEFT, ToolWindowAnchor.BOTTOM -> left.getStripeFor(anchor)
-      ToolWindowAnchor.RIGHT, ToolWindowAnchor.TOP -> right.getStripeFor(anchor)
+      ToolWindowAnchor.RIGHT -> right.getStripeFor(anchor)
       else -> throw IllegalArgumentException("Anchor=$anchor")
     }
   }

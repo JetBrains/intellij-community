@@ -14,9 +14,10 @@ import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class ToolWindowLeftToolbar : ToolWindowToolbar() {
+internal class ToolWindowLeftToolbar(paneId: String) : ToolWindowToolbar() {
   private class StripeV2(private val toolBar: ToolWindowLeftToolbar,
-                         override val anchor: ToolWindowAnchor) : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
+                         paneId: String,
+                         override val anchor: ToolWindowAnchor) : AbstractDroppableStripe(paneId, VerticalFlowLayout(0, 0)) {
     override val isNewStripes: Boolean
       get() = true
 
@@ -33,8 +34,8 @@ internal class ToolWindowLeftToolbar : ToolWindowToolbar() {
     override fun toString() = "StripeNewUi(anchor=$anchor)"
   }
 
-  private val topLeftStripe = StripeV2(this, ToolWindowAnchor.LEFT)
-  private val bottomLeftStripe = StripeV2(this, ToolWindowAnchor.BOTTOM)
+  private val topLeftStripe = StripeV2(this, paneId,  ToolWindowAnchor.LEFT)
+  private val bottomLeftStripe = StripeV2(this, paneId, ToolWindowAnchor.BOTTOM)
 
   val moreButton = MoreSquareStripeButton(this)
 
@@ -68,8 +69,8 @@ internal class ToolWindowLeftToolbar : ToolWindowToolbar() {
     }
 
     val moreButtonRect = Rectangle(moreButton.locationOnScreen, moreButton.size)
-    return if (Rectangle(topLeftStripe.locationOnScreen, topLeftStripe.size).contains(screenPoint) ||
-               topLeftStripe.getButtons().isEmpty() && moreButtonRect.contains(screenPoint)) {
+    return if (Rectangle(topLeftStripe.locationOnScreen, topLeftStripe.size).contains(screenPoint)
+               || moreButtonRect.contains(screenPoint)) {
       topLeftStripe
     }
     else if (!moreButtonRect.contains(screenPoint) &&

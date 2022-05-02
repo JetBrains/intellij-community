@@ -18,11 +18,11 @@ import javax.swing.JComponent
 import javax.swing.JLayeredPane
 import javax.swing.SwingConstants
 
-internal class ToolWindowPaneOldButtonManager : ToolWindowButtonManager {
-  private val leftStripe = Stripe(SwingConstants.LEFT)
-  private val rightStripe = Stripe(SwingConstants.RIGHT)
-  private val bottomStripe = Stripe(SwingConstants.BOTTOM)
-  private val topStripe = Stripe(SwingConstants.TOP)
+internal class ToolWindowPaneOldButtonManager(paneId: String) : ToolWindowButtonManager {
+  private val leftStripe = Stripe(paneId, SwingConstants.LEFT)
+  private val rightStripe = Stripe(paneId, SwingConstants.RIGHT)
+  private val bottomStripe = Stripe(paneId, SwingConstants.BOTTOM)
+  private val topStripe = Stripe(paneId, SwingConstants.TOP)
 
   private val stripes = java.util.List.of(topStripe, leftStripe, bottomStripe, rightStripe)
 

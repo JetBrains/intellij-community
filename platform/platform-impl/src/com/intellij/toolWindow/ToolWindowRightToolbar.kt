@@ -11,8 +11,8 @@ import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JComponent
 
-internal class ToolWindowRightToolbar : ToolWindowToolbar() {
-  private val rightStripe = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
+internal class ToolWindowRightToolbar(paneId: String) : ToolWindowToolbar() {
+  private val rightStripe = object : AbstractDroppableStripe(paneId, VerticalFlowLayout(0, 0)) {
     override val isNewStripes: Boolean
       get() = true
     override val anchor: ToolWindowAnchor

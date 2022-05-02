@@ -135,7 +135,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
     }
   }
 
-  fun initUi(toolWindowPane: ToolWindowPane) {
+  fun initUi() {
     initFuture
       .thenAcceptAsync(
         { ref ->
@@ -143,7 +143,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
           LOG.debug(project) { "create and layout tool windows (project=$it, tasks=${tasks?.joinToString(separator = "\n")}" }
 
           ref.set(null)
-          createAndLayoutToolWindows(manager, tasks ?: return@thenAcceptAsync, toolWindowPane)
+          createAndLayoutToolWindows(manager, tasks ?: return@thenAcceptAsync)
 
           while (true) {
             (pendingTasks.poll() ?: break).run()
@@ -171,8 +171,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
 
   // must be executed in EDT
   private fun createAndLayoutToolWindows(manager: ToolWindowManagerImpl,
-                                         tasks: List<RegisterToolWindowTask>,
-                                         toolWindowPane: ToolWindowPane) {
+                                         tasks: List<RegisterToolWindowTask>) {
     @Suppress("TestOnlyProblems")
     manager.setLayoutOnInit(pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout"))
 
@@ -184,6 +183,8 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       val entries = ArrayList<String>(list.size)
       for (task in list) {
         try {
+          val paneId = manager.getLayout().getInfo(task.id)?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+          val toolWindowPane = manager.getToolWindowPane(paneId)
           entries.add(manager.registerToolWindow(task, toolWindowPane.buttonManager).id)
         }
         catch (e: ProcessCanceledException) {
@@ -194,12 +195,14 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
         }
       }
 
-      toolWindowPane.buttonManager.initMoreButton()
-
       project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(entries, manager)
-      toolWindowPane.buttonManager.revalidateNotEmptyStripes()
+
+      manager.getToolWindowPanes().forEach {
+        it.buttonManager.initMoreButton()
+        it.buttonManager.revalidateNotEmptyStripes()
+        it.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, manager.createNotInHierarchyIterable(it.paneId))
+      }
     }
-    toolWindowPane.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, manager.createNotInHierarchyIterable())
     service<ToolWindowManagerImpl.ToolWindowManagerAppLevelHelper>()
 
     registerEpListeners(manager)

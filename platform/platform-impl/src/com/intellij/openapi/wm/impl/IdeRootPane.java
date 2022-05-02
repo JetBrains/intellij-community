@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBarCentralWidget;
+import com.intellij.openapi.wm.WindowInfoKt;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MacToolbarFrameHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MenuFrameHeader;
@@ -77,7 +78,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   private MainFrameCustomHeader myCustomFrameTitlePane;
   private CustomDecorationPath mySelectedEditorFilePath;
-  private final ToolWindowButtonManager toolWindowButtonManager;
 
   protected IdeRootPane(@NotNull JFrame frame, @NotNull IdeFrame frameHelper, @NotNull Disposable parentDisposable) {
     if (SystemInfoRt.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
@@ -137,14 +137,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     updateMainMenuVisibility();
 
-    if (ExperimentalUI.isNewUI()) {
-      toolWindowButtonManager = new ToolWindowPaneNewButtonManager();
-      toolWindowButtonManager.add(myContentPane);
-    }
-    else {
-      toolWindowButtonManager = new ToolWindowPaneOldButtonManager();
-    }
-
     myContentPane.add(createCenterComponent(frame, parentDisposable), BorderLayout.CENTER);
   }
 
@@ -165,7 +157,18 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   protected @NotNull Component createCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
-    toolWindowPane = new ToolWindowPane(frame, parentDisposable, toolWindowButtonManager);
+    String paneId = WindowInfoKt.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID;
+
+    final ToolWindowButtonManager toolWindowButtonManager;
+    if (ExperimentalUI.isNewUI()) {
+      toolWindowButtonManager = new ToolWindowPaneNewButtonManager(paneId);
+      toolWindowButtonManager.add(myContentPane);
+    }
+    else {
+      toolWindowButtonManager = new ToolWindowPaneOldButtonManager(paneId);
+    }
+
+    toolWindowPane = new ToolWindowPane(frame, parentDisposable, paneId, toolWindowButtonManager);
     return toolWindowPane;
   }
 

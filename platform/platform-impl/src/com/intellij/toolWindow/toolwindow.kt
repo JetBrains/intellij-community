@@ -12,6 +12,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ui.EmptyIcon
@@ -85,6 +86,7 @@ data class ToolWindowDescriptor(
   val id: String,
   var order: Int = -1,
 
+  val paneId: String = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID,
   var anchor: ToolWindowAnchor = ToolWindowAnchor.LEFT,
   val isAutoHide: Boolean = false,
   val floatingBounds: List<Int>? = null,

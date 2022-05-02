@@ -34,7 +34,7 @@ internal class LayoutData(
   var dragInsertPosition: Int = 0,
 )
 
-internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : JPanel(layoutManager) {
+internal abstract class AbstractDroppableStripe(val paneId: String, layoutManager: LayoutManager) : JPanel(layoutManager) {
   companion object {
     const val DROP_DISTANCE_SENSITIVITY = 200
 
@@ -165,7 +165,7 @@ internal abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : 
       if (isNewStripes && anchor == ToolWindowAnchor.BOTTOM) {
         order++
       }
-      manager.setSideToolAndAnchor(it.id, anchor, order, !isNewStripes && lastLayoutData.dragToSide)
+      manager.setSideToolAndAnchor(it.id, paneId, anchor, order, !isNewStripes && lastLayoutData.dragToSide)
     }
     manager.invokeLater { resetDrop() }
   }

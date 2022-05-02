@@ -20,7 +20,12 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.toolWindow.ToolWindowButtonManager;
+import com.intellij.toolWindow.ToolWindowPane;
+import com.intellij.toolWindow.ToolWindowPaneNewButtonManager;
+import com.intellij.toolWindow.ToolWindowPaneOldButtonManager;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -525,10 +530,32 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
       myDockContentUiContainer = new JPanel(new BorderLayout());
       myDockContentUiContainer.setOpaque(false);
-      myDockContentUiContainer.add(myContainer.getContainerComponent(), BorderLayout.CENTER);
-      myCenterPanel.add(myDockContentUiContainer, BorderLayout.CENTER);
 
+      final Window frame = getFrame();
+      if (frame instanceof JFrame) {
+        final String paneId = Objects.requireNonNull(getDimensionKey());
+
+        final ToolWindowButtonManager buttonManager;
+        if (ExperimentalUI.isNewUI()) {
+          buttonManager = new ToolWindowPaneNewButtonManager(paneId);
+          buttonManager.add(myDockContentUiContainer);
+          buttonManager.initMoreButton();
+        }
+        else {
+          buttonManager = new ToolWindowPaneOldButtonManager(paneId);
+        }
+
+        var toolWindowPane = new ToolWindowPane((JFrame)frame, this, paneId, buttonManager);
+        toolWindowPane.setDocumentComponent(myContainer.getContainerComponent());
+
+        myDockContentUiContainer.add(toolWindowPane, BorderLayout.CENTER);
+      }
+      else {
+        myDockContentUiContainer.add(myContainer.getContainerComponent(), BorderLayout.CENTER);
+      }
+      myCenterPanel.add(myDockContentUiContainer, BorderLayout.CENTER);
       myUiContainer.add(myCenterPanel, BorderLayout.CENTER);
+
       StatusBar statusBar = getStatusBar();
       if (statusBar != null) {
         myUiContainer.add(statusBar.getComponent(), BorderLayout.SOUTH);

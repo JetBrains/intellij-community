@@ -34,8 +34,9 @@ final class Stripe extends AbstractDroppableStripe implements UISettingsListener
   @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT})
   private final int anchor;
 
-  Stripe(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT}) int anchor) {
-    super(new GridBagLayout());
+  Stripe(@NotNull String paneId,
+         @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT}) int anchor) {
+    super(paneId, new GridBagLayout());
 
     setOpaque(true);
     this.anchor = anchor;
