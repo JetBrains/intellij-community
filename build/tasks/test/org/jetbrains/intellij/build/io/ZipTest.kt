@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -11,6 +11,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.configuration.ConfigurationProvider
 import org.jetbrains.intellij.build.tasks.DirSource
+import org.jetbrains.intellij.build.tasks.ZipSource
 import org.jetbrains.intellij.build.tasks.buildJar
 import org.jetbrains.intellij.build.tasks.dir
 import org.junit.jupiter.api.Assumptions
@@ -113,8 +114,7 @@ class ZipTest {
   fun excludes(@TempDir tempDir: Path) {
     val random = Random(42)
 
-    val dir = tempDir.resolve("dir")
-    Files.createDirectories(dir)
+    val dir = Files.createDirectories(tempDir.resolve("dir"))
     val list = mutableListOf<String>()
     for (i in 0..10) {
       val name = "entry-item${random.nextInt()}-$i"
@@ -163,6 +163,28 @@ class ZipTest {
       assertThat(zipFile.getResource("test-relative-ignore")).isNull()
       assertThat(zipFile.getResource("some/nested/dir/icon-robots.txt")).isNull()
       assertThat(zipFile.getResource("unknown")).isNull()
+    }
+  }
+
+  @Test
+  fun excludesInZipSource(@TempDir tempDir: Path) {
+    val random = Random(42)
+
+    val dir = Files.createDirectories(tempDir.resolve("zip"))
+    Files.write(dir.resolve("zip-included"), random.nextBytes(random.nextInt(128)))
+    Files.write(dir.resolve("zip-excluded"), random.nextBytes(random.nextInt(128)))
+    val zip = tempDir.resolve("test.zip")
+    zip(zip, mapOf(dir to ""), false)
+
+    val archiveFile = tempDir.resolve("archive.zip")
+    buildJar(archiveFile, listOf(
+      ZipSource(file = zip, excludes = listOf(Regex("^zip-excl.*")))
+    ))
+
+    checkZip(archiveFile) { zipFile ->
+      if (zipFile is ImmutableZipFile) {
+        assertThat(zipFile.getOrComputeNames()).containsExactly("zip-included")
+      }
     }
   }
 

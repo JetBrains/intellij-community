@@ -972,7 +972,7 @@ idea.fatal.error.notification=disabled
       .runtimeOnly()
       .libraries
       .collectMany { it.getFiles(JpsOrderRootType.COMPILED) }
-      .collect { File zipFile -> (Source)new ZipSource(zipFile.toPath(), null) }
+      .collect { File zipFile -> (Source)new ZipSource(zipFile.toPath(), [], null) }
 
     Path updaterJar = buildContext.paths.artifactDir.resolve(artifactName)
     JarBuilder.buildJar(

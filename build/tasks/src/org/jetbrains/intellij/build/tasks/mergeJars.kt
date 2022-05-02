@@ -23,7 +23,7 @@ sealed interface Source {
 private val USER_HOME = Path.of(System.getProperty("user.home"))
 private val MAVEN_REPO = USER_HOME.resolve(".m2/repository")
 
-data class ZipSource(val file: Path, override val sizeConsumer: IntConsumer? = null) : Source, Comparable<ZipSource> {
+data class ZipSource(val file: Path, val excludes: List<Regex>, override val sizeConsumer: IntConsumer? = null) : Source, Comparable<ZipSource> {
   override fun compareTo(other: ZipSource) = file.compareTo(other.file)
 
   override fun toString(): String {
@@ -74,7 +74,8 @@ data class InMemoryContentSource(val relativePath: String, val data: ByteArray, 
   }
 }
 
-fun createZipSource(file: Path, sizeConsumer: IntConsumer?): ZipSource = ZipSource(file = file, sizeConsumer = sizeConsumer)
+fun createZipSource(file: Path, sizeConsumer: IntConsumer?): ZipSource =
+  ZipSource(file = file, excludes = emptyList(), sizeConsumer = sizeConsumer)
 
 fun buildJars(descriptors: List<Triple<Path, String, List<Source>>>, dryRun: Boolean) {
   val uniqueFiles = HashMap<Path, List<Source>>()
@@ -162,7 +163,7 @@ fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
                                             "(sourceFile=$sourceFile, targetFile=$targetFile, fileName=${name})")
               }
 
-              if (checkName(name, uniqueNames, includeManifest = sources.size == 1, requiresMavenFiles = requiresMavenFiles)) {
+              if (checkName(name, uniqueNames, source.excludes, includeManifest = sources.size == 1, requiresMavenFiles = requiresMavenFiles)) {
                 packageIndexBuilder.addFile(name)
                 zipCreator.uncompressedData(name, entry.getByteBuffer())
               }
@@ -213,10 +214,11 @@ private val ignoredNames = java.util.Set.copyOf(getIgnoredNames())
 
 private fun checkName(name: String,
                       uniqueNames: MutableSet<String>,
+                      excludes: List<Regex>,
                       includeManifest: Boolean,
                       requiresMavenFiles: Boolean): Boolean {
   return !ignoredNames.contains(name) &&
-         uniqueNames.add(name) &&
+         excludes.none { it.matches(name) } &&
          !name.endsWith(".kotlin_metadata") &&
          (includeManifest || name != "META-INF/MANIFEST.MF") &&
          !name.startsWith("license/") &&
@@ -225,7 +227,8 @@ private fun checkName(name: String,
          !name.startsWith("licenses/") &&
          (requiresMavenFiles || (name != "META-INF/maven" && !name.startsWith("META-INF/maven/"))) &&
          !name.startsWith("META-INF/INDEX.LIST") &&
-         (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA")))
+         (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA"))) &&
+         uniqueNames.add(name)
 }
 
 @Suppress("SpellCheckingInspection")
