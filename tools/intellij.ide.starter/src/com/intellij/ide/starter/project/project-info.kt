@@ -30,7 +30,7 @@ data class ProjectInfo(
   /**
    * relative path inside Image file, where project home is located
    */
-  val testProjectImageRelPath: (Path) -> Path = { it / (testProjectURL?.split("/")?.last()?.split(".")?.first() ?: "") }
+  val testProjectImageRelPath: (Path) -> Path = { it / (testProjectURL?.split("/")?.last()?.split(".zip")?.first() ?: "") }
 ) : ProjectInfoSpec {
   init {
     require(listOfNotNull(testProjectURL, testProjectDir, testProjectImage).size <= 1) {
