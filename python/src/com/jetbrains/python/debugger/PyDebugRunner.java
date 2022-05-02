@@ -606,6 +606,10 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
                                           @NotNull PythonCommandLineState pyState,
                                           @NotNull PythonExecution debuggerScript,
                                           boolean debuggerScriptInServerMode) {
+    if (pyState instanceof PythonScriptCommandLineState && ((PythonScriptCommandLineState)pyState).showCommandLineAfterwards()) {
+      debuggerScript.addParameter("--cmd-line");
+    }
+
     if (pyState.isMultiprocessDebug() && !debuggerScriptInServerMode) {
       //noinspection SpellCheckingInspection
       debuggerScript.addParameter(getMultiprocessDebugParameter());

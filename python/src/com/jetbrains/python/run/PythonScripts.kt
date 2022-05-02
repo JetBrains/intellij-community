@@ -7,6 +7,7 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.Platform
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.LocalPtyOptions
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.*
 import com.intellij.execution.target.TargetEnvironment.TargetPath
@@ -34,7 +35,8 @@ private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
 
 fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironment,
                                              sdk: Sdk?,
-                                             interpreterParameters: List<String>): TargetedCommandLine {
+                                             interpreterParameters: List<String>,
+                                             isUsePty: Boolean = false): TargetedCommandLine {
   val commandLineBuilder = TargetedCommandLineBuilder(targetEnvironment.request)
   workingDir?.apply(targetEnvironment)?.let { commandLineBuilder.setWorkingDirectory(it) }
   charset?.let { commandLineBuilder.setCharset(it) }
@@ -62,6 +64,9 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   environmentVariablesForVirtualenv.forEach { (name, value) -> commandLineBuilder.addEnvironmentVariable(name, value) }
   // TODO [Targets API] [major] `PythonSdkFlavor` should be taken into account to pass (at least) "IRONPYTHONPATH" or "JYTHONPATH"
   //  environment variables for corresponding interpreters
+  if (isUsePty) {
+    commandLineBuilder.ptyOptions = LocalTargetPtyOptions(LocalPtyOptions.DEFAULT)
+  }
   return commandLineBuilder.build()
 }
 

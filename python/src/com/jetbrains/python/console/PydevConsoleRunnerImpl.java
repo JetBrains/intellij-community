@@ -555,10 +555,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     //  (see the legacy method `doCreateConsoleCmdLine()`)
 
     // TODO [Targets API] Path mappings of SDK's remote additional data is not applied here
+    boolean usePty = PtyCommandLine.isEnabled() && !SystemInfo.isWindows;
     TargetedCommandLine targetedCommandLine = PythonScripts.buildTargetedCommandLine(pythonConsoleExecution,
                                                                                      targetEnvironment,
                                                                                      sdk,
-                                                                                     interpreterOptions);
+                                                                                     interpreterOptions,
+                                                                                     usePty);
 
     // The environment is now prepared and ide server port should be resolved, so let's start the server
     // TODO check if binding to "localhost" properly works for Docker target on Linux host machine

@@ -99,10 +99,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
       final ProcessHandler processHandler = startProcess(processStarter, patchers);
 
-      TerminalExecutionConsole executeConsole = new TerminalExecutionConsole(myConfig.getProject(), processHandler);
-
-      executeConsole.addMessageFilter(new PythonTracebackFilter(myConfig.getProject()));
-      executeConsole.addMessageFilter(new UrlFilter());
+      TerminalExecutionConsole executeConsole = createTerminalExecutionConsole(myConfig.getProject(), processHandler);
 
       processHandler.startNotify();
 
@@ -115,6 +112,55 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       }
       return executionResult;
     }
+  }
+
+  @Override
+  public @Nullable ExecutionResult execute(@NotNull Executor executor, @NotNull PythonScriptTargetedCommandLineBuilder converter)
+    throws ExecutionException {
+    Project project = myConfig.getProject();
+    if (showCommandLineAfterwards()) {
+      if (DefaultRunExecutor.EXECUTOR_ID.equals(executor.getId())) {
+        PyRunFileInConsoleAction.configExecuted(myConfig);
+
+        String runFileText = buildScriptWithConsoleRun(myConfig);
+        boolean useExistingConsole = PyConsoleOptions.getInstance(project).isUseExistingConsole();
+        PyExecuteInConsole.executeCodeInConsole(project, runFileText, null, useExistingConsole, false, true, myConfig);
+
+        return null;
+      }
+      else {
+        if (DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId())) {
+          PyRunFileInConsoleAction.configExecuted(myConfig);
+        }
+        return super.execute(executor, converter);
+      }
+    }
+    else if (emulateTerminal()) {
+      setRunWithPty(true);
+
+      ProcessHandler processHandler = startProcess(converter);
+
+      TerminalExecutionConsole executeConsole = createTerminalExecutionConsole(project, processHandler);
+
+      processHandler.startNotify();
+
+      return new DefaultExecutionResult(executeConsole, processHandler, AnAction.EMPTY_ARRAY);
+    }
+    else {
+      ExecutionResult executionResult = super.execute(executor, converter);
+      if (myConfig.isRedirectInput()) {
+        addInputRedirectionMessage(project, executionResult);
+      }
+      return executionResult;
+    }
+  }
+
+  private static @NotNull TerminalExecutionConsole createTerminalExecutionConsole(@NotNull Project project,
+                                                                                  @NotNull ProcessHandler processHandler) {
+    TerminalExecutionConsole executeConsole = new TerminalExecutionConsole(project, processHandler);
+    executeConsole.addMessageFilter(new PythonTracebackFilter(project));
+    executeConsole.addMessageFilter(new UrlFilter());
+    return executeConsole;
   }
 
   private void addInputRedirectionMessage(@NotNull Project project, @NotNull ExecutionResult executionResult) {
@@ -151,6 +197,10 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
         }
       });
     }
+  }
+
+  public final boolean showCommandLineAfterwards() {
+    return myConfig.showCommandLineAfterwards() && !emulateTerminal();
   }
 
   /**
