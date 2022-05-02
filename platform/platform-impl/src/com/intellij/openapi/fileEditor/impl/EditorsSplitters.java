@@ -25,6 +25,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -1040,7 +1041,14 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         ApplicationManager.getApplication().invokeAndWait(() -> {
           JPanel panel = new JPanel(new BorderLayout());
           panel.setOpaque(false);
-          Splitter splitter = new OnePixelSplitter(orientation, proportion, 0.1f, 0.9f);
+          Splitter splitter = new OnePixelSplitter(orientation, proportion, 0.1f, 0.9f) {
+            @Override
+            protected Divider createDivider() {
+              Divider divider = super.createDivider();
+              divider.setBackground(JBColor.namedColor("EditorPane.splitBorder", JBColor.border()));
+              return divider;
+            }
+          };
           splitter.putClientProperty(SPLITTER_KEY, Boolean.TRUE);
           panel.add(splitter, BorderLayout.CENTER);
           splitter.setFirstComponent(firstComponent);

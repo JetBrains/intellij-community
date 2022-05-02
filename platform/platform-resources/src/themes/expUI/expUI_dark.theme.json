@@ -490,6 +490,8 @@
       "MarkerPopup.borderInsets": "6,8,6,10"
     },
 
+    "EditorPane.splitBorder": "Grey3",
+
     "WelcomeScreen.Details.background": "Grey1"
   },
 
