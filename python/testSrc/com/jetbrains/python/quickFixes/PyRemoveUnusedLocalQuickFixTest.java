@@ -47,8 +47,7 @@ public class PyRemoveUnusedLocalQuickFixTest extends PyQuickFixTestCase {
   }
 
   // PY-26418
-  // TODO: PY-43505
-  public void _testTwoWithItemsFirstUnused() {
+  public void testTwoWithItemsFirstUnused() {
     doQuickFixTest(PyUnusedLocalInspection.class, PyPsiBundle.message("QFIX.NAME.remove.with.target"));
   }
 
