@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.allopen-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:allopen-compiler-plugin-for-ide:1.7.20-dev-657" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:allopen-compiler-plugin-for-ide:1.7.20-dev-758" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/1.7.20-dev-657/allopen-compiler-plugin-for-ide-1.7.20-dev-657.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/1.7.20-dev-758/allopen-compiler-plugin-for-ide-1.7.20-dev-758.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/1.7.20-dev-657/allopen-compiler-plugin-for-ide-1.7.20-dev-657-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/1.7.20-dev-758/allopen-compiler-plugin-for-ide-1.7.20-dev-758-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
