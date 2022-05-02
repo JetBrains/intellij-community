@@ -328,8 +328,37 @@ public class PySmartEnterTest extends PyTestCase {
     doTest();
   }
 
+  public void testWithExpressionMissingNoSpaceAfterWithKeyword() {
+    doTest();
+  }
+
   // PY-12877
   public void testWithOnlyColonMissing() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testWithParenthesizedWithItemsOnlyColonMissing() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testWithParenthesizedWithItemsColonMissingAndTargetIncomplete() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testWithParenthesizedWithItemsFirstTargetIncomplete() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testWithParenthesizedWithItemsLastTargetIncomplete() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testWithParenthesizedWithItemsNothingToFix() {
     doTest();
   }
 
