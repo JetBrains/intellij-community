@@ -57,11 +57,11 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     return result
   }
 
-  suspend fun runMetaHandlers(metaHandlers: List<CheckinMetaHandler>, indicator: ProgressIndicator) {
+  suspend fun runMetaHandlers(metaHandlers: List<CheckinMetaHandler>, commitProgressUi: CommitProgressUi, indicator: ProgressIndicator) {
     // reversed to have the same order as when wrapping meta handlers into each other
     for (metaHandler in metaHandlers.reversed()) {
       if (metaHandler is CommitCheck<*>) {
-        runCommitCheck(metaHandler, indicator)
+        runCommitCheck(metaHandler, commitProgressUi, indicator)
       }
       else {
         suspendCancellableCoroutine<Unit> { continuation ->

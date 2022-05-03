@@ -239,7 +239,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     isOnlyRunCommitChecks: Boolean
   ): ReturnResult {
     val metaHandlers = commitHandlers.filterIsInstance<CheckinMetaHandler>()
-    workflow.runMetaHandlers(metaHandlers, indicator)
+    workflow.runMetaHandlers(metaHandlers, ui.commitProgressUi, indicator)
     FileDocumentManager.getInstance().saveAllDocuments()
 
     val plainHandlers = commitHandlers.filterNot { it is CommitCheck<*> }
