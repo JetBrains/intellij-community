@@ -977,8 +977,7 @@ idea.fatal.error.notification=disabled
     JarBuilder.buildJar(
       updaterJar,
       List.of(updaterModuleSource) + librarySources,
-      /*compress = */ true
-    )
+      /*compress = */ true)
 
     buildContext.notifyArtifactBuilt(updaterJar)
   }

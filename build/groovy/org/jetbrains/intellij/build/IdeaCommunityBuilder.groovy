@@ -12,7 +12,7 @@ final class IdeaCommunityBuilder {
   private final BuildContext buildContext
 
   IdeaCommunityBuilder(String home, BuildOptions options = new BuildOptions(), String projectHome = home) {
-    buildContext = BuildContextImpl.createContext(home, projectHome, new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY, options)
+    this(BuildContextImpl.createContext(home, projectHome, new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY, options))
   }
 
   IdeaCommunityBuilder(BuildContext buildContext) {
@@ -43,8 +43,8 @@ final class IdeaCommunityBuilder {
     tasks.buildDistributions()
     buildContext.messages.block("Build standalone JPS") {
       String jpsArtifactDir = "$buildContext.paths.artifacts/jps"
-      new CommunityStandaloneJpsBuilder(buildContext).processJpsLayout(jpsArtifactDir, buildContext.fullBuildNumber, new ProjectStructureMapping(),
-                                                                       true, {})
+      new CommunityStandaloneJpsBuilder(buildContext)
+        .processJpsLayout(jpsArtifactDir, buildContext.fullBuildNumber, new ProjectStructureMapping(), true, {})
     }
   }
 
