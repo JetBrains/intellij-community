@@ -274,4 +274,10 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     }
   }
 
+  public OverrideOrImplementOptions getOptions(){
+    return new OverrideOrImplementOptions()
+      .copyJavadoc(isCopyJavadoc())
+      .generateJavadoc(isGenerateJavadoc())
+      .insertOverrideWherePossible(isInsertOverrideAnnotation());
+  }
 }

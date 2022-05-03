@@ -457,8 +457,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
     PsiUtilCore.ensureValid(aClass);
     final ThrowableRunnable<RuntimeException> performImplementOverrideRunnable =
-        () -> overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
-                                                     chooser.isInsertOverrideAnnotation(), chooser.isGenerateJavadoc());
+        () -> overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.getOptions());
     if(Registry.is("run.refactorings.under.progress")) {
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(aClass)) {
         return;
@@ -573,15 +572,16 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                             @NotNull Collection<? extends PsiMethodMember> candidates,
                                                             boolean copyJavadoc,
                                                             boolean insertOverrideWherePossible) {
-    overrideOrImplementMethodsInRightPlace(editor, aClass, candidates, copyJavadoc, insertOverrideWherePossible, false);
+    OverrideOrImplementOptions options = new OverrideOrImplementOptions()
+      .copyJavadoc(copyJavadoc)
+      .insertOverrideWherePossible(insertOverrideWherePossible);
+    overrideOrImplementMethodsInRightPlace(editor, aClass, candidates, options);
   }
 
   public static void overrideOrImplementMethodsInRightPlace(@NotNull Editor editor,
                                                             @NotNull PsiClass aClass,
                                                             @NotNull Collection<? extends PsiMethodMember> candidates,
-                                                            boolean copyJavadoc,
-                                                            boolean insertOverrideWherePossible,
-                                                            boolean generateJavadoc) {
+                                                            OverrideOrImplementOptions options) {
     try {
       int offset = editor.getCaretModel().getOffset();
       PsiElement brace = aClass.getLBrace();
@@ -597,8 +597,8 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
         resultMembers = new ArrayList<>();
         for (PsiMethodMember candidate : candidates) {
           ProgressManager.progress(candidate.getElement().getName());
-          Collection<PsiMethod> prototypes =
-            overrideOrImplementMethod(aClass, candidate.getElement(), candidate.getSubstitutor(), copyJavadoc, insertOverrideWherePossible);
+          Collection<PsiMethod> prototypes = overrideOrImplementMethod(aClass, candidate.getElement(), candidate.getSubstitutor(),
+                                                                       options.isCopyJavaDoc(), options.isInsertOverrideWherePossible());
           List<PsiGenerationInfo<PsiMethod>> infos = convert2GenerationInfos(prototypes);
           for (PsiGenerationInfo<PsiMethod> info : infos) {
             PsiElement anchor = getDefaultAnchorToOverrideOrImplement(aClass, candidate.getElement(), candidate.getSubstitutor());
@@ -608,14 +608,15 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
         }
       }
       else {
-        List<PsiGenerationInfo<PsiMethod>> prototypes = overrideOrImplementMethods(aClass, candidates, copyJavadoc, insertOverrideWherePossible);
+        List<PsiGenerationInfo<PsiMethod>> prototypes = overrideOrImplementMethods(aClass, candidates, options.isCopyJavaDoc(),
+                                                                                   options.isInsertOverrideWherePossible());
         resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass, offset, prototypes);
       }
 
       if (!resultMembers.isEmpty()) {
         for (PsiGenerationInfo<PsiMethod> info : resultMembers) {
           PsiMethod method = info.getPsiMember();
-          if (generateJavadoc && method != null && method.getDocComment() == null) {
+          if (options.isGenerateJavaDoc() && method != null && method.getDocComment() == null) {
             method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
             if (method != null) {
               FixDocCommentAction.generateOrFixComment(method, method.getProject(), editor);

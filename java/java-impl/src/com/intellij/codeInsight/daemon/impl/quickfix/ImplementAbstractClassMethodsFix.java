@@ -100,8 +100,7 @@ public class ImplementAbstractClassMethodsFix extends ImplementMethodsFix {
           selectedElement.setSubstitutor(substitutor);
         }
       }
-      OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, psiAnonClass, selectedElements, chooser.isCopyJavadoc(),
-                                                                   chooser.isInsertOverrideAnnotation(), chooser.isGenerateJavadoc());
+      OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, psiAnonClass, selectedElements, chooser.getOptions());
     });
   }
 }
