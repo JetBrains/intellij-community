@@ -562,7 +562,7 @@ public final class NewMappings implements Disposable {
   }
 
   private @NotNull MyVcsActivator createVcsActivator() {
-    Set<AbstractVcs> newVcses = TrustedProjects.isTrusted(myProject)
+    Set<AbstractVcs> newVcses = !myProject.isDisposed() && TrustedProjects.isTrusted(myProject)
                                 ? ContainerUtil.map2SetNotNull(myMappings, this::getMappingsVcs)
                                 : Collections.emptySet();
 
