@@ -13,9 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Eugene Zhuravlev
  */
-public class LaunchJShellConsoleAction extends AnAction{
-  public LaunchJShellConsoleAction() {
-  }
+final class LaunchJShellConsoleAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
