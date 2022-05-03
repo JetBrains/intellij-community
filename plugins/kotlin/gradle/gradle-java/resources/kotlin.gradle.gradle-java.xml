@@ -48,8 +48,6 @@
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.gradleJava.scripting.legacy.GradleStandaloneScriptActionsManager"/>
 
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.SdkValidator"/>
-
     <externalProjectDataService implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleSourceSetDataService"/>
     <externalProjectDataService implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleProjectDataService"/>
     <externalProjectDataService implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleLibraryDataService"/>

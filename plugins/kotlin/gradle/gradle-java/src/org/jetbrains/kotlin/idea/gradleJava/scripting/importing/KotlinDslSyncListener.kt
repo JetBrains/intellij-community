@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsContributor
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
-import org.jetbrains.kotlin.idea.gradleJava.scripting.validateGradleSdk
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -74,8 +73,6 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
                     null
                 }
             }
-
-        GradleSettings.getInstance(project).getLinkedProjectSettings(sync.workingDir)?.validateGradleSdk(project, sync.javaHome)
 
         @Suppress("DEPRECATION")
         ScriptDefinitionContributor.find<GradleScriptDefinitionsContributor>(project)?.reloadIfNeeded(
