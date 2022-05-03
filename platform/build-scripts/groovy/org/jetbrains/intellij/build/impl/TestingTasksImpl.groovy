@@ -35,7 +35,7 @@ import java.util.function.Consumer
 import java.util.function.Predicate
 import java.util.function.Supplier
 import java.util.regex.Pattern
-import java.util.stream.Stream
+import java.util.stream.Collectors
 
 @CompileStatic
 class TestingTasksImpl extends TestingTasks {
@@ -544,50 +544,48 @@ class TestingTasksImpl extends TestingTasks {
       Pattern pattern = Pattern.compile(FileUtil.convertAntToRegexp(options.batchTestIncludes))
       Path root = Path.of(mainModuleTestsOutput)
 
-      Stream<Path> stream = Files.walk(root)
-      try {
-        stream
-          .filter(new Predicate<Path>() {
-            @Override
-            boolean test(Path path) {
-              return pattern.matcher(root.relativize(path).toString()).matches()
-            }
-          })
-          .forEach(new Consumer<Path>() {
-            @Override
-            void accept(Path path) {
-              String qName = FileUtilRt.getNameWithoutExtension(root.relativize(path).toString()).replaceAll("/", ".")
-              List<Path> files = new ArrayList<Path>(testClasspath.size())
-              for (String p : testClasspath) {
-                files.add(Path.of(p))
-              }
+      def testClasses = Files.walk(root).withCloseable { stream ->
+        stream.filter(new Predicate<Path>() {
+          @Override
+          boolean test(Path path) {
+            return pattern.matcher(root.relativize(path).toString()).matches()
+          }
+        }).collect(Collectors.toList())
+      }
+      if (testClasses.size() == 0) {
+        context.messages.error("No tests were found in the configuration")
+      }
+      testClasses.forEach(new Consumer<Path>() {
+        @Override
+        void accept(Path path) {
+          String qName = FileUtilRt.getNameWithoutExtension(root.relativize(path).toString()).replaceAll("/", ".")
+          List<Path> files = new ArrayList<Path>(testClasspath.size())
+          for (String p : testClasspath) {
+            files.add(Path.of(p))
+          }
 
-              try {
-                def noTests = true 
-                UrlClassLoader loader = UrlClassLoader.build().files(files).get()
-                Class<?> aClazz = Class.forName(qName, false, loader)
-                Class<?> testAnnotation = Class.forName("org.junit.Test", false, loader)
-                for (Method m : aClazz.getDeclaredMethods()) {
-                  if (m.isAnnotationPresent(testAnnotation as Class<? extends Annotation>) && Modifier.isPublic(m.getModifiers())) {
-                    def exitCode =
-                      runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, m.getName())
-                    noTests &= exitCode == NO_TESTS_ERROR
-                  }
-                }
-                
-                if (noTests) {
-                   context.messages.error("No tests were found in the configuration")
-                }
-              }
-              catch (Throwable e) {
-                context.messages.error("Failed to process $qName", e)
+          try {
+            def noTests = true
+            UrlClassLoader loader = UrlClassLoader.build().files(files).get()
+            Class<?> aClazz = Class.forName(qName, false, loader)
+            Class<?> testAnnotation = Class.forName("org.junit.Test", false, loader)
+            for (Method m : aClazz.getDeclaredMethods()) {
+              if (m.isAnnotationPresent(testAnnotation as Class<? extends Annotation>) && Modifier.isPublic(m.getModifiers())) {
+                def exitCode =
+                  runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, m.getName())
+                noTests &= exitCode == NO_TESTS_ERROR
               }
             }
-          })
-      }
-      finally {
-        stream.close()
-      }
+
+            if (noTests) {
+              context.messages.error("No tests were found in the configuration")
+            }
+          }
+          catch (Throwable e) {
+            context.messages.error("Failed to process $qName", e)
+          }
+        }
+      })
     }
     else {
       context.messages.info("Run junit 5 tests")

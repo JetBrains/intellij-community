@@ -108,7 +108,7 @@ class TestingOptions {
 
   /**
    * Pattern to match tests in {@link #mainModule} or default main module tests compilation outputs.
-   * Tests from each matched class will be executed in a fresh jdk.jfr.internal.JVM.
+   * Tests from each matched class will be executed in a forked Runtime.
    *
    * E.g. "com/intellij/util/ui/standalone/**Test.class"
    */
