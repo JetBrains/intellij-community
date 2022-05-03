@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,12 +12,11 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.Internal
 public interface SideEffectGuard {
-  ExtensionPointName<SideEffectGuard> EP_NAME = ExtensionPointName.create("com.intellij.sideEffectGuard");
-
   boolean isAllowed(@NotNull EffectType effectType);
 
   static void checkSideEffectAllowed(@NotNull EffectType effectType) {
-    if (EP_NAME.extensions().anyMatch(guard -> !guard.isAllowed(effectType))) {
+    SideEffectGuard guard = ApplicationManager.getApplication().getService(SideEffectGuard.class);
+    if (guard != null && !guard.isAllowed(effectType)) {
       throw new SideEffectNotAllowedException(effectType);
     }
   }
