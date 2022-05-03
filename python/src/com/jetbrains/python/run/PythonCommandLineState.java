@@ -356,7 +356,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * {@link PythonCommandLineState}. The working directory is resolved within
    * the uploads that are registered in the provided request.
    *
-   * @param targetEnvironment the environment to explore for the working directory upload
+   * @param targetEnvironmentRequest the environment to explore for the working directory upload
    * @return the promise to the working directory path
    */
   protected @Nullable Function<TargetEnvironment, String> getPythonExecutionWorkingDir(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
