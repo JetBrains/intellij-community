@@ -11,7 +11,6 @@ import com.intellij.util.system.CpuArch
 import groovy.io.FileType
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
-import groovy.transform.TypeCheckingMode
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -960,10 +959,9 @@ idea.fatal.error.notification=disabled
   @Override
   void buildFullUpdaterJar() {
     doBuildUpdaterJar("updater-full.jar")
-    doBuildUpdaterJarWithJarBuilder("updater-full-jarbuilder-preview.jar")
   }
 
-  private void doBuildUpdaterJarWithJarBuilder(String artifactName) {
+  private void doBuildUpdaterJar(String artifactName) {
     String updaterModuleName = "intellij.platform.updater"
     JpsModule updaterModule = buildContext.findRequiredModule(updaterModuleName)
     Source updaterModuleSource = new DirSource(buildContext.getModuleOutputDir(updaterModule), [], null)
@@ -982,27 +980,6 @@ idea.fatal.error.notification=disabled
       /*compress = */ true
     )
 
-    buildContext.notifyArtifactBuilt(updaterJar)
-  }
-
-  @CompileStatic(TypeCheckingMode.SKIP)
-  @SuppressWarnings(['GroovyAccessibility', 'GrUnresolvedAccess'])
-  private void doBuildUpdaterJar(String artifactName) {
-    String updaterModule = "intellij.platform.updater"
-    List<File> libraryFiles = JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(updaterModule))
-      .productionOnly()
-      .runtimeOnly()
-      .libraries.collectMany { it.getFiles(JpsOrderRootType.COMPILED) }
-    new LayoutBuilder(buildContext).layout(buildContext.paths.artifacts) {
-      jar(artifactName, true) {
-        module(updaterModule)
-        for (file in libraryFiles) {
-          ant.zipfileset(src: file.absolutePath, excludes: 'META-INF/**')
-        }
-      }
-    }
-
-    Path updaterJar = buildContext.paths.artifactDir.resolve(artifactName)
     buildContext.notifyArtifactBuilt(updaterJar)
   }
 
