@@ -2,7 +2,7 @@ LineBreakpoint created at stopInAnonymousFunctionInInlinedCallWithCrossInline.kt
 Run Java
 Connected to the target VM
 stopInAnonymousFunctionInInlinedCallWithCrossInline.kt:8
-stopInAnonymousFunctionInInlinedCallWithCrossInline.kt:19
+stopInAnonymousFunctionInInlinedCallWithCrossInline.kt:18
 Disconnected from the target VM
 
 Process finished with exit code 0
