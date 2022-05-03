@@ -327,6 +327,31 @@ public class SmartListTest {
     assertThat(list).isNotEqualTo(Arrays.asList(new Integer(1), new Integer(2), new Integer(3)));
   }
 
+  @Test
+  public void removeRange() {
+    SmartList<Integer> list = new SmartList<>();
+    list.removeRange(0, 0);
+
+    list.add(0);
+    list.removeRange(0, 0);
+    list.removeRange(1, 1);
+    assertThat(list).isEqualTo(Collections.singletonList(0));
+    list.removeRange(0, 1);
+    assertThat(list).isEmpty();
+
+    list.addAll(Arrays.asList(0, 1));
+    list.removeRange(0, 1);
+    assertThat(list).isEqualTo(Collections.singletonList(1));
+
+    list.add(0, 0);
+    list.removeRange(1, 2);
+    assertThat(list).isEqualTo(Collections.singletonList(0));
+
+    list.addAll(Arrays.asList(1, 2, 3));
+    list.removeRange(1, 3);
+    assertThat(list).isEqualTo(Arrays.asList(0, 3));
+  }
+
   private static <T> void checkForEach(@NotNull List<T> list) {
     List<T> checkList = new ArrayList<>();
     //noinspection UseBulkOperation

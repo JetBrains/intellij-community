@@ -131,9 +131,37 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   }
 
   @Override
-  public void clear() {
-    myElem = null;
-    mySize = 0;
+  public void removeRange(int fromIndex, int toIndex) {
+    int size = mySize;
+    if (fromIndex == 0 && toIndex == size) {
+      // clear() case
+      myElem = null;
+      mySize = 0;
+    } else {
+      checkOutOfBounds(toIndex, size, true);
+      checkOutOfBounds(fromIndex, toIndex, true);
+      int toRemove = toIndex - fromIndex;
+      if (toRemove > 0) {
+        // remove something but not everything… we're in array mode
+        E[] array = asArray();
+        if (fromIndex == 0 && toIndex == size - 1) {
+          myElem = array[size - 1];
+          mySize = 1;
+        }
+        else if (fromIndex == 1 && toIndex == size) {
+          myElem = array[0];
+          mySize = 1;
+        }
+        else {
+          System.arraycopy(array, toIndex, array, fromIndex, toRemove);
+          while (toRemove > 0) {
+            array[--size] = null;
+            toRemove--;
+          }
+          mySize = size;
+        }
+      }
+    }
     modCount++;
   }
 
