@@ -44,22 +44,16 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
-import java.util.function.Supplier;
 
-final class InspectionPopupManager {
+final class TrafficLightPopup {
   private final ExtensionPointName<InspectionPopupLevelChangePolicy> EP_NAME = ExtensionPointName.create("com.intellij.inspectionPopupLevelChangePolicy");
   private static final int DELTA_X = 6;
   private static final int DELTA_Y = 6;
-
-  private final Supplier<? extends @NotNull AnalyzerStatus> statusSupplier;
   private final Editor myEditor;
   private final AnAction compactViewAction;
-
   private final JPanel myContent = new JPanel(new GridBagLayout());
-  private final ComponentPopupBuilder myPopupBuilder;
   private final Map<String, JProgressBar> myProgressBarMap = new HashMap<>();
   private final AncestorListener myAncestorListener;
-  private final JBPopupListener myPopupListener;
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
   private final Alarm popupAlarm = new Alarm();
   private final List<DropDownLink<?>> levelLinks = new ArrayList<>();
@@ -67,30 +61,17 @@ final class InspectionPopupManager {
   private JBPopup myPopup;
   private boolean insidePopup;
 
-  InspectionPopupManager(@NotNull Supplier<? extends @NotNull AnalyzerStatus> statusSupplier, @NotNull Editor editor, @NotNull AnAction compactViewAction) {
-    this.statusSupplier = statusSupplier;
+  TrafficLightPopup(@NotNull Editor editor, @NotNull AnAction compactViewAction) {
     this.myEditor = editor;
     this.compactViewAction = compactViewAction;
 
     myContent.setOpaque(true);
     myContent.setBackground(ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Editor.Tooltip.BACKGROUND : UIUtil.getToolTipBackground());
 
-    myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null).
-      setCancelOnClickOutside(true).
-      setCancelCallback(() -> getAnalyzerStatus().getController().canClosePopup());
-
     myAncestorListener = new AncestorListenerAdapter() {
       @Override
       public void ancestorMoved(AncestorEvent event) {
         hidePopup();
-      }
-    };
-
-    myPopupListener = new JBPopupListener() {
-      @Override
-      public void onClosed(@NotNull LightweightWindowEvent event) {
-        statusSupplier.get().getController().onClosePopup();
-        myEditor.getComponent().removeAncestorListener(myAncestorListener);
       }
     };
 
@@ -121,9 +102,9 @@ final class InspectionPopupManager {
     IJSwingUtilities.updateComponentTreeUI(myContent);
   }
 
-  void scheduleShow(@NotNull InputEvent event) {
+  void scheduleShow(@NotNull InputEvent event, @NotNull AnalyzerStatus analyzerStatus) {
     popupAlarm.cancelAllRequests();
-    popupAlarm.addRequest(() -> showPopup(event), Registry.intValue("ide.tooltip.initialReshowDelay"));
+    popupAlarm.addRequest(() -> showPopup(event, analyzerStatus), Registry.intValue("ide.tooltip.initialReshowDelay"));
   }
 
   void scheduleHide() {
@@ -135,11 +116,23 @@ final class InspectionPopupManager {
     }, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
   }
 
-  private void showPopup(@NotNull InputEvent event) {
+  private void showPopup(@NotNull InputEvent event, @NotNull AnalyzerStatus analyzerStatus) {
     hidePopup();
-    if (myPopupState.isRecentlyHidden() || AnalyzerStatus.isEmpty(getAnalyzerStatus())) return; // do not show new popup
+    if (myPopupState.isRecentlyHidden() || AnalyzerStatus.isEmpty(analyzerStatus)) return; // do not show new popup
 
-    updateContentPanel(getAnalyzerStatus().getController());
+    updateContentPanel(analyzerStatus);
+
+    ComponentPopupBuilder myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null).
+      setCancelOnClickOutside(true).
+      setCancelCallback(() -> analyzerStatus.getController().canClosePopup());
+
+    JBPopupListener myPopupListener = new JBPopupListener() {
+      @Override
+      public void onClosed(@NotNull LightweightWindowEvent event) {
+        analyzerStatus.getController().onClosePopup();
+        myEditor.getComponent().removeAncestorListener(myAncestorListener);
+      }
+    };
 
     myPopup = myPopupBuilder.createPopup();
     myPopup.addListener(myPopupListener);
@@ -165,13 +158,9 @@ final class InspectionPopupManager {
     myPopup = null;
   }
 
-  @NotNull
-  private AnalyzerStatus getAnalyzerStatus() {
-    return statusSupplier.get();
-  }
-
-  private void updateContentPanel(@NotNull UIController controller) {
-    java.util.List<PassWrapper> passes = getAnalyzerStatus().getPasses();
+  private void updateContentPanel(@NotNull AnalyzerStatus analyzerStatus) {
+    UIController controller = analyzerStatus.getController();
+    java.util.List<PassWrapper> passes = analyzerStatus.getPasses();
     Set<String> presentableNames = ContainerUtil.map2Set(passes, p -> p.getPresentableName());
 
     if (!presentableNames.isEmpty() && myProgressBarMap.keySet().equals(presentableNames)) {
@@ -189,16 +178,16 @@ final class InspectionPopupManager {
       fillCellHorizontally().
       insets(10, 10, 10, 0);
 
-    boolean hasTitle = StringUtil.isNotEmpty(getAnalyzerStatus().getTitle());
+    boolean hasTitle = StringUtil.isNotEmpty(analyzerStatus.getTitle());
 
     if (hasTitle) {
-      myContent.add(new JLabel(XmlStringUtil.wrapInHtml(getAnalyzerStatus().getTitle())), gc);
+      myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getTitle())), gc);
     }
-    else if (StringUtil.isNotEmpty(getAnalyzerStatus().getDetails())) {
-      myContent.add(new JLabel(XmlStringUtil.wrapInHtml(getAnalyzerStatus().getDetails())), gc);
+    else if (StringUtil.isNotEmpty(analyzerStatus.getDetails())) {
+      myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getDetails())), gc);
     }
-    else if (!getAnalyzerStatus().getExpandedStatus().isEmpty() && getAnalyzerStatus().getAnalyzingType() != AnalyzingType.EMPTY) {
-      myContent.add(createDetailsPanel(), gc);
+    else if (!analyzerStatus.getExpandedStatus().isEmpty() && analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
+      myContent.add(createDetailsPanel(analyzerStatus), gc);
     }
 
     Presentation presentation = new Presentation();
@@ -239,11 +228,11 @@ final class InspectionPopupManager {
       int topIndent = !myProgressBarMap.isEmpty() ? 10 : 0;
       gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1).insets(topIndent, 10, 10, 6);
 
-      if (StringUtil.isNotEmpty(getAnalyzerStatus().getDetails())) {
-        myContent.add(new JLabel(XmlStringUtil.wrapInHtml(getAnalyzerStatus().getDetails())), gc);
+      if (StringUtil.isNotEmpty(analyzerStatus.getDetails())) {
+        myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getDetails())), gc);
       }
-      else if (!getAnalyzerStatus().getExpandedStatus().isEmpty() && getAnalyzerStatus().getAnalyzingType() != AnalyzingType.EMPTY) {
-        myContent.add(createDetailsPanel(), gc);
+      else if (!analyzerStatus.getExpandedStatus().isEmpty() && analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
+        myContent.add(createDetailsPanel(analyzerStatus), gc);
       }
       else if (!passes.isEmpty()){
         myProgressPanel.setBorder(JBUI.Borders.emptyBottom(12));
@@ -254,9 +243,9 @@ final class InspectionPopupManager {
                   gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1));
   }
 
-  void updateVisiblePopup() {
+  void updateVisiblePopup(@NotNull AnalyzerStatus analyzerStatus) {
     if (myPopup != null && myPopup.isVisible()) {
-      updateContentPanel(getAnalyzerStatus().getController());
+      updateContentPanel(analyzerStatus);
 
       Dimension size = myContent.getPreferredSize();
       size.width = Math.max(size.width, JBUIScale.scale(296));
@@ -264,9 +253,9 @@ final class InspectionPopupManager {
     }
   }
 
-  private @NotNull JComponent createDetailsPanel() {
+  private static @NotNull JComponent createDetailsPanel(@NotNull AnalyzerStatus analyzerStatus) {
     @Nls StringBuilder text = new StringBuilder();
-    List<StatusItem> expandedStatus = getAnalyzerStatus().getExpandedStatus();
+    List<StatusItem> expandedStatus = analyzerStatus.getExpandedStatus();
     for (int i = 0; i < expandedStatus.size(); i++) {
       boolean last = i == expandedStatus.size() - 1;
       StatusItem item = expandedStatus.get(i);
@@ -276,7 +265,7 @@ final class InspectionPopupManager {
       if (!last) {
         text.append(", ");
       }
-      else if (getAnalyzerStatus().getAnalyzingType() != AnalyzingType.COMPLETE) {
+      else if (analyzerStatus.getAnalyzingType() != AnalyzingType.COMPLETE) {
         text.append(" ").append(EditorBundle.message("iw.found.so.far.suffix"));
       }
     }

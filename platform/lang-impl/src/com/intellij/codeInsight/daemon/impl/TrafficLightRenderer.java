@@ -319,7 +319,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
       return status.errorAnalyzingFinished ? result :
              result.withAnalyzingType(AnalyzingType.PARTIAL).
-             withPasses(ContainerUtil.map(status.passes, p -> new PassWrapper(p.getPresentableName(), p.getProgress(), p.isFinished())));
+             withPasses(ContainerUtil.map(status.passes, pass -> new PassWrapper(pass.getPresentableName(), pass.getProgress(), pass.isFinished())));
     }
     if (StringUtil.isNotEmpty(status.reasonWhyDisabled)) {
       return new AnalyzerStatus(AllIcons.General.InspectionsTrafficOff,
@@ -347,7 +347,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     return new AnalyzerStatus(AllIcons.General.InspectionsEye, DaemonBundle.message("no.errors.or.warnings.found"), details, this::createUIController).
       withTextStatus(DaemonBundle.message("iw.status.analyzing")).
       withAnalyzingType(AnalyzingType.EMPTY).
-      withPasses(ContainerUtil.map(status.passes, p -> new PassWrapper(p.getPresentableName(), p.getProgress(), p.isFinished())));
+      withPasses(ContainerUtil.map(status.passes, pass -> new PassWrapper(pass.getPresentableName(), pass.getProgress(), pass.isFinished())));
   }
 
   protected @NotNull UIController createUIController() {
@@ -361,32 +361,33 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
   protected abstract class AbstractUIController implements UIController {
     private final boolean inLibrary;
+    @NotNull
     private final List<LanguageHighlightLevel> myLevelList;
+    @NotNull
     private List<HectorComponentPanel> myAdditionalPanels = Collections.emptyList();
 
     AbstractUIController() {
       PsiFile psiFile = getPsiFile();
-      if (psiFile != null) {
+      if (psiFile == null) {
+        inLibrary = false;
+        myLevelList = Collections.emptyList();
+      }
+      else {
         ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
         VirtualFile virtualFile = psiFile.getVirtualFile();
         assert virtualFile != null;
         inLibrary = fileIndex.isInLibrary(virtualFile) && !fileIndex.isInContent(virtualFile);
+        myLevelList = initLevels(psiFile);
       }
-      else {
-        inLibrary = false;
-      }
-
-      myLevelList = initLevels();
     }
 
-    private @NotNull List<@NotNull LanguageHighlightLevel> initLevels() {
+    private @NotNull List<@NotNull LanguageHighlightLevel> initLevels(@NotNull PsiFile psiFile) {
       List<LanguageHighlightLevel> result = new ArrayList<>();
-      PsiFile psiFile = getPsiFile();
-      if (psiFile != null && !getProject().isDisposed()) {
+      if (!psiFile.getProject().isDisposed()) {
         FileViewProvider viewProvider = psiFile.getViewProvider();
         for (Language language : viewProvider.getLanguages()) {
           PsiFile psiRoot = viewProvider.getPsi(language);
-          FileHighlightingSetting setting = HighlightingSettingsPerFile.getInstance(getProject()).getHighlightingSettingForRoot(psiRoot);
+          FileHighlightingSetting setting = HighlightingSettingsPerFile.getInstance(psiFile.getProject()).getHighlightingSettingForRoot(psiRoot);
           InspectionsLevel inspectionsLevel = FileHighlightingSetting.toInspectionsLevel(setting);
           result.add(new LanguageHighlightLevel(language.getID(), inspectionsLevel));
         }
