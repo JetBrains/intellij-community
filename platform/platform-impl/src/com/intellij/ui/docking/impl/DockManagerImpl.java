@@ -396,7 +396,9 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
     Boolean canReopenWindow = content.getPresentation().getClientProperty(REOPEN_WINDOW);
     boolean reopenWindow = canReopenWindow == null || canReopenWindow;
-    DockWindow window = createWindowFor(getWindowDimensionKey(content), null, container, reopenWindow);
+    boolean canDockToolWindows = container instanceof DockableEditorTabbedContainer &&
+                                 !isSingletonEditorInWindow(((DockableEditorTabbedContainer)container).getSplitters().getSelectedEditors());
+    DockWindow window = createWindowFor(getWindowDimensionKey(content), null, container, reopenWindow, canDockToolWindows);
     boolean isNorthPanelAvailable = (content instanceof EditorTabbedContainer.DockableEditor)
                                     ? ((EditorTabbedContainer.DockableEditor)content).isNorthPanelAvailable()
                                     : isNorthPanelVisible(UISettings.getInstance());
@@ -428,13 +430,16 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
                                                                                      @NotNull FileEditorManagerImpl fileEditorManager) {
     DockContainer container = getFactory(DockableEditorContainerFactory.TYPE).createContainer(null);
 
-    DockWindow window = createWindowFor(getWindowDimensionKey(file), null, container, REOPEN_WINDOW.get(file, true));
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    EditorWindow editorWindow = ((DockableEditorTabbedContainer)container).getSplitters().getOrCreateCurrentWindow(file);
+    Pair<FileEditor[], FileEditorProvider[]> result = fileEditorManager.openFileImpl2(editorWindow, file, true);
+
+    boolean canDockToolWindows = !isSingletonEditorInWindow(result.first);
+
+    DockWindow window = createWindowFor(getWindowDimensionKey(file), null, container, REOPEN_WINDOW.get(file, true), canDockToolWindows);
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       window.show(true);
     }
 
-    EditorWindow editorWindow = ((DockableEditorTabbedContainer)container).getSplitters().getOrCreateCurrentWindow(file);
-    Pair<FileEditor[], FileEditorProvider[]> result = fileEditorManager.openFileImpl2(editorWindow, file, true);
     boolean isNorthPanelAvailable = isNorthPanelAvailable(result.first);
     if (isNorthPanelAvailable) {
       window.setupNorthPanel();
@@ -445,6 +450,16 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
     SwingUtilities.invokeLater(() -> window.myUiContainer.setPreferredSize(null));
     return result;
+  }
+
+  private static boolean isSingletonEditorInWindow(FileEditor[] editors) {
+    for (FileEditor editor : editors) {
+      if (FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW.get(editor, false)
+        || EditorWindow.HIDE_TABS.get(editor, false)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static @Nullable String getWindowDimensionKey(@NotNull DockableContent<?> content) {
@@ -463,10 +478,11 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
   private @NotNull DockWindow createWindowFor(@Nullable String dimensionKey,
                                               @Nullable String id,
                                               @NotNull DockContainer container,
-                                              boolean canReopenWindow) {
+                                              boolean canReopenWindow,
+                                              boolean canDockToolWindows) {
     String windowId = id != null ? id : Integer.toString(myWindowIdCounter++);
     DockWindow window =
-      new DockWindow(dimensionKey, windowId, myProject, container, container instanceof DockContainer.Dialog, canReopenWindow);
+      new DockWindow(dimensionKey, windowId, myProject, container, container instanceof DockContainer.Dialog, canReopenWindow, canDockToolWindows);
     containerToWindow.put(container, window);
     return window;
   }
@@ -505,7 +521,8 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
                        @NotNull Project project,
                        @NotNull DockContainer container,
                        boolean isDialog,
-                       boolean supportReopen) {
+                       boolean supportReopen,
+                       boolean supportDockedToolWindows) {
       super(project, dimensionKey != null ? dimensionKey : "dock-window-" + id, isDialog);
 
       myId = id;
@@ -532,7 +549,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       myDockContentUiContainer.setOpaque(false);
 
       final Window frame = getFrame();
-      if (frame instanceof JFrame) {
+      if (frame instanceof JFrame && supportDockedToolWindows) {
         final String paneId = Objects.requireNonNull(getDimensionKey());
 
         final ToolWindowButtonManager buttonManager;
@@ -753,7 +770,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       DockContainer container = ((DockContainerFactory.Persistent)factory).loadContainerFrom(eachContent);
       String withNorthPanelStr = windowElement.getAttributeValue("withNorthPanel", Boolean.toString(true));
       boolean withNorthPanel = Boolean.parseBoolean(withNorthPanelStr);
-      DockWindow window = createWindowFor(null, windowElement.getAttributeValue("id"), container, true);
+      DockWindow window = createWindowFor(null, windowElement.getAttributeValue("id"), container, true, true);
       if (withNorthPanel) {
         window.setupNorthPanel();
       }
