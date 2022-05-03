@@ -18,6 +18,10 @@ open class CommandChain : MarshallableCommand, Iterable<MarshallableCommand> {
     _chain.add(command)
   }
 
+  fun addCommandChain(commandChain: CommandChain) {
+    _chain.addAll(commandChain)
+  }
+
   private fun initMarshallableCommand(content: String): MarshallableCommand =
     object : MarshallableCommand {
       override fun storeToString(): String = content
