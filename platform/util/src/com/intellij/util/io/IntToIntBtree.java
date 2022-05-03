@@ -52,7 +52,7 @@ public final class IntToIntBtree {
       Files.deleteIfExists(file);
     }
 
-    storage = new ResizeableMappedFile(file, pageSize, storageLockContext, 1024 * 1024, true, IOUtil.useNativeByteOrderForByteBuffers());
+    storage = new ResizeableMappedFile(file, 1024 * 1024, storageLockContext, pageSize, true, IOUtil.useNativeByteOrderForByteBuffers());
     storage.setRoundFactor(pageSize);
     root = new BtreeRootNode();
 
