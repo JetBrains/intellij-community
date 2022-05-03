@@ -12,7 +12,7 @@ fun generateKotlincLibraries(
     isCommunity: Boolean,
 ): List<JpsLibrary> {
     @Suppress("NAME_SHADOWING") val jpsPluginVersion = jpsPluginVersion.takeUnless { it == "dev" } ?: kotlincVersion
-    return listOf(
+    return listOfNotNull(
         kotlincForIdeWithStandardNaming("kotlinc.allopen-compiler-plugin", kotlincVersion),
         kotlincForIdeWithStandardNaming("kotlinc.android-extensions-compiler-plugin", kotlincVersion),
         kotlincForIdeWithStandardNaming("kotlinc.high-level-api-fir-tests", kotlincVersion),
@@ -24,6 +24,7 @@ fun generateKotlincLibraries(
         kotlincForIdeWithStandardNaming("kotlinc.analysis-project-structure", kotlincVersion),
         kotlincForIdeWithStandardNaming("kotlinc.symbol-light-classes", kotlincVersion),
         kotlincForIdeWithStandardNaming("kotlinc.incremental-compilation-impl-tests", kotlincVersion),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-backend-native", kotlincVersion).takeUnless { isCommunity },
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-build-common-tests", kotlincVersion),
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-cli", kotlincVersion),
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-testdata", kotlincVersion, includeSources = false),
