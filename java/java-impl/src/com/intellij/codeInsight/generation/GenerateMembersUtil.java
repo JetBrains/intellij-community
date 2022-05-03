@@ -769,7 +769,7 @@ public final class GenerateMembersUtil {
     final PsiClass containingClass = member.getContainingClass();
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) {
       PsiClass aClass = member instanceof PsiClass ? (PsiClass)member : containingClass;
-      newVisibility = PsiUtil.getMaximumModifierForMember(aClass, false);
+      newVisibility = PsiUtil.getSuitableModifierForMember(aClass, prototype.isConstructor());
     }
     else {
       newVisibility = (containingClass != null && containingClass.isRecord()) ? PsiModifier.PUBLIC : visibility;

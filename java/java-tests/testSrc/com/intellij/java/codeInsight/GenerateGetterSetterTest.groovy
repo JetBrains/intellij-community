@@ -16,6 +16,7 @@ import com.intellij.psi.impl.light.LightFieldBuilder
 import com.intellij.testFramework.ServiceContainerUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.NotNullFunction
+import com.intellij.util.VisibilityUtil
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 import groovy.transform.CompileStatic
@@ -313,7 +314,7 @@ class Foo {
   }
   
   void "test record accessor"() {
-    doRecordAccessorTest("EscalateVisible")
+    doRecordAccessorTest(VisibilityUtil.ESCALATE_VISIBILITY)
     doRecordAccessorTest(PsiModifier.PRIVATE)
   }
 

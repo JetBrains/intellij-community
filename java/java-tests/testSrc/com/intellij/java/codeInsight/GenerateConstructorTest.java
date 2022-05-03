@@ -17,6 +17,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,13 @@ import java.util.function.BiFunction;
  * @author ven
  */
 public class GenerateConstructorTest extends LightJavaCodeInsightFixtureTestCase {
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    JavaCodeStyleSettings.getInstance(getProject()).VISIBILITY = VisibilityUtil.ESCALATE_VISIBILITY;
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
