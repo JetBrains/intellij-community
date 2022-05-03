@@ -3,6 +3,7 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.MethodImplementor;
 import com.intellij.codeInsight.editorActions.FixDocCommentAction;
@@ -561,6 +562,14 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
   public static void overrideOrImplementMethodsInRightPlace(@NotNull Editor editor,
                                                             @NotNull PsiClass aClass,
+                                                            @NotNull Collection<? extends PsiMethodMember> members,
+                                                            boolean copyJavadoc) {
+    boolean insert = JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION;
+    overrideOrImplementMethodsInRightPlace(editor, aClass, members, copyJavadoc, insert);
+  }
+
+  public static void overrideOrImplementMethodsInRightPlace(@NotNull Editor editor,
+                                                            @NotNull PsiClass aClass,
                                                             @NotNull Collection<? extends PsiMethodMember> candidates,
                                                             boolean copyJavadoc,
                                                             boolean insertOverrideWherePossible) {
@@ -607,8 +616,10 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
         for (PsiGenerationInfo<PsiMethod> info : resultMembers) {
           PsiMethod method = info.getPsiMember();
           if (generateJavadoc && method != null && method.getDocComment() == null) {
-            PsiDocumentManager.getInstance(method.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-            FixDocCommentAction.generateOrFixComment(method, method.getProject(), editor);
+            method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
+            if (method != null) {
+              FixDocCommentAction.generateOrFixComment(method, method.getProject(), editor);
+            }
           }
         }
         resultMembers.get(0).positionCaret(editor, true);
@@ -691,11 +702,6 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     return aClass == null || !allowInterface && aClass.isInterface() ? null : aClass;
   }
 
-  public static void overrideOrImplementMethodsInRightPlace(@NotNull Editor editor, @NotNull PsiClass aClass, @NotNull Collection<? extends PsiMethodMember> members, boolean copyJavadoc) {
-    boolean insert =
-      JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION;
-    overrideOrImplementMethodsInRightPlace(editor, aClass, members, copyJavadoc, insert);
-  }
 
   @NotNull
   public static List<PsiMethod> overrideOrImplementMethodCandidates(@NotNull PsiClass aClass, @NotNull Collection<? extends CandidateInfo> candidatesToImplement,
