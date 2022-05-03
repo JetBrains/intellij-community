@@ -53,7 +53,7 @@ data class IDETestContext(
   val pluginConfigurator: PluginConfigurator by di.newInstance { factory<IDETestContext, PluginConfigurator>().invoke(this@IDETestContext) }
 
   fun addVMOptionsPatch(patchVMOptions: VMOptions.() -> VMOptions) = copy(
-    patchVMOptions = patchVMOptions.andThen(patchVMOptions)
+    patchVMOptions = this.patchVMOptions.andThen(patchVMOptions)
   )
 
   fun addLockFileForUITest(fileName: String): IDETestContext =

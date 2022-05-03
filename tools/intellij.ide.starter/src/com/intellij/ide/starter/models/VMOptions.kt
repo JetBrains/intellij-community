@@ -54,6 +54,7 @@ data class VMOptions(
 
   @Suppress("unused")
   fun addSystemProperty(key: String, value: String): VMOptions {
+    logOutput("Setting system property: [$key=$value]")
     System.setProperty(key, value) // to synchronize behaviour in IDEA and on test runner side
     return addLine(line = "-D$key=$value", filterPrefix = "-D$key=")
   }
