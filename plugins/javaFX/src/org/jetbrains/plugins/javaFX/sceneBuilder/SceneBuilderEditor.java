@@ -107,7 +107,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
     removeSceneBuilder();
 
-    if (JavaVersion.current().feature == 11 &&
+    if (JavaVersion.current().feature > 11 &&
         e instanceof NoClassDefFoundError &&
         !SceneBuilderUtil.getSceneBuilder11Path().toFile().isFile()) {
       myErrorLabel.addHyperlinkListener(e1 -> {
@@ -145,7 +145,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
       myLayout.show(myPanel, ERROR_CARD);
       return;
     }
-    if (JavaVersion.current().feature == 11) {
+    if (JavaVersion.current().feature > 11) {
       try {
         Class.forName(JavaFxCommonNames.JAVAFX_SCENE_NODE);
       }
