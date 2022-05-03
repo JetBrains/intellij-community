@@ -5,6 +5,7 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,6 +42,7 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
@@ -55,6 +57,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -364,17 +367,19 @@ final class SearchForUsagesRunnable implements Runnable {
       CoreProgressManager.assertUnderProgress(indicator);
     }
     TooManyUsagesStatus.createFor(indicator);
-    AtomicBoolean showBalloon = new AtomicBoolean(true);
+    AtomicBoolean showFindIsStartedBalloon = new AtomicBoolean(true);
     EdtScheduledExecutorService edtExecutorService = EdtScheduledExecutorService.getInstance();
 
-    edtExecutorService.schedule(() -> {
-      if (!myProject.isDisposed() && showBalloon.get() &&
-          ToolWindowManager.getInstance(myProject).getToolWindowBalloon(ToolWindowId.FIND) == null) { // Don't show balloon if there is another one
+    ScheduledFuture<?> hurrayFindIsStartedBalloon = edtExecutorService.schedule(() -> {
+      if (!myProject.isDisposed() && showFindIsStartedBalloon.get() &&
+          // Don't show balloon if there is another one
+          ToolWindowManager.getInstance(myProject).getToolWindowBalloon(ToolWindowId.FIND) == null) {
         notifyByFindBalloon(null, MessageType.WARNING,
                             Collections.singletonList(StringUtil.escapeXmlEntities(UsageViewManagerImpl.getProgressTitle(myPresentation))));
         findStartedBalloonShown.set(true);
+        showFindIsStartedBalloon.set(false);
       }
-    }, ModalityState.NON_MODAL, 300, TimeUnit.MILLISECONDS, myProject);
+    }, ModalityState.NON_MODAL, 300, TimeUnit.MILLISECONDS);
     UsageSearcher usageSearcher = mySearcherFactory.create();
     long startSearchStamp = System.currentTimeMillis();
     usageSearcher.generate(usage -> {
@@ -430,15 +435,27 @@ final class SearchForUsagesRunnable implements Runnable {
       ApplicationManager.getApplication().invokeLater(() -> myUsageViewManager.showToolWindow(true), myProject.getDisposed());
     }
 
-    edtExecutorService.schedule(() -> {
+    AtomicReference<ScheduledFuture<?>> hideFindIsStartedBalloon = new AtomicReference<>();
+    Disposable closeAllBalloons = () -> {
+      hurrayFindIsStartedBalloon.cancel(false);
+      hideFindIsStartedBalloon.get().cancel(false);
+    };
+
+    hideFindIsStartedBalloon.set(edtExecutorService.schedule(() -> {
       if (!myProject.isDisposed() && findStartedBalloonShown.get()) {
         Balloon balloon = ToolWindowManager.getInstance(myProject).getToolWindowBalloon(ToolWindowId.FIND);
         if (balloon != null) {
           balloon.hide();
         }
       }
-      showBalloon.set(false);
-    }, ModalityState.NON_MODAL, 3000, TimeUnit.MILLISECONDS, myProject);
+      showFindIsStartedBalloon.set(false);
+      Disposer.dispose(closeAllBalloons);
+    }, ModalityState.NON_MODAL, 3000, TimeUnit.MILLISECONDS));
+    // Avoid leaks when the usage view/project are closed suddenly but the scheduled tasks are still waiting in the queue.
+    // To do that, close all balloons and remove the callback from Disposer (to avoid mem leak of the "closeAllBalloons" callback)
+    // on usage view close/project close/hide the second balloon runnable, whichever comes first
+    Disposable parent = ObjectUtils.notNull(myUsageViewRef.get(), myProject);
+    Disposer.register(parent, closeAllBalloons);
   }
 
   private void endSearchForUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {
@@ -450,20 +467,20 @@ final class SearchForUsagesRunnable implements Runnable {
           if (myProcessPresentation.isCanceled()) {
             notifyByFindBalloon(null, MessageType.WARNING,
                                 Collections.singletonList(UsageViewBundle.message("message.usage.search.was.canceled")));
-            findStartedBalloonShown.set(false);
-            return;
           }
-          List<String> lines = new ArrayList<>();
-          lines.add(StringUtil.escapeXmlEntities(myPresentation.getSearchString()));
-          lines.add(UsageViewBundle.message("search.result.nothing.in.0", StringUtil.escapeXmlEntities(myPresentation.getScopeText())));
-          if (myOutOfScopeUsages.get() != 0) {
-            lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
+          else {
+            List<String> lines = new ArrayList<>();
+            lines.add(StringUtil.escapeXmlEntities(myPresentation.getSearchString()));
+            lines.add(UsageViewBundle.message("search.result.nothing.in.0", StringUtil.escapeXmlEntities(myPresentation.getScopeText())));
+            if (myOutOfScopeUsages.get() != 0) {
+              lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
+            }
+            if (myProcessPresentation.isShowFindOptionsPrompt()) {
+              lines.add(createOptionsHtml(mySearchFor));
+            }
+            MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
+            notifyByFindBalloon(createGotToOptionsListener(mySearchFor), type, lines);
           }
-          if (myProcessPresentation.isShowFindOptionsPrompt()) {
-            lines.add(createOptionsHtml(mySearchFor));
-          }
-          MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
-          notifyByFindBalloon(createGotToOptionsListener(mySearchFor), type, lines);
           findStartedBalloonShown.set(false);
         }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
