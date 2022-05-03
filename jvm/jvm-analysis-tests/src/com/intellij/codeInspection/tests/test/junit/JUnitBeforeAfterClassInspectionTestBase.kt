@@ -10,12 +10,27 @@ abstract class JUnitBeforeAfterClassInspectionTestBase : UastInspectionTestBase(
   override fun setUp() {
     super.setUp()
     myFixture.addClass("""
-      package org.junit.jupiter.api;
-      public @interface BeforeAll {}
+      package org.junit;
+      public @interface BeforeClass { }
+    """.trimIndent())
+    myFixture.addClass("""
+      package org.junit;
+      public @interface AfterClass { }
     """.trimIndent())
     myFixture.addClass("""
       package org.junit.jupiter.api;
-      public @interface AfterAll {}
+      public @interface BeforeAll { }
+    """.trimIndent())
+    myFixture.addClass("""
+      package org.junit.jupiter.api;
+      public @interface AfterAll { }
+    """.trimIndent())
+    myFixture.addClass("""
+      package org.junit.jupiter.api;
+      public @interface TestInstance {
+          Lifecycle value();
+          enum Lifecycle { PER_CLASS, PER_METHOD }
+      }
     """.trimIndent())
   }
 }

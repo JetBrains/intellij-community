@@ -19,32 +19,133 @@ class KotlinJunitBeforeAfterClassInspectionTest : JUnitBeforeAfterClassInspectio
     }
   }
 
-  fun testHighlighting() {
+  fun `test @BeforeClass non-static highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
-      import org.junit.jupiter.api.BeforeAll
-      
       class MainTest {
-        @BeforeAll
-        fun <warning descr="'beforeAll()' has incorrect signature for a '@org.junit.jupiter.api.BeforeAll' method">beforeAll</warning>(i: Int): String { return "${'$'}i" }
+        @org.junit.BeforeClass
+        fun <warning descr="'beforeClass()' has incorrect signature for a '@org.junit.BeforeClass' method">beforeClass</warning>() { }
       }
     """.trimIndent())
   }
 
-  fun testNoHighlighting() {
+  fun `test @BeforeClass private highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
-      import org.junit.jupiter.api.BeforeAll
-      
       class MainTest {
         companion object {
           @JvmStatic
-          @BeforeAll
+          @org.junit.BeforeClass
+          private fun <warning descr="'beforeClass()' has incorrect signature for a '@org.junit.BeforeClass' method">beforeClass</warning>() { }
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test @BeforeClass parameter highlighting`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      class MainTest {
+        companion object {
+          @JvmStatic
+          @org.junit.BeforeClass
+          fun <warning descr="'beforeClass()' has incorrect signature for a '@org.junit.BeforeClass' method">beforeClass</warning>(i: Int) { System.out.println(i) }
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test @BeforeClass return type highlighting`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      class MainTest {
+        companion object {
+          @JvmStatic
+          @org.junit.BeforeClass
+          fun <warning descr="'beforeClass()' has incorrect signature for a '@org.junit.BeforeClass' method">beforeClass</warning>(): String { return "" }
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test @BeforeClass no highlighting`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      class MainTest {
+        companion object {
+          @JvmStatic
+          @org.junit.BeforeClass
+          fun beforeClass() { }
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test @BeforeAll non-static highlighting`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      class MainTest {
+        @org.junit.jupiter.api.BeforeAll
+        fun <warning descr="'beforeAll()' has incorrect signature for a '@org.junit.jupiter.api.BeforeAll' method">beforeAll</warning>() { }
+      }
+    """.trimIndent())
+  }
+
+  fun `test @BeforeAll private highlighting`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      class MainTest {
+        companion object {
+          @JvmStatic
+          @org.junit.jupiter.api.BeforeAll
+          private fun <warning descr="'beforeAll()' has incorrect signature for a '@org.junit.jupiter.api.BeforeAll' method">beforeAll</warning>() { }
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test @BeforeAll parameter highlighting`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      class MainTest {
+        companion object {
+          @JvmStatic
+          @org.junit.jupiter.api.BeforeAll
+          fun <warning descr="'beforeAll()' has incorrect signature for a '@org.junit.jupiter.api.BeforeAll' method">beforeAll</warning>(i: Int) { System.out.println(i) }
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test @BeforeAll return type highlighting`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      class MainTest {
+        companion object {
+          @JvmStatic
+          @org.junit.jupiter.api.BeforeAll
+          fun <warning descr="'beforeAll()' has incorrect signature for a '@org.junit.jupiter.api.BeforeAll' method">beforeAll</warning>(): String { return "" }
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test @BeforeAll no highlighting test instance per class`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      import org.junit.jupiter.api.TestInstance
+      
+      @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+      class MainTest {
+        @org.junit.jupiter.api.BeforeAll
+        fun beforeAll() { }
+      }
+    """.trimIndent())
+  }
+
+  fun `test @BeforeAll no highlighting static`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      class MainTest {
+        companion object {
+          @JvmStatic
+          @org.junit.jupiter.api.BeforeAll
           fun beforeAll() { }
         }
       }
     """.trimIndent())
   }
 
-  fun testQuickFixFull() {
+  fun `test quickfix change full signature`() {
     myFixture.testQuickFix(ULanguage.KOTLIN, """
       import org.junit.jupiter.api.BeforeAll
       
