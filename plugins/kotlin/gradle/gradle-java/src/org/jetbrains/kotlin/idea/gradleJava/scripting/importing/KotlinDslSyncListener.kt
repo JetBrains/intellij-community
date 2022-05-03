@@ -6,7 +6,8 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.RESOLVE_PROJECT
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.projectRoots.JdkUtil
@@ -30,7 +31,7 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
     internal val tasks = WeakHashMap<ExternalSystemTaskId, KotlinDslGradleBuildSync>()
 
     override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
-        if (!isGradleProjectResolve(id)) return
+        if (!id.isGradleRelatedTask()) return
 
         if (workingDir == null) return
         val task = KotlinDslGradleBuildSync(workingDir, id)
@@ -43,7 +44,7 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
     }
 
     override fun onEnd(id: ExternalSystemTaskId) {
-        if (!isGradleProjectResolve(id)) return
+        if (!id.isGradleRelatedTask()) return
 
         val sync = synchronized(tasks) { tasks.remove(id) } ?: return
 
@@ -83,14 +84,14 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
     }
 
     override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
-        if (!isGradleProjectResolve(id)) return
+        if (!id.isGradleRelatedTask()) return
 
         val sync = synchronized(tasks) { tasks[id] } ?: return
         sync.failed = true
     }
 
     override fun onCancel(id: ExternalSystemTaskId) {
-        if (!isGradleProjectResolve(id)) return
+        if (!id.isGradleRelatedTask()) return
 
         val cancelled = synchronized(tasks) { tasks.remove(id) }
 
@@ -105,7 +106,6 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
         }
     }
 
-    private fun isGradleProjectResolve(id: ExternalSystemTaskId) =
-        id.type == ExternalSystemTaskType.RESOLVE_PROJECT &&
-                id.projectSystemId == GRADLE_SYSTEM_ID
+    private fun ExternalSystemTaskId.isGradleRelatedTask() = projectSystemId == GRADLE_SYSTEM_ID &&
+            (type == RESOLVE_PROJECT || type == EXECUTE_TASK)
 }
