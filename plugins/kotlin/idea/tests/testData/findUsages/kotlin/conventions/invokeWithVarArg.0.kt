@@ -13,3 +13,5 @@ fun f(p: P) {
     p.invoke()
     p.invoke(1, 2, 3)
 }
+
+// FIR_COMPARISON

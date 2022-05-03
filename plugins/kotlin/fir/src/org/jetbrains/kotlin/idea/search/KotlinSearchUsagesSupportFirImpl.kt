@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.DefinitionsScopedSearch
@@ -17,20 +18,19 @@ import org.jetbrains.kotlin.analysis.api.analyse
 import org.jetbrains.kotlin.analysis.api.analyseWithReadAction
 import org.jetbrains.kotlin.analysis.api.calls.KtDelegatedConstructorCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.analysis.api.fir.utils.firSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
 import org.jetbrains.kotlin.analysis.api.tokens.hackyAllowRunningOnEdt
+import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
-import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.idea.search.usagesSearch.getDefaultImports
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
@@ -41,9 +41,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.ImportPath
-import org.jetbrains.kotlin.resolve.OverridingUtil
-import org.jetbrains.kotlin.resolve.descriptorUtil.isTypeRefinementEnabled
-import org.jetbrains.kotlin.resolve.descriptorUtil.module
 
 class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSearchUsagesSupport {
     override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> {
@@ -107,7 +104,45 @@ class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSea
     }
 
     override fun getReceiverTypeSearcherInfo(psiElement: PsiElement, isDestructionDeclarationSearch: Boolean): ReceiverTypeSearcherInfo? {
-        return null
+        return when (psiElement) {
+            is KtCallableDeclaration -> {
+                analyseWithReadAction(psiElement) {
+                    when (val elementSymbol = psiElement.getSymbol()) {
+                        is KtValueParameterSymbol ->
+                            null // TODO: Look for uses of component functions cf [isDestructionDeclarationSearch]
+                        is KtCallableSymbol -> {
+                            val psiClass =
+                                getExtensionReceiverClass(elementSymbol)
+                                    ?: getContainingClass(elementSymbol)
+                            ReceiverTypeSearcherInfo(psiClass) {
+                                true // TODO: conservatively searches all uses. Should compute an actual
+                                     //       occurrence check cf [org.jetbrains.kotlin.idea.search.usagesSearch.UtilsKt.containsTypeOrDerivedInside]
+                            }
+                        }
+                        else ->
+                            null
+                    }
+                }
+            }
+            is PsiMember ->
+                null // TODO: stubbed
+            else ->
+                null // TODO: stubbed
+        }
+    }
+
+    // KtCallableSymbol.receiverType != null <=> symbol is extension
+    private fun KtAnalysisSession.getExtensionReceiverClass(symbol: KtCallableSymbol): PsiClass? {
+        val receiverType = symbol.receiverType ?: return null
+        val psi = receiverType.asPsiType(symbol.psi!!, KtTypeMappingMode.DEFAULT, false)
+        val psiClassReferenceType = psi as? PsiClassReferenceType ?: return TODO("non-class extension receiver")
+        return psiClassReferenceType.resolve()
+    }
+
+    private fun KtAnalysisSession.getContainingClass(symbol: KtCallableSymbol): PsiClass? {
+        val containingSymbol = symbol.getContainingSymbol() ?: return null
+        val classSymbol = containingSymbol as? KtNamedClassOrObjectSymbol ?: return null
+        return (classSymbol.psi as? KtClassOrObject)?.toLightClass()
     }
 
     override fun forceResolveReferences(file: KtFile, elements: List<KtElement>) {

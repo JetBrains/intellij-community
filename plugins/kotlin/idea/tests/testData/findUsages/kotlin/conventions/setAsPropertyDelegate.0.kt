@@ -12,3 +12,5 @@ class Delegate() {
 }
 
 var p: String by Delegate()
+
+// FIR_COMPARISON
