@@ -35,6 +35,6 @@ interface CommitProgressUi {
   var isDumbMode: Boolean
 
   fun startProgress(): ProgressIndicatorEx
-  fun addCommitCheckFailure(@Nls(capitalization = Sentence) text: String, detailsViewer: () -> Unit)
+  fun addCommitCheckFailure(@Nls(capitalization = Sentence) text: String, detailsViewer: (() -> Unit)?)
   fun clearCommitCheckFailures()
 }
