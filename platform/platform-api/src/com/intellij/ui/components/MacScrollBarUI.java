@@ -27,10 +27,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.ui.mac.foundation.Foundation.*;
 
-final class MacScrollBarUI extends DefaultScrollBarUI {
+class MacScrollBarUI extends DefaultScrollBarUI {
   private static final List<Reference<MacScrollBarUI>> UI = new ArrayList<>();
   private final Alarm myAlarm = new Alarm();
   private boolean myTrackHovered;
+
+  MacScrollBarUI(int thickness, int thicknessMax, int thicknessMin) {
+    super(thickness, thicknessMax, thicknessMin);
+  }
 
   MacScrollBarUI() {
     super(14, 14, 11);

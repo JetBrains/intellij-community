@@ -68,6 +68,7 @@ public class JBScrollPane extends JScrollPane {
 
   private int myViewportBorderWidth = -1;
   private volatile boolean myBackgroundRequested; // avoid cyclic references
+  private boolean myIsOverlappingScrollBar = false;
 
   protected JComponent statusComponent;
 
@@ -114,6 +115,20 @@ public class JBScrollPane extends JScrollPane {
       }
     }
     return color;
+  }
+
+  public boolean isOverlappingScrollBar() {
+    return myIsOverlappingScrollBar;
+  }
+
+  public void setOverlappingScrollBar(boolean overlappingScrollBar) {
+    boolean oldValue = myIsOverlappingScrollBar;
+    myIsOverlappingScrollBar = overlappingScrollBar;
+
+    if (oldValue != myIsOverlappingScrollBar) {
+      revalidate();
+      repaint();
+    }
   }
 
   static Color getViewBackground(JScrollPane pane) {
@@ -808,9 +823,12 @@ public class JBScrollPane extends JScrollPane {
           }
         }
       }
+
+      boolean isOverlappingScrollBar = (pane instanceof JBScrollPane) && ((JBScrollPane)pane).isOverlappingScrollBar();
+
       // disabled scroll bars should be minimized (see #adjustForVSB and #adjustForHSB)
-      if (vsb != null && vsbPolicy == VERTICAL_SCROLLBAR_ALWAYS && vsb.isEnabled()) result.width += vsb.getPreferredSize().width;
-      if (hsb != null && hsbPolicy == HORIZONTAL_SCROLLBAR_ALWAYS && hsb.isEnabled()) result.height += hsb.getPreferredSize().height;
+      if (vsb != null && vsbPolicy == VERTICAL_SCROLLBAR_ALWAYS && vsb.isEnabled() && ! isOverlappingScrollBar) result.width += vsb.getPreferredSize().width;
+      if (hsb != null && hsbPolicy == HORIZONTAL_SCROLLBAR_ALWAYS && hsb.isEnabled() && !isOverlappingScrollBar) result.height += hsb.getPreferredSize().height;
 
       if (rowHead != null && rowHead.isVisible()) result.width += rowHead.getPreferredSize().width;
       if (colHead != null && colHead.isVisible()) result.height += colHead.getPreferredSize().height;

@@ -34,7 +34,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   JScrollBar myScrollBar;
 
   final ScrollBarPainter.Track myTrack = new ScrollBarPainter.Track(() -> myScrollBar);
-  final ScrollBarPainter.Thumb myThumb = new ScrollBarPainter.Thumb(() -> myScrollBar, false);
+  final ScrollBarPainter.Thumb myThumb = createThumbPainter();
 
   private boolean isValueCached;
   private int myCachedValue;
@@ -48,6 +48,10 @@ class DefaultScrollBarUI extends ScrollBarUI {
     myThickness = thickness;
     myThicknessMax = thicknessMax;
     myThicknessMin = thicknessMin;
+  }
+
+  protected ScrollBarPainter.Thumb createThumbPainter() {
+    return new ScrollBarPainter.Thumb(() -> myScrollBar, false);
   }
 
   int getThickness() {
