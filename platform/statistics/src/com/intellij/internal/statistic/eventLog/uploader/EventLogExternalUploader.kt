@@ -25,9 +25,9 @@ object EventLogExternalUploader {
   private val LOG = Logger.getInstance(EventLogExternalUploader.javaClass)
   private const val UPLOADER_MAIN_CLASS = "com.intellij.internal.statistic.uploader.EventLogUploader"
 
-  fun logPreviousExternalUploadResult(recorderId: String) {
-    val recorder = EventLogInternalRecorderConfig(recorderId)
-    if (!recorder.isSendEnabled()) {
+  fun logPreviousExternalUploadResult(recorderIds: List<String>) {
+    val recorders = recorderIds.map { EventLogInternalRecorderConfig(it) }.filter { it.isSendEnabled() }
+    if (recorders.isEmpty()) {
       return
     }
 
@@ -35,34 +35,40 @@ object EventLogExternalUploader {
       val tempDir = getTempFile()
       if (tempDir.exists()) {
         val events = ExternalEventsLogger.parseEvents(tempDir)
-        for (event in events) {
-          val eventRecorderId = event.recorderId
-          if (eventRecorderId != recorderId && eventRecorderId != ExternalSystemEvent.ALL_RECORDERS) {
-            continue
-          }
-
-          when (event) {
-            is ExternalUploadStartedEvent -> {
-              EventLogSystemLogger.logStartingExternalSend(recorderId, event.timestamp)
-            }
-            is ExternalUploadSendEvent -> {
-              val files = event.successfullySentFiles
-              val errors = event.errors
-              EventLogSystemLogger.logFilesSend(recorderId, event.total, event.succeed, event.failed, true, files, errors)
-            }
-            is ExternalUploadFinishedEvent -> {
-              EventLogSystemLogger.logFinishedExternalSend(recorderId, event.error, event.timestamp)
-            }
-            is ExternalSystemErrorEvent -> {
-              EventLogSystemLogger.logSystemError(recorderId, event.event, event.errorClass, event.timestamp)
-            }
-          }
+        for (recorder in recorders) {
+          logPreviousExternalUploadResultByRecorder(recorder.getRecorderId(), events)
         }
       }
       tempDir.deleteRecursively()
     }
     catch (e: Exception) {
       LOG.warn("Failed reading previous upload result: " + e.message)
+    }
+  }
+
+  private fun logPreviousExternalUploadResultByRecorder(recorderId: String, events: List<ExternalSystemEvent>) {
+    for (event in events) {
+      val eventRecorderId = event.recorderId
+      if (eventRecorderId != recorderId && eventRecorderId != ExternalSystemEvent.ALL_RECORDERS) {
+        continue
+      }
+
+      when (event) {
+        is ExternalUploadStartedEvent -> {
+          EventLogSystemLogger.logStartingExternalSend(recorderId, event.timestamp)
+        }
+        is ExternalUploadSendEvent -> {
+          val files = event.successfullySentFiles
+          val errors = event.errors
+          EventLogSystemLogger.logFilesSend(recorderId, event.total, event.succeed, event.failed, true, files, errors)
+        }
+        is ExternalUploadFinishedEvent -> {
+          EventLogSystemLogger.logFinishedExternalSend(recorderId, event.error, event.timestamp)
+        }
+        is ExternalSystemErrorEvent -> {
+          EventLogSystemLogger.logSystemError(recorderId, event.event, event.errorClass, event.timestamp)
+        }
+      }
     }
   }
 
