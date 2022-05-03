@@ -11,3 +11,5 @@ fun test() {
     ++a
     a++
 }
+
+// FIR_COMPARISON

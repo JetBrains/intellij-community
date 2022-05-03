@@ -38,3 +38,5 @@ fun test3() {
 fun test4() {
     tt() - tt()
 }
+
+// FIR_COMPARISON

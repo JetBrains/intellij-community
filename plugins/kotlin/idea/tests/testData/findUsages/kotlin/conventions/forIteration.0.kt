@@ -19,3 +19,5 @@ fun test() {
     for (b in B<Int>()) {
     }
 }
+
+// FIR_COMPARISON

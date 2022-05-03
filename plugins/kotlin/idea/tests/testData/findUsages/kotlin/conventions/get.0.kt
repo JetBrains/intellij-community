@@ -17,3 +17,5 @@ fun test() {
 typealias DescriptorData = C<B.Key>
 
 class C<T>
+
+// FIR_COMPARISON

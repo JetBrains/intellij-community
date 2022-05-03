@@ -144,6 +144,15 @@ interface KotlinSearchUsagesSupport {
 
     fun isExtensionOfDeclarationClassUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean
 
+    /**
+     *
+     * Extract the PSI class for the receiver type of [psiElement] assuming it is an _operator_.
+     * Additionally compute an occurence check for uses of the type in another, used to
+     * conservatively discard search candidates in which the type does not occur at all.
+     *
+     * TODO: rename to something more apt? The FE1.0 implementation requires that the target
+     *       be an operator.
+     */
     fun getReceiverTypeSearcherInfo(psiElement: PsiElement, isDestructionDeclarationSearch: Boolean): ReceiverTypeSearcherInfo?
 
     fun forceResolveReferences(file: KtFile, elements: List<KtElement>)

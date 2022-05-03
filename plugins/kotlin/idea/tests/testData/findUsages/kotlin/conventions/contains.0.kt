@@ -14,3 +14,5 @@ fun test() {
         !in A(2) -> Unit
     }
 }
+
+// FIR_COMPARISON

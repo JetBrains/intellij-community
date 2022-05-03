@@ -19,3 +19,5 @@ fun test() {
     val (x1, y1) = f()
     val (x2, y2) = g()
 }
+
+// FIR_COMPARISON
