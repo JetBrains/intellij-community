@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.intellij.internal.statistic.utils.StatisticsRecorderUtil.BUILT_IN_RECORDERS;
 
 @InternalIgnoreDependencyViolation
 final class StatisticsJobsScheduler implements ApplicationInitializedListener {
@@ -64,7 +63,9 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
 
   private static void checkPreviousExternalUploadResult() {
     JobScheduler.getScheduler().schedule(() -> {
-      EventLogExternalUploader.INSTANCE.logPreviousExternalUploadResult(ContainerUtil.newArrayList(BUILT_IN_RECORDERS));
+      List<StatisticsEventLoggerProvider> providers =
+        ContainerUtil.filter(StatisticsEventLogProviderUtil.getEventLogProviders(), provider -> provider.getSendLogsOnIdeClose());
+      EventLogExternalUploader.INSTANCE.logPreviousExternalUploadResult(providers);
     }, CHECK_EXTERNAL_UPLOADER_DELAY_IN_MIN, TimeUnit.MINUTES);
   }
 

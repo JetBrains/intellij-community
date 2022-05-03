@@ -25,8 +25,8 @@ object EventLogExternalUploader {
   private val LOG = Logger.getInstance(EventLogExternalUploader.javaClass)
   private const val UPLOADER_MAIN_CLASS = "com.intellij.internal.statistic.uploader.EventLogUploader"
 
-  fun logPreviousExternalUploadResult(recorderIds: List<String>) {
-    val recorders = recorderIds.map { EventLogInternalRecorderConfig(it) }.filter { it.isSendEnabled() }
+  fun logPreviousExternalUploadResult(providers: List<StatisticsEventLoggerProvider>) {
+    val recorders = providers.map { EventLogInternalRecorderConfig(it.recorderId) }.filter { it.isSendEnabled() }
     if (recorders.isEmpty()) {
       return
     }
