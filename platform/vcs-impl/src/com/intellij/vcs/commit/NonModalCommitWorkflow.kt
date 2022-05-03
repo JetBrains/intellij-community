@@ -2,10 +2,12 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.project.DumbService.isDumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
@@ -95,8 +97,26 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     indicator.checkCanceled()
     indicator.text = ""
     indicator.text2 = ""
-    val problem = commitCheck.runCheck(indicator)
-    problem?.let { commitProgressUi.addCommitCheckFailure(it.text) { commitCheck.showDetails(it) } }
-    return problem == null
+
+    try {
+      val problem = commitCheck.runCheck(indicator)
+      problem?.let { commitProgressUi.addCommitCheckFailure(it.text) { commitCheck.showDetails(it) } }
+      return problem == null
+    }
+    catch (e: Throwable) {
+      // Do not report error on cancellation
+      // DO report error if someone threw PCE for no reason, ex: IDEA-234006
+      if (e is ProcessCanceledException && indicator.isCanceled) throw e
+      LOG.warn(Throwable(e))
+
+      val err = e.message
+      val message = when {
+        err.isNullOrBlank() -> VcsBundle.message("before.checkin.error.unknown")
+        else -> VcsBundle.message("before.checkin.error.unknown.details", err)
+      }
+      commitProgressUi.addCommitCheckFailure(message, null)
+
+      return false
+    }
   }
 }
