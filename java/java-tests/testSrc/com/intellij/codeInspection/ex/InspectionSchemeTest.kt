@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.openapi.options.SchemeState
+import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.runInInitMode
@@ -19,6 +20,9 @@ class InspectionSchemeTest {
     @JvmField
     @ClassRule
     val projectRule = ProjectRule()
+    @JvmField
+    @ClassRule
+    val testRootDisposable = DisposableRule()
   }
 
   @JvmField
@@ -35,7 +39,7 @@ class InspectionSchemeTest {
     schemeFile.write(schemeData)
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
     val profileManager = ApplicationInspectionProfileManager(schemeManagerFactory)
-    profileManager.forceInitProfiles(true)
+    profileManager.forceInitProfilesInTestUntil(testRootDisposable.disposable)
     profileManager.initProfiles()
 
     assertThat(profileManager.profiles).hasSize(1)

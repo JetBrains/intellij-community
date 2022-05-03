@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.codeInspection.InspectionsBundle
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.PersistentStateComponent
@@ -16,6 +17,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
@@ -69,9 +71,12 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
   }
 
   @TestOnly
-  fun forceInitProfiles(flag: Boolean) {
-    LOAD_PROFILES = flag
+  fun forceInitProfilesInTestUntil(disposable: Disposable) {
+    LOAD_PROFILES = true
     profilesAreInitialized
+    Disposer.register(disposable) {
+      LOAD_PROFILES = false
+    }
   }
 
   override fun getState(): Element? {
