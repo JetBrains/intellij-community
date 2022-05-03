@@ -68,7 +68,9 @@ public final class GitFileUtils {
     Git.getInstance().runCommand(handler).throwOnError();
   }
 
-  public static void deleteFilesFromCache(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files)
+  public static void deleteFilesFromCache(@NotNull Project project,
+                                          @NotNull VirtualFile root,
+                                          @NotNull Collection<? extends VirtualFile> files)
     throws VcsException {
     deleteFiles(project, root, files, "--cached");
     updateUntrackedFilesHolderOnFileRemove(project, root, files);
@@ -103,7 +105,7 @@ public final class GitFileUtils {
   }
 
   private static void updateIgnoredFilesHolderOnFileAdd(@NotNull Project project, @NotNull VirtualFile root,
-                                                          @NotNull Collection<VirtualFile> addedFiles) {
+                                                        @NotNull Collection<VirtualFile> addedFiles) {
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
     if (repository == null) {
       LOG.warn("Repository not found for root " + root.getPresentableUrl());
@@ -197,7 +199,8 @@ public final class GitFileUtils {
   }
 
   private static void addPathsImpl(@NotNull Project project, @NotNull VirtualFile root,
-                                   @NotNull List<String> paths, boolean force, boolean filterOutIgnored) throws VcsException {
+                                   @NotNull List<String> paths,
+                                   boolean force, boolean filterOutIgnored) throws VcsException {
     if (filterOutIgnored) {
       paths = excludeIgnoredFiles(project, root, paths);
       if (paths.isEmpty()) return;
@@ -243,7 +246,8 @@ public final class GitFileUtils {
     GitIndexFileSystemRefresher.refreshFilePaths(project, files);
   }
 
-  public static void revertUnstagedPaths(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<? extends FilePath> files) throws VcsException {
+  public static void revertUnstagedPaths(@NotNull Project project, @NotNull VirtualFile root,
+                                         @NotNull List<? extends FilePath> files) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       GitLineHandler handler = new GitLineHandler(project, root, GitCommand.CHECKOUT);
       handler.endOptions();
@@ -255,9 +259,9 @@ public final class GitFileUtils {
   /**
    * Get file content for the specific revision
    *
-   * @param project      the project
-   * @param root         the vcs root
-   * @param revisionOrBranch     the revision to find path in or branch
+   * @param project          the project
+   * @param root             the vcs root
+   * @param revisionOrBranch the revision to find path in or branch
    * @return the content of file if file is found, null if the file is missing in the revision
    * @throws VcsException if there is a problem with running git
    */
