@@ -235,13 +235,16 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     indicator: ProgressIndicator,
     isOnlyRunCommitChecks: Boolean
   ): ReturnResult {
-    workflow.runMetaHandlers(indicator)
+    val metaHandlers = commitHandlers.filterIsInstance<CheckinMetaHandler>()
+    workflow.runMetaHandlers(metaHandlers, indicator)
     FileDocumentManager.getInstance().saveAllDocuments()
 
-    val handlersResult = workflow.runHandlers(executor)
-    if (handlersResult != ReturnResult.COMMIT) return handlersResult
+    val plainHandlers = commitHandlers.filterNot { it is CommitCheck<*> }
+    val plainHandlersResult = workflow.runBeforeCommitHandlersChecks(executor, plainHandlers)
+    if (plainHandlersResult != ReturnResult.COMMIT) return plainHandlersResult
 
-    val checksPassed = runCommitChecks(indicator)
+    val commitChecks = commitHandlers.filterNot { it is CheckinMetaHandler }.filterIsInstance<CommitCheck<*>>()
+    val checksPassed = runCommitChecks(commitChecks, indicator)
     when {
       isOnlyRunCommitChecks -> {
         isCommitChecksResultUpToDate = true
@@ -257,8 +260,8 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
   }
 
-  private suspend fun runCommitChecks(indicator: ProgressIndicator): Boolean {
-    for (commitCheck in commitHandlers.filterNot { it is CheckinMetaHandler }.filterIsInstance<CommitCheck<*>>()) {
+  private suspend fun runCommitChecks(commitChecks: List<CommitCheck<*>>, indicator: ProgressIndicator): Boolean {
+    for (commitCheck in commitChecks) {
       val problem = runCommitCheck(commitCheck, indicator)
       if (problem != null) return false
     }

@@ -57,27 +57,19 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     return result
   }
 
-  suspend fun runMetaHandlers(indicator: ProgressIndicator) =
-    commitHandlers
-      .filterIsInstance<CheckinMetaHandler>()
-      .reversed() // to have the same order as when wrapping meta handlers into each other
-      .forEach { runMetaHandler(it, indicator) }
-
-  private suspend fun runMetaHandler(metaHandler: CheckinMetaHandler, indicator: ProgressIndicator) {
-    if (metaHandler is CommitCheck<*>) {
-      runCommitCheck(metaHandler, indicator)
-    }
-    else {
-      suspendCancellableCoroutine<Unit> { continuation ->
-        val handlerCall = wrapWithCommitMetaHandler(metaHandler) { continuation.resume(Unit) }
-        handlerCall.run()
+  suspend fun runMetaHandlers(metaHandlers: List<CheckinMetaHandler>, indicator: ProgressIndicator) {
+    // reversed to have the same order as when wrapping meta handlers into each other
+    for (metaHandler in metaHandlers.reversed()) {
+      if (metaHandler is CommitCheck<*>) {
+        runCommitCheck(metaHandler, indicator)
+      }
+      else {
+        suspendCancellableCoroutine<Unit> { continuation ->
+          val handlerCall = wrapWithCommitMetaHandler(metaHandler) { continuation.resume(Unit) }
+          handlerCall.run()
+        }
       }
     }
-  }
-
-  fun runHandlers(executor: CommitExecutor?): CheckinHandler.ReturnResult {
-    val handlers = commitHandlers.filterNot { it is CommitCheck<*> }
-    return runBeforeCommitHandlersChecks(executor, handlers)
   }
 
   suspend fun <P : CommitProblem> runCommitCheck(commitCheck: CommitCheck<P>, indicator: ProgressIndicator): P? {
