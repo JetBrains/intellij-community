@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.UtilBundle;
@@ -108,7 +108,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
    * {@code errorCount[idx]} equals to a number of highlighters of severity with index {@code idx} in this markup model.
    * Severity index can be obtained via {@link SeverityRegistrar#getSeverityIdx(HighlightSeverity)}.
    */
-  protected int @NotNull [] getErrorCounts() {
+  public int @NotNull [] getErrorCounts() {
     return cachedErrors.clone();
   }
 
