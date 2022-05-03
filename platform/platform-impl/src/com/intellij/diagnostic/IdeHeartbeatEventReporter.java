@@ -29,6 +29,7 @@ public final class IdeHeartbeatEventReporter implements Disposable {
   @Nullable
   private final ScheduledFuture<?> myThread;
 
+  private long myLastCpuTime = -1;
   private long myLastGcTime = -1;
   private final List<GarbageCollectorMXBean> myGcBeans = ManagementFactory.getGarbageCollectorMXBeans();
 
@@ -52,8 +53,17 @@ public final class IdeHeartbeatEventReporter implements Disposable {
     long totalGcTime = myGcBeans.stream().mapToLong(GarbageCollectorMXBean::getCollectionTime).sum();
     long thisGcTime = myLastGcTime == -1 ? 0 : totalGcTime - myLastGcTime;
     myLastGcTime = thisGcTime;
+
+    long totalCpuTime = mxBean.getProcessCpuTime();
+    long thisCpuTime = totalCpuTime < 0 || myLastCpuTime < 0 ? 0 : totalCpuTime - myLastCpuTime;
+    myLastCpuTime = thisCpuTime;
+
     // don't report total GC time in the first 5 minutes of IJ execution
-    UILatencyLogger.HEARTBEAT.log(systemCpuLoad, swapLoad, (int)thisGcTime);
+    UILatencyLogger.HEARTBEAT.log(
+      UILatencyLogger.SYSTEM_CPU_LOAD.with(systemCpuLoad),
+      UILatencyLogger.SWAP_LOAD.with(swapLoad),
+      UILatencyLogger.CPU_TIME.with((int) TimeUnit.NANOSECONDS.toMillis(thisCpuTime)),
+      UILatencyLogger.GC_TIME.with((int) thisGcTime));
   }
 
   @Override
@@ -74,10 +84,18 @@ public final class IdeHeartbeatEventReporter implements Disposable {
   }
 
   public static final class UILatencyLogger extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("performance", 63);
+    private static final EventLogGroup GROUP = new EventLogGroup("performance", 64);
 
-    private static final EventId3<Integer, Integer, Integer> HEARTBEAT = GROUP.registerEvent(
-      "heartbeat", EventFields.Int("system_cpu_load"), EventFields.Int("swap_load"), EventFields.Int("gc_time"));
+    private static final IntEventField SYSTEM_CPU_LOAD = EventFields.Int("system_cpu_load");
+    private static final IntEventField SWAP_LOAD = EventFields.Int("swap_load");
+    private static final IntEventField CPU_TIME = EventFields.Int("cpu_time");
+    private static final IntEventField GC_TIME = EventFields.Int("gc_time");
+    private static final VarargEventId HEARTBEAT = GROUP.registerVarargEvent(
+      "heartbeat",
+      SYSTEM_CPU_LOAD,
+      SWAP_LOAD,
+      CPU_TIME,
+      GC_TIME);
     public static final EventId1<Long> LATENCY = GROUP.registerEvent("ui.latency", EventFields.DurationMs);
     public static final EventId1<Long> LAGGING = GROUP.registerEvent("ui.lagging", EventFields.DurationMs);
     public static final BooleanEventField COLD_START = EventFields.Boolean("cold_start");
