@@ -14,9 +14,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.intellij.internal.statistic.config.StatisticsStringUtil.split;
@@ -57,14 +58,25 @@ public final class EventLogUploader {
       return;
     }
 
-    SendConfiguration config = newSendConfiguration(options);
+    List<SendConfiguration> configs = parseSendConfigurations(options);
     if (!waitForIde(logger, options, 20)) {
       logger.warn("Cannot send logs because IDE didn't close during " + (20 * WAIT_FOR_IDE_MS) + "ms");
       eventsLogger.logSendingLogsFinished("IDE_NOT_CLOSING");
       return;
     }
 
-    sendLogsByRecorder(appInfo, config, logger, eventsLogger);
+    ExecutorService service = Executors.newFixedThreadPool(configs.size());
+    for (SendConfiguration config : configs) {
+      service.execute(() -> sendLogsByRecorder(appInfo, config, logger, eventsLogger));
+    }
+
+    service.shutdown();
+    try {
+      service.awaitTermination(5, TimeUnit.MINUTES);
+    }
+    catch (InterruptedException e) {
+      // ignore
+    }
   }
 
   private static void sendLogsByRecorder(@NotNull EventLogApplicationInfo appInfo,
@@ -140,9 +152,18 @@ public final class EventLogUploader {
     return null;
   }
 
-  private static SendConfiguration newSendConfiguration(@NotNull Map<String, String> options) {
-    String recorder = options.get(EventLogUploaderOptions.RECORDER_OPTION);
-    return new SendConfiguration(recorder, options);
+  private static List<SendConfiguration> parseSendConfigurations(@NotNull Map<String, String> options) {
+    String recorder = options.get(EventLogUploaderOptions.RECORDERS_OPTION);
+    if (recorder == null) {
+      return Collections.emptyList();
+    }
+
+    String[] recorderIds = recorder.split(";");
+    List<SendConfiguration> configurations = new ArrayList<>();
+    for (String recorderId : recorderIds) {
+      configurations.add(new SendConfiguration(recorderId, options));
+    }
+    return configurations;
   }
 
   private static boolean waitForIde(DataCollectorDebugLogger logger, Map<String, String> options, int maxAttempts) {

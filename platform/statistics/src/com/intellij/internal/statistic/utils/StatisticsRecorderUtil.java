@@ -11,7 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class StatisticsRecorderUtil {
-  private static final String[] BUILT_IN_RECORDERS = new String[] {"FUS", "MLSE"};
+  public static final String[] BUILT_IN_RECORDERS = new String[] {"FUS", "MLSE"};
   private static final String IDEA_FUS_RECORDER_INTERNAL_MODE = "fus.internal.test.mode";
   private static final String IDEA_RECORDER_INTERNAL_MODE = "fus.recorder.internal.test.mode";
 

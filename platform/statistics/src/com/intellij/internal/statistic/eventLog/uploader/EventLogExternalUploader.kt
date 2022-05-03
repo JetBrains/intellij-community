@@ -66,18 +66,18 @@ object EventLogExternalUploader {
     }
   }
 
-  fun startExternalUpload(recorderId: String, isTest: Boolean) {
-    val recorder = EventLogInternalRecorderConfig(recorderId, false)
-    if (!recorder.isSendEnabled()) {
-      LOG.info("Don't start external process because sending logs is disabled")
+  fun startExternalUpload(recorderIds: List<String>, isTest: Boolean) {
+    val recorders = recorderIds.map { EventLogInternalRecorderConfig(it, false) }.filter { it.isSendEnabled() }
+    if (recorders.isEmpty()) {
+      LOG.info("Don't start external process because sending logs is disabled for all recorders")
       return
     }
 
-    EventLogSystemLogger.logCreatingExternalSendCommand(recorderId)
-    val application = EventLogInternalApplicationInfo(recorderId, isTest)
+    EventLogSystemLogger.logCreatingExternalSendCommand(recorderIds)
+    val application = EventLogInternalApplicationInfo("", isTest)
     try {
-      val command = prepareUploadCommand(recorder, application)
-      EventLogSystemLogger.logFinishedCreatingExternalSendCommand(recorderId, null)
+      val command = prepareUploadCommand(recorders, application)
+      EventLogSystemLogger.logFinishedCreatingExternalSendCommand(recorderIds, null)
       if (LOG.isDebugEnabled) {
         LOG.debug("Starting external process: '${command.joinToString(separator = " ")}'")
       }
@@ -86,14 +86,21 @@ object EventLogExternalUploader {
       LOG.info("Started external process for uploading event log")
     }
     catch (e: EventLogUploadException) {
-      EventLogSystemLogger.logFinishedCreatingExternalSendCommand(recorderId, e.errorType)
+      EventLogSystemLogger.logFinishedCreatingExternalSendCommand(recorderIds, e.errorType)
       LOG.info(e)
     }
   }
 
-  private fun prepareUploadCommand(recorder: EventLogRecorderConfig, applicationInfo: EventLogApplicationInfo): Array<out String> {
-    val logFiles = recorder.getFilesToSendProvider().getFilesToSend().map { it.file.absolutePath }
-    if (logFiles.isEmpty()) {
+  private fun prepareUploadCommand(recorders: List<EventLogRecorderConfig>, applicationInfo: EventLogApplicationInfo): Array<out String> {
+    val logFilesByRecorder = hashMapOf<String, List<String>>()
+    for (recorder in recorders) {
+      val logFiles = recorder.getFilesToSendProvider().getFilesToSend().map { it.file.absolutePath }
+      if (logFiles.isNotEmpty()) {
+        logFilesByRecorder[recorder.getRecorderId()] = logFiles
+      }
+    }
+
+    if (logFilesByRecorder.isEmpty()) {
       throw EventLogUploadException("No available logs to send", NO_LOGS)
     }
 
@@ -117,9 +124,11 @@ object EventLogExternalUploader {
 
     addArgument(args, IDE_TOKEN, Paths.get(PathManager.getSystemPath(), "token").toAbsolutePath().toString())
 
-    val recorderId = recorder.getRecorderId()
-    addArgument(args, RECORDER_OPTION, recorderId)
-    addRecorderConfiguration(args, recorderId, recorder.getTemplateUrl(), logFiles)
+    addArgument(args, RECORDERS_OPTION, recorders.joinToString(separator = ";") { it.getRecorderId() })
+    for (recorder in recorders) {
+      val logFiles = logFilesByRecorder[recorder.getRecorderId()]
+      logFiles?.let { addRecorderConfiguration(args, recorder.getRecorderId(), recorder.getTemplateUrl(), it) }
+    }
 
     addArgument(args, PRODUCT_OPTION, applicationInfo.productCode)
     addArgument(args, PRODUCT_VERSION_OPTION, applicationInfo.productVersion)
