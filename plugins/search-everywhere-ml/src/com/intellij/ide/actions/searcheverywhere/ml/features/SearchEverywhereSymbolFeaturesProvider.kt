@@ -51,7 +51,7 @@ class SearchEverywhereSymbolFeaturesProvider : SearchEverywhereElementFeaturesPr
   }
 
   private fun getParentStatisticianFeatures(element: PsiElement): List<EventPair<*>> {
-    val parent = ReadAction.compute<PsiElement?, Nothing> { element.parent } ?: return emptyList()
+    val parent = ReadAction.compute<PsiElement?, Nothing> { element.parent }?.takeIf { it is PsiNamedElement } ?: return emptyList()
     val service = service<SearchEverywhereStatisticianService>()
 
     return service.getCombinedStats(parent)?.let { stats ->
