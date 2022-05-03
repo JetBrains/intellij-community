@@ -485,15 +485,25 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     }
   }
 
-  static class RangeDfaProblemType extends DfaProblemType {
+  public static class RangeDfaProblemType extends DfaProblemType {
     final @NotNull @Nls String myTemplate;
     final @NotNull LongRangeSet myRangeSet;
     final @Nullable PsiPrimitiveType myType;
+
+    public RangeDfaProblemType(@NotNull LongRangeSet set, @Nullable PsiPrimitiveType type) {
+      this(JavaAnalysisBundle.message("dfa.find.cause.numeric.range.generic.template"), set, type);
+    }
 
     RangeDfaProblemType(@NotNull @Nls String template, @NotNull LongRangeSet set, @Nullable PsiPrimitiveType type) {
       myTemplate = template;
       myRangeSet = set;
       myType = type;
+    }
+
+    @Override
+    CauseItem[] findCauses(TrackingRunner runner, PsiExpression expression, MemoryStateChange history) {
+      CauseItem cause = findRangeCause(history, history.myTopOfStack, myRangeSet, myTemplate);
+      return cause == null ? new CauseItem[0] : new CauseItem[]{cause};
     }
 
     @Nullable
@@ -1389,7 +1399,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   }
 
   @Nullable
-  private PsiElement getCallAnchor(PsiCallExpression call) {
+  private static PsiElement getCallAnchor(PsiCallExpression call) {
     if (call instanceof PsiMethodCallExpression) {
       return ((PsiMethodCallExpression)call).getMethodExpression().getReferenceNameElement();
     }

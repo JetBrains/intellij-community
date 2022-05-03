@@ -2799,7 +2799,10 @@
                      bundle="messages.InspectionGadgetsBundle" key="inspection.constant.expression.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      implementationClass="com.siyeh.ig.style.ConstantExpressionInspection"/>
-
+    <localInspection groupPath="Java" language="JAVA" shortName="NonStrictComparisonCanBeEquality" enabledByDefault="true" level="WEAK WARNING"
+                     bundle="messages.InspectionGadgetsBundle" key="inspection.non.strict.comparison.equality.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     implementationClass="com.siyeh.ig.controlflow.NonStrictComparisonCanBeEqualityInspection"/>
   </extensions>
 
 </idea-plugin>
