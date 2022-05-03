@@ -5,7 +5,7 @@
   <vendor>JetBrains</vendor>
   <description>
       <![CDATA[
-      Provides integration with <a href="https://www.gradle.org">Gradle</a> for automation of building, testing, publishing, and deployment of software packages.
+      Provides integration with <a href="https://gradle.org">Gradle</a> for automation of building, testing, publishing, and deployment of software packages.
       <ul>
       <li>Create a new Gradle project or import an existing Gradle project.</li>
       <li>Edit Gradle files with coding assistance (code completion, inspections, refactoring, and much more).</li>
