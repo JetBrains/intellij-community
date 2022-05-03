@@ -145,6 +145,28 @@ class KotlinJunitBeforeAfterClassInspectionTest : JUnitBeforeAfterClassInspectio
     """.trimIndent())
   }
 
+  fun `test parameter resolver no highlighting`() {
+    myFixture.addClass("""
+      package com.intellij.test;
+      import org.junit.jupiter.api.extension.ParameterResolver;
+      public class TestParameterResolver implements ParameterResolver { }
+    """.trimIndent())
+
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      import org.junit.jupiter.api.extension.*
+      import com.intellij.test.TestParameterResolver
+      
+      @ExtendWith(TestParameterResolver::class)
+      class MainTest {
+        companion object {
+          @JvmStatic
+          @org.junit.jupiter.api.BeforeAll
+          fun beforeAll(foo: String) { println(foo) }
+        }
+      }
+    """.trimIndent())
+  }
+
   fun `test quickfix change full signature`() {
     myFixture.testQuickFix(ULanguage.KOTLIN, """
       import org.junit.jupiter.api.BeforeAll
