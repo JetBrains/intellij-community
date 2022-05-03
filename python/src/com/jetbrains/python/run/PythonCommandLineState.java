@@ -171,8 +171,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return execute(executor, getDefaultPythonProcessStarter(), patchers);
   }
 
-  @NotNull
-  public ExecutionResult execute(Executor executor) throws ExecutionException {
+  public @Nullable ExecutionResult execute(@NotNull Executor executor) throws ExecutionException {
     return execute(executor, (targetEnvironmentRequest, pythonScript) -> pythonScript);
   }
 
