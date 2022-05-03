@@ -119,6 +119,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
                      "* {@link #unknown} is unknown.\n" +
                      "* @param foo the text without the parameter name\n" +
                      "* @return the offset of {@link #bar} in something\n" +
+                     "* @throws Exception when something happens\n" +
                      " */";
     TextContent text = extractText("a.java", docText, 6);
     assertEquals("Hello |,\nhere's an asterisk: *\nand some |.\ntags1 |\ntags2 |\n|is unknown.", unknownOffsets(text));
@@ -128,6 +129,9 @@ public class TextExtractionTest extends BasePlatformTestCase {
 
     text = extractText("a.java", docText, docText.indexOf("without"));
     assertEquals("the text without the parameter name", text.toString());
+
+    text = extractText("a.java", docText, docText.indexOf("when something"));
+    assertEquals("when something happens", text.toString());
   }
 
   public void testJavaLiteral() {
