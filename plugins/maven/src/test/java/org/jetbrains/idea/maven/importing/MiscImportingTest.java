@@ -2,8 +2,8 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.ProjectTopics;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -16,19 +16,14 @@ import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectChanges;
-import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
-import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
@@ -399,24 +394,6 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     @Override
     public boolean isApplicable(MavenProject mavenProject) {
       return true;
-    }
-
-    @Override
-    public void preProcess(Module module,
-                           MavenProject mavenProject,
-                           MavenProjectChanges changes,
-                           IdeModifiableModelsProvider modifiableModelsProvider) {
-    }
-
-    @Override
-    public void process(IdeModifiableModelsProvider modifiableModelsProvider,
-                        Module module,
-                        MavenRootModelAdapter rootModel,
-                        MavenProjectsTree mavenModel,
-                        MavenProject mavenProject,
-                        MavenProjectChanges changes,
-                        Map<MavenProject, String> mavenProjectToModuleName,
-                        List<MavenProjectsProcessorTask> postTasks) {
     }
   }
 }
