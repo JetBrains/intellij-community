@@ -450,7 +450,7 @@ public class RefManagerImpl extends RefManager {
     if (!Registry.is("batch.inspections.process.project.usages.in.parallel")) {
       return;
     }
-    final int threadsCount = Math.min(4, Runtime.getRuntime().availableProcessors() - 1);
+    final int threadsCount = Math.min(6, Runtime.getRuntime().availableProcessors() - 1);
     if (threadsCount == 0) {
       // need more than 1 core for parallel processing
       return;
