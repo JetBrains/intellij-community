@@ -30,8 +30,11 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
-import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler.ReturnResult
+import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
+import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
+import com.intellij.openapi.vcs.checkin.CommitCheck
+import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -244,7 +247,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     if (plainHandlersResult != ReturnResult.COMMIT) return plainHandlersResult
 
     val commitChecks = commitHandlers.filterNot { it is CheckinMetaHandler }.filterIsInstance<CommitCheck<*>>()
-    val checksPassed = runCommitChecks(commitChecks, indicator)
+    val checksPassed = workflow.runCommitChecks(commitChecks, ui.commitProgressUi, indicator)
     when {
       isOnlyRunCommitChecks -> {
         isCommitChecksResultUpToDate = true
@@ -258,20 +261,6 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         return ReturnResult.CANCEL
       }
     }
-  }
-
-  private suspend fun runCommitChecks(commitChecks: List<CommitCheck<*>>, indicator: ProgressIndicator): Boolean {
-    for (commitCheck in commitChecks) {
-      val problem = runCommitCheck(commitCheck, indicator)
-      if (problem != null) return false
-    }
-    return true
-  }
-
-  private suspend fun <P : CommitProblem> runCommitCheck(commitCheck: CommitCheck<P>, indicator: ProgressIndicator): P? {
-    val problem = workflow.runCommitCheck(commitCheck, indicator)
-    problem?.let { ui.commitProgressUi.addCommitCheckFailure(it.text) { commitCheck.showDetails(it) } }
-    return problem
   }
 
   override fun dispose() {
