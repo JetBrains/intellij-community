@@ -76,28 +76,27 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
                               commitProgressUi: CommitProgressUi,
                               indicator: ProgressIndicator): Boolean {
     for (commitCheck in commitChecks) {
-      val problem = runCommitCheck(commitCheck, commitProgressUi, indicator)
-      if (problem != null) return false
+      val success = runCommitCheck(commitCheck, commitProgressUi, indicator)
+      if (!success) return false
     }
     return true
   }
 
+  /**
+   * @return true if there are no errors and commit shall proceed
+   */
   private suspend fun <P : CommitProblem> runCommitCheck(commitCheck: CommitCheck<P>,
                                                          commitProgressUi: CommitProgressUi,
-                                                         indicator: ProgressIndicator): P? {
-    val problem = runCommitCheck(commitCheck, indicator)
-    problem?.let { commitProgressUi.addCommitCheckFailure(it.text) { commitCheck.showDetails(it) } }
-    return problem
-  }
-
-  suspend fun <P : CommitProblem> runCommitCheck(commitCheck: CommitCheck<P>, indicator: ProgressIndicator): P? {
-    if (!commitCheck.isEnabled()) return null.also { LOG.debug("Commit check disabled $commitCheck") }
-    if (isDumb(project) && !isDumbAware(commitCheck)) return null.also { LOG.debug("Skipped commit check in dumb mode $commitCheck") }
+                                                         indicator: ProgressIndicator): Boolean {
+    if (!commitCheck.isEnabled()) return true.also { LOG.debug("Commit check disabled $commitCheck") }
+    if (isDumb(project) && !isDumbAware(commitCheck)) return true.also { LOG.debug("Skipped commit check in dumb mode $commitCheck") }
 
     LOG.debug("Running commit check $commitCheck")
     indicator.checkCanceled()
     indicator.text = ""
     indicator.text2 = ""
-    return commitCheck.runCheck(indicator)
+    val problem = commitCheck.runCheck(indicator)
+    problem?.let { commitProgressUi.addCommitCheckFailure(it.text) { commitCheck.showDetails(it) } }
+    return problem == null
   }
 }
