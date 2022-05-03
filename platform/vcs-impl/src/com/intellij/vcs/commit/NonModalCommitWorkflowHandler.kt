@@ -241,21 +241,28 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     val handlersResult = workflow.runHandlers(executor)
     if (handlersResult != ReturnResult.COMMIT) return handlersResult
 
-    val checksResult = runCommitChecks(indicator)
-    if (checksResult != ReturnResult.COMMIT || isOnlyRunCommitChecks) isCommitChecksResultUpToDate = true
-
-    return if (isOnlyRunCommitChecks) ReturnResult.CANCEL else checksResult
+    val checksPassed = runCommitChecks(indicator)
+    when {
+      isOnlyRunCommitChecks -> {
+        isCommitChecksResultUpToDate = true
+        return ReturnResult.CANCEL
+      }
+      checksPassed -> {
+        return ReturnResult.COMMIT
+      }
+      else -> {
+        isCommitChecksResultUpToDate = true
+        return ReturnResult.CANCEL
+      }
+    }
   }
 
-  private suspend fun runCommitChecks(indicator: ProgressIndicator): ReturnResult {
-    var result = ReturnResult.COMMIT
-
+  private suspend fun runCommitChecks(indicator: ProgressIndicator): Boolean {
     for (commitCheck in commitHandlers.filterNot { it is CheckinMetaHandler }.filterIsInstance<CommitCheck<*>>()) {
       val problem = runCommitCheck(commitCheck, indicator)
-      if (problem != null) result = ReturnResult.CANCEL
+      if (problem != null) return false
     }
-
-    return result
+    return true
   }
 
   private suspend fun <P : CommitProblem> runCommitCheck(commitCheck: CommitCheck<P>, indicator: ProgressIndicator): P? {
