@@ -58,35 +58,43 @@ public final class EventLogUploader {
     }
 
     SendConfiguration config = newSendConfiguration(options);
-    if (config.deviceConfig == null) {
-      logger.warn("Failed creating device config from arguments");
-      eventsLogger.logSendingLogsFinished("NO_DEVICE_CONFIG");
-      return;
-    }
-
-    if (config.recorderConfig == null) {
-      logger.warn("Failed creating recorder config from arguments");
-      eventsLogger.logSendingLogsFinished("NO_RECORDER_CONFIG");
-      return;
-    }
-
     if (!waitForIde(logger, options, 20)) {
       logger.warn("Cannot send logs because IDE didn't close during " + (20 * WAIT_FOR_IDE_MS) + "ms");
       eventsLogger.logSendingLogsFinished("IDE_NOT_CLOSING");
       return;
     }
 
-    logger.info("Start uploading...");
+    sendLogsByRecorder(appInfo, config, logger, eventsLogger);
+  }
+
+  private static void sendLogsByRecorder(@NotNull EventLogApplicationInfo appInfo,
+                                         @NotNull SendConfiguration config,
+                                         @NotNull DataCollectorDebugLogger logger,
+                                         @NotNull ExternalEventsLogger eventsLogger) {
+    String recorderId = config.recorderId;
+    if (config.deviceConfig == null) {
+      logger.warn("[" + recorderId + "] Failed creating device config from arguments");
+      eventsLogger.logSendingLogsFinished(recorderId, "NO_DEVICE_CONFIG");
+      return;
+    }
+
+    if (config.recorderConfig == null) {
+      logger.warn("[" + recorderId + "] Failed creating recorder config from arguments");
+      eventsLogger.logSendingLogsFinished(recorderId, "NO_RECORDER_CONFIG");
+      return;
+    }
+
+    logger.info("[" + recorderId + "] Start uploading...");
     EventLogConnectionSettings connectionSettings = appInfo.getConnectionSettings();
-    logger.info("{product:" + appInfo.getProductCode() + ", productVersion:" + appInfo.getProductVersion() +
+    logger.info("[" + recorderId + "] {product:" + appInfo.getProductCode() + ", productVersion:" + appInfo.getProductVersion() +
                 ", userAgent:" + connectionSettings.getUserAgent() +
                 ", internal:" + appInfo.isInternal() + ", isTest:" + appInfo.isTest() + "}");
 
     String logs = config.recorderConfig.getFilesToSendProvider().getFilesToSend().stream().
       map(file -> file.getFile().getAbsolutePath()).collect(Collectors.joining(File.pathSeparator));
-    logger.info("{recorder:" + config.recorderConfig.getRecorderId() +
+    logger.info("[" + recorderId + "] {recorder:" + config.recorderConfig.getRecorderId() +
                 ", url: " + config.recorderConfig.getTemplateUrl() + ", files:" + logs + "}");
-    logger.info("{device:" + config.deviceConfig.getDeviceId() + ", bucket:" + config.deviceConfig.getBucket() + "}");
+    logger.info("[" + recorderId + "] {device:" + config.deviceConfig.getDeviceId() + ", bucket:" + config.deviceConfig.getBucket() + "}");
     try {
       EventLogStatisticsService service = new EventLogStatisticsService(
         config.deviceConfig, config.recorderConfig, appInfo,
@@ -95,20 +103,20 @@ public final class EventLogUploader {
           public void onLogsSend(@NotNull List<String> successfullySentFiles,
                                  @NotNull List<Integer> errors,
                                  int totalLocalFiles) {
-            eventsLogger.logSendingLogsSucceed(successfullySentFiles, errors, totalLocalFiles);
+            eventsLogger.logSendingLogsSucceed(recorderId, successfullySentFiles, errors, totalLocalFiles);
           }
         });
 
       StatisticsResult result = service.send();
-      eventsLogger.logSendingLogsFinished(result.getCode());
+      eventsLogger.logSendingLogsFinished(recorderId, result.getCode());
       if (logger.isTraceEnabled()) {
-        logger.trace("Uploading finished with " + result.getCode().name());
-        logger.trace(result.getDescription());
+        logger.trace("[" + recorderId + "] Uploading finished with " + result.getCode().name());
+        logger.trace("[" + recorderId + "] " + result.getDescription());
       }
     }
     catch (Exception e) {
-      logger.warn("Failed sending files: " + e.getMessage());
-      eventsLogger.logSendingLogsFinished("ERROR_ON_SEND");
+      logger.warn("[" + recorderId + "] Failed sending files: " + e.getMessage());
+      eventsLogger.logSendingLogsFinished(recorderId, "ERROR_ON_SEND");
     }
   }
 
@@ -161,6 +169,9 @@ public final class EventLogUploader {
   }
 
   private static class SendConfiguration {
+    @NotNull
+    protected final String recorderId;
+
     @Nullable
     protected final DeviceConfiguration deviceConfig;
 
@@ -169,6 +180,7 @@ public final class EventLogUploader {
 
 
     private SendConfiguration(@NotNull String recorder, @NotNull Map<String, String> options) {
+      recorderId = recorder;
       deviceConfig = newDeviceConfig(recorder, options);
       recorderConfig = newRecorderConfig(recorder, options);
     }

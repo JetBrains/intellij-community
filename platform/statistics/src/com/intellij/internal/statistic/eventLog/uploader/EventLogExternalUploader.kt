@@ -36,6 +36,11 @@ object EventLogExternalUploader {
       if (tempDir.exists()) {
         val events = ExternalEventsLogger.parseEvents(tempDir)
         for (event in events) {
+          val eventRecorderId = event.recorderId
+          if (eventRecorderId != recorderId && eventRecorderId != ExternalSystemEvent.ALL_RECORDERS) {
+            continue
+          }
+
           when (event) {
             is ExternalUploadStartedEvent -> {
               EventLogSystemLogger.logStartingExternalSend(recorderId, event.timestamp)
