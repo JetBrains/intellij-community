@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.TestCaseLoader
 import com.intellij.execution.CommandLineWrapperUtil
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -32,11 +33,11 @@ import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
-import java.util.function.Consumer
 import java.util.function.Predicate
 import java.util.function.Supplier
 import java.util.regex.Pattern
 import java.util.stream.Collectors
+import java.util.stream.Stream
 
 @CompileStatic
 class TestingTasksImpl extends TestingTasks {
@@ -534,6 +535,101 @@ class TestingTasksImpl extends TestingTasks {
     }
   }
 
+  @Override
+  void runTestsSkippedInHeadlessEnvironment() {
+    def testsSkippedInHeadlessEnvironment = context.messages.block("Loading all tests annotated with @SkipInHeadlessEnvironment") {
+      loadTestsSkippedInHeadlessEnvironment()
+    }
+    testsSkippedInHeadlessEnvironment.forEach {
+      options.batchTestIncludes = it.first
+      options.mainModule = it.second
+      runTests([], null, null)
+    }
+  }
+
+  private List<Pair<String, String>> loadTestsSkippedInHeadlessEnvironment() {
+    List<Path> classpath = context.project.modules.stream()
+      .flatMap { context.getModuleRuntimeClasspath(it, true).stream() }
+      .distinct().map { Path.of(it) }
+      .collect(Collectors.toList())
+    UrlClassLoader classloader = UrlClassLoader.build().files(classpath).get()
+    Class<?> testAnnotation = Class.forName("com.intellij.testFramework.SkipInHeadlessEnvironment", false, classloader)
+    return context.project.modules.parallelStream().flatMap { module ->
+      def root = Path.of(context.getModuleTestsOutputPath(module))
+      if (Files.exists(root)) {
+        Files.walk(root).withCloseable { stream ->
+          stream.filter { it.toString().endsWith("Test.class") }
+            .map { root.relativize(it).toString() }.filter {
+            def className = FileUtilRt.getNameWithoutExtension(it).replaceAll("/", ".")
+            def testClass = Class.forName(className, false, classloader)
+            !Modifier.isAbstract(testClass.modifiers) && testClass.annotations.any { annotation ->
+              testAnnotation.isAssignableFrom(annotation.class)
+            }
+          }.map { Pair.create(it, module.name) }.collect(Collectors.toList())
+        }.stream()
+      }
+      else {
+        Stream.empty()
+      }
+    }.collect(Collectors.toList())
+  }
+
+  private void runInBatchMode(String mainModule,
+                              Map<String, String> systemProperties,
+                              List<String> jvmArgs,
+                              Map<String, String> envVariables,
+                              List<String> bootstrapClasspath,
+                              List<String> testClasspath) {
+    String mainModuleTestsOutput = context.getModuleTestsOutputPath(context.findModule(mainModule))
+    Pattern pattern = Pattern.compile(FileUtil.convertAntToRegexp(options.batchTestIncludes))
+    Path root = Path.of(mainModuleTestsOutput)
+
+    def testClasses = Files.walk(root).withCloseable { stream ->
+      stream.filter(new Predicate<Path>() {
+        @Override
+        boolean test(Path path) {
+          return pattern.matcher(root.relativize(path).toString()).matches()
+        }
+      }).collect(Collectors.toList())
+    }
+    if (testClasses.size() == 0) {
+      context.messages.error("No tests were found in $root with $pattern")
+    }
+    testClasses.forEach { Path path ->
+      String qName = FileUtilRt.getNameWithoutExtension(root.relativize(path).toString()).replaceAll("/", ".")
+      List<Path> files = new ArrayList<Path>(testClasspath.size())
+      for (String p : testClasspath) {
+        files.add(Path.of(p))
+      }
+
+      try {
+        def noTests = true
+        UrlClassLoader loader = UrlClassLoader.build().files(files).get()
+        Class<?> aClazz = Class.forName(qName, false, loader)
+        Class<?> testAnnotation = Class.forName("org.junit.Test", false, loader)
+        for (Method m : aClazz.getDeclaredMethods()) {
+          if (m.isAnnotationPresent(testAnnotation as Class<? extends Annotation>) && Modifier.isPublic(m.getModifiers())) {
+            def exitCode =
+              runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, m.getName())
+            noTests &= exitCode == NO_TESTS_ERROR
+          }
+        }
+
+        if (noTests) {
+          def exitCode3 = runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, null)
+          noTests &= exitCode3 == NO_TESTS_ERROR
+        }
+
+        if (noTests) {
+          context.messages.error("No tests were found in $qName")
+        }
+      }
+      catch (Throwable e) {
+        context.messages.error("Failed to process $qName", e)
+      }
+    }
+  }
+
   private void runJUnit5Engine(String mainModule,
                                Map<String, String> systemProperties,
                                List<String> jvmArgs,
@@ -541,52 +637,8 @@ class TestingTasksImpl extends TestingTasks {
                                List<String> bootstrapClasspath,
                                List<String> testClasspath) {
     if (isRunningInBatchMode()) {
-      String mainModuleTestsOutput = context.getModuleTestsOutputPath(context.findModule(mainModule))
-      Pattern pattern = Pattern.compile(FileUtil.convertAntToRegexp(options.batchTestIncludes))
-      Path root = Path.of(mainModuleTestsOutput)
-
-      def testClasses = Files.walk(root).withCloseable { stream ->
-        stream.filter(new Predicate<Path>() {
-          @Override
-          boolean test(Path path) {
-            return pattern.matcher(root.relativize(path).toString()).matches()
-          }
-        }).collect(Collectors.toList())
-      }
-      if (testClasses.size() == 0) {
-        context.messages.error("No tests were found in the configuration")
-      }
-      testClasses.forEach(new Consumer<Path>() {
-        @Override
-        void accept(Path path) {
-          String qName = FileUtilRt.getNameWithoutExtension(root.relativize(path).toString()).replaceAll("/", ".")
-          List<Path> files = new ArrayList<Path>(testClasspath.size())
-          for (String p : testClasspath) {
-            files.add(Path.of(p))
-          }
-
-          try {
-            def noTests = true
-            UrlClassLoader loader = UrlClassLoader.build().files(files).get()
-            Class<?> aClazz = Class.forName(qName, false, loader)
-            Class<?> testAnnotation = Class.forName("org.junit.Test", false, loader)
-            for (Method m : aClazz.getDeclaredMethods()) {
-              if (m.isAnnotationPresent(testAnnotation as Class<? extends Annotation>) && Modifier.isPublic(m.getModifiers())) {
-                def exitCode =
-                  runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, m.getName())
-                noTests &= exitCode == NO_TESTS_ERROR
-              }
-            }
-
-            if (noTests) {
-              context.messages.error("No tests were found in the configuration")
-            }
-          }
-          catch (Throwable e) {
-            context.messages.error("Failed to process $qName", e)
-          }
-        }
-      })
+      context.messages.info("Running tests in batch mode including ${options.batchTestIncludes}")
+      runInBatchMode(mainModule, systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath)
     }
     else {
       context.messages.info("Run junit 5 tests")
@@ -597,7 +649,7 @@ class TestingTasksImpl extends TestingTasks {
       def exitCode3 =
         runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, options.bootstrapSuite, null)
       context.messages.info("Finish junit 3 task")
-      
+
       if (exitCode5 == NO_TESTS_ERROR && exitCode3 == NO_TESTS_ERROR) {
         context.messages.error("No tests were found in the configuration")
       }

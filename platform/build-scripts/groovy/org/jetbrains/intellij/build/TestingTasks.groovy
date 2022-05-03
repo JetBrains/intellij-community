@@ -15,6 +15,11 @@ abstract class TestingTasks {
    */
   abstract void runTests(List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition)
 
+  /**
+   * Run all tests annotated with {@link com.intellij.testFramework.SkipInHeadlessEnvironment}
+   */
+  abstract void runTestsSkippedInHeadlessEnvironment()
+
   abstract Path createSnapshotsDirectory()
 
   /**
