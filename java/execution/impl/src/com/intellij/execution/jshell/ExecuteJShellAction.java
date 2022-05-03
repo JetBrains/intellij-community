@@ -13,12 +13,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,26 +44,21 @@ final class ExecuteJShellAction extends AnAction{
     if (editor == null) {
       return;
     }
-    final VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (vFile == null) {
+
+    final FileEditor fileEditor = e.getData(PlatformCoreDataKeys.FILE_EDITOR);
+    if (fileEditor == null) {
+      return;
+    }
+    final SnippetEditorDecorator.ConfigurationPane config =
+      SnippetEditorDecorator.ConfigurationPane.getJShellConfiguration(fileEditor);
+    if (config == null) {
       return;
     }
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
     try {
-      JShellHandler handler = JShellHandler.getAssociatedHandler(vFile);
-      if (handler == null) {
-        final FileEditor fileEditor = e.getData(PlatformCoreDataKeys.FILE_EDITOR);
-        final SnippetEditorDecorator.ConfigurationPane config =
-          fileEditor != null ?
-          SnippetEditorDecorator.ConfigurationPane.getJShellConfiguration(fileEditor) :
-          null;
-
-        final Module module = config != null ? config.getContextModule() : null;
-        final Sdk sdk = config != null ? config.getRuntimeSdk() : null;
-        handler = JShellHandler.create(project, vFile, module, sdk);
-      }
+      JShellHandler handler = config.getJShellHandler();
       handler.toFront();
       boolean hasDataToEvaluate = false;
 

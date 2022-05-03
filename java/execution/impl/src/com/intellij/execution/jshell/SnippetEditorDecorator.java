@@ -11,6 +11,8 @@ import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -26,6 +28,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.function.Function;
 
 /**
@@ -46,16 +50,19 @@ public final class SnippetEditorDecorator implements EditorNotificationProvider 
     private static final Key<ConfigurationPane> EDITOR_TOOLBAR_KEY = Key.create("jshell.editor.toolbar");
 
     private final Alarm myUpdateAlarm = new Alarm();
+    private final @NotNull FileEditor myFileEditor;
     private final @NotNull JrePathEditor myJreEditor;
     private final @NotNull ConfigurationModuleSelector myModuleSelector;
-    private final @NotNull FileEditor myFileEditor;
+    private final @NotNull Callable<@NotNull JShellHandler> myJShellHandlerGetter;
     private MessageBusConnection myBusConnection;
 
-    ConfigurationPane(@NotNull FileEditor fileEditor,
-                      @NotNull Project project) {
+    ConfigurationPane(@NotNull Project project,
+                      @NotNull VirtualFile virtualFile,
+                      @NotNull FileEditor fileEditor) {
       myFileEditor = fileEditor;
 
-      final DefaultActionGroup actions = new DefaultActionGroup(ExecuteJShellAction.getSharedInstance(), DropJShellStateAction.getSharedInstance());
+      final DefaultActionGroup actions =
+        new DefaultActionGroup(ExecuteJShellAction.getSharedInstance(), DropJShellStateAction.getSharedInstance());
       final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("JShellSnippetEditor", actions, true);
 
       myJreEditor = new JrePathEditor(DefaultJreSelector.projectSdk(project));
@@ -70,10 +77,31 @@ public final class SnippetEditorDecorator implements EditorNotificationProvider 
       myModuleSelector = new ConfigurationModuleSelector(project, modulesCombo, JavaCompilerBundle.message("whole.project"));
 
       JPanel mainPane = new JPanel(new GridBagLayout());
-      mainPane.add(toolbar.getComponent(), new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(2, 3, 0, 0), 0, 0));
-      mainPane.add(modulePane, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(2, 3, 0, 0), 0, 0));
-      mainPane.add(myJreEditor, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(2, 15, 0, 0), 0, 0));
+      mainPane.add(toolbar.getComponent(),
+                   new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                          JBUI.insets(2, 3, 0, 0), 0, 0));
+      mainPane.add(modulePane, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                      JBUI.insets(2, 3, 0, 0), 0, 0));
+      mainPane.add(myJreEditor, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                       JBUI.insets(2, 15, 0, 0), 0, 0));
       add(mainPane, BorderLayout.CENTER);
+
+      myJShellHandlerGetter = () -> {
+        JShellHandler handler = JShellHandler.getAssociatedHandler(virtualFile);
+        if (handler != null) {
+          return handler;
+        }
+
+        return JShellHandler.create(project,
+                                    virtualFile,
+                                    myModuleSelector.getModule(),
+                                    getRuntimeSdk());
+      };
+    }
+
+    @RequiresEdt
+    @NotNull JShellHandler getJShellHandler() throws Exception {
+      return myJShellHandlerGetter.call();
     }
 
     @Override
@@ -81,7 +109,17 @@ public final class SnippetEditorDecorator implements EditorNotificationProvider 
       super.addNotify();
       myFileEditor.putUserData(EDITOR_TOOLBAR_KEY, this);
 
-      myBusConnection = myModuleSelector.getProject().getMessageBus().connect();
+      Project project = myModuleSelector.getProject();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        try {
+          myJShellHandlerGetter.call();
+        }
+        catch (Exception e) {
+          JShellDiagnostic.notifyError(e, project);
+        }
+      }, ModalityState.stateForComponent(this), project.getDisposed());
+
+      myBusConnection = project.getMessageBus().connect();
       myBusConnection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
         @Override
         public void moduleAdded(@NotNull Project project, @NotNull Module module) {
@@ -118,16 +156,10 @@ public final class SnippetEditorDecorator implements EditorNotificationProvider 
 
     private void reloadModules() {
       myUpdateAlarm.cancelAllRequests();
-      myUpdateAlarm.addRequest(()->myModuleSelector.reset(), 300L);
+      myUpdateAlarm.addRequest(() -> myModuleSelector.reset(), 300L);
     }
 
-    @Nullable
-    public Module getContextModule() {
-      return myModuleSelector.getModule();
-    }
-
-    @Nullable
-    public Sdk getRuntimeSdk() {
+    private @Nullable Sdk getRuntimeSdk() {
       final String pathOrName = myJreEditor.getJrePathOrName();
       if (pathOrName != null) {
         final JavaSdk javaSdkType = JavaSdk.getInstance();
@@ -158,7 +190,7 @@ public final class SnippetEditorDecorator implements EditorNotificationProvider 
   public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                 @NotNull VirtualFile file) {
     if (ScratchFileService.findRootType(file) instanceof JShellRootType) {
-      return editor -> new ConfigurationPane(editor, project);
+      return editor -> new ConfigurationPane(project, file, editor);
     }
 
     return CONST_NULL;
