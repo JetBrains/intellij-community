@@ -447,12 +447,11 @@ public final class NewMappings implements Disposable {
   }
 
   public @Nullable MappedRoot getMappedRootFor(@Nullable VirtualFile file) {
-    if (file == null || !file.isInLocalFileSystem() || myMappedRoots.isEmpty() || myVcsManager.isIgnored(file)) {
-      return null;
-    }
-    else {
-      return myMappedRootsMapping.getRootFor(file);
-    }
+    if (file == null || !file.isInLocalFileSystem()) return null;
+    if (myMappedRoots.isEmpty()) return null;
+    if (myVcsManager.isIgnored(file)) return null;
+
+    return myMappedRootsMapping.getRootFor(file);
   }
 
   public @Nullable MappedRoot getMappedRootFor(@Nullable FilePath file) {
