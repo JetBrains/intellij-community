@@ -470,7 +470,7 @@ class CompilerArgumentsCachingTest {
             "profilePhases",
             "checkPhaseConditions",
             "checkStickyPhaseConditions",
-            "useFir",
+            "useK2",
             "useFirExtendedCheckers",
             "disableUltraLightClasses",
             "useMixedNamedArguments",
