@@ -46,5 +46,6 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.java.manifest" />
     <orderEntry type="module" module-name="kotlin.fe10-analyze.safe-analyze-utils" />
+    <orderEntry type="library" name="kotlinc.high-level-api-fe10" level="project" />
   </component>
 </module>
