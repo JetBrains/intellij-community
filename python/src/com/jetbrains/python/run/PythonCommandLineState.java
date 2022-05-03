@@ -123,10 +123,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
   private Boolean myMultiprocessDebug = null;
   private boolean myRunWithPty = PtyCommandLine.isEnabled();
 
-  public boolean isRunWithPty() {
-    return myRunWithPty;
-  }
-
   public boolean isDebug() {
     return PyDebugRunner.PY_DEBUG_RUNNER.equals(getEnvironment().getRunner().getRunnerId());
   }
