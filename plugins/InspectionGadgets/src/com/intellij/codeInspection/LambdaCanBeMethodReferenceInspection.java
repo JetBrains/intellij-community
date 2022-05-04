@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInspection.compiler.JavacQuirksInspectionVisitor;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -399,6 +400,10 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       JavaResolveResult result = methodCall.resolveMethodGenerics();
       final PsiMethod psiMethod = (PsiMethod)result.getElement();
       if (psiMethod == null) {
+        return null;
+      }
+
+      if (JavacQuirksInspectionVisitor.getInaccessibleMethodReferenceClass(element, psiMethod) != null) {
         return null;
       }
 

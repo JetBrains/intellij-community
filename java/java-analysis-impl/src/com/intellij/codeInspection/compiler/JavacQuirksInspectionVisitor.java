@@ -21,11 +21,13 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +48,36 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   public JavacQuirksInspectionVisitor(ProblemsHolder holder) {
     myHolder = holder;
     myLanguageLevel = PsiUtil.getLanguageLevel(myHolder.getFile());
+  }
+
+  @Override
+  public void visitMethodReferenceExpression(PsiMethodReferenceExpression methodRef) {
+    PsiMethod method = ObjectUtils.tryCast(methodRef.resolve(), PsiMethod.class);
+    PsiClass targetClass = getInaccessibleMethodReferenceClass(methodRef, method);
+    if (targetClass == null) return;
+    String className = PsiFormatUtil.formatClass(targetClass, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME);
+    myHolder.registerProblem(methodRef,
+                             InspectionGadgetsBundle.message("inspection.quirk.method.reference.return.type.message", className));
+  }
+
+  /**
+   * @param context PsiElement where accessibility should be checked
+   * @param method method reference target method
+   * @return class that needs to be accessible at runtime to link the method reference but is not accessible at runtime;
+   * null if there's no acessibility problem
+   */
+  @Nullable
+  public static PsiClass getInaccessibleMethodReferenceClass(@NotNull PsiElement context, @Nullable PsiMethod method) {
+    if (method == null) return null;
+    PsiClass targetClass = PsiUtil.resolveClassInType(TypeConversionUtil.erasure(method.getReturnType()));
+    if (targetClass == null) return null;
+    if (!targetClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && !targetClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+      return null;
+    }
+    if (JavaResolveUtil.isAccessible(targetClass, targetClass.getContainingClass(), targetClass.getModifierList(), context, null, null)) {
+      return null;
+    }
+    return targetClass;
   }
 
   @Override
@@ -112,7 +144,10 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
       if (resolveResult instanceof MethodCandidateInfo) {
         PsiMethod method = ((MethodCandidateInfo)resolveResult).getElement();
         PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-        if (PsiUtil.isLanguageLevel8OrHigher(expression) && method.isVarArgs() && method.hasTypeParameters() && args.length > method.getParameterList().getParametersCount() + 50) {
+        if (PsiUtil.isLanguageLevel8OrHigher(expression) &&
+            method.isVarArgs() &&
+            method.hasTypeParameters() &&
+            args.length > method.getParameterList().getParametersCount() + 50) {
           for (PsiTypeParameter typeParameter : method.getTypeParameters()) {
             if (!PsiTypesUtil.isDenotableType(substitutor.substitute(typeParameter), expression)) {
               return;
@@ -135,8 +170,8 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
               if (aClass != null && aClass.hasModifierProperty(PsiModifier.FINAL)) {
                 for (PsiType conjunct : ((PsiIntersectionType)value).getConjuncts()) {
                   PsiClass currentClass = PsiUtil.resolveClassInClassTypeOnly(conjunct);
-                  if (currentClass != null && 
-                      !aClass.equals(currentClass) && 
+                  if (currentClass != null &&
+                      !aClass.equals(currentClass) &&
                       !aClass.isInheritor(currentClass, true)) {
                     final String descriptionTemplate =
                       JavaAnalysisBundle.message("inspection.message.javac.quick.intersection.type.problem",
@@ -157,7 +192,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   public static boolean isSuspicious(PsiExpression[] args, PsiMethod method) {
     int count = 0;
     for (int i = method.getParameterList().getParametersCount(); i < args.length; i++) {
-      if (PsiPolyExpressionUtil.isPolyExpression(args[i]) && ++ count > 50) {
+      if (PsiPolyExpressionUtil.isPolyExpression(args[i]) && ++count > 50) {
         return true;
       }
     }
@@ -287,7 +322,8 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
           PsiExpression withArgs = AddTypeArgumentsFix.addTypeArguments((PsiExpression)parent, null);
           if (withArgs == null) return;
           element = WriteAction.compute(() -> CodeStyleManager.getInstance(project).reformat(parent.replace(withArgs)));
-          new SuppressByJavaCommentFix(RedundantTypeArgsInspection.SHORT_NAME + " (explicit type arguments speedup compilation and analysis time)")
+          new SuppressByJavaCommentFix(
+            RedundantTypeArgsInspection.SHORT_NAME + " (explicit type arguments speedup compilation and analysis time)")
             .invoke(project, element);
         }
       }
