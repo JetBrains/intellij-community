@@ -4,6 +4,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.grazie.text.TextContent;
 import com.intellij.grazie.text.TextContentBuilder;
 import com.intellij.grazie.text.TextExtractor;
+import com.intellij.grazie.utils.HtmlUtilsKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.html.HTMLLanguage;
@@ -118,7 +119,7 @@ public class XmlTextExtractor extends TextExtractor {
         if (content != null) {
           if (unknownBefore) content = content.markUnknown(TextRange.from(0, 0));
           if (unknownAfter) content = content.markUnknown(TextRange.from(content.length(), 0));
-          content = content.removeIndents(Set.of(' ', '\t')).trimWhitespace();
+          content = HtmlUtilsKt.nbspToSpace(content.removeIndents(Set.of(' ', '\t')));
           if (content != null) {
             for (PsiElement e : group) {
               result.put(e, content);

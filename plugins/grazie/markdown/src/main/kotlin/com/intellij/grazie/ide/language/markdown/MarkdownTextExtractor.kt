@@ -5,6 +5,7 @@ import com.intellij.grazie.ide.language.markdown.MarkdownPsiUtils.isMarkdownLink
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContentBuilder
 import com.intellij.grazie.text.TextExtractor
+import com.intellij.grazie.utils.nbspToSpace
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
@@ -18,14 +19,14 @@ class MarkdownTextExtractor : TextExtractor() {
   public override fun buildTextContent(root: PsiElement, allowedDomains: Set<TextContent.TextDomain>): TextContent? {
     if (allowedDomains.contains(TextContent.TextDomain.PLAIN_TEXT) &&
         (MarkdownPsiUtils.isHeaderContent(root) || MarkdownPsiUtils.isParagraph(root))) {
-      return TextContentBuilder.FromPsi
+      return nbspToSpace(TextContentBuilder.FromPsi
         .withUnknown { it.node.isMarkdownCodeType() }
         .excluding { e ->
           e.elementType in toExclude ||
           e.firstChild == null && e.parent.node.isMarkdownLinkType() && !isLinkText(e)
         }
         .removingIndents(" \t").removingLineSuffixes(" \t")
-        .build(root, TextContent.TextDomain.PLAIN_TEXT)
+        .build(root, TextContent.TextDomain.PLAIN_TEXT))
     }
     return null
   }
