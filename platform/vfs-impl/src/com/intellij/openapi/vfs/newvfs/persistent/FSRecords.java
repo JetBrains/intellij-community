@@ -111,6 +111,7 @@ public final class FSRecords {
     return writeAndHandleErrors(() -> {
       int nameId = setName(fileId, name, 0);
 
+      // TODO replace with single op
       setTimestamp(fileId, attributes.lastModified);
       setLength(fileId, attributes.isDirectory() ? -1L : attributes.length);
       setFlags(fileId, PersistentFSImpl.fileAttributesToFlags(attributes));
