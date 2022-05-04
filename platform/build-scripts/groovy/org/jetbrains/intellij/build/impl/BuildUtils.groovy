@@ -112,7 +112,7 @@ final class BuildUtils {
     }
 
     try {
-      FileSystems.newFileSystem(pluginJar, null).withCloseable {
+      FileSystems.newFileSystem(pluginJar, null as ClassLoader).withCloseable {
         return XmlDomReader.readXmlAsModel(Files.newInputStream(it.getPath("META-INF/plugin.xml"))).getChild("id")?.content
       }
     }
