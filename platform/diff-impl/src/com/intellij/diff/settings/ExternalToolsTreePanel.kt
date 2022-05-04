@@ -323,9 +323,11 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) :
                 testThreeSideDiffButton.isVisible = !isMergeGroup
                 testMergeButton.isVisible = isMergeGroup
 
-                argumentPatternField.text =
-                  if (isMergeGroup) MERGE_TOOL_DEFAULT_ARGUMENT_PATTERN
-                  else DIFF_TOOL_DEFAULT_ARGUMENT_PATTERN
+                if (!isEditMode) {
+                  argumentPatternField.text =
+                    if (isMergeGroup) MERGE_TOOL_DEFAULT_ARGUMENT_PATTERN
+                    else DIFF_TOOL_DEFAULT_ARGUMENT_PATTERN
+                }
 
                 argumentPatternDescription.text =
                   if (isMergeGroup) createDescription(ExternalToolGroup.MERGE_TOOL)
