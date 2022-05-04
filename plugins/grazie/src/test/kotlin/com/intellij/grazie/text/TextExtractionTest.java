@@ -1,6 +1,7 @@
 package com.intellij.grazie.text;
 
 import com.intellij.grazie.ide.language.java.JavaTextExtractor;
+import com.intellij.grazie.ide.language.markdown.MarkdownTextExtractor;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
@@ -62,6 +63,10 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertEquals("bold italic strikethrough", unknownOffsets(extractText("a.md", "**bold** *italic* ~~strikethrough~~", 3)));
   }
 
+  public void testHtmlNbsp() {
+    assertEquals("hello world", unknownOffsets(extractText("a.md", "hello&nbsp;world", 3)));
+    assertEquals("hello world", unknownOffsets(extractText("a.html", "hello&nbsp;world", 3)));
+  }
   public void testMarkdownInlineCode() {
     TextContent extracted = extractText("a.md", "you can use a number of predefined fields (e.g. `EventFields.InputEvent`)", 0);
     assertEquals("you can use a number of predefined fields (e.g. |)", unknownOffsets(extracted));
@@ -271,6 +276,17 @@ public class TextExtractionTest extends BasePlatformTestCase {
     TextExtractor extractor = new JavaTextExtractor();
     PlatformTestUtil.startPerformanceTest("TextContent building with HTML removal", 200, () -> {
       assertEquals(expected, extractor.buildTextContent(comment, TextContent.TextDomain.ALL).toString());
+    }).assertTiming();
+  }
+
+  public void testBuildingPerformance_removingNbsp() {
+    String text = "b&nbsp;".repeat(10_000);
+    String expected = "b ".repeat(10_000).trim();
+    PsiFile file = myFixture.configureByText("a.md", text);
+    var psi = PsiTreeUtil.findElementOfClassAtOffset(file, 10, MarkdownParagraph.class, false);
+    TextExtractor extractor = new MarkdownTextExtractor();
+    PlatformTestUtil.startPerformanceTest("TextContent building with nbsp removal", 200, () -> {
+      assertEquals(expected, extractor.buildTextContent(psi, TextContent.TextDomain.ALL).toString());
     }).assertTiming();
   }
 

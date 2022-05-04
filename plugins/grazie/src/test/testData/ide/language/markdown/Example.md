@@ -41,6 +41,8 @@ val b = "It is friend."
 Собрание состоится в <warning descr="RU_COMPOUNDS">конференц зале</warning>.
 <warning descr="WORD_REPEAT_RULE">Он он</warning> ошибка.
 
+Я предлагаю в&nbsp;своём приложении создавать что-нибудь.
+
 Er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <warning descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</warning>.
 das ist <warning descr="FUEHR_FUER">führ</warning> Dich!
 das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <warning descr="MANNSTUNDE">Mannstunden</warning>.
