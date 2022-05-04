@@ -129,19 +129,19 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
 
   private fun createActionsList(): Map<AnAction, Presentation?> {
     val actionManager = ActionManager.getInstance()
-    val res = mutableMapOf<AnAction, Presentation?>(
+    val res = listOfNotNull<Pair<AnAction, Presentation?>>(
       actionManager.createActionPair("NewProject", IdeBundle.message("project.widget.new"), "expui/general/add.svg"),
       actionManager.createActionPair("OpenFile", IdeBundle.message("project.widget.open"), "expui/toolwindow/project.svg"),
       actionManager.createActionPair("ProjectFromVersionControl", IdeBundle.message("project.widget.from.vcs"), "expui/vcs/vcs.svg")
-    )
+    ).toMap().toMutableMap()
 
     RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).forEach { res[it] = null }
 
     return res
   }
 
-  private fun ActionManager.createActionPair(actionID: String, name: String, iconPath: String): Pair<AnAction, Presentation> {
-    val action = getAction(actionID)
+  private fun ActionManager.createActionPair(actionID: String, name: String, iconPath: String): Pair<AnAction, Presentation>? {
+    val action = getAction(actionID) ?: return null
     val presentation = action.templatePresentation.clone()
     presentation.text = name
     presentation.icon = IconManager.getInstance().getIcon(iconPath, AllIcons::class.java)
