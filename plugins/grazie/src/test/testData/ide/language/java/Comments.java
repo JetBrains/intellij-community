@@ -58,4 +58,9 @@ class ForMultiLanguageSupport {
   // value between hours and minutes (":" is used by default)
 
   // Copyright refers to <warning descr="EN_A_VS_AN">an</warning> legal right bla-bla-bla, and we check for errors here.
+
+  // Returns details about the current user
+  int foo() {
+    return 1;
+  }
 }
