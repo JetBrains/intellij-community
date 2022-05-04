@@ -12,8 +12,8 @@ import com.intellij.psi.impl.compiled.ClsClassImpl
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.ClsJavaStubByVirtualFileCache
-import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
-import org.jetbrains.kotlin.analysis.providers.impl.AbstractDeclarationFromLibraryModuleProvider
+import org.jetbrains.kotlin.analysis.project.structure.KtBinaryModule
+import org.jetbrains.kotlin.analysis.providers.impl.AbstractDeclarationFromBinaryModuleProvider
 import org.jetbrains.kotlin.asJava.builder.ClsWrapperStubPsiFactory
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -22,19 +22,19 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeSmart
 import org.jetbrains.uast.kotlin.providers.KotlinPsiDeclarationProvider
 import org.jetbrains.uast.kotlin.providers.KotlinPsiDeclarationProviderFactory
 
-private class FirStaticPsiDeclarationFromLibraryModuleProvider(
+private class FirStaticPsiDeclarationFromBinaryModuleProvider(
     private val project: Project,
     override val scope: GlobalSearchScope,
-    private val libraryModules: Collection<KtLibraryModule>,
+    private val binaryModules: Collection<KtBinaryModule>,
     override val jarFileSystem: CoreJarFileSystem,
-) : KotlinPsiDeclarationProvider(), AbstractDeclarationFromLibraryModuleProvider {
+) : KotlinPsiDeclarationProvider(), AbstractDeclarationFromBinaryModuleProvider {
     private val psiManager by lazy { PsiManager.getInstance(project) }
 
     private fun clsClassImplsByFqName(
         fqName: FqName,
         isPackageName: Boolean = true,
     ): Collection<ClsClassImpl> {
-        return libraryModules
+        return binaryModules
             .flatMap {
                 virtualFilesFromModule(it, fqName, isPackageName)
             }
@@ -98,10 +98,10 @@ private class FirStaticPsiDeclarationFromLibraryModuleProvider(
 //  We need a session or facade that maintains such information
 class KotlinStaticPsiDeclarationProviderFactory(
     private val project: Project,
-    private val libraryModules: Collection<KtLibraryModule>,
+    private val binaryModules: Collection<KtBinaryModule>,
     private val jarFileSystem: CoreJarFileSystem,
 ) : KotlinPsiDeclarationProviderFactory() {
     override fun createPsiDeclarationProvider(searchScope: GlobalSearchScope): KotlinPsiDeclarationProvider {
-        return FirStaticPsiDeclarationFromLibraryModuleProvider(project, searchScope, libraryModules, jarFileSystem)
+        return FirStaticPsiDeclarationFromBinaryModuleProvider(project, searchScope, binaryModules, jarFileSystem)
     }
 }
