@@ -11,6 +11,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
 import javax.swing.UIManager.LookAndFeelInfo
 
@@ -23,7 +24,13 @@ internal class UiThemeProviderListManager {
 
     const val DEFAULT_LIGHT_THEME_ID = "JetBrainsLightTheme"
 
-    var lafNameOrder: Map<String, Int> = if (PlatformUtils.isRider()) {
+    var lafNameOrder: Map<String, Int> = if (ExperimentalUI.isNewUI()) {
+      java.util.Map.of(
+        "Light", 0,
+        "Dark", 1,
+        "High contrast", 2
+      )
+    } else if (PlatformUtils.isRider()) {
       java.util.Map.of(
         "Rider Dark", 0,
         "Rider Light", 1,
