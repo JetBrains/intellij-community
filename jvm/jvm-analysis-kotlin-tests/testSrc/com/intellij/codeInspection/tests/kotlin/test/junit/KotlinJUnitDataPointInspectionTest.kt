@@ -19,7 +19,7 @@ class KotlinJUnitDataPointInspectionTest : JUnitDatapointInspectionTestBase() {
     }
   }
 
-  fun `test no highlighting`() {
+  fun `test @DataPoint no highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class Test {
         companion object {
@@ -31,42 +31,51 @@ class KotlinJUnitDataPointInspectionTest : JUnitDatapointInspectionTestBase() {
     """.trimIndent())
   }
 
-  fun `test non-static highlighting`() {
+  fun `test @DataPoint non-static highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class Test {
          @JvmField
          @org.junit.experimental.theories.DataPoint
-         val <warning descr="Fields annotated with @DataPoint should be 'static'">f1</warning>: Any? = null
+         val <warning descr="Fields annotated with 'org.junit.experimental.theories.DataPoint' should be 'static'">f1</warning>: Any? = null
       }
     """.trimIndent())
   }
 
-  fun `test non-public highlighting`() {
+  fun `test @DataPoint non-public highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class Test {
         companion object {
           @JvmStatic
           @org.junit.experimental.theories.DataPoint
-          private val <warning descr="Fields annotated with @DataPoint should be 'public'">f1</warning>: Any? = null
+          private val <warning descr="Fields annotated with 'org.junit.experimental.theories.DataPoint' should be 'public'">f1</warning>: Any? = null
         }
       }
     """.trimIndent())
   }
 
-  fun `test field highlighting`() {
+  fun `test @DataPoint field highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class Test {
          @org.junit.experimental.theories.DataPoint
-         private val <warning descr="Fields annotated with @DataPoint should be 'public' and 'static'">f1</warning>: Any? = null
+         private val <warning descr="Fields annotated with 'org.junit.experimental.theories.DataPoint' should be 'public' and 'static'">f1</warning>: Any? = null
       }
     """.trimIndent())
   }
 
-  fun `test method highlighting`() {
+  fun `test @DataPoint method highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class Test {
          @org.junit.experimental.theories.DataPoint
-         private fun <warning descr="Methods annotated with @DataPoint should be 'public' and 'static'">f1</warning>(): Any? = null
+         private fun <warning descr="Methods annotated with 'org.junit.experimental.theories.DataPoint' should be 'public' and 'static'">f1</warning>(): Any? = null
+      }
+    """.trimIndent())
+  }
+
+  fun `test @DataPoints method highlighting`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      class Test {
+         @org.junit.experimental.theories.DataPoints
+         private fun <warning descr="Methods annotated with 'org.junit.experimental.theories.DataPoints' should be 'public' and 'static'">f1</warning>(): Any? = null
       }
     """.trimIndent())
   }

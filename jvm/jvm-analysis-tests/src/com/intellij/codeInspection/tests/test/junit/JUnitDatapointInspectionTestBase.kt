@@ -14,5 +14,11 @@ abstract class JUnitDatapointInspectionTestBase : UastInspectionTestBase() {
       @Target({FIELD, METHOD})
       public @interface DataPoint { }
     """.trimIndent())
+    myFixture.addClass("""
+      package org.junit.experimental.theories;
+      import java.lang.annotation.Target;
+      @Target({FIELD, METHOD})
+      public @interface DataPoints { }
+    """.trimIndent())
   }
 }

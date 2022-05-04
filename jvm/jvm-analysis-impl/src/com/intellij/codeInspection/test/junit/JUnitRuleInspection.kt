@@ -14,7 +14,6 @@ import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.SmartList
-import com.siyeh.ig.junit.getPublicStaticErrorMessage
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.uast.*
 import javax.swing.JComponent

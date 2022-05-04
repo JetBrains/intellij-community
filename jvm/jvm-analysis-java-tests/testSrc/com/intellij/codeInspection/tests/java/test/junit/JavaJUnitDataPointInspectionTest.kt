@@ -4,7 +4,7 @@ import com.intellij.codeInspection.tests.ULanguage
 import com.intellij.codeInspection.tests.test.junit.JUnitDatapointInspectionTestBase
 
 class JavaJUnitDataPointInspectionTest : JUnitDatapointInspectionTestBase() {
-  fun `test no highlighting`() {
+  fun `test @DataPoint no highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class Test {
         @org.junit.experimental.theories.DataPoint public static Object f1;
@@ -12,34 +12,42 @@ class JavaJUnitDataPointInspectionTest : JUnitDatapointInspectionTestBase() {
     """.trimIndent())
   }
 
-  fun `test non-static highlighting`() {
+  fun `test @DataPoint non-static highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class Test {
-        @org.junit.experimental.theories.DataPoint public Object <warning descr="Fields annotated with @DataPoint should be 'static'">f1</warning>;
+        @org.junit.experimental.theories.DataPoint public Object <warning descr="Fields annotated with 'org.junit.experimental.theories.DataPoint' should be 'static'">f1</warning>;
       }
     """.trimIndent())
   }
 
-  fun `test non-public highlighting`() {
+  fun `test @DataPoint non-public highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class Test {
-        @org.junit.experimental.theories.DataPoint static Object <warning descr="Fields annotated with @DataPoint should be 'public'">f1</warning>;
+        @org.junit.experimental.theories.DataPoint static Object <warning descr="Fields annotated with 'org.junit.experimental.theories.DataPoint' should be 'public'">f1</warning>;
       }
     """.trimIndent())
   }
 
-  fun `test field highlighting`() {
+  fun `test @DataPoint field highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class Test {
-        @org.junit.experimental.theories.DataPoint Object <warning descr="Fields annotated with @DataPoint should be 'public' and 'static'">f1</warning>;
+        @org.junit.experimental.theories.DataPoint Object <warning descr="Fields annotated with 'org.junit.experimental.theories.DataPoint' should be 'public' and 'static'">f1</warning>;
       }
     """.trimIndent())
   }
 
-  fun `test method highlighting`() {
+  fun `test @DataPoint method highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class Test {
-        @org.junit.experimental.theories.DataPoint Object <warning descr="Methods annotated with @DataPoint should be 'public' and 'static'">f1</warning>() { return null; }
+        @org.junit.experimental.theories.DataPoint Object <warning descr="Methods annotated with 'org.junit.experimental.theories.DataPoint' should be 'public' and 'static'">f1</warning>() { return null; }
+      }
+    """.trimIndent())
+  }
+
+  fun `test @DataPoints method highlighting`() {
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      class Test {
+        @org.junit.experimental.theories.DataPoints Object <warning descr="Methods annotated with 'org.junit.experimental.theories.DataPoints' should be 'public' and 'static'">f1</warning>() { return null; }
       }
     """.trimIndent())
   }
