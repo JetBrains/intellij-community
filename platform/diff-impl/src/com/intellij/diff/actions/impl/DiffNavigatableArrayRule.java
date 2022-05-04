@@ -21,6 +21,9 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * {@link DiffDataKeys#NAVIGATABLE_ARRAY}
+ */
 public class DiffNavigatableArrayRule implements GetDataRule {
   @Override
   public Object getData(@NotNull DataProvider dataProvider) {

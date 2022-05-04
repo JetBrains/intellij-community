@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @author Konstantin Kolosovsky.
+ * {@link VcsDataKeys#VCS_REVISION_NUMBERS}
  */
 public class VcsRevisionNumberArrayRule implements GetDataRule {
 

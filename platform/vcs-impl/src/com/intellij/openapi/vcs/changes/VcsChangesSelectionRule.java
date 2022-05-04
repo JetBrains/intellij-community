@@ -24,6 +24,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
+/**
+ * {@link VcsDataKeys#CHANGES_SELECTION}
+ */
 public class VcsChangesSelectionRule implements GetDataRule {
   @Nullable
   @Override
