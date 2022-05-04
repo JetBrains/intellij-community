@@ -160,7 +160,12 @@ public final class VfsImplUtil {
       return null;
     }
 
-    return pair(root, normalizedPath.substring(rootPath.length()));
+    int i = rootPath.length();
+    if (i < normalizedPath.length() && normalizedPath.charAt(i) == '/') {
+      i++;
+    }
+    String relativePath = normalizedPath.substring(i);
+    return pair(root, relativePath);
   }
 
   public static void refresh(@NotNull NewVirtualFileSystem vfs, boolean asynchronous) {

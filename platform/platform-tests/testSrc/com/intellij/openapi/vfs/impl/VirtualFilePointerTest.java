@@ -1279,11 +1279,11 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     while (root.getParentFile() != null) root = root.getParentFile();
     String diskRoot = UriUtil.trimTrailingSlashes(FileUtil.toSystemIndependentName(root.getPath()));
 
-    assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/!/abc", "jar://" + diskRoot + "/!/abc!/", "abc");
     assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/abc/", "jar://" + diskRoot + "/abc!/", "abc");
     assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/abc!/", "jar://" + diskRoot + "/abc!/", "abc");
     assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/abc!/xxx", "jar://" + diskRoot + "/abc!/xxx", "xxx");
     if (SystemInfo.isWindows) {
+      assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/!/abc", "jar://" + diskRoot + "!/abc", "abc");
       assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "!/abc", "jar://" + diskRoot + "!/abc", "abc");
     }
   }
