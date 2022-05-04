@@ -5,6 +5,7 @@ import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension;
 import com.intellij.openapi.externalSystem.model.ConfigurationDataImpl;
@@ -34,6 +35,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.LazyInitializer.LazyValue;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
@@ -586,7 +588,21 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   @Nullable
   private static File getGradleOutputDir(@Nullable ExternalSourceDirectorySet sourceDirectorySet) {
     if (sourceDirectorySet == null) return null;
-    return sourceDirectorySet.getGradleOutputDirs().stream().findFirst().orElse(null);
+    String firstExistingLang = sourceDirectorySet.getSrcDirs().stream()
+      .filter(File::exists)
+      .findFirst()
+      .map(File::getName)
+      .orElse(null);
+
+    if (firstExistingLang == null) {
+     return ContainerUtil.getFirstItem(sourceDirectorySet.getGradleOutputDirs());
+    }
+
+    return sourceDirectorySet.getGradleOutputDirs().stream()
+      .filter(f -> f.getPath().contains(firstExistingLang))
+      .findFirst()
+      .orElse(ContainerUtil.getFirstItem(sourceDirectorySet.getGradleOutputDirs()));
+
   }
 
   private static void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
