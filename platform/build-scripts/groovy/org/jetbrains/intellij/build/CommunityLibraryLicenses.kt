@@ -811,7 +811,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.kotlin-compiler-fe10"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-fir"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-ir"),
-    jetbrainsLibrary("kotlinc.kotlin-compiler-testdata"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-tests"),
     jetbrainsLibrary("kotlinc.kotlin-dist"),
     jetbrainsLibrary("kotlinc.kotlin-gradle-statistics"),
