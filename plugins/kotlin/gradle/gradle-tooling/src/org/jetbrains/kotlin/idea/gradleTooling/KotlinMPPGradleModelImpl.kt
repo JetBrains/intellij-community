@@ -6,6 +6,7 @@ import org.gradle.api.tasks.Exec
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheAwareImpl
 import org.jetbrains.kotlin.idea.projectModel.*
 import java.io.File
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.createCachedArgsInfo
 
 class KotlinSourceSetProto(
     val name: String,
@@ -168,7 +169,7 @@ data class KotlinCompilationImpl(
         output = KotlinCompilationOutputImpl(kotlinCompilation.output),
         arguments = KotlinCompilationArgumentsImpl(kotlinCompilation.arguments),
         dependencyClasspath = kotlinCompilation.dependencyClasspath,
-        cachedArgsInfo = kotlinCompilation.cachedArgsInfo.duplicate(),
+        cachedArgsInfo = createCachedArgsInfo(kotlinCompilation.cachedArgsInfo, cloningCache),
         kotlinTaskProperties = KotlinTaskPropertiesImpl(kotlinCompilation.kotlinTaskProperties),
         nativeExtensions = kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl)
     ) {

@@ -6,30 +6,41 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinCachedCompilerArgument
 import java.io.File
 
 object CompilerArgumentsCachingManager {
-
-    @Suppress("UNCHECKED_CAST")
-    internal fun <TArg> cacheCompilerArgument(
-        argument: TArg,
+    fun cacheCompilerArguments(
+        extractedBucket: ExtractedCompilerArgumentsBucket,
         mapper: CompilerArgumentsCacheMapper
-    ): KotlinCachedCompilerArgument<*> =
-        when {
-            argument == null -> KotlinCachedEmptyCompilerArgument
-            argument is String -> REGULAR_ARGUMENT_CACHING_STRATEGY.cacheArgument(argument, mapper)
-            argument is Boolean -> BOOLEAN_ARGUMENT_CACHING_STRATEGY.cacheArgument(argument, mapper)
-            argument is Array<*> -> MULTIPLE_ARGUMENT_CACHING_STRATEGY.cacheArgument(argument as Array<String>, mapper)
-            else -> error("Unknown argument received" + argument.let { ": ${it::class.java.name}" })
+    ): CachedCompilerArgumentsBucket {
+        val cachedCompilerArgumentsClassName =
+            REGULAR_ARGUMENT_CACHING_STRATEGY.cacheArgument(extractedBucket.compilerArgumentsClassName, mapper)
+        val cachedSingleArguments = extractedBucket.singleArguments.entries.associate { (k, v) ->
+            REGULAR_ARGUMENT_CACHING_STRATEGY.cacheArgument(k, mapper) to
+                    v?.let { REGULAR_ARGUMENT_CACHING_STRATEGY.cacheArgument(it, mapper) }
         }
+        val cachedClasspathParts = extractedBucket.classpathParts.map { REGULAR_ARGUMENT_CACHING_STRATEGY.cacheArgument(it, mapper) }
+            .let { KotlinCachedMultipleCompilerArgument(it) }
+        val cachedMultipleArguments = extractedBucket.multipleArguments.entries.associate { (k, v) ->
+            REGULAR_ARGUMENT_CACHING_STRATEGY.cacheArgument(k, mapper) to
+                    MULTIPLE_ARGUMENT_CACHING_STRATEGY.cacheArgument(v ?: emptyArray(), mapper)
+
+        }
+        val cachedFlagArguments = extractedBucket.flagArguments.entries.associate { (k, v) ->
+            REGULAR_ARGUMENT_CACHING_STRATEGY.cacheArgument(k, mapper) to KotlinCachedBooleanCompilerArgument(v)
+        }
+        val cachedInternalArguments = extractedBucket.internalArguments.map { REGULAR_ARGUMENT_CACHING_STRATEGY.cacheArgument(it, mapper) }
+        val cachedFreeArgs = extractedBucket.freeArgs.map { REGULAR_ARGUMENT_CACHING_STRATEGY.cacheArgument(it, mapper) }
+        return CachedCompilerArgumentsBucket(
+            cachedCompilerArgumentsClassName,
+            cachedSingleArguments,
+            cachedClasspathParts,
+            cachedMultipleArguments,
+            cachedFlagArguments,
+            cachedInternalArguments,
+            cachedFreeArgs
+        )
+    }
 
     private interface CompilerArgumentCachingStrategy<TArg, TCached> {
         fun cacheArgument(argument: TArg, mapper: CompilerArgumentsCacheMapper): TCached
-    }
-
-    private val BOOLEAN_ARGUMENT_CACHING_STRATEGY = object : CompilerArgumentCachingStrategy<Boolean, KotlinCachedBooleanCompilerArgument> {
-        override fun cacheArgument(argument: Boolean, mapper: CompilerArgumentsCacheMapper): KotlinCachedBooleanCompilerArgument {
-            val argStr = argument.toString()
-            val id = mapper.cacheArgument(argStr)
-            return KotlinCachedBooleanCompilerArgument(id)
-        }
     }
 
     private val REGULAR_ARGUMENT_CACHING_STRATEGY = object : CompilerArgumentCachingStrategy<String, KotlinCachedRegularCompilerArgument> {
@@ -45,7 +56,7 @@ object CompilerArgumentsCachingManager {
                 argument: Array<String>,
                 mapper: CompilerArgumentsCacheMapper
             ): KotlinCachedMultipleCompilerArgument {
-                val cachedArguments = argument.map { cacheCompilerArgument(it, mapper) }
+                val cachedArguments = argument.map { REGULAR_ARGUMENT_CACHING_STRATEGY.cacheArgument(it, mapper) }
                 return KotlinCachedMultipleCompilerArgument(cachedArguments)
             }
         }

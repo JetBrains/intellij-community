@@ -11,6 +11,6 @@ object CompilerArgumentsCachingChain {
         defaultsOnly: Boolean = false
     ): CachedCompilerArgumentsBucket =
         CompilerArgumentsExtractor.extractCompilerArgumentsFromTask(compileTask, defaultsOnly).let {
-            CompilerArgumentsCachingTool.cacheCompilerArguments(it, mapper)
+            CompilerArgumentsCachingManager.cacheCompilerArguments(it, mapper)
         }
 }
