@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -13,6 +14,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
+
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.*;
 
 public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindUsagesOptions> {
   private StateRestoringCheckBox myCbSearchForBase;
@@ -51,18 +55,19 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
       options.isImplicitToString = isSelected(myCbImplicitToString);
     }
     options.isCheckDeepInheritance = true;
-    FUCounterUsageLogger.getInstance().logEvent(myPsiElement.getProject(), EVENT_LOG_GROUP, "find.method.started", createFeatureUsageData(options));
+    FIND_METHOD_STARTED.log(myPsiElement.getProject(), createFeatureUsageData(options));
+
   }
 
   @Override
-  protected FeatureUsageData createFeatureUsageData(JavaMethodFindUsagesOptions options) {
-    FeatureUsageData data = super.createFeatureUsageData(options);
-    data.addData("searchForBaseMethods", options.isSearchForBaseMethod);
-    data.addData("overridingMethods", options.isOverridingMethods);
-    data.addData("implementingMethods", options.isImplementingMethods);
-    data.addData("includeInherited", options.isIncludeInherited);
-    data.addData("includeOverload", options.isIncludeOverloadUsages);
-    data.addData("implicitCalls", options.isImplicitToString);
+  protected List<EventPair<?>> createFeatureUsageData(JavaMethodFindUsagesOptions options) {
+    List<EventPair<?>> data = super.createFeatureUsageData(options);
+    data.add(SEARCH_FOR_BASE_METHODS.with(options.isSearchForBaseMethod));
+    data.add(OVERRIDING_METHODS.with(options.isOverridingMethods));
+    data.add(IMPLEMENTING_METHODS.with(options.isImplementingMethods));
+    data.add(INCLUDE_INHERITED.with(options.isIncludeInherited));
+    data.add(INCLUDE_OVERLOAD.with(options.isIncludeOverloadUsages));
+    data.add(IMPLICIT_CALLS.with(options.isImplicitToString));
     return data;
   }
 
