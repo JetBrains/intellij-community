@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.idea.references.KtSimpleNameReferenceDescriptorsImpl
+import org.jetbrains.kotlin.analysis.api.descriptors.references.KtFe10SimpleNameReference
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -76,7 +76,7 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     override fun bindToElement(reference: UReferenceExpression, element: PsiElement): PsiElement? {
         val sourcePsi = reference.sourcePsi ?: return null
         if (sourcePsi !is KtSimpleNameExpression) return null
-        return KtSimpleNameReferenceDescriptorsImpl(sourcePsi)
+        return KtFe10SimpleNameReference(sourcePsi)
             .bindToElement(element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
     }
 
