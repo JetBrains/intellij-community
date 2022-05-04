@@ -62,6 +62,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   String WARNING_MARKER = "warning";
   String WEAK_WARNING_MARKER = "weak_warning";
   String INFO_MARKER = "info";
+  String TEXT_ATTRIBUTES_MARKER = "text_attr";
   String END_LINE_HIGHLIGHT_MARKER = "EOLError";
   String END_LINE_WARNING_MARKER = "EOLWarning";
 

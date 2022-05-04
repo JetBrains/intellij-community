@@ -3,30 +3,20 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.colors.ScopeAttributesUtil;
 import com.intellij.codeHighlighting.RainbowHighlighter;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.intention.EmptyIntentionAction;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ReassignedVariableInspection;
-import com.intellij.codeInspection.SuppressionUtil;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
-import com.intellij.java.JavaBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.DependencyValidationManagerImpl;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -39,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 public final class HighlightNamesUtil {
   private static final Logger LOG = Logger.getInstance(HighlightNamesUtil.class);
@@ -246,48 +235,6 @@ public final class HighlightNamesUtil {
     }
     // use class by default
     return JavaHighlightInfoTypes.CLASS_NAME;
-  }
-
-  @Nullable
-  static HighlightInfo highlightReassignedVariable(@NotNull PsiVariable variable, @NotNull PsiElement elementToHighlight,
-                                                   HighlightInfoType.HighlightInfoTypeImpl highlightInfoType,
-                                                   InspectionProfileEntry reassignVariableTool) {
-    if (variable instanceof PsiLocalVariable) {
-      return createReassignedInfo(elementToHighlight,
-                                  highlightInfoType,
-                                  reassignVariableTool,
-                                  JavaBundle.message("tooltip.reassigned.local.variable"));
-    }
-    if (variable instanceof PsiParameter) {
-      return createReassignedInfo(elementToHighlight,
-                                  highlightInfoType,
-                                  reassignVariableTool, JavaBundle.message("tooltip.reassigned.parameter"));
-    }
-    return null;
-  }
-
-  @Nullable
-  private static HighlightInfo createReassignedInfo(@NotNull PsiElement elementToHighlight,
-                                                    @NotNull HighlightInfoType highlightInfoType,
-                                                    InspectionProfileEntry reassignVariableTool, @NotNull @NlsContexts.Tooltip String toolTip) {
-    HighlightDisplayKey key = HighlightDisplayKey.find(ReassignedVariableInspection.SHORT_NAME);
-    if (reassignVariableTool != null && SuppressionUtil.inspectionResultSuppressed(elementToHighlight, reassignVariableTool)) {
-      return null;
-    }
-
-    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(highlightInfoType).range(elementToHighlight);
-    InspectionProfileImpl profile = ProjectInspectionProfileManager.getInstance(elementToHighlight.getProject()).getCurrentProfile();
-    TextAttributesKey attributesKey = profile.getEditorAttributes(key.toString(), elementToHighlight);
-    if (attributesKey == null) {
-      attributesKey = highlightInfoType.getAttributesKey();
-    }
-
-    HighlightInfo highlightInfo = builder.descriptionAndTooltip(toolTip).textAttributes(attributesKey).create();
-    if (highlightInfo != null) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, null,
-                                            new EmptyIntentionAction(Objects.requireNonNull(HighlightDisplayKey.getDisplayNameByKey(key))), key);
-    }
-    return highlightInfo;
   }
 
   private static TextAttributes getScopeAttributes(@NotNull PsiElement element, @NotNull TextAttributesScheme colorsScheme) {

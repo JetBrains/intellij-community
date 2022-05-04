@@ -54,11 +54,11 @@ class <symbolName descr="null" type="CLASS_NAME">NoCtrClass</symbolName> {
     new <symbolName descr="null" type="CONSTRUCTOR_CALL">NoCtrClass</symbolName>();
   }
 
-  void <symbolName descr="null" type="METHOD_DECLARATION">ff</symbolName>(int <warning descr="Reassigned parameter">param</warning>) {
-     int <warning descr="Reassigned local variable">i</warning> = 1;
-     <warning descr="Reassigned local variable">i</warning> ++;
+  void <symbolName descr="null">ff</symbolName>(int <symbolName descr="null"><symbolName descr="null">param</symbolName></symbolName>) {
+     int <symbolName descr="null">i</symbolName> = 1;
+     <symbolName descr="null">i</symbolName> ++;
 
-     <warning descr="Reassigned parameter">param</warning> = 0;
+     <symbolName descr="null">param</symbolName> = 0;
   }
 }
 

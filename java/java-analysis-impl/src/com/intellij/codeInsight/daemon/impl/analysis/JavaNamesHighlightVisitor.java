@@ -1,34 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ReassignedVariableInspection;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionProfileWrapper;
-import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
 
 // java highlighting: color names like "reassigned variables"/fields/statics etc.
 // NO COMPILATION ERRORS
@@ -36,17 +20,6 @@ import java.util.function.Function;
 class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightVisitor {
   private HighlightInfoHolder myHolder;
   private PsiFile myFile;
-
-  // map codeBlock->List of PsiReferenceExpression of extra initialization of final variable
-  private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new HashMap<>();
-
-  private HighlightInfoType.HighlightInfoTypeImpl myHighlightInfoType;
-  private InspectionProfileEntry myReassignVariableTool;
-
-  private enum ReassignedState {
-    DUNNO, INSIDE_FILE, REASSIGNED
-  }
-  private final Map<PsiParameter, ReassignedState> myReassignedParameters = new HashMap<>();
 
   @NotNull
   @Override
@@ -73,8 +46,6 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
       highlight.run();
     }
     finally {
-      myFinalVarProblems.clear();
-      myReassignedParameters.clear();
       myFile = null;
       myHolder = null;
     }
@@ -85,18 +56,6 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
   private void prepare(@NotNull HighlightInfoHolder holder, @NotNull PsiFile file) {
     myHolder = holder;
     myFile = file;
-
-    Function<? super InspectionProfile, ? extends InspectionProfileWrapper> custom = InspectionProfileWrapper.getCustomInspectionProfileWrapper(myFile);
-    InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(holder.getProject()).getCurrentProfile();
-    InspectionProfile profile = custom != null ? custom.apply(currentProfile).getInspectionProfile() : currentProfile;
-
-    myReassignVariableTool = profile.getUnwrappedTool(ReassignedVariableInspection.SHORT_NAME, file);
-
-    HighlightDisplayKey reassignedKey = HighlightDisplayKey.find(ReassignedVariableInspection.SHORT_NAME);
-    if (profile.isToolEnabled(reassignedKey, myFile)) {
-      myHighlightInfoType = new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(reassignedKey, myFile).getSeverity(), 
-                                                                        JavaHighlightingColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES);
-    }
   }
 
   @Override
@@ -130,20 +89,8 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
         PsiElement child = variable.getLastChild();
         if (child instanceof PsiErrorElement && child.getPrevSibling() == identifier) return;
       }
-
-      boolean isMethodParameter = variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiMethod;
-      if (isMethodParameter) {
-        myReassignedParameters.put((PsiParameter)variable, ReassignedState.INSIDE_FILE); // mark param as present in current file
-      }
-      else {
-        // method params are highlighted in visitMethod since we should make sure the method body was visited before
-        if (myHighlightInfoType != null && HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems)) {
-          myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, identifier, myHighlightInfoType, myReassignVariableTool));
-        }
-        else {
-          myHolder.add(HighlightNamesUtil.highlightVariableName(variable, identifier, colorsScheme));
-        }
-      }
+ 
+      myHolder.add(HighlightNamesUtil.highlightVariableName(variable, identifier, colorsScheme));
     }
     else if (parent instanceof PsiClass) {
       PsiClass aClass = (PsiClass)parent;
@@ -196,52 +143,12 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
   }
 
   @Override
-  public void visitMethod(PsiMethod method) {
-    super.visitMethod(method);
-
-    // method params are highlighted in visitMethod since we should make sure the method body was visited before
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-
-    for (PsiParameter parameter : parameters) {
-      ReassignedState info = myReassignedParameters.getOrDefault(parameter, ReassignedState.DUNNO);
-      if (info == ReassignedState.DUNNO) continue; // out of this file
-
-      PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
-      if (nameIdentifier != null) {
-        if (info == ReassignedState.REASSIGNED) { // reassigned
-          myHolder.add(HighlightNamesUtil.highlightReassignedVariable(parameter, nameIdentifier, myHighlightInfoType, myReassignVariableTool));
-        }
-        else {
-          myHolder.add(HighlightNamesUtil.highlightVariableName(parameter, nameIdentifier, myHolder.getColorsScheme()));
-        }
-      }
-    }
-  }
-
-  @Override
   public void visitReferenceElement(PsiJavaCodeReferenceElement ref) {
     doVisitReferenceElement(ref);
   }
   @Override
   public void visitReferenceExpression(PsiReferenceExpression expression) {
     doVisitReferenceElement(expression);
-  }
-
-  private boolean isReassigned(@NotNull PsiVariable variable) {
-    try {
-      boolean reassigned;
-      if (variable instanceof PsiParameter) {
-        reassigned = myReassignedParameters.get(variable) == ReassignedState.REASSIGNED;
-      }
-      else  {
-        reassigned = HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems);
-      }
-
-      return reassigned;
-    }
-    catch (IndexNotReadyException e) {
-      return false;
-    }
   }
 
   private void doVisitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
@@ -266,19 +173,10 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
         }
       }
 
-      if (myHighlightInfoType != null && variable instanceof PsiParameter && ref instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)ref)) {
-        myReassignedParameters.put((PsiParameter)variable, ReassignedState.REASSIGNED);
-      }
-
       TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
-      if (myHighlightInfoType != null && !variable.hasModifierProperty(PsiModifier.FINAL) && isReassigned(variable)) {
-        myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, ref, myHighlightInfoType, myReassignVariableTool));
-      }
-      else {
-        PsiElement nameElement = ref.getReferenceNameElement();
-        if (nameElement != null) {
-          myHolder.add(HighlightNamesUtil.highlightVariableName(variable, nameElement, colorsScheme));
-        }
+      PsiElement nameElement = ref.getReferenceNameElement();
+      if (nameElement != null) {
+        myHolder.add(HighlightNamesUtil.highlightVariableName(variable, nameElement, colorsScheme));
       }
     }
     else {

@@ -51,8 +51,8 @@
                      implementationClass="org.jetbrains.java.generate.inspection.FieldNotUsedInToStringInspection"
                      key="inspection.field.not.used.in.to.string.display.name" bundle="messages.JavaAnalysisBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ReassignedVariable" groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.intellij.codeInspection.ReassignedVariableInspection" unfair="true"
+                     enabledByDefault="true" level="TEXT ATTRIBUTES"
+                     implementationClass="com.intellij.codeInspection.ReassignedVariableInspection"
                      editorAttributes="REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES"
                      key="reassign.variable.display.name" bundle="messages.JavaAnalysisBundle" />
     <!--suppress PluginXmlCapitalization -->

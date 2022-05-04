@@ -71,10 +71,10 @@ class PrivateClassTest {
   class IncrementedAndRead{
     private int ffff;
 
-    void foo(int <info descr="Reassigned parameter">p</info>) {
-      if (p == 0) return;
-      <info descr="Reassigned parameter">p</info> = ffff++;
-      if (<info descr="Reassigned parameter">p</info> == 0) foo(<info descr="Reassigned parameter">p</info>);
+    void foo(int <text_attr descr="Reassigned parameter">p</text_attr>) {
+      if (<text_attr descr="Reassigned parameter">p</text_attr> == 0) return;
+      <text_attr descr="Reassigned parameter">p</text_attr> = ffff++;
+      if (<text_attr descr="Reassigned parameter">p</text_attr> == 0) foo(<text_attr descr="Reassigned parameter">p</text_attr>);
     }
   }
 }

@@ -36,17 +36,17 @@ public class JavaSymbolHighlightingTest extends LightDaemonAnalyzerTestCase {
                           "class Test {\n" +
                           "  void foo() {\n" +
                           "    @SuppressWarnings(\"ReassignedVariable\") int x = 0;\n" +
-                          "    <info descr=\"Reassigned local variable\">x</info> = 1;\n" +
+                          "    <text_attr descr=\"Reassigned local variable\">x</text_attr> = 1;\n" +
                           "  }\n" +
                           "  \n" +
                           "  String loop() {\n" +
-                          "    String <info descr=\"Reassigned local variable\">a</info>;\n" +
+                          "    String <text_attr descr=\"Reassigned local variable\">a</text_attr>;\n" +
                           "\n" +
                           "    do {\n" +
-                          "      <info descr=\"Reassigned local variable\">a</info> = \"aaaa\";\n" +
+                          "      <text_attr descr=\"Reassigned local variable\">a</text_attr> = \"aaaa\";\n" +
                           "    }\n" +
-                          "    while (<info descr=\"Reassigned local variable\">a</info>.equals(\"bbb\"));\n" +
-                          "    return <info descr=\"Reassigned local variable\">a</info>;\n" +
+                          "    while (<text_attr descr=\"Reassigned local variable\">a</text_attr>.equals(\"bbb\"));\n" +
+                          "    return <text_attr descr=\"Reassigned local variable\">a</text_attr>;\n" +
                           "  }\n" +
                           "}");
     doTestConfiguredFile(true, true, true, null);
