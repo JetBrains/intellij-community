@@ -29,9 +29,6 @@ abstract class AbstractKotlinSteppingTest : KotlinDescriptorTestCaseWithStepping
         super.tearDown()
     }
 
-    override fun targetBackend(): TargetBackend =
-        TargetBackend.JVM_OLD
-
     private fun doTest(path: String, category: Category) {
         this.category = category
         super.doTest(path)
