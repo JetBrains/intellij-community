@@ -22,7 +22,6 @@ package com.intellij.concurrency;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 @ApiStatus.NonExtendable
@@ -38,7 +37,7 @@ public interface Job<T> {
    * Note that calling {@link #cancel()} might not lead to this method termination because the job can be in the middle of execution.
    * @throws TimeoutException when timeout expires
    */
-  void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException;
+  void waitForCompletion(int millis) throws InterruptedException, TimeoutException;
 
   @SuppressWarnings("unchecked")
   static <T> Job<T> nullJob() {

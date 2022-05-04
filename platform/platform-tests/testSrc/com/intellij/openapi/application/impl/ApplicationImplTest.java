@@ -121,7 +121,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       try {
         thread.waitForCompletion(20_000);
       }
-      catch (ExecutionException | InterruptedException e) {
+      catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
       if (!thread.isDone()) {

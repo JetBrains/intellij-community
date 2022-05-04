@@ -444,9 +444,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           throw new RuntimeException(e);
         }
       });
-      return future.get(millis, TimeUnit.MILLISECONDS);
+      return future.get();
     }
-    catch (TimeoutException | InterruptedException ex) {
+    catch (InterruptedException ex) {
       return false;
     }
     finally {
