@@ -10,9 +10,10 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.search.PsiReferenceProcessor;
-import com.intellij.psi.search.PsiReferenceProcessorAdapter;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -28,7 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@SuppressWarnings("InspectionDescriptionNotFoundInspection") // via UnusedDeclarationInspection
 class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   @Override
   public CommonProblemDescriptor @Nullable [] checkElement(@NotNull final RefEntity refEntity,
@@ -104,23 +104,16 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
             continue;
           }
           int idx = refParameter.getIndex();
-          boolean[] found = {false};
-          for (int i = 0; i < derived.length && !found[0]; i++) {
-            if (scope != null && scope.contains(derived[i])) continue;
-            PsiParameter[] parameters = derived[i].getParameterList().getParameters();
+          for (PsiMethod method : derived) {
+            if (scope != null && scope.contains(method)) continue;
+            PsiParameter[] parameters = method.getParameterList().getParameters();
             if (idx >= parameters.length) continue;
             PsiParameter psiParameter = parameters[idx];
-            ReferencesSearch.search(psiParameter, helper.getUseScope(psiParameter), false)
-              .forEach(new PsiReferenceProcessorAdapter(
-                new PsiReferenceProcessor() {
-                  @Override
-                  public boolean execute(PsiReference element) {
-                    refParameter.parameterReferenced(false);
-                    processor.ignoreElement(refParameter);
-                    found[0] = true;
-                    return false;
-                  }
-                }));
+            if (ReferencesSearch.search(psiParameter, helper.getUseScope(psiParameter), false).findFirst() != null) {
+              refParameter.parameterReferenced(false);
+              processor.ignoreElement(refParameter);
+              break;
+            }
           }
         }
       }
