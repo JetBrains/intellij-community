@@ -3,6 +3,7 @@ package com.intellij.execution.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.execution.*;
+import com.intellij.execution.compound.SettingsAndEffectiveTarget;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.impl.EditConfigurationsDialog;
@@ -199,7 +200,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     PropertiesComponent.getInstance().setValue("run.configuration.edit.ad", Boolean.toString(true));
     if (RunDialog.editConfiguration(project, configuration, ExecutionBundle.message("dialog.title.edit.configuration.settings"), executor)) {
       RunManager.getInstance(project).setSelectedConfiguration(configuration);
-      ExecutionUtil.runConfiguration(configuration, executor);
+      ExecutorRegistryImpl.RunnerHelper.run(project, configuration.getConfiguration(), configuration, DataContext.EMPTY_CONTEXT, executor);
     }
   }
 
@@ -615,9 +616,12 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
           allExecutors.add(executor);
         }
       }
+
+      final List<SettingsAndEffectiveTarget> settingsAndEffectiveTargets =
+        List.of(new SettingsAndEffectiveTarget(settings.getConfiguration(), active));
+
       for (final Executor executor : allExecutors) {
-        final ProgramRunner runner = ProgramRunner.getRunner(executor.getId(), settings.getConfiguration());
-        if (runner != null) {
+        if (ExecutorRegistryImpl.RunnerHelper.canRun(project, settingsAndEffectiveTargets, executor)) {
           result.add(new ActionWrapper(executor.getActionName(), executor.getIcon(), isFirst) {
             @Override
             public void perform() {
@@ -626,7 +630,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
                 manager.setTemporaryConfiguration(settings);
               }
               if (!manager.isRunWidgetActive()) manager.setSelectedConfiguration(settings);
-              ExecutionUtil.runConfiguration(settings, executor);
+              ExecutorRegistryImpl.RunnerHelper.run(project, settings.getConfiguration(), settings, DataContext.EMPTY_CONTEXT, executor);
             }
           });
           isFirst = false;
