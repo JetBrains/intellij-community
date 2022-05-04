@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiMember
+import com.intellij.util.SmartList
 import com.intellij.util.castSafelyTo
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UField
@@ -30,13 +31,17 @@ class JUnitDataPointInspection : AbstractBaseUastLocalInspectionTool() {
   ): Array<ProblemDescriptor> {
     val javaDecl = declaration.javaPsi.castSafelyTo<PsiMember>() ?: return emptyArray()
     val annotation = ANNOTATIONS.firstOrNull { AnnotationUtil.isAnnotated(javaDecl, it, 0) } ?: return emptyArray()
-    val errorMessage = getPublicStaticErrorMessage(
-      declaration.isStatic, declaration.visibility == UastVisibility.PUBLIC, true
-    )
-    if (!errorMessage.isEmpty()) {
-      val message = JvmAnalysisBundle.message(
-        "jvm.inspections.junit.datapoint.problem.descriptor", memberDescription, annotation, errorMessage
-      )
+    val issues = getIssues(declaration)
+    if (issues.isNotEmpty()) {
+      val message = when (issues.size) {
+        1 -> JvmAnalysisBundle.message(
+          "jvm.inspections.junit.datapoint.problem.single.descriptor", memberDescription, annotation, issues.first()
+        )
+        2 -> JvmAnalysisBundle.message(
+          "jvm.inspections.junit.datapoint.problem.double.descriptor", memberDescription, annotation, issues.first(), issues.last()
+        )
+        else -> error("Amount of issues should be smaller than 2")
+      }
       val place = declaration.uastAnchor?.sourcePsi ?: return emptyArray()
       val problemDescriptor = manager.createProblemDescriptor(
         place, message, isOnTheFly, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING
@@ -44,6 +49,11 @@ class JUnitDataPointInspection : AbstractBaseUastLocalInspectionTool() {
       return arrayOf(problemDescriptor)
     }
     return emptyArray()
+  }
+
+  private fun getIssues(declaration: UDeclaration): List<@NlsSafe String> = SmartList<String>().apply {
+    if (declaration.visibility != UastVisibility.PUBLIC) add("'public'")
+    if (!declaration.isStatic) add("'static'")
   }
 
   companion object {

@@ -10,11 +10,11 @@ import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.lang.jvm.actions.modifierRequest
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.SmartList
-import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.uast.*
 import javax.swing.JComponent
 
@@ -29,26 +29,17 @@ class JUnitRuleInspection : AbstractBaseUastLocalInspectionTool() {
   }
 
   override fun checkMethod(method: UMethod, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> =
-    checkDeclaration(method, manager, isOnTheFly,
-                     modifierMessage ="jvm.inspections.junit.rule.problem.method.descriptor",
-                     ruleTypeMessage = "jvm.inspections.junit.rule.type.problem.method.descriptor",
-                     classRuleTypeMessage = "jvm.inspections.junit.class.rule.type.problem.method.descriptor"
-    )
+    checkDeclaration(method, manager, isOnTheFly, "Method", "Method return")
 
   override fun checkField(field: UField, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> =
-    checkDeclaration(field, manager, isOnTheFly,
-                     modifierMessage = "jvm.inspections.junit.rule.problem.field.descriptor",
-                     ruleTypeMessage = "jvm.inspections.junit.rule.type.problem.field.descriptor",
-                     classRuleTypeMessage = "jvm.inspections.junit.class.rule.type.problem.field.descriptor"
-    )
+    checkDeclaration(field, manager, isOnTheFly, "Field", "Field")
 
   private fun checkDeclaration(
     uDeclaration: UDeclaration,
     manager: InspectionManager,
     isOnTheFly: Boolean,
-    modifierMessage: @PropertyKey(resourceBundle = JvmAnalysisBundle.BUNDLE) String,
-    ruleTypeMessage: @PropertyKey(resourceBundle = JvmAnalysisBundle.BUNDLE) String,
-    classRuleTypeMessage: @PropertyKey(resourceBundle = JvmAnalysisBundle.BUNDLE) String,
+    memberDescription: @NlsSafe String,
+    memberTypeDescription: @NlsSafe String
   ): Array<ProblemDescriptor> {
     val sourcePsi = uDeclaration.sourcePsi ?: return emptyArray()
     val nameIdentifier = uDeclaration.uastAnchor.sourcePsiElement ?: return emptyArray()
@@ -60,8 +51,18 @@ class JUnitRuleInspection : AbstractBaseUastLocalInspectionTool() {
     if (ruleAnnotated || classRuleAnnotated) {
       val isStatic = uDeclaration.isStatic
       val isPublic = uDeclaration.visibility == UastVisibility.PUBLIC
-      val message = getPublicStaticErrorMessage(isStatic, isPublic, classRuleAnnotated)
-      if (message.isNotEmpty()) {
+      val issues = getIssues(isStatic, isPublic, classRuleAnnotated)
+      if (issues.isNotEmpty()) {
+        val ruleFqn = if (ruleAnnotated) RULE_FQN else CLASS_RULE_FQN
+        val modifierMessage = when (issues.size) {
+          1 -> JvmAnalysisBundle.message(
+            "jvm.inspections.junit.rule.signature.problem.single.descriptor", memberDescription, ruleFqn, issues.first()
+          )
+          2 -> JvmAnalysisBundle.message(
+            "jvm.inspections.junit.rule.signature.problem.double.descriptor", memberDescription, ruleFqn, issues.first(), issues.last()
+          )
+          else -> error("Amount of issues should be smaller than 2")
+        }
         val actions = SmartList<IntentionAction>()
         if (ruleAnnotated && isStatic) actions.addAll(createModifierActions(uDeclaration, modifierRequest(JvmModifier.STATIC, false)))
         if (classRuleAnnotated && !isStatic) {
@@ -70,11 +71,7 @@ class JUnitRuleInspection : AbstractBaseUastLocalInspectionTool() {
         actions.addAll(createModifierActions(uDeclaration, modifierRequest(JvmModifier.PUBLIC, true)))
         val intention = IntentionWrapper.wrapToQuickFixes(actions, sourcePsi.containingFile).toTypedArray()
         val problem = manager.createProblemDescriptor(
-          nameIdentifier,
-          JvmAnalysisBundle.message(modifierMessage, if (ruleAnnotated) RULE_FQN else CLASS_RULE_FQN, message),
-          isOnTheFly,
-          intention,
-          ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+          nameIdentifier, modifierMessage, isOnTheFly, intention, ProblemHighlightType.GENERIC_ERROR_OR_WARNING
         )
         problems.add(problem)
       }
@@ -86,12 +83,16 @@ class JUnitRuleInspection : AbstractBaseUastLocalInspectionTool() {
         else -> throw IllegalStateException("Expected method or field.")
       }
       val aClass = PsiUtil.resolveClassInClassTypeOnly(type)
-      val isTestRuleInheritor = InheritanceUtil.isInheritor(aClass, false, TEST_RULE)
+      val isTestRuleInheritor = InheritanceUtil.isInheritor(aClass, false, TEST_RULE_FQN)
       if (isTestRuleInheritor) return problems.toTypedArray()
-      val isMethodRuleInheritor = InheritanceUtil.isInheritor(aClass, false, METHOD_RULE)
+      val isMethodRuleInheritor = InheritanceUtil.isInheritor(aClass, false, METHOD_RULE_FQN)
       val typeErrorMessage = when {
-        ruleAnnotated && !isMethodRuleInheritor -> JvmAnalysisBundle.message(classRuleTypeMessage, TEST_RULE, METHOD_RULE)
-        classRuleAnnotated-> JvmAnalysisBundle.message(ruleTypeMessage, TEST_RULE)
+        ruleAnnotated && !isMethodRuleInheritor -> JvmAnalysisBundle.message(
+          "jvm.inspections.junit.rule.type.problem.descriptor", memberTypeDescription, TEST_RULE_FQN, METHOD_RULE_FQN
+        )
+        classRuleAnnotated-> JvmAnalysisBundle.message(
+          "jvm.inspections.junit.class.rule.type.problem.descriptor", memberTypeDescription, TEST_RULE_FQN
+        )
         else -> null
       }
       typeErrorMessage?.let { errorMessage ->
@@ -106,13 +107,21 @@ class JUnitRuleInspection : AbstractBaseUastLocalInspectionTool() {
     return problems.toTypedArray()
   }
 
+  private fun getIssues(isStatic: Boolean, isPublic: Boolean, shouldBeStatic: Boolean): List<@NlsSafe String> = SmartList<String>().apply {
+    if (!isPublic) add("'public'")
+    when {
+      isStatic && !shouldBeStatic -> add("non-static")
+      !isStatic && shouldBeStatic -> add("'static'")
+    }
+  }
+
   companion object {
     const val RULE_FQN = "org.junit.Rule"
 
     const val CLASS_RULE_FQN = "org.junit.ClassRule"
 
-    const val TEST_RULE = "org.junit.rules.TestRule"
+    const val TEST_RULE_FQN = "org.junit.rules.TestRule"
 
-    const val METHOD_RULE = "org.junit.rules.MethodRule"
+    const val METHOD_RULE_FQN = "org.junit.rules.MethodRule"
   }
 }
