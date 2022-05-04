@@ -10,6 +10,7 @@ import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.util.ui.JBUI
 import com.jetbrains.CustomWindowDecoration
+import com.jetbrains.JBR
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Rectangle
@@ -19,6 +20,7 @@ import javax.swing.JFrame
 import javax.swing.JRootPane
 
 private const val GAP_FOR_BUTTONS = 80
+private const val DEFAULT_HEADER_HEIGHT = 40
 
 internal class MacToolbarFrameHeader(private val frame: JFrame,
                                      private val root: JRootPane,
@@ -58,6 +60,9 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   override fun addNotify() {
     super.addNotify()
     updateBorders()
+
+    val decor = JBR.getCustomWindowDecoration()
+    decor.setCustomDecorationTitleBarHeight(frame, DEFAULT_HEADER_HEIGHT)
   }
 
   override fun createButtonsPane(): CustomFrameTitleButtons = CustomFrameTitleButtons.create(myCloseAction)

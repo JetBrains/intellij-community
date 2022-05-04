@@ -148,7 +148,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     updateCustomDecorationHitTestSpots()
   }
 
-  private var added = false
+  protected var added = false
 
   override fun addNotify() {
     super.addNotify()
