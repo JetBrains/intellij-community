@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.reference.*;
@@ -14,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,11 +58,16 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
       UParameter parameter = refParameter.getUastElement();
       PsiElement anchor = UElementKt.getSourcePsiElement(parameter.getUastAnchor());
       if (anchor != null) {
+        final QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
+        final LocalQuickFix[] fixes = {
+          new AcceptSuggested(refParameter.getName()),
+          quickFixFactory.createRenameToIgnoredFix((PsiNamedElement)anchor.getParent(), true)
+        };
         result.add(manager.createProblemDescriptor(anchor,
                                                    JavaBundle.message(refMethod.isAbstract()
                                                                       ? "inspection.unused.parameter.composer"
                                                                       : "inspection.unused.parameter.composer1"),
-                                                   new AcceptSuggested(refParameter.getName()),
+                                                   fixes,
                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false));
       }
     }
@@ -142,7 +149,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     clearUsedParameters(refMethod, result, checkDeep);
 
     for (RefParameter parameter : result) {
-      if (parameter != null &&
+      if (parameter != null && !PsiUtil.isIgnoredName(parameter.getName()) &&
           !((RefElementImpl)parameter).isSuppressed(UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME,
                                                     UnusedSymbolLocalInspectionBase.UNUSED_ID)) {
         res.add(parameter);
