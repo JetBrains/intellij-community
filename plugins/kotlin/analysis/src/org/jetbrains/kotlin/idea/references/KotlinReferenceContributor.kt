@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.references
 
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.analysis.api.descriptors.references.base.KtFe10KotlinReferenceProviderContributor
 import org.jetbrains.kotlin.idea.kdoc.KDocReferenceDescriptorsImpl
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -13,9 +14,12 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 
 class KotlinReferenceContributor : KotlinReferenceProviderContributor {
+    private val delegate = KtFe10KotlinReferenceProviderContributor()
     override fun registerReferenceProviders(registrar: KotlinPsiReferenceRegistrar) {
+        delegate.registerReferenceProviders(registrar)
+
+        // TODO: consider moving the following to KtFe10KotlinReferenceProviderContributor
         with(registrar) {
-            registerProvider(factory = ::KtSimpleNameReferenceDescriptorsImpl)
 
             registerMultiProvider<KtNameReferenceExpression> { nameReferenceExpression ->
                 if (nameReferenceExpression.getReferencedNameElementType() != KtTokens.IDENTIFIER) {
@@ -37,20 +41,6 @@ class KotlinReferenceContributor : KotlinReferenceProviderContributor {
                         )
                 }
             }
-
-            registerProvider(factory = ::KtConstructorDelegationReferenceDescriptorsImpl)
-
-            registerProvider(factory = ::KtInvokeFunctionReferenceDescriptorsImpl)
-
-            registerProvider(factory = ::KtArrayAccessReferenceDescriptorsImpl)
-
-            registerProvider(factory = ::KtCollectionLiteralReferenceDescriptorsImpl)
-
-            registerProvider(factory = ::KtForLoopInReferenceDescriptorsImpl)
-
-            registerProvider(factory = ::KtPropertyDelegationMethodsReferenceDescriptorsImpl)
-
-            registerProvider(factory = ::KtDestructuringDeclarationReferenceDescriptorsImpl)
 
             registerProvider(factory = ::KDocReferenceDescriptorsImpl)
 
