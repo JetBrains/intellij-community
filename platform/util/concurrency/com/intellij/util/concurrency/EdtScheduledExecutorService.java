@@ -22,10 +22,5 @@ public interface EdtScheduledExecutorService extends ScheduledExecutorService {
   }
 
   @NotNull
-  default ScheduledFuture<?> schedule(@NotNull Runnable command, @NotNull ModalityState modalityState, long delay, TimeUnit unit) {
-    return schedule(command, modalityState, delay, unit, null);
-  }
-
-  @NotNull
-  ScheduledFuture<?> schedule(@NotNull Runnable command, @NotNull ModalityState modalityState, long delay, TimeUnit unit, @Nullable Disposable parentDisposable);
+  ScheduledFuture<?> schedule(@NotNull Runnable command, @NotNull ModalityState modalityState, long delay, TimeUnit unit);
 }
