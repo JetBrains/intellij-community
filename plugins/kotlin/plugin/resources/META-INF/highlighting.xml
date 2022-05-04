@@ -11,6 +11,12 @@
             serviceInterface="org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor"
             serviceImplementation="org.jetbrains.kotlin.idea.references.KotlinReferenceContributor"/>
     <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.references.KtReferenceMutateService"
+            serviceImplementation="org.jetbrains.kotlin.idea.references.KtReferenceMutateServiceImpl"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.descriptors.references.base.KtFe10ReferenceResolutionHelper"
+            serviceImplementation="org.jetbrains.kotlin.idea.references.KtFe10ReferenceResolutionHelperImpl"/>
+    <applicationService
             serviceInterface="org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy"
             serviceImplementation="org.jetbrains.kotlin.idea.decompiler.navigation.KotlinDeclarationNavigationPolicyImpl"/>
 

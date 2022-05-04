@@ -55,5 +55,6 @@
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
     <orderEntry type="library" name="kotlinc.high-level-api-fe10" level="project" />
+    <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
   </component>
 </module>
