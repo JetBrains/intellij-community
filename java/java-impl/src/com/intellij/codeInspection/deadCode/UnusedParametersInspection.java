@@ -2,32 +2,29 @@
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedParameterFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiParameter;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UDeclaration;
 import org.jetbrains.uast.UElementKt;
 import org.jetbrains.uast.UParameter;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.stream.Stream;
 
 class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   @Override
@@ -63,7 +60,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
                                                    JavaBundle.message(refMethod.isAbstract()
                                                                       ? "inspection.unused.parameter.composer"
                                                                       : "inspection.unused.parameter.composer1"),
-                                                   new AcceptSuggested(globalContext.getRefManager(), processor, refParameter.getName()),
+                                                   new AcceptSuggested(refParameter.getName()),
                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false));
       }
     }
@@ -132,7 +129,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   @Override
   @Nullable
   public LocalQuickFix getQuickFix(final String hint) {
-    return new AcceptSuggested(null, null, hint);
+    return new AcceptSuggested(hint);
   }
 
   @NotNull
@@ -178,14 +175,10 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     }
   }
 
-  private static class AcceptSuggested implements LocalQuickFix {
-    private final RefManager myManager;
+  private static class AcceptSuggested implements LocalQuickFix, BatchQuickFix, Iconable {
     private final String myHint;
-    private final ProblemDescriptionsProcessor myProcessor;
 
-    AcceptSuggested(@Nullable RefManager manager, @Nullable ProblemDescriptionsProcessor processor, @NotNull String hint) {
-      myManager = manager;
-      myProcessor = processor;
+    AcceptSuggested(@NotNull String hint) {
       myHint = hint;
     }
 
@@ -195,27 +188,38 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     }
 
     @Override
+    public @NotNull String getName() {
+      return JavaBundle.message("inspection.unused.parameter.delete.quickfix", myHint);
+    }
+
+    @Override
     @NotNull
     public String getFamilyName() {
-      return JavaBundle.message("inspection.unused.parameter.delete.quickfix");
+      return JavaBundle.message("inspection.unused.parameter.delete.family");
+    }
+
+    @Override
+    public Icon getIcon(int flags) {
+      return AllIcons.Actions.Cancel;
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement psiElement = descriptor.getPsiElement();
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(psiElement)) return;
-      final PsiParameter psiParameter = PsiTreeUtil.getParentOfType(psiElement, PsiParameter.class);
-      final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
-      if (psiMethod != null && psiParameter != null) {
-        final RefElement refMethod = myManager != null ? myManager.getReference(psiMethod) : null;
-        final PsiModificationTracker tracker = psiMethod.getManager().getModificationTracker();
-        final long startModificationCount = tracker.getModificationCount();
+      final PsiElement element = descriptor.getPsiElement().getParent();
+      if (!(element instanceof PsiNamedElement)) return;
+      SafeDeleteHandler.invoke(project, new PsiElement[]{element}, false);
+    }
 
-        RemoveUnusedParameterFix.removeReferences(psiParameter);
-        if (refMethod != null && startModificationCount != tracker.getModificationCount()) {
-          Objects.requireNonNull(myProcessor).ignoreElement(refMethod);
-        }
-      }
+    @Override
+    public void applyFix(@NotNull Project project,
+                         CommonProblemDescriptor @NotNull [] descriptors,
+                         @NotNull List<PsiElement> psiElementsToIgnore,
+                         @Nullable Runnable refreshViews) {
+      final PsiElement[] elements = Stream.of(descriptors)
+        .map(d -> ((ProblemDescriptor)d).getPsiElement().getParent())
+        .filter(e -> e instanceof PsiNamedElement)
+        .toArray(PsiElement[]::new);
+      SafeDeleteHandler.invoke(project, elements, false);
     }
 
     @Override
