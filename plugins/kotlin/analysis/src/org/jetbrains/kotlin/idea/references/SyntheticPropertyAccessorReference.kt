@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.references
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.util.SmartList
+import org.jetbrains.kotlin.analysis.api.descriptors.references.base.KtFe10Reference
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -31,7 +32,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 class SyntheticPropertyAccessorReferenceDescriptorImpl(
     expression: KtNameReferenceExpression,
     getter: Boolean
-) : SyntheticPropertyAccessorReference(expression, getter), KtDescriptorsBasedReference {
+) : SyntheticPropertyAccessorReference(expression, getter), KtFe10Reference {
 
     override fun canBeReferenceTo(element: PsiElement): Boolean {
         if (element !is PsiMethod || !isAccessorName(element.name)) return false
@@ -175,7 +176,7 @@ class SyntheticPropertyAccessorReferenceDescriptorImpl(
     }
 
     override fun isReferenceToImportAlias(alias: KtImportAlias): Boolean {
-        return super<KtDescriptorsBasedReference>.isReferenceToImportAlias(alias)
+        return super<KtFe10Reference>.isReferenceToImportAlias(alias)
     }
 
     override val resolvesByNames: Collection<Name>
