@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.util.Version
+import com.intellij.testFramework.UsefulTestCase
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJavaLibraryPlugin
@@ -128,6 +129,12 @@ open class TestGradleBuildScriptBuilder(
     }
 
   private fun ScriptTreeBuilder.mavenCentralRepository(useOldStyleMetadata: Boolean = false) {
+    if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
+      // IntelliJ internal maven repo is not available in local environment
+      call("mavenCentral")
+      return
+    }
+
     call("maven") {
       call("url", "https://repo.labs.intellij.net/repo1")
       if (useOldStyleMetadata) {
