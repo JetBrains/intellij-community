@@ -68,5 +68,7 @@
     <orderEntry type="library" name="intellij-markdown" level="project" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
     <orderEntry type="library" name="Velocity" level="project" />
+    <orderEntry type="library" name="kotlinc.high-level-api-fe10" level="project" />
+    <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
   </component>
 </module>
