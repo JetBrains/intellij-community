@@ -133,6 +133,7 @@ final class PlatformModules {
     "lz4-java", PackMode.STANDALONE_MERGED,
     "jetbrains-annotations-java5", PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
     "intellij-coverage", PackMode.STANDALONE_SEPARATE,
+    "github.jnr.ffi", PackMode.STANDALONE_SEPARATE,
     )
 
   static jar(String relativeJarPath,
