@@ -76,6 +76,11 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.unconstructable.test.case.display.name"
                      implementationClass="com.intellij.codeInspection.test.junit.JUnitUnconstructableTestCaseInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="JUnitDatapoint"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.junit.datapoint.display.name"
+                     implementationClass="com.intellij.codeInspection.test.junit.JUnitDataPointInspection"/>
 
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UnstableApiUsage"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
