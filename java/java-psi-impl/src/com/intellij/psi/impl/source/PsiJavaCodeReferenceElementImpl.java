@@ -177,24 +177,21 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return fragment.isClassesAccepted() ? Kind.CLASS_FQ_OR_PACKAGE_NAME_KIND : Kind.PACKAGE_NAME_KIND;
     }
 
-    diagnoseUnknownParent();
+    diagnoseUnknownParent(treeParent, i);
     return Kind.CLASS_NAME_KIND;
   }
 
-  private void diagnoseUnknownParent() {
-    CompositeElement parent = getTreeParent();
-    IElementType i = parent.getElementType();
-    StringBuilder msg = new StringBuilder("Unknown parent for java code reference: '").append(parent)
-      .append("'; Type: ").append(i).append(";\n")
-      .append(" Class: ").append(parent.getClass()).append('\n');
+  private void diagnoseUnknownParent(@NotNull CompositeElement parent, @NotNull IElementType parentElementType) {
+    String msg = "Java code reference '" + getText() + "' has unknown parent: '" + parent + "' (" + parent.getClass() + ")" +
+                 "; of type: " + parentElementType + "\n";
     while (parent != null && parent.getPsi() instanceof PsiExpression) {
       parent = parent.getTreeParent();
-      msg.append(" Parent: '").append(parent).append("'; \n");
+      msg += " Parent: '" + parent + "'\n";
     }
     if (parent != null) {
-      msg.append(DebugUtil.treeToString(parent, true));
+      msg += "PSI of the top-level PsiExpression parent:\n"+DebugUtil.treeToString(parent, true);
     }
-    LOG.error(msg.toString());
+    LOG.error(msg);
   }
 
   private static boolean isCodeFragmentType(@NotNull IElementType type) {
@@ -613,7 +610,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   @NotNull
   private static IncorrectOperationException cannotBindError(@NotNull PsiElement element, @NotNull Kind kind, @NotNull String reason) {
-    return new IncorrectOperationException("Cannot bind to " + element+" of kind: "+kind+" beacause "+reason);
+    return new IncorrectOperationException("Cannot bind to " + element+" of kind: "+kind+" because "+reason);
   }
 
   @NotNull
