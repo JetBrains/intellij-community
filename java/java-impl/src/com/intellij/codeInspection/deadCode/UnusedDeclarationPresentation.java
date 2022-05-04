@@ -263,7 +263,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   class MoveToEntries extends QuickFixAction {
     MoveToEntries(@NotNull InspectionToolWrapper toolWrapper) {
-      super(AnalysisBundle.message("inspection.dead.code.entry.point.quickfix"), null, null, toolWrapper);
+      super(AnalysisBundle.message("inspection.dead.code.entry.point.quickfix"), AllIcons.Nodes.EntryPoints, null, toolWrapper);
     }
 
     @Override
