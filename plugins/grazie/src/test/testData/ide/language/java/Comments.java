@@ -63,4 +63,9 @@ class ForMultiLanguageSupport {
   //     Elements are converted to strings as the time goes by.
   //     Get an instance of the Guzzle HTTP client.
   //     This key is used by the Illuminate encryptor service and should be set to a random, 32 character string, otherwise these encrypted strings will not be safe.
+
+  // Returns details about the current user
+  int foo() {
+    return 1;
+  }
 }
