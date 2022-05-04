@@ -1,4 +1,4 @@
-Django==3.0.0
+Django==3.1.14
 requests==2.22.0
 Jinja2==2.11.1
 pandas==1.0.1
