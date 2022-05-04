@@ -6,8 +6,8 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
-final class MoveTabRightAction extends SplitAction {
+final class MoveTabRightAction extends SplitMoveAction {
   MoveTabRightAction() {
-    super(SwingConstants.VERTICAL, true);
+    super(SwingConstants.VERTICAL);
   }
 }

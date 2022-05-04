@@ -9,7 +9,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladimir Kondratyev
@@ -17,27 +16,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class SplitAction extends AnAction implements DumbAware {
   public static final Key<Boolean> FORBID_TAB_SPLIT = new Key<>("FORBID_TAB_SPLIT");
-  private final int myOrientation;
-  private final boolean myCloseSource;
+  protected final int myOrientation;
 
   protected SplitAction(final int orientation) {
-    this(orientation, false);
-  }
-
-  protected SplitAction(final int orientation, boolean closeSource) {
     myOrientation = orientation;
-    myCloseSource = closeSource;
   }
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent event) {
     final EditorWindow window = event.getRequiredData(EditorWindow.DATA_KEY);
     final VirtualFile file = window.getSelectedFile();
-
-    if (myCloseSource && file != null) {
-      file.putUserData(EditorWindow.DRAG_START_PINNED_KEY, window.isFilePinned(file));
-      window.closeFile(file, false, false);
-    }
 
     window.split(myOrientation, true, file, true);
   }
@@ -47,18 +35,14 @@ public abstract class SplitAction extends AnAction implements DumbAware {
     EditorWindow window = event.getData(EditorWindow.DATA_KEY);
     VirtualFile selectedFile = window != null ? window.getSelectedFile() : null;
 
-    boolean enabled = isEnabled(selectedFile, window);
+    boolean enabled = selectedFile != null && isEnabled(selectedFile, window);
     event.getPresentation().setEnabledAndVisible(enabled);
   }
 
-  private boolean isEnabled(@Nullable VirtualFile vFile, @Nullable EditorWindow window) {
-    if (vFile == null || window == null) {
+  protected boolean isEnabled(@NotNull VirtualFile vFile, @NotNull EditorWindow window) {
+    if (FileEditorManagerImpl.forbidSplitFor(vFile)) {
       return false;
     }
-    if (!myCloseSource && FileEditorManagerImpl.forbidSplitFor(vFile)) {
-      return false;
-    }
-    int minimum = myCloseSource ? 2 : 1;
-    return window.getTabCount() >= minimum;
+    return window.getTabCount() >= 1;
   }
 }
