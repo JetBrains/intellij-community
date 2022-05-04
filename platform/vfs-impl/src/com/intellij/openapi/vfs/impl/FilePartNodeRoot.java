@@ -139,38 +139,27 @@ final class FilePartNodeRoot extends FilePartNode {
   @NotNull
   NodeToUpdate findOrCreateByPath(@NotNull String path, @NotNull NewVirtualFileSystem fs) {
     NewVirtualFileSystem currentFS;
-    boolean jarSuffix;
+    String relativePathInsideJar;
     if (fs instanceof ArchiveFileSystem) {
       currentFS = LocalFileSystem.getInstance();
-      // strip trailing "!/" because LocalVirtualFileSystem.normalize() are afraid of them and strip them out
-      if (path.endsWith(JarFileSystem.JAR_SEPARATOR)) {
-        path = path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length());
-        jarSuffix = true;
+      int i = path.lastIndexOf(JarFileSystem.JAR_SEPARATOR);
+      // strip everything after "!/" and after extractRootFromPath() append it back,
+      // because LocalVirtualFileSystem.normalize() is afraid of these jar separators and tries to absolutize them incorrectly (e.g. "C:!/foo" -> "C:idea/bin/!/foo")
+      if (i == -1) {
+        relativePathInsideJar = JarFileSystem.JAR_SEPARATOR;
       }
       else {
-        jarSuffix = false;
+        relativePathInsideJar = path.substring(i);
+        path = path.substring(0, i);
       }
     }
     else {
       currentFS = fs;
-      jarSuffix = false;
+      relativePathInsideJar = "";
     }
-    Pair<NewVirtualFile, String> pair;
-    if (fs instanceof ArchiveFileSystem
-        && SystemInfo.isWindows
-        && isArchiveInTheWindowsDiskRoot(path)) {
-      // special case: "C:!/foo" means the archive is in the disk root - we shouldn't treat it as relative path starting with "!"
-      // other special case: "jrt://C:/!/foo" means the archive is in the disk root - we shouldn't treat it as under the (local) directory "!" in the disk root
-      NewVirtualFile root = ManagingFS.getInstance().findRoot(path.substring(0, 2), currentFS);
-      pair = Pair.create(root, path.substring(path.charAt(2) == '/' ? 3 : 2));
-    }
-    else {
-      pair = VfsImplUtil.extractRootFromPath(currentFS, path);
-    }
+    Pair<NewVirtualFile, String> pair = VfsImplUtil.extractRootFromPath(currentFS, path);
     String pathFromRoot = pair == null ? path : pair.second;
-    if (jarSuffix) {
-      pathFromRoot += JarFileSystem.JAR_SEPARATOR;
-    }
+    pathFromRoot += relativePathInsideJar;
     List<String> names = splitNames(pathFromRoot);
     NewVirtualFile fsRoot = pair == null ? null : pair.first;
 
