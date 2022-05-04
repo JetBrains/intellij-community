@@ -195,10 +195,15 @@ public class CheckboxTreeBase extends Tree {
     @Override
     public AccessibleContext getAccessibleContext() {
       if (accessibleContext == null) {
-        accessibleContext = new AccessibleContextDelegate(super.getAccessibleContext()) {
+        accessibleContext = new AccessibleContextDelegateWithContextMenu(super.getAccessibleContext()) {
           @Override
           protected Container getDelegateParent() {
             return getParent();
+          }
+
+          @Override
+          protected void doShowContextMenu() {
+            ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true);
           }
 
           @Override
@@ -277,23 +282,5 @@ public class CheckboxTreeBase extends Tree {
       this.checkParentWithCheckedChild = checkParentWithCheckedChild;
       this.uncheckParentWithUncheckedChild = uncheckParentWithUncheckedChild;
     }
-  }
-
-  @Override
-  public AccessibleContext getAccessibleContext() {
-    if (accessibleContext == null) {
-      accessibleContext = new AccessibleContextDelegateWithContextMenu(super.getAccessibleContext()) {
-        @Override
-        protected void doShowContextMenu() {
-          ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true);
-        }
-
-        @Override
-        protected Container getDelegateParent() {
-          return getParent();
-        }
-      };
-    }
-    return accessibleContext;
   }
 }
