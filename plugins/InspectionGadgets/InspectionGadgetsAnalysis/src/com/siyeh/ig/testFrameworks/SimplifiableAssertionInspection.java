@@ -262,8 +262,7 @@ public class SimplifiableAssertionInspection extends BaseInspection {
 
       final PsiExpression originalExpression = assertHint.getOriginalExpression();
       if (lhsType != null && TypeConversionUtil.isFloatOrDoubleType(lhsType.getDeepComponentType()) ||
-          rhsType != null && TypeConversionUtil.isFloatOrDoubleType(rhsType.getDeepComponentType()) ||
-          isPrimitiveAndBoxedFloat(lhsType, rhsType) || isPrimitiveAndBoxedFloat(rhsType, lhsType)) {
+          rhsType != null && TypeConversionUtil.isFloatOrDoubleType(rhsType.getDeepComponentType())) {
         final String noDelta = compoundMethodCall(methodName, assertHint, buf.toString());
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(originalExpression.getProject());
         final PsiExpression expression = methodName.equals("assertNotEquals")
@@ -283,11 +282,6 @@ public class SimplifiableAssertionInspection extends BaseInspection {
         return rhsType instanceof PsiClassType;
       }
       return false;
-    }
-
-    private boolean isPrimitiveAndBoxedFloat(PsiType lhsType, PsiType rhsType) {
-      return lhsType instanceof PsiPrimitiveType && rhsType instanceof PsiClassType &&
-             (PsiType.DOUBLE.equals(rhsType) && PsiType.FLOAT.equals(rhsType));
     }
 
     private void replaceWithNegatedBooleanAssertion(AssertHint assertHint) {
