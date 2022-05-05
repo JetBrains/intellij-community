@@ -75,6 +75,7 @@ abstract class LessonContext : LearningDslBase {
     caret(position)
   }
 
+  @JvmOverloads
   open fun prepareSample(sample: LessonSample, checkSdkConfiguration: Boolean = true) {
     prepareRuntimeTask { setSample(sample) }
 
