@@ -239,20 +239,7 @@ final class KotlinPluginBuilder {
       })
 
       if (type == KotlinPluginType.FIR) {
-        withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
-          @Override
-          void accept(ModuleOutputPatcher patcher, BuildContext context) {
-            def firResourcesDir = context.findModule("kotlin.resources-fir").sourceRoots
-              .findAll { it.rootType instanceof JavaResourceRootType }[0]
-              .file.toPath()
-
-            Files.walk(firResourcesDir)
-              .filter { Files.isRegularFile(it) }
-              .forEach { resource ->
-                patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, "META-INF/" + resource.fileName.toString(), resource.toFile().text, true)
-              }
-          }
-        })
+        throw new IllegalStateException("FIR plugin should be build from kt-222-* branch")
       }
 
       withProjectLibrary("kotlinc.kotlin-compiler-fe10")

@@ -17,7 +17,6 @@
     <orderEntry type="module" module-name="kotlin.base.plugin" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test" />
     <orderEntry type="module" module-name="kotlin.idea.tests" />
-    <orderEntry type="module" module-name="kotlin.fir" />
     <orderEntry type="module" module-name="kotlin.scripting-support" />
     <orderEntry type="module" module-name="kotlin.maven.tests" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests" />
@@ -25,10 +24,6 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" />
     <orderEntry type="module" module-name="kotlin.j2k.old.tests" />
     <orderEntry type="module" module-name="kotlin.j2k.new.tests" />
-    <orderEntry type="module" module-name="kotlin.fir.fir-fe10-binding" />
-    <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" />
-    <orderEntry type="module" module-name="kotlin.fir.analysis-api-providers-ide-impl" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="TEST" />
