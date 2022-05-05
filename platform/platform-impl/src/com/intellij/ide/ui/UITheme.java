@@ -49,6 +49,7 @@ public final class UITheme {
   private String author;
   private String id;
   private String editorScheme;
+  private String[] additionalEditorSchemes;
   private Map<String, Object> ui;
   private @Nullable Map<String, Object> icons;
   private IconPathPatcher patcher;
@@ -353,6 +354,11 @@ public final class UITheme {
 
   public @Nullable String getEditorScheme() {
     return editorScheme;
+  }
+
+  @Nullable
+  public String[] getAdditionalEditorSchemes() {
+    return additionalEditorSchemes;
   }
 
   public Map<String, Object> getBackground() {
@@ -772,6 +778,11 @@ public final class UITheme {
   @SuppressWarnings("unused")
   public void setEditorScheme(String editorScheme) {
     this.editorScheme = editorScheme;
+  }
+
+  @SuppressWarnings("unused")
+  public void setAdditionalEditorSchemes(String[] additionalEditorSchemes) {
+    this.additionalEditorSchemes = additionalEditorSchemes;
   }
 
   public void setBackground(Map<String, Object> background) {

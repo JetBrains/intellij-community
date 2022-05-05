@@ -280,6 +280,10 @@
         "/editorScheme.xml"
       ]
     },
+    "additionalEditorSchemes": {
+      "type": "array",
+      "title": "Array of paths to additional editor schemes xml files starting with '/'"
+    },
     "ui": {
       "type": "object"
     },
