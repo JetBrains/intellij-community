@@ -56,6 +56,9 @@
 
     <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager" preload="await"/>
 
+    <applicationService serviceInterface="com.intellij.util.net.ssl.OsCertificatesService"
+                        serviceImplementation="com.intellij.util.net.ssl.OsCertificatesServiceImpl" />
+
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginConflictReporter"
                         serviceImplementation="com.intellij.diagnostic.GuiPluginConflictReporter"/>
 

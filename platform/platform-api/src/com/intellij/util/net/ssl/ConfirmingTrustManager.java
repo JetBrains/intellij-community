@@ -4,11 +4,14 @@ package com.intellij.util.net.ssl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
@@ -23,44 +26,51 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 /**
  * The central piece of our SSL support - special kind of trust manager, that asks user to confirm
  * untrusted certificate, e.g. if it wasn't found in system-wide storage.
+ * <br><br>
+ * Enable FINE (=DEBUG) logging level for categories 'com.intellij.util.net.ssl' and 'org.jetbrains.nativecerts'
+ * to get verbose debug logging.
  *
  * @author Mikhail Golubev
  */
 public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
   private static final Logger LOG = Logger.getInstance(ConfirmingTrustManager.class);
   private static final X509Certificate[] NO_CERTIFICATES = new X509Certificate[0];
-  private static final X509TrustManager MISSING_TRUST_MANAGER = new ClientOnlyTrustManager() {
-    @Override
-    public void checkServerTrusted(X509Certificate[] certificates, String s) throws CertificateException {
-      LOG.debug("Trust manager is missing. Retreating.");
-      throw new CertificateException("Missing trust manager");
-    }
-
-    @Override
-    public X509Certificate[] getAcceptedIssuers() {
-      return NO_CERTIFICATES;
-    }
-  };
 
   public final ThreadLocal<UntrustedCertificateStrategy> myUntrustedCertificateStrategy =
     ThreadLocal.withInitial(() -> UntrustedCertificateStrategy.ASK_USER);
 
   public static ConfirmingTrustManager createForStorage(@NotNull String path, @NotNull String password) {
-    return new ConfirmingTrustManager(getSystemDefault(), new MutableTrustManager(path, password));
+    return new ConfirmingTrustManager(getSystemTrustManagers(), new MutableTrustManager(path, password));
   }
 
-  private static X509TrustManager getSystemDefault() {
+  @NotNull
+  private static List<X509TrustManager> getSystemTrustManagers() {
+    List<X509TrustManager> result = new ArrayList<>();
+
+    X509TrustManager osManager = getOperatingSystemTrustManager();
+    if (osManager != null) {
+      result.add(osManager);
+    }
+
+    X509TrustManager javaRuntimeManager = getJavaRuntimeDefaultTrustManager();
+    if (javaRuntimeManager != null) {
+      result.add(javaRuntimeManager);
+    }
+
+    return result;
+  }
+
+  @Nullable
+  private static X509TrustManager getJavaRuntimeDefaultTrustManager() {
     try {
       TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
       // hacky way to get default trust store
@@ -72,20 +82,86 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       }
     }
     catch (Exception e) {
-      LOG.error("Cannot get system trust store", e);
+      LOG.error("Cannot get default JVM trust store", e);
     }
-    return MISSING_TRUST_MANAGER;
+    return null;
   }
 
-  private final X509TrustManager mySystemManager;
+  @Nullable
+  private static X509TrustManager getOperatingSystemTrustManager() {
+    try {
+      Collection<X509Certificate> additionalTrustedCertificates =
+        OsCertificatesService.getInstance().getCustomOsSpecificTrustedCertificates();
+      if (additionalTrustedCertificates.isEmpty()) {
+        LOG.warn(
+          "Received an empty list of custom trusted root certificates from the system. Check log above for possible errors, enable debug logging in category 'org.jetbrains.nativecerts' for more information");
+        return null;
+      }
+
+      X509TrustManager x509TrustManager = createTrustManagerFromCertificates(additionalTrustedCertificates);
+
+      List<String> acceptedRoots =
+        Arrays.stream(x509TrustManager.getAcceptedIssuers())
+        .map(certificate -> certificate.getSubjectX500Principal().toString())
+        .sorted()
+        .collect(Collectors.toList());
+      LOG.debug("Accepted trusted certificate roots from the system: \n" + StringUtil.join(acceptedRoots, "\n"));
+
+      return x509TrustManager;
+    }
+    catch (Throwable exception) {
+      LOG.error("Unable to build system trusted certificates manager, only JVM-bundled roots will be used: " + exception.getMessage(), exception);
+      return null;
+    }
+  }
+
+  @NotNull
+  static X509TrustManager createTrustManagerFromCertificates(@NotNull Collection<X509Certificate> certificates) throws Exception {
+    KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+    ks.load(null, null);
+    for (X509Certificate certificate : certificates) {
+      ks.setCertificateEntry(
+        certificate.getSubjectDN().toString() + "-" +
+        DigestUtil.sha256Hex(certificate.getEncoded()), certificate);
+    }
+
+    TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+    tmf.init(ks);
+    List<X509TrustManager> x509TrustManagers = ContainerUtil.filterIsInstance(tmf.getTrustManagers(), X509TrustManager.class);
+    if (x509TrustManagers.isEmpty()) {
+      throw new IllegalStateException("Unable to create X509TrustManager from keystore: no X509TrustManager instances returned, only " +
+                                      Strings.join(Arrays.asList(tmf.getTrustManagers()), " "));
+    }
+    if (x509TrustManagers.size() > 1) {
+      throw new IllegalStateException(
+        "Unable to create X509TrustManager from keystore: more than one X509TrustManager instance returned: " +
+        Strings.join(x509TrustManagers, " "));
+    }
+
+    return x509TrustManagers.get(0);
+  }
+
+  private final List<X509TrustManager> mySystemManagers;
   private final MutableTrustManager myCustomManager;
 
-
-  private ConfirmingTrustManager(X509TrustManager system, MutableTrustManager custom) {
-    mySystemManager = system;
+  private ConfirmingTrustManager(List<X509TrustManager> system, MutableTrustManager custom) {
+    mySystemManagers = system;
     myCustomManager = custom;
   }
 
+  @VisibleForTesting
+  void addSystemTrustManager(X509TrustManager manager) {
+    mySystemManagers.add(manager);
+  }
+
+  @VisibleForTesting
+  void removeSystemTrustManager(X509TrustManager manager) {
+    if (!mySystemManagers.remove(manager)) {
+      throw new IllegalArgumentException("trust manager was not in the list of system trust managers: " + manager);
+    }
+  }
+
+  @Nullable
   private static X509TrustManager findX509TrustManager(TrustManager[] managers) {
     for (TrustManager manager : managers) {
       if (manager instanceof X509TrustManager) {
@@ -96,26 +172,34 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
   }
 
   @Override
-  public void checkServerTrusted(final X509Certificate[] certificates, String s) throws CertificateException {
+  public void checkServerTrusted(final X509Certificate[] chain, String authType) throws CertificateException {
     boolean askUser = myUntrustedCertificateStrategy.get() == UntrustedCertificateStrategy.ASK_USER;
-    checkServerTrusted(certificates, s, true, askUser);
+    checkServerTrusted(chain, authType, true, askUser);
   }
 
-  public void checkServerTrusted(final X509Certificate[] certificates, String s, boolean addToKeyStore, boolean askUser)
+  public void checkServerTrusted(final X509Certificate[] chain, String authType, boolean addToKeyStore, boolean askUser)
     throws CertificateException {
-    try {
-      mySystemManager.checkServerTrusted(certificates, s);
+
+    CertificateException lastCertificateException = null;
+    for (X509TrustManager trustManager : mySystemManagers) {
+      try {
+        trustManager.checkServerTrusted(chain, authType);
+        return;
+      }
+      catch (CertificateException e) {
+        // Check next or fall-back to custom manager
+        lastCertificateException = e;
+      }
     }
-    catch (CertificateException e) {
-      // check-then-act sequence
-      synchronized (myCustomManager) {
-        try {
-          myCustomManager.checkServerTrusted(certificates, s);
-        }
-        catch (CertificateException e2) {
-          if (myCustomManager.isBroken() || !confirmAndUpdate(certificates, addToKeyStore, askUser)) {
-            throw e;
-          }
+
+    // check-then-act sequence
+    synchronized (myCustomManager) {
+      try {
+        myCustomManager.checkServerTrusted(chain, authType);
+      }
+      catch (CertificateException e) {
+        if (myCustomManager.isBroken() || !confirmAndUpdate(chain, addToKeyStore, askUser)) {
+          throw lastCertificateException != null ? lastCertificateException : e;
         }
       }
     }
@@ -155,11 +239,21 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
 
   @Override
   public X509Certificate[] getAcceptedIssuers() {
-    return ArrayUtil.mergeArrays(mySystemManager.getAcceptedIssuers(), myCustomManager.getAcceptedIssuers());
-  }
+    Set<X509Certificate> certificates = new HashSet<>();
 
-  public X509TrustManager getSystemManager() {
-    return mySystemManager;
+    for (X509TrustManager manager : mySystemManagers) {
+      try {
+        certificates.addAll(Arrays.asList(manager.getAcceptedIssuers()));
+      }
+      catch (Throwable exception) {
+        LOG.error("Could not get list of accepted issuers (trusted root identities) from " +
+                  manager.toString() + " (" + manager.getClass().getName() + ")", exception);
+      }
+    }
+
+    certificates.addAll(Arrays.asList(myCustomManager.getAcceptedIssuers()));
+
+    return certificates.toArray(X509Certificate[]::new);
   }
 
   public MutableTrustManager getCustomManager() {
@@ -383,7 +477,8 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       catch (KeyStoreException e) {
         LOG.error(e);
         return false;
-      } finally {
+      }
+      finally {
         myReadLock.unlock();
       }
     }

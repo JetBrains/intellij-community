@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="jvm-native-trusted-roots" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.nativecerts:jvm-native-trusted-roots:1.0.12" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/nativecerts/jvm-native-trusted-roots/1.0.12/jvm-native-trusted-roots-1.0.12.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/nativecerts/jvm-native-trusted-roots/1.0.12/jvm-native-trusted-roots-1.0.12-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
