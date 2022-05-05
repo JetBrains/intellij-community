@@ -27,15 +27,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 
 public class TypingEventsLogger extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 6);
+  private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 7);
 
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
   private static final StringEventField TOOL_WINDOW =
     EventFields.StringValidatedByCustomRule("toolwindow_id", ToolWindowUtilValidator.class);
   private static final VarargEventId TYPED = GROUP.registerVarargEvent("typed", EDITOR_KIND, TOOL_WINDOW);
   private static final EventId TOO_MANY_EVENTS = GROUP.registerEvent("too.many.events");
-  private static final IntEventField LATENCY_MAX = EventFields.Int("latency_max");
-  private static final IntEventField LATENCY_90 = EventFields.Int("latency_90");
+  private static final IntEventField LATENCY_MAX = EventFields.Int("latency_max_ms");
+  private static final IntEventField LATENCY_90 = EventFields.Int("latency_90_ms");
   private static final EventId3<Integer, Integer, FileType> LATENCY = GROUP.registerEvent("latency", LATENCY_MAX, LATENCY_90, EventFields.FileType);
 
   private static final EventsRateWindowThrottle ourThrottle =
