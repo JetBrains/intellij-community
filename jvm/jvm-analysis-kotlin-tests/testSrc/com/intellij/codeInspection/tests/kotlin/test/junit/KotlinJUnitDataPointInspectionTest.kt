@@ -36,7 +36,7 @@ class KotlinJUnitDataPointInspectionTest : JUnitDatapointInspectionTestBase() {
       class Test {
          @JvmField
          @org.junit.experimental.theories.DataPoint
-         val <warning descr="Fields annotated with 'org.junit.experimental.theories.DataPoint' should be 'static'">f1</warning>: Any? = null
+         val <warning descr="Fields annotated with 'org.junit.experimental.theories.DataPoint' should be static">f1</warning>: Any? = null
       }
     """.trimIndent())
   }
@@ -47,7 +47,7 @@ class KotlinJUnitDataPointInspectionTest : JUnitDatapointInspectionTestBase() {
         companion object {
           @JvmStatic
           @org.junit.experimental.theories.DataPoint
-          private val <warning descr="Fields annotated with 'org.junit.experimental.theories.DataPoint' should be 'public'">f1</warning>: Any? = null
+          private val <warning descr="Fields annotated with 'org.junit.experimental.theories.DataPoint' should be public">f1</warning>: Any? = null
         }
       }
     """.trimIndent())
@@ -57,7 +57,7 @@ class KotlinJUnitDataPointInspectionTest : JUnitDatapointInspectionTestBase() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class Test {
          @org.junit.experimental.theories.DataPoint
-         private val <warning descr="Fields annotated with 'org.junit.experimental.theories.DataPoint' should be 'public' and 'static'">f1</warning>: Any? = null
+         private val <warning descr="Fields annotated with 'org.junit.experimental.theories.DataPoint' should be public and static">f1</warning>: Any? = null
       }
     """.trimIndent())
   }
@@ -66,7 +66,7 @@ class KotlinJUnitDataPointInspectionTest : JUnitDatapointInspectionTestBase() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class Test {
          @org.junit.experimental.theories.DataPoint
-         private fun <warning descr="Methods annotated with 'org.junit.experimental.theories.DataPoint' should be 'public' and 'static'">f1</warning>(): Any? = null
+         private fun <warning descr="Methods annotated with 'org.junit.experimental.theories.DataPoint' should be public and static">f1</warning>(): Any? = null
       }
     """.trimIndent())
   }
@@ -75,8 +75,61 @@ class KotlinJUnitDataPointInspectionTest : JUnitDatapointInspectionTestBase() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class Test {
          @org.junit.experimental.theories.DataPoints
-         private fun <warning descr="Methods annotated with 'org.junit.experimental.theories.DataPoints' should be 'public' and 'static'">f1</warning>(): Any? = null
+         private fun <warning descr="Methods annotated with 'org.junit.experimental.theories.DataPoints' should be public and static">f1</warning>(): Any? = null
       }
     """.trimIndent())
+  }
+
+  fun `test @DataPoint quickfix make field public`() {
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+      class Test {
+          companion object {
+              @org.junit.experimental.theories.DataPoint
+              val f<caret>1: Any? = null
+          }
+      }
+    """.trimIndent(), """
+      class Test {
+          companion object {
+              @kotlin.jvm.JvmField
+              @org.junit.experimental.theories.DataPoint
+              val f1: Any? = null
+          }
+      }
+    """.trimIndent(), "Make field 'f1' public")
+  }
+
+  fun `test @DataPoint quickfix make field public and static`() {
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+      class Test {
+        @org.junit.experimental.theories.DataPoint
+        val f<caret>1: Any? = null
+      }
+    """.trimIndent(), """
+      class Test {
+          companion object {
+              @kotlin.jvm.JvmField
+              @org.junit.experimental.theories.DataPoint
+              val f1: Any? = null
+          }
+      }
+    """.trimIndent(), "Make field 'f1' public and static")
+  }
+
+  fun `test @DataPoint quickfix make method public and static`() {
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+      class Test {
+        @org.junit.experimental.theories.DataPoint
+        private fun f<caret>1(): Any? = null
+      }
+    """.trimIndent(), """
+      class Test {
+          companion object {
+              @JvmStatic
+              @org.junit.experimental.theories.DataPoint
+              fun f1(): Any? = null
+          }
+      }
+    """.trimIndent(), "Make method 'f1' public and static")
   }
 }
