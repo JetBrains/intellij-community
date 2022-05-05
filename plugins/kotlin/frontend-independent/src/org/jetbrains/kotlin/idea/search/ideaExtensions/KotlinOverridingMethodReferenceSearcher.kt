@@ -11,7 +11,11 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.asJava.*
+import org.jetbrains.kotlin.asJava.canHaveOverride
+import org.jetbrains.kotlin.asJava.canHaveSyntheticGetter
+import org.jetbrains.kotlin.asJava.canHaveSyntheticSetter
+import org.jetbrains.kotlin.asJava.syntheticAccessors
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess

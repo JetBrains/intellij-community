@@ -7,13 +7,13 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor
+import org.jetbrains.kotlin.analysis.api.descriptors.references.Fe10SyntheticPropertyAccessorReference
+import org.jetbrains.kotlin.asJava.canHaveSyntheticGetter
+import org.jetbrains.kotlin.asJava.canHaveSyntheticSetter
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.syntheticGetter
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
-import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReferenceDescriptorImpl
-import org.jetbrains.kotlin.idea.search.canHaveSyntheticGetter
-import org.jetbrains.kotlin.idea.search.canHaveSyntheticSetter
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
-import org.jetbrains.kotlin.idea.search.syntheticGetter
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
@@ -51,7 +51,7 @@ class KotlinAwareJavaGetterRenameProcessor : RenameJavaMethodProcessor() {
                     .filterIsInstanceWithChecker<SyntheticPropertyAccessorReference> { accessor -> !accessor.getter }
             }
             .map {
-                SyntheticPropertyAccessorReferenceDescriptorImpl(it.expression, getter = true)
+                Fe10SyntheticPropertyAccessorReference(it.expression, getter = true)
             }
             .toList()
     }
