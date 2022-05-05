@@ -36,6 +36,10 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             return jpsPluginSettings
         }
 
+        fun getJpsVersion(project: Project): String? {
+            return getInstanceUnsafe(project)?.settings?.version?.ifEmpty { DEFAULT_VERSION }
+        }
+
         /**
          * [getInstance] returns always initialized [JpsPluginSettings]. Contrary, [getInstanceUnsafe] returns "bare" [JpsPluginSettings]
          * value.

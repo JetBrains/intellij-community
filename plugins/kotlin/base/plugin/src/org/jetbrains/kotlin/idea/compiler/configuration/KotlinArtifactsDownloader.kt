@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
 import com.intellij.jarRepository.JarRepositoryManager
@@ -26,8 +26,7 @@ object KotlinArtifactsDownloader {
         else KOTLIN_DIST_LOCATION_PREFIX.resolve(version)
 
     fun getUnpackedKotlinDistPath(project: Project) =
-        KotlinJpsPluginSettings.getInstance(project)?.settings?.version?.let { getUnpackedKotlinDistPath(it) }
-            ?: KotlinPluginLayout.instance.kotlinc
+        KotlinJpsPluginSettings.getJpsVersion(project)?.let { getUnpackedKotlinDistPath(it) } ?: KotlinPluginLayout.instance.kotlinc
 
     fun isKotlinDistInitialized(version: String): Boolean {
         if (IdeKotlinVersion.get(version) == KotlinPluginLayout.instance.standaloneCompilerVersion) {

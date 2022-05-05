@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
@@ -89,7 +89,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             )
         }
 
-        assertEquals("1.3.72", KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
+        assertEquals("1.3.72", KotlinJpsPluginSettings.getJpsVersion(myProject))
 
         assertAllModulesConfigured()
 
@@ -184,7 +184,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("1.4", apiLevel!!.versionString)
         }
 
-        assertEquals("1.4.20", KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
+        assertEquals("1.4.20", KotlinJpsPluginSettings.getJpsVersion(myProject))
 
         assertAllModulesConfigured()
     }
@@ -464,7 +464,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals(JvmPlatforms.jvm6, targetPlatform)
         }
 
-        assertEquals("1.3.72", KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
+        assertEquals("1.3.72", KotlinJpsPluginSettings.getJpsVersion(myProject))
 
         assertEquals(
             listOf(
@@ -496,7 +496,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertTrue(targetPlatform.isJs())
         }
 
-        assertEquals("1.3.50", KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
+        assertEquals("1.3.50", KotlinJpsPluginSettings.getJpsVersion(myProject))
 
         assertEquals(
             listOf(
@@ -738,7 +738,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("my/test/destination", (compilerArguments as K2MetadataCompilerArguments).destination)
         }
 
-        assertEquals("1.3.72", KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
+        assertEquals("1.3.72", KotlinJpsPluginSettings.getJpsVersion(myProject))
 
         val rootManager = ModuleRootManager.getInstance(getModule("project.main"))
         val stdlib = rootManager.orderEntries.filterIsInstance<LibraryOrderEntry>().single().library

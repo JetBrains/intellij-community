@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.application.options.CodeStyle
@@ -662,7 +662,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                     compilerSettings!!.additionalArguments
                 )
             }
-            Assert.assertEquals(kotlinMavenPluginVersion, KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
+
+            Assert.assertEquals(kotlinMavenPluginVersion, KotlinJpsPluginSettings.getJpsVersion(myProject))
 
             assertSources("project", "src/main/kotlin")
             assertTestSources("project", "src/test/java")
@@ -883,7 +884,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             """
             )
 
-            Assert.assertEquals(kotlinVersion, KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
+            Assert.assertEquals(kotlinVersion, KotlinJpsPluginSettings.getJpsVersion(myProject))
 
             assertModules("project")
             assertImporterStatePresent()
@@ -2172,7 +2173,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             assertImporterStatePresent()
 
             // The highest of available versions should be picked
-            Assert.assertEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.getInstance(myProject)?.settings?.version)
+            Assert.assertEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.getJpsVersion(myProject))
         }
     }
 
