@@ -10,6 +10,7 @@ import com.intellij.openapi.command.impl.FinishMarkAction
 import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
@@ -19,7 +20,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringActionHandler
-import com.intellij.refactoring.extractMethod.ExtractMethodHandler
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.newImpl.inplace.*
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.Nls
@@ -98,7 +99,7 @@ class ExtractKotlinFunctionHandler(
             val editorState = EditorState(editor)
             val disposable = Disposer.newDisposable()
             WriteCommandAction.writeCommandAction(project).run<Throwable> {
-                val startMarkAction = StartMarkAction.start(editor, project, ExtractMethodHandler.getRefactoringName())
+                val startMarkAction = StartMarkAction.start(editor, project, EXTRACT_FUNCTION)
                 Disposer.register(disposable) { FinishMarkAction.finish(project, editor, startMarkAction) }
             }
             fun afterFinish(extraction: ExtractionResult){
@@ -118,6 +119,7 @@ class ExtractKotlinFunctionHandler(
                     .onSuccess {
                         processDuplicates(extraction.duplicateReplacers, file.project, editor)
                     }
+                    .withCompletionAdvertisement(getDialogAdvertisement())
                     .withValidation { variableRange ->
                         val error = getIdentifierError(file, variableRange)
                         if (error != null) {
@@ -136,6 +138,12 @@ class ExtractKotlinFunctionHandler(
                 Disposer.dispose(disposable)
                 throw e
             }
+        }
+
+        @Nls
+        private fun getDialogAdvertisement():  String {
+            val shortcut = KeymapUtil.getPrimaryShortcut("ExtractFunction") ?: throw IllegalStateException("Action is not found")
+            return RefactoringBundle.message("inplace.refactoring.advertisement.text", KeymapUtil.getShortcutText(shortcut))
         }
 
         private fun rangeOf(element: PsiElement): TextRange {

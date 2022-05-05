@@ -17,7 +17,9 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
 import com.intellij.refactoring.suggested.range
@@ -128,6 +130,7 @@ data class ExtractMethodTemplateBuilder(
       override fun shouldSelectAll() = false
       override fun performRefactoring() = false
       override fun getCommandName(): String { throw NotImplementedError() }
+      override fun startsOnTheSameElement(handler: RefactoringActionHandler?, element: PsiElement?) = true
     }
     templateState.editor.putUserData(InplaceRefactoring.INPLACE_RENAMER, dummy)
     Disposer.register(templateState) { templateState.editor.putUserData(InplaceRefactoring.INPLACE_RENAMER, null) }
