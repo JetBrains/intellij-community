@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManager;
@@ -292,7 +293,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (!hasEventSystemEnabledUncommittedDocuments()) {
       if (!isCommitInProgress()) {
         // in case of fireWriteActionFinished() we didn't execute 'actionsWhenAllDocumentsAreCommitted' yet
-        assert actionsWhenAllDocumentsAreCommitted.isEmpty() : actionsWhenAllDocumentsAreCommitted +"; uncommitted docs: "+myUncommittedDocuments;
+        assert actionsWhenAllDocumentsAreCommitted.isEmpty() : actionsWhenAllDocumentsAreCommitted + "; uncommitted docs: " +
+                                                               StringUtil.join(myUncommittedDocuments, document->document+":isEventSystemEnabled="+isEventSystemEnabled(document)+":virtualFile="+getVirtualFile(document), ",");
       }
       action.run();
       return true;
