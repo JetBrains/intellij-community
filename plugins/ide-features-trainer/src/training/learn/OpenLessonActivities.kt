@@ -293,7 +293,7 @@ internal object OpenLessonActivities {
     val executor = LessonExecutor(lesson, projectWhereToStartLesson, textEditor?.editor, vf)
     val lessonContext = LessonContextImpl(executor)
     LessonManager.instance.initDslLesson(textEditor?.editor, lesson, executor)
-    lesson.lessonContent(lessonContext)
+    lesson.fullLessonContent(lessonContext)
     executor.startLesson()
   }
 
