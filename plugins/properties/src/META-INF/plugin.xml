@@ -134,6 +134,8 @@
     <lang.inspectionSuppressor language="Properties" implementationClass="com.intellij.lang.properties.codeInspection.PropertiesInspectionSuppressor"/>
     <qualifiedNameProvider implementation="com.intellij.lang.properties.ide.actions.PropertiesQualifiedNameProvider"/>
 
+    <psi.referenceContributor language="Properties" implementation="com.intellij.lang.properties.PropertiesWebReferenceContributor"/>
+
     <intentionAction>
       <className>com.intellij.lang.properties.actions.CopyPropertyValueToClipboardIntention</className>
       <bundleName>messages.PropertiesBundle</bundleName>
