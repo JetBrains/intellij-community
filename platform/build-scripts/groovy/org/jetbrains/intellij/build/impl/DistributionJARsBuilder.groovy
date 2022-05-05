@@ -255,7 +255,7 @@ final class DistributionJARsBuilder {
     ForkJoinTask<?> brokenPluginsTask = createBuildBrokenPluginListTask(context)?.fork()
 
     BuildHelper.createSkippableTask(spanBuilder("build searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, context) {
-      buildSearchableOptions(context, getModulesForPluginsToPublish())
+      buildSearchableOptions(context)
     }?.fork()?.join()
 
     Set<PluginLayout> pluginLayouts = getPluginsByModules(context, context.productProperties.productLayout.bundledPluginModules)
@@ -482,34 +482,24 @@ final class DistributionJARsBuilder {
    * Build index which is used to search options in the Settings dialog.
    */
   @Nullable
-  static Path buildSearchableOptions(BuildContext buildContext,
-                                     @NotNull Collection<String> modulesForPluginsToPublish,
-                                     @Nullable UnaryOperator<Set<String>> classpathCustomizer = null,
-                                     Map<String, Object> systemProperties = Collections.emptyMap()) {
+  Path buildSearchableOptions(BuildContext buildContext,
+                              @Nullable UnaryOperator<Set<String>> classpathCustomizer = null,
+                              Map<String, Object> systemProperties = Collections.emptyMap()) {
     Span span = Span.current()
     if (buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
       span.addEvent("skip building searchable options index")
       return null
     }
-
-    ProductModulesLayout productLayout = buildContext.productProperties.productLayout
-    Set<String> modulesToIndex = new LinkedHashSet<>()
-    modulesToIndex.addAll(productLayout.mainModules)
-    modulesToIndex.addAll(getModulesToCompile(buildContext))
-    modulesToIndex.addAll(modulesForPluginsToPublish)
-    modulesToIndex.remove("intellij.ruby.lsp")
-
+    LinkedHashSet<String> ideClasspath = createIdeClassPath(buildContext)
     Path targetDirectory = JarPackager.getSearchableOptionsDir(buildContext)
     BuildMessages messages = buildContext.messages
-    span.setAttribute(AttributeKey.longKey("moduleCount"), (long)modulesToIndex.size())
-    span.setAttribute(AttributeKey.stringArrayKey("modules"), List.copyOf(modulesToIndex))
     NioFiles.deleteRecursively(targetDirectory)
     // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
     // It'll process all UI elements in Settings dialog and build index for them.
     //noinspection SpellCheckingInspection
     BuildHelper.runApplicationStarter(buildContext,
                                       buildContext.paths.tempDir.resolve("searchableOptions"),
-                                      modulesToIndex, List.of("traverseUI", targetDirectory.toString(), "true"),
+                                      ideClasspath, List.of("traverseUI", targetDirectory.toString(), "true"),
                                       systemProperties,
                                       List.of(),
                                       TimeUnit.MINUTES.toMillis(10L), classpathCustomizer)
@@ -582,7 +572,38 @@ final class DistributionJARsBuilder {
     BuildTasks.create(context).zipSourcesOfModules(modulesFromCommunity, context.paths.artifactDir.resolve(archiveName), true)
   }
 
-  void generateProjectStructureMapping(@NotNull Path targetFile, @NotNull BuildContext context) {
+  LinkedHashSet<String> createIdeClassPath(@NotNull BuildContext context) {
+    // for some reasons maybe duplicated paths - use set
+    LinkedHashSet<String> classPath = new LinkedHashSet<String>()
+    Files.createDirectories(context.paths.tempDir)
+    Path pluginLayoutRoot = Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
+    List<DistributionFileEntry> nonPluginsEntries = new ArrayList<>()
+    List<DistributionFileEntry> pluginsEntries = new ArrayList<>()
+    for(e in (generateProjectStructureMapping(context, pluginLayoutRoot))) {
+      if (e.getPath().startsWith(pluginLayoutRoot)) {
+        Path relPath = pluginLayoutRoot.relativize(e.path)
+        // For plugins our classloader load jars only from lib folder
+        if (relPath.parent?.parent == null && relPath.parent?.toString() == "lib") {
+          pluginsEntries.add(e)
+        }
+      } else {
+        nonPluginsEntries.add(e)
+      }
+    }
+
+    for (entry in nonPluginsEntries + pluginsEntries) {
+      if (entry instanceof ModuleOutputEntry) {
+        classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)).toString())
+      } else if (entry instanceof LibraryFileEntry) {
+        classPath.add(entry.libraryFile.toString())
+      } else {
+        throw new UnsupportedOperationException("Entry $entry is not supported")
+      }
+    }
+    return classPath
+  }
+
+  List<DistributionFileEntry> generateProjectStructureMapping(@NotNull BuildContext context, @NotNull Path pluginLayoutRoot) {
     ModuleOutputPatcher moduleOutputPatcher = new ModuleOutputPatcher()
     ForkJoinTask<List<DistributionFileEntry>> libDirLayout = processLibDirectoryLayout(moduleOutputPatcher, platform, context, false).fork()
     Set<PluginLayout> allPlugins = getPluginsByModules(context, context.productProperties.productLayout.bundledPluginModules)
@@ -598,7 +619,7 @@ final class DistributionJARsBuilder {
         @Override
         void accept(PluginLayout plugin) {
           entries.addAll(layout(plugin,
-                                context.paths.tempDir,
+                                pluginLayoutRoot,
                                 false,
                                 moduleOutputPatcher,
                                 plugin.moduleJars,
@@ -606,8 +627,11 @@ final class DistributionJARsBuilder {
         }
       })
     entries.addAll(libDirLayout.join())
+    return entries
+  }
 
-    ProjectStructureMapping.writeReport(entries, targetFile, context.paths)
+  void generateProjectStructureMapping(@NotNull Path targetFile, @NotNull BuildContext context, @NotNull Path pluginLayoutRoot) {
+    ProjectStructureMapping.writeReport(generateProjectStructureMapping(context, pluginLayoutRoot), targetFile, context.paths)
   }
 
   @Nullable

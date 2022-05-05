@@ -214,25 +214,13 @@ final class BuildHelper {
 
   static void runApplicationStarter(@NotNull BuildContext context,
                                     @NotNull Path tempDir,
-                                    @NotNull Collection<String> modules,
+                                    @NotNull Set<String> ideClasspath,
                                     List<String> arguments,
                                     Map<String, Object> systemProperties = Collections.emptyMap(),
                                     List<String> vmOptions = null,
                                     long timeoutMillis = TimeUnit.MINUTES.toMillis(10L),
                                     @Nullable UnaryOperator<Set<String>> classpathCustomizer = null) {
     Files.createDirectories(tempDir)
-
-    Set<String> ideClasspath = new LinkedHashSet<String>()
-
-    Span.current().addEvent("collect classpath to run application starter", Attributes.of(AttributeKey.stringArrayKey("args"), arguments))
-    context.messages.debug("Collecting classpath to run application starter '${arguments.first()}:")
-    for (moduleName in modules) {
-      for (pathElement in context.getModuleRuntimeClasspath(context.findRequiredModule(moduleName), false)) {
-        if (ideClasspath.add(pathElement)) {
-          context.messages.debug(" $pathElement from $moduleName")
-        }
-      }
-    }
 
     List<String> jvmArgs = new ArrayList<>()
     BuildUtils.addVmProperty(jvmArgs, "idea.home.path", context.paths.projectHome)

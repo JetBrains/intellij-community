@@ -193,17 +193,15 @@ final class BuildTasksImpl extends BuildTasks {
   /**
    * Build a list with modules that the IDE will provide for plugins.
    */
-  private static void buildProvidedModuleList(BuildContext context, Path targetFile, @NotNull Collection<String> modules) {
-    context.executeStep(
-      spanBuilder("build provided module list")
-        .setAttribute(AttributeKey.stringArrayKey("modules"), List.copyOf(modules)),
-      BuildOptions.PROVIDED_MODULES_LIST_STEP,
+  private static void buildProvidedModuleList(BuildContext context, Path targetFile, @NotNull DistributionJARsBuilder builder) {
+    context.executeStep(spanBuilder("build provided module list"), BuildOptions.PROVIDED_MODULES_LIST_STEP,
       new Runnable() {
         @Override
         void run() {
           Files.deleteIfExists(targetFile)
+          Set<String> ideClasspath = builder.createIdeClassPath(context)
           // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-          BuildHelper.runApplicationStarter(context, context.paths.tempDir.resolve("builtinModules"), modules,
+          BuildHelper.runApplicationStarter(context, context.paths.tempDir.resolve("builtinModules"), ideClasspath,
                                             List.of("listBundledPlugins", targetFile.toString()), Collections.emptyMap(),
                                             null, TimeUnit.MINUTES.toMillis(10L), context.classpathCustomizer)
           if (Files.notExists(targetFile)) {
@@ -367,8 +365,9 @@ idea.fatal.error.notification=disabled
     compileModules(toCompile)
 
     if (context.shouldBuildDistributions()) {
+      DistributionJARsBuilder builder = compilePlatformAndPluginModules(pluginsToPublish);
       Path providedModulesFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
-      buildProvidedModuleList(context, providedModulesFile, moduleNames)
+      buildProvidedModuleList(context, providedModulesFile, builder)
       if (productProperties.productLayout.buildAllCompatiblePlugins) {
         if (context.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
           context.messages.info("Skipping collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")
@@ -464,7 +463,7 @@ idea.fatal.error.notification=disabled
         else {
           Span.current().addEvent("skip building product distributions because " +
                                   "\"intellij.build.target.os\" property is set to \"$BuildOptions.OS_NONE\"")
-          DistributionJARsBuilder.buildSearchableOptions(context, distributionJARsBuilder.getModulesForPluginsToPublish(), context.classpathCustomizer)
+          distributionJARsBuilder.buildSearchableOptions(context, context.classpathCustomizer)
           distributionJARsBuilder.createBuildNonBundledPluginsTask(pluginsToPublish, true, null, context)?.fork()?.join()
         }
         return null
@@ -600,13 +599,15 @@ idea.fatal.error.notification=disabled
     copyDependenciesFile(buildContext)
     Set<PluginLayout> pluginsToPublish = DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules)
     DistributionJARsBuilder distributionJARsBuilder = compilePlatformAndPluginModules(pluginsToPublish)
-    DistributionJARsBuilder.buildSearchableOptions(buildContext, distributionJARsBuilder.getModulesForPluginsToPublish())
+    distributionJARsBuilder.buildSearchableOptions(buildContext)
     distributionJARsBuilder.createBuildNonBundledPluginsTask(pluginsToPublish, true, null, buildContext)?.fork()?.join()
   }
 
   @Override
   void generateProjectStructureMapping(Path targetFile) {
-    new DistributionJARsBuilder(buildContext).generateProjectStructureMapping(targetFile, buildContext)
+    Files.createDirectories(buildContext.paths.tempDir)
+    Path pluginLayoutRoot = Files.createTempDirectory(buildContext.paths.tempDir, "pluginLayoutRoot")
+    new DistributionJARsBuilder(buildContext).generateProjectStructureMapping(targetFile, buildContext, pluginLayoutRoot)
   }
 
   static @NotNull Path unpackPty4jNative(BuildContext buildContext, @NotNull Path distDir, String pty4jOsSubpackageName) {
