@@ -11,7 +11,6 @@
     <orderEntry type="library" name="kotlinc.kotlin-reflect" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-fir" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-ir" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-cli" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-tests" level="project" />
@@ -24,15 +23,6 @@
     <orderEntry type="library" name="kotlinc.kotlin-scripting-common" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-jvm" level="project" />
-    <orderEntry type="library" name="kotlinc.analysis-api-providers" level="project" />
-    <orderEntry type="library" name="kotlinc.analysis-project-structure" level="project" />
-    <orderEntry type="library" name="kotlinc.low-level-api-fir" level="project" />
-    <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
-    <orderEntry type="library" name="kotlinc.high-level-api-impl-base" level="project" />
-    <orderEntry type="library" name="kotlinc.high-level-api-impl-base-tests" level="project" />
-    <orderEntry type="library" name="kotlinc.high-level-api-fir" level="project" />
-    <orderEntry type="library" name="kotlinc.high-level-api-fir-tests" level="project" />
-    <orderEntry type="library" name="kotlinc.symbol-light-classes" level="project" />
     <orderEntry type="library" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
     <orderEntry type="library" name="kotlinc.allopen-compiler-plugin" level="project" />
     <orderEntry type="library" name="kotlinc.noarg-compiler-plugin" level="project" />
