@@ -37,7 +37,7 @@ object AdditionalKotlinArtifacts {
     @JvmStatic
     val compilerTestDataDir: File by lazy {
         downloadAndUnpack(
-            libraryForVersion = "kotlinc_kotlin_compiler_cli.xml",
+            libraryFileName = "kotlinc_kotlin_compiler_cli.xml",
             artifactId = "kotlin-compiler-testdata-for-ide",
             dirName = "kotlinc-testdata-2",
         )
@@ -51,10 +51,15 @@ object AdditionalKotlinArtifacts {
     @JvmStatic
     val jpsPluginTestDataDir: File by lazy {
         downloadAndUnpack(
-            libraryForVersion = "kotlinc_kotlin_jps_plugin_tests.xml",
+            libraryFileName = "kotlinc_kotlin_jps_plugin_tests.xml",
             artifactId = "kotlin-jps-plugin-testdata-for-ide",
             dirName = "kotlinc-jps-testdata",
         )
+    }
+
+    @JvmStatic
+    val jsIrRuntimeDir: File by lazy {
+        downloadArtifact(libraryFileName = "kotlinc_kotlin_jps_plugin_tests.xml", artifactId = "js-ir-runtime-for-ide", extension = "klib")
     }
 
     @JvmStatic
@@ -62,21 +67,26 @@ object AdditionalKotlinArtifacts {
         return jpsPluginTestDataDir.resolve(jpsTestDataPath).canonicalPath
     }
 
-    private fun downloadAndUnpack(libraryForVersion: String, artifactId: String, dirName: String): File {
-        val version = KotlinMavenUtils.findLibraryVersion(libraryForVersion) ?: error("Can't get '$libraryForVersion' version")
-        val jar = Paths.get(PathManager.getCommunityHomePath()).resolve("out").resolve("$artifactId-$version.jar").also {
+    private fun downloadAndUnpack(libraryFileName: String, artifactId: String, dirName: String): File {
+        val jar = downloadArtifact(libraryFileName, artifactId)
+        return lazyUnpackJar(jar, File(PathManager.getCommunityHomePath()).resolve("out").resolve(dirName))
+    }
+
+    private fun downloadArtifact(libraryFileName: String, artifactId: String, extension: String = "jar"): File {
+        val version = KotlinMavenUtils.findLibraryVersion(libraryFileName) ?: error("Can't get '$libraryFileName' version")
+        val jar = Paths.get(PathManager.getCommunityHomePath()).resolve("out").resolve("$artifactId-$version.$extension").also {
             Files.createDirectories(it.parent)
         }
 
         if (!jar.exists()) {
             val stream = URL(
                 "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/" +
-                        "org/jetbrains/kotlin/$artifactId/$version/$artifactId-$version.jar"
+                        "org/jetbrains/kotlin/$artifactId/$version/$artifactId-$version.$extension"
             ).openStream()
             Files.copy(stream, jar)
             check(jar.exists()) { "$jar should be downloaded" }
         }
 
-        return lazyUnpackJar(jar.toFile(), File(PathManager.getCommunityHomePath()).resolve("out").resolve(dirName))
+        return jar.toFile()
     }
 }
