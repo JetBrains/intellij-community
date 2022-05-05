@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.addDelayedImportRequest
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
+import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -84,6 +85,12 @@ class KtReferenceMutateServiceImpl : KtReferenceMutateService {
     override fun handleElementRename(ktReference: KtReference, newElementName: String): PsiElement {
         return when (ktReference) {
             is KtArrayAccessReference -> ktReference.renameImplicitConventionalCall(newElementName)
+            is KDocReference -> with(ktReference) {
+                val textRange = element.getNameTextRange()
+                val newText = textRange.replace(element.text, newElementName)
+                val newLink = KDocElementFactory(element.project).createNameFromText(newText)
+                return element.replace(newLink)
+            }
             is KtInvokeFunctionReference -> with(ktReference) {
                 val callExpression = expression
                 val fullCallExpression = callExpression.getQualifiedExpressionForSelectorOrThis()
