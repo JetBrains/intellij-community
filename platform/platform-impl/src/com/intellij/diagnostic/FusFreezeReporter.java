@@ -6,6 +6,7 @@ import com.intellij.internal.DebugAttachDetector;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.concurrent.TimeUnit;
 
 class FusFreezeReporter implements IdePerformanceListener {
   final boolean isDebugEnabled = DebugAttachDetector.isDebugEnabled();
@@ -21,8 +22,9 @@ class FusFreezeReporter implements IdePerformanceListener {
 
   @Override
   public void uiResponded(long latencyMs) {
-    final long currentTime = System.currentTimeMillis();
-    if (currentTime - myPreviousLoggedUIResponse >= IdeHeartbeatEventReporter.UI_RESPONSE_LOGGING_INTERVAL_MS) {
+    final long currentTime = System.nanoTime();
+    final long elapsedMs = TimeUnit.NANOSECONDS.toMillis(currentTime - myPreviousLoggedUIResponse);
+    if (elapsedMs >= IdeHeartbeatEventReporter.UI_RESPONSE_LOGGING_INTERVAL_MS) {
       myPreviousLoggedUIResponse = currentTime;
       IdeHeartbeatEventReporter.UILatencyLogger.LATENCY.log(latencyMs);
     }
