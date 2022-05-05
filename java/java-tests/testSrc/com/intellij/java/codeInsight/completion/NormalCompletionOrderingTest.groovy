@@ -1007,7 +1007,7 @@ class Foo {
     assert weights[3].contains("explicitlyImported=CLASS_DECLARED_IN_SAME_PACKAGE_NESTED,") // same package but nested class not imported
   }
 
-  @NeedsIndex.Full
+  @NeedsIndex.SmartMode(reason = "Ordering requires smart mode")
   void "test discourage experimental"() {
     myFixture.addClass("package org.jetbrains.annotations;public class ApiStatus{public @interface Experimental {}}");
     myFixture.addClass("class Cls {@org.jetbrains.annotations.ApiStatus.Experimental public void methodA() {} public void methodB() {}}")

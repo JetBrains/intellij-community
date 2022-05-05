@@ -995,6 +995,7 @@ public class ListUtils {
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
+  @NeedsIndex.SmartMode(reason = "Ordering requires smart mode")
   void testSuggestInaccessibleOnSecondInvocation() throws Throwable {
     configure()
     assertStringItems("_bar", "_goo")

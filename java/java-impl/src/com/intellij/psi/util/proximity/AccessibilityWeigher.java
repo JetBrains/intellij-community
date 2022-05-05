@@ -4,6 +4,8 @@ package com.intellij.psi.util.proximity;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.StaticAnalysisAnnotationManager;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ProximityLocation;
 import org.jetbrains.annotations.NotNull;
@@ -14,12 +16,15 @@ public class AccessibilityWeigher extends ProximityWeigher {
     if (element instanceof PsiDocCommentOwner) {
       final PsiDocCommentOwner member = (PsiDocCommentOwner)element;
       PsiElement position = location.getPosition();
-      if (position != null && !JavaPsiFacade.getInstance(member.getProject()).getResolveHelper().isAccessible(member, position, null)) {
-        return AccessibilityLevel.INACCESSIBLE;
-      }
-      if (JavaCompletionUtil.isEffectivelyDeprecated(member)) return AccessibilityLevel.DEPRECATED;
-      if (AnnotationUtil.isAnnotated(member, StaticAnalysisAnnotationManager.getInstance().getKnownUnstableApiAnnotations(), 0)) {
-        return AccessibilityLevel.DISCOURAGED;
+      Project project = location.getProject();
+      if (project != null && !DumbService.isDumb(project)) {
+        if (position != null && !JavaPsiFacade.getInstance(project).getResolveHelper().isAccessible(member, position, null)) {
+          return AccessibilityLevel.INACCESSIBLE;
+        }
+        if (JavaCompletionUtil.isEffectivelyDeprecated(member)) return AccessibilityLevel.DEPRECATED;
+        if (AnnotationUtil.isAnnotated(member, StaticAnalysisAnnotationManager.getInstance().getKnownUnstableApiAnnotations(), 0)) {
+          return AccessibilityLevel.DISCOURAGED;
+        }
       }
       if (member instanceof PsiClass) {
         PsiFile file = member.getContainingFile();
