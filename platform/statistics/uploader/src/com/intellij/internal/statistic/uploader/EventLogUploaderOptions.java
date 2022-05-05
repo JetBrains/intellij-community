@@ -10,8 +10,8 @@ public interface EventLogUploaderOptions {
   String BUCKET_OPTION = "--bucket-";
   String MACHINE_ID_OPTION = "--machine-";
   String ID_REVISION_OPTION = "--id-revision-";
-  String URL_OPTION = "--url-";
 
+  String URL_OPTION = "--url";
   String PRODUCT_OPTION = "--product";
   String PRODUCT_VERSION_OPTION = "--product-version";
   String USER_AGENT_OPTION = "--user-agent";

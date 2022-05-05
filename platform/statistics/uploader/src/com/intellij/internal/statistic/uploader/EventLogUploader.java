@@ -99,13 +99,12 @@ public final class EventLogUploader {
     logger.info("[" + recorderId + "] Start uploading...");
     EventLogConnectionSettings connectionSettings = appInfo.getConnectionSettings();
     logger.info("[" + recorderId + "] {product:" + appInfo.getProductCode() + ", productVersion:" + appInfo.getProductVersion() +
-                ", userAgent:" + connectionSettings.getUserAgent() +
+                ", userAgent:" + connectionSettings.getUserAgent() + ", url: " + appInfo.getTemplateUrl() +
                 ", internal:" + appInfo.isInternal() + ", isTest:" + appInfo.isTest() + "}");
 
     String logs = config.recorderConfig.getFilesToSendProvider().getFilesToSend().stream().
       map(file -> file.getFile().getAbsolutePath()).collect(Collectors.joining(File.pathSeparator));
-    logger.info("[" + recorderId + "] {recorder:" + config.recorderConfig.getRecorderId() +
-                ", url: " + config.recorderConfig.getTemplateUrl() + ", files:" + logs + "}");
+    logger.info("[" + recorderId + "] {recorder:" + config.recorderConfig.getRecorderId() + ", files:" + logs + "}");
     logger.info("[" + recorderId + "] {device:" + config.deviceConfig.getDeviceId() + ", bucket:" + config.deviceConfig.getBucket() + "}");
     try {
       EventLogStatisticsService service = new EventLogStatisticsService(
@@ -138,15 +137,16 @@ public final class EventLogUploader {
                                                             DataCollectorSystemEventLogger eventLogger) {
     String productCode = options.get(EventLogUploaderOptions.PRODUCT_OPTION);
     String productVersion = options.get(EventLogUploaderOptions.PRODUCT_VERSION_OPTION);
+    String url = options.get(EventLogUploaderOptions.URL_OPTION);
     String userAgent = options.get(EventLogUploaderOptions.USER_AGENT_OPTION);
     String headersString = options.get(EventLogUploaderOptions.EXTRA_HEADERS);
     Map<String, String> extraHeaders = ExtraHTTPHeadersParser.parse(headersString);
-    if (productCode != null) {
+    if (url != null && productCode != null) {
       boolean isInternal = options.containsKey(EventLogUploaderOptions.INTERNAL_OPTION);
       boolean isTest = options.containsKey(EventLogUploaderOptions.TEST_OPTION);
       boolean isEAP = options.containsKey(EventLogUploaderOptions.EAP_OPTION);
       return new EventLogExternalApplicationInfo(
-        "", productCode, productVersion, userAgent, isInternal, isTest, isEAP, extraHeaders, logger, eventLogger
+        url, productCode, productVersion, userAgent, isInternal, isTest, isEAP, extraHeaders, logger, eventLogger
       );
     }
     return null;
@@ -229,10 +229,9 @@ public final class EventLogUploader {
     @Nullable
     protected EventLogRecorderConfig newRecorderConfig(@NotNull String recorder, @NotNull Map<String, String> options) {
       String logs = options.get(EventLogUploaderOptions.LOGS_OPTION + recorder.toLowerCase(Locale.ENGLISH));
-      String templateUrl = options.get(EventLogUploaderOptions.URL_OPTION + recorder.toLowerCase(Locale.ENGLISH));
-      if (logs != null && templateUrl != null) {
+      if (logs != null) {
         List<String> files = split(logs, File.pathSeparatorChar);
-        return new EventLogExternalRecorderConfig(recorder, templateUrl, files);
+        return new EventLogExternalRecorderConfig(recorder, files);
       }
       return null;
     }

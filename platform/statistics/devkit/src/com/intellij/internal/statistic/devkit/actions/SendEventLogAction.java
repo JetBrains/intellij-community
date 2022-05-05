@@ -77,11 +77,10 @@ public class SendEventLogAction extends AnAction {
       private StatisticsResult send() {
         String recorderId = StringUtil.trim(Registry.stringValue("usage.statistics.test.action.recorder.id"));
         EventLogRecorderConfiguration config = EventLogConfiguration.getInstance().getOrCreate(recorderId);
-        EventLogInternalRecorderConfig recorderConfig = new EventLogInternalRecorderConfig(recorderId);
         return EventLogStatisticsService.send(
           new DeviceConfiguration(config.getDeviceId(), config.getBucket(), config.getMachineId()),
-          recorderConfig,
-          new EventLogTestSettingsService(recorderConfig),
+          new EventLogInternalRecorderConfig(recorderId),
+          new EventLogTestSettingsService(recorderId),
           new EventLogTestResultDecorator()
         );
       }
@@ -89,8 +88,8 @@ public class SendEventLogAction extends AnAction {
   }
 
   private static final class EventLogTestSettingsService extends EventLogUploadSettingsService implements EventLogSettingsService {
-    private EventLogTestSettingsService(@NotNull EventLogRecorderConfig recorder) {
-      super(recorder, new EventLogTestApplication(recorder.getRecorderId()));
+    private EventLogTestSettingsService(@NotNull String recorderId) {
+      super(recorderId, new EventLogTestApplication());
     }
 
     @Override
@@ -107,8 +106,8 @@ public class SendEventLogAction extends AnAction {
   }
 
   private static final class EventLogTestApplication extends EventLogInternalApplicationInfo {
-    private EventLogTestApplication(@NotNull String recorderId) {
-      super(recorderId, true);
+    private EventLogTestApplication() {
+      super(true);
     }
 
     @Override

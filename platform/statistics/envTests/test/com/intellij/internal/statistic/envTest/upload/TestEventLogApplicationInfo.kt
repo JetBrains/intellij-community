@@ -14,19 +14,13 @@ internal const val RECORDER_ID = "FUS"
 internal const val PRODUCT_VERSION = "2020.1"
 internal const val PRODUCT_CODE = "IC"
 
-internal class TestEventLogApplicationInfo(recorderId: String)
-  : EventLogInternalApplicationInfo(recorderId, false) {
+internal class TestEventLogApplicationInfo(private val settingsUrl: String): EventLogInternalApplicationInfo(false) {
   override fun getProductVersion(): String = PRODUCT_VERSION
   override fun getProductCode(): String = PRODUCT_CODE
-  @Deprecated(
-    replaceWith = ReplaceWith("EventLogInternalRecorderConfig.getTemplateUrl()"),
-    message = "Get template url from recorder configuration, because it depends on the recorder code"
-  )
-  override fun getTemplateUrl(): String = ""
+  override fun getTemplateUrl(): String = settingsUrl
 }
 
 internal class TestEventLogRecorderConfig(recorderId: String,
-                                          private val settingsUrl: String,
                                           private val sendEnabled: Boolean = true,
                                           logFiles: List<File> = emptyList())
   : EventLogInternalRecorderConfig(recorderId) {
@@ -37,8 +31,6 @@ internal class TestEventLogRecorderConfig(recorderId: String,
   override fun isSendEnabled(): Boolean = sendEnabled
 
   override fun getFilesToSendProvider(): FilesToSendProvider = evenLogFilesProvider
-
-  override fun getTemplateUrl(): String = settingsUrl
 }
 
 internal fun newSendService(container: ApacheContainer,
@@ -48,11 +40,10 @@ internal fun newSendService(container: ApacheContainer,
                             machineId: MachineId? = null): EventLogStatisticsService {
   val settingsUrl = container.getBaseUrl(settingsResponseFile).toString()
   val config = EventLogConfiguration.getInstance().getOrCreate(RECORDER_ID)
-  val recorderConfig = TestEventLogRecorderConfig(RECORDER_ID, settingsUrl, sendEnabled, logFiles)
   return EventLogStatisticsService(
     DeviceConfiguration(config.deviceId, config.bucket, machineId ?: config.machineId),
-    recorderConfig,
+    TestEventLogRecorderConfig(RECORDER_ID, sendEnabled, logFiles),
     EventLogSendListener { _, _, _ -> },
-    EventLogUploadSettingsService(recorderConfig, TestEventLogApplicationInfo(RECORDER_ID))
+    EventLogUploadSettingsService(RECORDER_ID, TestEventLogApplicationInfo(settingsUrl))
   )
 }

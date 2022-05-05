@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION")
 
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogEndpointSubstitutor
-import com.intellij.internal.statistic.eventLog.EventLogInternalRecorderConfig
+import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
@@ -26,7 +26,7 @@ class ConfigEndpointSubstitutorTest : BasePlatformTestCase() {
   }
 
   fun testSubstitution() {
-    val recorderConfig = EventLogInternalRecorderConfig("FUS", true)
-    assertThat(recorderConfig.getTemplateUrl()).isEqualTo(URL)
+    val applicationInfo = EventLogInternalApplicationInfo("FUS", true)
+    assertThat(applicationInfo.templateUrl).isEqualTo(URL)
   }
 }

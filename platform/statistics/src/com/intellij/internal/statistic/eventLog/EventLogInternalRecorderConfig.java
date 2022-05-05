@@ -39,26 +39,4 @@ public class EventLogInternalRecorderConfig implements EventLogRecorderConfig {
     EventLogFilesProvider logFilesProvider = StatisticsEventLogProviderUtil.getEventLogProvider(myRecorderId).getLogFilesProvider();
     return new DefaultFilesToSendProvider(logFilesProvider, maxFilesToSend, myFilterActiveFile);
   }
-
-  @NotNull
-  @Override
-  public String getTemplateUrl() {
-    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
-    if (externalEventLogSettings != null) {
-      String result = externalEventLogSettings.getTemplateUrl(myRecorderId);
-      return result == null ? getDefaultTemplateUrl() : result;
-    } else if (ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(EventLogEndpointSubstitutor.EP_NAME.getName())) {
-      EventLogEndpointSubstitutor validSubstitutor = EventLogEndpointSubstitutor.EP_NAME.findFirstSafe(substitutor -> {
-        return PluginInfoDetectorKt.getPluginInfo(substitutor.getClass()).isAllowedToInjectIntoFUS();
-      });
-
-      String result = validSubstitutor == null ? null : validSubstitutor.getTemplateUrl(myRecorderId);
-      return result == null ? getDefaultTemplateUrl() : result;
-    }
-    return getDefaultTemplateUrl();
-  }
-
-  private static String getDefaultTemplateUrl() {
-    return ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEventLogSettingsUrl();
-  }
 }

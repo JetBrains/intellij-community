@@ -3,9 +3,11 @@ package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -18,15 +20,18 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   private final boolean myIsTest;
   private final DataCollectorSystemEventLogger myEventLogger;
   private final EventLogAppConnectionSettings myConnectionSettings;
-  private final String myRecorderId;
 
   /**
-   * @param recorderId is used here for backward compatibility with TBE
-   * see: {@link EventLogApplicationInfo#getTemplateUrl}
+   * @deprecated EventLogApplicationInfo should not depend on recorderId
+   * use {@link EventLogInternalApplicationInfo#EventLogInternalApplicationInfo(boolean)}
    */
+  @Deprecated(forRemoval = true)
   public EventLogInternalApplicationInfo(@NotNull String recorderId, boolean isTest) {
+    this(isTest);
+  }
+
+  public EventLogInternalApplicationInfo(boolean isTest) {
     myIsTest = isTest;
-    myRecorderId = recorderId;
     myConnectionSettings = new EventLogAppConnectionSettings();
     myEventLogger = new DataCollectorSystemEventLogger() {
       @Override
@@ -36,10 +41,27 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
     };
   }
 
+  @NotNull
   @Override
-  @Deprecated(forRemoval = true)
-  public @NotNull String getTemplateUrl() {
-    return new EventLogInternalRecorderConfig(myRecorderId).getTemplateUrl();
+  public String getTemplateUrl() {
+    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
+    if (externalEventLogSettings != null) {
+      String result = externalEventLogSettings.getTemplateUrl();
+      return result == null ? getDefaultTemplateUrl() : result;
+    }
+    else if (ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(EventLogEndpointSubstitutor.EP_NAME.getName())) {
+      EventLogEndpointSubstitutor validSubstitutor = EventLogEndpointSubstitutor.EP_NAME.findFirstSafe(substitutor -> {
+        return PluginInfoDetectorKt.getPluginInfo(substitutor.getClass()).isAllowedToInjectIntoFUS();
+      });
+
+      String result = validSubstitutor == null ? null : validSubstitutor.getTemplateUrl();
+      return result == null ? getDefaultTemplateUrl() : result;
+    }
+    return getDefaultTemplateUrl();
+  }
+
+  private static String getDefaultTemplateUrl() {
+    return ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEventLogSettingsUrl();
   }
 
   @NotNull

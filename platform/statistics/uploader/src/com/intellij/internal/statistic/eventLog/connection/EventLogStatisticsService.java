@@ -40,7 +40,7 @@ public class EventLogStatisticsService implements StatisticsService {
                                    @Nullable EventLogSendListener listener) {
     myDeviceConfiguration = device;
     myRecorderConfiguration = config;
-    mySettingsService = new EventLogUploadSettingsService(config, application);
+    mySettingsService = new EventLogUploadSettingsService(config.getRecorderId(), application);
     mySendListener = listener;
   }
 

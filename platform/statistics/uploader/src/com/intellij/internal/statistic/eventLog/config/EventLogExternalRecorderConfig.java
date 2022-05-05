@@ -9,12 +9,10 @@ import java.util.List;
 
 public class EventLogExternalRecorderConfig implements EventLogRecorderConfig {
   private final String myRecorderId;
-  private final String myTemplateUrl;
   private final FilesToSendProvider myFilesProvider;
 
-  public EventLogExternalRecorderConfig(@NotNull String recorderId, @NotNull String templateUrl, @NotNull List<String> logs) {
+  public EventLogExternalRecorderConfig(@NotNull String recorderId, @NotNull List<String> logs) {
     myRecorderId = recorderId;
-    myTemplateUrl = templateUrl;
     myFilesProvider = new EventLogFileListProvider(logs);
   }
 
@@ -22,12 +20,6 @@ public class EventLogExternalRecorderConfig implements EventLogRecorderConfig {
   @Override
   public String getRecorderId() {
     return myRecorderId;
-  }
-
-  @NotNull
-  @Override
-  public String getTemplateUrl() {
-    return myTemplateUrl;
   }
 
   @Override

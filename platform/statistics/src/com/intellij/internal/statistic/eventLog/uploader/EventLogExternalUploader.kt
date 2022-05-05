@@ -80,7 +80,7 @@ object EventLogExternalUploader {
     }
 
     EventLogSystemLogger.logCreatingExternalSendCommand(recorderIds)
-    val application = EventLogInternalApplicationInfo("", isTest)
+    val application = EventLogInternalApplicationInfo(isTest)
     try {
       val command = prepareUploadCommand(recorders, application)
       EventLogSystemLogger.logFinishedCreatingExternalSendCommand(recorderIds, null)
@@ -133,9 +133,10 @@ object EventLogExternalUploader {
     addArgument(args, RECORDERS_OPTION, recorders.joinToString(separator = ";") { it.getRecorderId() })
     for (recorder in recorders) {
       val logFiles = logFilesByRecorder[recorder.getRecorderId()]
-      logFiles?.let { addRecorderConfiguration(args, recorder.getRecorderId(), recorder.getTemplateUrl(), it) }
+      logFiles?.let { addRecorderConfiguration(args, recorder.getRecorderId(), it) }
     }
 
+    addArgument(args, URL_OPTION, applicationInfo.templateUrl)
     addArgument(args, PRODUCT_OPTION, applicationInfo.productCode)
     addArgument(args, PRODUCT_VERSION_OPTION, applicationInfo.productVersion)
     addArgument(args, USER_AGENT_OPTION, applicationInfo.connectionSettings.getUserAgent())
@@ -155,7 +156,7 @@ object EventLogExternalUploader {
     return ArrayUtil.toStringArray(args)
   }
 
-  private fun addRecorderConfiguration(args: ArrayList<String>, recorderId: String, templateUrl: String, logFiles: List<String>) {
+  private fun addRecorderConfiguration(args: ArrayList<String>, recorderId: String, logFiles: List<String>) {
     val config = EventLogConfiguration.getInstance().getOrCreate(recorderId)
 
     val recorderIdLowerCase = Strings.toLowerCase(recorderId)
@@ -164,7 +165,6 @@ object EventLogExternalUploader {
     addArgument(args, MACHINE_ID_OPTION + recorderIdLowerCase, config.machineId.id)
     addArgument(args, ID_REVISION_OPTION + recorderIdLowerCase, config.machineId.revision.toString())
     addArgument(args, LOGS_OPTION + recorderIdLowerCase, logFiles.joinToString(separator = File.pathSeparator))
-    addArgument(args, URL_OPTION + recorderIdLowerCase, templateUrl)
   }
 
   private fun addArgument(args: ArrayList<String>, name: String, value: String) {

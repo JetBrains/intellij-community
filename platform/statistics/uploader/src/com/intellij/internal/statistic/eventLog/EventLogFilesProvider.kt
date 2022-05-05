@@ -8,8 +8,6 @@ import java.nio.file.Path
 interface EventLogRecorderConfig {
   fun getRecorderId(): String
 
-  fun getTemplateUrl(): String
-
   fun isSendEnabled(): Boolean
 
   fun getFilesToSendProvider(): FilesToSendProvider
