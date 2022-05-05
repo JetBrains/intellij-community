@@ -858,7 +858,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       }
       if (TEST_TAGS.equals(TEST_OBJECT)) {
         return TAGS != null && TAGS.length() > 0
-               ? JUnitBundle.message("default.junit.config.name.tags", StringUtil.join(TAGS, " "))
+               ? JUnitBundle.message("default.junit.config.name.tags", TAGS)
                : JUnitBundle.message("default.junit.config.name.temp.suite");
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
