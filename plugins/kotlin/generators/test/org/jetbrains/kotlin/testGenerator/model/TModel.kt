@@ -5,6 +5,10 @@ import org.jetbrains.kotlin.test.TargetBackend
 import java.io.File
 
 typealias ModelMatcher = (String) -> ModelMatchingResult?
+
+infix fun ModelMatcher.or(other: ModelMatcher): ModelMatcher =
+    { model -> this(model) ?: other(model )}
+
 class ModelMatchingResult(val methodName: String)
 
 data class TModel(

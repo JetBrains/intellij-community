@@ -1009,7 +1009,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("analysis-api-providers-ide-impl") {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
-            model("outOfBlockProjectWide")
+            model("outOfBlockProjectWide", pattern = KT_WITHOUT_DOTS or JAVA)
         }
 //
 //      testClass<AbstractFileStructureAndOutOfBlockModificationTrackerConsistencyTest> {
