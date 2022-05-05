@@ -3,7 +3,10 @@ package com.intellij.maven.testFramework;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.compiler.CompilerTestUtil;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -51,7 +54,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -466,7 +468,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       getMavenImporterSettings(),
       getMavenGeneralSettings(),
       MavenImportSpec.EXPLICIT_IMPORT
-    ).onSuccess(p -> {
+    ).getFinishPromise().onSuccess(p -> {
       Throwable t = p.getError();
       if (t != null) {
         if (t instanceof RuntimeException) throw (RuntimeException)t;
@@ -547,14 +549,14 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     if (isNewImportingProcess) {
       MavenImportFlow flow = new MavenImportFlow();
       MavenInitialImportContext initialImportContext =
-        flow.prepareNewImport(myProject, getMavenProgressIndicator(),
+        flow.prepareNewImport(myProject,
                               new FilesList(files),
                               getMavenGeneralSettings(),
                               getMavenImporterSettings(),
                               Arrays.asList(profiles),
                               disabledProfiles);
       myProjectsManager.initForTests();
-      myReadContext = flow.readMavenFiles(initialImportContext);
+      myReadContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
       flow.updateProjectManager(myReadContext);
     }
     else {

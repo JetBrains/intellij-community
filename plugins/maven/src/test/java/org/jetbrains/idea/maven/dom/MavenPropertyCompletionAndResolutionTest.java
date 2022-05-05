@@ -1017,14 +1017,14 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   private void readWithProfilesViaImportFlow(String... profiles) {
     MavenImportFlow flow = new MavenImportFlow();
     MavenInitialImportContext initialImportContext =
-      flow.prepareNewImport(myProject, getMavenProgressIndicator(),
+      flow.prepareNewImport(myProject,
                             new FilesList(myAllPoms),
                             getMavenGeneralSettings(),
                             getMavenImporterSettings(),
                             Arrays.asList(profiles),
                             Collections.emptyList());
     myProjectsManager.initForTests();
-    myReadContext = flow.readMavenFiles(initialImportContext);
+    myReadContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
     myProjectsManager.setProjectsTree(myReadContext.getProjectsTree());
   }
 }

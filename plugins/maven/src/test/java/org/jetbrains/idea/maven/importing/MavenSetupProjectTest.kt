@@ -77,7 +77,9 @@ class MavenSetupProjectTest : ExternalSystemSetupProjectTest, MavenImportingTest
     projectManager.initForTests()
     if (isNewImportingProcess) {
       val promise = MavenImportingManager.getInstance(project).getImportFinishPromise()
-      PlatformTestUtil.waitForPromise(promise)
+      val importFinishedContext = PlatformTestUtil.waitForPromise(promise)
+      importFinishedContext?.error?.let{throw it}
+
     }
     else {
       ApplicationManager.getApplication().invokeAndWait {

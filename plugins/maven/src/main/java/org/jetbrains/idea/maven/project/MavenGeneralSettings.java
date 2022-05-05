@@ -456,6 +456,10 @@ public class MavenGeneralSettings implements Cloneable {
     myListeners.remove(l);
   }
 
+  public void copyListeners(MavenGeneralSettings another) {
+    myListeners.addAll(another.myListeners);
+  }
+
   @Transient
   public void updateFromMavenConfig(@NotNull List<VirtualFile> mavenRootProjects) {
     if (mavenRootProjects.isEmpty() || !useMavenConfig) return;

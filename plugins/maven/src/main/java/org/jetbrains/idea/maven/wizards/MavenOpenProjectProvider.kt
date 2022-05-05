@@ -3,9 +3,9 @@ package org.jetbrains.idea.maven.wizards
 
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectImportBuilder
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -23,10 +23,6 @@ class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
   }
 
   override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
-    if (MavenUtil.isLinearImportEnabled()) {
-      MavenImportingManager.getInstance(project).linkAndImportFile(projectFile)
-      return;
-    }
 
     val builder = builder
     try {

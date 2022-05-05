@@ -37,6 +37,11 @@ public class MavenImportStats {
   }
 
 
+
+  public static class WrapperTask {
+
+  }
+
   public static class ReadingTask {
 
   }

@@ -114,6 +114,10 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return myCreatedProject;
   }
 
+  protected Project getCreatedProject() {
+    return myCreatedProject;
+  }
+
   protected @Nullable Module createModuleFromTemplate(String group, String name, @Nullable Consumer<? super Step> adjuster) throws IOException {
     return createModuleFromTemplate(group, name, getProject(), adjuster);
   }

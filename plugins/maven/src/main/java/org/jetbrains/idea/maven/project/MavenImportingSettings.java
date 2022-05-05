@@ -277,6 +277,10 @@ public class MavenImportingSettings implements Cloneable {
     this.jdkForImporter = jdkForImporter;
   }
 
+
+  public void copyListeners(MavenImportingSettings another) {
+    myListeners.addAll(another.myListeners);
+  }
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
