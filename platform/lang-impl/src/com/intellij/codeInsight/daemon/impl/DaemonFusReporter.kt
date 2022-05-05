@@ -45,6 +45,7 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
   }
 
   private fun Int.roundInt(): Int {
+    if (this == 0) return 0
     val l = log10(toDouble()).toInt()
     val p = 10.0.pow(l.toDouble()).toInt()
     return (this - this % p).coerceAtLeast(10)
