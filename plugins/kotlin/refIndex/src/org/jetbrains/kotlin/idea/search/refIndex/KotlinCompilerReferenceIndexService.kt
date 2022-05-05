@@ -43,6 +43,7 @@ import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.jps.backwardRefs.NameEnumerator
+import org.jetbrains.kotlin.asJava.syntheticAccessors
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.KotlinFileType

@@ -133,7 +133,6 @@ fun findScriptsWithUsages(declaration: KtNamedDeclaration, processor:(KtFile) ->
     )
 }
 
-
 data class ReceiverTypeSearcherInfo(
     val psiClass: PsiClass?,
     val containsTypeOrDerivedInside: ((KtDeclaration) -> Boolean)

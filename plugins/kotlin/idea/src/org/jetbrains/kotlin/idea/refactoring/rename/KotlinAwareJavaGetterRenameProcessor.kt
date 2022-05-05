@@ -8,9 +8,12 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor
+import org.jetbrains.kotlin.analysis.api.descriptors.references.Fe10SyntheticPropertyAccessorReference
+import org.jetbrains.kotlin.asJava.canHaveSyntheticGetter
+import org.jetbrains.kotlin.asJava.canHaveSyntheticSetter
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.syntheticGetter
 import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReference
-import org.jetbrains.kotlin.idea.references.SyntheticPropertyAccessorReferenceDescriptorImpl
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
@@ -41,7 +44,7 @@ class KotlinAwareJavaGetterRenameProcessor : RenameJavaMethodProcessor() {
             .ifEmpty { return getterReferences }
         return ArrayList<PsiReference>(getterReferences.size + setterReferences.size).apply {
             addAll(getterReferences)
-            setterReferences.mapTo(this) { SyntheticPropertyAccessorReferenceDescriptorImpl(it.expression, getter = true) }
+            setterReferences.mapTo(this) { Fe10SyntheticPropertyAccessorReference(it.expression, getter = true) }
         }
     }
 }
