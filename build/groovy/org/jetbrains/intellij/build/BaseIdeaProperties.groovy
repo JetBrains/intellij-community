@@ -177,7 +177,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
     productLayout.compatiblePluginsToIgnore = [
       "intellij.java.plugin",
-      "kotlin.resources-fir",
     ]
     additionalModulesToCompile = List.of("intellij.tools.jps.build.standalone")
     modulesToCompileTests = List.of("intellij.platform.jps.build")
