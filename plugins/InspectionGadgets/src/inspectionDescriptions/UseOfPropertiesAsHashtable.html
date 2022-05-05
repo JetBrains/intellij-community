@@ -2,18 +2,19 @@
 <body>
 Reports calls to the following methods on <code>java.util.Properties</code> objects:
 <ul>
-  <li><code>java.util.Hashtable#put</code></li>
-  <li><code>java.util.Hashtable#putIfAbsent</code></li>
-  <li><code>java.util.Hashtable#putAll</code></li>
-  <li><code>java.util.Hashtable#get</code></li>
+  <li><code>put()</code></li>
+  <li><code>putIfAbsent()</code></li>
+  <li><code>putAll()</code></li>
+  <li><code>get()</code></li>
 </ul>
 <p>
-  For historical reasons, <code>java.util.Properties</code> inherits <code>java.util.Hashtable</code>,
-  but using those methods is discouraged to prevent corruption of properties values of types other than <code>String</code>.
+  For historical reasons, <code>java.util.Properties</code> inherits from <code>java.util.Hashtable</code>,
+  but using these methods is discouraged to prevent pollution of properties with values of types other than <code>String</code>.
 </p>
 <p>
-  Although <code>java.util.Properties#putAll</code> overrides <code>java.util.Hashtable#putAll</code> it doesn't get reported when
+  Calls to <code>java.util.Properties.putAll()</code> won't get reported when
   both the key and the value parameters in the map are of the <code>String</code> type.
+  Such a call is safe and no better alternative exists.
 </p>
 <p><b>Example:</b></p>
 <pre><code>
