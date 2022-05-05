@@ -13,6 +13,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -146,6 +147,9 @@ public final class JBCefApp {
     if (ApplicationManager.getApplication().isInternal() && port > 0) {
       settings.remote_debugging_port = port;
     }
+
+    settings.cache_path = System.getProperty("ide.browser.jcef.cache.path",
+                                             PathManager.getSystemPath() + Platform.current().fileSeparator + "jcef_cache/");
 
     String[] argsFromProviders = JBCefAppRequiredArgumentsProvider
       .getProviders()
@@ -426,7 +430,7 @@ public final class JBCefApp {
     private int myGPUCrashCounter = 0;
     private boolean myNotificationShown = false;
 
-    MyCefAppHandler(String @Nullable[] args, boolean trackGPUCrashes) {
+    MyCefAppHandler(String @Nullable [] args, boolean trackGPUCrashes) {
       super(args);
       myGPUCrashLimit = trackGPUCrashes ? Integer.getInteger("ide.browser.jcef.gpu.infinitecrash.internallimit", 10) : -1;
     }
