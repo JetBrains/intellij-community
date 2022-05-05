@@ -10,7 +10,7 @@ import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
-import org.jetbrains.kotlin.idea.search.syntheticAccessors
+import org.jetbrains.kotlin.asJava.syntheticAccessors
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.name.Name
