@@ -3,6 +3,9 @@
   "dark": true,
   "author": "JetBrains",
   "editorScheme": "/themes/expUI/expUI_darkScheme.xml",
+  "additionalEditorSchemes": [
+    "/themes/expUI/expUI_darkSchemeNew.xml"
+  ],
 
   "colors": {
     "Grey1": "#1E1F22",
