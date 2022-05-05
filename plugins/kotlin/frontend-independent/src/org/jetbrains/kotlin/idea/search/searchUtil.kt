@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.search
 
-import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -14,19 +13,13 @@ import com.intellij.psi.search.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndex
-import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.scriptDefinitionExists
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.load.java.propertyNameByGetMethodName
-import org.jetbrains.kotlin.load.java.propertyNamesBySetMethodName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName as getKotlinFqNameOriginal
@@ -176,7 +169,6 @@ fun findScriptsWithUsages(declaration: KtNamedDeclaration, processor: (KtFile) -
     )
 }
 
-
 data class ReceiverTypeSearcherInfo(
     val psiClass: PsiClass?,
     val containsTypeOrDerivedInside: ((KtDeclaration) -> Boolean)
@@ -204,52 +196,3 @@ fun PsiElement?.isPotentiallyOperator(): Boolean {
     // TODO: it's fast PSI-based check, a proper check requires call to resolveDeclarationWithParents() that is not frontend-independent
     return true
 }
-
-private val PsiMethod.canBeGetter: Boolean
-    get() = JvmAbi.isGetterName(name) && parameters.isEmpty() && returnTypeElement?.textMatches("void") != true
-
-private val PsiMethod.canBeSetter: Boolean
-    get() = JvmAbi.isSetterName(name) && parameters.size == 1 && returnTypeElement?.textMatches("void") != false
-
-private val PsiMethod.probablyCanHaveSyntheticAccessors: Boolean
-    get() = canHaveOverride && !hasTypeParameters() && !isFinalProperty
-
-private val PsiMethod.getterName: Name? get() = propertyNameByGetMethodName(Name.identifier(name))
-private val PsiMethod.setterNames: Collection<Name>? get() = propertyNamesBySetMethodName(Name.identifier(name)).takeIf { it.isNotEmpty() }
-
-private val PsiMethod.isFinalProperty: Boolean
-    get() {
-        val property = unwrapped as? KtProperty ?: return false
-        if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
-        val containingClassOrObject = property.containingClassOrObject ?: return true
-        return containingClassOrObject is KtObjectDeclaration
-    }
-
-private val PsiMethod.isTopLevelDeclaration: Boolean get() = unwrapped?.isTopLevelKtOrJavaMember() == true
-
-val PsiMethod.syntheticAccessors: Collection<Name>
-    get() {
-        if (!probablyCanHaveSyntheticAccessors) return emptyList()
-
-        return when {
-            canBeGetter -> listOfNotNull(getterName)
-            canBeSetter -> setterNames.orEmpty()
-            else -> emptyList()
-        }
-    }
-
-val PsiMethod.canHaveSyntheticAccessors: Boolean get() = probablyCanHaveSyntheticAccessors && (canBeGetter || canBeSetter)
-
-val PsiMethod.canHaveSyntheticGetter: Boolean get() = probablyCanHaveSyntheticAccessors && canBeGetter
-
-val PsiMethod.canHaveSyntheticSetter: Boolean get() = probablyCanHaveSyntheticAccessors && canBeSetter
-
-val PsiMethod.syntheticGetter: Name? get() = if (canHaveSyntheticGetter) getterName else null
-
-val PsiMethod.syntheticSetters: Collection<Name>? get() = if (canHaveSyntheticSetter) setterNames else null
-
-/**
- * Attention: only language constructs are checked. For example: static member, constructor, top-level property
- * @return `false` if constraints are found. Otherwise, `true`
- */
-val PsiMethod.canHaveOverride: Boolean get() = !hasModifier(JvmModifier.STATIC) && !isConstructor && !isTopLevelDeclaration
