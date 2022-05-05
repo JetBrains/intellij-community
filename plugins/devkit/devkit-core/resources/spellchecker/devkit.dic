@@ -1,4 +1,6 @@
+blockmap
 codestyle
+controlflow
 darcula
 decapitalize
 decapitalized
@@ -10,12 +12,15 @@ findusages
 foldable
 goide
 grammarkit
+ijperf
 indexable
 inplace
 jbrsdk
 nomod
+preloader
 pythonid
 redirector
+remoterobot
 renamer
 reparse
 restarter
@@ -23,6 +28,7 @@ structuralsearch
 subdir
 substitutor
 surrounder
+tearline
 templatable
 testdata
 testframework
@@ -31,3 +37,5 @@ undisposed
 unicodes
 unsafety
 versionable
+yybegin
+yystate
