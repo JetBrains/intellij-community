@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.analysis.api.descriptors.references.Fe10SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
@@ -240,9 +241,9 @@ class KotlinImportOptimizer : ImportOptimizer {
             override fun resolve(bindingContext: BindingContext) = reference.resolveToDescriptors(bindingContext)
 
             override fun toString() = when (reference) {
-                is SyntheticPropertyAccessorReferenceDescriptorImpl -> {
+                is Fe10SyntheticPropertyAccessorReference -> {
                     reference.toString().replace(
-                        "SyntheticPropertyAccessorReferenceDescriptorImpl",
+                        "Fe10SyntheticPropertyAccessorReference",
                         if (reference.getter) "Getter" else "Setter"
                     )
                 }
