@@ -67,21 +67,21 @@ public final class ToolWindowCollector {
    */
   private static final Map<String, ToolWindowInfo> ourToolwindowWhitelist = new HashMap<>();
   static {
-    ourToolwindowWhitelist.put(MESSAGES_WINDOW, new ToolWindowInfo("Messages"));
-    ourToolwindowWhitelist.put(DEBUG, new ToolWindowInfo("Debug"));
-    ourToolwindowWhitelist.put(RUN, new ToolWindowInfo("Run"));
-    ourToolwindowWhitelist.put(BuildContentManager.TOOL_WINDOW_ID, new ToolWindowInfo("Build"));
-    ourToolwindowWhitelist.put(FIND, new ToolWindowInfo("Find"));
+    ourToolwindowWhitelist.put(MESSAGES_WINDOW, new ToolWindowInfo(MESSAGES_WINDOW));
+    ourToolwindowWhitelist.put(DEBUG, new ToolWindowInfo(DEBUG));
+    ourToolwindowWhitelist.put(RUN, new ToolWindowInfo(RUN));
+    ourToolwindowWhitelist.put(BuildContentManager.TOOL_WINDOW_ID, new ToolWindowInfo(BuildContentManager.TOOL_WINDOW_ID));
+    ourToolwindowWhitelist.put(FIND, new ToolWindowInfo(FIND));
     ourToolwindowWhitelist.put("CVS", new ToolWindowInfo("CVS"));
-    ourToolwindowWhitelist.put(HIERARCHY, new ToolWindowInfo("Hierarchy"));
-    ourToolwindowWhitelist.put(DEPENDENCIES, new ToolWindowInfo("Dependency_Viewer"));
-    ourToolwindowWhitelist.put(MODULES_DEPENDENCIES, new ToolWindowInfo("Module_Dependencies"));
-    ourToolwindowWhitelist.put(DUPLICATES, new ToolWindowInfo("Duplicates"));
-    ourToolwindowWhitelist.put(EXTRACT_METHOD, new ToolWindowInfo("Extract_Method"));
-    ourToolwindowWhitelist.put(DOCUMENTATION, new ToolWindowInfo("Documentation"));
-    ourToolwindowWhitelist.put(PREVIEW, new ToolWindowInfo("Preview"));
-    ourToolwindowWhitelist.put(SERVICES, new ToolWindowInfo("Services"));
-    ourToolwindowWhitelist.put(ENDPOINTS, new ToolWindowInfo("Endpoints"));
+    ourToolwindowWhitelist.put(HIERARCHY, new ToolWindowInfo(HIERARCHY));
+    ourToolwindowWhitelist.put(DEPENDENCIES, new ToolWindowInfo(DEPENDENCIES));
+    ourToolwindowWhitelist.put(MODULES_DEPENDENCIES, new ToolWindowInfo(MODULES_DEPENDENCIES));
+    ourToolwindowWhitelist.put(DUPLICATES, new ToolWindowInfo(DUPLICATES));
+    ourToolwindowWhitelist.put(EXTRACT_METHOD, new ToolWindowInfo(EXTRACT_METHOD));
+    ourToolwindowWhitelist.put(DOCUMENTATION, new ToolWindowInfo(DOCUMENTATION));
+    ourToolwindowWhitelist.put(PREVIEW, new ToolWindowInfo(PREVIEW));
+    ourToolwindowWhitelist.put(SERVICES, new ToolWindowInfo(SERVICES));
+    ourToolwindowWhitelist.put(ENDPOINTS, new ToolWindowInfo(ENDPOINTS));
   }
 
   private ToolWindowCollector() {
