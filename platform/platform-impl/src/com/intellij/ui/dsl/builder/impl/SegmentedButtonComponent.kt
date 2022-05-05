@@ -13,9 +13,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.observable.util.addMouseListener
-import com.intellij.openapi.observable.util.lockOrSkip
-import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
@@ -197,27 +195,38 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>, private val ren
     }
 
     fun <T> SegmentedButtonComponent<T>.whenItemSelectedFromUi(parentDisposable: Disposable? = null, listener: (T) -> Unit) {
-      for (button in components) {
-        whenButtonTouchedFromUi(button, parentDisposable, listener)
+      whenKeyReleased(parentDisposable) {
+        fireItemSelectedFromUi(listener)
+      }
+      whenButtonsTouchedFromUi(parentDisposable) {
+        fireItemSelectedFromUi(listener)
       }
       whenRebuild(parentDisposable) {
-        for (button in components) {
-          whenButtonTouchedFromUi(button, parentDisposable, listener)
+        whenButtonsTouchedFromUi(parentDisposable) {
+          fireItemSelectedFromUi(listener)
         }
       }
     }
 
-    private fun <T> SegmentedButtonComponent<T>.whenButtonTouchedFromUi(
+    private fun <T> SegmentedButtonComponent<T>.fireItemSelectedFromUi(listener: (T) -> Unit) {
+      invokeLater(ModalityState.stateForComponent(this)) {
+        selectedItem?.let(listener)
+      }
+    }
+
+    private fun SegmentedButtonComponent<*>.whenButtonsTouchedFromUi(parentDisposable: Disposable?, listener: () -> Unit) {
+      for (button in components) {
+        whenButtonTouchedFromUi(button, parentDisposable, listener)
+      }
+    }
+
+    private fun SegmentedButtonComponent<*>.whenButtonTouchedFromUi(
       button: Component,
       parentDisposable: Disposable?,
-      listener: (T) -> Unit
+      listener: () -> Unit
     ) {
       val mouseListener = object : MouseAdapter() {
-        override fun mouseReleased(e: MouseEvent) {
-          invokeLater(ModalityState.stateForComponent(button)) {
-            selectedItem?.let(listener)
-          }
-        }
+        override fun mouseReleased(e: MouseEvent) = listener()
       }
       button.addMouseListener(parentDisposable, mouseListener)
       whenRebuild(parentDisposable) {

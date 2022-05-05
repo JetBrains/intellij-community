@@ -135,6 +135,18 @@ fun Component.whenMouseReleased(parentDisposable: Disposable? = null, listener: 
   })
 }
 
+fun Component.whenKeyTyped(parentDisposable: Disposable? = null, listener: (KeyEvent) -> Unit) {
+  addKeyListener(parentDisposable, object : KeyAdapter() {
+    override fun keyTyped(e: KeyEvent) = listener(e)
+  })
+}
+
+fun Component.whenKeyPressed(parentDisposable: Disposable? = null, listener: (KeyEvent) -> Unit) {
+  addKeyListener(parentDisposable, object : KeyAdapter() {
+    override fun keyPressed(e: KeyEvent) = listener(e)
+  })
+}
+
 fun Component.whenKeyReleased(parentDisposable: Disposable? = null, listener: (KeyEvent) -> Unit) {
   addKeyListener(parentDisposable, object : KeyAdapter() {
     override fun keyReleased(e: KeyEvent) = listener(e)
