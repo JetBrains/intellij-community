@@ -16,6 +16,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
@@ -26,16 +27,17 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
-import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.idea.refactoring.KotlinNamesValidator
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ui.KotlinExtractFunctionDialog
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetSibling
 import org.jetbrains.kotlin.idea.refactoring.introduce.validateExpressionElements
 import org.jetbrains.kotlin.idea.util.nonBlocking
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -91,8 +93,8 @@ class ExtractKotlinFunctionHandler(
             val descriptor = descriptorWithConflicts.descriptor.copy(suggestedNames = listOf("extracted"))
             val elements = descriptor.extractionData.originalElements
             val file = descriptor.extractionData.originalFile
-            val callRange = editor.document.createRangeMarker(elements.first().textRange.startOffset, elements.last().textRange.endOffset)
-                .apply { isGreedyToLeft = true; isGreedyToRight = true }
+            val callTextRange = TextRange(rangeOf(elements.first()).startOffset, rangeOf(elements.last()).endOffset)
+            val callRangeProvider: () -> TextRange? = createSmartRangeProvider(descriptor.extractionData.commonParent, callTextRange)
             val editorState = EditorState(editor)
             val disposable = Disposer.newDisposable()
             WriteCommandAction.writeCommandAction(project).run<Throwable> {
@@ -100,12 +102,13 @@ class ExtractKotlinFunctionHandler(
                 Disposer.register(disposable) { FinishMarkAction.finish(project, editor, startMarkAction) }
             }
             fun afterFinish(extraction: ExtractionResult){
-                val callIdentifier = findSingleCallExpression(file, callRange.range)?.calleeExpression ?: throw IllegalStateException()
+                val callRange: TextRange = callRangeProvider.invoke() ?: throw IllegalStateException()
+                val callIdentifier = findSingleCallExpression(file, callRange)?.calleeExpression ?: throw IllegalStateException()
                 val methodIdentifier = extraction.declaration.nameIdentifier ?: throw IllegalStateException()
                 val methodRange = extraction.declaration.textRange
                 val methodOffset = extraction.declaration.navigationElement.textRange.endOffset
                 val callOffset = callIdentifier.textRange.endOffset
-                val preview = InplaceExtractUtils.createPreview(editor, methodRange, methodOffset, callRange.range!!, callOffset)
+                val preview = InplaceExtractUtils.createPreview(editor, methodRange, methodOffset, callRange, callOffset)
                 Disposer.register(disposable, preview)
                 ExtractMethodTemplateBuilder(editor, EXTRACT_FUNCTION)
                     .withCompletionNames(descriptor.suggestedNames)
@@ -133,6 +136,21 @@ class ExtractKotlinFunctionHandler(
                 Disposer.dispose(disposable)
                 throw e
             }
+        }
+
+        private fun rangeOf(element: PsiElement): TextRange {
+            return (element as? KtExpression)?.extractableSubstringInfo?.contentRange ?: element.textRange
+        }
+
+        private fun createSmartRangeProvider(container: PsiElement, range: TextRange): () -> TextRange? {
+            val offsetFromStart = range.startOffset - container.textRange.startOffset
+            val offsetFromEnd = container.textRange.endOffset - range.endOffset
+            val pointer = SmartPointerManager.createPointer(container)
+            fun findRange(): TextRange? {
+                val containerRange = pointer.range ?: return null
+                return TextRange(containerRange.startOffset + offsetFromStart, containerRange.endOffset - offsetFromEnd)
+            }
+            return ::findRange
         }
 
         @Nls

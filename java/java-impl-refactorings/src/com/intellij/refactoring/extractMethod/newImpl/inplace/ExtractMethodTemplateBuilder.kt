@@ -9,7 +9,6 @@ import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -80,8 +79,8 @@ data class ExtractMethodTemplateBuilder(
 
       val methodMarker = document.createRangeMarker(methodIdentifier).apply { isGreedyToRight = true }
       val callMarker = document.createRangeMarker(callIdentifier).apply { isGreedyToRight = true }
-      fun setMethodName(text: String){
-        runWriteAction {
+      fun setMethodName(text: String) {
+        WriteCommandAction.writeCommandAction(project).run<Throwable> {
           callMarker.range?.also { range ->
             editor.document.replaceString(range.startOffset, range.endOffset, text)
           }
