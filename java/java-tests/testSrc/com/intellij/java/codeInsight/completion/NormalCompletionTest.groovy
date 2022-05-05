@@ -204,9 +204,11 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     assertTrue("Exception not found", Arrays.binarySearch(myItems, "xxx") > 0)
   }
 
-  void testClassLiteralInArrayAnnoInitializer() throws Throwable { doTest() }
+  @NeedsIndex.ForStandardLibrary
+  void testClassLiteralInArrayAnnoInitializer() throws Throwable { doTest('\n') }
 
-  void testClassLiteralInArrayAnnoInitializer2() throws Throwable { doTest() }
+  @NeedsIndex.ForStandardLibrary
+  void testClassLiteralInArrayAnnoInitializer2() throws Throwable { doTest('\n') }
 
   void testReferenceParameters() throws Exception {
     configureByFile("ReferenceParameters.java")
@@ -1368,7 +1370,7 @@ class XInternalError {}
 @Anno(XInternal<caret>)
 """
     myFixture.complete(CompletionType.BASIC, 2)
-    assertFirstStringItems "XInternalError", "XInternalTimerServiceController"
+    assertFirstStringItems "XInternalError.class", "XInternalError", "XInternalTimerServiceController.class", "XInternalTimerServiceController"
   }
 
   @NeedsIndex.Full
@@ -2659,5 +2661,19 @@ class Abc {
     myFixture.type('\b')
     myFixture.completeBasic()
     myFixture.checkResult("class Test {static void test() {int \u89D2\u8272 = 3;\u89D2\u8272}}")
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void testClassLiteralCompletion() {
+    myFixture.configureByText("Test.java", "class Test {Class<? extends CharSequence> get() {return String<caret>}}")
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems(0, 'String', 'String.class', 'StringBuffer.class', 'StringBuffer', 'StringBuilder.class', 'StringBuilder', 'StringIndexOutOfBoundsException')
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void testClassLiteralCompletionNoBound() {
+    myFixture.configureByText("Test.java", "class Test {Class<?> get() {return String<caret>}}")
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems(0, 'String', 'String.class', 'StringBuffer.class', 'StringBuffer', 'StringBuilder.class', 'StringBuilder', 'StringIndexOutOfBoundsException.class', 'StringIndexOutOfBoundsException')
   }
 }

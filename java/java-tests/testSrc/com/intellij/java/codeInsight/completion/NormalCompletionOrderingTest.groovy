@@ -621,7 +621,7 @@ interface TxANotAnno {}
   @NeedsIndex.ForStandardLibrary
   void testPreferClassesOfExpectedClassType() {
     myFixture.addClass "class XException extends Exception {}"
-    checkPreferredItems 0, 'XException', 'XClass', 'XIntf'
+    checkPreferredItems 0, 'XException.class', 'XException', 'XClass', 'XIntf'
   }
 
   void testNoNumberValueOf() {

@@ -46,6 +46,7 @@ import com.intellij.psi.filters.classes.AssignableFromContextFilter;
 import com.intellij.psi.filters.classes.NoFinalLibraryClassesFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
+import com.intellij.psi.filters.getters.ClassLiteralGetter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.getters.JavaMembersGetter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
@@ -437,6 +438,12 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       if (smart) {
         hasTypeMatchingSuggestions |= smartCompleteExpression(parameters, result, expectedInfos);
         smartCompleteNonExpression(parameters, result);
+      } else {
+        if (!JavaKeywordCompletion.AFTER_DOT.accepts(position)) {
+          for (ExpectedTypeInfo info : expectedInfos) {
+            ClassLiteralGetter.addCompletions(new JavaSmartCompletionParameters(parameters, info), result, matcher);
+          }
+        }
       }
 
       if ((!hasTypeMatchingSuggestions || parameters.getInvocationCount() >= 2) &&
