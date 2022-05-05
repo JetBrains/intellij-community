@@ -99,11 +99,14 @@ public class ResetConfigurationModuleAdapter extends HyperlinkAdapter {
         final String moduleName = module1.getName();
         return "<a href=\"" + moduleName + "\">" + moduleName + "</a>";
       };
-      String message = JavaBundle.message("popup.content.tests.were.not.found.in.module", module.getName()) +
-                       JavaBundle.message("popup.content.tests.were.not.found.in.module.use.instead", 
-                                          modulesWithPackage.size() == 1 ? 0 : 1,
-                                          moduleNameRef.fun(modulesWithPackage.iterator().next()),
-                                          StringUtil.join(modulesWithPackage, moduleNameRef, "\n"));
+      String message = new HtmlBuilder()
+        .append( JavaBundle.message("popup.content.tests.were.not.found.in.module", module.getName()))
+        .br()
+        .append(JavaBundle.message("popup.content.tests.were.not.found.in.module.use.instead", 
+                                   modulesWithPackage.size() == 1 ? 0 : 1,
+                                   moduleNameRef.fun(modulesWithPackage.iterator().next()),
+                                   StringUtil.join(modulesWithPackage, moduleNameRef, "<br/>")))
+        .toString();
       UIUtil.invokeLaterIfNeeded(() ->
                                    toolWindowManager.notifyByBalloon(testRunDebugId, MessageType.WARNING, message, null,
                                                                      new ResetConfigurationModuleAdapter(configuration, project, isDebug, toolWindowManager, testRunDebugId)));
