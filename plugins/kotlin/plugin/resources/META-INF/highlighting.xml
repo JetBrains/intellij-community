@@ -9,7 +9,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor"
-            serviceImplementation="org.jetbrains.kotlin.idea.references.KotlinReferenceContributor"/>
+            serviceImplementation="org.jetbrains.kotlin.analysis.api.descriptors.references.base.KtFe10KotlinReferenceProviderContributor"/>
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.references.KtReferenceMutateService"
             serviceImplementation="org.jetbrains.kotlin.idea.references.KtReferenceMutateServiceImpl"/>

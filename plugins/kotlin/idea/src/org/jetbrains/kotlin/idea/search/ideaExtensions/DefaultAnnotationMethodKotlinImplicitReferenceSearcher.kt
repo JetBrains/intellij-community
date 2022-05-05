@@ -11,6 +11,7 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.idea.references.KtDefaultAnnotationArgumentReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -18,7 +19,6 @@ import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import org.jetbrains.kotlin.idea.references.ReferenceImpl as ImplicitReference
 
 class DefaultAnnotationMethodKotlinImplicitReferenceSearcher :
     QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters>(true) {
@@ -30,7 +30,7 @@ class DefaultAnnotationMethodKotlinImplicitReferenceSearcher :
             if (reference !is KtSimpleNameReference) return true
             val annotationEntry = reference.expression.getParentOfTypeAndBranch<KtAnnotationEntry> { typeReference } ?: return true
             val argument = annotationEntry.valueArguments.singleOrNull() as? KtValueArgument ?: return true
-            val implicitRef = argument.references.firstIsInstanceOrNull<ImplicitReference>() ?: return true
+            val implicitRef = argument.references.firstIsInstanceOrNull<KtDefaultAnnotationArgumentReference>() ?: return true
             return consumer.process(implicitRef)
         }
     }

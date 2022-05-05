@@ -250,6 +250,15 @@ class KtReferenceMutateServiceImpl : KtReferenceMutateService {
 
                 return renameByPropertyName(newName.identifier)
             }
+            is KtDefaultAnnotationArgumentReference -> with(ktReference) {
+                val psiFactory = KtPsiFactory(expression)
+                val newArgument = psiFactory.createArgument(
+                    expression.getArgumentExpression(),
+                    Name.identifier(newElementName.quoteIfNeeded()),
+                    expression.getSpreadElement() != null
+                )
+                return expression.replaced(newArgument)
+            }
             else -> throw IncorrectOperationException()
         }
     }
