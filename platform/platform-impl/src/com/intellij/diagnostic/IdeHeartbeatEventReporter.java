@@ -55,7 +55,7 @@ public final class IdeHeartbeatEventReporter implements Disposable {
     myLastGcTime = thisGcTime;
 
     long totalCpuTime = mxBean.getProcessCpuTime();
-    long thisCpuTime = totalCpuTime < 0 || myLastCpuTime < 0 ? 0 : totalCpuTime - myLastCpuTime;
+    long thisCpuTime = totalCpuTime < 0 || myLastCpuTime < 0 ? -1 : totalCpuTime - myLastCpuTime;
     myLastCpuTime = thisCpuTime;
 
     // don't report total GC time in the first 5 minutes of IJ execution
@@ -84,12 +84,12 @@ public final class IdeHeartbeatEventReporter implements Disposable {
   }
 
   public static final class UILatencyLogger extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("performance", 64);
+    private static final EventLogGroup GROUP = new EventLogGroup("performance", 65);
 
     private static final IntEventField SYSTEM_CPU_LOAD = EventFields.Int("system_cpu_load");
     private static final IntEventField SWAP_LOAD = EventFields.Int("swap_load");
-    private static final IntEventField CPU_TIME = EventFields.Int("cpu_time");
-    private static final IntEventField GC_TIME = EventFields.Int("gc_time");
+    private static final IntEventField CPU_TIME = EventFields.Int("cpu_time_ms");
+    private static final IntEventField GC_TIME = EventFields.Int("gc_time_ms");
     private static final VarargEventId HEARTBEAT = GROUP.registerVarargEvent(
       "heartbeat",
       SYSTEM_CPU_LOAD,
