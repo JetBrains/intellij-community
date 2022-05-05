@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
@@ -177,15 +176,7 @@ internal class LessonExecutor(val lesson: KLesson,
 
   fun startLesson() {
     addAllInactiveMessages()
-    if (lesson.properties.canStartInDumbMode) {
-      processNextTask(0)
-    }
-    else {
-      DumbService.getInstance(project).runWhenSmart {
-        if (!hasBeenStopped)
-          processNextTask(0)
-      }
-    }
+    processNextTask(0)
   }
 
   inline fun invokeInBackground(crossinline runnable: () -> Unit) {
