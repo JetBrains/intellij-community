@@ -83,13 +83,9 @@ private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesLi
   override fun showAllChangesForEmptySelection(): Boolean = false
 
   override fun selectChange(change: Wrapper) {
-    changesView.findNodePathInTree(change.userObject, (change.tag as? ChangesViewUserObjectTag)?.userObject)
-      ?.let {
-        TreeUtil.selectPath(changesView, it, false)
-        // Explicit refresh needed, since TreeUtil.selectPath will trigger refresh based on the current focused editor component.
-        // This will fail in case if selection comes from "Go to Change" popup.
-        refresh(false)
-      }
+    val tag = (change.tag as? ChangesViewUserObjectTag)?.userObject
+    val treePath = changesView.findNodePathInTree(change.userObject, tag) ?: return
+    TreeUtil.selectPath(changesView, treePath, false)
   }
 
   fun setAllowExcludeFromCommit(value: Boolean) {

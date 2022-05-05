@@ -57,6 +57,10 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   @NotNull
   public abstract Stream<? extends Wrapper> getAllChanges();
 
+  /**
+   * Select change in view (ex: in corresponding JTree).
+   * NB: might do nothing if existing multiple selection contains passed change.
+   */
   protected abstract void selectChange(@NotNull Wrapper change);
 
   protected boolean showAllChangesForEmptySelection() {
