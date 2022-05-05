@@ -602,6 +602,9 @@
     <applicationService serviceInterface="com.intellij.ui.ColorChooserService"
                         serviceImplementation="com.intellij.ui.ColorChooserServiceImpl"/>
 
+    <applicationService serviceInterface="com.intellij.ui.ExperimentalUI"
+                        serviceImplementation="com.intellij.ui.ExperimentalUIImpl"/>
+
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.AbbreviationManager"
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.AbbreviationManagerImpl"/>
 
