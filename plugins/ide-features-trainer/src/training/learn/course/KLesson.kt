@@ -6,8 +6,10 @@ import org.jetbrains.annotations.NonNls
 import training.dsl.LessonContext
 
 abstract class KLesson(@NonNls id: String, @Nls name: String) : Lesson(id, name) {
-  abstract val lessonContent: LessonContext.() -> Unit
+  protected abstract val lessonContent: LessonContext.() -> Unit
 
   override lateinit var module: IftModule
     internal set
+
+  val fullLessonContent: LessonContext.() -> Unit get() = lessonContent
 }
