@@ -74,6 +74,12 @@ object AdditionalKotlinArtifacts {
 
     private fun downloadArtifact(libraryFileName: String, artifactId: String, extension: String = "jar"): File {
         val version = KotlinMavenUtils.findLibraryVersion(libraryFileName) ?: error("Can't get '$libraryFileName' version")
+
+        // In cooperative development artifacts are already downloaded and stored in $PROJECT_DIR$/../build/repo
+        KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, artifactId, version)?.let {
+            return it.toFile()
+        }
+
         val jar = Paths.get(PathManager.getCommunityHomePath()).resolve("out").resolve("$artifactId-$version.$extension").also {
             Files.createDirectories(it.parent)
         }
