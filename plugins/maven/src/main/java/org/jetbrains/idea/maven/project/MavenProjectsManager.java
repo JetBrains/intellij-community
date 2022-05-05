@@ -869,13 +869,14 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec spec) {
-    if (MavenUtil.isLinearImportEnabled()) {
-      MavenImportingManager.getInstance(myProject)
-        .openProjectAndImport(new FilesList(collectAllAvailablePomFiles()), getImportingSettings(), getGeneralSettings(), spec);
-      return;
-    }
+
     if (!isMavenizedProject()) {
       addManagedFiles(collectAllAvailablePomFiles());
+    }
+    if (MavenUtil.isLinearImportEnabled()) {
+      MavenImportingManager.getInstance(myProject)
+        .openProjectAndImport(new FilesList(myProjectsTree.getExistingManagedFiles()), getImportingSettings(), getGeneralSettings(), spec);
+      return;
     }
     doScheduleUpdateProjects(List.of(), spec);
   }

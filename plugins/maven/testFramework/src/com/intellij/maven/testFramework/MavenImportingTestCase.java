@@ -109,10 +109,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void stopMavenImportManager() {
-    if (isNewImportingProcess) {
-      MavenImportingManager.getInstance(myProject).forceStopImport();
-      PlatformTestUtil.waitForPromise(MavenImportingManager.getInstance(myProject).getImportFinishPromise());
-    }
+    if (!isNewImportingProcess) return;
+    MavenImportingManager manager = MavenImportingManager.getInstance(myProject);
+    manager.forceStopImport();
+    if (!manager.isImportingInProgress()) return;
+    Promise p = MavenImportingManager.getInstance(myProject).getImportFinishPromise();
   }
 
   @Override
@@ -463,7 +464,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     myProjectsManager.initForTests();
     myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList(profiles), disabledProfiles));
-    Promise<MavenImportFinishedContext> promise = MavenImportingManager.getInstance(myProject).openProjectAndImport(
+    MavenImportingManager importingManager = MavenImportingManager.getInstance(myProject);
+    Promise<MavenImportFinishedContext> promise = importingManager.openProjectAndImport(
       new FilesList(files),
       getMavenImporterSettings(),
       getMavenGeneralSettings(),
@@ -484,7 +486,18 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       }
     });
 
-    PlatformTestUtil.waitForPromise(promise);
+    try {
+      PlatformTestUtil.waitForPromise(promise);
+    }
+    catch (AssertionError e) {
+      if (promise.getState() == Promise.State.PENDING) {
+        fail("Current state is: " + importingManager.getCurrentContext());
+      }
+      else {
+        throw new RuntimeException(e);
+      }
+    }
+    
 
 
     /*Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> { // we have not use EDT for import in tests

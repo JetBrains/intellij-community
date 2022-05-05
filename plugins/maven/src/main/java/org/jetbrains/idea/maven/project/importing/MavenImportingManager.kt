@@ -24,7 +24,6 @@ import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.execution.RunnerBundle
 import org.jetbrains.idea.maven.importing.MavenImportStats
@@ -77,7 +76,7 @@ class MavenImportingManager(val project: Project) {
     });
   }
 
-  private val waitingPromises = ArrayList<AsyncPromise<MavenImportFinishedContext>>()
+  private var waitingPromise = AsyncPromise<MavenImportFinishedContext>()
 
   fun linkAndImportFile(pom: VirtualFile): MavenImportingResult {
     ApplicationManager.getApplication().assertIsDispatchThread()
@@ -101,11 +100,12 @@ class MavenImportingManager(val project: Project) {
                            spec: MavenImportSpec): MavenImportingResult {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (isImportingInProgress()) {
-      getImportFinishPromise()
+      return MavenImportingResult(waitingPromise, null);
     }
     if (executor.isShutdown) {
       throw RuntimeException("Project is closing");
     }
+    waitingPromise = AsyncPromise();
     MavenUtil.setupProjectSdk(project)
     currentContext = MavenStartedImport(project)
     val enabledProfiles = MavenProjectsManager.getInstance(project).explicitProfiles.enabledProfiles
@@ -121,17 +121,15 @@ class MavenImportingManager(val project: Project) {
         override fun run(indicator: ProgressIndicator) {
           try {
             val finishedContext = doImport(MavenProgressIndicator(project, indicator) { console }, initialImportContext, spec)
-            val promises = getAndClearWaitingPromises(finishedContext)
-            promises.forEach { it.setResult(finishedContext) }
+            getWaitingPromise().setResult(finishedContext)
           }
           catch (e: Throwable) {
-            val promises = getAndClearWaitingPromises(MavenImportFinishedContext(e, project))
             if (indicator.isCanceled) {
-              promises.forEach { it.setError("Cancelled") }
+              getWaitingPromise().setError("Cancelled")
             }
             else {
               MavenLog.LOG.error(e)
-              promises.forEach { it.setError(e) }
+              getWaitingPromise().setError(e)
             }
           }
         }
@@ -219,13 +217,11 @@ class MavenImportingManager(val project: Project) {
 
   }
 
-  private fun getAndClearWaitingPromises(finishedContext: MavenImportFinishedContext): List<AsyncPromise<MavenImportFinishedContext>> {
-    val ref = Ref<ArrayList<AsyncPromise<MavenImportFinishedContext>>>()
+  private fun getWaitingPromise(): AsyncPromise<MavenImportFinishedContext> {
+    if (ApplicationManager.getApplication().isDispatchThread) return waitingPromise;
+    val ref = Ref<AsyncPromise<MavenImportFinishedContext>>()
     ApplicationManager.getApplication().invokeAndWait {
-      val result = ArrayList(waitingPromises)
-      ref.set(result)
-      waitingPromises.clear()
-      currentContext = finishedContext
+      ref.set(waitingPromise)
     }
     return ref.get()
   }
@@ -237,11 +233,7 @@ class MavenImportingManager(val project: Project) {
 
   fun getImportFinishPromise(): Promise<MavenImportFinishedContext> {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    val context = currentContext
-    if (context is MavenImportFinishedContext) return resolvedPromise(context)
-    val result = AsyncPromise<MavenImportFinishedContext>()
-    waitingPromises.add(result)
-    return result
+    return getWaitingPromise();
   }
 
   fun scheduleImportAll(spec: MavenImportSpec): MavenImportingResult {
