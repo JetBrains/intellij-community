@@ -627,7 +627,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     final StringBuilder buf = new StringBuilder();
     getComposer().compose(buf, entity, false);
     final String text = buf.toString();
-    DescriptionEditorPaneKt.readHTML(htmlView, DescriptionEditorPaneKt.toHTML(htmlView, text, false));
+    DescriptionEditorPaneKt.readHTML(htmlView, text);
     return ScrollPaneFactory.createScrollPane(htmlView, true);
   }
 

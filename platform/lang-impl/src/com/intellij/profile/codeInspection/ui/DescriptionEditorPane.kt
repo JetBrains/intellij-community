@@ -7,6 +7,7 @@ import com.intellij.ui.JBColor
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
+import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Point
@@ -35,14 +36,20 @@ open class DescriptionEditorPane : JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML) {
 }
 
 fun JEditorPane.readHTML(text: String) {
+  val htmlText = when {
+    XmlStringUtil.isWrappedInHtml(text) -> text
+    else -> XmlStringUtil.wrapInHtml(text.replace("\\n", "<br>"))
+  }
+
   try {
-    read(StringReader(text.replace("<pre>", "<pre class=\"editor-background\">")), null)
+    read(StringReader(htmlText.replace("<pre>", "<pre class=\"editor-background\">")), null)
   }
   catch (e: IOException) {
     throw RuntimeException(e)
   }
 }
 
+@Deprecated(message = "HTMl conversion is handled in JEditorPane.readHTML")
 fun JEditorPane.toHTML(text: @Nls String?, miniFontSize: Boolean): String {
   val hintHint = HintHint(this, Point(0, 0))
   hintHint.setFont(if (miniFontSize) UIUtil.getLabelFont(UIUtil.FontSize.SMALL) else StartupUiUtil.getLabelFont())

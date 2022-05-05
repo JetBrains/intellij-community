@@ -749,11 +749,11 @@ public class SingleInspectionProfilePanel extends JPanel {
 
         }
         else {
-          DescriptionEditorPaneKt.readHTML(myDescription, DescriptionEditorPaneKt.toHTML(myDescription, AnalysisBundle.message("inspections.settings.no.description.warning"), false));
+          DescriptionEditorPaneKt.readHTML(myDescription, AnalysisBundle.message("inspections.settings.no.description.warning"));
         }
       }
       else {
-        DescriptionEditorPaneKt.readHTML(myDescription, DescriptionEditorPaneKt.toHTML(myDescription, AnalysisBundle.message("inspections.settings.multiple.inspections.warning"), false));
+        DescriptionEditorPaneKt.readHTML(myDescription, AnalysisBundle.message("inspections.settings.multiple.inspections.warning"));
       }
 
       myOptionsPanel.removeAll();
