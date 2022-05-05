@@ -52,10 +52,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -641,7 +638,12 @@ public class RunAnythingPopupUI extends BigPopupUI {
       wrapped.setForeground(foreground);
       if (ExperimentalUI.isNewUI()) {
         wrapped.setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
-        wrapped.setBorder(new EmptyBorder(JBUI.CurrentTheme.Popup.Selection.innerInsets()));
+        JBInsets insets = JBInsets.create(3, 0);
+        Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
+        wrapped.setBorder(JBUI.Borders.empty(innerInsets.top + insets.top,
+                                             innerInsets.left,
+                                             innerInsets.bottom + insets.bottom,
+                                             innerInsets.right));
         int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
         //noinspection UseDPIAwareBorders
         myMainPanel.setBorder(new EmptyBorder(0, leftRightInset, 0, leftRightInset));

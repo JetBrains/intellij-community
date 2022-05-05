@@ -1982,6 +1982,15 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     }
 
     @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      if (ExperimentalUI.isNewUI()) {
+        size.height = JBUI.CurrentTheme.List.rowHeight();
+      }
+      return size;
+    }
+
+    @Override
     public AccessibleContext getAccessibleContext() {
       if (accessibleContext == null) {
         accessibleContext = new AccessibleJPanel() {

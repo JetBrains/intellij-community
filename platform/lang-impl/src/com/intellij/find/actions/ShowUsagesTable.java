@@ -71,7 +71,7 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
   public int getRowHeight() {
     if (ExperimentalUI.isNewUI()) {
       Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
-      return super.getRowHeight() + innerInsets.top + innerInsets.bottom;
+      return JBUI.CurrentTheme.List.rowHeight() + innerInsets.top + innerInsets.bottom;
     }
 
     return super.getRowHeight() + 2 * ShowUsagesTableCellRenderer.MARGIN;

@@ -191,8 +191,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     Insets insets = getDefaultItemComponentBorder().getBorderInsets(result);
     if (ExperimentalUI.isNewUI()) {
-      left.setBorder(JBUI.Borders.empty(insets.top, 0, insets.bottom, 0));
-      right.setBorder(JBUI.Borders.empty(insets.top, 0, insets.bottom, 0));
+      left.setBorder(JBUI.Borders.empty());
+      right.setBorder(JBUI.Borders.empty());
     } else {
       left.setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, 0));
       right.setBorder(JBUI.Borders.empty(insets.top, leftRightInset, insets.bottom, insets.right));
