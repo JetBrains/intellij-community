@@ -144,11 +144,7 @@ abstract class ToolWindowManager {
 
   fun notifyByBalloon(toolWindowId: String, type: MessageType, @NlsContexts.NotificationContent htmlBody: String) {
     @Suppress("SSBasedInspection")
-    notifyByBalloon(ToolWindowBalloonShowOptions(toolWindowId = toolWindowId,
-                                                 type = type,
-                                                 htmlBody = htmlBody,
-                                                 icon = null,
-                                                 listener = null))
+    notifyByBalloon(ToolWindowBalloonShowOptions(toolWindowId, type, htmlBody))
   }
 
   fun notifyByBalloon(toolWindowId: String,
@@ -157,10 +153,9 @@ abstract class ToolWindowManager {
                       icon: Icon?,
                       listener: HyperlinkListener?) {
     @Suppress("SSBasedInspection")
-    notifyByBalloon(ToolWindowBalloonShowOptions(toolWindowId = toolWindowId, type = type, htmlBody = htmlBody, icon = icon, listener = listener))
+    notifyByBalloon(ToolWindowBalloonShowOptions(toolWindowId, type, htmlBody, icon, listener))
   }
 
-  @Suppress("SSBasedInspection")
   abstract fun notifyByBalloon(options: ToolWindowBalloonShowOptions)
 
   abstract fun getToolWindowBalloon(id: String): Balloon?
@@ -198,16 +193,9 @@ class RegisterToolWindowTaskBuilder @PublishedApi internal constructor(private v
 
   @PublishedApi
   internal fun build(): RegisterToolWindowTask {
-    val result = RegisterToolWindowTask(
-      id = id,
-      anchor = anchor,
-      stripeTitle = stripeTitle,
-      icon = icon,
-      canCloseContent = canCloseContent,
-      shouldBeAvailable = shouldBeAvailable,
-      sideTool = sideTool,
-      contentFactory = contentFactory,
-    )
+    val result = RegisterToolWindowTask(id, anchor, null, sideTool, canCloseContent, true, shouldBeAvailable, contentFactory, icon,
+                                        stripeTitle)
+
     result.hideOnEmptyContent = hideOnEmptyContent
     return result
   }
