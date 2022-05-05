@@ -622,7 +622,7 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
     @Override
     public Color getBackground() {
       EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-      if (ExperimentalUI.isNewEditorTabs()) {
+      if (ExperimentalUI.isNewUI()) {
         return globalScheme.getDefaultBackground();
       }
       Color color = globalScheme.getColor(EditorColors.GUTTER_BACKGROUND);
@@ -639,7 +639,7 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
           return borderColor;
         }
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-        if (ExperimentalUI.isNewEditorTabs()) {
+        if (ExperimentalUI.isNewUI()) {
           return scheme.getDefaultBackground();
         }
         Color result = scheme.getColor(top ? EditorColors.SEPARATOR_ABOVE_COLOR : EditorColors.SEPARATOR_BELOW_COLOR);

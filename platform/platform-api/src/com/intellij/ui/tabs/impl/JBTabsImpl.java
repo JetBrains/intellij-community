@@ -1072,7 +1072,7 @@ public class JBTabsImpl extends JComponent
     if (rect == null) return;
 
     List<TabInfo> hiddenInfos = ContainerUtil.filter(getVisibleInfos(), tabInfo -> mySingleRowLayout.isTabHidden(tabInfo));
-    if (ExperimentalUI.isNewEditorTabs()) {
+    if (ExperimentalUI.isNewUI()) {
       showListPopup(rect, hiddenInfos);
     } else {
       showTabLabelsPopup(rect, hiddenInfos);
@@ -3116,7 +3116,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public boolean isSingleRow() {
-    return mySingleRow || ExperimentalUI.isNewEditorTabs();
+    return mySingleRow || ExperimentalUI.isNewUI();
   }
 
   public boolean isSideComponentVertical() {

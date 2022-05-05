@@ -82,7 +82,7 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
 
       when(tabs.position) {
         JBTabsPosition.top -> {
-          if (!ExperimentalUI.isNewEditorTabs()) {
+          if (!ExperimentalUI.isNewUI()) {
             for (eachRow in 0..tabs.lastLayoutPass.rowCount) {
               val yl = (eachRow * tabs.myHeaderFitSize.height) + startY
               tabs.tabPainter.paintBorderLine(g, thickness, Point(x, yl), Point(x + width, yl))

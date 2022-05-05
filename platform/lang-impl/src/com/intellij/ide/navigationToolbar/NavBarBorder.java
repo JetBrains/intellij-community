@@ -45,7 +45,7 @@ public class NavBarBorder implements Border {
   @Override
   public Insets getBorderInsets(final Component c) {
     var settings = UISettings.getInstance();
-    if (ExperimentalUI.isNewToolbar() && settings.getShowNavigationBar() && settings.getNavBarLocation() == NavBarLocation.TOP) {
+    if (ExperimentalUI.isNewUI() && settings.getShowNavigationBar() && settings.getNavBarLocation() == NavBarLocation.TOP) {
       return NO_RUN_INSETS;
     }
     else if (!settings.getShowMainToolbar()) {

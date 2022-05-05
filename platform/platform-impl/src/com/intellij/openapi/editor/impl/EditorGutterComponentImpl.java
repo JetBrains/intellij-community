@@ -701,7 +701,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       return myEditor.getBackgroundColor();
     }
     Color color = myEditor.getColorsScheme().getColor(EditorColors.GUTTER_BACKGROUND);
-    if (ExperimentalUI.isNewEditorTabs()) {
+    if (ExperimentalUI.isNewUI()) {
       color = myEditor.getBackgroundColor();
     }
     return color != null ? color : EditorColors.GUTTER_BACKGROUND.getDefaultColor();
@@ -1464,7 +1464,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       myAnchorsDisplayStrategy.getAnchorsToDisplay(firstVisibleOffset, lastVisibleOffset, myActiveFoldRegions);
     for (DisplayedFoldingAnchor anchor : anchorsToDisplay) {
       boolean active = myActiveFoldRegions.contains(anchor.foldRegion);
-      if (ExperimentalUI.isNewEditorTabs()) {
+      if (ExperimentalUI.isNewUI()) {
         active = myAlphaContext.isVisible();
       }
       drawFoldingAnchor(width, clip, g, anchor.visualLine, anchor.type, active);
@@ -1472,7 +1472,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private void paintFoldingLines(final Graphics2D g, final Rectangle clip) {
-    if (ExperimentalUI.isNewEditorTabs()) {
+    if (ExperimentalUI.isNewUI()) {
       return;
     }
     boolean shown = isFoldingOutlineShown();
@@ -1585,7 +1585,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     double[] dxPoints = {x1, x1, x2, x2, centerX};
     double[] dyPoints = {y + baseHeight, y, y, y + baseHeight, y + height + (height < 0 ? 1 : 0)};
 
-    if (ExperimentalUI.isNewEditorTabs()) {
+    if (ExperimentalUI.isNewUI()) {
       if (height > 0) {
         myAlphaContext.paintWithComposite(g, () -> {
           Icon icon = scaleIcon(IconLoader.getIcon("expui/gutter/fold.svg", AllIcons.class.getClassLoader()));
@@ -1624,7 +1624,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     Rectangle2D rect = RectanglePainter2D.align(g,
                                                 EnumSet.of(LinePainter2D.Align.CENTER_X, LinePainter2D.Align.CENTER_Y),
                                                 centerX, centerY, width, width, StrokeType.CENTERED, sw);
-    if (ExperimentalUI.isNewEditorTabs()) {
+    if (ExperimentalUI.isNewUI()) {
       Icon icon = scaleIcon(IconLoader.getIcon("/expui/gutter/unfold.svg", AllIcons.class.getClassLoader()));
       icon.paintIcon(this, g, getFoldingAreaOffset(), getFoldingIconY(visualLine, icon));
       return;
@@ -1649,7 +1649,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
    * Returns the gap between the sign and the square itself
    */
   private double getSquareInnerOffset(double width) {
-    if (ExperimentalUI.isNewEditorTabs()) return 0;
+    if (ExperimentalUI.isNewUI()) return 0;
     return Math.max(width / 5, scale(2));
   }
 
@@ -1662,7 +1662,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private double getFoldingAnchorWidth2D() {
-    if (ExperimentalUI.isNewEditorTabs()) {
+    if (ExperimentalUI.isNewUI()) {
       return scale(IconLoader.getIcon("expui/gutter/fold.svg", AllIcons.class.getClassLoader()).getIconWidth());
     }
     return Math.min(scale(4f), myEditor.getLineHeight() / 2f - JBUIScale.scale(2f)) * 2;
@@ -1816,7 +1816,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
      width = myForcedRightFreePaintersAreaWidth < 0 ? /*ExperimentalUI.isNewUI() ? 0 :*/ FREE_PAINTERS_RIGHT_AREA_WIDTH.get()
                                                     : myForcedRightFreePaintersAreaWidth;
     }
-    if (ExperimentalUI.isNewEditorTabs()) {
+    if (ExperimentalUI.isNewUI()) {
       if (width == 0) return 0;
       return (int)Math.max(FREE_PAINTERS_RIGHT_AREA_WIDTH.get(), scale(JBUI.getInt("Gutter.VcsChanges.width", 4)) + 2);
     }
@@ -2654,7 +2654,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private static final HoverStateListener HOVER_STATE_LISTENER = new HoverStateListener() {
     @Override
     protected void hoverChanged(@NotNull Component component, boolean hovered) {
-      if (component instanceof EditorGutterComponentImpl && ExperimentalUI.isNewEditorTabs()) {
+      if (component instanceof EditorGutterComponentImpl && ExperimentalUI.isNewUI()) {
         EditorGutterComponentImpl gutter = (EditorGutterComponentImpl)component;
         gutter.myAlphaContext.setVisible(hovered);
       }

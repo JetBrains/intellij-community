@@ -243,7 +243,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           yield({ checkBox(cdUseCompactTreeIndents) })
           yield({ checkBox(cdEnableMenuMnemonics) })
           yield({ checkBox(cdEnableControlsMnemonics) })
-          if (SystemInfo.isWindows && ExperimentalUI.isNewToolbar()) {
+          if (SystemInfo.isWindows && ExperimentalUI.isNewUI()) {
             yield({ checkBox(cdSeparateMainMenu) })
           }
         }

@@ -65,7 +65,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
 
   @Nullable
   private @Nls String buildTitle(@NotNull Repo currentRepository) {
-    if (ExperimentalUI.isNewVcsBranchPopup()) return null;
+    if (ExperimentalUI.isNewUI()) return null;
 
     String vcsName = myVcs.getDisplayName();
     return myInSpecificRepository ?

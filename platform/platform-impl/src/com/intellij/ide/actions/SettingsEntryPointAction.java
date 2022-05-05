@@ -222,7 +222,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     ToolbarSettings toolbarSettings = ToolbarSettings.getInstance();
     return !uiSettings.getShowMainToolbar() &&
            !uiSettings.getShowNavigationBar() &&
-           !ExperimentalUI.isNewToolbar() &&
+           !ExperimentalUI.isNewUI() &&
            !(toolbarSettings.isEnabled() && toolbarSettings.isVisible());
   }
 

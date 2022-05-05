@@ -65,7 +65,7 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
           row(TAB_PLACEMENT + ":") {
             myEditorTabPlacement = tabPlacementComboBox().component
           }
-          if (ExperimentalUI.isNewEditorTabs()) {
+          if (ExperimentalUI.isNewUI()) {
             row {
               checkBox(hideTabsIfNeeded)
                 .enabledIf(myEditorTabPlacement.selectedValueMatches { it == SwingConstants.TOP })

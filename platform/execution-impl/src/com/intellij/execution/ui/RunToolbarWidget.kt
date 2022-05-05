@@ -80,7 +80,7 @@ internal class RunToolbarWidgetFactory : MainToolbarProjectWidgetFactory {
 
 internal class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableActionGroupProvider() {
   override fun registerGroups(registrar: CustomizableActionGroupRegistrar?) {
-    if (ExperimentalUI.isNewToolbar()) {
+    if (ExperimentalUI.isNewUI()) {
       registrar?.addCustomizableActionGroup(RUN_TOOLBAR_WIDGET_GROUP, ExecutionBundle.message("run.toolbar.widget.customizable.group.name"))
     }
   }

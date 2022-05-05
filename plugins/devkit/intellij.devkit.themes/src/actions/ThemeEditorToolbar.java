@@ -38,7 +38,7 @@ public final class ThemeEditorToolbar extends EditorNotifications.Provider<Edito
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
     if (ThemeJsonUtil.isThemeFilename(file.getName())) {
-      JBColor bg = JBColor.lazy(() -> ExperimentalUI.isNewEditorTabs()
+      JBColor bg = JBColor.lazy(() -> ExperimentalUI.isNewUI()
                                         ? EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()
                                         : JBColor.PanelBackground);
       EditorNotificationPanel panel = new EditorNotificationPanel(bg);

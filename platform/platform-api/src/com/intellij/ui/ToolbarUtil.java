@@ -27,7 +27,7 @@ public final class ToolbarUtil {
                                        @NotNull JRootPane rootPane,
                                        Consumer<? super Runnable> onDispose) {
     if (SystemInfoRt.isMac) {
-      if (ExperimentalUI.isNewToolbar()) {
+      if (ExperimentalUI.isNewUI()) {
         setCustomTitleForToolbar(window, rootPane, onDispose);
       }
       else if (isMacTransparentTitleBarAppearance()) {
@@ -41,7 +41,7 @@ public final class ToolbarUtil {
   }
 
   public static void removeSystemTitleBar(@NotNull JRootPane rootPane) {
-    if (!SystemInfoRt.isMac || !ExperimentalUI.isNewToolbar()) return;
+    if (!SystemInfoRt.isMac || !ExperimentalUI.isNewUI()) return;
 
     rootPane.putClientProperty("apple.awt.windowTitleVisible", false);
     rootPane.putClientProperty("apple.awt.fullWindowContent", true);
@@ -51,7 +51,7 @@ public final class ToolbarUtil {
   public static void setCustomTitleForToolbar(@NotNull Window window,
                                               @NotNull JRootPane rootPane,
                                               Consumer<? super Runnable> onDispose) {
-    if (!SystemInfoRt.isMac || !ExperimentalUI.isNewToolbar()) return;
+    if (!SystemInfoRt.isMac || !ExperimentalUI.isNewUI()) return;
 
     JBInsets topWindowInset = JBUI.insetsTop(UIUtil.getTransparentTitleBarHeight(rootPane));
     AbstractBorder customBorder = new AbstractBorder() {

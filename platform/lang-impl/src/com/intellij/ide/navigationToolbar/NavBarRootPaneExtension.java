@@ -276,7 +276,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
 
   private static boolean isShowToolPanel(@NotNull UISettings uiSettings) {
     // Evanescent me: fix run panel show condition in ExpUI if necessary.
-    if (!ExperimentalUI.isNewToolbar() && uiSettings.getShowNavigationBar() &&
+    if (!ExperimentalUI.isNewUI() && uiSettings.getShowNavigationBar() &&
         !uiSettings.getShowMainToolbar() && !uiSettings.getPresentationMode()) {
       ToolbarSettings toolbarSettings = ToolbarSettings.getInstance();
       return !toolbarSettings.isVisible() || !toolbarSettings.isEnabled();

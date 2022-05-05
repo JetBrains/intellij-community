@@ -82,7 +82,7 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
   }
 
   private static boolean isExperimentalToolbar(@NotNull String place) {
-    return ExperimentalUI.isNewToolbar() && ActionPlaces.MAIN_TOOLBAR.equals(place);
+    return ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR.equals(place);
   }
 
   @NotNull

@@ -466,7 +466,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   private void updateFileBackgroundColor(@NotNull VirtualFile file) {
-    if (ExperimentalUI.isNewEditorTabs()) return;
+    if (ExperimentalUI.isNewUI()) return;
     Set<EditorsSplitters> all = getAllSplitters();
     for (EditorsSplitters each : all) {
       each.updateFileBackgroundColor(file);

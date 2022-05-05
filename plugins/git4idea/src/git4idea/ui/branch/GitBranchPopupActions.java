@@ -89,7 +89,7 @@ public class GitBranchPopupActions {
       popupGroup.addAll(createPerRepoRebaseActions(myRepository));
     }
 
-    if (ExperimentalUI.isNewVcsBranchPopup()) {
+    if (ExperimentalUI.isNewUI()) {
       ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction("Git.Experimental.Branch.Popup.Actions");
       popupGroup.addAll(actionGroup);
       popupGroup.addSeparator();
@@ -97,7 +97,7 @@ public class GitBranchPopupActions {
 
     popupGroup.addAction(new GitNewBranchAction(myProject, repositoryList));
 
-    if (!ExperimentalUI.isNewVcsBranchPopup()) {
+    if (!ExperimentalUI.isNewUI()) {
       popupGroup.addAction(new CheckoutRevisionActions(myProject, repositoryList));
     }
 

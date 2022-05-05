@@ -105,7 +105,7 @@ class EditorTabTheme : TabTheme {
   override val inactiveColoredTabBackground: Color
     get() = JBUI.CurrentTheme.EditorTabs.inactiveColoredFileBackground()
 
-  fun <T> newUIAware(newUI: T, oldUI:T):T = if (ExperimentalUI.isNewEditorTabs()) newUI else oldUI
+  fun <T> newUIAware(newUI: T, oldUI:T):T = if (ExperimentalUI.isNewUI()) newUI else oldUI
 }
 
 internal class ToolWindowTabTheme : DefaultTabTheme() {

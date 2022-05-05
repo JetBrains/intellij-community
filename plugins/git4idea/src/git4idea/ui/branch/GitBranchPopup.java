@@ -182,7 +182,7 @@ public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     }
     popupGroup.add(new GitBranchPopupActions.GitNewBranchAction(myProject, allRepositories));
 
-    if (!ExperimentalUI.isNewVcsBranchPopup()) {
+    if (!ExperimentalUI.isNewUI()) {
       popupGroup.add(new GitBranchPopupActions.CheckoutRevisionActions(myProject, allRepositories));
     }
 

@@ -215,7 +215,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     mySearchActionsToolbar.setForceShowFirstComponent(true);
     searchPair.add(mySearchActionsToolbar, BorderLayout.CENTER);
 
-    if (ExperimentalUI.isNewEditorTabs()) {
+    if (ExperimentalUI.isNewUI()) {
       mySearchActionsToolbar.setBackground(EDITOR_BACKGROUND);
       searchPair.setBackground(EDITOR_BACKGROUND);
     }
@@ -259,7 +259,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       }
       mySplitter.setFirstComponent(leftPanel);
       mySplitter.setSecondComponent(rightPanel);
-      if (ExperimentalUI.isNewEditorTabs()) {
+      if (ExperimentalUI.isNewUI()) {
         mySearchActionsToolbar.setBackground(EDITOR_BACKGROUND);
         mySplitter.setBackground(EDITOR_BACKGROUND);
         mySplitter.setOpaque(true);

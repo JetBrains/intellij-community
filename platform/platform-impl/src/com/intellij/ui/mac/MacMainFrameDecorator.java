@@ -113,7 +113,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         public void windowExitedFullScreen(FullScreenEvent event) {
           // We can get the notification when the frame has been disposed
           JRootPane rootPane = myFrame.getRootPane();
-          if (ExperimentalUI.isNewToolbar() && MainToolbarKt.isToolbarInHeader()) {
+          if (ExperimentalUI.isNewUI() && MainToolbarKt.isToolbarInHeader()) {
             ToolbarUtil.removeSystemTitleBar(rootPane);
           }
           else {
