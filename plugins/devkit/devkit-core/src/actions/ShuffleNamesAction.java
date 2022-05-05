@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -11,6 +11,7 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
@@ -36,6 +37,9 @@ public final class ShuffleNamesAction extends AnAction {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (editor == null || file == null) return;
     final Project project = file.getProject();
+
+    if (!ReadonlyStatusHandler.ensureFilesWritable(project,file.getVirtualFile())) return;
+
     CommandProcessorEx commandProcessor = (CommandProcessorEx)CommandProcessorEx.getInstance();
     CommandToken commandToken = commandProcessor.startCommand(project, e.getPresentation().getText(), e.getPresentation().getText(), UndoConfirmationPolicy.DEFAULT);
     try {
