@@ -23,10 +23,8 @@ import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
@@ -263,10 +261,10 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       HashSet<String> toRemovePerType = new HashSet<>();
       toRemove.put(ideType, toRemovePerType);
 
-      for (VirtualFile ideFile: ideLibrary.getFiles(ideType)) {
-        String idePath = ExternalSystemApiUtil.getLocalFileSystemPath(ideFile);
+      for (String url : ideLibrary.getUrls(ideType)) {
+        String idePath = getLocalPath(url);
         if (!toAddPerType.remove(idePath)) {
-          toRemovePerType.add(ideFile.getUrl());
+          toRemovePerType.add(url);
         }
       }
     }
@@ -287,5 +285,13 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
       registerPaths(false, roots, excludedPaths, libraryModel, externalLibrary.getInternalName());
     }
+  }
+
+  @NotNull
+  private static String getLocalPath(@NotNull String url) {
+    if (url.startsWith(StandardFileSystems.JAR_PROTOCOL_PREFIX)) {
+      url = StringUtil.trimEnd(url, JarFileSystem.JAR_SEPARATOR);
+    }
+    return VfsUtilCore.urlToPath(url);
   }
 }
