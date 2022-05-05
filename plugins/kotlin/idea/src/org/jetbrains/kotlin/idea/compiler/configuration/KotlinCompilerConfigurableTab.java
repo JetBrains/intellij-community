@@ -128,7 +128,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         this.commonCompilerArguments = commonCompilerArguments;
         this.k2jsCompilerArguments = k2jsCompilerArguments;
         this.compilerSettings = compilerSettings;
-        this.jpsPluginSettings = Optional.ofNullable(isProjectSettings ? KotlinJpsPluginSettings.Companion.getInstance(project) : null)
+        this.jpsPluginSettings = Optional.ofNullable(isProjectSettings ? KotlinJpsPluginSettings.Companion.getInstanceUnsafe(project) : null)
                 .map(KotlinJpsPluginSettings::getSettings)
                 .map(FreezableKt::unfrozen)
                 .orElse(null);
@@ -527,7 +527,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         return isModified(reportWarningsCheckBox, !commonCompilerArguments.getSuppressWarnings()) ||
                !getSelectedLanguageVersionView().equals(KotlinFacetSettingsKt.getLanguageVersionView(commonCompilerArguments)) ||
                !getSelectedAPIVersionView().equals(KotlinFacetSettingsKt.getApiVersionView(commonCompilerArguments)) ||
-               jpsPluginSettings != null && !getSelectedKotlinJpsPluginVersion().equals(jpsPluginSettings.getVersion()) ||
+               jpsPluginSettings != null && !getSelectedKotlinJpsPluginVersion().equals(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)) ||
                !additionalArgsOptionsField.getText().equals(compilerSettings.getAdditionalArguments()) ||
                isModified(scriptTemplatesField, compilerSettings.getScriptTemplates()) ||
                isModified(scriptTemplatesClasspathField, compilerSettings.getScriptTemplatesClasspath()) ||
@@ -585,7 +585,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
             return version;
         }
 
-        return KotlinPluginLayout.getInstance().getStandaloneCompilerVersion().getRawVersion();
+        return KotlinJpsPluginSettings.DEFAULT_VERSION;
     }
 
     public void applyTo(
@@ -598,7 +598,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
             boolean shouldInvalidateCaches =
                     !getSelectedLanguageVersionView().equals(KotlinFacetSettingsKt.getLanguageVersionView(commonCompilerArguments)) ||
                     !getSelectedAPIVersionView().equals(KotlinFacetSettingsKt.getApiVersionView(commonCompilerArguments)) ||
-                    jpsPluginSettings != null && !getSelectedKotlinJpsPluginVersion().equals(jpsPluginSettings.getVersion()) ||
+                    jpsPluginSettings != null && !getSelectedKotlinJpsPluginVersion().equals(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)) ||
                     !additionalArgsOptionsField.getText().equals(compilerSettings.getAdditionalArguments());
 
             if (shouldInvalidateCaches) {
@@ -618,9 +618,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         KotlinFacetSettingsKt.setLanguageVersionView(commonCompilerArguments, getSelectedLanguageVersionView());
         KotlinFacetSettingsKt.setApiVersionView(commonCompilerArguments, getSelectedAPIVersionView());
 
-        if (jpsPluginSettings != null) {
-            jpsPluginSettings.setVersion(getSelectedKotlinJpsPluginVersion());
-        }
         compilerSettings.setAdditionalArguments(additionalArgsOptionsField.getText());
         compilerSettings.setScriptTemplates(scriptTemplatesField.getText());
         compilerSettings.setScriptTemplatesClasspath(scriptTemplatesClasspathField.getText());
@@ -650,13 +647,18 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         k2jvmCompilerArguments.setJvmTarget(getSelectedJvmVersion());
 
         if (isProjectSettings) {
+            if (jpsPluginSettings != null) {
+                String jpsPluginVersion = getSelectedKotlinJpsPluginVersion();
+                if (!jpsPluginSettings.getVersion().isEmpty() || !jpsPluginVersion.equals(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings))) {
+                    jpsPluginSettings.setVersion(jpsPluginVersion);
+                    KotlinJpsPluginSettings.Companion.getInstanceUnsafe(project).setSettings(jpsPluginSettings);
+                }
+            }
+
             KotlinCommonCompilerArgumentsHolder.Companion.getInstance(project).setSettings(commonCompilerArguments);
             Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project).setSettings(k2jvmCompilerArguments);
             Kotlin2JsCompilerArgumentsHolder.Companion.getInstance(project).setSettings(k2jsCompilerArguments);
             KotlinCompilerSettings.Companion.getInstance(project).setSettings(compilerSettings);
-            if (jpsPluginSettings != null) {
-                KotlinJpsPluginSettings.Companion.getInstanceUnsafe(project).setSettings(jpsPluginSettings);
-            }
         }
 
         for (ClearBuildStateExtension extension : ClearBuildStateExtension.getExtensions()) {
@@ -673,8 +675,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     public void reset() {
         reportWarningsCheckBox.setSelected(!commonCompilerArguments.getSuppressWarnings());
         if (jpsPluginSettings != null) {
-            setSelectedItem(kotlinJpsPluginVersionComboBox,
-                            new ComboBoxTextItem(normalizeKotlinJpsPluginVersion(jpsPluginSettings.getVersion())));
+            setSelectedItem(kotlinJpsPluginVersionComboBox, new ComboBoxTextItem(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)));
         }
         setSelectedItem(languageVersionComboBox, KotlinFacetSettingsKt.getLanguageVersionView(commonCompilerArguments));
         onLanguageLevelChanged((VersionView) languageVersionComboBox.getSelectedItem()); // getSelectedLanguageVersionView() replaces null
