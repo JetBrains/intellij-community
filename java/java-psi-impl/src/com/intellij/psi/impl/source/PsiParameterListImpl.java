@@ -17,10 +17,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiParameterListStub;
@@ -48,7 +45,12 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
 
   @Override
   public int getParameterIndex(@NotNull PsiParameter parameter) {
-    LOG.assertTrue(parameter.getParent() == this);
+    PsiElement parent = parameter.getParent();
+    if (parent != this) {
+      LOG.error("Not my parameter; parameter class = " + parameter.getClass() + "; " +
+                "this class = " + getClass() + "; " +
+                "parameter parent class = " + (parent == null ? null : parent.getClass()));
+    }
     return PsiImplUtil.getParameterIndex(parameter, this);
   }
 
