@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.analysis.providers.DecompiledPsiDeclarationProvider
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -154,7 +155,7 @@ internal fun KtAnalysisSession.nullability(ktType: KtType?): TypeNullability? {
 internal fun KtSymbol.psiForUast(project: Project): PsiElement? {
     return when (origin) {
         KtSymbolOrigin.LIBRARY -> {
-            FirPsiDeclarationProvider.findPsi(this, project) ?: psi
+            DecompiledPsiDeclarationProvider.findPsi(this, project) ?: psi
         }
         else -> psi
     }
