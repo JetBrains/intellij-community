@@ -3,7 +3,6 @@ package com.intellij.java.ift
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
@@ -44,17 +43,15 @@ internal class JavaLangSupport : JavaBasedLangSupport() {
   override val sdkConfigurationTasks: LessonContext.(lesson: KLesson) -> Unit = {
     val setupSdkText = ProjectBundle.message("project.sdk.setup")
 
-    fun isJdkInstalled(project: Project) = JavaProjectUtil.getProjectJdk(project) != null
-
     task {
-      if (isJdkInstalled(project)) return@task
+      if (isSdkConfigured(project)) return@task
       triggerAndFullHighlight { usePulsation = true }.component { ui: HyperlinkLabel ->
         ui.text == setupSdkText
       }
     }
 
     task {
-      if (isJdkInstalled(project)) return@task
+      if (isSdkConfigured(project)) return@task
 
       rehighlightPreviousUi = true
       text(JavaLessonsBundle.message("java.missed.sdk.click.setup", strong(setupSdkText)))
@@ -69,7 +66,7 @@ internal class JavaLangSupport : JavaBasedLangSupport() {
     }
 
     task {
-      if (isJdkInstalled(project)) return@task
+      if (isSdkConfigured(project)) return@task
 
       rehighlightPreviousUi = true
       text(JavaLessonsBundle.message("java.missed.sdk.configure"))

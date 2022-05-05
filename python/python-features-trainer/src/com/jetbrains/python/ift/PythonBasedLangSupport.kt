@@ -24,7 +24,6 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReady
 import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
 import com.jetbrains.python.statistics.modules
 import training.dsl.LessonContext
-import training.dsl.TaskRuntimeContext
 import training.lang.AbstractLangSupport
 import training.learn.CourseManager
 import training.learn.course.KLesson
@@ -142,11 +141,12 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
     }
   }
 
+  override fun isSdkConfigured(project: Project): Boolean = project.pythonSdk != null
 
   override val sdkConfigurationTasks: LessonContext.(lesson: KLesson) -> Unit = { lesson ->
     task {
       stateCheck {
-        hasPythonSdk()
+        isSdkConfigured(project)
       }
       val configureCallbackId = LearningUiManager.addCallback {
         val module = project.modules.singleOrNull() ?: return@addCallback
@@ -155,7 +155,7 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
       if (useUserProjects || isLearningProject(project, this@PythonBasedLangSupport)) {
         showWarning(PythonLessonsBundle.message("no.interpreter.in.learning.project", configureCallbackId),
                     problem = LearningInternalProblems.NO_SDK_CONFIGURED) {
-          !hasPythonSdk()
+          !isSdkConfigured(project)
         }
       } else {
         // for Scratch lessons in the non-learning project
@@ -163,11 +163,9 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
           CourseManager.instance.openLesson(project, lesson, LessonStartingWay.NO_SDK_RESTART, true, true)
         }
         showWarning(PythonLessonsBundle.message("no.interpreter.in.user.project", openCallbackId, configureCallbackId)) {
-          !hasPythonSdk()
+          !isSdkConfigured(project)
         }
       }
     }
   }
 }
-
-private fun TaskRuntimeContext.hasPythonSdk() = project.pythonSdk != null
