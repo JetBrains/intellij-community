@@ -16,13 +16,15 @@ import java.util.stream.Collectors;
 
 public final class BuildOptions {
   /**
-   * By default build scripts compile project classes to a special output directory (to not interfere with the default project output if
-   * invoked on a developer machine). Pass 'true' to this system property to skip compilation step and use compiled classes from the project output instead.
+   * If {@code false} build scripts compile project classes to a special output directory (to not interfere with the default project output if
+   * invoked on a developer machine).
+   * If {@code true} compilation step is skipped and compiled classes from the project output are used instead.
+   * True if {@link BuildOptions#isInDevelopmentMode} is enabled.
    *
    * @see {@link org.jetbrains.intellij.build.impl.CompilationContextImpl#getProjectOutputDirectory}
    */
   public static final String USE_COMPILED_CLASSES_PROPERTY = "intellij.build.use.compiled.classes";
-  public boolean useCompiledClassesFromProjectOutput = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, false);
+  public boolean useCompiledClassesFromProjectOutput = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode);
 
   /**
    * Use this property to change the project compiled classes output directory.
