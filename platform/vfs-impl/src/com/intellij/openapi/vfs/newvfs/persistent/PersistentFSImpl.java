@@ -825,9 +825,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return FSRecords.getContentId(getFileId(file));
   }
 
-  @Override
-  public boolean doesHoldFile(@NotNull VirtualFile file) {
-    return ((VirtualFileSystemEntry)file).getVfsData() == myVfsData;
+  public boolean isOwnData(@NotNull VfsData data) {
+    return data == myVfsData;
   }
 
   @Override

@@ -36,6 +36,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
 
   static final PersistentFS ourPersistence = PersistentFS.getInstance();
+  private static final boolean UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
 
   @ApiStatus.Internal
   public static void markAllFilesAsUnindexed() {
@@ -113,8 +114,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     myId = -42;
   }
 
-  @NotNull public VfsData getVfsData() {
-    return getSegment().vfsData;
+  @NotNull
+  public VfsData getVfsData() {
+    VfsData data = getSegment().vfsData;
+    if (!UNIT_TEST_MODE && !((PersistentFSImpl)ourPersistence).isOwnData(data)) {
+      throw new AssertionError("Alien file!");
+    }
+    return data;
   }
 
   VfsData.@NotNull Segment getSegment() {
@@ -377,7 +383,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   @NonNls
   public String toString() {
-    if (!ourPersistence.doesHoldFile(this)) {
+    if (!((PersistentFSImpl)ourPersistence).isOwnData(getSegment().vfsData)) {
       return "Alien file!";
     }
     if (isValid()) {
