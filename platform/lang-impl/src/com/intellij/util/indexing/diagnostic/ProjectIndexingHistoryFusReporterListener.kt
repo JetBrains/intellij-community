@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -24,7 +24,7 @@ class ProjectIndexingHistoryFusReporterListener : ProjectIndexingHistoryListener
   override fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory) {
     val scanningTime = projectIndexingHistory.times.scanFilesDuration.toMillis()
     val numberOfFileProviders = projectIndexingHistory.scanningStatistics.size
-    val numberOfScannedFiles = projectIndexingHistory.scanningStatistics.sumBy { it.numberOfScannedFiles }
+    val numberOfScannedFiles = projectIndexingHistory.scanningStatistics.sumOf { it.numberOfScannedFiles }
 
     val numberOfFilesIndexedByExtensionsDuringScan =
       projectIndexingHistory.scanningStatistics.sumOf { it.numberOfFilesFullyIndexedByInfrastructureExtensions }
@@ -39,13 +39,15 @@ class ProjectIndexingHistoryFusReporterListener : ProjectIndexingHistoryListener
     val contentLoadingSpeedByFileType = HashMap<FileType, Long>()
     projectIndexingHistory.totalStatsPerFileType.forEach { (fileType, stats) ->
       if (stats.totalContentLoadingTimeInAllThreads != 0L && stats.totalBytes != 0L) {
-        contentLoadingSpeedByFileType[FileTypeManager.getInstance().getStdFileType(fileType)] = calculateReadSpeed(stats.totalBytes, stats.totalContentLoadingTimeInAllThreads)
+        contentLoadingSpeedByFileType[FileTypeManager.getInstance().getStdFileType(fileType)] =
+          calculateReadSpeed(stats.totalBytes, stats.totalContentLoadingTimeInAllThreads)
       }
     }
 
     ProjectIndexingHistoryFusReporter.reportIndexingFinished(
       projectIndexingHistory.project,
       projectIndexingHistory.indexingSessionId,
+      projectIndexingHistory.times.wasFullIndexing,
       TimeUnit.NANOSECONDS.toMillis(projectIndexingHistory.times.totalUpdatingTime),
       scanningTime,
       numberOfFileProviders,
@@ -60,13 +62,13 @@ class ProjectIndexingHistoryFusReporterListener : ProjectIndexingHistoryListener
 
   /**
    * @return speed as bytes per second
-  * */
-  private fun calculateReadSpeed(bytes : BytesNumber, loadingTime : TimeNano) : Long {
+   * */
+  private fun calculateReadSpeed(bytes: BytesNumber, loadingTime: TimeNano): Long {
     if (bytes == 0L || loadingTime == 0L) return 0L
 
     val nanoSecondInOneSecond = TimeUnit.SECONDS.toNanos(1)
     return if (bytes * nanoSecondInOneSecond > 0) // avoid hitting overflow; possible if loaded more then 9 223 372 037 bytes
-      // as `loadingTime` in nanoseconds tend to be much bigger value then `bytes` prefer to divide as second step
+    // as `loadingTime` in nanoseconds tend to be much bigger value then `bytes` prefer to divide as second step
       (bytes * nanoSecondInOneSecond) / loadingTime
     else // do not use by default to avoid unnecessary conversions
       ((bytes.toDouble() / loadingTime) * nanoSecondInOneSecond).roundToLong()
@@ -74,12 +76,13 @@ class ProjectIndexingHistoryFusReporterListener : ProjectIndexingHistoryListener
 }
 
 object ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("indexing.statistics", 3)
+  private val GROUP = EventLogGroup("indexing.statistics", 4)
 
   override fun getGroup() = GROUP
 
   private val indexingSessionId = EventFields.Long("indexing_session_id")
 
+  private val isFullIndexing = EventFields.Boolean("is_full")
   private val indexingTime = EventFields.Long("indexing_time")
   private val scanningTime = EventFields.Long("scanning_time")
   private val numberOfFileProviders = EventFields.Int("number_of_file_providers")
@@ -105,6 +108,7 @@ object ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
   private val indexingFinished = GROUP.registerVarargEvent(
     "finished",
     indexingSessionId,
+    isFullIndexing,
     indexingTime,
     scanningTime,
     numberOfFileProviders,
@@ -126,6 +130,7 @@ object ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
   fun reportIndexingFinished(
     project: Project,
     indexingSessionId: Long,
+    wasFullIndexing: Boolean,
     indexingTime: Long,
     scanningTime: Long,
     numberOfFileProviders: Int,
@@ -133,19 +138,21 @@ object ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
     numberOfFilesIndexedByExtensionsDuringScan: Int,
     numberOfFilesIndexedByExtensionsWithLoadingContent: Int,
     numberOfFilesIndexedWithLoadingContent: Int,
-    averageContentLoadingSpeed : Long,
-    contentLoadingSpeedByFileType : Map<FileType, Long>
+    averageContentLoadingSpeed: Long,
+    contentLoadingSpeedByFileType: Map<FileType, Long>
 
   ) {
     indexingFinished.log(
       project,
       this.indexingSessionId.with(indexingSessionId),
+      this.isFullIndexing.with(wasFullIndexing),
       this.indexingTime.with(indexingTime),
       this.scanningTime.with(scanningTime),
       this.numberOfFileProviders.with(numberOfFileProviders),
       this.numberOfScannedFiles.with(StatisticsUtil.roundToHighestDigit(numberOfScannedFiles)),
       this.numberOfFilesIndexedByExtensionsDuringScan.with(StatisticsUtil.roundToHighestDigit(numberOfFilesIndexedByExtensionsDuringScan)),
-      this.numberOfFilesIndexedByExtensionsWithLoadingContent.with(StatisticsUtil.roundToHighestDigit(numberOfFilesIndexedByExtensionsWithLoadingContent)),
+      this.numberOfFilesIndexedByExtensionsWithLoadingContent.with(
+        StatisticsUtil.roundToHighestDigit(numberOfFilesIndexedByExtensionsWithLoadingContent)),
       this.numberOfFilesIndexedWithLoadingContent.with(StatisticsUtil.roundToHighestDigit(numberOfFilesIndexedWithLoadingContent)),
       this.averageContentLoadingSpeed.with(averageContentLoadingSpeed),
       this.contentLoadingSpeedByFileType.with(contentLoadingSpeedByFileType.map { entry ->
