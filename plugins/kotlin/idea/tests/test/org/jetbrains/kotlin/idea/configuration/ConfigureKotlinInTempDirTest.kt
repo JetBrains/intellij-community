@@ -5,12 +5,14 @@ package org.jetbrains.kotlin.idea.configuration
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.util.JDOMUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JsCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.notification.catchNotificationText
 import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
@@ -22,9 +24,28 @@ import java.io.File
 import java.nio.charset.StandardCharsets
 
 @RunWith(JUnit38ClassRunner::class)
-open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
-    private fun checkKotlincPresence(present: Boolean = true) {
-        TestCase.assertEquals(present, File(project.basePath, ".idea/kotlinc.xml").exists())
+class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
+    private fun checkKotlincPresence(present: Boolean = true, jpsVersionOnly: Boolean = false) {
+        val file = File(project.basePath, ".idea/kotlinc.xml")
+        TestCase.assertEquals(present, file.exists())
+        val children = JDOMUtil.load(file).children.ifEmpty { error("kotlinc.xml is empty") }
+        val jpsSettingsElement = children.singleOrNull {
+            it.getAttributeValue("name") == KotlinJpsPluginSettings::class.java.simpleName
+        }
+
+        val childrenNames = children.joinToString(prefix = "[", postfix = "]") { it.getAttributeValue("name") }
+        if (jpsVersionOnly) {
+            assertNotNull(jpsSettingsElement)
+            assertTrue(
+                /* message = */ "kotlinc.xml contains not only jps settings: $childrenNames",
+                /* condition = */ children.size == 1,
+            )
+        } else {
+            assertTrue(
+                /* message = */ "non-jps settings is not found: $childrenNames",
+                /* condition = */ jpsSettingsElement != null && children.size > 1 || jpsSettingsElement == null && children.isNotEmpty(),
+            )
+        }
     }
 
     private fun moduleFileContent() = String(module.moduleFile!!.contentsToByteArray(), StandardCharsets.UTF_8)
@@ -35,7 +56,7 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
         Assert.assertEquals(LanguageVersion.KOTLIN_1_0, module.languageVersionSettings.languageVersion)
         Assert.assertEquals(LanguageVersion.KOTLIN_1_0, myProject.getLanguageVersionSettings(null).languageVersion)
         application.saveAll()
-        checkKotlincPresence(false)
+        checkKotlincPresence(jpsVersionOnly = true)
     }
 
     fun testMigrationNotificationWithStdlib() {
@@ -95,7 +116,7 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
         Assert.assertEquals(expectedLanguageVersion, module.languageVersionSettings.languageVersion)
         Assert.assertEquals(expectedLanguageVersion, myProject.getLanguageVersionSettings(null).languageVersion)
         application.saveAll()
-        checkKotlincPresence(false)
+        checkKotlincPresence(jpsVersionOnly = true)
     }
 
     fun testKotlincExistsNoSettingsLatestRuntimeNoVersionAutoAdvance() {
@@ -121,7 +142,7 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
             autoAdvanceApiVersion = true
         }
         application.saveAll()
-        checkKotlincPresence(false)
+        checkKotlincPresence(jpsVersionOnly = true)
     }
 
     fun testProject107InconsistentVersionInConfig() {
@@ -190,7 +211,7 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
             sourceMapEmbedSources = ""
         }
         application.saveAll()
-        checkKotlincPresence(false)
+        checkKotlincPresence(jpsVersionOnly = true)
     }
 
     private fun doTestLoadAndSaveProjectWithFacetConfig(valueBefore: String, valueAfter: String) {

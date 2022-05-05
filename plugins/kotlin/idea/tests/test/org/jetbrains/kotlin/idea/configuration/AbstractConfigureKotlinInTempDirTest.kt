@@ -16,7 +16,7 @@ import java.nio.file.Path
 abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTest() {
     private lateinit var vfsDisposable: Ref<Disposable>
 
-    override fun createProjectRoot(): File = KotlinTestUtils.tmpDirForReusableFolder("configure")
+    override fun createProjectRoot(): File = KotlinTestUtils.tmpDirForReusableFolder("configure_$projectName")
 
     override fun setUp() {
         super.setUp()
