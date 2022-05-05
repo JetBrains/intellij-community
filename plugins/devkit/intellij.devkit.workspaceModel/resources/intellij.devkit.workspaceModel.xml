@@ -14,7 +14,14 @@
                      groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
                      runForWholeFile="true"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.workspaceModel.codegen.WorkspaceApiVersionInspection"
+                     implementationClass="com.intellij.workspaceModel.codegen.WorkspaceImplObsoleteInspection"
                      key="inspection.workspace.obsolete.model.display.name"/>
+    <localInspection language="kotlin"
+                     groupBundle="messages.DevKitWorkspaceModelBundle"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
+                     runForWholeFile="true"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.workspaceModel.codegen.WorkspaceImplAbsentInspection"
+                     key="inspection.workspace.absent.model.display.name"/>
   </extensions>
 </idea-plugin>
