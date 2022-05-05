@@ -25,7 +25,7 @@ class KotlinInlayHintsTopHitProvider : OptionsSearchTopHitProvider.ProjectLevelP
             KotlinBundle.message("kotlin.call.chains.hints"),
             KotlinBundle.message("kotlin.lambdas.hints.hints.lambda.receivers.parameters"),
             KotlinBundle.message("kotlin.lambdas.hints.hints.lambda.return"),
-            KotlinBundle.message("kotlin.ranges.hints"),
+            KotlinBundle.message("kotlin.values.hints.kotlin.values.ranges"),
             KotlinBundle.message("microservices.url.path.inlay.hints"),
             KotlinBundle.message("vcs.code.author")
         )
@@ -50,7 +50,7 @@ class KotlinInlayHintsTopHitProvider : OptionsSearchTopHitProvider.ProjectLevelP
             ) +
                     it.cases.map { case ->
                         CheckboxDescriptor(
-                            KotlinBundle.message("""${it.id}.${case.id}"""),
+                            KotlinBundle.message("${it.id}.${case.id}"),
                             PropertyBinding(
                                 get = case::value,
                                 set = { newValue ->

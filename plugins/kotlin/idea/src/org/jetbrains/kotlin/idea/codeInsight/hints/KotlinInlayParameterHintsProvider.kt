@@ -41,19 +41,6 @@ class KotlinInlayParameterHintsProvider : InlayParameterHintsProvider {
             "org.gradle.kotlin.dsl.project(path,configuration)"
         )
 
-    override fun getSettingsPreview(): String {
-        return """
-            fun callsAnotherFun() {
-                anotherFunction(1, 2)            
-            }
-            
-            fun anotherFunction(a: Int = 10, b: Int = 5): Int {
-                val sum = a + b
-                return sum * 2
-            } 
-        """.trimIndent()
-    }
-
     override fun getHintInfo(element: PsiElement): HintInfo? {
         if (!(HintType.PARAMETER_HINT.isApplicable(element))) return null
         val parent: PsiElement = (element as? KtValueArgumentList)?.parent ?: return null

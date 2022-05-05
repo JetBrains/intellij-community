@@ -159,7 +159,7 @@
     <codeInsight.inlayProvider language="kotlin"
                                implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinCallChainHintsProvider"/>
     <codeInsight.inlayProvider language="kotlin"
-                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinRangesHintsProvider"/>
+                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinValuesHintsProvider"/>
 
     <vcs.codeVisionLanguageContext language="kotlin"
                                    implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinVcsCodeVisionContext"/>
