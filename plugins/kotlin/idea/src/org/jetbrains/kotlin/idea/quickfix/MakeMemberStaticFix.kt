@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 class MakeMemberStaticFix(private val declaration: KtNamedDeclaration) : KotlinQuickFixAction<KtNamedDeclaration>(declaration) {
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         fun makeStaticAndReformat(declaration: KtNamedDeclaration) {
-            AddJvmStaticIntention().applyTo(declaration, editor)
+            val makeStaticIntention = AddJvmStaticIntention()
+            if (makeStaticIntention.applicabilityRange(declaration) != null) AddJvmStaticIntention().applyTo(declaration, editor)
             CodeStyleManager.getInstance(declaration.project).reformat(declaration, true)
         }
 
