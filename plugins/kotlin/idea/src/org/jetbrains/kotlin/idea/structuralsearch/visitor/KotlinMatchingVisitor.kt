@@ -422,8 +422,8 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         val type = other.resolveKotlinType()
         if (type != null) {
             val fqType = DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(type)
-            val analzyableFile = factory(other) {createAnalyzableFile("${other.hashCode()}.kt", "val x: $fqType = TODO()", other)}
-            return myMatchingVisitor.match(typeReference, (analzyableFile.lastChild as KtProperty).typeReference)
+            val analyzableFile = factory(other) {createAnalyzableFile("${other.hashCode()}.kt", "val x: $fqType = TODO()", other)}
+            return myMatchingVisitor.match(typeReference, (analyzableFile.lastChild as KtProperty).typeReference)
         }
         return false
     }
