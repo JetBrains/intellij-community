@@ -508,6 +508,7 @@ public class AllIcons {
     /** 24x24 */ public static final @NotNull Icon NotificationWarning = load("general/notificationWarning.svg", -1793999716, 2);
     /** 16x16 */ public static final @NotNull Icon OpenDisk = load("general/openDisk.svg", 1690828212, 0);
     /** 16x16 */ public static final @NotNull Icon OpenDiskHover = load("general/openDiskHover.svg", 1612325831, 0);
+    /** 16x16 */ public static final @NotNull Icon OpenInToolWindow = load("general/openInToolWindow.svg", -1512598006, 2);
     /** 16x16 */ public static final @NotNull Icon OverridenMethod = load("general/overridenMethod.svg", -303739634, 0);
     /** 16x16 */ public static final @NotNull Icon OverridingMethod = load("general/overridingMethod.svg", -440147955, 0);
     /** 16x16 */ public static final @NotNull Icon Pin_tab = load("general/pin_tab.svg", 513437504, 2);
