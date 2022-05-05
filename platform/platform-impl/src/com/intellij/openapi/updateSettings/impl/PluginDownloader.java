@@ -315,14 +315,17 @@ public final class PluginDownloader {
   public void install() throws IOException {
     boolean loaded = LoadingState.COMPONENTS_LOADED.isOccurred();
 
+    boolean keepArchive = !loaded ||
+                          RegistryManager.getInstance().is("ide.plugins.keep.archive");
     PluginInstaller.installAfterRestart(getFilePath(),
-                                        !loaded || RegistryManager.getInstance().is("ide.plugins.keep.archive"),
+                                        !keepArchive,
                                         myOldFile,
                                         myDescriptor);
 
     if (loaded) {
       InstalledPluginsState.getInstance().onPluginInstall(myDescriptor,
-                                                          PluginManagerCore.isPluginInstalled(myDescriptor.getPluginId()), true);
+                                                          PluginManagerCore.isPluginInstalled(myDescriptor.getPluginId()),
+                                                          true);
     }
     else {
       InstalledPluginsState.addPreInstalledPlugin(myDescriptor);
