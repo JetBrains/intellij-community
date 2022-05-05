@@ -1041,14 +1041,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         ApplicationManager.getApplication().invokeAndWait(() -> {
           JPanel panel = new JPanel(new BorderLayout());
           panel.setOpaque(false);
-          Splitter splitter = new OnePixelSplitter(orientation, proportion, 0.1f, 0.9f) {
-            @Override
-            protected Divider createDivider() {
-              Divider divider = super.createDivider();
-              divider.setBackground(JBColor.namedColor("EditorPane.splitBorder", JBColor.border()));
-              return divider;
-            }
-          };
+          Splitter splitter = createSplitter(orientation, proportion, 0.1f, 0.9f);
           splitter.putClientProperty(SPLITTER_KEY, Boolean.TRUE);
           panel.add(splitter, BorderLayout.CENTER);
           splitter.setFirstComponent(firstComponent);
@@ -1118,6 +1111,18 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
     EditorsSplitters splitters = activeWindow == null ? null : fileEditorManager.getSplittersFor(activeWindow);
     return splitters == null ? fileEditorManager.getSplitters() : splitters;
+  }
+
+  @NotNull
+  public static OnePixelSplitter createSplitter(boolean orientation, float proportion, final float minProp, final float maxProp) {
+    return new OnePixelSplitter(orientation, proportion, minProp, maxProp) {
+      @Override
+      protected Divider createDivider() {
+        Divider divider = super.createDivider();
+        divider.setBackground(JBColor.namedColor("EditorPane.splitBorder", JBColor.border()));
+        return divider;
+      }
+    };
   }
 
   public static @Nullable JComponent findDefaultComponentInSplitters(@Nullable Project project)  {

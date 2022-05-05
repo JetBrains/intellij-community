@@ -359,6 +359,11 @@
       "description": "Inner insets around each editor tab"
     },
     {
+      "key": "EditorPane.splitBorder",
+      "description": "Separator color for editor split mode",
+      "since": "2022.2"
+    },
+    {
       "key": "FileColor.Blue",
       "description": "Settings | Appearance & Behavior | File colors"
     },

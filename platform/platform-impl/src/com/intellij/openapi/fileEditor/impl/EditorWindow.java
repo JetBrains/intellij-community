@@ -646,7 +646,7 @@ public final class EditorWindow {
       myPanel = new JPanel(new BorderLayout());
       myPanel.setOpaque(false);
 
-      Splitter splitter = new OnePixelSplitter(orientation == JSplitPane.VERTICAL_SPLIT, 0.5f, 0.1f, 0.9f);
+      Splitter splitter = EditorsSplitters.createSplitter(orientation == JSplitPane.VERTICAL_SPLIT, 0.5f, 0.1f, 0.9f);
       splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, Boolean.TRUE);
       EditorWindow res = new EditorWindow(myOwner, myOwner);
       EditorComposite selectedComposite = getSelectedComposite();
