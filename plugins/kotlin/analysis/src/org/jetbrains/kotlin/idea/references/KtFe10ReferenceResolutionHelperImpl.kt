@@ -10,12 +10,16 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.descriptors.references.base.KtFe10ReferenceResolutionHelper
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
@@ -40,4 +44,20 @@ class KtFe10ReferenceResolutionHelperImpl : KtFe10ReferenceResolutionHelper {
 
     override fun resolveImportReference(file: KtFile, fqName: FqName): Collection<DeclarationDescriptor> =
         file.resolveImportReference(fqName)
+
+    override fun resolveKDocLink(element: KDocName): Collection<DeclarationDescriptor> {
+        val declaration = element.getContainingDoc().getOwner() ?: return arrayListOf()
+        val resolutionFacade = element.getResolutionFacade()
+        val correctContext = resolutionFacade.analyze(declaration, BodyResolveMode.PARTIAL)
+        val declarationDescriptor = correctContext[BindingContext.DECLARATION_TO_DESCRIPTOR, declaration] ?: return arrayListOf()
+
+        val kdocLink = element.getStrictParentOfType<KDocLink>()!!
+        return org.jetbrains.kotlin.idea.kdoc.resolveKDocLink(
+            correctContext,
+            resolutionFacade,
+            declarationDescriptor,
+            kdocLink.getTagIfSubject(),
+            element.getQualifiedName()
+        )
+    }
 }
