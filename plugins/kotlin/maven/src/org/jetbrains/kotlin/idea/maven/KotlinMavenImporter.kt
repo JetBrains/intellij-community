@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.maven
 
@@ -68,7 +68,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         changes: MavenProjectChanges,
         modifiableModelsProvider: IdeModifiableModelsProvider
     ) {
-        KotlinJpsPluginSettings.getInstanceUnsafe(module.project)?.update {
+        KotlinJpsPluginSettings.getInstance(module.project)?.update {
             version = ""
         }
     }
@@ -258,7 +258,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
             modifiableModelsProvider,
             emptySet()
         )
-        KotlinJpsPluginSettings.getInstanceUnsafe(module.project)?.update {
+        KotlinJpsPluginSettings.getInstance(module.project)?.update {
             version = maxOf(IdeKotlinVersion.opt(version) ?: compilerVersion, compilerVersion).rawVersion
         }
         val facetSettings = kotlinFacet.configuration.settings

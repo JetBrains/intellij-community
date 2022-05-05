@@ -32,24 +32,18 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
 
             if (jpsPluginSettings.settings.version.isEmpty()) {
                 // Encourage user to specify desired Kotlin compiler version in project settings for sake of reproducible builds
+                // it's important to trigger `.idea/kotlinc.xml` file creation
                 jpsPluginSettings.update { version = DEFAULT_VERSION }
             }
         }
 
-        fun getJpsVersion(project: Project): String? {
-            return getInstanceUnsafe(project)?.settings?.version?.ifEmpty { DEFAULT_VERSION }
-        }
+        fun jpsVersion(project: Project): String? = getInstance(project)?.settings?.versionWithFallback
 
-        /**
-         * [getInstanceUnsafe] is needed for cases when:
-         * * it's important to preserve "not initialized" state
-         * * it's important not to trigger `.idea/kotlinc.xml` file creation
-         *
-         * @return "bare" [JpsPluginSettings]
-         */
-        fun getInstanceUnsafe(project: Project): KotlinJpsPluginSettings? =
-            if (isUnbundledJpsExperimentalFeatureEnabled(project)) project.service() else null
+        @JvmStatic
+        fun getInstance(project: Project): KotlinJpsPluginSettings? =
+            project.takeIf { isUnbundledJpsExperimentalFeatureEnabled(it) }?.service()
 
+        @JvmStatic
         fun isUnbundledJpsExperimentalFeatureEnabled(project: Project): Boolean =
             isUnitTestMode() || !project.isDefault &&
                     project.stateStore.directoryStorePath?.resolve("kotlin-unbundled-jps-experimental-feature-flag")?.exists() == true

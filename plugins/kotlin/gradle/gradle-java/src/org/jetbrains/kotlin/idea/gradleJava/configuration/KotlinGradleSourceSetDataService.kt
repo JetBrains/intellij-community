@@ -114,7 +114,7 @@ class KotlinGradleSourceSetDataService : AbstractProjectDataService<GradleSource
             GradleProjectImportHandler.getInstances(project).forEach { it.importBySourceSet(kotlinFacet, sourceSetNode) }
         }
         if (maxCompilerVersion != null) {
-            KotlinJpsPluginSettings.getInstanceUnsafe(project)?.update {
+            KotlinJpsPluginSettings.getInstance(project)?.update {
                 version = maxCompilerVersion.rawVersion
             }
         }

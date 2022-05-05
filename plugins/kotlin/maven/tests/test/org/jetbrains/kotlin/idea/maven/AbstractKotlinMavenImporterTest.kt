@@ -14,7 +14,6 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
-import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
@@ -663,7 +662,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                 )
             }
 
-            Assert.assertEquals(kotlinMavenPluginVersion, KotlinJpsPluginSettings.getJpsVersion(myProject))
+            Assert.assertEquals(kotlinMavenPluginVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
 
             assertSources("project", "src/main/kotlin")
             assertTestSources("project", "src/test/java")
@@ -884,7 +883,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             """
             )
 
-            Assert.assertEquals(kotlinVersion, KotlinJpsPluginSettings.getJpsVersion(myProject))
+            Assert.assertEquals(kotlinVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
 
             assertModules("project")
             assertImporterStatePresent()
@@ -2173,7 +2172,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             assertImporterStatePresent()
 
             // The highest of available versions should be picked
-            Assert.assertEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.getJpsVersion(myProject))
+            Assert.assertEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.jpsVersion(myProject))
         }
     }
 

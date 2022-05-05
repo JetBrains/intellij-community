@@ -128,7 +128,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         this.commonCompilerArguments = commonCompilerArguments;
         this.k2jsCompilerArguments = k2jsCompilerArguments;
         this.compilerSettings = compilerSettings;
-        this.jpsPluginSettings = Optional.ofNullable(isProjectSettings ? KotlinJpsPluginSettings.Companion.getInstanceUnsafe(project) : null)
+        this.jpsPluginSettings = Optional.ofNullable(isProjectSettings ? KotlinJpsPluginSettings.getInstance(project) : null)
                 .map(KotlinJpsPluginSettings::getSettings)
                 .map(FreezableKt::unfrozen)
                 .orElse(null);
@@ -178,10 +178,10 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     @SuppressWarnings("unused") // Empty constructor fixes 'Extension should not have constructor with parameters (except Project)'
     public KotlinCompilerConfigurableTab(Project project) {
         this(project,
-             FreezableKt.unfrozen(KotlinCommonCompilerArgumentsHolder.Companion.getInstance(project).getSettings()),
-             FreezableKt.unfrozen(Kotlin2JsCompilerArgumentsHolder.Companion.getInstance(project).getSettings()),
-             FreezableKt.unfrozen(Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project).getSettings()),
-             FreezableKt.unfrozen(KotlinCompilerSettings.Companion.getInstance(project).getSettings()),
+             FreezableKt.unfrozen(KotlinCommonCompilerArgumentsHolder.getInstance(project).getSettings()),
+             FreezableKt.unfrozen(Kotlin2JsCompilerArgumentsHolder.getInstance(project).getSettings()),
+             FreezableKt.unfrozen(Kotlin2JvmCompilerArgumentsHolder.getInstance(project).getSettings()),
+             FreezableKt.unfrozen(KotlinCompilerSettings.getInstance(project).getSettings()),
              KotlinCompilerWorkspaceSettings.getInstance(project),
              true,
              false);
@@ -413,7 +413,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         languageVersionComboBox.addItem(VersionView.LatestStable.INSTANCE);
         apiVersionComboBox.addItem(VersionView.LatestStable.INSTANCE);
 
-        if (isProjectSettings && KotlinJpsPluginSettings.Companion.isUnbundledJpsExperimentalFeatureEnabled(project)) {
+        if (isProjectSettings && KotlinJpsPluginSettings.isUnbundledJpsExperimentalFeatureEnabled(project)) {
             ComboBoxTextItem loadingItem = new ComboBoxTextItem(KotlinBundle.message("loading.available.versions.from.maven"), false);
             kotlinJpsPluginVersionComboBox.addItem(loadingItem);
             fetchAvailableJpsCompilersAsync(
@@ -651,14 +651,14 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
                 String jpsPluginVersion = getSelectedKotlinJpsPluginVersion();
                 if (!jpsPluginSettings.getVersion().isEmpty() || !jpsPluginVersion.equals(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings))) {
                     jpsPluginSettings.setVersion(jpsPluginVersion);
-                    KotlinJpsPluginSettings.Companion.getInstanceUnsafe(project).setSettings(jpsPluginSettings);
+                    KotlinJpsPluginSettings.getInstance(project).setSettings(jpsPluginSettings);
                 }
             }
 
-            KotlinCommonCompilerArgumentsHolder.Companion.getInstance(project).setSettings(commonCompilerArguments);
-            Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project).setSettings(k2jvmCompilerArguments);
-            Kotlin2JsCompilerArgumentsHolder.Companion.getInstance(project).setSettings(k2jsCompilerArguments);
-            KotlinCompilerSettings.Companion.getInstance(project).setSettings(compilerSettings);
+            KotlinCommonCompilerArgumentsHolder.getInstance(project).setSettings(commonCompilerArguments);
+            Kotlin2JvmCompilerArgumentsHolder.getInstance(project).setSettings(k2jvmCompilerArguments);
+            Kotlin2JsCompilerArgumentsHolder.getInstance(project).setSettings(k2jsCompilerArguments);
+            KotlinCompilerSettings.getInstance(project).setSettings(compilerSettings);
         }
 
         for (ClearBuildStateExtension extension : ClearBuildStateExtension.getExtensions()) {

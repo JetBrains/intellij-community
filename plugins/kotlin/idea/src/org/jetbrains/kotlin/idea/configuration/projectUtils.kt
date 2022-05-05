@@ -47,7 +47,7 @@ fun findExternalKotlinCompilerVersions(project: Project): Set<IdeKotlinVersion> 
     }
 
     if (hasJpsModules) {
-        val projectGlobalVersion = KotlinJpsPluginSettings.getJpsVersion(project)?.let(IdeKotlinVersion::opt)
+        val projectGlobalVersion = KotlinJpsPluginSettings.jpsVersion(project)?.let(IdeKotlinVersion::opt)
         if (projectGlobalVersion != null) {
             result.add(projectGlobalVersion)
         }

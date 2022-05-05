@@ -46,11 +46,11 @@ class KotlinDistAutomaticDownloaderForKotlinBundled : StartupActivity.DumbAware 
         val detector = KotlinBundledUsageDetector.getInstance(project)
         detector.coroutineScope.launch {
             detector.isKotlinBundledPotentiallyUsedInLibraries.collect {
-                downloadKotlinDistIfNeeded(it, KotlinJpsPluginSettings.getJpsVersion(project) ?: return@collect, project)
+                downloadKotlinDistIfNeeded(it, KotlinJpsPluginSettings.jpsVersion(project) ?: return@collect, project)
             }
         }
 
-        KotlinJpsPluginSettings.getInstanceUnsafe(project)?.settings?.let { settings ->
+        KotlinJpsPluginSettings.getInstance(project)?.settings?.let { settings ->
             downloadKotlinDistIfNeeded(
                 KotlinBundledUsageDetector.getInstance(project).isKotlinBundledPotentiallyUsedInLibraries.value,
                 settings.version,

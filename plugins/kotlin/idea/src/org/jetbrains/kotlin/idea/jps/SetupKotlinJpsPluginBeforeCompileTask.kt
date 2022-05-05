@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.core.util.toPsiFile
 
 class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
     override fun execute(context: CompileContext): Boolean {
-        val version = KotlinJpsPluginSettings.getJpsVersion(context.project) ?: return true
+        val version = KotlinJpsPluginSettings.jpsVersion(context.project) ?: return true
 
         val parsed = IdeKotlinVersion.opt(version)
         if (parsed == null) {

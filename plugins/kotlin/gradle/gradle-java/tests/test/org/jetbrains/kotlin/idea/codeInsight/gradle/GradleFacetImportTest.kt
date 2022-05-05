@@ -41,7 +41,6 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Ignore
 import org.junit.Test
@@ -89,7 +88,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             )
         }
 
-        assertEquals("1.3.72", KotlinJpsPluginSettings.getJpsVersion(myProject))
+        assertEquals("1.3.72", KotlinJpsPluginSettings.jpsVersion(myProject))
 
         assertAllModulesConfigured()
 
@@ -184,7 +183,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("1.4", apiLevel!!.versionString)
         }
 
-        assertEquals("1.4.20", KotlinJpsPluginSettings.getJpsVersion(myProject))
+        assertEquals("1.4.20", KotlinJpsPluginSettings.jpsVersion(myProject))
 
         assertAllModulesConfigured()
     }
@@ -464,7 +463,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals(JvmPlatforms.jvm6, targetPlatform)
         }
 
-        assertEquals("1.3.72", KotlinJpsPluginSettings.getJpsVersion(myProject))
+        assertEquals("1.3.72", KotlinJpsPluginSettings.jpsVersion(myProject))
 
         assertEquals(
             listOf(
@@ -496,7 +495,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertTrue(targetPlatform.isJs())
         }
 
-        assertEquals("1.3.50", KotlinJpsPluginSettings.getJpsVersion(myProject))
+        assertEquals("1.3.50", KotlinJpsPluginSettings.jpsVersion(myProject))
 
         assertEquals(
             listOf(
@@ -738,7 +737,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("my/test/destination", (compilerArguments as K2MetadataCompilerArguments).destination)
         }
 
-        assertEquals("1.3.72", KotlinJpsPluginSettings.getJpsVersion(myProject))
+        assertEquals("1.3.72", KotlinJpsPluginSettings.jpsVersion(myProject))
 
         val rootManager = ModuleRootManager.getInstance(getModule("project.main"))
         val stdlib = rootManager.orderEntries.filterIsInstance<LibraryOrderEntry>().single().library
