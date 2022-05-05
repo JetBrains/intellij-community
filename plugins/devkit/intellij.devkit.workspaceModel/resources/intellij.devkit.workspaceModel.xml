@@ -8,4 +8,13 @@
         <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
       </action>
   </actions>
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection language="kotlin"
+                     groupBundle="messages.DevKitWorkspaceModelBundle"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
+                     runForWholeFile="true"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.workspaceModel.codegen.WorkspaceApiVersionInspection"
+                     key="inspection.workspace.obsolete.model.display.name"/>
+  </extensions>
 </idea-plugin>
