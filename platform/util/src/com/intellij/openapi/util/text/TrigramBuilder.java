@@ -25,6 +25,16 @@ public final class TrigramBuilder {
       }
 
       @Override
+      public boolean containsKey(int k) {
+        return trigrams.contains(k);
+      }
+
+      @Override
+      public boolean containsValue(Object v) {
+        return v == null && !isEmpty();
+      }
+
+      @Override
       public ObjectSet<Entry<Void>> int2ObjectEntrySet() {
         return new AbstractObjectSet<Entry<Void>>() {
           @Override
