@@ -45,6 +45,16 @@ class KotlinJUnitUnconstructableInspectionTest : JUnitUnconstructableTestCaseTes
     """.trimIndent())
   }
 
+  fun testUnconstructableJUnit3TestCaseAnynoymousObject() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      import junit.framework.TestCase
+      
+      class Test {
+          private val testCase = object : TestCase() { }
+      }
+    """.trimIndent())
+  }
+
   fun testUnconstructableJUnit4TestCase1() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       import org.junit.Test

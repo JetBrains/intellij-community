@@ -10,6 +10,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.PsiTypeParameter
 import com.siyeh.ig.psiutils.TestUtils
 import com.siyeh.ig.psiutils.TypeUtils
+import org.jetbrains.uast.UAnonymousClass
 import org.jetbrains.uast.UClass
 
 class JUnitUnconstructableTestCaseInspection : AbstractBaseUastLocalInspectionTool() {
@@ -20,7 +21,7 @@ class JUnitUnconstructableTestCaseInspection : AbstractBaseUastLocalInspectionTo
     if (javaClass.hasModifier(JvmModifier.ABSTRACT)) return emptyArray()
     if (javaClass is PsiTypeParameter) return emptyArray()
     if (TestUtils.isJUnitTestClass(javaClass)) { // JUnit 3
-      if (!javaClass.hasModifier(JvmModifier.PUBLIC)) {
+      if (!javaClass.hasModifier(JvmModifier.PUBLIC) && aClass !is UAnonymousClass) {
         val message = JvmAnalysisBundle.message("jvm.inspections.unconstructable.test.case.not.public.descriptor")
         return arrayOf(
           manager.createProblemDescriptor(
@@ -43,7 +44,7 @@ class JUnitUnconstructableTestCaseInspection : AbstractBaseUastLocalInspectionTo
         }
       }
     } else if (TestUtils.isJUnit4TestClass(javaClass, false)) { // JUnit 4
-      if (!javaClass.hasModifier(JvmModifier.PUBLIC)) {
+      if (!javaClass.hasModifier(JvmModifier.PUBLIC) && aClass !is UAnonymousClass) {
         val message = JvmAnalysisBundle.message("jvm.inspections.unconstructable.test.case.not.public.descriptor")
         return arrayOf(
           manager.createProblemDescriptor(
