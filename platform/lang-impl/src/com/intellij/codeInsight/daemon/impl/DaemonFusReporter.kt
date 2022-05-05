@@ -11,6 +11,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
+import kotlin.math.log10
+import kotlin.math.pow
 
 class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
   var daemonStartTime = -1L
@@ -28,6 +30,7 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
     val warningIndex = registrar.getSeverityIdx(HighlightSeverity.WARNING)
     val errorCount = errorCounts?.let { it[errorIndex] } ?: -1
     val warningCount = errorCounts?.let { it[warningIndex] } ?: -1
+    val lines = editor?.document?.lineCount?.roundInt() ?: -1
     val elapsedTime = System.currentTimeMillis() - daemonStartTime
     val fileType = editor?.let { FileDocumentManager.getInstance().getFile(it.document)?.fileType }
 
@@ -36,18 +39,26 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
       EventFields.DurationMs with elapsedTime,
       DaemonFusCollector.ERRORS with errorCount,
       DaemonFusCollector.WARNINGS with warningCount,
+      DaemonFusCollector.LINES with lines,
       EventFields.FileType with fileType
     )
+  }
+
+  private fun Int.roundInt(): Int {
+    val l = log10(toDouble()).toInt()
+    val p = 10.0.pow(l.toDouble()).toInt()
+    return (this - this % p).coerceAtLeast(10)
   }
 }
 
 class DaemonFusCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("daemon", 1)
+    val GROUP = EventLogGroup("daemon", 2)
     val ERRORS = EventFields.Int("errors")
     val WARNINGS = EventFields.Int("warnings")
+    val LINES = EventFields.Int("lines")
     val FINISHED = GROUP.registerVarargEvent("finished",
-        EventFields.DurationMs, ERRORS, WARNINGS, EventFields.FileType)
+        EventFields.DurationMs, ERRORS, WARNINGS, LINES, EventFields.FileType)
   }
 
   override fun getGroup(): EventLogGroup {
