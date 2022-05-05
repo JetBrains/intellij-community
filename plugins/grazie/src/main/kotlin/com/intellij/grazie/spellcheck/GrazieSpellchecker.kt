@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.spellcheck
 
+import ai.grazie.detector.heuristics.rule.RuleFilter
+import ai.grazie.utils.emptyLinkedSet
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GraziePlugin
-import com.intellij.grazie.detector.heuristics.rule.RuleFilter
-import com.intellij.grazie.detector.utils.collections.emptyLinkedSet
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool

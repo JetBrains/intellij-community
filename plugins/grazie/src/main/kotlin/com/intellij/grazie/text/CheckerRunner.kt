@@ -2,7 +2,9 @@
 
 package com.intellij.grazie.text
 
-import ai.grazie.nlp.tokenizer.sentence.SRXSentenceTokenizer
+import ai.grazie.nlp.tokenizer.sentence.RuleSentenceTokenizer
+import ai.grazie.utils.mpp.FromResourcesDataLoader
+import ai.grazie.utils.toLinkedSet
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptorBase
@@ -14,7 +16,6 @@ import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieCustomFixWrappe
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
-import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.blockingContext
@@ -30,7 +31,7 @@ import com.intellij.refactoring.suggested.startOffset
 import kotlinx.coroutines.*
 
 class CheckerRunner(val text: TextContent) {
-  private val sentences by lazy { SRXSentenceTokenizer.tokenize(text.toString()) }
+  private val sentences by lazy { tokenizer.tokenize(text.toString()) }
 
   fun run(checkers: List<TextChecker>, consumer: (TextProblem) -> Unit) {
     runBlockingCancellable {
@@ -210,6 +211,12 @@ class CheckerRunner(val text: TextContent) {
 
   private fun highlightSpan(problem: TextProblem) =
     TextRange(problem.highlightRanges[0].startOffset, problem.highlightRanges.last().endOffset)
+
+  companion object {
+    private val tokenizer by lazy {
+      runBlocking { RuleSentenceTokenizer.load(FromResourcesDataLoader) }
+    }
+  }
 }
 
 private val filterEp = LanguageExtension<ProblemFilter>("com.intellij.grazie.problemFilter")

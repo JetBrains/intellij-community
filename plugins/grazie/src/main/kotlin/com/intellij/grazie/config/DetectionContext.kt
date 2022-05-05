@@ -1,11 +1,11 @@
 package com.intellij.grazie.config
 
+import ai.grazie.detector.ChainLanguageDetector
+import ai.grazie.detector.LanguageDetector
+import ai.grazie.detector.heuristics.list.ListDetector
+import ai.grazie.detector.ngram.NgramDetector
+import ai.grazie.nlp.langs.Language
 import com.intellij.grazie.detection.hasWhitespaces
-import com.intellij.grazie.detector.ChainLanguageDetector
-import com.intellij.grazie.detector.LanguageDetector
-import com.intellij.grazie.detector.heuristics.list.ListDetector
-import com.intellij.grazie.detector.model.Language
-import com.intellij.grazie.detector.ngram.NgramDetector
 import com.intellij.util.xmlb.annotations.Property
 import java.util.concurrent.ConcurrentHashMap
 
