@@ -26,10 +26,7 @@ import com.intellij.toolWindow.ToolWindowEventSource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup.*;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlatformPlugin;
@@ -44,12 +41,11 @@ import static com.intellij.openapi.wm.ToolWindowId.*;
  *
  * <p>
  *   If toolwindow is registered dynamically is <b>should</b> be explicitly whitelisted
- *   in plugin.xml {@link #EP_NAME} or here in {@link ToolWindowCollector#ourToolwindowWhitelist}
+ *   in plugin.xml {@link #EP_NAME} or here in {@link ToolWindowCollector#ourToolwindowAllowList}
  * </p>
  */
 public final class ToolWindowCollector {
   private static final ExtensionPointName<ToolWindowAllowlistEP> EP_NAME = new ExtensionPointName<>("com.intellij.toolWindowAllowlist");
-  private static final ToolWindowInfo UNKNOWN = new ToolWindowInfo("unknown", getUnknownPlugin());
 
   public static ToolWindowCollector getInstance() {
     return Holder.INSTANCE;
@@ -65,23 +61,12 @@ public final class ToolWindowCollector {
    * If toolwindow is registered in plugin.xml, it's whitelisted automatically. <br/>
    * To whitelist dynamically registered plugin toolwindow use {@link #EP_NAME}
    */
-  private static final Map<String, ToolWindowInfo> ourToolwindowWhitelist = new HashMap<>();
+  private static final Map<String, PluginInfo> ourToolwindowAllowList = new HashMap<>();
+
   static {
-    ourToolwindowWhitelist.put(MESSAGES_WINDOW, new ToolWindowInfo(MESSAGES_WINDOW));
-    ourToolwindowWhitelist.put(DEBUG, new ToolWindowInfo(DEBUG));
-    ourToolwindowWhitelist.put(RUN, new ToolWindowInfo(RUN));
-    ourToolwindowWhitelist.put(BuildContentManager.TOOL_WINDOW_ID, new ToolWindowInfo(BuildContentManager.TOOL_WINDOW_ID));
-    ourToolwindowWhitelist.put(FIND, new ToolWindowInfo(FIND));
-    ourToolwindowWhitelist.put("CVS", new ToolWindowInfo("CVS"));
-    ourToolwindowWhitelist.put(HIERARCHY, new ToolWindowInfo(HIERARCHY));
-    ourToolwindowWhitelist.put(DEPENDENCIES, new ToolWindowInfo(DEPENDENCIES));
-    ourToolwindowWhitelist.put(MODULES_DEPENDENCIES, new ToolWindowInfo(MODULES_DEPENDENCIES));
-    ourToolwindowWhitelist.put(DUPLICATES, new ToolWindowInfo(DUPLICATES));
-    ourToolwindowWhitelist.put(EXTRACT_METHOD, new ToolWindowInfo(EXTRACT_METHOD));
-    ourToolwindowWhitelist.put(DOCUMENTATION, new ToolWindowInfo(DOCUMENTATION));
-    ourToolwindowWhitelist.put(PREVIEW, new ToolWindowInfo(PREVIEW));
-    ourToolwindowWhitelist.put(SERVICES, new ToolWindowInfo(SERVICES));
-    ourToolwindowWhitelist.put(ENDPOINTS, new ToolWindowInfo(ENDPOINTS));
+    Arrays.asList(MESSAGES_WINDOW, DEBUG, RUN, FIND, HIERARCHY, DEPENDENCIES, MODULES_DEPENDENCIES, DUPLICATES, EXTRACT_METHOD,
+                  DOCUMENTATION, PREVIEW, SERVICES, ENDPOINTS, BuildContentManager.TOOL_WINDOW_ID, "CVS")
+      .forEach(id -> ourToolwindowAllowList.put(id, getPlatformPlugin()));
   }
 
   private ToolWindowCollector() {
@@ -97,7 +82,7 @@ public final class ToolWindowCollector {
   private static void addToolwindowToWhitelist(@NotNull ToolWindowAllowlistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
     PluginInfo info = PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor);
     if (info.isDevelopedByJetBrains()) {
-      ourToolwindowWhitelist.put(extension.id, new ToolWindowInfo(extension.id, info));
+      ourToolwindowAllowList.put(extension.id, info);
     }
   }
 
@@ -127,10 +112,10 @@ public final class ToolWindowCollector {
       return;
     }
 
-    ToolWindowInfo info = getToolWindowInfo(toolWindowId);
+    PluginInfo info = getToolWindowInfo(toolWindowId);
     List<EventPair<?>> data = new ArrayList<>();
-    data.add(TOOLWINDOW_ID.with(info.myRecordedId));
-    data.add(EventFields.PluginInfo.with(info.myPluginInfo));
+    data.add(TOOLWINDOW_ID.with(toolWindowId));
+    data.add(EventFields.PluginInfo.with(info));
     if (windowInfo != null) {
       data.add(VIEW_MODE.with(ViewMode.fromWindowInfo(windowInfo)));
       data.add(LOCATION.with(Anchor.fromWindowInfo(windowInfo)));
@@ -141,26 +126,26 @@ public final class ToolWindowCollector {
     event.log(project, data.toArray(new EventPair[0]));
   }
 
-  private static @NotNull ToolWindowInfo getToolWindowInfo(@NotNull String toolWindowId) {
-    if (ourToolwindowWhitelist.containsKey(toolWindowId)) {
-      return ourToolwindowWhitelist.get(toolWindowId);
+  private static @NotNull PluginInfo getToolWindowInfo(@NotNull String toolWindowId) {
+    if (ourToolwindowAllowList.containsKey(toolWindowId)) {
+      return ourToolwindowAllowList.get(toolWindowId);
     }
 
-    ToolWindowInfo info = getToolWindowInfo(toolWindowId, ToolWindowEP.EP_NAME.getExtensions());
+    PluginInfo info = getToolWindowInfo(toolWindowId, ToolWindowEP.EP_NAME.getExtensions());
     if (info == null) {
       info = getToolWindowInfo(toolWindowId, LibraryDependentToolWindow.EXTENSION_POINT_NAME.getExtensions());
     }
     if (info == null) {
       info = getToolWindowInfo(toolWindowId, FacetDependentToolWindow.EXTENSION_POINT_NAME.getExtensions());
     }
-    return info != null ? info : UNKNOWN;
+    return info != null ? info : getUnknownPlugin();
   }
 
-  public static @Nullable ToolWindowInfo getToolWindowInfo(@NotNull String toolWindowId, ToolWindowEP @NotNull [] toolWindows) {
+  private static @Nullable PluginInfo getToolWindowInfo(@NotNull String toolWindowId, ToolWindowEP @NotNull [] toolWindows) {
     for (ToolWindowEP ep : toolWindows) {
       if (StringUtil.equals(toolWindowId, ep.id)) {
         PluginDescriptor pluginDescriptor = ep.getPluginDescriptor();
-        return new ToolWindowInfo(ep.id, PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor));
+        return PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor);
       }
     }
     return null;
@@ -180,22 +165,8 @@ public final class ToolWindowCollector {
       if (hasPluginField(context)) {
         return acceptWhenReportedByJetBrainsPlugin(context);
       }
-      ToolWindowInfo info = getToolWindowInfo(data);
-      return info.myPluginInfo.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
-    }
-  }
-
-  private static final class ToolWindowInfo {
-    private final String myRecordedId;
-    private final PluginInfo myPluginInfo;
-
-    private ToolWindowInfo(@NotNull String recordedId) {
-      this(recordedId, getPlatformPlugin());
-    }
-
-    private ToolWindowInfo(@NotNull String recordedId, @NotNull PluginInfo info) {
-      myRecordedId = recordedId;
-      myPluginInfo = info;
+      PluginInfo info = getToolWindowInfo(data);
+      return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
     }
   }
 }
