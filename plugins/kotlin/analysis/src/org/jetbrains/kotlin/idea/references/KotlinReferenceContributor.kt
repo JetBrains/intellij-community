@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.references
 
 import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.analysis.api.descriptors.references.base.KtFe10KotlinReferenceProviderContributor
-import org.jetbrains.kotlin.idea.kdoc.KDocReferenceDescriptorsImpl
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -41,8 +40,6 @@ class KotlinReferenceContributor : KotlinReferenceProviderContributor {
                         )
                 }
             }
-
-            registerProvider(factory = ::KDocReferenceDescriptorsImpl)
 
             registerProvider(KotlinDefaultAnnotationMethodImplicitReferenceProvider)
         }
