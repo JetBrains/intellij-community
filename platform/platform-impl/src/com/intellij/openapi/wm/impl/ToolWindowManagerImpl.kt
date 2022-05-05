@@ -2134,11 +2134,11 @@ private const val LAYOUT_TO_RESTORE = "layout-to-restore"
 private const val RECENT_TW_TAG = "recentWindows"
 
 private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowImpl): Boolean {
-  var source = if (component is JComponent) component else null
+  var source: Component? = if (component is JComponent) component else null
   val activeToolWindowComponent = activeToolWindow.decoratorComponent
   if (activeToolWindowComponent != null) {
     while (source != null && source !== activeToolWindowComponent) {
-      source = ClientProperty.get(source, ToolWindowManagerImpl.PARENT_COMPONENT) ?: source.parent as? JComponent
+      source = ClientProperty.get(source, ToolWindowManagerImpl.PARENT_COMPONENT) ?: source.parent as? Component
     }
   }
   return source != null
