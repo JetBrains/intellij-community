@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.lang.Language;
@@ -39,7 +39,7 @@ public interface EditorSettings {
   /**
    * Explicitly sets soft margins (visual indent guides) to be used in the editor instead of obtaining them from code style settings via
    * {@code CodeStyleSettings.getSoftMargins()} method. It is important to distinguish and empty list from {@code null} value: the first
-   * will define no soft margins for the eidtor while the latter will restore the default behavior of using them from code style settings.
+   * will define no soft margins for the editor while the latter will restore the default behavior of using them from code style settings.
    * @param softMargins A list of soft margins or {@code null} to use margins from code style settings.
    */
   void setSoftMargins(@Nullable List<Integer> softMargins);

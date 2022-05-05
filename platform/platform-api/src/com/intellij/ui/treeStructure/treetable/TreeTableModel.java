@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure.treetable;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -8,7 +8,7 @@ import javax.swing.tree.TreeModel;
 
 /**
  * TreeTableModel is the model used by a JTreeTable. It extends TreeModel
- * to add methods for getting inforamtion about the set of columns each
+ * to add methods for getting information about the set of columns each
  * node in the TreeTableModel may have. Each column, like a column in
  * a TableModel, has a name and a type associated with it. Each node in
  * the TreeTableModel can return a value for each of the columns and

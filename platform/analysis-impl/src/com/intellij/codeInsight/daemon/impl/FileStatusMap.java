@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
@@ -138,7 +138,7 @@ public final class FileStatusMap implements Disposable {
     public String toString() {
       @NonNls StringBuilder s = new StringBuilder();
       s.append("defensivelyMarked = ").append(defensivelyMarked);
-      s.append("; wolfPassFinfished = ").append(wolfPassFinished);
+      s.append("; wolfPassFinished = ").append(wolfPassFinished);
       s.append("; errorFound = ").append(errorFound);
       s.append("; dirtyScopes: (");
       dirtyScopes.forEach((passId, rangeMarker) ->
