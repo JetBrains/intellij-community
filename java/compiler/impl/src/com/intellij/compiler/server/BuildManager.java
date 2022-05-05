@@ -110,7 +110,8 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -844,8 +845,8 @@ public final class BuildManager implements Disposable {
 
     final String projectPath = getProjectPath(project);
     final boolean isAutomake = messageHandler instanceof AutoMakeMessageHandler;
-    final BuilderMessageHandler handler = new NotifyingMessageHandler(project, messageHandler, isAutomake);
-    WSLDistribution wslDistribution = findWSLDistributionForBuild(project);
+    final WSLDistribution wslDistribution = findWSLDistributionForBuild(project);
+    final BuilderMessageHandler handler = new NotifyingMessageHandler(project, messageHandler, wslDistribution != null ? wslDistribution::getWindowsPath : null, isAutomake);
     try {
       ensureListening(wslDistribution != null ? wslDistribution.getHostIpAddress() : InetAddress.getLoopbackAddress());
     }
@@ -1785,11 +1786,14 @@ public final class BuildManager implements Disposable {
   private static final class NotifyingMessageHandler extends DelegatingMessageHandler {
     private final Project myProject;
     private final BuilderMessageHandler myDelegateHandler;
+    @Nullable
+    private final Function<String, String> myPathMapper;
     private final boolean myIsAutomake;
 
-    NotifyingMessageHandler(@NotNull Project project, @NotNull BuilderMessageHandler delegateHandler, final boolean isAutomake) {
+    NotifyingMessageHandler(@NotNull Project project, @NotNull BuilderMessageHandler delegateHandler, @Nullable Function<String, String> pathMapper, final boolean isAutomake) {
       myProject = project;
       myDelegateHandler = delegateHandler;
+      myPathMapper = pathMapper;
       myIsAutomake = isAutomake;
     }
 
@@ -1826,6 +1830,34 @@ public final class BuildManager implements Disposable {
           LOG.error(e);
         }
       }
+    }
+
+    @Override
+    public void handleBuildMessage(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage msg) {
+      CmdlineRemoteProto.Message.BuilderMessage _message = msg;
+      if (myPathMapper != null) {
+        if (_message.hasCompileMessage()) {
+          final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage compileMessage = _message.getCompileMessage();
+          if (compileMessage.hasSourceFilePath()) {
+            final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Builder builder = CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.newBuilder(compileMessage);
+            builder.setSourceFilePath(myPathMapper.apply(compileMessage.getSourceFilePath())); 
+            _message = CmdlineRemoteProto.Message.BuilderMessage.newBuilder(_message).setCompileMessage(builder).build();
+          }
+        }
+        if (_message.hasBuildEvent()) {
+          final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent buildEvent = _message.getBuildEvent();
+          final int filesCount = buildEvent.getGeneratedFilesCount();
+          if (filesCount > 0) {
+            final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Builder builder = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.newBuilder(buildEvent);
+            for (int idx = 0; idx < filesCount; idx++) {
+              final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile file = buildEvent.getGeneratedFiles(idx);
+              builder.setGeneratedFiles(idx, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile.newBuilder(file).setOutputRoot(myPathMapper.apply(file.getOutputRoot())));
+            }
+            _message = CmdlineRemoteProto.Message.BuilderMessage.newBuilder(_message).setBuildEvent(builder).build();
+          }
+        }
+      }
+      super.handleBuildMessage(channel, sessionId, _message);
     }
   }
 
