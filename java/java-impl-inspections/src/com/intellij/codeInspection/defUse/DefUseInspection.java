@@ -14,6 +14,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
@@ -161,7 +162,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     final PsiClassInitializer[] classInitializers = psiClass.getInitializers();
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
     final PsiMethod[] constructors = !isStatic ? psiClass.getConstructors() : PsiMethod.EMPTY_ARRAY;
-    final boolean fieldHasInitializer = field.hasInitializer();
+    final boolean fieldHasInitializer = field.hasInitializer() && PsiAugmentProvider.canTrustFieldInitializer(field);
     final int maxPossibleWritesCount = classInitializers.length + (constructors.length != 0 ? 1 : 0) + (fieldHasInitializer ? 1 : 0);
     if (maxPossibleWritesCount <= 1) return;
 
