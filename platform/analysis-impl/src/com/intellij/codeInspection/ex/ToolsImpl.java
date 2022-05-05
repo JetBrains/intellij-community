@@ -409,12 +409,17 @@ public final class ToolsImpl implements Tools {
         if (scope != null) {
           PackageSet set = scope.getValue();
           if (set != null && set.contains(element.getContainingFile(), manager)) {
-            return state.isEnabled() && (includeDoNotShow || !HighlightDisplayLevel.DO_NOT_SHOW.equals(state.getLevel())) ? state.getTool() : null;
+            return state.isEnabled() && (includeDoNotShow || isAvailableInBatch(state)) ? state.getTool() : null;
           }
         }
       }
     }
-    return myDefaultState.isEnabled() && (includeDoNotShow || !HighlightDisplayLevel.DO_NOT_SHOW.equals(myDefaultState.getLevel())) ? myDefaultState.getTool() : null;
+    return myDefaultState.isEnabled() && (includeDoNotShow || isAvailableInBatch(myDefaultState)) ? myDefaultState.getTool() : null;
+  }
+
+  private static boolean isAvailableInBatch(ScopeToolState state) {
+    HighlightDisplayLevel level = state.getLevel();
+    return !(HighlightDisplayLevel.DO_NOT_SHOW.equals(level) || HighlightDisplayLevel.TEXT_ATTRIBUTES.equals(level));
   }
 
   @Nullable
