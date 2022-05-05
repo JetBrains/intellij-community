@@ -34,7 +34,6 @@ class CloneableProjectsService {
   ) {
     val progressIndicator = CloneableProjectProgressIndicator(projectPath, cloneTaskInfo)
     addCloneableProject(progressIndicator)
-    fireAddEvent(progressIndicator)
 
     val cloneProcess = Runnable {
       when (val cloneResult = cloneTask(progressIndicator)) {
@@ -70,12 +69,12 @@ class CloneableProjectsService {
   fun removeCloneProject(progressIndicator: ProgressIndicator) {
     progressIndicator.cancel()
     projectProgressIndicators.remove(progressIndicator)
-    fireEvent()
+    fireCloneRemovedEvent()
   }
 
   private fun addCloneableProject(progressIndicator: CloneableProjectProgressIndicator) {
     projectProgressIndicators.add(progressIndicator)
-    fireEvent()
+    fireCloneAddedEvent(progressIndicator)
   }
 
   private fun upgradeCloneProjectToRecent(progressIndicator: CloneableProjectProgressIndicator) {
@@ -83,15 +82,20 @@ class CloneableProjectsService {
 
     val recentProjectsManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
     recentProjectsManager.addRecentPath(progressIndicator.projectPath, RecentProjectMetaInfo())
-    fireEvent()
+
+    fireCloneRemovedEvent()
   }
 
-  private fun fireEvent() {
-    ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).change()
+  private fun fireCloneAddedEvent(progressIndicator: CloneableProjectProgressIndicator) {
+    ApplicationManager.getApplication().messageBus
+      .syncPublisher(TOPIC)
+      .onCloneAdded(progressIndicator, progressIndicator.cloneTaskInfo)
   }
 
-  private fun fireAddEvent(progressIndicator: CloneableProjectProgressIndicator) {
-    ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).add(progressIndicator, progressIndicator.cloneTaskInfo)
+  private fun fireCloneRemovedEvent() {
+    ApplicationManager.getApplication().messageBus
+      .syncPublisher(TOPIC)
+      .onCloneRemoved()
   }
 
   enum class CloneResult {
@@ -119,17 +123,17 @@ class CloneableProjectsService {
     }
   }
 
-  interface CloneProjectChange {
+  interface CloneProjectListener {
     @JvmDefault
-    fun add(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) {}
+    fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) {}
 
     @JvmDefault
-    fun change() {}
+    fun onCloneRemoved() {}
   }
 
   companion object {
     @JvmField
-    val TOPIC = Topic(CloneProjectChange::class.java)
+    val TOPIC = Topic(CloneProjectListener::class.java)
 
     @JvmStatic
     fun getInstance() = service<CloneableProjectsService>()

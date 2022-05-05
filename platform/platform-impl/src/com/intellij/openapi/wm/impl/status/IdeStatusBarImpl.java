@@ -788,9 +788,9 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
     ApplicationManager.getApplication().getMessageBus()
       .connect(this)
-      .subscribe(CloneableProjectsService.TOPIC, new CloneableProjectsService.CloneProjectChange() {
+      .subscribe(CloneableProjectsService.TOPIC, new CloneableProjectsService.CloneProjectListener() {
         @Override
-        public void add(@NotNull ProgressIndicatorEx progressIndicator, @NotNull TaskInfo taskInfo) {
+        public void onCloneAdded(@NotNull ProgressIndicatorEx progressIndicator, @NotNull TaskInfo taskInfo) {
           addProgress(progressIndicator, taskInfo);
         }
       });

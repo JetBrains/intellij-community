@@ -5,9 +5,11 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManager.RecentProjectsChange
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
-import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneProjectChange
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneProjectListener
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Alarm
 import com.intellij.util.ui.update.MergingUpdateQueue
@@ -27,8 +29,9 @@ internal object RecentProjectPanelComponentFactory {
 
     ApplicationManager.getApplication().messageBus.connect(parentDisposable).apply {
       subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, RecentProjectsChange { filteringTree.searchModel.updateStructure() })
-      subscribe(CloneableProjectsService.TOPIC, object : CloneProjectChange {
-        override fun change() = filteringTree.searchModel.updateStructure()
+      subscribe(CloneableProjectsService.TOPIC, object : CloneProjectListener {
+        override fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) = filteringTree.searchModel.updateStructure()
+        override fun onCloneRemoved() = filteringTree.searchModel.updateStructure()
       })
     }
 
