@@ -55,6 +55,7 @@ private fun <T : AbstractButton> Cell<T>.bindSelected(prop: MutableProperty<Bool
   return bind(AbstractButton::isSelected, AbstractButton::setSelected, prop)
 }
 
+@ApiStatus.Experimental
 fun <T : JCheckBox> Cell<T>.whenStateChangedFromUi(parentDisposable: Disposable? = null, listener: (Boolean) -> Unit): Cell<T> {
   return applyToComponent { whenStateChangedFromUiImpl(parentDisposable, listener) }
 }

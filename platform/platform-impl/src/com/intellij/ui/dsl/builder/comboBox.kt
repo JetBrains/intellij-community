@@ -73,6 +73,7 @@ fun <T, C : ComboBox<T>> C.columns(columns: Int) = apply {
   setMinimumAndPreferredWidth(columns * columnWidth + insets.left + insets.right)
 }
 
+@ApiStatus.Experimental
 fun <T, C : JComboBox<T>> Cell<C>.whenItemSelectedFromUi(parentDisposable: Disposable? = null, listener: (T) -> Unit): Cell<C> {
   return applyToComponent { whenItemSelectedFromUiImpl(parentDisposable, listener) }
 }

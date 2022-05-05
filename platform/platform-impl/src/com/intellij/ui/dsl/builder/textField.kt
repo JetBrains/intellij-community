@@ -140,6 +140,7 @@ fun <T : JTextComponent> Cell<T>.trimmedTextValidation(vararg validations: Dialo
 fun <T : JTextComponent> Cell<T>.textValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =
   validation(*validations.map2Array { it.forTextComponent() })
 
+@ApiStatus.Experimental
 fun <T: JTextComponent> Cell<T>.whenTextChangedFromUi(parentDisposable: Disposable? = null, listener: (String) -> Unit): Cell<T> {
   return applyToComponent { whenTextChangedFromUiImpl(parentDisposable, listener) }
 }

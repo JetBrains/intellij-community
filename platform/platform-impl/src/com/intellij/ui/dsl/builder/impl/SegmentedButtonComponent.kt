@@ -194,6 +194,7 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>, private val ren
       }
     }
 
+    @ApiStatus.Experimental
     fun <T> SegmentedButtonComponent<T>.whenItemSelectedFromUi(parentDisposable: Disposable? = null, listener: (T) -> Unit) {
       whenKeyReleased(parentDisposable) {
         fireItemSelectedFromUi(listener)

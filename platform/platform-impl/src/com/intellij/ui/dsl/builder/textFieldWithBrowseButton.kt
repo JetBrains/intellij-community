@@ -52,6 +52,7 @@ fun <T : TextFieldWithBrowseButton> Cell<T>.trimmedTextValidation(vararg validat
 fun <T : TextFieldWithBrowseButton> Cell<T>.textValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =
   validation(*validations.map2Array { it.forTextFieldWithBrowseButton() })
 
+@ApiStatus.Experimental
 fun <T : TextFieldWithBrowseButton> Cell<T>.whenTextChangedFromUi(parentDisposable: Disposable? = null, listener: (String) -> Unit): Cell<T> {
   return applyToComponent { whenTextChangedFromUiImpl(parentDisposable, listener) }
 }

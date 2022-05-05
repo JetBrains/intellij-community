@@ -41,6 +41,7 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 
   fun whenItemSelected(parentDisposable: Disposable? = null, listener: (T) -> Unit): SegmentedButton<T>
 
+  @ApiStatus.Experimental
   fun whenItemSelectedFromUi(parentDisposable: Disposable? = null, listener: (T) -> Unit): SegmentedButton<T>
 
   /**

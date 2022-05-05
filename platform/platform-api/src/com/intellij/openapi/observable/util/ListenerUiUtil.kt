@@ -15,6 +15,7 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.TableViewModel
 import com.intellij.util.ui.tree.TreeModelAdapter
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.awt.ItemSelectable
@@ -228,6 +229,7 @@ fun Disposable.whenDisposed(listener: () -> Unit) {
   Disposer.register(this, Disposable { listener() })
 }
 
+@Experimental
 fun <T> JComboBox<T>.whenItemSelectedFromUi(parentDisposable: Disposable? = null, listener: (T) -> Unit) {
   whenPopupMenuWillBecomeInvisible(parentDisposable) {
     invokeLater(ModalityState.stateForComponent(this)) {
@@ -239,10 +241,12 @@ fun <T> JComboBox<T>.whenItemSelectedFromUi(parentDisposable: Disposable? = null
   }
 }
 
+@Experimental
 fun TextFieldWithBrowseButton.whenTextChangedFromUi(parentDisposable: Disposable? = null, listener: (String) -> Unit) {
   textField.whenTextChangedFromUi(parentDisposable, listener)
 }
 
+@Experimental
 fun JTextComponent.whenTextChangedFromUi(parentDisposable: Disposable? = null, listener: (String) -> Unit) {
   whenKeyReleased(parentDisposable) {
     invokeLater(ModalityState.stateForComponent(this)) {
@@ -251,6 +255,7 @@ fun JTextComponent.whenTextChangedFromUi(parentDisposable: Disposable? = null, l
   }
 }
 
+@Experimental
 fun JCheckBox.whenStateChangedFromUi(parentDisposable: Disposable? = null, listener: (Boolean) -> Unit) {
   whenMouseReleased(parentDisposable) {
     invokeLater(ModalityState.stateForComponent(this)) {
