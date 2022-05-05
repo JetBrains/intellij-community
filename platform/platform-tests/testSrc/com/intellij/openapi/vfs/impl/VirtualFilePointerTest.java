@@ -11,11 +11,13 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
@@ -36,6 +38,7 @@ import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -47,6 +50,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -1279,18 +1283,40 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     while (root.getParentFile() != null) root = root.getParentFile();
     String diskRoot = UriUtil.trimTrailingSlashes(FileUtil.toSystemIndependentName(root.getPath()));
 
-    assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/abc/", "jar://" + diskRoot + "/abc!/", "abc");
-    assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/abc!/", "jar://" + diskRoot + "/abc!/", "abc");
-    assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/abc!/xxx", "jar://" + diskRoot + "/abc!/xxx", "xxx");
+    assertJarSeparatorParsedCorrectlyForFileInsideJar("/", "!/", null, "_");
+    assertJarSeparatorParsedCorrectlyForFileInsideJar("!/", "!/", null, "_");
+    assertJarSeparatorParsedCorrectlyForFileInsideJar("!/xxx", "!/xxx", "xxx", "xxx");
+    assertJarSeparatorParsedCorrectlyForFileInsideJar("!/xxx/!/yyy", "!/xxx/!/yyy", "yyy", "xxx/!/yyy");
     if (SystemInfo.isWindows) {
       assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/!/abc", "jar://" + diskRoot + "!/abc", "abc");
       assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "!/abc", "jar://" + diskRoot + "!/abc", "abc");
     }
   }
 
+  private void assertJarSeparatorParsedCorrectlyForFileInsideJar(@NotNull String relativePathInsideJar, @NotNull String expectedPointerRelativeUrl, @Nullable String expectedPointerFileName, @NotNull String expectedPathInsideJar) {
+    String abc = "abc" + new SecureRandom().nextLong()+".jar";
+    String tempRoot = UriUtil.trimTrailingSlashes(FileUtil.toSystemIndependentName(tempDir.getRoot().getPath()));
+    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create("jar://" + tempRoot + "/" + abc + relativePathInsideJar, disposable, null);
+    assertEquals(expectedPointerRelativeUrl, StringUtil.trimStart(pointer.getUrl(), "jar://" + tempRoot + "/" + abc));
+    String expectedPointerFileNameToCheck = expectedPointerFileName == null ? abc : expectedPointerFileName;
+    assertEquals(expectedPointerFileNameToCheck, pointer.getFileName());
+    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).myNode.myFS);
+    assertFalse(pointer.isValid());
+
+    File jar = IoTestUtil.createTestJar(new File(tempRoot+"/"+abc), List.of(Pair.create(expectedPathInsideJar, new byte[]{' ', ' '})));
+    assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar));
+    
+    assertTrue(pointer.isValid());
+    VirtualFile virtualFile = pointer.getFile();
+    assertNotNull(virtualFile);
+    assertEquals(expectedPointerFileNameToCheck, virtualFile.getName());
+  }
+
   private void assertJarSeparatorParsedCorrectly(@NotNull String sourceUrl, @NotNull String expectedPointerUrl, @NotNull String expectedPointerFileName) {
     VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(sourceUrl, disposable, null);
     assertEquals(expectedPointerUrl, pointer.getUrl());
     assertEquals(expectedPointerFileName, pointer.getFileName());
+    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).myNode.myFS);
+    assertFalse(pointer.isValid());
   }
 }
