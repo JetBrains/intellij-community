@@ -5,8 +5,10 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
@@ -48,4 +50,6 @@ abstract class JavaBasedLangSupport : AbstractLangSupport() {
   override fun checkSdk(sdk: Sdk?, project: Project) {}
 
   override fun blockProjectFileModification(project: Project, file: VirtualFile): Boolean = true
+
+  override fun isSdkConfigured(project: Project) = ProjectRootManager.getInstance(project).projectSdk?.sdkType is JavaSdkType
 }
