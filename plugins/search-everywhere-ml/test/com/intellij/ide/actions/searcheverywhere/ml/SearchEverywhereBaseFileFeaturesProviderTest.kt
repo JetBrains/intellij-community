@@ -16,7 +16,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 
-abstract class SearchEverywhereBaseFileFeaturesProviderTest<T : SearchEverywhereElementFeaturesProvider>(providerClass: Class<T>)
+internal abstract class SearchEverywhereBaseFileFeaturesProviderTest<T : SearchEverywhereElementFeaturesProvider>(providerClass: Class<T>)
   : HeavyFeaturesProviderTestCase<T>(providerClass) {
 
   protected val testFile: PsiFileSystemItem by lazy {

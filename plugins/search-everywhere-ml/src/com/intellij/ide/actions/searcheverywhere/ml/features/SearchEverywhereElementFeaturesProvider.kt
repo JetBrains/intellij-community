@@ -4,12 +4,11 @@ package com.intellij.ide.actions.searcheverywhere.ml.features
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 import com.intellij.textMatching.PrefixMatchingType
 import com.intellij.textMatching.PrefixMatchingUtil
 import kotlin.math.round
 
-abstract class SearchEverywhereElementFeaturesProvider(private val supportedContributorIds: List<String>) {
+internal abstract class SearchEverywhereElementFeaturesProvider(private val supportedContributorIds: List<String>) {
   constructor(vararg supportedTabs: Class<out SearchEverywhereContributor<*>>) : this(supportedTabs.map { it.simpleName })
 
   companion object {
@@ -49,13 +48,6 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
   open val isApplicableToEveryContributor: Boolean = false
 
   /**
-   * Returns data to be cached in the search session
-   */
-  open fun getDataToCache(project: Project?): Any? {
-    return null
-  }
-
-  /**
    * Returns true if the Search Everywhere contributor is supported by the feature provider.
    */
   fun isContributorSupported(contributorId: String): Boolean {
@@ -68,7 +60,7 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: Any?): List<EventPair<*>>
+                                  cache: FeaturesProviderCache?): List<EventPair<*>>
 
   internal fun addIfTrue(result: MutableList<EventPair<*>>, key: BooleanEventField, value: Boolean) {
     if (value) {

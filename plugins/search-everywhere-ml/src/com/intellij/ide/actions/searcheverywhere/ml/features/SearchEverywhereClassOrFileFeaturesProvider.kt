@@ -1,15 +1,14 @@
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
-import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
+import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.internal.statistic.local.FileTypeUsageLocalSummary
 import com.intellij.internal.statistic.local.FileTypeUsageSummary
-import com.intellij.internal.statistic.local.FileTypeUsageSummaryProvider
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.components.service
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -60,15 +59,6 @@ internal class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereEle
 
   }
 
-  override fun getDataToCache(project: Project?): Any? {
-    if (project == null) {
-      return null
-    }
-
-    val openedFile = FileEditorManager.getInstance(project).selectedEditor?.file
-    return Cache(deepCopyFileTypeStats(project), openedFile)
-  }
-
   override fun getFeaturesDeclarations(): List<EventField<*>> {
     return arrayListOf(
       IS_INVALID_DATA_KEY, IS_ACCESSIBLE_FROM_MODULE,
@@ -87,9 +77,8 @@ internal class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereEle
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: Any?): List<EventPair<*>> {
+                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
     val item = getPsiElement(element) ?: return emptyList()
-    cache as Cache?
     val file = getContainingFile(item)
     val project = ReadAction.compute<Project?, Nothing> { item.takeIf { it.isValid }?.project } ?: return listOf(IS_INVALID_DATA_KEY.with(true))
 
@@ -99,7 +88,7 @@ internal class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereEle
     }
 
     if (item !is PsiFileSystemItem) {
-      data.addAll(isAccessibleFromModule(item, cache?.openedFile))
+      data.addAll(isAccessibleFromModule(item, cache?.currentlyOpenedFile))
     }
     return data
   }
@@ -141,32 +130,17 @@ internal class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereEle
   private fun getFileFeatures(data: MutableList<EventPair<*>>,
                               file: VirtualFile,
                               project: Project,
-                              cache: Cache,
+                              cache: FeaturesProviderCache,
                               currentTime: Long) {
     data.addAll(getFileLocationStats(file, project))
-    data.putIfValueNotNull(IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY, isSameFileTypeAsOpenedFile(file, cache.openedFile))
-    data.putIfValueNotNull(IS_SAME_MODULE_DATA_KEY, isSameModuleAsOpenedFile(file, project, cache.openedFile))
-    data.addAll(getFileTypeStats(file, currentTime, cache.fileTypeStats))
+    data.putIfValueNotNull(IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY, isSameFileTypeAsOpenedFile(file, cache.currentlyOpenedFile))
+    data.putIfValueNotNull(IS_SAME_MODULE_DATA_KEY, isSameModuleAsOpenedFile(file, project, cache.currentlyOpenedFile))
+    data.addAll(getFileTypeStats(file, currentTime, cache.fileTypeUsageStatistics))
 
-    calculatePackageDistance(file, project, cache.openedFile)?.let { (packageDistance, packageDistanceNorm) ->
+    calculatePackageDistance(file, project, cache.currentlyOpenedFile)?.let { (packageDistance, packageDistanceNorm) ->
       data.add(PACKAGE_DISTANCE_DATA_KEY.with(packageDistance))
       data.add(PACKAGE_DISTANCE_NORMALIZED_DATA_KEY.with(packageDistanceNorm))
     }
-  }
-
-  /**
-   * Creates a deep copy of the file type stats obtained from the [FileTypeUsageLocalSummary],
-   * so they can be safely used without running into an issue whereupon search
-   * result selection, the stats get updated before calculating the file features
-   * resulting in a negative timeSinceLastFileTypeUsage.
-   */
-  private fun deepCopyFileTypeStats(project: Project): Map<String, FileTypeUsageSummary> {
-    val service = project.service<FileTypeUsageSummaryProvider>()
-    val statsCopy = service.getFileTypeStats().mapValues {
-      FileTypeUsageSummary(it.value.usageCount, it.value.lastUsed)
-    }
-
-    return statsCopy
   }
 
   private fun getFileTypeStats(file: VirtualFile,
@@ -291,6 +265,4 @@ internal class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereEle
       )
     }
   }
-
-  private data class Cache(val fileTypeStats: Map<String, FileTypeUsageSummary>, val openedFile: VirtualFile?)
 }

@@ -11,7 +11,7 @@ import com.intellij.testFramework.HeavyPlatformTestCase
 import java.io.File
 import java.io.FileNotFoundException
 
-abstract class HeavyFeaturesProviderTestCase<T : SearchEverywhereElementFeaturesProvider>(providerClass: Class<T>)
+internal abstract class HeavyFeaturesProviderTestCase<T : SearchEverywhereElementFeaturesProvider>(providerClass: Class<T>)
   : HeavyPlatformTestCase(), FeaturesProviderTestCase {
   override val provider: SearchEverywhereElementFeaturesProvider by lazy {
     SearchEverywhereElementFeaturesProvider.EP_NAME.findExtensionOrFail(providerClass)

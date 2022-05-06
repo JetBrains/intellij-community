@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.ide.actions.searcheverywhere.ml.features.FeaturesProviderCache
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereStateFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelProvider
@@ -14,7 +15,7 @@ internal class SearchEverywhereMlSearchState(
   val searchIndex: Int, val searchStartReason: SearchRestartReason, val tabId: String,
   val keysTyped: Int, val backspacesTyped: Int, private val searchQuery: String,
   private val modelProvider: SearchEverywhereModelProvider,
-  private val providersCaches: Map<Class<out SearchEverywhereElementFeaturesProvider>, Any>
+  private val providersCache: FeaturesProviderCache?
 ) {
   private val cachedElementsInfo: MutableMap<Int, SearchEverywhereMLItemInfo> = hashMapOf()
   private val cachedMLWeight: MutableMap<Int, Double> = hashMapOf()
@@ -34,8 +35,7 @@ internal class SearchEverywhereMlSearchState(
       val features = arrayListOf<EventPair<*>>()
       val contributorId = contributor.searchProviderId
       SearchEverywhereElementFeaturesProvider.getFeatureProvidersForContributor(contributorId).forEach { provider ->
-        val cache = providersCaches[provider::class.java]
-        features.addAll(provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, cache))
+        features.addAll(provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, providersCache))
       }
 
       return@computeIfAbsent SearchEverywhereMLItemInfo(elementId, contributorId, features)

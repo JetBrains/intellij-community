@@ -10,7 +10,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.psi.PsiNamedElement
 
-class SearchEverywhereClassFeaturesProvider : SearchEverywhereElementFeaturesProvider(ClassSearchEverywhereContributor::class.java) {
+internal class SearchEverywhereClassFeaturesProvider : SearchEverywhereElementFeaturesProvider(ClassSearchEverywhereContributor::class.java) {
   companion object {
     internal val IS_DEPRECATED = EventFields.Boolean("isDeprecated")
   }
@@ -23,7 +23,7 @@ class SearchEverywhereClassFeaturesProvider : SearchEverywhereElementFeaturesPro
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: Any?): List<EventPair<*>> {
+                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
     val item = SearchEverywhereClassOrFileFeaturesProvider.getPsiElement(element) ?: return emptyList()
 
     val data = arrayListOf<EventPair<*>>()

@@ -6,8 +6,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
 
-class SearchEverywhereCommonFeaturesProvider
-  : SearchEverywhereElementFeaturesProvider() {
+internal class SearchEverywhereCommonFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
   companion object {
     internal val PRIORITY_DATA_KEY = EventFields.Int("priority")
     internal val TOTAL_SYMBOLS_AMOUNT_DATA_KEY = EventFields.Int("totalSymbolsAmount")
@@ -32,7 +31,7 @@ class SearchEverywhereCommonFeaturesProvider
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: Any?): List<EventPair<*>> {
+                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
     val features = arrayListOf<EventPair<*>>(
       PRIORITY_DATA_KEY.with(elementPriority),
       TOTAL_SYMBOLS_AMOUNT_DATA_KEY.with(searchQuery.length),

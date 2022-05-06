@@ -12,7 +12,8 @@ import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 
-class SearchEverywhereSymbolFeaturesProvider : SearchEverywhereElementFeaturesProvider(SymbolSearchEverywhereContributor::class.java) {
+internal class SearchEverywhereSymbolFeaturesProvider
+  : SearchEverywhereElementFeaturesProvider(SymbolSearchEverywhereContributor::class.java) {
   companion object {
     private val LANGUAGE_DATA_KEY = EventFields.StringValidatedByCustomRule("language", LangCustomRuleValidator::class.java)
     private val PARENT_STAT_USE_COUNT_DATA_KEY = EventFields.Int("parentStatUseCount")
@@ -30,7 +31,7 @@ class SearchEverywhereSymbolFeaturesProvider : SearchEverywhereElementFeaturesPr
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: Any?): List<EventPair<*>> {
+                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
     val psiElement = getPsiElement(element) ?: return emptyList()
     val data = arrayListOf<EventPair<*>>()
 

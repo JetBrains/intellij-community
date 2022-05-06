@@ -51,7 +51,7 @@ internal class SearchEverywhereFileFeaturesProvider
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: Any?): List<EventPair<*>> {
+                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
     val item = (SearchEverywhereClassOrFileFeaturesProvider.getPsiElement(element) as? PsiFileSystemItem) ?: return emptyList()
 
     val data = arrayListOf<EventPair<*>>(

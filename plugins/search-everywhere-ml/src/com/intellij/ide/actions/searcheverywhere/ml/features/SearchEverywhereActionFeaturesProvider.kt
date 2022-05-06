@@ -86,7 +86,7 @@ internal class SearchEverywhereActionFeaturesProvider :
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: Any?): List<EventPair<*>> {
+                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
     val value = if (element is GotoActionModel.MatchedValue) element.value else element
     val action = getAnAction(value) ?: return emptyList()
 

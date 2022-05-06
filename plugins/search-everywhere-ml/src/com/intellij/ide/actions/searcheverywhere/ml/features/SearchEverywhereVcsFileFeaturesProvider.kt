@@ -8,7 +8,8 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.psi.PsiFileSystemItem
 
-class SearchEverywhereVcsFileFeaturesProvider : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java) {
+internal class SearchEverywhereVcsFileFeaturesProvider
+  : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java) {
   companion object {
     internal val IS_IGNORED_DATA_KEY = EventFields.Boolean("isIgnored")
     internal val IS_CHANGED_DATA_KEY = EventFields.Boolean("isChanged")
@@ -33,7 +34,7 @@ class SearchEverywhereVcsFileFeaturesProvider : SearchEverywhereElementFeaturesP
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: Any?): List<EventPair<*>> {
+                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
     val item = when (element) {
       is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> (element.item as? PsiFileSystemItem) ?: return emptyList()
       is PsiFileSystemItem -> element

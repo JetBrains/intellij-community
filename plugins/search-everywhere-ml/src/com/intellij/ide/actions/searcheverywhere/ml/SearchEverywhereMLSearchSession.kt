@@ -4,8 +4,8 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.ide.actions.searcheverywhere.ml.features.FeaturesProviderCacheDataProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereStatisticianService
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelProvider
@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference
 internal class SearchEverywhereMLSearchSession(project: Project?, private val sessionId: Int) {
   val itemIdProvider = SearchEverywhereMlItemIdProvider()
   private val sessionStartTime: Long = System.currentTimeMillis()
-  private val providersCaches: Map<Class<out SearchEverywhereElementFeaturesProvider>, Any>
+  private val providersCache = FeaturesProviderCacheDataProvider().getDataToCache(project)
   private val modelProviderWithCache: SearchEverywhereModelProvider = SearchEverywhereModelProvider()
 
   // context features are calculated once per Search Everywhere session
@@ -30,13 +30,6 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   private val logger: SearchEverywhereMLStatisticsCollector = SearchEverywhereMLStatisticsCollector()
 
   private val performanceTracker = PerformanceTracker()
-
-  init {
-    providersCaches = SearchEverywhereElementFeaturesProvider.getFeatureProviders()
-      .associate { it::class.java to it.getDataToCache(project) }
-      .mapNotNull { it.value?.let { value -> it.key to value } }
-      .toMap()
-  }
 
   fun onSearchRestart(project: Project?,
                       experimentStrategy: SearchEverywhereMlExperiment,
@@ -56,7 +49,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
 
       SearchEverywhereMlSearchState(
         sessionStartTime, startTime, nextSearchIndex, searchReason, tabId, keysTyped, backspacesTyped,
-        searchQuery, modelProviderWithCache, providersCaches
+        searchQuery, modelProviderWithCache, providersCache
       )
     }
 

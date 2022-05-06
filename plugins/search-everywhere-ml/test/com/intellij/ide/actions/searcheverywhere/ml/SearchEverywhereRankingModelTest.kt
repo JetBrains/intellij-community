@@ -1,6 +1,7 @@
 package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
+import com.intellij.ide.actions.searcheverywhere.ml.features.FeaturesProviderCache
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelProvider
@@ -8,7 +9,6 @@ import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereRankin
 import com.intellij.ide.util.gotoByName.ChooseByNameModel
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
-import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -22,7 +22,7 @@ internal abstract class SearchEverywhereRankingModelTest
 
   protected abstract fun filterElements(searchQuery: String): List<FoundItemDescriptor<*>>
 
-  protected fun performSearchFor(searchQuery: String, featuresProviderCache: Any? = null): RankingAssertion {
+  protected fun performSearchFor(searchQuery: String, featuresProviderCache: FeaturesProviderCache? = null): RankingAssertion {
     VirtualFileManager.getInstance().syncRefresh()
     val rankedElements: List<FoundItemDescriptor<*>> = filterElements(searchQuery)
       .map { it.withMlWeight(getMlWeight(it, searchQuery, featuresProviderCache)) }
@@ -35,11 +35,13 @@ internal abstract class SearchEverywhereRankingModelTest
 
   private fun getMlWeight(item: FoundItemDescriptor<*>,
                           searchQuery: String,
-                          featuresProviderCache: Any?) = model.predict(getElementFeatures(item, searchQuery, featuresProviderCache))
+                          featuresProviderCache: FeaturesProviderCache?): Double {
+    return model.predict(getElementFeatures(item, searchQuery, featuresProviderCache))
+  }
 
   private fun getElementFeatures(foundItem: FoundItemDescriptor<*>,
                                  searchQuery: String,
-                                 featuresProviderCache: Any?): Map<String, Any?> {
+                                 featuresProviderCache: FeaturesProviderCache?): Map<String, Any?> {
     return featuresProviders.map {
       val features = it.getElementFeatures(foundItem.item, System.currentTimeMillis(), searchQuery, foundItem.weight, featuresProviderCache)
       val featuresAsMap = hashMapOf<String, Any?>()

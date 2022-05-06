@@ -13,7 +13,8 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.util.containers.ContainerUtil
 
-class SearchEverywhereRunConfigurationFeaturesProvider : SearchEverywhereElementFeaturesProvider(RunConfigurationsSEContributor::class.java) {
+internal class SearchEverywhereRunConfigurationFeaturesProvider
+  : SearchEverywhereElementFeaturesProvider(RunConfigurationsSEContributor::class.java) {
   companion object {
     private val IS_SHARED = EventFields.Boolean("isShared")
     private val IS_TEMPORARY = EventFields.Boolean("isTemporary")
@@ -29,7 +30,7 @@ class SearchEverywhereRunConfigurationFeaturesProvider : SearchEverywhereElement
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: Any?): List<EventPair<*>> {
+                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
     if (element !is ChooseRunConfigurationPopup.ItemWrapper<*> || element.value !is RunnerAndConfigurationSettings) {
       return emptyList()
     }

@@ -28,7 +28,7 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: Any?): List<EventPair<*>> {
+                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
     val data = arrayListOf<EventPair<*>>()
     addIfTrue(data, IS_HIGH_PRIORITY, isHighPriority(elementPriority))
 

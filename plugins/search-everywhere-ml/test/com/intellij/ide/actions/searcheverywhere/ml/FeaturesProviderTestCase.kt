@@ -1,6 +1,7 @@
 package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.ml.FeaturesProviderTestCase.AssertionElementSelector.AssertionSpecifier
+import com.intellij.ide.actions.searcheverywhere.ml.features.FeaturesProviderCacheDataProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -42,7 +43,7 @@ internal interface FeaturesProviderTestCase {
       private var currentTime = 0L
       private var query = ""
       private var elementPriority = 0
-      private val cache = testCase.provider.getDataToCache(testCase.testProject)
+      private val cache = FeaturesProviderCacheDataProvider().getDataToCache(testCase.testProject)
 
       /**
        * Specifies the current time / session start time that will be passed when obtaining the features,
