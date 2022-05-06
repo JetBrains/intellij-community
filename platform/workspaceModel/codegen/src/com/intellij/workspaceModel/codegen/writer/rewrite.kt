@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.deft.codegen.patcher
 
+import com.intellij.workspaceModel.codegen.skippedGenTypes
 import deft.storage.codegen.generatedApiCode
 import deft.storage.codegen.generatedExtensionCode
 import org.jetbrains.deft.codegen.model.*
@@ -15,7 +16,7 @@ fun KtFile.rewrite(): String {
 
   val code = mutableMapOf<KtBlock, Pair<String, String>>()
   block.visitRecursively { block, objType ->
-    if (objType != null) {
+    if (objType != null && objType.name !in skippedGenTypes) {
       val body = objType.def.body
       val indent = body.indent
       val parentIndent = body.parent?.indent ?: ""

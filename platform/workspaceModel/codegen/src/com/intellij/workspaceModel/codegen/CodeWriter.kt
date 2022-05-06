@@ -9,6 +9,9 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.workspaceModel.storage.ReferableWorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
 import deft.storage.codegen.javaImplName
 import org.jetbrains.deft.codegen.ijws.implWsCode
 import org.jetbrains.deft.codegen.model.DefType
@@ -16,6 +19,10 @@ import org.jetbrains.deft.codegen.model.KtObjModule
 import org.jetbrains.deft.codegen.patcher.rewrite
 import org.jetbrains.deft.codegen.utils.fileContents
 import java.io.File
+
+internal val skippedGenTypes = setOf(WorkspaceEntity::class.simpleName,
+                                    ReferableWorkspaceEntity::class.simpleName,
+                                    WorkspaceEntityWithPersistentId::class.simpleName)
 
 fun DefType.implIjWsFileContents(simpleTypes: List<DefType>): String {
   return fileContents(def.file!!.pkg.fqn, """
@@ -45,7 +52,7 @@ object CodeWriter {
       module.addFile(vfu.name, vfu) { document.text }
     }
     val result = module.build()
-    val entitiesForGeneration = result.typeDefs.filterNot { it.name == "WorkspaceEntity" || it.name == "WorkspaceEntityWithPersistentId" || it.abstract }
+    val entitiesForGeneration = result.typeDefs.filterNot { it.name in skippedGenTypes || it.abstract }
     if (!entitiesForGeneration.isEmpty()) {
       val genFolder = targetFolderGenerator.invoke()
       if (genFolder == null) {
