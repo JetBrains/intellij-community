@@ -22,10 +22,12 @@ import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.idea.debugger.*
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluator
 
-open class KotlinStackFrame(stackFrameDescriptorImpl: StackFrameDescriptorImpl) : JavaStackFrame(stackFrameDescriptorImpl, true) {
+@Suppress("EqualsOrHashCode")
+open class KotlinStackFrame(
+    frame: StackFrameProxyImpl,
+    visibleVariables: List<LocalVariableProxyImpl>
+) : JavaStackFrame(StackFrameDescriptorImpl(frame, MethodsTracker()), true) {
     private val kotlinVariableViewService = ToggleKotlinVariablesState.getService()
-
-    constructor(frame: StackFrameProxyImpl) : this(StackFrameDescriptorImpl(frame, MethodsTracker()))
 
     private val kotlinEvaluator by lazy {
         val debugProcess = descriptor.debugProcess as DebugProcessImpl // Cast as in JavaStackFrame
@@ -162,11 +164,7 @@ open class KotlinStackFrame(stackFrameDescriptorImpl: StackFrameDescriptorImpl) 
         variable.remapName(getThisName(thisLabel))
     }
 
-    // The visible variables are queried twice in the common path through [JavaStackFrame.buildVariables],
-    // so we cache them the first time through.
-    protected open val _visibleVariables: List<LocalVariableProxyImpl> by lazy {
-        InlineStackFrameVariableHolder.fromStackFrame(stackFrameProxy).visibleVariables.remapInKotlinView()
-    }
+    private val _visibleVariables: List<LocalVariableProxyImpl> = visibleVariables.remapInKotlinView()
 
     final override fun getVisibleVariables(): List<LocalVariableProxyImpl> {
         if (!kotlinVariableViewService.kotlinVariableView) {

@@ -9,7 +9,7 @@ InlineStackFrame lambda 'apply' in 'main' (inlineStackTraceWithApply.kt:21)
     JavaValue[local] this: inlineStackTraceWithAlso.Foo = inlineStackTraceWithAlso.Foo@hashCode
         DummyMessageValueNode = Class has no properties
     JavaValue[local] x1: int = 1 (inlineStackTraceWithApply.kt:19)
-KotlinStackFrameWithProvidedVariables (inlineStackTraceWithApply.kt:18)
+KotlinStackFrame (inlineStackTraceWithApply.kt:18)
     JavaValue[local] this: inlineStackTraceWithAlso.Foo = inlineStackTraceWithAlso.Foo@hashCode
         DummyMessageValueNode = Class has no properties
 inlineStackTraceWithApply.kt:8
@@ -22,7 +22,7 @@ InlineStackFrame lambda 'apply' in 'main' (inlineStackTraceWithApply.kt:21)
     JavaValue[local] this: inlineStackTraceWithAlso.Foo = inlineStackTraceWithAlso.Foo@hashCode
         DummyMessageValueNode = Class has no properties
     JavaValue[local] x1: int = 1
-KotlinStackFrameWithProvidedVariables (inlineStackTraceWithApply.kt:18)
+KotlinStackFrame (inlineStackTraceWithApply.kt:18)
     JavaValue[local] this: inlineStackTraceWithAlso.Foo = inlineStackTraceWithAlso.Foo@hashCode
         DummyMessageValueNode = Class has no properties
 inlineStackTraceWithApply.kt:14
@@ -39,7 +39,7 @@ InlineStackFrame lambda 'apply' in 'main' (inlineStackTraceWithApply.kt:21)
     JavaValue[local] this: inlineStackTraceWithAlso.Foo = inlineStackTraceWithAlso.Foo@hashCode
         DummyMessageValueNode = Class has no properties
     JavaValue[local] x1: int = 1
-KotlinStackFrameWithProvidedVariables (inlineStackTraceWithApply.kt:18)
+KotlinStackFrame (inlineStackTraceWithApply.kt:18)
     JavaValue[local] this: inlineStackTraceWithAlso.Foo = inlineStackTraceWithAlso.Foo@hashCode
         DummyMessageValueNode = Class has no properties
 Disconnected from the target VM

@@ -5,7 +5,7 @@ inlineFunThisKotlinVariables.kt:12
 InlineStackFrame inlineFun (inlineFunThisKotlinVariables.kt:12)
     JavaValue[local] this (@Different): inlineFunThisKotlinVariables.Different = inlineFunThisKotlinVariables.Different@hashCode
         DummyMessageValueNode = Class has no properties
-KotlinStackFrameWithProvidedVariables (inlineFunThisKotlinVariables.kt:5)
+KotlinStackFrame (inlineFunThisKotlinVariables.kt:5)
 Disconnected from the target VM
 
 Process finished with exit code 0

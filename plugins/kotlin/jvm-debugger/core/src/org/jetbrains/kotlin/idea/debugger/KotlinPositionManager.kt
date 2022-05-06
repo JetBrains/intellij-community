@@ -107,7 +107,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             }
         }
 
-        return listOf(KotlinStackFrame(frameProxy))
+        val visibleVariables = InlineStackTraceCalculator.calculateVisibleVariables(frameProxy)
+        return listOf(KotlinStackFrame(frameProxy, visibleVariables))
     }
 
     override fun getSourcePosition(location: Location?): SourcePosition? {
