@@ -162,10 +162,12 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   protected abstract fun addUnversionedFiles(): Boolean
 
-  protected fun addUnversionedFiles(changeList: LocalChangeList): Boolean =
-    workflow.addUnversionedFiles(changeList, getIncludedUnversionedFiles().mapNotNull { it.virtualFile }) { changes ->
-      ui.includeIntoCommit(changes)
+  protected fun addUnversionedFiles(changeList: LocalChangeList, inclusionModel: InclusionModel): Boolean {
+    val unversionedFiles = getIncludedUnversionedFiles().mapNotNull { it.virtualFile }
+    return workflow.addUnversionedFiles(changeList, unversionedFiles) { newChanges ->
+      inclusionModel.addInclusion(newChanges)
     }
+  }
 
   protected open fun doExecuteDefault(executor: CommitExecutor?): Boolean {
     return workflow.executeDefault(executor)

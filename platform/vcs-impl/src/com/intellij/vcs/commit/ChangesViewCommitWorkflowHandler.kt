@@ -140,7 +140,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
     if (!isActive || force) {
       inclusionModel.clearInclusion()
-      ui.includeIntoCommit(items)
+      inclusionModel.addInclusion(items)
 
       knownActiveChanges = if (!isActive) activeChanges else emptyList()
     }
@@ -150,10 +150,10 @@ internal class ChangesViewCommitWorkflowHandler(
 
       // we have inclusion in active change list and/or unversioned files => include new active changes if any
       val newChanges = activeChanges - knownActiveChanges
-      ui.includeIntoCommit(newChanges)
+      inclusionModel.addInclusion(newChanges)
 
       // include all active changes if nothing is included
-      if (inclusionModel.isInclusionEmpty()) ui.includeIntoCommit(activeChanges)
+      if (inclusionModel.isInclusionEmpty()) inclusionModel.addInclusion(activeChanges)
     }
   }
 
@@ -246,7 +246,10 @@ internal class ChangesViewCommitWorkflowHandler(
     workflow.commitState = getCommitState()
   }
 
-  override fun addUnversionedFiles(): Boolean = addUnversionedFiles(workflow.getAffectedChangeList(getIncludedChanges()))
+  override fun addUnversionedFiles(): Boolean {
+    val changeList = workflow.getAffectedChangeList(getIncludedChanges())
+    return addUnversionedFiles(changeList, inclusionModel)
+  }
 
   override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(currentChangeList, getCommitMessage(), success)
 

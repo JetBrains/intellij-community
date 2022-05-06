@@ -189,8 +189,6 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
       changesView.setInclusionModel(value)
     }
 
-  override fun includeIntoCommit(items: Collection<*>) = changesView.includeChanges(items)
-
   override val commitProgressUi: CommitProgressUi get() = progressPanel
 
   override fun endExecution() = closeEditorPreviewIfEmpty()

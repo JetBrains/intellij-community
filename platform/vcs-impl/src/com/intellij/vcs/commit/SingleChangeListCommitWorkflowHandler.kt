@@ -97,7 +97,9 @@ class SingleChangeListCommitWorkflowHandler(
     workflow.commitState = getCommitState()
   }
 
-  override fun addUnversionedFiles() = addUnversionedFiles(getChangeList())
+  override fun addUnversionedFiles(): Boolean {
+    return addUnversionedFiles(getChangeList(), ui.getInclusionModel())
+  }
 
   private fun initCommitMessage() {
     commitMessagePolicy.init(getChangeList(), getIncludedChanges())

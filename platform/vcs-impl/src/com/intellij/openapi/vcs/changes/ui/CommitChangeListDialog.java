@@ -681,9 +681,10 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return getBrowser().getIncludedUnversionedFiles();
   }
 
+  @NotNull
   @Override
-  public void includeIntoCommit(@NotNull Collection<?> items) {
-    getBrowser().getViewer().includeChanges(items);
+  public InclusionModel getInclusionModel() {
+    return getBrowser().getViewer().getInclusionModel();
   }
 
   @Override
