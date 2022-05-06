@@ -1001,11 +1001,11 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/core/tests/kotlin.core.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/core/tests/kotlin.core.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/coverage/kotlin.coverage.iml" filepath="$PROJECT_DIR$/plugins/kotlin/coverage/kotlin.coverage.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/coverage/tests/kotlin.coverage.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/coverage/tests/kotlin.coverage.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/fe10-analyze/safe-analyze-utils/kotlin.fe10-analyze.safe-analyze-utils.iml" filepath="$PROJECT_DIR$/plugins/kotlin/fe10-analyze/safe-analyze-utils/kotlin.fe10-analyze.safe-analyze-utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/features-trainer/kotlin.features-trainer.iml" filepath="$PROJECT_DIR$/plugins/kotlin/features-trainer/kotlin.features-trainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/features-trainer/tests/kotlin.features-trainer.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/features-trainer/tests/kotlin.features-trainer.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/frontend-independent/kotlin.fir.frontend-independent.iml" filepath="$PROJECT_DIR$/plugins/kotlin/frontend-independent/kotlin.fir.frontend-independent.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/frontend-independent/tests/kotlin.fir.frontend-independent.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/frontend-independent/tests/kotlin.fir.frontend-independent.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/fe10-analyze/safe-analyze-utils/kotlin.fe10-analyze.safe-analyze-utils.iml" filepath="$PROJECT_DIR$/plugins/kotlin/fe10-analyze/safe-analyze-utils/kotlin.fe10-analyze.safe-analyze-utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/formatter/kotlin.formatter.iml" filepath="$PROJECT_DIR$/plugins/kotlin/formatter/kotlin.formatter.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/generators/kotlin.generators.iml" filepath="$PROJECT_DIR$/plugins/kotlin/generators/kotlin.generators.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/git/kotlin.git.iml" filepath="$PROJECT_DIR$/plugins/kotlin/git/kotlin.git.iml" />
