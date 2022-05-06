@@ -1685,7 +1685,6 @@
     </group>
     <group id="Internal.VFS" popup="true" internal="true">
       <action id="VirtualFileInfo" internal="true" class="com.intellij.openapi.vfs.impl.local.VirtualFileInfoAction"/>
-      <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction"/>
       <separator/>
       <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction"/>
       <action id="MarkVfsCorrupted" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.MarkVfsCorruptedAction"/>
@@ -1698,7 +1697,6 @@
       <action internal="true" id="PruneEmptyDirectories" class="com.intellij.ide.actions.PruneEmptyDirectoriesAction"/>
       <action internal="true" id="FixLineSeparators" class="com.intellij.ide.actions.FixLineSeparatorsAction"/>
       <separator/>
-      <action internal="true" id="ValidateLocalHistory" class="com.intellij.history.integration.ValidateHistoryAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
   </actions>

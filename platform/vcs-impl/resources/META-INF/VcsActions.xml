@@ -651,5 +651,8 @@
       <group class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup$Group" popup="true" id="ShowAnnotateOperationsPopupGroup"/>
     </group>
 
+    <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction">
+      <add-to-group group-id="Internal.VFS"/>
+    </action>
   </actions>
 </idea-plugin>
