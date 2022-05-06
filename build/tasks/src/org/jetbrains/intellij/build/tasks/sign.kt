@@ -13,6 +13,7 @@ import io.opentelemetry.api.common.Attributes
 import net.schmizz.keepalive.KeepAliveProvider
 import net.schmizz.sshj.DefaultConfig
 import net.schmizz.sshj.SSHClient
+import net.schmizz.sshj.connection.channel.Channel
 import net.schmizz.sshj.sftp.SFTPClient
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier
 import net.schmizz.sshj.userauth.method.AuthKeyboardInteractive
@@ -25,6 +26,8 @@ import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntryPredicate
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.jetbrains.intellij.build.io.*
+import java.io.InputStream
+import java.io.OutputStream
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -39,6 +42,7 @@ import java.util.function.Consumer
 import java.util.logging.*
 import java.util.zip.Deflater
 import kotlin.io.path.name
+import kotlin.io.path.outputStream
 
 private val random by lazy { SecureRandom() }
 
@@ -219,12 +223,13 @@ private fun processFile(localFile: Path,
   ssh.startSession().use { session ->
     val command = session.exec(commandString)
     try {
-      // use CompletableFuture because get will call ForkJoinPool.helpAsyncBlocker, so, other tasks in FJP will be executed while waiting
-      CompletableFuture.allOf(
-        runAsync { command.inputStream.transferTo(System.out) },
-        runAsync { Files.copy(command.errorStream, logFile, StandardCopyOption.REPLACE_EXISTING) }
-      ).get(6, TimeUnit.HOURS)
-
+      logFile.outputStream(StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING).use { logStream ->
+        // use CompletableFuture because get will call ForkJoinPool.helpAsyncBlocker, so, other tasks in FJP will be executed while waiting
+        CompletableFuture.allOf(
+          runAsync { command.inputStream.writeEachLineTo(logStream, System.out, channel = command) },
+          runAsync { command.errorStream.writeEachLineTo(logStream, System.out, channel = command) },
+        ).get(6, TimeUnit.HOURS)
+      }
       command.join(1, TimeUnit.MINUTES)
     }
     catch (e: Exception) {
@@ -241,6 +246,38 @@ private fun processFile(localFile: Path,
     if (command.exitStatus != 0) {
       throw RuntimeException("SSH command failed, details are available in ${artifactDir.relativize(logFile)}" +
                              " (exitStatus=${command.exitStatus}, exitErrorMessage=${command.exitErrorMessage})")
+    }
+  }
+}
+
+private fun InputStream.writeEachLineTo(vararg outputStreams: OutputStream, channel: Channel) {
+  val lineBuffer = StringBuilder()
+  fun writeLine() {
+    val lineBytes = lineBuffer.toString().toByteArray()
+    outputStreams.forEach {
+      synchronized(it) {
+        it.write(lineBytes)
+      }
+    }
+  }
+  bufferedReader().use { reader ->
+    while (channel.isOpen || reader.ready()) {
+      if (reader.ready()) {
+        val char = reader.read()
+          .takeIf { it != -1 }?.toChar()
+          ?.also(lineBuffer::append)
+        val endOfLine = char == '\n' || char == '\r' || char == null
+        if (endOfLine && lineBuffer.isNotEmpty()) {
+          writeLine()
+          lineBuffer.clear()
+        }
+      }
+      else {
+        Thread.sleep(100L)
+      }
+    }
+    if (lineBuffer.isNotBlank()) {
+      writeLine()
     }
   }
 }

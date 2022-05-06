@@ -60,7 +60,7 @@ find "$APP_DIRECTORY" -name '*.jar' \
     rm -rf jarfolder jar.jar
     mkdir jarfolder
     filename="${jar##*/}"
-    log "Filename: $filename"
+    log "Jarname: $filename"
     cp "$jar" jarfolder && (cd jarfolder && jar xf "$filename" && rm "$filename")
 
     while read -r file; do
@@ -85,7 +85,7 @@ for f in \
   "Contents/MacOS" "Contents/bin"; do
   if [ -d "$APP_DIRECTORY/$f" ]; then
     while read -r file; do
-      echo "$file"
+      log "Filename: $file"
       ./codesign.sh --timestamp \
             --verbose \
             --sign "$JB_CERT" \
