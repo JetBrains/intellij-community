@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -77,44 +78,22 @@ public class CoreCodeStyleUtil {
   }
 
   public static List<RangeFormatInfo> getRangeFormatInfoList(@NotNull PsiFile file, @NotNull FormattingRangesInfo ranges) {
-    final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(file.getProject());
-
     List<RangeFormatInfo> infos = new ArrayList<>();
     for (TextRange range : ranges.getTextRanges()) {
-      final PsiElement start = findElementInTreeWithFormatterEnabled(file, range.getStartOffset());
-      final PsiElement end = findElementInTreeWithFormatterEnabled(file, range.getEndOffset());
-      if (start != null && !start.isValid()) {
-        LOG.error("start=" + start + "; file=" + file);
-      }
-      if (end != null && !end.isValid()) {
-        LOG.error("end=" + start + "; end=" + file);
-      }
-      boolean formatFromStart = range.getStartOffset() == 0;
-      boolean formatToEnd = range.getEndOffset() == file.getTextLength();
-      infos.add(new RangeFormatInfo(
-        start == null ? null : smartPointerManager.createSmartPsiElementPointer(start),
-        end == null ? null : smartPointerManager.createSmartPsiElementPointer(end),
-        formatFromStart,
-        formatToEnd
-      ));
+      infos.add(new RangeFormatInfo(file, range));
     }
     return infos;
   }
 
-  public static void postProcessRanges(@NotNull PsiFile file,
-                                       @NotNull List<RangeFormatInfo> rangeFormatInfoList,
+  public static void postProcessRanges(@NotNull List<RangeFormatInfo> rangeFormatInfoList,
                                        @NotNull Consumer<TextRange> postProcessFormatter) {
-    final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(file.getProject());
     for (RangeFormatInfo info : rangeFormatInfoList) {
-      final PsiElement startElement = info.startPointer == null ? null : info.startPointer.getElement();
-      final PsiElement endElement = info.endPointer == null ? null : info.endPointer.getElement();
-      if ((startElement != null || info.fromStart) && (endElement != null || info.toEnd)) {
-        TextRange currRange = new TextRange(info.fromStart ? 0 : startElement.getTextRange().getStartOffset(),
-                                            info.toEnd ? file.getTextLength() : endElement.getTextRange().getEndOffset());
-        postProcessFormatter.accept(currRange);
+      int startOffset = info.getStartOffset();
+      int endOffset = info.getEndOffset();
+      if (startOffset >= 0 && endOffset >= 0 && endOffset > startOffset) {
+        postProcessFormatter.accept(new TextRange(startOffset, endOffset));
       }
-      if (info.startPointer != null) smartPointerManager.removePointer(info.startPointer);
-      if (info.endPointer != null) smartPointerManager.removePointer(info.endPointer);
+      info.disposePointers();
     }
   }
 
@@ -145,29 +124,61 @@ public class CoreCodeStyleUtil {
     }
   }
 
-  public static class RangeFormatInfo{
+  public static class RangeFormatInfo {
+    private final PsiFile                   myFile;
     private final SmartPsiElementPointer<?> startPointer;
     private final SmartPsiElementPointer<?> endPointer;
     private final boolean                   fromStart;
     private final boolean                   toEnd;
 
-    RangeFormatInfo(@Nullable SmartPsiElementPointer<?> startPointer,
-                    @Nullable SmartPsiElementPointer<?> endPointer,
-                    boolean fromStart,
-                    boolean toEnd)
-    {
-      this.startPointer = startPointer;
-      this.endPointer = endPointer;
-      this.fromStart = fromStart;
-      this.toEnd = toEnd;
+    RangeFormatInfo(@NotNull PsiFile file, @NotNull TextRange range) {
+      myFile = file;
+      fromStart = range.getStartOffset() == 0;
+      toEnd = range.getEndOffset() == file.getTextLength();
+      startPointer = fromStart ? null : createPsiPointer(range.getStartOffset());
+      endPointer = toEnd ? null : createPsiPointer(range.getEndOffset());
+    }
+
+    private @Nullable SmartPsiElementPointer<?> createPsiPointer(int offset) {
+      PsiElement element = findElementInTreeWithFormatterEnabled(myFile, offset);
+      if (element != null) {
+        if (!element.isValid()) {
+          LOG.error("Invalid element " + element + "; file: " + myFile.getName());
+        }
+        return SmartPointerManager.getInstance(myFile.getProject()).createSmartPsiElementPointer(element);
+      }
+      return null;
+    }
+
+    private int getStartOffset() {
+      if (fromStart) return 0;
+      TextRange range = getElementRange(startPointer);
+      return range != null ? range.getStartOffset() : -1;
+    }
+
+    private int getEndOffset() {
+      if (toEnd) return myFile.getTextLength();
+      TextRange range = getElementRange(endPointer);
+      return range != null ? range.getEndOffset() : -1;
+    }
+
+    private static @Nullable TextRange getElementRange(@Nullable SmartPsiElementPointer<?> pointer) {
+      return pointer != null ?
+             ObjectUtils.doIfNotNull(pointer.getElement(), element -> element.getTextRange()) : null;
+    }
+
+    private void disposePointers() {
+      SmartPointerManager pointerManager = SmartPointerManager.getInstance(myFile.getProject());
+      ObjectUtils.consumeIfNotNull(startPointer, pointer -> pointerManager.removePointer(pointer));
+      ObjectUtils.consumeIfNotNull(endPointer, pointer -> pointerManager.removePointer(pointer));
     }
   }
 
   @Nullable
   public static PsiElement findElementInTreeWithFormatterEnabled(final PsiFile file, final int offset) {
-    final PsiElement bottomost = file.findElementAt(offset);
-    if (bottomost != null && LanguageFormatting.INSTANCE.forContext(bottomost) != null){
-      return bottomost;
+    final PsiElement bottommost = file.findElementAt(offset);
+    if (bottommost != null && LanguageFormatting.INSTANCE.forContext(bottommost) != null) {
+      return bottommost;
     }
 
     final Language fileLang = file.getLanguage();
@@ -175,9 +186,8 @@ public class CoreCodeStyleUtil {
       return file.getViewProvider().findElementAt(offset, fileLang);
     }
 
-    return bottomost;
+    return bottommost;
   }
-
 
 
   @ApiStatus.Internal
@@ -225,6 +235,4 @@ public class CoreCodeStyleUtil {
   private static CodeStyleSettings getSettings(@NotNull PsiFile file) {
     return CodeStyle.getSettings(file);
   }
-
-
 }

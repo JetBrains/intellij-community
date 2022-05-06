@@ -61,7 +61,7 @@ public final class CoreFormattingService implements FormattingService {
     List<CoreCodeStyleUtil.RangeFormatInfo> infos = CoreCodeStyleUtil.getRangeFormatInfoList(file, rangesInfo);
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), file.getLanguage());
     codeFormatter.processText(file, (FormatTextRanges)rangesInfo, !canChangeWhiteSpaceOnly);
-    CoreCodeStyleUtil.postProcessRanges(file, infos, range -> CoreCodeStyleUtil.postProcessText(file, range, canChangeWhiteSpaceOnly));
+    CoreCodeStyleUtil.postProcessRanges(infos, range -> CoreCodeStyleUtil.postProcessText(file, range, canChangeWhiteSpaceOnly));
   }
 
   @Override
