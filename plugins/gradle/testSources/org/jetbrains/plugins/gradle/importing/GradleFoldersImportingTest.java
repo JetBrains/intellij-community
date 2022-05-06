@@ -212,7 +212,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     assertDefaultGradleJavaProjectFoldersForMergedModule("project");
 
-    assertModuleOutput("project", getProjectPath() + "/build", getProjectPath() + "/build/classes/java/test");
+    assertModuleOutput("project", getProjectPath() + "/build", getProjectPath() + testClassesOutputPath);
   }
 
   @Test

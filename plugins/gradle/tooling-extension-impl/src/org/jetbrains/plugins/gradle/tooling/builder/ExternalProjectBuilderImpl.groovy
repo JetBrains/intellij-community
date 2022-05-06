@@ -289,12 +289,6 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       ExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet()
       resourcesDirectorySet.name = sourceSet.resources.name
       resourcesDirectorySet.srcDirs = sourceSet.resources.srcDirs
-      if (ideaPluginOutDir && SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name) {
-        resourcesDirectorySet.addGradleOutputDir(ideaPluginOutDir)
-      }
-      if (ideaPluginTestOutDir && SourceSet.TEST_SOURCE_SET_NAME == sourceSet.name) {
-        resourcesDirectorySet.addGradleOutputDir(ideaPluginTestOutDir)
-      }
       if (is4OrBetter) {
         if (sourceSet.output.resourcesDir) {
           resourcesDirectorySet.addGradleOutputDir(sourceSet.output.resourcesDir)
@@ -322,12 +316,6 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       ExternalSourceDirectorySet javaDirectorySet = new DefaultExternalSourceDirectorySet()
       javaDirectorySet.name = sourceSet.allJava.name
       javaDirectorySet.srcDirs = sourceSet.allJava.srcDirs
-      if (ideaPluginOutDir && SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name) {
-        javaDirectorySet.addGradleOutputDir(ideaPluginOutDir)
-      }
-      if (ideaPluginTestOutDir && SourceSet.TEST_SOURCE_SET_NAME == sourceSet.name) {
-        javaDirectorySet.addGradleOutputDir(ideaPluginTestOutDir)
-      }
       if (is4OrBetter) {
         for (File outDir : sourceSet.output.classesDirs.files) {
           javaDirectorySet.addGradleOutputDir(outDir)
