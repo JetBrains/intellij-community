@@ -575,6 +575,10 @@
     <keyboard-shortcut first-keystroke="control F1"/>
   </action>
 
+  <action id="MainMenuButton.ShowMenu">
+    <keyboard-shortcut first-keystroke="alt PERIOD"/>
+  </action>
+
   <!--KNOWN CONFLICTS: https://youtrack.jetbrains.com/issue/IDEA-268674-->
   <!--MISSING VISUAL STUDIO SHORTCUTS-->
 
