@@ -25,7 +25,6 @@ internal class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
   override val ui: ChangesViewCommitWorkflowUi
 ) : NonModalCommitWorkflowHandler<ChangesViewCommitWorkflow, ChangesViewCommitWorkflowUi>(),
-    CommitAuthorTracker by ui,
     CommitAuthorListener,
     ProjectManagerListener {
 
@@ -63,8 +62,7 @@ internal class ChangesViewCommitWorkflowHandler(
     workflow.addListener(this, this)
     workflow.addCommitListener(GitCommitStateCleaner(), this)
 
-    addCommitAuthorListener(this, this)
-
+    ui.addCommitAuthorListener(this, this)
     ui.addExecutorListener(this, this)
     ui.addDataProvider(createDataProvider())
     ui.addInclusionListener(this, this)
@@ -199,22 +197,22 @@ internal class ChangesViewCommitWorkflowHandler(
   }
 
   private fun changeListDataChanged() {
-    commitAuthor = currentChangeList?.author
-    commitAuthorDate = currentChangeList?.authorDate
+    ui.commitAuthor = currentChangeList?.author
+    ui.commitAuthorDate = currentChangeList?.authorDate
   }
 
   override fun commitAuthorChanged() {
     val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
-    if (commitAuthor == changeList.author) return
+    if (ui.commitAuthor == changeList.author) return
 
-    changeListManager.editChangeListData(changeList.name, ChangeListData.of(commitAuthor, commitAuthorDate))
+    changeListManager.editChangeListData(changeList.name, ChangeListData.of(ui.commitAuthor, ui.commitAuthorDate))
   }
 
   override fun commitAuthorDateChanged() {
     val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
-    if (commitAuthorDate == changeList.authorDate) return
+    if (ui.commitAuthorDate == changeList.authorDate) return
 
-    changeListManager.editChangeListData(changeList.name, ChangeListData.of(commitAuthor, commitAuthorDate))
+    changeListManager.editChangeListData(changeList.name, ChangeListData.of(ui.commitAuthor, ui.commitAuthorDate))
   }
 
   override fun inclusionChanged() {
