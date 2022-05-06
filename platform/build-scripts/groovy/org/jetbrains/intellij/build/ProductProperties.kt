@@ -132,8 +132,9 @@ abstract class ProductProperties {
   val productLayout = ProductModulesLayout()
 
   /**
-   * If {@code true} cross-platform ZIP archive containing binaries for all OS will be built. The archive will be generated in {@link BuildPaths#artifactDir}
-   * directory and have ".portable" suffix by default, override {@link #getCrossPlatformZipFileName} to change the file name.
+   * If true cross-platform ZIP archive containing binaries for all OS will be built. The archive will be generated in [BuildPaths.artifactDir]
+   * directory and have ".portable" suffix by default, override [getCrossPlatformZipFileName] to change the file name.
+   * Cross-platform distribution is required for [plugins development](https://github.com/JetBrains/gradle-intellij-plugin).
    */
   var buildCrossPlatformDistribution = false
 
