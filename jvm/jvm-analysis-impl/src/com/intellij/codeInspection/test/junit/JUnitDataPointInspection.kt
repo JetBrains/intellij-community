@@ -6,11 +6,12 @@ import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.*
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.lang.jvm.actions.modifierRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.PsiMember
+import com.intellij.psi.*
 import com.intellij.util.SmartList
 import com.intellij.util.castSafelyTo
 import org.jetbrains.uast.*
@@ -49,6 +50,11 @@ class JUnitDataPointInspection : AbstractBaseUastLocalInspectionTool() {
     return emptyArray()
   }
 
+  private fun getIssues(declaration: UDeclaration): List<@NlsSafe String> = SmartList<String>().apply {
+    if (declaration.visibility != UastVisibility.PUBLIC) add("public")
+    if (!declaration.isStatic) add("static")
+  }
+
   private class MakePublicStaticQuickfix(
     private val memberDescription: @NlsSafe String,
     private val memberName: @NlsSafe String,
@@ -67,19 +73,20 @@ class JUnitDataPointInspection : AbstractBaseUastLocalInspectionTool() {
     override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.datapoint.fix.familyName")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val element = descriptor.psiElement
-      val uDeclaration = getUParentForIdentifier(descriptor.psiElement)?.castSafelyTo<UDeclaration>() ?: return
-      val makePublicActions = createModifierActions(uDeclaration, modifierRequest(JvmModifier.PUBLIC, true))
-      val makeStaticActions = createModifierActions(uDeclaration, modifierRequest(JvmModifier.STATIC, true))
-      (makePublicActions + makeStaticActions).forEach {
-        it.invoke(project, null, element.containingFile)
-      }
+      val containingFile = descriptor.psiElement.containingFile ?: return
+      val declaration = getUParentForIdentifier(descriptor.psiElement)?.castSafelyTo<UDeclaration>()?.javaPsi ?: return
+      val declarationPtr = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(declaration)
+      declarationPtr.invokeModifierRequest(JvmModifier.PUBLIC, containingFile)
+      declarationPtr.invokeModifierRequest(JvmModifier.STATIC, containingFile)
     }
-  }
 
-  private fun getIssues(declaration: UDeclaration): List<@NlsSafe String> = SmartList<String>().apply {
-    if (declaration.visibility != UastVisibility.PUBLIC) add("public")
-    if (!declaration.isStatic) add("static")
+    private fun SmartPsiElementPointer<PsiElement>.invokeModifierRequest(modifier: JvmModifier, containingFile: PsiFile) {
+      element?.castSafelyTo<JvmModifiersOwner>()?.let { elem ->
+        createModifierActions(elem, modifierRequest(modifier, true)).forEach {
+          it.invoke(project, null, containingFile)
+        }
+      } ?: return
+    }
   }
 
   companion object {
