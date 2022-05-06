@@ -244,7 +244,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       })
     }
 
-    val currentJdk = JavaProjectUtil.getProjectJdk(project)
+    val currentJdk = JavaProjectUtil.getEffectiveJdk(project)
 
     @Suppress("HardCodedStringLiteral")
     val currentJdkVersion: @NlsSafe String = currentJdk?.let { JavaSdk.getInstance().getVersionString(it) } ?: "none"

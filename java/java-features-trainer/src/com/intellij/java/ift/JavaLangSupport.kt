@@ -73,7 +73,7 @@ internal class JavaLangSupport : JavaBasedLangSupport() {
       var progressHighlightingStarted = false
       var downloadingListenerAdded = false
       timerCheck {
-        val jdk = JavaProjectUtil.getProjectJdk(project)
+        val jdk = JavaProjectUtil.getEffectiveJdk(project)
 
         if (jdk != null && !progressHighlightingStarted) {
           progressHighlightingStarted = true
@@ -99,7 +99,7 @@ internal class JavaLangSupport : JavaBasedLangSupport() {
             //  So we need to trigger the indexing by setting the same JDK that already set just to call listeners of JDK update.
             //  Remove this hack when IDEA-244649 will be fixed.
             runWriteAction {
-              ProjectRootManager.getInstance(project).projectSdk = JavaProjectUtil.getProjectJdk(project)
+              ProjectRootManager.getInstance(project).projectSdk = JavaProjectUtil.getEffectiveJdk(project)
             }
           }
         }
