@@ -17,6 +17,28 @@ public final class TrigramBuilder {
   private TrigramBuilder() {
   }
 
+  public static abstract class TrigramProcessor implements IntPredicate {
+    public boolean consumeTrigramsCount(@SuppressWarnings("unused") int count) {
+      return true;
+    }
+  }
+
+  @SuppressWarnings("unused")
+  public static boolean processTrigrams(@NotNull CharSequence text, @NotNull TrigramProcessor consumer) {
+    IntSet trigrams = getTrigrams(text);
+    if (!consumer.consumeTrigramsCount(trigrams.size())) {
+      return false;
+    }
+    IntIterator iterator = trigrams.intIterator();
+    while (iterator.hasNext()) {
+      int trigram = iterator.nextInt();
+      if (!consumer.test(trigram)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public static @NotNull Map<Integer, Void> getTrigramsAsMap(@NotNull CharSequence text) {
     return new AbstractInt2ObjectMap<Void>() {
       final IntSet trigrams = getTrigrams(text);
@@ -88,7 +110,7 @@ public final class TrigramBuilder {
 
   /**
    * Produces <a href="https://en.wikipedia.org/wiki/Trigram">trigrams</a> from a given text.
-   *
+   * <p>
    * Every single trigram is represented by single integer where char bytes are stored with 8 bit offset.
    */
   public static @NotNull IntSet getTrigrams(@NotNull CharSequence text) {
