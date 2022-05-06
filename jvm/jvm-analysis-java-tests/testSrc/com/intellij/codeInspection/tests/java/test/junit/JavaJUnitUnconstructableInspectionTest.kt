@@ -61,6 +61,18 @@ class JavaJUnitUnconstructableInspectionTest : JUnitUnconstructableTestCaseTestB
     """.trimIndent())
   }
 
+  fun testUnconstructableJUnit3TestCaseLocalClass() {
+    myFixture.testHighlighting(ULanguage.JAVA, """
+      import junit.framework.TestCase;
+
+      public class UnconstructableJUnit3TestCaseLocalClass {
+          public static void main() {
+            class LocalClass extends TestCase { }
+          }
+      }
+    """.trimIndent())
+  }
+
   fun testUnconstructableJUnit4TestCase1() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       import org.junit.Test;

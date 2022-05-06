@@ -26,3 +26,11 @@ fun UAnnotated.findAnnotations(fqNames: Collection<String>) = uAnnotations.filte
 fun UFile.allClasses() = classes.toTypedArray() + classes.flatMap { it.allInnerClasses().toList() }
 
 fun UClass.allInnerClasses(): Array<UClass> = innerClasses + innerClasses.flatMap { it.allInnerClasses().toList() }
+
+fun UClass.isAnonymousOrLocal(): Boolean = this is UAnonymousClass || isLocal()
+
+fun UClass.isLocal(): Boolean {
+  val parent = uastParent
+  if (parent is UDeclarationsExpression && parent.uastParent is UBlockExpression) return true
+  return if (parent is UClass) parent.isLocal() else false
+}
