@@ -104,4 +104,9 @@ public final class StorageLockContext {
       myFilePageCache.assertUnderSegmentAllocationLock();
     }
   }
+
+  @ApiStatus.Internal
+  public static void forceDirectMemoryCache() {
+    ourDefaultCache.flushBuffers();
+  }
 }

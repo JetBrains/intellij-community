@@ -317,6 +317,25 @@ final class FilePageCache {
     }
   }
 
+  void flushBuffers() {
+    mySegmentsAccessLock.lock();
+    try {
+      while (!mySegments.isEmpty()) {
+        mySegments.doRemoveEldestEntry();
+      }
+    }
+    finally {
+      mySegmentsAccessLock.unlock();
+    }
+
+    mySegmentsAllocationLock.lock();
+    try {
+      disposeRemovedSegments(null);
+    } finally {
+      mySegmentsAllocationLock.unlock();
+    }
+  }
+
   void flushBuffersForOwner(StorageLockContext storageLockContext) throws IOException {
     storageLockContext.checkReadAccess();
     Map<Long, DirectBufferWrapper> buffers = getBuffersOrderedForOwner(storageLockContext);
