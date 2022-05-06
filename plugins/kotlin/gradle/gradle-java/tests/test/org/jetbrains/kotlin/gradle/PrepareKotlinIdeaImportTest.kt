@@ -18,7 +18,7 @@ class PrepareKotlinIdeaImportTest : MultiplePluginVersionGradleImportingTestCase
         get() = this >= parseKotlinVersion("1.6.255-SNAPSHOT")
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.4+")
+    @PluginTargetVersions(pluginVersion = "1.5+")
     fun testPrepareKotlinIdeaImport() {
         configureByFiles()
 
