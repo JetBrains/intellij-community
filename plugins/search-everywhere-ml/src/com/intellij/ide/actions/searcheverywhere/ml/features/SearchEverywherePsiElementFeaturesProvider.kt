@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.LanguageUsageStatistics
+import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.application.ReadAction
 import com.intellij.psi.PsiElement
@@ -63,7 +64,8 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
   private fun getLanguageFeatures(element: PsiElement, cache: FeaturesProviderCache?): List<EventPair<*>> {
     if (cache == null) return emptyList()
 
-    val stats = cache.usageSortedLanguageStatistics.getOrDefault(element.language.id, LanguageUsageStatistics.NEVER_USED)
+    val elementLanguage = ReadAction.compute<Language, Nothing> { element.language }
+    val stats = cache.usageSortedLanguageStatistics.getOrDefault(elementLanguage.id, LanguageUsageStatistics.NEVER_USED)
 
     val languageUsageIndex = cache.usageSortedLanguageStatistics
       .values
@@ -76,7 +78,7 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
     val timeSinceLastUsage = System.currentTimeMillis() - stats.lastUsed
 
     val features = mutableListOf(
-      LANGUAGE_DATA_KEY.with(element.language.id),
+      LANGUAGE_DATA_KEY.with(elementLanguage.id),
       LANGUAGE_IS_MOST_USED_DATA_KEY.with(isMostUsed),
       LANGUAGE_IS_IN_TOP_3_MOST_USED_DATA_KEY.with(isInTop3MostUsed),
       LANGUAGE_USED_IN_LAST_DAY.with(timeSinceLastUsage <= DAY),
@@ -87,7 +89,7 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
 
     if (cache.currentlyOpenedFile != null) {
       val openedFileLanguage = LanguageUtil.getFileLanguage(cache.currentlyOpenedFile)
-      features.add(LANGUAGE_IS_SAME_AS_OPENED_FILE.with(openedFileLanguage == element.language))
+      features.add(LANGUAGE_IS_SAME_AS_OPENED_FILE.with(openedFileLanguage == elementLanguage))
     }
 
     return features

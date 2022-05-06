@@ -92,6 +92,8 @@
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereSymbolFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereRunConfigurationFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywherePsiElementFeaturesProvider"/>
 
     <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.ActionKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.id.PsiElementKeyProvider"/>

@@ -52,7 +52,7 @@ internal class SearchEverywhereFileFeaturesProvider
                                   searchQuery: String,
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?): List<EventPair<*>> {
-    val item = (SearchEverywhereClassOrFileFeaturesProvider.getPsiElement(element) as? PsiFileSystemItem) ?: return emptyList()
+    val item = (SearchEverywherePsiElementFeaturesProvider.getPsiElement(element) as? PsiFileSystemItem) ?: return emptyList()
 
     val data = arrayListOf<EventPair<*>>(
       IS_FAVORITE_DATA_KEY.with(isFavorite(item)),

@@ -2,8 +2,8 @@ package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywherePsiElementFeaturesProvider.Companion.IS_INVALID_DATA_KEY
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -27,7 +27,6 @@ internal class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereEle
   RecentFilesSEContributor::class.java
 ) {
   companion object {
-    internal val IS_INVALID_DATA_KEY = EventFields.Boolean("isInvalid")
     internal val IS_ACCESSIBLE_FROM_MODULE = EventFields.Boolean("isAccessibleFromModule")
 
     internal val IS_SAME_MODULE_DATA_KEY = EventFields.Boolean("isSameModule")
@@ -48,20 +47,11 @@ internal class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereEle
     internal val FILETYPE_USED_IN_LAST_HOUR_DATA_KEY = EventFields.Boolean("fileTypeUsedInLastHour")
     internal val FILETYPE_USED_IN_LAST_DAY_DATA_KEY = EventFields.Boolean("fileTypeUsedInLastDay")
     internal val FILETYPE_USED_IN_LAST_MONTH_DATA_KEY = EventFields.Boolean("fileTypeUsedInLastMonth")
-
-    internal fun getPsiElement(element: Any): PsiElement? {
-      return when (element) {
-        is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> element.item
-        is PsiElement -> element
-        else -> null
-      }
-    }
-
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
     return arrayListOf(
-      IS_INVALID_DATA_KEY, IS_ACCESSIBLE_FROM_MODULE,
+      IS_ACCESSIBLE_FROM_MODULE,
       IS_SAME_MODULE_DATA_KEY, PACKAGE_DISTANCE_DATA_KEY,
       PACKAGE_DISTANCE_NORMALIZED_DATA_KEY, IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY,
       IS_IN_SOURCE_DATA_KEY, IS_IN_TEST_SOURCES_DATA_KEY, IS_IN_LIBRARY_DATA_KEY,
@@ -78,9 +68,11 @@ internal class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereEle
                                   searchQuery: String,
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?): List<EventPair<*>> {
-    val item = getPsiElement(element) ?: return emptyList()
+    val item = SearchEverywherePsiElementFeaturesProvider.getPsiElement(element) ?: return emptyList()
     val file = getContainingFile(item)
-    val project = ReadAction.compute<Project?, Nothing> { item.takeIf { it.isValid }?.project } ?: return listOf(IS_INVALID_DATA_KEY.with(true))
+    val project = ReadAction.compute<Project?, Nothing> {
+      item.takeIf { it.isValid }?.project
+    } ?: return listOf(IS_INVALID_DATA_KEY.with(true))
 
     val data = ArrayList<EventPair<*>>()
     if (file != null && cache != null) {
