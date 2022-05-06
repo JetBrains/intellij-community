@@ -3,8 +3,10 @@ package com.intellij
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.indexing.FileBasedIndexTumbler
 import com.intellij.util.indexing.ID
 import org.jetbrains.annotations.ApiStatus
@@ -25,6 +27,7 @@ object CacheSwitcher {
       fileBasedIndexTumbler.switch {
         val vfs = PersistentFS.getInstance() as PersistentFSImpl
         vfs.switch {
+          assertVirtualPointersDisposed(reason)
           unsafeDataManipulation()
 
           setupProp("caches_dir", cachesDir)
@@ -33,6 +36,24 @@ object CacheSwitcher {
         }
 
         ID.reloadEnumFile()
+      }
+    }
+  }
+
+  private fun assertVirtualPointersDisposed(reason: String) {
+    val assertSoftly = ApplicationManager.getApplication().isUnitTestMode
+    val virtualFilePointerManagerImpl = VirtualFilePointerManager.getInstance() as VirtualFilePointerManagerImpl
+
+    try {
+      virtualFilePointerManagerImpl.assertAllPointersDisposed()
+    }
+    catch (e: Exception) {
+      val message = "Not disposed pointers during caches switching $reason"
+      if (assertSoftly) {
+        log.info(message, e)
+      }
+      else {
+        log.error(message, e)
       }
     }
   }
