@@ -24,6 +24,5 @@
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-cli" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
-    <!-- PLEASE DON'T ADD FRONTEND-SPECIFIC DEPENDENCIES: they should rather go to frontend variants, such as uast-kotlin(-fir) -->
   </component>
 </module>
