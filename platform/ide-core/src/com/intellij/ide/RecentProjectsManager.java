@@ -72,6 +72,9 @@ public abstract class RecentProjectsManager {
   public void moveProjectToGroup(@NotNull String projectPath, @NotNull ProjectGroup from, @NotNull ProjectGroup to) {
   }
 
+  public void removeProjectFromGroup(@NotNull String projectPath, @NotNull ProjectGroup from) {
+  }
+
   public boolean hasPath(@SystemIndependent String path) {
     return false;
   }

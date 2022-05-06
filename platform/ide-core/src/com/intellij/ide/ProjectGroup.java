@@ -88,12 +88,7 @@ public final class ProjectGroup {
   }
 
   public boolean removeProject(@SystemIndependent String path) {
-    boolean isRemoved = myProjects.remove(path);
-    if (isRemoved) {
-      RecentProjectsManager.fireChangeEvent();
-    }
-
-    return isRemoved;
+    return myProjects.remove(path);
   }
 
   public boolean isExpanded() {

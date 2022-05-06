@@ -17,8 +17,9 @@ class RemoveSelectedProjectsFromGroupsAction : RecentProjectsWelcomeScreenAction
 
   override fun actionPerformed(event: AnActionEvent) {
     val item = getSelectedItem(event).castSafelyTo<RecentProjectItem>() ?: return
+    val recentProjectsManager = RecentProjectsManager.getInstance()
     for (group in RecentProjectsManager.getInstance().groups) {
-      group.removeProject(item.projectPath)
+      recentProjectsManager.removeProjectFromGroup(item.projectPath, group)
     }
   }
 }

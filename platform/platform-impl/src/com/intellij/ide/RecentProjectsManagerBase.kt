@@ -610,6 +610,11 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     fireChangeEvent()
   }
 
+  override fun removeProjectFromGroup(projectPath: String, from: ProjectGroup) {
+    from.removeProject(projectPath)
+    fireChangeEvent()
+  }
+
   override fun getModificationCount(): Long {
     synchronized(stateLock) {
       return modCounter.get() + state.modificationCount
