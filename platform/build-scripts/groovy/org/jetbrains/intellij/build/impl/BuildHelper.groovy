@@ -272,6 +272,11 @@ final class BuildHelper {
                                                       @NotNull Set<String> explicitlyEnabledPlugins) {
     Set<String> toDisable = new LinkedHashSet<>()
     for (String moduleName : context.productProperties.productLayout.compatiblePluginsToIgnore) {
+      // TODO: It is temporary solution to avoid exclude Kotlin from searchable options build because Kotlin team
+      // need to use the same id in fir plugin.
+      // Remove it when "kotlin.resources-fir" will removed from compatiblePluginsToIgnore
+      // see: org/jetbrains/intellij/build/BaseIdeaProperties.groovy:179
+      if (moduleName == "kotlin.resources-fir") continue
       Path pluginXml = context.findFileInModuleSources(moduleName, "META-INF/plugin.xml")
       String pluginId = XmlDomReader.readXmlAsModel(Files.newInputStream(pluginXml)).getChild("id")?.content
       if (!explicitlyEnabledPlugins.contains(pluginId)) {
