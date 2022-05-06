@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.ui.*
 import com.intellij.ui.hover.TreeHoverListener
@@ -70,6 +71,7 @@ class RecentProjectFilteringTree(treeComponent: Tree, parentDisposable: Disposab
       isRootVisible = false
       cellRenderer = ProjectActionRenderer(filePathChecker::isValid)
       rowHeight = 0 // Fix tree renderer size on macOS
+      background = WelcomeScreenUIManager.getProjectsBackground()
 
       setExpandableItemsEnabled(false)
     }

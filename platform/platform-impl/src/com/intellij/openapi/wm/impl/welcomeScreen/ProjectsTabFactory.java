@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.PlatformUtils;
@@ -54,6 +55,8 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
         else {
           mainPanel = JBUI.Panels.simplePanel().withBorder(JBUI.Borders.empty(13, 12)).withBackground(getProjectsBackground());
           RecentProjectFilteringTree recentProjectTree = RecentProjectPanelComponentFactory.createComponent(parentDisposable);
+          JComponent treeComponent = recentProjectTree.getComponent();
+          JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(treeComponent, true);
           SearchTextField projectSearch = recentProjectTree.installSearchField();
 
           JPanel northPanel =
@@ -65,12 +68,12 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
             });
 
           ActionToolbar actionsToolbar = createActionsToolbar();
-          actionsToolbar.setTargetComponent(recentProjectTree.getComponent());
+          actionsToolbar.setTargetComponent(scrollPane);
           JComponent projectActionsPanel = actionsToolbar.getComponent();
           northPanel.add(projectSearch, BorderLayout.CENTER);
           northPanel.add(projectActionsPanel, BorderLayout.EAST);
           mainPanel.add(northPanel, BorderLayout.NORTH);
-          mainPanel.add(recentProjectTree.getComponent(), BorderLayout.CENTER);
+          mainPanel.add(scrollPane, BorderLayout.CENTER);
           mainPanel.add(createNotificationPanel(parentDisposable), BorderLayout.SOUTH);
         }
         DnDNativeTarget target = createDropFileTarget();
