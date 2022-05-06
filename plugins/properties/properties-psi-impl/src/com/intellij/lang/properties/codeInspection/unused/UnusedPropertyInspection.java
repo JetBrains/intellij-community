@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.Disposable;
@@ -124,6 +125,11 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
     }
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module == null) return PsiElementVisitor.EMPTY_VISITOR;
+
+    if (InjectedLanguageManager.getInstance(module.getProject()).isInjectedFragment(holder.getFile())) {
+      // Properties inside injected fragments cannot be normally referenced
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
 
     final UnusedPropertiesSearchHelper helper = new UnusedPropertiesSearchHelper(module);
 
