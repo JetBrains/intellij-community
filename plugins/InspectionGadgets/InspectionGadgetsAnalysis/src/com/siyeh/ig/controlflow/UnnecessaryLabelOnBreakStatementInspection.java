@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -25,14 +26,12 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
-public class UnnecessaryLabelOnBreakStatementInspection
-  extends BaseInspection {
+public class UnnecessaryLabelOnBreakStatementInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.label.on.break.statement.problem.descriptor");
+    return InspectionGadgetsBundle.message("unnecessary.label.on.break.statement.problem.descriptor");
   }
 
   @Override

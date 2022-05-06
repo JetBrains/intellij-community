@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class CallToSimpleSetterInClassInspection extends BaseInspection {
+public class CallToSimpleSetterInClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("UnusedDeclaration")
   public boolean ignoreSetterCallsOnOtherObjects = false;

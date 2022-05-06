@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -35,8 +36,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ListIndexOfReplaceableByContainsInspection
-  extends BaseInspection {
+public class ListIndexOfReplaceableByContainsInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

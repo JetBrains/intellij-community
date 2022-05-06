@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -46,7 +47,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspection {
+public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspection implements CleanupLocalInspectionTool {
   private static final CallMatcher JUNIT4_ASSERT_EQUALS =
     CallMatcher.anyOf(
       CallMatcher.staticCall("org.junit.Assert", "assertEquals").parameterTypes("long", "long"),

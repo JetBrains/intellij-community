@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -43,7 +44,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public final class PointlessArithmeticExpressionInspection extends BaseInspection {
+public final class PointlessArithmeticExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
   private static final TokenSet arithmeticTokens = TokenSet.create(
     JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.ASTERISK, JavaTokenType.DIV, JavaTokenType.PERC, JavaTokenType.GT,
     JavaTokenType.LT, JavaTokenType.LE, JavaTokenType.GE);

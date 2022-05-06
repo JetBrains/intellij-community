@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.testFrameworks;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -16,7 +17,7 @@ import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SimplifiableAssertionInspection extends BaseInspection {
+public class SimplifiableAssertionInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {

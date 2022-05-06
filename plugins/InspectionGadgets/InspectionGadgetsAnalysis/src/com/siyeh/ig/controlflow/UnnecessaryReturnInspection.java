@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class UnnecessaryReturnInspection extends BaseInspection {
+public class UnnecessaryReturnInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @SuppressWarnings("PublicField")
   public boolean ignoreInThenBranch = false;
 

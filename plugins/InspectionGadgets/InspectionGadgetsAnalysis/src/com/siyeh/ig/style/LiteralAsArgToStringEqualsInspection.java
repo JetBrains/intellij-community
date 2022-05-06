@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class LiteralAsArgToStringEqualsInspection extends BaseInspection {
+public class LiteralAsArgToStringEqualsInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
