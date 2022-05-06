@@ -145,6 +145,84 @@ public abstract class HLLocalInspectionTestGenerated extends AbstractHLLocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/inspectionsLocal/implicitThis")
+    public static class ImplicitThis extends AbstractHLLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("already.kt")
+        public void testAlready() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/implicitThis/already.kt");
+        }
+
+        @TestMetadata("callVariableAsFunction.kt")
+        public void testCallVariableAsFunction() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/implicitThis/callVariableAsFunction.kt");
+        }
+
+        @TestMetadata("callVariableAsFunction2.kt")
+        public void testCallVariableAsFunction2() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/implicitThis/callVariableAsFunction2.kt");
+        }
+
+        @TestMetadata("function.kt")
+        public void testFunction() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/implicitThis/function.kt");
+        }
+
+        @TestMetadata("functionPartOfCall.kt")
+        public void testFunctionPartOfCall() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/implicitThis/functionPartOfCall.kt");
+        }
+
+        @TestMetadata("functionReference.kt")
+        public void testFunctionReference() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/implicitThis/functionReference.kt");
+        }
+
+        @TestMetadata("functionWithReceiver.kt")
+        public void testFunctionWithReceiver() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/implicitThis/functionWithReceiver.kt");
+        }
+
+        @TestMetadata("multipleReceivers.kt")
+        public void testMultipleReceivers() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/implicitThis/multipleReceivers.kt");
+        }
+
+        @TestMetadata("nested.kt")
+        public void testNested() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/implicitThis/nested.kt");
+        }
+
+        @TestMetadata("nestedCall.kt")
+        public void testNestedCall() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/implicitThis/nestedCall.kt");
+        }
+
+        @TestMetadata("property.kt")
+        public void testProperty() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/implicitThis/property.kt");
+        }
+
+        @TestMetadata("propertyPartOfCall.kt")
+        public void testPropertyPartOfCall() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/implicitThis/propertyPartOfCall.kt");
+        }
+
+        @TestMetadata("propertyReference.kt")
+        public void testPropertyReference() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/implicitThis/propertyReference.kt");
+        }
+
+        @TestMetadata("topLevel.kt")
+        public void testTopLevel() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/implicitThis/topLevel.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractHLLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)

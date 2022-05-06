@@ -1132,6 +1132,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("idea/tests/testData/inspectionsLocal/unusedVariable", pattern = pattern)
             model("idea/tests/testData/inspectionsLocal/redundantVisibilityModifier", pattern = pattern)
+            model("idea/tests/testData/inspectionsLocal/implicitThis")
             model("fir/testData/inspectionsLocal", pattern = pattern)
         }
     }
