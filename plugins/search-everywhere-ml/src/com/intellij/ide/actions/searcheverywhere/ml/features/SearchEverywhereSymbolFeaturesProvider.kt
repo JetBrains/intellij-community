@@ -34,7 +34,7 @@ class SearchEverywhereSymbolFeaturesProvider : SearchEverywhereElementFeaturesPr
     val psiElement = getPsiElement(element) ?: return emptyList()
     val data = arrayListOf<EventPair<*>>()
 
-    data.add(LANGUAGE_DATA_KEY.with(psiElement.language.id))
+    data.add(LANGUAGE_DATA_KEY.with(getPsiElementLanguage(psiElement)))
     data.addAll(getParentStatisticianFeatures(psiElement))
 
     getElementName(element)?.let { name ->
@@ -49,6 +49,8 @@ class SearchEverywhereSymbolFeaturesProvider : SearchEverywhereElementFeaturesPr
     is PsiElement -> element
     else -> null
   }
+
+  private fun getPsiElementLanguage(element: PsiElement) = ReadAction.compute<String, Nothing> { element.language.id }
 
   private fun getParentStatisticianFeatures(element: PsiElement): List<EventPair<*>> {
     val parent = ReadAction.compute<PsiElement?, Nothing> { element.parent }?.takeIf { it is PsiNamedElement } ?: return emptyList()
