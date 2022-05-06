@@ -434,9 +434,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     boolean isDarkMenu = isDarkMenu();
     for (AnAction action : myVisibleActions) {
       ActionMenu actionMenu =
-        new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, isDarkMenu);
+        new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, isDarkMenu, true);
 
-      actionMenu.setHeaderMenuItem();
       if (IdeFrameDecorator.isCustomDecorationActive()) {
         actionMenu.setOpaque(false);
         actionMenu.setFocusable(false);
