@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -55,6 +56,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getImmediateValuesEx;
 import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getModuleImmediateValues;
 
 @ApiStatus.Internal
@@ -477,14 +479,29 @@ public class UnindexedFilesUpdater extends DumbModeTask {
         IndexableFilesDeduplicateFilter.createDelegatingTo(indexableFilesDeduplicateFilter);
 
       List<FilePropertyPusher<?>> pushers;
+      List<FilePropertyPusherEx<?>> pusherExs;
       Object[] moduleValues;
       if (origin instanceof ModuleRootOrigin && !((ModuleRootOrigin)origin).getModule().isDisposed()) {
         pushers = FilePropertyPusher.EP_NAME.getExtensionList();
+        pusherExs = null;
         moduleValues = ReadAction.compute(() -> getModuleImmediateValues(pushers, ((ModuleRootOrigin)origin).getModule()));
       }
       else {
         pushers = null;
-        moduleValues = null;
+        List<FilePropertyPusherEx<?>> extendedPushers = new SmartList<>();
+        for (FilePropertyPusher<?> pusher : FilePropertyPusher.EP_NAME.getExtensionList()) {
+          if (pusher instanceof FilePropertyPusherEx && ((FilePropertyPusherEx<?>)pusher).acceptsOrigin(project, origin)) {
+            extendedPushers.add((FilePropertyPusherEx<?>)pusher);
+          }
+        }
+        if (extendedPushers.isEmpty()) {
+          pusherExs = null;
+          moduleValues = null;
+        }
+        else {
+          pusherExs = extendedPushers;
+          moduleValues = ReadAction.compute(() -> getImmediateValuesEx(extendedPushers, origin));
+        }
       }
 
       ProgressManager.checkCanceled(); // give a chance to suspend indexing
@@ -498,6 +515,9 @@ public class UnindexedFilesUpdater extends DumbModeTask {
         PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors);
         if (pushers != null && myPusher instanceof PushedFilePropertiesUpdaterImpl) {
           ((PushedFilePropertiesUpdaterImpl)myPusher).applyPushersToFile(fileOrDir, pushers, moduleValues);
+        }
+        else if (pusherExs != null && myPusher instanceof PushedFilePropertiesUpdaterImpl) {
+          ((PushedFilePropertiesUpdaterImpl)myPusher).applyPushersToFile(fileOrDir, pusherExs, moduleValues);
         }
 
         UnindexedFileStatus status;

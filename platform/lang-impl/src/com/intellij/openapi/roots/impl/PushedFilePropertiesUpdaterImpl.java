@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
@@ -37,14 +37,12 @@ import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.FileBasedIndexProjectHandler;
-import com.intellij.util.indexing.IndexingBundle;
+import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushedDiagnostic;
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushingStatistics;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.roots.*;
+import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
@@ -318,6 +316,16 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     moduleValues = new Object[pushers.size()];
     for (int i = 0; i < moduleValues.length; i++) {
       moduleValues[i] = pushers.get(i).getImmediateValue(module);
+    }
+    return moduleValues;
+  }
+
+  public static Object @NotNull [] getImmediateValuesEx(@NotNull List<FilePropertyPusherEx<?>> pushers,
+                                                        @NotNull IndexableSetOrigin origin) {
+    final Object[] moduleValues;
+    moduleValues = new Object[pushers.size()];
+    for (int i = 0; i < moduleValues.length; i++) {
+      moduleValues[i] = pushers.get(i).getImmediateValueEx(origin);
     }
     return moduleValues;
   }
