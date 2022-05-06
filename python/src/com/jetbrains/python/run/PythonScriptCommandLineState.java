@@ -45,6 +45,7 @@ import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.run.target.PySdkTargetPaths;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -333,16 +334,17 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
                                                                    createRemotePathMapper(), scriptPath);
   }
 
-  private static @NotNull List<String> getExpandedScriptParameters(PythonRunConfiguration config) {
+  private static @NotNull List<String> getExpandedScriptParameters(@NotNull PythonRunConfiguration config) {
     final String parameters = config.getScriptParameters();
     return ProgramParametersConfigurator.expandMacrosAndParseParameters(parameters);
   }
 
-  private static String escape(String s) {
+  @Contract(pure = true)
+  private static @NotNull String escape(@NotNull String s) {
     return StringUtil.escapeCharCharacters(s);
   }
 
-  public static String buildScriptWithConsoleRun(PythonRunConfiguration config) {
+  public static @NotNull String buildScriptWithConsoleRun(@NotNull PythonRunConfiguration config) {
     StringBuilder sb = new StringBuilder();
     final Map<String, String> configEnvs = config.getEnvs();
     configEnvs.remove(PythonEnvUtil.PYTHONUNBUFFERED);
