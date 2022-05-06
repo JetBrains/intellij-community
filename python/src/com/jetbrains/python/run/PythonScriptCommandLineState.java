@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,18 +33,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PathMapper;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.jetbrains.python.actions.PyExecuteInConsole;
 import com.jetbrains.python.actions.PyRunFileInConsoleAction;
 import com.jetbrains.python.console.PyConsoleOptions;
-import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.run.target.PySdkTargetPaths;
-import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +83,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
         }));
       }
 
-      final String runFileText = buildScriptWithConsoleRun(myConfig);
+      final String runFileText = PythonConsoleScripts.buildScriptWithConsoleRun(myConfig);
       final boolean useExistingConsole = PyConsoleOptions.getInstance(project).isUseExistingConsole();
       ApplicationManager.getApplication().invokeLater(() -> {
         PyExecuteInConsole.executeCodeInConsole(project, runFileText, null, useExistingConsole, false, true, myConfig);
@@ -123,7 +118,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       if (DefaultRunExecutor.EXECUTOR_ID.equals(executor.getId())) {
         PyRunFileInConsoleAction.configExecuted(myConfig);
 
-        String runFileText = buildScriptWithConsoleRun(myConfig);
+        String runFileText = PythonConsoleScripts.buildScriptWithConsoleRun(myConfig);
         boolean useExistingConsole = PyConsoleOptions.getInstance(project).isUseExistingConsole();
         PyExecuteInConsole.executeCodeInConsole(project, runFileText, null, useExistingConsole, false, true, myConfig);
 
@@ -337,59 +332,5 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   private static @NotNull List<String> getExpandedScriptParameters(@NotNull PythonRunConfiguration config) {
     final String parameters = config.getScriptParameters();
     return ProgramParametersConfigurator.expandMacrosAndParseParameters(parameters);
-  }
-
-  @Contract(pure = true)
-  private static @NotNull String escape(@NotNull String s) {
-    return StringUtil.escapeCharCharacters(s);
-  }
-
-  public static @NotNull String buildScriptWithConsoleRun(@NotNull PythonRunConfiguration config) {
-    StringBuilder sb = new StringBuilder();
-    final Map<String, String> configEnvs = config.getEnvs();
-    configEnvs.remove(PythonEnvUtil.PYTHONUNBUFFERED);
-    if (configEnvs.size() > 0) {
-      sb.append("import os\n");
-      for (Map.Entry<String, String> entry : configEnvs.entrySet()) {
-        sb.append("os.environ['").append(escape(entry.getKey())).append("'] = '").append(escape(entry.getValue())).append("'\n");
-      }
-    }
-
-    final Project project = config.getProject();
-    final Sdk sdk = config.getSdk();
-    final PathMapper pathMapper =
-      PydevConsoleRunner.getPathMapper(project, sdk, PyConsoleOptions.getInstance(project).getPythonConsoleSettings());
-
-    String scriptPath = config.getScriptName();
-    String workingDir = config.getWorkingDirectory();
-    if (PythonSdkUtil.isRemote(sdk) && pathMapper != null) {
-      scriptPath = pathMapper.convertToRemote(scriptPath);
-      workingDir = pathMapper.convertToRemote(workingDir);
-    }
-
-    sb.append("runfile('").append(escape(scriptPath)).append("'");
-
-    final List<String> scriptParameters = getExpandedScriptParameters(config);
-    if (scriptParameters.size() != 0) {
-      sb.append(", args=[");
-      for (int i = 0; i < scriptParameters.size(); i++) {
-        if (i != 0) {
-          sb.append(", ");
-        }
-        sb.append("'").append(escape(scriptParameters.get(i))).append("'");
-      }
-      sb.append("]");
-    }
-
-    if (!workingDir.isEmpty()) {
-      sb.append(", wdir='").append(escape(workingDir)).append("'");
-    }
-
-    if (config.isModuleMode()) {
-      sb.append(", is_module=True");
-    }
-
-    sb.append(")");
-    return sb.toString();
   }
 }
