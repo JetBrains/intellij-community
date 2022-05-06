@@ -971,13 +971,12 @@ public final class ExpressionUtils {
    * or if reference points to non-static member of class from static context
    */
   public static PsiExpression getEffectiveQualifier(@NotNull PsiReferenceExpression ref, @NotNull PsiMember member) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
-    PsiClass memberClass = member.getContainingClass();
-    PsiMethod containingMethod = PsiTreeUtil.getParentOfType(ref, PsiMethod.class);
-    PsiClassInitializer classInitializer = PsiTreeUtil.getParentOfType(ref, PsiClassInitializer.class);
-    if (!member.hasModifierProperty(PsiModifier.STATIC) && (isStaticMember(containingMethod) || isStaticMember(classInitializer))) {
+    PsiMember containingMember = PsiTreeUtil.getParentOfType(ref, PsiMethod.class, PsiClassInitializer.class, PsiField.class);
+    if (!member.hasModifierProperty(PsiModifier.STATIC) && isStaticMember(containingMember)) {
       return null;
     }
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
+    PsiClass memberClass = member.getContainingClass();
     if (memberClass != null) {
       if (member.hasModifierProperty(PsiModifier.STATIC)) {
         return factory.createReferenceExpression(memberClass);
