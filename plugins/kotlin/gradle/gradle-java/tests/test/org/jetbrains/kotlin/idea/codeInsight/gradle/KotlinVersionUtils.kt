@@ -198,7 +198,7 @@ fun parseKotlinVersion(value: String): KotlinVersion {
         major = baseVersionSplit[0].toIntOrNull() ?: throwInvalid(),
         minor = baseVersionSplit[1].toIntOrNull() ?: throwInvalid(),
         patch = baseVersionSplit.getOrNull(2)?.let { it.toIntOrNull() ?: throwInvalid() } ?: 0,
-        classifier = classifier?.lowercase()
+        classifier = classifier
     )
 }
 
