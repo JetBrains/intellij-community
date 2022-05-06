@@ -166,6 +166,8 @@
       "delete.svg": "actions/gc.svg",
       "down.svg": "actions/nextOccurence.svg",
       "download.svg": "actions/download.svg",
+      "dropdown.svg": "general/dropdown.svg",
+      "dropdownGutter.svg": "general/dropdownGutter.svg",
       "edit.svg": [
         "actions/edit.svg",
         "actions/editSource.svg"
