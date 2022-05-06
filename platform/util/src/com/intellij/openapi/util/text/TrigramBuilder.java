@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.function.IntPredicate;
 
 public final class TrigramBuilder {
@@ -17,8 +18,9 @@ public final class TrigramBuilder {
   }
 
   public static @NotNull Map<Integer, Void> getTrigramsAsMap(@NotNull CharSequence text) {
-    IntSet trigrams = getTrigrams(text);
     return new AbstractInt2ObjectMap<Void>() {
+      final IntSet trigrams = getTrigrams(text);
+
       @Override
       public int size() {
         return trigrams.size();
@@ -48,10 +50,12 @@ public final class TrigramBuilder {
 
               @Override
               public Entry<Void> next() {
+                int key = iterator.nextInt();
+
                 return new Entry<Void>() {
                   @Override
                   public int getIntKey() {
-                    return iterator.nextInt();
+                    return key;
                   }
 
                   @Override
@@ -143,26 +147,39 @@ public final class TrigramBuilder {
     @Override
     public IntIterator iterator() {
       return new AbstractIntIterator() {
-        private int pos = -2;
+        private int pos = -1;
 
         @Override
         public int nextInt() {
-          return pos == -1 ? 0 : data[pos];
+          if (pos == -1 && hasZeroKey) {
+            pos = 0;
+            return 0;
+          }
+
+          for (int i = Math.max(0, pos); i < data.length; i++) {
+            if (data[i] != 0) {
+              pos = i + 1;
+              return data[i];
+            }
+          }
+
+          throw new NoSuchElementException();
         }
 
         @Override
         public boolean hasNext() {
-          if (pos == -2) {
-            pos = -1;
-            if (hasZeroKey) {
+          if (pos == -1 && hasZeroKey) {
+            return true;
+          }
+
+          for (int i = Math.max(0, pos); i < data.length; i++) {
+            if (data[i] != 0) {
+              pos = i;
               return true;
             }
           }
-          while (true) {
-            pos++;
-            if (pos >= data.length) return false;
-            if (data[pos] != 0) return true;
-          }
+
+          return false;
         }
       };
     }
