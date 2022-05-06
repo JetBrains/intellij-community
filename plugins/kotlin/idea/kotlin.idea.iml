@@ -78,7 +78,5 @@
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
-    <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
-    <orderEntry type="library" name="kotlinc.high-level-api-fe10" level="project" />
   </component>
 </module>
