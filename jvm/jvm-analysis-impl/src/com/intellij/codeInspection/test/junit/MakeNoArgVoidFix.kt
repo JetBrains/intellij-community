@@ -11,6 +11,7 @@ import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.psi.SmartPointerManager
 import com.intellij.util.castSafelyTo
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.getUParentForIdentifier
@@ -25,17 +26,33 @@ class MakeNoArgVoidFix(
   override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.fix.make.no.arg.void.name")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val element = descriptor.psiElement
-    val uMethod = getUParentForIdentifier(element)?.castSafelyTo<UMethod>() ?: return
-    val jvmMethod = uMethod.javaPsi.castSafelyTo<JvmMethod>() ?: return
-    val changeTypeActions = createChangeTypeActions(jvmMethod, typeRequest(JvmPrimitiveTypeKind.VOID.name, emptyList()))
-    val removeParametersActions = createChangeParametersActions(jvmMethod, setMethodParametersRequest(emptyMap<String, JvmType>().entries))
-    val visibilityActions = if (newVisibility != null) {
-      createModifierActions(jvmMethod, modifierRequest(newVisibility, true))
-    } else emptyList()
-    val makeStaticActions = createModifierActions(jvmMethod, modifierRequest(JvmModifier.STATIC, makeStatic))
-    (changeTypeActions + visibilityActions + removeParametersActions + makeStaticActions).forEach {
-      it.invoke(project, null, element.containingFile)
+    val containingFile = descriptor.psiElement.containingFile ?: return
+    val javaMethod = getUParentForIdentifier(descriptor.psiElement)?.castSafelyTo<UMethod>()?.javaPsi ?: return
+    val methodPtr = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(javaMethod)
+    methodPtr.element?.castSafelyTo<JvmMethod>()?.let { jvmMethod ->
+      createChangeTypeActions(jvmMethod, typeRequest(JvmPrimitiveTypeKind.VOID.name, emptyList())).forEach {
+        it.invoke(project, null, containingFile)
+      }
+    }
+
+    methodPtr.element?.castSafelyTo<JvmMethod>()?.let { jvmMethod ->
+      createChangeParametersActions(jvmMethod, setMethodParametersRequest(emptyMap<String, JvmType>().entries)).forEach {
+        it.invoke(project, null, containingFile)
+      }
+    }
+
+    if (newVisibility != null) {
+      methodPtr.element?.castSafelyTo<JvmMethod>()?.let { jvmMethod ->
+        createModifierActions(jvmMethod, modifierRequest(newVisibility, true)).forEach {
+          it.invoke(project, null, containingFile)
+        }
+      }
+    }
+
+    methodPtr.element?.castSafelyTo<JvmMethod>()?.let { jvmMethod ->
+      createModifierActions(jvmMethod, modifierRequest(JvmModifier.STATIC, makeStatic)).forEach {
+        it.invoke(project, null, containingFile)
+      }
     }
   }
 }
