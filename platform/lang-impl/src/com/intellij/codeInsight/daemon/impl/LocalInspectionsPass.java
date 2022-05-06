@@ -59,7 +59,6 @@ import java.util.function.Function;
 
 public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance(LocalInspectionsPass.class);
-  public static final TextRange EMPTY_PRIORITY_RANGE = TextRange.EMPTY_RANGE;
   private final TextRange myPriorityRange;
   private final boolean myIgnoreSuppressed;
   private volatile List<? extends HighlightInfo> myInfos = Collections.emptyList(); // updated atomically
