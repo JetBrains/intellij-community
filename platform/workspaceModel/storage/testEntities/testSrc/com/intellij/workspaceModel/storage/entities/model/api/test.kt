@@ -25,13 +25,15 @@ interface FooEntity: WorkspaceEntity {
   interface Builder: FooEntity, ModifiableWorkspaceEntity<FooEntity>, ObjBuilder<FooEntity> {
       override var name: String
       override var entitySource: EntitySource
+      override var moduleDependency: ModuleDependencyItem.Exportable.ModuleDependency
   }
   
   companion object: Type<FooEntity, Builder>() {
-      operator fun invoke(name: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FooEntity {
+      operator fun invoke(name: String, entitySource: EntitySource, moduleDependency: ModuleDependencyItem.Exportable.ModuleDependency, init: (Builder.() -> Unit)? = null): FooEntity {
           val builder = builder()
           builder.name = name
           builder.entitySource = entitySource
+          builder.moduleDependency = moduleDependency
           init?.invoke(builder)
           return builder
       }
@@ -54,6 +56,7 @@ interface AnotherTest: WorkspaceEntity {
   interface Builder: AnotherTest, ModifiableWorkspaceEntity<AnotherTest>, ObjBuilder<AnotherTest> {
       override var name: String
       override var entitySource: EntitySource
+      override var testField: TestEntity
   }
   
   companion object: Type<AnotherTest, Builder>() {
