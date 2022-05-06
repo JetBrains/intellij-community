@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginUpdateStatus
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
@@ -128,8 +129,22 @@ class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScrol
         form.channelCombo.addActionListener {
             val newChannel = form.channelCombo.selectedIndex
             if (newChannel != savedChannel) {
-                savedChannel = newChannel
-                checkForUpdates()
+                // Android Studio: Added for b/231644880 but remove this if we add a similar warning when installing any plugin.
+                if (newChannel == UpdateChannel.EAP.ordinal) {
+                    val legalese = "EAP Kotlin builds are provided by JetBrains and receive no support from Google. " +
+                            "EAP builds are experimental and can potentially break Android Studio, requiring reinstallation. " +
+                            "Would you like to continue?"
+                    val confirmation = MessageDialogBuilder.okCancel("Switching to EAP Builds From JetBrains", legalese)
+                    if (confirmation.ask(parentComponent = form.mainPanel)) {
+                        savedChannel = newChannel
+                        checkForUpdates()
+                    } else {
+                        form.channelCombo.selectedIndex = savedChannel
+                    }
+                } else {
+                    savedChannel = newChannel
+                    checkForUpdates()
+                }
             }
         }
 
