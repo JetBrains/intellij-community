@@ -35,17 +35,19 @@ import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
-import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_TYPES
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_TYPES
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
+import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
 import org.jetbrains.kotlin.idea.debugger.breakpoints.SourcePositionRefiner
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getElementsAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
@@ -53,8 +55,6 @@ import org.jetbrains.kotlin.idea.debugger.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.stepping.getLineRange
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.isSamLambda
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT
@@ -113,7 +113,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             }
         }
 
-        return listOf(KotlinStackFrame(frameProxy))
+        val visibleVariables = InlineStackTraceCalculator.calculateVisibleVariables(frameProxy)
+        return listOf(KotlinStackFrame(frameProxy, visibleVariables))
     }
 
     override fun getSourcePosition(location: Location?): SourcePosition? {

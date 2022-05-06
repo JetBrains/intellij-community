@@ -16,7 +16,7 @@ InlineStackFrame foo (frameInlineArgumentInsideInlineFun.kt:14)
     JavaValue[local] this (@B): frameInlineArgumentInsideInlineFun.B = frameInlineArgumentInsideInlineFun.B@hashCode
         DummyMessageValueNode = Class has no properties
     JavaValue[local] element: int = 1 (frameInlineArgumentInsideInlineFun.kt:13)
-KotlinStackFrameWithProvidedVariables (frameInlineArgumentInsideInlineFun.kt:25)
+KotlinStackFrame (frameInlineArgumentInsideInlineFun.kt:25)
     JavaValue[local] element: float = 1.0 (frameInlineArgumentInsideInlineFun.kt:13)
 Disconnected from the target VM
 

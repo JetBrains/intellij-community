@@ -10,20 +10,13 @@ import com.intellij.xdebugger.ui.DebuggerColors
 import com.sun.jdi.Location
 import java.awt.Color
 
-open class KotlinStackFrameWithProvidedVariables(
-    frameProxy: StackFrameProxyImpl,
-    visibleVariables: List<LocalVariableProxyImpl>
-) : KotlinStackFrame(frameProxy) {
-    override val _visibleVariables = visibleVariables.remapInKotlinView()
-}
-
 class InlineStackFrame(
-    location: Location,
+    location: Location?,
     name: String,
     frameProxy: StackFrameProxyImpl,
     variableInlineDepth: Int,
     visibleVariables: List<LocalVariableProxyImpl>
-) : KotlinStackFrameWithProvidedVariables(
+) : KotlinStackFrame(
         safeInlineStackFrameProxy(location, variableInlineDepth, frameProxy),
         visibleVariables
     ), XDebuggerFramesList.ItemWithCustomBackgroundColor {

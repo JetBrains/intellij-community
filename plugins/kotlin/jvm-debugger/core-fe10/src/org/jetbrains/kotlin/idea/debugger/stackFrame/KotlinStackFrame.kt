@@ -8,7 +8,8 @@ import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
-import com.intellij.debugger.ui.impl.watch.*
+import com.intellij.debugger.ui.impl.watch.MethodsTracker
+import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
@@ -23,10 +24,12 @@ import org.jetbrains.kotlin.idea.debugger.*
 import org.jetbrains.kotlin.idea.debugger.base.util.isSubtype
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluator
 
-open class KotlinStackFrame(stackFrameDescriptorImpl: StackFrameDescriptorImpl) : JavaStackFrame(stackFrameDescriptorImpl, true) {
+@Suppress("EqualsOrHashCode")
+open class KotlinStackFrame(
+    frame: StackFrameProxyImpl,
+    visibleVariables: List<LocalVariableProxyImpl>
+) : JavaStackFrame(StackFrameDescriptorImpl(frame, MethodsTracker()), true) {
     private val kotlinVariableViewService = ToggleKotlinVariablesState.getService()
-
-    constructor(frame: StackFrameProxyImpl) : this(StackFrameDescriptorImpl(frame, MethodsTracker()))
 
     private val kotlinEvaluator by lazy {
         val debugProcess = descriptor.debugProcess as DebugProcessImpl // Cast as in JavaStackFrame
@@ -163,11 +166,7 @@ open class KotlinStackFrame(stackFrameDescriptorImpl: StackFrameDescriptorImpl) 
         variable.remapName(getThisName(thisLabel))
     }
 
-    // The visible variables are queried twice in the common path through [JavaStackFrame.buildVariables],
-    // so we cache them the first time through.
-    protected open val _visibleVariables: List<LocalVariableProxyImpl> by lazy {
-        InlineStackFrameVariableHolder.fromStackFrame(stackFrameProxy).visibleVariables.remapInKotlinView()
-    }
+    private val _visibleVariables: List<LocalVariableProxyImpl> = visibleVariables.remapInKotlinView()
 
     final override fun getVisibleVariables(): List<LocalVariableProxyImpl> {
         if (!kotlinVariableViewService.kotlinVariableView) {
