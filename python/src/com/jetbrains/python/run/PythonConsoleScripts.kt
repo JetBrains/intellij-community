@@ -1,81 +1,66 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.run;
+@file:JvmName("PythonConsoleScripts")
 
-import com.intellij.execution.util.ProgramParametersConfigurator;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PathMapper;
-import com.jetbrains.python.console.PyConsoleOptions;
-import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.PythonSdkUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+package com.jetbrains.python.run
 
-import java.util.List;
-import java.util.Map;
+import com.intellij.execution.util.ProgramParametersConfigurator
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.PathMapper
+import com.jetbrains.python.console.PyConsoleOptions
+import com.jetbrains.python.console.PydevConsoleRunner
+import com.jetbrains.python.sdk.PythonEnvUtil
+import com.jetbrains.python.sdk.PythonSdkUtil
+import org.jetbrains.annotations.Contract
 
-public class PythonConsoleScripts {
-  /**
-   * Composes lines for execution in Python Console to run Python script specified in the given {@code config}.
-   * <p>
-   * Uses {@code runfile()} method defined in {@code _pydev_bundle/pydev_umd.py}.
-   *
-   * @param config
-   * @return the program
-   */
-  public static @NotNull String buildScriptWithConsoleRun(@NotNull PythonRunConfiguration config) {
-    StringBuilder sb = new StringBuilder();
-    final Map<String, String> configEnvs = config.getEnvs();
-    configEnvs.remove(PythonEnvUtil.PYTHONUNBUFFERED);
-    if (configEnvs.size() > 0) {
-      sb.append("import os\n");
-      for (Map.Entry<String, String> entry : configEnvs.entrySet()) {
-        sb.append("os.environ['").append(escape(entry.getKey())).append("'] = '").append(escape(entry.getValue())).append("'\n");
-      }
+/**
+ * Composes lines for execution in Python REPL to run Python script specified in the given [config].
+ *
+ * Uses `runfile()` method defined in `_pydev_bundle/pydev_umd.py`.
+ *
+ * @param config Python run configuration with the information about Python script, its arguments, environment variables and the working
+ *               directory
+ * @return lines to be executed in Python REPL
+ */
+fun buildScriptWithConsoleRun(config: PythonRunConfiguration): String {
+  val sb = StringBuilder()
+  val configEnvs = config.envs
+  configEnvs.remove(PythonEnvUtil.PYTHONUNBUFFERED)
+  if (configEnvs.isNotEmpty()) {
+    sb.append("import os\n")
+    for ((key, value) in configEnvs) {
+      sb.append("os.environ['").append(escape(key)).append("'] = '").append(escape(value)).append("'\n")
     }
-
-    final Project project = config.getProject();
-    final Sdk sdk = config.getSdk();
-    final PathMapper pathMapper =
-      PydevConsoleRunner.getPathMapper(project, sdk, PyConsoleOptions.getInstance(project).getPythonConsoleSettings());
-
-    String scriptPath = config.getScriptName();
-    String workingDir = config.getWorkingDirectory();
-    if (PythonSdkUtil.isRemote(sdk) && pathMapper != null) {
-      scriptPath = pathMapper.convertToRemote(scriptPath);
-      workingDir = pathMapper.convertToRemote(workingDir);
-    }
-
-    sb.append("runfile('").append(escape(scriptPath)).append("'");
-
-    final List<String> scriptParameters = ProgramParametersConfigurator.expandMacrosAndParseParameters(config.getScriptParameters());
-    if (scriptParameters.size() != 0) {
-      sb.append(", args=[");
-      for (int i = 0; i < scriptParameters.size(); i++) {
-        if (i != 0) {
-          sb.append(", ");
-        }
-        sb.append("'").append(escape(scriptParameters.get(i))).append("'");
-      }
-      sb.append("]");
-    }
-
-    if (!workingDir.isEmpty()) {
-      sb.append(", wdir='").append(escape(workingDir)).append("'");
-    }
-
-    if (config.isModuleMode()) {
-      sb.append(", is_module=True");
-    }
-
-    sb.append(")");
-    return sb.toString();
   }
-
-  @Contract(pure = true)
-  private static @NotNull String escape(@NotNull String s) {
-    return StringUtil.escapeCharCharacters(s);
+  val project = config.project
+  val sdk = config.sdk
+  val pathMapper: PathMapper? = PydevConsoleRunner.getPathMapper(project, sdk, PyConsoleOptions.getInstance(project).pythonConsoleSettings)
+  var scriptPath = config.scriptName
+  var workingDir = config.workingDirectory
+  if (PythonSdkUtil.isRemote(sdk) && pathMapper != null) {
+    scriptPath = pathMapper.convertToRemote(scriptPath)
+    workingDir = pathMapper.convertToRemote(workingDir)
   }
+  sb.append("runfile('").append(escape(scriptPath)).append("'")
+  val scriptParameters = ProgramParametersConfigurator.expandMacrosAndParseParameters(config.scriptParameters)
+  if (scriptParameters.size != 0) {
+    sb.append(", args=[")
+    for (i in scriptParameters.indices) {
+      if (i != 0) {
+        sb.append(", ")
+      }
+      sb.append("'").append(escape(scriptParameters[i])).append("'")
+    }
+    sb.append("]")
+  }
+  if (!workingDir.isEmpty()) {
+    sb.append(", wdir='").append(escape(workingDir)).append("'")
+  }
+  if (config.isModuleMode) {
+    sb.append(", is_module=True")
+  }
+  sb.append(")")
+  return sb.toString()
 }
+
+@Contract(pure = true)
+private fun escape(s: String): String = StringUtil.escapeCharCharacters(s)
