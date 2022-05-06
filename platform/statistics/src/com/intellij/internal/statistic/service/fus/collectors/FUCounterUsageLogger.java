@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  */
 @ApiStatus.Internal
 public final class FUCounterUsageLogger {
-  private static final ExtensionPointName<CounterUsageCollectorEP> EP_NAME =
+  public static final ExtensionPointName<CounterUsageCollectorEP> EP_NAME =
     new ExtensionPointName<>("com.intellij.statistics.counterUsagesCollector");
 
   private static final int LOG_REGISTERED_DELAY_MIN = 24 * 60;
@@ -80,16 +80,10 @@ public final class FUCounterUsageLogger {
   }
 
   public static @NotNull List<FeatureUsagesCollector> instantiateCounterCollectors() {
-    return instantiateCounterCollectors(null);
-  }
-
-  public static @NotNull List<FeatureUsagesCollector> instantiateCounterCollectors(String pluginId) {
     List<FeatureUsagesCollector> result = new ArrayList<>(EP_NAME.getPoint().size());
     EP_NAME.processWithPluginDescriptor((ep, pluginDescriptor) -> {
-      if (pluginId == null || pluginId.equals(pluginDescriptor.getPluginId().getIdString())) {
-        if (ep.implementationClass != null) {
-          result.add(ApplicationManager.getApplication().instantiateClass(ep.implementationClass, pluginDescriptor));
-        }
+      if (ep.implementationClass != null) {
+        result.add(ApplicationManager.getApplication().instantiateClass(ep.implementationClass, pluginDescriptor));
       }
     });
     return result;

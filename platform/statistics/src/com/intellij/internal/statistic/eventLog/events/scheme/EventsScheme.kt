@@ -19,4 +19,5 @@ data class GroupDescriptor(val id: String,
                            val version: Int,
                            val schema: Set<EventDescriptor>,
                            val className: String,
-                           val recorder: String)
+                           val recorder: String,
+                           val pluginId: String)

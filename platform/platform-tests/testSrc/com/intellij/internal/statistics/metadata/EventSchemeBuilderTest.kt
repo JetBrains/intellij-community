@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder
 import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder.pluginInfoFields
 import com.intellij.internal.statistic.eventLog.events.scheme.FieldDescriptor
+import com.intellij.internal.statistic.eventLog.events.scheme.GroupDescriptor
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
@@ -69,25 +70,24 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   }
 
   private fun doFieldTest(eventField: EventField<*>, expectedValues: Set<String>) {
-    val eventLogGroup = EventLogGroup("test.group.id", 1)
-    eventLogGroup.registerEvent("test_event", eventField)
-    val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(TestCounterCollector(eventLogGroup)), "FUS")
-    assertSize(1, groups)
-    val group = groups.first()
-    assertNotNull(group)
+    val group = buildGroupDescription(eventField)
     val event = group.schema.first()
     assertSameElements(event.fields.first().value, expectedValues)
   }
 
   private fun doCompositeFieldTest(eventField: EventField<*>, expectedValues: Set<FieldDescriptor>) {
-    val eventLogGroup = EventLogGroup("test.group.id", 1)
-    eventLogGroup.registerEvent("test_event", eventField)
-    val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(TestCounterCollector(eventLogGroup)), "FUS")
-    assertSize(1, groups)
-    val group = groups.first()
-    assertNotNull(group)
+    val group = buildGroupDescription(eventField)
     val event = group.schema.first()
     assertSameElements(event.fields, expectedValues)
+  }
+
+  private fun buildGroupDescription(eventField: EventField<*>): GroupDescriptor {
+    val eventLogGroup = EventLogGroup("test.group.id", 1)
+    eventLogGroup.registerEvent("test_event", eventField)
+    val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup),"testPlugin" )
+    val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(collector), "FUS")
+    assertSize(1, groups)
+    return groups.first()
   }
 
   enum class TestEnum { FOO, BAR }
