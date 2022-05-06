@@ -3,6 +3,7 @@ package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
@@ -54,16 +55,19 @@ public class IdeaMenuUI extends BasicMenuUI {
     }
 
     selectionBackground = JBColor.namedColor("Menu.selectionBackground", UIUtil.getListSelectionBackground(true));
+    if (isHeaderMenu()) {
+      menuItem.setForeground(JBColor.namedColor("MainMenu.foreground", menuItem.getForeground()));
+      selectionForeground = JBColor.namedColor("MainMenu.selectionForeground", selectionForeground);
+      selectionBackground = JBColor.namedColor("MainMenu.selectionBackground", selectionBackground);
+    }
+  }
+
+  private boolean isHeaderMenu() {
+    return menuItem instanceof ActionMenu && ((ActionMenu)menuItem).isHeaderMenuItem();
   }
 
   private void checkEmptyIcon(JComponent comp) {
     myMaxGutterIconWidth = getAllowedIcon() == null && IdeaPopupMenuUI.hideEmptyIcon(comp) ? 0 : myMaxGutterIconWidth2;
-  }
-
-  public void updateForHeaderMenuItem() {
-    menuItem.setForeground(JBColor.namedColor("MainMenu.foreground", menuItem.getForeground()));
-    selectionForeground = JBColor.namedColor("MainMenu.selectionForeground", selectionForeground);
-    selectionBackground = JBColor.namedColor("MainMenu.selectionBackground", selectionBackground);
   }
 
   @Override

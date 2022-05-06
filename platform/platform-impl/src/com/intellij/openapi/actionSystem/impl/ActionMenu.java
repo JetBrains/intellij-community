@@ -65,6 +65,7 @@ public final class ActionMenu extends JBMenu {
   private Disposable myDisposable;
   private final @Nullable Menu myScreenMenuPeer;
   private final @Nullable SubElementSelector mySubElementSelector;
+  private final boolean myHeaderMenuItem;
 
   public ActionMenu(@Nullable DataContext context,
                     @NotNull String place,
@@ -72,6 +73,16 @@ public final class ActionMenu extends JBMenu {
                     @NotNull PresentationFactory presentationFactory,
                     boolean enableMnemonics,
                     boolean useDarkIcons) {
+    this(context, place, group, presentationFactory, enableMnemonics, useDarkIcons, false);
+  }
+
+  public ActionMenu(@Nullable DataContext context,
+                    @NotNull String place,
+                    @NotNull ActionGroup group,
+                    @NotNull PresentationFactory presentationFactory,
+                    boolean enableMnemonics,
+                    boolean useDarkIcons,
+                    boolean headerMenuItem) {
     myContext = context;
     myPlace = place;
     myGroup = ActionRef.fromAction(group);
@@ -79,6 +90,7 @@ public final class ActionMenu extends JBMenu {
     myPresentation = myPresentationFactory.getPresentation(group);
     myMnemonicEnabled = enableMnemonics;
     myUseDarkIcons = useDarkIcons;
+    myHeaderMenuItem = headerMenuItem;
 
     if (Menu.isJbScreenMenuEnabled() && ActionPlaces.MAIN_MENU.equals(myPlace)) {
       myScreenMenuPeer = new Menu(myPresentation.getText(enableMnemonics));
@@ -142,8 +154,8 @@ public final class ActionMenu extends JBMenu {
 
   public @Nullable Menu getScreenMenuPeer() { return myScreenMenuPeer; }
 
-  public void setHeaderMenuItem() {
-    ((IdeaMenuUI)getUI()).updateForHeaderMenuItem();
+  public boolean isHeaderMenuItem() {
+    return myHeaderMenuItem;
   }
 
   private void init() {
