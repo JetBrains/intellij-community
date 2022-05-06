@@ -110,7 +110,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
         getLayeredPane().add(myCustomFrameTitlePane.getComponent(), Integer.valueOf(JLayeredPane.DEFAULT_LAYER - 2));
       }
 
-      if (FrameInfoHelper.isFloatingMenuBarSupported()) {
+      if (FrameInfoHelper.isFloatingMenuBarSupported() && !isMenuButtonInToolbar()) {
         menuBar = menu;
         getLayeredPane().add(menuBar, Integer.valueOf(JLayeredPane.DEFAULT_LAYER - 1));
       }
@@ -613,6 +613,14 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
         contentPane.setBounds(0, contentY, w, h - contentY);
       }
     }
+  }
+
+  /**
+   * Returns true if menu should be placed in toolbar instead of menu bar
+   */
+  @ApiStatus.Internal
+  public static boolean isMenuButtonInToolbar() {
+    return SystemInfo.isLinux && ExperimentalUI.isNewUI() && FrameInfoHelper.isFloatingMenuBarSupported();
   }
 
   private static boolean isDecoratedMenu() {

@@ -109,7 +109,10 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
         if (ExperimentalUI.isNewUI()) {
-          size.height = JBUI.CurrentTheme.List.rowHeight();
+          int rowHeight = JBUI.CurrentTheme.List.rowHeight();
+          if (rowHeight > 0) {
+            size.height = rowHeight;
+          }
         }
         return size;
       }
@@ -132,7 +135,6 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     panel.add(myShortcutLabel, BorderLayout.EAST);
 
     myMnemonicLabel = new JLabel();
-    //noinspection HardCodedStringLiteral
     Insets insets = JBUI.CurrentTheme.ActionsList.numberMnemonicInsets();
     myMnemonicLabel.setBorder(JBUI.Borders.empty(insets));
     if (!ExperimentalUI.isNewUI()) {

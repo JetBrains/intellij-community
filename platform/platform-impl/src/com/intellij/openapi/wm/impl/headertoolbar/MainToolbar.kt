@@ -14,16 +14,16 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
+import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI
-import java.awt.Color
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.SwingUtilities
 
 private val EP_NAME = ExtensionPointName<MainToolbarProjectWidgetFactory>("com.intellij.projectToolbarWidget")
 
@@ -35,16 +35,27 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   )
   private val visibleComponentsPool = VisibleComponentsPool()
   private val disposable = Disposer.newDisposable()
+  private val mainMenuButton: MainMenuButton?
 
   init {
     background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
     isOpaque = true
+    if (IdeRootPane.isMenuButtonInToolbar()) {
+      mainMenuButton = MainMenuButton()
+      Disposer.register(disposable, mainMenuButton.menuShortcutHandler)
+    } else {
+      mainMenuButton = null
+    }
   }
 
   // Separate init because first, as part of IdeRootPane creation, we add bare component to allocate space and then,
   // as part of EDT task scheduled in a start-up activity, do fill it.
   // That's to avoid flickering due to resizing
   fun init(project: Project?) {
+    mainMenuButton?.let {
+      addWidget(it.button, Position.Left)
+    }
+
     for (factory in MainToolbarAppWidgetFactory.EP_NAME.extensionList) {
       addWidget(factory.createWidget(), factory.getPosition())
     }
@@ -144,5 +155,5 @@ private class VisibleComponentsPool {
 
 @JvmOverloads internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance) : Boolean {
   return ((SystemInfoRt.isMac && Registry.`is`("ide.experimental.ui.title.toolbar.in.macos"))
-          || (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle)) && IdeFrameDecorator.isCustomDecorationAvailable();
+          || (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle)) && IdeFrameDecorator.isCustomDecorationAvailable()
 }

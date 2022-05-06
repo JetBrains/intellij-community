@@ -1,18 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
-import com.intellij.icons.AllIcons
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.actionSystem.impl.PresentationFactory
-import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.IdeFrame
@@ -22,7 +12,6 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
-import com.intellij.ui.IconManager
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.GridBag
@@ -45,12 +34,10 @@ private enum class ShowMode {
 
 internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
   private val myMenuBar = ideMenu
-  private val menuAction = ShowMenuAction()
-  private val myMenuButton = createMenuButton(menuAction)
+  private val mainMenuButton = MainMenuButton()
   private var myToolbar : MainToolbar? = null
   private val myToolbarPlaceholder = NonOpaquePanel()
   private val myHeaderContent = createHeaderContent()
-  private val menuShortcutHandler = MainMenuMnemonicHandler(frame, menuAction)
 
   private val contentResizeListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
@@ -75,7 +62,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
 
     setCustomFrameTopBorder({ false }, {true})
 
-    Disposer.register(this, menuShortcutHandler)
+    Disposer.register(this, mainMenuButton.menuShortcutHandler)
   }
 
   override fun updateToolbar() {
@@ -99,13 +86,13 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
 
   override fun installListeners() {
     super.installListeners()
-    menuShortcutHandler.registerShortcuts()
+    mainMenuButton.menuShortcutHandler.registerShortcuts(frame.rootPane)
     myMenuBar.addComponentListener(contentResizeListener)
   }
 
   override fun uninstallListeners() {
     super.uninstallListeners()
-    menuShortcutHandler.unregisterShortcuts()
+    mainMenuButton.menuShortcutHandler.unregisterShortcuts()
     myMenuBar.removeComponentListener(contentResizeListener)
     myToolbar?.let { it.removeComponentListener(contentResizeListener) }
   }
@@ -137,7 +124,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
         }, MENU_BAR))
       }
       ShowMode.TOOLBAR -> {
-        result.add(Pair(getElementRect(myMenuButton), MENU_BAR))
+        result.add(Pair(getElementRect(mainMenuButton.button), MENU_BAR))
         myToolbar?.components?.filter { it.isVisible }?.forEach { result.add(Pair(getElementRect(it), MENU_BAR)) }
       }
     }
@@ -164,7 +151,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     }
     val toolbarPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
-      add(myMenuButton, gb.next().insetLeft(JBUI.scale(20)))
+      add(mainMenuButton.button, gb.next().insetLeft(JBUI.scale(20)))
       add(myToolbarPlaceholder, gb.next().weightx(1.0).fillCellHorizontally().insetLeft(JBUI.scale(16)))
     }
 
@@ -179,52 +166,4 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     val layout = myHeaderContent.layout as CardLayout
     layout.show(myHeaderContent, mode.name)
   }
-
-  private fun createMenuButton(action: AnAction): JComponent {
-    return ActionButton(action, PresentationFactory().getPresentation(action),
-                        ActionPlaces.MAIN_MENU_IN_POPUP, Dimension(40, 40))
-      .apply { setLook(HeaderToolbarButtonLook()) }
-  }
-
-  private inner class ShowMenuAction : DumbAwareAction() {
-
-    private val icon = IconManager.getInstance().getIcon("expui/general/windowsMenu@20x20.svg", AllIcons::class.java)
-
-    override fun update(e: AnActionEvent) {
-      e.presentation.icon = icon
-      e.presentation.text = IdeBundle.message("main.toolbar.menu.button")
-    }
-
-    override fun actionPerformed(e: AnActionEvent) = createPopup(e.dataContext).showUnderneathOf(myMenuButton)
-
-    private fun createPopup(context: DataContext): JBPopup {
-      val mainMenu = ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
-      return JBPopupFactory.getInstance()
-        .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, ActionPlaces.MAIN_MENU_IN_POPUP)
-        .apply { setShowSubmenuOnHover(true) }
-        .apply { setMinimumSize(Dimension(CustomFrameDecorations.menuPopupMinWidth(), 0)) }
-    }
-  }
-
 }
-
-private class MainMenuMnemonicHandler(val frame: JFrame, val action: AnAction) : Disposable {
-
-  private var disposable: Disposable? = null
-
-  fun registerShortcuts() {
-    if (disposable == null) disposable = Disposer.newDisposable()
-
-    val shortcutSet = ActionUtil.getShortcutSet("MainMenuButton.ShowMenu")
-    action.registerCustomShortcutSet(shortcutSet, frame.rootPane, disposable)
-  }
-
-  fun unregisterShortcuts() {
-    disposable?.let { Disposer.dispose(it) }
-  }
-
-  override fun dispose() = unregisterShortcuts()
-}
-
-
-
