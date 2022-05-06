@@ -159,7 +159,7 @@ final class PlatformModules {
 
   static PlatformLayout createPlatformLayout(ProductModulesLayout productLayout,
                                              boolean hasPlatformCoverage,
-                                             Set<ProjectLibraryData> additionalProjectLevelLibraries,
+                                             SortedSet<ProjectLibraryData> additionalProjectLevelLibraries,
                                              BuildContext context) {
     PlatformLayout layout = new PlatformLayout()
     // used only in modules that packed into Java
@@ -299,7 +299,7 @@ final class PlatformModules {
       }
     }
 
-    layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of("Trove4j"))
+    layout.projectLibrariesToUnpack.putValue(UTIL_JAR, "Trove4j")
 
     for (ProjectLibraryData item in additionalProjectLevelLibraries) {
       String name = item.libraryName
@@ -313,7 +313,8 @@ final class PlatformModules {
       @Override
       void accept(JpsLibrary lib, JpsModule module) {
         String name = lib.name
-        layout.includedProjectLibraries.addOrGet(new ProjectLibraryData(name, CUSTOM_PACK_MODE.getOrDefault(name, LibraryPackMode.MERGED)))
+        layout.includedProjectLibraries
+          .addOrGet(new ProjectLibraryData(name, CUSTOM_PACK_MODE.getOrDefault(name, LibraryPackMode.MERGED)))
           .dependentModules.computeIfAbsent("core", LIST_PRODUCER).add(module.name)
       }
     })

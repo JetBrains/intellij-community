@@ -39,6 +39,10 @@ class ProductModulesLayout {
 
   private var pluginsToPublish: LinkedHashSet<String> = LinkedHashSet()
 
+  fun addPluginToPublish(id: String) {
+    pluginsToPublish.add(id)
+  }
+
   /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed
    * into it. Zip archives of these plugins will be built and placed under "&lt;product-code&gt;-plugins" directory in the build artifacts.

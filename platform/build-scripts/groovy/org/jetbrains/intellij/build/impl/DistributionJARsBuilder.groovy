@@ -85,7 +85,7 @@ final class DistributionJARsBuilder {
   static PlatformLayout createPlatformLayout(Set<PluginLayout> pluginsToPublish, BuildContext context) {
     ProductModulesLayout productLayout = context.productProperties.productLayout
     Set<String> enabledPluginModules = getEnabledPluginModules(pluginsToPublish, context.productProperties)
-    Set<ProjectLibraryData> projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(context, enabledPluginModules)
+    SortedSet<ProjectLibraryData> projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(context, enabledPluginModules)
     return PlatformModules.createPlatformLayout(productLayout,
                                                 hasPlatformCoverage(productLayout, enabledPluginModules, context),
                                                 projectLibrariesUsedByPlugins,
@@ -127,7 +127,7 @@ final class DistributionJARsBuilder {
     return false
   }
 
-  private static Set<ProjectLibraryData> computeProjectLibsUsedByPlugins(BuildContext context, Set<String> enabledPluginModules) {
+  private static SortedSet<ProjectLibraryData> computeProjectLibsUsedByPlugins(BuildContext context, Set<String> enabledPluginModules) {
     ObjectLinkedOpenHashSet<ProjectLibraryData> result = new ObjectLinkedOpenHashSet<>()
 
     for (PluginLayout plugin : getPluginsByModules(context, enabledPluginModules)) {
