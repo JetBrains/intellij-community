@@ -5,6 +5,7 @@ import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -55,8 +56,9 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
 
   public ChangesListView(@NotNull Project project, boolean showCheckboxes) {
     super(project, showCheckboxes, true);
-
-    setDragEnabled(true);
+    // setDragEnabled throws an exception in headless mode which leads to a memory leak
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment())
+      setDragEnabled(true);
   }
 
   @NotNull
