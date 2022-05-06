@@ -91,10 +91,14 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         imageCollector = ImageCollector(projectHome, moduleConfig = moduleConfig)
         val imagesS = imageCollector.collectSubDir(resourceRoot, "studio/icons", includePhantom = true)
         imageCollector.printUsedIconRobots()
+        imageCollector = ImageCollector(projectHome, moduleConfig = moduleConfig)
+        val imagesI = imageCollector.collectSubDir(resourceRoot, "studio/illustrations", includePhantom = true)
+        imageCollector.printUsedIconRobots()
 
         return listOf(
           IconClassInfo(true, packageName, "AndroidIcons", Path.of(sourceRoot, "icons", "AndroidIcons.java"), imagesA),
           IconClassInfo(true, packageName, "StudioIcons", Path.of(sourceRoot, "icons", "StudioIcons.java"), imagesS),
+          IconClassInfo(true, packageName, "StudioIllustrations", Path.of(sourceRoot, "icons", "StudioIllustrations.java"), imagesI),
         )
       }
       else -> {
@@ -488,11 +492,11 @@ private fun generateIconFieldName(file: Path): CharSequence {
   val imageFileName = file.fileName.toString()
   val path = file.toString()
   when {
-    path.contains("android/artwork/resources/studio") -> {
-      return toStreamingSnakeCaseJavaIdentifier(imageFileName, imageFileName.lastIndexOf('.'))
-    }
-    path.contains("android/artwork/resources/icons") -> {
+    path.contains("$androidIcons/icons") -> {
       return toCamelCaseJavaIdentifier(imageFileName, imageFileName.lastIndexOf('.'))
+    }
+    path.contains("$androidIcons") -> {
+      return toStreamingSnakeCaseJavaIdentifier(imageFileName, imageFileName.lastIndexOf('.'))
     }
     else -> {
       val id = if ((imageFileName.length - 4) == 2) {
