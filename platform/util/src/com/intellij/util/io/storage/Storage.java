@@ -9,7 +9,7 @@ import java.nio.file.Path;
 
 public class Storage extends AbstractStorage {
   public Storage(@NotNull Path path) throws IOException {
-    super(path, true);
+    super(path);
   }
 
   public Storage(@NotNull Path path, CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {

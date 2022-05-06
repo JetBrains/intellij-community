@@ -18,6 +18,7 @@ import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.DataInputStream;
@@ -71,11 +72,11 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     return deletedRecordsFile && deletedDataFile;
   }
 
-  protected AbstractStorage(@NotNull Path storageFilePath, boolean useScalableLock) throws IOException {
+  protected AbstractStorage(@NotNull Path storageFilePath) throws IOException {
     this(storageFilePath, SHARED);
   }
 
-  protected AbstractStorage(@NotNull Path storageFilePath, StorageLockContext context) throws IOException {
+  protected AbstractStorage(@NotNull Path storageFilePath, @NotNull StorageLockContext context) throws IOException {
     this(storageFilePath, context, CapacityAllocationPolicy.DEFAULT);
   }
 
@@ -85,8 +86,8 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   }
 
   protected AbstractStorage(@NotNull Path storageFilePath,
-                            StorageLockContext context,
-                            CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
+                            @NotNull StorageLockContext context,
+                            @Nullable CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
     myCapacityAllocationPolicy = capacityAllocationPolicy != null ? capacityAllocationPolicy
                                                                   : CapacityAllocationPolicy.DEFAULT;
     tryInit(storageFilePath, context, 0);
@@ -414,18 +415,18 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   }
 
   protected <T, E extends Throwable> T withReadLock(@NotNull ThrowableComputable<T, E> runnable) throws E {
-    return ConcurrencyUtil.withLock(SHARED.readLock(), runnable);
+    return ConcurrencyUtil.withLock(myContext.readLock(), runnable);
   }
 
   protected <E extends Throwable> void withReadLock(@NotNull ThrowableRunnable<E> runnable) throws E {
-    ConcurrencyUtil.withLock(SHARED.readLock(), runnable);
+    ConcurrencyUtil.withLock(myContext.readLock(), runnable);
   }
 
   protected  <T, E extends Throwable> T withWriteLock(@NotNull ThrowableComputable<T, E> runnable) throws E {
-    return ConcurrencyUtil.withLock(SHARED.writeLock(), runnable);
+    return ConcurrencyUtil.withLock(myContext.writeLock(), runnable);
   }
 
   protected <E extends Throwable> void withWriteLock(@NotNull ThrowableRunnable<E> runnable) throws E {
-    ConcurrencyUtil.withLock(SHARED.writeLock(), runnable);
+    ConcurrencyUtil.withLock(myContext.writeLock(), runnable);
   }
 }

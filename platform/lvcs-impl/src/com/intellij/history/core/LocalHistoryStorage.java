@@ -12,8 +12,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public final class LocalHistoryStorage extends AbstractStorage {
+  private static final StorageLockContext STORAGE_LOCK_CONTEXT = new StorageLockContext();
+
   public LocalHistoryStorage(@NotNull Path storageFilePath) throws IOException {
-    super(storageFilePath, true);
+    super(storageFilePath, STORAGE_LOCK_CONTEXT);
   }
 
   @Override
