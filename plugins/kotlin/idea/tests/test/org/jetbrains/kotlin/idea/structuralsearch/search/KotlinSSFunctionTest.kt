@@ -90,7 +90,15 @@ class KotlinSSFunctionTest : KotlinSSResourceInspectionTest() {
         fun b() { }
     """.trimIndent()) }
 
-    fun testFunTypeVarRef() { doTest(pattern = "fun '_(): '_", highlighting = """
+    fun testFunTypeReference() { doTest(pattern = "fun '_(): '_", highlighting = """
+        fun a() = true
+        <warning descr="SSR">fun b(): Boolean = true</warning>
+        <warning descr="SSR">fun c(): Boolean {
+            return true
+        }</warning>
+    """.trimIndent()) }
+
+    fun testFunTypeReferenceCountFilter() { doTest(pattern = "fun '_(): '_{0,1}", highlighting = """
         <warning descr="SSR">fun a() = true</warning>
         <warning descr="SSR">fun b(): Boolean = true</warning>
         <warning descr="SSR">fun c(): Boolean {
@@ -169,7 +177,7 @@ class KotlinSSFunctionTest : KotlinSSResourceInspectionTest() {
 
     fun testFunFqReceiverTypeReference() { doTest(pattern = "fun kotlin.Int.'_()", highlighting = """
         fun myFun() {}
-        <warning descr="SSR">fun Int.myFun1() {}</warning>
+        fun Int.myFun1() {}
         <warning descr="SSR">fun kotlin.Int.myFun2() {}</warning>
         class A {
             class Int

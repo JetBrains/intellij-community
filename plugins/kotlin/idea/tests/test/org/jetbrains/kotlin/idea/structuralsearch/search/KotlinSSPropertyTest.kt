@@ -27,7 +27,7 @@ class KotlinSSPropertyTest : KotlinSSResourceInspectionTest() {
 
     fun testValType() { doTest(pattern = "val '_ : Int", highlighting = """
         class A {
-            <warning descr="SSR">val foo1 = Int()</warning>
+            val foo1 = Int()
             <warning descr="SSR">val foo2 : A.Int = Int()</warning>
             class Int
         }
@@ -41,7 +41,7 @@ class KotlinSSPropertyTest : KotlinSSResourceInspectionTest() {
 
     fun testValFqType() { doTest(pattern = "val '_ : Foo.Int", highlighting = """
         class Foo {
-            <warning descr="SSR">val foo = Int()</warning>
+            val foo = Int()
             <warning descr="SSR">val bar : Foo.Int</warning>
             init {bar = Int()}
             class Int
@@ -55,7 +55,7 @@ class KotlinSSPropertyTest : KotlinSSResourceInspectionTest() {
     fun testValComplexFqType() { doTest(pattern = "val '_ : '_<'_<'_, (Foo.Int) -> Int>>", highlighting = """
         class Foo { class Int }
         <warning descr="SSR">val foo1: List<Pair<String, (Foo.Int) -> kotlin.Int>> = listOf()</warning>
-        <warning descr="SSR">val foo2 = listOf("foo" to { _: Foo.Int -> 2 })</warning>
+        val foo2 = listOf("foo" to { _: Foo.Int -> 2 })
         val bar1: List<Pair<String, (Int) -> Int>> = listOf()
         val bar2 = listOf("bar" to { _: Int -> 2 })
     """.trimIndent()) }
@@ -181,7 +181,7 @@ class KotlinSSPropertyTest : KotlinSSResourceInspectionTest() {
 
     fun testReceiverFqTypeReference() { doTest(pattern = "val kotlin.Int.'_ : '_", highlighting = """
         val String.foo: Int get() = 1
-        <warning descr="SSR">val Int.foo: Int get() = 1</warning>
+        val Int.foo: Int get() = 1
         <warning descr="SSR">val kotlin.Int.bar: Int get() = 1</warning>
         class A {
             class Int

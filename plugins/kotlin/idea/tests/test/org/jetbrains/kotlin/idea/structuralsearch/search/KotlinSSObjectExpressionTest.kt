@@ -26,27 +26,6 @@ class KotlinSSObjectExpressionTest : KotlinSSResourceInspectionTest() {
         )
     }
 
-    fun testObjectAnyReturn() {
-        doTest(pattern = """
-            fun '_(): Any = object {
-                val c = 1
-            }
-        """.trimIndent(), highlighting = """
-            <warning descr="SSR">fun a() = object {
-                val c = 1
-            }</warning>
-            class A() {
-                private fun b() = object {
-                    val c = 1
-                }
-                <warning descr="SSR">fun c() = object {
-                    val c = 1
-                }</warning>
-            }
-        """.trimIndent()
-        )
-    }
-
     fun testObjectAnonymous() {
         doTest(pattern = """
             private fun '_() = object {

@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package org.jetbrains.kotlin.idea.structuralsearch.visitor
 
 import com.intellij.psi.PsiComment
@@ -16,9 +15,7 @@ import com.intellij.util.containers.reverse
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
-import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -47,7 +44,6 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.psi2ir.deparenthesize
-import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor
@@ -418,52 +414,9 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         myMatchingVisitor.result = myMatchingVisitor.element is KtDynamicType
     }
 
-    private fun matchTypeReferenceWithDeclaration(typeReference: KtTypeReference?, other: KtDeclaration): Boolean {
-        val type = other.resolveKotlinType()
-        if (type != null) {
-            val fqType = DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(type)
-            val analyzableFile = factory(other) {createAnalyzableFile("${other.hashCode()}.kt", "val x: $fqType = TODO()", other)}
-            return myMatchingVisitor.match(typeReference, (analyzableFile.lastChild as KtProperty).typeReference)
-        }
-        return false
-    }
-
     override fun visitTypeReference(typeReference: KtTypeReference) {
         val other = getTreeElementDepar<KtTypeReference>() ?: return
-        val parent = other.parent
-
-        val isReceiverTypeReference = when (parent) {
-            is KtProperty -> parent.receiverTypeReference == other
-            is KtNamedFunction -> parent.receiverTypeReference == other
-            else -> false
-        }
-
-        val type = when {
-            !isReceiverTypeReference && parent is KtProperty -> parent.resolveKotlinType()
-            isReceiverTypeReference && parent is KtDeclaration && parent.descriptor is FunctionDescriptor ->
-                (parent.descriptor as FunctionDescriptor).extensionReceiverParameter?.value?.type
-            isReceiverTypeReference && parent is KtDeclaration && parent.descriptor is PropertyDescriptorImpl ->
-                (parent.descriptor as PropertyDescriptorImpl).extensionReceiverParameter?.value?.type
-            else -> null
-        }
-
-        val fqMatch = when {
-            type != null -> {
-                val handler = getHandler(typeReference)
-                type.renderNames().any {
-                    if (handler is SubstitutionHandler)
-                        if (handler.findRegExpPredicate()?.doMatch(it, myMatchingVisitor.matchContext, other) == true) {
-                            handler.addResult(other, myMatchingVisitor.matchContext)
-                            true
-                        } else false
-                    else myMatchingVisitor.matchText(typeReference.text, it)
-                }
-
-            }
-            else -> false
-        }
-
-        myMatchingVisitor.result = fqMatch || myMatchingVisitor.matchSons(typeReference, other)
+        myMatchingVisitor.result = myMatchingVisitor.matchSons(typeReference, other)
     }
 
     override fun visitQualifiedExpression(expression: KtQualifiedExpression) {
@@ -676,18 +629,11 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
     override fun visitParameter(parameter: KtParameter) {
         val other = getTreeElementDepar<KtParameter>() ?: return
-        val decl = other.parent.parent
-        val typeMatched = when {
-            decl is KtFunctionType || decl is KtCatchClause || (parameter.isVarArg && other.isVarArg) -> {
-                myMatchingVisitor.match(parameter.typeReference, other.typeReference)
-            }
-            else -> matchTypeReferenceWithDeclaration(parameter.typeReference, other)
-        }
         val otherNameIdentifier = if (getHandler(parameter) is SubstitutionHandler
             && parameter.nameIdentifier != null
             && other.nameIdentifier == null
         ) other else other.nameIdentifier
-        myMatchingVisitor.result = typeMatched
+        myMatchingVisitor.result = myMatchingVisitor.match(parameter.typeReference, other.typeReference)
                 && myMatchingVisitor.match(parameter.defaultValue, other.defaultValue)
                 && (parameter.isVarArg == other.isVarArg || getHandler(parameter) is SubstitutionHandler)
                 && myMatchingVisitor.match(parameter.valOrVarKeyword, other.valOrVarKeyword)
@@ -925,7 +871,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         myMatchingVisitor.result = myMatchingVisitor.match(function.modifierList, other.modifierList)
                 && matchTextOrVariable(function.nameIdentifier, other.nameIdentifier)
                 && myMatchingVisitor.match(function.typeParameterList, other.typeParameterList)
-                && matchTypeReferenceWithDeclaration(function.typeReference, other)
+                && myMatchingVisitor.match(function.typeReference, other.typeReference)
                 && myMatchingVisitor.match(function.valueParameterList, other.valueParameterList)
                 && myMatchingVisitor.match(function.receiverTypeReference, other.receiverTypeReference)
                 && bodyMatch
@@ -1076,7 +1022,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         val handler = getHandler(property.nameIdentifier!!)
         myMatchingVisitor.result = (
                 property.isVar == other.isVar || (handler is SubstitutionHandler && handler.predicate is KotlinAlsoMatchValVarPredicate)
-                ) && matchTypeReferenceWithDeclaration(property.typeReference, other)
+                ) && myMatchingVisitor.match(property.typeReference, other.typeReference)
                 && myMatchingVisitor.match(property.modifierList, other.modifierList)
                 && matchTextOrVariable(property.nameIdentifier, other.nameIdentifier)
                 && myMatchingVisitor.match(property.docComment, other.docComment)
@@ -1158,7 +1104,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
     override fun visitDestructuringDeclarationEntry(multiDeclarationEntry: KtDestructuringDeclarationEntry) {
         val other = getTreeElementDepar<KtDestructuringDeclarationEntry>() ?: return
-        myMatchingVisitor.result = matchTypeReferenceWithDeclaration(multiDeclarationEntry.typeReference, other)
+        myMatchingVisitor.result = myMatchingVisitor.match(multiDeclarationEntry.typeReference, other.typeReference)
                 && myMatchingVisitor.match(multiDeclarationEntry.modifierList, other.modifierList)
                 && multiDeclarationEntry.isVar == other.isVar
                 && matchTextOrVariable(multiDeclarationEntry.nameIdentifier, other.nameIdentifier)
