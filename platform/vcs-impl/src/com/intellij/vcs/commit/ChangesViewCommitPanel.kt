@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.IdeBorderFactory.createBorder
@@ -21,6 +20,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
 import com.intellij.util.ui.JBUI.Borders.*
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil.*
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import javax.swing.JComponent
@@ -29,7 +29,7 @@ import kotlin.properties.Delegates.observable
 
 internal fun ChangesBrowserNode<*>.subtreeRootObject(): Any? = (path.getOrNull(1) as? ChangesBrowserNode<*>)?.userObject
 
-class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, private val rootComponent: JComponent) :
+class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel) :
   NonModalCommitPanel(changesViewHost.changesView.project), ChangesViewCommitWorkflowUi {
 
   val changesView get() = changesViewHost.changesView
@@ -49,6 +49,7 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
   }
 
   private val commitActions = commitActionsPanel.createActions()
+  private var rootComponent: JComponent? = null
 
   init {
     Disposer.register(this, commitMessage)
@@ -78,11 +79,15 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
       }
     ChangesViewCommitTabTitleUpdater(this).start()
 
-    commitActions.forEach { it.registerCustomShortcutSet(rootComponent, this) }
     commitActionsPanel.isCommitButtonDefault = {
       !progressPanel.isDumbMode &&
-      IdeFocusManager.getInstance(project).getFocusedDescendantFor(rootComponent) != null
+      UIUtil.isFocusAncestor(rootComponent ?: this)
     }
+  }
+
+  fun registerRootComponent(newRootComponent: JComponent) {
+    rootComponent = newRootComponent
+    commitActions.forEach { it.registerCustomShortcutSet(newRootComponent, this) }
   }
 
   private fun addToolbar(isHorizontal: Boolean) {

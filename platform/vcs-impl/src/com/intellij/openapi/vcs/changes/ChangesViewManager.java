@@ -592,9 +592,10 @@ public class ChangesViewManager implements ChangesViewEx,
 
       if (isNonModal) {
         if (myCommitPanel == null) {
-          myCommitPanel = new ChangesViewCommitPanel(myChangesPanel, this);
+          myCommitPanel = new ChangesViewCommitPanel(myChangesPanel);
           myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
           Disposer.register(this, myCommitPanel);
+          myCommitPanel.registerRootComponent(this);
           myCommitPanelSplitter.setSecondComponent(myCommitPanel);
 
           myCommitWorkflowHandler.addActivityListener(() -> configureDiffPreview(), myCommitWorkflowHandler);
