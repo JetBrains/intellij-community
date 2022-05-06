@@ -12,11 +12,10 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.KotlinVersion
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.LAST_SNAPSHOT
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_3_30
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_3_72
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_4_32
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_31
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_6_10
+import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_32
+import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_6_21
+import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_7_0_Beta
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
@@ -88,17 +87,16 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         @Suppress("ACCIDENTAL_OVERRIDE")
         @Parameterized.Parameters(name = kotlinAndGradleParametersName)
         fun data(): Collection<Array<Any>> {
-            val safePushParams: Collection<Array<Any>> = listOf(arrayOf("7.3.3", "master"))
+            val safePushParams: Collection<Array<Any>> = listOf(arrayOf("7.4.2", "master"))
 
             if (IS_UNDER_SAFE_PUSH)
                 return safePushParams
             else
                 return listOf<Array<Any>>(
-                    arrayOf("4.9", V_1_3_30.toString()),
-                    arrayOf("5.6.4", V_1_3_72.toString()),
                     arrayOf("6.8.2", V_1_4_32.toString()),
-                    arrayOf("7.3.3", V_1_5_31.toString()),
-                    arrayOf("7.3.3", V_1_6_10.toString()),
+                    arrayOf("7.3.3", V_1_5_32.toString()),
+                    arrayOf("7.3.3", V_1_6_21.toString()),
+                    arrayOf("7.4.2", V_1_7_0_Beta.toString()),
                     arrayOf("6.8.2", "master"),
                 ).plus(safePushParams)
         }

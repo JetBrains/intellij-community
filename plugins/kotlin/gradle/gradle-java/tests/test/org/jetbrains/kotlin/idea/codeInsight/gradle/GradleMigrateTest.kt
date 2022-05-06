@@ -25,14 +25,14 @@ class GradleMigrateTest : GradleImportingTestCase() {
                     ${GradleKotlinTestUtils.listRepositories(false, gradleVersion)}                    
                 }
                 dependencies {
-                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_31}"
+                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_32}"
                 }
             }
 
             apply plugin: 'kotlin'
 
             dependencies {
-                compile "org.jetbrains.kotlin:kotlin-stdlib:${GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_31}"
+                compile "org.jetbrains.kotlin:kotlin-stdlib:${GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_32}"
             }
             """,
             afterText =
