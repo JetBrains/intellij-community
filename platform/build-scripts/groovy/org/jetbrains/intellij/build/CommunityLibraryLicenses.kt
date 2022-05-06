@@ -796,6 +796,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("jetbrains.markdown.jvm"),
     jetbrainsLibrary("jetbrains.research.refactorinsight.kotlin.impl"),
     jetbrainsLibrary("jshell-frontend"),
+    jetbrainsLibrary("kotlin-gradle-plugin-idea"),
     jetbrainsLibrary("kotlin-script-runtime"),
     jetbrainsLibrary("kotlin-test"),
     jetbrainsLibrary("kotlinc.allopen-compiler-plugin"),
