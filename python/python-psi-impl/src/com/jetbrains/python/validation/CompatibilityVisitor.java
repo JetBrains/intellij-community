@@ -158,7 +158,30 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                          PyPsiBundle.message("INSP.compatibility.feature.support.unpacking.without.parentheses.in.yield.statements"),
                                          node);
         }
+
+        if (tupleParent instanceof PySubscriptionExpression) {
+          registerForAllMatchingVersions(level -> level.isAtLeast(LanguageLevel.PYTHON35) &&
+                                                  level.isOlderThan(LanguageLevel.PYTHON311) &&
+                                                  registerForLanguageLevel(level),
+                                         PyPsiBundle.message("INSP.compatibility.feature.support.starred.expressions.in.subscriptions"),
+                                         node);
+        }
       }
+      if (node.getParent() instanceof PySubscriptionExpression || node.getParent() instanceof PySliceItem) {
+        registerForAllMatchingVersions(level -> level.isAtLeast(LanguageLevel.PYTHON35) &&
+                                                level.isOlderThan(LanguageLevel.PYTHON311) &&
+                                                registerForLanguageLevel(level),
+                                       PyPsiBundle.message("INSP.compatibility.feature.support.starred.expressions.in.subscriptions"),
+                                       node);
+      }
+    }
+
+    PsiElement parent = node.getParent();
+    if (parent instanceof PyAnnotation && StarAnnotator.isVariadicArg(parent.getParent())) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON311) &&
+                                              registerForLanguageLevel(level),
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.starred.expressions.in.type.annotations"),
+                                     node);
     }
   }
 

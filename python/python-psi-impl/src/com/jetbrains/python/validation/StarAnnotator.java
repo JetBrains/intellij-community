@@ -22,13 +22,18 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public class StarAnnotator extends PyAnnotator {
   @Override
   public void visitPyStarExpression(@NotNull PyStarExpression node) {
     super.visitPyStarExpression(node);
-    if (!node.isAssignmentTarget() && !allowedUnpacking(node) && !(node.getParent() instanceof PyParameterTypeList)) {
+    PsiElement parent = node.getParent();
+    if (!node.isAssignmentTarget() &&
+        !allowedUnpacking(node) &&
+        !(parent instanceof PyParameterTypeList) &&
+        !(parent instanceof PyAnnotation && isVariadicArg(parent.getParent()))) {
       getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.can.t.use.starred.expression.here")).create();
     }
   }
@@ -47,5 +52,8 @@ public class StarAnnotator extends PyAnnotator {
       }
     }
     return true;
+  }
+  public static boolean isVariadicArg(@Nullable PsiElement parameter) {
+    return parameter instanceof PyNamedParameter && (((PyNamedParameter)parameter).isPositionalContainer());
   }
 }
