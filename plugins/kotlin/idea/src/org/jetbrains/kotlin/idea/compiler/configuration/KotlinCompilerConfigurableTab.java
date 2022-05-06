@@ -16,9 +16,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.MutableCollectionComboBoxModel;
-import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
@@ -53,6 +51,7 @@ import org.jetbrains.kotlin.platform.jvm.JdkPlatform;
 import org.jetbrains.kotlin.utils.DescriptionAware;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -104,6 +103,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     private JComboBox<String> jvmVersionComboBox;
     private JPanel kotlinJpsPluginVersionPanel;
     private JComboBox<ComboBoxTextItem> kotlinJpsPluginVersionComboBox;
+    private ComboBoxTextItem defaultJpsVersionItem;
     private JComboBox<VersionView> languageVersionComboBox;
     private JComboBox<VersionView> apiVersionComboBox;
     private JPanel scriptPanel;
@@ -397,14 +397,18 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
                                     onFinish.accept(null);
                                     return;
                                 }
+
                                 KotlinVersion min = SetupKotlinJpsPluginBeforeCompileTask.getJpsMinimumSupportedVersion();
-                                List<String> versions = ContainerUtil.filter(
-                                        ContainerUtil.intersection(distVersions, jpsClassPathVersions),
-                                        it -> {
-                                            IdeKotlinVersion parsedVersion = IdeKotlinVersion.opt(it);
-                                            return parsedVersion != null && parsedVersion.getKotlinVersion().compareTo(min) >= 0;
-                                        });
-                                onFinish.accept(versions);
+                                Collection<String> intersection = ContainerUtil.intersection(distVersions, jpsClassPathVersions);
+                                SortedSet<IdeKotlinVersion> sortedVersions = new TreeSet<>();
+                                for (String version : intersection) {
+                                    IdeKotlinVersion parsedVersion = IdeKotlinVersion.opt(version);
+                                    if (parsedVersion != null && parsedVersion.getKotlinVersion().compareTo(min) >= 0) {
+                                        sortedVersions.add(parsedVersion);
+                                    }
+                                }
+
+                                onFinish.accept(ContainerUtil.reverse(ContainerUtil.map(sortedVersions, it -> it.getRawVersion())));
                             });
                 });
     }
@@ -413,25 +417,44 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
         languageVersionComboBox.addItem(VersionView.LatestStable.INSTANCE);
         apiVersionComboBox.addItem(VersionView.LatestStable.INSTANCE);
 
-        if (isProjectSettings && KotlinJpsPluginSettings.isUnbundledJpsExperimentalFeatureEnabled(project)) {
+        if (isProjectSettings && jpsPluginSettings != null) {
+            defaultJpsVersionItem = new ComboBoxTextItem(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings));
+            kotlinJpsPluginVersionComboBox.addItem(defaultJpsVersionItem);
             ComboBoxTextItem loadingItem = new ComboBoxTextItem(KotlinBundle.message("loading.available.versions.from.maven"), false);
             kotlinJpsPluginVersionComboBox.addItem(loadingItem);
-            fetchAvailableJpsCompilersAsync(
-                    availableVersions -> {
-                        kotlinJpsPluginVersionComboBox.removeItem(loadingItem);
-                        if (availableVersions == null) {
-                            kotlinJpsPluginVersionComboBox.addItem(
-                                    new ComboBoxTextItem(KotlinBundle.message("failed.fetching.all.available.versions.from.maven")));
-                        } else {
-                            HashSet<String> alreadyPresented = new HashSet<>();
-                            for (int i = 0; i < kotlinJpsPluginVersionComboBox.getItemCount(); i++) {
-                                alreadyPresented.add(kotlinJpsPluginVersionComboBox.getItemAt(i).getDescription());
-                            }
-                            for (@NlsSafe String version : ContainerUtil.subtract(availableVersions, alreadyPresented)) {
-                                kotlinJpsPluginVersionComboBox.addItem(new ComboBoxTextItem(version));
-                            }
-                        }
-                    });
+            PopupMenuListenerAdapter popupListener = new PopupMenuListenerAdapter() {
+                @Override
+                public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                    kotlinJpsPluginVersionComboBox.removePopupMenuListener(this);
+                    fetchAvailableJpsCompilersAsync(
+                            availableVersions -> {
+                                kotlinJpsPluginVersionComboBox.removeItem(loadingItem);
+                                if (availableVersions == null) {
+                                    kotlinJpsPluginVersionComboBox.addItem(
+                                            new ComboBoxTextItem(KotlinBundle.message("failed.fetching.all.available.versions.from.maven"),
+                                                                 false)
+                                    );
+                                } else {
+                                    HashSet<String> alreadyPresented = new HashSet<>();
+                                    for (int i = 0; i < kotlinJpsPluginVersionComboBox.getItemCount(); i++) {
+                                        alreadyPresented.add(kotlinJpsPluginVersionComboBox.getItemAt(i).getDescription());
+                                    }
+
+                                    for (@NlsSafe String version : availableVersions) {
+                                        if (alreadyPresented.contains(version)) continue;
+                                        kotlinJpsPluginVersionComboBox.addItem(new ComboBoxTextItem(version));
+                                    }
+                                }
+
+                                if (kotlinJpsPluginVersionComboBox.isPopupVisible()) {
+                                    kotlinJpsPluginVersionComboBox.hidePopup();
+                                    kotlinJpsPluginVersionComboBox.showPopup();
+                                }
+                            });
+                }
+            };
+
+            kotlinJpsPluginVersionComboBox.addPopupMenuListener(popupListener);
         } else {
             kotlinJpsPluginVersionPanel.setVisible(false);
         }
@@ -650,6 +673,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
             if (jpsPluginSettings != null) {
                 String jpsPluginVersion = getSelectedKotlinJpsPluginVersion();
                 if (!jpsPluginSettings.getVersion().isEmpty() || !jpsPluginVersion.equals(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings))) {
+                    defaultJpsVersionItem = (ComboBoxTextItem) kotlinJpsPluginVersionComboBox.getSelectedItem();
                     jpsPluginSettings.setVersion(jpsPluginVersion);
                     KotlinJpsPluginSettings.getInstance(project).setSettings(jpsPluginSettings);
                 }
@@ -675,7 +699,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     public void reset() {
         reportWarningsCheckBox.setSelected(!commonCompilerArguments.getSuppressWarnings());
         if (jpsPluginSettings != null) {
-            setSelectedItem(kotlinJpsPluginVersionComboBox, new ComboBoxTextItem(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)));
+            setSelectedItem(kotlinJpsPluginVersionComboBox, defaultJpsVersionItem);
         }
         setSelectedItem(languageVersionComboBox, KotlinFacetSettingsKt.getLanguageVersionView(commonCompilerArguments));
         onLanguageLevelChanged((VersionView) languageVersionComboBox.getSelectedItem()); // getSelectedLanguageVersionView() replaces null
