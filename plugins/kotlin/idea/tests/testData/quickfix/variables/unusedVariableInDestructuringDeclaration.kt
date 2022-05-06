@@ -1,4 +1,5 @@
 // "Remove variable 'one'" "false"
+// ACTION: Do not show return expression hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Rename to _
 // ACTION: Specify all types explicitly in destructuring declaration

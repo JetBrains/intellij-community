@@ -147,7 +147,7 @@ object DirectiveBasedActionUtils {
             availableActions,
         ) { expectedDirectives, actualActionsDirectives ->
             UsefulTestCase.assertOrderedEquals(
-                "Some unexpected actions available at current position. Use '$ACTION_DIRECTIVE' directive",
+                "Some unexpected actions available at current position. Use '$ACTION_DIRECTIVE' directive\n",
                 actualActionsDirectives,
                 expectedDirectives
             )

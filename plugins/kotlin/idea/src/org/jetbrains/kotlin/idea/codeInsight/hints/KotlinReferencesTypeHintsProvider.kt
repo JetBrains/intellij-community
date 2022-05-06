@@ -18,7 +18,25 @@ class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinRefe
         var localVariableType: Boolean = false,
         var functionReturnType: Boolean = false,
         var parameterType: Boolean = false
-    )
+    ): HintsSettings() {
+        override fun isEnabled(hintType: HintType) =
+            when(hintType) {
+                HintType.PROPERTY_HINT -> propertyType
+                HintType.LOCAL_VARIABLE_HINT -> localVariableType
+                HintType.FUNCTION_HINT -> functionReturnType
+                HintType.PARAMETER_TYPE_HINT -> parameterType
+                else -> false
+            }
+
+        override fun enable(hintType: HintType, enable: Boolean) =
+            when(hintType) {
+                HintType.PROPERTY_HINT -> propertyType = enable
+                HintType.LOCAL_VARIABLE_HINT -> localVariableType = enable
+                HintType.FUNCTION_HINT -> functionReturnType = enable
+                HintType.PARAMETER_TYPE_HINT -> parameterType = enable
+                else -> Unit
+            }
+    }
 
     override val key: SettingsKey<Settings> = SettingsKey("kotlin.references.types.hints")
     override val name: String = KotlinBundle.message("hints.settings.types")
@@ -75,6 +93,10 @@ class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinRefe
             else -> false
         }
     }
+
+    override fun isHintSupported(hintType: HintType): Boolean =
+        hintType == HintType.PROPERTY_HINT || hintType == HintType.LOCAL_VARIABLE_HINT ||
+                hintType == HintType.FUNCTION_HINT || hintType == HintType.PARAMETER_TYPE_HINT
 
     override val previewText: String = """
         val property = listOf(1, 2, 3).filter { num -> num % 2 == 0 }

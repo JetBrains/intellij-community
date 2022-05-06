@@ -1,9 +1,10 @@
 // "Replace with safe (?.) call" "false"
 // ERROR: Operator call corresponds to a dot-qualified call 'p1.compareTo(p2)' which is not allowed on a nullable receiver 'p1'.
 // ACTION: Add non-null asserted (!!) call
+// ACTION: Do not show return expression hints
+// ACTION: Expand boolean expression to 'if else'
 // ACTION: Flip '>'
 // ACTION: Replace overloaded operator with function call
-// ACTION: Expand boolean expression to 'if else'
 
 class SafeType {
     operator fun compareTo(other : SafeType) = 0

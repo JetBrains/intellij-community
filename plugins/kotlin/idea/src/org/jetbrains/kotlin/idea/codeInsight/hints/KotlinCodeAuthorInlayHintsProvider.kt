@@ -2,7 +2,9 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.VcsCodeAuthorInlayHintsProvider
+import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector.Companion.CLASS_LOCATION
 import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector.Companion.FUNCTION_LOCATION
 import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector.Companion.logCodeAuthorClicked
@@ -10,6 +12,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 internal class KotlinCodeAuthorInlayHintsProvider : VcsCodeAuthorInlayHintsProvider() {
+
+    override fun isLanguageSupported(language: Language): Boolean = language == KotlinLanguage.INSTANCE
 
     override fun isAccepted(element: PsiElement): Boolean =
         when (element) {

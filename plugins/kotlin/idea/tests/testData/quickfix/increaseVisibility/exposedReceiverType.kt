@@ -1,5 +1,6 @@
 // "Make 'Private' protected" "true"
 // ACTION: Convert receiver to parameter
+// ACTION: Do not show return expression hints
 // ACTION: Introduce import alias
 // ACTION: Make 'Private' protected
 // ACTION: Make 'Private' public

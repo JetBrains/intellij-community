@@ -5,6 +5,7 @@
 // ACTION: Add braces to all 'if' statements
 // ACTION: Convert property initializer to getter
 // ACTION: Convert to lazy property
+// ACTION: Do not show return expression hints
 // ACTION: Move to constructor
 // WITH_STDLIB
 fun main() {

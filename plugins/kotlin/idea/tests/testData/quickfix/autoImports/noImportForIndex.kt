@@ -1,4 +1,5 @@
 // "Import" "false"
+// ACTION: Do not show return expression hints
 // ERROR: Unresolved reference: some[12]
 // ERROR: No get method providing array access
 

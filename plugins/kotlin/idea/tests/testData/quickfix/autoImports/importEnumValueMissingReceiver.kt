@@ -3,6 +3,7 @@
 // ACTION: Create extension property 'A.Companion.foo'
 // ACTION: Create member property 'A.Companion.foo'
 // ACTION: Create object 'foo'
+// ACTION: Do not show return expression hints
 // ACTION: Rename reference
 // ERROR: Unresolved reference: foo
 

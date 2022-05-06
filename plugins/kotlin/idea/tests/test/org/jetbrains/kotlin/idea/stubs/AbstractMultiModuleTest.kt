@@ -15,9 +15,11 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -84,6 +86,8 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
         return super.createModule(path, moduleType)
     }
 
+    fun VirtualFile.sourceIOFile(): File? = getUserData(sourceIOFile)
+
     fun addRoot(module: Module, sourceDirInTestData: File, isTestRoot: Boolean, transformContainedFiles: ((File) -> Unit)? = null) {
         val tmpDir = createTempDirectory()
 
@@ -97,6 +101,7 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
         }
 
         val virtualTempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tmpRootDir)!!
+        virtualTempDir.putUserData(sourceIOFile, sourceDirInTestData)
         virtualTempDir.refresh(false, isTestRoot)
         PsiTestUtil.addSourceRoot(module, virtualTempDir, isTestRoot)
     }
@@ -178,6 +183,8 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
         }
     }
 }
+
+private val sourceIOFile: Key<File> = Key("sourceIOFile")
 
 fun Module.createFacet(
     platformKind: TargetPlatform? = null,

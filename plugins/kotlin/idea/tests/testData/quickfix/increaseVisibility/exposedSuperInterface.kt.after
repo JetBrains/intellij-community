@@ -1,5 +1,6 @@
 // "Make 'Outer' public" "true"
 // ACTION: Add full qualifier
+// ACTION: Do not show return expression hints
 // ACTION: Implement interface
 // ACTION: Introduce import alias
 // ACTION: Make 'Derived' internal

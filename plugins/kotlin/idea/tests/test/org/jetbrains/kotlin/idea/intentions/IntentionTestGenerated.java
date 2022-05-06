@@ -10981,6 +10981,24 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/inlayHints")
+    public static class InlayHints extends AbstractIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("localVariable.kt")
+        public void testLocalVariable() throws Exception {
+            runTest("testData/intentions/inlayHints/localVariable.kt");
+        }
+
+        @TestMetadata("property.kt")
+        public void testProperty() throws Exception {
+            runTest("testData/intentions/inlayHints/property.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/insertCurlyBracesToTemplate")
     public static class InsertCurlyBracesToTemplate extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {

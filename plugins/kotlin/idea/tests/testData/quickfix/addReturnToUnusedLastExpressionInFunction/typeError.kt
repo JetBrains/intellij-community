@@ -2,6 +2,7 @@
 // WITH_STDLIB
 // ACTION: Add full qualifier
 // ACTION: Compiler warning 'UNUSED_EXPRESSION' options
+// ACTION: Do not show return expression hints
 // ACTION: Introduce import alias
 // ACTION: Introduce local variable
 // ERROR: A 'return' expression required in a function with a block body ('{...}')

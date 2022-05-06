@@ -3,6 +3,7 @@
 // ACTION: Create parameter 'abc'
 // ACTION: Create property 'abc'
 // ACTION: Create property 'abc' as constructor parameter
+// ACTION: Do not show return expression hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Rename reference
 // ERROR: Unresolved reference: abc

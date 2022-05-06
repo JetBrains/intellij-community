@@ -1,5 +1,6 @@
 // "Create property 'foo' as constructor parameter" "false"
 // ACTION: Create extension property 'Int.foo'
+// ACTION: Do not show return expression hints
 // ACTION: Rename reference
 // ERROR: Unresolved reference: foo
 // WITH_STDLIB

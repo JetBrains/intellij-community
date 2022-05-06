@@ -1,9 +1,10 @@
 // "Wrap with '?.let { ... }' call" "false"
 // ACTION: Add 's =' to argument
 // ACTION: Add non-null asserted (!!) call
-// ACTION: Replace with safe (?.) call
 // ACTION: Convert to run
 // ACTION: Convert to with
+// ACTION: Do not show return expression hints
+// ACTION: Replace with safe (?.) call
 // ACTION: Surround with null check
 // DISABLE-ERRORS
 // WITH_STDLIB

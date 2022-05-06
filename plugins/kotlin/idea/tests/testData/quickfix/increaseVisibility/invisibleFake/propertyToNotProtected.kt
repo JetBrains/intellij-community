@@ -1,7 +1,8 @@
 // "Make 'foo' protected" "false"
-// ACTION: Make 'foo' public
-// ACTION: Make 'foo' internal
+// ACTION: Do not show return expression hints
 // ACTION: Introduce local variable
+// ACTION: Make 'foo' internal
+// ACTION: Make 'foo' public
 // ERROR: Cannot access 'foo': it is private in 'A'
 
 class A {

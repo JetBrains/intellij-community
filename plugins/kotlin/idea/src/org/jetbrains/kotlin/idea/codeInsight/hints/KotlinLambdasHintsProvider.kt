@@ -16,7 +16,21 @@ class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHint
     data class Settings(
         var returnExpressions: Boolean = true,
         var implicitReceiversAndParams: Boolean = true,
-    )
+    ): HintsSettings() {
+        override fun isEnabled(hintType: HintType): Boolean =
+            when(hintType) {
+                HintType.LAMBDA_RETURN_EXPRESSION -> returnExpressions
+                HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER -> implicitReceiversAndParams
+                else -> false
+            }
+
+        override fun enable(hintType: HintType, enable: Boolean) =
+            when(hintType) {
+                HintType.LAMBDA_RETURN_EXPRESSION -> returnExpressions = enable
+                HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER -> implicitReceiversAndParams = enable
+                else -> Unit
+            }
+    }
 
     override val key: SettingsKey<Settings> = SettingsKey("kotlin.lambdas.hints")
     override val name: String = KotlinBundle.message("hints.settings.lambdas")
@@ -29,13 +43,15 @@ class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHint
         return KotlinBundle.getMessage(key)
     }
 
-    override fun isElementSupported(resolved: HintType?, settings: Settings): Boolean {
-        return when (resolved) {
+    override fun isElementSupported(resolved: HintType?, settings: Settings): Boolean =
+        when (resolved) {
             HintType.LAMBDA_RETURN_EXPRESSION -> settings.returnExpressions
             HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER -> settings.implicitReceiversAndParams
             else -> false
         }
-    }
+
+    override fun isHintSupported(hintType: HintType): Boolean =
+        hintType == HintType.LAMBDA_RETURN_EXPRESSION || hintType == HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER
 
     override fun createConfigurable(settings: Settings): ImmediateConfigurable {
         return object : ImmediateConfigurable {

@@ -1,6 +1,7 @@
 // "Implement members" "false"
-// ACTION: Make internal
+// ACTION: Do not show return expression hints
 // ACTION: Extract 'A' from current file
+// ACTION: Make internal
 
 interface I {
     fun foo()

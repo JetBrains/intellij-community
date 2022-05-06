@@ -3,6 +3,7 @@
 // ACTION: Convert to apply
 // ACTION: Convert to run
 // ACTION: Convert to with
+// ACTION: Do not show return expression hints
 // ACTION: Rename reference
 // ERROR: Unresolved reference: ext
 

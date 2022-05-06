@@ -4,6 +4,7 @@
 // ACTION: Add full qualifier
 // ACTION: Create extension function 'Some.invoke'
 // ACTION: Create member function 'Some.invoke'
+// ACTION: Do not show return expression hints
 // ACTION: Introduce import alias
 
 

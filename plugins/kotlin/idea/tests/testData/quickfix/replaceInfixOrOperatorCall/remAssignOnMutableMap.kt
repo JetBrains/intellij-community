@@ -1,6 +1,7 @@
 // "Replace with safe (?.) call" "false"
 // WITH_STDLIB
 // ACTION: Add non-null asserted (!!) call
+// ACTION: Do not show return expression hints
 // ACTION: Replace overloaded operator with function call
 // ACTION: Replace with ordinary assignment
 // ERROR: Operator call corresponds to a dot-qualified call 'map[3].remAssign(5)' which is not allowed on a nullable receiver 'map[3]'.

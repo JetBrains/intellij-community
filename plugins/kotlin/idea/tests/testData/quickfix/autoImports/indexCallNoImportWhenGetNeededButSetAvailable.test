@@ -5,6 +5,7 @@
 // ACTION: Converts the assignment statement to an expression
 // ACTION: Create extension function 'Some.set'
 // ACTION: Create member function 'Some.set'
+// ACTION: Do not show return expression hints
 // ACTION: Replace overloaded operator with function call
 
 

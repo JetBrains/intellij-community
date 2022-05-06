@@ -6,6 +6,7 @@
 // ACTION: Add braces to all 'if' statements
 // ACTION: Convert property initializer to getter
 // ACTION: Convert to lazy property
+// ACTION: Do not show return expression hints
 // ACTION: Go To Super Property
 // ACTION: Introduce local variable
 // WITH_STDLIB

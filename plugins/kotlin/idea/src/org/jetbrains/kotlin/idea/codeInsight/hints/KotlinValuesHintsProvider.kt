@@ -11,7 +11,19 @@ class KotlinValuesHintsProvider : KotlinAbstractHintsProvider<KotlinValuesHintsP
 
     data class Settings(
         var ranges: Boolean = true
-    )
+    ): HintsSettings() {
+        override fun isEnabled(hintType: HintType): Boolean =
+            when (hintType) {
+                HintType.RANGES -> ranges
+                else -> false
+            }
+
+        override fun enable(hintType: HintType, enable: Boolean) =
+            when (hintType) {
+                HintType.RANGES -> ranges = enable
+                else -> Unit
+            }
+    }
 
     override val key: SettingsKey<Settings> = SettingsKey("kotlin.values.hints")
     override val name: String = KotlinBundle.message("hints.settings.values.ranges")
@@ -37,12 +49,13 @@ class KotlinValuesHintsProvider : KotlinAbstractHintsProvider<KotlinValuesHintsP
 
     }
 
-    override fun isElementSupported(resolved: HintType?, settings: Settings): Boolean {
-        return when (resolved) {
+    override fun isElementSupported(resolved: HintType?, settings: Settings): Boolean =
+        when (resolved) {
             HintType.RANGES -> settings.ranges
             else -> false
         }
-    }
+
+    override fun isHintSupported(hintType: HintType): Boolean = hintType == HintType.RANGES
 
     override val previewText: String? = null
 

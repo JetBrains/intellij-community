@@ -1,5 +1,6 @@
 // "Delete redundant extension property" "false"
 // ACTION: Convert property to function
+// ACTION: Do not show return expression hints
 // ACTION: Move to companion object
 // ACTION: Remove explicit type specification
 

@@ -2,6 +2,7 @@
 // ACTION: Add full qualifier
 // ACTION: Add names to call arguments
 // ACTION: Create test
+// ACTION: Do not show return expression hints
 // ACTION: Introduce import alias
 // ACTION: Make 'Data' protected
 // ACTION: Make 'Data' public

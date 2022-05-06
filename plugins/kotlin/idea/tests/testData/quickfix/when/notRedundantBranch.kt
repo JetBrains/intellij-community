@@ -1,6 +1,7 @@
 // "Remove branch" "false"
 // ACTION: Add braces to 'when' entry
 // ACTION: Add braces to all 'when' entries
+// ACTION: Do not show return expression hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Remove condition
 fun test(x: Int): String {

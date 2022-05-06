@@ -1,5 +1,6 @@
 // "Replace with 'NewClass'" "false"
 // ACTION: Compiler warning 'TYPEALIAS_EXPANSION_DEPRECATION' options
+// ACTION: Do not show return expression hints
 // ACTION: Introduce import alias
 // ACTION: Introduce local variable
 // ACTION: Replace usages of 'typealias Old = OldClass' in whole project

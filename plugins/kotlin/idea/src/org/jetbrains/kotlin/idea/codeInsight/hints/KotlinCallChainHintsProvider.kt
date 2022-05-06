@@ -7,12 +7,14 @@ import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.codeInsight.hints.chain.AbstractCallChainHintsProvider
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.parameterInfo.HintsTypeRenderer
 import org.jetbrains.kotlin.psi.*
@@ -54,6 +56,8 @@ class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedE
 
     override val description: String
         get() = KotlinBundle.message("inlay.kotlin.call.chains.hints")
+
+    override fun isLanguageSupported(language: Language): Boolean = language == KotlinLanguage.INSTANCE
 
     override fun createFile(project: Project, fileType: FileType, document: Document): PsiFile =
         KotlinAbstractHintsProvider.createKtFile(project, document, fileType)

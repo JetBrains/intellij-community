@@ -1,9 +1,10 @@
 // "Create object 'RED'" "false"
 // ACTION: Create enum constant 'RED'
-// ACTION: Expand boolean expression to 'if else'
-// ACTION: Rename reference
 // ACTION: Create extension property 'SampleEnum.Companion.RED'
 // ACTION: Create member property 'SampleEnum.Companion.RED'
+// ACTION: Do not show return expression hints
+// ACTION: Expand boolean expression to 'if else'
+// ACTION: Rename reference
 // ERROR: Unresolved reference: RED
 enum class SampleEnum {}
 

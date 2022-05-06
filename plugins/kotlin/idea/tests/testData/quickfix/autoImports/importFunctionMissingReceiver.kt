@@ -4,6 +4,7 @@
 // ACTION: Convert to with
 // ACTION: Create extension function 'A.Companion.foo'
 // ACTION: Create member function 'A.Companion.foo'
+// ACTION: Do not show return expression hints
 // ACTION: Rename reference
 // ERROR: Unresolved reference: foo
 

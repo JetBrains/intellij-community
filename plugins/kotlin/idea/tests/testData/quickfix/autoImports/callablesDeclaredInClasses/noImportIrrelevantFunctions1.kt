@@ -3,6 +3,7 @@
 // ACTION: Convert to with
 // ACTION: Create extension function 'Base.foo'
 // ACTION: Create member function 'Base.foo'
+// ACTION: Do not show return expression hints
 // ACTION: Rename reference
 // ERROR: Unresolved reference: foo
 

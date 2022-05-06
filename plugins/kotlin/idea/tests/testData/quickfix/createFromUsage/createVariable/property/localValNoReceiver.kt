@@ -1,6 +1,7 @@
 // "Create property 'foo'" "false"
-// ACTION: Create parameter 'foo'
 // ACTION: Create local variable 'foo'
+// ACTION: Create parameter 'foo'
+// ACTION: Do not show return expression hints
 // ACTION: Rename reference
 // ERROR: Unresolved reference: foo
 

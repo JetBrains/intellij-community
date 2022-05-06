@@ -2,6 +2,7 @@
 // ACTION: Add non-null asserted (!!) call
 // ACTION: Convert to run
 // ACTION: Convert to with
+// ACTION: Do not show return expression hints
 // ACTION: Replace with safe (?.) call
 // ACTION: Surround with null check
 // ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type B?

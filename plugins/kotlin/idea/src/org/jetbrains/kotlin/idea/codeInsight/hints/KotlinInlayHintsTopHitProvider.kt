@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.application.options.editor.CheckboxDescriptor
+import com.intellij.codeInsight.hints.InlayHintsPassFactory
 import com.intellij.codeInsight.hints.settings.InlaySettingsProvider
 import com.intellij.ide.ui.OptionsSearchTopHitProvider
 import com.intellij.ide.ui.search.OptionDescription
@@ -44,6 +45,7 @@ class KotlinInlayHintsTopHitProvider : OptionsSearchTopHitProvider.ProjectLevelP
                             with(it) {
                                 isEnabled = newValue
                                 apply()
+                                InlayHintsPassFactory.forceHintsUpdateOnNextPass()
                             }
                         })
                 ).asOptionDescriptor()
@@ -59,6 +61,7 @@ class KotlinInlayHintsTopHitProvider : OptionsSearchTopHitProvider.ProjectLevelP
                                         it.isEnabled = true
                                     }
                                     it.apply()
+                                    InlayHintsPassFactory.forceHintsUpdateOnNextPass()
                                 })
                         ).asOptionDescriptor()
                     }

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.ComparisonFailure
@@ -44,9 +45,23 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         }
     }
 
+    private fun VirtualFile.toIOFile(): File? {
+        val paths = mutableListOf<String>()
+        var vFile: VirtualFile? = this
+        while (vFile != null) {
+            vFile.sourceIOFile()?.let {
+                return File(it, paths.reversed().joinToString("/"))
+            }
+            paths.add(vFile.name)
+            vFile = vFile.parent
+        }
+        return null
+    }
+
     private fun doQuickFixTest(dirPath: String) {
         val actionFile = project.findFileWithCaret()
         val virtualFile = actionFile.virtualFile!!
+        val mainFile = virtualFile.toIOFile()?.takeIf(File::exists) ?: error("unable to lookup source io file")
         configureByExistingFile(virtualFile)
         val actionFileText = actionFile.text
         val actionFileName = actionFile.name
@@ -79,6 +94,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                 val log = try {
 
                     AbstractQuickFixMultiFileTest.doAction(
+                        mainFile,
                         text,
                         file,
                         editor,

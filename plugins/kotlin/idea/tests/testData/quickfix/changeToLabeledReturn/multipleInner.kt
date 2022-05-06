@@ -1,6 +1,7 @@
 // "Change to 'return@forEach'" "true"
 // ACTION: Change to 'return@foo'
 // ACTION: Change to 'return@forEach'
+// ACTION: Do not show return expression hints
 // ERROR: The integer literal does not conform to the expected type Unit
 // WITH_STDLIB
 // COMPILER_ARGUMENTS: -XXLanguage:-NewInference
