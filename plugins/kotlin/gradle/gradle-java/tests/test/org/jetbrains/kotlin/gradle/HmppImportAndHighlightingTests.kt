@@ -771,7 +771,7 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                 module("published-lib-consumer.iosArm64Main") {
                     moduleDependency("published-lib-consumer.commonMain", DependencyScope.COMPILE)
                     moduleDependency("published-lib-consumer.iosMain", DependencyScope.COMPILE)
-                    libraryDependency(Regex("Gradle: com.h0tk3y.mpp.demo:lib-iosarm64:(klib:)?1.0"), DependencyScope.COMPILE)
+                    libraryDependency(Regex("Gradle: com.h0tk3y.mpp.demo:lib-iosarm64:(klib:)?1.0"), DependencyScope.COMPILE, )
                 }
 
                 module("published-lib-consumer.iosArm64Test") {
@@ -780,7 +780,7 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                     moduleDependency("published-lib-consumer.iosMain", DependencyScope.TEST)
                     moduleDependency("published-lib-consumer.iosTest", DependencyScope.TEST)
                     moduleDependency("published-lib-consumer.iosArm64Main", DependencyScope.TEST)
-                    libraryDependency(Regex("Gradle: com.h0tk3y.mpp.demo:lib-iosarm64:(klib:)?1.0"), DependencyScope.TEST)
+                    libraryDependency(Regex("Gradle: com.h0tk3y.mpp.demo:lib-iosarm64:(klib:)?1.0"), DependencyScope.TEST, )
                 }
 
                 module("published-lib-consumer.iosMain") {
@@ -806,13 +806,13 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                 module("published-lib-consumer.iosX64Main") {
                     moduleDependency("published-lib-consumer.commonMain", DependencyScope.COMPILE)
                     moduleDependency("published-lib-consumer.iosMain", DependencyScope.COMPILE)
-                    libraryDependency(Regex("Gradle: com.h0tk3y.mpp.demo:lib-iosx64:(klib:)?1.0"), DependencyScope.COMPILE)
+                    libraryDependency(Regex("Gradle: com.h0tk3y.mpp.demo:lib-iosx64:(klib:)?1.0"), DependencyScope.COMPILE, )
                 }
 
                 module("published-lib-consumer.iosSimulatorArm64Main", isOptional = true) {
                     moduleDependency("published-lib-consumer.commonMain", DependencyScope.COMPILE)
                     moduleDependency("published-lib-consumer.iosMain", DependencyScope.COMPILE)
-                    libraryDependency(Regex("Gradle: com.h0tk3y.mpp.demo:lib-iossimulatorarm64:(klib:)?1.0"), DependencyScope.COMPILE)
+                    libraryDependency(Regex("Gradle: com.h0tk3y.mpp.demo:lib-iossimulatorarm64:(klib:)?1.0"), DependencyScope.COMPILE, )
                 }
 
                 module("published-lib-consumer.iosX64Test") {
@@ -821,7 +821,7 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                     moduleDependency("published-lib-consumer.iosMain", DependencyScope.TEST)
                     moduleDependency("published-lib-consumer.iosTest", DependencyScope.TEST)
                     moduleDependency("published-lib-consumer.iosX64Main", DependencyScope.TEST)
-                    libraryDependency(Regex("Gradle: com.h0tk3y.mpp.demo:lib-iosx64:(klib:)?1.0"), DependencyScope.TEST)
+                    libraryDependency(Regex("Gradle: com.h0tk3y.mpp.demo:lib-iosx64:(klib:)?1.0"), DependencyScope.TEST, )
                 }
 
                 module("published-lib-consumer.iosSimulatorArm64Test", isOptional = true) {
@@ -830,7 +830,7 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                     moduleDependency("published-lib-consumer.iosMain", DependencyScope.TEST)
                     moduleDependency("published-lib-consumer.iosTest", DependencyScope.TEST)
                     moduleDependency("published-lib-consumer.iosSimulatorArm64Main", DependencyScope.TEST)
-                    libraryDependency(Regex("Gradle: com.h0tk3y.mpp.demo:lib-iossimulatorarm64:(klib:)?1.0"), DependencyScope.TEST)
+                    libraryDependency(Regex("Gradle: com.h0tk3y.mpp.demo:lib-iossimulatorarm64:(klib:)?1.0"), DependencyScope.TEST, )
                 }
 
                 module("published-lib-consumer.jsMain") {
