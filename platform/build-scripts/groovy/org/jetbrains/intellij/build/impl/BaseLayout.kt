@@ -10,8 +10,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 abstract class BaseLayout {
   companion object {
-    @JvmStatic
-    val APP_JAR = "app.jar"
+    const val APP_JAR = "app.jar"
 
     @JvmStatic
     fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')
@@ -20,7 +19,7 @@ abstract class BaseLayout {
   /** JAR name (or path relative to 'lib' directory) to names of modules */
   val moduleJars: MultiMap<String, String> = MultiMap.createLinkedSet()
   /** artifact name to relative output path */
-  val includedArtifacts: MutableMap<String, String> = mutableMapOf()
+  val includedArtifacts: MutableMap<String, String> = LinkedHashMap()
   /** list of additional resources which should be included into the distribution */
   val resourcePaths: MutableList<ModuleResourceData> = mutableListOf()
   /** module name to entries which should be excluded from its output */
@@ -28,14 +27,14 @@ abstract class BaseLayout {
   @Suppress("SSBasedInspection")
   @ApiStatus.Internal
   val includedProjectLibraries: ObjectOpenHashSet<ProjectLibraryData> = ObjectOpenHashSet()
-  val includedModuleLibraries: MutableSet<ModuleLibraryData> = mutableSetOf()
+  val includedModuleLibraries: MutableSet<ModuleLibraryData> = LinkedHashSet()
   /** module name to name of the module library */
   val excludedModuleLibraries: MultiMap<String, String> = MultiMap.createLinked()
   /** JAR name -> name of project library which content should be unpacked */
   val projectLibrariesToUnpack: MultiMap<String, String> = MultiMap.createLinked()
   val modulesWithExcludedModuleLibraries: MutableList<String> = mutableListOf()
   /** set of keys in {@link #moduleJars} which are set explicitly, not automatically derived from modules names */
-  val explicitlySetJarPaths: MutableSet<String> = mutableSetOf()
+  val explicitlySetJarPaths: MutableSet<String> = LinkedHashSet()
 
   private val moduleNameToJarPath: MutableMap<String, String> = mutableMapOf()
 

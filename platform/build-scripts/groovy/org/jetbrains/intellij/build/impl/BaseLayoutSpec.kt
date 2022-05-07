@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.impl
 
 open class BaseLayoutSpec(private val layout: BaseLayout) {
@@ -72,7 +74,7 @@ open class BaseLayoutSpec(private val layout: BaseLayout) {
    * @param relativeOutputPath target path relative to 'lib' directory
    */
   fun withArtifact(artifactName: String, relativeOutputPath: String) {
-    layout.includedArtifacts[artifactName] = relativeOutputPath
+    layout.includedArtifacts.put(artifactName, relativeOutputPath)
   }
 
   /**
