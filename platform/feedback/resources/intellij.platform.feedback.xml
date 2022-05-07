@@ -15,7 +15,7 @@
   </extensions>
 
   <applicationListeners>
-    <listener class="com.intellij.feedback.common.OpenedApplicationFeedbackShower"
+    <listener class="com.intellij.feedback.common.OpenApplicationFeedbackShower"
               topic="com.intellij.ide.AppLifecycleListener"/>
   </applicationListeners>
   
@@ -25,8 +25,8 @@
       <action id="com.intellij.feedback.npw.TestShowNewProjectFeedbackDialogAction"
               class="com.intellij.feedback.npw.TestShowNewProjectFeedbackDialogAction"
               text="Show New Project Feedback Dialog" internal="true"/>
-      <action id="com.intellij.feedback.disabledKotlinPlugin.TestShowDisabledKotlinPluginFeedbackDialogAction"
-              class="com.intellij.feedback.disabledKotlinPlugin.TestShowDisabledKotlinPluginFeedbackDialogAction"
+      <action id="com.intellij.feedback.kotlinRejecters.TestShowKotlinRejectersFeedbackDialogAction"
+              class="com.intellij.feedback.kotlinRejecters.TestShowKotlinRejectersFeedbackDialogAction"
               text="Show Feedback Dialog About Disabled Kotlin Plugin" internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>

@@ -3,8 +3,8 @@ package com.intellij.feedback.common
 
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.notification.RequestFeedbackNotification
-import com.intellij.feedback.disabledKotlinPlugin.bundle.DisabledKotlinPluginFeedbackBundle
-import com.intellij.feedback.disabledKotlinPlugin.dialog.DisabledKotlinPluginFeedbackDialog
+import com.intellij.feedback.kotlinRejecters.bundle.KotlinRejectersFeedbackBundle
+import com.intellij.feedback.kotlinRejecters.dialog.KotlinRejectersFeedbackDialog
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.feedback.kotlinRejecters.state.KotlinRejectersInfoService
 import com.intellij.notification.NotificationAction
@@ -15,20 +15,20 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayAt
 
-class OpenedApplicationFeedbackShower : AppLifecycleListener {
+class OpenApplicationFeedbackShower : AppLifecycleListener {
 
   companion object {
     val LAST_DATE_COLLECT_FEEDBACK = LocalDate(2022, 5, 31)
-    val MAX_NUMBER_NOTIFICATION_SHOWED = 3
+    const val MAX_NUMBER_NOTIFICATION_SHOWED = 3
 
     fun showNotification(project: Project?, forTest: Boolean) {
       val notification = RequestFeedbackNotification(
-        DisabledKotlinPluginFeedbackBundle.message("notification.kotlin.feedback.request.feedback.title"),
-        DisabledKotlinPluginFeedbackBundle.message("notification.kotlin.feedback.request.feedback.content")
+        KotlinRejectersFeedbackBundle.message("notification.kotlin.feedback.request.feedback.title"),
+        KotlinRejectersFeedbackBundle.message("notification.kotlin.feedback.request.feedback.content")
       )
       notification.addAction(
         NotificationAction.createSimpleExpiring(CommonFeedbackBundle.message("notification.request.feedback.action.respond.text")) {
-          val dialog = DisabledKotlinPluginFeedbackDialog(project, forTest)
+          val dialog = KotlinRejectersFeedbackDialog(project, forTest)
           dialog.show()
         }
         )
