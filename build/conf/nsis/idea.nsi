@@ -1871,6 +1871,7 @@ done:
   ;do not show feedback web page checkbox for EAP builds.
   StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" end_of_uninstall feedback_web_page
 feedback_web_page:
+  IfSilent end_of_uninstall 0
   StrCmp "${UNINSTALL_WEB_PAGE}" "feedback_web_page" end_of_uninstall
   !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 6" "State"
   StrCmp "$R3" "0" end_of_uninstall
