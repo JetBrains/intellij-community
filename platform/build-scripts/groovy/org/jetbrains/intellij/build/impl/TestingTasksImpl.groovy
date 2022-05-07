@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
+import org.jetbrains.intellij.build.io.ProcessKt
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -364,7 +365,7 @@ class TestingTasksImpl extends TestingTasks {
     }
     String runtime = runtimeExecutablePath()
     context.messages.info("Runtime: $runtime")
-    BuildHelper.runProcess(context, List.of(runtime, "-version"))
+    ProcessKt.runProcess(List.of(runtime, "-version"), null, context.messages)
     context.messages.info("Runtime options: $allJvmArgs")
     context.messages.info("System properties: $allSystemProperties")
     context.messages.info("Bootstrap classpath: $bootstrapClasspath")

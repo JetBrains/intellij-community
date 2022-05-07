@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
@@ -226,7 +226,7 @@ class PluginLayout(val mainModule: String): BaseLayout() {
           BuildHelper.copyFileToDir(source, targetDir.resolve(outputPath))
         }
         else {
-          BuildHelper.getInstance(context).copyDir(source, targetDir.resolve(outputPath))
+          BuildHelper.copyDir(source, targetDir.resolve(outputPath))
         }
       })
     }

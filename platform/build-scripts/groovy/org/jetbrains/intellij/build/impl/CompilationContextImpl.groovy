@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtilRt
@@ -100,7 +100,7 @@ final class CompilationContextImpl implements CompilationContext {
     String jbrHome = toCanonicalPath(homePath.toString())
     def jbrVersionName = "11"
 
-    JdkUtils.defineJdk(context.projectModel.global, jbrVersionName, jbrHome, context.messages)
+    JdkUtils.INSTANCE.defineJdk(context.projectModel.global, jbrVersionName, jbrHome, context.messages)
     readModulesFromReleaseFile(context.projectModel, jbrVersionName, jbrHome)
 
     context.projectModel.project.modules
@@ -115,7 +115,7 @@ final class CompilationContextImpl implements CompilationContext {
       }
 
       if (context.projectModel.global.libraryCollection.findLibrary(sdkName) == null) {
-        JdkUtils.defineJdk(context.projectModel.global, sdkName, jbrHome, context.messages)
+        JdkUtils.INSTANCE.defineJdk(context.projectModel.global, sdkName, jbrHome, context.messages)
         readModulesFromReleaseFile(context.projectModel, sdkName, jbrHome)
       }
     }
@@ -128,7 +128,7 @@ final class CompilationContextImpl implements CompilationContext {
     }
 
     def urls = additionalSdk.getRoots(JpsOrderRootType.COMPILED).collect { it.url }
-    JdkUtils.readModulesFromReleaseFile(new File(sdkHome)).each {
+    JdkUtils.INSTANCE.readModulesFromReleaseFile(Path.of(sdkHome)).each {
       if (!urls.contains(it)) {
         additionalSdk.addRoot(it, JpsOrderRootType.COMPILED)
       }

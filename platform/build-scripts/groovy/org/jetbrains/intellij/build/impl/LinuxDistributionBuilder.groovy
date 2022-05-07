@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.NioFiles
@@ -13,6 +13,7 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.FileKt
+import org.jetbrains.intellij.build.io.ProcessKt
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.*
@@ -43,15 +44,14 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void copyFilesForOsDistribution(@NotNull Path unixDistPath, JvmArchitecture arch) {
-    BuildHelper buildHelper = BuildHelper.getInstance(buildContext)
-    buildHelper.span(spanBuilder("copy files for os distribution")
+    BuildHelper.span(spanBuilder("copy files for os distribution")
                        .setAttribute("os", targetOs.osName)
                        .setAttribute("arch", arch?.name()), new Runnable() {
       @Override
       void run() {
         Path distBinDir = unixDistPath.resolve("bin")
 
-        buildHelper.copyDir(buildContext.paths.communityHomeDir.resolve("bin/linux"), distBinDir)
+        BuildHelper.copyDir(buildContext.paths.communityHomeDir.resolve("bin/linux"), distBinDir)
         BuildTasksImpl.unpackPty4jNative(buildContext, unixDistPath, "linux")
         BuildTasksImpl.generateBuildTxt(buildContext, unixDistPath)
         BuildTasksImpl.copyDistFiles(buildContext, unixDistPath)
@@ -253,7 +253,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.messages.progress("Preparing files")
 
       Path unixSnapDistPath = buildContext.paths.buildOutputDir.resolve("dist.unix.snap")
-      BuildHelper.getInstance(buildContext).copyDir(unixDistPath, unixSnapDistPath)
+      BuildHelper.copyDir(unixDistPath, unixSnapDistPath)
 
       String productName = buildContext.applicationInfo.productNameWithEdition
 
@@ -319,28 +319,25 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.messages.progress("Building package")
 
       String snapArtifact = "${customizer.snapName}_${version}_amd64.snap".toString()
-      BuildHelper.runProcess(
-        buildContext,
-        [
-          "docker",
-          "run",
-          "--rm",
-          "--volume=${snapDir}/snapcraft.yaml:/build/snapcraft.yaml:ro".toString(),
-          "--volume=${snapDir}/${customizer.snapName}.desktop:/build/snap/gui/${customizer.snapName}.desktop:ro".toString(),
-          "--volume=${snapDir}/${customizer.snapName}.png:/build/prime/meta/gui/icon.png:ro".toString(),
-          "--volume=${snapDir}/result:/build/result".toString(),
-          "--volume=${buildContext.paths.distAll}:/build/dist.all:ro".toString(),
-          "--volume=${unixSnapDistPath}:/build/dist.unix:ro".toString(),
-          "--volume=${jreDirectoryPath}:/build/jre:ro".toString(),
-          "--workdir=/build",
-          buildContext.options.snapDockerImage,
-          "snapcraft",
-          "snap",
-          "-o",
-          "result/$snapArtifact".toString(),
-        ],
-        snapDir
-      )
+      ProcessKt.runProcess([
+                             "docker",
+                             "run",
+                             "--rm",
+                             "--volume=${snapDir}/snapcraft.yaml:/build/snapcraft.yaml:ro".toString(),
+                             "--volume=${snapDir}/${customizer.snapName}.desktop:/build/snap/gui/${customizer.snapName}.desktop:ro"
+                               .toString(),
+                             "--volume=${snapDir}/${customizer.snapName}.png:/build/prime/meta/gui/icon.png:ro".toString(),
+                             "--volume=${snapDir}/result:/build/result".toString(),
+                             "--volume=${buildContext.paths.distAll}:/build/dist.all:ro".toString(),
+                             "--volume=${unixSnapDistPath}:/build/dist.unix:ro".toString(),
+                             "--volume=${jreDirectoryPath}:/build/jre:ro".toString(),
+                             "--workdir=/build",
+                             buildContext.options.snapDockerImage,
+                             "snapcraft",
+                             "snap",
+                             "-o",
+                             "result/$snapArtifact".toString(),
+                           ], snapDir, buildContext.messages)
 
       BuildHelper.moveFileToDir(resultDir.resolve(snapArtifact), buildContext.paths.artifactDir)
       buildContext.notifyArtifactWasBuilt(buildContext.paths.artifactDir.resolve(snapArtifact))

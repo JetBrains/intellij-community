@@ -254,8 +254,7 @@ final class DistributionJARsBuilder {
     ForkJoinTask<?> svgPrebuildTask = SVGPreBuilder.createPrebuildSvgIconsTask(context)?.fork()
     ForkJoinTask<?> brokenPluginsTask = createBuildBrokenPluginListTask(context)?.fork()
 
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
-    buildHelper.createSkippableTask(spanBuilder("build searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, context) {
+    BuildHelper.createSkippableTask(spanBuilder("build searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, context) {
       buildSearchableOptions(context, getModulesForPluginsToPublish())
     }?.fork()?.join()
 
@@ -265,7 +264,7 @@ final class DistributionJARsBuilder {
     Path antTargetFile = antDir == null ? null : antDir.resolve("lib/ant.jar")
 
     ModuleOutputPatcher moduleOutputPatcher = new ModuleOutputPatcher()
-    ForkJoinTask<List<DistributionFileEntry>> buildPlatformTask = buildHelper.createTask(
+    ForkJoinTask<List<DistributionFileEntry>> buildPlatformTask = TraceKt.createTask(
       spanBuilder("build platform lib"),
       new Supplier<List<DistributionFileEntry>>() {
         @Override
@@ -278,7 +277,7 @@ final class DistributionJARsBuilder {
 
           ForkJoinTask.invokeAll(Arrays.asList(
             StatisticsRecorderBundledMetadataProvider.createTask(moduleOutputPatcher, context),
-            buildHelper.createTask(spanBuilder("write patched app info")) {
+            TraceKt.createTask(spanBuilder("write patched app info")) {
               Path moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
               String relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
               byte[] result = AsmKt.injectAppInfo(
@@ -322,12 +321,12 @@ final class DistributionJARsBuilder {
     if (!additionalPluginPaths.isEmpty()) {
       Path pluginDir = context.paths.distAllDir.resolve("plugins")
       for (Path sourceDir : additionalPluginPaths) {
-        buildHelper.copyDir(sourceDir, pluginDir.resolve(sourceDir.fileName))
+        BuildHelper.copyDir(sourceDir, pluginDir.resolve(sourceDir.fileName))
       }
     }
 
     List<ForkJoinTask<?>> tasks = new ArrayList<ForkJoinTask<?>>(3)
-    tasks.add(buildHelper.createTask(spanBuilder("generate content report"), new Supplier<Void>() {
+    tasks.add(TraceKt.createTask(spanBuilder("generate content report"), new Supplier<Void>() {
       @Override
       Void get() {
         Files.createDirectories(context.paths.artifactDir)
@@ -375,8 +374,7 @@ final class DistributionJARsBuilder {
   private static ForkJoinTask<List<DistributionFileEntry>> copyAnt(@NotNull Path antDir,
                                                                    @NotNull Path antTargetFile,
                                                                    @NotNull BuildContext context) {
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
-    return buildHelper.createTask(
+    return TraceKt.createTask(
       spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()),
       new Supplier<List<DistributionFileEntry>>() {
         @Override
@@ -384,7 +382,7 @@ final class DistributionJARsBuilder {
           List<Source> sources = new ArrayList<>()
           List<DistributionFileEntry> result = new ArrayList<>()
           ProjectLibraryData libraryData = new ProjectLibraryData("Ant", LibraryPackMode.MERGED)
-          buildHelper.copyDir(
+          BuildHelper.copyDir(
             context.paths.communityHomeDir.resolve("lib/ant"), antDir,
             new Predicate<Path>() {
               @Override
@@ -438,8 +436,7 @@ final class DistributionJARsBuilder {
   private static ForkJoinTask<?> createBuildBrokenPluginListTask(@NotNull BuildContext context) {
     String buildString = context.fullBuildNumber
     Path targetFile = context.paths.tempDir.resolve("brokenPlugins.db")
-    BuildHelper helper = BuildHelper.getInstance(context)
-    return helper.createSkippableTask(
+    return BuildHelper.createSkippableTask(
       spanBuilder("build broken plugin list")
         .setAttribute("buildNumber", buildString)
         .setAttribute("path", targetFile.toString()),
@@ -616,7 +613,7 @@ final class DistributionJARsBuilder {
   @Nullable
   private static ForkJoinTask<?> buildThirdPartyLibrariesList(@NotNull ProjectStructureMapping projectStructureMapping,
                                                               @NotNull BuildContext context) {
-    return BuildHelper.getInstance(context).createSkippableTask(
+    return BuildHelper.createSkippableTask(
       spanBuilder("generate table of licenses for used third-party libraries"),
       BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP,
       context,
@@ -674,7 +671,7 @@ final class DistributionJARsBuilder {
                                                                              PlatformLayout platform,
                                                                              BuildContext context,
                                                                              boolean copyFiles) {
-    return BuildHelper.getInstance(context).createTask(
+    return TraceKt.createTask(
       spanBuilder("layout").setAttribute("path", context.paths.buildOutputDir.relativize(context.paths.distAllDir).toString()),
       new Supplier<List<DistributionFileEntry>>() {
         @Override
@@ -689,7 +686,7 @@ final class DistributionJARsBuilder {
                                                                          ForkJoinTask<?> buildPlatformTask,
                                                                          @NotNull BuildContext context) {
     Set<String> pluginDirectoriesToSkip = context.options.bundledPluginDirectoriesToSkip
-    return BuildHelper.getInstance(context).createTask(
+    return TraceKt.createTask(
       spanBuilder("build bundled plugins")
         .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), List.copyOf(pluginDirectoriesToSkip))
         .setAttribute("count", plugins.size()),
@@ -744,8 +741,7 @@ final class DistributionJARsBuilder {
                                                                                             boolean isUpdateFromSources,
                                                                                             @Nullable ForkJoinTask<?> buildPlatformTask,
                                                                                             @NotNull BuildContext context) {
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
-    buildHelper.createTask(spanBuilder("build os-specific bundled plugins")
+    TraceKt.createTask(spanBuilder("build os-specific bundled plugins")
                              .setAttribute("isUpdateFromSources", isUpdateFromSources), new Supplier<List<DistributionFileEntry>>() {
       @Override
       List<DistributionFileEntry> get() {
@@ -774,7 +770,7 @@ final class DistributionJARsBuilder {
             ? context.paths.distAllDir.resolve("plugins")
             : getOsAndArchSpecificDistDirectory(osFamily, arch, context).resolve("plugins")
 
-          return buildHelper.createTask(spanBuilder("build bundled plugins")
+          return TraceKt.createTask(spanBuilder("build bundled plugins")
                                           .setAttribute("os", osFamily.osName)
                                           .setAttribute("arch", arch.name())
                                           .setAttribute("count", osSpecificPlugins.size())
@@ -845,7 +841,7 @@ final class DistributionJARsBuilder {
       return null
     }
 
-    return BuildHelper.getInstance(context).createTask(
+    return TraceKt.createTask(
       spanBuilder("build non-bundled plugins").setAttribute("count", pluginsToPublish.size()),
       new Supplier<List<DistributionFileEntry>>() {
         @Override
@@ -905,9 +901,7 @@ final class DistributionJARsBuilder {
               }
             }
           )
-
-          BuildHelper buildHelper = BuildHelper.getInstance(context)
-          buildHelper.bulkZipWithPrefix(stageDir, dirToJar, compressPluginArchive)
+          BlockmapKt.bulkZipWithPrefix(stageDir, dirToJar, compressPluginArchive)
 
           PluginLayout helpPlugin = BuiltInHelpPlugin.helpPlugin(context, defaultPluginVersion)
           if (helpPlugin != null) {
@@ -1045,7 +1039,6 @@ final class DistributionJARsBuilder {
     List<ForkJoinTask<?>> scrambleTasks = new ArrayList<>()
     List<ForkJoinTask<List<DistributionFileEntry>>> tasks = new ArrayList<>()
 
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
     // must be as a closure, dont' use "for in" here - to capture supplier variables.
     plugins.each { PluginLayout plugin ->
       boolean isHelpPlugin = "intellij.platform.builtInHelp" == plugin.mainModule
@@ -1057,7 +1050,7 @@ final class DistributionJARsBuilder {
       String directoryName = getActualPluginDirectoryName(plugin, context)
       Path pluginDir = targetDirectory.resolve(directoryName)
 
-      tasks.add(buildHelper.createTask(
+      tasks.add(TraceKt.createTask(
         spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()),
         new Supplier<List<DistributionFileEntry>>() {
           @Override
@@ -1104,7 +1097,7 @@ final class DistributionJARsBuilder {
     if (!scrambleTasks.isEmpty()) {
       // scrambling can require classes from platform
       if (buildPlatformTask != null) {
-        buildHelper.span(spanBuilder("wait for platform lib for scrambling"), new Runnable() {
+        BuildHelper.span(spanBuilder("wait for platform lib for scrambling"), new Runnable() {
           @Override
           void run() {
             buildPlatformTask.join()
@@ -1192,7 +1185,6 @@ final class DistributionJARsBuilder {
                                             ModuleOutputPatcher moduleOutputPatcher,
                                             MultiMap<String, String> moduleJars,
                                             BuildContext context) {
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
     if (copyFiles) {
       checkModuleExcludes(layout.moduleExcludes, context)
     }
@@ -1202,7 +1194,7 @@ final class DistributionJARsBuilder {
     // patchers must be executed _before_ pack because patcher patches module output
     if (copyFiles && layout instanceof PluginLayout && !layout.patchers.isEmpty()) {
       List<BiConsumer<ModuleOutputPatcher, BuildContext>> patchers = layout.patchers
-      buildHelper.span(spanBuilder("execute custom patchers").setAttribute("count", patchers.size()), new Runnable() {
+      BuildHelper.span(spanBuilder("execute custom patchers").setAttribute("count", patchers.size()), new Runnable() {
         @Override
         void run() {
           for (BiConsumer<ModuleOutputPatcher, BuildContext> patcher : patchers) {
@@ -1212,7 +1204,7 @@ final class DistributionJARsBuilder {
       })
     }
 
-    tasks.add(buildHelper.createTask(spanBuilder("pack"), new Supplier<Collection<DistributionFileEntry>>() {
+    tasks.add(TraceKt.createTask(spanBuilder("pack"), new Supplier<Collection<DistributionFileEntry>>() {
       @Override
       Collection<DistributionFileEntry> get() {
         Map<String, List<String>> actualModuleJars = new TreeMap<>()
@@ -1231,17 +1223,17 @@ final class DistributionJARsBuilder {
     }))
 
     if (copyFiles && (!layout.resourcePaths.isEmpty() || (layout instanceof PluginLayout && !layout.resourceGenerators.isEmpty()))) {
-      tasks.add(buildHelper.createTask(spanBuilder("pack additional resources"), new Supplier<Collection<DistributionFileEntry>>() {
+      tasks.add(TraceKt.createTask(spanBuilder("pack additional resources"), new Supplier<Collection<DistributionFileEntry>>() {
         @Override
         Collection<DistributionFileEntry> get() {
-          layoutAdditionalResources(layout, context, targetDirectory, buildHelper)
+          layoutAdditionalResources(layout, context, targetDirectory)
           return Collections.<DistributionFileEntry> emptyList()
         }
       }))
     }
 
     if (!layout.includedArtifacts.isEmpty()) {
-      tasks.add(buildHelper.createTask(spanBuilder("pack artifacts"), new Supplier<Collection<DistributionFileEntry>>() {
+      tasks.add(TraceKt.createTask(spanBuilder("pack artifacts"), new Supplier<Collection<DistributionFileEntry>>() {
         @Override
         Collection<DistributionFileEntry> get() {
           return layoutArtifacts(layout, context, copyFiles, targetDirectory)
@@ -1253,8 +1245,7 @@ final class DistributionJARsBuilder {
 
   private static void layoutAdditionalResources(BaseLayout layout,
                                                 BuildContext context,
-                                                Path targetDirectory,
-                                                BuildHelper buildHelper) {
+                                                Path targetDirectory) {
     for (ModuleResourceData resourceData in layout.resourcePaths) {
       Path source = basePath(context, resourceData.moduleName).resolve(resourceData.resourcePath).normalize()
       Path target = targetDirectory.resolve(resourceData.relativeOutputPath)
@@ -1275,7 +1266,7 @@ final class DistributionJARsBuilder {
           BuildHelper.copyFileToDir(source, target)
         }
         else {
-          buildHelper.copyDir(source, target)
+          BuildHelper.copyDir(source, target)
         }
       }
     }
@@ -1286,7 +1277,7 @@ final class DistributionJARsBuilder {
 
     List<Pair<BiFunction<Path, BuildContext, Path>, String>> resourceGenerators = layout.resourceGenerators
     if (!resourceGenerators.isEmpty()) {
-      buildHelper.span(spanBuilder("generate and pack resources"), new Runnable() {
+      BuildHelper.span(spanBuilder("generate and pack resources"), new Runnable() {
         @Override
         void run() {
           for (Pair<BiFunction<Path, BuildContext, Path>, String> item : resourceGenerators) {
@@ -1300,7 +1291,7 @@ final class DistributionJARsBuilder {
               BuildHelper.copyFileToDir(resourceFile, target)
             }
             else {
-              buildHelper.copyDir(resourceFile, target)
+              BuildHelper.copyDir(resourceFile, target)
             }
           }
         }
@@ -1312,7 +1303,6 @@ final class DistributionJARsBuilder {
                                                                    BuildContext context,
                                                                    boolean copyFiles,
                                                                    Path targetDirectory) {
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
     Span span = Span.current()
     Collection<DistributionFileEntry> entries = new ArrayList<>()
     for (Map.Entry<String, String> entry in layout.includedArtifacts.entrySet()) {
@@ -1331,7 +1321,7 @@ final class DistributionJARsBuilder {
         Path source = Path.of(artifact.outputPath)
         artifactFile = targetDirectory.resolve("lib").resolve(relativePath)
         if (copyFiles) {
-          buildHelper.copyDir(source, targetDirectory.resolve("lib").resolve(relativePath))
+          BuildHelper.copyDir(source, targetDirectory.resolve("lib").resolve(relativePath))
         }
       }
       else {

@@ -258,10 +258,9 @@ idea.fatal.error.notification=disabled
       @Override
       Void get() {
         Path licenseOutDir = buildContext.paths.distAllDir.resolve("license")
-        BuildHelper buildHelper = BuildHelper.getInstance(buildContext)
-        buildHelper.copyDir(buildContext.paths.communityHomeDir.resolve("license"), licenseOutDir)
+        BuildHelper.copyDir(buildContext.paths.communityHomeDir.resolve("license"), licenseOutDir)
         for (String additionalDirWithLicenses in buildContext.productProperties.additionalDirectoriesWithLicenses) {
-          buildHelper.copyDir(Path.of(additionalDirWithLicenses), licenseOutDir)
+          BuildHelper.copyDir(Path.of(additionalDirWithLicenses), licenseOutDir)
         }
 
         if (buildContext.applicationInfo.svgRelativePath != null) {

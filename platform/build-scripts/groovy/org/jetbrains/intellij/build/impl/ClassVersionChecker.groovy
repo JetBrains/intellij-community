@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -66,9 +66,9 @@ final class ClassVersionChecker {
       return
     }
 
-    BuildHelper.getInstance(context).span(TracerManager.spanBuilder("verify class file versions")
-                                            .setAttribute("ruleCount", config.size())
-                                            .setAttribute("root", root.toString()), new Runnable() {
+    BuildHelper.span(TracerManager.spanBuilder("verify class file versions")
+                       .setAttribute("ruleCount", config.size())
+                       .setAttribute("root", root.toString()), new Runnable() {
       @Override
       void run() {
         List<Rule> rules = new ArrayList<Rule>(config.size())

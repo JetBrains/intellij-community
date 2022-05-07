@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
@@ -7,11 +7,7 @@ import com.intellij.openapi.util.io.NioFiles
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.MacDistributionCustomizer
-import org.jetbrains.intellij.build.MacHostProperties
-import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.intellij.build.io.ProcessKt
 import org.jetbrains.intellij.build.tasks.SignKt
@@ -112,10 +108,9 @@ final class MacDmgBuilder {
                                    boolean sign, boolean notarize,
                                    MacDistributionCustomizer customizer,
                                    BuildContext context) {
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
     Path tempDir = context.paths.tempDir.resolve(sitFile.fileName.toString().replace(".sit", ""))
     if (jreArchivePath != null || sign) {
-      buildHelper.span(TracerManager.spanBuilder("bundle JBR and sign sit locally")
+      BuildHelper.span(TracerManager.spanBuilder("bundle JBR and sign sit locally")
                          .setAttribute("jreArchive", jreArchivePath.toString())
                          .setAttribute("sitFile", sitFile.toString()), new Runnable() {
         @Override

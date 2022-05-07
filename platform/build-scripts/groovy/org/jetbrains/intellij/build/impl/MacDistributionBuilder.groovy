@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
@@ -14,6 +13,7 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.intellij.build.io.FileKt
 import org.jetbrains.intellij.build.tasks.MacKt
+import org.jetbrains.intellij.build.tasks.TraceKt
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -190,7 +190,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
                                                         Boolean notarize,
                                                         MacDistributionCustomizer customizer,
                                                         BuildContext context) {
-    return BuildHelper.getInstance(context).createTask(spanBuilder("build macOS artifacts for specific arch")
+    return TraceKt.createTask(spanBuilder("build macOS artifacts for specific arch")
                                                          .setAttribute("arch", arch.name()), new Supplier<Void>() {
       @Override
       Void get() {
@@ -213,7 +213,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     String archStr = arch.name()
     // with JRE
     if (context.options.buildDmgWithBundledJre) {
-      tasks.add(BuildHelper.getInstance(context).createSkippableTask(
+      tasks.add(BuildHelper.createSkippableTask(
         spanBuilder("build DMG with JRE").setAttribute("arch", archStr),
         "${BuildOptions.MAC_ARTIFACTS_STEP}_jre_$archStr",
         context,
@@ -229,7 +229,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     // without JRE
     if (context.options.buildDmgWithoutBundledJre) {
-      tasks.add(BuildHelper.getInstance(context).createSkippableTask(
+      tasks.add(BuildHelper.createSkippableTask(
         spanBuilder("build DMG without JRE").setAttribute("arch", archStr),
         "${BuildOptions.MAC_ARTIFACTS_STEP}_no_jre_$archStr",
         context, new Runnable() {
@@ -249,11 +249,10 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
                             Path macDistDir,
                             BuildContext context) {
     MacDistributionCustomizer macCustomizer = customizer
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
-    buildHelper.copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"),
+    BuildHelper.copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"),
                                       macDistDir.resolve("bin"),
                                       customizer.binFilesFilter)
-    buildHelper.copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
+    BuildHelper.copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
 
     String executable = context.productProperties.baseFileName
     Files.move(macDistDir.resolve("MacOS/executable"), macDistDir.resolve("MacOS/$executable"))

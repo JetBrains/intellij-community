@@ -20,6 +20,8 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.FileKt
+import org.jetbrains.intellij.build.io.ProcessKt
+import org.jetbrains.intellij.build.tasks.TraceKt
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
@@ -158,12 +160,12 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     Path tempZip = Files.createTempDirectory(buildContext.paths.tempDir, "zip-")
     Path tempExe = Files.createTempDirectory(buildContext.paths.tempDir, "exe-")
     try {
-      BuildHelper.runProcess(buildContext, List.of("7z", "x", "-bd", exePath), tempExe)
-      BuildHelper.runProcess(buildContext, List.of("unzip", "-q", zipPath.toString()), tempZip)
+      ProcessKt.runProcess(List.of("7z", "x", "-bd", exePath), tempExe, buildContext.messages)
+      ProcessKt.runProcess(List.of("unzip", "-q", zipPath.toString()), tempZip, buildContext.messages)
       //noinspection SpellCheckingInspection
       NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
 
-      BuildHelper.runProcess(buildContext, List.of("diff", "-q", "-r", tempZip.toString(), tempExe.toString()))
+      ProcessKt.runProcess(List.of("diff", "-q", "-r", tempZip.toString(), tempExe.toString()), null, buildContext.messages)
       RepairUtilityBuilder.generateManifest(buildContext, tempExe, Path.of(exePath).fileName.toString())
     }
     finally {
@@ -357,7 +359,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
                                                           BuildContext context) {
     String baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
     Path targetFile = context.paths.artifactDir.resolve("${baseName}${zipNameSuffix}.zip")
-    return BuildHelper.getInstance(context).createTask(TracerManager.spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
+    return TraceKt.createTask(TracerManager.spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
                                                          .setAttribute("targetFile", targetFile.toString()), new Supplier<Path>() {
       @Override
       Path get() {

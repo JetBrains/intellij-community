@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -85,7 +85,7 @@ final class WinExeInstallerBuilder {
       context.messages.info("JRE won't be bundled with Windows installer because JRE archive is missing")
     }
 
-    BuildHelper.getInstance(context).copyDir(context.paths.communityHomeDir.resolve("build/conf/nsis"), nsiConfDir)
+    BuildHelper.copyDir(context.paths.communityHomeDir.resolve("build/conf/nsis"), nsiConfDir)
 
     generateInstallationConfigFileForSilentMode()
 

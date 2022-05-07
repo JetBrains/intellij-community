@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtilRt
@@ -19,7 +19,6 @@ import org.jetbrains.intellij.build.OpenedPackages
 import org.jetbrains.intellij.build.io.FileKt
 import org.jetbrains.intellij.build.io.ProcessKt
 import org.jetbrains.intellij.build.io.ZipKt
-import org.jetbrains.intellij.build.tasks.BlockmapKt
 import org.jetbrains.intellij.build.tasks.TraceKt
 
 import java.nio.file.Files
@@ -33,20 +32,14 @@ import java.util.function.UnaryOperator
 
 @CompileStatic
 final class BuildHelper {
-  private static final BuildHelper instance = new BuildHelper()
-
   public static final long DEFAULT_TIMEOUT = TimeUnit.MINUTES.toMillis(10L)
 
   private BuildHelper() {
   }
 
-  @NotNull
-  <T> ForkJoinTask<T> createTask(@NotNull SpanBuilder spanBuilder, @NotNull Supplier<T> task) {
-    return TraceKt.createTask(spanBuilder, task)
-  }
 
   @NotNull
-  void span(@NotNull SpanBuilder spanBuilder, @NotNull Runnable task) {
+  static void span(@NotNull SpanBuilder spanBuilder, @NotNull Runnable task) {
     Span span = spanBuilder.startSpan()
     span.makeCurrent().withCloseable {
       try {
@@ -59,10 +52,10 @@ final class BuildHelper {
   }
 
   @Nullable
-  ForkJoinTask<?> createSkippableTask(@NotNull SpanBuilder spanBuilder,
-                                      @NotNull String taskId,
-                                      @NotNull BuildContext context,
-                                      @NotNull Runnable task) {
+  static ForkJoinTask<?> createSkippableTask(@NotNull SpanBuilder spanBuilder,
+                                             @NotNull String taskId,
+                                             @NotNull BuildContext context,
+                                             @NotNull Runnable task) {
     if (context.options.buildStepsToSkip.contains(taskId)) {
       Span span = spanBuilder.startSpan()
       span.addEvent("skip")
@@ -80,18 +73,18 @@ final class BuildHelper {
     }
   }
 
-  void copyDir(Path fromDir, Path targetDir) {
+  static void copyDir(Path fromDir, Path targetDir) {
     FileKt.copyDir(fromDir, targetDir, null, null)
   }
 
-  void copyDir(Path fromDir, Path targetDir, @NotNull Predicate<Path> dirFilter, @Nullable Predicate<Path> fileFilter = null) {
+  static void copyDir(Path fromDir, Path targetDir, @NotNull Predicate<Path> dirFilter, @Nullable Predicate<Path> fileFilter = null) {
     FileKt.copyDir(fromDir, targetDir, dirFilter, fileFilter)
   }
 
   /**
    * Filter is applied only to files, not to directories.
    */
-  void copyDirWithFileFilter(Path fromDir, Path targetDir, @NotNull Predicate<Path> fileFilter) {
+  static void copyDirWithFileFilter(Path fromDir, Path targetDir, @NotNull Predicate<Path> fileFilter) {
     FileKt.copyDir(fromDir, targetDir, null, fileFilter)
   }
 
@@ -155,10 +148,6 @@ final class BuildHelper {
     }
   }
 
-  void bulkZipWithPrefix(@NotNull Path commonSourceDir, @NotNull List<Map.Entry<String, Path>> items, boolean compress) {
-    BlockmapKt.bulkZipWithPrefix(commonSourceDir, items, compress)
-  }
-
   /**
    * Executes a Java class in a forked JVM
    */
@@ -172,14 +161,6 @@ final class BuildHelper {
     jvmArgs = OpenedPackages.getCommandLineArguments(context) + jvmArgs
     ProcessKt.runJava(mainClass, args, jvmArgs, classPath, context.stableJavaExecutable,
                       context.messages, timeoutMillis, workingDir)
-  }
-
-  static void runProcess(CompilationContext context, List<String> args) {
-    ProcessKt.runProcess(args, null, context.messages)
-  }
-
-  static void runProcess(CompilationContext context, List<String> args, @Nullable Path workingDir) {
-    ProcessKt.runProcess(args, workingDir, context.messages)
   }
 
   /**
@@ -315,9 +296,5 @@ final class BuildHelper {
       Files.createDirectories(configDir)
       Files.writeString(configDir.resolve("disabled_plugins.txt"), String.join("\n", toDisable))
     }
-  }
-
-  static BuildHelper getInstance(@NotNull CompilationContext context) {
-    return instance
   }
 }

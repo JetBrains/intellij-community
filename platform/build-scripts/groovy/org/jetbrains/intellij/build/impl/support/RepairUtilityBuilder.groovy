@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.support
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -11,7 +11,7 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
-import org.jetbrains.intellij.build.impl.BuildHelper
+import org.jetbrains.intellij.build.io.ProcessKt
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -20,6 +20,7 @@ import java.util.function.Consumer
 
 import static java.nio.file.attribute.PosixFilePermission.*
 import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
+
 /**
  * Builds 'repair' command line utility which is a simple and automated way to fix the IDE when it cannot start:
  * <ul>
@@ -111,7 +112,7 @@ final class RepairUtilityBuilder {
         def tmpDir = buildContext.paths.tempDir.resolve(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP + UUID.randomUUID().toString())
         Files.createDirectories(tmpDir)
         try {
-          BuildHelper.runProcess(buildContext, [binaryPath.toString(), 'hashes', '-g', '--path', unpackedDistribution.toString()], tmpDir)
+          ProcessKt.runProcess([binaryPath.toString(), 'hashes', '-g', '--path', unpackedDistribution.toString()], tmpDir, buildContext.messages)
         }
         catch (Throwable e) {
           buildContext.messages.warning("Manifest generation failed, listing unpacked distribution content for debug:")
@@ -179,8 +180,8 @@ final class RepairUtilityBuilder {
       }
       else {
         try {
-          BuildHelper.runProcess(buildContext, ['docker', '--version'])
-          BuildHelper.runProcess(buildContext, ['bash', 'build.sh'], projectHome)
+          ProcessKt.runProcess(['docker', '--version'], null, buildContext.messages)
+          ProcessKt.runProcess(['bash', 'build.sh'], projectHome, buildContext.messages)
         }
         catch (Throwable e) {
           if (TeamCityHelper.isUnderTeamCity) {

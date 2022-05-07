@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.fus
 
 import com.intellij.internal.statistic.config.EventLogExternalSendSettings
@@ -31,7 +31,7 @@ final class StatisticsRecorderBundledMetadataProvider {
       return null
     }
 
-    return BuildHelper.getInstance(context).createSkippableTask(
+    return BuildHelper.createSkippableTask(
       TracerManager.spanBuilder("bundle a default version of feature usage statistics"),
       BuildOptions.FUS_METADATA_BUNDLE_STEP,
       context,
