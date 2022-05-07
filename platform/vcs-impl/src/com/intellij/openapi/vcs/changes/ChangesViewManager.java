@@ -2,6 +2,9 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
@@ -176,11 +179,15 @@ public class ChangesViewManager implements ChangesViewEx,
   @RequiresEdt
   private ChangesViewToolWindowPanel initToolWindowPanel() {
     if (myToolWindowPanel == null) {
+      Activity activity = StartUpMeasurer.startActivity("ChangesViewToolWindowPanel initialization", ActivityCategory.DEFAULT);
+
       ChangesViewToolWindowPanel panel = new ChangesViewToolWindowPanel(myProject, this);
       Disposer.register(this, panel);
 
       myToolWindowPanel = panel;
       Disposer.register(panel, () -> myToolWindowPanel = null);
+
+      activity.end();
     }
     return myToolWindowPanel;
   }
