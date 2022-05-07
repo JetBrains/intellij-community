@@ -9,16 +9,12 @@ import com.intellij.openapi.application.ApplicationManager
 fun recordKotlinPluginDisabling(descriptors: Collection<IdeaPluginDescriptor>,
                                 action: PluginEnableDisableAction) {
   if (ApplicationManager.getApplication() != null && action.isDisable) {
-    descriptors.forEach {
-      println(it.name)
-      println(it.pluginId)
-    }
     descriptors.find {
-      it.name == "org.jetbrains.kotlin"
+      it.pluginId.idString == "org.jetbrains.kotlin"
     } ?: return
 
-    // Kotlin Plugin + 3 plugin dependency
-    if (descriptors.size <= 4) {
+    // Kotlin Plugin + 4 plugin dependency
+    if (descriptors.size <= 5) {
       val kotlinRejectersInfoState = KotlinRejectersInfoService.getInstance().state
       kotlinRejectersInfoState.showNotificationAfterRestart = true
     }

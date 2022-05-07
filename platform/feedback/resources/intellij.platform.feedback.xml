@@ -15,8 +15,8 @@
   </extensions>
 
   <applicationListeners>
-    <listener class="com.intellij.feedback.common.OpenedProjectFeedbackShower"
-              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="com.intellij.feedback.common.OpenedApplicationFeedbackShower"
+              topic="com.intellij.ide.AppLifecycleListener"/>
   </applicationListeners>
   
   <actions>

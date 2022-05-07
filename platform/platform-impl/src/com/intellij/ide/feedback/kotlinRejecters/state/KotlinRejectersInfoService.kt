@@ -24,5 +24,6 @@ class KotlinRejectersInfoService : PersistentStateComponent<KotlinRejectersInfoS
 @Serializable
 data class KotlinRejectersInfoState(
   var feedbackSent: Boolean = false,
-  var showNotificationAfterRestart: Boolean = false
+  var showNotificationAfterRestart: Boolean = false,
+  var numberNotificationShowed: Int = 0
 )

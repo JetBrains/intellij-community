@@ -5,19 +5,21 @@ import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.notification.RequestFeedbackNotification
 import com.intellij.feedback.disabledKotlinPlugin.bundle.DisabledKotlinPluginFeedbackBundle
 import com.intellij.feedback.disabledKotlinPlugin.dialog.DisabledKotlinPluginFeedbackDialog
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.feedback.kotlinRejecters.state.KotlinRejectersInfoService
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayAt
 
-class OpenedProjectFeedbackShower : ProjectManagerListener {
+class OpenedApplicationFeedbackShower : AppLifecycleListener {
 
   companion object {
     val LAST_DATE_COLLECT_FEEDBACK = LocalDate(2022, 5, 31)
+    val MAX_NUMBER_NOTIFICATION_SHOWED = 3
 
     fun showNotification(project: Project?, forTest: Boolean) {
       val notification = RequestFeedbackNotification(
@@ -41,12 +43,15 @@ class OpenedProjectFeedbackShower : ProjectManagerListener {
     }
   }
 
-  override fun projectOpened(project: Project) {
+  override fun appStarted() {
     //Try to show only one possible feedback form - Kotlin Rejecters form
     val kotlinRejectersInfoState = KotlinRejectersInfoService.getInstance().state
     if (!kotlinRejectersInfoState.feedbackSent && kotlinRejectersInfoState.showNotificationAfterRestart &&
         LAST_DATE_COLLECT_FEEDBACK >= Clock.System.todayAt(TimeZone.currentSystemDefault()) &&
-        !IdleFeedbackTypeResolver.isFeedbackNotificationDisabled) {
+        !IdleFeedbackTypeResolver.isFeedbackNotificationDisabled &&
+        kotlinRejectersInfoState.numberNotificationShowed <= MAX_NUMBER_NOTIFICATION_SHOWED) {
+      val project = ProjectManagerEx.getInstance().openProjects.firstOrNull()
+      kotlinRejectersInfoState.numberNotificationShowed += 1
       showNotification(project, false)
     }
   }

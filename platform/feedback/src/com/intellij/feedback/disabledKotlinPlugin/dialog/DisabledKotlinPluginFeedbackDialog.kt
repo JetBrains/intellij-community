@@ -11,10 +11,7 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.LicensingFacade
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.JBTextField
-import com.intellij.ui.components.TextComponentEmptyText
+import com.intellij.ui.components.*
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.JBGaps
 import com.intellij.util.ui.JBEmptyBorder
@@ -35,8 +32,8 @@ class DisabledKotlinPluginFeedbackDialog(
   /** Increase the additional number when onboarding feedback format is changed */
   private val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 0
 
-  private val TICKET_TITLE_ZENDESK = "Kotlin Rejecters Feedback"
-  private val FEEDBACK_TYPE_ZENDESK = "Kotlin Rejecters Feedback"
+  private val TICKET_TITLE_ZENDESK = "Kotlin Rejecters Disable Plugin Feedback"
+  private val FEEDBACK_TYPE_ZENDESK = "Kotlin Rejecters Disable Plugin Feedback"
 
   private val SLOW_DOWN_IDE = "Slows down IDE"
   private val BREAKS_CODE_ANALISYS = "Breaks code analisys"
@@ -49,7 +46,7 @@ class DisabledKotlinPluginFeedbackDialog(
   private val propertyGraph = PropertyGraph()
 
   private val developedUsingKotlin = propertyGraph.property(
-    DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.3.label"))
+    DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.2.label"))
 
   private val checkBoxSlowsDownIDEProperty = propertyGraph.property(false)
   private val checkBoxBreaksCodeAnalysisProperty = propertyGraph.property(false)
@@ -81,8 +78,10 @@ class DisabledKotlinPluginFeedbackDialog(
 
   override fun doOKAction() {
     super.doOKAction()
-    val kotlinRejectersInfoState = KotlinRejectersInfoService.getInstance().state
-    kotlinRejectersInfoState.feedbackSent = true
+    if (!forTest) {
+      val kotlinRejectersInfoState = KotlinRejectersInfoService.getInstance().state
+      kotlinRejectersInfoState.feedbackSent = true
+    }
     val email = if (checkBoxEmailProperty.get()) textFieldEmailProperty.get() else DEFAULT_NO_EMAIL_ZENDESK_REQUESTER
     submitGeneralFeedback(project,
                           TICKET_TITLE_ZENDESK,
@@ -129,7 +128,7 @@ class DisabledKotlinPluginFeedbackDialog(
     if (checkBoxOtherProperty.get()) {
       resultReasonsList.add(textFieldOtherProblemProperty.get())
     }
-    return resultReasonsList.joinToString(prefix = "   - ", separator = "   \n- ")
+    return resultReasonsList.joinToString(prefix = "- ", separator = "\n- ")
   }
 
   private fun createCollectedDataJsonString(): String {
@@ -155,7 +154,7 @@ class DisabledKotlinPluginFeedbackDialog(
         }
       }
       put("detailed_explanation", textAreaDetailExplainProperty.get())
-      put("system_info", jsonConverter.encodeToJsonElement(commonSystemInfoData))
+      put("system_info", jsonConverter.encodeToJsonElement(commonSystemInfoData.value))
     }
     return jsonConverter.encodeToString(collectedData)
   }
@@ -183,9 +182,13 @@ class DisabledKotlinPluginFeedbackDialog(
 
       buttonsGroup {
         row {
+          val firstQuestionLabel = JBLabel(
+            DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.question.1.title")).apply {
+            font = JBFont.h4()
+          }
           radioButton(DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.1.label"),
                       DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.1.label"))
-            .label(DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.question.1.title"), LabelPosition.TOP)
+            .label(firstQuestionLabel, LabelPosition.TOP)
         }.topGap(TopGap.MEDIUM)
         row {
           radioButton(DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.question.1.checkbox.2.label"),
@@ -198,9 +201,13 @@ class DisabledKotlinPluginFeedbackDialog(
       }.bind({ developedUsingKotlin.get() }, { developedUsingKotlin.set(it) })
 
       row {
+        val secondQuestionLabel = JBLabel(
+          DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.question.2.title")).apply {
+          font = JBFont.h4()
+        }
         checkBox(DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.1.label"))
           .bindSelected(checkBoxSlowsDownIDEProperty)
-          .label(DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.question.2.title"), LabelPosition.TOP)
+          .label(secondQuestionLabel, LabelPosition.TOP)
       }.topGap(TopGap.MEDIUM)
       row {
         checkBox(DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.question.2.checkbox.2.label"))
@@ -242,11 +249,15 @@ class DisabledKotlinPluginFeedbackDialog(
       }.bottomGap(BottomGap.MEDIUM)
 
       row {
+        val textareaLabel = JBLabel(
+          DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.textarea.label")).apply {
+          font = JBFont.h4()
+        }
         textArea()
           .bindText(textAreaDetailExplainProperty)
           .rows(textAreaRowSize)
           .columns(textAreaOverallFeedbackColumnSize)
-          .label(DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.textarea.label"), LabelPosition.TOP)
+          .label(textareaLabel, LabelPosition.TOP)
           .applyToComponent {
             wrapStyleWord = true
             lineWrap = true
