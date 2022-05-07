@@ -61,6 +61,7 @@ final class DistributionJARsBuilder {
   private static final Comparator<PluginLayout> PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE = new Comparator<PluginLayout>() {
     @Override
     int compare(PluginLayout o1, PluginLayout o2) {
+      //noinspection ChangeToOperator
       return o1.mainModule.compareTo(o2.mainModule)
     }
   }
@@ -144,7 +145,12 @@ final class DistributionJARsBuilder {
             String name = library.name
             LibraryPackMode packMode = PlatformModules.CUSTOM_PACK_MODE.getOrDefault(name, LibraryPackMode.MERGED)
             result.addOrGet(new ProjectLibraryData(name, packMode))
-              .dependentModules.computeIfAbsent(Objects.requireNonNull(plugin.directoryName), PlatformModules.LIST_PRODUCER).add(moduleName)
+              .dependentModules.computeIfAbsent(Objects.requireNonNull(plugin.directoryName), new Function<String, List<String>>() {
+              @Override
+              List<String> apply(String s) {
+                return new ArrayList<String>()
+              }
+            }).add(moduleName)
           }
         })
       }

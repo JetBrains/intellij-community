@@ -27,7 +27,7 @@ class ProjectLibraryData @JvmOverloads constructor(
   }
 
   // plugin to list of modules that uses the library
-  val dependentModules: MutableMap<String, List<String>> = TreeMap()
+  val dependentModules: MutableMap<String, MutableList<String>> = TreeMap()
 
   override fun toString() = "ProjectLibraryData(name=$libraryName, packMode=$packMode, relativeOutputPath=$outPath)"
 

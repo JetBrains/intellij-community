@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.text.Strings
 import com.intellij.util.containers.MultiMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.annotations.ApiStatus
@@ -15,8 +14,7 @@ abstract class BaseLayout {
     val APP_JAR = "app.jar"
 
     @JvmStatic
-    fun convertModuleNameToFileName(moduleName: String): String =
-      Strings.trimStart(moduleName, "intellij.").replace('.', '-')
+    fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')
   }
 
   /** JAR name (or path relative to 'lib' directory) to names of modules */
@@ -27,6 +25,7 @@ abstract class BaseLayout {
   val resourcePaths: MutableList<ModuleResourceData> = mutableListOf()
   /** module name to entries which should be excluded from its output */
   val moduleExcludes: MultiMap<String, String> = MultiMap.createLinked()
+  @Suppress("SSBasedInspection")
   @ApiStatus.Internal
   val includedProjectLibraries: ObjectOpenHashSet<ProjectLibraryData> = ObjectOpenHashSet()
   val includedModuleLibraries: MutableSet<ModuleLibraryData> = mutableSetOf()
