@@ -5,7 +5,7 @@ import com.intellij.feedback.common.OpenApplicationFeedbackShower.Companion.show
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-class TestShowKotlinRejectersFeedbackDialogAction : AnAction() {
+private class TestShowKotlinRejectersFeedbackDialogAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     showNotification(e.project, true)
   }
