@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback.common
 
-import com.intellij.feedback.common.FeedbackTypeResolver.isFeedbackNotificationDisabled
+import com.intellij.feedback.common.IdleFeedbackTypeResolver.isFeedbackNotificationDisabled
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.notification.RequestFeedbackNotification
+import com.intellij.feedback.npw.bundle.NPWFeedbackBundle
 import com.intellij.feedback.npw.dialog.ProjectCreationFeedbackDialog
 import com.intellij.feedback.npw.state.ProjectCreationInfoService
 import com.intellij.feedback.npw.state.ProjectCreationInfoState
@@ -13,7 +14,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 
-enum class FeedbackTypes {
+enum class IdleFeedbackTypes {
   PROJECT_CREATION_FEEDBACK {
     private val unknownProjectTypeName = "UNKNOWN"
     private val testProjectTypeName = "TEST"
@@ -43,7 +44,8 @@ enum class FeedbackTypes {
     }
 
     override fun createNotification(forTest: Boolean): Notification {
-      return RequestFeedbackNotification()
+      return RequestFeedbackNotification(NPWFeedbackBundle.message("notification.created.project.request.feedback.title"),
+                                         NPWFeedbackBundle.message("notification.created.project.request.feedback.content"))
     }
 
     override fun createFeedbackDialog(project: Project?, forTest: Boolean): DialogWrapper {

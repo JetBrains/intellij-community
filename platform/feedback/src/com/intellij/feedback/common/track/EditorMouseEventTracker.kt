@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback.common.track
 
-import com.intellij.feedback.common.FeedbackTypeResolver
+import com.intellij.feedback.common.IdleFeedbackTypeResolver
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
@@ -12,10 +12,10 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener
 
 class EditorMouseEventTracker : EditorMouseListener, EditorMouseMotionListener {
   override fun mouseClicked(event: EditorMouseEvent) {
-    FeedbackTypeResolver.checkActivity(event.editor.project)
+    IdleFeedbackTypeResolver.checkActivity(event.editor.project)
   }
 
   override fun mouseMoved(event: EditorMouseEvent) {
-    FeedbackTypeResolver.checkActivity(event.editor.project)
+    IdleFeedbackTypeResolver.checkActivity(event.editor.project)
   }
 }

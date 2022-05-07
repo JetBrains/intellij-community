@@ -1,10 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback.disabledKotlinPlugin.dialog
 
-import com.intellij.feedback.common.createFeedbackAgreementComponent
+import com.intellij.feedback.common.*
+import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
 import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.disabledKotlinPlugin.bundle.DisabledKotlinPluginFeedbackBundle
+import com.intellij.ide.feedback.kotlinRejecters.state.KotlinRejectersInfoService
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -18,7 +20,8 @@ import com.intellij.ui.dsl.gridLayout.JBGaps
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.*
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.util.function.Predicate
@@ -28,6 +31,19 @@ class DisabledKotlinPluginFeedbackDialog(
   private val project: Project?,
   private val forTest: Boolean
 ) : DialogWrapper(project) {
+
+  /** Increase the additional number when onboarding feedback format is changed */
+  private val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 0
+
+  private val TICKET_TITLE_ZENDESK = "Kotlin Rejecters Feedback"
+  private val FEEDBACK_TYPE_ZENDESK = "Kotlin Rejecters Feedback"
+
+  private val SLOW_DOWN_IDE = "Slows down IDE"
+  private val BREAKS_CODE_ANALISYS = "Breaks code analisys"
+  private val NOISE_NOTIFICATION = "Makes noise notifications and other stuff"
+  private val USUALLY_DISABLE_PLUGINS = "Usually deactivate plugins that I don't use"
+  private val OTHER = "Other"
+
   private val commonSystemInfoData: Lazy<CommonFeedbackSystemInfoData> = lazy { CommonFeedbackSystemInfoData.getCurrentData() }
 
   private val propertyGraph = PropertyGraph()
@@ -65,10 +81,95 @@ class DisabledKotlinPluginFeedbackDialog(
 
   override fun doOKAction() {
     super.doOKAction()
-
+    val kotlinRejectersInfoState = KotlinRejectersInfoService.getInstance().state
+    kotlinRejectersInfoState.feedbackSent = true
+    val email = if (checkBoxEmailProperty.get()) textFieldEmailProperty.get() else DEFAULT_NO_EMAIL_ZENDESK_REQUESTER
+    submitGeneralFeedback(project,
+                          TICKET_TITLE_ZENDESK,
+                          createRequestDescription(),
+                          FEEDBACK_TYPE_ZENDESK,
+                          createCollectedDataJsonString(),
+                          email,
+                          { },
+                          { },
+                          if (forTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST
+    )
   }
 
-  override fun createCenterPanel(): JComponent? {
+  private fun createRequestDescription(): String {
+    return buildString {
+      appendLine(DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.zendesk.title"))
+      appendLine(DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.zendesk.description"))
+      appendLine()
+      appendLine(DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.zendesk.question.1"))
+      appendLine(developedUsingKotlin.get())
+      appendLine()
+      appendLine(DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.zendesk.question.2"))
+      appendLine(createReasonDisablingKotlinList())
+      appendLine()
+      appendLine(DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.zendesk.textarea.label"))
+      appendLine(textAreaDetailExplainProperty.get())
+    }
+  }
+
+  private fun createReasonDisablingKotlinList(): String {
+    val resultReasonsList = mutableListOf<String>()
+    if (checkBoxSlowsDownIDEProperty.get()) {
+      resultReasonsList.add(DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.zendesk.reason.1.label"))
+    }
+    if (checkBoxBreaksCodeAnalysisProperty.get()) {
+      resultReasonsList.add(DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.zendesk.reason.2.label"))
+    }
+    if (checkBoxMakeNoiseNotificationProperty.get()) {
+      resultReasonsList.add(DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.zendesk.reason.3.label"))
+    }
+    if (checkBoxUsuallyDeactivatePluginsProperty.get()) {
+      resultReasonsList.add(DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.zendesk.reason.4.label"))
+    }
+    if (checkBoxOtherProperty.get()) {
+      resultReasonsList.add(textFieldOtherProblemProperty.get())
+    }
+    return resultReasonsList.joinToString(prefix = "   - ", separator = "   \n- ")
+  }
+
+  private fun createCollectedDataJsonString(): String {
+    val collectedData = buildJsonObject {
+      put(FEEDBACK_REPORT_ID_KEY, "kotlin_rejecters_disabled_plugin")
+      put("format_version", FEEDBACK_JSON_VERSION)
+      put("developed_on_kotlin", developedUsingKotlin.get())
+      putJsonArray("problems") {
+        if (checkBoxSlowsDownIDEProperty.get()) {
+          add(createReasonJsonObject(SLOW_DOWN_IDE))
+        }
+        if (checkBoxBreaksCodeAnalysisProperty.get()) {
+          add(createReasonJsonObject(BREAKS_CODE_ANALISYS))
+        }
+        if (checkBoxMakeNoiseNotificationProperty.get()) {
+          add(createReasonJsonObject(NOISE_NOTIFICATION))
+        }
+        if (checkBoxUsuallyDeactivatePluginsProperty.get()) {
+          add(createReasonJsonObject(USUALLY_DISABLE_PLUGINS))
+        }
+        if (checkBoxOtherProperty.get()) {
+          add(createReasonJsonObject(OTHER, textFieldOtherProblemProperty.get()))
+        }
+      }
+      put("detailed_explanation", textAreaDetailExplainProperty.get())
+      put("system_info", jsonConverter.encodeToJsonElement(commonSystemInfoData))
+    }
+    return jsonConverter.encodeToString(collectedData)
+  }
+
+  private fun createReasonJsonObject(name: String, description: String? = null): JsonObject {
+    return buildJsonObject {
+      put("name", name)
+      if (description != null) {
+        put("description", description)
+      }
+    }
+  }
+
+  override fun createCenterPanel(): JComponent {
     val mainPanel = panel {
       row {
         label(DisabledKotlinPluginFeedbackBundle.message("dialog.kotlin.feedback.title")).applyToComponent {

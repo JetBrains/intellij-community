@@ -9,7 +9,7 @@ import java.time.Duration
 import java.time.LocalDateTime
 import kotlin.random.Random
 
-object FeedbackTypeResolver {
+object IdleFeedbackTypeResolver {
   // 10 minutes
   private const val MIN_INACTIVE_TIME = 600
 
@@ -41,7 +41,7 @@ object FeedbackTypeResolver {
     if (isFeedbackNotificationDisabled || !Registry.`is`("platform.feedback", true)) {
       return
     }
-    val suitableFeedbackTypes = FeedbackTypes.values().filter { it.isSuitable() }
+    val suitableFeedbackTypes = IdleFeedbackTypes.values().filter { it.isSuitable() }
     if (suitableFeedbackTypes.isEmpty()) {
       return
     }

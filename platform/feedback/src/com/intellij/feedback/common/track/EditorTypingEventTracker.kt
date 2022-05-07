@@ -2,7 +2,7 @@
 package com.intellij.feedback.common.track
 
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
-import com.intellij.feedback.common.FeedbackTypeResolver.checkActivity
+import com.intellij.feedback.common.IdleFeedbackTypeResolver.checkActivity
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
