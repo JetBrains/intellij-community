@@ -9,23 +9,26 @@ import com.intellij.ide.feedback.kotlinRejecters.state.KotlinRejectersInfoServic
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayAt
 
 class OpenedProjectFeedbackShower : ProjectManagerListener {
 
   companion object {
+    val LAST_DATE_COLLECT_FEEDBACK = LocalDate(2022, 5, 31)
+
     fun showNotification(project: Project?, forTest: Boolean) {
-      //Try to show only one possible feedback form - Kotlin Rejecters form
-      val kotlinRejectersInfoState = KotlinRejectersInfoService.getInstance().state
-      if (!kotlinRejectersInfoState.feedbackSent && kotlinRejectersInfoState.showNotificationAfterRestart) {
-        val notification = RequestFeedbackNotification(
-          DisabledKotlinPluginFeedbackBundle.message("notification.kotlin.feedback.request.feedback.title"),
-          DisabledKotlinPluginFeedbackBundle.message("notification.kotlin.feedback.request.feedback.content")
-        )
-        notification.addAction(
-          NotificationAction.createSimpleExpiring(CommonFeedbackBundle.message("notification.request.feedback.action.respond.text")) {
-            val dialog = DisabledKotlinPluginFeedbackDialog(project, forTest)
-            dialog.show()
-          }
+      val notification = RequestFeedbackNotification(
+        DisabledKotlinPluginFeedbackBundle.message("notification.kotlin.feedback.request.feedback.title"),
+        DisabledKotlinPluginFeedbackBundle.message("notification.kotlin.feedback.request.feedback.content")
+      )
+      notification.addAction(
+        NotificationAction.createSimpleExpiring(CommonFeedbackBundle.message("notification.request.feedback.action.respond.text")) {
+          val dialog = DisabledKotlinPluginFeedbackDialog(project, forTest)
+          dialog.show()
+        }
         )
         notification.notify(project)
         notification.addAction(
@@ -35,11 +38,16 @@ class OpenedProjectFeedbackShower : ProjectManagerListener {
             }
           }
         )
-      }
     }
   }
 
   override fun projectOpened(project: Project) {
-    showNotification(project, false)
+    //Try to show only one possible feedback form - Kotlin Rejecters form
+    val kotlinRejectersInfoState = KotlinRejectersInfoService.getInstance().state
+    if (!kotlinRejectersInfoState.feedbackSent && kotlinRejectersInfoState.showNotificationAfterRestart &&
+        LAST_DATE_COLLECT_FEEDBACK >= Clock.System.todayAt(TimeZone.currentSystemDefault()) &&
+        !IdleFeedbackTypeResolver.isFeedbackNotificationDisabled) {
+      showNotification(project, false)
+    }
   }
 }
