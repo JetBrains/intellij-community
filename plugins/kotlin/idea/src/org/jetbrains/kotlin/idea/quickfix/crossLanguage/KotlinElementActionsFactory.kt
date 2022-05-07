@@ -426,7 +426,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             if (!request.isValid) return
             val target = pointer.element ?: return
             val oldType = target.typeReference
-            val typeName = if (request.qualifiedName == PsiType.VOID.name) "kotlin.Unit" else request.qualifiedName ?: target.typeName() ?: return
+            val typeName = primitiveTypeMapping.getOrDefault(request.qualifiedName, request.qualifiedName ?: target.typeName() ?: return)
             val psiFactory = KtPsiFactory(target)
             val annotations = request.annotations.joinToString(" ") { "@${renderAnnotation(target, it, psiFactory)}" }
             val newType = psiFactory.createType("$annotations $typeName".trim())
@@ -445,6 +445,28 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             val descriptor = this.resolveToDescriptorIfAny() as? CallableDescriptor ?: return null
             val returnType = descriptor.returnType ?: return null
             return IdeDescriptorRenderers.SOURCE_CODE.renderType(returnType)
+        }
+
+        companion object {
+            private val primitiveTypeMapping = mapOf(
+                PsiType.VOID.name to "kotlin.Unit",
+                PsiType.BOOLEAN.name to "kotlin.Boolean",
+                PsiType.BYTE.name to "kotlin.Byte",
+                PsiType.CHAR.name to "kotlin.Char",
+                PsiType.SHORT.name to "kotlin.Short",
+                PsiType.INT.name to "kotlin.Int",
+                PsiType.FLOAT.name to "kotlin.Float",
+                PsiType.LONG.name to "kotlin.Long",
+                PsiType.DOUBLE.name to "kotlin.Double",
+                "${PsiType.BOOLEAN.name}[]" to "kotlin.BooleanArray",
+                "${PsiType.BYTE.name}[]" to "kotlin.ByteArray",
+                "${PsiType.CHAR.name}[]" to "kotlin.CharArray",
+                "${PsiType.SHORT.name}[]" to "kotlin.ShortArray",
+                "${PsiType.INT.name}[]" to "kotlin.IntArray",
+                "${PsiType.FLOAT.name}[]" to "kotlin.FloatArray",
+                "${PsiType.LONG.name}[]" to "kotlin.LongArray",
+                "${PsiType.DOUBLE.name}[]" to "kotlin.DoubleArray"
+            )
         }
     }
 }
