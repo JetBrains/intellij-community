@@ -1183,6 +1183,10 @@
           <abbreviation value="uii"/>
           <mouse-shortcut keymap="$default" keystroke="control alt button1"/>
         </action>
+        <action id="CopyUiLabel" internal="true" class="com.intellij.internal.inspector.CopyUiLabelAction">
+          <mouse-shortcut keymap="$default" keystroke="control alt button3"/>
+          <mouse-shortcut keymap="$default" keystroke="control alt shift button3"/>
+        </action>
         <action id="ToggleUiInspectorHierarchyTrace" internal="true"
                 class="com.intellij.internal.inspector.UiInspectorAction$ToggleHierarchyTraceAction"/>
         <action id="GrayFilterConfig" internal="true" class="com.intellij.internal.GrayFilterConfig"/>
