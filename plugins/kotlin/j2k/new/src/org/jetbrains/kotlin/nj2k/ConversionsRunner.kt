@@ -11,7 +11,7 @@ import java.util.*
 
 object ConversionsRunner {
     private fun createConversions(context: NewJ2kConverterContext) = listOf(
-        ParenthesizeBitwiseOperationConversion(context),
+        ParenthesizeBinaryExpressionIfNeededConversion(context),
         NonCodeElementsConversion(context),
         JavaModifiersConversion(context),
         JavaAnnotationsConversion(context),
@@ -23,7 +23,6 @@ object ConversionsRunner {
         BoxedTypeOperationsConversion(context),
         AnyWithStringConcatenationConversion(context),
         AssignmentExpressionUnfoldingConversion(context),
-        AddParenthesisForLineBreaksInBinaryExpression(context),
         ThrowStatementConversion(context),
         ArrayInitializerConversion(context),
         TryStatementConversion(context),
