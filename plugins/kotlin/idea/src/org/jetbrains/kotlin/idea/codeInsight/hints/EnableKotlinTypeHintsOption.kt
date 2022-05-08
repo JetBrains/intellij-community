@@ -17,18 +17,29 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Suppress("IntentionDescriptionNotFoundInspection")
 class EnableKotlinTypeHintsOption : IntentionAction, HighPriorityAction {
+    private val hintTypes = arrayOf(
+        HintType.RANGES,
+        HintType.PROPERTY_HINT,
+        HintType.LOCAL_VARIABLE_HINT,
+        HintType.FUNCTION_HINT,
+        HintType.PARAMETER_TYPE_HINT,
+        HintType.PARAMETER_HINT,
+        HintType.LAMBDA_RETURN_EXPRESSION,
+        HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER,
+        HintType.SUSPENDING_CALL,
+    )
     @IntentionName
     private var lastOptionName = ""
 
     override fun getText(): String = lastOptionName
 
     override fun getFamilyName(): String = CodeInsightBundle.message("inlay.hints.intention.family.name")
-
+    
     override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
         val element = findElement(editor, file) ?: return false
-
+        
         lastOptionName = ""
-        for (hintType in HintType.values()) {
+        for (hintType in hintTypes) {
             findSetting(hintType, project, element)?.let {
                 val enabled = it.isEnabled(hintType)
                 lastOptionName = if (enabled) hintType.hideDescription else hintType.showDescription
@@ -41,7 +52,7 @@ class EnableKotlinTypeHintsOption : IntentionAction, HighPriorityAction {
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
         val element = findElement(editor, file) ?: return
 
-        for (hintType in HintType.values()) {
+        for (hintType in hintTypes) {
             findSetting(hintType, project, element)?.let {
                 val enabled = it.isEnabled(hintType)
                 it.enable(hintType, !enabled)
