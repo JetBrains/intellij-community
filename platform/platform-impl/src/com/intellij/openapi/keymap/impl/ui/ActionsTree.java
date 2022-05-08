@@ -594,7 +594,7 @@ public final class ActionsTree {
         }
         else {
           if (changed) {
-            foreground = PlatformColors.BLUE;
+            foreground = JBColor.namedColor("Tree.modifiedItemForeground", PlatformColors.BLUE);
           }
           else {
             foreground = UIUtil.getTreeForeground();
