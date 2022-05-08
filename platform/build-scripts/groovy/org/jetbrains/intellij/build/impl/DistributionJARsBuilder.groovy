@@ -251,7 +251,7 @@ final class DistributionJARsBuilder {
   ProjectStructureMapping buildJARs(BuildContext context, boolean isUpdateFromSources = false) {
     validateModuleStructure(context)
 
-    ForkJoinTask<?> svgPrebuildTask = SVGPreBuilder.createPrebuildSvgIconsTask(context)?.fork()
+    ForkJoinTask<?> svgPrebuildTask = SVGPreBuilder.INSTANCE.createPrebuildSvgIconsTask(context)?.fork()
     ForkJoinTask<?> brokenPluginsTask = createBuildBrokenPluginListTask(context)?.fork()
 
     BuildHelper.createSkippableTask(spanBuilder("build searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, context) {

@@ -159,8 +159,7 @@ final class BuildHelper {
                       long timeoutMillis = DEFAULT_TIMEOUT,
                       Path workingDir = null) {
     jvmArgs = OpenedPackages.getCommandLineArguments(context) + jvmArgs
-    ProcessKt.runJava(mainClass, args, jvmArgs, classPath, context.stableJavaExecutable,
-                      context.messages, timeoutMillis, workingDir)
+    ProcessKt.runJava(mainClass, args, jvmArgs, classPath, context.stableJavaExecutable, context.messages, timeoutMillis, workingDir)
   }
 
   /**
