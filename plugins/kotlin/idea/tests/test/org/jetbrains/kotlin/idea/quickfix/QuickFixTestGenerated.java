@@ -194,159 +194,196 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/addAnnotationTarget")
-    public static class AddAnnotationTarget extends AbstractQuickFixTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class AddAnnotationTarget extends AbstractQuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/addAnnotationTarget/requiresOptIn")
+        public static class RequiresOptIn extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("class.kt")
+            public void testClass() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/requiresOptIn/class.kt");
+            }
+
+            @TestMetadata("expression.kt")
+            public void testExpression() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/requiresOptIn/expression.kt");
+            }
+
+            @TestMetadata("file.kt")
+            public void testFile() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/requiresOptIn/file.kt");
+            }
+
+            @TestMetadata("type.kt")
+            public void testType() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/requiresOptIn/type.kt");
+            }
+
+            @TestMetadata("typeParameter.kt")
+            public void testTypeParameter() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/requiresOptIn/typeParameter.kt");
+            }
         }
 
-        @TestMetadata("basic1.kt")
-        public void testBasic1() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/basic1.kt");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/addAnnotationTarget")
+        public static class Uncategorized extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("basic2.kt")
-        public void testBasic2() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/basic2.kt");
-        }
+            @TestMetadata("basic1.kt")
+            public void testBasic1() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/basic1.kt");
+            }
 
-        @TestMetadata("basic3.kt")
-        public void testBasic3() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/basic3.kt");
-        }
+            @TestMetadata("basic2.kt")
+            public void testBasic2() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/basic2.kt");
+            }
 
-        @TestMetadata("basic4.kt")
-        public void testBasic4() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/basic4.kt");
-        }
+            @TestMetadata("basic3.kt")
+            public void testBasic3() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/basic3.kt");
+            }
 
-        @TestMetadata("expression.kt")
-        public void testExpression() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/expression.kt");
-        }
+            @TestMetadata("basic4.kt")
+            public void testBasic4() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/basic4.kt");
+            }
 
-        @TestMetadata("expression2.kt")
-        public void testExpression2() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/expression2.kt");
-        }
+            @TestMetadata("expression.kt")
+            public void testExpression() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/expression.kt");
+            }
 
-        @TestMetadata("expression3.kt")
-        public void testExpression3() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/expression3.kt");
-        }
+            @TestMetadata("expression2.kt")
+            public void testExpression2() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/expression2.kt");
+            }
 
-        @TestMetadata("file.kt")
-        public void testFile() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/file.kt");
-        }
+            @TestMetadata("expression3.kt")
+            public void testExpression3() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/expression3.kt");
+            }
 
-        @TestMetadata("fromLib.kt")
-        public void testFromLib() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/fromLib.kt");
-        }
+            @TestMetadata("file.kt")
+            public void testFile() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/file.kt");
+            }
 
-        @TestMetadata("hasAnnotationTarget1.kt")
-        public void testHasAnnotationTarget1() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/hasAnnotationTarget1.kt");
-        }
+            @TestMetadata("fromLib.kt")
+            public void testFromLib() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/fromLib.kt");
+            }
 
-        @TestMetadata("hasAnnotationTarget11.kt")
-        public void testHasAnnotationTarget11() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/hasAnnotationTarget11.kt");
-        }
+            @TestMetadata("hasAnnotationTarget1.kt")
+            public void testHasAnnotationTarget1() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/hasAnnotationTarget1.kt");
+            }
 
-        @TestMetadata("hasAnnotationTarget2.kt")
-        public void testHasAnnotationTarget2() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/hasAnnotationTarget2.kt");
-        }
+            @TestMetadata("hasAnnotationTarget11.kt")
+            public void testHasAnnotationTarget11() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/hasAnnotationTarget11.kt");
+            }
 
-        @TestMetadata("hasAnnotationTarget21.kt")
-        public void testHasAnnotationTarget21() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/hasAnnotationTarget21.kt");
-        }
+            @TestMetadata("hasAnnotationTarget2.kt")
+            public void testHasAnnotationTarget2() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/hasAnnotationTarget2.kt");
+            }
 
-        @TestMetadata("noBackingField.kt")
-        public void testNoBackingField() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/noBackingField.kt");
-        }
+            @TestMetadata("hasAnnotationTarget21.kt")
+            public void testHasAnnotationTarget21() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/hasAnnotationTarget21.kt");
+            }
 
-        @TestMetadata("use-site_delegate.kt")
-        public void testUse_site_delegate() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/use-site_delegate.kt");
-        }
+            @TestMetadata("noBackingField.kt")
+            public void testNoBackingField() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/noBackingField.kt");
+            }
 
-        @TestMetadata("use-site_field.kt")
-        public void testUse_site_field() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/use-site_field.kt");
-        }
+            @TestMetadata("use-site_delegate.kt")
+            public void testUse_site_delegate() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/use-site_delegate.kt");
+            }
 
-        @TestMetadata("use-site_field_member.kt")
-        public void testUse_site_field_member() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/use-site_field_member.kt");
-        }
+            @TestMetadata("use-site_field.kt")
+            public void testUse_site_field() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/use-site_field.kt");
+            }
 
-        @TestMetadata("use-site_field_member_with_delegate.kt")
-        public void testUse_site_field_member_with_delegate() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/use-site_field_member_with_delegate.kt");
-        }
+            @TestMetadata("use-site_field_member.kt")
+            public void testUse_site_field_member() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/use-site_field_member.kt");
+            }
 
-        @TestMetadata("use-site_field_member_without_backing.kt")
-        public void testUse_site_field_member_without_backing() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/use-site_field_member_without_backing.kt");
-        }
+            @TestMetadata("use-site_field_member_with_delegate.kt")
+            public void testUse_site_field_member_with_delegate() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/use-site_field_member_with_delegate.kt");
+            }
 
-        @TestMetadata("use-site_field_toplevel.kt")
-        public void testUse_site_field_toplevel() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/use-site_field_toplevel.kt");
-        }
+            @TestMetadata("use-site_field_member_without_backing.kt")
+            public void testUse_site_field_member_without_backing() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/use-site_field_member_without_backing.kt");
+            }
 
-        @TestMetadata("use-site_field_toplevel_with_delegate.kt")
-        public void testUse_site_field_toplevel_with_delegate() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/use-site_field_toplevel_with_delegate.kt");
-        }
+            @TestMetadata("use-site_field_toplevel.kt")
+            public void testUse_site_field_toplevel() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/use-site_field_toplevel.kt");
+            }
 
-        @TestMetadata("use-site_field_toplevel_without_backing.kt")
-        public void testUse_site_field_toplevel_without_backing() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/use-site_field_toplevel_without_backing.kt");
-        }
+            @TestMetadata("use-site_field_toplevel_with_delegate.kt")
+            public void testUse_site_field_toplevel_with_delegate() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/use-site_field_toplevel_with_delegate.kt");
+            }
 
-        @TestMetadata("use-site_file.kt")
-        public void testUse_site_file() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/use-site_file.kt");
-        }
+            @TestMetadata("use-site_field_toplevel_without_backing.kt")
+            public void testUse_site_field_toplevel_without_backing() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/use-site_field_toplevel_without_backing.kt");
+            }
 
-        @TestMetadata("use-site_get.kt")
-        public void testUse_site_get() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/use-site_get.kt");
-        }
+            @TestMetadata("use-site_file.kt")
+            public void testUse_site_file() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/use-site_file.kt");
+            }
 
-        @TestMetadata("use-site_invalid.kt")
-        public void testUse_site_invalid() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/use-site_invalid.kt");
-        }
+            @TestMetadata("use-site_get.kt")
+            public void testUse_site_get() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/use-site_get.kt");
+            }
 
-        @TestMetadata("use-site_param.kt")
-        public void testUse_site_param() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/use-site_param.kt");
-        }
+            @TestMetadata("use-site_invalid.kt")
+            public void testUse_site_invalid() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/use-site_invalid.kt");
+            }
 
-        @TestMetadata("use-site_property.kt")
-        public void testUse_site_property() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/use-site_property.kt");
-        }
+            @TestMetadata("use-site_param.kt")
+            public void testUse_site_param() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/use-site_param.kt");
+            }
 
-        @TestMetadata("use-site_receiver.kt")
-        public void testUse_site_receiver() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/use-site_receiver.kt");
-        }
+            @TestMetadata("use-site_property.kt")
+            public void testUse_site_property() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/use-site_property.kt");
+            }
 
-        @TestMetadata("use-site_set.kt")
-        public void testUse_site_set() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/use-site_set.kt");
-        }
+            @TestMetadata("use-site_receiver.kt")
+            public void testUse_site_receiver() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/use-site_receiver.kt");
+            }
 
-        @TestMetadata("use-site_setparam.kt")
-        public void testUse_site_setparam() throws Exception {
-            runTest("testData/quickfix/addAnnotationTarget/use-site_setparam.kt");
+            @TestMetadata("use-site_set.kt")
+            public void testUse_site_set() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/use-site_set.kt");
+            }
+
+            @TestMetadata("use-site_setparam.kt")
+            public void testUse_site_setparam() throws Exception {
+                runTest("testData/quickfix/addAnnotationTarget/use-site_setparam.kt");
+            }
         }
     }
 
