@@ -9,6 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.diagnostics.Errors.WRONG_ANNOTATION_TARGET_WITH_USE_
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.util.runOnExpectAndAllActuals
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -41,9 +43,9 @@ class AddAnnotationTargetFix(annotationEntry: KtAnnotationEntry) : KotlinQuickFi
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val annotationEntry = element ?: return
 
-        val annotationClass = annotationEntry.toAnnotationClass() ?: return
+        val (annotationClass, annotationClassDescriptor) = annotationEntry.toAnnotationClass() ?: return
 
-        val requiredAnnotationTargets = annotationEntry.getRequiredAnnotationTargets(annotationClass, project)
+        val requiredAnnotationTargets = annotationEntry.getRequiredAnnotationTargets(annotationClass, annotationClassDescriptor, project)
         if (requiredAnnotationTargets.isEmpty()) return
 
         val psiFactory = KtPsiFactory(annotationEntry)
@@ -53,13 +55,14 @@ class AddAnnotationTargetFix(annotationEntry: KtAnnotationEntry) : KotlinQuickFi
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
-        private fun KtAnnotationEntry.toAnnotationClass(): KtClass? {
+        private fun KtAnnotationEntry.toAnnotationClass(): Pair<KtClass, ClassDescriptor>? {
             val context = analyze(BodyResolveMode.PARTIAL)
             val annotationDescriptor = context[BindingContext.ANNOTATION, this] ?: return null
-            val annotationTypeDescriptor = annotationDescriptor.type.constructor.declarationDescriptor ?: return null
-            return (DescriptorToSourceUtils.descriptorToDeclaration(annotationTypeDescriptor) as? KtClass)?.takeIf {
+            val annotationTypeDescriptor = annotationDescriptor.type.constructor.declarationDescriptor as? ClassDescriptor ?: return null
+            val annotationClass = (DescriptorToSourceUtils.descriptorToDeclaration(annotationTypeDescriptor) as? KtClass)?.takeIf {
                 it.isAnnotation() && it.isWritable
-            }
+            } ?: return null
+            return annotationClass to annotationTypeDescriptor
         }
 
         override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtAnnotationEntry>? {
@@ -68,15 +71,25 @@ class AddAnnotationTargetFix(annotationEntry: KtAnnotationEntry) : KotlinQuickFi
             }
 
             val entry = diagnostic.psiElement as? KtAnnotationEntry ?: return null
-            val annotationClass = entry.toAnnotationClass() ?: return null
-            if (entry.useSiteTarget != null && entry.getRequiredAnnotationTargets(annotationClass, entry.project).isEmpty()) return null
+            val (annotationClass, annotationClassDescriptor) = entry.toAnnotationClass() ?: return null
+            if (entry.getRequiredAnnotationTargets(annotationClass, annotationClassDescriptor, entry.project).isEmpty()) return null
 
             return AddAnnotationTargetFix(entry)
         }
     }
 }
 
-private fun KtAnnotationEntry.getRequiredAnnotationTargets(annotationClass: KtClass, project: Project): List<KotlinTarget> {
+private fun KtAnnotationEntry.getRequiredAnnotationTargets(
+    annotationClass: KtClass,
+    annotationClassDescriptor: ClassDescriptor,
+    project: Project
+): List<KotlinTarget> {
+    val ignoreAnnotationTargets = if (annotationClassDescriptor.hasRequiresOptInAnnotation()) {
+        setOf(AnnotationTarget.EXPRESSION, AnnotationTarget.FILE, AnnotationTarget.TYPE, AnnotationTarget.TYPE_PARAMETER)
+    } else emptySet()
+    val annotationTargetValueNames = AnnotationTarget.values().toSet().minus(ignoreAnnotationTargets).map { it.name }
+    if (annotationTargetValueNames.isEmpty()) return emptyList()
+
     val requiredTargets = getActualTargetList()
     if (requiredTargets.isEmpty()) return emptyList()
 
@@ -90,13 +103,15 @@ private fun KtAnnotationEntry.getRequiredAnnotationTargets(annotationClass: KtCl
             (reference.element.parent as? PsiAnnotation)?.getActualTargetList()
         }
     }.flatten().toSet()
-    val annotationTargetValueNames = AnnotationTarget.values().map { it.name }
+
     return (requiredTargets + otherReferenceRequiredTargets).asSequence()
         .distinct()
         .filter { it.name in annotationTargetValueNames }
         .sorted()
         .toList()
 }
+
+private fun ClassDescriptor.hasRequiresOptInAnnotation() = annotations.any { it.fqName == FqName("kotlin.RequiresOptIn") }
 
 private fun getActualTargetList(annotated: PsiTarget): AnnotationTargetList {
     return when (annotated) {
