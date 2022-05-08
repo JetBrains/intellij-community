@@ -214,7 +214,6 @@ private val inspectionLikePostProcessingGroup =
         RemoveRedundantNullabilityProcessing(),
         CanBeValInspectionBasedProcessing(),
         inspectionBasedProcessing(FoldInitializerAndIfToElvisInspection(), writeActionNeeded = false),
-        intentionBasedProcessing(RemoveRedundantCallsOfConversionMethodsIntention()),
         inspectionBasedProcessing(JavaMapForEachInspection()),
         intentionBasedProcessing(FoldIfToReturnIntention()) { it.then.isTrivialStatementBody() && it.`else`.isTrivialStatementBody() },
         intentionBasedProcessing(FoldIfToReturnAsymmetricallyIntention()) {
