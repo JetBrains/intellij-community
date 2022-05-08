@@ -5,6 +5,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 
+import java.nio.file.Path
 import java.nio.file.Paths
 
 @CompileStatic
@@ -28,7 +29,7 @@ final class IdeaCommunityBuilder {
 
   void buildFullUpdater() {
     def tasks = BuildTasks.create(buildContext)
-    tasks.compileModules(["updater"])
+    tasks.compileModules(List.of("updater"))
     tasks.buildFullUpdaterJar()
   }
 
@@ -42,7 +43,7 @@ final class IdeaCommunityBuilder {
     def tasks = BuildTasks.create(buildContext)
     tasks.buildDistributions()
     buildContext.messages.block("Build standalone JPS") {
-      String jpsArtifactDir = "$buildContext.paths.artifacts/jps"
+      Path jpsArtifactDir = buildContext.paths.artifactDir.resolve("jps")
       new CommunityStandaloneJpsBuilder(buildContext)
         .processJpsLayout(jpsArtifactDir, buildContext.fullBuildNumber, new ProjectStructureMapping(), true, {})
     }

@@ -605,8 +605,8 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
-  void generateProjectStructureMapping(File targetFile) {
-    new DistributionJARsBuilder(buildContext).generateProjectStructureMapping(targetFile.toPath(), buildContext)
+  void generateProjectStructureMapping(Path targetFile) {
+    new DistributionJARsBuilder(buildContext).generateProjectStructureMapping(targetFile, buildContext)
   }
 
   static @NotNull Path unpackPty4jNative(BuildContext buildContext, @NotNull Path distDir, String pty4jOsSubpackageName) {
@@ -848,7 +848,7 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
-  void compileModules(Collection<String> moduleNames, List<String> includingTestsInModules = []) {
+  void compileModules(Collection<String> moduleNames, List<String> includingTestsInModules = List.of()) {
     CompilationTasks.create(buildContext).compileModules(moduleNames, includingTestsInModules)
   }
 

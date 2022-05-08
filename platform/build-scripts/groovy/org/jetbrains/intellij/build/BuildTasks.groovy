@@ -1,5 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
+
 
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
@@ -37,11 +38,11 @@ abstract class BuildTasks {
    * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
    * @see org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
    */
-  abstract void generateProjectStructureMapping(File targetFile)
+  abstract void generateProjectStructureMapping(@NotNull Path targetFile)
 
   abstract void compileProjectAndTests(List<String> includingTestsInModules)
 
-  abstract void compileModules(Collection<String> moduleNames, List<String> includingTestsInModules = [])
+  abstract void compileModules(Collection<String> moduleNames, List<String> includingTestsInModules = List.of())
 
   abstract void buildUpdaterJar()
 

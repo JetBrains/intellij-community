@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -8,6 +8,7 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructur
 import org.jetbrains.jps.model.library.JpsLibrary
 
 import java.nio.file.Path
+
 /**
  * Creates JARs containing classes required to run the external build for IDEA project without IDE.
  */
@@ -20,10 +21,10 @@ final class CommunityStandaloneJpsBuilder {
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  void processJpsLayout(String targetDir, String buildNumber, ProjectStructureMapping projectStructureMapping,
+  void processJpsLayout(Path targetDir, String buildNumber, ProjectStructureMapping projectStructureMapping,
                         boolean copyFiles, @DelegatesTo(LayoutBuilder.LayoutSpec) Closure additionalJars) {
     BuildContext context = buildContext
-    new LayoutBuilder(buildContext).process(targetDir, projectStructureMapping, copyFiles) {
+    new LayoutBuilder(buildContext).process(targetDir.toString(), projectStructureMapping, copyFiles) {
       zip(getZipName(buildNumber)) {
         jar("util.jar") {
           module("intellij.platform.util")
@@ -111,7 +112,7 @@ final class CommunityStandaloneJpsBuilder {
         moduleTests("intellij.platform.jps.model.serialization.tests")
       }
     }
-    buildContext.notifyArtifactWasBuilt(Path.of(targetDir).normalize().toAbsolutePath())
+    buildContext.notifyArtifactWasBuilt(targetDir)
   }
 
   static String getZipName(String buildNumber) {

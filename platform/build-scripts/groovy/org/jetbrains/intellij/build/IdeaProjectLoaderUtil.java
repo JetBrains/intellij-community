@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build;
 
 import com.intellij.util.io.URLUtil;
@@ -7,7 +7,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class IdeaProjectLoaderUtil {
+public final class IdeaProjectLoaderUtil {
   private static final String JPS_BOOTSTRAP_COMMUNITY_HOME_ENV_NAME = "JPS_BOOTSTRAP_COMMUNITY_HOME";
   private static final String ULTIMATE_REPO_MARKER_FILE = "intellij.idea.ultimate.tests.main.iml";
   private static final String COMMUNITY_REPO_MARKER_FILE = "intellij.idea.community.main.iml";
@@ -15,7 +15,6 @@ public class IdeaProjectLoaderUtil {
   public static Path guessUltimateHome(Class<?> klass) {
     final Path start = getSomeRoot(klass);
     Path home = start;
-
     while (home != null) {
       if (Files.exists(home.resolve(ULTIMATE_REPO_MARKER_FILE))) {
         return home;
