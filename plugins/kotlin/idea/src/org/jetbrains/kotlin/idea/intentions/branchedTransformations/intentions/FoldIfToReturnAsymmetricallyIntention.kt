@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions
 
@@ -24,15 +24,15 @@ class FoldIfToReturnAsymmetricallyIntention : SelfTargetingRangeIntention<KtIfEx
     }
 
     override fun applyTo(element: KtIfExpression, editor: Editor?) {
-        val condition = element.condition!!
-        val thenBranch = element.then!!
-        val elseBranch = KtPsiUtil.skipTrailingWhitespacesAndComments(element) as KtReturnExpression
+        val condition = element.condition ?: return
+        val thenBranch = element.then ?: return
+        val elseBranch = KtPsiUtil.skipTrailingWhitespacesAndComments(element) as? KtReturnExpression ?: return
 
         val psiFactory = KtPsiFactory(element)
         val newIfExpression = psiFactory.createIf(condition, thenBranch, elseBranch)
 
-        val thenReturn = BranchedFoldingUtils.getFoldableBranchedReturn(newIfExpression.then!!)!!
-        val elseReturn = BranchedFoldingUtils.getFoldableBranchedReturn(newIfExpression.`else`!!)!!
+        val thenReturn = BranchedFoldingUtils.getFoldableBranchedReturn(newIfExpression.then!!) ?: return
+        val elseReturn = BranchedFoldingUtils.getFoldableBranchedReturn(newIfExpression.`else`!!) ?: return
 
         thenReturn.replace(thenReturn.returnedExpression!!)
         elseReturn.replace(elseReturn.returnedExpression!!)
