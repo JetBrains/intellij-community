@@ -71,6 +71,8 @@ final class JpsCompilationRunner {
   private final JpsCompilationData compilationData
 
   JpsCompilationRunner(CompilationContext context) {
+    context.assertJpsCompilerAvailable()
+
     this.context = context
     compilationData = context.compilationData
     setSystemPropertyIfUndefined(DependencyResolvingBuilder.RESOLUTION_RETRY_ENABLED_PROPERTY, (context.options.resolveDependenciesMaxAttempts > 1).toString())

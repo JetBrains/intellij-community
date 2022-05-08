@@ -67,6 +67,11 @@ final class BuildContextImpl extends BuildContext {
     return productProperties.getSystemSelector(applicationInfo, buildNumber)
   }
 
+  @Override
+  void assertJpsCompilerAvailable() {
+    compilationContext.assertJpsCompilerAvailable()
+  }
+
   static BuildContext createContext(String communityHome, String projectHome, ProductProperties productProperties,
                                     ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
                                     BuildOptions options = new BuildOptions()) {
