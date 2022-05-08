@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
 @NonNls
-private const val BUNDLE = "messages.DisabledKotlinPluginFeedbackMessages"
+private const val BUNDLE = "messages.KotlinRejectersFeedbackMessages"
 
 internal object KotlinRejectersFeedbackBundle : AbstractBundle(BUNDLE) {
   @Suppress("SpreadOperator")
