@@ -858,22 +858,7 @@ public final class ConfigImportHelper {
 
       pluginsToDownload.removeIf(hasPendingUpdate);
       if (!pluginsToDownload.isEmpty()) {
-        if (options.headless) {
-          downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, pluginsToDownload, new EmptyProgressIndicator());
-        }
-        else {
-          ConfigImportProgressDialog dialog = new ConfigImportProgressDialog();
-          dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
-          AppUIUtil.updateWindowIcon(dialog);
-
-          SplashManager.executeWithHiddenSplash(dialog, () -> {
-            new Thread(() -> {
-              downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, pluginsToDownload, dialog.getIndicator());
-              SwingUtilities.invokeLater(() -> dialog.setVisible(false));
-            }, "Plugin migration downloader").start();
-            dialog.setVisible(true);
-          });
-        }
+        downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, pluginsToDownload);
 
         // migrating plugins for which we weren't able to download updates
         migratePlugins(newPluginsDir, pluginsToDownload, log);
@@ -947,6 +932,27 @@ public final class ConfigImportHelper {
         Files.createDirectories(newPluginsDir);
         Files.copy(pluginPath, target);
       }
+    }
+  }
+
+  private static void downloadUpdatesForIncompatiblePlugins(@NotNull Path newPluginsDir,
+                                                            @NotNull ConfigImportOptions options,
+                                                            @NotNull List<? extends IdeaPluginDescriptor> incompatiblePlugins) {
+    if (options.headless) {
+      downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, new EmptyProgressIndicator());
+    }
+    else {
+      ConfigImportProgressDialog dialog = new ConfigImportProgressDialog();
+      dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
+      AppUIUtil.updateWindowIcon(dialog);
+
+      SplashManager.executeWithHiddenSplash(dialog, () -> {
+        new Thread(() -> {
+          downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, dialog.getIndicator());
+          SwingUtilities.invokeLater(() -> dialog.setVisible(false));
+        }, "Plugin migration downloader").start();
+        dialog.setVisible(true);
+      });
     }
   }
 
