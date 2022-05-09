@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.IconButton
@@ -30,7 +29,10 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
-import git4idea.*
+import git4idea.GitBranch
+import git4idea.GitRevisionNumber
+import git4idea.GitTag
+import git4idea.GitVcs
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.config.GitRebaseSettings
@@ -278,7 +280,7 @@ internal class GitRebaseDialog(private val project: Project,
 
             if (getSelectedRepo().root == root) {
               UIUtil.invokeLaterIfNeeded {
-                addRefsToOntoAndFrom(tagsInRepo, replace = false)
+                updateBaseFields()
               }
             }
           }
@@ -304,20 +306,13 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun updateBaseFields() {
-    addRefsToOntoAndFrom(localBranches + remoteBranches + getTags(), replace = true)
-  }
-
-  private fun addRefsToOntoAndFrom(refs: Collection<GitReference>, replace: Boolean = true) {
     val upstream = upstreamField.item
     val onto = ontoField.item
 
-    val existingRefs = upstreamField.mutableModel?.items?.toSet() ?: emptySet()
-    val newRefs = refs.map { it.name }.toSet()
+    val newRefs = sequenceOf(localBranches, remoteBranches, getTags()).flatten().map { it.name }.toList()
 
-    val result = (if (replace) newRefs else existingRefs + newRefs).toList()
-
-    upstreamField.mutableModel?.update(result)
-    ontoField.mutableModel?.update(result)
+    upstreamField.mutableModel?.update(newRefs)
+    ontoField.mutableModel?.update(newRefs)
 
     upstreamField.item = upstream
     ontoField.item = onto
