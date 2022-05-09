@@ -1,9 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.artifacts
 
-import com.intellij.openapi.roots.libraries.LibraryKind
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import java.io.File
 
 enum class KotlinLibraryData(val libraryName: String, val kind: PersistentLibraryKind<*>?, val classesRoot: File, val sourcesRoot: File) {
@@ -27,7 +26,7 @@ enum class KotlinLibraryData(val libraryName: String, val kind: PersistentLibrar
     ),
     KOTLIN_STDLIB_JS(
         libraryName = "kotlin-stdlib-js",
-        kind = JSLibraryKind,
+        kind = KotlinJavaScriptLibraryKind,
         classesRoot = KotlinArtifacts.instance.kotlinStdlibJs,
         sourcesRoot = KotlinArtifacts.instance.kotlinStdlibSources
     )

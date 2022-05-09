@@ -26,6 +26,8 @@ import com.intellij.util.Query
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.kotlin.base.util.invalidateProjectRoots
+import org.jetbrains.kotlin.base.util.isAndroidModule
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
@@ -34,7 +36,6 @@ import org.jetbrains.kotlin.idea.caches.project.sourceType
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.project.platform
-import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.util.rootManager
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
@@ -121,7 +122,8 @@ private class PureKotlinSourceFoldersHolder {
      */
     fun hasPurePrefixInPath(module: Module, path: String): Boolean {
         val pureFolders = moduleMap.getOrPut(module) {
-            KotlinFacet.get(module)?.configuration?.settings?.pureKotlinSourceFolders?.takeIf { it.isNotEmpty() && !module.isAndroidModule() }
+            KotlinFacet.get(module)?.configuration?.settings?.pureKotlinSourceFolders
+                ?.takeIf { it.isNotEmpty() && !module.isAndroidModule() }
         } ?: return true
 
         return pureFolders.any { path.startsWith(it, ignoreCase = true) }

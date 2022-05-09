@@ -21,10 +21,7 @@
             interface="org.jetbrains.kotlin.idea.actions.NewKotlinFileHook"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.facetValidatorCreator"
-            interface="org.jetbrains.kotlin.idea.facet.KotlinFacetValidatorCreator"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.clearBuildState"
-            interface="org.jetbrains.kotlin.idea.compiler.configuration.ClearBuildStateExtension"/>
+            interface="org.jetbrains.kotlin.idea.base.compilerPreferences.facet.KotlinFacetValidatorCreator"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.experimentalFeature"
             interface="org.jetbrains.kotlin.idea.configuration.ExperimentalFeature"
@@ -59,6 +56,9 @@
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerWorkspaceSettings"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettings"/>
 
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.facet.KotlinFacetEditorProviderService"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinFacetEditorProviderServiceImpl"/>
 
     <applicationConfigurable
             groupId="language"
@@ -68,7 +68,7 @@
             instance="org.jetbrains.kotlin.idea.configuration.KotlinLanguageConfiguration"/>
 
     <projectConfigurable
-            instance="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerConfigurableTab"
+            instance="org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab"
             id="project.kotlinCompiler"
             bundle="messages.KotlinBundle"
             key="kotlin.compiler.configurable"
@@ -190,7 +190,7 @@
   </projectListeners>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <versionInfoProvider implementation="org.jetbrains.kotlin.idea.facet.KotlinVersionInfoProviderByModuleDependencies"/>
+    <versionInfoProvider implementation="org.jetbrains.kotlin.idea.base.compilerPreferences.facet.KotlinVersionInfoProviderByModuleDependencies"/>
 
     <pluginUpdateVerifier implementation="org.jetbrains.kotlin.idea.update.GooglePluginUpdateVerifier"/>
 

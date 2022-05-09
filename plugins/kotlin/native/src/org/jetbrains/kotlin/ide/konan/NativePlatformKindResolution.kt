@@ -5,8 +5,6 @@ package org.jetbrains.kotlin.ide.konan
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.PlatformAnalysisParameters
@@ -27,6 +25,7 @@ import org.jetbrains.kotlin.descriptors.konan.DeserializedKlibModuleOrigin
 import org.jetbrains.kotlin.descriptors.konan.KlibModuleOrigin
 import org.jetbrains.kotlin.ide.konan.CommonizerNativeTargetsCompat.commonizerNativeTargetsCompat
 import org.jetbrains.kotlin.ide.konan.analyzer.NativeResolverForModuleFactory
+import org.jetbrains.kotlin.idea.base.platforms.isKlibLibraryRootForPlatform
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.LibraryInfo
 import org.jetbrains.kotlin.idea.caches.project.SdkInfo
@@ -35,7 +34,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.BuiltInsCacheKey
 import org.jetbrains.kotlin.idea.compiler.IDELanguageSettingsProvider
 import org.jetbrains.kotlin.idea.klib.AbstractKlibLibraryInfo
 import org.jetbrains.kotlin.idea.klib.createKlibPackageFragmentProvider
-import org.jetbrains.kotlin.idea.klib.isKlibLibraryRootForPlatform
 import org.jetbrains.kotlin.idea.klib.safeRead
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
@@ -59,7 +57,7 @@ class NativePlatformKindResolution : IdePlatformKindResolution {
 
     override fun createLibraryInfo(project: Project, library: Library): List<LibraryInfo> {
         return library.getFiles(OrderRootType.CLASSES).mapNotNull { file ->
-            if (!isLibraryFileForPlatform(file)) return@createLibraryInfo emptyList()
+            if (!file.isKlibLibraryRootForPlatform(NativePlatforms.unspecifiedNativePlatform)) return@createLibraryInfo emptyList()
             val path = PathUtil.getLocalPath(file) ?: return@createLibraryInfo emptyList()
             NativeKlibLibraryInfo(project, library, path)
         }
@@ -82,9 +80,6 @@ class NativePlatformKindResolution : IdePlatformKindResolution {
             )
     }
 
-    override fun isLibraryFileForPlatform(virtualFile: VirtualFile): Boolean =
-        virtualFile.isKlibLibraryRootForPlatform(NativePlatforms.unspecifiedNativePlatform)
-
     override fun createResolverForModuleFactory(
         settings: PlatformAnalysisParameters,
         environment: TargetEnvironment,
@@ -92,9 +87,6 @@ class NativePlatformKindResolution : IdePlatformKindResolution {
     ): ResolverForModuleFactory {
         return NativeResolverForModuleFactory(settings, environment, platform)
     }
-
-    override val libraryKind: PersistentLibraryKind<*>
-        get() = NativeLibraryKind
 
     override val kind get() = NativeIdePlatformKind
 

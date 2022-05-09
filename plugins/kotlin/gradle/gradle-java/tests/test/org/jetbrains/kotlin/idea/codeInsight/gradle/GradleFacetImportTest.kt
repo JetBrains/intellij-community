@@ -8,6 +8,7 @@ import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
@@ -21,6 +22,8 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments
 import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.caches.project.productionSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.testSourceInfo
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
@@ -29,11 +32,8 @@ import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
 import org.jetbrains.kotlin.idea.configuration.ModuleSourceRootMap
 import org.jetbrains.kotlin.idea.configuration.allConfigurators
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -236,7 +236,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         val libraryEntries = rootManager.orderEntries.filterIsInstance<LibraryOrderEntry>()
         val stdlib = libraryEntries.single { it.libraryName?.contains("js") ?: false }.library
 
-        assertEquals(JSLibraryKind, (stdlib as LibraryEx).kind)
+        assertEquals(KotlinJavaScriptLibraryKind, (stdlib as LibraryEx).kind)
         assertTrue(stdlib.getFiles(OrderRootType.CLASSES).isNotEmpty())
 
         assertSameKotlinSdks("project.main", "project.test")
@@ -277,7 +277,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             .map { it.library as LibraryEx }
             .first { "kotlin-stdlib-js" in it.name!! }
 
-        assertEquals(JSLibraryKind, stdlib.kind)
+        assertEquals(KotlinJavaScriptLibraryKind, stdlib.kind)
 
         assertAllModulesConfigured()
 
@@ -399,8 +399,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
 
         val rootManager = ModuleRootManager.getInstance(getModule("project.main"))
         val libraries = rootManager.orderEntries.filterIsInstance<LibraryOrderEntry>().map { it.library as LibraryEx }
-        assertEquals(JSLibraryKind, libraries.single { it.name?.contains("kotlin-stdlib-js") == true }.kind)
-        assertEquals(CommonLibraryKind, libraries.single { it.name?.contains("kotlin-stdlib-common") == true }.kind)
+        assertEquals(KotlinJavaScriptLibraryKind, libraries.single { it.name?.contains("kotlin-stdlib-js") == true }.kind)
+        assertEquals(KotlinCommonLibraryKind, libraries.single { it.name?.contains("kotlin-stdlib-common") == true }.kind)
 
         assertEquals(
             listOf(
@@ -434,7 +434,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
 
         val rootManager = ModuleRootManager.getInstance(getModule("project.main"))
         val stdlib = rootManager.orderEntries.filterIsInstance<LibraryOrderEntry>().single().library
-        assertEquals(CommonLibraryKind, (stdlib as LibraryEx).kind)
+        assertEquals(KotlinCommonLibraryKind, (stdlib as LibraryEx).kind)
 
         assertEquals(
             listOf(
@@ -593,7 +593,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             .library!!
 
         assertTrue(stdlib.getFiles(OrderRootType.CLASSES).isNotEmpty())
-        assertEquals(JSLibraryKind, (stdlib as LibraryEx).kind)
+        assertEquals(KotlinJavaScriptLibraryKind, (stdlib as LibraryEx).kind)
     }
 
     @Test
@@ -643,9 +643,9 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
     fun testJDKImport() {
         val mockJdkPath = "${PathManager.getHomePath()}/community/java/mockJDK-1.8"
         runWriteActionAndWait {
-            val jdk = JavaSdk.getInstance().createJdk("myJDK", mockJdkPath)
-            getProjectJdkTableSafe().addJdk(jdk)
-            ProjectRootManager.getInstance(myProject).projectSdk = jdk
+          val jdk = JavaSdk.getInstance().createJdk("myJDK", mockJdkPath)
+          runReadAction<ProjectJdkTable> { ProjectJdkTable.getInstance() }.addJdk(jdk)
+          ProjectRootManager.getInstance(myProject).projectSdk = jdk
         }
 
         try {
@@ -658,9 +658,9 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals(mockJdkPath, moduleSDK.homePath)
         } finally {
             runWriteActionAndWait {
-                val jdkTable = getProjectJdkTableSafe()
-                jdkTable.removeJdk(jdkTable.findJdk("myJDK")!!)
-                ProjectRootManager.getInstance(myProject).projectSdk = null
+              val jdkTable = runReadAction<ProjectJdkTable> { ProjectJdkTable.getInstance() }
+              jdkTable.removeJdk(jdkTable.findJdk("myJDK")!!)
+              ProjectRootManager.getInstance(myProject).projectSdk = null
             }
         }
     }
@@ -749,7 +749,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
 
         val rootManager = ModuleRootManager.getInstance(getModule("project.main"))
         val stdlib = rootManager.orderEntries.filterIsInstance<LibraryOrderEntry>().single().library
-        assertEquals(CommonLibraryKind, (stdlib as LibraryEx).kind)
+        assertEquals(KotlinCommonLibraryKind, (stdlib as LibraryEx).kind)
 
         assertSameKotlinSdks("project.main", "project.test")
 

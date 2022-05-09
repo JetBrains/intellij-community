@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtProperty
@@ -25,7 +26,9 @@ open class RemovePartsFromPropertyFix(
             if (removeInitializer) add(KotlinBundle.message("text.initializer"))
         }
 
-        fun concat(head: String, tail: String) = head + " " + KotlinBundle.message("configuration.text.and") + " " + tail
+        fun concat(head: String, tail: String): String {
+            return head + " " + KotlinBaseCompilerConfigurationUiBundle.message("configuration.text.and") + " " + tail
+        }
 
         val partsText = when (chunks.size) {
             0 -> ""

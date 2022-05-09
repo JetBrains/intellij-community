@@ -43,16 +43,12 @@ interface IdePlatformKindResolution {
         platform: TargetPlatform
     ): ResolverForModuleFactory
 
-    fun isLibraryFileForPlatform(virtualFile: VirtualFile): Boolean
-
     fun createKlibPackageFragmentProvider(
         moduleInfo: ModuleInfo,
         storageManager: StorageManager,
         languageVersionSettings: LanguageVersionSettings,
         moduleDescriptor: ModuleDescriptor
     ): PackageFragmentProvider? = null
-
-    val libraryKind: PersistentLibraryKind<*>?
 
     fun createLibraryInfo(project: Project, library: Library): List<LibraryInfo>
 

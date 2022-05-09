@@ -4,16 +4,14 @@ package org.jetbrains.kotlin.idea.test;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.util.lang.JavaVersion;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.util.IjPlatformUtil;
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestJdkKind;
 
 import java.io.File;
@@ -24,7 +22,7 @@ public class PluginTestCaseBase {
 
     @NotNull
     private static Sdk getSdk(String sdkHome, String name) {
-        ProjectJdkTable table = IjPlatformUtil.getProjectJdkTableSafe();
+        ProjectJdkTable table = ReadAction.compute(() -> ProjectJdkTable.getInstance());
         Sdk existing = table.findJdk(name);
         if (existing != null) {
             return existing;
@@ -42,13 +40,13 @@ public class PluginTestCaseBase {
     @NotNull
     public static Sdk addJdk(@NotNull Disposable disposable, @NotNull Function0<Sdk> getJdk) {
         Sdk jdk = getJdk.invoke();
-        Sdk[] allJdks = IjPlatformUtil.getProjectJdkTableSafe().getAllJdks();
+        Sdk[] allJdks = ReadAction.compute(() -> ProjectJdkTable.getInstance()).getAllJdks();
         for (Sdk existingJdk : allJdks) {
             if (existingJdk == jdk) {
                 return existingJdk;
             }
         }
-        ApplicationManager.getApplication().runWriteAction(() -> IjPlatformUtil.getProjectJdkTableSafe().addJdk(jdk, disposable));
+        ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(jdk, disposable));
         return jdk;
     }
 

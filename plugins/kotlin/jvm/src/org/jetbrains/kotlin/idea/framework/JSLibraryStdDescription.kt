@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.configuration.KotlinJsModuleConfigurator
 
 /**
@@ -15,7 +16,7 @@ class JSLibraryStdDescription(project: Project?) : CustomLibraryDescriptorWithDe
     project,
     KotlinJsModuleConfigurator.NAME,
     LIBRARY_NAME,
-    JSLibraryKind,
+    KotlinJavaScriptLibraryKind,
     SUITABLE_LIBRARY_KINDS
 ) {
 
@@ -29,6 +30,6 @@ class JSLibraryStdDescription(project: Project?) : CustomLibraryDescriptorWithDe
 
         val JAVA_SCRIPT_LIBRARY_CREATION get() = KotlinJvmBundle.message("javascript.library.creation")
         val DIALOG_TITLE get() = KotlinJvmBundle.message("create.kotlin.javascript.library")
-        val SUITABLE_LIBRARY_KINDS = setOf(JSLibraryKind)
+        val SUITABLE_LIBRARY_KINDS = setOf(KotlinJavaScriptLibraryKind)
     }
 }

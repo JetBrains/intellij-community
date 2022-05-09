@@ -6,8 +6,8 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -116,7 +116,7 @@ sealed class Stdlib(
       "stdlib-common",
       AdditionalKotlinArtifacts.kotlinStdlibCommon,
       CommonPlatforms.defaultCommonPlatform,
-      CommonLibraryKind
+      KotlinCommonLibraryKind
     )
 
     object JvmStdlib : Stdlib(
@@ -130,7 +130,7 @@ sealed class Stdlib(
         "stdlib-js",
         KotlinArtifacts.instance.kotlinStdlibJs,
         JsPlatforms.defaultJsPlatform,
-        JSLibraryKind
+        KotlinJavaScriptLibraryKind
     )
 }
 
@@ -145,7 +145,7 @@ sealed class KotlinTest(
         "kotlin-test-js",
         KotlinArtifacts.instance.kotlinTestJs,
         JsPlatforms.defaultJsPlatform,
-        JSLibraryKind
+        KotlinJavaScriptLibraryKind
     )
 
     object JvmKotlinTest : KotlinTest(

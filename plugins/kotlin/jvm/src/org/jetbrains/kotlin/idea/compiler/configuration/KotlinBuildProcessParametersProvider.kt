@@ -9,7 +9,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.isDirectory
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService
-import org.jetbrains.kotlin.idea.jps.SetupKotlinJpsPluginBeforeCompileTask
 import java.nio.file.Path
 
 class KotlinBuildProcessParametersProvider(private val project: Project) : BuildProcessParametersProvider() {
@@ -29,7 +28,7 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
         if (Registry.`is`("kotlin.jps.instrument.bytecode", false)) {
             res.add("-Dkotlin.jps.instrument.bytecode=true")
         }
-        PluginStartupApplicationService.getInstance().aliveFlagPath.let {
+        PluginStartupApplicationService.getInstance().getAliveFlagPath().let {
             if (!it.isBlank()) {
                 // TODO: consider taking the property name from compiler/daemon/common (check whether dependency will be not too heavy)
                 res.add("-Dkotlin.daemon.client.alive.path=\"$it\"")

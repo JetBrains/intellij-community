@@ -3,27 +3,24 @@
 package org.jetbrains.kotlin.idea.core.platform.impl
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.framework.JavaRuntimeDetectionUtil
 import org.jetbrains.kotlin.idea.framework.JavaRuntimeLibraryDescription
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor.Companion.getTestStateIcon
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.platform.getGenericTestIcon
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
-import org.jetbrains.kotlin.idea.testIntegration.framework.*
+import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.utils.PathUtil
 import javax.swing.Icon
 
 class JvmIdePlatformKindTooling : IdePlatformKindTooling() {
     override val kind = JvmIdePlatformKind
-
-    override fun compilerArgumentsForProject(project: Project) = Kotlin2JvmCompilerArgumentsHolder.getInstance(project).settings
 
     override val mavenLibraryIds = listOf(
         PathUtil.KOTLIN_JAVA_STDLIB_NAME,
@@ -38,10 +35,6 @@ class JvmIdePlatformKindTooling : IdePlatformKindTooling() {
 
     override val libraryKind: PersistentLibraryKind<*>? = null
     override fun getLibraryDescription(project: Project) = JavaRuntimeLibraryDescription(project)
-
-    override fun getLibraryVersionProvider(project: Project): (Library) -> IdeKotlinVersion? {
-        return JavaRuntimeDetectionUtil::getJavaRuntimeVersion
-    }
 
     private fun calculateUrls(declaration: KtNamedDeclaration, includeSlowProviders: Boolean? = null): List<String>? {
         val testFramework =

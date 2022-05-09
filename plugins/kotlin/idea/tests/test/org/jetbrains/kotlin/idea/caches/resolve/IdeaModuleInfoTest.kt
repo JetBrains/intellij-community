@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -21,21 +22,21 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.platform
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.ModuleTestSourceInfo
-import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind
-import org.jetbrains.kotlin.idea.framework.platform
 import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
@@ -369,15 +370,16 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             ProjectRootManager.getInstance(project).projectSdk = null
         }
 
-        val firstSDK = getProjectJdkTableSafe().allJdks.firstOrNull() ?: error("no jdks are present")
+        val allJdks = runReadAction { ProjectJdkTable.getInstance() }.allJdks
+        val firstJdk = allJdks.firstOrNull() ?: error("no jdks are present")
 
         with(createFileInProject("script.kts").moduleInfo) {
             UIUtil.dispatchAllInvocationEvents()
             NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
             val filterIsInstance = dependencies().filterIsInstance<SdkInfo>()
-            filterIsInstance.singleOrNull { it.sdk == firstSDK }
-                ?: error("Unable to look up ${firstSDK.name} in ${filterIsInstance.map { it.name }} / allJdks: ${getProjectJdkTableSafe().allJdks}")
+            filterIsInstance.singleOrNull { it.sdk == firstJdk }
+                ?: error("Unable to look up ${firstJdk.name} in ${filterIsInstance.map { it.name }} / allJdks: $allJdks")
         }
     }
 
@@ -781,7 +783,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     private fun stdlibCommon(): LibraryEx = projectLibrary(
       "kotlin-stdlib-common",
       AdditionalKotlinArtifacts.kotlinStdlibCommon.jarRoot,
-      kind = CommonLibraryKind
+      kind = KotlinCommonLibraryKind
     )
 
     private fun stdlibJvm(): LibraryEx = projectLibrary("kotlin-stdlib", KotlinArtifacts.instance.kotlinStdlib.jarRoot)
@@ -789,7 +791,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     private fun stdlibJs(): LibraryEx = projectLibrary(
       "kotlin-stdlib-js",
       KotlinArtifacts.instance.kotlinStdlibJs.jarRoot,
-      kind = JSLibraryKind
+      kind = KotlinJavaScriptLibraryKind
     )
 
     private fun projectLibraryWithFakeRoot(name: String): LibraryEx {

@@ -6,8 +6,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.PlatformAnalysisParameters
 import org.jetbrains.kotlin.analyzer.ResolverForModuleFactory
@@ -33,10 +31,6 @@ import org.jetbrains.kotlin.resolve.jvm.JvmResolverForModuleFactory
 private val LOG = Logger.getInstance(JvmPlatformKindResolution::class.java)
 
 class JvmPlatformKindResolution : IdePlatformKindResolution {
-    override fun isLibraryFileForPlatform(virtualFile: VirtualFile): Boolean {
-        return false // TODO: No library kind for JVM
-    }
-
     override fun createResolverForModuleFactory(
         settings: PlatformAnalysisParameters,
         environment: TargetEnvironment,
@@ -44,9 +38,6 @@ class JvmPlatformKindResolution : IdePlatformKindResolution {
     ): ResolverForModuleFactory {
         return JvmResolverForModuleFactory(settings as JvmPlatformParameters, environment, platform)
     }
-
-    override val libraryKind: PersistentLibraryKind<*>?
-        get() = null
 
     override fun createLibraryInfo(project: Project, library: Library): List<LibraryInfo> =
         listOf(JvmLibraryInfo(project, library))

@@ -4,28 +4,22 @@ package org.jetbrains.kotlin.ide.konan
 
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.DummyLibraryProperties
-import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
 import org.jetbrains.kotlin.idea.caches.project.isTestModule
-import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.facet.externalSystemNativeMainRunTasks
-import org.jetbrains.kotlin.idea.framework.KotlinLibraryKind
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor.Companion.getTestStateIcon
 import org.jetbrains.kotlin.idea.isMainFunction
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.platform.isKotlinTestDeclaration
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.util.module
-import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
-import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -37,15 +31,12 @@ class NativeIdePlatformKindTooling : IdePlatformKindTooling() {
 
     override val kind = NativeIdePlatformKind
 
-    override fun compilerArgumentsForProject(project: Project): CommonCompilerArguments? = null
-
     override val mavenLibraryIds: List<String> get() = emptyList()
     override val gradlePluginId: String get() = ""
     override val gradlePlatformIds: List<KotlinPlatform> get() = listOf(KotlinPlatform.NATIVE)
 
-    override val libraryKind: PersistentLibraryKind<*> = NativeLibraryKind
+    override val libraryKind: PersistentLibraryKind<*> = KotlinNativeLibraryKind
     override fun getLibraryDescription(project: Project): CustomLibraryDescription? = null
-    override fun getLibraryVersionProvider(project: Project): (Library) -> IdeKotlinVersion? = { null }
 
     override fun getTestIcon(
         declaration: KtNamedDeclaration,
@@ -97,11 +88,4 @@ class NativeIdePlatformKindTooling : IdePlatformKindTooling() {
 
         return true
     }
-}
-
-object NativeLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("kotlin.native"), KotlinLibraryKind {
-    override val compilerPlatform: TargetPlatform
-        get() = NativePlatforms.unspecifiedNativePlatform
-
-    override fun createDefaultProperties() = DummyLibraryProperties.INSTANCE!!
 }

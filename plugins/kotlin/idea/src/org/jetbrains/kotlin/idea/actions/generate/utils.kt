@@ -6,6 +6,7 @@ import com.intellij.java.JavaBundle
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject
@@ -56,7 +57,7 @@ fun confirmMemberRewrite(targetClass: KtClass, vararg descriptors: FunctionDescr
     if (isUnitTestMode()) return true
 
     val functionsText =
-        descriptors.joinToString(separator = " ${KotlinBundle.message("configuration.text.and")} ") { "'${MEMBER_RENDERER.render(it)}'" }
+        descriptors.joinToString(separator = " ${KotlinBaseCompilerConfigurationUiBundle.message("configuration.text.and")} ") { "'${MEMBER_RENDERER.render(it)}'" }
     val message = KotlinBundle.message("action.generate.functions.already.defined", functionsText, targetClass.name.toString())
     return Messages.showYesNoDialog(
         targetClass.project, message,

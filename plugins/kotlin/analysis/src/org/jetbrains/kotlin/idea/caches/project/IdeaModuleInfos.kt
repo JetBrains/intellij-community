@@ -26,6 +26,9 @@ import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.descriptors.ModuleCapability
 import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
+import org.jetbrains.kotlin.idea.base.platforms.IdePlatformKindProjectStructure
+import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider
+import org.jetbrains.kotlin.idea.base.platforms.platform
 import org.jetbrains.kotlin.idea.caches.resolve.util.enlargedSearchScope
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinModuleOutOfCodeBlockModificationTracker
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType

@@ -8,9 +8,9 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VfsUtilCore.urlToPath
-import org.jetbrains.kotlin.ide.konan.NativeLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.configuration.externalCompilerVersion
-import org.jetbrains.kotlin.idea.framework.detectLibraryKind
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.konan.library.konanCommonLibraryPath
@@ -69,7 +69,7 @@ private val Module.libraries
 
 private fun assertValidModule(module: Module, projectRoot: String) {
     val (nativeLibraries, otherLibraries) = module.libraries.partition { library ->
-        detectLibraryKind(library.getFiles(OrderRootType.CLASSES)) == NativeLibraryKind
+        detectLibraryKind(library.getFiles(OrderRootType.CLASSES)) == KotlinNativeLibraryKind
     }
 
     if (module.platform.isNative()) {

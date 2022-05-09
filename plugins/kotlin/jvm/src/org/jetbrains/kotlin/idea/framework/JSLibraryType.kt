@@ -19,9 +19,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import javax.swing.JComponent
 
-class JSLibraryType : LibraryType<DummyLibraryProperties>(JSLibraryKind) {
+class JSLibraryType : LibraryType<DummyLibraryProperties>(KotlinJavaScriptLibraryKind) {
     override fun createPropertiesEditor(editorComponent: LibraryEditorComponent<DummyLibraryProperties>) = null
 
     @Suppress("HardCodedStringLiteral")
@@ -74,7 +76,7 @@ private fun isAcceptedForJsLibrary(extension: String?) = extension == "js" || ex
 // Can't import a member annotated with DEPRECATION_ERROR
 val org.jetbrains.kotlin.config.TargetPlatformKind<*>.libraryKind: PersistentLibraryKind<*>?
     get() = when (this) {
-        org.jetbrains.kotlin.config.TargetPlatformKind.JavaScript -> JSLibraryKind
-        org.jetbrains.kotlin.config.TargetPlatformKind.Common -> CommonLibraryKind
+        org.jetbrains.kotlin.config.TargetPlatformKind.JavaScript -> KotlinJavaScriptLibraryKind
+        org.jetbrains.kotlin.config.TargetPlatformKind.Common -> KotlinCommonLibraryKind
         else -> null
     }

@@ -8,6 +8,7 @@ import com.intellij.execution.actions.MultipleRunLocationsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.kotlin.base.util.isAndroidModule
 import org.jetbrains.kotlin.config.KotlinModuleKind
 import org.jetbrains.kotlin.idea.caches.project.SourceType
 import org.jetbrains.kotlin.idea.caches.project.implementingModules
@@ -15,7 +16,6 @@ import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
 import org.jetbrains.kotlin.idea.caches.project.sourceType
 import org.jetbrains.kotlin.idea.configuration.toModuleGroup
 import org.jetbrains.kotlin.idea.core.getSourceType
-import org.jetbrains.kotlin.idea.core.isAndroidModule
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 
 class KotlinMultiplatformRunLocationsProvider : MultipleRunLocationsProvider() {

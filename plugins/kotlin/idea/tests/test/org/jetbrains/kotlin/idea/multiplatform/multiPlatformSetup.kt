@@ -4,15 +4,14 @@ package org.jetbrains.kotlin.idea.multiplatform
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.roots.CompilerModuleExtension
-import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.kotlin.checkers.utils.clearFileFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM1
@@ -20,7 +19,6 @@ import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -33,6 +31,7 @@ import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.projectModel.*
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.test.TestJdkKind
 import org.jetbrains.kotlin.types.typeUtil.closure
 import java.io.File
@@ -139,7 +138,8 @@ private fun AbstractMultiModuleTest.setUpSdkForModule(ideaModule: Module, sdk: R
             KotlinSdkType.setUpIfNeeded(testRootDisposable)
             ConfigLibraryUtil.configureSdk(
                 ideaModule,
-                getProjectJdkTableSafe().findMostRecentSdkOfType(KotlinSdkType.INSTANCE) ?: error("Kotlin SDK wasn't created")
+                runReadAction { ProjectJdkTable.getInstance() }.findMostRecentSdkOfType(KotlinSdkType.INSTANCE)
+                    ?: error("Kotlin SDK wasn't created")
             )
         }
 
@@ -163,9 +163,9 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                 is ModuleDependency -> module.addDependency(modulesById[it.moduleId]!!)
                 is StdlibDependency -> {
                     when {
-                        platform.isCommon() -> module.addLibrary(AdditionalKotlinArtifacts.kotlinStdlibCommon, kind = CommonLibraryKind)
+                        platform.isCommon() -> module.addLibrary(AdditionalKotlinArtifacts.kotlinStdlibCommon, kind = KotlinCommonLibraryKind)
                         platform.isJvm() -> module.addLibrary(KotlinArtifacts.instance.kotlinStdlib)
-                        platform.isJs() -> module.addLibrary(KotlinArtifacts.instance.kotlinStdlibJs, kind = JSLibraryKind)
+                        platform.isJs() -> module.addLibrary(KotlinArtifacts.instance.kotlinStdlibJs, kind = KotlinJavaScriptLibraryKind)
                         else -> error("Unknown platform $this")
                     }
                 }
@@ -177,7 +177,7 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                 is CoroutinesDependency -> module.enableCoroutines()
                 is KotlinTestDependency -> when {
                     platform.isJvm() -> module.addLibrary(KotlinArtifacts.instance.kotlinTestJunit)
-                    platform.isJs() -> module.addLibrary(KotlinArtifacts.instance.kotlinTestJs, kind = JSLibraryKind)
+                    platform.isJs() -> module.addLibrary(KotlinArtifacts.instance.kotlinTestJs, kind = KotlinJavaScriptLibraryKind)
                 }
             }
         }

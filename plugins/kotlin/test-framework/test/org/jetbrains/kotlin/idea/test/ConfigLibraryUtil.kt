@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -18,10 +19,10 @@ import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.idea.artifacts.KotlinLibraryData
-import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
 import java.io.File
 import kotlin.test.assertNotNull
 
@@ -47,13 +48,13 @@ object ConfigLibraryUtil {
     }
 
     fun configureKotlinStdlibJs(module: Module) {
-        addLibrary(module, LIB_NAME_KOTLIN_STDLIB_JS, JSLibraryKind) {
+        addLibrary(module, LIB_NAME_KOTLIN_STDLIB_JS, KotlinJavaScriptLibraryKind) {
             addRoot(KotlinArtifacts.instance.kotlinStdlibJs, OrderRootType.CLASSES)
         }
     }
 
     fun configureKotlinStdlibCommon(module: Module) {
-        addLibrary(module, LIB_NAME_KOTLIN_STDLIB_COMMON, CommonLibraryKind) {
+        addLibrary(module, LIB_NAME_KOTLIN_STDLIB_COMMON, KotlinCommonLibraryKind) {
             addRoot(AdditionalKotlinArtifacts.kotlinStdlibCommon, OrderRootType.CLASSES)
         }
     }
@@ -93,7 +94,7 @@ object ConfigLibraryUtil {
             val rootModel = rootManager.modifiableModel
 
             assertNotNull(
-                getProjectJdkTableSafe().findJdk(sdk.name),
+                ProjectJdkTable.getInstance().findJdk(sdk.name),
                 "Cannot find sdk in ProjectJdkTable. This may cause sdk leak.\n" +
                         "You can use ProjectPluginTestBase.addJdk(Disposable ...) to register sdk in ProjectJdkTable.\n" +
                         "Then sdk will be removed in tearDown"

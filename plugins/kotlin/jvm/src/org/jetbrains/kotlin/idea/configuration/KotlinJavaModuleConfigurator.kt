@@ -17,12 +17,12 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.base.platforms.JsStdlibDetectionUtil
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
 import org.jetbrains.kotlin.idea.framework.JavaRuntimeDetectionUtil
 import org.jetbrains.kotlin.idea.framework.JavaRuntimeLibraryDescription
-import org.jetbrains.kotlin.idea.framework.JsLibraryStdDetectionUtil
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
 import org.jetbrains.kotlin.idea.util.projectStructure.version
@@ -112,7 +112,7 @@ open class KotlinJavaModuleConfigurator : KotlinWithLibraryConfigurator<Reposito
     private fun hasBrokenJsRuntime(module: Module): Boolean {
         for (orderEntry in ModuleRootManager.getInstance(module).orderEntries) {
             val library = (orderEntry as? LibraryOrderEntry)?.library as? LibraryEx ?: continue
-            if (JsLibraryStdDetectionUtil.hasJsStdlibJar(library, module.project, ignoreKind = true)) return true
+            if (JsStdlibDetectionUtil.hasJavaScriptStdlibJar(library, module.project, ignoreKind = true)) return true
         }
         return false
     }

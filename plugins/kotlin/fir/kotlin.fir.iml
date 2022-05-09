@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="kotlin.resources-fir" />
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.base.plugin" />
+    <orderEntry type="module" module-name="kotlin.base.resources" />
     <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
@@ -31,7 +32,6 @@
     <orderEntry type="library" exported="" scope="TEST" name="kotlinc.high-level-api-fir-tests" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.low-level-api-fir" level="project" />
     <orderEntry type="module" module-name="kotlin.base.indices" />
-    <orderEntry type="module" module-name="kotlin.base.resources" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />

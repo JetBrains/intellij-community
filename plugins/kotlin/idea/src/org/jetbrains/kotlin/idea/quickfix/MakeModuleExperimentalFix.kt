@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.base.util.invalidateProjectRoots
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -17,7 +18,6 @@ import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
 import org.jetbrains.kotlin.idea.facet.getOrCreateConfiguredFacet
 import org.jetbrains.kotlin.idea.quickfix.ExperimentalFixesFactory.annotationExists
-import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile

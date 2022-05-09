@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription
-import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.extensions.ApplicationExtensionDescriptor
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -19,8 +18,6 @@ import javax.swing.Icon
 abstract class IdePlatformKindTooling {
     abstract val kind: IdePlatformKind
 
-    abstract fun compilerArgumentsForProject(project: Project): CommonCompilerArguments?
-
     abstract val mavenLibraryIds: List<String>
     abstract val gradlePluginId: String
 
@@ -28,7 +25,6 @@ abstract class IdePlatformKindTooling {
 
     abstract val libraryKind: PersistentLibraryKind<*>?
     abstract fun getLibraryDescription(project: Project): CustomLibraryDescription?
-    abstract fun getLibraryVersionProvider(project: Project): (Library) -> IdeKotlinVersion?
 
     abstract fun getTestIcon(
         declaration: KtNamedDeclaration,

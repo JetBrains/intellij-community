@@ -5,8 +5,6 @@ package org.jetbrains.kotlin.caches.resolve
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.PlatformAnalysisParameters
@@ -18,14 +16,13 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.context.ProjectContext
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentProvider
+import org.jetbrains.kotlin.idea.base.platforms.isKlibLibraryRootForPlatform
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.LibraryInfo
 import org.jetbrains.kotlin.idea.caches.project.SdkInfo
 import org.jetbrains.kotlin.idea.caches.resolve.BuiltInsCacheKey
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.klib.AbstractKlibLibraryInfo
 import org.jetbrains.kotlin.idea.klib.createKlibPackageFragmentProvider
-import org.jetbrains.kotlin.idea.klib.isKlibLibraryRootForPlatform
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.konan.util.KlibMetadataFactories
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -37,15 +34,6 @@ import org.jetbrains.kotlin.serialization.konan.impl.KlibMetadataModuleDescripto
 import org.jetbrains.kotlin.storage.StorageManager
 
 class JsPlatformKindResolution : IdePlatformKindResolution {
-    override fun isLibraryFileForPlatform(virtualFile: VirtualFile): Boolean {
-        return virtualFile.extension == "js"
-                || virtualFile.extension == "kjsm"
-                || virtualFile.isKlibLibraryRootForPlatform(JsPlatforms.defaultJsPlatform)
-    }
-
-    override val libraryKind: PersistentLibraryKind<*>
-        get() = JSLibraryKind
-
     override val kind get() = JsIdePlatformKind
 
     override fun getKeyForBuiltIns(moduleInfo: ModuleInfo, sdkInfo: SdkInfo?, stdlibInfo: LibraryInfo?): BuiltInsCacheKey {
@@ -69,9 +57,8 @@ class JsPlatformKindResolution : IdePlatformKindResolution {
     ): ResolverForModuleFactory = JsResolverForModuleFactory(environment)
 
     override fun createLibraryInfo(project: Project, library: Library): List<LibraryInfo> {
-        val klibFiles = library.getFiles(OrderRootType.CLASSES).filter {
-            it.isKlibLibraryRootForPlatform(JsPlatforms.defaultJsPlatform)
-        }
+        val klibFiles = library.getFiles(OrderRootType.CLASSES)
+            .filter { it.isKlibLibraryRootForPlatform(JsPlatforms.defaultJsPlatform) }
 
         return if (klibFiles.isNotEmpty()) {
             klibFiles.mapNotNull {

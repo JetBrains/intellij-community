@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.isOverridable
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.util.CachedValue
 import org.jetbrains.kotlin.idea.core.util.getValue
@@ -88,7 +89,7 @@ class MakeOverriddenMemberOpenFix(declaration: KtDeclaration) : KotlinQuickFixAc
         }
         val sortedDeclarationNames = containingDeclarationsNames.sorted()
         val declarations = sortedDeclarationNames.subList(0, sortedDeclarationNames.size - 1).joinToString(", ") +
-                " ${KotlinBundle.message("configuration.text.and")} " +
+                " ${KotlinBaseCompilerConfigurationUiBundle.message("configuration.text.and")} " +
                 sortedDeclarationNames.last()
         return KotlinBundle.message("make.0.in.1.open", element.name.toString(), declarations)
     }

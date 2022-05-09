@@ -13,8 +13,8 @@ import com.intellij.ui.components.JBLabelDecorator
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.kotlin.base.util.onTextChange
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.core.util.onTextChange
 import javax.swing.InputVerifier
 import javax.swing.JComponent
 import kotlin.io.path.Path

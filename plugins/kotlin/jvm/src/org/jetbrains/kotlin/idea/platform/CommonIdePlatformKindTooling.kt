@@ -4,14 +4,10 @@ package org.jetbrains.kotlin.idea.core.platform.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.Library
-import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.caches.project.implementingModules
-import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
 import org.jetbrains.kotlin.idea.framework.CommonStandardLibraryDescription
-import org.jetbrains.kotlin.idea.framework.getCommonRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.platform.isCompatibleWith
 import org.jetbrains.kotlin.idea.platform.tooling
@@ -31,19 +27,13 @@ object CommonIdePlatformKindTooling : IdePlatformKindTooling() {
 
     override val kind = CommonIdePlatformKind
 
-    override fun compilerArgumentsForProject(project: Project): CommonCompilerArguments? = null
-
     override val mavenLibraryIds = listOf(MAVEN_COMMON_STDLIB_ID)
     override val gradlePluginId = "kotlin-platform-common"
     override val gradlePlatformIds: List<KotlinPlatform> get() = listOf(KotlinPlatform.COMMON)
 
-    override val libraryKind = CommonLibraryKind
+    override val libraryKind = KotlinCommonLibraryKind
 
     override fun getLibraryDescription(project: Project) = CommonStandardLibraryDescription(project)
-
-    override fun getLibraryVersionProvider(project: Project): (Library) -> IdeKotlinVersion? {
-        return ::getCommonRuntimeLibraryVersion
-    }
 
     private fun getRelevantToolings(platform: TargetPlatform?): List<IdePlatformKindTooling> {
         return getInstances()

@@ -11,10 +11,10 @@ import com.intellij.openapi.roots.libraries.DummyLibraryProperties
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryType
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.JsStdlibDetectionUtil
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.framework.JSLibraryStdDescription
 import org.jetbrains.kotlin.idea.framework.JSLibraryType
-import org.jetbrains.kotlin.idea.framework.JsLibraryStdDetectionUtil
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
 import org.jetbrains.kotlin.js.JavaScript
@@ -45,7 +45,7 @@ open class KotlinJsModuleConfigurator : KotlinWithLibraryConfigurator<DummyLibra
     override val libraryJarDescriptor: LibraryJarDescriptor get() = LibraryJarDescriptor.JS_STDLIB_JAR
 
     override val libraryMatcher: (Library, Project) -> Boolean = { library, project ->
-        JsLibraryStdDetectionUtil.hasJsStdlibJar(library, project)
+        JsStdlibDetectionUtil.hasJavaScriptStdlibJar(library, project)
     }
 
     override val libraryType: LibraryType<DummyLibraryProperties> get() = JSLibraryType.getInstance()
@@ -66,7 +66,7 @@ open class KotlinJsModuleConfigurator : KotlinWithLibraryConfigurator<DummyLibra
         for (orderEntry in ModuleRootManager.getInstance(module).orderEntries) {
             val library = (orderEntry as? LibraryOrderEntry)?.library as? LibraryEx ?: continue
             allLibraries.add(library)
-            if (JsLibraryStdDetectionUtil.hasJsStdlibJar(library, module.project, ignoreKind = true) && library.kind == null) {
+            if (JsStdlibDetectionUtil.hasJavaScriptStdlibJar(library, module.project, ignoreKind = true) && library.kind == null) {
                 brokenStdlib = library
             }
         }
@@ -75,7 +75,7 @@ open class KotlinJsModuleConfigurator : KotlinWithLibraryConfigurator<DummyLibra
             runWriteAction {
                 for (library in allLibraries.filter { it.kind == null }) {
                     library.modifiableModel.apply {
-                        kind = JSLibraryKind
+                        kind = KotlinJavaScriptLibraryKind
                         commit()
                     }
                 }

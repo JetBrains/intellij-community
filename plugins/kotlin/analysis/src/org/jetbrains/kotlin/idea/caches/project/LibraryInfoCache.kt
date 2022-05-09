@@ -18,8 +18,8 @@ import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.caches.resolve.resolution
-import org.jetbrains.kotlin.idea.framework.effectiveKind
-import org.jetbrains.kotlin.idea.framework.platform
+import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider
+import org.jetbrains.kotlin.idea.base.platforms.platform
 import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProvider
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -57,7 +57,7 @@ class LibraryInfoCache(private val project: Project): Disposable {
 
         val approximatePlatform = if (library is LibraryEx && !library.isDisposed) {
             // for Native returns 'unspecifiedNativePlatform', thus "approximate"
-            library.effectiveKind(project).platform
+            LibraryEffectiveKindProvider.getInstance(project).getEffectiveKind(library).platform
         } else {
             DefaultIdeTargetPlatformKindProvider.defaultPlatform
         }

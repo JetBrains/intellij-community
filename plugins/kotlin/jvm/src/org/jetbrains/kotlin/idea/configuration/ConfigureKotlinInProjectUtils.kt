@@ -28,11 +28,11 @@ import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.core.util.getKotlinJvmRuntimeMarkerClass
 import org.jetbrains.kotlin.idea.extensions.gradle.RepositoryDescription
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind
-import org.jetbrains.kotlin.idea.framework.effectiveKind
 import org.jetbrains.kotlin.idea.quickfix.KotlinAddRequiredModuleFix
 import org.jetbrains.kotlin.idea.search.projectScope
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
@@ -303,7 +303,7 @@ fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
             getKotlinJvmRuntimeMarkerClass(module.project, scope) != null ||
-                    hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, JSLibraryKind)) ||
+                    hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, KotlinJavaScriptLibraryKind)) ||
                     hasKotlinCommonRuntimeInScope(scope)
         })
     }
@@ -321,7 +321,7 @@ fun hasKotlinJvmRuntimeInScope(module: Module): Boolean {
 fun hasKotlinJsRuntimeInScope(module: Module): Boolean {
     return module.project.syncNonBlockingReadAction {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
-        hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, JSLibraryKind))
+        hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, KotlinJavaScriptLibraryKind))
     }
 }
 
@@ -332,13 +332,13 @@ fun hasKotlinCommonRuntimeInScope(scope: GlobalSearchScope): Boolean {
 class LibraryKindSearchScope(
     val module: Module,
     baseScope: GlobalSearchScope,
-    val libraryKind: PersistentLibraryKind<*>
+    private val libraryKind: PersistentLibraryKind<*>
 ) : DelegatingGlobalSearchScope(baseScope) {
     override fun contains(file: VirtualFile): Boolean {
         if (!super.contains(file)) return false
         val orderEntry = ModuleRootManager.getInstance(module).fileIndex.getOrderEntryForFile(file)
         if (orderEntry is LibraryOrderEntry) {
-            return (orderEntry.library as LibraryEx).effectiveKind(module.project) == libraryKind
+            return LibraryEffectiveKindProvider.getInstance(module.project).getEffectiveKind(orderEntry.library as LibraryEx) == libraryKind
         }
         return true
     }

@@ -24,10 +24,9 @@ import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.*
 import org.jetbrains.kotlin.config.getFacetPlatformByConfigurationElement
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.platforms.JsStdlibDetectionUtil
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.framework.JavaRuntimeDetectionUtil
-import org.jetbrains.kotlin.idea.framework.JsLibraryStdDetectionUtil
-import org.jetbrains.kotlin.idea.framework.getLibraryJar
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
@@ -50,10 +49,10 @@ private val PLATFORM_TO_STDLIB_DETECTORS: Map<TargetPlatform, (Array<VirtualFile
         JavaRuntimeDetectionUtil.getRuntimeJar(roots.toList()) != null
     },
     JsPlatforms.defaultJsPlatform to { roots: Array<VirtualFile> ->
-        JsLibraryStdDetectionUtil.getJsStdLibJar(roots.toList()) != null
+        JsStdlibDetectionUtil.getJavaScriptStdLibJar(roots.toList()) != null
     },
     CommonPlatforms.defaultCommonPlatform to { roots: Array<VirtualFile> ->
-        getLibraryJar(roots, PathUtil.KOTLIN_STDLIB_COMMON_JAR_PATTERN) != null
+        roots.any { PathUtil.KOTLIN_STDLIB_COMMON_JAR_PATTERN.matcher(it.name).matches() }
     }
 )
 

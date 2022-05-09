@@ -6,6 +6,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.idea.caches.project.getAllProjectSdks
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage
 import org.jetbrains.kotlin.idea.core.script.scriptingWarnLog
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
 import java.nio.file.Path
 
 class ScriptSdksBuilder(
@@ -79,7 +79,8 @@ class ScriptSdksBuilder(
             null
         } ?: return null
 
-        return getProjectJdkTableSafe().allJdks.find { it.homeDirectory == javaHomeVF }
+        return runReadAction { ProjectJdkTable.getInstance() }.allJdks
+            .find { it.homeDirectory == javaHomeVF }
             ?.takeIf { it.canBeUsedForScript() }
     }
 
@@ -87,10 +88,12 @@ class ScriptSdksBuilder(
         sdks.getOrPut(SdkId.default) { defaultSdk }
 
     fun addSdkByName(sdkName: String) {
-        val sdk = getProjectJdkTableSafe().allJdks
+        val sdk = runReadAction { ProjectJdkTable.getInstance() }.allJdks
             .find { it.name == sdkName }
             ?.takeIf { it.canBeUsedForScript() }
-            ?: defaultSdk ?: return
+            ?: defaultSdk
+            ?: return
+
         val homePath = sdk.homePath ?: return
         sdks[SdkId(homePath)] = sdk
     }
