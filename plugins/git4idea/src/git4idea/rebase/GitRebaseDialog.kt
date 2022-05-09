@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.IconButton
@@ -49,6 +50,7 @@ import java.awt.Container
 import java.awt.Insets
 import java.awt.event.*
 import java.util.Collections.synchronizedMap
+import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -296,7 +298,7 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun updateBranches() {
-    branchField.model.castSafelyTo<MutableCollectionComboBoxModel<String>>()?.update(localBranches.map { it.name })
+    branchField.mutableModel?.update(localBranches.map { it.name })
 
     updateBaseFields()
   }
@@ -309,13 +311,13 @@ internal class GitRebaseDialog(private val project: Project,
     val upstream = upstreamField.item
     val onto = ontoField.item
 
-    val existingRefs = upstreamField.model.castSafelyTo<MutableCollectionComboBoxModel<String>>()?.items?.toSet() ?: emptySet()
+    val existingRefs = upstreamField.mutableModel?.items?.toSet() ?: emptySet()
     val newRefs = refs.map { it.name }.toSet()
 
     val result = (if (replace) newRefs else existingRefs + newRefs).toList()
 
-    upstreamField.model.castSafelyTo<MutableCollectionComboBoxModel<String>>()?.update(result)
-    ontoField.model.castSafelyTo<MutableCollectionComboBoxModel<String>>()?.update(result)
+    upstreamField.mutableModel?.update(result)
+    ontoField.mutableModel?.update(result)
 
     upstreamField.item = upstream
     ontoField.item = onto
@@ -684,3 +686,5 @@ internal class GitRebaseDialog(private val project: Project,
     private const val LONG_FIELD_LENGTH = 310
   }
 }
+
+private val JComboBox<String>.mutableModel get() = this.model.castSafelyTo<MutableCollectionComboBoxModel<String>>()
