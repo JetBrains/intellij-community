@@ -17,6 +17,7 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.tools.*;
+import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -44,13 +45,31 @@ public class APIWrappers {
     return null;
   }
 
-  public static Processor newProcessorWrapper(final Processor delegate, JpsJavacFileManager fileManager) {
-    return wrap(Processor.class, new ProcessorWrapper(delegate, fileManager));
+  public static Processor newProcessorWrapper(final Processor delegate, ProcessingEnvironmentProvider envProvider) {
+    return wrap(Processor.class, new ProcessorWrapper(delegate, envProvider));
   }
 
   @SuppressWarnings("unchecked")
   public static <T extends FileObject> DiagnosticOutputConsumer newDiagnosticListenerWrapper(final DiagnosticOutputConsumer delegate, @NotNull Iterable<Processor> processors) {
     return wrap(DiagnosticOutputConsumer.class, new DiagnosticListenerWrapper<T>(delegate, processors));
+  }
+
+  public static class ProcessingEnvironmentProvider {
+    private final JpsJavacFileManager myFileManager;
+    private final Map<ProcessingEnvironment, ProcessingEnvironment> myWrappers = new HashMap<ProcessingEnvironment, ProcessingEnvironment>();
+
+    public ProcessingEnvironmentProvider(JpsJavacFileManager fileManager) {
+      myFileManager = fileManager;
+    }
+
+    @NotNull
+    public ProcessingEnvironment getWrappedProcessingEnvironment(ProcessingEnvironment processingEnv) {
+      ProcessingEnvironment wrapped = myWrappers.get(processingEnv);
+      if (wrapped == null) {
+        myWrappers.put(processingEnv, wrapped = wrap(ProcessingEnvironment.class, new ProcessingEnvironmentWrapper(processingEnv, myFileManager)));
+      }
+      return wrapped;
+    }
   }
 
   public interface WrapperDelegateAccessor<T> {
@@ -127,20 +146,20 @@ public class APIWrappers {
   }
 
   static class ProcessorWrapper extends DynamicWrapper<Processor> {
-    private final JpsJavacFileManager myFileManager;
+    private final ProcessingEnvironmentProvider myEnvProvider;
     private boolean myCodeShown = false;
     private ProcessingEnvironment myProcessingEnv;
 
-    ProcessorWrapper(Processor delegate, JpsJavacFileManager fileManager) {
+    ProcessorWrapper(Processor delegate, ProcessingEnvironmentProvider envProvider) {
       super(delegate);
-      myFileManager = fileManager;
+      myEnvProvider = envProvider;
     }
 
     public void init(ProcessingEnvironment processingEnv) {
       myProcessingEnv = processingEnv;
       final Ref<ClassLoader> oldCtxLoader = setupContextClassLoader();
       try {
-        getWrapperDelegate().init(wrap(ProcessingEnvironment.class, new ProcessingEnvironmentWrapper(processingEnv, myFileManager)));
+        getWrapperDelegate().init(myEnvProvider.getWrappedProcessingEnvironment(processingEnv));
       }
       catch (IllegalArgumentException e) {
         sendDiagnosticWarning(processingEnv, e);
@@ -304,7 +323,7 @@ public class APIWrappers {
 
   @NotNull
   public static <T> T wrap(@NotNull Class<T> ifaceClass, @NotNull final Object wrapper, @NotNull final Class<?> parentToStopSearchAt, @NotNull final T delegateTo) {
-    return ifaceClass.cast(Proxy.newProxyInstance(APIWrappers.class.getClassLoader(), new Class<?>[]{ifaceClass, WrapperDelegateAccessor.class}, new InvocationHandler() {
+    return ifaceClass.cast(Proxy.newProxyInstance(APIWrappers.class.getClassLoader(), new Class<?>[]{ifaceClass, WrapperDelegateAccessor.class, Closeable.class}, new InvocationHandler() {
       private final Map<Method, Pair<Method, Object>> myCallHandlers = Collections.synchronizedMap(new HashMap<Method, Pair<Method, Object>>());
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -322,13 +341,26 @@ public class APIWrappers {
       private Pair<Method, Object> getCallHandlerMethod(Method method) {
         Pair<Method, Object> pair = myCallHandlers.get(method);
         if (pair == null) {
-          if (WrapperDelegateAccessor.class.equals(method.getDeclaringClass())) {
+          final Class<?> declaringClass = method.getDeclaringClass();
+          if (WrapperDelegateAccessor.class.equals(declaringClass)) {
             pair = wrapper instanceof WrapperDelegateAccessor? Pair.create(method, wrapper) : Pair.<Method, Object>create(method, new WrapperDelegateAccessor<T>() {
               @Override
               public T getWrapperDelegate() {
                 return delegateTo;
               }
             });
+          }
+          else if (Closeable.class.equals(declaringClass)) {
+            // process Closeable separately as in this case the call should never fail (e.g. if neither the wrapper nor delegate implements it)
+            if (wrapper instanceof Closeable) {
+              pair = Pair.create(method, wrapper);
+            }
+            else if (delegateTo instanceof Closeable) {
+              pair = Pair.<Method, Object>create(method, delegateTo);
+            }
+            else {
+              pair = Pair.<Method, Object>create(method, new Closeable() {@Override public void close() { /*empty*/ }});
+            }
           }
           else {
             // important: look for implemented methods starting from the actual class
