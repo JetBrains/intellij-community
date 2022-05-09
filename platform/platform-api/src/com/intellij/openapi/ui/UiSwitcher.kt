@@ -9,50 +9,54 @@ import javax.swing.JComponent
 
 /**
  * Defines switcher component which can change visibility state of component
- * in total UI view. For example: tabs selector, collapsable groups, etc.
+ * in UI view, for example collapsible groups in Kotlin UI DSL.
+ * Use [UiSwitcher.append] to add a switcher to a component. At the same time component can belong to several UiSwitcher
  *
- * Switcher component can implement this interface, or switcher may be
- * in component's context which should be accessible by [UI_SWITCHER] key.
- *
- * @see com.intellij.openapi.ui.putUserData
- * @see javax.swing.JComponent.putClientProperty
- * @see UiSwitcher.show
+ * @see UIUtil#showComponent(Component)
  */
 @ApiStatus.Experimental
 interface UiSwitcher {
 
   /**
-   * Checks that [component] is administrated by this switcher, and changes switcher state
-   * to make the component visible.
-   *
-   * For example select tab with component or expand collapsable
-   * group if component is located in group.
+   * Returns false if the component assigned to this UiSwitcher cannot be shown
    */
-  fun show(component: Component)
+  fun show(): Boolean
 
   companion object {
 
-    val UI_SWITCHER = Key.create<UiSwitcher>("com.intellij.openapi.ui.UI_SWITCHER")
+    private val UI_SWITCHER = Key.create<UiSwitcher>("com.intellij.openapi.ui.UI_SWITCHER")
+
+    @JvmStatic
+    fun append(component: JComponent, uiSwitcher: UiSwitcher) {
+      val existingSwitcher = component.getUserData(UI_SWITCHER)
+      component.putUserData(UI_SWITCHER, if (existingSwitcher == null) uiSwitcher
+      else UnionUiSwitcher(
+        listOf(existingSwitcher, uiSwitcher)))
+    }
 
     /**
-     * Finds and applies all switchers which can show [component].
+     * Tries to show the component in UI hierarchy:
+     * * Expands collapsable groups if the component is inside such groups
      */
+    @JvmStatic
     fun show(component: Component) {
-      for (currentComponent in UIUtil.uiParents(component, false)) {
-        val container = currentComponent.parent ?: return
-        getSwitcher(container)?.show(currentComponent)
-        for (sibling in UIUtil.uiChildren(container)) {
-          getSwitcher(sibling)?.show(currentComponent)
+      var c = component
+      while (!c.isShowing) {
+        if (c is JComponent) {
+          val uiSwitcher = c.getUserData(UI_SWITCHER)
+          if (uiSwitcher?.show() == false) {
+            return
+          }
         }
+        c = c.parent
       }
     }
+  }
+}
 
-    private fun getSwitcher(component: Component): UiSwitcher? {
-      return when (component) {
-        is UiSwitcher -> component
-        is JComponent -> component.getUserData(UI_SWITCHER)
-        else -> null
-      }
-    }
+private class UnionUiSwitcher(private val uiSwitchers: List<UiSwitcher>) : UiSwitcher {
+
+  override fun show(): Boolean {
+    return uiSwitchers.all { it.show() }
   }
 }

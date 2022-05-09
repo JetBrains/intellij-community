@@ -7,14 +7,16 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.dsl.UiDslException
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.HyperlinkEventAction
+import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.GridLayoutComponentProperty
 import org.jetbrains.annotations.ApiStatus
-import java.util.ArrayList
 import javax.swing.*
 import javax.swing.text.JTextComponent
 
@@ -132,14 +134,4 @@ internal fun warn(message: String) {
   else {
     LOG.warn(message)
   }
-}
-
-internal fun buildPanelHierarchy(leaf: RowImpl): List<Panel> {
-  val hierarchy = ArrayList<Panel>()
-  var row: RowImpl? = leaf
-  while (row != null) {
-    hierarchy.add(row.parent)
-    row = row.parent.parent
-  }
-  return hierarchy
 }

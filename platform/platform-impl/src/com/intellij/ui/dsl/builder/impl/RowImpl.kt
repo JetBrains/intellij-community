@@ -46,7 +46,7 @@ import javax.swing.*
 @ApiStatus.Internal
 internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                             private val panelContext: PanelContext,
-                            val parent: PanelImpl,
+                            private val parent: PanelImpl,
                             rowLayout: RowLayout) : Row {
 
   var rowLayout = rowLayout

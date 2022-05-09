@@ -2,7 +2,6 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.util.Key
 import com.intellij.ui.dsl.gridLayout.Gaps
 import javax.swing.JComponent
 import javax.swing.event.HyperlinkEvent
@@ -25,12 +24,6 @@ enum class DslComponentProperty {
    */
   VISUAL_PADDINGS
 }
-
-/**
- * DSL panels inside [com.intellij.openapi.ui.DialogPanel] form flat structure.
- * So this value can help to recreate panel tree DSL structure.
- */
-val DSL_PANEL_HIERARCHY = Key.create<List<Panel>>("com.intellij.ui.dsl.builder.DSL_PANEL_HIERARCHY")
 
 /**
  * Default comment width

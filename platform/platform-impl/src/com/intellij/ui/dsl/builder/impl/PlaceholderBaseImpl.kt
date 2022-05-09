@@ -2,9 +2,7 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.putUserData
 import com.intellij.ui.dsl.builder.CellBase
-import com.intellij.ui.dsl.builder.DSL_PANEL_HIERARCHY
 import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.gridLayout.Constraints
 import org.jetbrains.annotations.ApiStatus
@@ -59,9 +57,6 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
   }
 
   private fun reinstallComponent(oldComponent: JComponent?, newComponent: JComponent?) {
-    oldComponent?.putUserData(DSL_PANEL_HIERARCHY, null)
-    newComponent?.putUserData(DSL_PANEL_HIERARCHY, buildPanelHierarchy(parent))
-
     var invalidate = false
     if (oldComponent != null) {
       placeholderCellData?.let {

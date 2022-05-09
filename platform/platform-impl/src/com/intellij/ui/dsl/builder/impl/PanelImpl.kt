@@ -23,7 +23,7 @@ import javax.swing.JLabel
 @ApiStatus.Internal
 internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
                               var spacingConfiguration: SpacingConfiguration,
-                              val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
+                              private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
 
   val rows: List<RowImpl>
     get() = _rows
