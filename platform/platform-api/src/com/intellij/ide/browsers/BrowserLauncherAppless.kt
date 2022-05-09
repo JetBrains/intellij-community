@@ -38,8 +38,6 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     @JvmStatic
     fun canUseSystemDefaultBrowserPolicy(): Boolean =
       isDesktopActionSupported(Desktop.Action.BROWSE) || SystemInfo.isMac || SystemInfo.isWindows || SystemInfo.isUnix && SystemInfo.hasXdgOpen()
-
-    fun isOpenCommandUsed(command: GeneralCommandLine): Boolean = SystemInfo.isMac && ExecUtil.openCommandPath == command.exePath
   }
 
   override fun open(url: String): Unit = openOrBrowse(url, false)
@@ -188,28 +186,11 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       return false
     }
 
-    val command = BrowserUtil.getOpenBrowserCommand(effectivePath, openInNewWindow).toMutableList()
-    val commandLine = GeneralCommandLine(command)
-
     val browserSpecificSettings = browser?.specificSettings
+    val parameters = (browserSpecificSettings?.additionalParameters ?: emptyList()) + additionalParameters
+    val commandLine = GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(effectivePath, url, parameters, openInNewWindow))
     if (browserSpecificSettings != null) {
       commandLine.environment.putAll(browserSpecificSettings.environmentVariables)
-    }
-
-    val isOpenCommandUsed = isOpenCommandUsed(commandLine)
-    if (isOpenCommandUsed && url != null) {
-      commandLine.addParameter(url)
-    }
-    val specific = browserSpecificSettings?.additionalParameters ?: emptyList()
-    if (specific.size + additionalParameters.size > 0) {
-      if (isOpenCommandUsed) {
-        commandLine.addParameter("--args")
-      }
-      commandLine.addParameters(specific)
-      commandLine.addParameters(*additionalParameters)
-    }
-    if (!isOpenCommandUsed && url != null) {
-      commandLine.addParameter(url)
     }
 
     doLaunch(commandLine, project, browser, fix)

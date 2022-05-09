@@ -8,10 +8,10 @@ import com.intellij.ide.browsers.BrowserLauncherAppless;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,9 +20,9 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -87,24 +87,45 @@ public final class BrowserUtil {
     return ApplicationManager.getApplication() != null ? BrowserLauncher.getInstance() : new BrowserLauncherAppless();
   }
 
-  @NotNull
-  public static List<String> getOpenBrowserCommand(@NotNull String browserPathOrName, boolean newWindowIfPossible) {
-    if (new File(browserPathOrName).isFile()) {
-      return Collections.singletonList(browserPathOrName);
-    }
-    else if (SystemInfo.isMac) {
-      List<String> command = ContainerUtil.newArrayList(ExecUtil.getOpenCommandPath(), "-a", browserPathOrName);
-      if (newWindowIfPossible) {
-        command.add("-n");
+  public static @NotNull List<String> getOpenBrowserCommand(@NotNull String browserPathOrName,
+                                                            @Nullable String url,
+                                                            @NotNull List<String> parameters,
+                                                            boolean newWindowIfPossible) {
+    var command = new ArrayList<String>();
+
+    var path = NioFiles.toPath(browserPathOrName);
+    if (path == null || !Files.isRegularFile(path)) {
+      if (SystemInfo.isMac) {
+        command.addAll(List.of(ExecUtil.getOpenCommandPath(), "-a", browserPathOrName));
+        if (newWindowIfPossible) {
+          command.add("-n");
+        }
+        if (url != null) {
+          command.add(url);
+        }
+        if (!parameters.isEmpty()) {
+          command.add("--args");
+          command.addAll(parameters);
+        }
       }
-      return command;
+      else if (SystemInfo.isWindows) {
+        command.addAll(List.of(ExecUtil.getOpenCommandPath(), "/c", "start", GeneralCommandLine.inescapableQuote(""), browserPathOrName));
+        command.addAll(parameters);
+        if (url != null) {
+          command.add(url);
+        }
+      }
     }
-    else if (SystemInfo.isWindows) {
-      return Arrays.asList(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""), browserPathOrName);
+
+    if (command.isEmpty()) {
+      command.add(browserPathOrName);
+      command.addAll(parameters);
+      if (url != null) {
+        command.add(url);
+      }
     }
-    else {
-      return Collections.singletonList(browserPathOrName);
-    }
+
+    return command;
   }
 
   @NotNull
@@ -124,6 +145,12 @@ public final class BrowserUtil {
   }
 
   //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated the result is a pain to deal with; please use {@link #getOpenBrowserCommand(String, String, List, boolean)} instead */
+  @Deprecated(forRemoval = true)
+  public static @NotNull List<String> getOpenBrowserCommand(@NotNull String browserPathOrName, boolean newWindowIfPossible) {
+    return getOpenBrowserCommand(browserPathOrName, null, List.of(), newWindowIfPossible);
+  }
+
   /** @deprecated Use {@link #browse(String)} */
   @Deprecated
   public static void launchBrowser(@NotNull String url) {
