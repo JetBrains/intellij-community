@@ -261,7 +261,7 @@ class PostHighlightingVisitor {
   @Nullable
   private HighlightInfo processLocalVariable(@NotNull PsiLocalVariable variable,
                                              @NotNull PsiIdentifier identifier) {
-    if (variable instanceof PsiResourceVariable && PsiUtil.isIgnoredName(variable.getName())) return null;
+    if (PsiUtil.isIgnoredName(variable.getName())) return null;
     if (UnusedSymbolUtil.isImplicitUsage(myProject, variable)) return null;
 
     String message = null;

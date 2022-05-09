@@ -16,5 +16,6 @@ class PatternVariables {
 
     }
     var strings = getStrings(); // strings unused
+    final boolean ignored = new java.io.File(args[1]).delete(); // don't warn on variables named 'ignored'
   }
 }

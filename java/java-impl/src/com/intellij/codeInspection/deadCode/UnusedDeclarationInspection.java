@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBLabel;
@@ -294,6 +295,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
         for (DefUseUtil.Info varDefInfo : unusedDefs) {
           PsiElement parent = varDefInfo.getContext();
           PsiVariable variable = varDefInfo.getVariable();
+          if (PsiUtil.isIgnoredName(variable.getName())) continue;
           if (parent instanceof PsiDeclarationStatement || parent instanceof PsiForeachStatement ||
               variable instanceof PsiResourceVariable || variable instanceof PsiPatternVariable) {
             if (!varDefInfo.isRead() && !SuppressionUtil.inspectionResultSuppressed(variable, UnusedDeclarationInspection.this)) {
