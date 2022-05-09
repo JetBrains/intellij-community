@@ -154,7 +154,7 @@ fun KotlinVersionRequirement.matches(version: KotlinVersion): Boolean {
 }
 
 fun KotlinVersionRequirement.Exact.matches(version: KotlinVersion): Boolean {
-    return this.version == version
+    return this.version.compareTo(version) == 0
 }
 
 fun KotlinVersionRequirement.Range.matches(version: KotlinVersion): Boolean {
