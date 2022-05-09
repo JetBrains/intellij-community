@@ -196,19 +196,19 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       commandLine.environment.putAll(browserSpecificSettings.environmentVariables)
     }
 
-    val isBrowserPathUsedAsCommand = command.size == 1
-    if (!isBrowserPathUsedAsCommand && url != null) {
+    val isOpenCommandUsed = isOpenCommandUsed(commandLine)
+    if (isOpenCommandUsed && url != null) {
       commandLine.addParameter(url)
     }
     val specific = browserSpecificSettings?.additionalParameters ?: emptyList()
     if (specific.size + additionalParameters.size > 0) {
-      if (isOpenCommandUsed(commandLine)) {
+      if (isOpenCommandUsed) {
         commandLine.addParameter("--args")
       }
       commandLine.addParameters(specific)
       commandLine.addParameters(*additionalParameters)
     }
-    if (isBrowserPathUsedAsCommand && url != null) {
+    if (!isOpenCommandUsed && url != null) {
       commandLine.addParameter(url)
     }
 
