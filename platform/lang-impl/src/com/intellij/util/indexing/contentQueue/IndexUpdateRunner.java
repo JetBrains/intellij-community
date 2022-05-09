@@ -4,6 +4,7 @@ package com.intellij.util.indexing.contentQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.WrappedProgressIndicator;
@@ -17,6 +18,7 @@ import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
+import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,6 +43,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class IndexUpdateRunner {
@@ -266,10 +269,13 @@ public final class IndexUpdateRunner {
     try {
       indexingJob.setLocationBeingIndexed(file);
       if (!file.isDirectory()) {
+        @NotNull Supplier<@NotNull Boolean> fileTypeChangeChecker = CachedFileType.getFileTypeChangeChecker();
+        FileType type = file.getFileType();
         FileIndexesValuesApplier applier = ReadAction
           .nonBlocking(() -> {
             myIndexingAttemptCount.incrementAndGet();
-            return myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent);
+            FileType fileType = fileTypeChangeChecker.get() ? type : null;
+            return myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent, fileType);
           })
           .expireWith(indexingJob.myProject)
           .wrapProgress(indexingJob.myIndicator)

@@ -650,7 +650,17 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public void freezeFileTypeTemporarilyIn(@NotNull VirtualFile file, @NotNull Runnable runnable) {
-    FileType fileType = file.isDirectory() ? null : file.getFileType();
+    freezeFileTypeTemporarilyWithProvidedValueIn(file, null, runnable);
+  }
+
+  @ApiStatus.Internal
+  public void freezeFileTypeTemporarilyWithProvidedValueIn(@NotNull VirtualFile file,
+                                                           @Nullable FileType cachedFileType,
+                                                           @NotNull Runnable runnable) {
+    FileType fileType = null;
+    if (!file.isDirectory()) {
+      fileType = cachedFileType != null ? cachedFileType : file.getFileType();
+    }
     Pair<VirtualFile, FileType> old = FILE_TYPE_FIXED_TEMPORARILY.get();
     FILE_TYPE_FIXED_TEMPORARILY.set(new Pair<>(file, fileType));
     if (toLog()) {
@@ -852,7 +862,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  @SuppressWarnings("removal")
   public void registerFileType(@NotNull FileType type, String @Nullable ... defaultAssociatedExtensions) {
     PluginException.reportDeprecatedUsage("FileTypeManager#registerFileType", "Use `com.intellij.fileType` extension or `FileTypeFactory` instead.");
     List<FileNameMatcher> matchers = new ArrayList<>();
@@ -971,7 +980,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  @SuppressWarnings("removal")
   public String @NotNull [] getAssociatedExtensions(@NotNull FileType type) {
     instantiatePendingFileTypeByName(type.getName());
     return withReadLock(() -> myPatternsTable.getAssociatedExtensions(FileTypeWithDescriptor.allFor(type)));
