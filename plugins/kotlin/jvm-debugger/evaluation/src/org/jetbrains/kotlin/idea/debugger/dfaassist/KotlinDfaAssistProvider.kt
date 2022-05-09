@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.debugger.dfaassist
 
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor
+import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
@@ -13,20 +14,25 @@ import com.intellij.debugger.jdi.StackFrameProxyEx
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.util.ThreeState
 import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.debugger.ClassNameCalculator
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
+import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem
 import org.jetbrains.kotlin.idea.inspections.dfa.KtThisDescriptor
 import org.jetbrains.kotlin.idea.inspections.dfa.KtVariableDescriptor
 import org.jetbrains.kotlin.idea.util.toJvmFqName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 class KotlinDfaAssistProvider : DfaAssistProvider {
@@ -118,7 +124,7 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
             val hints = hashMapOf<PsiElement, DfaHint>()
 
             override fun beforePush(args: Array<out DfaValue>, value: DfaValue, anchor: DfaAnchor, state: DfaMemoryState) {
-                val psi = when (anchor) {
+                var psi = when (anchor) {
                     is KotlinAnchor.KotlinExpressionAnchor -> {
                         if (shouldTrackExpressionValue(anchor.expression)) anchor.expression
                         else return
@@ -132,8 +138,31 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
                     hint = DfaHint.TRUE
                 } else if (dfType === DfTypes.FALSE) {
                     hint = DfaHint.FALSE
+                } else if (dfType === DfTypes.NULL) {
+                    val parent = psi.parent
+                    if (parent is KtPostfixExpression && parent.operationToken == KtTokens.EXCLEXCL) {
+                        hint = DfaHint.NPE
+                    } else if (parent is KtBinaryExpressionWithTypeRHS && parent.operationReference.textMatches("as")) {
+                        val typeReference = parent.right
+                        val type =
+                            typeReference?.getAbbreviatedTypeOrType(typeReference.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL))
+                        if (type != null && !type.isMarkedNullable) {
+                            hint = DfaHint.NPE
+                            psi = parent.operationReference
+                        }
+                    }
                 }
                 hints.merge(psi, hint, DfaHint::merge)
+            }
+
+            override fun onCondition(problem: UnsatisfiedConditionProblem, value: DfaValue, failed: ThreeState, state: DfaMemoryState) {
+                if (problem is KotlinProblem.KotlinCastProblem) {
+                    hints.merge(
+                        problem.cast.operationReference,
+                        if (failed == ThreeState.YES) DfaHint.CCE else DfaHint.NONE,
+                        DfaHint::merge
+                    )
+                }
             }
 
             private fun shouldTrackExpressionValue(expr: KtExpression): Boolean {

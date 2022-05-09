@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.engine.dfaassist.DfaAssistTest
+import com.intellij.debugger.mockJDI.MockLocalVariable
 import com.intellij.debugger.mockJDI.MockStackFrame
 import com.intellij.debugger.mockJDI.MockVirtualMachine
 import com.intellij.debugger.mockJDI.values.MockBooleanValue
@@ -131,6 +132,37 @@ class KotlinDfaAssistTest : DfaAssistTest() {
                   }""") { vm, frame ->
             frame.addVariable("a", MockIntegerValue(vm, 3))
             frame.addVariable("b", MockIntegerValue(vm, 5))
+        }
+    }
+
+    fun testNPE() {
+        doTest("""
+            fun test(x: String?) {
+              <caret>println(x/*NPE*/!!)
+            }
+        """.trimIndent()) { vm, frame ->
+            frame.addVariable(MockLocalVariable(vm, "x", vm.createReferenceType(String::class.java), null))
+        }
+    }
+
+    fun testAsNull() {
+        doTest("""
+            fun test(x: Any?) {
+              <caret>println(x as String?) 
+              println(x as/*NPE*/ String)
+            }
+        """.trimIndent()) { vm, frame ->
+            frame.addVariable(MockLocalVariable(vm, "x", vm.createReferenceType(String::class.java), null))
+        }
+    }
+
+    fun testAs() {
+        doTest("""
+            fun test(x: Any?) {
+              <caret>println(x as/*CCE*/ Int) 
+            }
+        """.trimIndent()) { vm, frame ->
+            frame.addVariable("x", MockValue.createValue("", vm))
         }
     }
 

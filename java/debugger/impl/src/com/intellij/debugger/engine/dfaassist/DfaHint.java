@@ -43,6 +43,7 @@ public enum DfaHint {
     if (this.myValue && other.myValue) return ANY_VALUE;
     if (this.myValue) return other;
     if (other.myValue) return this;
+    if (this == CCE && other == NPE || this == NPE && other == CCE) return NPE;
     return NONE;
   }
 }
