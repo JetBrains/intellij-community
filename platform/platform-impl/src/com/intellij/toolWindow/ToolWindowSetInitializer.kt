@@ -50,7 +50,7 @@ private inline fun Logger.debug(project: Project, lazyMessage: (project: String)
 internal class InitToolWindowSetActivity : StartupActivity {
   override fun runActivity(project: Project) {
     val app = ApplicationManager.getApplication()
-    if (app.isHeadlessEnvironment) {
+    if (app.isHeadlessEnvironment || app.isUnitTestMode) {
       return
     }
 
