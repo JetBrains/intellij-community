@@ -31,6 +31,7 @@ import org.cef.CefSettings.LogSeverity;
 import org.cef.callback.CefSchemeHandlerFactory;
 import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefAppHandlerAdapter;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +69,8 @@ public final class JBCefApp {
   private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 7;
 
   @NotNull private final CefApp myCefApp;
+
+  @Nullable private CefSettings myCefSettings;
 
   @NotNull private final Disposable myDisposable = new Disposable() {
     @Override
@@ -198,6 +201,7 @@ public final class JBCefApp {
     }
 
     CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes));
+    myCefSettings = settings;
     myCefApp = CefApp.getInstance(settings);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
   }
@@ -358,6 +362,11 @@ public final class JBCefApp {
     if (!initialised) return false;
     //noinspection ConstantConditions
     return getInstance() != null;
+  }
+
+  @Contract(pure = true)
+  @Nullable String getCachePath() {
+    return myCefSettings != null ? myCefSettings.cache_path : null;
   }
 
   @NotNull
