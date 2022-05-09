@@ -56,7 +56,7 @@ public abstract class InspectionTreeNode implements TreeNode {
     }
   });
 
-  protected final ProblemLevels myProblemLevels = new ProblemLevels();
+  final ProblemLevels myProblemLevels = new ProblemLevels();
   @Nullable
   volatile Children myChildren;
   final InspectionTreeNode myParent;
@@ -183,7 +183,7 @@ public abstract class InspectionTreeNode implements TreeNode {
   }
 
   @Override
-  public Enumeration children() {
+  public Enumeration<? extends TreeNode> children() {
     return Collections.enumeration(getChildren());
   }
 
