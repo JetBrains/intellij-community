@@ -4,6 +4,8 @@ package git4idea.rebase
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -98,8 +100,6 @@ internal class GitRebaseDialog(private val project: Project,
   private val rebaseMergesAvailable = REBASE_MERGES_REPLACES_PRESERVE_MERGES.existsIn(gitVersion)
 
   init {
-    loadTagsInBackground()
-
     title = GitBundle.message("rebase.dialog.title")
     setOKButtonText(GitBundle.message("rebase.dialog.start.rebase"))
 
@@ -111,6 +111,8 @@ internal class GitRebaseDialog(private val project: Project,
     updateUi()
 
     updateOkActionEnabled()
+
+    invokeLater(ModalityState.stateForComponent(rootPane)) { loadTagsInBackground() }
   }
 
   override fun createCenterPanel() = panel
@@ -263,10 +265,12 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun loadTagsInBackground() {
+    val selectedRoot = getSelectedRepo().root
     ProgressManager.getInstance().run(
       object : Task.Backgroundable(project, GitBundle.message("rebase.dialog.progress.loading.tags"), true) {
         override fun run(indicator: ProgressIndicator) {
           val sortedRoots = LinkedHashSet<VirtualFile>(roots.size).apply {
+            add(selectedRoot)
             if (defaultRoot != null) {
               add(defaultRoot)
             }
@@ -278,12 +282,16 @@ internal class GitRebaseDialog(private val project: Project,
 
             tags[root] = tagsInRepo
 
-            if (getSelectedRepo().root == root) {
+            if (selectedRoot == root) {
               UIUtil.invokeLaterIfNeeded {
                 updateBaseFields()
               }
             }
           }
+        }
+
+        override fun onSuccess() {
+          updateBaseFields()
         }
       })
   }
