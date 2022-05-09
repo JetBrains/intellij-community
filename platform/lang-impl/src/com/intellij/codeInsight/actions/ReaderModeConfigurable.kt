@@ -19,7 +19,7 @@ import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.PlatformUtils
 
 internal class ReaderModeConfigurable(private val project: Project) : BoundSearchableConfigurable(
-  LangBundle.message("configurable.reader.mode"), "READER_MODE_HELP") {
+  LangBundle.message("configurable.reader.mode"), "editor.reader.mode") {
   private val settings get() = ReaderModeSettings.getInstance(project)
 
   private val cdInlays get() = CheckboxDescriptor(LangBundle.message("checkbox.inlays"), settings::showInlaysHints)
