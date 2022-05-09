@@ -57,6 +57,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -785,10 +786,16 @@ public final class ConfigImportHelper {
     else {
       migratePlugins(oldPluginsDir,
                      newPluginsDir,
-                     newConfigDir,
-                     oldConfigDir,
                      options,
-                     Files.isDirectory(oldPluginsDir) ? collectPendingPluginUpdates(actionCommands, options.log) : __ -> false);
+                     Files.isDirectory(oldPluginsDir) ? collectPendingPluginUpdates(actionCommands, options.log) : __ -> false,
+                     (pluginsToMigrate, pluginsToDownload) -> {
+                       if (options.importSettings != null) {
+                         options.importSettings.processPluginsToMigrate(newConfigDir,
+                                                                        oldConfigDir,
+                                                                        pluginsToMigrate,
+                                                                        pluginsToDownload);
+                       }
+                     });
     }
 
     if (SystemInfoRt.isMac && (PlatformUtils.isIntelliJ() || "AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))) {
@@ -823,50 +830,47 @@ public final class ConfigImportHelper {
 
   private static void migratePlugins(@NotNull Path oldPluginsDir,
                                      @NotNull Path newPluginsDir,
-                                     @NotNull Path newConfigDir,
-                                     @NotNull Path oldConfigDir,
                                      @NotNull ConfigImportOptions options,
-                                     @NotNull Predicate<? super IdeaPluginDescriptor> hasPendingUpdate) throws IOException {
+                                     @NotNull Predicate<? super IdeaPluginDescriptor> hasPendingUpdate,
+                                     @NotNull BiConsumer<List<IdeaPluginDescriptor>, List<IdeaPluginDescriptor>> consumer)
+    throws IOException {
     Logger log = options.log;
 
-    try {
-      List<IdeaPluginDescriptor> pluginsToMigrate = new ArrayList<>();
-      List<IdeaPluginDescriptor> pluginsToDownload = new ArrayList<>();
+    List<IdeaPluginDescriptor> pluginsToMigrate = new ArrayList<>();
+    List<IdeaPluginDescriptor> pluginsToDownload = new ArrayList<>();
 
-      if (Files.isDirectory(oldPluginsDir)) {
+    if (Files.isDirectory(oldPluginsDir)) {
+      try {
         PluginDescriptorLoader.getDescriptorsToMigrate(oldPluginsDir,
                                                        options.compatibleBuildNumber,
                                                        options.bundledPluginPath,
                                                        options.brokenPluginVersions,
                                                        pluginsToMigrate,
                                                        pluginsToDownload);
-
-        if (options.importSettings != null) {
-          options.importSettings.processPluginsToMigrate(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload);
-        }
-
-        pluginsToMigrate.removeIf(hasPendingUpdate);
-        migratePlugins(newPluginsDir, pluginsToMigrate, log);
       }
-      else {
-        log.info("non-existing plugins directory: " + oldPluginsDir);
-
-        if (options.importSettings != null) {
-          options.importSettings.processPluginsToMigrate(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload);
-        }
-      }
-
-      pluginsToDownload.removeIf(hasPendingUpdate);
-      if (!pluginsToDownload.isEmpty()) {
-        downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, pluginsToDownload);
-
-        // migrating plugins for which we weren't able to download updates
-        migratePlugins(newPluginsDir, pluginsToDownload, log);
+      catch (ExecutionException | InterruptedException e) {
+        log.info("Error loading list of plugins from old dir, migrating entire plugin directory");
+        FileUtil.copyDir(oldPluginsDir.toFile(), newPluginsDir.toFile());
+        return;
       }
     }
-    catch (ExecutionException | InterruptedException e) {
-      log.info("Error loading list of plugins from old dir, migrating entire plugin directory");
-      FileUtil.copyDir(oldPluginsDir.toFile(), newPluginsDir.toFile());
+    else {
+      log.info("Non-existing plugins directory: " + oldPluginsDir);
+    }
+
+    consumer.accept(pluginsToMigrate, pluginsToDownload);
+
+    pluginsToMigrate.removeIf(hasPendingUpdate);
+    if (!pluginsToMigrate.isEmpty()) {
+      migratePlugins(newPluginsDir, pluginsToMigrate, log);
+    }
+
+    pluginsToDownload.removeIf(hasPendingUpdate);
+    if (!pluginsToDownload.isEmpty()) {
+      downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, pluginsToDownload);
+
+      // migrating plugins for which we weren't able to download updates
+      migratePlugins(newPluginsDir, pluginsToDownload, log);
     }
   }
 
