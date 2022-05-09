@@ -1,9 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
+import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.VcsCodeAuthorInlayHintsProvider
 import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector.Companion.CLASS_LOCATION
 import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector.Companion.FUNCTION_LOCATION
@@ -37,4 +39,9 @@ internal class KotlinCodeAuthorInlayHintsProvider : VcsCodeAuthorInlayHintsProvi
 
         return { logCodeAuthorClicked(project, location) }
     }
+
+    override fun getProperty(key: String): String = KotlinBundle.getMessage(key)
+
+    override fun getCaseDescription(case: ImmediateConfigurable.Case): String? = case.extendedDescription
+
 }

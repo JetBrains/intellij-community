@@ -39,10 +39,6 @@ class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHint
     override val group: InlayGroup
         get() = InlayGroup.LAMBDAS_GROUP
 
-    override fun getProperty(key: String): String {
-        return KotlinBundle.getMessage(key)
-    }
-
     override fun isElementSupported(resolved: HintType?, settings: Settings): Boolean =
         when (resolved) {
             HintType.LAMBDA_RETURN_EXPRESSION -> settings.returnExpressions

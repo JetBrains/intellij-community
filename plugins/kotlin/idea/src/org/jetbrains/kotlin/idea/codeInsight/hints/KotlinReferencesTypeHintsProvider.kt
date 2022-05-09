@@ -115,8 +115,4 @@ class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinRefe
                 .collect(Collectors.toList())
         }
     """.trimIndent()
-
-    override fun getProperty(key: String): String {
-        return KotlinBundle.getMessage(key)
-    }
 }

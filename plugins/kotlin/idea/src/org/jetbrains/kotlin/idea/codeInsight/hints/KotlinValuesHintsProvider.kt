@@ -61,10 +61,6 @@ class KotlinValuesHintsProvider : KotlinAbstractHintsProvider<KotlinValuesHintsP
 
     override val description: String
         get() = KotlinBundle.message("inlay.kotlin.values.hints")
-
-    override fun getProperty(key: String): String {
-        return KotlinBundle.getMessage(key)
-    }
 }
 
 internal fun KtBinaryExpression.isRangeExpression(): Boolean =

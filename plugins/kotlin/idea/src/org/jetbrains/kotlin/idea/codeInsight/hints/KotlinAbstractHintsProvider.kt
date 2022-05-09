@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
@@ -37,6 +38,10 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
     open fun isHintSupported(hintType: HintType): Boolean = false
 
     override fun isLanguageSupported(language: Language): Boolean = language == KotlinLanguage.INSTANCE
+
+    override fun getProperty(key: String): String = KotlinBundle.getMessage(key)
+
+    override fun getCaseDescription(case: ImmediateConfigurable.Case): String? = case.extendedDescription
 
     override fun createFile(project: Project, fileType: FileType, document: Document): PsiFile =
         createKtFile(project, document, fileType)

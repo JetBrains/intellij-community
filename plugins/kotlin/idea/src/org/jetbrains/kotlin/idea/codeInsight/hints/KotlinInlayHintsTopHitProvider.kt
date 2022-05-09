@@ -52,6 +52,7 @@ class KotlinInlayHintsTopHitProvider : OptionsSearchTopHitProvider.ProjectLevelP
             ) +
                     it.cases.map { case ->
                         CheckboxDescriptor(
+                            // TODO: Have to clean up this hidden "gem" - maybe make `Case` open ?
                             KotlinBundle.message("${it.id}.${case.id}"),
                             PropertyBinding(
                                 get = case::value,
