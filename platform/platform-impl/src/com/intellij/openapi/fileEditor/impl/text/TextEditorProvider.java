@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.ApplicationManager;
@@ -361,11 +360,6 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
 
     @Override
     public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
-
-    @Override
-    public BackgroundEditorHighlighter getBackgroundHighlighter() {
-      return null;
-    }
 
     @Override
     public boolean canNavigateTo(@NotNull final Navigatable navigatable) {

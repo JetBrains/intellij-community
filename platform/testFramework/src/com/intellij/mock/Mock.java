@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
@@ -98,11 +97,6 @@ public class Mock {
 
     @Override
     public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    }
-
-    @Override
-    public BackgroundEditorHighlighter getBackgroundHighlighter() {
-      return null;
     }
   }
 
