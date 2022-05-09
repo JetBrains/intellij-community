@@ -5,13 +5,11 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.util.text.Strings
-import com.intellij.util.ExceptionUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.Jdk11Downloader
@@ -55,15 +53,6 @@ final class CompilationContextImpl implements CompilationContext {
   JpsCompilationData compilationData
   final Path stableJavaExecutable
   final Path stableJdkHome
-  @Nullable
-  final Throwable jpsBuildInitializationException
-
-  @Override
-  void assertJpsCompilerAvailable() {
-    if (jpsBuildInitializationException != null) {
-      throw new IllegalStateException("JPS compiler is not available: ${jpsBuildInitializationException.message}", jpsBuildInitializationException)
-    }
-  }
 
   @SuppressWarnings("GrUnresolvedAccess")
   static CompilationContextImpl create(String communityHome, String projectHome, String defaultOutputRoot) {
@@ -88,22 +77,12 @@ final class CompilationContextImpl implements CompilationContext {
 
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
     def kotlinBinaries = new KotlinBinaries(communityHome, options, messages)
-
-    Throwable jpsBuildInitializationException
-    try {
-      setJpsPluginFiles(List.of(kotlinBinaries.kotlinJpsPluginJar), messages)
-      jpsBuildInitializationException = null
-    } catch (Throwable t) {
-      messages.warning("Unable to initialize JPS plugins (warning only, does not affect anything besides compilation): ${ExceptionUtil.getThrowableText(t)}")
-      jpsBuildInitializationException = t
-    }
-
     def model = loadProject(projectHome, kotlinBinaries, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
 
     projectHome = toCanonicalPath(projectHome)
     CompilationContextImpl context = new CompilationContextImpl(model, communityHome, projectHome, messages, oldToNewModuleName,
-                                             buildOutputRootEvaluator, options, jpsBuildInitializationException)
+                                             buildOutputRootEvaluator, options)
     defineJavaSdk(context)
     context.prepareForBuild()
 
@@ -176,10 +155,7 @@ final class CompilationContextImpl implements CompilationContext {
   private CompilationContextImpl(JpsModel model, String communityHome,
                                  String projectHome, BuildMessages messages,
                                  Map<String, String> oldToNewModuleName,
-                                 BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator,
-                                 BuildOptions options,
-                                 Throwable jpsBuildInitializationException) {
-    this.jpsBuildInitializationException = jpsBuildInitializationException
+                                 BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
     this.projectModel = model
     this.project = model.project
     this.global = model.global
@@ -210,8 +186,7 @@ final class CompilationContextImpl implements CompilationContext {
   CompilationContextImpl createCopy(BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
     CompilationContextImpl copy = new CompilationContextImpl(projectModel, paths.communityHome, paths.projectHome,
-                                                             messages, oldToNewModuleName, buildOutputRootEvaluator,
-                                                             options, jpsBuildInitializationException)
+                                                             messages, oldToNewModuleName, buildOutputRootEvaluator, options)
     copy.compilationData = compilationData
     return copy
   }
@@ -231,7 +206,6 @@ final class CompilationContextImpl implements CompilationContext {
     this.bundledRuntime = context.bundledRuntime
     this.stableJavaExecutable = context.stableJavaExecutable
     this.stableJdkHome = context.stableJdkHome
-    this.jpsBuildInitializationException = context.jpsBuildInitializationException
   }
 
   CompilationContextImpl cloneForContext(BuildMessages messages) {
@@ -246,7 +220,7 @@ final class CompilationContextImpl implements CompilationContext {
         "Setting JPS plugin paths to " +
         Strings.join(pluginFiles, path -> path.toString(), ","))
 
-      JpsPluginManager.setInstance(new StandaloneJpsPluginManager(pluginFiles))
+      JpsPluginManager.setInstance(new StandaloneJpsPluginManager(pluginFiles));
     }
     else {
       if (!(currentPluginManager instanceof StandaloneJpsPluginManager)) {
@@ -271,6 +245,8 @@ final class CompilationContextImpl implements CompilationContext {
   }
 
   private static JpsModel loadProject(String projectHome, KotlinBinaries kotlinBinaries, BuildMessages messages) {
+    setJpsPluginFiles(List.of(kotlinBinaries.kotlinJpsPluginJar), messages)
+
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
     if (kotlinBinaries.isCompilerRequired()) {

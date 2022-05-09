@@ -59,12 +59,4 @@ interface CompilationContext {
 
   @Deprecated("Use notifyArtifactWasBuilt")
   fun notifyArtifactBuilt(artifactPath: String)
-
-  /**
-   * Sometimes it's impossible to initialize a proper JPS build, in that case throw an exception.
-   * Known reason: JPS build components were initialized before creating a CompilationContext
-   * e.g. for some tests.
-   * TODO To fix it the right way, creating a compilation context should be decoupled from actually build a product
-   */
-  fun assertJpsCompilerAvailable()
 }
