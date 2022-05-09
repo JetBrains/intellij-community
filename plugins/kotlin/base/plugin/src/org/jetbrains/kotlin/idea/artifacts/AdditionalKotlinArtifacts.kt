@@ -86,7 +86,7 @@ object AdditionalKotlinArtifacts {
 
         if (!jar.exists()) {
             val stream = URL(
-                "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies" +
+                "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/" +
                         "org/jetbrains/kotlin/$artifactId/$version/$artifactId-$version.$extension"
             ).openStream()
             Files.copy(stream, jar)
