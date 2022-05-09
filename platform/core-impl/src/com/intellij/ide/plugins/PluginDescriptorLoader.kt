@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment")
 @file:JvmName("PluginDescriptorLoader")
 @file:ApiStatus.Internal
@@ -364,29 +364,24 @@ private fun loadDescriptorsFromProperty(result: PluginLoadingResult, context: De
   }
 }
 
-internal fun loadDescriptors(isUnitTestMode: Boolean, isRunningFromSources: Boolean): DescriptorListLoadingContext {
+internal fun loadDescriptors(
+  isUnitTestMode: Boolean,
+  isRunningFromSources: Boolean,
+): DescriptorListLoadingContext {
   val result = createPluginLoadingResult(null)
-  val bundledPluginPath: Path? = if (isUnitTestMode) {
-    null
-  }
-  else if (java.lang.Boolean.getBoolean("idea.use.dev.build.server")) {
-    Paths.get(PathManager.getHomePath(), "out/dev-run", PlatformUtils.getPlatformPrefix(), "plugins")
-  }
-  else {
-    Paths.get(PathManager.getPreInstalledPluginsPath())
-  }
-
   val context = DescriptorListLoadingContext(isMissingSubDescriptorIgnored = true,
                                              isMissingIncludeIgnored = isUnitTestMode,
                                              checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
                                              disabledPlugins = DisabledPluginsState.disabledPlugins(),
                                              result = result)
   context.use {
-    loadBundledDescriptorsAndDescriptorsFromDir(context = context,
-                                                customPluginDir = Paths.get(PathManager.getPluginsPath()),
-                                                bundledPluginDir = bundledPluginPath,
-                                                isUnitTestMode = isUnitTestMode,
-                                                isRunningFromSources = isRunningFromSources)
+    loadDescriptorsFromDirs(
+      context = context,
+      customPluginDir = Paths.get(PathManager.getPluginsPath()),
+      isUnitTestMode = isUnitTestMode,
+      isRunningFromSources = isRunningFromSources,
+    )
+
     loadDescriptorsFromProperty(result, context)
     if (isUnitTestMode && result.enabledPluginCount() <= 1) {
       // we're running in unit test mode, but the classpath doesn't contain any plugins; try to load bundled plugins anyway
@@ -398,11 +393,13 @@ internal fun loadDescriptors(isUnitTestMode: Boolean, isRunningFromSources: Bool
   return context
 }
 
-private fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListLoadingContext,
-                                                        customPluginDir: Path,
-                                                        bundledPluginDir: Path?,
-                                                        isUnitTestMode: Boolean,
-                                                        isRunningFromSources: Boolean) {
+private fun loadDescriptorsFromDirs(
+  context: DescriptorListLoadingContext,
+  customPluginDir: Path,
+  bundledPluginDir: Path? = null,
+  isUnitTestMode: Boolean = PluginManagerCore.isUnitTestMode,
+  isRunningFromSources: Boolean = PluginManagerCore.isRunningFromSources(),
+) {
   val classLoader = DescriptorListLoadingContext::class.java.classLoader
   val pool = ForkJoinPool.commonPool()
   var activity = StartUpMeasurer.startActivity("platform plugin collecting", ActivityCategory.DEFAULT)
@@ -442,9 +439,20 @@ private fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListL
 
   activity = activity.endAndStart("plugin from user dir loading")
   pool.invoke(LoadDescriptorsFromDirAction(customPluginDir, context, isBundled = false))
-  if (bundledPluginDir != null) {
+
+  val bundledPluginDirOrDefault = bundledPluginDir ?: if (isUnitTestMode) {
+    null
+  }
+  else if (isInDevServerMode) {
+    Paths.get(PathManager.getHomePath(), "out/dev-run", platformPrefix, "plugins")
+  }
+  else {
+    Paths.get(PathManager.getPreInstalledPluginsPath())
+  }
+
+  if (bundledPluginDirOrDefault != null) {
     activity = activity.endAndStart("plugin from bundled dir loading")
-    pool.invoke(LoadDescriptorsFromDirAction(bundledPluginDir, context, isBundled = true))
+    pool.invoke(LoadDescriptorsFromDirAction(bundledPluginDirOrDefault, context, isBundled = true))
   }
   activity.end()
 }
@@ -572,45 +580,27 @@ fun loadDescriptor(file: Path,
 }
 
 @Throws(ExecutionException::class, InterruptedException::class)
-fun getDescriptorsToMigrate(dir: Path,
-                            compatibleBuildNumber: BuildNumber?,
-                            bundledPluginsPath: Path?,
-                            brokenPluginVersions: Map<PluginId, Set<String>>?,
-                            pluginsToMigrate: MutableList<IdeaPluginDescriptor?>,
-                            incompatiblePlugins: MutableList<IdeaPluginDescriptor?>) {
-  val loadingResult = PluginLoadingResult(brokenPluginVersions = brokenPluginVersions ?: PluginManagerCore.getBrokenPluginVersions(),
-                                          productBuildNumber = Supplier { compatibleBuildNumber ?: PluginManagerCore.getBuildNumber() }
+fun loadDescriptors(
+  customPluginDir: Path,
+  bundledPluginDir: Path?,
+  brokenPluginVersions: Map<PluginId, Set<String?>>?,
+  productBuildNumber: BuildNumber?,
+): PluginLoadingResult {
+  val result = PluginLoadingResult(
+    brokenPluginVersions = brokenPluginVersions ?: PluginManagerCore.getBrokenPluginVersions(),
+    productBuildNumber = Supplier { productBuildNumber ?: PluginManagerCore.getBuildNumber() },
   )
-  val context = DescriptorListLoadingContext(disabledPlugins = emptySet(),
-                                             result = loadingResult,
-                                             isMissingIncludeIgnored = true,
-                                             isMissingSubDescriptorIgnored = true)
-  val effectiveBundledPluginPath = if (bundledPluginsPath != null || PluginManagerCore.isUnitTestMode) {
-    bundledPluginsPath
+
+  DescriptorListLoadingContext(
+    disabledPlugins = emptySet(),
+    result = result,
+    isMissingIncludeIgnored = true,
+    isMissingSubDescriptorIgnored = true,
+  ).use {
+    loadDescriptorsFromDirs(it, customPluginDir, bundledPluginDir)
   }
-  else {
-    Paths.get(PathManager.getPreInstalledPluginsPath())
-  }
-  loadBundledDescriptorsAndDescriptorsFromDir(context = context,
-                                              customPluginDir = dir,
-                                              bundledPluginDir = effectiveBundledPluginPath,
-                                              isUnitTestMode = PluginManagerCore.isUnitTestMode,
-                                              isRunningFromSources = PluginManagerCore.isRunningFromSources())
-  for (descriptor in loadingResult.idMap.values) {
-    if (!descriptor.isBundled) {
-      if (loadingResult.isBroken(descriptor.pluginId)) {
-        incompatiblePlugins.add(descriptor)
-      }
-      else {
-        pluginsToMigrate.add(descriptor)
-      }
-    }
-  }
-  for (descriptor in loadingResult.incompletePlugins.values) {
-    if (!descriptor.isBundled) {
-      incompatiblePlugins.add(descriptor)
-    }
-  }
+
+  return result
 }
 
 @TestOnly

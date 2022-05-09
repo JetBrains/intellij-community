@@ -841,12 +841,10 @@ public final class ConfigImportHelper {
 
     if (Files.isDirectory(oldPluginsDir)) {
       try {
-        PluginDescriptorLoader.getDescriptorsToMigrate(oldPluginsDir,
-                                                       options.compatibleBuildNumber,
-                                                       options.bundledPluginPath,
-                                                       options.brokenPluginVersions,
-                                                       pluginsToMigrate,
-                                                       pluginsToDownload);
+        collectNonBundledPluginsUpdates(oldPluginsDir,
+                                        pluginsToMigrate,
+                                        pluginsToDownload,
+                                        options);
       }
       catch (ExecutionException | InterruptedException e) {
         log.info("Error loading list of plugins from old dir, migrating entire plugin directory");
@@ -871,6 +869,34 @@ public final class ConfigImportHelper {
 
       // migrating plugins for which we weren't able to download updates
       migratePlugins(newPluginsDir, pluginsToDownload, log);
+    }
+  }
+
+  private static void collectNonBundledPluginsUpdates(@NotNull Path oldPluginsDir,
+                                                      @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
+                                                      @NotNull List<IdeaPluginDescriptor> pluginsToDownload,
+                                                      @NotNull ConfigImportOptions options)
+    throws ExecutionException, InterruptedException {
+    PluginLoadingResult result = PluginDescriptorLoader.loadDescriptors(oldPluginsDir,
+                                                                        options.bundledPluginPath,
+                                                                        options.brokenPluginVersions,
+                                                                        options.compatibleBuildNumber);
+
+    for (IdeaPluginDescriptorImpl descriptor : result.idMap.values()) {
+      if (descriptor.isBundled()) {
+        continue;
+      }
+
+      boolean isBroken = result.isBroken(descriptor.getPluginId());
+      (isBroken ? pluginsToDownload : pluginsToMigrate).add(descriptor);
+    }
+
+    for (IdeaPluginDescriptorImpl descriptor : result.incompletePlugins.values()) {
+      if (descriptor.isBundled()) {
+        continue;
+      }
+
+      pluginsToDownload.add(descriptor);
     }
   }
 
@@ -902,7 +928,6 @@ public final class ConfigImportHelper {
         log.info("Failed to load plugin descriptor from pending update: " + source);
       }
     }
-
 
     return descriptor -> {
       PluginId pluginId = descriptor.getPluginId();
