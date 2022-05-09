@@ -80,34 +80,31 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     return false;
   }
 
-  protected static void configureMavenProjectsInBackground(@NotNull Collection<MavenProject> projects,
-                                                           @NotNull Map<MavenProject, Module> mavenProjectToModule,
-                                                           @NotNull Project project) {
+  protected static void configureMavenProjectsInBackground(@NotNull Project project,
+                                                           @NotNull Map<Module, MavenProject> moduleToProject) {
     if (MavenUtil.isLinearImportEnabled()) return;
 
     MavenUtil.runInBackground(project, MavenProjectBundle.message("command.name.configuring.projects"), false, indicator -> {
-      configureMavenProjects(projects, mavenProjectToModule, project, indicator);
+      configureMavenProjects(project, moduleToProject, indicator);
     });
   }
 
   @IntellijInternalApi
   @ApiStatus.Internal
-  public static void configureMavenProjects(@NotNull Collection<MavenProject> projects,
-                                            @NotNull Map<MavenProject, Module> mavenProjectToModule,
-                                            @NotNull Project project,
+  public static void configureMavenProjects(@NotNull Project project,
+                                            @NotNull Map<Module, MavenProject> moduleToProject,
                                             MavenProgressIndicator indicator) {
     List<MavenModuleConfigurer> configurers = MavenModuleConfigurer.getConfigurers();
     float count = 0;
     long startTime = System.currentTimeMillis();
     StructuredIdeActivity activity = MavenImportStats.startConfiguringProjectsActivity(project);
     try {
-      LOG.info("[maven import] applying " + configurers.size() + " configurers to " + projects.size() + " Maven projects");
-      for (MavenProject mavenProject : projects) {
-        Module module = mavenProjectToModule.get(mavenProject);
-        if (module == null) {
-          continue;
-        }
-        indicator.setFraction(count++ / projects.size());
+      int size = moduleToProject.size();
+      LOG.info("[maven import] applying " + configurers.size() + " configurers to " + size + " Maven projects");
+      for (Map.Entry<Module, MavenProject> each : moduleToProject.entrySet()) {
+        Module module = each.getKey();
+        MavenProject mavenProject = each.getValue();
+        indicator.setFraction(count++ / size);
         indicator.setText2(MavenProjectBundle.message("progress.details.configuring.module", module.getName()));
         for (MavenModuleConfigurer configurer : configurers) {
           configurer.configure(mavenProject, project, module);
