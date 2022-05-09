@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
@@ -313,16 +312,11 @@ public final class PluginDownloader {
   }
 
   public void install() throws IOException {
-    boolean loaded = LoadingState.COMPONENTS_LOADED.isOccurred();
+    PluginInstaller.installAfterRestartAndKeepIfNecessary(myDescriptor, getFilePath(),
+                                                          myOldFile
+    );
 
-    boolean keepArchive = !loaded ||
-                          RegistryManager.getInstance().is("ide.plugins.keep.archive");
-    PluginInstaller.installAfterRestart(getFilePath(),
-                                        !keepArchive,
-                                        myOldFile,
-                                        myDescriptor);
-
-    if (loaded) {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
       InstalledPluginsState.getInstance().onPluginInstall(myDescriptor,
                                                           PluginManagerCore.isPluginInstalled(myDescriptor.getPluginId()),
                                                           true);

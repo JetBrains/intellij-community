@@ -370,10 +370,17 @@ internal open class UpdateIdeFromSourcesAction
     LOG.debug("Existing custom plugins: $existingCustomPlugins")
     val pluginsToUpdate =
       plugins.mapNotNull { node -> existingCustomPlugins[node.pluginId.idString]?.let { it to node } }
-    for ((existing, update) in pluginsToUpdate) {
-      val pluginFile = pluginsDir.resolve(update.downloadUrl)
-      LOG.debug("Adding update command: ${existing.pluginPath} to $pluginFile")
-      PluginInstaller.installAfterRestart(pluginFile, false, existing.pluginPath, update)
+    for ((oldDescriptor, newDescriptor) in pluginsToUpdate) {
+      val oldPluginPath = oldDescriptor.pluginPath
+      val newPluginPath = pluginsDir.resolve(newDescriptor.downloadUrl)
+        .also { LOG.debug("Adding update command: $oldPluginPath to $it") }
+
+      PluginInstaller.installAfterRestart(
+        newDescriptor,
+        newPluginPath,
+        oldPluginPath,
+        false,
+      )
     }
   }
 

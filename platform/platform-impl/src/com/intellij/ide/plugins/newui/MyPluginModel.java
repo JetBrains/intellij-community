@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -173,8 +172,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
       if (needRestart) {
         try {
-          PluginInstaller.installAfterRestart(pendingPluginInstall.getFile(), !Registry.is("ide.plugins.keep.archive", true),
-                                              null, pendingPluginInstall.getPluginDescriptor());
+          PluginInstaller.installAfterRestartAndKeepIfNecessary(pendingPluginInstall.getPluginDescriptor(),
+                                                                pendingPluginInstall.getFile(),
+                                                                null);
         }
         catch (IOException e) {
           LOG.error(e);
