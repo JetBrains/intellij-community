@@ -1,7 +1,7 @@
 package org.jetbrains.yaml;
 
 /**
- * @author: oleg
+ * @author oleg
  */
 public interface YAMLTokenTypes {
   YAMLElementType COMMENT = new YAMLElementType("comment");

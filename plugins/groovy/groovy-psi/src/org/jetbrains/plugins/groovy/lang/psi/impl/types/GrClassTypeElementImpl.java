@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @author: Dmitry.Krasilschikov
+ * @author Dmitry.Krasilschikov
  * @date: 26.04.2007
  */
 public class GrClassTypeElementImpl extends GroovyPsiElementImpl implements GrClassTypeElement {

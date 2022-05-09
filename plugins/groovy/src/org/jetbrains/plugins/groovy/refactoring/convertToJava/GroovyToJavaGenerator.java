@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @author: Dmitry.Krasilschikov
+ * @author Dmitry.Krasilschikov
  * @date: 03.05.2007
  */
 public final class GroovyToJavaGenerator {

@@ -19,7 +19,7 @@ package com.intellij.execution;
 /**
  * Created by IntelliJ IDEA.
  *
- * @author: oleg
+ * @author oleg
  * @date: 24.08.2006
  */
 public class Output {

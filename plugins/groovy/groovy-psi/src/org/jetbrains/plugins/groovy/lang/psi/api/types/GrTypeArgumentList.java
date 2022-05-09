@@ -6,7 +6,7 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
- * @author: Dmitry.Krasilschikov
+ * @author Dmitry.Krasilschikov
  * @date: 28.03.2007
  */
 public interface GrTypeArgumentList extends GroovyPsiElement {

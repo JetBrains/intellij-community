@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @author: Dmitry.Krasilschikov
+ * @author Dmitry.Krasilschikov
  * @date: 06.04.2007
  */
 public class GrEnumConstantListImpl extends GrStubElementBase<EmptyStub>

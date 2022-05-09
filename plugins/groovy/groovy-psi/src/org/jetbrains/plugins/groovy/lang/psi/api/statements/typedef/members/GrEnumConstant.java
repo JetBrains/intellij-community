@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConsta
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 
 /**
- * @author: Dmitry.Krasilschikov
+ * @author Dmitry.Krasilschikov
  * @date: 06.04.2007
  */
 public interface GrEnumConstant extends GrField, GrConstructorCall, PsiEnumConstant {

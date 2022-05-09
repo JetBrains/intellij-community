@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author: Dmitry.Krasilschikov
+ * @author Dmitry.Krasilschikov
  * @date: 03.04.2007
  */
 public class GrThrowsClauseImpl extends GrReferenceListImpl implements GrThrowsClause {

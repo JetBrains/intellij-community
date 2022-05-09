@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author: Dmitry.Krasilschikov, ilyas
+ * @author Dmitry.Krasilschikov, ilyas
  */
 public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptyStub> implements GrTypeDefinitionBody {
   public GrTypeDefinitionBodyBase(@NotNull ASTNode node) {

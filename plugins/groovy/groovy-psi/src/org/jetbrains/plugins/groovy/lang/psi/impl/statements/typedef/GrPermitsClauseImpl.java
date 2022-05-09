@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrPermitsCla
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrReferenceListStub;
 
 /**
- * @author: Dmitry.Krasilschikov
+ * @author Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
 public class GrPermitsClauseImpl extends GrReferenceListImpl implements GrPermitsClause {

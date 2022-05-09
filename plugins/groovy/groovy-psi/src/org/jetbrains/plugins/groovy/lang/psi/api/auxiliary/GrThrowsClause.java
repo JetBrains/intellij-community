@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 
 /**
- * @author: Dmitry.Krasilschikov
+ * @author Dmitry.Krasilschikov
  * @date: 03.04.2007
  */
 public interface GrThrowsClause extends GrReferenceList {

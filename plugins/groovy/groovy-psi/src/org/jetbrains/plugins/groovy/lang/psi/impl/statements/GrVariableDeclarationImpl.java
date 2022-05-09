@@ -40,7 +40,7 @@ import java.util.List;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
 
 /**
- * @author: Dmitry.Krasilschikov
+ * @author Dmitry.Krasilschikov
  */
 public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDeclarationStub>
   implements GrVariableDeclaration, StubBasedPsiElement<GrVariableDeclarationStub>, PsiListLikeElement {

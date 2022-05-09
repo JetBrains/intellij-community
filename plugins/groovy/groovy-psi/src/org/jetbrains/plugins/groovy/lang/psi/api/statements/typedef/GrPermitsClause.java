@@ -3,7 +3,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
 /**
- * @author: Dmitry.Krasilschikov
+ * @author Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
 public interface GrPermitsClause extends GrReferenceList {

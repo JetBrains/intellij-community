@@ -40,7 +40,7 @@ import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
- * @author: lesya
+ * @author lesya
  */
 public final class AnnotateToggleAction extends ToggleAction implements DumbAware {
   public static final ExtensionPointName<Provider> EP_NAME =
