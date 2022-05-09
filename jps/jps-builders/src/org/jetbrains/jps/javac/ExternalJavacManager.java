@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.BaseOutputReader;
@@ -808,7 +809,7 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
 
     static boolean isWinPath(String path) {
-      return path.length() >= 3 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':' && path.charAt(2) == '/';
+      return OSAgnosticPathUtil.isAbsoluteDosPath(path);
     }
   }
 }

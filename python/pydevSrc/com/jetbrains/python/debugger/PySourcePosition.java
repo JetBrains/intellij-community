@@ -2,6 +2,7 @@
 package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +59,6 @@ public abstract class PySourcePosition {
   }
 
   public static boolean isWindowsPath(@NotNull String path) {
-    return path.contains("\\") || (path.length() > 1 && path.charAt(1) == ':');
+    return path.contains("\\") || OSAgnosticPathUtil.startsWithWindowsDrive(path);
   }
 }

@@ -863,7 +863,7 @@ public class FileUtil extends FileUtilRt {
   @Nullable
   public static String extractRootPath(@NotNull String normalizedPath) {
     if (SystemInfoRt.isWindows) {
-      if (normalizedPath.length() >= 2 && normalizedPath.charAt(1) == ':') {
+      if (OSAgnosticPathUtil.startsWithWindowsDrive(normalizedPath)) {
         // drive letter
         return StringUtil.toUpperCase(normalizedPath.substring(0, 2));
       }
@@ -1267,12 +1267,8 @@ public class FileUtil extends FileUtilRt {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static boolean isWindowsAbsolutePath(@NotNull String path) {
-    boolean ok = path.length() >= 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':';
-    if (ok && path.length() > 2) {
-      char separatorChar = path.charAt(2);
-      ok = separatorChar == '/' || separatorChar == '\\';
-    }
-    return ok;
+    return path.length() <= 2 && OSAgnosticPathUtil.startsWithWindowsDrive(path)
+           || OSAgnosticPathUtil.isAbsoluteDosPath(path);
   }
 
   @Contract("null -> null; !null -> !null")

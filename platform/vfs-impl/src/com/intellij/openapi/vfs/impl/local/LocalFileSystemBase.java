@@ -235,7 +235,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
     try {
       Path file = Path.of(path);
-      if (!file.isAbsolute() && !(SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':')) {
+      if (!file.isAbsolute() && !(SystemInfo.isWindows && path.length() == 2 && OSAgnosticPathUtil.startsWithWindowsDrive(path))) {
         path = file.toAbsolutePath().toString();
       }
     }

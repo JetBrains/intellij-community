@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -391,7 +392,7 @@ public class VcsUtil {
   @NonNls
   public static String getCanonicalLocalPath(@NonNls String localPath) {
     localPath = chopTrailingChars(localPath.trim().replace('\\', '/'), ourCharsToBeChopped);
-    if (localPath.length() == 2 && localPath.charAt(1) == ':') {
+    if (localPath.length() == 2 && OSAgnosticPathUtil.startsWithWindowsDrive(localPath)) {
       localPath += '/';
     }
     return localPath;
