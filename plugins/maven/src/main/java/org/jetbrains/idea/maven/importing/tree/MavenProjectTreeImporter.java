@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
@@ -28,7 +29,6 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.*;
-import org.jetbrains.idea.maven.importing.configurers.MavenModuleConfigurer;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -143,7 +143,9 @@ public class MavenProjectTreeImporter extends MavenProjectImporterBase {
         }
       }
 
-      configureMavenProjects(myContext);
+      configureMavenProjectsInBackground(myProject,
+                                         ContainerUtil.map2Map(myContext.allModules,
+                                                               it -> Pair.create(it.getModuleData().getModule(), it.getMavenProject())));
     }
     else {
       MavenUtil.invokeAndWaitWriteAction(myProject, () -> setMavenizedModules(obsoleteModules, false));
@@ -157,32 +159,6 @@ public class MavenProjectTreeImporter extends MavenProjectImporterBase {
     return !obsoleteModules.isEmpty();
   }
 
-  private void configureMavenProjects(MavenModuleImportContext moduleImportContext) {
-    List<MavenModuleConfigurer> configurers = MavenModuleConfigurer.getConfigurers();
-    List<MavenModuleImportData> allModules = moduleImportContext.allModules;
-    if (MavenUtil.isLinearImportEnabled()) return;
-    MavenUtil.runInBackground(myProject, MavenProjectBundle.message("command.name.configuring.projects"), false, indicator -> {
-      float count = 0;
-      long startTime = System.currentTimeMillis();
-      StructuredIdeActivity activity = MavenImportStats.startConfiguringProjectsActivity(myProject);
-      try {
-        int size = allModules.size();
-        LOG.info("[maven import] applying " + configurers.size() + " configurers to " + size + " Maven projects");
-        for (MavenModuleImportData importData : allModules) {
-          Module module = importData.getModuleData().getModule();
-          indicator.setFraction(count++ / size);
-          indicator.setText2(MavenProjectBundle.message("progress.details.configuring.module", module.getName()));
-          for (MavenModuleConfigurer configurer : configurers) {
-            configurer.configure(importData.getMavenProject(), myProject, module);
-          }
-        }
-      }
-      finally {
-        activity.finished();
-        LOG.info("[maven import] configuring projects took " + (System.currentTimeMillis() - startTime) + "ms");
-      }
-    });
-  }
 
   private void disposeModifiableModels() {
     MavenUtil.invokeAndWaitWriteAction(myProject, () -> myModelsProvider.dispose());

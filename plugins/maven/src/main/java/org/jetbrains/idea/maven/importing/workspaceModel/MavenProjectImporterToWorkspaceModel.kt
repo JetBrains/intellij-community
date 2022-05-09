@@ -55,7 +55,7 @@ class MavenProjectImporterToWorkspaceModel(
                                                  mavenImportingSettings, mavenProjectToModuleName, project).importModule()
       createdModules.add(mavenProject to moduleEntity.persistentId())
     }
-    val mavenProjectToModule = HashMap<MavenProject, Module>()
+    val moduleToMavenProject = HashMap<Module, MavenProject>()
     MavenUtil.invokeAndWaitWriteAction(project) {
       WorkspaceModel.getInstance(project).updateProjectModel { current ->
         current.replaceBySource({ (it as? JpsImportedEntitySource)?.externalSystemId == ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID }, builder)
@@ -67,11 +67,11 @@ class MavenProjectImporterToWorkspaceModel(
         val module = storage.findModuleByEntity(moduleEntity)
         if (module != null) {
           createdModulesList.add(module)
-          mavenProjectToModule[mavenProject] = module
+          moduleToMavenProject[module] = mavenProject
         }
       }
     }
-    configureMavenProjectsInBackground(allProjects, mavenProjectToModule, project)
+    configureMavenProjectsInBackground(project, moduleToMavenProject)
   }
 
   override val createdModules: List<Module>

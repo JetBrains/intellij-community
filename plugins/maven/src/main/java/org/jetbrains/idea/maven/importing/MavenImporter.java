@@ -124,22 +124,22 @@ public abstract class MavenImporter {
   /**
    * Import pre process callback.
    */
-  public abstract void preProcess(Module module,
-                                  MavenProject mavenProject,
-                                  MavenProjectChanges changes,
-                                  IdeModifiableModelsProvider modifiableModelsProvider);
+  public void preProcess(Module module,
+                         MavenProject mavenProject,
+                         MavenProjectChanges changes,
+                         IdeModifiableModelsProvider modifiableModelsProvider) { }
 
   /**
    * Import process callback.
    */
-  public abstract void process(IdeModifiableModelsProvider modifiableModelsProvider,
-                               Module module,
-                               MavenRootModelAdapter rootModel,
-                               MavenProjectsTree mavenModel,
-                               MavenProject mavenProject,
-                               MavenProjectChanges changes,
-                               Map<MavenProject, String> mavenProjectToModuleName,
-                               List<MavenProjectsProcessorTask> postTasks);
+  public void process(IdeModifiableModelsProvider modifiableModelsProvider,
+                      Module module,
+                      MavenRootModelAdapter rootModel,
+                      MavenProjectsTree mavenModel,
+                      MavenProject mavenProject,
+                      MavenProjectChanges changes,
+                      Map<MavenProject, String> mavenProjectToModuleName,
+                      List<MavenProjectsProcessorTask> postTasks) { }
 
   /**
    * Import post process callback.

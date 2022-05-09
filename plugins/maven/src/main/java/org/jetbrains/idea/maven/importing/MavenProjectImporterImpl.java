@@ -201,7 +201,9 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
         }
       }
 
-      configureMavenProjectsInBackground(myAllProjects, myMavenProjectToModule, myProject);
+      configureMavenProjectsInBackground(myProject,
+                                         ContainerUtil.map2Map(myMavenProjectToModule.entrySet(),
+                                                               entry -> Pair.create(entry.getValue(), entry.getKey())));
     }
     else {
       MavenUtil.invokeAndWaitWriteAction(myProject, () -> setMavenizedModules(obsoleteModules, false));

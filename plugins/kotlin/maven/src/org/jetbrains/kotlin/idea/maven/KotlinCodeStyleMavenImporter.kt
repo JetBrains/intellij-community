@@ -27,15 +27,6 @@ internal class KotlinCodeStyleMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_
         return getCodeStyleString(mavenProject) != null
     }
 
-    override fun preProcess(
-        module: Module?,
-        mavenProject: MavenProject?,
-        changes: MavenProjectChanges?,
-        modifiableModelsProvider: IdeModifiableModelsProvider?
-    ) {
-        // Do nothing
-    }
-
     override fun process(
         modifiableModelsProvider: IdeModifiableModelsProvider?,
         module: Module,
