@@ -33,10 +33,6 @@ final class KotlinBinaries {
     compilerHome
   }()
 
-  @Lazy Path kotlinJpsPluginJar = {
-    KotlinCompilerDependencyDownloader.downloadKotlinJpsPlugin(new BuildDependenciesCommunityRoot(Path.of(communityHome)))
-  }()
-
   boolean isCompilerRequired() {
     return !CompilationTasksImpl.areCompiledClassesProvided(options)
   }

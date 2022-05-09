@@ -14,6 +14,7 @@
     <orderEntry type="library" name="decentxml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" exported="" />
     <orderEntry type="library" name="commons-compress" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="fixed.kotlin-jps-plugin-classpath" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.tools.jps.build.standalone" />
@@ -47,6 +48,5 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="networknt.json.schema.validator" level="project" />
-    <orderEntry type="library" name="kotlin-reflect" level="project" />
   </component>
 </module>

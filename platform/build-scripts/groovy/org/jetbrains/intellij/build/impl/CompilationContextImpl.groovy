@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Formats
-import com.intellij.openapi.util.text.Strings
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileDynamic
@@ -16,7 +15,6 @@ import org.jetbrains.intellij.build.dependencies.Jdk11Downloader
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
-import org.jetbrains.jps.build.StandaloneJpsPluginManager
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
@@ -30,7 +28,6 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
-import org.jetbrains.jps.plugin.JpsPluginManager
 import org.jetbrains.jps.util.JpsPathUtil
 
 import java.nio.file.Files
@@ -212,41 +209,7 @@ final class CompilationContextImpl implements CompilationContext {
     return new CompilationContextImpl(messages, this)
   }
 
-  private static void setJpsPluginFiles(List<Path> pluginFiles, BuildMessages buildMessages) {
-    JpsPluginManager currentPluginManager = JpsPluginManager.tryGetInstance()
-
-    if (currentPluginManager == null) {
-      buildMessages.info(
-        "Setting JPS plugin paths to " +
-        Strings.join(pluginFiles, path -> path.toString(), ","))
-
-      JpsPluginManager.setInstance(new StandaloneJpsPluginManager(pluginFiles));
-    }
-    else {
-      if (!(currentPluginManager instanceof StandaloneJpsPluginManager)) {
-        throw new IllegalStateException("JpsPluginManager was already initialized to wrong JpsPluginManager implementation: " + currentPluginManager.getClass().getName())
-      }
-
-      StandaloneJpsPluginManager standaloneJpsPluginManager = (StandaloneJpsPluginManager)currentPluginManager
-
-      List<Path> currentFiles = standaloneJpsPluginManager.getAdditionalPluginFiles()
-      if (currentFiles != pluginFiles) {
-        throw new IllegalStateException(
-          "Unable to replace JPS plugins classpath:\n" +
-          "previous value: " + Strings.join(currentFiles, path -> path.toString(), ",") + "\n" +
-          "new value: " + Strings.join(pluginFiles, path -> path.toString(), ",") + "\n"
-        )
-      }
-
-      buildMessages.info(
-        "JPS plugin paths were already set to " +
-        Strings.join(currentFiles, path -> path.toString(), ","))
-    }
-  }
-
   private static JpsModel loadProject(String projectHome, KotlinBinaries kotlinBinaries, BuildMessages messages) {
-    setJpsPluginFiles(List.of(kotlinBinaries.kotlinJpsPluginJar), messages)
-
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
     if (kotlinBinaries.isCompilerRequired()) {
