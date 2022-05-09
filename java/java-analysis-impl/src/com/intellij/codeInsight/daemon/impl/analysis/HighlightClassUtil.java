@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Checks and Highlights problems with classes
@@ -1231,7 +1231,9 @@ public final class HighlightClassUtil {
           .create();
       }
       PsiFile parentFile = psiClass.getContainingFile();
-      boolean hasOutsideClasses = inheritors.stream().anyMatch(inheritor -> inheritor.getContainingFile() != parentFile);
+      PsiManager manager = parentFile.getManager();
+      boolean hasOutsideClasses = inheritors.stream()
+        .anyMatch(inheritor -> !manager.areElementsEquivalent(inheritor.getNavigationElement().getContainingFile(), parentFile));
       if (hasOutsideClasses) {
         Map<PsiJavaCodeReferenceElement, PsiClass> permittedClassesRefs = getPermittedClassesRefs(psiClass);
         Collection<PsiClass> permittedClasses = permittedClassesRefs.values();
