@@ -12,7 +12,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
+import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
@@ -151,7 +151,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnhandledMessingWithFinally() { doTest(false); }
   public void testSerializableStuff() {  doTest(true); }
   public void testDeprecated() { doTest(true); }
-  public void testJavadoc() { enableInspectionTool(new JavaDocLocalInspection()); doTest(true); }
+  public void testJavadoc() { enableInspectionTool(new JavadocDeclarationInspection()); doTest(true); }
   public void testExpressionsInSwitch () { doTest(false); }
   public void testAccessInner() {
     Editor e = createSaveAndOpenFile("x/BeanContextServicesSupport.java",
