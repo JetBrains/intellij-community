@@ -400,7 +400,7 @@ final class SearchForUsagesRunnable implements Runnable {
         if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
           myFirstUsage.compareAndSet(null, usage);
         }
-        myFirstItemFoundTS.compareAndSet(0, System.currentTimeMillis()); // Successes only once - at first assignment
+        myFirstItemFoundTS.compareAndSet(0, System.nanoTime()); // Successes only once - at first assignment
 
         UsageViewEx usageView = getUsageView(originalIndicator, startSearchStamp);
 
