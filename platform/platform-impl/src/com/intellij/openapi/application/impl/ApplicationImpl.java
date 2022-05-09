@@ -564,15 +564,17 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public final void restart(boolean exitConfirmed) {
-    int flags = SAVE;
-    if (exitConfirmed) {
-      flags |= EXIT_CONFIRMED;
-    }
-    exit(flags, true, ArrayUtilRt.EMPTY_STRING_ARRAY);
+    restart(exitConfirmed, false);
   }
 
   @Override
   public final void restart(boolean exitConfirmed, boolean elevate) {
+    restart(exitConfirmed, elevate, false);
+  }
+
+  private void restart(boolean exitConfirmed,
+                       boolean elevate,
+                       boolean force) {
     int flags = SAVE;
     if (exitConfirmed) {
       flags |= EXIT_CONFIRMED;
@@ -580,7 +582,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     if (elevate) {
       flags |= ELEVATE;
     }
-    exit(flags, true, ArrayUtilRt.EMPTY_STRING_ARRAY);
+    if (force) {
+      flags |= FORCE_EXIT;
+    }
+    restart(flags, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   /**
