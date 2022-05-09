@@ -75,7 +75,7 @@ data class ExtractMethodTemplateBuilder(
       template.setToIndent(false)
       editor.caretModel.moveToOffset(file.textRange.startOffset)
       val templateState = TemplateManager.getInstance(project).runTemplate(editor, template)
-      disableCompletionInTemplate(project, templateState)
+      disableCompletionAndRestartCheck(project, templateState)
       Disposer.register(templateState) { SuggestedRefactoringProvider.getInstance(project).reset() }
       DaemonCodeAnalyzer.getInstance(project).disableUpdateByTimer(templateState)
 
@@ -125,12 +125,20 @@ data class ExtractMethodTemplateBuilder(
     })
   }
 
-  private fun disableCompletionInTemplate(project: Project, templateState: TemplateState){
+  private fun disableCompletionAndRestartCheck(project: Project, templateState: TemplateState){
     val dummy = object: InplaceRefactoring(templateState.editor, null, project){
       override fun shouldSelectAll() = false
       override fun performRefactoring() = false
       override fun getCommandName(): String { throw NotImplementedError() }
-      override fun startsOnTheSameElement(handler: RefactoringActionHandler?, element: PsiElement?) = true
+      override fun startsOnTheSameElement(handler: RefactoringActionHandler?, element: PsiElement?): Boolean {
+        val templateRange = templateState.currentVariableRange?.grown(1) ?: TextRange.EMPTY_RANGE
+        val editorOffsets = if (editor.selectionModel.hasSelection()) {
+          listOf(editor.caretModel.offset, editor.selectionModel.selectionStart, editor.selectionModel.selectionEnd - 1)
+        } else {
+          listOf(editor.caretModel.offset)
+        }
+        return editorOffsets.all { it in templateRange }
+      }
     }
     templateState.editor.putUserData(InplaceRefactoring.INPLACE_RENAMER, dummy)
     Disposer.register(templateState) { templateState.editor.putUserData(InplaceRefactoring.INPLACE_RENAMER, null) }
