@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin.test.junit
 
-import com.intellij.codeInspection.tests.JUnitUnconstructableTestCaseTestBase
 import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.test.junit.JUnitUnconstructableTestCaseTestBase
 
 class KotlinJUnitUnconstructableInspectionTest : JUnitUnconstructableTestCaseTestBase() {
   fun testPlain() {
