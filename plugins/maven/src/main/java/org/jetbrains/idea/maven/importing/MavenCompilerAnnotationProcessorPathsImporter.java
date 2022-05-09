@@ -38,13 +38,6 @@ public class MavenCompilerAnnotationProcessorPathsImporter extends MavenImporter
     return getConfig(mavenProject, "annotationProcessorPaths") != null;
   }
 
-  @Override
-  public void preProcess(Module module,
-                         MavenProject mavenProject,
-                         MavenProjectChanges changes,
-                         IdeModifiableModelsProvider modifiableModelsProvider) {
-
-  }
 
   @Override
   public void process(IdeModifiableModelsProvider modifiableModelsProvider,

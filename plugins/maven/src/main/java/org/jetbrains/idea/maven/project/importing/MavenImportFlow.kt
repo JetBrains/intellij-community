@@ -289,12 +289,10 @@ class MavenImportFlow {
   fun configureMavenProject(context: MavenImportedContext) {
     val projectsManager = MavenProjectsManager.getInstance(context.project)
     val projects = context.readContext.projectsTree.projects
-    val moduleMap = ReadAction.compute<Map<MavenProject, Module?>, Throwable> {
-      projects.map {
-        it to projectsManager.findModule(it)
-      }.toMap();
+    val moduleMap = ReadAction.compute<Map<Module, MavenProject>, Throwable> {
+      projects.mapNotNull { project -> projectsManager.findModule(project)?.let { it to project } }.toMap();
     }
-    MavenProjectImporterBase.configureMavenProjects(context.readContext.projectsTree.projects, moduleMap, context.project,
+    MavenProjectImporterBase.configureMavenProjects(context.project, moduleMap,
                                                     context.readContext.indicator)
 
   }

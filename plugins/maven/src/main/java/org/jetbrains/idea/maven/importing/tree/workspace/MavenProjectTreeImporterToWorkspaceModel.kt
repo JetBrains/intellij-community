@@ -16,12 +16,10 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.*
-import org.jetbrains.idea.maven.importing.configurers.MavenModuleConfigurer
 import org.jetbrains.idea.maven.importing.tree.MavenModuleType
 import org.jetbrains.idea.maven.importing.tree.MavenProjectTreeImporter
 import org.jetbrains.idea.maven.importing.tree.ModuleData
 import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.*
 
@@ -91,7 +89,9 @@ class MavenProjectTreeImporterToWorkspaceModel(
     facetImport(moduleImportDataList, context, postTasks)
 
     MavenUtil.invokeAndWaitWriteAction(project) { modelsProvider.dispose() }
-    configureMavenProjects(moduleImportDataList, project)
+
+    configureMavenProjectsInBackground(project,
+                                       moduleImportDataList.associate { it.module to it.mavenModuleImportData.mavenProject })
   }
 
   private fun facetImport(moduleImportDataList: MutableList<ModuleImportData>,
@@ -150,33 +150,6 @@ class MavenProjectTreeImporterToWorkspaceModel(
       mavenModuleImportData.dependencies,
       mavenModuleImportData.changes
     )
-  }
-
-  private fun configureMavenProjects(moduleImportDataList: List<ModuleImportData>, project: Project) {
-    if (MavenUtil.isLinearImportEnabled()) return
-
-    val configurers = MavenModuleConfigurer.getConfigurers()
-    MavenUtil.runInBackground(project, MavenProjectBundle.message("command.name.configuring.projects"), false
-    ) { indicator: MavenProgressIndicator ->
-      var count = 0f
-      val startTime = System.currentTimeMillis()
-      val activity = MavenImportStats.startConfiguringProjectsActivity(project)
-      try {
-        val size = moduleImportDataList.size
-        LOG.info("[maven import] applying " + configurers.size + " configurers to " + size + " Maven projects")
-        for (moduleIMportData in moduleImportDataList) {
-          indicator.setFraction((count++ / size).toDouble())
-          indicator.setText2(MavenProjectBundle.message("progress.details.configuring.module", moduleIMportData.module.name))
-          for (configurer in configurers) {
-            configurer.configure(moduleIMportData.mavenModuleImportData.mavenProject, project, moduleIMportData.module)
-          }
-        }
-      }
-      finally {
-        activity.finished()
-        LOG.info("[maven import] configuring projects took " + (System.currentTimeMillis() - startTime) + "ms")
-      }
-    }
   }
 
   override val createdModules: List<Module>
