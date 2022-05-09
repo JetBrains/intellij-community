@@ -61,9 +61,16 @@ class ProjectInfo(
     private val expectedModuleNames = HashSet<String>()
     private var allModulesAsserter: (ModuleInfo.() -> Unit)? = null
 
+    @Deprecated("Use .forEachModule instead. This method is error prone and has to be called before 'module(..)' in order to run")
     fun allModules(body: ModuleInfo.() -> Unit) {
         assert(allModulesAsserter == null)
         allModulesAsserter = body
+    }
+
+    fun forEachModule(moduleInfo: ModuleInfo.() -> Unit) {
+        moduleManager.modules.forEach { module ->
+            ModuleInfo(module, this).run(moduleInfo)
+        }
     }
 
     fun module(name: String, isOptional: Boolean = false, body: ModuleInfo.() -> Unit = {}) {
