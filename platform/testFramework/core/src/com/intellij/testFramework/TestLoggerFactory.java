@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -38,9 +38,6 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static final String SPLIT_TEST_LOGS_KEY = "idea.split.test.logs";
   private static final String SPLIT_LOGS_SUBDIR = "splitTestLogs";
   private static boolean SPLIT_TEST_LOGS = SystemProperties.getBooleanProperty(SPLIT_TEST_LOGS_KEY, false);
-  private static final String SYSTEM_MACRO = "$SYSTEM_DIR$";
-  private static final String APPLICATION_MACRO = "$APPLICATION_DIR$";
-  private static final String LOG_DIR_MACRO = "$LOG_DIR$";
   private static final String LOG_DIR = "testlog";
   private static final long LOG_SIZE_LIMIT = 100 * 1024 * 1024;
   private static final long LOG_SEEK_WINDOW = 100 * 1024;
@@ -78,10 +75,10 @@ public final class TestLoggerFactory implements Logger.Factory {
         }
       }
 
-      String logDir = getTestLogDir();
-      Files.createDirectories(Paths.get(logDir));
+      Path logDir = getTestLogDir();
+      Files.createDirectories(logDir);
 
-      Path logFile = Paths.get(getTestLogDir(), "idea.log");
+      Path logFile = logDir.resolve("idea.log");
       JulLogger.clearHandlers();
       JulLogger.configureLogFileAndConsole(logFile, false, false, null);
 
@@ -97,13 +94,13 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
-  public static String getTestLogDir() {
+  public static @NotNull Path getTestLogDir() {
     String property = System.getProperty(PROPERTY_LOG_PATH);
-    return property != null ? property : PathManager.getSystemPath() + '/' + LOG_DIR;
+    return property == null ? Path.of(PathManager.getSystemPath(), LOG_DIR) : Path.of(property);
   }
 
   public static void dumpLogToStdout(@NotNull String testStartMarker) {
-    Path logFile = Paths.get(getTestLogDir(), "idea.log");
+    Path logFile = getTestLogDir().resolve("idea.log");
     if (Files.exists(logFile)) {
       try {
         long length = Files.size(logFile);
@@ -122,7 +119,7 @@ public final class TestLoggerFactory implements Logger.Factory {
         }
 
         System.out.println("\n\nIdea Log:");
-        Pattern logStart = Pattern.compile("[0-9\\-, :\\[\\]]+(DEBUG|INFO|ERROR) - ");
+        Pattern logStart = Pattern.compile("[\\d\\-, :\\[\\]]+(DEBUG|INFO|ERROR) - ");
         for (String line : StringUtil.splitByLines(logText.substring(Math.max(0, logText.lastIndexOf(testStartMarker))))) {
           Matcher matcher = logStart.matcher(line);
           int lineStart = matcher.lookingAt() ? matcher.end() : 0;
@@ -177,15 +174,18 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   private static @NotNull String saveSplitLog(@NotNull String testName, @NotNull String buffer) {
-    var logsDir = new File(getTestLogDir(), SPLIT_LOGS_SUBDIR);
-    if (!logsDir.exists() && !logsDir.mkdirs()) {
+    var logsDir = getTestLogDir().resolve(SPLIT_LOGS_SUBDIR);
+    try {
+      Files.createDirectories(logsDir);
+    }
+    catch (IOException e) {
       buffer += "\nUnable to create dir for split logs, disabling splitting: " + logsDir;
       SPLIT_TEST_LOGS = false;
       return buffer;
     }
 
     var testFileName = FileUtil.sanitizeFileName(testName);
-    var logFile = FileUtil.findSequentNonexistentFile(logsDir, testFileName, "log");
+    var logFile = FileUtil.findSequentNonexistentFile(logsDir.toFile(), testFileName, "log");
 
     try (var writer = new BufferedWriter(new FileWriter(logFile, StandardCharsets.UTF_8))) {
       writer.write(buffer);

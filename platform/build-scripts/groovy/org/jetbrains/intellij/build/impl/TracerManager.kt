@@ -30,7 +30,6 @@ object TracerManager {
   @JvmStatic
   fun spanBuilder(spanName: String): SpanBuilder = tracer.spanBuilder(spanName)
 
-  @JvmStatic
   fun finish(): Path? {
     return JaegerJsonSpanExporter.finish(TracerProviderManager.getTracerProvider())
   }

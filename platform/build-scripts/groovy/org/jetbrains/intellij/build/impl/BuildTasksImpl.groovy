@@ -406,7 +406,7 @@ idea.fatal.error.notification=disabled
       span.setStatus(StatusCode.ERROR, e.message)
 
       try {
-        TracerManager.finish()
+        TracerManager.INSTANCE.finish()
       }
       catch (Throwable ignore) {
       }

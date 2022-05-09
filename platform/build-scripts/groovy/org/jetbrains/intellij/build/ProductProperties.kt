@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import PyCharmCommunityInstallersBuildTarget
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
 import org.jetbrains.jps.model.module.JpsModule

@@ -186,7 +186,7 @@ fun runTestBuild(
 
 private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMessagesImpl) {
   try {
-    val targetFile = Path.of(TestLoggerFactory.getTestLogDir(), "${productProperties.baseFileName}-test-build-debug.log")
+    val targetFile = TestLoggerFactory.getTestLogDir().resolve("${productProperties.baseFileName}-test-build-debug.log")
     Files.createDirectories(targetFile.parent)
     Files.copy(messages.debugLogFile, targetFile, StandardCopyOption.REPLACE_EXISTING)
     messages.info("Debug log copied to $targetFile")
@@ -197,7 +197,7 @@ private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMe
 }
 
 private fun copyPerfReport(traceFileName: String) {
-  val targetFile = Path.of(TestLoggerFactory.getTestLogDir(), traceFileName)
+  val targetFile = TestLoggerFactory.getTestLogDir().resolve(traceFileName)
   Files.createDirectories(targetFile.parent)
   val file = TracerManager.finish() ?: return
   try {
