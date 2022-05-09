@@ -39,6 +39,11 @@ public class MissingJavadocInspection extends LocalInspectionTool {
   public Options METHOD_SETTINGS = new Options("@return@param@throws or @exception");
   public Options FIELD_SETTINGS = new Options();
 
+  protected static final String PACKAGE_LOCAL = "package";
+  protected static final String PUBLIC = PsiModifier.PUBLIC;
+  protected static final String PROTECTED = PsiModifier.PROTECTED;
+  protected static final String PRIVATE = PsiModifier.PRIVATE;
+
   @Override
   public @Nullable JComponent createOptionsPanel() {
     return JavadocUIUtil.INSTANCE.missingJavadocOptions(this);
@@ -269,10 +274,10 @@ public class MissingJavadocInspection extends LocalInspectionTool {
   }
 
   private static int getAccessNumber(String accessModifier) {
-    if (accessModifier.startsWith(JavaDocLocalInspection.PUBLIC)) return 1;
-    if (accessModifier.startsWith(JavaDocLocalInspection.PROTECTED)) return 2;
-    if (accessModifier.startsWith(JavaDocLocalInspection.PACKAGE_LOCAL)) return 3;
-    if (accessModifier.startsWith(JavaDocLocalInspection.PRIVATE)) return 4;
+    if (accessModifier.startsWith(PUBLIC)) return 1;
+    if (accessModifier.startsWith(PROTECTED)) return 2;
+    if (accessModifier.startsWith(PACKAGE_LOCAL)) return 3;
+    if (accessModifier.startsWith(PRIVATE)) return 4;
 
     return 5;
   }

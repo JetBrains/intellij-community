@@ -36,6 +36,12 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
   public boolean IGNORE_PERIOD_PROBLEM = true;
   public boolean IGNORE_SELF_REFS = false;
 
+  private boolean myIgnoreEmptyDescriptions = false;
+
+  public void setIgnoreEmptyDescriptions(boolean ignoreEmptyDescriptions) {
+    myIgnoreEmptyDescriptions = ignoreEmptyDescriptions;
+  }
+
   private static final String[] TAGS_TO_CHECK = {"author", "version", "since"};
   private static final Set<String> UNIQUE_TAGS = ContainerUtil.newHashSet("return", "deprecated", "serial", "serialData");
 
@@ -139,7 +145,9 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
       if (!MissingJavadocInspection.isInherited(docComment, method)) {
         PsiDocTag[] tags = docComment.getTags();
 
-        checkEmptyMethodTagsDescription(tags, method, holder);
+        if (!myIgnoreEmptyDescriptions) {
+          checkEmptyMethodTagsDescription(tags, method, holder);
+        }
 
         checkBasics(docComment, tags, method, holder);
       }
