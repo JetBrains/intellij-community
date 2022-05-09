@@ -12,7 +12,6 @@ import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,12 +45,11 @@ public final class BrowserUtil {
     return anchorMatcher.find() ? anchorMatcher.reset().replaceAll("") : url;
   }
 
-  @Nullable
-  public static URL getURL(String url) throws MalformedURLException {
+  public static @Nullable URL getURL(String url) throws MalformedURLException {
     return isAbsoluteURL(url) ? VfsUtilCore.convertToURL(url) : new URL("file", "", url);
   }
 
-  public static void open(@NonNls @NotNull String url) {
+  public static void open(@NotNull String url) {
     getBrowserLauncher().open(url);
   }
 
@@ -75,7 +73,7 @@ public final class BrowserUtil {
     getBrowserLauncher().browse(uri);
   }
 
-  public static void browse(@NonNls @NotNull String url) {
+  public static void browse(@NotNull String url) {
     browse(url, null);
   }
 
@@ -128,8 +126,7 @@ public final class BrowserUtil {
     return command;
   }
 
-  @NotNull
-  public static String getDefaultAlternativeBrowserPath() {
+  public static @NotNull String getDefaultAlternativeBrowserPath() {
     if (SystemInfo.isWindows) {
       return "C:\\Program Files\\Internet Explorer\\IExplore.exe";
     }
@@ -152,7 +149,7 @@ public final class BrowserUtil {
   }
 
   /** @deprecated Use {@link #browse(String)} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void launchBrowser(@NotNull String url) {
     browse(url);
   }
