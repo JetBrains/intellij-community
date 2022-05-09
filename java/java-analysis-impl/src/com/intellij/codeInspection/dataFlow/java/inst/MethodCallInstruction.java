@@ -409,7 +409,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
       }
       return factory.fromDfType(dfType.meet(mutable.asDfType()));
     }
-    LongRangeSet range = JvmPsiRangeSetUtil.typeRange(type);
+    LongRangeSet range = JvmPsiRangeSetUtil.typeRange(type, true);
     if (range != null) {
       if (myTargetMethod != null) {
         range = range.meet(JvmPsiRangeSetUtil.fromPsiElement(myTargetMethod));
