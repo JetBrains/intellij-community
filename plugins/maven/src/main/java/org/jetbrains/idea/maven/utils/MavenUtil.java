@@ -1183,6 +1183,12 @@ public class MavenUtil {
     return ExternalSystemUtil.confirmLoadingUntrustedProject(project, SYSTEM_ID);
   }
 
+  /**
+   *
+   * @param project Project required to restart connectors
+   * @param wait if true, then maven server(s) restarted synchronously
+   * @param condition only connectors satisfied for this predicate will be restarted
+   */
   public static void restartMavenConnectors(@NotNull Project project, boolean wait, Predicate<MavenServerConnector> condition) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       MavenServerManager.getInstance().getAllConnectors().forEach(it -> {
