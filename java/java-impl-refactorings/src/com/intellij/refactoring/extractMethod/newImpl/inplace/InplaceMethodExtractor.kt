@@ -91,7 +91,7 @@ class InplaceMethodExtractor(private val editor: Editor,
         .withCompletionNames(suggestedNames.toList())
         .withCompletionAdvertisement(InplaceRefactoring.getPopupOptionsAdvertisement())
         .onBroken {
-          WriteCommandAction.writeCommandAction(project).run<Throwable> { editorState.revert()  }
+          editorState.revert()
         }
         .onSuccess {
           val range = callIdentifierRange?.range ?: return@onSuccess

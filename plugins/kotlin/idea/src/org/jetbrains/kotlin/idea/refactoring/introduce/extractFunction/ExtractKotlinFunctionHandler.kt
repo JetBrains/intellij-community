@@ -114,7 +114,7 @@ class ExtractKotlinFunctionHandler(
                 ExtractMethodTemplateBuilder(editor, EXTRACT_FUNCTION)
                     .withCompletionNames(descriptor.suggestedNames)
                     .onBroken {
-                        WriteCommandAction.writeCommandAction(project).run<Throwable> { editorState.revert() }
+                        editorState.revert()
                     }
                     .onSuccess {
                         processDuplicates(extraction.duplicateReplacers, file.project, editor)
