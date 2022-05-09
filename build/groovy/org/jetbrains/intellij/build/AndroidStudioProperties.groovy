@@ -71,13 +71,13 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
   )
 
-  AndroidStudioProperties(String home, BuildOptions buildOptions) {
+  AndroidStudioProperties(Path home, BuildOptions buildOptions) {
     baseFileName = "studio"
     platformPrefix = "AndroidStudio"
     productCode = "AI"
     applicationInfoModule = "intellij.android.adt.branding"
     useSplash = true
-    additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
+    additionalIDEPropertiesFilePaths = List.of(home.resolve("build/conf/ideaCE.properties"))
     toolsJarRequired = true
     scrambleMainJar = false
     buildSourcesArchive = true;
@@ -94,7 +94,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     def unknownExcludedPlugins = EXCLUDED_PLUGINS - INHERITED_PLUGINS
     assert unknownExcludedPlugins.empty : "AndroidStudioProperties.EXCLUDED_PLUGINS contains nonexistent plugins: $unknownExcludedPlugins"
-    productLayout.bundledPluginModules = INHERITED_PLUGINS + EXTRA_PLUGINS - EXCLUDED_PLUGINS
+    productLayout.bundledPluginModules.clear()
+    productLayout.bundledPluginModules.addAll(INHERITED_PLUGINS + EXTRA_PLUGINS - EXCLUDED_PLUGINS)
 
     productLayout.mainModules = ["intellij.idea.community.main"]
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
