@@ -19,9 +19,11 @@ package de.thomasrosenau.diffplugin;
 import java.io.File;
 import java.io.IOException;
 
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataFile;
 import de.thomasrosenau.diffplugin.parser.DiffParserDefinition;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +39,7 @@ abstract class DiffParserTestBase extends ParsingTestCase {
 
     @Override
     protected String getTestDataPath() {
-        return "src/test/resources/diffs";
+        return PlatformTestUtil.getCommunityPath() + "/platform/diff-syntax/" + "src/test/resources/diffs";
     }
 
     @Override

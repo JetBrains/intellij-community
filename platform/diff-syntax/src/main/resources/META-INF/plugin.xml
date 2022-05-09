@@ -23,8 +23,10 @@
   <depends>com.intellij.modules.lang</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <!--
     <fileType language="Diff" name="Diff/Patch" extensions="diff;patch"
         implementationClass="de.thomasrosenau.diffplugin.DiffFileType" />
+    -->
     <lang.parserDefinition language="Diff"
         implementationClass="de.thomasrosenau.diffplugin.parser.DiffParserDefinition" />
     <lang.syntaxHighlighterFactory language="Diff"

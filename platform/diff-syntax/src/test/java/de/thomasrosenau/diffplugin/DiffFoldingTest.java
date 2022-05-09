@@ -16,6 +16,7 @@
 
 package de.thomasrosenau.diffplugin;
 
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class DiffFoldingTest extends LightJavaCodeInsightFixtureTestCase {
@@ -64,7 +65,7 @@ public class DiffFoldingTest extends LightJavaCodeInsightFixtureTestCase {
 
     @Override
     protected String getTestDataPath() {
-        return "src/test/resources/diffs";
+        return PlatformTestUtil.getCommunityPath() + "/platform/diff-syntax/" + "src/test/resources/diffs";
     }
 
 }
