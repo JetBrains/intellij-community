@@ -314,16 +314,10 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun updateBaseFields() {
-    val upstream = upstreamField.item
-    val onto = ontoField.item
-
     val newRefs = sequenceOf(localBranches, remoteBranches, getTags()).flatten().map { it.name }.toList()
 
-    upstreamField.mutableModel?.update(newRefs)
-    ontoField.mutableModel?.update(newRefs)
-
-    upstreamField.item = upstream
-    ontoField.item = onto
+    upstreamField.updatePreserving { upstreamField.mutableModel?.update(newRefs) }
+    ontoField.updatePreserving { ontoField.mutableModel?.update(newRefs) }
   }
 
   private fun showRootField() = roots.size > 1
