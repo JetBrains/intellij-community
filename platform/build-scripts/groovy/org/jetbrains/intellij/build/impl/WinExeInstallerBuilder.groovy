@@ -63,7 +63,7 @@ final class WinExeInstallerBuilder {
    * Returns list of file extensions with leading dot added
    */
   private List<String> getFileAssociations() {
-    customizer.fileAssociations.collect {it.startsWith(".") ? it : ("." + it) }
+    return customizer.fileAssociations.collect {it.startsWith(".") ? it : ("." + it) }
   }
 
   Path buildInstaller(Path winDistPath, Path additionalDirectoryToInclude, String suffix, BuildContext context) {

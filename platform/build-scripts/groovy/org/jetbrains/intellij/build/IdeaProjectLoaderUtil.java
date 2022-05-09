@@ -51,7 +51,7 @@ public final class IdeaProjectLoaderUtil {
     // Under jps-bootstrap home is already known, reuse it
     String communityHome = System.getenv(JPS_BOOTSTRAP_COMMUNITY_HOME_ENV_NAME);
     if (communityHome != null) {
-      return Path.of(communityHome);
+      return Path.of(communityHome).normalize();
     }
 
     return getPathFromClass(klass);

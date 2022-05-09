@@ -32,8 +32,8 @@ final class KotlinPluginBuilder {
    */
   private static String KOTLIN_COOP_DEV_VERSION = "1.7.255"
 
-  private final String communityHome
-  private final String home
+  private final Path communityHome
+  private final Path home
   private final ProductProperties properties
 
   @SuppressWarnings('SpellCheckingInspection')
@@ -166,7 +166,7 @@ final class KotlinPluginBuilder {
     "kotlinc.lombok-compiler-plugin",
   )
 
-  KotlinPluginBuilder(String communityHome, String home, ProductProperties properties) {
+  KotlinPluginBuilder(Path communityHome, Path home, ProductProperties properties) {
     this.communityHome = communityHome
     this.home = home
     this.properties = properties

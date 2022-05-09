@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.kotlin
 
 import groovy.transform.CompileStatic
@@ -14,18 +14,18 @@ import java.nio.file.Path
  */
 @CompileStatic
 final class KotlinBinaries {
-  private final String communityHome
+  private final Path communityHome
   private final BuildMessages messages
   private final BuildOptions options
 
-  KotlinBinaries(String communityHome, BuildOptions options, BuildMessages messages) {
+  KotlinBinaries(Path communityHome, BuildOptions options, BuildMessages messages) {
     this.options = options
     this.messages = messages
     this.communityHome = communityHome
   }
 
   @Lazy Path kotlinCompilerHome = {
-    Path compilerHome = KotlinCompilerDependencyDownloader.downloadAndExtractKotlinCompiler(new BuildDependenciesCommunityRoot(Path.of(communityHome)))
+    Path compilerHome = KotlinCompilerDependencyDownloader.downloadAndExtractKotlinCompiler(new BuildDependenciesCommunityRoot(communityHome))
     def kotlinc = compilerHome.resolve("bin/kotlinc")
     if (!Files.exists(kotlinc)) {
       throw new IllegalStateException("Kotlin compiler home is missing under the path: " + compilerHome)

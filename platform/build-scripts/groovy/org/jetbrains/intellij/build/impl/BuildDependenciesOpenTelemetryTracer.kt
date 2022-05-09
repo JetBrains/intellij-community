@@ -1,89 +1,65 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import groovy.transform.CompileStatic
 import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.common.AttributesBuilder
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesSpan
 import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesTraceEventAttributes
 import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesTracer
 
-@CompileStatic
-class BuildDependenciesOpenTelemetryTracer implements BuildDependenciesTracer {
-  static final BuildDependenciesTracer INSTANCE = new BuildDependenciesOpenTelemetryTracer()
-
-  private BuildDependenciesOpenTelemetryTracer() {
+class BuildDependenciesOpenTelemetryTracer private constructor() : BuildDependenciesTracer {
+  companion object {
+    @JvmField
+    val INSTANCE: BuildDependenciesTracer = BuildDependenciesOpenTelemetryTracer()
   }
 
-  @Override
-  BuildDependenciesTraceEventAttributes createAttributes() {
-    return new BuildDependenciesOpenTelemetryAttributes()
+  override fun createAttributes(): BuildDependenciesTraceEventAttributes = BuildDependenciesOpenTelemetryAttributes()
+
+  override fun startSpan(name: String, attributes: BuildDependenciesTraceEventAttributes): BuildDependenciesSpan {
+    return BuildDependenciesOpenTelemetrySpan(name, attributes)
+  }
+}
+
+private class BuildDependenciesOpenTelemetrySpan(name: String, attributes: BuildDependenciesTraceEventAttributes) : BuildDependenciesSpan {
+  private val span: Span
+
+  init {
+    val spanBuilder = TracerManager.spanBuilder(name)
+    spanBuilder.setAllAttributes((attributes as BuildDependenciesOpenTelemetryAttributes).getAttributes())
+    span = spanBuilder.startSpan()
   }
 
-  @Override
-  BuildDependenciesSpan startSpan(@NotNull String name, @NotNull BuildDependenciesTraceEventAttributes attributes) {
-    return new BuildDependenciesOpenTelemetrySpan(name, attributes)
+  override fun addEvent(name: String, attributes: BuildDependenciesTraceEventAttributes) {
+    span.addEvent(name, (attributes as BuildDependenciesOpenTelemetryAttributes).getAttributes())
   }
 
-  private static class BuildDependenciesOpenTelemetrySpan implements BuildDependenciesSpan {
-    private final Span mySpan
-
-    BuildDependenciesOpenTelemetrySpan(@NotNull String name, @NotNull BuildDependenciesTraceEventAttributes attributes) {
-      def spanBuilder = TracerManager.spanBuilder(name)
-      spanBuilder.setAllAttributes(((BuildDependenciesOpenTelemetryAttributes)attributes).attributes)
-      mySpan = spanBuilder.startSpan()
-    }
-
-    @Override
-    void addEvent(@NotNull String name, @NotNull BuildDependenciesTraceEventAttributes attributes) {
-      mySpan.addEvent(name, ((BuildDependenciesOpenTelemetryAttributes)attributes).attributes)
-    }
-
-    @Override
-    void recordException(@NotNull Throwable throwable) {
-      mySpan.recordException(throwable)
-    }
-
-    @SuppressWarnings('UnnecessaryQualifiedReference')
-    @Override
-    void setStatus(@NotNull BuildDependenciesSpan.SpanStatus status) {
-      StatusCode statusCode
-      switch (status) {
-        case SpanStatus.UNSET:
-          statusCode = StatusCode.UNSET
-          break
-        case SpanStatus.OK:
-          statusCode = StatusCode.OK
-          break
-        case SpanStatus.ERROR:
-          statusCode = StatusCode.ERROR
-          break
-        default:
-          throw new IllegalArgumentException("Unsupported span status: " + status)
-      }
-
-      mySpan.setStatus(statusCode)
-    }
-
-    @Override
-    void close() throws IOException {
-      mySpan.end()
-    }
+  override fun recordException(throwable: Throwable) {
+    span.recordException(throwable)
   }
 
-  private static class BuildDependenciesOpenTelemetryAttributes implements BuildDependenciesTraceEventAttributes {
-    private AttributesBuilder builder = Attributes.builder()
-
-    Attributes getAttributes() {
-      return builder.build()
+  override fun setStatus(status: BuildDependenciesSpan.SpanStatus) {
+    val statusCode = when (status) {
+      BuildDependenciesSpan.SpanStatus.UNSET -> StatusCode.UNSET
+       BuildDependenciesSpan.SpanStatus.OK -> StatusCode.OK
+      BuildDependenciesSpan.SpanStatus.ERROR -> StatusCode.ERROR
+      else -> throw IllegalArgumentException("Unsupported span status: $status")
     }
 
-    @Override
-    void setAttribute(@NotNull String name, @NotNull String value) {
-      builder.put(name, value)
-    }
+    span.setStatus(statusCode)
+  }
+
+  override fun close() {
+    span.end()
+  }
+}
+
+private class BuildDependenciesOpenTelemetryAttributes : BuildDependenciesTraceEventAttributes {
+  private val builder = Attributes.builder()
+
+  fun getAttributes(): Attributes = builder.build()
+
+  override fun setAttribute(name: String, value: String) {
+    builder.put(name, value)
   }
 }

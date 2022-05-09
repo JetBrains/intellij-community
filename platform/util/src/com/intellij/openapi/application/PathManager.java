@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -142,12 +142,20 @@ public final class PathManager {
   }
 
   public static @Nullable String getHomePathFor(@NotNull Class<?> aClass) {
-    String rootPath = getResourceRoot(aClass, '/' + aClass.getName().replace('.', '/') + ".class");
-    if (rootPath == null) return null;
+    Path result = getHomeDirFor(aClass);
+    return result == null ? null : result.toString();
+  }
 
-    Path root = Paths.get(rootPath).toAbsolutePath();
-    do root = root.getParent(); while (root != null && !isIdeaHome(root));
-    return root != null ? root.toString() : null;
+  public static @Nullable Path getHomeDirFor(@NotNull Class<?> aClass) {
+    Path result = null;
+    String rootPath = getResourceRoot(aClass, '/' + aClass.getName().replace('.', '/') + ".class");
+    if (rootPath != null) {
+      Path root = Paths.get(rootPath).toAbsolutePath();
+      do root = root.getParent();
+      while (root != null && !isIdeaHome(root));
+      result = root;
+    }
+    return result;
   }
 
   private static boolean isIdeaHome(Path root) {

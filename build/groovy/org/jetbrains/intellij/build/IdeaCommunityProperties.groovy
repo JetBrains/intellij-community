@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -10,11 +10,11 @@ import java.util.function.BiConsumer
 
 @CompileStatic
 class IdeaCommunityProperties extends BaseIdeaProperties {
-  IdeaCommunityProperties(String home) {
+  IdeaCommunityProperties(Path home) {
     baseFileName = "idea"
     platformPrefix = "Idea"
     applicationInfoModule = "intellij.idea.community.resources"
-    additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
+    additionalIDEPropertiesFilePaths.add(home.resolve("build/conf/ideaCE.properties"))
     toolsJarRequired = true
     scrambleMainJar = false
     useSplash = true
@@ -22,7 +22,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
 
     productLayout.productImplementationModules = ["intellij.platform.main"]
     productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.idea.community.resources")
-    productLayout.bundledPluginModules += BUNDLED_PLUGIN_MODULES
+    productLayout.bundledPluginModules.addAll(BUNDLED_PLUGIN_MODULES)
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [

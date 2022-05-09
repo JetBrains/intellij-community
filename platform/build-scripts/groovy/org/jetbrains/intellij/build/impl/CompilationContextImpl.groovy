@@ -52,32 +52,30 @@ final class CompilationContextImpl implements CompilationContext {
   final Path stableJdkHome
 
   @SuppressWarnings("GrUnresolvedAccess")
-  static CompilationContextImpl create(String communityHome, String projectHome, String defaultOutputRoot) {
+  static CompilationContextImpl create(Path communityHome, Path projectHome, String defaultOutputRoot) {
     //noinspection GroovyAssignabilityCheck
     return create(communityHome, projectHome,
                   { p, m -> defaultOutputRoot } as BiFunction<JpsProject, BuildMessages, String>, new BuildOptions())
    }
 
-  static CompilationContextImpl create(String communityHome, String projectHome,
+  static CompilationContextImpl create(Path communityHome, Path projectHome,
                                        BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
     // This is not a proper place to initialize tracker for downloader
     // but this is the only place which is called in most build scripts
     BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
 
     BuildMessagesImpl messages = BuildMessagesImpl.create()
-    communityHome = toCanonicalPath(communityHome)
-    if (["platform/build-scripts", "bin/idea.properties", "build.txt"].any { !new File(communityHome, it).exists() }) {
+    if (["platform/build-scripts", "bin/idea.properties", "build.txt"].any { !Files.exists(communityHome.resolve(it)) }) {
       messages.error("communityHome ($communityHome) doesn't point to a directory containing IntelliJ Community sources")
     }
 
     printEnvironmentDebugInfo()
 
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
-    def kotlinBinaries = new KotlinBinaries(communityHome, options, messages)
+    KotlinBinaries kotlinBinaries = new KotlinBinaries(communityHome, options, messages)
     def model = loadProject(projectHome, kotlinBinaries, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
 
-    projectHome = toCanonicalPath(projectHome)
     CompilationContextImpl context = new CompilationContextImpl(model, communityHome, projectHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     defineJavaSdk(context)
@@ -137,20 +135,23 @@ final class CompilationContextImpl implements CompilationContext {
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
   @CompileDynamic
-  static Map<String, String> loadModuleRenamingHistory(String projectHome, BuildMessages messages) {
-    def modulesXml = new File(projectHome, ".idea/modules.xml")
-    if (!modulesXml.exists()) {
+  private static Map<String, String> loadModuleRenamingHistory(Path projectHome, BuildMessages messages) {
+    Path modulesXml = projectHome.resolve(".idea/modules.xml")
+    if (!Files.exists(modulesXml)) {
       messages.error("Incorrect project home: $modulesXml doesn't exist")
     }
-    def root = new XmlParser().parse(modulesXml)
-    def renamingHistoryTag = root.component.find { it.@name == "ModuleRenamingHistory"}
-    def mapping = new LinkedHashMap<String, String>()
-    renamingHistoryTag?.module?.each { mapping[it.'@old-name'] = it.'@new-name' }
-    return mapping
+
+    try (InputStream stream = Files.newInputStream(modulesXml)) {
+      def root = new XmlParser().parse(stream)
+      def renamingHistoryTag = root.component.find { it.@name == "ModuleRenamingHistory" }
+      def mapping = new LinkedHashMap<String, String>()
+      renamingHistoryTag?.module?.each { mapping[it.'@old-name'] = it.'@new-name' }
+      return mapping
+    }
   }
 
-  private CompilationContextImpl(JpsModel model, String communityHome,
-                                 String projectHome, BuildMessages messages,
+  private CompilationContextImpl(JpsModel model, Path communityHome,
+                                 Path projectHome, BuildMessages messages,
                                  Map<String, String> oldToNewModuleName,
                                  BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
     this.projectModel = model
@@ -182,7 +183,7 @@ final class CompilationContextImpl implements CompilationContext {
 
   CompilationContextImpl createCopy(BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
-    CompilationContextImpl copy = new CompilationContextImpl(projectModel, paths.communityHome, paths.projectHome,
+    CompilationContextImpl copy = new CompilationContextImpl(projectModel, paths.communityHomeDir, paths.projectHomeDir,
                                                              messages, oldToNewModuleName, buildOutputRootEvaluator, options)
     copy.compilationData = compilationData
     return copy
@@ -209,7 +210,7 @@ final class CompilationContextImpl implements CompilationContext {
     return new CompilationContextImpl(messages, this)
   }
 
-  private static JpsModel loadProject(String projectHome, KotlinBinaries kotlinBinaries, BuildMessages messages) {
+  private static JpsModel loadProject(Path projectHome, KotlinBinaries kotlinBinaries, BuildMessages messages) {
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
     if (kotlinBinaries.isCompilerRequired()) {
@@ -328,7 +329,7 @@ final class CompilationContextImpl implements CompilationContext {
   }
 
   private static void suppressWarnings(JpsProject project) {
-    def compilerOptions = JpsJavaExtensionService.instance.getOrCreateCompilerConfiguration(project).currentCompilerOptions
+    def compilerOptions = JpsJavaExtensionService.instance.getCompilerConfiguration(project).currentCompilerOptions
     compilerOptions.GENERATE_NO_WARNINGS = true
     compilerOptions.DEPRECATION = false
     compilerOptions.ADDITIONAL_OPTIONS_STRING = compilerOptions.ADDITIONAL_OPTIONS_STRING.replace("-Xlint:unchecked", "")
@@ -423,11 +424,10 @@ final class CompilationContextImpl implements CompilationContext {
   }
 
   private static String toCanonicalPath(String path) {
-    FileUtilRt.toSystemIndependentName(new File(path).canonicalPath)
+    return FileUtilRt.toSystemIndependentName(new File(path).canonicalPath)
   }
 
-  static void logFreeDiskSpace(BuildMessages buildMessages, String directoryPath, String phase) {
-    Path dir = Path.of(directoryPath)
+  static void logFreeDiskSpace(BuildMessages buildMessages, Path dir, String phase) {
     buildMessages.debug("Free disk space $phase: ${Formats.formatFileSize(Files.getFileStore(dir).getUsableSpace())} (on disk containing $dir)")
   }
 
@@ -448,13 +448,13 @@ final class CompilationContextImpl implements CompilationContext {
 
 @CompileStatic
 final class BuildPathsImpl extends BuildPaths {
-  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, Path logDir) {
-    super(Path.of(communityHome).toAbsolutePath().normalize(),
+  BuildPathsImpl(Path communityHome, Path projectHome, String buildOutputRoot, Path logDir) {
+    super(communityHome,
           Path.of(buildOutputRoot).toAbsolutePath().normalize(),
           logDir.toAbsolutePath().normalize())
 
-    this.projectHome = projectHome
-    this.projectHomeDir = Path.of(projectHome).toAbsolutePath().normalize()
+    this.projectHome = FileUtilRt.toSystemIndependentName(projectHome.toString())
+    this.projectHomeDir = projectHome
     artifactDir = buildOutputDir.resolve("artifacts")
     artifacts = FileUtilRt.toSystemIndependentName(artifactDir.toString())
   }

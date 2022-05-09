@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
@@ -27,11 +28,7 @@ import java.lang.reflect.UndeclaredThrowableException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.function.BiFunction
-import java.util.function.Function
-import java.util.function.Predicate
-import java.util.function.Supplier
-import java.util.function.UnaryOperator
+import java.util.function.*
 import java.util.stream.Collectors
 
 @CompileStatic
@@ -67,20 +64,21 @@ final class BuildContextImpl extends BuildContext {
     return productProperties.getSystemSelector(applicationInfo, buildNumber)
   }
 
-  static BuildContext createContext(String communityHome, String projectHome, ProductProperties productProperties,
+  static BuildContext createContext(Path communityHome, Path projectHome, ProductProperties productProperties,
                                     ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
                                     BuildOptions options = new BuildOptions()) {
     return create(communityHome, projectHome, productProperties, proprietaryBuildTools, options)
   }
 
-  static BuildContextImpl create(String communityHome, String projectHome, ProductProperties productProperties,
+  static BuildContextImpl create(Path communityHome, Path projectHome, ProductProperties productProperties,
                                  ProprietaryBuildTools proprietaryBuildTools, BuildOptions options) {
-    WindowsDistributionCustomizer windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHome)
-    LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHome)
-    MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(projectHome)
+    def projectHomeAsString = FileUtilRt.toSystemIndependentName(projectHome.toString())
+    WindowsDistributionCustomizer windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString)
+    LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString)
+    MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeAsString)
 
     def compilationContext = CompilationContextImpl.create(communityHome, projectHome,
-                                                           createBuildOutputRootEvaluator(projectHome, productProperties, options), options)
+                                                           createBuildOutputRootEvaluator(projectHomeAsString, productProperties, options), options)
 
     return new BuildContextImpl(compilationContext, productProperties,
                                 windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
@@ -394,10 +392,11 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  BuildContext createCopyForProduct(ProductProperties productProperties, String projectHomeForCustomizers) {
-    WindowsDistributionCustomizer windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeForCustomizers)
-    LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizers)
-    MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizers)
+  BuildContext createCopyForProduct(ProductProperties productProperties, Path projectHomeForCustomizers) {
+    String projectHomeForCustomizersAsString = FileUtilRt.toSystemIndependentName(projectHomeForCustomizers.toString())
+    WindowsDistributionCustomizer windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeForCustomizersAsString)
+    LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizersAsString)
+    MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizersAsString)
     /**
      * FIXME compiled classes are assumed to be already fetched in the FIXME from {@link org.jetbrains.intellij.build.impl.CompilationContextImpl#prepareForBuild}, please change them together
      */

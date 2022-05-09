@@ -12,7 +12,7 @@ import java.nio.file.Paths
 final class IdeaCommunityBuilder {
   private final BuildContext buildContext
 
-  IdeaCommunityBuilder(String home, BuildOptions options = new BuildOptions(), String projectHome = home) {
+  IdeaCommunityBuilder(Path home, BuildOptions options = new BuildOptions(), Path projectHome = home) {
     this(BuildContextImpl.createContext(home, projectHome, new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY, options))
   }
 

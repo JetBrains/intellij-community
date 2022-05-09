@@ -24,17 +24,17 @@ import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloa
  * Clean-up local download cache in two stages:
  * 1) mark old files by writing near them a marker file (.marked.for.cleanup)
  * 2) on the second run remove both marked and original old files.
- *
+ * <p>
  * Why two stage removing is required: suppose you're running some build scripts after a month of vacation.
  * Older downloaded files will be marked for deletion and then some of them will be used again.
  * Without the marking they would be removed and re-downloaded again, which we do not want.
  */
-public class BuildDependenciesDownloaderCleanup {
+public final class BuildDependenciesDownloaderCleanup {
   private static final Duration MAXIMUM_ACCESS_TIME_AGE = Duration.ofDays(22);
   private static final Duration CLEANUP_EVERY_DURATION = Duration.ofDays(1);
 
   static final String LAST_CLEANUP_MARKER_FILE_NAME = ".last.cleanup.marker";
-  static final String MARKED_FOR_CLEANUP_SUFFIX = ".marked.for.cleanup";
+  private static final String MARKED_FOR_CLEANUP_SUFFIX = ".marked.for.cleanup";
 
   private final Path myCachesDir;
   private final Path myLastCleanupMarkerFile;

@@ -65,7 +65,7 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
   val platformPrefix = productProperties.platformPrefix ?: "idea"
   val runDir = createRunDirForProduct(homePath, platformPrefix)
 
-  val buildContext = BuildContextImpl.createContext(getCommunityHomePath(homePath).toString(), homePath.toString(), productProperties,
+  val buildContext = BuildContextImpl.createContext(getCommunityHomePath(homePath), homePath, productProperties,
                                                     ProprietaryBuildTools.DUMMY, createBuildOptions(runDir))
   val pluginsDir = runDir.resolve("plugins")
 

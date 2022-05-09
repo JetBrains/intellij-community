@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.testFramework
 
 import com.intellij.openapi.application.PathManager
@@ -13,20 +13,25 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ErrorCollector
+import java.nio.file.Path
 
 abstract class IdeStructureTestBase {
   @Rule
   @JvmField
   val errorCollector: ErrorCollector = ErrorCollector()
 
-  protected abstract fun createProductProperties(homePath: String): ProductProperties
+  protected abstract fun createProductProperties(homePath: Path): ProductProperties
   protected abstract fun createBuildTools(): ProprietaryBuildTools
   protected abstract val missingModulesException: Set<String>
 
   private fun createBuildContext(): BuildContext {
-    val homePath = PathManager.getHomePathFor(javaClass)!!
+    val homePath = Path.of(PathManager.getHomePathFor(javaClass)!!)
     val productProperties = createProductProperties(homePath)
-    return createBuildContext(homePath, productProperties, createBuildTools(), false, "$homePath/community")
+    return createBuildContext(homePath = homePath,
+                              productProperties = productProperties,
+                              buildTools = createBuildTools(),
+                              skipDependencySetup = false,
+                              communityHomePath = homePath.resolve("community"))
   }
 
   @Test

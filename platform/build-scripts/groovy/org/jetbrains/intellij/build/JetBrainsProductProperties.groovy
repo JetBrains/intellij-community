@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.FileUtil
@@ -13,10 +13,8 @@ import org.jetbrains.jps.util.JpsPathUtil
 abstract class JetBrainsProductProperties extends ProductProperties {
   {
     scrambleMainJar = true
-    productLayout.bundledPluginModules = ProductModulesLayout.DEFAULT_BUNDLED_PLUGINS + [
-      "intellij.laf.macos",
-      "intellij.laf.win10",
-    ]
+    productLayout.bundledPluginModules.add("intellij.laf.macos")
+    productLayout.bundledPluginModules.add("intellij.laf.win10")
     includeIntoSourcesArchiveFilter = { JpsModule module, BuildContext buildContext ->
       module.contentRootsList.urls.every { url ->
         FileUtil.isAncestor(buildContext.paths.communityHome, JpsPathUtil.urlToOsPath(url), false)

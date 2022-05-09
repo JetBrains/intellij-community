@@ -267,8 +267,8 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       def upperCaseProductName = buildContext.applicationInfo.upperCaseProductName
       List<String> vmOptions = buildContext.additionalJvmArguments + ['-Dide.native.launcher=true']
       def productName = buildContext.applicationInfo.shortProductName
-      String classPath = buildContext.bootClassPathJarNames.join(";")
-      String bootClassPath = buildContext.XBootClassPathJarNames.join(";")
+      String classPath = String.join(";", buildContext.bootClassPathJarNames)
+      String bootClassPath = String.join(";", buildContext.XBootClassPathJarNames)
       def envVarBaseName = buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo)
       Path icoFilesDirectory = buildContext.paths.tempDir.resolve("win-launcher-ico")
       Path appInfoForLauncher = generateApplicationInfoForLauncher(patchedApplicationInfo, icoFilesDirectory)
@@ -305,8 +305,8 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       resourceModules.collectMany { it.sourceRoots }.each { JpsModuleSourceRoot root ->
         classpath.add(root.file.absolutePath)
       }
-      buildContext.productProperties.brandingResourcePaths.each {
-        classpath.add(it)
+      for (String p in buildContext.productProperties.brandingResourcePaths) {
+        classpath.add(p.toString())
       }
       classpath.add(icoFilesDirectory.toString())
       classpath.add(buildContext.getModuleOutputDir(buildContext.findRequiredModule("intellij.platform.util.jdom")).toString())

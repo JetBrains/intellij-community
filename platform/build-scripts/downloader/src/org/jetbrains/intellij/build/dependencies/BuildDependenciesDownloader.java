@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies;
 
 import com.google.common.util.concurrent.Striped;
@@ -383,7 +383,10 @@ final public class BuildDependenciesDownloader {
   }
 
   private static String getExtractOptionsShortString(BuildDependenciesExtractOptions[] options) {
-    if (options.length <= 0) return "";
+    if (options.length == 0) {
+      return "";
+    }
+
     StringBuilder sb = new StringBuilder();
     for (BuildDependenciesExtractOptions option : options) {
       if (option == BuildDependenciesExtractOptions.STRIP_ROOT) {

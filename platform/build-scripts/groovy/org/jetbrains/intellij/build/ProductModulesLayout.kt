@@ -35,7 +35,7 @@ class ProductModulesLayout {
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. Layouts of the
    * bundled plugins are specified in {@link #allNonTrivialPlugins} list.
    */
-  var bundledPluginModules: MutableList<String> = DEFAULT_BUNDLED_PLUGINS.toMutableList()
+  val bundledPluginModules: MutableList<String> = DEFAULT_BUNDLED_PLUGINS.toMutableList()
 
   private var pluginsToPublish: LinkedHashSet<String> = LinkedHashSet()
 

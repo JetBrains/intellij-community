@@ -43,7 +43,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", m2HomePath.canonicalPath)
 
     val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
-    JpsProjectLoader.loadProject(model.project, pathVariables, paths.sourcesRootFolder.canonicalPath)
+    JpsProjectLoader.loadProject(model.project, pathVariables, paths.sourcesRootFolder.toPath())
 
     val productionOutput = paths.outputRootFolder.resolve("production")
     if (!productionOutput.isDirectory) {

@@ -217,8 +217,8 @@ final class BuildTasksImpl extends BuildTasks {
   static Path patchIdeaPropertiesFile(BuildContext buildContext) {
     StringBuilder builder = new StringBuilder(Files.readString(buildContext.paths.communityHomeDir.resolve("bin/idea.properties")))
 
-    buildContext.productProperties.additionalIDEPropertiesFilePaths.each {
-      builder.append('\n').append(Files.readString(Paths.get(it)))
+    for (it in buildContext.productProperties.additionalIDEPropertiesFilePaths) {
+      builder.append('\n').append(Files.readString(it))
     }
 
     //todo[nik] introduce special systemSelectorWithoutVersion instead?
@@ -658,7 +658,7 @@ idea.fatal.error.notification=disabled
   }
 
   private void logFreeDiskSpace(String phase) {
-    CompilationContextImpl.logFreeDiskSpace(buildContext.messages, buildContext.paths.buildOutputRoot, phase)
+    CompilationContextImpl.logFreeDiskSpace(buildContext.messages, buildContext.paths.buildOutputDir, phase)
   }
 
   private static void copyDependenciesFile(BuildContext context) {
@@ -671,9 +671,9 @@ idea.fatal.error.notification=disabled
   private void checkProductProperties() {
     checkProductLayout()
     def properties = buildContext.productProperties
-    checkPaths(properties.brandingResourcePaths, "productProperties.brandingResourcePaths")
-    checkPaths(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths")
-    checkPaths(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
+    checkPaths2(properties.brandingResourcePaths, "productProperties.brandingResourcePaths")
+    checkPaths2(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths")
+    checkPaths2(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
 
     checkModules(properties.additionalModulesToCompile, "productProperties.additionalModulesToCompile")
     checkModules(properties.modulesToCompileTests, "productProperties.modulesToCompileTests")
@@ -829,6 +829,13 @@ idea.fatal.error.notification=disabled
     Collection<String> nonExistingFiles = paths.findAll { it != null && !Files.exists(Paths.get(it)) }
     if (!nonExistingFiles.empty) {
       buildContext.messages.error("$fieldName contains non-existing path${nonExistingFiles.size() > 1 ? "s" : ""}: ${String.join(",", nonExistingFiles)}")
+    }
+  }
+
+  private void checkPaths2(@NotNull Collection<Path> paths, String fieldName) {
+    Collection<Path> nonExistingFiles = paths.findAll { it != null && !Files.exists(it) }
+    if (!nonExistingFiles.empty) {
+      buildContext.messages.error("$fieldName contains non-existing path${nonExistingFiles.size() > 1 ? "s" : ""}: ${String.join(",", nonExistingFiles.collect { it.toString()})}")
     }
   }
 

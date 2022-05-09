@@ -36,7 +36,7 @@ abstract class BuildContext: CompilationContext {
   /**
    * Names of JARs inside `IDE_HOME/lib` directory which need to be added to the JVM boot classpath to start the IDE.
    */
-  abstract var xBootClassPathJarNames: MutableList<String>
+  abstract val xBootClassPathJarNames: List<String>
 
   /**
    * Names of JARs inside `IDE_HOME/lib` directory which need to be added to the JVM classpath to start the IDE.
@@ -97,7 +97,7 @@ abstract class BuildContext: CompilationContext {
    */
   abstract fun forkForParallelTask(taskName: String): BuildContext
 
-  abstract fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: String): BuildContext
+  abstract fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext
 
   abstract fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null): OsSpecificDistributionBuilder?
 

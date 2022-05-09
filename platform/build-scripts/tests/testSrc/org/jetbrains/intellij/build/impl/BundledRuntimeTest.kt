@@ -73,7 +73,7 @@ class BundledRuntimeTest {
     val tempDir = FileUtil.createTempDirectory("compilation-context-", "")
     try {
       val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
-      val context = CompilationContextImpl.create(communityHome.toString(), communityHome.toString(), tempDir.toString())
+      val context = CompilationContextImpl.create(communityHome, communityHome, tempDir.toString())
       block(context)
     }
     finally {

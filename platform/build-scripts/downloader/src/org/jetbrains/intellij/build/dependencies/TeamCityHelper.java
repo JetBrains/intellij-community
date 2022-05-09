@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies;
 
 import com.google.common.base.Suppliers;
@@ -13,11 +14,10 @@ import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
 @ApiStatus.Internal
-public class TeamCityHelper {
+public final class TeamCityHelper {
   public static final boolean isUnderTeamCity = System.getenv("TEAMCITY_VERSION") != null;
 
-  @Nullable
-  public static Path getCheckoutDirectory() {
+  public static @Nullable Path getCheckoutDirectory() {
     if (!isUnderTeamCity) {
       return null;
     }
@@ -37,18 +37,15 @@ public class TeamCityHelper {
     return file;
   }
 
-  @NotNull
-  public static Map<String, String> getSystemProperties() {
+  static @NotNull Map<String, String> getSystemProperties() {
     return systemPropertiesValue.get();
   }
 
-  @NotNull
-  public static Map<String, String> getAllProperties() {
+  public static @NotNull Map<String, String> getAllProperties() {
     return allPropertiesValue.get();
   }
 
-  @Nullable
-  public static Path getTempDirectory() {
+  public static @Nullable Path getTempDirectory() {
     Map<String, String> systemProperties = getSystemProperties();
     if (systemProperties.isEmpty()) {
       return null;
