@@ -1,5 +1,5 @@
 <idea-plugin package="org.jetbrains.plugins.gitlab">
-  <name>GitHub</name>
+  <name>GitLab</name>
   <id>org.jetbrains.plugins.gitlab</id>
   <vendor>JetBrains</vendor>
   <category>Version Controls</category>
