@@ -200,6 +200,9 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       else if (myToggled) {
         Icon checkmark = LafIconLookup.getIcon("checkmark");
         Color selectionBg = UIManager.getColor("PopupMenu.selectionBackground");
+        if (selectionBg == null) {
+          selectionBg = UIManager.getColor("List.selectionBackground");
+        }
         boolean isLightSelectionInLightTheme = selectionBg != null && JBColor.isBright() && !ColorUtil.isDark(selectionBg);
         Icon selectedCheckmark = isLightSelectionInLightTheme ?  checkmark : LafIconLookup.getSelectedIcon("checkmark");
         Icon disabledCheckmark = LafIconLookup.getDisabledIcon("checkmark");
