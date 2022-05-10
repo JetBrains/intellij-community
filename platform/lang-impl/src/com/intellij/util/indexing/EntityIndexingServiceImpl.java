@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,11 +40,16 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
     if (!(FileBasedIndex.getInstance() instanceof FileBasedIndexImpl)) return;
     if (LightEdit.owns(project)) return;
     if (changes.isEmpty()) {
-      runFullReindex(project, "Project roots have changed");
+      runFullRescan(project, "Project roots have changed");
     }
+    boolean fullReindexOnBuildableChanges = Registry.is("indexing.full.rescan.on.buildable.changes");
     for (RootsChangeRescanningInfo change : changes) {
       if (change == RootsChangeRescanningInfo.TOTAL_RESCAN) {
-        runFullReindex(project, "Reindex requested by project root model changes");
+        runFullRescan(project, "Reindex requested by project root model changes");
+        return;
+      }
+      else if (fullReindexOnBuildableChanges && change instanceof BuildableRootsChangeRescanningInfo) {
+        runFullRescan(project, "Reindex requested by buildable changes");
         return;
       }
     }
@@ -59,7 +65,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
       }
       else {
         LOG.warn("Unexpected change " + change.getClass() + " " + change + ", full reindex requested");
-        runFullReindex(project, "Reindex on unexpected change in EntityIndexingServiceImpl");
+        runFullRescan(project, "Reindex on unexpected change in EntityIndexingServiceImpl");
         return;
       }
     }
@@ -83,7 +89,7 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
     }
   }
 
-  private static void runFullReindex(@NotNull Project project, @NotNull @NonNls String reason) {
+  private static void runFullRescan(@NotNull Project project, @NotNull @NonNls String reason) {
     logRootChanges(project, true);
     new UnindexedFilesUpdater(project, reason).queue(project);
   }
