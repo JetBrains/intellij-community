@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.tasks
@@ -27,8 +27,6 @@ import kotlin.io.path.readText
 private const val fileFlag = 32768
 // 0755
 const val executableFileUnixMode = fileFlag or 493
-// 0644
-const val regularFileUnixMode = fileFlag or 420
 
 internal fun packInternalUtilities(outFile: Path, files: List<Path>) {
   writeNewZip(outFile, compress = true) { writer ->

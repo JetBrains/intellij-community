@@ -10,9 +10,6 @@ import groovy.transform.CompileStatic
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import it.unimi.dsi.fastutil.Hash
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlin.Triple
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -52,11 +49,6 @@ import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
  */
 @CompileStatic
 final class DistributionJARsBuilder {
-  /**
-   * Path to file with third party libraries HTML content,
-   * see the same constant at com.intellij.ide.actions.AboutPopup#THIRD_PARTY_LIBRARIES_FILE_PATH
-   */
-  private static final String THIRD_PARTY_LIBRARIES_FILE_PATH = "license/third-party-libraries.html"
   private static final String PLUGINS_DIRECTORY = "plugins"
   private static final Comparator<PluginLayout> PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE = new Comparator<PluginLayout>() {
     @Override
@@ -66,67 +58,22 @@ final class DistributionJARsBuilder {
     }
   }
 
-  final PlatformLayout platform
-  private final Set<PluginLayout> pluginsToPublish
+  public final DistributionBuilderState state
   private final PluginXmlPatcher pluginXmlPatcher
 
   DistributionJARsBuilder(BuildContext context, Set<PluginLayout> pluginsToPublish = Collections.emptySet()) {
-    this.pluginsToPublish = filterPluginsToPublish(pluginsToPublish, context)
+    state = new DistributionBuilderState(pluginsToPublish, context)
 
-    String releaseDate = context.applicationInfo.majorReleaseDate
-    if (releaseDate.startsWith('__')) {
-      context.messages.error("Unresolved release-date: $releaseDate")
-    }
     String releaseVersion = "${context.applicationInfo.majorVersion}${context.applicationInfo.minorVersionMainPart}00"
-    pluginXmlPatcher = new PluginXmlPatcher(releaseDate, releaseVersion)
-
-    platform = createPlatformLayout(this.pluginsToPublish, context)
+    pluginXmlPatcher = new PluginXmlPatcher(context.applicationInfo.majorReleaseDate, releaseVersion)
   }
 
-  static PlatformLayout createPlatformLayout(Set<PluginLayout> pluginsToPublish, BuildContext context) {
-    ProductModulesLayout productLayout = context.productProperties.productLayout
-    Set<String> enabledPluginModules = getEnabledPluginModules(pluginsToPublish, context.productProperties)
-    SortedSet<ProjectLibraryData> projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(context, enabledPluginModules)
-    return PlatformModules.createPlatformLayout(productLayout,
-                                                PlatformModules.INSTANCE.hasPlatformCoverage(productLayout, enabledPluginModules, context),
-                                                projectLibrariesUsedByPlugins,
-                                                context)
-  }
+  DistributionJARsBuilder(DistributionBuilderState state) {
+    this.state = state
 
-  private static SortedSet<ProjectLibraryData> computeProjectLibsUsedByPlugins(BuildContext context, Set<String> enabledPluginModules) {
-    ObjectLinkedOpenHashSet<ProjectLibraryData> result = new ObjectLinkedOpenHashSet<>()
-
-    for (PluginLayout plugin : getPluginsByModules(context, enabledPluginModules)) {
-      Collection<String> libsToUnpack = plugin.projectLibrariesToUnpack.values()
-      for (String moduleName in plugin.includedModuleNames) {
-        JpsJavaDependenciesEnumerator dependencies = JpsJavaExtensionService.dependencies(context.findRequiredModule(moduleName))
-        dependencies.includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).processLibraries(new com.intellij.util.Consumer<JpsLibrary>() {
-          @Override
-          void consume(JpsLibrary library) {
-            if (!isProjectLibraryUsedByPlugin(library, plugin, libsToUnpack)) {
-              return
-            }
-
-            String name = library.name
-            LibraryPackMode packMode = PlatformModules.INSTANCE.CUSTOM_PACK_MODE.getOrDefault(name, LibraryPackMode.MERGED)
-            result.addOrGet(new ProjectLibraryData(name, packMode))
-              .dependentModules.computeIfAbsent(Objects.requireNonNull(plugin.directoryName), new Function<String, List<String>>() {
-              @Override
-              List<String> apply(String s) {
-                return new ArrayList<String>()
-              }
-            }).add(moduleName)
-          }
-        })
-      }
-    }
-    return result
-  }
-
-  private static boolean isProjectLibraryUsedByPlugin(JpsLibrary library, BaseLayout plugin, Collection<String> libsToUnpack) {
-    return !(library.createReference().parentReference instanceof JpsModuleReference) &&
-           !plugin.includedProjectLibraries.any {it.libraryName == library.name} &&
-           !libsToUnpack.contains(library.name)
+    BuildContext context = state.context
+    String releaseVersion = "${context.applicationInfo.majorVersion}${context.applicationInfo.minorVersionMainPart}00"
+    pluginXmlPatcher = new PluginXmlPatcher(context.applicationInfo.majorReleaseDate, releaseVersion)
   }
 
   static void collectProjectLibrariesWhichShouldBeProvidedByPlatform(BaseLayout plugin,
@@ -137,79 +84,11 @@ final class DistributionJARsBuilder {
       JpsModule module = context.findRequiredModule(moduleName)
       JpsJavaDependenciesEnumerator dependencies = JpsJavaExtensionService.dependencies(module)
       for (JpsLibrary library : dependencies.includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
-        if (isProjectLibraryUsedByPlugin(library, plugin, libsToUnpack)) {
+        if (DistributionBuilderStateKt.isProjectLibraryUsedByPlugin(library, plugin, libsToUnpack)) {
           result.putValue(library, module)
         }
       }
     }
-  }
-
-  private static @NotNull Set<PluginLayout> filterPluginsToPublish(@NotNull Set<PluginLayout> plugins, @NotNull BuildContext context) {
-    if (plugins.isEmpty()) {
-      return plugins
-    }
-
-    Set<PluginLayout> result = new LinkedHashSet<>(plugins)
-    for (Iterator<PluginLayout> iterator = result.iterator(); iterator.hasNext();) {
-      PluginLayout plugin = iterator.next()
-      // Kotlin Multiplatform Mobile plugin is excluded since:
-      // * is compatible with Android Studio only;
-      // * has release cycle of its
-      // * shadows IntelliJ utility modules included via Kotlin Compiler;
-      // * breaks searchable options index and jar order generation steps.
-      if (plugin.mainModule == "kotlin-ultimate.kmm-plugin") {
-        iterator.remove()
-      }
-    }
-    if (result.isEmpty()) {
-      return Collections.emptySet()
-    }
-
-    Set<String> toInclude = new HashSet<>(context.options.nonBundledPluginDirectoriesToInclude)
-    if (toInclude.isEmpty()) {
-      return result
-    }
-
-    if (toInclude.size() == 1 && toInclude.contains("none")) {
-      return Collections.emptySet()
-    }
-
-    for (Iterator<PluginLayout> iterator = result.iterator(); iterator.hasNext();) {
-      PluginLayout plugin = iterator.next()
-      if (!toInclude.contains(plugin.directoryName)) {
-        iterator.remove()
-      }
-    }
-    return result
-  }
-
-  private static Set<String> getEnabledPluginModules(Set<PluginLayout> pluginsToPublish, ProductProperties productProperties) {
-    Set<String> result = new LinkedHashSet<>()
-    result.addAll(productProperties.productLayout.bundledPluginModules)
-    for (PluginLayout plugin : pluginsToPublish) {
-      result.add(plugin.mainModule)
-    }
-    return result
-  }
-
-  Collection<String> getPlatformModules() {
-    return platform.getIncludedModuleNames() + toolModules
-  }
-
-  /**
-   * @return module names which are required to run necessary tools from build scripts
-   */
-  static List<String> getToolModules() {
-    return List.of("intellij.java.rt", "intellij.platform.main", /*required to build searchable options index*/ "intellij.platform.updater")
-  }
-
-  Set<String> getIncludedProjectArtifacts(BuildContext context) {
-    Set<String> result = new LinkedHashSet<String>()
-    result.addAll(platform.includedArtifacts.keySet())
-
-    getPluginsByModules(context, getEnabledPluginModules(pluginsToPublish, context.productProperties))
-      .collectMany(result) { it.includedArtifacts.keySet() }
-    return result
   }
 
   @NotNull
@@ -223,7 +102,7 @@ final class DistributionJARsBuilder {
       buildSearchableOptions(context)
     }?.fork()?.join()
 
-    Set<PluginLayout> pluginLayouts = getPluginsByModules(context, context.productProperties.productLayout.bundledPluginModules)
+    Set<PluginLayout> pluginLayouts = DistributionBuilderStateKt.getPluginsByModules(context.productProperties.productLayout.bundledPluginModules, context)
 
     Path antDir = context.productProperties.isAntRequired() ? context.paths.distAllDir.resolve("lib/ant") : null
     Path antTargetFile = antDir == null ? null : antDir.resolve("lib/ant.jar")
@@ -253,7 +132,7 @@ final class DistributionJARsBuilder {
             },
             ).findAll { it != null })
 
-          List<DistributionFileEntry> result = buildLib(moduleOutputPatcher, platform, context)
+          List<DistributionFileEntry> result = buildLib(moduleOutputPatcher, state.platform, context)
           if (!isUpdateFromSources && context.productProperties.scrambleMainJar) {
             scramble(context)
           }
@@ -270,7 +149,7 @@ final class DistributionJARsBuilder {
       buildPlatformTask,
       createBuildBundledPluginTask(pluginLayouts, buildPlatformTask, context),
       createBuildOsSpecificBundledPluginsTask(pluginLayouts, isUpdateFromSources, buildPlatformTask, context),
-      createBuildNonBundledPluginsTask(pluginsToPublish,
+      createBuildNonBundledPluginsTask(state.pluginsToPublish,
                                        !isUpdateFromSources && context.options.compressNonBundledPluginArchive,
                                        buildPlatformTask,
                                        context),
@@ -425,14 +304,14 @@ final class DistributionJARsBuilder {
   @CompileStatic
   void validateModuleStructure(BuildContext context) {
     if (context.options.validateModuleStructure) {
-      new ModuleStructureValidator(context, platform.moduleJars).validate()
+      new ModuleStructureValidator(context, state.platform.moduleJars).validate()
     }
   }
 
   @CompileStatic
   List<String> getProductModules() {
     List<String> result = new ArrayList<>()
-    for (moduleJar in platform.jarToIncludedModuleNames) {
+    for (moduleJar in state.platform.jarToIncludedModuleNames) {
       // Filter out jars with relative paths in name
       if (moduleJar.key.contains("\\") || moduleJar.key.contains("/")) {
         continue
@@ -493,47 +372,12 @@ final class DistributionJARsBuilder {
     modulesToInclude.addAll(productLayout.productApiModules)
     modulesToInclude.addAll(productLayout.productImplementationModules)
     modulesToInclude.addAll(productLayout.additionalPlatformJars.values())
-    modulesToInclude.addAll(toolModules)
+    modulesToInclude.addAll(DistributionBuilderStateKt.getToolModules())
     modulesToInclude.addAll(buildContext.productProperties.additionalModulesToCompile)
     modulesToInclude.add("intellij.idea.community.build.tasks")
     modulesToInclude.add("intellij.platform.images.build")
     modulesToInclude.removeAll(productLayout.excludedModuleNames)
     return modulesToInclude
-  }
-
-  Set<String> getModulesForPluginsToPublish() {
-    Set<String> result = new LinkedHashSet<String>()
-    result.addAll(platformModules)
-    pluginsToPublish.collectMany(result) { it.includedModuleNames }
-    return result
-  }
-
-  static void buildAdditionalArtifacts(BuildContext context, ProjectStructureMapping projectStructureMapping) {
-    ProductProperties productProperties = context.productProperties
-
-    if (productProperties.generateLibrariesLicensesTable &&
-        !context.options.buildStepsToSkip.contains(BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP)) {
-      String artifactNamePrefix = productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
-      Path artifactDir = context.paths.artifactDir
-      Files.createDirectories(artifactDir)
-      Files.copy(getThirdPartyLibrariesHtmlFilePath(context), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.html"))
-      Files.copy(getThirdPartyLibrariesJsonFilePath(context), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.json"))
-      context.notifyArtifactBuilt(artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.html"))
-      context.notifyArtifactBuilt(artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.json"))
-    }
-
-    if (productProperties.buildSourcesArchive) {
-      buildSourcesArchive(projectStructureMapping, context)
-    }
-  }
-
-  static void buildSourcesArchive(ProjectStructureMapping projectStructureMapping, BuildContext context) {
-    ProductProperties productProperties = context.productProperties
-    String archiveName = productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + "-sources.zip"
-    Set<String> modulesFromCommunity = projectStructureMapping.includedModules.findAll { moduleName ->
-      productProperties.includeIntoSourcesArchiveFilter.test(context.findRequiredModule(moduleName), context)
-    }
-    BuildTasks.create(context).zipSourcesOfModules(modulesFromCommunity, context.paths.artifactDir.resolve(archiveName), true)
   }
 
   LinkedHashSet<String> createIdeClassPath(@NotNull BuildContext context) {
@@ -569,8 +413,8 @@ final class DistributionJARsBuilder {
 
   List<DistributionFileEntry> generateProjectStructureMapping(@NotNull BuildContext context, @NotNull Path pluginLayoutRoot) {
     ModuleOutputPatcher moduleOutputPatcher = new ModuleOutputPatcher()
-    ForkJoinTask<List<DistributionFileEntry>> libDirLayout = processLibDirectoryLayout(moduleOutputPatcher, platform, context, false).fork()
-    Set<PluginLayout> allPlugins = getPluginsByModules(context, context.productProperties.productLayout.bundledPluginModules)
+    ForkJoinTask<List<DistributionFileEntry>> libDirLayout = processLibDirectoryLayout(moduleOutputPatcher, state.platform, context, false).fork()
+    Set<PluginLayout> allPlugins = DistributionBuilderStateKt.getPluginsByModules(context.productProperties.productLayout.bundledPluginModules, context)
     List<DistributionFileEntry> entries = new ArrayList<DistributionFileEntry>()
     allPlugins.stream()
       .filter(new Predicate<PluginLayout>() {
@@ -611,19 +455,11 @@ final class DistributionJARsBuilder {
           LibraryLicensesListGenerator generator = LibraryLicensesListGenerator.create(context.project,
                                                                                        context.productProperties.allLibraryLicenses,
                                                                                        projectStructureMapping.includedModules)
-          generator.generateHtml(getThirdPartyLibrariesHtmlFilePath(context))
-          generator.generateJson(getThirdPartyLibrariesJsonFilePath(context))
+          generator.generateHtml(BuildTasksImplKt.getThirdPartyLibrariesHtmlFilePath(context))
+          generator.generateJson(BuildTasksImplKt.getThirdPartyLibrariesJsonFilePath(context))
         }
       }
     )
-  }
-
-  private static Path getThirdPartyLibrariesHtmlFilePath(@NotNull BuildContext buildContext) {
-    return buildContext.paths.distAllDir.resolve(THIRD_PARTY_LIBRARIES_FILE_PATH)
-  }
-
-  private static Path getThirdPartyLibrariesJsonFilePath(@NotNull BuildContext buildContext) {
-    return buildContext.paths.tempDir.resolve("third-party-libraries.json")
   }
 
   @NotNull
@@ -956,61 +792,6 @@ final class DistributionJARsBuilder {
     }
   }
 
-  static Set<PluginLayout> getPluginsByModules(BuildContext context, Collection<String> modules) {
-    if (modules.isEmpty()) {
-      return Collections.emptySet()
-    }
-
-    List<PluginLayout> allNonTrivialPlugins = context.productProperties.productLayout.allNonTrivialPlugins
-    Map<String, List<PluginLayout>> nonTrivialPlugins = allNonTrivialPlugins.groupBy { it.mainModule }
-    Set<PluginLayout> result = new ObjectLinkedOpenCustomHashSet<>(modules.size(), new Hash.Strategy<PluginLayout>() {
-      @Override
-      int hashCode(@Nullable PluginLayout layout) {
-        if (layout == null) {
-          return 0
-        }
-
-        int result = layout.mainModule.hashCode()
-        result = 31 * result + layout.bundlingRestrictions.hashCode()
-        return result
-      }
-
-      @Override
-      boolean equals(@Nullable PluginLayout a, @Nullable PluginLayout b) {
-        if (a.is(b)) {
-          return true
-        }
-        if (a == null || b == null) {
-          return false
-        }
-        return a.mainModule == b.mainModule && a.bundlingRestrictions == b.bundlingRestrictions
-      }
-    })
-    for (String moduleName : modules) {
-      List<PluginLayout> customLayouts = nonTrivialPlugins.get(moduleName)
-      if (customLayouts == null) {
-        String alternativeModuleName = context.findModule(moduleName)?.name
-        if (alternativeModuleName != moduleName) {
-          customLayouts = nonTrivialPlugins.get(alternativeModuleName)
-        }
-      }
-
-      if (customLayouts == null) {
-        if (moduleName != "kotlin-ultimate.kmm-plugin" && !result.add(PluginLayout.simplePlugin(moduleName))) {
-          throw new IllegalStateException("Plugin layout for module $moduleName is already added (duplicated module name?)")
-        }
-      }
-      else {
-        for (PluginLayout layout : customLayouts) {
-          if (layout.mainModule != "kotlin-ultimate.kmm-plugin" && !result.add(layout)) {
-            throw new IllegalStateException("Plugin layout for module $moduleName is already added (duplicated module name?)")
-          }
-        }
-      }
-    }
-    return result
-  }
-
   // pluginBuilt - for now it doesn't mean that scrambling is completed, so,
   // you must not do use plugin content as a final result in a consumer, only after this method will be finished.
   // It will be changed once will be safe to build plugins in parallel.
@@ -1032,7 +813,7 @@ final class DistributionJARsBuilder {
       boolean isHelpPlugin = "intellij.platform.builtInHelp" == plugin.mainModule
       if (!isHelpPlugin) {
         checkOutputOfPluginModules(plugin.mainModule, plugin.moduleJars, plugin.moduleExcludes, context)
-        PluginXmlPatcher.patchPluginXml(moduleOutputPatcher, plugin, pluginsToPublish, pluginXmlPatcher, context)
+        PluginXmlPatcher.patchPluginXml(moduleOutputPatcher, plugin, state.pluginsToPublish, pluginXmlPatcher, context)
       }
 
       String directoryName = getActualPluginDirectoryName(plugin, context)

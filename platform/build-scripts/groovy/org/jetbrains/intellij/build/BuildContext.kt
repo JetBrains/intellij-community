@@ -15,7 +15,7 @@ abstract class BuildContext: CompilationContext {
   abstract val macDistributionCustomizer: MacDistributionCustomizer
   abstract val proprietaryBuildTools: ProprietaryBuildTools
 
-  abstract fun getApplicationInfo(): ApplicationInfoProperties
+  abstract val applicationInfo: ApplicationInfoProperties
 
   /**
    * Build number without product code (e.g. '162.500.10')

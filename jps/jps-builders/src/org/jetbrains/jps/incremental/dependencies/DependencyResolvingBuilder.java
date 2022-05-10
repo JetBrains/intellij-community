@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.dependencies;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +50,7 @@ import java.util.function.Consumer;
  * so this builder does nothing in normal cases. However it's needed when the build process is started in standalone mode (not from IDE) or
  * if build is triggered before IDE downloads all required dependencies.
  */
-public class DependencyResolvingBuilder extends ModuleLevelBuilder {
+public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(DependencyResolvingBuilder.class);
   private static final String MAVEN_REPOSITORY_PATH_VAR = "MAVEN_REPOSITORY";
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";

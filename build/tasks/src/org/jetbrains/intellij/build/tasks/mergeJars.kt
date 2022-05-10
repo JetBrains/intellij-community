@@ -43,7 +43,7 @@ data class ZipSource(val file: Path,
   }
 }
 
-data class DirSource(val dir: Path, val excludes: List<PathMatcher>, override val sizeConsumer: IntConsumer? = null) : Source {
+data class DirSource(val dir: Path, val excludes: List<PathMatcher> = emptyList(), override val sizeConsumer: IntConsumer? = null) : Source {
   override fun toString(): String {
     val shortPath = if (dir.startsWith(USER_HOME)) {
       "~/" + USER_HOME.relativize(dir)

@@ -1,10 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.intellij.build.impl.BuildTasksImpl
+import org.jetbrains.annotations.Nullable
 
 import java.nio.file.Path
 
@@ -14,7 +13,11 @@ abstract class BuildTasks {
    * Builds archive containing production source roots of the project modules. If {@code includeLibraries} is {@code true}, the produced
    * archive also includes sources of project-level libraries on which platform API modules from {@code modules} list depend on.
    */
-  abstract void zipSourcesOfModules(Collection<String> modules, Path targetFile, boolean includeLibraries = false)
+  abstract void zipSourcesOfModules(Collection<String> modules, Path targetFile, boolean includeLibraries)
+
+  void zipSourcesOfModules(Collection<String> modules, Path targetFile) {
+    zipSourcesOfModules(modules, targetFile, false)
+  }
 
   void zipSourcesOfModules(Collection<String> modules, String targetFilePath) {
     zipSourcesOfModules(modules, Path.of(targetFilePath))
@@ -42,7 +45,7 @@ abstract class BuildTasks {
 
   abstract void compileProjectAndTests(List<String> includingTestsInModules)
 
-  abstract void compileModules(Collection<String> moduleNames, List<String> includingTestsInModules = List.of())
+  abstract void compileModules(@Nullable Collection<String> moduleNames, List<String> includingTestsInModules = List.of())
 
   abstract void buildUpdaterJar()
 
@@ -63,6 +66,8 @@ abstract class BuildTasks {
   abstract void buildDmg(Path macZipDir)
 
   static BuildTasks create(BuildContext context) {
-    return new BuildTasksImpl(context)
+    return getClass().classLoader.loadClass("org.jetbrains.intellij.build.impl.BuildTasksImpl")
+      .getConstructor(BuildContext.class)
+      .newInstance(context) as BuildTasks
   }
 }

@@ -5,8 +5,6 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.xml.dom.XmlDomReader
 import groovy.transform.CompileStatic
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
@@ -36,7 +34,6 @@ final class BuildHelper {
 
   private BuildHelper() {
   }
-
 
   @NotNull
   static void span(@NotNull SpanBuilder spanBuilder, @NotNull Runnable task) {

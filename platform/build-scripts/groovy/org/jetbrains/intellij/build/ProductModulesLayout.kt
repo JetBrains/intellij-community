@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.MultiValuesMap
@@ -9,8 +11,8 @@ import java.util.function.BiConsumer
 
 class ProductModulesLayout {
   companion object {
-    @JvmStatic
-    val DEFAULT_BUNDLED_PLUGINS: List<String> = listOf(
+    @JvmField
+    val DEFAULT_BUNDLED_PLUGINS: List<String> = java.util.List.of(
       "intellij.platform.images",
       "intellij.dev",
     )

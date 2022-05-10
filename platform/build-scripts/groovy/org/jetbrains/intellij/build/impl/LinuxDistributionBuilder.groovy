@@ -53,9 +53,9 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
         BuildHelper.copyDir(buildContext.paths.communityHomeDir.resolve("bin/linux"), distBinDir)
         BuildTasksImpl.unpackPty4jNative(buildContext, unixDistPath, "linux")
-        BuildTasksImpl.generateBuildTxt(buildContext, unixDistPath)
-        BuildTasksImpl.copyDistFiles(buildContext, unixDistPath)
-        List<String> extraJarNames = BuildTasksImpl.addDbusJava(buildContext, unixDistPath.resolve("lib"))
+        BuildTasksImplKt.generateBuildTxt(buildContext, unixDistPath)
+        BuildTasksImplKt.copyDistFiles(buildContext, unixDistPath)
+        List<String> extraJarNames = BuildTasksImplKt.addDbusJava(buildContext, unixDistPath.resolve("lib"))
         Files.copy(ideaProperties, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
         //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
         // for real installers we need to checkout all text files with 'lf' separators anyway

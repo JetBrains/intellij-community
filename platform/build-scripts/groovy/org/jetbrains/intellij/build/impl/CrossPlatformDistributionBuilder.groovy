@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.Pair
+
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -15,7 +15,7 @@ import java.nio.file.Path
 
 @CompileStatic
 final class CrossPlatformDistributionBuilder {
-  static Path buildCrossPlatformZip(Map<Pair<OsFamily, JvmArchitecture>, Path> distDirs, BuildContext context) {
+  static Path buildCrossPlatformZip(List<DistributionForOsTaskResult> distDirs, BuildContext context) {
     String executableName = context.productProperties.baseFileName
 
     byte[] productJson = new ProductInfoGenerator(context).generateMultiPlatformProductJson(
@@ -33,10 +33,10 @@ final class CrossPlatformDistributionBuilder {
     Path targetFile = context.paths.artifactDir.resolve(zipFileName)
 
     ArchiveKt.crossPlatformZip(
-      distDirs.get(new Pair(OsFamily.MACOS, JvmArchitecture.x64)),
-      distDirs.get(new Pair(OsFamily.MACOS, JvmArchitecture.aarch64)),
-      distDirs.get(new Pair(OsFamily.LINUX, JvmArchitecture.x64)),
-      distDirs.get(new Pair(OsFamily.WINDOWS, JvmArchitecture.x64)),
+      distDirs.find { it.os == OsFamily.MACOS && it.arch == JvmArchitecture.x64 }.outDir,
+      distDirs.find { it.os == OsFamily.MACOS && it.arch == JvmArchitecture.aarch64 }.outDir,
+      distDirs.find { it.os == OsFamily.LINUX && it.arch == JvmArchitecture.x64 }.outDir,
+      distDirs.find { it.os == OsFamily.WINDOWS && it.arch == JvmArchitecture.x64 }.outDir,
       targetFile,
       executableName,
       productJson,

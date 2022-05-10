@@ -7,10 +7,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
-import org.jetbrains.intellij.build.impl.BuildContextImpl
-import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
-import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
-import org.jetbrains.intellij.build.impl.PluginLayoutGroovy
+import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.LibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.jps.model.artifact.JpsArtifactService
@@ -121,7 +118,7 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
 }
 
 private fun createLibClassPath(context: BuildContext, homePath: Path): String {
-  val platformLayout = DistributionJARsBuilder.createPlatformLayout(emptySet(), context)
+  val platformLayout = createPlatformLayout(emptySet(), context)
   val isPackagedLib = System.getProperty("dev.server.pack.lib") == "true"
   val projectStructureMapping = DistributionJARsBuilder.processLibDirectoryLayout(ModuleOutputPatcher(),
                                                                                   platformLayout,

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.BundledRuntime
@@ -40,7 +40,7 @@ interface CompilationContext {
 
   fun findRequiredModule(name: String): JpsModule
 
-  fun findModule(name: String): JpsModule
+  fun findModule(name: String): JpsModule?
 
   /**
    * If module {@code newName} was renamed returns its old name and {@code null} otherwise. This method can be used to temporary keep names

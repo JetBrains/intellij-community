@@ -39,7 +39,7 @@ object SVGPreBuilder {
     BuildHelper.runJava(
       context,
       "org.jetbrains.intellij.build.images.ImageSvgPreCompiler",
-      listOf(dbDir.toString(), requestFile.toString()) + context.getApplicationInfo().svgProductIcons,
+      listOf(dbDir.toString(), requestFile.toString()) + context.applicationInfo.svgProductIcons,
       listOf("-Xmx1024m"),
       svgToolClasspath
     )

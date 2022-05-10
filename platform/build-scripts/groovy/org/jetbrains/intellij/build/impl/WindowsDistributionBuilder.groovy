@@ -69,9 +69,9 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
     binWin.copyToDir(distBinDir)
 
-    def pty4jNativeDir = BuildTasksImpl.unpackPty4jNative(buildContext, winDistPath, "win")
-    BuildTasksImpl.generateBuildTxt(buildContext, winDistPath)
-    BuildTasksImpl.copyDistFiles(buildContext, winDistPath)
+    def pty4jNativeDir = BuildTasksImplKt.unpackPty4jNative(buildContext, winDistPath, "win")
+    BuildTasksImplKt.generateBuildTxt(buildContext, winDistPath)
+    BuildTasksImplKt.copyDistFiles(buildContext, winDistPath)
 
     Files.writeString(distBinDir.resolve(ideaProperties.fileName), StringUtilRt.convertLineSeparators(Files.readString(ideaProperties), "\r\n"))
 

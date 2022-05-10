@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.text.StringUtilRt
 import groovy.transform.CompileStatic
 import kotlin.Pair
 import org.jetbrains.annotations.NotNull
@@ -79,7 +78,7 @@ final class UnixScriptBuilder {
           copyScript(file, target, baseName, additionalJvmArgs, defaultXmxParameter, classPath, scriptName, context)
         }
       }
-      BuildTasksImpl.copyInspectScript(context, distBinDir)
+      BuildTasksImplKt.copyInspectScript(context, distBinDir)
     }
     else if (osFamily == OsFamily.MACOS) {
       copyScript(sourceScriptDir.resolve(REMOTE_DEV_SCRIPT_FILE_NAME), distBinDir.resolve(REMOTE_DEV_SCRIPT_FILE_NAME),
