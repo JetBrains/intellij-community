@@ -5,6 +5,8 @@ import com.intellij.codeInsight.intention.impl.AddJavadocIntention;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefJavaUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
@@ -29,6 +31,7 @@ import java.util.Map;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class MissingJavadocInspection extends LocalInspectionTool {
+  private static final ExtensionPointName<Condition<PsiMember>> EP_NAME = new ExtensionPointName<>("com.intellij.javaDocNotNecessary");
 
   public boolean IGNORE_DEPRECATED_ELEMENTS = false;
   public boolean IGNORE_ACCESSORS = false;
@@ -240,8 +243,8 @@ public class MissingJavadocInspection extends LocalInspectionTool {
     return false;
   }
 
-  private static boolean isJavadocRequired(PsiMethod method){
-    return JavaDocLocalInspection.EP_NAME.extensions().noneMatch(condition -> condition.value(method));
+  public static boolean isJavadocRequired(PsiMethod method){
+    return EP_NAME.extensions().noneMatch(condition -> condition.value(method));
   }
 
   private static boolean isJavadocRequired(@NotNull Options options, @NotNull PsiModifierListOwner element) {
@@ -437,7 +440,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
     }
   }
 
-  private static boolean hasTagForParameter(PsiDocTag @NotNull [] tags, PsiElement param) {
+  public static boolean hasTagForParameter(PsiDocTag @NotNull [] tags, PsiElement param) {
     for (PsiDocTag tag : tags) {
       if ("param".equals(tag.getName())) {
         PsiDocTagValue value = tag.getValueElement();

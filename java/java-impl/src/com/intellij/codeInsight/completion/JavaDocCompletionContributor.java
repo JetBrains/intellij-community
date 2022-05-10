@@ -13,7 +13,7 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
-import com.intellij.codeInspection.javaDoc.JavadocHighlightUtil;
+import com.intellij.codeInspection.javaDoc.MissingJavadocInspection;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -456,7 +456,7 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
   private static List<PsiNamedElement> getParametersToSuggest(PsiDocComment comment) {
     List<PsiNamedElement> allParams = PsiDocParamRef.getAllParameters(comment);
     PsiDocTag[] tags = comment.getTags();
-    return ContainerUtil.filter(allParams, param -> !JavadocHighlightUtil.hasTagForParameter(tags, param));
+    return ContainerUtil.filter(allParams, param -> !MissingJavadocInspection.hasTagForParameter(tags, param));
   }
 
   private static String nameForParamTag(PsiNamedElement param) {

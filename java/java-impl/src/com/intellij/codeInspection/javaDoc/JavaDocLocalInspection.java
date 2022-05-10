@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -39,7 +38,6 @@ import java.util.Hashtable;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class JavaDocLocalInspection extends LocalInspectionTool {
-  public static final ExtensionPointName<Condition<PsiMember>> EP_NAME = new ExtensionPointName<>("com.intellij.javaDocNotNecessary");
 
   public static final String SHORT_NAME = "JavaDoc";
   protected static final String NONE = "none";
@@ -333,7 +331,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     else if (required && !hasSupers) {
       PsiIdentifier nameIdentifier = method.getNameIdentifier();
       if (nameIdentifier != null) {
-        if (EP_NAME.extensions().noneMatch(condition -> condition.value(method))) {
+        if (MissingJavadocInspection.isJavadocRequired(method)) {
           JavadocHighlightUtil.reportMissingTag(nameIdentifier, holder);
         }
       }

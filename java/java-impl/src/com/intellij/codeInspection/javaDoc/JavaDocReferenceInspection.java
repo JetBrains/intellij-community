@@ -202,7 +202,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
         PsiDocTag[] tags = tag.getContainingComment().getTags();
         Set<String> unboundParams = new HashSet<>();
         for (PsiParameter parameter : parameters) {
-          if (!JavadocHighlightUtil.hasTagForParameter(tags, parameter)) {
+          if (!MissingJavadocInspection.hasTagForParameter(tags, parameter)) {
             unboundParams.add(parameter.getName());
           }
         }
