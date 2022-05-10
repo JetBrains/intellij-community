@@ -4,6 +4,7 @@ package org.jetbrains.tools.model.updater.impl
 import org.jdom.Document
 import org.jdom.Element
 import org.jdom.output.Format
+import java.io.File
 
 fun xml(name: String, vararg args: Pair<String, Any>, block: XmlNode.() -> Unit = {}): XmlNode {
     return XmlNode(name, args.asList(), block)
@@ -46,12 +47,12 @@ class XmlNode(private val name: String, private val args: List<Pair<String, Any>
         return element
     }
 
-    override fun toString(): String {
+    fun render(addXmlDeclaration: Boolean): String {
         val document = Document()
         document.rootElement = toElement()
 
         val format = Format.getPrettyFormat().apply {
-            omitDeclaration = true
+            omitDeclaration = !addXmlDeclaration
             lineSeparator = System.lineSeparator()
         }
 
@@ -59,4 +60,9 @@ class XmlNode(private val name: String, private val args: List<Pair<String, Any>
         output.format = format
         return output.outputString(document).trim()
     }
+}
+
+fun File.readXml(): Document {
+    @Suppress("DEPRECATION")
+    return org.jdom.input.SAXBuilder().build(this)
 }

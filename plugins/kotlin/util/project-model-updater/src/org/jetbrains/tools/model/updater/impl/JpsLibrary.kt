@@ -37,7 +37,7 @@ data class JpsLibrary(
                 addRoots("JAVADOC", emptyList())
                 addRoots("SOURCES", sources)
             }
-        }.toString()
+        }.render(addXmlDeclaration = false)
     }
 
     sealed class LibraryType {

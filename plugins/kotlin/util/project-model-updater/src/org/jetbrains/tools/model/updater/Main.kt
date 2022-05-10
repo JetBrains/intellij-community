@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
+import org.jdom.Document
 import org.jetbrains.tools.model.updater.GeneratorPreferences.ArtifactMode
 import org.jetbrains.tools.model.updater.impl.*
 import java.io.File
@@ -53,6 +54,7 @@ fun main(args: Array<String>) {
 
     if (monorepoRoot != null) {
         processRoot(monorepoRoot, isCommunity = false)
+        cloneModuleStructure(monorepoRoot, communityRoot)
     }
 
     processRoot(communityRoot, isCommunity = true)
@@ -78,4 +80,82 @@ private fun patchGitignore(dotIdea: File, kotlincArtifactsMode: ArtifactMode) {
         ArtifactMode.MAVEN -> gitignoreFile.writeText(normalizedContent)
         ArtifactMode.BOOTSTRAP -> gitignoreFile.writeText("$normalizedContent\n$ignoreRule")
     }
+}
+
+private fun cloneModuleStructure(monorepoRoot: File, communityRoot: File) {
+    val monorepoModulesFile = monorepoRoot.resolve(".idea/modules.xml")
+    val communityModulesFile = communityRoot.resolve(".idea/modules.xml")
+
+    val monorepoModulesXml = monorepoModulesFile.readXml()
+    val communityModulesXml = communityModulesFile.readXml()
+
+    val monorepoModules = readModules(monorepoRoot, monorepoModulesXml)
+
+    val communityModules = monorepoModules
+        .filterValues { module -> module.isCommunity && module.dependencies.all { dep -> monorepoModules[dep]?.isCommunity ?: false } }
+        .mapValues { (_, module) -> module.copy(path = module.path.removePrefix("community/")) }
+
+    // Leave community renames as is. They're rarely changed, and it seems there are a number of old ones
+    val communityModuleRenames = readModuleRenames(communityModulesXml)
+
+    val newCommunityModulesXmlContent = xml("project", "version" to "4") {
+        if (communityModules.isNotEmpty()) {
+            xml("component", "name" to "ModuleRenamingHistory") {
+                communityModuleRenames.forEach { (old, new) -> xml("module", "old-name" to old, "new-name" to new) }
+            }
+        }
+        xml("component", "name" to "ProjectModuleManager") {
+            xml("modules") {
+                for (module in communityModules.values) {
+                    val modulePath = "\$PROJECT_DIR$/${module.path}"
+                    xml("module", "fileurl" to "file://$modulePath", "filepath" to modulePath)
+                }
+            }
+        }
+    }
+
+    communityModulesFile.writeText(newCommunityModulesXmlContent.render(addXmlDeclaration = true))
+}
+
+private data class JpsModule(val name: String, val path: String, val dependencies: List<String>) {
+    val isCommunity: Boolean
+        get() = path.startsWith("community/")
+}
+
+private fun readModules(root: File, document: Document): Map<String, JpsModule> {
+    val projectModuleManagerComponent = document.rootElement.getChildren("component")
+        .first { it.getAttributeValue("name") == "ProjectModuleManager" }
+
+    val result = LinkedHashMap<String, JpsModule>()
+
+    for (moduleEntry in projectModuleManagerComponent.getChild("modules").getChildren("module")) {
+        val modulePath = moduleEntry.getAttributeValue("filepath").removePrefix("\$PROJECT_DIR$/")
+        val moduleName = modulePath.substringAfterLast("/").removeSuffix(".iml")
+
+        val moduleXml = root.resolve(modulePath).readXml()
+        val moduleRootManagerComponent = moduleXml.rootElement.getChildren("component")
+            .first { it.getAttributeValue("name") == "NewModuleRootManager" }
+
+        val dependencies = moduleRootManagerComponent.getChildren("orderEntry")
+            .filter { it.getAttributeValue("type") == "module" }
+            .mapNotNull { it.getAttributeValue("module-name") }
+
+        result[moduleName] = JpsModule(moduleName, modulePath, dependencies)
+    }
+
+    return result
+}
+
+private fun readModuleRenames(document: Document): Map<String, String> {
+    val moduleRenamingHistoryComponent = document.rootElement.getChildren("component")
+        .firstOrNull { it.getAttributeValue("name") == "ModuleRenamingHistory" }
+        ?: return emptyMap()
+
+    val result = mutableMapOf<String, String>()
+    for (moduleEntry in moduleRenamingHistoryComponent.getChildren("module")) {
+        val oldName = moduleEntry.getAttributeValue("old-name") ?: continue
+        val newName = moduleEntry.getAttributeValue("new-name") ?: continue
+        result[oldName] = newName
+    }
+    return result
 }
