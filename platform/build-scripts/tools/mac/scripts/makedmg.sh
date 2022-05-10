@@ -7,10 +7,11 @@ set -x
 
 cd "$(dirname "$0")"
 
-EXPLODED="$2.exploded"
+EXPLODED=${4:-"./$2.exploded"}
 RESULT_DMG=${3:-"$1.dmg"}
 TEMP_DMG="$2.temp.dmg"
 BG_PIC="$2.png"
+CLEANUP_EXPLODED=${5:-"true"}
 
 function log() {
   echo "$(date '+[%H:%M:%S]') $*"
@@ -22,7 +23,9 @@ VOLNAME="${BUILD_NAME%.app}"
 log "VOLNAME is $VOLNAME"
 
 mkdir "${EXPLODED}/.background"
-mv "${BG_PIC}" "${EXPLODED}/.background"
+if [ -f "${BG_PIC}" ]; then
+  mv "${BG_PIC}" "${EXPLODED}/.background"
+fi
 ln -s /Applications "${EXPLODED}/Applications"
 # allocate space for .DS_Store
 # it's ok to have relatively big (10 MB) empty file, those space would be compressed in resulted dmg
@@ -31,7 +34,7 @@ dd if=/dev/zero of="${EXPLODED}/DSStorePlaceHolder" bs=1024 count=10240
 stat "${EXPLODED}/DSStorePlaceHolder"
 
 log "Creating unpacked r/w disk image ${VOLNAME}..."
-hdiutil create -srcfolder "./${EXPLODED}" -volname "$VOLNAME" -anyowners -nospotlight -quiet -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDRW "$TEMP_DMG"
+hdiutil create -srcfolder "${EXPLODED}" -volname "$VOLNAME" -anyowners -nospotlight -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDRW "$TEMP_DMG"
 
 # check if the image already mounted
 if [ -d "/Volumes/$1" ]; then
@@ -48,7 +51,9 @@ if [ -d "/Volumes/$1" ]; then
     if [ -d "/Volumes/$1" ]; then
       if [ $attempt -ge $limit ]; then
         log "/Volumes/$1 - the image is still mounted. By the reason the build will be stopped."
-        rm -rf "$EXPLODED"
+        if [ "$CLEANUP_EXPLODED" = "true" ]; then
+          rm -rf "$EXPLODED"
+        fi
         rm -f "$TEMP_DMG"
         exit 1
       fi
@@ -56,7 +61,9 @@ if [ -d "/Volumes/$1" ]; then
   done
 fi
 
-rm -rf "$EXPLODED"
+if [ "$CLEANUP_EXPLODED" = "true" ]; then
+  rm -rf "$EXPLODED"
+fi
 
 # mount this image
 log "Mounting unpacked r/w disk image..."
@@ -84,7 +91,7 @@ sync;sync;sync
 hdiutil detach "$device"
 
 log "Compressing r/w disk image to ${RESULT_DMG}..."
-hdiutil convert "$TEMP_DMG" -quiet -format ULFO -imagekey lzfse-level=9 -o "$RESULT_DMG"
+hdiutil convert "$TEMP_DMG" -format ULFO -imagekey lzfse-level=9 -o "$RESULT_DMG"
 rm -f "$TEMP_DMG"
 
 if hdiutil internet-enable -help >/dev/null 2>/dev/null; then
