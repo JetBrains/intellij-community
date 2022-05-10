@@ -21,7 +21,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +39,7 @@ public final class StatusBarUtil {
     FileEditor fileEditor = getCurrentFileEditor(statusBar);
     if (fileEditor instanceof TextEditor) {
       Editor editor = ((TextEditor)fileEditor).getEditor();
-      return ensureValidEditorFile(editor, fileEditor) && UIUtil.isShowing(editor.getComponent()) ? editor : null;
+      return ensureValidEditorFile(editor, fileEditor) ? editor : null;
     }
     return null;
   }
