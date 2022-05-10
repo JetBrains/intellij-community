@@ -435,6 +435,21 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
+  @Override
+  public void makeRootsChange(@NotNull Runnable runnable, @NotNull RootsChangeRescanningInfo changes) {
+    if (myProject.isDisposed()) {
+      return;
+    }
+
+    try {
+      myRootsChanged.beforeRootsChanged();
+      runnable.run();
+    }
+    finally {
+      myRootsChanged.rootsChanged(changes);
+    }
+  }
+
   protected boolean isFiringEvent;
 
   private void fireBeforeRootsChanged(boolean fileTypes) {
