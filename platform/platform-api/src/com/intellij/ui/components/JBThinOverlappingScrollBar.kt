@@ -5,5 +5,4 @@ import org.intellij.lang.annotations.JdkConstants
 
 class JBThinOverlappingScrollBar(@JdkConstants.AdjustableOrientation orientation: Int) : JBScrollBar(orientation) {
   override fun isThin(): Boolean = true
-  override fun isOpaque(): Boolean = false
 }

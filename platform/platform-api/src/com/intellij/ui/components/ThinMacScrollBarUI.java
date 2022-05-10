@@ -18,4 +18,9 @@ final class ThinMacScrollBarUI extends MacScrollBarUI {
   void paintTrack(Graphics2D g, JComponent c) {
     // Track is not needed
   }
+
+  @Override
+  protected int insetForSmall(boolean small) {
+    return 0;
+  }
 }
