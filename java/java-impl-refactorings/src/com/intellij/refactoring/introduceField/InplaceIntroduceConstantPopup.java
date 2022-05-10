@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -81,7 +81,6 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                              JBInsets.emptyInsets(), 0, 0);
     myReplaceAllCb = new JCheckBox(RefactoringBundle.message("replace.all.occurences.checkbox"));
-    myReplaceAllCb.setMnemonic('a');
     myReplaceAllCb.setFocusable(false);
     myReplaceAllCb.setVisible(myOccurrences.length > 1);
     myReplaceAllCb.setSelected(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_REPLACE_ALL);
@@ -93,7 +92,6 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   private JPanel createLeftPanel() {
     final JPanel left = new JPanel(new GridBagLayout());
     myMoveToAnotherClassCb = new JCheckBox(JavaRefactoringBundle.message("introduce.constant.move.to.another.class.checkbox"), false);
-    myMoveToAnotherClassCb.setMnemonic('m');
     myMoveToAnotherClassCb.setFocusable(false);
     left.add(myMoveToAnotherClassCb,
              new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(),

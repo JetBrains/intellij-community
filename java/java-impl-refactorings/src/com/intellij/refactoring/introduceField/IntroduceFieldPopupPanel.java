@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -151,7 +151,6 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     initializeInitializerPlace(myInitializerExpression, IntroduceFieldDialog.ourLastInitializerPlace);
     if (myInitialisersPlaceModel.getSize() > 1) {
       final JLabel initLabel = new JLabel(RefactoringBundle.message("initialize.in.border.title") + ":");
-      initLabel.setDisplayedMnemonic('i');
       gridBagConstraints.insets.left = 5;
       gridBagConstraints.anchor = GridBagConstraints.WEST;
       groupPanel.add(initLabel, gridBagConstraints);

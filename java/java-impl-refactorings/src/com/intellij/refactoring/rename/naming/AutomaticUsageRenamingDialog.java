@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.ide.IdeBundle;
@@ -14,7 +14,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.panels.ValidatingComponent;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -158,7 +157,6 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
       }
       myTableModel.fireTableDataChanged();
     });
-    selectAllButton.setMnemonic('S');
 
     deselectAllButton.addActionListener(e -> {
       for (int i = 0; i < getElementCount(); i++) {
@@ -166,7 +164,6 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
       }
       myTableModel.fireTableDataChanged();
     });
-    deselectAllButton.setMnemonic('U');
     box.add(Box.createVerticalStrut(4));
     box.add(buttonBox);
     box.add(Box.createVerticalStrut(4));
