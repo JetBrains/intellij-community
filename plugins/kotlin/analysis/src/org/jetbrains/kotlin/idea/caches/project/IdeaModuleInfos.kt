@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.descriptors.ModuleCapability
 import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
-import org.jetbrains.kotlin.idea.base.platforms.IdePlatformKindProjectStructure
 import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider
 import org.jetbrains.kotlin.idea.base.platforms.platform
 import org.jetbrains.kotlin.idea.caches.resolve.util.enlargedSearchScope
@@ -57,8 +56,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 
 internal val LOG = Logger.getInstance(IdeaModuleInfo::class.java)
 
-@Suppress("DEPRECATION_ERROR")
-interface IdeaModuleInfo : org.jetbrains.kotlin.idea.caches.resolve.IdeaModuleInfo {
+interface IdeaModuleInfo : ModuleInfo {
     fun contentScope(): GlobalSearchScope
 
     val moduleOrigin: ModuleOrigin
@@ -159,9 +157,8 @@ data class ModuleProductionSourceInfo internal constructor(
 }
 
 //TODO: (module refactoring) do not create ModuleTestSourceInfo when there are no test roots for module
-@Suppress("DEPRECATION_ERROR")
 data class ModuleTestSourceInfo internal constructor(override val module: Module) :
-    ModuleSourceInfoWithExpectedBy(forProduction = false), org.jetbrains.kotlin.idea.caches.resolve.ModuleTestSourceInfo {
+    ModuleSourceInfoWithExpectedBy(forProduction = false), IdeaModuleInfo {
 
     override val name = Name.special("<test sources for module ${module.name}>")
 
