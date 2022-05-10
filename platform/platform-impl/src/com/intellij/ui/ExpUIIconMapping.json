@@ -31,6 +31,7 @@
       "breakpointMutedDisabled.svg": "debugger/db_muted_disabled_breakpoint.svg",
       "breakpointObsolete.svg": "debugger/db_obsolete.svg",
       "breakpointUnsuspendent.svg": "debugger/db_no_suspend_breakpoint.svg",
+      "breakpointUnsuspendentValid": "debugger/db_verified_no_suspend_breakpoint.svg",
       "breakpointValid.svg": "debugger/db_verified_breakpoint.svg",
       "multipleBreakpoints.svg": "debugger/MultipleBreakpoints.svg",
       "questionBadge.svg": "debugger/question_badge.svg"
