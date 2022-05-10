@@ -19,4 +19,7 @@ public interface EntityIndexingService {
   }
 
   void indexChanges(@NotNull Project project, @NotNull List<? extends RootsChangeRescanningInfo> changes);
+
+  @NotNull
+  BuildableRootsChangeRescanningInfo createBuildableInfo();
 }

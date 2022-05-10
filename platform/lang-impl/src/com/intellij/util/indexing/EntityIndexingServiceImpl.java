@@ -18,7 +18,10 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsCha
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
+import kotlin.Pair;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -50,6 +53,9 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
       if (change == RootsChangeRescanningInfo.NO_RESCAN_NEEDED) continue;
       if (change instanceof ProjectRootsChangeListener.WorkspaceEventRescanningInfo) {
         builders.addAll(getBuildersOnWorkspaceChange(project, ((ProjectRootsChangeListener.WorkspaceEventRescanningInfo)change).getEvents()));
+      }
+      else if (change instanceof BuildableRootsChangeRescanningInfo) {
+        builders.addAll(getBuildersOnBuildableChangeInfo((BuildableRootsChangeRescanningInfo)change));
       }
       else {
         LOG.warn("Unexpected change " + change.getClass() + " " + change + ", full reindex requested");
@@ -177,5 +183,31 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
         builders.addAll(((IndexableEntityProvider<E>)provider).getRemovedEntityIteratorBuilders(entity, project));
       }
     }
+  }
+
+  @NotNull
+  private static Collection<? extends IndexableIteratorBuilder> getBuildersOnBuildableChangeInfo(@NotNull BuildableRootsChangeRescanningInfo buildableInfo) {
+    BuildableRootsChangeRescanningInfoImpl info = (BuildableRootsChangeRescanningInfoImpl)buildableInfo;
+    List<IndexableIteratorBuilder> builders = new SmartList<>();
+    IndexableIteratorBuilders instance = IndexableIteratorBuilders.INSTANCE;
+    for (ModuleId moduleId : info.getModules()) {
+      builders.addAll(instance.forModuleContent(moduleId));
+    }
+    if (info.hasInheritedSdk()) {
+      builders.addAll(instance.forInheritedSdk());
+    }
+    for (Pair<String, String> sdk : info.getSdks()) {
+      builders.addAll(instance.forSdk(sdk.getFirst(), sdk.getSecond()));
+    }
+    for (LibraryId library : info.getLibraries()) {
+      builders.addAll(instance.forLibraryEntity(library, true));
+    }
+    return builders;
+  }
+
+  @Override
+  @NotNull
+  public BuildableRootsChangeRescanningInfo createBuildableInfo() {
+    return new BuildableRootsChangeRescanningInfoImpl();
   }
 }
