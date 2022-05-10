@@ -16,7 +16,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JreHiDpiUtil;
@@ -226,7 +225,7 @@ public final class JBCefApp {
   }
 
   /**
-   * Returns {@code JBCefApp} instance. If the app has not yet been initialized
+   * Returns {@code JBCefApp} instance. If the app has not yet been initialized,
    * then starts up CEF and initializes the app.
    *
    * @throws IllegalStateException when JCEF initialization is not possible in current env
@@ -282,10 +281,10 @@ public final class JBCefApp {
   /**
    * Returns whether JCEF is supported. For that:
    * <ul>
-   * <li> It should be available in the running JBR.
-   * <li> It should have a compatible version.
+   * <li>It should be available in the running JBR.</li>
+   * <li>It should have a compatible version.</li>
    * </ul>
-   * In order to assuredly meet the above requirements the IDE should run with a bundled JBR.
+   * In order to assuredly meet the above requirements, the IDE should run with a bundled JBR.
    */
   public static boolean isSupported() {
     boolean testModeEnabled = RegistryManager.getInstance().is("ide.browser.jcef.testMode.enabled");
@@ -368,8 +367,8 @@ public final class JBCefApp {
   }
 
   /**
-   * Returns true if the off-screen rendering mode is enabled.
-   * <p></p>
+   * Returns {@code true} if the off-screen rendering mode is enabled.
+   * <p>
    * This mode allows for browser creation in either windowed or off-screen rendering mode.
    *
    * @see JBCefOsrHandlerBrowser
@@ -502,10 +501,10 @@ public final class JBCefApp {
 
   /**
    * Returns normal (unscaled) size of the provided scaled size if IDE-managed HiDPI mode is enabled.
-   * In JRE-managed HiDPI mode the method has no effect.
-   * <p></p>
+   * In JRE-managed HiDPI mode, the method has no effect.
+   * <p>
    * This method should be applied to size values (for instance, font size) previously scaled (explicitly or implicitly)
-   * via {@link com.intellij.ui.scale.JBUIScale#scale(int)}, before the values are used in html (in CSS, for instance).
+   * via {@link com.intellij.ui.scale.JBUIScale#scale(int)}, before the values are used in HTML (in CSS, for instance).
    *
    * @see com.intellij.ui.scale.ScaleType
    */
