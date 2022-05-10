@@ -29,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
  * @author Dmitry.Krasilschikov
- * @date: 26.03.2007
  */
 public interface GrParameter extends PsiParameter, GrVariable, GrCondition {
   GrParameter[] EMPTY_ARRAY = new GrParameter[0];

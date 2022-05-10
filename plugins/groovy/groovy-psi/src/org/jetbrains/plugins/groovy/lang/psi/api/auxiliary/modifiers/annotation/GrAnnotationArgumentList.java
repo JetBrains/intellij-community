@@ -22,7 +22,6 @@ import com.intellij.psi.PsiAnnotationParameterList;
 
 /**
  * @author Dmitry.Krasilschikov
- * @date: 04.04.2007
  */
 public interface GrAnnotationArgumentList extends GroovyPsiElement, PsiAnnotationParameterList {
   @Override

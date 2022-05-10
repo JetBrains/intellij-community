@@ -23,7 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 
 /**
  * @author Dmitry.Krasilschikov
- * @date: 20.03.2007
  */
 public interface GrMember extends PsiMember, GroovyPsiElement {
   GrMember[] EMPTY_ARRAY = new GrMember[0];

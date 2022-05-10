@@ -20,7 +20,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceL
 
 /**
  * @author Dmitry.Krasilschikov
- * @date: 03.04.2007
  */
 public interface GrThrowsClause extends GrReferenceList {
 }

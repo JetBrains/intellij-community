@@ -23,7 +23,6 @@ import java.util.List;
 
 /**
  * @author Dmitry.Krasilschikov
- * @date: 03.04.2007
  */
 public class GrThrowsClauseImpl extends GrReferenceListImpl implements GrThrowsClause {
   public GrThrowsClauseImpl(GrReferenceListStub stub) {

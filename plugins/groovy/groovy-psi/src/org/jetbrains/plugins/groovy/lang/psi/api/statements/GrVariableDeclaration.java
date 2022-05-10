@@ -27,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
  * @author Dmitry.Krasilschikov
- * @date: 27.03.2007
  */
 public interface GrVariableDeclaration extends GrStatement, GrMembersDeclaration {
   GrVariableDeclaration[] EMPTY_ARRAY = new GrVariableDeclaration[0];

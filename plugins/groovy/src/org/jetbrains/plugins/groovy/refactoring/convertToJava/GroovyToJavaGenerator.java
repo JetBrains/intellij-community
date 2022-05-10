@@ -12,7 +12,6 @@ import java.util.Map;
 
 /**
  * @author Dmitry.Krasilschikov
- * @date: 03.05.2007
  */
 public final class GroovyToJavaGenerator {
   private static final Logger LOG = Logger.getInstance(GroovyToJavaGenerator.class);

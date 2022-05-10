@@ -34,7 +34,6 @@ import java.util.Map;
 
 /**
  * @author Dmitry.Krasilschikov
- * @date: 16.04.2007
  */
 public class GroovycOutputParser {
   public static final String GRAPE_ROOT = "grape.root";

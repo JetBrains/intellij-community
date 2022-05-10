@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry.Krasilschikov
- * @date: 04.04.2007
  */
 public interface GrAnnotationArrayInitializer extends GrAnnotationMemberValue, PsiArrayInitializerMemberValue {
   @Override

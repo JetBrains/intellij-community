@@ -48,7 +48,6 @@ import static java.util.Objects.requireNonNull;
 
 /**
  * @author oleg
- * @date 9/27/11
  */
 public class GithubCreateGistAction extends DumbAwareAction {
   private static final Logger LOG = GithubUtil.LOG;

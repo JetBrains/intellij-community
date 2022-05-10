@@ -30,7 +30,6 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_ENUM;
 
 /**
  * @author Dmitry.Krasilschikov
- * @date 18.03.2007
  */
 public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements GrEnumTypeDefinition {
 
