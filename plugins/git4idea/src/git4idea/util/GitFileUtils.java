@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -155,8 +156,15 @@ public final class GitFileUtils {
   public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
                               @NotNull Collection<? extends FilePath> files,
                               boolean force, boolean filterOutIgnored) throws VcsException {
+    addPaths(project, root, files, force, filterOutIgnored, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
+                              @NotNull Collection<? extends FilePath> files,
+                              boolean force, boolean filterOutIgnored,
+                              String... additionalOptions) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
-      addPathsImpl(project, root, paths, force, filterOutIgnored);
+      addPathsImpl(project, root, paths, force, filterOutIgnored, additionalOptions);
     }
     updateAndRefresh(project, root, files, force);
   }
@@ -179,7 +187,8 @@ public final class GitFileUtils {
 
   private static void addPathsImpl(@NotNull Project project, @NotNull VirtualFile root,
                                    @NotNull List<String> paths,
-                                   boolean force, boolean filterOutIgnored) throws VcsException {
+                                   boolean force, boolean filterOutIgnored,
+                                   String... additionalOptions) throws VcsException {
     if (filterOutIgnored) {
       paths = excludeIgnoredFiles(project, root, paths);
       if (paths.isEmpty()) return;
@@ -188,6 +197,7 @@ public final class GitFileUtils {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.ADD);
     handler.addParameters("--ignore-errors", "-A");
     if (force) handler.addParameters("-f");
+    handler.addParameters(additionalOptions);
     handler.endOptions();
     handler.addParameters(paths);
     Git.getInstance().runCommand(handler).throwOnError();

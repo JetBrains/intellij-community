@@ -264,7 +264,7 @@ public enum GitVersionSpecialty {
 
   STATUS_SUPPORTS_NO_RENAMES {
     @Override
-    public boolean existsIn (@NotNull GitVersion version) {
+    public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 18, 0, 0));
     }
   },
@@ -302,6 +302,20 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 31, 0, 0));
+    }
+  },
+
+  /**
+   * <code>
+   * The following paths and/or pathspecs matched paths that exist
+   * outside of your sparse-checkout definition, so will not be
+   * updated in the index:
+   * </code>
+   */
+  ADD_REJECTS_SPARSE_FILES_FOR_CONFLICTS {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 34, 0, 0));
     }
   };
 
