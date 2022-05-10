@@ -28,15 +28,16 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
-  private final UITheme myTheme;
+
+  private final @NotNull UITheme myTheme;
   private boolean myInitialised;
 
   public UIThemeBasedLookAndFeelInfo(@NotNull UITheme theme) {
-    super(theme.getName(), theme.isDark() ? DarculaLaf.class.getName() : IntelliJLaf.class.getName());
+    super(theme.getName(), (theme.isDark() ? DarculaLaf.class : IntelliJLaf.class).getName());
     myTheme = theme;
   }
 
-  public UITheme getTheme() {
+  public final @NotNull UITheme getTheme() {
     return myTheme;
   }
 
@@ -60,12 +61,12 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     myInitialised = true;
   }
 
-  public void uninstallTheme() {
+  public final void uninstallTheme() {
     myInitialised = false;
     myTheme.setProviderClassLoader(null);
   }
 
-  public boolean isInitialised() {
+  public final boolean isInitialised() {
     return myInitialised;
   }
 

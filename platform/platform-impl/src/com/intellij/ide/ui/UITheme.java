@@ -417,11 +417,6 @@ public final class UITheme {
   }
 
   @ApiStatus.Internal
-  public boolean isUnloaded() {
-    return providerClassLoader == null;
-  }
-
-  @ApiStatus.Internal
   public void setProviderClassLoader(@Nullable ClassLoader providerClassLoader) {
     this.providerClassLoader = providerClassLoader;
   }
