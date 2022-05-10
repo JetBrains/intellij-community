@@ -11,7 +11,7 @@ import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.RootsChangeIndexingInfo;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -126,31 +126,31 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   @ApiStatus.Internal
-  public BatchSession<RootsChangeIndexingInfo, List<RootsChangeIndexingInfo>> getRootsChanged() {
+  public BatchSession<RootsChangeRescanningInfo, List<RootsChangeRescanningInfo>> getRootsChanged() {
     return myRootsChanged;
   }
 
-  protected final BatchSession<RootsChangeIndexingInfo, List<RootsChangeIndexingInfo>>
+  protected final BatchSession<RootsChangeRescanningInfo, List<RootsChangeRescanningInfo>>
     myRootsChanged = new BatchSession<>(false) {
     @Override
-    protected boolean fireRootsChanged(@NotNull List<RootsChangeIndexingInfo> changes) {
+    protected boolean fireRootsChanged(@NotNull List<RootsChangeRescanningInfo> changes) {
       return ProjectRootManagerImpl.this.fireRootsChanged(false, changes);
     }
 
     @Override
-    protected @NotNull List<RootsChangeIndexingInfo> accumulate(@NotNull List<RootsChangeIndexingInfo> currentPair,
-                                                                @NotNull RootsChangeIndexingInfo cause) {
+    protected @NotNull List<RootsChangeRescanningInfo> accumulate(@NotNull List<RootsChangeRescanningInfo> currentPair,
+                                                                  @NotNull RootsChangeRescanningInfo cause) {
       currentPair.add(cause);
       return currentPair;
     }
 
     @Override
-    protected @NotNull RootsChangeIndexingInfo getGenericChange() {
-      return RootsChangeIndexingInfo.TOTAL_REINDEX;
+    protected @NotNull RootsChangeRescanningInfo getGenericChange() {
+      return RootsChangeRescanningInfo.TOTAL_RESCAN;
     }
 
     @Override
-    protected @NotNull List<RootsChangeIndexingInfo> initiateChangelist(@NotNull RootsChangeIndexingInfo info) {
+    protected @NotNull List<RootsChangeRescanningInfo> initiateChangelist(@NotNull RootsChangeRescanningInfo info) {
       return new SmartList<>(info);
     }
   };
@@ -448,7 +448,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @ApiStatus.Internal
   protected void fireBeforeRootsChangeEvent(boolean fileTypes) { }
 
-  private boolean fireRootsChanged(boolean fileTypes, @NotNull List<? extends RootsChangeIndexingInfo> indexingInfos) {
+  private boolean fireRootsChanged(boolean fileTypes, @NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) {
     if (myProject.isDisposed()) return false;
 
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -465,7 +465,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   @ApiStatus.Internal
-  protected void fireRootsChangedEvent(boolean fileTypes, @NotNull List<? extends RootsChangeIndexingInfo> indexingInfos) { }
+  protected void fireRootsChangedEvent(boolean fileTypes, @NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) { }
 
   @ApiStatus.Internal
   protected OrderRootsCache getOrderRootsCache(@NotNull Project project) {

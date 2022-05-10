@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.watcher
 
 import com.google.common.io.Files
@@ -247,7 +247,7 @@ internal class RootsChangeWatcher(val project: Project) {
       }
 
       fun createIndexingInfo() = entities?.let { it ->
-        ProjectRootsChangeListener.WorkspaceEventIndexingInfo(it.map { entity -> EntityChange.Added(entity) })
+        ProjectRootsChangeListener.WorkspaceEventRescanningInfo(it.map { entity -> EntityChange.Added(entity) })
       }
     }
   }

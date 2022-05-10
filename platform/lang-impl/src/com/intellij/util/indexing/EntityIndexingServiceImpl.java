@@ -5,7 +5,7 @@ import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.RootsChangeIndexingInfo;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,24 +32,24 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
   private static final RootChangesLogger ROOT_CHANGES_LOGGER = new RootChangesLogger();
 
   @Override
-  public void indexChanges(@NotNull Project project, @NotNull List<? extends RootsChangeIndexingInfo> changes) {
+  public void indexChanges(@NotNull Project project, @NotNull List<? extends RootsChangeRescanningInfo> changes) {
     if (!(FileBasedIndex.getInstance() instanceof FileBasedIndexImpl)) return;
     if (LightEdit.owns(project)) return;
     if (changes.isEmpty()) {
       runFullReindex(project, "Project roots have changed");
     }
-    for (RootsChangeIndexingInfo change : changes) {
-      if (change == RootsChangeIndexingInfo.TOTAL_REINDEX) {
+    for (RootsChangeRescanningInfo change : changes) {
+      if (change == RootsChangeRescanningInfo.TOTAL_RESCAN) {
         runFullReindex(project, "Reindex requested by project root model changes");
         return;
       }
     }
     List<IndexableIteratorBuilder> builders = new SmartList<>();
     WorkspaceEntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
-    for (RootsChangeIndexingInfo change : changes) {
-      if (change == RootsChangeIndexingInfo.NO_INDEXING_NEEDED) continue;
-      if (change instanceof ProjectRootsChangeListener.WorkspaceEventIndexingInfo) {
-        builders.addAll(getBuildersOnWorkspaceChange(project, ((ProjectRootsChangeListener.WorkspaceEventIndexingInfo)change).getEvents()));
+    for (RootsChangeRescanningInfo change : changes) {
+      if (change == RootsChangeRescanningInfo.NO_RESCAN_NEEDED) continue;
+      if (change instanceof ProjectRootsChangeListener.WorkspaceEventRescanningInfo) {
+        builders.addAll(getBuildersOnWorkspaceChange(project, ((ProjectRootsChangeListener.WorkspaceEventRescanningInfo)change).getEvents()));
       }
       else {
         LOG.warn("Unexpected change " + change.getClass() + " " + change + ", full reindex requested");

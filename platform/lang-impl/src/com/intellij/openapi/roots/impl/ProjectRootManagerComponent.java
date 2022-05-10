@@ -17,7 +17,7 @@ import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.project.RootsChangeIndexingInfo;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -174,7 +174,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   }
 
   @Override
-  protected void fireRootsChangedEvent(boolean fileTypes, @NotNull List<? extends RootsChangeIndexingInfo> indexingInfos) {
+  protected void fireRootsChangedEvent(boolean fileTypes, @NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) {
     isFiringEvent = true;
     try {
       DirectoryIndex directoryIndex = DirectoryIndex.getInstance(myProject);
@@ -272,7 +272,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
   }
 
-  private void synchronizeRoots(@NotNull List<? extends RootsChangeIndexingInfo> indexingInfos) {
+  private void synchronizeRoots(@NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) {
     if (!myStartupActivityPerformed) return;
     EntityIndexingService.getInstance().indexChanges(myProject, indexingInfos);
   }
@@ -333,19 +333,19 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
   private final VirtualFilePointerListener myRootsChangedListener = new VirtualFilePointerListener() {
     @NotNull
-    private RootsChangeIndexingInfo getPointersChanges(VirtualFilePointer @NotNull [] pointers) {
-      RootsChangeIndexingInfo result = null;
+    private RootsChangeRescanningInfo getPointersChanges(VirtualFilePointer @NotNull [] pointers) {
+      RootsChangeRescanningInfo result = null;
       for (VirtualFilePointer pointer : pointers) {
         if (pointer.isValid()) {
-          return RootsChangeIndexingInfo.TOTAL_REINDEX;
+          return RootsChangeRescanningInfo.TOTAL_RESCAN;
         }
         else {
           if (result == null) {
-            result = RootsChangeIndexingInfo.NO_INDEXING_NEEDED;
+            result = RootsChangeRescanningInfo.NO_RESCAN_NEEDED;
           }
         }
       }
-      return ObjectUtils.notNull(result, RootsChangeIndexingInfo.TOTAL_REINDEX);
+      return ObjectUtils.notNull(result, RootsChangeRescanningInfo.TOTAL_RESCAN);
     }
 
     @Override
@@ -368,7 +368,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
     @Override
     public void validityChanged(VirtualFilePointer @NotNull [] pointers) {
-      RootsChangeIndexingInfo changeInfo = getPointersChanges(pointers);
+      RootsChangeRescanningInfo changeInfo = getPointersChanges(pointers);
 
       if (myProject.isDisposed()) {
         return;
