@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
@@ -45,7 +46,9 @@ public final class UiInspectorUtil {
   }
 
   @NotNull
-  public static List<PropertyBean> collectActionGroupInfo(@NotNull @NonNls String prefix, @NotNull ActionGroup group, @Nullable String place) {
+  public static List<PropertyBean> collectActionGroupInfo(@NotNull @NonNls String prefix,
+                                                          @NotNull ActionGroup group,
+                                                          @Nullable String place) {
     List<PropertyBean> result = new ArrayList<>();
 
     if (place != null) {
@@ -77,6 +80,16 @@ public final class UiInspectorUtil {
     if (classLoader instanceof PluginAwareClassLoader) {
       result.add(new PropertyBean("Action Plugin ID", ((PluginAwareClassLoader)classLoader).getPluginId().getIdString(), true));
     }
+
+    if (action instanceof ActionWithDelegate<?>) {
+      Object delegate = ((ActionWithDelegate<?>)action).getDelegate();
+      if (delegate instanceof AnAction) {
+        result.add(new PropertyBean("Action Delegate", delegate.getClass().getName(), true));
+        result.add(new PropertyBean("Action Delegate ID", getActionId((AnAction)delegate), true));
+      }
+      result.add(new PropertyBean("Action Delegate toString", delegate, false));
+    }
+
     return result;
   }
 
