@@ -547,6 +547,7 @@ class GradleFacetImportTest : KotlinGradleImportingTestCase() {
     @Ignore // android.sdk needed
     fun testAndroidGradleJsDetection() {
         configureByFiles()
+        @Suppress("DEPRECATION_ERROR")
         createLocalPropertiesSubFileForAndroid()
         importProject()
 
@@ -568,6 +569,7 @@ class GradleFacetImportTest : KotlinGradleImportingTestCase() {
     @Test
     fun testKotlinAndroidPluginDetection() {
         configureByFiles()
+        @Suppress("DEPRECATION_ERROR")
         createLocalPropertiesSubFileForAndroid()
         importProject()
 

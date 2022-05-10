@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.KotlinVersion
@@ -177,6 +178,10 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
     fun checkHighligthingOnAllModules() {
         createHighlightingCheck().invokeOnAllModules()
+    }
+
+    public override fun createProjectSubFile(relativePath: String?, content: String?): VirtualFile {
+        return super.createProjectSubFile(relativePath, content)
     }
 }
 
