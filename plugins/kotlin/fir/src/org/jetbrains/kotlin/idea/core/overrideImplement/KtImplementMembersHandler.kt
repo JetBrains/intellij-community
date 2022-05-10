@@ -7,18 +7,18 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
-import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
-import org.jetbrains.kotlin.analysis.api.tokens.hackyAllowRunningOnEdt
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler.Companion.getUnimplementedMembers
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactoryFromIntentionActions
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
@@ -29,10 +29,10 @@ internal open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
 
     override fun getNoMembersFoundHint() = KotlinIdeaCoreBundle.message("implement.members.handler.no.members.hint")
 
-    @OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
+    @OptIn(KtAllowAnalysisOnEdt::class)
     override fun collectMembersToGenerate(classOrObject: KtClassOrObject): Collection<KtClassMember> {
-        return hackyAllowRunningOnEdt {
-            analyse(classOrObject) {
+        return allowAnalysisOnEdt {
+            analyze(classOrObject) {
                 getUnimplementedMembers(classOrObject).map { createKtClassMember(it, BodyType.FROM_TEMPLATE, false) }
             }
         }

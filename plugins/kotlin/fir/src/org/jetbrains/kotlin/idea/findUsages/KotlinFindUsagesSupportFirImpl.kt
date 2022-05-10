@@ -11,7 +11,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyseInModalWindow
+import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
@@ -133,7 +133,7 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
             }.let { "    $it\n" }
 
 
-        val analyzeResult = analyseInModalWindow(declaration, KotlinBundle.message("find.usages.progress.text.declaration.superMethods")) {
+        val analyzeResult = analyzeInModalWindow(declaration, KotlinBundle.message("find.usages.progress.text.declaration.superMethods")) {
             (declaration.getSymbol() as? KtCallableSymbol)?.let { callableSymbol ->
                 callableSymbol.originalContainingClassForOverride?.let { containingClass ->
                     val overriddenSymbols = callableSymbol.getAllOverriddenSymbols()

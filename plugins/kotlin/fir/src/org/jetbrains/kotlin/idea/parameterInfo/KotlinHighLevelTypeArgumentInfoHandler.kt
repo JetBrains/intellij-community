@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
@@ -68,7 +68,7 @@ abstract class KotlinHighLevelTypeArgumentInfoHandlerBase : AbstractKotlinTypeAr
     protected abstract fun KtAnalysisSession.findParameterOwners(argumentList: KtTypeArgumentList): Collection<KtSymbolWithTypeParameters>?
 
     override fun fetchCandidateInfos(argumentList: KtTypeArgumentList): List<CandidateInfo>? {
-        analyse(argumentList) {
+        analyze(argumentList) {
             val parameterOwners = findParameterOwners(argumentList) ?: return null
             return parameterOwners.map { fetchCandidateInfo(it) }
         }

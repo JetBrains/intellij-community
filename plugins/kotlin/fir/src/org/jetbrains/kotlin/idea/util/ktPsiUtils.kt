@@ -2,20 +2,20 @@
 
 package org.jetbrains.kotlin.idea.util
 
-import org.jetbrains.kotlin.analysis.api.analyse
-import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
-import org.jetbrains.kotlin.analysis.api.tokens.hackyAllowRunningOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-@OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
+@OptIn(KtAllowAnalysisOnEdt::class)
 fun KtCallableDeclaration.setType(typeString: String, classId: ClassId?, shortenReferences: Boolean = true) {
     val typeReference = KtPsiFactory(project).createType(typeString)
     setTypeReference(typeReference)
     if (shortenReferences && classId != null) {
-        hackyAllowRunningOnEdt {
-            analyse(this) {
+        allowAnalysisOnEdt {
+            analyze(this) {
                 collectPossibleReferenceShortenings(
                     containingKtFile,
                     getTypeReference()!!.textRange,

@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.getDefaultMessageWithFactoryName
@@ -40,7 +40,7 @@ class KotlinHighLevelDiagnosticHighlightingPass(
     val annotationHolder = AnnotationHolderImpl(AnnotationSession(ktFile), false)
 
     override fun doCollectInformation(progress: ProgressIndicator) {
-        analyse(ktFile) {
+        analyze(ktFile) {
             ktFile.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).forEach { diagnostic ->
                 addDiagnostic(diagnostic)
             }

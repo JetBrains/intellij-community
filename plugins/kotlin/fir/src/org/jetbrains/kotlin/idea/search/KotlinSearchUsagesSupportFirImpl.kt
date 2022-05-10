@@ -13,16 +13,16 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyse
-import org.jetbrains.kotlin.analysis.api.analyseWithReadAction
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
 import org.jetbrains.kotlin.analysis.api.calls.KtDelegatedConstructorCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
-import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
-import org.jetbrains.kotlin.analysis.api.tokens.hackyAllowRunningOnEdt
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -63,7 +63,7 @@ class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSea
     }
 
     override fun isCallableOverride(subDeclaration: KtDeclaration, superDeclaration: PsiNamedElement): Boolean {
-        return analyse(subDeclaration) {
+        return analyze(subDeclaration) {
             val subSymbol = subDeclaration.getSymbol() as? KtCallableSymbol ?: return false
             subSymbol.getAllOverriddenSymbols().any { it.psi == superDeclaration }
         }
@@ -83,7 +83,7 @@ class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSea
                 is KtDestructuringDeclarationEntry -> false
                 is KtCallableDeclaration -> {
                     if (target.isTopLevelCallable()) return@any false
-                    analyse(target) {
+                    analyze(target) {
                         if (!declaration.canBeAnalysed()) return@any false
                         val targetSymbol = target.getSymbol() as? KtCallableSymbol ?: return@any false
                         declaration.getSymbol() in targetSymbol.getAllOverriddenSymbols()
@@ -142,7 +142,7 @@ class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSea
         return findKotlinInheritors(method, scope, processor)
     }
 
-    @OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
+    @OptIn(KtAllowAnalysisOnEdt::class)
     private fun findKotlinInheritors(
         method: PsiMethod,
         scope: SearchScope,
@@ -153,8 +153,8 @@ class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSea
 
         return DefinitionsScopedSearch.search(ktClass, scope, true).forEach(Processor { psiClass ->
             val inheritor = psiClass.unwrapped as? KtClassOrObject ?: return@Processor true
-            hackyAllowRunningOnEdt {
-                analyseWithReadAction(inheritor) {
+            allowAnalysisOnEdt {
+                analyzeWithReadAction(inheritor) {
                     findMemberInheritors(ktMember, inheritor, processor)
                 }
             }
@@ -203,7 +203,7 @@ class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSea
     override fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
         return when (val element = method.unwrapped) {
             is PsiMethod -> element.findDeepestSuperMethods().toList()
-            is KtCallableDeclaration -> analyse(element) {
+            is KtCallableDeclaration -> analyze(element) {
                 val symbol = element.getSymbol() as? KtCallableSymbol ?: return emptyList()
                 symbol.getAllOverriddenSymbols()
                     .filter {
@@ -247,8 +247,8 @@ class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSea
 
     override fun isInheritable(ktClass: KtClass): Boolean = isOverridableBySymbol(ktClass)
 
-    private fun isOverridableBySymbol(declaration: KtDeclaration) = analyseWithReadAction(declaration) {
-        val symbol = declaration.getSymbol() as? KtSymbolWithModality ?: return@analyseWithReadAction false
+    private fun isOverridableBySymbol(declaration: KtDeclaration) = analyzeWithReadAction(declaration) {
+        val symbol = declaration.getSymbol() as? KtSymbolWithModality ?: return@analyzeWithReadAction false
         when (symbol.modality) {
             Modality.OPEN, Modality.SEALED, Modality.ABSTRACT -> true
             Modality.FINAL -> false

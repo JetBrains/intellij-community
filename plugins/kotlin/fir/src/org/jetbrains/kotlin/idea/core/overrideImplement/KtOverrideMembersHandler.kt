@@ -2,14 +2,14 @@
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
-import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
-import org.jetbrains.kotlin.analysis.api.tokens.hackyAllowRunningOnEdt
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
@@ -17,10 +17,10 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 internal open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
-    @OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
+    @OptIn(KtAllowAnalysisOnEdt::class)
     override fun collectMembersToGenerate(classOrObject: KtClassOrObject): Collection<KtClassMember> {
-        return hackyAllowRunningOnEdt {
-            analyse(classOrObject) {
+        return allowAnalysisOnEdt {
+            analyze(classOrObject) {
                 collectMembers(classOrObject)
             }
         }

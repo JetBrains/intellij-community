@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.KtAlwaysAccessibleLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -29,6 +31,12 @@ val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lz {
     UastLanguagePlugin.getInstances().single { it.language == KotlinLanguage.INSTANCE } as FirKotlinUastLanguagePlugin?
         ?: FirKotlinUastLanguagePlugin()
 }
+
+internal inline fun <R> analyzeForUast(
+    useSiteKtElement: KtElement,
+    action: KtAnalysisSession.() -> R
+): R =
+    analyze(useSiteKtElement, KtAlwaysAccessibleLifetimeTokenFactory, action)
 
 internal fun KtAnalysisSession.containingKtClass(
     ktConstructorSymbol: KtConstructorSymbol,

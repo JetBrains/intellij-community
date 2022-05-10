@@ -3,11 +3,11 @@ package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
-import org.jetbrains.kotlin.analysis.api.tokens.hackyAllowRunningOnEdt
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 object CastExpressionFixFactories {
     class Input(val typePresentation: String, val typeSourceCode: String) : HLApplicatorInput
 
-    @OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
+    @OptIn(KtAllowAnalysisOnEdt::class)
     val applicator = applicator<PsiElement, Input> {
         familyName(KotlinBundle.message("fix.cast.expression.family"))
         actionName { psi, input -> KotlinBundle.message("fix.cast.expression.text", psi.text, input.typePresentation) }
@@ -32,8 +32,8 @@ object CastExpressionFixFactories {
             val expressionToInsert = KtPsiFactory(psi).createExpressionByPattern("$0 as $1", psi, input.typeSourceCode)
             val newExpression = psi.replaced(expressionToInsert)
 
-            hackyAllowRunningOnEdt {
-                analyse(newExpression) {
+            allowAnalysisOnEdt {
+                analyze(newExpression) {
                     collectPossibleReferenceShorteningsInElement(newExpression)
                 }
             }.invokeShortening()

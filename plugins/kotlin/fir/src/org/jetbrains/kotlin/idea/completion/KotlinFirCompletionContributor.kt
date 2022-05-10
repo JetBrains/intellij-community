@@ -63,7 +63,7 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
 
         val positionContext = FirPositionCompletionContextDetector.detect(basicContext)
 
-        FirPositionCompletionContextDetector.analyseInContext(basicContext, positionContext) {
+        FirPositionCompletionContextDetector.analyzeInContext(basicContext, positionContext) {
             complete(basicContext, positionContext)
         }
     }
