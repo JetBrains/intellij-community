@@ -31,7 +31,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.SingleCharSequence;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -486,9 +485,13 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return attrs;
   }
 
-  @ApiStatus.Internal
   private TextAttributesKey @NotNull [] getAttributesKeys(@NotNull IElementType tokenType) {
-    return myKeysMap.computeIfAbsent(tokenType, type -> myHighlighter.getTokenHighlights(type));
+    TextAttributesKey[] attributesKeys = myKeysMap.get(tokenType);
+    if (attributesKeys == null) {
+      attributesKeys = myHighlighter.getTokenHighlights(tokenType);
+      myKeysMap.put(tokenType, attributesKeys);
+    }
+    return attributesKeys;
   }
 
   @NotNull
