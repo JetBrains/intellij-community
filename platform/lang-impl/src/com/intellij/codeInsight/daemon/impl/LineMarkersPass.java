@@ -5,7 +5,6 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.script.IDE;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -51,15 +50,19 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
   @NotNull private final TextRange myPriorityBounds;
   @NotNull private final TextRange myRestrictRange;
 
+  @NotNull private final Mode myMode;
+
   LineMarkersPass(@NotNull Project project,
                   @NotNull PsiFile file,
                   @NotNull Document document,
                   @NotNull TextRange priorityBounds,
-                  @NotNull TextRange restrictRange) {
+                  @NotNull TextRange restrictRange,
+                  @NotNull LineMarkersPass.Mode mode) {
     super(project, document, false);
     myFile = file;
     myPriorityBounds = priorityBounds;
     myRestrictRange = restrictRange;
+    myMode = mode;
   }
 
   @Override
@@ -158,41 +161,43 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
                               @NotNull List<? extends LineMarkerProvider> providers,
                               @NotNull PairConsumer<? super PsiElement, ? super LineMarkerInfo<?>> consumer) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    Set<PsiFile> visitedInjectedFiles = new HashSet<>();
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < elements.size(); i++) {
-      PsiElement element = elements.get(i);
 
-      //noinspection ForLoopReplaceableByForEach
-      for (int j = 0; j < providers.size(); j++) {
-        ProgressManager.checkCanceled();
-        LineMarkerProvider provider = providers.get(j);
-        LineMarkerInfo<?> info;
-        try {
-          info = provider.getLineMarkerInfo(element);
-        }
-        catch (ProcessCanceledException | IndexNotReadyException e) {
-          throw e;
-        }
-        catch (Exception e) {
-          LOG.error("During querying provider " + provider + " (" + provider.getClass() + ")", e,
-                    new Attachment(containingFile.getViewProvider().getVirtualFile().getName(), containingFile.getText()));
-          continue;
-        }
-        if (info != null) {
-          if (info.endOffset > getDocument().getTextLength()) {
-            Exception exception = new IllegalStateException(provider + " (" + provider.getClass() + ")" +
-                        " generated invalid LineMarker " + info + " for element " + element + " (" + element.getClass() + ")." +
-                        " document length: " + getDocument().getTextLength());
-            LOG.error(PluginException.createByClass(exception, provider.getClass()));
+    if (myMode != Mode.SLOW) {
+      for (int i = 0; i < elements.size(); i++) {
+        PsiElement element = elements.get(i);
+
+        for (int j = 0; j < providers.size(); j++) {
+          ProgressManager.checkCanceled();
+          LineMarkerProvider provider = providers.get(j);
+          LineMarkerInfo<?> info;
+          try {
+            info = provider.getLineMarkerInfo(element);
           }
-          consumer.consume(element, info);
+          catch (ProcessCanceledException | IndexNotReadyException e) {
+            throw e;
+          }
+          catch (Exception e) {
+            LOG.error("During querying provider " + provider + " (" + provider.getClass() + ")", e,
+                      new Attachment(containingFile.getViewProvider().getVirtualFile().getName(), containingFile.getText()));
+            continue;
+          }
+          if (info != null) {
+            if (info.endOffset > getDocument().getTextLength()) {
+              Exception exception = new IllegalStateException(provider + " (" + provider.getClass() + ")" +
+                          " generated invalid LineMarker " + info + " for element " + element + " (" + element.getClass() + ")." +
+                          " document length: " + getDocument().getTextLength());
+              LOG.error(PluginException.createByClass(exception, provider.getClass()));
+            }
+            consumer.consume(element, info);
+          }
         }
       }
     }
 
+    if (myMode == Mode.FAST) return;
+
+    Set<PsiFile> visitedInjectedFiles = new HashSet<>();
     // line markers for injected could be slow
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < elements.size(); i++) {
       PsiElement element = elements.get(i);
 
@@ -200,7 +205,6 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
     }
 
     List<LineMarkerInfo<?>> slowLineMarkers = new NotNullList<>();
-    //noinspection ForLoopReplaceableByForEach
     for (int j = 0; j < providers.size(); j++) {
       ProgressManager.checkCanceled();
       LineMarkerProvider provider = providers.get(j);
@@ -216,7 +220,6 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
       }
 
       if (!slowLineMarkers.isEmpty()) {
-        //noinspection ForLoopReplaceableByForEach
         for (int k = 0; k < slowLineMarkers.size(); k++) {
           LineMarkerInfo<?> slowInfo = slowLineMarkers.get(k);
           PsiElement element = slowInfo.getElement();
@@ -269,7 +272,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
       // binary file? see IDEADEV-2809
       return Collections.emptyList();
     }
-    LineMarkersPass pass = new LineMarkersPass(file.getProject(), file, document, file.getTextRange(), file.getTextRange());
+    LineMarkersPass pass = new LineMarkersPass(file.getProject(), file, document, file.getTextRange(), file.getTextRange(), Mode.ALL);
     pass.doCollectInformation(new EmptyProgressIndicator());
     return pass.myMarkers;
   }
@@ -286,5 +289,9 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
   @Override
   public String toString() {
     return super.toString() + "; myBounds: " + myPriorityBounds;
+  }
+
+  enum Mode {
+    FAST, SLOW, ALL
   }
 }
