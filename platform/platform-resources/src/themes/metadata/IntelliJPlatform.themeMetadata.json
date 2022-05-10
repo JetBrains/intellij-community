@@ -1044,6 +1044,16 @@
       "description": "Button background to highlight chosen search option"
     },
     {
+      "key": "SearchOption.selectedPressedBackground",
+      "description": "Button background to highlight selected pressed search option (experimental UI only)",
+      "since": "2022.3"
+    },
+    {
+      "key": "SearchOption.selectedHoveredBackground",
+      "description": "Button background to highlight selected hovered search option (experimental UI only)",
+      "since": "2022.3"
+    },
+    {
       "key": "SearchMatch.startBackground"
     },
     {

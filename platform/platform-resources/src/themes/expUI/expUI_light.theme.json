@@ -385,7 +385,9 @@
       "endBackground": "Yellow9"
     },
 
-    "SearchOption.selectedBackground": "Blue14",
+    "SearchOption": {
+      "selectedBackground": "Blue14"
+    },
 
     "SpeedSearch": {
       "background": "Grey13",
