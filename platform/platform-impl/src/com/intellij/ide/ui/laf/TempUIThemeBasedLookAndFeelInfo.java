@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
-import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,33 +11,64 @@ import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
+import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.function.Function;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class TempUIThemeBasedLookAndFeelInfo extends UIThemeBasedLookAndFeelInfo {
-  private final VirtualFile mySchemeFile;
-  private UIManager.LookAndFeelInfo myPreviousLaf;
-  private static final Logger LOG = Logger.getInstance(TempUIThemeBasedLookAndFeelInfo.class);
 
-  public TempUIThemeBasedLookAndFeelInfo(UITheme theme, VirtualFile editorSchemeFile) {
+  private static final Logger LOG = Logger.getInstance(TempUIThemeBasedLookAndFeelInfo.class);
+  private static final @NonNls String ID = "Temp theme";
+
+  private final @Nullable VirtualFile mySchemeFile;
+  private final @Nullable UIManager.LookAndFeelInfo myPreviousLaf;
+
+  public TempUIThemeBasedLookAndFeelInfo(@NotNull UITheme theme,
+                                         @Nullable VirtualFile editorSchemeFile,
+                                         @Nullable UIManager.LookAndFeelInfo previousLaf) {
     super(theme);
+    assert ID.equals(theme.getId());
+
     mySchemeFile = editorSchemeFile;
-    myPreviousLaf = LafManager.getInstance().getCurrentLookAndFeel();
-    if (myPreviousLaf instanceof TempUIThemeBasedLookAndFeelInfo) {
-      myPreviousLaf = ((TempUIThemeBasedLookAndFeelInfo)myPreviousLaf).getPreviousLaf();
-    }
+    myPreviousLaf = previousLaf instanceof TempUIThemeBasedLookAndFeelInfo ?
+                    ((TempUIThemeBasedLookAndFeelInfo)previousLaf).getPreviousLaf() :
+                    previousLaf;
   }
 
-  public UIManager.LookAndFeelInfo getPreviousLaf() {
+  public @Nullable UIManager.LookAndFeelInfo getPreviousLaf() {
     return myPreviousLaf;
+  }
+
+  @Override
+  protected @Nullable InputStream getResourceAsStream(@NotNull String path) {
+    Path file = Path.of(path);
+    if (Files.exists(file)) {
+      try {
+        return Files.newInputStream(file);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+
+    return null;
   }
 
   @Override
@@ -77,5 +107,31 @@ public final class TempUIThemeBasedLookAndFeelInfo extends UIThemeBasedLookAndFe
         });
       }
     }
+  }
+
+  public static @NotNull UITheme loadTempTheme(@NotNull InputStream stream,
+                                               @NotNull IconPathPatcher patcher) throws IOException {
+    UITheme theme = UITheme.loadFromJson(stream,
+                                         ID,
+                                         null,
+                                         Function.identity());
+
+    IconPathPatcher oldPatcher = theme.getPatcher();
+    if (oldPatcher != null) {
+      theme.setPatcher(new IconPathPatcher() {
+        @Override
+        public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
+          String result = oldPatcher.patchPath(path, classLoader);
+          return result != null ? patcher.patchPath(result, classLoader) : null;
+        }
+
+        @Override
+        public @Nullable ClassLoader getContextClassLoader(@NotNull String path, @Nullable ClassLoader originalClassLoader) {
+          return patcher.getContextClassLoader(path, originalClassLoader);
+        }
+      });
+    }
+
+    return theme;
   }
 }

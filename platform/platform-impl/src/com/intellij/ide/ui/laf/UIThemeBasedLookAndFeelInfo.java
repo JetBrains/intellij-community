@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.util.SVGLoader;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,6 +71,10 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     return myInitialised;
   }
 
+  protected @Nullable InputStream getResourceAsStream(@NotNull String path) {
+    return myTheme.getProviderClassLoader().getResourceAsStream(path);
+  }
+
   protected void installEditorScheme() {
     String name = myTheme.getEditorSchemeName();
     if (name != null) {
@@ -89,15 +94,19 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     }
   }
 
-  private boolean installBackgroundImage(@Nullable Map<String, Object> backgroundProps, String bgImageProperty) {
+  private boolean installBackgroundImage(@Nullable Map<String, Object> backgroundProps,
+                                         @NotNull @NonNls String bgImageProperty) {
     Object path = backgroundProps == null ? null : backgroundProps.get("image");
-    if (!(path instanceof String)) {
-      return false;
-    }
+    return path instanceof String &&
+           installBackgroundImage(backgroundProps, bgImageProperty, (String)path);
+  }
 
+  private boolean installBackgroundImage(@NotNull Map<String, Object> backgroundProps,
+                                         @NotNull @NonNls String bgImageProperty,
+                                         @NotNull @NonNls String path) {
     try {
-      Path tmpImage = FileUtil.createTempFile("ijBackgroundImage", path.toString().substring(((String)path).lastIndexOf(".")), true).toPath();
-      InputStream stream = myTheme.getResourceAsStream((String)path);
+      Path tmpImage = FileUtil.createTempFile("ijBackgroundImage", path.substring(path.lastIndexOf(".")), true).toPath();
+      InputStream stream = getResourceAsStream(path);
       if (stream == null) {
         throw new IllegalArgumentException("Can't load background: " + path);
       }
@@ -116,6 +125,7 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
       String currentSpec = propertyComponent.getValue(bgImageProperty);
       propertyComponent.setValue("old." + bgImageProperty, currentSpec);
       propertyComponent.setValue(bgImageProperty, spec);
+
       return true;
     }
     catch (IOException e) {
