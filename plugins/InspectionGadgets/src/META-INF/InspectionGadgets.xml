@@ -1418,10 +1418,6 @@
                      bundle="messages.InspectionGadgetsBundle" key="test.method.in.product.code.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.TestMethodInProductCodeInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="TestMethodWithIncorrectSignature" shortName="TestMethodIsPublicVoidNoArg"
-                     bundle="messages.InspectionGadgetsBundle" key="test.method.is.public.void.no.arg.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.TestMethodIsPublicVoidNoArgInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="JUnitTestMethodWithNoAssertions" shortName="TestMethodWithoutAssertion"
                      bundle="messages.InspectionGadgetsBundle" key="test.method.without.assertion.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
