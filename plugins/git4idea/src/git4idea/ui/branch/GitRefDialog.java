@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.CharFilter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
@@ -109,7 +111,7 @@ public final class GitRefDialog extends DialogWrapper {
 
   @NotNull
   public String getReference() {
-    return myTextField.getText();
+    return StringUtil.trim(myTextField.getText(), CharFilter.NOT_WHITESPACE_FILTER);
   }
 
   @Nullable
