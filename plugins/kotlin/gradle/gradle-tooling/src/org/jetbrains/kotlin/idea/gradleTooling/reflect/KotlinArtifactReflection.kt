@@ -19,6 +19,7 @@ interface KonanArtifactReflection {
     val runTask: Exec?
     val isTests: Boolean?
     val freeCompilerArgs: Collection<String>?
+    val binaryOptions: Map<String, String>?
 }
 
 private class KonanArtifactReflectionImpl(private val instance: Any) : KonanArtifactReflection {
@@ -68,6 +69,10 @@ private class KonanArtifactReflectionImpl(private val instance: Any) : KonanArti
     override val freeCompilerArgs: Collection<String>? by lazy {
         linkTask?.callReflectiveAnyGetter("getKotlinOptions", logger)
             ?.callReflectiveGetter("getFreeCompilerArgs", logger)
+    }
+
+    override val binaryOptions: Map<String, String>? by lazy {
+        linkTask?.callReflectiveGetter("getBinaryOptions", logger)
     }
 
     companion object {
