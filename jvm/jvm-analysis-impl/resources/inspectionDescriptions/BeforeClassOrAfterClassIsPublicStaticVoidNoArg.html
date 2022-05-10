@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports JUnit <code>@BeforeClass</code>, <code>@AfterClass</code>, <code>@BeforeAll</code> and <code>@AfterAll</code> methods
-that are not declared <code>public</code> and <code>static</code>,
-do not return <code>void</code>, or take arguments.
+Reports JUnit 4 <code>@BeforeClass</code> and <code>@AfterClass</code> annotated methods and JUnit 5
+<code>@BeforeAll</code> and <code>@AfterAll</code> annotated methods that are not public, not static, do not return a void type or take
+arguments without declaring a parameter resolver.
 Such methods are easy to create inadvertently, but they will not be executed by JUnit tests runners.
 <p><b>Example:</b></p>
 <pre><code>
