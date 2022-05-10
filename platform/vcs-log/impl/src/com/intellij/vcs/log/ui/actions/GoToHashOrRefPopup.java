@@ -11,6 +11,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.text.CharFilter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
@@ -64,9 +66,10 @@ public class GoToHashOrRefPopup {
         @Override
         public void onOk() {
           if (myFuture == null) {
-            final Future future = ((mySelectedRef == null || (!mySelectedRef.getName().equals(getText().trim())))
-                                   ? myOnSelectedHash.fun(getText().trim())
-                                   : myOnSelectedRef.fun(mySelectedRef));
+            String refText = StringUtil.trim(getText(), CharFilter.NOT_WHITESPACE_FILTER);
+            final Future<?> future = ((mySelectedRef == null || (!mySelectedRef.getName().equals(refText)))
+                                      ? myOnSelectedHash.fun(refText)
+                                      : myOnSelectedRef.fun(mySelectedRef));
             myFuture = future;
             showProgress();
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
