@@ -119,6 +119,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         }.toList()
     }
 
+    @Deprecated("Use .setupAndroid() instead", level = DeprecationLevel.ERROR)
     protected fun createLocalPropertiesSubFileForAndroid() {
         createProjectSubFile(
             "local.properties",
