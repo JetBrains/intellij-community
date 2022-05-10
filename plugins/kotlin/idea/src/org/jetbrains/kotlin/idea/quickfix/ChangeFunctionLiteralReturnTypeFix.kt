@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.quickfix.QuickFixUtil
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.*
@@ -54,7 +53,7 @@ class ChangeFunctionLiteralReturnTypeFix(
         val correspondingProperty = PsiTreeUtil.getParentOfType(functionLiteralExpression, KtProperty::class.java)
         if (correspondingProperty != null &&
             correspondingProperty.delegate == null &&
-            correspondingProperty.initializer?.let { QuickFixUtil.canEvaluateTo(it, functionLiteralExpression) } != false
+            correspondingProperty.initializer?.let { QuickFixBranchUtil.canEvaluateTo(it, functionLiteralExpression) } != false
         ) {
             val correspondingPropertyTypeRef = correspondingProperty.typeReference
             val propertyType = context.get(BindingContext.TYPE, correspondingPropertyTypeRef)
@@ -85,7 +84,7 @@ class ChangeFunctionLiteralReturnTypeFix(
 
 
         val parentFunction = PsiTreeUtil.getParentOfType(functionLiteralExpression, KtFunction::class.java, true)
-        return if (parentFunction != null && QuickFixUtil.canFunctionOrGetterReturnExpression(parentFunction, functionLiteralExpression)) {
+        return if (parentFunction != null && QuickFixBranchUtil.canFunctionOrGetterReturnExpression(parentFunction, functionLiteralExpression)) {
             val parentFunctionReturnTypeRef = parentFunction.typeReference
             val parentFunctionReturnType = context.get(BindingContext.TYPE, parentFunctionReturnTypeRef)
             if (parentFunctionReturnType != null && !KotlinTypeChecker.DEFAULT

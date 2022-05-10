@@ -1,50 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.core.quickfix;
+package org.jetbrains.kotlin.idea.quickfix;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.descriptors.CallableDescriptor;
-import org.jetbrains.kotlin.descriptors.ClassifierDescriptor;
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor;
-import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers;
-import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.psi.*;
-import org.jetbrains.kotlin.renderer.DescriptorRenderer;
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils;
-import org.jetbrains.kotlin.resolve.DescriptorUtils;
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode;
-import org.jetbrains.kotlin.types.DeferredType;
 import org.jetbrains.kotlin.types.KotlinType;
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker;
 
-public class QuickFixUtil {
-    private QuickFixUtil() {
-    }
-
-    /**
-     * @deprecated Avoid using unsafe resolution methods and unwrapping 'DeferredType's.
-     */
-    @Nullable
-    @Deprecated
-    public static KotlinType getDeclarationReturnType(KtNamedDeclaration declaration) {
-        PsiFile file = declaration.getContainingFile();
-        if (!(file instanceof KtFile)) return null;
-        DeclarationDescriptor descriptor = ResolutionUtils.unsafeResolveToDescriptor(declaration, BodyResolveMode.FULL);
-        if (!(descriptor instanceof CallableDescriptor)) return null;
-        KotlinType type = ((CallableDescriptor) descriptor).getReturnType();
-        if (type instanceof DeferredType) {
-            type = ((DeferredType) type).getDelegate();
-        }
-        return type;
+class QuickFixBranchUtil {
+    private QuickFixBranchUtil() {
     }
 
     @Nullable
-    public static KotlinType findLowerBoundOfOverriddenCallablesReturnTypes(@NotNull CallableDescriptor descriptor) {
+    static KotlinType findLowerBoundOfOverriddenCallablesReturnTypes(@NotNull CallableDescriptor descriptor) {
         KotlinType matchingReturnType = null;
         for (CallableDescriptor overriddenDescriptor : descriptor.getOverriddenDescriptors()) {
             KotlinType overriddenReturnType = overriddenDescriptor.getReturnType();
@@ -61,13 +33,6 @@ public class QuickFixUtil {
         return matchingReturnType;
     }
 
-    @Nullable
-    public static PsiElement safeGetDeclaration(@Nullable CallableDescriptor descriptor) {
-        //do not create fix if descriptor has more than one overridden declaration
-        if (descriptor == null || descriptor.getOverriddenDescriptors().size() > 1) return null;
-        return DescriptorToSourceUtils.descriptorToDeclaration(descriptor);
-    }
-
     private static boolean equalOrLastInBlock(KtExpression block, KtExpression expression) {
         if (block == expression) return true;
         return block instanceof KtBlockExpression && expression.getParent() == block &&
@@ -75,7 +40,7 @@ public class QuickFixUtil {
     }
 
     @Nullable
-    public static KtIfExpression getParentIfForBranch(@Nullable KtExpression expression) {
+    static KtIfExpression getParentIfForBranch(@Nullable KtExpression expression) {
         KtIfExpression ifExpression = PsiTreeUtil.getParentOfType(expression, KtIfExpression.class, true);
         if (ifExpression == null) return null;
         if (equalOrLastInBlock(ifExpression.getThen(), expression)
@@ -106,7 +71,7 @@ public class QuickFixUtil {
     // parent = (x), child = x;
     // parent = if (...) x else y, child = x;
     // parent = y.x, child = x
-    public static boolean canEvaluateTo(KtExpression parent, KtExpression child) {
+    static boolean canEvaluateTo(KtExpression parent, KtExpression child) {
         if (parent == null || child == null) {
             return false;
         }
@@ -127,7 +92,7 @@ public class QuickFixUtil {
         return true;
     }
 
-    public static boolean canFunctionOrGetterReturnExpression(@NotNull KtDeclaration functionOrGetter, @NotNull KtExpression expression) {
+    static boolean canFunctionOrGetterReturnExpression(@NotNull KtDeclaration functionOrGetter, @NotNull KtExpression expression) {
         if (functionOrGetter instanceof KtFunctionLiteral) {
             KtBlockExpression functionLiteralBody = ((KtFunctionLiteral) functionOrGetter).getBodyExpression();
             PsiElement returnedElement = null;
@@ -147,15 +112,5 @@ public class QuickFixUtil {
             KtReturnExpression returnExpression = PsiTreeUtil.getParentOfType(expression, KtReturnExpression.class);
             return returnExpression != null && canEvaluateTo(returnExpression.getReturnedExpression(), expression);
         }
-    }
-
-    public static String renderTypeWithFqNameOnClash(KotlinType type, String nameToCheckAgainst) {
-        FqName fqNameToCheckAgainst = new FqName(nameToCheckAgainst);
-        ClassifierDescriptor typeClassifierDescriptor = type.getConstructor().getDeclarationDescriptor();
-        FqName typeFqName = typeClassifierDescriptor != null ? DescriptorUtils.getFqNameSafe(typeClassifierDescriptor) : fqNameToCheckAgainst;
-        DescriptorRenderer renderer = typeFqName.shortName().equals(fqNameToCheckAgainst.shortName())
-               ? IdeDescriptorRenderers.SOURCE_CODE
-               : IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS;
-        return renderer.renderType(type);
     }
 }

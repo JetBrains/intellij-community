@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.quickfix.QuickFixUtil
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isNullExpression
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -119,7 +118,7 @@ open class ChangeVariableTypeFix(element: KtCallableDeclaration, type: KotlinTyp
             if (element !is KtProperty && element !is KtParameter) return actions
             val descriptor = element.resolveToDescriptorIfAny(BodyResolveMode.FULL) as? PropertyDescriptor ?: return actions
 
-            var lowerBoundOfOverriddenPropertiesTypes = QuickFixUtil.findLowerBoundOfOverriddenCallablesReturnTypes(descriptor)
+            var lowerBoundOfOverriddenPropertiesTypes = QuickFixBranchUtil.findLowerBoundOfOverriddenCallablesReturnTypes(descriptor)
 
             val propertyType = descriptor.returnType ?: error("Property type cannot be null if it mismatches something")
 

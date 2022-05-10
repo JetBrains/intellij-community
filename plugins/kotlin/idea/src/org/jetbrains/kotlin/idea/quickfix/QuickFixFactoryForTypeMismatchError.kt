@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isKFunctionType
@@ -15,7 +16,6 @@ import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.core.quickfix.QuickFixUtil
 import org.jetbrains.kotlin.idea.intentions.branches
 import org.jetbrains.kotlin.idea.intentions.reflectToRegularFunctionType
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
@@ -29,10 +29,11 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
+import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils.descriptorToDeclaration
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunctionDescriptor
-import org.jetbrains.kotlin.resolve.calls.util.*
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.*
 import org.jetbrains.kotlin.resolve.constants.IntegerValueTypeConstant
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
@@ -209,7 +210,7 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             diagnosticElement.module?.languageVersionSettings?.supportsFeature(LanguageFeature.DefinitelyNonNullableTypes) == true
         ) {
             val descriptor = context[BindingContext.REFERENCE_TARGET, diagnosticElement]?.safeAs<CallableDescriptor>()
-            when (val declaration = QuickFixUtil.safeGetDeclaration(descriptor)) {
+            when (val declaration = safeGetDeclaration(descriptor)) {
                 is KtParameter -> {
                     // Check the parent parameter list to avoid creating actions for loop iterators
                     if (declaration.parent is KtParameterList) {
@@ -227,8 +228,8 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
         if (property != null) {
             val getter = property.getter
             val initializer = property.initializer
-            if (QuickFixUtil.canEvaluateTo(initializer, diagnosticElement)
-                || getter != null && QuickFixUtil.canFunctionOrGetterReturnExpression(getter, diagnosticElement)
+            if (QuickFixBranchUtil.canEvaluateTo(initializer, diagnosticElement)
+                || getter != null && QuickFixBranchUtil.canFunctionOrGetterReturnExpression(getter, diagnosticElement)
             ) {
                 val returnType = property.returnType(diagnosticElement, expressionType, context)
                 addChangeTypeFix(property, returnType, ::ChangeVariableTypeFix)
@@ -242,7 +243,7 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             expressionParent.getTargetFunction(context)
         else
             PsiTreeUtil.getParentOfType(diagnosticElement, KtFunction::class.java, true)
-        if (function is KtFunction && QuickFixUtil.canFunctionOrGetterReturnExpression(function, diagnosticElement)) {
+        if (function is KtFunction && QuickFixBranchUtil.canFunctionOrGetterReturnExpression(function, diagnosticElement)) {
             val returnType = function.returnType(diagnosticElement, expressionType, context)
             addChangeTypeFix(function, returnType, ChangeCallableReturnTypeFix::ForEnclosing)
         }
@@ -290,12 +291,12 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
         if (resolvedCall != null) {
             // to fix 'type mismatch' on 'if' branches
             // todo: the same with 'when'
-            val parentIf = QuickFixUtil.getParentIfForBranch(diagnosticElement)
+            val parentIf = QuickFixBranchUtil.getParentIfForBranch(diagnosticElement)
             val argumentExpression = parentIf ?: diagnosticElement
             val valueArgument = resolvedCall.call.getValueArgumentForExpression(argumentExpression)
             if (valueArgument != null) {
                 val correspondingParameterDescriptor = resolvedCall.getParameterForArgument(valueArgument)
-                val correspondingParameter = QuickFixUtil.safeGetDeclaration(correspondingParameterDescriptor) as? KtParameter
+                val correspondingParameter = safeGetDeclaration(correspondingParameterDescriptor) as? KtParameter
                 val expressionFromArgument = valueArgument.getArgumentExpression()
                 val valueArgumentType = when (diagnostic.factory) {
                     Errors.NULL_FOR_NONNULL_TYPE, Errors.SIGNED_CONSTANT_CONVERTED_TO_UNSIGNED -> expressionType
@@ -360,11 +361,16 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
         private val LOG = Logger.getInstance(QuickFixFactoryForTypeMismatchError::class.java)
 
         private fun getFunctionDeclaration(resolvedCall: ResolvedCall<*>): KtFunction? {
-            val result = QuickFixUtil.safeGetDeclaration(resolvedCall.resultingDescriptor)
+            val result = safeGetDeclaration(resolvedCall.resultingDescriptor)
             if (result is KtFunction) {
                 return result
             }
             return null
+        }
+
+        private fun safeGetDeclaration(descriptor: CallableDescriptor?): PsiElement? {
+            //do not create fix if descriptor has more than one overridden declaration
+            return if (descriptor == null || descriptor.overriddenDescriptors.size > 1) null else descriptorToDeclaration(descriptor)
         }
     }
 }

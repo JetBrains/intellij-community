@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -21,7 +22,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.quickfix.QuickFixUtil
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.*
@@ -183,7 +183,7 @@ abstract class ChangeCallableReturnTypeFix(
 
             val descriptor = function.resolveToDescriptorIfAny(BodyResolveMode.FULL) as? FunctionDescriptor ?: return emptyList()
 
-            val matchingReturnType = QuickFixUtil.findLowerBoundOfOverriddenCallablesReturnTypes(descriptor)
+            val matchingReturnType = findLowerBoundOfOverriddenCallablesReturnTypes(descriptor)
             if (matchingReturnType != null) {
                 actions.add(OnType(function, matchingReturnType))
             }
@@ -230,6 +230,19 @@ abstract class ChangeCallableReturnTypeFix(
             val multiDeclaration = diagnostic.psiElement.findParentOfType<KtDestructuringDeclaration>(strict = false)
                 ?: error("COMPONENT_FUNCTION_RETURN_TYPE_MISMATCH reported on expression that is not within any multi declaration")
             return multiDeclaration.entries[componentIndex - 1]
+        }
+
+        fun findLowerBoundOfOverriddenCallablesReturnTypes(descriptor: CallableDescriptor): KotlinType? {
+            var matchingReturnType: KotlinType? = null
+            for (overriddenDescriptor in descriptor.overriddenDescriptors) {
+                val overriddenReturnType = overriddenDescriptor.returnType ?: return null
+                if (matchingReturnType == null || KotlinTypeChecker.DEFAULT.isSubtypeOf(overriddenReturnType, matchingReturnType)) {
+                    matchingReturnType = overriddenReturnType
+                } else if (!KotlinTypeChecker.DEFAULT.isSubtypeOf(matchingReturnType, overriddenReturnType)) {
+                    return null
+                }
+            }
+            return matchingReturnType
         }
     }
 }
