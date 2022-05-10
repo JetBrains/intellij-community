@@ -247,9 +247,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   private void addThemeAndDynamicPluginListeners() {
     UIThemeProvider.EP_NAME.addExtensionPointListener(new UiThemeEpListener(), this);
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-
-      private final List<UIThemeBasedLookAndFeelInfo> myLafInfosToUnload = new ArrayList<>();
+    ApplicationManager.getApplication()
+      .getMessageBus()
+      .connect(this)
+      .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
 
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
@@ -260,23 +261,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         else {
           themeIdBeforePluginUpdate = null;
         }
-
-        for (UIManager.LookAndFeelInfo lafInfo : lafList.getValue()) {
-          if (lafInfo instanceof UIThemeBasedLookAndFeelInfo) {
-            UIThemeBasedLookAndFeelInfo themeBasedLafInfo = (UIThemeBasedLookAndFeelInfo)lafInfo;
-            if (themeBasedLafInfo.getTheme().getProviderClassLoader() == pluginDescriptor.getPluginClassLoader()) {
-              myLafInfosToUnload.add(themeBasedLafInfo);
-            }
-          }
-        }
       }
 
       @Override
       public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        for (UIThemeBasedLookAndFeelInfo lafInfo : myLafInfosToUnload) {
-          lafInfo.uninstallTheme();
-        }
-        myLafInfosToUnload.clear();
         if (isNewUIPlugin(pluginDescriptor)) {
           Registry.get("ide.experimental.ui").setValue(false);
           Registry.get("debugger.new.tool.window.layout").setValue(false);
@@ -1262,51 +1250,58 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private final class UiThemeEpListener implements ExtensionPointListener<UIThemeProvider> {
     @Override
     public void extensionAdded(@NotNull UIThemeProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
-      UIThemeBasedLookAndFeelInfo newTheme = UiThemeProviderListManager.getInstance().themeAdded(provider);
-      if (newTheme == null) {
+      UIThemeBasedLookAndFeelInfo newLaF = UiThemeProviderListManager.getInstance().themeProviderAdded(provider);
+      if (newLaF == null) {
         return;
       }
 
-      List<UIManager.LookAndFeelInfo> lafList = LafManagerImpl.this.lafList.getValue();
-      List<UIManager.LookAndFeelInfo> newLaFs = new ArrayList<>(lafList.size() + 1);
-      newLaFs.addAll(lafList);
-      newLaFs.add(newTheme);
+      List<UIManager.LookAndFeelInfo> oldLaFs = lafList.getValue();
+      List<UIManager.LookAndFeelInfo> newLaFs = new ArrayList<>(oldLaFs.size() + 1);
+      newLaFs.addAll(oldLaFs);
+      newLaFs.add(newLaF);
       UiThemeProviderListManager.Companion.sortThemes(newLaFs);
-      LafManagerImpl.this.lafList.setValue(newLaFs);
+      lafList.setValue(newLaFs);
 
       updateLafComboboxModel();
 
       // when updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
-      if (!autodetect && (!isUpdatingPlugin || newTheme.getTheme().getId().equals(themeIdBeforePluginUpdate))) {
-        setLookAndFeelImpl(newTheme, true, false);
-        JBColor.setDark(newTheme.getTheme().isDark());
+      UITheme newTheme = newLaF.getTheme();
+      if (!autodetect && (!isUpdatingPlugin || newTheme.getId().equals(themeIdBeforePluginUpdate))) {
+        setLookAndFeelImpl(newLaF, true, false);
+        JBColor.setDark(newTheme.isDark());
         updateUI();
       }
     }
 
     @Override
     public void extensionRemoved(@NotNull UIThemeProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
-      UIManager.LookAndFeelInfo switchLafTo = null;
-      List<UIManager.LookAndFeelInfo> list = new ArrayList<>();
-      for (UIManager.LookAndFeelInfo lookAndFeel : getInstalledLookAndFeels()) {
-        if (lookAndFeel instanceof UIThemeBasedLookAndFeelInfo) {
-          UITheme theme = ((UIThemeBasedLookAndFeelInfo)lookAndFeel).getTheme();
-          if (theme.getId().equals(provider.id)) {
-            if (lookAndFeel == getCurrentLookAndFeel()) {
-              switchLafTo = theme.isDark() ? defaultDarkLaf.getValue() : getDefaultLightLaf();
-            }
-            ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).handleThemeRemoved(theme);
-            continue;
-          }
-        }
-        list.add(lookAndFeel);
+      UIThemeBasedLookAndFeelInfo oldLaF = UiThemeProviderListManager.getInstance().themeProviderRemoved(provider);
+      if (oldLaF == null) {
+        return;
       }
-      lafList.setValue(list);
+
+      boolean isDark = oldLaF.getTheme().isDark();
+      UIManager.LookAndFeelInfo defaultLaF;
+      if (oldLaF == getCurrentLookAndFeel()) {
+        defaultLaF = isDark ? defaultDarkLaf.getValue() : getDefaultLightLaf();
+      }
+      else {
+        defaultLaF = null;
+      }
+
+      List<UIManager.LookAndFeelInfo> newLaFs = new ArrayList<>();
+      for (UIManager.LookAndFeelInfo laf : lafList.getValue()) {
+        if (laf != oldLaF) {
+          newLaFs.add(laf);
+        }
+      }
+      lafList.setValue(newLaFs);
+
       updateLafComboboxModel();
 
-      if (switchLafTo != null) {
-        setLookAndFeelImpl(switchLafTo, true, true);
-        JBColor.setDark(defaultDarkLaf.isInitialized() && switchLafTo == defaultDarkLaf.getValue());
+      if (defaultLaF != null) {
+        setLookAndFeelImpl(defaultLaF, true, true);
+        JBColor.setDark(defaultDarkLaf.isInitialized() && isDark);
         updateUI();
       }
     }
