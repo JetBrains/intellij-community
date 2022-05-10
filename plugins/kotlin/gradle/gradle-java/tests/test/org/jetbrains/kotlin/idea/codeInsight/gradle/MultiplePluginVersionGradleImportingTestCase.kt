@@ -87,18 +87,16 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         @Suppress("ACCIDENTAL_OVERRIDE")
         @Parameterized.Parameters(name = kotlinAndGradleParametersName)
         fun data(): Collection<Array<Any>> {
-            val safePushParams: Collection<Array<Any>> = listOf(arrayOf("7.4.2", "master"))
-
-            if (IS_UNDER_SAFE_PUSH)
-                return safePushParams
-            else
-                return listOf<Array<Any>>(
-                    arrayOf("6.8.2", V_1_4_32.toString()),
-                    arrayOf("7.3.3", V_1_5_32.toString()),
-                    arrayOf("7.3.3", V_1_6_21.toString()),
-                    arrayOf("7.4.2", V_1_7_0_Beta.toString()),
-                    arrayOf("6.8.2", "master"),
-                ).plus(safePushParams)
+            return if (IS_UNDER_SAFE_PUSH) listOf(
+                arrayOf("7.3.3", V_1_6_21.toString())
+            ) else listOf(
+                arrayOf("6.8.2", V_1_4_32.toString()),
+                arrayOf("7.3.3", V_1_5_32.toString()),
+                arrayOf("7.3.3", V_1_6_21.toString()),
+                arrayOf("7.4.2", V_1_7_0_Beta.toString()),
+                arrayOf("6.8.2", "master"),
+                arrayOf("7.4.2", "master")
+            )
         }
     }
 
