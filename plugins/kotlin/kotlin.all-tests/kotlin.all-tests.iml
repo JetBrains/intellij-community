@@ -20,7 +20,6 @@
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
     <orderEntry type="module" module-name="kotlin.base.fe10.kdoc" />
     <orderEntry type="module" module-name="kotlin.base.fe10.refactorings" />
-    <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" />

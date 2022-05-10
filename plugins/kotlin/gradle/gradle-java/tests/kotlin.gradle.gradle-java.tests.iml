@@ -22,7 +22,6 @@
     <orderEntry type="module" module-name="kotlin.base.platforms" />
     <orderEntry type="module" module-name="kotlin.base.test" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
-    <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.project-model" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />

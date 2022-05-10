@@ -23,6 +23,5 @@
     <orderEntry type="module" module-name="kotlin.formatter" />
     <orderEntry type="module" module-name="kotlin.jvm" />
     <orderEntry type="module" module-name="kotlin.idea" />
-    <orderEntry type="module" module-name="kotlin.common" />
   </component>
 </module>

@@ -1041,7 +1041,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/resources/kotlin.base.resources.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/resources/kotlin.base.resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/test/kotlin.base.test.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/test/kotlin.base.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/util/kotlin.base.util.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/util/kotlin.base.util.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/common/kotlin.common.iml" filepath="$PROJECT_DIR$/plugins/kotlin/common/kotlin.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/compiler-plugins/allopen/common/kotlin.compiler-plugins.allopen.common.iml" filepath="$PROJECT_DIR$/plugins/kotlin/compiler-plugins/allopen/common/kotlin.compiler-plugins.allopen.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/compiler-plugins/allopen/gradle/kotlin.compiler-plugins.allopen.gradle.iml" filepath="$PROJECT_DIR$/plugins/kotlin/compiler-plugins/allopen/gradle/kotlin.compiler-plugins.allopen.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/compiler-plugins/allopen/maven/kotlin.compiler-plugins.allopen.maven.iml" filepath="$PROJECT_DIR$/plugins/kotlin/compiler-plugins/allopen/maven/kotlin.compiler-plugins.allopen.maven.iml" />

@@ -20,7 +20,6 @@
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.core" />
-    <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="kotlin.fir" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" />

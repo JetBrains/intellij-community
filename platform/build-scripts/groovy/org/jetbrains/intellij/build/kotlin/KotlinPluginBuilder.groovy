@@ -257,8 +257,6 @@ final class KotlinPluginBuilder {
       withProjectLibrary("kotlinc.kotlin-compiler-fe10")
       withProjectLibrary("kotlinc.kotlin-compiler-ir")
 
-      withModule("kotlin.common", "kotlin-common.jar")
-
       withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
       withProjectLibrary("kotlinc.kotlin-reflect", "kotlinc-lib.jar")
       withProjectLibrary("kotlinc.kotlin-stdlib", "kotlinc-lib.jar")

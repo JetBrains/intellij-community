@@ -21,7 +21,6 @@
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.fe10.kdoc" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.base.fe10.refactorings" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.common" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" scope="PROVIDED" />
