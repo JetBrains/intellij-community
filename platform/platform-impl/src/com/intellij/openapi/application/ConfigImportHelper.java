@@ -918,16 +918,19 @@ public final class ConfigImportHelper {
         log.info("Skipping migration of plugin " + descriptor.getPluginId() + " because there's a pending update for it");
         continue;
       }
-      log.info("Migrating plugin " + descriptor.getPluginId() + " version " + descriptor.getVersion());
-      if (descriptor.getPluginPath() == null) {
+      Path pluginPath = descriptor.getPluginPath();
+      if (pluginPath == null) {
+        log.info("Skipping migration of plugin " + descriptor.getPluginId() + " because it is officially homeless");
         continue;
       }
-      File path = descriptor.getPluginPath().toFile();
-      if (path.isDirectory()) {
-        FileUtil.copyDir(path, new File(newPluginsDir.toFile(), path.getName()));
+      log.info("Migrating plugin " + descriptor.getPluginId() + " version " + descriptor.getVersion());
+      Path target = newPluginsDir.resolve(pluginPath.getFileName());
+      if (Files.isDirectory(pluginPath)) {
+        FileUtil.copyDir(pluginPath.toFile(), target.toFile());
       }
       else {
-        FileUtil.copy(path, new File(newPluginsDir.toFile(), path.getName()));
+        Files.createDirectories(newPluginsDir);
+        Files.copy(pluginPath, target);
       }
     }
   }
