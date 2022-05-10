@@ -475,7 +475,7 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                 }
             }
 
-            checkHighligthingOnAllModules()
+            checkHighlightingOnAllModules()
         }
 
         @Test
@@ -483,7 +483,7 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
         fun testKt46625SupportedAndUnsupportedPlatform() {
             configureByFiles()
             importProject()
-            checkHighligthingOnAllModules()
+            checkHighlightingOnAllModules()
         }
     }
 
@@ -500,7 +500,7 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
             linkProject("$projectPath/lib-and-app")
             linkProject("$projectPath/published-lib-consumer")
 
-            checkHighligthingOnAllModules()
+            checkHighlightingOnAllModules()
 
             val publishTaskSettings = ExternalSystemTaskExecutionSettings()
             publishTaskSettings.externalProjectPath = "$projectPath/lib-and-app"
