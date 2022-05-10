@@ -951,6 +951,10 @@ public final class JBUI {
         return JBUIScale.scale(170);
       }
 
+      public static Color mnemonicForeground() {
+        return JBColor.namedColor("Popup.mnemonicForeground", ActionsList.MNEMONIC_FOREGROUND);
+      }
+
       public static class Selection {
         public static final JBValue ARC = new JBValue.UIInteger("Popup.Selection.arc", 8);
         public static final JBValue LEFT_RIGHT_INSET = new JBValue.UIInteger("Popup.Selection.leftRightInset", 12);
