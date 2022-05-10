@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.importing.tree;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
-import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
@@ -72,16 +71,8 @@ public class MavenProjectTreeImporter extends MavenProjectImporterBase {
   @Override
   @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
-    StructuredIdeActivity activity = MavenImportStats.startApplyingModelsActivity(myProject);
-    long startTime = System.currentTimeMillis();
-    try {
-      List<MavenProjectsProcessorTask> tasks = importProjectTree();
-      return tasks;
-    }
-    finally {
-      activity.finished();
-      LOG.info("[maven import] applying models took " + (System.currentTimeMillis() - startTime) + "ms");
-    }
+    List<MavenProjectsProcessorTask> tasks = importProjectTree();
+    return tasks;
   }
 
   @Nullable
@@ -314,7 +305,7 @@ public class MavenProjectTreeImporter extends MavenProjectImporterBase {
   }
 
   @Override
-  public @NotNull List<Module> getCreatedModules() {
+  public @NotNull List<Module> createdModules() {
     return myContext.createdModules;
   }
 }

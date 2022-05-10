@@ -16,6 +16,8 @@ import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemStatUtilKt;
+import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
@@ -1305,12 +1307,20 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     final Ref<List<MavenProjectsProcessorTask>> postTasks = new Ref<>();
 
     final Runnable r = () -> {
-      MavenProjectImporter projectImporter = MavenProjectImporter.createImporter(
-        myProject, myProjectsTree, projectsToImportWithChanges, importModuleGroupsRequired,
-        modelsProvider, getImportingSettings(), myDummyModule
+      StructuredIdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(myProject, MavenUtil.SYSTEM_ID, () ->
+        Collections.singletonList(ProjectImportCollector.TASK_CLASS.with(MavenImportStats.ImportingTaskOld.class))
       );
-      importer.set(projectImporter);
-      postTasks.set(projectImporter.importProject());
+      try {
+        MavenProjectImporter projectImporter = MavenProjectImporter.createImporter(
+          myProject, myProjectsTree, projectsToImportWithChanges, importModuleGroupsRequired,
+          modelsProvider, getImportingSettings(), myDummyModule, activity
+        );
+        importer.set(projectImporter);
+        postTasks.set(projectImporter.importProject());
+      }
+      finally {
+        activity.finished();
+      }
     };
 
     // called from wizard or ui
@@ -1343,7 +1353,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     myImportingQueue.restartTimer();
 
     MavenProjectImporter projectImporter = importer.get();
-    List<Module> createdModules = projectImporter == null ? Collections.emptyList() : projectImporter.getCreatedModules();
+    List<Module> createdModules = projectImporter == null ? Collections.emptyList() : projectImporter.createdModules();
     if (!projectsToImportWithChanges.isEmpty()) {
       myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC)
         .importFinished(projectsToImportWithChanges.keySet(), createdModules);

@@ -38,21 +38,15 @@ class MavenProjectTreeImporterToWorkspaceModel(
                                                                   projectsToImportWithChanges, mavenImportingSettings)
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
-    val activity = MavenImportStats.startApplyingModelsActivity(project)
-    val startTime = System.currentTimeMillis()
-    try {
-      val postTasks = ArrayList<MavenProjectsProcessorTask>()
-      val context = contextProvider.context
-      if (context.hasChanges) {
-        importModules(context, postTasks)
-        scheduleRefreshResolvedArtifacts(postTasks)
-      }
-      return postTasks
+
+    val postTasks = ArrayList<MavenProjectsProcessorTask>()
+    val context = contextProvider.context
+    if (context.hasChanges) {
+      importModules(context, postTasks)
+      scheduleRefreshResolvedArtifacts(postTasks)
     }
-    finally {
-      activity.finished()
-      LOG.info("[maven import] applying models to workspace model took ${System.currentTimeMillis() - startTime}ms")
-    }
+    return postTasks
+
   }
 
   private fun importModules(context: MavenModuleImportContext, postTasks: ArrayList<MavenProjectsProcessorTask>) {
@@ -102,7 +96,8 @@ class MavenProjectTreeImporterToWorkspaceModel(
       for (importData in moduleImportDataList) {
         configFacet(importData, context, modifiableModelsProvider, postTasks)
       }
-    } finally {
+    }
+    finally {
       MavenUtil.invokeAndWaitWriteAction(project) {
         ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring { modifiableModelsProvider.commit() }
       }
@@ -152,8 +147,10 @@ class MavenProjectTreeImporterToWorkspaceModel(
     )
   }
 
-  override val createdModules: List<Module>
-    get() = createdModulesList
+  override fun createdModules(): List<Module> {
+    return createdModulesList
+  }
+
 
   companion object {
     private val LOG = logger<MavenProjectTreeImporterToWorkspaceModel>()

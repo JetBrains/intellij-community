@@ -16,27 +16,16 @@ public class MavenImportStats {
 
   @NotNull
   public static StructuredIdeActivity startImportActivity(Project project) {
-    return doStartActivity(project, ImportingTask.class);
-  }
-
-  @NotNull
-  public static StructuredIdeActivity startApplyingModelsActivity(Project project) {
-    return doStartActivity(project, ApplyingModelTask.class);
-  }
-
-  @NotNull
-  public static StructuredIdeActivity startConfiguringProjectsActivity(Project project) {
-    return doStartActivity(project, ConfiguringProjectsTask.class);
-  }
-
-  @NotNull
-  private static StructuredIdeActivity doStartActivity(Project project, Class<?> activityClass) {
     return ExternalSystemStatUtilKt.importActivityStarted(project, MavenUtil.SYSTEM_ID, () ->
-      Collections.singletonList(ProjectImportCollector.TASK_CLASS.with(activityClass))
+      Collections.singletonList(ProjectImportCollector.TASK_CLASS.with(ImportingTask.class))
     );
   }
 
-
+  @NotNull
+  public static StructuredIdeActivity startApplyingModelsActivity(Project project, StructuredIdeActivity importingActivity) {
+    return ProjectImportCollector.IMPORT_STAGE.startedWithParent(project, importingActivity, () -> Collections.singletonList(
+      ProjectImportCollector.TASK_CLASS.with(ApplyingModelTask.class)));
+  }
 
   public static class WrapperTask {
 
@@ -55,6 +44,9 @@ public class MavenImportStats {
   }
 
   public static class ImportingTask {
+  }
+
+  public static class ImportingTaskOld {
   }
 
   public static class ApplyingModelTask {

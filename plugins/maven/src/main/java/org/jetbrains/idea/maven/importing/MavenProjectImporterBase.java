@@ -97,7 +97,6 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     List<MavenModuleConfigurer> configurers = MavenModuleConfigurer.getConfigurers();
     float count = 0;
     long startTime = System.currentTimeMillis();
-    StructuredIdeActivity activity = MavenImportStats.startConfiguringProjectsActivity(project);
     try {
       int size = moduleToProject.size();
       LOG.info("[maven import] applying " + configurers.size() + " configurers to " + size + " Maven projects");
@@ -112,7 +111,6 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
       }
     }
     finally {
-      activity.finished();
       LOG.info("[maven import] configuring projects took " + (System.currentTimeMillis() - startTime) + "ms");
     }
   }

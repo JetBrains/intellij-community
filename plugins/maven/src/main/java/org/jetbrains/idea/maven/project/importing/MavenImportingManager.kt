@@ -200,7 +200,7 @@ class MavenImportingManager(val project: Project) {
       val importContext = doTask(MavenProjectBundle.message("maven.project.importing"), activity,
                                  MavenImportStats.ApplyingModelTask::class.java) {
         currentContext?.indicator?.checkCanceled()
-        flow.commitToWorkspaceModel(dependenciesContext)
+        flow.commitToWorkspaceModel(dependenciesContext, activity)
       }
 
       return@runSync doTask(MavenProjectBundle.message("maven.post.processing"), activity,

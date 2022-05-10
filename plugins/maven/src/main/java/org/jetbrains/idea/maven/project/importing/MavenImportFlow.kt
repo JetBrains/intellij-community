@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project.importing
 
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
@@ -273,16 +274,16 @@ class MavenImportFlow {
     return MavenSourcesGeneratedContext(context, projectsFoldersResolved);
   }
 
-  fun commitToWorkspaceModel(context: MavenResolvedContext): MavenImportedContext {
+  fun commitToWorkspaceModel(context: MavenResolvedContext, importingActivity: StructuredIdeActivity): MavenImportedContext {
     val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(context.project)
     assertNonDispatchThread()
     val projectImporter = MavenProjectImporter.createImporter(context.project, context.readContext.projectsTree,
                                                               context.projectsToImport.map {
                                                                 it to MavenProjectChanges.ALL
                                                               }.toMap(), false, modelsProvider, context.initialContext.importingSettings,
-                                                              context.initialContext.dummyModule)
+                                                              context.initialContext.dummyModule, importingActivity)
     val postImportTasks = projectImporter.importProject();
-    val modulesCreated = projectImporter.createdModules
+    val modulesCreated = projectImporter.createdModules()
     return MavenImportedContext(context.project, modulesCreated, postImportTasks, context.readContext, context);
   }
 
