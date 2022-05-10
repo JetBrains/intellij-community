@@ -72,56 +72,51 @@ public final class GitFileUtils {
                                           @NotNull VirtualFile root,
                                           @NotNull Collection<? extends VirtualFile> files)
     throws VcsException {
-    deleteFiles(project, root, files, "--cached");
-    updateUntrackedFilesHolderOnFileRemove(project, root, files);
+    List<FilePath> paths = ContainerUtil.map(files, VcsUtil::getFilePath);
+    deletePaths(project, root, paths, "--cached");
+    updateUntrackedFilesHolderOnFileRemove(project, root, paths);
   }
 
   public static void addFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files)
     throws VcsException {
-    for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
-      addPathsImpl(project, root, paths, false, true);
-    }
-    updateUntrackedFilesHolderOnFileAdd(project, root, files);
-    GitIndexFileSystemRefresher.refreshVirtualFiles(project, files);
+    List<FilePath> paths = ContainerUtil.mapNotNull(files, VcsUtil::getFilePath);
+    addPaths(project, root, paths);
   }
 
   public static void addFilesForce(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files)
     throws VcsException {
-    for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
-      addPathsImpl(project, root, paths, true, false);
-    }
-    updateUntrackedFilesHolderOnFileAdd(project, root, files);
-    GitIndexFileSystemRefresher.refreshVirtualFiles(project, files);
+    List<FilePath> paths = ContainerUtil.mapNotNull(files, VcsUtil::getFilePath);
+    addPathsForce(project, root, paths);
   }
 
   private static void updateUntrackedFilesHolderOnFileAdd(@NotNull Project project, @NotNull VirtualFile root,
-                                                          @NotNull Collection<? extends VirtualFile> addedFiles) {
+                                                          @NotNull Collection<? extends FilePath> addedFiles) {
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
     if (repository == null) {
       LOG.warn("Repository not found for root " + root.getPresentableUrl());
       return;
     }
-    repository.getUntrackedFilesHolder().remove(ContainerUtil.map(addedFiles, VcsUtil::getFilePath));
+    repository.getUntrackedFilesHolder().remove(addedFiles);
   }
 
   private static void updateIgnoredFilesHolderOnFileAdd(@NotNull Project project, @NotNull VirtualFile root,
-                                                        @NotNull Collection<VirtualFile> addedFiles) {
+                                                        @NotNull Collection<? extends FilePath> addedFiles) {
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
     if (repository == null) {
       LOG.warn("Repository not found for root " + root.getPresentableUrl());
       return;
     }
-    repository.getIgnoredFilesHolder().removeIgnoredFiles(ContainerUtil.mapNotNull(addedFiles, VcsUtil::getFilePath));
+    repository.getIgnoredFilesHolder().removeIgnoredFiles(addedFiles);
   }
 
   private static void updateUntrackedFilesHolderOnFileRemove(@NotNull Project project, @NotNull VirtualFile root,
-                                                             @NotNull Collection<? extends VirtualFile> removedFiles) {
+                                                             @NotNull Collection<? extends FilePath> removedFiles) {
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
     if (repository == null) {
       LOG.warn("Repository not found for root " + root.getPresentableUrl());
       return;
     }
-    repository.getUntrackedFilesHolder().add(ContainerUtil.map(removedFiles, VcsUtil::getFilePath));
+    repository.getUntrackedFilesHolder().add(removedFiles);
   }
 
   private static void updateUntrackedFilesHolderOnFileReset(@NotNull Project project, @NotNull VirtualFile root,
@@ -158,7 +153,8 @@ public final class GitFileUtils {
   }
 
   public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
-                              @NotNull Collection<? extends FilePath> files, boolean force, boolean filterOutIgnored) throws VcsException {
+                              @NotNull Collection<? extends FilePath> files,
+                              boolean force, boolean filterOutIgnored) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       addPathsImpl(project, root, paths, force, filterOutIgnored);
     }
@@ -169,33 +165,16 @@ public final class GitFileUtils {
                                        @NotNull VirtualFile root,
                                        @NotNull Collection<? extends FilePath> files,
                                        boolean updateIgnoredHolders) {
-    updateUntrackedFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
+    updateUntrackedFilesHolderOnFileAdd(project, root, files);
     if (updateIgnoredHolders) {
-      updateIgnoredFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
+      updateIgnoredFilesHolderOnFileAdd(project, root, files);
     }
     GitIndexFileSystemRefresher.refreshFilePaths(project, files);
   }
 
   public static void addPathsForce(@NotNull Project project, @NotNull VirtualFile root,
                                    @NotNull Collection<? extends FilePath> files) throws VcsException {
-    for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
-      addPathsImpl(project, root, paths, true, false);
-    }
-    updateUntrackedFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
-    updateIgnoredFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
-    GitIndexFileSystemRefresher.refreshFilePaths(project, files);
-  }
-
-  @NotNull
-  private static Collection<VirtualFile> getVirtualFilesFromFilePaths(@NotNull Collection<? extends FilePath> paths) {
-    Collection<VirtualFile> files = new ArrayList<>(paths.size());
-    for (FilePath path : paths) {
-      VirtualFile file = path.getVirtualFile();
-      if (file != null) {
-        files.add(file);
-      }
-    }
-    return files;
+    addPaths(project, root, files, true, false);
   }
 
   private static void addPathsImpl(@NotNull Project project, @NotNull VirtualFile root,
