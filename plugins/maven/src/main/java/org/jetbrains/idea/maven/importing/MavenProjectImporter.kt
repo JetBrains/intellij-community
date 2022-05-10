@@ -5,11 +5,8 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import org.jetbrains.idea.maven.importing.tree.MavenProjectTreeImporter
+import org.jetbrains.idea.maven.importing.tree.MavenProjectTreeLegacyImporter
 import org.jetbrains.idea.maven.importing.tree.workspace.MavenProjectTreeImporterToWorkspaceModel
-import org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectImporterToWorkspaceModel
 import org.jetbrains.idea.maven.project.*
 
 interface MavenProjectImporter {
@@ -26,16 +23,15 @@ interface MavenProjectImporter {
                        importingSettings: MavenImportingSettings,
                        dummyModule: Module?): MavenProjectImporter {
       if (isImportToWorkspaceModelEnabled()) {
-        if (isImportToTreeStructureEnabled(project)) {
-          return MavenProjectTreeImporterToWorkspaceModel(projectsTree, projectsToImportWithChanges,
-                                                          importingSettings, modelsProvider, project)
-        }
-        return MavenProjectImporterToWorkspaceModel(projectsTree, projectsToImportWithChanges, importingSettings,
-                                                    VirtualFileUrlManager.getInstance(project), project)
+        return MavenProjectTreeImporterToWorkspaceModel(projectsTree, projectsToImportWithChanges,
+                                                        importingSettings, modelsProvider, project)
       }
-      if (isImportToTreeStructureEnabled(project)) {
-        return MavenProjectTreeImporter(project, projectsTree, projectsToImportWithChanges, modelsProvider, importingSettings)
+
+      if (isImportToTreeStructureEnabled(project) || MavenProjectTreeLegacyImporter.isAlwaysUseTreeImport()) {
+        return MavenProjectTreeLegacyImporter(project, projectsTree, projectsToImportWithChanges,
+                                              modelsProvider, importingSettings)
       }
+
       return MavenProjectImporterImpl(project, projectsTree, projectsToImportWithChanges, importModuleGroupsRequired,
                                       modelsProvider, importingSettings, dummyModule)
     }
