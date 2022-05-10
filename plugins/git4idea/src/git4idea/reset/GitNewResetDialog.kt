@@ -18,106 +18,99 @@ package git4idea.reset
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBRadioButton
-import com.intellij.util.ui.GridBag
-import com.intellij.util.ui.RadioButtonEnumModel
-import com.intellij.util.ui.UIUtil
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.xml.util.XmlStringUtil
+import git4idea.GitUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
-import javax.swing.ButtonGroup
 import javax.swing.JComponent
-import javax.swing.JPanel
 
-class GitNewResetDialog(private val myProject: Project,
-                        private val myCommits: Map<GitRepository, VcsFullCommitDetails>,
-                        private val myDefaultMode: GitResetMode) : DialogWrapper(myProject) {
-  private val myButtonGroup: ButtonGroup = ButtonGroup()
-  private val myEnumModel: RadioButtonEnumModel<GitResetMode> = RadioButtonEnumModel.bindEnum(GitResetMode::class.java, myButtonGroup)
+class GitNewResetDialog(private val project: Project,
+                        private val commits: Map<GitRepository, VcsFullCommitDetails>,
+                        defaultMode: GitResetMode) : DialogWrapper(project) {
+
+  var resetMode: GitResetMode = defaultMode
+    private set
 
   init {
     init()
     title = GitBundle.message("git.reset.dialog.title")
     setOKButtonText(GitBundle.message("git.reset.button"))
-    isResizable = false
   }
 
   override fun createCenterPanel(): JComponent {
-    val panel = JPanel(GridBagLayout())
-    val gb = GridBag().setDefaultAnchor(GridBagConstraints.LINE_START).setDefaultInsets(0, UIUtil.DEFAULT_HGAP, UIUtil.LARGE_VGAP, 0)
-    val description = prepareDescription(myProject, myCommits)
-    panel.add(JBLabel(XmlStringUtil.wrapInHtml(description)), gb.nextLine().next().coverLine())
-    val descriptionLabel = JBLabel(XmlStringUtil.wrapInHtml(GitBundle.message("git.reset.dialog.description")), UIUtil.ComponentStyle.SMALL)
-    panel.add(descriptionLabel, gb.nextLine().next().coverLine())
-    for (mode in GitResetMode.values()) {
-      val button = JBRadioButton(mode.getName())
-      button.setMnemonic(mode.getName()[0])
-      myButtonGroup.add(button)
-      panel.add(button, gb.nextLine().next())
-      panel.add(JBLabel(XmlStringUtil.wrapInHtml(mode.description), UIUtil.ComponentStyle.SMALL), gb.next())
+    return panel {
+      row {
+        label(XmlStringUtil.wrapInHtml(prepareDescription(project, commits)))
+      }
+      row {
+        label(XmlStringUtil.wrapInHtml(GitBundle.message("git.reset.dialog.description")))
+      }
+      buttonsGroup {
+        for (mode in GitResetMode.values()) {
+          val name = mode.getName()
+          row {
+            radioButton(name, mode)
+              .applyToComponent { mnemonic = name[0].code }
+              .comment(mode.description)
+          }
+        }
+      }.bind(::resetMode)
     }
-    myEnumModel.selected = myDefaultMode
-    return panel
   }
 
-  override fun getHelpId(): String {
-    return DIALOG_ID
-  }
-
-  val resetMode: GitResetMode
-    get() = myEnumModel.selected
+  override fun getHelpId() = DIALOG_ID
 
   companion object {
     private const val DIALOG_ID = "git.new.reset.dialog" //NON-NLS
 
     private fun prepareDescription(project: Project, commits: Map<GitRepository, VcsFullCommitDetails>): @Nls String {
-      if (commits.size == 1 && !isMultiRepo(project)) {
-        val (key, value) = commits.entries.iterator().next()
-        return String.format("%s -> %s", getSourceText(key), getTargetText(value)) //NON-NLS
+      val isMultiRepo = GitRepositoryManager.getInstance(project).moreThanOneRoot()
+      val onlyCommit = commits.entries.singleOrNull()
+      if (onlyCommit != null && !isMultiRepo) {
+        val (key, value) = onlyCommit
+        return "${getSourceText(key)} -> ${getTargetText(value)}" //NON-NLS
       }
-      val desc: @NlsSafe StringBuilder = StringBuilder()
+
+      val desc: @Nls StringBuilder = StringBuilder()
       for ((repository, commit) in commits) {
         val sourceInRepo = GitBundle.message("git.reset.dialog.description.source.in.repository",
                                              getSourceText(repository),
                                              DvcsUtil.getShortRepositoryName(repository))
-        desc.append(String.format("%s -> %s<br/>", //NON-NLS
-                                  sourceInRepo,
-                                  getTargetText(commit)))
+        desc.append("${sourceInRepo} -> ${getTargetText(commit)}<br/>") //NON-NLS
       }
-      return desc.toString()
+      return desc.toString() //NON-NLS
     }
 
     private fun getTargetText(commit: VcsFullCommitDetails): @Nls String {
-      val commitMessage = StringUtil.shortenTextWithEllipsis(commit.subject, 20, 0)
-      val commitDetails: HtmlChunk = HtmlChunk.tag("code").children(
-        HtmlChunk.text(commit.id.toShortString()).bold(),
-        HtmlChunk.text(" \"$commitMessage\""))
-      val author: HtmlChunk = HtmlChunk.tag("code").addText(VcsUserUtil.getShortPresentation(commit.author))
-      return GitBundle.message("git.reset.dialog.description.commit.details.by.author", commitDetails, author)
+      val commitMessage = StringUtil.shortenTextWithEllipsis(commit.subject, 40, 0)
+      val author = StringUtil.shortenTextWithEllipsis(VcsUserUtil.getShortPresentation(commit.author), 40, 0)
+      return GitBundle.message("git.reset.dialog.description.commit.details.by.author",
+                               HtmlBuilder()
+                                 .append(HtmlChunk.text(commit.id.toShortString()).bold())
+                                 .append(HtmlChunk.text(" \"$commitMessage\""))
+                                 .toString(),
+                               HtmlChunk.tag("code").addText(author))
     }
 
     private fun getSourceText(repository: GitRepository): @NonNls String {
-      val currentRevision = repository.currentRevision!!
-      val text = when (repository.currentBranch) {
-        null -> "HEAD (" + DvcsUtil.getShortHash(currentRevision) + ")" //NON-NLS
-        else -> repository.currentBranch!!.name
+      val currentBranch = repository.currentBranch
+      val currentRevision = repository.currentRevision
+      val text = when {
+        currentBranch != null -> currentBranch.name
+        currentRevision != null -> "${GitUtil.HEAD} (${DvcsUtil.getShortHash(currentRevision)})" //NON-NLS
+        else -> GitUtil.HEAD //NON-NLS
       }
-      return XmlStringUtil.wrapInHtmlTag(text, "b")
-    }
-
-    private fun isMultiRepo(project: Project): Boolean {
-      return GitRepositoryManager.getInstance(project).moreThanOneRoot()
+      return HtmlChunk.text(text).bold().toString()
     }
   }
 }
