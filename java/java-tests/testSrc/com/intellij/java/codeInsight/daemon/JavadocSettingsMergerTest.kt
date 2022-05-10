@@ -162,6 +162,12 @@ class JavadocSettingsMergerTest: LightJavaCodeInsightFixtureTestCase5() {
           <option name="REQUIRED_TAGS" value="" />
         </value>
       </option>
+      <option name="MODULE_OPTIONS">
+        <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+        <option name="REQUIRED_TAGS" value="" />
+      </option>
+      <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+      <option name="REQUIRED_TAGS" value="" />
       <option name="IGNORE_DEPRECATED" value="false" />
       <option name="IGNORE_JAVADOC_PERIOD" value="false" />
       <option name="IGNORE_DUPLICATED_THROWS" value="false" />
