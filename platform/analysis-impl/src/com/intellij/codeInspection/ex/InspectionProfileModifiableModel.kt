@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
+import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.WriteExternalException
@@ -131,6 +132,7 @@ fun modifyAndCommitProjectProfile(project: Project, action: Consumer<InspectionP
 }
 
 inline fun InspectionProfileImpl.edit(task: InspectionProfileModifiableModel.() -> Unit) {
+  SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS)
   val model = InspectionProfileModifiableModel(this)
   model.task()
   model.commit()
