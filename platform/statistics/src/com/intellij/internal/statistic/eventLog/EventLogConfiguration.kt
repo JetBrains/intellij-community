@@ -145,16 +145,17 @@ class EventLogConfiguration {
 
 class EventLogRecorderConfiguration internal constructor(private val recorderId: String,
                                                          private val eventLogConfiguration: EventLogConfiguration,
-                                                         val sessionId: String = generateSessionId()) {
+                                                         val sessionId: String = generateSessionId())
+  : EventLogDeviceConfiguration {
 
-  val deviceId: String = getOrGenerateDeviceId()
-  val bucket: Int = deviceId.asBucket()
+  override val deviceId: String = getOrGenerateDeviceId()
+  override val bucket: Int = deviceId.asBucket()
 
   private val salt: ByteArray = getOrGenerateSalt()
   private val anonymizedCache: AnonymizedIdsCache = AnonymizedIdsCache()
   private val machineIdReference: AtomicLazyValue<MachineId>
 
-  val machineId: MachineId
+  override val machineId: MachineId
     get() = machineIdReference.getValue()
 
   val maxFilesToSend: Int = getMaxFilesToSend()

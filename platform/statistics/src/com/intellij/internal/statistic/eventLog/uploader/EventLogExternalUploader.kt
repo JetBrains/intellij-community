@@ -120,6 +120,15 @@ object EventLogExternalUploader {
     libPaths.add(findLibraryByClass(EventGroupsFilterRules::class.java))
     val classpath = joinAsClasspath(libPaths, uploader)
 
+    val recordersConfig = recorders.associate { it.getRecorderId() to EventLogConfiguration.getInstance().getOrCreate(it.getRecorderId()) }
+    return createExternalUploadCommand(applicationInfo, recordersConfig, logFilesByRecorder, classpath, tempDir)
+  }
+
+  fun createExternalUploadCommand(applicationInfo: EventLogApplicationInfo,
+                                  recordersConfig: Map<String, EventLogDeviceConfiguration>,
+                                  logFilesByRecorder: Map<String, List<String>>,
+                                  classpath: String,
+                                  tempDir: File): Array<out String> {
     val args = arrayListOf<String>()
     val java = findJavaHome()
     args += File(java, if (SystemInfo.isWindows) "bin\\java.exe" else "bin/java").path
@@ -130,10 +139,10 @@ object EventLogExternalUploader {
 
     addArgument(args, IDE_TOKEN, Paths.get(PathManager.getSystemPath(), "token").toAbsolutePath().toString())
 
-    addArgument(args, RECORDERS_OPTION, recorders.joinToString(separator = ";") { it.getRecorderId() })
-    for (recorder in recorders) {
-      val logFiles = logFilesByRecorder[recorder.getRecorderId()]
-      logFiles?.let { addRecorderConfiguration(args, recorder.getRecorderId(), it) }
+    addArgument(args, RECORDERS_OPTION, recordersConfig.keys.joinToString(separator = ";"))
+    for (recorderConfig in recordersConfig) {
+      val logFiles = logFilesByRecorder[recorderConfig.key]
+      logFiles?.let { addRecorderConfiguration(args, recorderConfig.key, recorderConfig.value, it) }
     }
 
     addArgument(args, URL_OPTION, applicationInfo.templateUrl)
@@ -156,9 +165,8 @@ object EventLogExternalUploader {
     return ArrayUtil.toStringArray(args)
   }
 
-  private fun addRecorderConfiguration(args: ArrayList<String>, recorderId: String, logFiles: List<String>) {
-    val config = EventLogConfiguration.getInstance().getOrCreate(recorderId)
-
+  private fun addRecorderConfiguration(args: ArrayList<String>, recorderId: String,
+                                       config: EventLogDeviceConfiguration, logFiles: List<String>) {
     val recorderIdLowerCase = Strings.toLowerCase(recorderId)
     addArgument(args, DEVICE_OPTION + recorderIdLowerCase, config.deviceId)
     addArgument(args, BUCKET_OPTION + recorderIdLowerCase, config.bucket.toString())
