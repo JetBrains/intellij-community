@@ -36,7 +36,7 @@ abstract class BaseLayout {
   /** set of keys in {@link #moduleJars} which are set explicitly, not automatically derived from modules names */
   val explicitlySetJarPaths: MutableSet<String> = LinkedHashSet()
 
-  private val moduleNameToJarPath: MutableMap<String, String> = mutableMapOf()
+  private val moduleNameToJarPath: MutableMap<String, String> = LinkedHashMap()
 
   fun getIncludedModuleNames(): Collection<String> = moduleJars.values()
 

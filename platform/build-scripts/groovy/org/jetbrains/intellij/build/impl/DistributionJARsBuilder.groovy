@@ -88,44 +88,9 @@ final class DistributionJARsBuilder {
     Set<String> enabledPluginModules = getEnabledPluginModules(pluginsToPublish, context.productProperties)
     SortedSet<ProjectLibraryData> projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(context, enabledPluginModules)
     return PlatformModules.createPlatformLayout(productLayout,
-                                                hasPlatformCoverage(productLayout, enabledPluginModules, context),
+                                                PlatformModules.INSTANCE.hasPlatformCoverage(productLayout, enabledPluginModules, context),
                                                 projectLibrariesUsedByPlugins,
                                                 context)
-  }
-
-  private static boolean hasPlatformCoverage(ProductModulesLayout productLayout, Set<String> enabledPluginModules, BuildContext context) {
-    Set<String> modules = new LinkedHashSet<>()
-    modules.addAll(productLayout.getIncludedPluginModules(enabledPluginModules))
-    modules.addAll(PlatformModules.PLATFORM_API_MODULES)
-    modules.addAll(PlatformModules.PLATFORM_IMPLEMENTATION_MODULES)
-    modules.addAll(productLayout.productApiModules)
-    modules.addAll(productLayout.productImplementationModules)
-    modules.addAll(productLayout.additionalPlatformJars.values())
-
-    String coverageModuleName = "intellij.platform.coverage"
-    if (modules.contains(coverageModuleName)) {
-      return true
-    }
-
-    for (String moduleName : modules) {
-      boolean contains = false
-      JpsJavaExtensionService.dependencies(context.findRequiredModule(moduleName))
-        .productionOnly()
-        .processModules(new com.intellij.util.Consumer<JpsModule>() {
-          @Override
-          void consume(JpsModule module) {
-            if (!contains && module.name == coverageModuleName) {
-              contains = true
-            }
-          }
-        })
-
-      if (contains) {
-        return true
-      }
-    }
-
-    return false
   }
 
   private static SortedSet<ProjectLibraryData> computeProjectLibsUsedByPlugins(BuildContext context, Set<String> enabledPluginModules) {
@@ -143,7 +108,7 @@ final class DistributionJARsBuilder {
             }
 
             String name = library.name
-            LibraryPackMode packMode = PlatformModules.CUSTOM_PACK_MODE.getOrDefault(name, LibraryPackMode.MERGED)
+            LibraryPackMode packMode = PlatformModules.INSTANCE.CUSTOM_PACK_MODE.getOrDefault(name, LibraryPackMode.MERGED)
             result.addOrGet(new ProjectLibraryData(name, packMode))
               .dependentModules.computeIfAbsent(Objects.requireNonNull(plugin.directoryName), new Function<String, List<String>>() {
               @Override
@@ -524,8 +489,7 @@ final class DistributionJARsBuilder {
     ProductModulesLayout productLayout = buildContext.productProperties.productLayout
     Set<String> modulesToInclude = new LinkedHashSet<>()
     modulesToInclude.addAll(productLayout.getIncludedPluginModules(Set.copyOf(productLayout.bundledPluginModules)))
-    modulesToInclude.addAll(PlatformModules.PLATFORM_API_MODULES)
-    modulesToInclude.addAll(PlatformModules.PLATFORM_IMPLEMENTATION_MODULES)
+    PlatformModules.INSTANCE.collectPlatformModules(modulesToInclude)
     modulesToInclude.addAll(productLayout.productApiModules)
     modulesToInclude.addAll(productLayout.productImplementationModules)
     modulesToInclude.addAll(productLayout.additionalPlatformJars.values())

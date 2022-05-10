@@ -14,7 +14,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     baseFileName = "idea"
     platformPrefix = "Idea"
     applicationInfoModule = "intellij.idea.community.resources"
-    additionalIDEPropertiesFilePaths.add(home.resolve("build/conf/ideaCE.properties"))
+    additionalIDEPropertiesFilePaths = List.of(home.resolve("build/conf/ideaCE.properties"))
     toolsJarRequired = true
     scrambleMainJar = false
     useSplash = true
@@ -31,7 +31,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       CommunityRepositoryModules.groovyPlugin([])
     ]
 
-    productLayout.appendPlatformCustomizer(new BiConsumer<PlatformLayout, BuildContext>() {
+    productLayout.addPlatformCustomizer(new BiConsumer<PlatformLayout, BuildContext>() {
       @Override
       void accept(PlatformLayout layout, BuildContext context) {
         layout.withModule("intellij.platform.duplicates.analysis")

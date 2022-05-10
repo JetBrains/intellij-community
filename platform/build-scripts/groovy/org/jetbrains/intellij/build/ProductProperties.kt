@@ -124,7 +124,7 @@ abstract class ProductProperties {
   /**
    * Path to an alternative scramble script which will should be used for a product
    */
-  var alternativeScrambleStubPath: String? = null
+  var alternativeScrambleStubPath: Path? = null
 
   /**
    * Describes which modules should be included into the product's platform and which plugins should be bundled with the product
@@ -199,7 +199,7 @@ abstract class ProductProperties {
    * Specified additional modules (not included into the product layout) which need to be compiled when product is built.
    * todo[nik] get rid of this
    */
-  var additionalModulesToCompile: MutableList<String> = mutableListOf()
+  var additionalModulesToCompile: List<String> = emptyList()
 
   /**
    * Specified modules which tests need to be compiled when product is built.

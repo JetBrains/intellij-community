@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.LibraryLicense.Companion.jetbrainsLibrary
@@ -9,7 +11,7 @@ import org.jetbrains.intellij.build.LibraryLicense.Companion.jetbrainsLibrary
 object CommunityLibraryLicenses {
   @JvmStatic
   @SuppressWarnings("SpellCheckingInspection")
-  val LICENSES_LIST: List<LibraryLicense> = listOf(
+  val LICENSES_LIST: List<LibraryLicense> = java.util.List.of(
     LibraryLicense(name = "A fast Java JSON schema validator", libraryName = "networknt.json.schema.validator",
                    url = "https://github.com/networknt/json-schema-validator").apache(),
     LibraryLicense(name = "aalto-xml", libraryName = "aalto-xml", url = "https://github.com/FasterXML/aalto-xml/").apache(),
@@ -284,7 +286,7 @@ object CommunityLibraryLicenses {
                    licenseUrl = "https://github.com/fb55/entities/blob/master/LICENSE",
                    version = LibraryLicense.CUSTOM_REVISION).simplifiedBsd(),
     LibraryLicense(name = "epydoc", attachedTo = "intellij.python", version = "3.0.1",
-                   url = "http://epydoc.sourceforge.net/").mit(),
+                   url = "https://epydoc.sourceforge.net/").mit(),
     LibraryLicense(name = "error-prone-annotations", libraryName = "error-prone-annotations",
                    url = "https://github.com/google/error-prone",
                    licenseUrl = "https://github.com/google/error-prone/blob/master/COPYING").apache(),
@@ -380,7 +382,7 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/FasterXML/jackson-databind").apache(),
     LibraryLicense(name = "Jackson Module Kotlin", libraryName = "jackson-module-kotlin",
                    url = "https://github.com/FasterXML/jackson-module-kotlin").apache(),
-    LibraryLicense(name = "JaCoCo", libraryName = "JaCoCo", url = "http://www.eclemma.org/jacoco/").eplV1(),
+    LibraryLicense(name = "JaCoCo", libraryName = "JaCoCo", url = "https://www.eclemma.org/jacoco/").eplV1(),
     LibraryLicense(name = "Jakarta ORO", libraryName = "OroMatcher",
                    url = "https://jakarta.apache.org/oro/",
                    licenseUrl = "https://svn.apache.org/repos/asf/jakarta/oro/trunk/LICENSE").apache(),
@@ -618,7 +620,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Plexus Utils", libraryName = "plexus-utils",
                    url = "https://plexus.codehaus.org/plexus-utils").apache(),
     LibraryLicense(name = "PLY", attachedTo = "intellij.python", version = "3.7",
-                   url = "http://www.dabeaz.com/ply/").newBsd(),
+                   url = "https://www.dabeaz.com/ply/").newBsd(),
     LibraryLicense(name = "pockets", attachedTo = "intellij.python", version = "0.9.1",
                    url = "https://pockets.readthedocs.io/",
                    licenseUrl = "https://github.com/RobRuana/pockets/blob/master/LICENSE").newBsd(),

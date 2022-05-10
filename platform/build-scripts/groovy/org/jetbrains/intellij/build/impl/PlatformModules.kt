@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductModulesLayout
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.w3c.dom.Element
 import java.nio.file.Files
 import java.util.*
@@ -13,105 +14,103 @@ import javax.xml.parsers.DocumentBuilderFactory
 private const val UTIL_JAR = "util.jar"
 private const val UTIL_RT_JAR = "util_rt.jar"
 
+private val PLATFORM_API_MODULES: List<String> = java.util.List.of(
+  "intellij.platform.analysis",
+  "intellij.platform.builtInServer",
+  "intellij.platform.core",
+  "intellij.platform.diff",
+  "intellij.platform.vcs.dvcs",
+  "intellij.platform.editor",
+  "intellij.platform.externalSystem",
+  "intellij.platform.externalSystem.dependencyUpdater",
+  "intellij.platform.codeStyle",
+  "intellij.platform.indexing",
+  "intellij.platform.jps.model",
+  "intellij.platform.lang.core",
+  "intellij.platform.lang",
+  "intellij.platform.lvcs",
+  "intellij.platform.ide",
+  "intellij.platform.ide.core",
+  "intellij.platform.projectModel",
+  "intellij.platform.remote.core",
+  "intellij.platform.remoteServers.agent.rt",
+  "intellij.platform.remoteServers",
+  "intellij.platform.tasks",
+  "intellij.platform.usageView",
+  "intellij.platform.vcs.core",
+  "intellij.platform.vcs",
+  "intellij.platform.vcs.log",
+  "intellij.platform.vcs.log.graph",
+  "intellij.platform.execution",
+  "intellij.platform.debugger",
+  "intellij.xml.analysis",
+  "intellij.xml",
+  "intellij.xml.psi",
+  "intellij.xml.structureView",
+  "intellij.platform.concurrency",
+)
+
+/**
+ * List of modules which are included into lib/app.jar in all IntelliJ based IDEs.
+ */
+private val PLATFORM_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
+  "intellij.platform.analysis.impl",
+  "intellij.platform.builtInServer.impl",
+  "intellij.platform.core.impl",
+  "intellij.platform.ide.core.impl",
+  "intellij.platform.diff.impl",
+  "intellij.platform.editor.ex",
+  "intellij.platform.codeStyle.impl",
+  "intellij.platform.indexing.impl",
+  "intellij.platform.elevation",
+  "intellij.platform.elevation.client",
+  "intellij.platform.elevation.common",
+  "intellij.platform.elevation.daemon",
+  "intellij.platform.externalProcessAuthHelper",
+  "intellij.platform.refactoring",
+  "intellij.platform.inspect",
+  "intellij.platform.lang.impl",
+  "intellij.platform.workspaceModel.storage",
+  "intellij.platform.workspaceModel.jps",
+  "intellij.platform.lvcs.impl",
+  "intellij.platform.vfs.impl",
+  "intellij.platform.ide.impl",
+  "intellij.platform.projectModel.impl",
+  "intellij.platform.macro",
+  "intellij.platform.execution.impl",
+  "intellij.platform.wsl.impl",
+  "intellij.platform.externalSystem.impl",
+  "intellij.platform.scriptDebugger.protocolReaderRuntime",
+  "intellij.regexp",
+  "intellij.platform.remoteServers.impl",
+  "intellij.platform.scriptDebugger.backend",
+  "intellij.platform.scriptDebugger.ui",
+  "intellij.platform.smRunner",
+  "intellij.platform.smRunner.vcs",
+  "intellij.platform.structureView.impl",
+  "intellij.platform.tasks.impl",
+  "intellij.platform.testRunner",
+  "intellij.platform.debugger.impl",
+  "intellij.platform.configurationStore.impl",
+  "intellij.platform.serviceContainer",
+  "intellij.platform.objectSerializer",
+  "intellij.platform.diagnostic",
+  "intellij.platform.core.ui",
+  "intellij.platform.credentialStore",
+  "intellij.platform.credentialStore.ui",
+  "intellij.platform.rd.community",
+  "intellij.platform.ml.impl",
+  "intellij.remoteDev.util",
+  "intellij.platform.feedback",
+  "intellij.platform.warmup",
+  "intellij.platform.buildScripts.downloader",
+  "intellij.idea.community.build.dependencies",
+  "intellij.platform.usageView.impl",
+)
+
 object PlatformModules {
-    const val PRODUCT_JAR = "product.jar"
-    @JvmField
-    val PLATFORM_API_MODULES: MutableList<String> = java.util.List.of(
-      "intellij.platform.analysis",
-      "intellij.platform.builtInServer",
-      "intellij.platform.core",
-      "intellij.platform.diff",
-      "intellij.platform.vcs.dvcs",
-      "intellij.platform.editor",
-      "intellij.platform.externalSystem",
-      "intellij.platform.externalSystem.dependencyUpdater",
-      "intellij.platform.codeStyle",
-      "intellij.platform.indexing",
-      "intellij.platform.jps.model",
-      "intellij.platform.lang.core",
-      "intellij.platform.lang",
-      "intellij.platform.lvcs",
-      "intellij.platform.ide",
-      "intellij.platform.ide.core",
-      "intellij.platform.projectModel",
-      "intellij.platform.remote.core",
-      "intellij.platform.remoteServers.agent.rt",
-      "intellij.platform.remoteServers",
-      "intellij.platform.tasks",
-      "intellij.platform.usageView",
-      "intellij.platform.vcs.core",
-      "intellij.platform.vcs",
-      "intellij.platform.vcs.log",
-      "intellij.platform.vcs.log.graph",
-      "intellij.platform.execution",
-      "intellij.platform.debugger",
-      "intellij.xml.analysis",
-      "intellij.xml",
-      "intellij.xml.psi",
-      "intellij.xml.structureView",
-      "intellij.platform.concurrency",
-    )
+  const val PRODUCT_JAR = "product.jar"
 
-    /**
-     * List of modules which are included into lib/app.jar in all IntelliJ based IDEs.
-     */
-    @JvmField
-    val PLATFORM_IMPLEMENTATION_MODULES: MutableList<String> = java.util.List.of(
-      "intellij.platform.analysis.impl",
-      "intellij.platform.builtInServer.impl",
-      "intellij.platform.core.impl",
-      "intellij.platform.ide.core.impl",
-      "intellij.platform.diff.impl",
-      "intellij.platform.editor.ex",
-      "intellij.platform.codeStyle.impl",
-      "intellij.platform.indexing.impl",
-      "intellij.platform.elevation",
-      "intellij.platform.elevation.client",
-      "intellij.platform.elevation.common",
-      "intellij.platform.elevation.daemon",
-      "intellij.platform.externalProcessAuthHelper",
-      "intellij.platform.refactoring",
-      "intellij.platform.inspect",
-      "intellij.platform.lang.impl",
-      "intellij.platform.workspaceModel.storage",
-      "intellij.platform.workspaceModel.jps",
-      "intellij.platform.lvcs.impl",
-      "intellij.platform.vfs.impl",
-      "intellij.platform.ide.impl",
-      "intellij.platform.projectModel.impl",
-      "intellij.platform.macro",
-      "intellij.platform.execution.impl",
-      "intellij.platform.wsl.impl",
-      "intellij.platform.externalSystem.impl",
-      "intellij.platform.scriptDebugger.protocolReaderRuntime",
-      "intellij.regexp",
-      "intellij.platform.remoteServers.impl",
-      "intellij.platform.scriptDebugger.backend",
-      "intellij.platform.scriptDebugger.ui",
-      "intellij.platform.smRunner",
-      "intellij.platform.smRunner.vcs",
-      "intellij.platform.structureView.impl",
-      "intellij.platform.tasks.impl",
-      "intellij.platform.testRunner",
-      "intellij.platform.debugger.impl",
-      "intellij.platform.configurationStore.impl",
-      "intellij.platform.serviceContainer",
-      "intellij.platform.objectSerializer",
-      "intellij.platform.diagnostic",
-      "intellij.platform.core.ui",
-      "intellij.platform.credentialStore",
-      "intellij.platform.credentialStore.ui",
-      "intellij.platform.rd.community",
-      "intellij.platform.ml.impl",
-      "intellij.remoteDev.util",
-      "intellij.platform.feedback",
-      "intellij.platform.warmup",
-      "intellij.platform.buildScripts.downloader",
-      "intellij.idea.community.build.dependencies",
-      "intellij.platform.usageView.impl",
-    )
-
-  @JvmField
   val CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = java.util.Map.of(
     // jna uses native lib
     "jna", LibraryPackMode.STANDALONE_MERGED,
@@ -121,10 +120,44 @@ object PlatformModules {
     "github.jnr.ffi", LibraryPackMode.STANDALONE_SEPARATE,
     )
 
-  fun jar(relativeJarPath: String,
-          moduleNames: Collection<String>,
-          productLayout: ProductModulesLayout,
-          layout: PlatformLayout) {
+  fun collectPlatformModules(to: MutableCollection<String>) {
+    to.addAll(PLATFORM_API_MODULES)
+    to.addAll(PLATFORM_IMPLEMENTATION_MODULES)
+  }
+
+  fun hasPlatformCoverage(productLayout: ProductModulesLayout, enabledPluginModules: Set<String>, context: BuildContext): Boolean {
+    val modules = LinkedHashSet<String>()
+    modules.addAll(productLayout.getIncludedPluginModules(enabledPluginModules))
+    modules.addAll(PLATFORM_API_MODULES)
+    modules.addAll(PLATFORM_IMPLEMENTATION_MODULES)
+    modules.addAll(productLayout.productApiModules)
+    modules.addAll(productLayout.productImplementationModules)
+    modules.addAll(productLayout.additionalPlatformJars.values())
+
+    val coverageModuleName = "intellij.platform.coverage"
+    if (modules.contains(coverageModuleName)) {
+      return true
+    }
+
+    for (moduleName in modules) {
+      var contains = false
+      JpsJavaExtensionService.dependencies(context.findRequiredModule(moduleName))
+        .productionOnly()
+        .processModules { module ->
+          if (!contains && module.name == coverageModuleName) {
+            contains = true
+          }
+        }
+
+      if (contains) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  fun jar(relativeJarPath: String, moduleNames: Collection<String>, productLayout: ProductModulesLayout, layout: PlatformLayout) {
     for (moduleName in moduleNames) {
       if (!productLayout.excludedModuleNames.contains(moduleName)) {
         layout.withModule(moduleName, relativeJarPath)
@@ -153,7 +186,9 @@ object PlatformModules {
     // used only in modules that packed into Java
     layout.withoutProjectLibrary("jps-javac-extension")
     layout.withoutProjectLibrary("Eclipse")
-    productLayout.platformLayoutCustomizer.accept(layout, context)
+    for (platformLayoutCustomizer in productLayout.platformLayoutCustomizers) {
+      platformLayoutCustomizer.accept(layout, context)
+    }
 
     val alreadyPackedModules = HashSet<String>()
     for (entry in productLayout.additionalPlatformJars.entrySet()) {
@@ -304,7 +339,6 @@ object PlatformModules {
     return layout
   }
 
-  @JvmStatic
   // result _must_ consistent, do not use Set.of or HashSet here
   fun getProductPluginContentModules(buildContext: BuildContext, productPluginSourceModuleName: String): Set<String> {
     var file = buildContext.findFileInModuleSources(productPluginSourceModuleName, "META-INF/plugin.xml")

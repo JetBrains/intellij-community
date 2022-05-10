@@ -71,31 +71,27 @@ class ProductModulesLayout {
   /**
    * Names of the project libraries which JARs' contents should be extracted into {@link #mainJarName} JAR.
    */
-  var projectLibrariesToUnpackIntoMainJar: MutableList<String> = mutableListOf()
+  var projectLibrariesToUnpackIntoMainJar: List<String> = emptyList()
 
   /**
    * Maps names of JARs to names of the modules; these modules will be packed into these JARs and copied to the product's 'lib' directory.
    */
-  var additionalPlatformJars: MultiMap<String, String> = MultiMap.createLinkedSet()
+  val additionalPlatformJars: MultiMap<String, String> = MultiMap.createLinkedSet()
 
   /**
    * Module name to list of Ant-like patterns describing entries which should be excluded from its output.
    * <strong>This is a temporary property added to keep layout of some products. If some directory from a module shouldn't be included into the
    * product JAR it's strongly recommended to move that directory outside of the module source roots.</strong>
    */
-  var moduleExcludes: MultiValuesMap<String, String> = MultiValuesMap<String, String>(true)
+  val moduleExcludes: MultiValuesMap<String, String> = MultiValuesMap<String, String>(true)
 
   /**
    * Additional customizations of platform JARs. <strong>This is a temporary property added to keep layout of some products.</strong>
    */
-  var platformLayoutCustomizer: BiConsumer<PlatformLayout, BuildContext> = BiConsumer { _, _ -> }
+  internal val platformLayoutCustomizers = mutableListOf<BiConsumer<PlatformLayout, BuildContext>>()
 
-  fun appendPlatformCustomizer(customizer: BiConsumer<PlatformLayout, BuildContext>) {
-    val prev = platformLayoutCustomizer
-    platformLayoutCustomizer = BiConsumer { layout, context ->
-      prev.accept(layout, context)
-      customizer.accept(layout, context)
-    }
+  fun addPlatformCustomizer(customizer: BiConsumer<PlatformLayout, BuildContext>) {
+    platformLayoutCustomizers.add(customizer)
   }
 
   /**
