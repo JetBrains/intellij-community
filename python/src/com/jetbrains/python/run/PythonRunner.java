@@ -72,8 +72,8 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
           () -> promise.setResult(DefaultProgramRunnerKt.showRunContent(executionResult, env)),
           ModalityState.any());
       }
-      catch (ExecutionException | RuntimeException err) {
-        promise.setError(err);
+      catch (Exception e) {
+        promise.setError(e);
       }
     });
     return promise;
