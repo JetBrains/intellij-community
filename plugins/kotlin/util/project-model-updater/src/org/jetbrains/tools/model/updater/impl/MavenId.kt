@@ -1,19 +1,26 @@
 package org.jetbrains.tools.model.updater.impl
 
-data class MavenId(val groupId: String, val artifactId: String, val version: String = "") {
-    val coordinates: String = if (version == "") "$groupId:$artifactId" else "$groupId:$artifactId:$version"
+data class MavenId(val groupId: String, val artifactId: String, val version: String? = null) {
+    override fun toString(): String = buildString {
+        append(groupId).append(':').append(artifactId)
+        if (version != null) {
+            append(':').append(version)
+        }
+    }
+
+    fun toJarPath(classifier: String?): String {
+        val classifierSuffix = if (classifier != null) "-$classifier" else ""
+        return "${groupId.replace(".", "/")}/$artifactId/$version/$artifactId-$version$classifierSuffix.jar"
+    }
 
     companion object {
-        fun fromCoordinates(coordinates: String): MavenId {
+        fun parse(coordinates: String): MavenId {
             val (group, artifact, version) = coordinates.split(":").also {
                 check(it.size == 3) {
-                    "mavenCoordinates ($coordinates) are expected to two semicolons"
+                    "Invalid Maven coordinates ($coordinates), expected \"groupId:artifactId:version\""
                 }
             }
             return MavenId(group, artifact, version)
         }
     }
 }
-
-fun MavenId.toJarPath(): String = "${groupId.replace(".", "/")}/$artifactId/$version/$artifactId-$version.jar"
-fun MavenId.toSourcesJarPath(): String = "${groupId.replace(".", "/")}/$artifactId/$version/$artifactId-$version-sources.jar"
