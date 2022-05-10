@@ -70,6 +70,7 @@ import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.*;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 @State(
   name = "LafManager",
@@ -733,7 +734,27 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     else if (SystemInfoRt.isLinux) {
       installLinuxFonts(UIManager.getLookAndFeelDefaults());
     }
+
+    updateColors(defaults);
     return false;
+  }
+
+  private static void updateColors(UIDefaults defaults) {
+    for (Object key : defaults.keySet().toArray()) {
+      Object value = defaults.get(key);
+      if (value instanceof Color && !(value instanceof JBColor && ((JBColor)value).getName() != null)) {
+        defaults.remove(key);
+        defaults.put(key, wrapColorToNamedColor((Color)value, key.toString()));
+      }
+    }
+  }
+
+  private static Color wrapColorToNamedColor(Color color, String key) {
+    if (Registry.is("ide.ui.wrap.colors")) {
+      return color instanceof UIResource ? new IJColorUIResource(color, key)
+                                         : new IJColor(color, key);
+    }
+    return color;
   }
 
   private void updateEditorSchemeIfNecessary(UIManager.LookAndFeelInfo oldLaf, boolean processChangeSynchronously) {
@@ -1440,6 +1461,31 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     @Override
     public boolean isDumbAware() {
       return true;
+    }
+  }
+
+  public static class IJColor extends JBColor {
+    private final String myName;
+
+    IJColor(Color color, String name) {
+      super((Supplier<Color>)() -> color);
+      myName = name;
+    }
+
+    @Override
+    public String getName() {
+      return myName;
+    }
+
+    @Override
+    public String toString() {
+      return super.toString() + " Name: " + myName;
+    }
+  }
+
+  public static class IJColorUIResource extends IJColor implements UIResource {
+    IJColorUIResource(Color color, String name) {
+      super(color, name);
     }
   }
 }
