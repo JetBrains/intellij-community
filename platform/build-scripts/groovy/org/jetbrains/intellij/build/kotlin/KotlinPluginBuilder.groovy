@@ -75,6 +75,7 @@ final class KotlinPluginBuilder {
     "kotlin.base.resources",
     "kotlin.base.fe10.analysis",
     "kotlin.base.fe10.kdoc",
+    "kotlin.base.fe10.refactorings",
     "kotlin.base.fe10.obsolete-compat",
     "kotlin.core",
     "kotlin.idea",

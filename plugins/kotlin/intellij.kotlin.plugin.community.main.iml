@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="kotlin.base.resources" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.kdoc" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.refactorings" exported="" />
     <orderEntry type="module" module-name="kotlin.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" exported="" />
