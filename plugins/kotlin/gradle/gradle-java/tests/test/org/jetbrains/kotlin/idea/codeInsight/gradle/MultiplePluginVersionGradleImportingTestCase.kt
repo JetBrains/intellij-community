@@ -88,13 +88,17 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         @Parameterized.Parameters(name = kotlinAndGradleParametersName)
         fun data(): Collection<Array<Any>> {
             return if (IS_UNDER_SAFE_PUSH) listOf(
+                /* Safe push tested with latest released versions */
                 arrayOf("7.3.3", V_1_6_21.toString())
             ) else listOf(
-                arrayOf("6.8.2", V_1_4_32.toString()),
-                arrayOf("7.3.3", V_1_5_32.toString()),
+                /* Progressively updated Gradle and KGP versions */
+                arrayOf("6.8.3", V_1_4_32.toString()),
+                arrayOf("6.9.2", V_1_5_32.toString()),
                 arrayOf("7.3.3", V_1_6_21.toString()),
                 arrayOf("7.4.2", V_1_7_0_Beta.toString()),
-                arrayOf("6.8.2", "master"),
+
+                /* Master tested with latest and oldest Gradle version */
+                arrayOf("6.8.3", "master"),
                 arrayOf("7.4.2", "master")
             )
         }
