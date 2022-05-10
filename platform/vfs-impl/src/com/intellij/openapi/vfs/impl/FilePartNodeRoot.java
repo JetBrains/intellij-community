@@ -185,24 +185,6 @@ final class FilePartNodeRoot extends FilePartNode {
     return trieDescend(fs, currentFS, names, fsRoot, currentNode, parentNode);
   }
 
-  static boolean isArchiveInTheWindowsDiskRoot(@NotNull String path) {
-    // special case: "C:!/foo" means the archive is in the disk root - we shouldn't treat it as relative path starting with "!"
-    // other special case: "jrt://C:/!/foo" means the archive is in the disk root - we shouldn't treat it as under the (local) directory "!" in the disk root
-    return Character.isLetter(path.charAt(0))
-           && (path.length() >= 4
-               && path.charAt(1) == ':'
-               && path.charAt(2) == '!'
-               && path.charAt(3) == '/'
-               ||
-               path.length() >= 5
-               && path.charAt(1) == ':'
-               && path.charAt(2) == '/'
-               && path.charAt(3) == '!'
-               && path.charAt(4) == '/'
-           )
-      ;
-  }
-
   // extracted private method to split code which is too large for JDK17 to not crash (see IDEA-289921 [JBR17] Constant crashes while executing tests on TeamCity
   @NotNull
   private static NodeToUpdate trieDescend(@NotNull NewVirtualFileSystem fs,
