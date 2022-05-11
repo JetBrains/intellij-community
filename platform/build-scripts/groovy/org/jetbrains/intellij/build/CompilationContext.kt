@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.BundledRuntime
+import org.jetbrains.intellij.build.impl.CompilationTasksImpl
 import org.jetbrains.intellij.build.impl.DependenciesProperties
 import org.jetbrains.intellij.build.impl.JpsCompilationData
 import org.jetbrains.jps.model.JpsModel
@@ -60,3 +61,23 @@ interface CompilationContext {
   @Deprecated("Use notifyArtifactWasBuilt")
   fun notifyArtifactBuilt(artifactPath: String)
 }
+
+interface CompilationTasks {
+  companion object {
+    @JvmStatic
+    fun create(context: CompilationContext): CompilationTasks = CompilationTasksImpl(context)
+  }
+
+  fun compileAllModulesAndTests()
+
+  fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>? = emptyList())
+
+  fun buildProjectArtifacts(artifactNames: Set<String>)
+
+  fun resolveProjectDependencies()
+
+  fun resolveProjectDependenciesAndCompileAll()
+
+  fun reuseCompiledClassesIfProvided()
+}
+

@@ -1,18 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.util.text.Strings
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
-import org.jetbrains.intellij.build.impl.CompilationContextImpl
 import org.jetbrains.intellij.build.impl.JpsCompilationRunner
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
 import org.jetbrains.jps.incremental.storage.ProjectStamps
-
 /**
  * Combination of {@link PortableCompilationCache.JpsCaches} and {@link org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput}s
  */
@@ -63,7 +61,7 @@ final class PortableCompilationCache {
     /**
      * If true then {@link RemoteCache} is configured to be used
      */
-    private static final boolean IS_CONFIGURED = !StringUtil.isEmptyOrSpaces(System.getProperty(RemoteCache.URL_PROPERTY))
+    private static final boolean IS_CONFIGURED = !Strings.isEmptyOrSpaces(System.getProperty(RemoteCache.URL_PROPERTY))
     /**
      * URL for read-only operations
      */
@@ -223,13 +221,13 @@ final class PortableCompilationCache {
   private def clean() {
     [jpsCaches.dir, context.projectOutputDirectory].each {
       context.messages.info("Cleaning $it")
-      FileUtil.delete(it)
+      NioFiles.deleteRecursively(it.toPath())
     }
   }
 
   private def compileProject() {
     // fail-fast in case of KTIJ-17296
-    if (SystemInfo.isWindows && git.lineBreaksConfig() != "input") {
+    if (SystemInfoRt.isWindows && git.lineBreaksConfig() != "input") {
       context.messages.error("${getClass().simpleName} cannot be used with CRLF line breaks, " +
                              "please execute `git config --global core.autocrlf input` before checkout " +
                              "and upvote https://youtrack.jetbrains.com/issue/KTIJ-17296")
@@ -265,7 +263,7 @@ final class PortableCompilationCache {
 
   private String require(String systemProperty, String description) {
     def value = System.getProperty(systemProperty)
-    if (StringUtil.isEmptyOrSpaces(value)) {
+    if (Strings.isEmptyOrSpaces(value)) {
       context.messages.error("$description is not defined. Please set '$systemProperty' system property.")
     }
     return value

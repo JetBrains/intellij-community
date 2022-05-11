@@ -68,9 +68,9 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
     binWin.copyToDir(distBinDir)
 
-    def pty4jNativeDir = BuildTasksImplKt.unpackPty4jNative(buildContext, winDistPath, "win")
-    BuildTasksImplKt.generateBuildTxt(buildContext, winDistPath)
-    BuildTasksImplKt.copyDistFiles(buildContext, winDistPath)
+    def pty4jNativeDir = DistUtilKt.unpackPty4jNative(buildContext, winDistPath, "win")
+    DistUtilKt.generateBuildTxt(buildContext, winDistPath)
+    DistUtilKt.copyDistFiles(buildContext, winDistPath)
 
     Files.writeString(distBinDir.resolve(ideaProperties.fileName), StringUtilRt.convertLineSeparators(Files.readString(ideaProperties), "\r\n"))
 
@@ -90,7 +90,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         boolean process(File file) {
           if (signFileFilter.accept(file)) {
             buildContext.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", file.toString()), BuildOptions.WIN_SIGN_STEP) {
-              buildContext.signFile(file.toPath(), BuildOptions.WIN_SIGN_OPTIONS)
+              buildContext.signFiles(List.of(file.toPath()), BuildOptions.WIN_SIGN_OPTIONS)
             }
           }
           return true
@@ -100,7 +100,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     customizer.getBinariesToSign(buildContext).each {
       def path = winDistPath.resolve(it)
       buildContext.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", path.toString()), BuildOptions.WIN_SIGN_STEP) {
-        buildContext.signFile(path, BuildOptions.WIN_SIGN_OPTIONS)
+        buildContext.signFiles(List.of(path), BuildOptions.WIN_SIGN_OPTIONS)
       }
     }
   }
@@ -121,7 +121,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         "If DLL was relocated to another place, please correct the path in this code.")
     }
 
-    BuildHelper.copyFileToDir(vcRtDll, winAndArchSpecificDistPath.resolve("bin"))
+    FileKt.copyFileToDir(vcRtDll, winAndArchSpecificDistPath.resolve("bin"))
 
     if (customizer.buildZipArchive) {
       List<Path> jreDirectoryPaths

@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.NioFiles
@@ -15,7 +17,6 @@ import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
-import org.jetbrains.intellij.build.impl.BaseLayout.Companion.convertModuleNameToFileName
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.getSearchableOptionsDir
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.pack
 import org.jetbrains.intellij.build.impl.PlatformModules.collectPlatformModules
@@ -23,6 +24,9 @@ import org.jetbrains.intellij.build.impl.SVGPreBuilder.createPrebuildSvgIconsTas
 import org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.copyFile
+import org.jetbrains.intellij.build.io.copyFileToDir
+import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.tasks.*
 import org.jetbrains.jps.model.artifact.JpsArtifact
 import org.jetbrains.jps.model.artifact.JpsArtifactService
@@ -43,7 +47,6 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
-import java.util.function.Consumer
 import java.util.function.Predicate
 import java.util.function.UnaryOperator
 import java.util.stream.Collectors
@@ -160,45 +163,6 @@ class DistributionJARsBuilder {
       }
     }
 
-    fun buildLib(moduleOutputPatcher: ModuleOutputPatcher, platform: PlatformLayout, context: BuildContext): List<DistributionFileEntry> {
-      patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher, context)
-      val libDirMappings = processLibDirectoryLayout(moduleOutputPatcher = moduleOutputPatcher,
-                                                     platform = platform,
-                                                     context = context,
-                                                     copyFiles = true).fork().join()
-      val scrambleTool = context.proprietaryBuildTools.scrambleTool
-      if (scrambleTool != null) {
-        val libDir = context.paths.distAllDir.resolve("lib")
-        for (forbiddenJarName in scrambleTool.getNamesOfJarsRequiredToBeScrambled()) {
-          if (Files.exists(libDir.resolve(forbiddenJarName))) {
-            context.messages.error("The following JAR cannot be included into the product 'lib' directory," +
-                                   " it need to be scrambled with the main jar: $forbiddenJarName")
-          }
-        }
-        val modulesToBeScrambled = scrambleTool.getNamesOfModulesRequiredToBeScrambled()
-        val productLayout = context.productProperties.productLayout
-        for (jarName in platform.moduleJars.keySet()) {
-          if (jarName != productLayout.mainJarName && jarName != PlatformModules.PRODUCT_JAR) {
-            val notScrambled = DefaultGroovyMethods.intersect(platform.moduleJars.get(jarName), modulesToBeScrambled)
-            if (!notScrambled.isEmpty()) {
-              context.messages.error("Module \'${notScrambled.first()}\' is included into $jarName which is not scrambled.")
-            }
-          }
-        }
-      }
-      return libDirMappings
-    }
-
-    fun processLibDirectoryLayout(moduleOutputPatcher: ModuleOutputPatcher,
-                                  platform: PlatformLayout,
-                                  context: BuildContext,
-                                  copyFiles: Boolean): ForkJoinTask<List<DistributionFileEntry>> {
-      return createTask(spanBuilder("layout").setAttribute("path", context.paths.buildOutputDir
-        .relativize(context.paths.distAllDir).toString())) {
-        layout(platform, context.paths.distAllDir, copyFiles, moduleOutputPatcher, platform.moduleJars, context)
-      }
-    }
-
     private fun satisfiesBundlingRequirements(plugin: PluginLayout,
                                               osFamily: OsFamily?,
                                               arch: JvmArchitecture?,
@@ -253,19 +217,6 @@ class DistributionJARsBuilder {
       return buildKeymapPlugins(context.buildNumber, targetDir, keymapDir)
     }
 
-    /**
-     * Returns name of directory in the product distribution where plugin will be placed. For plugins which use the main module name as the
-     * directory name return the old module name to temporary keep layout of plugins unchanged.
-     */
-    fun getActualPluginDirectoryName(plugin: PluginLayout, context: BuildContext): String {
-      if (!plugin.directoryNameSetExplicitly && (plugin.directoryName == convertModuleNameToFileName(plugin.mainModule))) {
-        context.getOldModuleName(plugin.mainModule)?.let {
-          return it
-        }
-      }
-      return plugin.directoryName
-    }
-
     fun checkOutputOfPluginModules(mainPluginModule: String,
                                    moduleJars: MultiMap<String, String>,
                                    moduleExcludes: MultiMap<String, String>,
@@ -318,26 +269,6 @@ class DistributionJARsBuilder {
       return !set.isEmpty()
     }
 
-    /**
-     * Returns path to a JAR file in the product distribution where platform/plugin classes will be placed. If the JAR name corresponds to
-     * a module name and the module was renamed, return the old name to temporary keep the product layout unchanged.
-     */
-    fun getActualModuleJarPath(relativeJarPath: String,
-                               moduleNames: Collection<String?>,
-                               explicitlySetJarPaths: Set<String?>,
-                               context: BuildContext): String {
-      if (explicitlySetJarPaths.contains(relativeJarPath)) {
-        return relativeJarPath
-      }
-
-      for (moduleName: String? in moduleNames) {
-        if ((relativeJarPath == convertModuleNameToFileName((moduleName)!!) + ".jar") && context.getOldModuleName(moduleName) != null) {
-          return "${context.getOldModuleName(moduleName)}.jar"
-        }
-      }
-      return relativeJarPath
-    }
-
     fun layout(layout: BaseLayout,
                targetDirectory: Path,
                copyFiles: Boolean,
@@ -352,13 +283,11 @@ class DistributionJARsBuilder {
       // patchers must be executed _before_ pack because patcher patches module output
       if (copyFiles && layout is PluginLayout && !layout.patchers.isEmpty()) {
         val patchers = layout.patchers
-        BuildHelper.span(spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()), object : Runnable {
-          override fun run() {
-            for (patcher in patchers) {
-              patcher.accept(moduleOutputPatcher, context)
-            }
+        BuildHelper.span(spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong())) {
+          for (patcher in patchers) {
+            patcher.accept(moduleOutputPatcher, context)
           }
-        })
+        }
       }
       tasks.add(createTask(spanBuilder("pack")) {
         val actualModuleJars = TreeMap<String, MutableList<String>>()
@@ -390,7 +319,7 @@ class DistributionJARsBuilder {
         if (resourceData.packToZip) {
           if (Files.isDirectory(source)) {
             // do not compress - doesn't make sense as it is a part of distribution
-            BuildHelper.zip(context, target.get(), source, false)
+            zip(target.get(), mapOf(source to ""), compress = false)
           }
           else {
             target.set(target.get().resolve(source.fileName))
@@ -399,10 +328,10 @@ class DistributionJARsBuilder {
         }
         else {
           if (Files.isRegularFile(source)) {
-            BuildHelper.copyFileToDir(source, target.get())
+            copyFileToDir(source, target.get())
           }
           else {
-            BuildHelper.copyDir(source, target.get())
+            copyDir(source, target.get())
           }
         }
       }
@@ -412,15 +341,14 @@ class DistributionJARsBuilder {
 
       val resourceGenerators = layout.resourceGenerators
       if (!resourceGenerators.isEmpty()) {
-        BuildHelper.span(spanBuilder("generate and pack resources")) {
+        spanBuilder("generate and pack resources").startSpan().useWithScope {
           for (item in resourceGenerators) {
-            val resourceFile = item.getFirst().apply(targetDirectory, context)
-            val target = if (item.getSecond().isEmpty()) targetDirectory else targetDirectory.resolve(item.getSecond())
+            val resourceFile = item.apply(targetDirectory, context) ?: continue
             if (Files.isRegularFile(resourceFile)) {
-              BuildHelper.copyFileToDir(resourceFile, target)
+              copyFileToDir(resourceFile, targetDirectory)
             }
             else {
-              BuildHelper.copyDir(resourceFile, target)
+              copyDir(resourceFile, targetDirectory)
             }
           }
         }
@@ -444,14 +372,14 @@ class DistributionJARsBuilder {
           val source = Path.of(artifact.outputPath!!)
           artifactFile = targetDirectory.resolve("lib").resolve(relativePath)
           if (copyFiles) {
-            BuildHelper.copyDir(source, targetDirectory.resolve("lib").resolve(relativePath))
+            copyDir(source, targetDirectory.resolve("lib").resolve(relativePath))
           }
         }
         else {
           val source = Path.of(artifact.outputFilePath!!)
           artifactFile = targetDirectory.resolve("lib").resolve(relativePath).resolve(source.fileName)
           if (copyFiles) {
-            BuildHelper.copyFile(source, artifactFile)
+            copyFile(source, artifactFile)
           }
         }
         addArtifactMapping(artifact, entries, artifactFile)
@@ -493,34 +421,13 @@ class DistributionJARsBuilder {
         }
       }
     }
-
-    fun basePath(buildContext: BuildContext, moduleName: String): Path {
-      return Path.of(JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first()))
-    }
-
-    private fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher: ModuleOutputPatcher, context: BuildContext) {
-      if (!context.productProperties.reassignAltClickToMultipleCarets) {
-        return
-      }
-
-      val moduleName = "intellij.platform.resources"
-      val sourceFile = context.getModuleOutputDir((context.findModule(moduleName))!!).resolve("keymaps/\$default.xml")
-      var defaultKeymapContent = Files.readString(sourceFile)
-      defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>",
-                                                          "<mouse-shortcut keystroke=\"to be alt shift button1\"/>")
-      defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>",
-                                                          "<mouse-shortcut keystroke=\"alt button1\"/>")
-      defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"to be alt shift button1\"/>",
-                                                          "<mouse-shortcut keystroke=\"alt shift button1\"/>")
-      moduleOutputPatcher.patchModuleOutput(moduleName, "keymaps/\$default.xml", defaultKeymapContent)
-    }
   }
 
   @JvmOverloads
   fun buildJARs(context: BuildContext, isUpdateFromSources: Boolean = false): ProjectStructureMapping {
     validateModuleStructure(context)
-    val svgPrebuildTask = createPrebuildSvgIconsTask(context)!!.fork()
-    val brokenPluginsTask = createBuildBrokenPluginListTask(context)!!.fork()
+    val svgPrebuildTask = createPrebuildSvgIconsTask(context)?.fork()
+    val brokenPluginsTask = createBuildBrokenPluginListTask(context)?.fork()
     BuildHelper.createSkippableTask(spanBuilder("build searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP,
                                     context) { buildSearchableOptions(context) }!!.fork().join()
     val pluginLayouts = getPluginsByModules(context.productProperties.productLayout.bundledPluginModules, context)
@@ -567,7 +474,7 @@ class DistributionJARsBuilder {
     if (!additionalPluginPaths.isEmpty()) {
       val pluginDir = context.paths.distAllDir.resolve("plugins")
       for (sourceDir in additionalPluginPaths) {
-        BuildHelper.copyDir(sourceDir, pluginDir.resolve(sourceDir.fileName))
+        copyDir(sourceDir, pluginDir.resolve(sourceDir.fileName))
       }
     }
 
@@ -584,8 +491,8 @@ class DistributionJARsBuilder {
     ))
 
     // inversed order of join - better for FJP (https://shipilev.net/talks/jeeconf-May2012-forkjoin.pdf, slide 32)
-    brokenPluginsTask.join()
-    svgPrebuildTask.join()
+    brokenPluginsTask?.join()
+    svgPrebuildTask?.join()
     return projectStructureMapping
   }
 
@@ -618,7 +525,7 @@ class DistributionJARsBuilder {
   @JvmOverloads
   fun buildSearchableOptions(buildContext: BuildContext,
                              classpathCustomizer: UnaryOperator<Set<String>>? = null,
-                             systemProperties: Map<String, Any> = emptyMap<String, Any>()): Path? {
+                             systemProperties: Map<String, Any> = emptyMap()): Path? {
     val span = Span.current()
     if (buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
       span.addEvent("skip building searchable options index")
@@ -673,31 +580,33 @@ class DistributionJARsBuilder {
       }
     }
     for (entry: DistributionFileEntry in DefaultGroovyMethods.plus(nonPluginsEntries, pluginsEntries)) {
-      if (entry is ModuleOutputEntry) {
-        classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)).toString())
-      }
-      else if (entry is LibraryFileEntry) {
-        classPath.add((entry as LibraryFileEntry).libraryFile.toString())
-      }
-      else {
-        throw UnsupportedOperationException("Entry $entry is not supported")
+      when (entry) {
+        is ModuleOutputEntry -> classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)).toString())
+        is LibraryFileEntry -> classPath.add((entry as LibraryFileEntry).libraryFile.toString())
+        else -> throw UnsupportedOperationException("Entry $entry is not supported")
       }
     }
     return classPath
   }
 
-  fun generateProjectStructureMapping(context: BuildContext,
-                                      pluginLayoutRoot: Path): List<DistributionFileEntry> {
+  private fun generateProjectStructureMapping(context: BuildContext, pluginLayoutRoot: Path): List<DistributionFileEntry> {
     val moduleOutputPatcher = ModuleOutputPatcher()
-    val libDirLayout = processLibDirectoryLayout(moduleOutputPatcher, state.platform, context, false).fork()
+    val libDirLayout = processLibDirectoryLayout(moduleOutputPatcher = moduleOutputPatcher,
+                                                 platform = state.platform,
+                                                 context = context,
+                                                 copyFiles = false).fork()
     val allPlugins = getPluginsByModules(context.productProperties.productLayout.bundledPluginModules, context)
-    val entries: MutableList<DistributionFileEntry> = ArrayList()
-    allPlugins.stream().filter(
-      Predicate { plugin -> satisfiesBundlingRequirements(plugin, null, null, context) }).forEach(object : Consumer<PluginLayout> {
-      override fun accept(plugin: PluginLayout) {
-        entries.addAll(layout(plugin, pluginLayoutRoot, false, moduleOutputPatcher, plugin.moduleJars, context))
+    val entries = ArrayList<DistributionFileEntry>()
+    for (plugin in allPlugins) {
+      if (satisfiesBundlingRequirements(plugin, null, null, context)) {
+        entries.addAll(layout(layout = plugin,
+                              targetDirectory = pluginLayoutRoot,
+                              copyFiles = false,
+                              moduleOutputPatcher = moduleOutputPatcher,
+                              moduleJars = plugin.moduleJars,
+                              context = context))
       }
-    })
+    }
     entries.addAll(libDirLayout.join())
     return entries
   }
@@ -874,7 +783,7 @@ class DistributionJARsBuilder {
     val destFile = targetDir.resolve("$directory.zip")
     spanBuilder("build help plugin").setAttribute("dir", directory).startSpan().useWithScope {
       buildPlugins(moduleOutputPatcher, listOf(helpPlugin), pluginsToPublishDir, context, null, null)
-      BuildHelper.zipWithPrefix(context, destFile, listOf(pluginsToPublishDir.resolve(directory)), directory, true)
+      zip(targetFile = destFile, dirs = mapOf(pluginsToPublishDir.resolve(directory) to ""), compress = true)
       null
     }
     return PluginRepositorySpec(destFile, moduleOutputPatcher.getPatchedPluginXml(helpPlugin.mainModule))
@@ -1019,4 +928,93 @@ internal fun getThirdPartyLibrariesHtmlFilePath(context: BuildContext): Path {
 
 internal fun getThirdPartyLibrariesJsonFilePath(context: BuildContext): Path {
   return context.paths.tempDir.resolve("third-party-libraries.json")
+}
+
+/**
+ * Returns path to a JAR file in the product distribution where platform/plugin classes will be placed. If the JAR name corresponds to
+ * a module name and the module was renamed, return the old name to temporary keep the product layout unchanged.
+ */
+private fun getActualModuleJarPath(relativeJarPath: String,
+                                   moduleNames: Collection<String>,
+                                   explicitlySetJarPaths: Set<String>,
+                                   context: BuildContext): String {
+  if (explicitlySetJarPaths.contains(relativeJarPath)) {
+    return relativeJarPath
+  }
+
+  for (moduleName in moduleNames) {
+    if (relativeJarPath == "${convertModuleNameToFileName(moduleName)}.jar" && context.getOldModuleName(moduleName) != null) {
+      return "${context.getOldModuleName(moduleName)}.jar"
+    }
+  }
+  return relativeJarPath
+}
+
+/**
+ * Returns name of directory in the product distribution where plugin will be placed. For plugins which use the main module name as the
+ * directory name return the old module name to temporary keep layout of plugins unchanged.
+ */
+fun getActualPluginDirectoryName(plugin: PluginLayout, context: BuildContext): String {
+  if (!plugin.directoryNameSetExplicitly && (plugin.directoryName == convertModuleNameToFileName(plugin.mainModule))) {
+    context.getOldModuleName(plugin.mainModule)?.let {
+      return it
+    }
+  }
+  return plugin.directoryName
+}
+
+private fun basePath(buildContext: BuildContext, moduleName: String): Path {
+  return Path.of(JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first()))
+}
+
+fun buildLib(moduleOutputPatcher: ModuleOutputPatcher, platform: PlatformLayout, context: BuildContext): List<DistributionFileEntry> {
+  patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher, context)
+  val libDirMappings = processLibDirectoryLayout(moduleOutputPatcher = moduleOutputPatcher,
+                                                 platform = platform,
+                                                 context = context,
+                                                 copyFiles = true).fork().join()
+
+  val scrambleTool = context.proprietaryBuildTools.scrambleTool ?: return libDirMappings
+  val libDir = context.paths.distAllDir.resolve("lib")
+  for (forbiddenJarName in scrambleTool.getNamesOfJarsRequiredToBeScrambled()) {
+    if (Files.exists(libDir.resolve(forbiddenJarName))) {
+      context.messages.error("The following JAR cannot be included into the product 'lib' directory," +
+                             " it need to be scrambled with the main jar: $forbiddenJarName")
+    }
+  }
+  val modulesToBeScrambled = scrambleTool.getNamesOfModulesRequiredToBeScrambled()
+  val productLayout = context.productProperties.productLayout
+  for (jarName in platform.moduleJars.keySet()) {
+    if (jarName != productLayout.mainJarName && jarName != PlatformModules.PRODUCT_JAR) {
+      val notScrambled = DefaultGroovyMethods.intersect(platform.moduleJars.get(jarName), modulesToBeScrambled)
+      if (!notScrambled.isEmpty()) {
+        context.messages.error("Module \'${notScrambled.first()}\' is included into $jarName which is not scrambled.")
+      }
+    }
+  }
+  return libDirMappings
+}
+
+fun processLibDirectoryLayout(moduleOutputPatcher: ModuleOutputPatcher,
+                              platform: PlatformLayout,
+                              context: BuildContext,
+                              copyFiles: Boolean): ForkJoinTask<List<DistributionFileEntry>> {
+  return createTask(spanBuilder("layout").setAttribute("path", context.paths.buildOutputDir
+    .relativize(context.paths.distAllDir).toString())) {
+    DistributionJARsBuilder.layout(platform, context.paths.distAllDir, copyFiles, moduleOutputPatcher, platform.moduleJars, context)
+  }
+}
+
+private fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher: ModuleOutputPatcher, context: BuildContext) {
+  if (!context.productProperties.reassignAltClickToMultipleCarets) {
+    return
+  }
+
+  val moduleName = "intellij.platform.resources"
+  val sourceFile = context.getModuleOutputDir((context.findModule(moduleName))!!).resolve("keymaps/\$default.xml")
+  var text = Files.readString(sourceFile)
+  text = text.replace("<mouse-shortcut keystroke=\"alt button1\"/>", "<mouse-shortcut keystroke=\"to be alt shift button1\"/>")
+  text = text.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>", "<mouse-shortcut keystroke=\"alt button1\"/>")
+  text = text.replace("<mouse-shortcut keystroke=\"to be alt shift button1\"/>", "<mouse-shortcut keystroke=\"alt shift button1\"/>")
+  moduleOutputPatcher.patchModuleOutput(moduleName, "keymaps/\$default.xml", text)
 }

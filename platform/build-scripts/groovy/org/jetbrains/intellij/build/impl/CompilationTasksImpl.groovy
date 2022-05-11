@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.NioFiles
@@ -8,6 +8,7 @@ import groovy.transform.CompileStatic
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
@@ -21,7 +22,7 @@ import java.util.function.Supplier
 import java.util.stream.Collectors
 
 @CompileStatic
-final class CompilationTasksImpl extends CompilationTasks {
+final class CompilationTasksImpl implements CompilationTasks {
   private final CompilationContext context
   private final PortableCompilationCache jpsCache
 
@@ -31,7 +32,7 @@ final class CompilationTasksImpl extends CompilationTasks {
   }
 
   @Override
-  void compileModules(Collection<String> moduleNames, List<String> includingTestsInModules) {
+  void compileModules(@Nullable Collection<String> moduleNames, @Nullable List<String> includingTestsInModules) {
     reuseCompiledClassesIfProvided()
     if (context.options.useCompiledClassesFromProjectOutput) {
       context.messages.info("Compilation skipped, the compiled classes from '${context.projectOutputDirectory}' will be used")

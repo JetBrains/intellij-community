@@ -69,7 +69,7 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
   val mainModuleToNonTrivialPlugin = HashMap<String, BuildItem>(bundledMainModuleNames.size)
   for (plugin in allNonTrivialPlugins) {
     if (bundledMainModuleNames.contains(plugin.mainModule)) {
-      val item = BuildItem(pluginsDir.resolve(DistributionJARsBuilder.getActualPluginDirectoryName(plugin, buildContext)), plugin)
+      val item = BuildItem(pluginsDir.resolve(getActualPluginDirectoryName(plugin, buildContext)), plugin)
       mainModuleToNonTrivialPlugin.put(plugin.mainModule, item)
     }
   }
@@ -81,7 +81,7 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
     var item = mainModuleToNonTrivialPlugin.get(mainModuleName)
     if (item == null) {
       val pluginLayout = PluginLayoutGroovy.plugin(mainModuleName)
-      val pluginDir = pluginsDir.resolve(DistributionJARsBuilder.getActualPluginDirectoryName(pluginLayout, buildContext))
+      val pluginDir = pluginsDir.resolve(getActualPluginDirectoryName(pluginLayout, buildContext))
       item = BuildItem(pluginDir, PluginLayoutGroovy.plugin(mainModuleName))
     }
     else {
@@ -120,10 +120,10 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
 private fun createLibClassPath(context: BuildContext, homePath: Path): String {
   val platformLayout = createPlatformLayout(emptySet(), context)
   val isPackagedLib = System.getProperty("dev.server.pack.lib") == "true"
-  val projectStructureMapping = DistributionJARsBuilder.processLibDirectoryLayout(ModuleOutputPatcher(),
-                                                                                  platformLayout,
-                                                                                  context,
-                                                                                  isPackagedLib).fork().join()
+  val projectStructureMapping = processLibDirectoryLayout(moduleOutputPatcher = ModuleOutputPatcher(),
+                                                          platform = platformLayout,
+                                                          context = context,
+                                                          copyFiles = isPackagedLib).fork().join()
   // for some reasons maybe duplicated paths - use set
   val classPath = LinkedHashSet<String>()
   if (isPackagedLib) {

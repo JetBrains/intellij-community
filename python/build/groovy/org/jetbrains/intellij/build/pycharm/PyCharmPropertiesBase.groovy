@@ -29,7 +29,7 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
   @Override
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
     def tasks = BuildTasks.create(context)
-    tasks.zipSourcesOfModules(["intellij.python.community", "intellij.python.psi"], "$targetDirectory/lib/src/pycharm-openapi-src.zip")
+    tasks.zipSourcesOfModules(["intellij.python.community", "intellij.python.psi"], Path.of("$targetDirectory/lib/src/pycharm-openapi-src.zip"))
 
     new FileSet(Path.of(getKeymapReferenceDirectory(context)))
       .include("*.pdf")

@@ -6,7 +6,6 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Formats
 import com.intellij.util.io.Decompressor
@@ -25,6 +24,8 @@ import org.jetbrains.intellij.build.impl.JarPackager.Companion.getLibraryName
 import org.jetbrains.intellij.build.impl.TracerManager.finish
 import org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
+import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.tasks.*
 import org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder.getLocalArtifactRepositoryRoot
 import org.jetbrains.jps.model.JpsGlobal
@@ -37,7 +38,6 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.*
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
-import java.io.File
 import java.lang.reflect.UndeclaredThrowableException
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -53,73 +53,7 @@ import java.util.function.Predicate
 import java.util.function.Supplier
 import java.util.stream.Collectors
 
-internal fun copyInspectScript(context: BuildContext, distBinDir: Path) {
-  val inspectScript = context.productProperties.inspectCommandName
-  if (inspectScript != "inspect") {
-    val targetPath = distBinDir.resolve("$inspectScript.sh")
-    Files.move(distBinDir.resolve("inspect.sh"), targetPath, StandardCopyOption.REPLACE_EXISTING)
-    context.patchInspectScript(targetPath)
-  }
-}
-
-internal fun copyDistFiles(buildContext: BuildContext, newDir: Path) {
-  Files.createDirectories(newDir)
-  for ((file, value) in buildContext.getDistFiles()) {
-    val dir = newDir.resolve(value)
-    Files.createDirectories(dir)
-    Files.copy(file, dir.resolve(file.fileName), StandardCopyOption.REPLACE_EXISTING)
-  }
-}
-
-internal fun generateBuildTxt(buildContext: BuildContext, targetDirectory: Path) {
-  Files.writeString(targetDirectory.resolve("build.txt"), buildContext.fullBuildNumber)
-}
-
-internal fun addDbusJava(context: CompilationContext, libDir: Path): List<String> {
-  val library = context.findRequiredModule("intellij.platform.credentialStore").libraryCollection.findLibrary("dbus-java")!!
-  val extraJars = ArrayList<String>()
-  Files.createDirectories(libDir)
-  for (file in library.getFiles(JpsOrderRootType.COMPILED)) {
-    BuildHelper.copyFileToDir(file.toPath(), libDir)
-    extraJars.add(file.name)
-  }
-  return extraJars
-}
-
-internal fun unpackPty4jNative(buildContext: BuildContext, distDir: Path, pty4jOsSubpackageName: String?): Path {
-  val pty4jNativeDir = distDir.resolve("lib/pty4j-native")
-  val nativePkg = "resources/com/pty4j/native"
-  for (file in buildContext.project.libraryCollection.findLibrary("pty4j")!!.getFiles(JpsOrderRootType.COMPILED)) {
-    val tempDir = Files.createTempDirectory(buildContext.paths.tempDir, file.name)
-    try {
-      Decompressor.Zip(file).withZipExtensions().extract(tempDir)
-      val nativeDir = tempDir.resolve(nativePkg)
-      if (Files.isDirectory(nativeDir)) {
-        for (child in nativeDir.toFile().listFiles()!!) {
-          val childName = child.name
-          if (pty4jOsSubpackageName == null || pty4jOsSubpackageName == childName) {
-            val dest = File(pty4jNativeDir.toFile(), childName)
-            FileUtilRt.createDirectory(dest)
-            FileUtil.copyDir(child, dest)
-          }
-        }
-      }
-    }
-    finally {
-      NioFiles.deleteRecursively(tempDir)
-    }
-  }
-
-  val files = Files.newDirectoryStream(pty4jNativeDir).use { dirStream ->
-    dirStream.asSequence().filter { Files.isRegularFile(it) }.toList()
-  }
-  if (files.isEmpty()) {
-    buildContext.messages.error("Cannot layout pty4j native: no files extracted")
-  }
-  return pty4jNativeDir
-}
-
-class BuildTasksImpl(val context: BuildContext) : BuildTasks() {
+class BuildTasksImpl(val context: BuildContext) : BuildTasks {
   override fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path, includeLibraries: Boolean) {
     zipSourcesOfModules(modules, targetFile, includeLibraries, context)
   }
@@ -222,7 +156,7 @@ class BuildTasksImpl(val context: BuildContext) : BuildTasks() {
         }
       }
       if (context.productProperties.buildCrossPlatformDistribution) {
-        if (distDirs.size == SUPPORTED_DISTRIBUTIONS!!.size) {
+        if (distDirs.size == 4) {
           context.executeStep("build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
             CrossPlatformDistributionBuilder.buildCrossPlatformZip(distDirs, context)
           }
@@ -540,15 +474,6 @@ class BuildTasksImpl(val context: BuildContext) : BuildTasks() {
   }
 }
 
-private class SupportedDistribution(@JvmField val os: OsFamily, @JvmField val arch: JvmArchitecture)
-
-private val SUPPORTED_DISTRIBUTIONS = java.util.List.of(
-  SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64),
-  SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64),
-  SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64),
-  SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64),
-)
-
 private fun isSourceFile(path: String): Boolean {
   return path.endsWith(".java") || path.endsWith(".groovy") || path.endsWith(".kt")
 }
@@ -620,9 +545,9 @@ private fun patchIdeaPropertiesFile(buildContext: BuildContext): Path {
 private fun layoutShared(context: BuildContext) {
   context.messages.block(spanBuilder("copy files shared among all distributions"), Supplier<Void?> {
     val licenseOutDir = context.paths.distAllDir.resolve("license")
-    BuildHelper.copyDir(context.paths.communityHomeDir.resolve("license"), licenseOutDir)
+    copyDir(context.paths.communityHomeDir.resolve("license"), licenseOutDir)
     for (additionalDirWithLicenses in context.productProperties.additionalDirectoriesWithLicenses) {
-      BuildHelper.copyDir(additionalDirWithLicenses, licenseOutDir)
+      copyDir(additionalDirWithLicenses, licenseOutDir)
     }
     context.applicationInfo.svgRelativePath?.let { svgRelativePath ->
       val from = findBrandingResource(svgRelativePath, context)
@@ -873,7 +798,7 @@ private fun buildSourcesArchive(projectStructureMapping: ProjectStructureMapping
                       context = context)
 }
 
-private fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path, includeLibraries: Boolean, context: BuildContext) {
+fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path, includeLibraries: Boolean, context: BuildContext) {
   context.executeStep(spanBuilder("build module sources archives")
                         .setAttribute("path", context.paths.buildOutputDir.relativize(targetFile).toString())
                         .setAttribute(AttributeKey.stringArrayKey("modules"), java.util.List.copyOf(modules)),
@@ -941,7 +866,13 @@ private fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path, i
         context.messages.debug("  skipped root $url: not a jar file")
       }
     }
-    BuildHelper.zipWithPrefixes(context, targetFile, zipFileMap, true)
+
+    spanBuilder("pack")
+      .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
+      .startSpan().useWithScope {
+        zip(targetFile, zipFileMap, compress = true)
+      }
+
     context.notifyArtifactWasBuilt(targetFile)
   }
 }

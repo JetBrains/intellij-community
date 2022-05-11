@@ -169,7 +169,7 @@ final class WinExeInstallerBuilder {
       context.messages.error("Windows installer wasn't created.")
     }
     context.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", installerFile.toString()), BuildOptions.WIN_SIGN_STEP) {
-      context.signFile(installerFile)
+      context.signFiles(List.of(installerFile), Collections.emptyMap())
     }
     context.notifyArtifactWasBuilt(installerFile)
     return installerFile

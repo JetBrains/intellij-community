@@ -32,7 +32,7 @@ import java.util.function.*
 import java.util.stream.Collectors
 
 @CompileStatic
-final class BuildContextImpl extends BuildContext {
+final class BuildContextImpl implements BuildContext {
   final ProductProperties productProperties
   final WindowsDistributionCustomizer windowsDistributionCustomizer
   final LinuxDistributionCustomizer linuxDistributionCustomizer

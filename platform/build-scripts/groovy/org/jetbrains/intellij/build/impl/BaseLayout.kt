@@ -11,9 +11,6 @@ import org.jetbrains.annotations.ApiStatus
 open class BaseLayout {
   companion object {
     const val APP_JAR = "app.jar"
-
-    @JvmStatic
-    fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')
   }
 
   /** JAR name (or path relative to 'lib' directory) to names of modules */
@@ -59,14 +56,14 @@ open class BaseLayout {
 
       // allow to put module to several JARs if JAR located in another dir
       // (e.g. intellij.spring.customNs packed into main JAR and customNs/customNs.jar)
-      if (!previousJarPath.contains("/") && !relativeJarPath.contains("/")) {
+      if (!previousJarPath.contains("/") && !relativeJarPath.contains('/')) {
         error("$moduleName cannot be packed into $relativeJarPath because it is already configured to be packed into $previousJarPath")
       }
     }
   }
 
   open fun withModule(moduleName: String) {
-    withModuleImpl(moduleName, convertModuleNameToFileName(moduleName) + ".jar")
+    withModuleImpl(moduleName, "${convertModuleNameToFileName(moduleName)}.jar")
   }
 
   protected fun withModuleImpl(moduleName: String, jarPath: String) {
@@ -82,3 +79,5 @@ open class BaseLayout {
     moduleExcludes.putValue(moduleName, excludedPattern)
   }
 }
+
+internal fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')

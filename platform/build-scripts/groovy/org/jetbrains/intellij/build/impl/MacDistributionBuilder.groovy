@@ -108,11 +108,11 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     layoutMacApp(ideaProperties, platformProperties, getDocTypes(), macDistDir, buildContext)
 
-    BuildTasksImplKt.unpackPty4jNative(buildContext, macDistDir, "darwin")
+    DistUtilKt.unpackPty4jNative(buildContext, macDistDir, "darwin")
 
-    BuildTasksImplKt.generateBuildTxt(buildContext, macDistDir.resolve("Resources"))
+    DistUtilKt.generateBuildTxt(buildContext, macDistDir.resolve("Resources"))
     if (copyDistFiles) {
-      BuildTasksImplKt.copyDistFiles(buildContext, macDistDir)
+      DistUtilKt.copyDistFiles(buildContext, macDistDir)
     }
 
     customizer.copyAdditionalFiles(buildContext, macDistDir.toString())

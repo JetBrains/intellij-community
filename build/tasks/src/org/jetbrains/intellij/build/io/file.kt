@@ -11,6 +11,19 @@ import java.util.function.Predicate
 @PublishedApi
 internal val W_CREATE_NEW = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
 
+fun copyFileToDir(file: Path, targetDir: Path) {
+  doCopyFile(file, targetDir.resolve(file.fileName), targetDir)
+}
+
+fun copyFile(file: Path, target: Path) {
+  doCopyFile(file, target, target.parent)
+}
+
+private fun doCopyFile(file: Path, target: Path, targetDir: Path) {
+  Files.createDirectories(targetDir)
+  Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES)
+}
+
 fun copyDir(sourceDir: Path, targetDir: Path, dirFilter: Predicate<Path>? = null, fileFilter: Predicate<Path>? = null) {
   Files.createDirectories(targetDir)
   Files.walkFileTree(sourceDir, CopyDirectoryVisitor(

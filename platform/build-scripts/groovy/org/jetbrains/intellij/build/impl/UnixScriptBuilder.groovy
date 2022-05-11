@@ -78,7 +78,7 @@ final class UnixScriptBuilder {
           copyScript(file, target, baseName, additionalJvmArgs, defaultXmxParameter, classPath, scriptName, context)
         }
       }
-      BuildTasksImplKt.copyInspectScript(context, distBinDir)
+      DistUtilKt.copyInspectScript(context, distBinDir)
     }
     else if (osFamily == OsFamily.MACOS) {
       copyScript(sourceScriptDir.resolve(REMOTE_DEV_SCRIPT_FILE_NAME), distBinDir.resolve(REMOTE_DEV_SCRIPT_FILE_NAME),
