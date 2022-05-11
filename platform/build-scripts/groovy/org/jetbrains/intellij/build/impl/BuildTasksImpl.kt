@@ -47,7 +47,6 @@ import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
 import java.util.*
 import java.util.concurrent.ForkJoinTask
-import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -218,20 +217,24 @@ class BuildTasksImpl(val context: BuildContext) : BuildTasks {
     checkModules(properties.additionalModulesToCompile, "productProperties.additionalModulesToCompile")
     checkModules(properties.modulesToCompileTests, "productProperties.modulesToCompileTests")
 
-    val winCustomizer = context.windowsDistributionCustomizer
-    checkPaths(listOfNotNull(winCustomizer.icoPath), "productProperties.windowsCustomizer.icoPath")
-    checkPaths(listOfNotNull(winCustomizer.icoPathForEAP), "productProperties.windowsCustomizer.icoPathForEAP")
-    checkPaths(listOfNotNull(winCustomizer.installerImagesPath), "productProperties.windowsCustomizer.installerImagesPath")
+    context.windowsDistributionCustomizer?.let { winCustomizer ->
+      checkPaths(listOfNotNull(winCustomizer.icoPath), "productProperties.windowsCustomizer.icoPath")
+      checkPaths(listOfNotNull(winCustomizer.icoPathForEAP), "productProperties.windowsCustomizer.icoPathForEAP")
+      checkPaths(listOfNotNull(winCustomizer.installerImagesPath), "productProperties.windowsCustomizer.installerImagesPath")
+    }
 
-    checkPaths(listOfNotNull(context.linuxDistributionCustomizer.iconPngPath), "productProperties.linuxCustomizer.iconPngPath")
-    checkPaths(listOfNotNull(context.linuxDistributionCustomizer.iconPngPathForEAP), "productProperties.linuxCustomizer.iconPngPathForEAP")
+    context.linuxDistributionCustomizer?.let { linuxDistributionCustomizer ->
+      checkPaths(listOfNotNull(linuxDistributionCustomizer.iconPngPath), "productProperties.linuxCustomizer.iconPngPath")
+      checkPaths(listOfNotNull(linuxDistributionCustomizer.iconPngPathForEAP), "productProperties.linuxCustomizer.iconPngPathForEAP")
+    }
 
-    val macCustomizer = context.macDistributionCustomizer
-    checkMandatoryField(macCustomizer.bundleIdentifier, "productProperties.macCustomizer.bundleIdentifier")
-    checkMandatoryPath(macCustomizer.icnsPath, "productProperties.macCustomizer.icnsPath")
-    checkPaths(listOfNotNull(macCustomizer.icnsPathForEAP), "productProperties.macCustomizer.icnsPathForEAP")
-    checkMandatoryPath(macCustomizer.dmgImagePath, "productProperties.macCustomizer.dmgImagePath")
-    checkPaths(listOfNotNull(macCustomizer.dmgImagePathForEAP), "productProperties.macCustomizer.dmgImagePathForEAP")
+    context.macDistributionCustomizer?.let { macCustomizer ->
+      checkMandatoryField(macCustomizer.bundleIdentifier, "productProperties.macCustomizer.bundleIdentifier")
+      checkMandatoryPath(macCustomizer.icnsPath, "productProperties.macCustomizer.icnsPath")
+      checkPaths(listOfNotNull(macCustomizer.icnsPathForEAP), "productProperties.macCustomizer.icnsPathForEAP")
+      checkMandatoryPath(macCustomizer.dmgImagePath, "productProperties.macCustomizer.dmgImagePath")
+      checkPaths(listOfNotNull(macCustomizer.dmgImagePathForEAP), "productProperties.macCustomizer.dmgImagePathForEAP")
+    }
 
     checkModules(properties.mavenArtifacts.additionalModules, "productProperties.mavenArtifacts.additionalModules")
     checkModules(properties.mavenArtifacts.squashedModules, "productProperties.mavenArtifacts.squashedModules")
@@ -496,9 +499,11 @@ private fun buildProvidedModuleList(targetFile: Path, state: DistributionBuilder
     Files.deleteIfExists(targetFile)
     val ideClasspath = DistributionJARsBuilder(state).createIdeClassPath(context)
     // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-    BuildHelper.runApplicationStarter(context, context.paths.tempDir.resolve("builtinModules"), ideClasspath,
-                                      listOf("listBundledPlugins", targetFile.toString()), emptyMap(), null,
-                                      TimeUnit.MINUTES.toMillis(10L), context.classpathCustomizer)
+    runApplicationStarter(context = context,
+                          tempDir = context.paths.tempDir.resolve("builtinModules"),
+                          ideClasspath = ideClasspath,
+                          arguments = listOf("listBundledPlugins", targetFile.toString()),
+                          classpathCustomizer = context.classpathCustomizer)
     if (Files.notExists(targetFile)) {
       context.messages.error("Failed to build provided modules list: $targetFile doesn\'t exist")
     }

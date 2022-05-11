@@ -6,13 +6,12 @@ import org.jetbrains.intellij.build.impl.BuiltinModulesFileData
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
-import java.util.function.UnaryOperator
 
 interface BuildContext: CompilationContext {
   val productProperties: ProductProperties
-  val windowsDistributionCustomizer: WindowsDistributionCustomizer
-  val linuxDistributionCustomizer: LinuxDistributionCustomizer
-  val macDistributionCustomizer: MacDistributionCustomizer
+  val windowsDistributionCustomizer: WindowsDistributionCustomizer?
+  val linuxDistributionCustomizer: LinuxDistributionCustomizer?
+  val macDistributionCustomizer: MacDistributionCustomizer?
   val proprietaryBuildTools: ProprietaryBuildTools
 
   val applicationInfo: ApplicationInfoProperties
@@ -46,7 +45,7 @@ interface BuildContext: CompilationContext {
   /**
    * Allows to customize classpath for buildSearchableOptions and builtinModules
    */
-  val classpathCustomizer: UnaryOperator<Set<String>>
+  val classpathCustomizer: (MutableSet<String>) -> Unit
 
   /**
    * Add file to be copied into application.

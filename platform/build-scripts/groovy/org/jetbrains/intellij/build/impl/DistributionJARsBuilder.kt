@@ -46,9 +46,7 @@ import java.time.ZonedDateTime
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ForkJoinTask
-import java.util.concurrent.TimeUnit
 import java.util.function.Predicate
-import java.util.function.UnaryOperator
 import java.util.stream.Collectors
 
 /**
@@ -127,9 +125,9 @@ class DistributionJARsBuilder {
     private fun createBuildBrokenPluginListTask(context: BuildContext): ForkJoinTask<*>? {
       val buildString = context.fullBuildNumber
       val targetFile = context.paths.tempDir.resolve("brokenPlugins.db")
-      return BuildHelper.createSkippableTask(spanBuilder("build broken plugin list")
-                                               .setAttribute("buildNumber", buildString)
-                                               .setAttribute("path", targetFile.toString()), BuildOptions.BROKEN_PLUGINS_LIST_STEP, context) {
+      return createSkippableTask(spanBuilder("build broken plugin list")
+                                   .setAttribute("buildNumber", buildString)
+                                   .setAttribute("path", targetFile.toString()), BuildOptions.BROKEN_PLUGINS_LIST_STEP, context) {
         buildBrokenPlugins(targetFile, buildString, context.options.isInDevelopmentMode)
         if (Files.exists(targetFile)) {
           context.addDistFile(java.util.Map.entry(targetFile, "bin"))
@@ -154,8 +152,8 @@ class DistributionJARsBuilder {
     }
 
     private fun buildThirdPartyLibrariesList(projectStructureMapping: ProjectStructureMapping, context: BuildContext): ForkJoinTask<*>? {
-      return BuildHelper.createSkippableTask(spanBuilder("generate table of licenses for used third-party libraries"),
-                                             BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP, context) {
+      return createSkippableTask(spanBuilder("generate table of licenses for used third-party libraries"),
+                                 BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP, context) {
         val generator = LibraryLicensesListGenerator.create(context.project, context.productProperties.allLibraryLicenses,
                                                             projectStructureMapping.includedModules)
         generator.generateHtml(getThirdPartyLibrariesHtmlFilePath(context))
@@ -283,7 +281,7 @@ class DistributionJARsBuilder {
       // patchers must be executed _before_ pack because patcher patches module output
       if (copyFiles && layout is PluginLayout && !layout.patchers.isEmpty()) {
         val patchers = layout.patchers
-        BuildHelper.span(spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong())) {
+        spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).startSpan().useWithScope {
           for (patcher in patchers) {
             patcher.accept(moduleOutputPatcher, context)
           }
@@ -428,8 +426,9 @@ class DistributionJARsBuilder {
     validateModuleStructure(context)
     val svgPrebuildTask = createPrebuildSvgIconsTask(context)?.fork()
     val brokenPluginsTask = createBuildBrokenPluginListTask(context)?.fork()
-    BuildHelper.createSkippableTask(spanBuilder("build searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP,
-                                    context) { buildSearchableOptions(context) }!!.fork().join()
+    createSkippableTask(spanBuilder("build searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, context) {
+      buildSearchableOptions(context)
+    }?.fork()?.join()
     val pluginLayouts = getPluginsByModules(context.productProperties.productLayout.bundledPluginModules, context)
     val antDir = if (context.productProperties.isAntRequired) context.paths.distAllDir.resolve("lib/ant") else null
     val antTargetFile = antDir?.resolve("lib/ant.jar")
@@ -523,25 +522,27 @@ class DistributionJARsBuilder {
    * Build index which is used to search options in the Settings dialog.
    */
   @JvmOverloads
-  fun buildSearchableOptions(buildContext: BuildContext,
-                             classpathCustomizer: UnaryOperator<Set<String>>? = null,
+  fun buildSearchableOptions(context: BuildContext,
+                             classpathCustomizer: ((MutableSet<String>) -> Unit)? = null,
                              systemProperties: Map<String, Any> = emptyMap()): Path? {
     val span = Span.current()
-    if (buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
+    if (context.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
       span.addEvent("skip building searchable options index")
       return null
     }
 
-    val ideClasspath = createIdeClassPath(buildContext)
-    val targetDirectory = getSearchableOptionsDir(buildContext)
-    val messages = buildContext.messages
+    val ideClasspath = createIdeClassPath(context)
+    val targetDirectory = getSearchableOptionsDir(context)
+    val messages = context.messages
     NioFiles.deleteRecursively(targetDirectory)
     // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
     // It'll process all UI elements in Settings dialog and build index for them.
-    BuildHelper.runApplicationStarter(buildContext, buildContext.paths.tempDir.resolve("searchableOptions"), ideClasspath,
-                                      listOf("traverseUI", targetDirectory.toString(), "true"), systemProperties,
-                                      emptyList(),
-                                      TimeUnit.MINUTES.toMillis(10L), classpathCustomizer)
+    runApplicationStarter(context = context,
+                          tempDir = context.paths.tempDir.resolve("searchableOptions"),
+                          ideClasspath = ideClasspath,
+                          arguments = listOf("traverseUI", targetDirectory.toString(), "true"),
+                          systemProperties = systemProperties,
+                          classpathCustomizer = classpathCustomizer)
     if (!Files.isDirectory(targetDirectory)) {
       messages.error("Failed to build searchable options index: $targetDirectory does not exist. " +
                      "See log above for error output from traverseUI run.")
@@ -838,10 +839,10 @@ class DistributionJARsBuilder {
     val entries = ForkJoinTask.invokeAll(tasks).flatMap { it.rawResult }
     if (!scrambleTasks.isEmpty()) {
       // scrambling can require classes from platform
-      buildPlatformTask?.let {
-        BuildHelper.span(spanBuilder("wait for platform lib for scrambling"), it::join)
+      buildPlatformTask?.let { task ->
+        spanBuilder("wait for platform lib for scrambling").startSpan().useWithScope { task.join() }
       }
-      BuildHelper.invokeAllSettled(scrambleTasks)
+      invokeAllSettled(scrambleTasks)
     }
     return entries
   }

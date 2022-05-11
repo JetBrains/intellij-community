@@ -44,14 +44,14 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void copyFilesForOsDistribution(@NotNull Path unixDistPath, JvmArchitecture arch) {
-    BuildHelper.span(spanBuilder("copy files for os distribution")
+    BuildHelperKt.span(spanBuilder("copy files for os distribution")
                        .setAttribute("os", targetOs.osName)
                        .setAttribute("arch", arch?.name()), new Runnable() {
       @Override
       void run() {
         Path distBinDir = unixDistPath.resolve("bin")
 
-        BuildHelper.copyDir(buildContext.paths.communityHomeDir.resolve("bin/linux"), distBinDir)
+        FileKt.copyDir(buildContext.paths.communityHomeDir.resolve("bin/linux"), distBinDir)
         DistUtilKt.unpackPty4jNative(buildContext, unixDistPath, "linux")
         DistUtilKt.generateBuildTxt(buildContext, unixDistPath)
         DistUtilKt.copyDistFiles(buildContext, unixDistPath)
@@ -253,7 +253,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.messages.progress("Preparing files")
 
       Path unixSnapDistPath = buildContext.paths.buildOutputDir.resolve("dist.unix.snap")
-      BuildHelper.copyDir(unixDistPath, unixSnapDistPath)
+      FileKt.copyDir(unixDistPath, unixSnapDistPath)
 
       String productName = buildContext.applicationInfo.productNameWithEdition
 
@@ -270,7 +270,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         ]
       )
 
-      BuildHelper.moveFile(iconPngPath, snapDir.resolve(customizer.snapName + ".png"))
+      FileKt.moveFile(iconPngPath, snapDir.resolve(customizer.snapName + ".png"))
 
       Path snapcraftTemplate = buildContext.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/snap/snapcraft-template.yaml")
       String versionSuffix = buildContext.applicationInfo.versionSuffix?.replace(' ', '-') ?: ""
@@ -339,7 +339,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
                              "result/$snapArtifact".toString(),
                            ], snapDir, buildContext.messages)
 
-      BuildHelper.moveFileToDir(resultDir.resolve(snapArtifact), buildContext.paths.artifactDir)
+      FileKt.moveFileToDir(resultDir.resolve(snapArtifact), buildContext.paths.artifactDir)
       buildContext.notifyArtifactWasBuilt(buildContext.paths.artifactDir.resolve(snapArtifact))
     }
   }

@@ -6,7 +6,6 @@ import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 
 import java.nio.file.Path
-import java.nio.file.Paths
 
 @CompileStatic
 final class IdeaCommunityBuilder {
@@ -49,7 +48,7 @@ final class IdeaCommunityBuilder {
     }
   }
 
-  void buildUnpackedDistribution(String targetDirectory) {
-    BuildTasks.create(buildContext).buildUnpackedDistribution(Paths.get(targetDirectory), false)
+  void buildUnpackedDistribution(Path targetDirectory) {
+    BuildTasks.create(buildContext).buildUnpackedDistribution(targetDirectory, false)
   }
 }

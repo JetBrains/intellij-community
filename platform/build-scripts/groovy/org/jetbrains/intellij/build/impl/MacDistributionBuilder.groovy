@@ -6,6 +6,8 @@ import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
 import kotlin.Pair
+import kotlin.Unit
+import kotlin.jvm.functions.Function0
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
@@ -206,30 +208,32 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     String archStr = arch.name()
     // with JRE
     if (context.options.buildDmgWithBundledJre) {
-      tasks.add(BuildHelper.createSkippableTask(
+      tasks.add(BuildHelperKt.createSkippableTask(
         spanBuilder("build DMG with JRE").setAttribute("arch", archStr),
         "${BuildOptions.MAC_ARTIFACTS_STEP}_jre_$archStr",
         context,
-        new Runnable() {
+        new Function0<Unit>() {
           @Override
-          void run() {
+          Unit invoke() {
             Path jreArchive = jreManager.findArchive(BundledRuntimeImpl.getProductPrefix(context), OsFamily.MACOS, arch)
             MacDmgBuilder.signAndBuildDmg(context, customizer, context.proprietaryBuildTools.macHostProperties, macZip,
                                           jreArchive, suffix, notarize)
+            return null
           }
         }))
     }
 
     // without JRE
     if (context.options.buildDmgWithoutBundledJre) {
-      tasks.add(BuildHelper.createSkippableTask(
+      tasks.add(BuildHelperKt.createSkippableTask(
         spanBuilder("build DMG without JRE").setAttribute("arch", archStr),
         "${BuildOptions.MAC_ARTIFACTS_STEP}_no_jre_$archStr",
-        context, new Runnable() {
+        context, new Function0<Unit>() {
         @Override
-        void run() {
+        Unit invoke() {
           MacDmgBuilder.signAndBuildDmg(context, customizer, context.proprietaryBuildTools.macHostProperties, macZip,
                                         null, "-no-jdk$suffix", notarize)
+          return null
         }
       }))
     }
@@ -242,10 +246,10 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
                             Path macDistDir,
                             BuildContext context) {
     MacDistributionCustomizer macCustomizer = customizer
-    BuildHelper.copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"),
+    BuildHelperKt.copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"),
                                       macDistDir.resolve("bin"),
                                       customizer.binFilesFilter)
-    BuildHelper.copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
+    FileKt.copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
 
     String executable = context.productProperties.baseFileName
     Files.move(macDistDir.resolve("MacOS/executable"), macDistDir.resolve("MacOS/$executable"))
@@ -253,14 +257,14 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     //noinspection SpellCheckingInspection
     Path icnsPath = Path.of((context.applicationInfo.isEAP() ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath)
     Path resourcesDistDir = macDistDir.resolve("Resources")
-    BuildHelper.copyFile(icnsPath, resourcesDistDir.resolve(targetIcnsFileName))
+    FileKt.copyFile(icnsPath, resourcesDistDir.resolve(targetIcnsFileName))
 
     for (FileAssociation fileAssociation in customizer.fileAssociations) {
       if (!fileAssociation.iconPath.empty) {
         Path source = Path.of(fileAssociation.iconPath)
         Path dest = resourcesDistDir.resolve(source.fileName)
         Files.deleteIfExists(dest)
-        BuildHelper.copyFile(source, dest)
+        FileKt.copyFile(source, dest)
       }
     }
 

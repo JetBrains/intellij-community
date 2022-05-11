@@ -15,6 +15,16 @@ fun copyFileToDir(file: Path, targetDir: Path) {
   doCopyFile(file, targetDir.resolve(file.fileName), targetDir)
 }
 
+fun moveFile(source: Path, target: Path) {
+  Files.createDirectories(target.parent)
+  Files.move(source, target)
+}
+
+fun moveFileToDir(file: Path, targetDir: Path) {
+  Files.createDirectories(targetDir)
+  Files.move(file, targetDir.resolve(file.fileName))
+}
+
 fun copyFile(file: Path, target: Path) {
   doCopyFile(file, target, target.parent)
 }
@@ -24,6 +34,7 @@ private fun doCopyFile(file: Path, target: Path, targetDir: Path) {
   Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES)
 }
 
+@JvmOverloads
 fun copyDir(sourceDir: Path, targetDir: Path, dirFilter: Predicate<Path>? = null, fileFilter: Predicate<Path>? = null) {
   Files.createDirectories(targetDir)
   Files.walkFileTree(sourceDir, CopyDirectoryVisitor(

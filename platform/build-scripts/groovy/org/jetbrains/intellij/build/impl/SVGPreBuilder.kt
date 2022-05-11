@@ -18,7 +18,7 @@ external process does not take too much time, and it's much easier to reason abo
 */
 object SVGPreBuilder {
   fun createPrebuildSvgIconsTask(context: BuildContext): ForkJoinTask<*>? {
-    return BuildHelper.createSkippableTask(spanBuilder("prebuild SVG icons"), BuildOptions.SVGICONS_PREBUILD_STEP, context) {
+    return createSkippableTask(spanBuilder("prebuild SVG icons"), BuildOptions.SVGICONS_PREBUILD_STEP, context) {
       val requestBuilder = StringBuilder()
       // build for all modules - so, icon db will be suitable for any non-bundled plugin
       for (module in context.project.modules) {
@@ -36,12 +36,12 @@ object SVGPreBuilder {
 
   private fun runSvgTool(context: BuildContext, svgToolClasspath: List<String>, requestFile: Path) {
     val dbDir = context.paths.tempDir.resolve("icons.db.dir")
-    BuildHelper.runJava(
-      context,
-      "org.jetbrains.intellij.build.images.ImageSvgPreCompiler",
-      listOf(dbDir.toString(), requestFile.toString()) + context.applicationInfo.svgProductIcons,
-      listOf("-Xmx1024m"),
-      svgToolClasspath
+    runJava(
+      context = context,
+      mainClass = "org.jetbrains.intellij.build.images.ImageSvgPreCompiler",
+      args = listOf(dbDir.toString(), requestFile.toString()) + context.applicationInfo.svgProductIcons,
+      jvmArgs = listOf("-Xmx1024m"),
+      classPath = svgToolClasspath
     )
 
     Files.newDirectoryStream(dbDir).use { dirStream ->

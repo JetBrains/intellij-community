@@ -9,6 +9,8 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Scope
+import kotlin.Unit
+import kotlin.jvm.functions.Function1
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
@@ -42,7 +44,12 @@ final class BuildContextImpl implements BuildContext {
   final String buildNumber
   List<String> XBootClassPathJarNames
   List<String> bootClassPathJarNames
-  UnaryOperator<Set<String>> classpathCustomizer = UnaryOperator.identity()
+  Function1<Set<String>, Unit> classpathCustomizer = new Function1<Set<String>, Unit>() {
+    @Override
+    Unit invoke(Set<String> strings) {
+      return null
+    }
+  }
 
   final ApplicationInfoProperties applicationInfo
 
@@ -510,13 +517,13 @@ final class BuildContextImpl implements BuildContext {
   }
 
   @Override
-  UnaryOperator<Set<String>> getClasspathCustomizer() {
+  Function1<Set<String>, Unit> getClasspathCustomizer() {
     return classpathCustomizer
   }
 
   // External use from Rider
   @SuppressWarnings('unused')
-  void setClasspathCustomizer(UnaryOperator<Set<String>> classpathCustomizer) {
+  void setClasspathCustomizer(Function1<Set<String>, Unit> classpathCustomizer) {
     this.classpathCustomizer = classpathCustomizer
   }
 }

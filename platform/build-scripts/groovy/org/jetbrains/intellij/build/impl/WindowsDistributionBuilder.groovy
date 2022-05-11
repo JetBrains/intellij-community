@@ -310,7 +310,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       classpath.add(icoFilesDirectory.toString())
       classpath.add(buildContext.getModuleOutputDir(buildContext.findRequiredModule("intellij.platform.util.jdom")).toString())
 
-      BuildHelper.runJava(
+      BuildHelperKt.runJava(
         buildContext,
         "com.pme.launcher.LauncherGeneratorMain",
         [
@@ -365,7 +365,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
       String zipPrefix = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
       List<Path> dirs = [context.paths.distAllDir, winDistPath, productJsonDir] + jreDirectoryPaths
-      BuildHelper.zipWithPrefix(context, targetFile, dirs, zipPrefix, true)
+      BuildHelperKt.zipWithPrefix(context, targetFile, dirs, zipPrefix, true)
       ProductInfoValidator.checkInArchive(context, targetFile, zipPrefix)
       context.notifyArtifactWasBuilt(targetFile)
       return targetFile

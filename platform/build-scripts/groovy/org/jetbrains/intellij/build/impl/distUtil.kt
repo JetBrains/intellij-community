@@ -1,15 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Decompressor
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.jps.model.library.JpsOrderRootType
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -17,18 +15,21 @@ import java.nio.file.StandardCopyOption
 internal fun unpackPty4jNative(context: BuildContext, distDir: Path, pty4jOsSubpackageName: String?): Path {
   val pty4jNativeDir = distDir.resolve("lib/pty4j-native")
   val nativePkg = "resources/com/pty4j/native"
-  for (file in context.project.libraryCollection.findLibrary("pty4j")!!.getFiles(JpsOrderRootType.COMPILED)) {
-    val tempDir = Files.createTempDirectory(context.paths.tempDir, file.name)
+  var copied = false
+  for (file in context.project.libraryCollection.findLibrary("pty4j")!!.getPaths(JpsOrderRootType.COMPILED)) {
+    val tempDir = Files.createTempDirectory(context.paths.tempDir, file.fileName.toString())
     try {
       Decompressor.Zip(file).withZipExtensions().extract(tempDir)
       val nativeDir = tempDir.resolve(nativePkg)
       if (Files.isDirectory(nativeDir)) {
-        for (child in nativeDir.toFile().listFiles()!!) {
-          val childName = child.name
-          if (pty4jOsSubpackageName == null || pty4jOsSubpackageName == childName) {
-            val dest = File(pty4jNativeDir.toFile(), childName)
-            FileUtilRt.createDirectory(dest)
-            FileUtil.copyDir(child, dest)
+        Files.newDirectoryStream(nativeDir).use { stream ->
+          for (child in stream) {
+            val childName = child.fileName.toString()
+            if (pty4jOsSubpackageName == null || pty4jOsSubpackageName == childName) {
+              val dest = pty4jNativeDir.resolve(childName)
+              copied = true
+              copyDir(child, Files.createDirectories(dest))
+            }
           }
         }
       }
@@ -38,10 +39,7 @@ internal fun unpackPty4jNative(context: BuildContext, distDir: Path, pty4jOsSubp
     }
   }
 
-  val files = Files.newDirectoryStream(pty4jNativeDir).use { dirStream ->
-    dirStream.asSequence().filter { Files.isRegularFile(it) }.toList()
-  }
-  if (files.isEmpty()) {
+  if (!copied) {
     context.messages.error("Cannot layout pty4j native: no files extracted")
   }
   return pty4jNativeDir

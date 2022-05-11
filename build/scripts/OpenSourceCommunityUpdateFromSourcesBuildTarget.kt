@@ -28,6 +28,6 @@ object OpenSourceCommunityUpdateFromSourcesBuildTarget {
     //when IDEA CE is updated from IDEA UE sources project should be loaded from IDEA UE directory
     val projectHome = System.getProperty("devIdeaHome")?.let { Path.of(it) } ?: communityHome
     IdeaCommunityBuilder(communityHome, options, projectHome)
-      .buildUnpackedDistribution("${options.outputRootPath}/$distOutputRelativePath")
+      .buildUnpackedDistribution(Path.of("${options.outputRootPath}/$distOutputRelativePath").normalize())
   }
 }

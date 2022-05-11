@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.io.FileKt
 import org.jetbrains.intellij.build.io.ProcessKt
 
 import java.nio.file.*
@@ -85,7 +86,7 @@ final class WinExeInstallerBuilder {
       context.messages.info("JRE won't be bundled with Windows installer because JRE archive is missing")
     }
 
-    BuildHelper.copyDir(context.paths.communityHomeDir.resolve("build/conf/nsis"), nsiConfDir)
+    FileKt.copyDir(context.paths.communityHomeDir.resolve("build/conf/nsis"), nsiConfDir)
 
     generateInstallationConfigFileForSilentMode()
 
