@@ -595,6 +595,7 @@ class TestingTasksImpl extends TestingTasks {
     if (testClasses.size() == 0) {
       context.messages.error("No tests were found in $root with $pattern")
     }
+    def noTestsInAllClasses = true
     testClasses.forEach { Path path ->
       String qName = FileUtilRt.getNameWithoutExtension(root.relativize(path).toString()).replaceAll("/", ".")
       List<Path> files = new ArrayList<Path>(testClasspath.size())
@@ -620,13 +621,15 @@ class TestingTasksImpl extends TestingTasks {
           noTests &= exitCode3 == NO_TESTS_ERROR
         }
 
-        if (noTests) {
-          context.messages.error("No tests were found in $qName")
-        }
+        noTestsInAllClasses &= noTests
       }
       catch (Throwable e) {
         context.messages.error("Failed to process $qName", e)
       }
+    }
+
+    if (noTestsInAllClasses) {
+      context.messages.error("No tests were found in $mainModule")
     }
   }
 
