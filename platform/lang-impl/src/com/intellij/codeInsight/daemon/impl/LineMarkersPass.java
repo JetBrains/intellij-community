@@ -295,6 +295,17 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
   }
 
   enum Mode {
-    FAST, SLOW, ALL
+    /**
+     * To constraint collection of <code>{@link LineMarkerInfo}</code>s to only <code>{@link LineMarkerProvider#getLineMarkerInfo(PsiElement)}</code>.
+     */
+    FAST,
+    /**
+     * To constraint collection of <code>{@link LineMarkerInfo}</code>s to only for injected languages and <code>{@link LineMarkerProvider#collectSlowLineMarkers(List, Collection)}</code>.
+     */
+    SLOW,
+    /**
+     * No any constraints, collect all <code>{@link LineMarkerInfo}</code>s
+     */
+    ALL
   }
 }
