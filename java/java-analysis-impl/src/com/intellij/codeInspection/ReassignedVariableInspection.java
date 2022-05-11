@@ -74,7 +74,9 @@ public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectio
       PsiElement referenceNameElement = expression.getReferenceNameElement();
       if (referenceNameElement != null) {
         PsiElement resolve = expression.resolve();
-        if (resolve instanceof PsiVariable && !((PsiVariable)resolve).hasModifierProperty(PsiModifier.FINAL)) {
+        if (resolve instanceof PsiVariable && 
+            !((PsiVariable)resolve).hasModifierProperty(PsiModifier.FINAL) &&
+            !SuppressManager.getInstance().isSuppressedFor(resolve, "ReassignedVariable")) {
           if (resolve instanceof PsiLocalVariable) {
             if (HighlightControlFlowUtil.isReassigned((PsiVariable)resolve, myLocals)) {
               myHolder.registerProblem(referenceNameElement, getReassignedMessage((PsiVariable)resolve));

@@ -35,7 +35,9 @@ public class JavaSymbolHighlightingTest extends LightDaemonAnalyzerTestCase {
     configureFromFileText("Test.java",
                           "class Test {\n" +
                           "  void foo() {\n" +
-                          "    @SuppressWarnings(\"ReassignedVariable\") int x = 0;\n" +
+                          "    @SuppressWarnings(\"ReassignedVariable\") int y = 0;\n" +
+                          "    y = 7; " +
+                          "    int x = 0;\n" +
                           "    <text_attr descr=\"Reassigned local variable\">x</text_attr> = 1;\n" +
                           "  }\n" +
                           "  \n" +
