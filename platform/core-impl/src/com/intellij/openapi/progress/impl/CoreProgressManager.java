@@ -48,7 +48,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private final AtomicInteger myUnsafeProgressCount = new AtomicInteger(0);
 
   public static final boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));
-  
+
   private static CheckCanceledHook ourCheckCanceledHook;
   private ScheduledFuture<?> myCheckCancelledFuture; // guarded by threadsUnderIndicator
 
@@ -126,9 +126,12 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   @ApiStatus.Internal
-  public static boolean runCheckCanceledHooks(@Nullable ProgressIndicator indicator) {
-    CheckCanceledHook hook = ourCheckCanceledHook;
-    return hook != null && hook.runHook(indicator);
+  public boolean runCheckCanceledHooks(@Nullable ProgressIndicator indicator) {
+    return false;
+  }
+  @ApiStatus.Internal
+  protected boolean hasCheckCanceledHooks() {
+    return false;
   }
 
   @Override
@@ -724,18 +727,11 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   final void updateShouldCheckCanceled() {
     synchronized (threadsUnderIndicator) {
-      CheckCanceledHook hook = createCheckCanceledHook();
       boolean hasCanceledIndicator = !threadsUnderCanceledIndicator.isEmpty();
-      ourCheckCanceledHook = hook;
-      ourCheckCanceledBehavior = hook == null && !hasCanceledIndicator ? CheckCanceledBehavior.NONE :
+      ourCheckCanceledBehavior = !hasCheckCanceledHooks() && !hasCanceledIndicator ? CheckCanceledBehavior.NONE :
                                  hasCanceledIndicator && ENABLED ? CheckCanceledBehavior.INDICATOR_PLUS_HOOKS :
                                  CheckCanceledBehavior.ONLY_HOOKS;
     }
-  }
-
-  @Nullable
-  protected CheckCanceledHook createCheckCanceledHook() {
-    return null;
   }
 
   @Override

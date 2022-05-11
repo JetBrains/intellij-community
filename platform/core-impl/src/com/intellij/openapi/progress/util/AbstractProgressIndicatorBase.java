@@ -145,7 +145,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   public void checkCanceled() {
     throwIfCanceled();
-    if (CoreProgressManager.runCheckCanceledHooks(this)) {
+    if (((CoreProgressManager)ProgressManager.getInstance()).runCheckCanceledHooks(this)) {
       throwIfCanceled();
     }
   }
