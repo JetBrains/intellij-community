@@ -106,12 +106,18 @@ object KotlinArtifactsDownloader {
                 return KotlinPluginLayout.instance.kotlinc
             }
         }
-        val expectedMavenArtifactJarPath = KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, artifactId, version)?.toFile()
-        expectedMavenArtifactJarPath?.takeIf { it.exists() }?.let {
+        fun getExpectedMavenArtifactPath() = KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, artifactId, version)?.toFile()
+        getExpectedMavenArtifactPath()?.takeIf { it.exists() }?.let {
             return it
         }
         indicator.text = indicatorDownloadText
         return downloadMavenArtifact(artifactId, version, project, indicator)
+            ?.also {
+                val expectedMavenArtifactPath = getExpectedMavenArtifactPath()
+                check(it == expectedMavenArtifactPath) {
+                    "Expected maven artifact path ($expectedMavenArtifactPath) doesn't match actual artifact path ($it)"
+                }
+            }
     }
 
     private fun downloadMavenArtifact(
@@ -146,12 +152,6 @@ object KotlinArtifactsDownloader {
         }
         return downloadedCompiler.singleOrNull().let { it ?: error("Expected to download only single artifact") }.file
             .toVirtualFileUrl(VirtualFileUrlManager.getInstance(project)).presentableUrl.let { File(it) }
-            .also {
-                val expectedMavenArtifactJarPath = KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, artifactId, version)?.toFile()
-                check(it == expectedMavenArtifactJarPath) {
-                    "Expected maven artifact path ($expectedMavenArtifactJarPath) doesn't match actual artifact path ($it)"
-                }
-            }
     }
 
     private fun getMavenRepos(project: Project) =
