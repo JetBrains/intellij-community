@@ -5,23 +5,19 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
-import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.ui.AntialiasingType;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.InternalActionsBundle;
 import com.intellij.internal.inspector.components.HierarchyTree;
-import com.intellij.internal.inspector.components.ValueCellRenderer;
+import com.intellij.internal.inspector.components.InspectorTable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
@@ -32,48 +28,39 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.*;
-import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter;
-import com.intellij.ui.picker.ColorListener;
 import com.intellij.ui.popup.PopupFactoryImpl;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Function;
 import com.intellij.util.PsiNavigateUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.plaf.ColorUIResource;
-import javax.swing.table.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
 import java.util.function.Supplier;
 
 public class UiInspectorAction extends DumbAwareAction implements LightEditCompatible, ActionPromoter {
@@ -304,9 +291,10 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
                     }
                   }
                 }
-              } else if (myInspectorTable.myTable.hasFocus()) {
-                int row = myInspectorTable.myTable.getSelectedRow();
-                Object at = myInspectorTable.myModel.getValueAt(row, 1);
+              }
+              else if (myInspectorTable.getTable().hasFocus()) {
+                int row = myInspectorTable.getTable().getSelectedRow();
+                Object at = myInspectorTable.getModel().getValueAt(row, 1);
                 openClass(String.valueOf(at), requestFocus);
               }
             }
@@ -547,412 +535,6 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     }
   }
 
-  private static final class InspectorTable extends JPanel implements DataProvider {
-    InspectorTableModel myModel;
-    DimensionsComponent myDimensionComponent;
-    StripeTable myTable;
-
-    private InspectorTable(@NotNull final List<? extends PropertyBean> clickInfo) {
-      myModel = new InspectorTableModel(clickInfo);
-      init(null);
-    }
-
-    private InspectorTable(@NotNull final Component component) {
-
-      myModel = new InspectorTableModel(component);
-      init(component);
-    }
-
-    private void init(@Nullable Component component) {
-      setLayout(new BorderLayout());
-      myTable = new StripeTable(myModel);
-      new TableSpeedSearch(myTable);
-
-      TableColumnModel columnModel = myTable.getColumnModel();
-      TableColumn propertyColumn = columnModel.getColumn(0);
-      propertyColumn.setMinWidth(JBUIScale.scale(220));
-      propertyColumn.setMaxWidth(JBUIScale.scale(220));
-      propertyColumn.setResizable(false);
-      propertyColumn.setCellRenderer(new PropertyNameRenderer());
-
-      TableColumn valueColumn = columnModel.getColumn(1);
-      valueColumn.setMinWidth(JBUIScale.scale(200));
-      valueColumn.setResizable(false);
-      valueColumn.setCellRenderer(new ValueCellRenderer());
-      valueColumn.setCellEditor(new DefaultCellEditor(new JBTextField()) {
-        @Override
-        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-          Component comp = table.getCellRenderer(row, column).getTableCellRendererComponent(table, value, false, false, row, column);
-          Object realValue = table.getModel().getValueAt(row, column);
-          if (comp instanceof JLabel) {
-            value = ((JLabel)comp).getText();
-          }
-          if (realValue instanceof Color) {
-            Rectangle cellRect = table.getCellRect(row, column, true);
-            ColorPicker.showColorPickerPopup(null, (Color)realValue, new ColorListener() {
-              @Override
-              public void colorChanged(Color color, Object source) {
-                if (component != null) {
-                  component.setBackground(color);
-                  String name = myModel.myProperties.get(row).propertyName;
-                  myModel.myProperties.set(row, new PropertyBean(name, color));
-                }
-              }
-            }, new RelativePoint(table, new Point(cellRect.x + JBUI.scale(6), cellRect.y + cellRect.height)));
-            return null;
-          }
-          Component result = super.getTableCellEditorComponent(table, value, isSelected, row, column);
-          ((JComponent)result).setBorder(BorderFactory.createLineBorder(JBColor.GRAY, 1));
-          return result;
-        }
-      });
-      new DoubleClickListener(){
-        @Override
-        protected boolean onDoubleClick(@NotNull MouseEvent event) {
-          int row = myTable.rowAtPoint(event.getPoint());
-          int column = 1;
-          if (row >=0 && row < myTable.getRowCount() && column < myTable.getColumnCount()) {
-            Component renderer = myTable.getCellRenderer(row, column)
-                                        .getTableCellRendererComponent(myTable, myModel.getValueAt(row, column), false, false, row, column);
-            if (renderer instanceof JLabel) {
-              StringBuilder sb = new StringBuilder();
-              if (component != null) sb.append(UiInspectorUtil.getComponentName(component)).append(" ");
-              String value = StringUtil.trimStart(((JLabel)renderer).getText().replace("\r", "").replace("\tat", "\n\tat"), "at ");
-              sb.append("'").append(myModel.getValueAt(row, 0)).append("':");
-              sb.append(value.contains("\n") || value.length() > 100 ? "\n" : " ");
-              sb.append(value);
-              //noinspection UseOfSystemOutOrSystemErr
-              System.out.println(sb);
-              return true;
-            }
-          }
-          return false;
-        }
-      }.installOn(myTable);
-
-      myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-
-      add(new JBScrollPane(myTable), BorderLayout.CENTER);
-      if (component != null) {
-        myDimensionComponent = new DimensionsComponent(component);
-        add(myDimensionComponent, BorderLayout.SOUTH);
-      }
-    }
-
-    public void refresh() {
-      myModel.refresh();
-      myDimensionComponent.update();
-      myDimensionComponent.repaint();
-    }
-
-    private static class PropertyNameRenderer extends DefaultTableCellRenderer {
-      @Override
-      public Component getTableCellRendererComponent(JTable table,
-                                                     Object value,
-                                                     boolean isSelected,
-                                                     boolean hasFocus,
-                                                     int row,
-                                                     int column) {
-        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        final TableModel model = table.getModel();
-        boolean changed = false;
-        if (model instanceof InspectorTableModel) {
-          changed = ((InspectorTableModel)model).myProperties.get(row).changed;
-        }
-
-        Color fg = isSelected ? table.getSelectionForeground()
-                              : changed ? JBUI.CurrentTheme.Link.Foreground.ENABLED
-                                        : table.getForeground();
-        final JBFont font = JBFont.label();
-        setFont(changed ? font.asBold() : font);
-        setForeground(fg);
-        return this;
-      }
-    }
-
-    @Override
-    public Object getData(@NotNull String dataId) {
-      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-        return new MyInspectorTableCopyProvider();
-      }
-      return null;
-    }
-
-    private class MyInspectorTableCopyProvider implements CopyProvider {
-      @Override
-      public void performCopy(@NotNull DataContext dataContext) {
-        int[] rows = myTable.getSelectedRows();
-
-        StringBuilder builder = new StringBuilder();
-        for (int row : rows) {
-          if (builder.length() > 0) builder.append('\n');
-
-          for (int col = 0; col < myTable.getColumnCount(); col++) {
-            builder.append(getTextValue(row, col));
-            if (col < myTable.getColumnCount() - 1) builder.append("\t");
-          }
-        }
-
-        CopyPasteManager.getInstance().setContents(new TextTransferable(builder.toString()));
-      }
-
-      private String getTextValue(int row, int col) {
-        Object value = myTable.getValueAt(row, col);
-        if (value instanceof String) return (String)value;
-
-        TableColumn tableColumn = myTable.getColumnModel().getColumn(col);
-        Component component = tableColumn.getCellRenderer().getTableCellRendererComponent(myTable, value, false, false, row, col);
-        if (component instanceof JLabel) { // see ValueCellRenderer
-          return ((JLabel)component).getText();
-        }
-        return value.toString();
-      }
-
-      @Override
-      public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-        return true;
-      }
-
-      @Override
-      public boolean isCopyVisible(@NotNull DataContext dataContext) {
-        return myTable.getSelectedRowCount() > 0;
-      }
-    }
-  }
-
-  private static final class DimensionsComponent extends JComponent {
-    Component myComponent;
-    int myWidth;
-    int myHeight;
-    Border myBorder;
-    Insets myInsets;
-
-    private DimensionsComponent(@NotNull final Component component) {
-      myComponent = component;
-      setOpaque(true);
-      setBackground(JBColor.WHITE);
-      setBorder(JBUI.Borders.empty(5, 0));
-
-      setFont(JBUI.Fonts.label(9));
-
-      update();
-    }
-
-    public void update() {
-      myWidth = myComponent.getWidth();
-      myHeight = myComponent.getHeight();
-      if (myComponent instanceof JComponent) {
-        myBorder = ((JComponent)myComponent).getBorder();
-        myInsets = ((JComponent)myComponent).getInsets();
-      }
-    }
-
-    @Override
-    protected void paintComponent(final Graphics g) {
-      Graphics2D g2d = (Graphics2D)g;
-      GraphicsConfig config = new GraphicsConfig(g).setAntialiasing(UISettings.getShadowInstance().getIdeAAType() != AntialiasingType.OFF);
-      Rectangle bounds = getBounds();
-
-      g2d.setColor(getBackground());
-      Insets insets = getInsets();
-      g2d.fillRect(insets.left, insets.top, bounds.width - insets.left - insets.right, bounds.height - insets.top - insets.bottom);
-
-      final String sizeString = String.format("%d x %d", myWidth, myHeight);
-
-      FontMetrics fm = g2d.getFontMetrics();
-      int sizeWidth = fm.stringWidth(sizeString);
-      int fontHeight = fm.getHeight();
-
-      int innerBoxWidthGap = JBUIScale.scale(20);
-      int innerBoxHeightGap = JBUIScale.scale(5);
-      int boxSize = JBUIScale.scale(15);
-
-      int centerX = bounds.width / 2;
-      int centerY = bounds.height / 2;
-      int innerX = centerX - sizeWidth / 2 - innerBoxWidthGap;
-      int innerY = centerY - fontHeight / 2 - innerBoxHeightGap;
-      int innerWidth = sizeWidth + innerBoxWidthGap * 2;
-      int innerHeight = fontHeight + innerBoxHeightGap * 2;
-
-      g2d.setColor(getForeground());
-      drawCenteredString(g2d, fm, fontHeight, sizeString, centerX, centerY);
-
-      g2d.setColor(JBColor.GRAY);
-      g2d.drawRect(innerX, innerY, innerWidth, innerHeight);
-
-      Insets borderInsets = null;
-      if (myBorder != null) borderInsets = myBorder.getBorderInsets(myComponent);
-      UIUtil.drawDottedRectangle(g2d, innerX - boxSize, innerY - boxSize, innerX + innerWidth + boxSize, innerY + innerHeight + boxSize);
-      drawInsets(g2d, fm, "border", borderInsets, boxSize, fontHeight, innerX, innerY, innerWidth, innerHeight);
-
-      g2d.drawRect(innerX - boxSize * 2, innerY - boxSize * 2, innerWidth + boxSize * 4, innerHeight + boxSize * 4);
-      drawInsets(g2d, fm, "insets", myInsets, boxSize * 2, fontHeight, innerX, innerY, innerWidth, innerHeight);
-
-      config.restore();
-    }
-
-    private static void drawInsets(Graphics2D g2d, FontMetrics fm, String name, Insets insets, int offset, int fontHeight, int innerX, int innerY, int innerWidth, int innerHeight) {
-      g2d.setColor(JBColor.BLACK);
-      g2d.drawString(name, innerX - offset + JBUIScale.scale(5), innerY - offset + fontHeight);
-
-      g2d.setColor(JBColor.GRAY);
-
-      int outerX = innerX - offset;
-      int outerWidth = innerWidth + offset * 2;
-      int outerY = innerY - offset;
-      int outerHeight = innerHeight + offset * 2;
-
-      final String top = insets != null ? Integer.toString(insets.top) : "-";
-      final String bottom = insets != null ? Integer.toString(insets.bottom) : "-";
-      final String left = insets != null ? Integer.toString(insets.left) : "-";
-      final String right = insets != null ? Integer.toString(insets.right) : "-";
-
-      int shift = JBUIScale.scale(7);
-      drawCenteredString(g2d, fm, fontHeight, top,
-                         outerX + outerWidth / 2,
-                         outerY + shift);
-      drawCenteredString(g2d, fm, fontHeight, bottom,
-                         outerX + outerWidth / 2,
-                         outerY + outerHeight - shift);
-      drawCenteredString(g2d, fm, fontHeight, left,
-                         outerX + shift,
-                         outerY + outerHeight / 2);
-      drawCenteredString(g2d, fm, fontHeight, right,
-                         outerX + outerWidth - shift,
-                         outerY + outerHeight / 2);
-    }
-
-    @Override
-    public Dimension getMinimumSize() {
-      return JBUI.size(120);
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      return JBUI.size(150);
-    }
-  }
-
-  private static void drawCenteredString(Graphics2D g2d, FontMetrics fm, int fontHeight, String text, int x, int y) {
-    int width = fm.stringWidth(text);
-    UIUtil.drawCenteredString(g2d, new Rectangle(x - width / 2, y - fontHeight / 2, width, fontHeight), text);
-  }
-
-  private static class InspectorTableModel extends AbstractTableModel {
-    final Component myComponent;
-    final List<PropertyBean> myProperties = new ArrayList<>();
-
-    InspectorTableModel(@NotNull List<? extends PropertyBean> clickInfo) {
-      myComponent = null;
-      myProperties.addAll(clickInfo);
-    }
-
-    InspectorTableModel(@NotNull Component c) {
-      myComponent = c;
-      myProperties.addAll(ComponentPropertiesCollector.collect(c));
-    }
-
-    @Override
-    @Nullable
-    public Object getValueAt(int row, int column) {
-      final PropertyBean bean = myProperties.get(row);
-      if (bean != null) {
-        return column == 0 ? bean.propertyName : bean.propertyValue;
-      }
-
-      return null;
-    }
-
-    @Override
-    public boolean isCellEditable(int row, int col) {
-      return col == 1 && updater(myProperties.get(row)) != null;
-    }
-
-    @Override
-    public void setValueAt(Object value, int row, int col) {
-      PropertyBean bean = myProperties.get(row);
-      try {
-        myProperties.set(row, new PropertyBean(bean.propertyName, Objects.requireNonNull(updater(bean)).fun(value)));
-      }
-      catch (Exception ignored) {
-      }
-    }
-
-    @Nullable
-    public Function<Object, Object> updater(PropertyBean bean) {
-      if (myComponent == null) return null;
-
-      String name = bean.propertyName.trim();
-      try {
-        try {
-          Method getter;
-          try {
-            getter = myComponent.getClass().getMethod("get" + StringUtil.capitalize(name));
-          }
-          catch (Exception e) {
-            getter = myComponent.getClass().getMethod("is" + StringUtil.capitalize(name));
-          }
-          final Method finalGetter = getter;
-          final Method setter = myComponent.getClass().getMethod("set" + StringUtil.capitalize(name), getter.getReturnType());
-          setter.setAccessible(true);
-          return o -> {
-            try {
-              setter.invoke(myComponent, fromObject(o, finalGetter.getReturnType()));
-              return finalGetter.invoke(myComponent);
-            }
-            catch (Exception e) {
-              throw new RuntimeException(e);
-            }
-          };
-        }
-        catch (Exception e) {
-          final Field field = ReflectionUtil.findField(myComponent.getClass(), null, name);
-          if (Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers())) {
-            return null;
-          }
-          return o -> {
-            try {
-              field.set(myComponent, fromObject(o, field.getType()));
-              return field.get(myComponent);
-            }
-            catch (Exception e1) {
-              throw new RuntimeException(e1);
-            }
-          };
-        }
-      }
-      catch (Exception ignored) {
-      }
-      return null;
-    }
-
-    @Override
-    public int getColumnCount() {
-      return 2;
-    }
-
-    @Override
-    public int getRowCount() {
-      return myProperties.size();
-    }
-
-    @Override
-    public String getColumnName(int columnIndex) {
-      return columnIndex == 0 ? "Property" : "Value";
-    }
-
-    @Override
-    public Class<?> getColumnClass(int columnIndex) {
-      return columnIndex == 0 ? String.class : Object.class;
-    }
-
-    public void refresh() {
-      myProperties.clear();
-      myProperties.addAll(ComponentPropertiesCollector.collect(myComponent));
-      fireTableDataChanged();
-    }
-  }
-
   private static class UiInspector implements AWTEventListener, Disposable {
 
     UiInspector(@Nullable Project project) {
@@ -1025,7 +607,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           rendererComponent.setBounds(list.getCellBounds(row, row));
           clickInfo.addAll(findActionsFor(list.getModel().getElementAt(row)));
           clickInfo.add(new PropertyBean(RENDERER_BOUNDS, list.getUI().getCellBounds(list, row, row)));
-          clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);
+          clickInfo.addAll(ComponentPropertiesCollector.collect(rendererComponent));
           return Pair.create(clickInfo, rendererComponent);
         }
       }
@@ -1039,7 +621,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
                                            table.hasFocus(), row, column);
           rendererComponent.setBounds(table.getCellRect(row, column, false));
           clickInfo.add(new PropertyBean(RENDERER_BOUNDS, table.getCellRect(row, column, true)));
-          clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);
+          clickInfo.addAll(ComponentPropertiesCollector.collect(rendererComponent));
           return Pair.create(clickInfo, rendererComponent);
         }
       }
@@ -1055,7 +637,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
               tree.getRowForPath(path), tree.hasFocus());
           rendererComponent.setBounds(tree.getPathBounds(path));
           clickInfo.add(new PropertyBean(RENDERER_BOUNDS, tree.getPathBounds(path)));
-          clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);
+          clickInfo.addAll(ComponentPropertiesCollector.collect(rendererComponent));
           return Pair.create(clickInfo, rendererComponent);
         }
       }
@@ -1091,52 +673,6 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         UIUtil.putClientProperty((JComponent)child, ADDED_AT_STACKTRACE, new Throwable());
       }
     }
-  }
-
-  /** @noinspection UseJBColor*/
-  private static Object fromObject(Object o, Class<?> type) {
-    if (o == null) return null;
-    if (type.isAssignableFrom(o.getClass())) return o;
-    if ("null".equals(o)) return null;
-
-    String value = String.valueOf(o).trim();
-    if (type == int.class) return Integer.parseInt(value);
-    if (type == boolean.class) return "yes".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
-    if (type == byte.class) return Byte.parseByte(value);
-    if (type == short.class) return Short.parseShort(value);
-    if (type == double.class) return Double.parseDouble(value);
-    if (type == float.class) return Float.parseFloat(value);
-
-    String[] s = value.split("(?i)\\s*(?:[x@:]|[a-z]+:)\\s*", 6);
-    if (type == Dimension.class) {
-      if (s.length == 2) return new Dimension(Integer.parseInt(s[0]), Integer.parseInt(s[1]));
-    }
-    else if (type == Point.class) {
-      if (s.length == 2) return new Point(Integer.parseInt(s[0]), Integer.parseInt(s[1]));
-    }
-    else if (type == Rectangle.class) {
-      if (s.length >= 5) {
-        return new Rectangle(Integer.parseInt(s[3]), Integer.parseInt(s[4]),
-                             Integer.parseInt(s[1]), Integer.parseInt(s[2]));
-      }
-    }
-    else if (type == Insets.class) {
-      if (s.length >= 5) {
-        //noinspection UseDPIAwareInsets
-        return new Insets(Integer.parseInt(s[1]), Integer.parseInt(s[2]),
-                          Integer.parseInt(s[4]), Integer.parseInt(s[4]));
-      }
-    }
-    else if (type == Color.class) {
-      if (s.length >= 5) {
-        return new ColorUIResource(
-          new Color(Integer.parseInt(s[1]), Integer.parseInt(s[2]), Integer.parseInt(s[3]), Integer.parseInt(s[4])));
-      }
-    }
-    else if (type.getSimpleName().contains("ArrayTable")) {
-      return "ArrayTable!";
-    }
-    throw new UnsupportedOperationException(type.toString());
   }
 
   public static class ToggleHierarchyTraceAction extends ToggleAction implements AWTEventListener {
