@@ -54,7 +54,6 @@ public class JBCefProxyTest {
   @Test
   public void test() throws IOException {
     var latch = new CountDownLatch(1);
-    var diagnostics = new StringBuffer("Diagnostics:\n");
     var statusCode = new AtomicInteger(-1);
 
     var browser = new JBCefBrowser("https://" + TEST_HOST);
@@ -62,7 +61,7 @@ public class JBCefProxyTest {
     browser.getJBCefClient().addLoadHandler(new CefLoadHandlerAdapter() {
       @Override
       public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
-        diagnostics.append("onLoadEnd: ").append(browser.getURL()).append(", status: ").append(httpStatusCode).append('\n');
+        System.out.println("JBCefProxyTest.onLoadEnd: " + browser.getURL() + ", status: " + httpStatusCode);
         if (frame.getURL().contains(TEST_HOST)) {
           statusCode.set(httpStatusCode);
           latch.countDown();
@@ -71,7 +70,7 @@ public class JBCefProxyTest {
 
       @Override
       public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
-        diagnostics.append("onLoadError: ").append(failedUrl).append(", error: ").append(errorText).append('\n');
+        System.out.println("JBCefProxyTest.onLoadError: " + failedUrl + ", error: " + errorText);
       }
     }, browser.getCefBrowser());
 
@@ -85,6 +84,6 @@ public class JBCefProxyTest {
 
     assertTrue(await(latch));
 
-    assertEquals(diagnostics.toString(), 200, statusCode.get());
+    assertEquals(200, statusCode.get());
   }
 }
