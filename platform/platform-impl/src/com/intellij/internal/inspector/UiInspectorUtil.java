@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -101,5 +102,21 @@ public final class UiInspectorUtil {
         recursiveCollectGroupIds(child, result);
       }
     }
+  }
+
+  public static @NotNull String getComponentName(@NotNull Component component) {
+    String name = getClassName(component);
+
+    String componentName = component.getName();
+    if (StringUtil.isNotEmpty(componentName)) {
+      name += " \"" + componentName + "\"";
+    }
+    return name;
+  }
+
+  public static @NotNull String getClassName(@NotNull Object value) {
+    Class<?> clazz0 = value.getClass();
+    Class<?> clazz = clazz0.isAnonymousClass() ? clazz0.getSuperclass() : clazz0;
+    return clazz.getSimpleName();
   }
 }

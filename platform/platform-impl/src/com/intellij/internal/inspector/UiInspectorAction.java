@@ -11,7 +11,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -19,6 +18,7 @@ import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.InternalActionsBundle;
+import com.intellij.internal.inspector.components.HierarchyTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -38,7 +38,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -64,12 +67,10 @@ import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.picker.ColorListener;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.tree.TreeUtil;
 import net.miginfocom.layout.*;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
@@ -79,30 +80,30 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.table.*;
-import javax.swing.tree.*;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.TextAttribute;
-import java.lang.reflect.*;
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Vector;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static com.intellij.internal.inspector.UiInspectorUtil.collectAnActionInfo;
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 
 public class UiInspectorAction extends DumbAwareAction implements LightEditCompatible, ActionPromoter {
   private static final String ACTION_ID = "UiInspector";
   private static final String RENDERER_BOUNDS = "clicked renderer";
-  private static final int MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME = 8;
 
-  private static final Key<Pair<List<PropertyBean>, Component>> CLICK_INFO = Key.create("CLICK_INFO");
+  public static final Key<Pair<List<PropertyBean>, Component>> CLICK_INFO = Key.create("CLICK_INFO");
   private static final Key<Point> CLICK_INFO_POINT = Key.create("CLICK_INFO_POINT");
   private static final Key<Throwable> ADDED_AT_STACKTRACE = Key.create("uiInspector.addedAt");
 
@@ -195,7 +196,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       .forEach(w -> Disposer.dispose(((InspectorWindow)w).myInspector));
   }
 
-  private static final class InspectorWindow extends JDialog implements Disposable {
+  public static final class InspectorWindow extends JDialog implements Disposable {
     private InspectorTable myInspectorTable;
     @NotNull private final List<Component> myComponents = new ArrayList<>();
     private List<? extends PropertyBean> myInfo;
@@ -280,7 +281,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           Component c = ((HierarchyTree.ComponentNode) node).getComponent();
           if (c != null) {
             isAccessibleEnable = !isAccessibleEnable;
-            myHierarchyTree.setModel(buildModel(c, isAccessibleEnable));
+            myHierarchyTree.resetModel(c, isAccessibleEnable);
             myHierarchyTree.expandPath(isAccessibleEnable);
           }
         }
@@ -530,403 +531,6 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     }
   }
 
-  private static class ComponentTreeCellRenderer extends ColoredTreeCellRenderer {
-    private final Component myInitialSelection;
-
-    ComponentTreeCellRenderer(Component initialSelection) {
-      myInitialSelection = initialSelection;
-      setFont(JBUI.Fonts.label(11));
-      setBorder(JBUI.Borders.empty(0, 3));
-    }
-
-    @Override
-    public void customizeCellRenderer(@NotNull JTree tree,
-                                      Object value,
-                                      boolean selected,
-                                      boolean expanded,
-                                      boolean leaf,
-                                      int row,
-                                      boolean hasFocus) {
-      Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
-      Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : null;
-      boolean isRenderer = false;
-      if (value instanceof HierarchyTree.ComponentNode) {
-        HierarchyTree.ComponentNode componentNode = (HierarchyTree.ComponentNode)value;
-        isRenderer = componentNode.getUserObject() instanceof List<?>;
-        Component component = componentNode.getComponent();
-
-        if (component != null && !selected) {
-          if (!component.isVisible()) {
-            foreground = JBColor.GRAY;
-          }
-          else if (component.getWidth() == 0 || component.getHeight() == 0) {
-            foreground = new JBColor(new Color(128, 10, 0), JBColor.BLUE);
-          }
-          else if (component.getPreferredSize() != null &&
-                   (component.getSize().width < component.getPreferredSize().width
-                    || component.getSize().height < component.getPreferredSize().height)) {
-            foreground = PlatformColors.BLUE;
-          }
-
-          if (myInitialSelection == componentNode.getComponent()) {
-            //noinspection UseJBColor
-            background = new Color(31, 128, 8, 58);
-          }
-        }
-
-        if (componentNode.isAccessibleNode) {
-          AccessibleContext ac;
-          if (component != null) {
-            ac = component.getAccessibleContext();
-          } else {
-            ac = componentNode.getAccessible().getAccessibleContext();
-          }
-          String simpleName = ac.getClass().getSimpleName();
-          if (StringUtil.isEmpty(simpleName)) {
-            append(ac.getClass().getName());
-          } else {
-            append(simpleName);
-          }
-          String axName = ac.getAccessibleName();
-          if (axName != null) {
-            append(" " + axName);
-          }
-        }
-        else {
-          append(getComponentName(component));
-          Pair<Class<?>, String> class2field = getClassAndFieldName(component);
-          if (class2field != null) {
-            append("(" + class2field.second + "@" + class2field.first.getSimpleName() + ")");
-          }
-
-          append(": " + RectangleRenderer.toString(component.getBounds()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          if (component.isOpaque()) {
-            append(", opaque", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          }
-          if (component.isDoubleBuffered()) {
-            append(", double-buffered", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          }
-          if (DataManagerImpl.getDataProviderEx(component) != null) {
-            append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-            append("data-provider", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-          }
-          componentNode.setText(toString());
-          setIcon(UiInspectorIcons.findIconFor(component));
-        }
-      }
-      if (isRenderer) {
-        setIcon(AllIcons.Ide.Rating);
-      }
-      setForeground(foreground);
-      setBackground(background);
-
-      SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, false, selected);
-    }
-  }
-
-  @NotNull
-  private static String getComponentName(Component component) {
-    String name = getClassName(component);
-
-    String componentName = component.getName();
-    if (StringUtil.isNotEmpty(componentName)) {
-      name += " \"" + componentName + "\"";
-    }
-    return name;
-  }
-
-  @Nullable
-  private static Pair<Class<?>, String> getClassAndFieldName(Component component) {
-    Container parent = component.getParent();
-    int deepness = 1;
-    while(parent != null && deepness <= MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME) {
-      Class<?> aClass = parent.getClass();
-      Map<Field, Class<?>> fields = new HashMap<>();
-      while (aClass != null) {
-        for (Field field : aClass.getDeclaredFields()) {
-          fields.put(field, aClass);
-        }
-        aClass = aClass.getSuperclass();
-      }
-      for (Map.Entry<Field, Class<?>> entry : fields.entrySet()) {
-        try {
-          Field field = entry.getKey();
-          field.setAccessible(true);
-          if (field.get(parent) == component) {
-            return Pair.create(entry.getValue(), field.getName());
-          }
-        }
-        catch (IllegalAccessException | InaccessibleObjectException e) {
-          //skip
-        }
-      }
-      parent = parent.getParent();
-      deepness++;
-    }
-    return null;
-  }
-
-  private static TreeModel buildModel(Component c) {
-    return buildModel(c, false);
-  }
-
-  private static TreeModel buildModel(Component c, boolean accessibleModel) {
-    Component parent = null;
-    if (accessibleModel && (c instanceof Accessible)) {
-      Accessible axComponent = c.getAccessibleContext().getAccessibleParent();
-      if (axComponent instanceof Component) {
-        parent = ((Component) axComponent);
-      }
-    } else {
-      parent = c.getParent();
-    }
-    while (parent != null) {
-      c = parent;
-      //Find root window
-      if (accessibleModel && (c instanceof Accessible)) {
-        Accessible axComponent = c.getAccessibleContext().getAccessibleParent();
-        if (axComponent instanceof Component) {
-          parent = ((Component) axComponent);
-        } else {
-          parent = null;
-        }
-      } else {
-        parent = c.getParent();
-      }
-    }
-    return new DefaultTreeModel(new UiInspectorAction.HierarchyTree.ComponentNode(c, accessibleModel));
-  }
-
-
-  private abstract static class HierarchyTree extends JTree implements TreeSelectionListener {
-    final Component myComponent;
-
-    private HierarchyTree(Component c) {
-      myComponent = c;
-      setModel(buildModel(c));
-      setCellRenderer(new ComponentTreeCellRenderer(c));
-      getSelectionModel().addTreeSelectionListener(this);
-      new TreeSpeedSearch(this);
-      if (c instanceof JComponent && UIUtil.getClientProperty(c, CLICK_INFO) != null) {
-        SwingUtilities.invokeLater(() -> getSelectionModel().setSelectionPath(getPathForRow(getLeadSelectionRow() + 1)));
-      }
-    }
-
-    @Override
-    public String convertValueToText(Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      if (value instanceof ComponentNode) {
-        Pair<Class<?>, String> pair = null;
-        if (((HierarchyTree.ComponentNode)value).myComponent != null) {
-          pair = getClassAndFieldName(((HierarchyTree.ComponentNode)value).myComponent);
-        }
-        if (pair != null) {
-          return pair.first.getSimpleName() + '.' + pair.second;
-        } else {
-          return myComponent.getClass().getName();
-        }
-      }
-      return super.convertValueToText(value, selected, expanded, leaf, row, hasFocus);//todo
-    }
-
-    public void expandPath() {
-      expandPath(false);
-    }
-
-    public void expandPath(boolean isAccessibleTree) {
-      TreeUtil.expandAll(this);
-      int count = getRowCount();
-      ComponentNode node = new ComponentNode(myComponent, isAccessibleTree);
-
-      for (int i = 0; i < count; i++) {
-        TreePath row = getPathForRow(i);
-        if (row.getLastPathComponent().equals(node)) {
-          setSelectionPath(row);
-          scrollPathToVisible(getSelectionPath());
-          break;
-        }
-      }
-    }
-
-    @Override
-    public void valueChanged(TreeSelectionEvent e) {
-      TreePath[] paths = getSelectionPaths();
-      if (paths == null) {
-        onComponentsChanged(Collections.emptyList());
-        return;
-      }
-
-      List<List<PropertyBean>> clickInfos = ContainerUtil.mapNotNull(paths, path -> {
-        Object node = path.getLastPathComponent();
-        if (node instanceof ComponentNode) {
-          if (((ComponentNode)node).getUserObject() instanceof List<?>)
-            //it's renderer and we present it as ComponentNode instead of outdated ClickInfoNode
-            //noinspection unchecked
-            return (List<PropertyBean>)((ComponentNode)node).getUserObject();
-        }
-        //if (node instanceof ClickInfoNode) return ((ClickInfoNode)node).getInfo();
-        return null;
-      });
-      if (!clickInfos.isEmpty()) {
-        onClickInfoChanged(clickInfos.get(0));
-        return;
-      }
-
-      List<Component> components = ContainerUtil.mapNotNull(paths, path -> {
-        Object node = path.getLastPathComponent();
-        if (node instanceof ComponentNode) return ((ComponentNode)node).getComponent();
-        return null;
-      });
-      onComponentsChanged(components);
-    }
-
-    public abstract void onClickInfoChanged(List<? extends PropertyBean> info);
-
-    public abstract void onComponentsChanged(List<? extends Component> components);
-
-    private static final class ComponentNode extends DefaultMutableTreeNode  {
-      private final Component myComponent;
-      String myText;
-      private final Accessible myAccessible;
-      private final boolean isAccessibleNode;
-
-      private ComponentNode(@NotNull Component component, boolean isAccessibleComponent) {
-        super(component);
-        myComponent = component;
-        if (component instanceof Accessible) {
-          myAccessible = (Accessible)component;
-        } else {
-          myAccessible = null;
-        }
-        isAccessibleNode = isAccessibleComponent;
-        children = prepareChildren(myComponent, isAccessibleComponent);
-      }
-
-      private ComponentNode(@NotNull Accessible a) {
-        super(a);
-        myComponent = null;
-        myAccessible= a;
-        isAccessibleNode = true;
-        children = prepareChildren(a);
-      }
-
-      @SuppressWarnings("UseOfObsoleteCollectionType")
-      private static Vector<TreeNode> prepareChildren(@NotNull Accessible a) {
-        Vector<TreeNode> result = new Vector<>();
-        AccessibleContext ac = a.getAccessibleContext();
-        if (ac != null) {
-          int count = ac.getAccessibleChildrenCount();
-          for (int i = 0; i < count; i++) {
-            Accessible axComponent = a.getAccessibleContext().getAccessibleChild(i);
-            if (axComponent instanceof Component) {
-              result.add(new ComponentNode(((Component) axComponent), true));
-            } else {
-              result.add(new ComponentNode(axComponent));
-            }
-          }
-        }
-        return result;
-      }
-
-      Component getComponent() {
-        return myComponent;
-      }
-
-      private Accessible getAccessible() {
-        return myAccessible;
-      }
-
-      private boolean isAccessibleNode() {
-        return isAccessibleNode;
-      }
-
-      @Override
-      public String toString() {
-        if (myComponent != null) {
-          return myText != null ? myText : myComponent.getClass().getName();
-        }
-        else {
-          return Objects.requireNonNullElseGet(myText, () -> myAccessible.getClass().getName());
-        }
-      }
-
-      public void setText(String value) {
-        myText = value;
-      }
-
-      @Override
-      public boolean equals(Object obj) {
-        return obj instanceof ComponentNode && ((ComponentNode)obj).getComponent() == getComponent();
-      }
-
-      @SuppressWarnings("UseOfObsoleteCollectionType")
-      private static Vector<TreeNode> prepareChildren(Component parent, boolean isAccessibleComponent) {
-        Vector<TreeNode> result = new Vector<>();
-        if (isAccessibleComponent) {
-          if (parent instanceof Accessible) {
-            for (int i = 0; i < parent.getAccessibleContext().getAccessibleChildrenCount(); i++) {
-              Accessible axComponent = parent.getAccessibleContext().getAccessibleChild(i);
-              if (axComponent instanceof Component) {
-                result.add(new ComponentNode(((Component)axComponent), true));
-              }
-              else {
-                result.add(new ComponentNode(axComponent));
-              }
-            }
-          }
-          return result;
-        }
-
-        if (parent instanceof JComponent) {
-          Pair<List<PropertyBean>, Component> o = UIUtil.getClientProperty(parent, CLICK_INFO);
-          if (o != null) {
-            //result.add(new ClickInfoNode(o.first));
-            //We present clicked renderer as ComponentNode instead of ClickInfoNode to see inner structure of renderer
-            ComponentNode node = new ComponentNode(o.second, false);
-            o.second.doLayout();
-            node.setUserObject(o.first);
-            result.add(node);
-          }
-        }
-        if (parent instanceof Container) {
-          for (Component component : ((Container)parent).getComponents()) {
-            result.add(new ComponentNode(component, false));
-          }
-        }
-        if (parent instanceof Window) {
-          Window[] children = ((Window)parent).getOwnedWindows();
-          for (Window child : children) {
-            if (child instanceof InspectorWindow) continue;
-            result.add(new ComponentNode(child, false));
-          }
-        }
-
-        return result;
-      }
-    }
-
-    //private static class ClickInfoNode extends DefaultMutableTreeNode {
-    //  private final List<PropertyBean> myInfo;
-    //
-    //  ClickInfoNode(List<PropertyBean> info) {
-    //    myInfo = info;
-    //  }
-    //
-    //  @Override
-    //  public String toString() {
-    //    return "Clicked Info";
-    //  }
-    //
-    //  public List<PropertyBean> getInfo() {
-    //    return myInfo;
-    //  }
-    //
-    //  @Override
-    //  public boolean isLeaf() {
-    //    return true;
-    //  }
-    //}
-  }
-
   private static final class HighlightComponent extends JComponent {
     @NotNull private final Color myColor;
     @NotNull private final Insets myInsets;
@@ -1035,7 +639,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
                                         .getTableCellRendererComponent(myTable, myModel.getValueAt(row, column), false, false, row, column);
             if (renderer instanceof JLabel) {
               StringBuilder sb = new StringBuilder();
-              if (component != null) sb.append(getComponentName(component)).append(" ");
+              if (component != null) sb.append(UiInspectorUtil.getComponentName(component)).append(" ");
               String value = StringUtil.trimStart(((JLabel)renderer).getText().replace("\r", "").replace("\tat", "\n\tat"), "at ");
               sb.append("'").append(myModel.getValueAt(row, 0)).append("':");
               sb.append(value.contains("\n") || value.length() > 100 ? "\n" : " ");
@@ -1342,14 +946,14 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     }
   }
 
-  private static class RectangleRenderer extends Renderer<Rectangle> {
+  public static class RectangleRenderer extends Renderer<Rectangle> {
     @Override
     public void setValue(@NotNull final Rectangle value) {
       setText(toString(value));
     }
 
     @NotNull
-    static String toString(@NotNull Rectangle r) {
+    public static String toString(@NotNull Rectangle r) {
       return r.width + "x" + r.height + " @ " + r.x + ":" + r.y;
     }
   }
@@ -1488,7 +1092,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       }
 
       StringBuilder sb = new StringBuilder();
-      sb.append(getClassName(value));
+      sb.append(UiInspectorUtil.getClassName(value));
 
       Color color = getBorderColor(value);
       if (color != null) sb.append(" color=").append(color);
@@ -1577,13 +1181,6 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     }
     String toString = StringUtil.notNullize(String.valueOf(value), "toString()==null");
     return toString.replace('\n', ' ');
-  }
-
-  @NotNull
-  private static String getClassName(Object value) {
-    Class<?> clazz0 = value.getClass();
-    Class<?> clazz = clazz0.isAnonymousClass() ? clazz0.getSuperclass() : clazz0;
-    return clazz.getSimpleName();
   }
 
   private static ColorIcon createColorIcon(Color color) {
@@ -1798,7 +1395,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       }
 
       if (action != null) {
-        myProperties.addAll(collectAnActionInfo(action));
+        myProperties.addAll(UiInspectorUtil.collectAnActionInfo(action));
       }
     }
 
@@ -1847,7 +1444,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         if (bagLayout.rowWeights != null) addSubValue("rowWeights", Arrays.toString(bagLayout.rowWeights));
 
         for (Component child : component.getComponents()) {
-          addSubValue(getComponentName(child), toString(bagLayout.getConstraints(child)));
+          addSubValue(UiInspectorUtil.getComponentName(child), toString(bagLayout.getConstraints(child)));
         }
       }
       else if (layout instanceof BorderLayout) {
@@ -1857,7 +1454,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
                                           String.format("hgap - %s, vgap - %s", borderLayout.getHgap(), borderLayout.getVgap())));
 
         for (Component child : component.getComponents()) {
-          addSubValue(getComponentName(child), borderLayout.getConstraints(child));
+          addSubValue(UiInspectorUtil.getComponentName(child), borderLayout.getConstraints(child));
         }
       }
       else if (layout instanceof CardLayout) {
@@ -1879,7 +1476,9 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           for (Object card : vector) {
             String cardName = ReflectionUtil.getField(card.getClass(), card, String.class, "name");
             Component child = ReflectionUtil.getField(card.getClass(), card, Component.class, "comp");
-            addSubValue(getComponentName(child), cardName);
+            if (child != null) {
+              addSubValue(UiInspectorUtil.getComponentName(child), cardName);
+            }
           }
         }
       }
@@ -1911,7 +1510,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         }
 
         for (Component child : component.getComponents()) {
-          addSubValue(getComponentName(child), migLayout.getComponentConstraints(child));
+          addSubValue(UiInspectorUtil.getComponentName(child), migLayout.getComponentConstraints(child));
         }
       }
       else if (layout instanceof com.intellij.ui.layout.migLayout.patched.MigLayout) {
@@ -2398,7 +1997,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     private static List<PropertyBean> findActionsFor(Object object) {
       if (object instanceof PopupFactoryImpl.ActionItem) {
         AnAction action = ((PopupFactoryImpl.ActionItem)object).getAction();
-        return collectAnActionInfo(action);
+        return UiInspectorUtil.collectAnActionInfo(action);
       }
       if (object instanceof QuickFixWrapper) {
         return findActionsFor(((QuickFixWrapper)object).getFix());
@@ -2480,67 +2079,6 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       return "ArrayTable!";
     }
     throw new UnsupportedOperationException(type.toString());
-  }
-
-  static class UiInspectorIcons {
-    private static final Map<Class<?>, Icon> COMPONENT_MAPPING = new HashMap<>();
-    private static @NotNull Icon load(@NotNull String path) {
-      return load(path, null);
-    }
-
-    private static @NotNull Icon load(@NotNull String path, Class<?> cls) {
-      Icon icon = IconLoader.getIcon("com/intellij/internal/inspector/icons/" + path, UiInspectorAction.class.getClassLoader());
-      if (cls != null) {
-        COMPONENT_MAPPING.put(cls, icon);
-      }
-      return icon;
-    }
-    static {
-      load("button.svg", JButton.class);
-      load("checkBox.svg", JCheckBox.class);
-      load("comboBox.svg", JComboBox.class);
-      load("editorPane.svg", JEditorPane.class);
-      load("formattedTextField.svg", JFormattedTextField.class);
-      load("label.svg", JLabel.class);
-      load("list.svg", JList.class);
-      load("panel.svg", JPanel.class);
-      load("passwordField.svg", JPasswordField.class);
-      load("progressbar.svg", JProgressBar.class);
-      load("radioButton.svg", JRadioButton.class);
-      load("scrollbar.svg", JScrollBar.class);
-      load("scrollPane.svg", JScrollPane.class);
-      load("separator.svg", JSeparator.class);
-      load("slider.svg", JSlider.class);
-      load("spinner.svg", JSpinner.class);
-      load("splitPane.svg", JSplitPane.class);
-      load("tabbedPane.svg", JTabbedPane.class);
-      load("table.svg", JTable.class);
-      load("textArea.svg", JTextArea.class);
-      load("textField.svg", JTextField.class);
-      load("textPane.svg", JTextPane.class);
-      load("toolbar.svg", JToolBar.class);
-      //load("toolbarSeparator.svg");
-      load("tree.svg", JTree.class);
-    }
-
-    static final @NotNull Icon Kotlin = load("kotlin.svg");
-    static final @NotNull Icon Unknown = load("unknown.svg");
-
-    public static Icon findIconFor(Component component) {
-      Class<?> aClass = component.getClass();
-      Icon icon = null;
-      while (icon == null && aClass != null) {
-        icon = COMPONENT_MAPPING.get(aClass);
-        aClass = aClass.getSuperclass();
-      }
-      if (icon == null) icon = Unknown;
-
-      if (ComponentUtil.findParentByCondition(component, (c) -> c.getClass() == DialogPanel.class) != null) {
-        Icon kotlinIcon = ((ScalableIcon)Kotlin).scale(0.5f);
-        return new RowIcon(icon, IconUtil.toSize(kotlinIcon, icon.getIconWidth(), icon.getIconHeight()));
-      }
-      return icon;
-    }
   }
 
   public static class ToggleHierarchyTraceAction extends ToggleAction implements AWTEventListener {
