@@ -53,4 +53,13 @@
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.PackageSearchGradleConfiguration"/>
     </extensions>
+
+    <actions>
+        <action id="PackageSearch.Gradle.DependencyAnalyzer.GoTo"
+                class="com.jetbrains.packagesearch.intellij.plugin.gradle.dependency.analyzer.GradleDependencyAnalyzerGoToPackageSearchAction">
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyListGroup"/>
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
+        </action>
+    </actions>
 </idea-plugin>
