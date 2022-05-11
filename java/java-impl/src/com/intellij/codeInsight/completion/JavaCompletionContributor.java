@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -54,6 +54,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
+import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.PsiLabelReference;
 import com.intellij.psi.scope.ElementClassFilter;
@@ -70,17 +71,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 
-import static com.intellij.patterns.PsiJavaPatterns.elementType;
-import static com.intellij.patterns.PsiJavaPatterns.or;
-import static com.intellij.patterns.PsiJavaPatterns.psiAnnotation;
-import static com.intellij.patterns.PsiJavaPatterns.psiClass;
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
-import static com.intellij.patterns.PsiJavaPatterns.psiExpressionStatement;
-import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
-import static com.intellij.patterns.PsiJavaPatterns.psiNameValuePair;
-import static com.intellij.patterns.PsiJavaPatterns.psiParameter;
-import static com.intellij.patterns.PsiJavaPatterns.psiReferenceExpression;
-import static com.intellij.patterns.PsiJavaPatterns.string;
+import static com.intellij.patterns.PsiJavaPatterns.*;
 
 public final class JavaCompletionContributor extends CompletionContributor implements DumbAware {
   private static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT = or(
@@ -1288,15 +1279,24 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         if (requires) {
           Module module = ModuleUtilCore.findModuleForFile(originalFile);
           if (module != null) {
-            scope = GlobalSearchScope.projectScope(project);
+            scope = GlobalSearchScope.allScope(project);
+            Set<String> names = new HashSet<>();
             for (String name : JavaSourceModuleNameIndex.getAllKeys(project)) {
-              if (JavaSourceModuleNameIndex.getFilesByKey(name, scope).size() > 0) {
+              Collection<VirtualFile> roots = JavaSourceModuleNameIndex.getFilesByKey(name, scope);
+              if (roots.size() > 0) {
+                names.add(name);
+                for (VirtualFile manifest : roots) {
+                  names.add(LightJavaModule.moduleName(manifest.getParent().getParent().getNameWithoutExtension()));
+                }
                 addAutoModuleReference(name, parent, filter, result);
               }
             }
             VirtualFile[] roots = ModuleRootManager.getInstance(module).orderEntries().withoutSdk().librariesOnly().getClassesRoots();
             scope = GlobalSearchScope.filesScope(project, Arrays.asList(roots));
             for (String name : JavaAutoModuleNameIndex.getAllKeys(project)) {
+              if (names.contains(name)) {
+                continue;
+              }
               if (JavaAutoModuleNameIndex.getFilesByKey(name, scope).size() > 0) {
                 addAutoModuleReference(name, parent, filter, result);
               }

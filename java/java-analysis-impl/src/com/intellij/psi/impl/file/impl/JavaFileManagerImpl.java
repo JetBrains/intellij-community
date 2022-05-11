@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
+import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -162,11 +163,21 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
 
     List<PsiJavaModule> results = new ArrayList<>(JavaModuleNameIndex.getInstance().get(moduleName, myManager.getProject(), excludingScope));
 
+    Set<VirtualFile> roots = new HashSet<>();
     for (VirtualFile manifest : JavaSourceModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {
-      results.add(LightJavaModule.create(myManager, manifest.getParent().getParent(), moduleName));
+      VirtualFile root = manifest.getParent().getParent();
+      roots.add(root);
+      results.add(LightJavaModule.create(myManager, root, moduleName));
     }
 
     for (VirtualFile root : JavaAutoModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {
+      if (roots.contains(root)) { //already found by MANIFEST attribute
+        continue;
+      }
+      VirtualFile manifest = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
+      if (manifest != null && LightJavaModule.claimedModuleName(manifest) != null) {
+        continue;
+      }
       results.add(LightJavaModule.create(myManager, root, moduleName));
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -28,7 +28,7 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
     }
   };
 
-  private final DataIndexer<String, Void, FileContent> myIndexer = data -> singletonMap(LightJavaModule.moduleName(data.getFile()), null);
+  private final DataIndexer<String, Void, FileContent> myIndexer = data -> singletonMap(LightJavaModule.moduleName(data.getFile().getNameWithoutExtension()), null);
 
   @Override
   public boolean indexDirectories() {
@@ -42,7 +42,7 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 5;
+    return 6;
   }
 
   @Override
