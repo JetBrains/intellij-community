@@ -19,7 +19,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
@@ -776,7 +775,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final long MAX_PRIORITIZATION_NANOS = TimeUnit.SECONDS.toNanos(12);
   private static final Thread[] EMPTY_THREAD_ARRAY = new Thread[0];
   private final Set<Thread> myPrioritizedThreads = ContainerUtil.newConcurrentSet();
-  private volatile Thread[] myEffectivePrioritizedThreads = EMPTY_THREAD_ARRAY;
   private int myDeprioritizations; //guarded by myPrioritizationLock
   private final Object myPrioritizationLock = ObjectUtils.sentinel("myPrioritizationLock");
   private volatile long myPrioritizingStarted;
@@ -791,11 +789,16 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       }
       else {
         prioritize = true;
+        boolean prioritizingStarted;
         if (myPrioritizedThreads.isEmpty()) {
           myPrioritizingStarted = System.nanoTime();
+          prioritizingStarted = true;
+        }
+        else {
+          prioritizingStarted = false;
         }
         myPrioritizedThreads.add(thread);
-        updateEffectivePrioritized();
+        updateEffectivePrioritized(prioritizingStarted, false);
       }
     }
     try {
@@ -805,21 +808,17 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       if (prioritize) {
         synchronized (myPrioritizationLock) {
           myPrioritizedThreads.remove(thread);
-          updateEffectivePrioritized();
+          updateEffectivePrioritized(false, myPrioritizedThreads.isEmpty());
         }
       }
     }
   }
 
-  private void updateEffectivePrioritized() {
-    Thread[] prev = myEffectivePrioritizedThreads;
-    Thread[] current = myDeprioritizations > 0 || myPrioritizedThreads.isEmpty() ? EMPTY_THREAD_ARRAY
-                                                                                 : myPrioritizedThreads.toArray(EMPTY_THREAD_ARRAY);
-    myEffectivePrioritizedThreads = current;
-    if (prev.length == 0 && current.length > 0) {
+  private void updateEffectivePrioritized(boolean prioritizingStarted, boolean prioritizingFinished) {
+    if (prioritizingStarted) {
       prioritizingStarted();
     }
-    else if (prev.length > 0 && current.length == 0) {
+    else if (prioritizingFinished) {
       prioritizingFinished();
     }
   }
@@ -836,23 +835,25 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @ApiStatus.Internal
   public void suppressPrioritizing() {
     synchronized (myPrioritizationLock) {
-      if (++myDeprioritizations == 100 + ForkJoinPool.getCommonPoolParallelism() * 2) {
+      int prios = ++myDeprioritizations;
+      if (prios == 100 + ForkJoinPool.getCommonPoolParallelism() * 2) {
         Attachment attachment = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
         attachment.setIncluded(true);
         LOG.error("A suspiciously high nesting of suppressPrioritizing, forgot to call restorePrioritizing?", attachment);
       }
-      updateEffectivePrioritized();
+      updateEffectivePrioritized(false, prios == 1);
     }
   }
 
   @ApiStatus.Internal
   public void restorePrioritizing() {
     synchronized (myPrioritizationLock) {
-      if (--myDeprioritizations < 0) {
+      int prios = --myDeprioritizations;
+      if (prios < 0) {
         myDeprioritizations = 0;
         LOG.error("Unmatched suppressPrioritizing/restorePrioritizing");
       }
-      updateEffectivePrioritized();
+      updateEffectivePrioritized(prios <= 0, false);
     }
   }
 
@@ -866,7 +867,12 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   private boolean isCurrentThreadEffectivelyPrioritized() {
-    return ArrayUtil.indexOfIdentity(myEffectivePrioritizedThreads, Thread.currentThread()) != -1;
+    synchronized (myPrioritizationLock) {
+      if (myDeprioritizations > 0) {
+        return false;
+      }
+      return myPrioritizedThreads.contains(Thread.currentThread());
+    }
   }
 
   private boolean checkLowPriorityReallyApplicable() {
@@ -920,12 +926,17 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private void stopAllPrioritization() {
     synchronized (myPrioritizationLock) {
       myPrioritizedThreads.clear();
-      updateEffectivePrioritized();
+      updateEffectivePrioritized(false, true);
     }
   }
 
   private boolean isAnyPrioritizedThreadBlocked() {
-    for (Thread thread : myEffectivePrioritizedThreads) {
+    synchronized (myPrioritizationLock) {
+      if (myDeprioritizations > 0) {
+        return false;
+      }
+    }
+    for (Thread thread : myPrioritizedThreads) {
       Thread.State state = thread.getState();
       if (state == Thread.State.WAITING || state == Thread.State.TIMED_WAITING || state == Thread.State.BLOCKED) {
         return true;
