@@ -10,9 +10,9 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfoRt.*
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
-import org.jetbrains.kotlin.idea.caches.project.isMPPModule
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.parseIDELibraryName
 import org.jetbrains.kotlin.idea.gradle.configuration.readGradleProperty
@@ -295,7 +295,7 @@ class PerformanceNativeProjectsTest : AbstractPerformanceProjectsTest() {
         val nativeModules: Map<Module, Set<String>> = runReadAction {
             project.allModules().mapNotNull { module ->
                 val facetSettings = KotlinFacet.get(module)?.configuration?.settings ?: return@mapNotNull null
-                if (!facetSettings.isMPPModule || !facetSettings.targetPlatform.isNative()) return@mapNotNull null
+                if (!facetSettings.isMultiPlatformModule || !facetSettings.targetPlatform.isNative()) return@mapNotNull null
 
                 // ex: "myProject.commonTest" -> "commonTest"
                 val moduleName = module.name.removePrefix(project.name).removePrefix(".")

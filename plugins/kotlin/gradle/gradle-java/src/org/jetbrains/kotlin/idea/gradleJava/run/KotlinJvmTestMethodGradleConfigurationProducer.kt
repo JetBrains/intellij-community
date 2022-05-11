@@ -4,14 +4,14 @@ package org.jetbrains.kotlin.idea.gradleJava.run
 
 import com.intellij.execution.Location
 import com.intellij.openapi.module.Module
-import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
-import org.jetbrains.kotlin.idea.project.platform
+import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.facet.platform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
 class KotlinJvmTestMethodGradleConfigurationProducer : AbstractKotlinTestMethodGradleConfigurationProducer() {
     override val forceGradleRunner get() = false
     override val hasTestFramework get() = canRunJvmTests()
-    override fun isApplicable(module: Module) = module.platform.isJvm() && !module.isNewMPPModule
+    override fun isApplicable(module: Module) = module.platform.isJvm() && !module.isNewMultiPlatformModule
 
     override fun getPsiMethodForLocation(contextLocation: Location<*>) = getTestMethodForJvm(contextLocation)
 }

@@ -5,13 +5,13 @@ package org.jetbrains.kotlin.idea.core.platform.impl
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.base.facet.implementingModules
+import org.jetbrains.kotlin.idea.base.facet.platform
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
-import org.jetbrains.kotlin.idea.caches.project.implementingModules
 import org.jetbrains.kotlin.idea.framework.CommonStandardLibraryDescription
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.platform.isCompatibleWith
 import org.jetbrains.kotlin.idea.platform.tooling
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.platform.TargetPlatform

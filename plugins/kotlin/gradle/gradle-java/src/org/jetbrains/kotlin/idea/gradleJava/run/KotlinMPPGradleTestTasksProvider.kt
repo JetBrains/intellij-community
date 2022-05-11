@@ -8,7 +8,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.idea.caches.project.isMPPModule
+import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinTargetData
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider
@@ -50,7 +50,7 @@ class KotlinMPPGradleTestTasksProvider : GradleTestTasksProvider {
     private fun isMultiplatformTestModule(module: Module): Boolean {
         val settingsProvider = KotlinFacetSettingsProvider.getInstance(module.project) ?: return false
         val settings = settingsProvider.getInitializedSettings(module)
-        return settings.isMPPModule && settings.isTestModule
+        return settings.isMultiPlatformModule && settings.isTestModule
     }
 
     private fun getTaskNames(task: TaskData, namePrefix: String): List<String> {

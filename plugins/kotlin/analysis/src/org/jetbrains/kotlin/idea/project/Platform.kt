@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.idea.base.facet.platform as platformNew
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.compiler.IDELanguageSettingsProvider
@@ -27,7 +28,6 @@ import org.jetbrains.kotlin.load.java.JavaTypeEnhancementState
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.impl.isCommon
-import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.UserDataProperty
@@ -208,23 +208,21 @@ private fun MutableMap<AnalysisFlag<*>, Any>.initIDESpecificAnalysisSettings(pro
     put(AnalysisFlags.ideMode, true)
 }
 
+@Deprecated(
+    "Use 'import org.jetbrains.kotlin.idea.base.facet.platform' instead.",
+    ReplaceWith("platform", imports = ["org.jetbrains.kotlin.idea.base.facet"]),
+    level = DeprecationLevel.ERROR
+)
+@Suppress("unused")
 val Module.platform: TargetPlatform?
-    get() = KotlinFacetSettingsProvider.getInstance(project)?.getInitializedSettings(this)?.targetPlatform ?: project.platform
+    get() = platformNew
 
 val Module.isHMPPEnabled: Boolean
     get() = KotlinFacetSettingsProvider.getInstance(project)?.getInitializedSettings(this)?.mppVersion?.isHmpp ?: false
 
-// FIXME(dsavvinov): this logic is clearly wrong in MPP environment; review and fix
-val Project.platform: TargetPlatform?
-    get() {
-        val jvmTarget = Kotlin2JvmCompilerArgumentsHolder.getInstance(this).settings.jvmTarget ?: return null
-        val version = JvmTarget.fromString(jvmTarget) ?: return null
-        return JvmPlatforms.jvmPlatformByTargetVersion(version)
-    }
-
 private val Module.implementsCommonModule: Boolean
-    get() = !platform.isCommon() // FIXME(dsavvinov): this doesn't seems right, in multilevel-MPP 'common' modules can implement other commons
-            && ModuleRootManager.getInstance(this).dependencies.any { it.platform.isCommon() }
+    get() = !platformNew.isCommon() // FIXME(dsavvinov): this doesn't seems right, in multilevel-MPP 'common' modules can implement other commons
+            && ModuleRootManager.getInstance(this).dependencies.any { it.platformNew.isCommon() }
 
 private fun parseArguments(
     platformKind: TargetPlatform,

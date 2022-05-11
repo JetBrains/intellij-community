@@ -12,10 +12,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.ResolveScopeEnlarger
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
-import org.jetbrains.kotlin.idea.caches.project.implementingModules
+import org.jetbrains.kotlin.idea.base.facet.implementingModules
+import org.jetbrains.kotlin.idea.base.facet.platform
 import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.util.isInSourceContentWithoutInjected
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm

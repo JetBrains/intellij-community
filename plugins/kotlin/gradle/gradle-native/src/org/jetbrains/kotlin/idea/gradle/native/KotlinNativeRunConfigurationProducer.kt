@@ -11,8 +11,8 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.ide.konan.KotlinNativeRunConfigurationProvider
+import org.jetbrains.kotlin.idea.base.facet.platform
 import org.jetbrains.kotlin.idea.facet.externalSystemNativeMainRunTasks
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.psi.KtFunction

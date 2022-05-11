@@ -2,165 +2,59 @@
 
 package org.jetbrains.kotlin.idea.caches.project
 
-import com.intellij.facet.FacetManager
-import com.intellij.facet.FacetTypeRegistry
-import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analyzer.ModuleInfo
-import org.jetbrains.kotlin.base.util.isAndroidModule
-import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.config.KotlinFacetSettings
-import org.jetbrains.kotlin.config.KotlinMultiplatformVersion
-import org.jetbrains.kotlin.config.isHmpp
-import org.jetbrains.kotlin.config.isNewMPP
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.idea.base.facet.implementingModules
+import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.facet.sourceType as sourceTypeNew
+import org.jetbrains.kotlin.idea.base.facet.implementingModules as implementingModulesNew
 import org.jetbrains.kotlin.idea.caches.project.SourceType.PRODUCTION
 import org.jetbrains.kotlin.idea.caches.project.SourceType.TEST
-import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.facet.KotlinFacetType
-import org.jetbrains.kotlin.idea.facet.KotlinFacetType.Companion.ID
-import org.jetbrains.kotlin.idea.project.platform
-import org.jetbrains.kotlin.idea.util.rootManager
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
-import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import org.jetbrains.kotlin.types.typeUtil.closure
 
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule' instead.",
+    ReplaceWith("this.isNewMultiPlatformModule", imports = ["org.jetbrains.kotlin.idea.base.facet"]),
+    level = DeprecationLevel.ERROR
+)
+@Suppress("unused")
 val Module.isNewMPPModule: Boolean
-    get() = facetSettings?.mppVersion.isNewMPP ||
-            facetSettings?.mppVersion.isHmpp // TODO: review clients, correct them to use precise checks for MPP version
+    get() = isNewMultiPlatformModule
 
-val Module.externalProjectId: String
-    get() = facetSettings?.externalProjectId ?: ""
-
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.facet.sourceType' instead.",
+    ReplaceWith("sourceType", imports = ["org.jetbrains.kotlin.idea.base.facet"]),
+    level = DeprecationLevel.ERROR
+)
+@Suppress("unused")
 val Module.sourceType: SourceType?
-    get() = facetSettings?.isTestModule?.let { isTest -> if (isTest) TEST else PRODUCTION }
+    get() = sourceTypeNew
 
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule' instead.",
+    ReplaceWith("isMultiPlatformModule", imports = ["org.jetbrains.kotlin.idea.base.facet"]),
+    level = DeprecationLevel.ERROR
+)
+@Suppress("unused")
 val Module.isMPPModule: Boolean
-    get() = facetSettings?.isMPPModule ?: false
+    get() = isMultiPlatformModule
 
-val Module.isTestModule: Boolean
-    get() = facetSettings?.isTestModule ?: false
-
-val KotlinFacetSettings.isMPPModule: Boolean
-    get() = this.mppVersion != null
-
-var Module.isKpmModule: Boolean
-        by NotNullableUserDataProperty(Key.create("IS_KPM_MODULE"), false)
-
-var Module.refinesFragmentIds: Collection<String>
-        by NotNullableUserDataProperty(Key.create("REFINES_FRAGMENT_IDS"), emptyList())
-
-private val Module.facetSettings get() = KotlinFacet.get(this)?.configuration?.settings
-
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.facet.implementingModules' instead.",
+    ReplaceWith("implementingModules", imports = ["org.jetbrains.kotlin.idea.base.facet"]),
+    level = DeprecationLevel.ERROR
+)
+@Suppress("unused")
 val Module.implementingModules: List<Module>
-    get() = cacheInvalidatingOnRootModifications {
-        fun Module.implementingModulesM2(moduleManager: ModuleManager): List<Module> {
-            return moduleManager.getModuleDependentModules(this).filter {
-                it.isNewMPPModule && it.externalProjectId == externalProjectId
-            }
-        }
-
-        val moduleManager = ModuleManager.getInstance(project)
-        val stableNameProvider = StableModuleNameProvider.getInstance(project)
-
-        if (isKpmModule) {
-            moduleManager.modules.filter { stableNameProvider.getStableModuleName(this) in it.refinesFragmentIds }
-        } else when (facetSettings?.mppVersion) {
-            null -> emptyList()
-
-            KotlinMultiplatformVersion.M3 -> {
-                val thisModuleStableName = stableNameProvider.getStableModuleName(this)
-                val result = mutableSetOf<Module>()
-                moduleManager.modules.filterTo(result) { it.facetSettings?.dependsOnModuleNames?.contains(thisModuleStableName) == true }
-
-                // HACK: we do not import proper dependsOn for android source-sets in M3,
-                // so add all Android modules that M2-implemention would've added,
-                // to at least not make things worse.
-                // See KT-33809 for details
-                implementingModulesM2(moduleManager).forEach { if (it !in result && it.isAndroidModule()) result += it }
-
-                result.toList()
-            }
-
-            KotlinMultiplatformVersion.M2 -> implementingModulesM2(moduleManager)
-
-            KotlinMultiplatformVersion.M1 -> moduleManager.modules.filter { name in it.findOldFashionedImplementedModuleNames() }
-        }
-    }
-
-private val Project.modulesByLinkedKey: Map<String, Module>
-    get() = cacheInvalidatingOnRootModifications {
-        val moduleManager = ModuleManager.getInstance(this)
-        val stableNameProvider = StableModuleNameProvider.getInstance(this)
-
-        moduleManager.modules.associateBy { stableNameProvider.getStableModuleName(it) }
-    }
-
-val Module.implementedModules: List<Module>
-    get() = cacheInvalidatingOnRootModifications {
-        fun Module.implementedModulesM2(): List<Module> {
-            return rootManager.dependencies.filter {
-                // TODO: remove additional android check
-                it.isNewMPPModule &&
-                        it.platform.isCommon() &&
-                        it.externalProjectId == externalProjectId &&
-                        (isAndroidModule() || it.isTestModule == isTestModule)
-            }
-        }
-
-        if (isKpmModule) {
-            refinesFragmentIds.mapNotNull { project.modulesByLinkedKey[it] }
-        } else {
-            val facetSettings = facetSettings
-            when (facetSettings?.mppVersion) {
-                null -> emptyList()
-
-                KotlinMultiplatformVersion.M3 -> {
-                    facetSettings.dependsOnModuleNames
-                        .mapNotNull { project.modulesByLinkedKey[it] }
-                        // HACK: we do not import proper dependsOn for android source-sets in M3, so fallback to M2-impl
-                        // to at least not make things worse.
-                        // See KT-33809 for details
-                        .plus(if (isAndroidModule()) implementedModulesM2() else emptyList())
-                        .distinct()
-                }
-
-                KotlinMultiplatformVersion.M2 -> {
-                    implementedModulesM2()
-                }
-
-                KotlinMultiplatformVersion.M1 -> {
-                    val modelsProvider = IdeModelsProviderImpl(project)
-                    findOldFashionedImplementedModuleNames().mapNotNull { modelsProvider.findIdeModule(it) }
-                }
-            }
-        }
-    }
-
-val Module.additionalVisibleModules: List<Module>
-    get() = cacheInvalidatingOnRootModifications cache@{
-        val facetSettings = facetSettings ?: return@cache emptyList()
-        facetSettings.additionalVisibleModuleNames.mapNotNull { moduleName ->
-            project.modulesByLinkedKey[moduleName]
-        }
-    }
-
-private fun Module.findOldFashionedImplementedModuleNames(): List<String> {
-    val facet = FacetManager.getInstance(this).findFacet(
-        KotlinFacetType.TYPE_ID,
-        FacetTypeRegistry.getInstance().findFacetType(ID)!!.defaultFacetName
-    )
-    return facet?.configuration?.settings?.implementedModuleNames ?: emptyList()
-}
-
+    get() = implementingModulesNew
 
 val ModuleDescriptor.implementingDescriptors: List<ModuleDescriptor>
     get() {

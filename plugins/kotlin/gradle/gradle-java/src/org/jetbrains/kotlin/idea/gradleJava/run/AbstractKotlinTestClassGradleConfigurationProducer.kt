@@ -12,9 +12,9 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
+import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.facet.platform
 import org.jetbrains.kotlin.idea.gradle.run.KotlinGradleConfigurationProducer
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.applyTestConfiguration
@@ -31,7 +31,7 @@ abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer :
     abstract fun isApplicable(module: Module, platform: TargetPlatform): Boolean
 
     final override fun isApplicable(module: Module): Boolean {
-        if (!module.isNewMPPModule) {
+        if (!module.isNewMultiPlatformModule) {
             return false
         }
 

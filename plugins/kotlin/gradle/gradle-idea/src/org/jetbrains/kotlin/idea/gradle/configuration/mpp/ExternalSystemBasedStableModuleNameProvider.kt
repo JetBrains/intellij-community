@@ -7,7 +7,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.caches.project.StableModuleNameProvider
+import org.jetbrains.kotlin.idea.base.platforms.StableModuleNameProvider
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 private val LOG = Logger.getInstance(ExternalSystemBasedStableModuleNameProvider::class.java)

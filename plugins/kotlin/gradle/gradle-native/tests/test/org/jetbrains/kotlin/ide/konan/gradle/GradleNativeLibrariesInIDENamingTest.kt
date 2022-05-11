@@ -8,10 +8,10 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VfsUtilCore.urlToPath
+import org.jetbrains.kotlin.idea.base.facet.platform
 import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.configuration.externalCompilerVersion
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.konan.library.konanCommonLibraryPath
 import org.jetbrains.kotlin.konan.library.konanPlatformLibraryPath
@@ -19,9 +19,7 @@ import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Assert.*
 import org.junit.Test
-import org.junit.runners.Parameterized
 import java.io.File
-
 
 class GradleNativeLibrariesInIDENamingTest15 : TestCaseWithFakeKotlinNative() {
     // Test naming of Kotlin/Native libraries

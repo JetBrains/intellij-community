@@ -30,12 +30,12 @@ import org.jetbrains.kotlin.base.util.invalidateProjectRoots
 import org.jetbrains.kotlin.base.util.isAndroidModule
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
+import org.jetbrains.kotlin.idea.base.facet.platform
+import org.jetbrains.kotlin.idea.base.facet.sourceType
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
 import org.jetbrains.kotlin.idea.caches.project.SourceType
-import org.jetbrains.kotlin.idea.caches.project.sourceType
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.util.rootManager
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
@@ -69,8 +69,6 @@ fun PsiDirectory.getFqNameWithImplicitPrefixOrRoot(): FqName = getFqNameWithImpl
 
 private fun VirtualFile.hasExplicitPackagePrefix(project: Project): Boolean =
     toPsiDirectory(project)?.getPackage()?.qualifiedName?.isNotEmpty() == true
-
-fun KtFile.packageMatchesDirectory(): Boolean = packageFqName == getFqNameByDirectory()
 
 fun KtFile.packageMatchesDirectoryOrImplicit() =
     packageFqName == getFqNameByDirectory() || packageFqName == parent?.getFqNameWithImplicitPrefix()

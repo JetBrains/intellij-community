@@ -26,6 +26,10 @@ import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.descriptors.ModuleCapability
 import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
+import org.jetbrains.kotlin.idea.base.facet.additionalVisibleModules
+import org.jetbrains.kotlin.idea.base.facet.implementedModules
+import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.facet.sourceType
 import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider
 import org.jetbrains.kotlin.idea.base.platforms.platform
 import org.jetbrains.kotlin.idea.caches.resolve.util.enlargedSearchScope
@@ -193,10 +197,10 @@ fun Module.testSourceInfo(): ModuleTestSourceInfo? = if (hasTestRoots()) ModuleT
 internal fun Module.correspondingModuleInfos(): List<ModuleSourceInfo> = listOfNotNull(testSourceInfo(), productionSourceInfo())
 
 private fun Module.hasProductionRoots() =
-    hasRootsOfType(JavaSourceRootType.SOURCE) || hasRootsOfType(SourceKotlinRootType) || (isNewMPPModule && sourceType == SourceType.PRODUCTION)
+    hasRootsOfType(JavaSourceRootType.SOURCE) || hasRootsOfType(SourceKotlinRootType) || (isNewMultiPlatformModule && sourceType == SourceType.PRODUCTION)
 
 private fun Module.hasTestRoots() =
-    hasRootsOfType(JavaSourceRootType.TEST_SOURCE) || hasRootsOfType(TestSourceKotlinRootType) || (isNewMPPModule && sourceType == SourceType.TEST)
+    hasRootsOfType(JavaSourceRootType.TEST_SOURCE) || hasRootsOfType(TestSourceKotlinRootType) || (isNewMultiPlatformModule && sourceType == SourceType.TEST)
 
 private fun Module.hasRootsOfType(sourceRootType: JpsModuleSourceRootType<*>): Boolean =
     rootManager.contentEntries.any { it.getSourceFolders(sourceRootType).isNotEmpty() }
@@ -501,10 +505,5 @@ data class PlatformModuleInfo(
 
 fun IdeaModuleInfo.projectSourceModules(): List<ModuleSourceInfo>? =
     (this as? ModuleSourceInfo)?.let(::listOf) ?: (this as? PlatformModuleInfo)?.containedModules
-
-enum class SourceType {
-    PRODUCTION,
-    TEST
-}
 
 internal val ModuleSourceInfo.sourceType get() = if (this is ModuleTestSourceInfo) SourceType.TEST else SourceType.PRODUCTION

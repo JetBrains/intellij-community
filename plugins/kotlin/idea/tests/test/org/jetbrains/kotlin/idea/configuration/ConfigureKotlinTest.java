@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.config.JvmTarget;
 import org.jetbrains.kotlin.config.KotlinFacetSettings;
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider;
 import org.jetbrains.kotlin.config.LanguageVersion;
+import org.jetbrains.kotlin.idea.base.facet.KotlinFacetConfigurationUtils;
 import org.jetbrains.kotlin.idea.base.platforms.JsStdlibDetectionUtil;
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind;
 import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider;
@@ -357,7 +358,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     }
 
     public void testProjectWithoutFacetWithJvmTarget18() {
-        assertEquals(JvmPlatforms.INSTANCE.getJvm8(), PlatformKt.getPlatform(getModule()));
+        assertEquals(JvmPlatforms.INSTANCE.getJvm8(), KotlinFacetConfigurationUtils.getPlatform(getModule()));
     }
 
     private static Library getFirstLibrary(@NotNull Project project) {

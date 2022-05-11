@@ -5,10 +5,10 @@ package org.jetbrains.kotlin.idea.js
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.CompilerModuleExtension
 import org.jetbrains.jps.util.JpsPathUtil
+import org.jetbrains.kotlin.idea.base.facet.platform
 import org.jetbrains.kotlin.idea.configuration.isGradleModule
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.platform.js.isJs
 
 val Module.jsTestOutputFilePath: String?

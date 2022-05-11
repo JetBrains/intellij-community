@@ -8,10 +8,10 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.facet.platform
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.configuration.isGradleModule
 import org.jetbrains.kotlin.idea.platform.tooling
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.run.KotlinMainFunctionLocatingService
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework
 import org.jetbrains.kotlin.idea.util.isUnderKotlinSourceRootTypes

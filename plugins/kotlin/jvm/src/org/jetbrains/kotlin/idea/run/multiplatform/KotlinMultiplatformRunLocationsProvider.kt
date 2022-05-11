@@ -10,10 +10,10 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.base.util.isAndroidModule
 import org.jetbrains.kotlin.config.KotlinModuleKind
+import org.jetbrains.kotlin.idea.base.facet.implementingModules
+import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.facet.sourceType
 import org.jetbrains.kotlin.idea.caches.project.SourceType
-import org.jetbrains.kotlin.idea.caches.project.implementingModules
-import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
-import org.jetbrains.kotlin.idea.caches.project.sourceType
 import org.jetbrains.kotlin.idea.configuration.toModuleGroup
 import org.jetbrains.kotlin.idea.core.getSourceType
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
@@ -29,7 +29,7 @@ class KotlinMultiplatformRunLocationsProvider : MultipleRunLocationsProvider() {
 
     override fun getAlternativeLocations(originalLocation: Location<*>): List<Location<*>> {
         val originalModule = originalLocation.module ?: return emptyList()
-        if (originalModule.isNewMPPModule) {
+        if (originalModule.isNewMultiPlatformModule) {
             return emptyList()
         }
 
@@ -40,7 +40,7 @@ class KotlinMultiplatformRunLocationsProvider : MultipleRunLocationsProvider() {
 }
 
 private fun compactedGradleProjectId(module: Module): String {
-    return if (module.isNewMPPModule) {
+    return if (module.isNewMultiPlatformModule) {
         // TODO: more robust way to get compilation/sourceSet name
         module.name.substringAfterLast('_')
     } else {
@@ -53,7 +53,7 @@ private fun modulesToRunFrom(
     originalSourceType: SourceType
 ): List<Module> {
     val modules = originalModule.implementingModules
-    if (!originalModule.isNewMPPModule) return modules
+    if (!originalModule.isNewMultiPlatformModule) return modules
     val compilations = modules.filter {
         KotlinFacet.get(it)?.configuration?.settings?.kind == KotlinModuleKind.COMPILATION_AND_SOURCE_SET_HOLDER
     }

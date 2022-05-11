@@ -19,10 +19,11 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
-import org.jetbrains.kotlin.idea.run.asJvmModule
+import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.facet.platform
 import org.jetbrains.kotlin.idea.run.forceGradleRunnerInMPP
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfiguration>(JUnitConfigurationType.getInstance()) {
@@ -33,7 +34,7 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
 
     private fun isAvailableInMpp(context: ConfigurationContext): Boolean {
         val module = context.module
-        return module == null || !module.isNewMPPModule || !forceGradleRunnerInMPP()
+        return module == null || !module.isNewMultiPlatformModule || !forceGradleRunnerInMPP()
     }
 
     override fun isConfigurationFromContext(
@@ -75,7 +76,7 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
         val template = RunManager.getInstance(configuration.project).getConfigurationTemplate(configurationFactory)
         val predefinedModule = (template.configuration as ModuleBasedConfiguration<*, *>).configurationModule.module
         val configurationModule = configuration.configurationModule.module
-        return configurationModule == context.location?.module?.asJvmModule() || configurationModule == predefinedModule
+        return configurationModule == context.location?.module?.takeIf { it.platform.isJvm() } || configurationModule == predefinedModule
     }
 
     override fun setupConfigurationFromContext(
@@ -91,7 +92,7 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
 
         val location = context.location ?: return false
         val element = location.psiElement
-        context.module?.asJvmModule() ?: return false
+        context.module?.takeIf { it.platform.isJvm() } ?: return false
 
         if (!ProjectRootsUtil.isInProjectOrLibSource(element) || element.containingFile !is KtFile) {
             return false

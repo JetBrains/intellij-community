@@ -15,11 +15,10 @@ import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.createArguments
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmJsPlatformDetails
 import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmJvmPlatformDetails
 import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmNativePlatformDetails
-import org.jetbrains.kotlin.idea.caches.project.isKpmModule
-import org.jetbrains.kotlin.idea.caches.project.refinesFragmentIds
+import org.jetbrains.kotlin.idea.base.facet.isKpmModule
+import org.jetbrains.kotlin.idea.base.facet.refinesFragmentIds
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.externalCompilerVersion
 import org.jetbrains.kotlin.idea.facet.*

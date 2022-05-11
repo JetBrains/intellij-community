@@ -12,6 +12,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.ClassUtil
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.idea.base.facet.platform
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
@@ -22,7 +24,7 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
         sourceElement: Ref<PsiElement>
     ): Boolean {
         val location = context.location ?: return false
-        val module = location.module?.asJvmModule() ?: return false
+        val module = location.module?.takeIf { it.platform.isJvm() } ?: return false
         val container = getEntryPointContainer(location) ?: return false
         val startClassFQName = getStartClassFqName(container) ?: return false
 
@@ -45,7 +47,7 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
         val startClassFQName = getStartClassFqName(entryPointContainer) ?: return false
 
         return configuration.runClass == startClassFQName &&
-                context.module?.asJvmModule() == configuration.configurationModule?.module
+                context.module?.takeIf { it.platform.isJvm() } == configuration.configurationModule?.module
     }
 
     companion object {
