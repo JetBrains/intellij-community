@@ -11,6 +11,7 @@ import kotlinx.coroutines.CompletableJob;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
@@ -21,14 +22,32 @@ import static kotlinx.coroutines.JobKt.Job;
 @Internal
 public final class Propagation {
 
+  static class Holder {
+    private static boolean propagateThreadContext = Registry.is("ide.propagate.context");
+    private static boolean propagateThreadCancellation = Registry.is("ide.propagate.cancellation");
+  }
+
+  @TestOnly
+  static void prapagata(@NotNull Runnable runnable) {
+    Holder.propagateThreadContext = true;
+    Holder.propagateThreadCancellation = true;
+    try {
+      runnable.run();
+    }
+    finally {
+      Holder.propagateThreadContext = true;
+      Holder.propagateThreadCancellation = true;
+    }
+  }
+
   private Propagation() { }
 
-  private static boolean propagateThreadContext() {
-    return Registry.is("ide.propagate.context");
+  static boolean propagateThreadContext() {
+    return Holder.propagateThreadContext;
   }
 
   public static boolean propagateCancellation() {
-    return Registry.is("ide.propagate.cancellation");
+    return Holder.propagateThreadCancellation;
   }
 
   static @NotNull Runnable handleCommand(@NotNull Runnable command) {

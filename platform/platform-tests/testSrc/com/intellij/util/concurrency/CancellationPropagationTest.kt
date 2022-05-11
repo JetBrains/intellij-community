@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.progress
+package com.intellij.util.concurrency
 
 import com.intellij.concurrency.callable
 import com.intellij.concurrency.resetThreadContext
@@ -10,13 +10,11 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.assertReferenced
 import com.intellij.openapi.application.impl.pumpEDT
 import com.intellij.openapi.application.impl.withModality
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.ApplicationExtension
-import com.intellij.testFramework.RegistryKeyExtension
 import com.intellij.testFramework.UncaughtExceptionsExtension
-import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
@@ -47,9 +45,6 @@ class CancellationPropagationTest {
     @JvmField
     val uncaughtExceptionsExtension = UncaughtExceptionsExtension()
 
-    @RegisterExtension
-    @JvmField
-    val registryKeyExtension = RegistryKeyExtension("ide.propagate.cancellation", true)
   }
 
   private val service = AppExecutorUtil.getAppExecutorService()
@@ -120,18 +115,20 @@ class CancellationPropagationTest {
   @Test
   fun `cancelled invokeLater is not executed`(): Unit = timeoutRunBlocking {
     launch {
-      resetThreadContext(coroutineContext).use {
-        ApplicationManager.getApplication().withModality {
-          val runnable = Runnable {
-            fail()
+      Propagation.prapagata {
+        resetThreadContext(coroutineContext).use {
+          ApplicationManager.getApplication().withModality {
+            val runnable = Runnable {
+              fail()
+            }
+            ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, Conditions.alwaysFalse<Nothing?>())
+            assertReferenced(LaterInvocator::class.java, runnable) // the runnable is queued
+            this@launch.cancel()
           }
-          ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, Conditions.alwaysFalse<Nothing?>())
-          assertReferenced(LaterInvocator::class.java, runnable) // the runnable is queued
-          this@launch.cancel()
         }
       }
-    }.join()
-    pumpEDT()
+      }.join()
+      pumpEDT()
   }
 
   @Test
@@ -187,14 +184,16 @@ class CancellationPropagationTest {
   }
 
   private suspend fun doTest(submit: (() -> Unit) -> Unit) {
-    resetThreadContext(coroutineContext).use {
-      suspendCancellableCoroutine<Unit> { continuation ->
-        val parentJob = checkNotNull(Cancellation.currentJob())
-        submit { // switch to another thread
-          val result: Result<Unit> = runCatching {
-            assertCurrentJobIsChildOf(parentJob)
+      resetThreadContext(coroutineContext).use {
+        suspendCancellableCoroutine<Unit> { continuation ->
+          Propagation.prapagata {
+          val parentJob = checkNotNull(Cancellation.currentJob())
+          submit { // switch to another thread
+            val result: Result<Unit> = runCatching {
+              assertCurrentJobIsChildOf(parentJob)
+            }
+            continuation.resumeWith(result)
           }
-          continuation.resumeWith(result)
         }
       }
     }

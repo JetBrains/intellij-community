@@ -1,13 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.concurrency
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.concurrency
 
+import com.intellij.concurrency.*
+import com.intellij.concurrency.TestElement
+import com.intellij.concurrency.TestElementKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.timeoutRunBlocking
 import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.ApplicationExtension
-import com.intellij.testFramework.RegistryKeyExtension
-import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
@@ -23,10 +24,6 @@ class ThreadContextPropagationTest {
     @RegisterExtension
     @JvmField
     val applicationExtension = ApplicationExtension()
-
-    @RegisterExtension
-    @JvmField
-    val registryKeyExtension = RegistryKeyExtension("ide.propagate.context", true)
   }
 
   @Test
@@ -84,11 +81,13 @@ class ThreadContextPropagationTest {
     return suspendCancellableCoroutine { continuation ->
       val element = TestElement("element")
       withThreadContext(element) {                                       // install context in calling thread
-        submit {                                                         // switch to another thread
-          val result: Result<Unit> = runCatching {
-            assertSame(element, currentThreadContext()[TestElementKey])  // the same element must be present in another thread context
+        Propagation.prapagata {
+          submit {                                                         // switch to another thread
+            val result: Result<Unit> = runCatching {
+              assertSame(element, currentThreadContext()[TestElementKey])  // the same element must be present in another thread context
+            }
+            continuation.resumeWith(result)
           }
-          continuation.resumeWith(result)
         }
       }
     }
