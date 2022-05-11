@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -10,12 +10,12 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiJavaPatterns.elementType
 import com.intellij.patterns.PsiJavaPatterns.psiElement
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletion
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletionSession
-import org.jetbrains.kotlin.idea.completion.stringTemplates.InsertStringTemplateBracesLookupElementDecorator
 import org.jetbrains.kotlin.idea.completion.stringTemplates.StringTemplateCompletion
+import org.jetbrains.kotlin.idea.completion.stringTemplates.wrapLookupElementForStringTemplateAfterDotCompletion
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -136,10 +136,8 @@ class KotlinCompletionContributor : CompletionContributor() {
         val parametersOriginFile = parameters.originalFile
         if (position.containingFile !is KtFile || parametersOriginFile !is KtFile) return
 
-        val toFromOriginalFileMapper = ToFromOriginalFileMapper.create(parameters)
-
         StringTemplateCompletion.correctParametersForInStringTemplateCompletion(parameters)?.let { correctedParameters ->
-            doComplete(correctedParameters, result) { InsertStringTemplateBracesLookupElementDecorator(it) }
+            doComplete(correctedParameters, result, ::wrapLookupElementForStringTemplateAfterDotCompletion)
             return
         }
 
