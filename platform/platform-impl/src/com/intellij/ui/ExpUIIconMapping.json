@@ -108,6 +108,8 @@
         "icons/ruby/ruby_file.svg"
       ],
       "scala.svg": "org/jetbrains/plugins/scala/images/scala16.png",
+      "scratch.svg": "actions/scratch",
+      "scratches.svg": "scope/scratches.svg",
       "scss.svg": "org/jetbrains/plugins/sass/sass.svg",
       "shell.svg": "icons/shFile.svg",
       "sql.svg": "icons/sql.svg",
