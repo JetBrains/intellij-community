@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.ProjectTopics;
@@ -74,18 +74,18 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                            "  <mirror>" +
                            "  </mirror>" +
                            "  <mirror>" +
-                           "    <id></id>" +
-                           "    <url></url>" +
-                           "    <mirrorOf></mirrorOf>" +
+                           "    <id/>" +
+                           "    <url/>" +
+                           "    <mirrorOf/>" +
                            "  </mirror>" +
                            "  <mirror>" +
-                           "    <id></id>" +
+                           "    <id/>" +
                            "    <url>foo</url>" +
                            "    <mirrorOf>*</mirrorOf>" +
                            "  </mirror>" +
                            "  <mirror>" +
                            "    <id>foo</id>" +
-                           "    <url></url>" +
+                           "    <url/>" +
                            "    <mirrorOf>*</mirrorOf>" +
                            "  </mirror>" +
                            "</mirrors>" +
@@ -217,16 +217,13 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
     myProjectsManager.listenForExternalChanges();
 
-    // valid password is 'fg3W9' (see http://www.jetbrains.net/confluence/display/JBINT/HTTP+Proxy+with+authorization)
     updateSettingsXml("<proxies>" +
                       " <proxy>" +
                       "    <id>my</id>" +
                       "    <active>true</active>" +
                       "    <protocol>http</protocol>" +
-                      "    <host>proxy-auth-test.labs.intellij.net</host>" +
+                      "    <host>invalid.host.in.intellij.net</host>" +
                       "    <port>3128</port>" +
-                      "    <username>user1</username>" +
-                      "    <password>invalid</password>" +
                       "  </proxy>" +
                       "</proxies>");
 
@@ -280,8 +277,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
       PlatformTestUtil.assertPathsEqual(myProjectPom.getPath(), mavenProject.getProperties().getProperty("workspace-info"));
     }
     finally {
-      // do not lock files by maven process
-      MavenServerManager.getInstance().shutdown(true);
+      MavenServerManager.getInstance().shutdown(true);  // to unlock files
     }
   }
 
@@ -373,7 +369,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     assertEquals("name-from-properties", project.getName());
   }
 
-  private void assertRootsChanged(int count) {
+  private void assertRootsChanged(@SuppressWarnings("SameParameterValue") int count) {
     assertEquals(count, rootsChangedCount);
     assertEquals(rootsChangedCount, beforeRootsChangedCount);
   }
