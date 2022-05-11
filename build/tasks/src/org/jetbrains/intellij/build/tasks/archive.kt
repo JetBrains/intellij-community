@@ -28,7 +28,7 @@ private const val fileFlag = 32768
 // 0755
 const val executableFileUnixMode = fileFlag or 493
 
-internal fun packInternalUtilities(outFile: Path, files: List<Path>) {
+fun packInternalUtilities(outFile: Path, files: List<Path>) {
   writeNewZip(outFile, compress = true) { writer ->
     for (file in files) {
       writer.file(file.fileName.toString(), file)

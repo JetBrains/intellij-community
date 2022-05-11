@@ -41,7 +41,7 @@ abstract class BuildContext: CompilationContext {
   /**
    * Names of JARs inside `IDE_HOME/lib` directory which need to be added to the JVM classpath to start the IDE.
    */
-  abstract var bootClassPathJarNames: MutableList<String>
+  abstract var bootClassPathJarNames: List<String>
 
   /**
    * Allows to customize classpath for buildSearchableOptions and builtinModules

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.tasks
 
 import io.opentelemetry.api.GlobalOpenTelemetry
@@ -10,11 +10,10 @@ import io.opentelemetry.context.Context
 import io.opentelemetry.semconv.trace.attributes.SemanticAttributes
 import java.util.concurrent.Callable
 import java.util.concurrent.ForkJoinTask
-import java.util.function.Supplier
 
 internal val tracer: Tracer by lazy { GlobalOpenTelemetry.getTracer("build-script") }
 
-fun <T> createTask(spanBuilder: SpanBuilder, task: Supplier<T>): ForkJoinTask<T> {
+inline fun <T> createTask(spanBuilder: SpanBuilder, crossinline task: () -> T): ForkJoinTask<T> {
   val context = Context.current()
   return ForkJoinTask.adapt(Callable {
     val thread = Thread.currentThread()
@@ -25,7 +24,7 @@ fun <T> createTask(spanBuilder: SpanBuilder, task: Supplier<T>): ForkJoinTask<T>
       .startSpan()
     span.makeCurrent().use {
       span.use {
-        task.get()
+        task()
       }
     }
   })

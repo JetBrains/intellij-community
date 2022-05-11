@@ -9,6 +9,7 @@ import com.intellij.util.SystemProperties
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.Jdk11Downloader
@@ -357,8 +358,9 @@ final class CompilationContextImpl implements CompilationContext {
   }
 
   @Override
+  @Nullable
   String getOldModuleName(String newName) {
-    return newToOldModuleName[newName]
+    return newToOldModuleName.get(newName)
   }
 
   @Override

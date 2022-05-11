@@ -46,7 +46,7 @@ interface CompilationContext {
    * If module {@code newName} was renamed returns its old name and {@code null} otherwise. This method can be used to temporary keep names
    * of directories and JARs in the product distributions after renaming modules.
    */
-  fun getOldModuleName(newName: String): String
+  fun getOldModuleName(newName: String): String?
 
   fun getModuleOutputDir(module: JpsModule): Path
 

@@ -504,7 +504,7 @@ class BuildTasksImpl(val context: BuildContext) : BuildTasks() {
   override fun runTestBuild() {
     checkProductProperties(context)
     val context = context
-    val projectStructureMapping = compileModulesForDistribution(context).buildJARs(context)
+    val projectStructureMapping = DistributionJARsBuilder(compileModulesForDistribution(context)).buildJARs(context)
     layoutShared(context)
     context.productProperties.versionCheckerConfig?.let {
       ClassVersionChecker.checkVersions(it, context, context.paths.distAllDir)
@@ -522,7 +522,7 @@ class BuildTasksImpl(val context: BuildContext) : BuildTasks() {
     context.options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
     BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
-    compileModulesForDistribution(context).buildJARs(context, true)
+    DistributionJARsBuilder(compileModulesForDistribution(context)).buildJARs(context, true)
     val arch = if (CpuArch.isArm64()) JvmArchitecture.aarch64 else JvmArchitecture.x64
     layoutShared(context)
     if (includeBinAndRuntime) {

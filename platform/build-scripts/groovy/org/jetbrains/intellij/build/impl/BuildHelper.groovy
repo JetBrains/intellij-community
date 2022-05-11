@@ -9,6 +9,7 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Scope
+import kotlin.jvm.functions.Function0
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
@@ -25,7 +26,6 @@ import java.nio.file.StandardCopyOption
 import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
 import java.util.function.Predicate
-import java.util.function.Supplier
 import java.util.function.UnaryOperator
 
 @CompileStatic
@@ -60,9 +60,9 @@ final class BuildHelper {
       return null
     }
     else {
-      return TraceKt.createTask(spanBuilder, new Supplier<Void>() {
+      return TraceKt.createTask(spanBuilder, new Function0<Void>() {
         @Override
-        Void get() {
+        Void invoke() {
           task.run()
           return null
         }
