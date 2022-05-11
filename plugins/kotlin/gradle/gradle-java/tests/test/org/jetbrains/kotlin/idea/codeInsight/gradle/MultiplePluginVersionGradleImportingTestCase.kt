@@ -96,9 +96,6 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
                 arrayOf("6.9.2", V_1_5_32.toString()),
                 arrayOf("7.3.3", V_1_6_21.toString()),
                 arrayOf("7.4.2", V_1_7_0_Beta.toString()),
-
-                /* Master tested with latest and oldest Gradle version */
-                arrayOf("6.8.3", "master"),
                 arrayOf("7.4.2", "master")
             )
         }
