@@ -29,7 +29,7 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
 
     class TestBucket1322 : HmppImportAndHighlightingTests() {
         @Test
-        @PluginTargetVersions(pluginVersion = "1.5.0+")
+        @PluginTargetVersions(pluginVersion = "1.6.0+")
         fun testMultiModulesHmpp() {
             val macosX64 = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.MACOS_X64)
             val linuxX64 = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.LINUX_X64)
@@ -479,7 +479,7 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
         }
 
         @Test
-        @PluginTargetVersions(pluginVersion = "1.5.30+")
+        @PluginTargetVersions(pluginVersion = "1.6.0+")
         fun testKt46625SupportedAndUnsupportedPlatform() {
             configureByFiles()
             importProject()
@@ -489,13 +489,8 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
 
     class HmppLibAndConsumer25 : HmppImportAndHighlightingTests() {
         @Test
-        @PluginTargetVersions(pluginVersion = "1.4.30+")
+        @PluginTargetVersions(pluginVersion = "1.6.0+")
         fun testHmppLibAndConsumer() {
-            assumeTrue(
-                "Test ignored, because of regression in 1.5.0 https://youtrack.jetbrains.com/issue/KT-46417",
-                kotlinPluginVersion != parseKotlinVersion("1.5.0")
-            )
-
             configureByFiles()
             linkProject("$projectPath/lib-and-app")
             linkProject("$projectPath/published-lib-consumer")
