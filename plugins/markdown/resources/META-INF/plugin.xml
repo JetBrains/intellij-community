@@ -557,7 +557,7 @@ Includes the following features:</p>
       <action id="Markdown.ConfigurePandoc"
               class="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"/>
     </group>
-    <action id="Markdown.OpenDevtoolsAction"
+    <action id="Markdown.OpenDevtools"
             class="org.intellij.plugins.markdown.ui.actions.MarkdownOpenDevtoolsAction"/>
     <action id="Markdown.Extensions.CleanupExternalFiles"
             class="org.intellij.plugins.markdown.extensions.CleanupExtensionsExternalFilesAction"
