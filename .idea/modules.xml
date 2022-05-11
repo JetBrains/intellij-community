@@ -20,6 +20,7 @@
     <module old-name="android-annotations" new-name="android.sdktools.android-annotations" />
     <module old-name="android-common" new-name="intellij.android.common" />
     <module old-name="android-gradle-jps" new-name="intellij.android.gradle.jps" />
+    <module old-name="android-gradle-jps" new-name="intellij.android.gradle.jps" />
     <module old-name="android-jps-plugin" new-name="intellij.android.jpsBuildPlugin.jps" />
     <module old-name="android-plugin" new-name="intellij.android.plugin" />
     <module old-name="android-test-framework" new-name="intellij.android.testFramework" />
@@ -1035,7 +1036,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/core/tests/kotlin.core.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/core/tests/kotlin.core.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/coverage/kotlin.coverage.iml" filepath="$PROJECT_DIR$/plugins/kotlin/coverage/kotlin.coverage.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/coverage/tests/kotlin.coverage.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/coverage/tests/kotlin.coverage.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/fe10-analyze/safe-analyze-utils/kotlin.fe10-analyze.safe-analyze-utils.iml" filepath="$PROJECT_DIR$/plugins/kotlin/fe10-analyze/safe-analyze-utils/kotlin.fe10-analyze.safe-analyze-utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/features-trainer/kotlin.features-trainer.iml" filepath="$PROJECT_DIR$/plugins/kotlin/features-trainer/kotlin.features-trainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/features-trainer/tests/kotlin.features-trainer.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/features-trainer/tests/kotlin.features-trainer.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/fir/kotlin.fir.iml" filepath="$PROJECT_DIR$/plugins/kotlin/fir/kotlin.fir.iml" />

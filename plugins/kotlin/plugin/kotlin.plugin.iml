@@ -85,6 +85,5 @@
     <orderEntry type="module" module-name="kotlin.features-trainer" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.maven" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.fe10-analyze.safe-analyze-utils" scope="PROVIDED" />
   </component>
 </module>
