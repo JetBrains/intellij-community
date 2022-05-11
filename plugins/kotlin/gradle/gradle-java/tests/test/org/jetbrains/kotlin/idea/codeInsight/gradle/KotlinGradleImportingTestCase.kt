@@ -54,6 +54,14 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
 
     protected val importStatusCollector = ImportStatusCollector()
 
+    override fun findJdkPath(): String {
+        return System.getenv("JDK_11") ?: System.getenv("JAVA11_HOME") ?: run {
+            val message = "Missing JDK_11 or JAVA11_HOME environment variable"
+            if (IS_UNDER_TEAMCITY) LOG.error(message) else LOG.warn(message)
+            super.findJdkPath()
+        }
+    }
+
     override fun setUp() {
         Assume.assumeFalse(AndroidStudioTestUtils.skipIncompatibleTestAgainstAndroidStudio())
         super.setUp()

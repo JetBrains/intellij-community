@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle
 
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.KotlinVersion
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.codeInsight.gradle.compareTo
@@ -16,6 +19,7 @@ class PrepareKotlinIdeaImportTest : MultiplePluginVersionGradleImportingTestCase
 
     private val KotlinVersion.isPrepareKotlinIdeaImportSupportExpected: Boolean
         get() = this >= parseKotlinVersion("1.6.255-SNAPSHOT")
+
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.5+")

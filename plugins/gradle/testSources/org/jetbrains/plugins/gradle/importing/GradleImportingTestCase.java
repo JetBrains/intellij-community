@@ -197,7 +197,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     }
     JavaVersion javaRuntimeVersion = JavaVersion.current();
     assumeTestJavaRuntime(javaRuntimeVersion);
-    return requireJdkHome(getCurrentGradleBaseVersion());
+    return findJdkPath();
   }
 
   private static String requireWslJdkHome(@NotNull WSLDistribution distribution) {
@@ -229,6 +229,9 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return null;
   }
 
+  public String findJdkPath() {
+    return requireJdkHome(getCurrentGradleVersion());
+  }
   protected void collectAllowedRoots(final List<String> roots, PathAssembler.LocalDistribution distribution) {
   }
 
