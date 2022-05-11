@@ -54,7 +54,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -1470,6 +1469,10 @@ public abstract class DialogWrapper {
 
   public boolean isModal() {
     return myPeer.isModal();
+  }
+
+  public void setOnDeactivationAction(@NotNull Runnable action) {
+    myPeer.setOnDeactivationAction(myDisposable, action);
   }
 
   public boolean isOKActionEnabled() {

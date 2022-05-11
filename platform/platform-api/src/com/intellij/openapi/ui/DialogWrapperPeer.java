@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ArrayUtilRt;
@@ -144,6 +145,8 @@ public abstract class DialogWrapperPeer {
   public abstract void setAppIcons();
 
   public abstract boolean isHeadless();
+
+  public abstract void setOnDeactivationAction(@NotNull Disposable disposable, @NotNull Runnable onDialogDeactivated);
 
   public Object[] getCurrentModalEntities() {
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
