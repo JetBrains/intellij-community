@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.dependency.analyzer.*
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.ui.treeStructure.SimpleTree
 import org.jetbrains.idea.maven.navigator.MavenProjectsStructure.*
-import org.jetbrains.idea.maven.project.MavenDependencyAnalyzerContributor
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -42,11 +41,9 @@ class ViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<MavenSimpl
     return null
   }
 
-  override fun getDependencyScope(e: AnActionEvent, selectedData: MavenSimpleNode): DependencyAnalyzerDependency.Scope? {
+  override fun getDependencyScope(e: AnActionEvent, selectedData: MavenSimpleNode): String? {
     if (selectedData is DependencyNode) {
-      return MavenDependencyAnalyzerContributor.scope(
-        selectedData.artifact.scope
-      )
+      return selectedData.artifact.scope
     }
     return null
   }

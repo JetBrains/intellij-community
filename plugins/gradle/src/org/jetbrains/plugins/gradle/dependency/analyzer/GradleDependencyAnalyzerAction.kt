@@ -13,7 +13,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode
 import com.intellij.openapi.externalSystem.view.ModuleNode
 import com.intellij.openapi.externalSystem.view.ProjectNode
-import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import com.intellij.openapi.module.Module
 
@@ -44,9 +43,8 @@ class ViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<ExternalSy
     }
   }
 
-  override fun getDependencyScope(e: AnActionEvent, selectedData: ExternalSystemNode<*>): DependencyAnalyzerDependency.Scope? {
-    val dependencyNode = selectedData.findDependencyNode(DependencyScopeNode::class.java) ?: return null
-    return DAScope(dependencyNode.scope, StringUtil.toTitleCase(dependencyNode.scope))
+  override fun getDependencyScope(e: AnActionEvent, selectedData: ExternalSystemNode<*>): String? {
+    return selectedData.findDependencyNode(DependencyScopeNode::class.java)?.scope
   }
 }
 

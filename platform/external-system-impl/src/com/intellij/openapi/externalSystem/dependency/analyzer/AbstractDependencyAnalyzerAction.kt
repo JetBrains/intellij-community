@@ -11,7 +11,7 @@ abstract class AbstractDependencyAnalyzerAction<Data> : DependencyAnalyzerAction
 
   abstract fun getDependencyData(e: AnActionEvent, selectedData: Data): DependencyAnalyzerDependency.Data?
 
-  abstract fun getDependencyScope(e: AnActionEvent, selectedData: Data): DependencyAnalyzerDependency.Scope?
+  abstract fun getDependencyScope(e: AnActionEvent, selectedData: Data): String?
 
   override fun isEnabledAndVisible(e: AnActionEvent): Boolean {
     val selectedData = getSelectedData(e) ?: return false

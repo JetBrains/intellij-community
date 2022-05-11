@@ -9,6 +9,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView.Companion.ACTION_PLACE
 import com.intellij.openapi.externalSystem.dependency.analyzer.util.*
 import com.intellij.openapi.externalSystem.dependency.analyzer.util.DependencyGroup.Companion.hasWarnings
@@ -87,21 +88,21 @@ class DependencyAnalyzerViewImpl(
     setSelectedExternalProject(externalProjectPath) {}
   }
 
-  override fun setSelectedDependency(externalProjectPath: String, dependency: Dependency) {
-    setSelectedExternalProject(externalProjectPath) {
-      this.dependency = dependency
-    }
-  }
-
   override fun setSelectedDependency(externalProjectPath: String, data: Dependency.Data) {
     setSelectedExternalProject(externalProjectPath) {
       dependency = findDependency { it.data == data } ?: dependency
     }
   }
 
-  override fun setSelectedDependency(externalProjectPath: String, data: Dependency.Data, scope: Dependency.Scope) {
+  override fun setSelectedDependency(externalProjectPath: String, data: Dependency.Data, scope: String) {
     setSelectedExternalProject(externalProjectPath) {
-      dependency = findDependency { it.data == data && it.scope == scope } ?: dependency
+      dependency = findDependency { it.data == data && it.scope.name == scope } ?: dependency
+    }
+  }
+
+  override fun setSelectedDependency(externalProjectPath: String, dependencyPath: List<Pair<DependencyAnalyzerDependency.Data, String>>) {
+    setSelectedExternalProject(externalProjectPath) {
+      dependency = findDependency { d -> getTreePath(d).map { it.data to it.scope.name } == dependencyPath } ?: dependency
     }
   }
 
