@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.io.Decompressor
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import java.io.File
 
@@ -52,17 +51,4 @@ class KotlinArtifacts private constructor(val kotlincDirectory: File) {
     val kotlinxSerializationCompilerPlugin = File(kotlincLibDirectory, KotlinArtifactNames.KOTLINX_SERIALIZATION_COMPILER_PLUGIN)
     val parcelizeRuntime = File(kotlincLibDirectory, KotlinArtifactNames.PARCELIZE_RUNTIME)
     val androidExtensionsRuntime = File(kotlincLibDirectory, KotlinArtifactNames.ANDROID_EXTENSIONS_RUNTIME)
-}
-
-fun lazyUnpackJar(jar: File, destination: File): File {
-    val unpackedDistTimestamp = destination.lastModified()
-    val packedDistTimestamp = jar.lastModified()
-    if (unpackedDistTimestamp != 0L && packedDistTimestamp != 0L && unpackedDistTimestamp >= packedDistTimestamp) {
-        return destination
-    }
-    destination.deleteRecursively()
-
-    Decompressor.Zip(jar).extract(destination)
-    check(destination.isDirectory)
-    return destination
 }

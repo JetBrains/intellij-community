@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_LOCATION_PREFIX
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
-import org.jetbrains.kotlin.idea.artifacts.lazyUnpackJar
+import org.jetbrains.kotlin.idea.artifacts.LazyZipUnpacker
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.awt.EventQueue
@@ -33,11 +33,8 @@ object KotlinArtifactsDownloader {
         if (IdeKotlinVersion.get(version) == KotlinPluginLayout.instance.standaloneCompilerVersion) {
             return true
         }
-        val unpackedTimestamp = getUnpackedKotlinDistPath(version).lastModified()
-        val mavenJarTimestamp = KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, version)
-            ?.toFile()?.lastModified() ?: 0
-
-        return unpackedTimestamp != 0L && mavenJarTimestamp != 0L && unpackedTimestamp >= mavenJarTimestamp
+        val jar = KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, version)?.toFile() ?: return false
+        return getLazyDistUnpacker(version).isUpToDate(jar)
     }
 
     fun getKotlinJpsPluginJarPath(version: String): File {
@@ -88,7 +85,7 @@ object KotlinArtifactsDownloader {
         version,
         indicator,
         KotlinBasePluginBundle.message("progress.text.downloading.kotlinc.dist"),
-    )?.let { lazyUnpackJar(it, getUnpackedKotlinDistPath(version)) }
+    )?.let { jar -> getLazyDistUnpacker(version).lazyUnpack(jar) }
 
     @Synchronized // Avoid manipulations with the same files from different threads
     fun lazyDownloadMavenArtifact(
@@ -153,6 +150,8 @@ object KotlinArtifactsDownloader {
         return downloadedCompiler.singleOrNull().let { it ?: error("Expected to download only single artifact") }.file
             .toVirtualFileUrl(VirtualFileUrlManager.getInstance(project)).presentableUrl.let { File(it) }
     }
+
+    private fun getLazyDistUnpacker(version: String) = LazyZipUnpacker(getUnpackedKotlinDistPath(version))
 
     private fun getMavenRepos(project: Project) =
         RemoteRepositoriesConfiguration.getInstance(project).repositories +
