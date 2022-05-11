@@ -171,7 +171,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         buildGradleModel(T::class)
 
     protected fun <T : Any> buildGradleModel(clazz: KClass<T>): BuiltGradleModel<T> =
-        buildGradleModel(myProjectRoot.toNioPath().toFile(), GradleVersion.version(gradleVersion), clazz)
+        buildGradleModel(myProjectRoot.toNioPath().toFile(), GradleVersion.version(gradleVersion), findJdkPath(), clazz)
 
     protected fun buildKotlinMPPGradleModel(): BuiltGradleModel<KotlinMPPGradleModel> = buildGradleModel()
 
