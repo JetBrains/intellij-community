@@ -26,7 +26,7 @@ import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class ValueCellRenderer implements TableCellRenderer {
+final class ValueCellRenderer implements TableCellRenderer {
   private static final Map<Class<?>, Renderer<?>> RENDERERS = new HashMap<>();
 
   static {

@@ -34,12 +34,12 @@ import java.lang.reflect.InaccessibleObjectException;
 import java.util.List;
 import java.util.*;
 
-public abstract class HierarchyTree extends JTree implements TreeSelectionListener {
+abstract class HierarchyTree extends JTree implements TreeSelectionListener {
   private static final int MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME = 8;
 
   final Component myComponent;
 
-  public HierarchyTree(Component c) {
+  HierarchyTree(Component c) {
     myComponent = c;
     setModel(buildModel(c));
     setCellRenderer(new ComponentTreeCellRenderer(c));

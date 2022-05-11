@@ -40,17 +40,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public final class InspectorTable extends JPanel implements DataProvider {
+final class InspectorTable extends JPanel implements DataProvider {
   private final MyModel myModel;
   private DimensionsComponent myDimensionComponent;
   private StripeTable myTable;
 
-  public InspectorTable(@NotNull final List<? extends PropertyBean> clickInfo) {
+  InspectorTable(@NotNull final List<? extends PropertyBean> clickInfo) {
     myModel = new MyModel(clickInfo);
     init(null);
   }
 
-  public InspectorTable(@NotNull final Component component) {
+  InspectorTable(@NotNull final Component component) {
     myModel = new MyModel(component);
     init(component);
   }
