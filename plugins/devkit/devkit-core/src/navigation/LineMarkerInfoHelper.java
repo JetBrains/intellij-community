@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
@@ -26,6 +27,8 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.Listeners;
+import org.jetbrains.idea.devkit.util.ListenerCandidate;
 import org.jetbrains.idea.devkit.util.PointableCandidate;
 
 import java.util.Collection;
@@ -55,6 +58,13 @@ final class LineMarkerInfoHelper {
     return ((ExtensionPoint)element).getEffectiveQualifiedName();
   }
 
+  private static final NullableFunction<PointableCandidate, String> LISTENER_NAMER =
+    createNamer("line.marker.tooltip.listener.declaration", tag -> {
+      final DomElement element = DomUtil.getDomElement(tag);
+      if (!(element instanceof Listeners.Listener)) return "?";
+      return StringUtil.notNullize(((Listeners.Listener)element).getTopicClassName().getStringValue(), "?");
+    });
+
   private LineMarkerInfoHelper() {
   }
 
@@ -70,6 +80,13 @@ final class LineMarkerInfoHelper {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.extension.point"),
                                       EXTENSION_POINT_NAMER);
+  }
+
+  static RelatedItemLineMarkerInfo<PsiElement> createListenerLineMarkerInfo(@NotNull List<? extends ListenerCandidate> targets,
+                                                                            @NotNull PsiElement element) {
+    return createPluginLineMarkerInfo(targets, element,
+                                      DevKitBundle.message("gutter.related.navigation.choose.listener"),
+                                      LISTENER_NAMER);
   }
 
   private static @NotNull RelatedItemLineMarkerInfo<PsiElement> createPluginLineMarkerInfo(@NotNull List<? extends PointableCandidate> targets,
