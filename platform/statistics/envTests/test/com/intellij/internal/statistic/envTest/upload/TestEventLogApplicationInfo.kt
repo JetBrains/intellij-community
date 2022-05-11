@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.*
 import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService
 import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService
+import com.intellij.internal.statistic.uploader.EventLogExternalSendConfig
 import java.io.File
 
 internal const val SETTINGS_ROOT = "settings/%s/%s.json"
@@ -20,18 +21,13 @@ internal class TestEventLogApplicationInfo(private val settingsUrl: String): Eve
   override fun getTemplateUrl(): String = settingsUrl
 }
 
-internal class TestEventLogRecorderConfig(recorderId: String,
-                                          private val sendEnabled: Boolean = true,
-                                          logFiles: List<File> = emptyList())
-  : EventLogInternalRecorderConfig(recorderId) {
-  private val evenLogFilesProvider = object : FilesToSendProvider {
-    override fun getFilesToSend(): List<EventLogFile> = logFiles.map { EventLogFile(it) }
-  }
-
-  override fun isSendEnabled(): Boolean = sendEnabled
-
-  override fun getFilesToSendProvider(): FilesToSendProvider = evenLogFilesProvider
-}
+internal class TestEventLogSendConfig(recorderId: String,
+                                      deviceId: String,
+                                      bucket: Int,
+                                      machineId: MachineId,
+                                      sendEnabled: Boolean = true,
+                                      logFiles: List<File> = emptyList())
+  : EventLogExternalSendConfig(recorderId, deviceId, bucket, machineId, logFiles.map { it.absolutePath }, sendEnabled)
 
 internal fun newSendService(container: ApacheContainer,
                             logFiles: List<File>,
@@ -41,8 +37,7 @@ internal fun newSendService(container: ApacheContainer,
   val settingsUrl = container.getBaseUrl(settingsResponseFile).toString()
   val config = EventLogConfiguration.getInstance().getOrCreate(RECORDER_ID)
   return EventLogStatisticsService(
-    DeviceConfiguration(config.deviceId, config.bucket, machineId ?: config.machineId),
-    TestEventLogRecorderConfig(RECORDER_ID, sendEnabled, logFiles),
+    TestEventLogSendConfig(RECORDER_ID, config.deviceId, config.bucket, machineId ?: config.machineId, sendEnabled, logFiles),
     EventLogSendListener { _, _, _ -> },
     EventLogUploadSettingsService(RECORDER_ID, TestEventLogApplicationInfo(settingsUrl))
   )

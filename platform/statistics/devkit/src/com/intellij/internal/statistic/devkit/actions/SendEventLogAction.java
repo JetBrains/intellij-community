@@ -76,10 +76,8 @@ public class SendEventLogAction extends AnAction {
 
       private StatisticsResult send() {
         String recorderId = StringUtil.trim(Registry.stringValue("usage.statistics.test.action.recorder.id"));
-        EventLogRecorderConfiguration config = EventLogConfiguration.getInstance().getOrCreate(recorderId);
         return EventLogStatisticsService.send(
-          new DeviceConfiguration(config.getDeviceId(), config.getBucket(), config.getMachineId()),
-          new EventLogInternalRecorderConfig(recorderId),
+          EventLogInternalSendConfig.createByRecorder(recorderId, true),
           new EventLogTestSettingsService(recorderId),
           new EventLogTestResultDecorator()
         );

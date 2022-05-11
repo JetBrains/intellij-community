@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.config.EventLogOptions.MACHINE_ID_SALT_RE
 import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
 import com.intellij.internal.statistic.envTest.upload.RECORDER_ID
 import com.intellij.internal.statistic.envTest.upload.TestEventLogApplicationInfo
-import com.intellij.internal.statistic.envTest.upload.TestEventLogRecorderConfig
 import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService
 import junit.framework.TestCase
 import java.util.concurrent.TimeUnit

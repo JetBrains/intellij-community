@@ -26,8 +26,8 @@ object EventLogExternalUploader {
   private const val UPLOADER_MAIN_CLASS = "com.intellij.internal.statistic.uploader.EventLogUploader"
 
   fun logPreviousExternalUploadResult(providers: List<StatisticsEventLoggerProvider>) {
-    val recorders = providers.map { EventLogInternalRecorderConfig(it.recorderId) }.filter { it.isSendEnabled() }
-    if (recorders.isEmpty()) {
+    val enabledProviders = providers.filter { it.isSendEnabled() }
+    if (enabledProviders.isEmpty()) {
       return
     }
 
@@ -35,8 +35,8 @@ object EventLogExternalUploader {
       val tempDir = getTempFile()
       if (tempDir.exists()) {
         val events = ExternalEventsLogger.parseEvents(tempDir)
-        for (recorder in recorders) {
-          logPreviousExternalUploadResultByRecorder(recorder.getRecorderId(), events)
+        for (provider in enabledProviders) {
+          logPreviousExternalUploadResultByRecorder(provider.recorderId, events)
         }
       }
       tempDir.deleteRecursively()
@@ -72,17 +72,18 @@ object EventLogExternalUploader {
     }
   }
 
-  fun startExternalUpload(recorderIds: List<String>, isTest: Boolean) {
-    val recorders = recorderIds.map { EventLogInternalRecorderConfig(it, false) }.filter { it.isSendEnabled() }
-    if (recorders.isEmpty()) {
+  fun startExternalUpload(recordersProviders: List<StatisticsEventLoggerProvider>, isTest: Boolean) {
+    val enabledRecordersProviders = recordersProviders.filter { it.isSendEnabled() }
+    if (enabledRecordersProviders.isEmpty()) {
       LOG.info("Don't start external process because sending logs is disabled for all recorders")
       return
     }
 
+    val recorderIds = enabledRecordersProviders.map { it.recorderId }
     EventLogSystemLogger.logCreatingExternalSendCommand(recorderIds)
     val application = EventLogInternalApplicationInfo(isTest)
     try {
-      val command = prepareUploadCommand(recorders, application)
+      val command = prepareUploadCommand(enabledRecordersProviders, application)
       EventLogSystemLogger.logFinishedCreatingExternalSendCommand(recorderIds, null)
       if (LOG.isDebugEnabled) {
         LOG.debug("Starting external process: '${command.joinToString(separator = " ")}'")
@@ -97,16 +98,9 @@ object EventLogExternalUploader {
     }
   }
 
-  private fun prepareUploadCommand(recorders: List<EventLogRecorderConfig>, applicationInfo: EventLogApplicationInfo): Array<out String> {
-    val logFilesByRecorder = hashMapOf<String, List<String>>()
-    for (recorder in recorders) {
-      val logFiles = recorder.getFilesToSendProvider().getFilesToSend().map { it.file.absolutePath }
-      if (logFiles.isNotEmpty()) {
-        logFilesByRecorder[recorder.getRecorderId()] = logFiles
-      }
-    }
-
-    if (logFilesByRecorder.isEmpty()) {
+  private fun prepareUploadCommand(recorders: List<StatisticsEventLoggerProvider>, applicationInfo: EventLogApplicationInfo): Array<out String> {
+    val sendConfigs = recorders.map { EventLogInternalSendConfig.createByRecorder(it.recorderId, false) }
+    if (sendConfigs.isEmpty()) {
       throw EventLogUploadException("No available logs to send", NO_LOGS)
     }
 
@@ -120,13 +114,11 @@ object EventLogExternalUploader {
     libPaths.add(findLibraryByClass(EventGroupsFilterRules::class.java))
     val classpath = joinAsClasspath(libPaths, uploader)
 
-    val recordersConfig = recorders.associate { it.getRecorderId() to EventLogConfiguration.getInstance().getOrCreate(it.getRecorderId()) }
-    return createExternalUploadCommand(applicationInfo, recordersConfig, logFilesByRecorder, classpath, tempDir)
+    return createExternalUploadCommand(applicationInfo, sendConfigs, classpath, tempDir)
   }
 
   fun createExternalUploadCommand(applicationInfo: EventLogApplicationInfo,
-                                  recordersConfig: Map<String, EventLogDeviceConfiguration>,
-                                  logFilesByRecorder: Map<String, List<String>>,
+                                  configs: List<EventLogSendConfig>,
                                   classpath: String,
                                   tempDir: File): Array<out String> {
     val args = arrayListOf<String>()
@@ -139,10 +131,9 @@ object EventLogExternalUploader {
 
     addArgument(args, IDE_TOKEN, Paths.get(PathManager.getSystemPath(), "token").toAbsolutePath().toString())
 
-    addArgument(args, RECORDERS_OPTION, recordersConfig.keys.joinToString(separator = ";"))
-    for (recorderConfig in recordersConfig) {
-      val logFiles = logFilesByRecorder[recorderConfig.key]
-      logFiles?.let { addRecorderConfiguration(args, recorderConfig.key, recorderConfig.value, it) }
+    addArgument(args, RECORDERS_OPTION, configs.joinToString(separator = ";") { it.getRecorderId() })
+    for (config in configs) {
+      addRecorderConfiguration(args, config)
     }
 
     addArgument(args, URL_OPTION, applicationInfo.templateUrl)
@@ -165,14 +156,15 @@ object EventLogExternalUploader {
     return ArrayUtil.toStringArray(args)
   }
 
-  private fun addRecorderConfiguration(args: ArrayList<String>, recorderId: String,
-                                       config: EventLogDeviceConfiguration, logFiles: List<String>) {
-    val recorderIdLowerCase = Strings.toLowerCase(recorderId)
-    addArgument(args, DEVICE_OPTION + recorderIdLowerCase, config.deviceId)
-    addArgument(args, BUCKET_OPTION + recorderIdLowerCase, config.bucket.toString())
-    addArgument(args, MACHINE_ID_OPTION + recorderIdLowerCase, config.machineId.id)
-    addArgument(args, ID_REVISION_OPTION + recorderIdLowerCase, config.machineId.revision.toString())
-    addArgument(args, LOGS_OPTION + recorderIdLowerCase, logFiles.joinToString(separator = File.pathSeparator))
+  private fun addRecorderConfiguration(args: ArrayList<String>, config: EventLogSendConfig) {
+    val recorderIdLowerCase = Strings.toLowerCase(config.getRecorderId())
+    addArgument(args, DEVICE_OPTION + recorderIdLowerCase, config.getDeviceId())
+    addArgument(args, BUCKET_OPTION + recorderIdLowerCase, config.getBucket().toString())
+    addArgument(args, MACHINE_ID_OPTION + recorderIdLowerCase, config.getMachineId().id)
+    addArgument(args, ID_REVISION_OPTION + recorderIdLowerCase, config.getMachineId().revision.toString())
+
+    val filesToSend = config.getFilesToSendProvider().getFilesToSend().map { it.file }
+    addArgument(args, LOGS_OPTION + recorderIdLowerCase, filesToSend.joinToString(separator = File.pathSeparator))
   }
 
   private fun addArgument(args: ArrayList<String>, name: String, value: String) {

@@ -2,31 +2,31 @@
 package com.intellij.internal.statistics.uploader
 
 import com.intellij.internal.statistic.eventLog.*
-import com.intellij.internal.statistic.eventLog.config.EventLogExternalRecorderConfig
 import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploader
+import com.intellij.internal.statistic.uploader.EventLogExternalSendConfig
 import com.intellij.internal.statistic.uploader.EventLogUploaderCliParser
 import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.*
-import com.intellij.internal.statistic.uploader.SendConfiguration
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase
 import java.io.File
 
 class EventLogExternalCommandTest : BasePlatformTestCase() {
 
-  private fun createCommand(configByRecorder: Map<String, EventLogDeviceConfiguration>,
-                            filesByRecorders: Map<String, List<String>>,
+  private fun createCommand(configs: List<EventLogSendConfig>,
                             classPath: String = "/test/path1:/test/path2",
                             tempDir: File = File(PathManager.getTempPath(), "statistics-uploader")): Array<out String> {
     val appInfo = EventLogInternalApplicationInfo(false)
-    return EventLogExternalUploader.createExternalUploadCommand(appInfo, configByRecorder, filesByRecorders, classPath, tempDir)
+    return EventLogExternalUploader.createExternalUploadCommand(appInfo, configs, classPath, tempDir)
   }
 
   fun test_create_command_one_recorder() {
-    val command = createCommand(
-      mapOf("ABC" to TestDeviceConfiguration("test-device-id", 10, "test-machine-id", 15)),
-      mapOf("ABC" to listOf("/path/to/log/file"))
-    )
+    val command = createCommand(listOf(TestEventLogSendConfig(
+      "ABC", "test-device-id", 10,
+      MachineId("test-machine-id", 15),
+      false, listOf("/path/to/log/file")
+    )))
 
     val options = EventLogUploaderCliParser.parseOptions(command)
     TestCase.assertEquals("ABC", options[RECORDERS_OPTION])
@@ -40,13 +40,15 @@ class EventLogExternalCommandTest : BasePlatformTestCase() {
 
   fun test_create_command_multiple_recorders() {
     val command = createCommand(
-      mapOf(
-        "ABC" to TestDeviceConfiguration("test-device-id", 10, "test-machine-id", 15),
-        "DEF" to TestDeviceConfiguration("another-device-id", 65, "another-machine-id", 98)
-      ),
-      mapOf(
-        "ABC" to listOf("/path/to/log/file"),
-        "DEF" to listOf("/another/path/to/log")
+      listOf(
+        TestEventLogSendConfig(
+          "ABC", "test-device-id", 10, MachineId("test-machine-id", 15),
+          false, listOf("/path/to/log/file")
+        ),
+        TestEventLogSendConfig(
+          "DEF", "another-device-id", 65, MachineId("another-machine-id", 98),
+          false, listOf("/another/path/to/log")
+        )
       )
     )
 
@@ -66,91 +68,106 @@ class EventLogExternalCommandTest : BasePlatformTestCase() {
     TestCase.assertEquals("/another/path/to/log", options[LOGS_OPTION + "def"])
   }
 
-  private fun doTestParse(configByRecorder: Map<String, EventLogDeviceConfiguration>,
-                          filesByRecorders: Map<String, List<String>>,
-                          vararg expectedConfigs: SendConfiguration) {
-    val command = createCommand(configByRecorder, filesByRecorders)
-    val configs = SendConfiguration.parseSendConfigurations(EventLogUploaderCliParser.parseOptions(command))
+  private fun doTestParse(vararg configs: TestEventLogSendConfig) {
+    val logsToDelete = arrayListOf<File>()
+    try {
+      val logDir = FileUtil.createTempDirectory("event-log-command-test", "", false)
+      logsToDelete.add(logDir)
+      for (config in configs) {
+        config.createLogFiles(logDir)
+      }
 
-    TestCase.assertEquals(expectedConfigs.size, configs.size)
-    for (expected in expectedConfigs) {
-      val actual = configs.find { it.recorderId == expected.recorderId }
-      TestCase.assertEquals(expected.deviceConfig!!.deviceId, actual!!.deviceConfig!!.deviceId)
-      TestCase.assertEquals(expected.deviceConfig!!.bucket, actual.deviceConfig!!.bucket)
-      TestCase.assertEquals(expected.deviceConfig!!.machineId, actual.deviceConfig!!.machineId)
 
-      TestCase.assertEquals(
-        expected.recorderConfig!!.getFilesToSendProvider().getFilesToSend(),
-        actual.recorderConfig!!.getFilesToSendProvider().getFilesToSend()
-      )
+      val command = createCommand(configs.toList())
+      val actualConfigs = EventLogExternalSendConfig.parseSendConfigurations(
+        EventLogUploaderCliParser.parseOptions(command)) { error, recorder ->
+        TestCase.assertTrue("Failed parsing '$recorder': $error", false)
+      }
+
+      TestCase.assertEquals(configs.size, actualConfigs.size)
+      for (expected in configs) {
+        val actual = actualConfigs.find { it.getRecorderId() == expected.getRecorderId() }
+        TestCase.assertEquals(expected.getDeviceId(), actual!!.getDeviceId())
+        TestCase.assertEquals(expected.getBucket(), actual.getBucket())
+        TestCase.assertEquals(expected.getMachineId(), actual.getMachineId())
+
+        TestCase.assertEquals(
+          expected.getFilesToSendProvider().getFilesToSend(),
+          actual.getFilesToSendProvider().getFilesToSend()
+        )
+      }
+    }
+    finally {
+      for (files in logsToDelete) {
+        FileUtil.delete(files.toPath())
+      }
     }
   }
 
   fun test_send_command_parse_one_recorder() {
     doTestParse(
-      mapOf("ABC" to TestDeviceConfiguration("test-device-id", 10, "test-machine-id", 15)),
-      mapOf("ABC" to listOf("/path/to/log/file")),
-      SendConfiguration(
-        "ABC",
-        DeviceConfiguration("test-device-id", 10, MachineId("test-machine-id", 15)),
-        EventLogExternalRecorderConfig("ABC", listOf("/path/to/log/file"))
+      TestEventLogSendConfig(
+        "ABC", "test-device-id", 10, MachineId("test-machine-id", 15), true, listOf("abc-log-file")
       )
     )
   }
 
   fun test_send_command_parse_multiple_log_files() {
     doTestParse(
-      mapOf("ABC" to TestDeviceConfiguration("test-device-id", 10, "test-machine-id", 15)),
-      mapOf("ABC" to listOf("/path/to/log/file", "/second/path/to/log/file", "/third/path/to/log/file")),
-      SendConfiguration(
-        "ABC",
-        DeviceConfiguration("test-device-id", 10, MachineId("test-machine-id", 15)),
-        EventLogExternalRecorderConfig("ABC", listOf("/path/to/log/file", "/second/path/to/log/file", "/third/path/to/log/file"))
+      TestEventLogSendConfig(
+        "ABC", "test-device-id", 10, MachineId("test-machine-id", 15),
+        true, listOf("abc-log-file", "abc-second-log-file", "abc-third-log-file")
       )
     )
   }
 
   fun test_send_command_parse_without_log_files() {
     doTestParse(
-      mapOf("ABC" to TestDeviceConfiguration("test-device-id", 10, "test-machine-id", 15)),
-      mapOf("ABC" to listOf()),
-      SendConfiguration(
-        "ABC",
-        DeviceConfiguration("test-device-id", 10, MachineId("test-machine-id", 15)),
-        EventLogExternalRecorderConfig("ABC", listOf())
+      TestEventLogSendConfig(
+        "ABC", "test-device-id", 10, MachineId("test-machine-id", 15), true, listOf()
       )
     )
   }
 
   fun test_send_command_parse_multiple_recorders() {
     doTestParse(
-      mapOf(
-        "ABC" to TestDeviceConfiguration("test-device-id", 10, "test-machine-id", 15),
-        "DEF" to TestDeviceConfiguration("another-device-id", 65, "another-machine-id", 98)
+      TestEventLogSendConfig(
+        "ABC", "test-device-id", 10, MachineId("test-machine-id", 15), true, listOf("abc-log-file")
       ),
-      mapOf(
-        "ABC" to listOf("/path/to/log/file"),
-        "DEF" to listOf("/another/path/to/log")
-      ),
-      SendConfiguration(
-        "ABC",
-        DeviceConfiguration("test-device-id", 10, MachineId("test-machine-id", 15)),
-        EventLogExternalRecorderConfig("ABC", listOf("/path/to/log/file"))
-      ),
-      SendConfiguration(
-        "DEF",
-        DeviceConfiguration("another-device-id", 65, MachineId("another-machine-id", 98)),
-        EventLogExternalRecorderConfig("DEF", listOf("/another/path/to/log"))
+      TestEventLogSendConfig(
+        "DEF", "another-device-id", 65, MachineId("another-machine-id", 98), true, listOf("def-log-file")
       )
     )
   }
 }
 
-private class TestDeviceConfiguration(
-  override val deviceId: String,
-  override val bucket: Int,
-  machineId: String,
-  machineIdRevision: Int)
-  : EventLogDeviceConfiguration {
-  override val machineId = MachineId(machineId, machineIdRevision)
+private class TestEventLogSendConfig(recorderId: String,
+                                     deviceId: String,
+                                     bucket: Int,
+                                     machineId: MachineId,
+                                     val withPhysicalFiles: Boolean = false,
+                                     val fileNames: List<String> = emptyList())
+  : EventLogExternalSendConfig(recorderId, deviceId, bucket, machineId, fileNames, true) {
+  private val files = arrayListOf<File>()
+
+  private val evenLogFilesProvider = object : FilesToSendProvider {
+    override fun getFilesToSend(): List<EventLogFile> {
+      return if (withPhysicalFiles) {
+        files.map { EventLogFile(it) }
+      }
+      else {
+        fileNames.map { EventLogFile(File(it)) }
+      }
+    }
+  }
+
+  fun createLogFiles(logDir: File) {
+    for (logFile in fileNames) {
+      files.add(FileUtil.createTempFile(logDir, logFile, ".log", true))
+    }
+  }
+
+  override fun getFilesToSendProvider(): FilesToSendProvider = evenLogFilesProvider
+
+  override fun isSendEnabled(): Boolean = true
 }
