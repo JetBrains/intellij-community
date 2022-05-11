@@ -63,15 +63,17 @@ object KotlinArtifactsDownloader {
             jpsVersion,
             indicator,
             KotlinBasePluginBundle.message("progress.text.downloading.kotlin.jps.plugin"),
-            onError = onError,
-        ) ?: return false
+        ) ?: return false.also {
+            onError(failedToDownloadMavenArtifact(project, KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID, jpsVersion))
+        }
 
         lazyDownloadAndUnpackKotlincDist(
             project,
             jpsVersion,
             indicator,
-            onError = onError,
-        ) ?: return false
+        ) ?: return false.also {
+            onError(failedToDownloadMavenArtifact(project, KOTLIN_DIST_ARTIFACT_ID, jpsVersion))
+        }
 
         return true
     }
@@ -80,14 +82,12 @@ object KotlinArtifactsDownloader {
         project: Project,
         version: String,
         indicator: ProgressIndicator,
-        onError: (String) -> Unit,
     ): File? = lazyDownloadMavenArtifact(
         project,
         KOTLIN_DIST_ARTIFACT_ID,
         version,
         indicator,
         KotlinBasePluginBundle.message("progress.text.downloading.kotlinc.dist"),
-        onError
     )?.let { lazyUnpackJar(it, getUnpackedKotlinDistPath(version)) }
 
     @Synchronized // Avoid manipulations with the same files from different threads
@@ -97,7 +97,6 @@ object KotlinArtifactsDownloader {
         version: String,
         indicator: ProgressIndicator,
         @Nls indicatorDownloadText: String,
-        onError: (String) -> Unit,
     ): File? {
         if (IdeKotlinVersion.get(version) == KotlinPluginLayout.instance.standaloneCompilerVersion) {
             if (artifactId == KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID) {
@@ -112,7 +111,7 @@ object KotlinArtifactsDownloader {
             return it
         }
         indicator.text = indicatorDownloadText
-        return downloadMavenArtifact(artifactId, version, project, indicator, onError)
+        return downloadMavenArtifact(artifactId, version, project, indicator)
     }
 
     private fun downloadMavenArtifact(
@@ -120,7 +119,6 @@ object KotlinArtifactsDownloader {
         version: String,
         project: Project,
         indicator: ProgressIndicator,
-        onError: (String) -> Unit
     ): File? {
         check(isUnitTestMode() || !EventQueue.isDispatchThread()) {
             "Don't call downloadMavenArtifact on UI thread"
@@ -133,14 +131,7 @@ object KotlinArtifactsDownloader {
             emptyList()
         )
 
-        val repos = RemoteRepositoriesConfiguration.getInstance(project).repositories +
-                listOf( // TODO remove once KTI-724 is fixed
-                    RemoteRepositoryDescription(
-                        "kotlin.ide.plugin.dependencies",
-                        "Kotlin IDE Plugin Dependencies",
-                        "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies"
-                    )
-                )
+        val repos = getMavenRepos(project)
         val downloadedCompiler = JarRepositoryManager.loadDependenciesSync(
             project,
             prop,
@@ -151,11 +142,6 @@ object KotlinArtifactsDownloader {
             indicator
         )
         if (downloadedCompiler.isEmpty()) {
-            with(prop) {
-                onError("Failed to download maven artifact ($groupId:$artifactId:${getVersion()}). " +
-                                "Searched the artifact in following repos:\n" +
-                                repos.joinToString("\n") { it.url })
-            }
             return null
         }
         return downloadedCompiler.singleOrNull().let { it ?: error("Expected to download only single artifact") }.file
@@ -167,4 +153,21 @@ object KotlinArtifactsDownloader {
                 }
             }
     }
+
+    private fun getMavenRepos(project: Project) =
+        RemoteRepositoriesConfiguration.getInstance(project).repositories +
+                listOf( // TODO remove once KTI-724 is fixed
+                    RemoteRepositoryDescription(
+                        "kotlin.ide.plugin.dependencies",
+                        "Kotlin IDE Plugin Dependencies",
+                        "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies"
+                    )
+                )
+
+    @Nls
+    fun failedToDownloadMavenArtifact(project: Project, artifactId: String, version: String) = KotlinBasePluginBundle.message(
+        "failed.to.download.maven.artifact",
+        "$KOTLIN_MAVEN_GROUP_ID:$artifactId:$version",
+        getMavenRepos(project).joinToString("\n") { it.url }
+    )
 }

@@ -3,15 +3,16 @@
 package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.io.Decompressor
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import java.io.File
 
 class KotlinArtifacts private constructor(val kotlincDirectory: File) {
     companion object {
-        const val KOTLIN_MAVEN_GROUP_ID = "org.jetbrains.kotlin"
-        const val KOTLIN_DIST_ARTIFACT_ID = "kotlin-dist-for-ide"
-        const val KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
+        @NlsSafe const val KOTLIN_MAVEN_GROUP_ID = "org.jetbrains.kotlin"
+        @NlsSafe const val KOTLIN_DIST_ARTIFACT_ID = "kotlin-dist-for-ide"
+        @NlsSafe const val KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
         val KOTLIN_DIST_LOCATION_PREFIX = File(PathManager.getSystemPath(), KOTLIN_DIST_ARTIFACT_ID)
 
         @get:JvmStatic
