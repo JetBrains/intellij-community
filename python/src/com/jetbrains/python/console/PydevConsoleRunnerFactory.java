@@ -186,7 +186,6 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
   @NotNull
   public PydevConsoleRunner createConsoleRunnerWithFile(@NotNull Project project,
                                                         @Nullable Module contextModule,
-                                                        @Nullable String runFileText,
                                                         @NotNull PythonRunConfiguration config) {
     final ConsoleParameters consoleParameters = createConsoleParameters(project, contextModule);
     Sdk sdk = config.getSdk() != null ? config.getSdk() : consoleParameters.mySdk;

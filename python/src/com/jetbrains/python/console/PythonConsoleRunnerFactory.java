@@ -19,5 +19,5 @@ public abstract class PythonConsoleRunnerFactory {
 
   @NotNull
   public abstract PydevConsoleRunner createConsoleRunnerWithFile(@NotNull Project project, @Nullable Module contextModule,
-                                                                 @Nullable String runFileText, @NotNull PythonRunConfiguration config);
+                                                                 @NotNull PythonRunConfiguration config);
 }

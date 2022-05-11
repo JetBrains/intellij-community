@@ -150,7 +150,7 @@ object PyExecuteInConsole {
       consoleRunnerFactory.createConsoleRunner(project, null)
     }
     else {
-      consoleRunnerFactory.createConsoleRunnerWithFile(project, null, runFileText, config)
+      consoleRunnerFactory.createConsoleRunnerWithFile(project, null, config)
     }
     runner.addConsoleListener { consoleView ->
       if (consoleView is PyCodeExecutor) {
