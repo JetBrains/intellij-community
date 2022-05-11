@@ -133,7 +133,8 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
 
   @Nullable
   public Charset getCachedEncoding(@NotNull VirtualFile virtualFile) {
-    return ObjectUtils.doIfNotNull(getCachedCharsetData(virtualFile), CharsetData::getCharset);
+    CharsetData charsetData = getCachedCharsetData(virtualFile);
+    return charsetData != null && !charsetData.isIgnored ? charsetData.getCharset() : null;
   }
 
   @Nullable
