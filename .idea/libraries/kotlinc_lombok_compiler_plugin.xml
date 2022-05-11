@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.lombok-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:lombok-compiler-plugin-for-ide:1.7.0-Beta-61" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:lombok-compiler-plugin-for-ide:1.7.0-RC-181" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/1.7.0-Beta-61/lombok-compiler-plugin-for-ide-1.7.0-Beta-61.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/1.7.0-RC-181/lombok-compiler-plugin-for-ide-1.7.0-RC-181.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/1.7.0-Beta-61/lombok-compiler-plugin-for-ide-1.7.0-Beta-61-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/1.7.0-RC-181/lombok-compiler-plugin-for-ide-1.7.0-RC-181-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
