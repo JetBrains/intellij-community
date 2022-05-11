@@ -1,340 +1,286 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl.projectStructureMapping;
+package org.jetbrains.intellij.build.impl.projectStructureMapping
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.util.DefaultIndenter;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import groovy.lang.Closure;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
-import org.codehaus.groovy.runtime.IOGroovyMethods;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.intellij.build.BuildPaths;
-import org.jetbrains.intellij.build.impl.ProjectLibraryData;
-
-import java.io.File;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import com.fasterxml.jackson.core.JsonFactory
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.util.DefaultIndenter
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
+import groovy.lang.Closure
+import org.codehaus.groovy.runtime.DefaultGroovyMethods
+import org.codehaus.groovy.runtime.IOGroovyMethods
+import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
+import java.io.File
+import java.io.OutputStream
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
  * Provides mapping between files in the product distribution and modules and libraries in the project configuration. The generated JSON file
- * contains array of {@link DistributionFileEntry}.
+ * contains array of [DistributionFileEntry].
  */
-public final class ProjectStructureMapping {
-  public ProjectStructureMapping() {
-    entries = new ConcurrentLinkedQueue<DistributionFileEntry>();
+class ProjectStructureMapping {
+  constructor() {
+    entries = ConcurrentLinkedQueue()
   }
 
-  public ProjectStructureMapping(@NotNull Collection<DistributionFileEntry> entries) {
-    this.entries = Collections.unmodifiableCollection(entries);
+  constructor(entries: Collection<DistributionFileEntry>) {
+    this.entries = Collections.unmodifiableCollection(entries)
   }
 
-  public void addEntry(DistributionFileEntry entry) {
-    entries.add(entry);
+  fun addEntry(entry: DistributionFileEntry) {
+    entries.add(entry)
   }
 
-  public Set<String> getIncludedModules() {
-    Set<String> result = new LinkedHashSet<String>();
-    DefaultGroovyMethods.collect(DefaultGroovyMethods.findAll(entries, new Closure<Boolean>(this, this) {
-      public Boolean doCall(DistributionFileEntry it) { return it instanceof ModuleOutputEntry; }
-
-      public Boolean doCall() {
-        return doCall(null);
-      }
-    }), result, new Closure<String>(this, this) {
-      public String doCall(DistributionFileEntry it) { return ((ModuleOutputEntry)it).getModuleName(); }
-
-      public String doCall() {
-        return doCall(null);
-      }
-    });
-    return result;
-  }
-
-  public void generateJsonFile(Path file, BuildPaths buildPaths, Path extraRoot) {
-    writeReport(entries, file, buildPaths, extraRoot);
-  }
-
-  public void generateJsonFile(Path file, BuildPaths buildPaths) {
-    generateJsonFile(file, buildPaths, null);
-  }
-
-  @SuppressWarnings
-  public static void writeReport(Collection<DistributionFileEntry> entries, Path file, BuildPaths buildPaths, Path extraRoot) {
-    Files.createDirectories(file.getParent());
-
-    List<DistributionFileEntry> allEntries = new ArrayList<DistributionFileEntry>(entries);
-
-    // sort - stable result
-    DefaultGroovyMethods.sort(allEntries, new Closure<Integer>(null, null) {
-      public Integer doCall(DistributionFileEntry a, DistributionFileEntry b) { return a.getPath().compareTo(b.getPath()); }
-    });
-
-    IOGroovyMethods.withCloseable(Files.newOutputStream(file), new Closure<Void>(null, null) {
-      public void doCall(Object out) {
-        JsonGenerator writer = new JsonFactory().createGenerator((OutputStream)out).setPrettyPrinter(new IntelliJDefaultPrettyPrinter());
-        writer.writeStartArray();
-        for (DistributionFileEntry entry : allEntries) {
-          writer.writeStartObject();
-          writer.writeStringField("path", shortenAndNormalizePath(entry.getPath(), buildPaths, extraRoot));
-          writer.writeStringField("type", entry.getType());
-          if (entry instanceof ModuleLibraryFileEntry) {
-            writer.writeStringField("module", ((ModuleLibraryFileEntry)entry).getModuleName());
-            writer.writeStringField("libraryFile",
-                                    shortenAndNormalizePath(((ModuleLibraryFileEntry)entry).getLibraryFile(), buildPaths, extraRoot));
-            writer.writeNumberField("size", ((ModuleLibraryFileEntry)entry).getSize());
-          }
-          else if (entry instanceof ModuleOutputEntry) {
-            writer.writeStringField("module", ((ModuleOutputEntry)entry).getModuleName());
-            writer.writeNumberField("size", ((ModuleOutputEntry)entry).getSize());
-          }
-          else if (entry instanceof ModuleTestOutputEntry) {
-            writer.writeStringField("module", ((ModuleTestOutputEntry)entry).getModuleName());
-          }
-          else if (entry instanceof ProjectLibraryEntry) {
-            writer.writeStringField("library", ((ProjectLibraryEntry)entry).getData().getLibraryName());
-            writer.writeStringField("libraryFile",
-                                    shortenAndNormalizePath(((ProjectLibraryEntry)entry).getLibraryFile(), buildPaths, extraRoot));
-            writer.writeNumberField("size", ((ProjectLibraryEntry)entry).getSize());
-          }
-
-          writer.writeEndObject();
+  val includedModules: Set<String>
+    get() {
+      val result: Set<String> = LinkedHashSet()
+      DefaultGroovyMethods.collect(DefaultGroovyMethods.findAll(entries, object : Closure<Boolean?>(this, this) {
+        @JvmOverloads
+        fun doCall(it: DistributionFileEntry? = null): Boolean {
+          return it is ModuleOutputEntry
         }
-
-        writer.writeEndArray();
-      }
-    });
-  }
-
-  @SuppressWarnings
-  public static void writeReport(Collection<DistributionFileEntry> entries, Path file, BuildPaths buildPaths) {
-    ProjectStructureMapping.writeReport(entries, file, buildPaths, null);
-  }
-
-  public static void buildJarContentReport(Collection<DistributionFileEntry> entries, OutputStream out, final BuildPaths buildPaths) {
-    JsonGenerator writer = new JsonFactory().createGenerator(out).setPrettyPrinter(new IntelliJDefaultPrettyPrinter());
-    Map<String, List<DistributionFileEntry>> fileToEntry = new TreeMap<String, List<DistributionFileEntry>>();
-    Map<Path, String> fileToPresentablePath = new HashMap<Path, String>();
-    for (DistributionFileEntry entry : entries) {
-      String presentablePath = fileToPresentablePath.computeIfAbsent(entry.getPath(), new Closure<String>(null, null) {
-        public String doCall(Path it) { return shortenAndNormalizePath(it, buildPaths, null); }
-
-        public String doCall() {
-          return doCall(null);
+      }), result, object : Closure<String?>(this, this) {
+        @JvmOverloads
+        fun doCall(it: DistributionFileEntry? = null): String {
+          return (it as ModuleOutputEntry?)!!.moduleName
         }
-      });
-      fileToEntry.computeIfAbsent(presentablePath, new Closure<ArrayList<DistributionFileEntry>>(null, null) {
-        public ArrayList<DistributionFileEntry> doCall(String it) { return new ArrayList<DistributionFileEntry>(); }
+      })
+      return result
+    }
 
-        public ArrayList<DistributionFileEntry> doCall() {
-          return doCall(null);
+  @JvmOverloads
+  fun generateJsonFile(file: Path, buildPaths: BuildPaths, extraRoot: Path? = null) {
+    writeReport(entries, file, buildPaths, extraRoot)
+  }
+
+  private val entries: MutableCollection<DistributionFileEntry>
+
+  private class IntelliJDefaultPrettyPrinter : DefaultPrettyPrinter() {
+    override fun createInstance(): DefaultPrettyPrinter {
+      return IntelliJDefaultPrettyPrinter()
+    }
+
+    init {
+      _objectFieldValueSeparatorWithSpaces = ": "
+      _objectIndenter = INDENTER
+      _arrayIndenter = INDENTER
+    }
+
+    companion object {
+      private val INDENTER = DefaultIndenter("  ", "\n")
+    }
+  }
+
+  companion object {
+    fun writeReport(entries: Collection<DistributionFileEntry>?, file: Path, buildPaths: BuildPaths, extraRoot: Path?) {
+      Files.createDirectories(file.parent)
+      val allEntries: List<DistributionFileEntry> = ArrayList(entries)
+
+      // sort - stable result
+      DefaultGroovyMethods.sort(allEntries, object : Closure<Int?>(null, null) {
+        fun doCall(a: DistributionFileEntry, b: DistributionFileEntry): Int {
+          return a.path.compareTo(b.path)
         }
-      }).add(entry);
-    }
-
-
-    writer.writeStartArray();
-    for (Map.Entry<String, List<DistributionFileEntry>> entrySet : ((TreeMap<String, List<DistributionFileEntry>>)fileToEntry).entrySet()) {
-      List<DistributionFileEntry> fileEntries = entrySet.getValue();
-      String filePath = entrySet.getKey();
-      writer.writeStartObject();
-      writer.writeStringField("name", filePath);
-
-      writeProjectLibs(fileEntries, writer, buildPaths);
-      writeModules(writer, fileEntries, buildPaths);
-
-      writer.writeEndObject();
-    }
-
-    writer.writeEndArray();
-    writer.close();
-  }
-
-  private static void writeModules(JsonGenerator writer, List<DistributionFileEntry> fileEntries, BuildPaths buildPaths) {
-    boolean opened = false;
-    for (DistributionFileEntry o : fileEntries) {
-      if (!(o instanceof ModuleOutputEntry)) {
-        continue;
-      }
-
-
-      if (!opened) {
-        writer.writeArrayFieldStart("modules");
-        opened = true;
-      }
-
-
-      ModuleOutputEntry entry = (ModuleOutputEntry)o;
-
-      writer.writeStartObject();
-      String moduleName = entry.getModuleName();
-      writer.writeStringField("name", moduleName);
-      writer.writeNumberField("size", entry.getSize());
-
-      writeModuleLibraries(fileEntries, moduleName, writer, buildPaths);
-
-      writer.writeEndObject();
-    }
-
-    if (opened) {
-      writer.writeEndArray();
-    }
-  }
-
-  private static void writeModuleLibraries(List<DistributionFileEntry> fileEntries,
-                                           String moduleName,
-                                           JsonGenerator writer,
-                                           BuildPaths buildPaths) {
-    boolean opened = false;
-    for (DistributionFileEntry o : fileEntries) {
-      if (!(o instanceof ModuleLibraryFileEntry)) {
-        continue;
-      }
-
-
-      ModuleLibraryFileEntry entry = (ModuleLibraryFileEntry)o;
-      if (!entry.getModuleName().equals(moduleName)) {
-        continue;
-      }
-
-
-      if (!opened) {
-        writer.writeArrayFieldStart("libraries");
-        opened = true;
-      }
-
-
-      writer.writeStartObject();
-      writer.writeStringField("name", shortenAndNormalizePath(entry.getLibraryFile(), buildPaths, null));
-      writer.writeNumberField("size", entry.getSize());
-      writer.writeEndObject();
-    }
-
-
-    if (opened) {
-      writer.writeEndArray();
-    }
-  }
-
-  private static void writeProjectLibs(@NotNull List<DistributionFileEntry> entries, JsonGenerator writer, BuildPaths buildPaths) {
-    // group by library
-    Map<ProjectLibraryData, List<ProjectLibraryEntry>> map =
-      new TreeMap<ProjectLibraryData, List<ProjectLibraryEntry>>(new Comparator<ProjectLibraryData>() {
-        @SuppressWarnings("ChangeToOperator")
-        @Override
-        public int compare(ProjectLibraryData o1, ProjectLibraryData o2) {
-          return o1.getLibraryName().compareTo(o2.getLibraryName());
-        }
-      });
-    for (DistributionFileEntry entry : entries) {
-      if (entry instanceof ProjectLibraryEntry) {
-        map.computeIfAbsent(((ProjectLibraryEntry)entry).getData(), new Closure<ArrayList<ProjectLibraryEntry>>(null, null) {
-          public ArrayList<ProjectLibraryEntry> doCall(ProjectLibraryData it) { return new ArrayList<ProjectLibraryEntry>(); }
-
-          public ArrayList<ProjectLibraryEntry> doCall() {
-            return doCall(null);
+      })
+      IOGroovyMethods.withCloseable(Files.newOutputStream(file), object : Closure<Void?>(null, null) {
+        fun doCall(out: Any?) {
+          val writer = JsonFactory().createGenerator(out as OutputStream?).setPrettyPrinter(IntelliJDefaultPrettyPrinter())
+          writer.writeStartArray()
+          for (entry in allEntries) {
+            writer.writeStartObject()
+            writer.writeStringField("path", shortenAndNormalizePath(entry.path, buildPaths, extraRoot))
+            writer.writeStringField("type", entry.type)
+            if (entry is ModuleLibraryFileEntry) {
+              writer.writeStringField("module", entry.moduleName)
+              writer.writeStringField("libraryFile",
+                                      shortenAndNormalizePath(entry.libraryFile, buildPaths, extraRoot))
+              writer.writeNumberField("size", entry.size)
+            }
+            else if (entry is ModuleOutputEntry) {
+              writer.writeStringField("module", entry.moduleName)
+              writer.writeNumberField("size", entry.size)
+            }
+            else if (entry is ModuleTestOutputEntry) {
+              writer.writeStringField("module", entry.moduleName)
+            }
+            else if (entry is ProjectLibraryEntry) {
+              writer.writeStringField("library", entry.data.libraryName)
+              writer.writeStringField("libraryFile",
+                                      shortenAndNormalizePath(entry.libraryFile, buildPaths, extraRoot))
+              writer.writeNumberField("size", entry.size)
+            }
+            writer.writeEndObject()
           }
-        }).add(DefaultGroovyMethods.asType(entry, ProjectLibraryEntry.class));
+          writer.writeEndArray()
+        }
+      })
+    }
+
+    fun writeReport(entries: Collection<DistributionFileEntry>?, file: Path, buildPaths: BuildPaths) {
+      writeReport(entries, file, buildPaths, null)
+    }
+
+    fun buildJarContentReport(entries: Collection<DistributionFileEntry>, out: OutputStream?, buildPaths: BuildPaths) {
+      val writer = JsonFactory().createGenerator(out).setPrettyPrinter(IntelliJDefaultPrettyPrinter())
+      val fileToEntry: MutableMap<String, MutableList<DistributionFileEntry>> = TreeMap()
+      val fileToPresentablePath: MutableMap<Path, String> = HashMap()
+      for (entry in entries) {
+        val presentablePath = fileToPresentablePath.computeIfAbsent(entry.path, object : Closure<String?>(null, null) {
+          @JvmOverloads
+          fun doCall(it: Path? = null): String {
+            return shortenAndNormalizePath(it, buildPaths, null)
+          }
+        })
+        fileToEntry.computeIfAbsent(presentablePath, object : Closure<ArrayList<DistributionFileEntry?>?>(null, null) {
+          @JvmOverloads
+          fun doCall(it: String? = null): ArrayList<DistributionFileEntry> {
+            return ArrayList()
+          }
+        }).add(entry)
+      }
+      writer.writeStartArray()
+      for ((filePath, fileEntries) in fileToEntry as TreeMap<String, MutableList<DistributionFileEntry>>) {
+        writer.writeStartObject()
+        writer.writeStringField("name", filePath)
+        writeProjectLibs(fileEntries, writer, buildPaths)
+        writeModules(writer, fileEntries, buildPaths)
+        writer.writeEndObject()
+      }
+      writer.writeEndArray()
+      writer.close()
+    }
+
+    private fun writeModules(writer: JsonGenerator, fileEntries: List<DistributionFileEntry>, buildPaths: BuildPaths) {
+      var opened = false
+      for (o in fileEntries) {
+        if (o !is ModuleOutputEntry) {
+          continue
+        }
+        if (!opened) {
+          writer.writeArrayFieldStart("modules")
+          opened = true
+        }
+        val entry = o
+        writer.writeStartObject()
+        val moduleName = entry.moduleName
+        writer.writeStringField("name", moduleName)
+        writer.writeNumberField("size", entry.size)
+        writeModuleLibraries(fileEntries, moduleName, writer, buildPaths)
+        writer.writeEndObject()
+      }
+      if (opened) {
+        writer.writeEndArray()
       }
     }
 
-
-    if (map.isEmpty()) {
-      return;
-    }
-
-
-    writer.writeArrayFieldStart("projectLibraries");
-    for (Map.Entry<ProjectLibraryData, List<ProjectLibraryEntry>> entry : ((TreeMap<ProjectLibraryData, List<ProjectLibraryEntry>>)map).entrySet()) {
-      writer.writeStartObject();
-
-      ProjectLibraryData data = entry.getKey();
-      writer.writeStringField("name", data.getLibraryName());
-
-      writer.writeArrayFieldStart("files");
-      for (ProjectLibraryEntry fileEntry : entry.getValue()) {
-        writer.writeStartObject();
-        writer.writeStringField("name", shortenAndNormalizePath(fileEntry.getLibraryFile(), buildPaths, null));
-        writer.writeNumberField("size", DefaultGroovyMethods.asType(fileEntry.getSize(), (Class<Object>)Long.class));
-        writer.writeEndObject();
+    private fun writeModuleLibraries(fileEntries: List<DistributionFileEntry>,
+                                     moduleName: String,
+                                     writer: JsonGenerator,
+                                     buildPaths: BuildPaths) {
+      var opened = false
+      for (o in fileEntries) {
+        if (o !is ModuleLibraryFileEntry) {
+          continue
+        }
+        val entry = o
+        if (entry.moduleName != moduleName) {
+          continue
+        }
+        if (!opened) {
+          writer.writeArrayFieldStart("libraries")
+          opened = true
+        }
+        writer.writeStartObject()
+        writer.writeStringField("name", shortenAndNormalizePath(entry.libraryFile, buildPaths, null))
+        writer.writeNumberField("size", entry.size)
+        writer.writeEndObject()
       }
-
-      writer.writeEndArray();
-
-      if (data.getReason() != null) {
-        writer.writeStringField("reason", data.getReason());
+      if (opened) {
+        writer.writeEndArray()
       }
-
-      writeModuleDependents(writer, data);
-
-      writer.writeEndObject();
     }
 
-    writer.writeEndArray();
-  }
-
-  private static void writeModuleDependents(JsonGenerator writer, ProjectLibraryData data) {
-    writer.writeObjectFieldStart("dependentModules");
-    for (Map.Entry<String, List<String>> pluginAndModules : data.getDependentModules().entrySet()) {
-      writer.writeArrayFieldStart(pluginAndModules.getKey());
-      for (String moduleName : DefaultGroovyMethods.toSorted(pluginAndModules.getValue())) {
-        writer.writeString(moduleName);
+    private fun writeProjectLibs(entries: List<DistributionFileEntry>, writer: JsonGenerator, buildPaths: BuildPaths) {
+      // group by library
+      val map: MutableMap<ProjectLibraryData, MutableList<ProjectLibraryEntry>> = TreeMap { o1, o2 ->
+        o1.libraryName.compareTo(o2.libraryName)
       }
-
-      writer.writeEndArray();
-    }
-
-    writer.writeEndObject();
-  }
-
-  private static String shortenPath(Path file, BuildPaths buildPaths, @Nullable Path extraRoot) {
-    if (file.startsWith(MAVEN_REPO)) {
-      return "\$MAVEN_REPOSITORY\$/" + MAVEN_REPO.relativize(file).toString().replace(File.separatorChar, (char)"/");
-    }
-
-
-    Path projectHome = buildPaths.getProjectHomeDir();
-    if (file.startsWith(projectHome)) {
-      return "\$PROJECT_DIR\$/" + projectHome.relativize(file).toString();
-    }
-    else {
-      Path buildOutputDir = buildPaths.getBuildOutputDir();
-      if (file.startsWith(buildOutputDir)) {
-        return buildOutputDir.relativize(file);
+      for (entry in entries) {
+        if (entry is ProjectLibraryEntry) {
+          map.computeIfAbsent(entry.data, object : Closure<ArrayList<ProjectLibraryEntry?>?>(null, null) {
+            @JvmOverloads
+            fun doCall(it: ProjectLibraryData? = null): ArrayList<ProjectLibraryEntry> {
+              return ArrayList()
+            }
+          }).add(DefaultGroovyMethods.asType(entry, ProjectLibraryEntry::class.java))
+        }
       }
-      else if (extraRoot != null && file.startsWith(extraRoot)) {
-        return extraRoot.relativize(file);
+      if (map.isEmpty()) {
+        return
+      }
+      writer.writeArrayFieldStart("projectLibraries")
+      for ((data, value) in map as TreeMap<ProjectLibraryData, MutableList<ProjectLibraryEntry>>) {
+        writer.writeStartObject()
+        writer.writeStringField("name", data.libraryName)
+        writer.writeArrayFieldStart("files")
+        for (fileEntry in value) {
+          writer.writeStartObject()
+          writer.writeStringField("name", shortenAndNormalizePath(fileEntry.libraryFile, buildPaths, null))
+          writer.writeNumberField("size", DefaultGroovyMethods.asType(fileEntry.size, Long::class.java as Class<Any?>))
+          writer.writeEndObject()
+        }
+        writer.writeEndArray()
+        if (data.reason != null) {
+          writer.writeStringField("reason", data.reason)
+        }
+        writeModuleDependents(writer, data)
+        writer.writeEndObject()
+      }
+      writer.writeEndArray()
+    }
+
+    private fun writeModuleDependents(writer: JsonGenerator, data: ProjectLibraryData) {
+      writer.writeObjectFieldStart("dependentModules")
+      for ((key, value) in data.dependentModules) {
+        writer.writeArrayFieldStart(key)
+        for (moduleName in DefaultGroovyMethods.toSorted(value)) {
+          writer.writeString(moduleName)
+        }
+        writer.writeEndArray()
+      }
+      writer.writeEndObject()
+    }
+
+    private fun shortenPath(file: Path?, buildPaths: BuildPaths, extraRoot: Path?): String {
+      if (file!!.startsWith(MAVEN_REPO)) {
+        return "\\$MAVEN_REPOSITORY\$/" + MAVEN_REPO.relativize(file).toString().replace(File.separatorChar, "/" as Char)
+      }
+      val projectHome = buildPaths.projectHomeDir
+      return if (file.startsWith(projectHome)) {
+        "\\$PROJECT_DIR\$/" + projectHome.relativize(file).toString()
       }
       else {
-        return file.toString();
+        val buildOutputDir = buildPaths.buildOutputDir
+        if (file.startsWith(buildOutputDir)) {
+          buildOutputDir.relativize(file)
+        }
+        else if (extraRoot != null && file.startsWith(extraRoot)) {
+          extraRoot.relativize(file)
+        }
+        else {
+          file.toString()
+        }
       }
     }
-  }
 
-  private static String shortenAndNormalizePath(Path file, BuildPaths buildPaths, @Nullable Path extraRoot) {
-    String result = shortenPath(file, buildPaths, extraRoot).replace(File.separatorChar, (char)"/");
-    return result.startsWith("temp/") ? result.substring("temp/".length()) : result;
-  }
-
-  private final Collection<DistributionFileEntry> entries;
-  private static final Path MAVEN_REPO = Path.of(System.getProperty("user.home"), ".m2/repository");
-
-  final private static class IntelliJDefaultPrettyPrinter extends DefaultPrettyPrinter {
-    public IntelliJDefaultPrettyPrinter() {
-      _objectFieldValueSeparatorWithSpaces = ": ";
-      _objectIndenter = INDENTER;
-      _arrayIndenter = INDENTER;
+    private fun shortenAndNormalizePath(file: Path?, buildPaths: BuildPaths, extraRoot: Path?): String {
+      val result = shortenPath(file, buildPaths, extraRoot).replace(File.separatorChar, "/" as Char)
+      return if (result.startsWith("temp/")) result.substring("temp/".length) else result
     }
 
-    @Override
-    public DefaultPrettyPrinter createInstance() {
-      return new IntelliJDefaultPrettyPrinter();
-    }
-
-    private static final DefaultIndenter INDENTER = new DefaultIndenter("  ", "\n");
+    private val MAVEN_REPO = Path.of(System.getProperty("user.home"), ".m2/repository")
   }
 }
