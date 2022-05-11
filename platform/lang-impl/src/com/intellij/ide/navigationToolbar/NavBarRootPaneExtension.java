@@ -192,10 +192,15 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
         if (myScrollPane == null || !myScrollPane.isVisible()) return;
         final Component navBar = myScrollPane;
 
-        final Dimension preferredSize = navBar.getPreferredSize();
+        final int preferredHeight = navBar.getPreferredSize().height;
 
-        navBar.setBounds(x, (r.height - preferredSize.height) / 2,
-                         r.width - insets.left - insets.right, preferredSize.height);
+        int navBarHeight = preferredHeight;
+        if (ExperimentalUI.isNewUI()) {
+          navBarHeight = r.height;
+        }
+
+        navBar.setBounds(x, (r.height - navBarHeight) / 2,
+                         r.width - insets.left - insets.right, navBarHeight);
       }
 
       @Override
@@ -204,9 +209,9 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
         if (myScrollPane == null || myNavigationBar == null) return;
 
         var settings = UISettings.getInstance();
-        var border = !ExperimentalUI.isNewUI() ||
-                     settings.getShowNavigationBar() && settings.getNavBarLocation() == NavBarLocation.TOP ?
-                     new NavBarBorder() : JBUI.Borders.empty();
+        var border = !ExperimentalUI.isNewUI() || settings.getShowNavigationBar()
+                     ? new NavBarBorder()
+                     : JBUI.Borders.empty();
 
         if (ExperimentalUI.isNewUI()) {
           myScrollPane.setHorizontalScrollBar(new JBThinOverlappingScrollBar(Adjustable.HORIZONTAL));
