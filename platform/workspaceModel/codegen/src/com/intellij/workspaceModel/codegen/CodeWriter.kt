@@ -75,8 +75,7 @@ object CodeWriter {
     }
   }
 
-  fun generate(dir: File, fromDirectory: String, toDirectory: String) {
-    val generatedDestDir = dir.resolve(toDirectory)
+  fun generate(dir: File, fromDirectory: String, generatedDestDir: File) {
     generatedDestDir.mkdirs()
     val ktSrcs = dir.resolve(fromDirectory).listFiles()!!
       .toList()
