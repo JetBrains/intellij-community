@@ -206,7 +206,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.ml.models.local.java")
       bundlingRestrictions.includeInEapOnly = true
     },
-    plugin("intellij.jps.cache"),
     plugin("intellij.lombok") {
       withModule("intellij.lombok.generated")
     },
