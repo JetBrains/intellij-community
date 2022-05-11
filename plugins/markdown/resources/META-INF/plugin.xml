@@ -548,13 +548,13 @@ Includes the following features:</p>
 
     <group id="Markdown.Tools" popup="true">
       <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
-      <action id="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"
+      <action id="Markdown.ImportFromDocx"
               class="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"/>
-      <action id="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportAction"
+      <action id="Markdown.GoogleDocsImport"
               class="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportAction"/>
-      <action id="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction"
+      <action id="Markdown.Export"
               class="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction"/>
-      <action id="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"
+      <action id="Markdown.ConfigurePandoc"
               class="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"/>
     </group>
     <action id="Markdown.OpenDevtoolsAction"
