@@ -275,7 +275,7 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       if (parent instanceof Window) {
         Window[] children = ((Window)parent).getOwnedWindows();
         for (Window child : children) {
-          if (child instanceof UiInspectorAction.InspectorWindow) continue;
+          if (child instanceof InspectorWindow) continue;
           result.add(new ComponentNode(child, false));
         }
       }
