@@ -355,7 +355,7 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
             append("(" + class2field.second + "@" + class2field.first.getSimpleName() + ")");
           }
 
-          append(": " + UiInspectorAction.RectangleRenderer.toString(component.getBounds()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          append(": " + ValueCellRenderer.RectangleRenderer.toString(component.getBounds()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           if (component.isOpaque()) {
             append(", opaque", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
