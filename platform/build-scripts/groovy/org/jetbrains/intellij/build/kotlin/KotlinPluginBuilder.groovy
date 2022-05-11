@@ -73,6 +73,7 @@ final class KotlinPluginBuilder {
     "kotlin.base.jps",
     "kotlin.base.compiler-configuration-ui",
     "kotlin.base.resources",
+    "kotlin.base.statistics",
     "kotlin.base.fe10.analysis",
     "kotlin.base.fe10.kdoc",
     "kotlin.base.fe10.refactorings",

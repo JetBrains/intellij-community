@@ -9,13 +9,13 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.caches.project.isMPPModule
-import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
+import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.facet.platform
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.js.isJs
@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
 
 class ProjectConfigurationCollector : ProjectUsagesCollector() {
-
     override fun getGroup() = GROUP
 
     override fun getMetrics(project: Project): Set<MetricEvent> {
@@ -39,7 +38,7 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
                     buildEvent.metric(
                         systemField.with(buildSystem),
                         platformField.with(platform),
-                        isMPPBuild.with(it.isMPPModule || it.isNewMPPModule),
+                        isMPPBuild.with(it.isMultiPlatformModule || it.isNewMultiPlatformModule),
                         pluginInfoField.with(KotlinIdePlugin.getPluginInfo())
                     )
                 )
@@ -50,7 +49,6 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
     }
 
     private fun getPlatform(it: Module): String {
-
         return when {
             it.platform.isJvm() -> {
                 if (it.name.contains("android")) "jvm.android"

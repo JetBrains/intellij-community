@@ -45,7 +45,6 @@ class J2KFusCollector : CounterUsagesCollector() {
           this.pluginInfo.with(getPluginInfoById(KotlinIdePlugin.id)),
         )
     }
-
 }
 
 enum class ConversionType(val text: String) {

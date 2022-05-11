@@ -6,9 +6,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 
-
 open class KotlinFUSLogger {
-
     companion object {
         private val context = FeatureUsageData().addData("plugin_version", KotlinIdePlugin.version)
         private val logger = FUCounterUsageLogger.getInstance()

@@ -61,6 +61,4 @@ class KotlinMoveRefactoringFUSCollector : CounterUsagesCollector() {
     enum class MovedEntity {
         FUNCTIONS, CLASSES, MIXED, MPPCLASSES, MPPFUNCTIONS, MPPMIXED, PACKAGE, FILES
     }
-
-
 }
