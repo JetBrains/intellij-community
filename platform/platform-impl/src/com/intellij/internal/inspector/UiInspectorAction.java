@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector;
 
-import com.google.common.base.MoreObjects;
-import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.QuickFix;
@@ -21,11 +19,6 @@ import com.intellij.internal.inspector.components.HierarchyTree;
 import com.intellij.internal.inspector.components.ValueCellRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.ActionMenu;
-import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -42,46 +35,37 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.StripeTable;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindowEP;
-import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
-import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.toolWindow.StripeButton;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.dsl.gridLayout.Constraints;
-import com.intellij.ui.dsl.gridLayout.Grid;
-import com.intellij.ui.dsl.gridLayout.GridLayout;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.picker.ColorListener;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.*;
+import com.intellij.util.Function;
+import com.intellij.util.PsiNavigateUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
-import net.miginfocom.layout.*;
-import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.Accessible;
-import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.*;
-import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
@@ -89,18 +73,15 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
-import java.util.Vector;
 import java.util.*;
 import java.util.function.Supplier;
-
-import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 
 public class UiInspectorAction extends DumbAwareAction implements LightEditCompatible, ActionPromoter {
   private static final String ACTION_ID = "UiInspector";
   private static final String RENDERER_BOUNDS = "clicked renderer";
 
   public static final Key<Pair<List<PropertyBean>, Component>> CLICK_INFO = Key.create("CLICK_INFO");
-  private static final Key<Point> CLICK_INFO_POINT = Key.create("CLICK_INFO_POINT");
+  public static final Key<Point> CLICK_INFO_POINT = Key.create("CLICK_INFO_POINT");
   public static final Key<Throwable> ADDED_AT_STACKTRACE = Key.create("uiInspector.addedAt");
 
   private final List<MouseShortcut> myMouseShortcuts = new ArrayList<>();
@@ -858,37 +839,6 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   }
 
   private static class InspectorTableModel extends AbstractTableModel {
-
-    final List<String> PROPERTIES = Arrays.asList(
-      "ui", "getLocation", "getLocationOnScreen",
-      "getSize", "isOpaque", "getBorder",
-      "getForeground", "getBackground", "getFont",
-      "getCellRenderer", "getCellEditor",
-      "getMinimumSize", "getMaximumSize", "getPreferredSize",
-      "getPreferredScrollableViewportSize",
-      "getText", "toString", "isEditable", "getIcon",
-      "getVisibleRect", "getLayout",
-      "getAlignmentX", "getAlignmentY",
-      "getTooltipText", "getToolTipText", "cursor",
-      "isShowing", "isEnabled", "isVisible", "isDoubleBuffered",
-      "isFocusable", "isFocusCycleRoot", "isFocusOwner",
-      "isValid", "isDisplayable", "isLightweight", "getClientProperties", "getMouseListeners", "getFocusListeners"
-    );
-
-    final List<String> CHECKERS = Arrays.asList(
-      "isForegroundSet", "isBackgroundSet", "isFontSet",
-      "isMinimumSizeSet", "isMaximumSizeSet", "isPreferredSizeSet"
-    );
-
-    final List<String> ACCESSIBLE_CONTEXT_PROPERTIES = Arrays.asList(
-      "getAccessibleRole", "getAccessibleName", "getAccessibleDescription",
-      "getAccessibleAction", "getAccessibleChildrenCount",
-      "getAccessibleIndexInParent", "getAccessibleRelationSet",
-      "getAccessibleStateSet", "getAccessibleEditableText",
-      "getAccessibleTable", "getAccessibleText",
-      "getAccessibleValue", "accessibleChangeSupport"
-    );
-
     final Component myComponent;
     final List<PropertyBean> myProperties = new ArrayList<>();
 
@@ -899,550 +849,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
     InspectorTableModel(@NotNull Component c) {
       myComponent = c;
-
-      fillTable();
-    }
-
-    void fillTable() {
-      addProperties("", myComponent, PROPERTIES);
-      String addedAt = getAddedAtStacktrace(myComponent);
-      myProperties.add(new PropertyBean("added-at", addedAt, addedAt != null));
-
-      // Add properties related to Accessibility support. This is useful for manually
-      // inspecting what kind (if any) of accessibility support components expose.
-      boolean isAccessible = myComponent instanceof Accessible;
-      myProperties.add(new PropertyBean("accessible", isAccessible));
-      AccessibleContext context = myComponent.getAccessibleContext();
-      myProperties.add(new PropertyBean("accessibleContext", context));
-      if (isAccessible) {
-        addProperties("  ", myComponent.getAccessibleContext(), ACCESSIBLE_CONTEXT_PROPERTIES);
-      }
-
-      if (myComponent instanceof Container) {
-        addLayoutProperties((Container)myComponent);
-      }
-      if (myComponent instanceof TextPanel.WithIconAndArrows) {
-        myProperties.add(new PropertyBean("icon", ((TextPanel.WithIconAndArrows)myComponent).getIcon()));
-      }
-      if (myComponent.getParent() != null) {
-        LayoutManager layout = myComponent.getParent().getLayout();
-        if (layout instanceof com.intellij.ui.layout.migLayout.patched.MigLayout) {
-          CC cc = ((com.intellij.ui.layout.migLayout.patched.MigLayout)layout).getComponentConstraints().get(myComponent);
-          if (cc != null) {
-            addMigLayoutComponentConstraints(cc);
-          }
-        }
-        else if (layout instanceof GridLayout && myComponent instanceof JComponent) {
-          addGridLayoutComponentConstraints(Objects.requireNonNull(((GridLayout)layout).getConstraints((JComponent)myComponent)));
-        }
-      }
-    }
-
-    private void addProperties(@NotNull String prefix, @NotNull Object component, @NotNull List<String> methodNames) {
-      Class<?> clazz = component.getClass();
-      myProperties.add(new PropertyBean(prefix + "class", clazz.getName()+"@"+System.identityHashCode(component)));
-
-      if (clazz.isAnonymousClass()) {
-        Class<?> superClass = clazz.getSuperclass();
-        if (superClass != null) {
-          myProperties.add(new PropertyBean(prefix + "superclass", superClass.getName(), true));
-        }
-      }
-
-      Class<?> declaringClass = clazz.getDeclaringClass();
-      if (declaringClass != null) {
-        myProperties.add(new PropertyBean(prefix + "declaringClass", declaringClass.getName()));
-      }
-
-      if (component instanceof com.intellij.ui.treeStructure.Tree) {
-        TreeModel model = ((Tree)component).getModel();
-        if (model != null) {
-          myProperties.add(new PropertyBean(prefix + "treeModelClass", model.getClass().getName(), true));
-        }
-      }
-
-      addActionInfo(component);
-      addToolbarInfo(component);
-      addToolWindowInfo(component);
-      addGutterInfo(component);
-
-      UiInspectorContextProvider contextProvider = UiInspectorUtil.getProvider(component);
-      if (contextProvider != null) {
-        myProperties.addAll(contextProvider.getUiInspectorContext());
-      }
-
-      StringBuilder classHierarchy = new StringBuilder();
-      for (Class<?> cl = clazz.getSuperclass(); cl != null; cl = cl.getSuperclass()) {
-        if (classHierarchy.length() > 0) classHierarchy.append(" ").append(UIUtil.rightArrow()).append(" ");
-        classHierarchy.append(cl.getName());
-        if (JComponent.class.getName().equals(cl.getName())) break;
-      }
-      myProperties.add(new PropertyBean(prefix + "hierarchy", classHierarchy.toString()));
-
-      if (component instanceof Component) {
-        DialogWrapper dialog = DialogWrapper.findInstance((Component)component);
-        if (dialog != null) {
-          myProperties.add(new PropertyBean(prefix + "dialogWrapperClass", dialog.getClass().getName(), true));
-        }
-      }
-
-      addPropertiesFromMethodNames(prefix, component, methodNames);
-    }
-
-    private static List<Method> collectAllMethodsRecursively(Class<?> clazz) {
-      ArrayList<Method> list = new ArrayList<>();
-      for(Class<?> cl = clazz; cl != null; cl = cl.getSuperclass()) {
-        list.addAll(Arrays.asList(cl.getDeclaredMethods()));
-      }
-      return list;
-    }
-
-    private void addPropertiesFromMethodNames(@NotNull String prefix,
-                                              @NotNull Object component,
-                                              @NotNull List<String> methodNames) {
-      Class<?> clazz0 = component.getClass();
-      Class<?> clazz = clazz0.isAnonymousClass() ? clazz0.getSuperclass() : clazz0;
-      for (String name: methodNames) {
-        String propertyName = ObjectUtils.notNull(StringUtil.getPropertyName(name), name);
-        Object propertyValue;
-        try {
-          try {
-            //noinspection ConstantConditions
-            propertyValue = ReflectionUtil.findMethod(collectAllMethodsRecursively(clazz), name).invoke(component);
-          }
-          catch (Exception e) {
-            propertyValue = ReflectionUtil.findField(clazz, null, name).get(component);
-          }
-          boolean changed = false;
-          try {
-            final String checkerMethodName = "is" + StringUtil.capitalize(propertyName) + "Set";
-            if (CHECKERS.contains(checkerMethodName)) {
-              final Object value = ReflectionUtil.findMethod(Arrays.asList(clazz.getMethods()), checkerMethodName).invoke(component);
-              if (value instanceof Boolean) {
-                changed = ((Boolean)value).booleanValue();
-              }
-            }
-          }
-          catch (Exception ignored) {
-          }
-          myProperties.add(new PropertyBean(prefix + propertyName, propertyValue, changed));
-        }
-        catch (Exception ignored) {
-        }
-      }
-    }
-
-    private void addGutterInfo(Object component) {
-      Point clickPoint = component instanceof EditorGutterComponentEx ? UIUtil.getClientProperty(component, CLICK_INFO_POINT) : null;
-      if (clickPoint != null) {
-        GutterMark renderer = ((EditorGutterComponentEx)component).getGutterRenderer(clickPoint);
-        if (renderer != null) {
-          myProperties.add(new PropertyBean("gutter renderer", renderer.getClass().getName(), true));
-        }
-      }
-    }
-
-    private void addActionInfo(Object component) {
-      AnAction action = null;
-      if (component instanceof ActionButton) {
-        action = ((ActionButton)component).getAction();
-      } else if (component instanceof JComponent) {
-        if (component instanceof ActionMenuItem) {
-          action = ((ActionMenuItem)component).getAnAction();
-        }
-        else if (component instanceof ActionMenu) {
-          action = ((ActionMenu)component).getAnAction();
-        }
-        else {
-          action = getAction(
-            ComponentUtil.findParentByCondition((Component)component, c -> getAction(c) != null)
-          );
-        }
-      }
-
-      if (action != null) {
-        myProperties.addAll(UiInspectorUtil.collectAnActionInfo(action));
-      }
-    }
-
-    private void addToolbarInfo(Object component) {
-      if (component instanceof ActionToolbarImpl) {
-        ActionToolbarImpl toolbar = (ActionToolbarImpl)component;
-        myProperties.addAll(UiInspectorUtil.collectActionGroupInfo("Toolbar", toolbar.getActionGroup(), toolbar.getPlace()));
-
-        JComponent targetComponent = ReflectionUtil.getField(ActionToolbarImpl.class, toolbar, JComponent.class, "myTargetComponent");
-        if (targetComponent != null) {
-          myProperties.add(new PropertyBean("Target component", targetComponent.toString(), true));
-        }
-      }
-    }
-
-    private void addToolWindowInfo(Object component) {
-      if (component instanceof StripeButton) {
-        ToolWindowImpl window = ((StripeButton)component).getToolWindow$intellij_platform_ide_impl();
-        myProperties.add(new PropertyBean("Tool Window ID", window.getId(), true));
-        myProperties.add(new PropertyBean("Tool Window Icon", window.getIcon()));
-
-        ToolWindowFactory contentFactory = ReflectionUtil.getField(ToolWindowImpl.class, window, ToolWindowFactory.class, "contentFactory");
-        if (contentFactory != null) {
-          myProperties.add(new PropertyBean("Tool Window Factory", contentFactory));
-        }
-        else {
-          ToolWindowEP ep = ToolWindowEP.EP_NAME.findFirstSafe(it -> it.id == window.getId());
-          if (ep != null && ep.factoryClass != null) {
-            myProperties.add(new PropertyBean("Tool Window Factory", ep.factoryClass));
-          }
-        }
-      }
-    }
-
-    private void addLayoutProperties(@NotNull Container component) {
-      LayoutManager layout = component.getLayout();
-      if (layout instanceof GridBagLayout) {
-        GridBagLayout bagLayout = (GridBagLayout)layout;
-        GridBagConstraints defaultConstraints = ReflectionUtil.getField(GridBagLayout.class, bagLayout, GridBagConstraints.class, "defaultConstraints");
-
-        myProperties.add(new PropertyBean("GridBagLayout constraints",
-                                          String.format("defaultConstraints - %s", toString(defaultConstraints))));
-        if (bagLayout.columnWidths != null) addSubValue("columnWidths", Arrays.toString(bagLayout.columnWidths));
-        if (bagLayout.rowHeights != null) addSubValue("rowHeights", Arrays.toString(bagLayout.rowHeights));
-        if (bagLayout.columnWeights != null) addSubValue("columnWeights", Arrays.toString(bagLayout.columnWeights));
-        if (bagLayout.rowWeights != null) addSubValue("rowWeights", Arrays.toString(bagLayout.rowWeights));
-
-        for (Component child : component.getComponents()) {
-          addSubValue(UiInspectorUtil.getComponentName(child), toString(bagLayout.getConstraints(child)));
-        }
-      }
-      else if (layout instanceof BorderLayout) {
-        BorderLayout borderLayout = (BorderLayout)layout;
-
-        myProperties.add(new PropertyBean("BorderLayout constraints",
-                                          String.format("hgap - %s, vgap - %s", borderLayout.getHgap(), borderLayout.getVgap())));
-
-        for (Component child : component.getComponents()) {
-          addSubValue(UiInspectorUtil.getComponentName(child), borderLayout.getConstraints(child));
-        }
-      }
-      else if (layout instanceof CardLayout) {
-        CardLayout cardLayout = (CardLayout)layout;
-        Integer currentCard = ReflectionUtil.getField(CardLayout.class, cardLayout, null, "currentCard");
-        //noinspection UseOfObsoleteCollectionType
-        Vector<?> vector = ReflectionUtil.getField(CardLayout.class, cardLayout, Vector.class, "vector");
-        String cardDescription = "???";
-        if (vector != null && currentCard != null) {
-          Object card = vector.get(currentCard);
-          cardDescription = ReflectionUtil.getField(card.getClass(), card, String.class, "name");
-        }
-
-        myProperties.add(new PropertyBean("CardLayout constraints",
-                                          String.format("card - %s, hgap - %s, vgap - %s",
-                                                        cardDescription, cardLayout.getHgap(), cardLayout.getVgap())));
-
-        if (vector != null) {
-          for (Object card : vector) {
-            String cardName = ReflectionUtil.getField(card.getClass(), card, String.class, "name");
-            Component child = ReflectionUtil.getField(card.getClass(), card, Component.class, "comp");
-            if (child != null) {
-              addSubValue(UiInspectorUtil.getComponentName(child), cardName);
-            }
-          }
-        }
-      }
-      else if (layout instanceof MigLayout) {
-        MigLayout migLayout = (MigLayout)layout;
-
-        Object constraints = migLayout.getLayoutConstraints();
-        if (constraints instanceof LC) {
-          addMigLayoutLayoutConstraints((LC)constraints);
-        }
-        else {
-          myProperties.add(new PropertyBean("MigLayout layout constraints", constraints));
-        }
-
-        constraints = migLayout.getColumnConstraints();
-        if (constraints instanceof AC) {
-          addMigLayoutAxisConstraints("MigLayout column constraints", (AC)constraints);
-        }
-        else {
-          myProperties.add(new PropertyBean("MigLayout column constraints", constraints));
-        }
-
-        constraints = migLayout.getRowConstraints();
-        if (constraints instanceof AC) {
-          addMigLayoutAxisConstraints("MigLayout row constraints", (AC)constraints);
-        }
-        else {
-          myProperties.add(new PropertyBean("MigLayout row constraints", constraints));
-        }
-
-        for (Component child : component.getComponents()) {
-          addSubValue(UiInspectorUtil.getComponentName(child), migLayout.getComponentConstraints(child));
-        }
-      }
-      else if (layout instanceof com.intellij.ui.layout.migLayout.patched.MigLayout) {
-        com.intellij.ui.layout.migLayout.patched.MigLayout migLayout = (com.intellij.ui.layout.migLayout.patched.MigLayout)layout;
-
-        addMigLayoutLayoutConstraints(migLayout.getLayoutConstraints());
-        addMigLayoutAxisConstraints("MigLayout column constraints", migLayout.getColumnConstraints());
-        addMigLayoutAxisConstraints("MigLayout row constraints", migLayout.getRowConstraints());
-      }
-      else if (layout instanceof GridLayout) {
-        Grid grid = ((GridLayout) layout).getRootGrid();
-        myProperties.add(new PropertyBean("GridLayout", null));
-        addSubValue("resizableColumns", grid.getResizableColumns());
-        addSubValue("columnsGaps", grid.getColumnsGaps());
-        addSubValue("resizableRows", grid.getResizableRows());
-        addSubValue("rowsGaps", grid.getRowsGaps());
-      }
-    }
-
-    private void addMigLayoutLayoutConstraints(LC lc) {
-      myProperties.add(new PropertyBean("MigLayout layout constraints", lcConstraintToString(lc)));
-      UnitValue[] insets = lc.getInsets();
-      if (insets != null) {
-        List<String> insetsText = ContainerUtil.map(insets, (i) -> unitValueToString(i));
-        myProperties.add(new PropertyBean("  lc.insets", "[" + StringUtil.join(insetsText, ", ") + "]"));
-      }
-      UnitValue alignX = lc.getAlignX();
-      UnitValue alignY = lc.getAlignY();
-      if (alignX != null || alignY != null) {
-        myProperties.add(new PropertyBean("  lc.align", "x: " + unitValueToString(alignX) + "; y: " + unitValueToString(alignY)));
-      }
-      BoundSize width = lc.getWidth();
-      BoundSize height = lc.getHeight();
-      if (width != BoundSize.NULL_SIZE || height != BoundSize.NULL_SIZE) {
-        myProperties.add(new PropertyBean("  lc.size", "width: " + boundSizeToString(width) + "; height: " + boundSizeToString(height)));
-      }
-      BoundSize gridX = lc.getGridGapX();
-      BoundSize gridY = lc.getGridGapY();
-      if (gridX != null || gridY != null) {
-        myProperties.add(new PropertyBean("  lc.gridGap", "x: " + boundSizeToString(gridX) + "; y: " + boundSizeToString(gridY)));
-      }
-      boolean fillX = lc.isFillX();
-      boolean fillY = lc.isFillY();
-      if (fillX || fillY) {
-        myProperties.add(new PropertyBean("  lc.fill", "x: " + fillX + "; y: " + fillY));
-      }
-      BoundSize packWidth = lc.getPackWidth();
-      BoundSize packHeight = lc.getPackHeight();
-      if (packWidth != BoundSize.NULL_SIZE || packHeight != BoundSize.NULL_SIZE) {
-        myProperties.add(new PropertyBean("  lc.pack", "width: " + packWidth + "; height: " + packHeight +
-                                                       "; widthAlign: " + lc.getPackWidthAlign() +
-                                                       "; heightAlign: " + lc.getPackHeightAlign()));
-      }
-    }
-
-    private static String lcConstraintToString(LC constraint) {
-      return "isFlowX=" + constraint.isFlowX() +
-             " leftToRight=" + constraint.getLeftToRight() +
-             " noGrid=" + constraint.isNoGrid() +
-             " hideMode=" + constraint.getHideMode() +
-             " visualPadding=" + constraint.isVisualPadding() +
-             " topToBottom=" + constraint.isTopToBottom() +
-             " noCache=" + constraint.isNoCache();
-    }
-
-    private void addMigLayoutAxisConstraints(String title, AC ac) {
-      myProperties.add(new PropertyBean(title, ac));
-      DimConstraint[] constraints = ac.getConstaints();
-      for (int i = 0; i < constraints.length; i++) {
-        addDimConstraintProperties("  [" + i + "]", constraints[i]);
-      }
-    }
-
-    private void addMigLayoutComponentConstraints(CC cc) {
-      myProperties.add(new PropertyBean("MigLayout component constraints", componentConstraintsToString(cc)));
-      DimConstraint horizontal = cc.getHorizontal();
-      addDimConstraintProperties("  cc.horizontal", horizontal);
-      DimConstraint vertical = cc.getVertical();
-      addDimConstraintProperties("  cc.vertical", vertical);
-    }
-
-    private void addDimConstraintProperties(String name, DimConstraint constraint) {
-      myProperties.add(new PropertyBean(name, dimConstraintToString(constraint)));
-      BoundSize size = constraint.getSize();
-      if (size != null) {
-        addSubValue(name + ".size", boundSizeToString(size));
-      }
-      UnitValue align = constraint.getAlign();
-      if (align != null) {
-        addSubValue(name + ".align", unitValueToString(align));
-      }
-      BoundSize gapBefore = constraint.getGapBefore();
-      if (gapBefore != null && !gapBefore.isUnset()) {
-        addSubValue(name + ".gapBefore", boundSizeToString(gapBefore));
-      }
-      BoundSize gapAfter = constraint.getGapAfter();
-      if (gapAfter != null && !gapAfter.isUnset()) {
-        addSubValue(name + ".gapAfter", boundSizeToString(gapAfter));
-      }
-    }
-
-    private void addGridLayoutComponentConstraints(Constraints constraints) {
-      Grid grid = constraints.getGrid();
-
-      myProperties.add(new PropertyBean("GridLayout component constraints", null));
-      addSubValue("grid", grid.getClass().getSimpleName() + "@" + System.identityHashCode(grid));
-      addSubValue("Cell coordinate", new Point(constraints.getX(), constraints.getY()));
-      addSubValue("Cell size", new Dimension(constraints.getWidth(), constraints.getHeight()));
-      addSubValue("gaps", constraints.getGaps());
-      addSubValue("visualPaddings", constraints.getVisualPaddings());
-      addSubValue("horizontalAlign", constraints.getHorizontalAlign().name());
-      addSubValue("verticalAlign", constraints.getVerticalAlign().name());
-      addSubValue("baselineAlign", constraints.getBaselineAlign());
-    }
-
-    private void addSubValue(@NotNull String name, @Nullable Object value) {
-      myProperties.add(new PropertyBean("  " + name, value));
-    }
-
-    private static String componentConstraintsToString(CC cc) {
-      CC newCC = new CC();
-      StringBuilder stringBuilder = new StringBuilder();
-      if (cc.getSkip() != newCC.getSkip()) {
-        stringBuilder.append(" skip=").append(cc.getSkip());
-      }
-      if (cc.getSpanX() != newCC.getSpanX()) {
-        stringBuilder.append(" spanX=").append(cc.getSpanX() == LayoutUtil.INF ? "INF" : cc.getSpanX());
-      }
-      if (cc.getSpanY() != newCC.getSpanY()) {
-        stringBuilder.append(" spanY=").append(cc.getSpanY() == LayoutUtil.INF ? "INF" : cc.getSpanY());
-      }
-      if (cc.getPushX() != null) {
-        stringBuilder.append(" pushX=").append(cc.getPushX());
-      }
-      if (cc.getPushY() != null) {
-        stringBuilder.append(" pushY=").append(cc.getPushY());
-      }
-      if (cc.getSplit() != newCC.getSplit()) {
-        stringBuilder.append(" split=").append(cc.getSplit());
-      }
-      if (cc.isWrap()) {
-        stringBuilder.append(" wrap=");
-        if (cc.getWrapGapSize() != null) {
-          stringBuilder.append(cc.getWrapGapSize());
-        }
-        else {
-          stringBuilder.append("true");
-        }
-      }
-      if (cc.isNewline()) {
-        stringBuilder.append(" newline=");
-        if (cc.getNewlineGapSize() != null) {
-          stringBuilder.append(cc.getNewlineGapSize());
-        }
-        else {
-          stringBuilder.append("true");
-        }
-      }
-      if (cc.getHideMode() != newCC.getHideMode()) {
-        stringBuilder.append(" hidemode=").append(cc.getHideMode());
-      }
-      return stringBuilder.toString().trim();
-    }
-
-    private static String dimConstraintToString(DimConstraint constraint) {
-      StringBuilder stringBuilder = new StringBuilder();
-      DimConstraint newConstraint = new DimConstraint();
-      if (!Comparing.equal(constraint.getGrow(), newConstraint.getGrow())) {
-        stringBuilder.append(" grow=").append(constraint.getGrow());
-      }
-      if (constraint.getGrowPriority() != newConstraint.getGrowPriority()) {
-        stringBuilder.append(" growPrio=").append(constraint.getGrowPriority());
-      }
-      if (!Comparing.equal(constraint.getShrink(), newConstraint.getShrink())) {
-        stringBuilder.append(" shrink=").append(constraint.getShrink());
-      }
-      if (constraint.getShrinkPriority() != newConstraint.getShrinkPriority()) {
-        stringBuilder.append(" shrinkPrio=").append(constraint.getShrinkPriority());
-      }
-      if (constraint.isFill() != newConstraint.isFill()) {
-        stringBuilder.append(" fill=").append(constraint.isFill());
-      }
-      if (constraint.isNoGrid() != newConstraint.isNoGrid()) {
-        stringBuilder.append(" noGrid=").append(constraint.isNoGrid());
-      }
-      if (!Objects.equals(constraint.getSizeGroup(), newConstraint.getSizeGroup())) {
-        stringBuilder.append(" sizeGroup=").append(constraint.getSizeGroup());
-      }
-      if (!Objects.equals(constraint.getEndGroup(), newConstraint.getEndGroup())) {
-        stringBuilder.append(" endGroup=").append(constraint.getEndGroup());
-      }
-      return stringBuilder.toString();
-    }
-
-    private static String unitValueToString(@Nullable UnitValue unitValue) {
-      if (unitValue == null) return "null";
-      if (unitValue.getOperation() == UnitValue.STATIC) {
-        StringBuilder result = new StringBuilder();
-        result.append(unitValue.getValue());
-        if (unitValue.getUnitString() != null) {
-          result.append(unitValue.getUnitString());
-        }
-        else {
-          int unit = unitValue.getUnit();
-          if (unit >= 0) {
-            String unitName = MIG_LAYOUT_UNIT_MAP.get().get(unit);
-            if (unitName == null) {
-              return unitValue.toString();
-            }
-            result.append(unitName);
-          }
-        }
-        if (unitValue.isHorizontal()) {
-          result.append("H");
-        }
-        else {
-          result.append("V");
-        }
-        return result.toString();
-      }
-      return unitValue.toString();
-    }
-
-    private static String boundSizeToString(BoundSize boundSize) {
-      StringBuilder result = new StringBuilder("BoundSize{ ");
-      if (boundSize.getMin() != null) {
-        result.append("min=").append(unitValueToString(boundSize.getMin())).append(" ");
-      }
-      if (boundSize.getPreferred() != null) {
-        result.append("pref=").append(unitValueToString(boundSize.getPreferred())).append(" ");
-      }
-      if (boundSize.getMax() != null) {
-        result.append("max=").append(unitValueToString(boundSize.getMax())).append(" ");
-      }
-      if (boundSize.getGapPush()) {
-        result.append("push ");
-      }
-      result.append("}");
-      return result.toString();
-    }
-
-    @NotNull
-    private static String toString(@Nullable GridBagConstraints constraints) {
-      if (constraints == null) return "null";
-
-      MoreObjects.ToStringHelper h = MoreObjects.toStringHelper("");
-      appendFieldValue(h, constraints, "gridx");
-      appendFieldValue(h, constraints, "gridy");
-      appendFieldValue(h, constraints, "gridwidth");
-      appendFieldValue(h, constraints, "gridheight");
-      appendFieldValue(h, constraints, "weightx");
-      appendFieldValue(h, constraints, "weighty");
-      appendFieldValue(h, constraints, "anchor");
-      appendFieldValue(h, constraints, "fill");
-      appendFieldValue(h, constraints, "insets");
-      appendFieldValue(h, constraints, "ipadx");
-      appendFieldValue(h, constraints, "ipady");
-      return h.toString();
-    }
-
-    private static void appendFieldValue(@NotNull MoreObjects.ToStringHelper h,
-                                         @NotNull GridBagConstraints constraints,
-                                         @NotNull String field) {
-      Object value = ReflectionUtil.getField(GridBagConstraints.class, constraints, null, field);
-      Object defaultValue = ReflectionUtil.getField(GridBagConstraints.class, new GridBagConstraints(), null, field);
-      if (!Comparing.equal(value, defaultValue)) h.add(field, value);
+      myProperties.addAll(ComponentPropertiesCollector.collect(c));
     }
 
     @Override
@@ -1541,14 +948,9 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
     public void refresh() {
       myProperties.clear();
-      fillTable();
+      myProperties.addAll(ComponentPropertiesCollector.collect(myComponent));
       fireTableDataChanged();
     }
-  }
-
-  @Nullable
-  private static AnAction getAction(Component c) {
-    return UIUtil.getClientProperty(c, ACTION_KEY);
   }
 
   private static class UiInspector implements AWTEventListener, Disposable {
@@ -1691,16 +1093,6 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     }
   }
 
-  private static @Nullable String getAddedAtStacktrace(@Nullable Component component) {
-    Throwable throwable = UIUtil.getClientProperty(component, ADDED_AT_STACKTRACE);
-    if (throwable == null) return null;
-    String text = ExceptionUtil.getThrowableText(throwable);
-    int first = text.indexOf("at com.intellij", text.indexOf("at java."));
-    int last = text.indexOf("at java.awt.EventQueue");
-    if (last == -1) last = text.length();
-    return last > first && first > 0 ? text.substring(first, last).trim() : null;
-  }
-
   /** @noinspection UseJBColor*/
   private static Object fromObject(Object o, Class<?> type) {
     if (o == null) return null;
@@ -1783,20 +1175,4 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       }
     }
   }
-
-  private static final LazyInitializer.LazyValue<Map<Integer, String>> MIG_LAYOUT_UNIT_MAP = new LazyInitializer.LazyValue<Map<Integer, String>>(() -> {
-    Map<Integer, String> result = new HashMap<>();
-    try {
-      Field mapField = UnitValue.class.getDeclaredField("UNIT_MAP");
-      mapField.setAccessible(true);
-      //noinspection unchecked
-      Map<String, Integer> map = (Map<String, Integer>)mapField.get(null);
-      for (Map.Entry<String, Integer> entry : map.entrySet()) {
-        result.put(entry.getValue(), entry.getKey());
-      }
-    }
-    catch (NoSuchFieldException | IllegalAccessException ignored) {
-    }
-    return result;
-  });
 }
