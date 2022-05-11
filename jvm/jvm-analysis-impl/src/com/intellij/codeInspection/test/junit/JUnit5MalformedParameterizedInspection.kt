@@ -235,7 +235,7 @@ private class NullOrEmptySourceChecker(val holder: ProblemsHolder) {
     val shortName = psiAnnotation.qualifiedName ?: return
     if (size == 1) {
       var type = method.uastParameters[0].type
-      if (type is PsiClassReferenceType) {
+      if (type is PsiClassType) {
         type = type.rawType()
       }
       if (type is PsiArrayType ||
