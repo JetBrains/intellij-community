@@ -185,8 +185,9 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
       }
       if (component != null) {
         if (component instanceof JComponent) {
-          UIUtil.putClientProperty((JComponent)component, CLICK_INFO, getClickInfo(me, component));
-          UIUtil.putClientProperty((JComponent)component, CLICK_INFO_POINT, me.getPoint());
+          JComponent jComp = (JComponent)component;
+          jComp.putClientProperty(CLICK_INFO, getClickInfo(me, component));
+          jComp.putClientProperty(CLICK_INFO_POINT, me.getPoint());
         }
 
         showInspector(project, component);
@@ -272,7 +273,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     private static void processContainerEvent(ContainerEvent event) {
       Component child = event.getID() == ContainerEvent.COMPONENT_ADDED ? event.getChild() : null;
       if (child instanceof JComponent && !(event.getSource() instanceof CellRendererPane)) {
-        UIUtil.putClientProperty((JComponent)child, ADDED_AT_STACKTRACE, new Throwable());
+        ((JComponent)child).putClientProperty(ADDED_AT_STACKTRACE, new Throwable());
       }
     }
   }

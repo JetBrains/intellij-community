@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.toolWindow.StripeButton;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.dsl.gridLayout.Constraints;
 import com.intellij.ui.dsl.gridLayout.Grid;
@@ -201,6 +202,7 @@ public final class ComponentPropertiesCollector {
         try {
           final String checkerMethodName = "is" + StringUtil.capitalize(propertyName) + "Set";
           if (CHECKERS.contains(checkerMethodName)) {
+            //noinspection ConstantConditions
             final Object value = ReflectionUtil.findMethod(Arrays.asList(clazz.getMethods()), checkerMethodName).invoke(component);
             if (value instanceof Boolean) {
               changed = ((Boolean)value).booleanValue();
@@ -217,8 +219,9 @@ public final class ComponentPropertiesCollector {
   }
 
   private void addGutterInfo(Object component) {
-    Point clickPoint =
-      component instanceof EditorGutterComponentEx ? UIUtil.getClientProperty(component, UiInspectorAction.CLICK_INFO_POINT) : null;
+    Point clickPoint = component instanceof EditorGutterComponentEx
+                       ? ClientProperty.get((EditorGutterComponentEx)component, UiInspectorAction.CLICK_INFO_POINT)
+                       : null;
     if (clickPoint != null) {
       GutterMark renderer = ((EditorGutterComponentEx)component).getGutterRenderer(clickPoint);
       if (renderer != null) {
@@ -274,7 +277,7 @@ public final class ComponentPropertiesCollector {
         myProperties.add(new PropertyBean("Tool Window Factory", contentFactory));
       }
       else {
-        ToolWindowEP ep = ToolWindowEP.EP_NAME.findFirstSafe(it -> it.id == window.getId());
+        ToolWindowEP ep = ToolWindowEP.EP_NAME.findFirstSafe(it -> Objects.equals(it.id, window.getId()));
         if (ep != null && ep.factoryClass != null) {
           myProperties.add(new PropertyBean("Tool Window Factory", ep.factoryClass));
         }
@@ -634,11 +637,11 @@ public final class ComponentPropertiesCollector {
 
   @Nullable
   private static AnAction getAction(Component c) {
-    return UIUtil.getClientProperty(c, ACTION_KEY);
+    return ClientProperty.get(c, ACTION_KEY);
   }
 
   private static @Nullable String getAddedAtStacktrace(@Nullable Component component) {
-    Throwable throwable = UIUtil.getClientProperty(component, UiInspectorAction.ADDED_AT_STACKTRACE);
+    Throwable throwable = ClientProperty.get(component, UiInspectorAction.ADDED_AT_STACKTRACE);
     if (throwable == null) return null;
     String text = ExceptionUtil.getThrowableText(throwable);
     int first = text.indexOf("at com.intellij", text.indexOf("at java."));

@@ -45,16 +45,16 @@ abstract class HierarchyTree extends JTree implements TreeSelectionListener {
     setCellRenderer(new ComponentTreeCellRenderer(c));
     getSelectionModel().addTreeSelectionListener(this);
     new TreeSpeedSearch(this);
-    if (c instanceof JComponent && UIUtil.getClientProperty(c, UiInspectorAction.CLICK_INFO) != null) {
+    if (c instanceof JComponent && ClientProperty.get(c, UiInspectorAction.CLICK_INFO) != null) {
       SwingUtilities.invokeLater(() -> getSelectionModel().setSelectionPath(getPathForRow(getLeadSelectionRow() + 1)));
     }
   }
 
-  private TreeModel buildModel(Component c) {
+  private static TreeModel buildModel(Component c) {
     return buildModel(c, false);
   }
 
-  private TreeModel buildModel(Component c, boolean accessibleModel) {
+  private static TreeModel buildModel(Component c, boolean accessibleModel) {
     Component parent = null;
     if (accessibleModel && (c instanceof Accessible)) {
       Accessible axComponent = c.getAccessibleContext().getAccessibleParent();
@@ -215,10 +215,6 @@ abstract class HierarchyTree extends JTree implements TreeSelectionListener {
       return myAccessible;
     }
 
-    private boolean isAccessibleNode() {
-      return isAccessibleNode;
-    }
-
     @Override
     public String toString() {
       if (myComponent != null) {
@@ -257,7 +253,7 @@ abstract class HierarchyTree extends JTree implements TreeSelectionListener {
       }
 
       if (parent instanceof JComponent) {
-        Pair<List<PropertyBean>, Component> o = UIUtil.getClientProperty(parent, UiInspectorAction.CLICK_INFO);
+        Pair<List<PropertyBean>, Component> o = ClientProperty.get(parent, UiInspectorAction.CLICK_INFO);
         if (o != null) {
           //result.add(new ClickInfoNode(o.first));
           //We present clicked renderer as ComponentNode instead of ClickInfoNode to see inner structure of renderer

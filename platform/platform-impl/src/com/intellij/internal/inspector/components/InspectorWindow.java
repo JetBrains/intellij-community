@@ -31,7 +31,6 @@ import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -303,7 +302,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
   public void close() {
     if (myInitialComponent instanceof JComponent) {
-      UIUtil.putClientProperty((JComponent)myInitialComponent, UiInspectorAction.CLICK_INFO, null);
+      ((JComponent)myInitialComponent).putClientProperty(UiInspectorAction.CLICK_INFO, null);
     }
     myIsHighlighted = false;
     myInfo = null;
