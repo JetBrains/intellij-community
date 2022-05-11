@@ -7,23 +7,15 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.projectRoots.JavaSdk
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
-import org.jetbrains.kotlin.idea.caches.project.getAllProjectSdks
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.KotlinVersion
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.LAST_SNAPSHOT
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_4_32
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_32
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_6_21
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_7_0_Beta
-import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
