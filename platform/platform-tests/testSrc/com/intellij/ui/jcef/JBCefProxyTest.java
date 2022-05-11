@@ -21,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public class JBCefProxyTest {
-  private static final String TEST_HOST = "www.jetbrains.com";
+  private static final String TEST_HOST = "captive.apple.com";
 
   static {
     TestScaleHelper.setSystemProperty("java.awt.headless", "false");
@@ -79,7 +79,7 @@ public class JBCefProxyTest {
       frame.setVisible(true);
     });
 
-    assertTrue(await(latch));
+    await(latch);
 
     assertEquals(200, statusCode.get());
   }
