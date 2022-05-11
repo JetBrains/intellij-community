@@ -77,20 +77,16 @@ class IdeKotlinVersion private constructor(
             return opt(rawVersion)
         }
 
-        private fun parseKind(kindSuffix: String, vararg prefixes: String, factory: (Int) -> Kind): Kind? {
-            for (prefix in prefixes) {
-                if (kindSuffix.startsWith(prefix)) {
-                    val numberString = kindSuffix.drop(prefix.length).removeSuffix("-release")
-                    if (numberString.isEmpty()) {
-                        return factory(1)
-                    } else {
-                        val number = numberString.toIntOrNull() ?: return null
-                        return factory(number)
-                    }
-                }
-            }
+        private fun parseKind(kindSuffix: String, prefix: String, factory: (Int) -> Kind): Kind? {
+            check(kindSuffix.startsWith(prefix)) { "Prefix \"$prefix\" not found in kind suffix \"$kindSuffix\"" }
 
-            error("None of prefixes $prefixes found in kind suffix \"$kindSuffix\"")
+            val numberString = kindSuffix.drop(prefix.length).removeSuffix("-release")
+            if (numberString.isEmpty()) {
+                return factory(1)
+            } else {
+                val number = numberString.toIntOrNull() ?: return null
+                return factory(number)
+            }
         }
 
         fun parse(rawVersion: String): Result<IdeKotlinVersion> {
@@ -116,7 +112,8 @@ class IdeKotlinVersion private constructor(
                 kindSuffix == "snapshot" || kindSuffix == "local" -> Kind.Snapshot
                 kindSuffix.startsWith("rc") -> parseKind(kindSuffix, "rc") { Kind.ReleaseCandidate(it) }
                 kindSuffix.startsWith("beta") -> parseKind(kindSuffix, "beta") { Kind.Beta(it) }
-                kindSuffix.startsWith("m") || kindSuffix.startsWith("eap") -> parseKind(kindSuffix, "m", "eap") { Kind.Milestone(it) }
+                kindSuffix.startsWith("m")  -> parseKind(kindSuffix, "m") { Kind.Milestone(it) }
+                kindSuffix.startsWith("eap") -> parseKind(kindSuffix, "eap") { Kind.Eap(it) }
                 else -> null
             } ?: return Result.failure(IllegalArgumentException("Unsupported version kind suffix: \"$kindSuffix\" ($rawVersion)"))
 
@@ -137,6 +134,7 @@ class IdeKotlinVersion private constructor(
         data class ReleaseCandidate(val number: Int) : Kind(artifactSuffix = if (number == 1) "RC" else "RC$number")
         data class Beta(val number: Int) : Kind(artifactSuffix = "Beta$number")
         data class Milestone(val number: Int) : Kind(artifactSuffix = "M$number")
+        data class Eap(val number: Int) : Kind(artifactSuffix = if (number == 1) "eap" else "eap$number")
         object Dev : Kind(artifactSuffix = "dev", requireBuildNumber = true)
         object Snapshot : Kind(artifactSuffix = "SNAPSHOT", requireBuildNumber = true)
 

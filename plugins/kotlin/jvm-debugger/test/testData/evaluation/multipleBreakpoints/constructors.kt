@@ -83,3 +83,11 @@ class E {
 // RESULT: "foo": Ljava/lang/String;
 //FunctionBreakpoint!
 class F(val a: String)
+
+// TODO:
+// Muted on EE-IR Backend. There is some odd interaction between these test;
+// parceling every class, constructor and breakpoint out in individual tests
+// work completely as expected on all backends, and most subsets of this test
+// does as well. Timeouts? Some limit on breakpoints? It's not flaky on the old
+// backend, so perhaps some disparity due to the additional `<init>` steps on
+// IR that cause front- and back-end of the test framework to drift out of sync.

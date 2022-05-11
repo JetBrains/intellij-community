@@ -4,13 +4,15 @@ package org.jetbrains.uast.kotlin
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UUnknownExpression
 
 @ApiStatus.Internal
 class UnknownKotlinExpression(
-    override val sourcePsi: KtExpression,
-    givenParent: UElement?
-) : KotlinAbstractUExpression(givenParent), UExpression {
-    override fun asLogString() = "[!] UnknownKotlinExpression ($sourcePsi)"
+  override val sourcePsi: KtExpression,
+  givenParent: UElement?
+) : KotlinAbstractUExpression(givenParent), UUnknownExpression {
+  override val uAnnotations: List<UAnnotation>
+      get() = emptyList()
 }

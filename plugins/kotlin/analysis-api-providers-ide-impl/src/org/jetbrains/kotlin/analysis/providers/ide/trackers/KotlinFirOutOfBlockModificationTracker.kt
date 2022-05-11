@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.analysis.providers.ide.trackers
 
 import com.intellij.ProjectTopics
 import com.intellij.lang.ASTNode
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -70,7 +71,6 @@ internal class KotlinFirModificationTrackerService(project: Project) : Disposabl
         override fun modelChanged(event: PomModelEvent) {
             val changeSet = event.getChangeSet(treeAspect) as TreeChangeEvent? ?: return
             val psi = changeSet.rootElement.psi
-            if (psi.language != KotlinLanguage.INSTANCE) return
             val changedElements = changeSet.changedElements
 
             handleChangedElementsInAllModules(changedElements, changeSet, psi)
@@ -90,19 +90,20 @@ internal class KotlinFirModificationTrackerService(project: Project) : Disposabl
             if (changedElements.isEmpty()) {
                 incrementModificationCountForFileChange(changeSet)
             } else {
-                incrementModificationCountForSpecificElements(changedElements, changeSet)
+                incrementModificationCountForSpecificElements(changedElements, changeSet, changeSetRootElementPsi)
             }
         }
 
         private fun incrementModificationCountForSpecificElements(
             changedElements: Array<out ASTNode>,
-            changeSet: TreeChangeEvent
+            changeSet: TreeChangeEvent,
+            changeSetRootElementPsi: PsiElement
         ) {
             require(changedElements.isNotEmpty())
             var isOutOfBlockChangeInAnyModule = false
 
             changedElements.forEach { element ->
-                val isOutOfBlock = element.isOutOfBlockChange(changeSet)
+                val isOutOfBlock = element.isOutOfBlockChange(changeSet, changeSetRootElementPsi)
                 isOutOfBlockChangeInAnyModule = isOutOfBlockChangeInAnyModule || isOutOfBlock
                 if (isOutOfBlock) {
                     incrementModificationTrackerForContainingModule(element)
@@ -126,9 +127,21 @@ internal class KotlinFirModificationTrackerService(project: Project) : Disposabl
             }
         }
 
-        private fun ASTNode.isOutOfBlockChange(changeSet: TreeChangeEvent): Boolean {
-            val nodes = changeSet.getChangesByElement(this).affectedChildren
-            return nodes.any(::isOutOfBlockChange)
+        private fun ASTNode.isOutOfBlockChange(changeSet: TreeChangeEvent, changeSetRootElementPsi: PsiElement): Boolean {
+            return when (changeSetRootElementPsi.language) {
+                KotlinLanguage.INSTANCE -> {
+                    val nodes = changeSet.getChangesByElement(this).affectedChildren
+                     nodes.any(::isOutOfBlockChange)
+                }
+                JavaLanguage.INSTANCE -> {
+                    true // TODO improve for Java KTIJ-21684
+                }
+                else -> {
+                    // Any other language may cause OOBM in Kotlin too
+                    true
+                }
+            }
+
         }
 
         private fun isOutOfBlockChange(node: ASTNode): Boolean {

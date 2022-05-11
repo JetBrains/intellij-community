@@ -70,3 +70,8 @@ fun main(args: Array<String>) {
     //Breakpoint!
     myLocalFun8<Int>()
 }
+
+// Muted on IR evaluator: working as intended
+// The failing tests _pass_ on the IR backend as the compilations scheme for local functions support this pattern.
+// Local functions are lifted as static functions, captures closed over with parameters. There is thus no `FunctionN` instance
+// object that falls out of scope at run-time, which is what this test illustrates happening on the JVM backend.

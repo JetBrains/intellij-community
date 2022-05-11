@@ -84,7 +84,7 @@ class GroovyBuildScriptManipulator(
         if (useNewSyntax) {
             scriptFile
                 .getPluginsBlock()
-                .addLastExpressionInBlockIfNeeded("$kotlinPluginExpression version '$version'")
+                .addLastExpressionInBlockIfNeeded("$kotlinPluginExpression version '${version.artifactVersion}'")
             scriptFile.getRepositoriesBlock().apply {
                 val repository = getRepositoryForVersion(version)
                 val gradleFacade = KotlinGradleFacade.instance

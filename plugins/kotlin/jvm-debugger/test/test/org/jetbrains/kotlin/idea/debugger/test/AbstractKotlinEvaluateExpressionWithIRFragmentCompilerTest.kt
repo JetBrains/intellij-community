@@ -5,10 +5,8 @@
 
 package org.jetbrains.kotlin.idea.debugger.test
 
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompiler
-
 abstract class AbstractKotlinEvaluateExpressionWithIRFragmentCompilerTest : AbstractKotlinEvaluateExpressionTest() {
     override fun useIrBackend(): Boolean = false
     override fun fragmentCompilerBackend() =
-        CodeFragmentCompiler.Companion.FragmentCompilerBackend.JVM_IR
+        FragmentCompilerBackend.JVM_IR
 }

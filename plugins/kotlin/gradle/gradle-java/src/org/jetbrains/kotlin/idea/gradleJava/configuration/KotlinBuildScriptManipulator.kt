@@ -356,7 +356,7 @@ class KotlinBuildScriptManipulator(
     private fun KtFile.createPluginInPluginsGroupIfMissing(pluginName: String, version: IdeKotlinVersion): KtCallExpression? =
         getPluginsBlock()?.let {
             it.findPluginInPluginsGroup(pluginName)
-                ?: it.addExpressionIfMissing("$pluginName version \"${version.rawVersion}\"") as? KtCallExpression
+                ?: it.addExpressionIfMissing("$pluginName version \"${version.artifactVersion}\"") as? KtCallExpression
         }
 
     private fun KtFile.createApplyBlock(): KtBlockExpression? {

@@ -98,6 +98,28 @@ class IdeKotlinVersionTest {
     }
 
     @Test
+    fun testEapVersion() {
+        fun test(version: String, eapNumber: Int) = with (IdeKotlinVersion.get(version)) {
+            assertEquals(version, rawVersion)
+            assertEquals(KotlinVersion(1, 5, 30), kotlinVersion)
+            assertEquals(IdeKotlinVersion.Kind.Eap(eapNumber), kind)
+            assertEquals(LanguageVersion.KOTLIN_1_5, languageVersion)
+            assertEquals(ApiVersion.KOTLIN_1_5, apiVersion)
+            assertEquals("1.5.30", baseVersion)
+            assertEquals("1.5.30-eap${if (eapNumber == 1) "" else eapNumber.toString()}", artifactVersion)
+            assertFalse(isRelease)
+            assertTrue(isPreRelease)
+            assertFalse(isDev)
+            assertFalse(isSnapshot)
+        }
+
+        test("1.5.30-eap", eapNumber = 1)
+        test("1.5.30-eap2-release", eapNumber = 2)
+        test("1.5.30-eap2-release-123", eapNumber = 2)
+        test("1.5.30-eap15-release-123", eapNumber = 15)
+    }
+
+    @Test
     fun testBetaVersion() {
         fun test(version: String, beta: Int) = with (IdeKotlinVersion.get(version)) {
             assertEquals(version, rawVersion)
