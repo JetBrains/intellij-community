@@ -57,9 +57,9 @@ class ProjectInfo(
     val messageCollector = MessageCollector()
 
     private val moduleManager = ModuleManager.getInstance(project)
-    private val projectDataNode = ExternalSystemApiUtil.findProjectData(project, GRADLE_SYSTEM_ID, projectPath)
     private val expectedModuleNames = HashSet<String>()
     private var allModulesAsserter: (ModuleInfo.() -> Unit)? = null
+    private val moduleInfos = moduleManager.modules.associateWith { module -> ModuleInfo(module, this) }
 
     @Deprecated("Use .forEachModule instead. This method is error prone and has to be called before 'module(..)' in order to run")
     fun allModules(body: ModuleInfo.() -> Unit) {
@@ -67,9 +67,9 @@ class ProjectInfo(
         allModulesAsserter = body
     }
 
-    fun forEachModule(moduleInfo: ModuleInfo.() -> Unit) {
-        moduleManager.modules.forEach { module ->
-            ModuleInfo(module, this).run(moduleInfo)
+    fun forEachModule(body: ModuleInfo.() -> Unit) {
+        moduleInfos.values.forEach { moduleInfo ->
+            moduleInfo.run(body)
         }
     }
 
@@ -82,7 +82,7 @@ class ProjectInfo(
             return
         }
 
-        val moduleInfo = ModuleInfo(module, this)
+        val moduleInfo = moduleInfos.getValue(module)
         allModulesAsserter?.let { moduleInfo.it() }
         moduleInfo.run(body)
         expectedModuleNames += name
@@ -369,6 +369,7 @@ class ModuleInfo(val module: Module, val projectInfo: ProjectInfo) {
         assertions += {
             val expectedModuleDependencies = expectedDependencies.filterIsInstance<ModuleOrderEntry>()
                 .map { it.debugText }.sorted().distinct()
+
             val actualModuleDependencies = rootModel.orderEntries.filterIsInstance<ModuleOrderEntry>()
                 .map { it.debugText }.sorted().distinct()
                 // increasing readability of log outputs
@@ -446,6 +447,7 @@ class ModuleInfo(val module: Module, val projectInfo: ProjectInfo) {
     fun run(body: ModuleInfo.() -> Unit = {}) {
         body()
         assertions.forEach { it.invoke(this) }
+        assertions.clear()
         if (mustHaveSdk && rootModel.sdk == null) {
             report("No SDK defined")
         }
