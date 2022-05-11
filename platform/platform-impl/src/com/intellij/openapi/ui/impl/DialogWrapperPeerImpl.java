@@ -191,6 +191,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   public boolean isHeadless() {
     return myDialog instanceof HeadlessDialog;
   }
+  public void setOnDeactivationAction(@NotNull Disposable disposable, @NotNull Runnable onDialogDeactivated) {
+    WindowDeactivationManager.getInstance().addWindowDeactivationListener(getWindow(), myProject, disposable, onDialogDeactivated);
+  }
 
   @Override
   public Object[] getCurrentModalEntities() {
