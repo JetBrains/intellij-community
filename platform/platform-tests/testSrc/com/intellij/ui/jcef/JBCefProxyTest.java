@@ -6,10 +6,7 @@ import com.intellij.ui.scale.TestScaleHelper;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.*;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -32,8 +29,8 @@ public class JBCefProxyTest {
 
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
-  @BeforeClass
-  public static void before() {
+  @Before
+  public void before() {
     TestScaleHelper.assumeStandalone();
 
     var proxySettings = System.getProperty("idea.test.proxy.settings");
@@ -46,8 +43,8 @@ public class JBCefProxyTest {
     JBCefProxySettings.setTestInstance(true, false, false, null, matcher.group(3), proxyPort, true, matcher.group(1), matcher.group(2));
   }
 
-  @AfterClass
-  public static void after() {
+  @After
+  public void after() {
     TestScaleHelper.restoreSystemProperties();
   }
 
