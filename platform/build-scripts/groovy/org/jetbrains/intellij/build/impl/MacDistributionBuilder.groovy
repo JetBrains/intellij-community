@@ -21,7 +21,6 @@ import java.nio.file.Path
 import java.time.LocalDate
 import java.util.concurrent.ForkJoinTask
 import java.util.function.BiConsumer
-import java.util.function.Supplier
 import java.util.zip.Deflater
 
 import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
@@ -190,15 +189,9 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
                                                         Boolean notarize,
                                                         MacDistributionCustomizer customizer,
                                                         BuildContext context) {
-    return TraceKt.createTask(spanBuilder("build macOS artifacts for specific arch")
-                                                         .setAttribute("arch", arch.name()), new Supplier<Void>() {
-      @Override
-      Void get() {
-        ForkJoinTask.invokeAll(buildForArch(arch, context.bundledRuntime, macZip, notarize, customizer, context)
-                                 .findAll { it != null })
-
-        return null
-      }
+    return TraceKt.createTask(spanBuilder("build macOS artifacts for specific arch").setAttribute("arch", arch.name()), {
+      ForkJoinTask.invokeAll(buildForArch(arch, context.bundledRuntime, macZip, notarize, customizer, context)
+                               .findAll { it != null })
     })
   }
 

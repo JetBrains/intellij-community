@@ -98,7 +98,7 @@ class JarPackager private constructor(private val context: BuildContext) {
     fun pack(actualModuleJars: Map<String, List<String>>, outputDir: Path, context: BuildContext) {
       pack(actualModuleJars = actualModuleJars,
            outputDir = outputDir,
-           layout = object : BaseLayout() {},
+           layout = BaseLayout(),
            moduleOutputPatcher = ModuleOutputPatcher(),
            dryRun = false,
            context = context)

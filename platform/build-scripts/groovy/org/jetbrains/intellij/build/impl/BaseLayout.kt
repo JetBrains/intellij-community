@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Describes layout of a plugin or the platform JARs in the product distribution
  */
-abstract class BaseLayout {
+open class BaseLayout {
   companion object {
     const val APP_JAR = "app.jar"
 
@@ -60,8 +60,7 @@ abstract class BaseLayout {
       // allow to put module to several JARs if JAR located in another dir
       // (e.g. intellij.spring.customNs packed into main JAR and customNs/customNs.jar)
       if (!previousJarPath.contains("/") && !relativeJarPath.contains("/")) {
-        error(
-          "$moduleName cannot be packed into $relativeJarPath because it is already configured to be packed into $previousJarPath")
+        error("$moduleName cannot be packed into $relativeJarPath because it is already configured to be packed into $previousJarPath")
       }
     }
   }

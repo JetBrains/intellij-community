@@ -9,7 +9,10 @@ import groovy.lang.Reference
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import org.codehaus.groovy.runtime.DefaultGroovyMethods
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
 import org.jetbrains.intellij.build.impl.BaseLayout.Companion.convertModuleNameToFileName
@@ -69,21 +72,6 @@ class DistributionJARsBuilder {
   }
 
   companion object {
-    fun collectProjectLibrariesWhichShouldBeProvidedByPlatform(plugin: BaseLayout,
-                                                               result: MultiMap<JpsLibrary?, JpsModule?>,
-                                                               context: BuildContext) {
-      val libsToUnpack = plugin.projectLibrariesToUnpack.values()
-      for (moduleName in plugin.getIncludedModuleNames()) {
-        val module = context.findRequiredModule((moduleName))
-        val dependencies = JpsJavaExtensionService.dependencies(module)
-        for (library in dependencies.includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
-          if (isProjectLibraryUsedByPlugin(library, plugin, libsToUnpack)) {
-            result.putValue(library, module)
-          }
-        }
-      }
-    }
-
     private fun scramble(context: BuildContext) {
       pack(actualModuleJars = mapOf("internalUtilities.jar" to listOf("intellij.tools.internalUtilities")),
            outputDir = context.paths.buildOutputDir.resolve("internal"),
@@ -954,3 +942,81 @@ private const val PLUGINS_DIRECTORY = "plugins"
 private val PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE: Comparator<PluginLayout> = compareBy { it.mainModule }
 
 internal class PluginRepositorySpec(@JvmField val pluginZip: Path, @JvmField val pluginXml: ByteArray /* content of plugin.xml */)
+
+fun getPluginsByModules(modules: Collection<String>, context: BuildContext): Set<PluginLayout> {
+  if (modules.isEmpty()) {
+    return emptySet()
+  }
+
+  val allNonTrivialPlugins = context.productProperties.productLayout.allNonTrivialPlugins
+  val nonTrivialPlugins = allNonTrivialPlugins.groupBy { it.mainModule }
+  val result = ObjectLinkedOpenCustomHashSet<PluginLayout>(modules.size, object : Hash.Strategy<PluginLayout?> {
+    override fun hashCode(layout: PluginLayout?): Int {
+      if (layout == null) {
+        return 0
+      }
+
+      var result = layout.mainModule.hashCode()
+      result = 31 * result + layout.bundlingRestrictions.hashCode()
+      return result
+    }
+
+    override fun equals(a: PluginLayout?, b: PluginLayout?): Boolean {
+      if (a == b) {
+        return true
+      }
+      if (a == null || b == null) {
+        return false
+      }
+      return a.mainModule == b.mainModule && a.bundlingRestrictions == b.bundlingRestrictions
+    }
+  })
+
+  for (moduleName in modules) {
+    var customLayouts = nonTrivialPlugins.get(moduleName)
+    if (customLayouts == null) {
+      val alternativeModuleName = context.findModule(moduleName)?.name
+      if (alternativeModuleName != moduleName) {
+        customLayouts = nonTrivialPlugins.get(alternativeModuleName)
+      }
+    }
+
+    if (customLayouts == null) {
+      if (moduleName != "kotlin-ultimate.kmm-plugin" && !result.add(PluginLayout.simplePlugin(moduleName))) {
+        throw IllegalStateException("Plugin layout for module $moduleName is already added (duplicated module name?)")
+      }
+    }
+    else {
+      for (layout in customLayouts) {
+        if (layout.mainModule != "kotlin-ultimate.kmm-plugin" && !result.add(layout)) {
+          throw IllegalStateException("Plugin layout for module $moduleName is already added (duplicated module name?)")
+        }
+      }
+    }
+  }
+  return result
+}
+
+@TestOnly
+fun collectProjectLibrariesWhichShouldBeProvidedByPlatform(plugin: BaseLayout,
+                                                           result: MultiMap<JpsLibrary, JpsModule>,
+                                                           context: BuildContext) {
+  val libsToUnpack = plugin.projectLibrariesToUnpack.values()
+  for (moduleName in plugin.getIncludedModuleNames()) {
+    val module = context.findRequiredModule((moduleName))
+    val dependencies = JpsJavaExtensionService.dependencies(module)
+    for (library in dependencies.includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
+      if (isProjectLibraryUsedByPlugin(library, plugin, libsToUnpack)) {
+        result.putValue(library, module)
+      }
+    }
+  }
+}
+
+internal fun getThirdPartyLibrariesHtmlFilePath(context: BuildContext): Path {
+  return context.paths.distAllDir.resolve("license/third-party-libraries.html")
+}
+
+internal fun getThirdPartyLibrariesJsonFilePath(context: BuildContext): Path {
+  return context.paths.tempDir.resolve("third-party-libraries.json")
+}

@@ -24,9 +24,6 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.getLibraryName
 import org.jetbrains.intellij.build.impl.TracerManager.finish
 import org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
-import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.LibraryFileEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 import org.jetbrains.intellij.build.tasks.*
 import org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder.getLocalArtifactRepositoryRoot
@@ -657,7 +654,7 @@ private fun findBrandingResource(relativePath: String, context: BuildContext): P
                          "nor in ${context.productProperties.brandingResourcePaths}")
 }
 
-private fun updateExecutablePermissions(destinationDir: Path, executableFilesPatterns: List<String>) {
+internal fun updateExecutablePermissions(destinationDir: Path, executableFilesPatterns: List<String>) {
   val executable = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
                                                         PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_READ,
                                                         PosixFilePermission.GROUP_EXECUTE, PosixFilePermission.OTHERS_READ,
@@ -731,16 +728,13 @@ private fun createDistributionForOsTask(os: OsFamily,
 }
 
 private fun createDistributionForOsTask(os: OsFamily, arch: JvmArchitecture, buildAction: Consumer<BuildContext>): BuildTaskRunnable {
-  return BuildTaskRunnable.task("${os.osId} ${arch.name}", Consumer { context ->
-    if (!context.shouldBuildDistributionForOS(os.osId)) {
-      return@Consumer
+  return BuildTaskRunnable("${os.osId} ${arch.name}") { context ->
+    if (context.shouldBuildDistributionForOS(os.osId)) {
+      spanBuilder("build ${os.osName} ${arch.name} distribution").startSpan().useWithScope {
+        buildAction.accept(context)
+      }
     }
-
-    context.messages.block(spanBuilder("build ${os.osName} ${arch.name} distribution"), Supplier<Void> {
-      buildAction.accept(context)
-      null
-    })
-  })
+  }
 }
 
 private fun find(directory: Path, suffix: String, context: BuildContext): Path {
@@ -778,7 +772,7 @@ private fun runInParallel(tasks: List<BuildTaskRunnable>, context: BuildContext)
 
   if (!context.options.runBuildStepsInParallel) {
     for (task in tasks) {
-      task.task.accept(context)
+      task.task(context)
     }
     return
   }
@@ -843,7 +837,7 @@ private fun createTaskWrapper(task: BuildTaskRunnable,
           null
         }
         else {
-          task.task.accept(buildContext)
+          task.task(buildContext)
         }
       }
     }
@@ -867,7 +861,7 @@ private fun checkProjectLibraries(names: Collection<String>, fieldName: String, 
   }
 }
 
-internal fun buildSourcesArchive(projectStructureMapping: ProjectStructureMapping, context: BuildContext) {
+private fun buildSourcesArchive(projectStructureMapping: ProjectStructureMapping, context: BuildContext) {
   val productProperties = context.productProperties
   val archiveName = "${productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)}-sources.zip"
   val modulesFromCommunity = projectStructureMapping.includedModules.filter { moduleName ->
@@ -986,14 +980,6 @@ private fun buildAdditionalArtifacts(projectStructureMapping: ProjectStructureMa
   }
 }
 
-internal fun getThirdPartyLibrariesHtmlFilePath(context: BuildContext): Path {
-  return context.paths.distAllDir.resolve("license/third-party-libraries.html")
-}
-
-internal fun getThirdPartyLibrariesJsonFilePath(context: BuildContext): Path {
-  return context.paths.tempDir.resolve("third-party-libraries.json")
-}
-
 private fun compilePlatformAndPluginModules(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
   val distState = DistributionBuilderState(pluginsToPublish, context)
   val compilationTasks = CompilationTasks.create(context)
@@ -1029,7 +1015,7 @@ private fun compileModulesForDistribution(pluginsToPublish: Set<PluginLayout>, c
     buildProvidedModuleList(targetFile = providedModulesFile, state = state, context = context)
     if (productProperties.productLayout.buildAllCompatiblePlugins) {
       if (context.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-        context.messages.info("Skipping collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")
+        Span.current().addEvent("skip collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")
       }
       else {
         return compilePlatformAndPluginModules(
@@ -1045,74 +1031,7 @@ private fun compileModulesForDistribution(pluginsToPublish: Set<PluginLayout>, c
   return compilePlatformAndPluginModules(pluginsToPublish, context)
 }
 
-///**
-// * Build index which is used to search options in the Settings dialog.
-// */
-//@JvmOverloads
-//fun buildSearchableOptions(buildContext: BuildContext,
-//                           classpathCustomizer: UnaryOperator<Set<String>>? = null,
-//                           systemProperties: Map<String, Any> = emptyMap()): Path? {
-//  val span = Span.current()
-//  if (buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
-//    span.addEvent("skip building searchable options index")
-//    return null
-//  }
-//
-//  val ideClasspath = createIdeClassPath(buildContext)
-//  val targetDirectory = JarPackager.getSearchableOptionsDir(buildContext)
-//  val messages = buildContext.messages
-//  NioFiles.deleteRecursively(targetDirectory)
-//  // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
-//  // It'll process all UI elements in Settings dialog and build index for them.
-//  //noinspection SpellCheckingInspection
-//  BuildHelper.runApplicationStarter(buildContext,
-//                                    buildContext.paths.tempDir.resolve("searchableOptions"),
-//                                    ideClasspath, listOf("traverseUI", targetDirectory.toString(), "true"),
-//                                    systemProperties,
-//                                    emptyList(),
-//                                    TimeUnit.MINUTES.toMillis(10L), classpathCustomizer)
-//
-//  if (!Files.isDirectory(targetDirectory)) {
-//    messages.error("Failed to build searchable options index: $targetDirectory does not exist. See log above for error output from traverseUI run.")
-//  }
-//
-//  val modules = Files.newDirectoryStream(targetDirectory).use { it.toList() }
-//  if (modules.isEmpty()) {
-//    messages.error("Failed to build searchable options index: $targetDirectory is empty. See log above for error output from traverseUI run.")
-//  }
-//  else {
-//    span.setAttribute(AttributeKey.longKey("moduleCountWithSearchableOptions"), modules.size)
-//    span.setAttribute(AttributeKey.stringArrayKey("modulesWithSearchableOptions"),
-//                      modules.map { targetDirectory.relativize(it).toString() })
-//  }
-//  return targetDirectory
-//}
-
-//fun createIdeClassPath(context: BuildContext): LinkedHashSet<String> {
-//  // for some reasons maybe duplicated paths - use set
-//  val classPath = LinkedHashSet<String>()
-//  Files.createDirectories(context.paths.tempDir)
-//  val pluginLayoutRoot = Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
-//  val nonPluginsEntries = ArrayList<DistributionFileEntry>()
-//  val pluginsEntries = ArrayList<DistributionFileEntry>()
-//  for(e in generateProjectStructureMapping(context, pluginLayoutRoot)) {
-//    if (e.getPath().startsWith(pluginLayoutRoot)) {
-//      val relPath = pluginLayoutRoot.relativize(e.path)
-//      // For plugins our classloader load jars only from lib folder
-//      if (relPath.parent?.parent == null && relPath.parent?.toString() == "lib") {
-//        pluginsEntries.add(e)
-//      }
-//    } else {
-//      nonPluginsEntries.add(e)
-//    }
-//  }
-//
-//  for (entry in nonPluginsEntries + pluginsEntries) {
-//    when (entry) {
-//      is ModuleOutputEntry -> classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)).toString())
-//      is LibraryFileEntry -> classPath.add(entry.libraryFile.toString())
-//      else -> throw UnsupportedOperationException("Entry $entry is not supported")
-//    }
-//  }
-//  return classPath
-//}
+internal class BuildTaskRunnable(
+  @JvmField val stepId: String,
+  @JvmField val task: (BuildContext) -> Unit,
+)

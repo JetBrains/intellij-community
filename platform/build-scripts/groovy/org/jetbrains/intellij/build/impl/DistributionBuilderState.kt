@@ -3,8 +3,6 @@
 
 package org.jetbrains.intellij.build.impl
 
-import it.unimi.dsi.fastutil.Hash
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductProperties
@@ -117,60 +115,6 @@ private fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, c
           .computeIfAbsent(plugin.directoryName) { ArrayList<String>() }
           .add(moduleName)
       })
-    }
-  }
-  return result
-}
-
-fun getPluginsByModules(modules: Collection<String>, context: BuildContext): Set<PluginLayout> {
-  if (modules.isEmpty()) {
-    return emptySet()
-  }
-
-  val allNonTrivialPlugins = context.productProperties.productLayout.allNonTrivialPlugins
-  val nonTrivialPlugins = allNonTrivialPlugins.groupBy { it.mainModule }
-  val result = ObjectLinkedOpenCustomHashSet<PluginLayout>(modules.size, object : Hash.Strategy<PluginLayout?> {
-    override fun hashCode(layout: PluginLayout?): Int {
-      if (layout == null) {
-        return 0
-      }
-
-      var result = layout.mainModule.hashCode()
-      result = 31 * result + layout.bundlingRestrictions.hashCode()
-      return result
-    }
-
-    override fun equals(a: PluginLayout?, b: PluginLayout?): Boolean {
-      if (a == b) {
-        return true
-      }
-      if (a == null || b == null) {
-        return false
-      }
-      return a.mainModule == b.mainModule && a.bundlingRestrictions == b.bundlingRestrictions
-    }
-  })
-
-  for (moduleName in modules) {
-    var customLayouts = nonTrivialPlugins.get(moduleName)
-    if (customLayouts == null) {
-      val alternativeModuleName = context.findModule(moduleName)?.name
-      if (alternativeModuleName != moduleName) {
-        customLayouts = nonTrivialPlugins.get(alternativeModuleName)
-      }
-    }
-
-    if (customLayouts == null) {
-      if (moduleName != "kotlin-ultimate.kmm-plugin" && !result.add(PluginLayout.simplePlugin(moduleName))) {
-        throw IllegalStateException("Plugin layout for module $moduleName is already added (duplicated module name?)")
-      }
-    }
-    else {
-      for (layout in customLayouts) {
-        if (layout.mainModule != "kotlin-ultimate.kmm-plugin" && !result.add(layout)) {
-          throw IllegalStateException("Plugin layout for module $moduleName is already added (duplicated module name?)")
-        }
-      }
     }
   }
   return result

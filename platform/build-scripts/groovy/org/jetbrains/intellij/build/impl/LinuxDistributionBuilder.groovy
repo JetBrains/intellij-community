@@ -52,7 +52,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         Path distBinDir = unixDistPath.resolve("bin")
 
         BuildHelper.copyDir(buildContext.paths.communityHomeDir.resolve("bin/linux"), distBinDir)
-        BuildTasksImpl.unpackPty4jNative(buildContext, unixDistPath, "linux")
+        BuildTasksImplKt.unpackPty4jNative(buildContext, unixDistPath, "linux")
         BuildTasksImplKt.generateBuildTxt(buildContext, unixDistPath)
         BuildTasksImplKt.copyDistFiles(buildContext, unixDistPath)
         List<String> extraJarNames = BuildTasksImplKt.addDbusJava(buildContext, unixDistPath.resolve("lib"))
@@ -207,7 +207,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.messages.block("Build Linux tar.gz $description") {
       buildContext.messages.progress("Building Linux tar.gz $description")
       paths.each {
-        BuildTasksImpl.updateExecutablePermissions(Paths.get(it), executableFilesPatterns)
+        BuildTasksImplKt.updateExecutablePermissions(Path.of(it), executableFilesPatterns)
       }
       ArchiveUtils.tar(tarPath, tarRoot, paths, buildContext.options.buildDateInSeconds)
       ProductInfoValidator.checkInArchive(buildContext, tarPath, tarRoot)

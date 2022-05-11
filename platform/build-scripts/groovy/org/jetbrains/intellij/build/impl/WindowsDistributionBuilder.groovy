@@ -32,7 +32,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.ForkJoinTask
-import java.util.function.Supplier
 
 @CompileStatic
 final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
@@ -360,20 +359,17 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     String baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
     Path targetFile = context.paths.artifactDir.resolve("${baseName}${zipNameSuffix}.zip")
     return TraceKt.createTask(TracerManager.spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
-                                                         .setAttribute("targetFile", targetFile.toString()), new Supplier<Path>() {
-      @Override
-      Path get() {
-        Path productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip$zipNameSuffix")
-        generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty(), context)
+                                .setAttribute("targetFile", targetFile.toString())) {
+      Path productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip$zipNameSuffix")
+      generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty(), context)
 
-        String zipPrefix = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
-        List<Path> dirs = [context.paths.distAllDir, winDistPath, productJsonDir] + jreDirectoryPaths
-        BuildHelper.zipWithPrefix(context, targetFile, dirs, zipPrefix, true)
-        ProductInfoValidator.checkInArchive(context, targetFile, zipPrefix)
-        context.notifyArtifactWasBuilt(targetFile)
-        return targetFile
-      }
-    })
+      String zipPrefix = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
+      List<Path> dirs = [context.paths.distAllDir, winDistPath, productJsonDir] + jreDirectoryPaths
+      BuildHelper.zipWithPrefix(context, targetFile, dirs, zipPrefix, true)
+      ProductInfoValidator.checkInArchive(context, targetFile, zipPrefix)
+      context.notifyArtifactWasBuilt(targetFile)
+      return targetFile
+    }
   }
 
   private static void generateProductJson(@NotNull Path targetDir, boolean isJreIncluded, BuildContext context) {

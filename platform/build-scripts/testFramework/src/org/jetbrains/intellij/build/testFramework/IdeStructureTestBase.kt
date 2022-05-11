@@ -40,7 +40,7 @@ abstract class IdeStructureTestBase {
     val jarBuilder = DistributionJARsBuilder(buildContext, emptySet())
 
     println("Packed modules:")
-    val moduleJars = jarBuilder.platform.moduleJars
+    val moduleJars = jarBuilder.state.platform.moduleJars
     val module2Jar = moduleJars.entrySet().flatMap { it.value.map { e -> e to it.key } }.toMap()
     for (kv in module2Jar.entries.sortedBy { it.key }) {
       println("  ${kv.key} ${kv.value}")
@@ -60,7 +60,7 @@ abstract class IdeStructureTestBase {
     val exceptions = missingModulesException
     val activeExceptions = mutableSetOf<String>()
 
-    val module2Jar = jarBuilder.platform.getJarToIncludedModuleNames().flatMap { it.value.map { e -> e to it.key } }.toMap()
+    val module2Jar = jarBuilder.state.platform.getJarToIncludedModuleNames().flatMap { it.value.map { e -> e to it.key } }.toMap()
     for (kv in module2Jar.entries.sortedBy { it.key }) {
       val module = buildContext.findRequiredModule(kv.key)
       for (dependency in module.dependenciesList.dependencies) {
