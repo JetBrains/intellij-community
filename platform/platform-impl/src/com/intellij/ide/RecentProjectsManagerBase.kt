@@ -604,9 +604,12 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
-  override fun moveProjectToGroup(projectPath: String, from: ProjectGroup, to: ProjectGroup) {
-    from.removeProject(projectPath)
+  override fun moveProjectToGroup(projectPath: String, to: ProjectGroup) {
+    for (group in groups) {
+      group.removeProject(projectPath)
+    }
     to.addProject(projectPath)
+    to.isExpanded = true // Save state for UI
     fireChangeEvent()
   }
 

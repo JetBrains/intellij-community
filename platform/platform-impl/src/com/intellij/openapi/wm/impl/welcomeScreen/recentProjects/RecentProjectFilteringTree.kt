@@ -44,8 +44,12 @@ import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeCellRenderer
+import javax.swing.tree.TreePath
 
-class RecentProjectFilteringTree(treeComponent: Tree, parentDisposable: Disposable) : FilteringTree<DefaultMutableTreeNode, RecentProjectTreeItem>(
+class RecentProjectFilteringTree(
+  treeComponent: Tree,
+  parentDisposable: Disposable
+) : FilteringTree<DefaultMutableTreeNode, RecentProjectTreeItem>(
   ProjectManager.getInstance().defaultProject,
   treeComponent,
   DefaultMutableTreeNode(RootItem)
@@ -77,6 +81,11 @@ class RecentProjectFilteringTree(treeComponent: Tree, parentDisposable: Disposab
     }
   }
 
+  fun updateTree() {
+    searchModel.updateStructure()
+    expandGroups()
+  }
+
   override fun getNodeClass() = DefaultMutableTreeNode::class.java
 
   override fun getText(item: RecentProjectTreeItem?): String = item?.displayName().orEmpty()
@@ -84,6 +93,10 @@ class RecentProjectFilteringTree(treeComponent: Tree, parentDisposable: Disposab
   override fun getChildren(item: RecentProjectTreeItem): Iterable<RecentProjectTreeItem> = item.children()
 
   override fun createNode(item: RecentProjectTreeItem): DefaultMutableTreeNode = DefaultMutableTreeNode(item)
+
+  override fun rebuildTree() {
+    expandGroups()
+  }
 
   override fun createSpeedSearch(searchTextField: SearchTextField): SpeedSearchSupply = object : FilteringSpeedSearch(searchTextField) {}
 
@@ -126,6 +139,20 @@ class RecentProjectFilteringTree(treeComponent: Tree, parentDisposable: Disposab
     return RecentProjectPanel.FilePathChecker(treeUpdater, recentProjects.map { it.projectPath })
   }
 
+  private fun expandGroups() {
+    for (child in root.children()) {
+      val treeNode = child as DefaultMutableTreeNode
+      val item = treeNode.userObject
+      if (item is ProjectsGroupItem) {
+        val treePath = TreePath(child.path)
+        if (item.group.isExpanded)
+          tree.expandPath(treePath)
+        else
+          tree.collapsePath(treePath)
+      }
+    }
+  }
+
   private class ProjectActionMouseListener(private val tree: Tree) : PopupHandler() {
     override fun mouseReleased(mouseEvent: MouseEvent) {
       super.mouseReleased(mouseEvent)
@@ -160,7 +187,16 @@ class RecentProjectFilteringTree(treeComponent: Tree, parentDisposable: Disposab
         val treeNode = treePath.lastPathComponent as DefaultMutableTreeNode
         when (val project = treeNode.userObject) {
           is RootItem -> {} // Specific for RootItem (not visible in tree)
-          is ProjectsGroupItem -> if (tree.isExpanded(treePath)) tree.collapsePath(treePath) else tree.expandPath(treePath)
+          is ProjectsGroupItem -> {
+            if (tree.isExpanded(treePath)) {
+              tree.collapsePath(treePath)
+              project.group.isExpanded = false
+            }
+            else {
+              tree.expandPath(treePath)
+              project.group.isExpanded = true
+            }
+          }
           is RecentProjectItem -> project.openProject(createActionEvent(tree))
         }
       }
