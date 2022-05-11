@@ -48,7 +48,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   public static final boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));
 
-  private static CheckCanceledHook ourCheckCanceledHook;
   private ScheduledFuture<?> myCheckCancelledFuture; // guarded by threadsUnderIndicator
 
   // indicator -> threads which are running under this indicator.
@@ -798,7 +797,9 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           prioritizingStarted = false;
         }
         myPrioritizedThreads.add(thread);
-        updateEffectivePrioritized(prioritizingStarted, false);
+        if (prioritizingStarted) {
+          prioritizingStarted();
+        }
       }
     }
     try {
@@ -808,18 +809,11 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       if (prioritize) {
         synchronized (myPrioritizationLock) {
           myPrioritizedThreads.remove(thread);
-          updateEffectivePrioritized(false, myPrioritizedThreads.isEmpty());
+          if (myPrioritizedThreads.isEmpty()) {
+            prioritizingFinished();
+          }
         }
       }
-    }
-  }
-
-  private void updateEffectivePrioritized(boolean prioritizingStarted, boolean prioritizingFinished) {
-    if (prioritizingStarted) {
-      prioritizingStarted();
-    }
-    else if (prioritizingFinished) {
-      prioritizingFinished();
     }
   }
 
@@ -841,7 +835,9 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         attachment.setIncluded(true);
         LOG.error("A suspiciously high nesting of suppressPrioritizing, forgot to call restorePrioritizing?", attachment);
       }
-      updateEffectivePrioritized(false, prios == 1);
+      if (prios == 1) {
+        prioritizingFinished();
+      }
     }
   }
 
@@ -853,7 +849,9 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         myDeprioritizations = 0;
         LOG.error("Unmatched suppressPrioritizing/restorePrioritizing");
       }
-      updateEffectivePrioritized(prios <= 0, false);
+      if (prios <= 0) {
+        prioritizingStarted();
+      }
     }
   }
 
@@ -926,7 +924,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private void stopAllPrioritization() {
     synchronized (myPrioritizationLock) {
       myPrioritizedThreads.clear();
-      updateEffectivePrioritized(false, true);
+      prioritizingFinished();
     }
   }
 
