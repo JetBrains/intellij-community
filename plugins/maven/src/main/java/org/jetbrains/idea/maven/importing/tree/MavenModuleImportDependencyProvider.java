@@ -14,7 +14,7 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.project.SupportedRequestType;
 
 import java.util.ArrayList;
@@ -23,8 +23,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.jetbrains.idea.maven.importing.MavenModuleImporter.*;
-import static org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider.MavenProjectImportData;
-import static org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider.SplittedMainAndTestModules;
 
 public class MavenModuleImportDependencyProvider {
   public static final int INITIAL_CAPACITY_TEST_DEPENDENCY_LIST = 4;
@@ -32,18 +30,21 @@ public class MavenModuleImportDependencyProvider {
   @NotNull private final Project project;
   @NotNull private final Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId;
   @NotNull private final Set<String> dependencyTypesFromSettings;
+  @NotNull private final MavenProjectsTree myProjectTree;
 
   public MavenModuleImportDependencyProvider(@NotNull Project project,
                                              @NotNull Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId,
-                                             @NotNull MavenImportingSettings importingSettings) {
+                                             @NotNull MavenImportingSettings importingSettings,
+                                             @NotNull MavenProjectsTree projectTree) {
     this.project = project;
     this.moduleImportDataByMavenId = moduleImportDataByMavenId;
     this.dependencyTypesFromSettings = importingSettings.getDependencyTypesAsSet();
+    myProjectTree = projectTree;
   }
 
   @NotNull
   public MavenModuleImportDataWithDependencies getDependencies(MavenProjectImportData importData) {
-    MavenProject mavenProject = importData.mavenProject;
+    MavenProject mavenProject = importData.getMavenProject();
     List<MavenImportDependency<?>> mainDependencies = new ArrayList<>(mavenProject.getDependencies().size());
     List<MavenImportDependency<?>> testDependencies = new ArrayList<>(INITIAL_CAPACITY_TEST_DEPENDENCY_LIST);
 
@@ -64,10 +65,10 @@ public class MavenModuleImportDependencyProvider {
   private static void addMainDependencyToTestModule(MavenProjectImportData importData,
                                                     MavenProject mavenProject,
                                                     List<MavenImportDependency<?>> testDependencies) {
-    if (importData.splittedMainAndTestModules != null) {
+    if (importData.getSplittedMainAndTestModules() != null) {
       testDependencies.add(
         new ModuleDependency(null, mavenProject,
-                             importData.splittedMainAndTestModules.mainData.getModuleName(),
+                             importData.getSplittedMainAndTestModules().getMainData().getModuleName(),
                              DependencyScope.COMPILE, false)
       );
     }
@@ -84,15 +85,14 @@ public class MavenModuleImportDependencyProvider {
 
     DependencyScope scope = selectScope(artifact.getScope());
 
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    MavenProject depProject = projectsManager.findProject(artifact.getMavenId());
+    MavenProject depProject = myProjectTree.findProject(artifact.getMavenId());
 
     if (depProject != null) {
       if (depProject == mavenProject) return null;
 
       MavenProjectImportData mavenProjectImportData = moduleImportDataByMavenId.get(depProject.getMavenId());
 
-      if (mavenProjectImportData == null || projectsManager.isIgnored(depProject)) {
+      if (mavenProjectImportData == null || myProjectTree.isIgnored(depProject)) {
         return new BaseDependency(createCopyForLocalRepo(artifact, mavenProject), scope);
       }
       else {
@@ -135,7 +135,7 @@ public class MavenModuleImportDependencyProvider {
   }
 
   private static String getModuleName(MavenProjectImportData data) {
-    SplittedMainAndTestModules modules = data.splittedMainAndTestModules;
-    return modules == null ? data.moduleData.getModuleName() : modules.mainData.getModuleName();
+    SplittedMainAndTestModules modules = data.getSplittedMainAndTestModules();
+    return modules == null ? data.getModuleData().getModuleName() : modules.getMainData().getModuleName();
   }
 }

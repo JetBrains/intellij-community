@@ -16,9 +16,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.*
-import org.jetbrains.idea.maven.importing.tree.MavenModuleType
-import org.jetbrains.idea.maven.importing.tree.MavenProjectTreeImporter
-import org.jetbrains.idea.maven.importing.tree.ModuleData
+import org.jetbrains.idea.maven.importing.tree.*
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.*
@@ -31,7 +29,7 @@ class MavenProjectTreeImporterToWorkspaceModel(
   private val project: Project
 ) : MavenProjectImporterBase(mavenProjectsTree, mavenImportingSettings, projectsToImportWithChanges) {
 
-  private val modelsProvider = MavenProjectTreeImporter.getModelProvider(ideModelsProvider, project)
+  private val modelsProvider = MavenProjectTreeLegacyImporter.getModelProvider(ideModelsProvider, project)
   private val createdModulesList = ArrayList<Module>()
   private val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private val contextProvider = MavenProjectImportContextProvider(project, mavenProjectsTree,
@@ -128,7 +126,7 @@ class MavenProjectTreeImporterToWorkspaceModel(
 
     val rootModelAdapter = MavenRootModelAdapter(MavenRootModelAdapterLegacyImpl(mavenProject, importData.module, modelsProvider))
     val mapToOldImportModel = mapToOldImportModel(importData)
-    MavenProjectTreeImporter.configModule(mapToOldImportModel, mavenModuleImporter, rootModelAdapter)
+    MavenProjectTreeLegacyImporter.configModule(mapToOldImportModel, mavenModuleImporter, rootModelAdapter)
 
     mavenModuleImporter.setModifiableModelsProvider(modifiableModelsProvider);
 
@@ -139,9 +137,9 @@ class MavenProjectTreeImporterToWorkspaceModel(
 
   private fun mapToOldImportModel(importData: ModuleImportData): org.jetbrains.idea.maven.importing.tree.MavenModuleImportData {
     val mavenModuleImportData = importData.mavenModuleImportData
-    return org.jetbrains.idea.maven.importing.tree.MavenModuleImportData(
+    return MavenModuleImportData(
       mavenModuleImportData.mavenProject,
-      ModuleData(importData.module, mavenModuleImportData.moduleData.type, mavenModuleImportData.moduleData.javaVersionHolder, true),
+      LegacyModuleData(importData.module, mavenModuleImportData.moduleData.type, mavenModuleImportData.moduleData.javaVersionHolder, true),
       mavenModuleImportData.dependencies,
       mavenModuleImportData.changes
     )
@@ -157,7 +155,7 @@ class MavenProjectTreeImporterToWorkspaceModel(
   }
 }
 
-class ModuleImportData(
+private class ModuleImportData(
   val module: Module,
   val mavenModuleImportData: MavenModuleImportData
 )
