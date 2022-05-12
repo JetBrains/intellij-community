@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.Tested
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_4_32
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_32
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_6_21
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_7_0_Beta
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Assume.assumeTrue
@@ -97,7 +96,6 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
                 arrayOf("6.8.3", V_1_4_32.toString()),
                 arrayOf("6.9.2", V_1_5_32.toString()),
                 arrayOf("7.3.3", V_1_6_21.toString()),
-                arrayOf("7.4.2", V_1_7_0_Beta.toString()),
                 arrayOf("7.4.2", "master")
             )
         }
