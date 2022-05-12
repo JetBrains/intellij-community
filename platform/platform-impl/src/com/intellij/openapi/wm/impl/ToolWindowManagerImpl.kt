@@ -539,10 +539,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   }
 
   override fun activateEditorComponent() {
-    if (!EditorsSplitters.focusDefaultComponentInSplittersIfPresent(project)) {
-      // see note about requestFocus in focusDefaultComponentInSplittersIfPresent
-      frame?.rootPane?.requestFocus()
-    }
+    EditorsSplitters.focusDefaultComponentInSplittersIfPresent(project)
   }
 
   open fun activateToolWindow(id: String, runnable: Runnable?, autoFocusContents: Boolean, source: ToolWindowEventSource? = null) {

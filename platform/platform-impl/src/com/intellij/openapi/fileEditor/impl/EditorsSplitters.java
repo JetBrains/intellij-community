@@ -1101,6 +1101,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return getSplittersForProject(activeWindow, frame.getProject());
     }
 
+    if (project != null && !project.isDisposed()) {
+      return FileEditorManagerEx.getInstanceEx(project).getSplitters();
+    }
+
     return null;
   }
 
@@ -1170,7 +1174,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   public static boolean focusDefaultComponentInSplittersIfPresent(@NotNull Project project) {
     JComponent defaultFocusedComponentInEditor = findDefaultComponentInSplitters(project);
     if (defaultFocusedComponentInEditor != null) {
-      // not requestFocus because if floating or windowed tool window is deactivated (or, ESC pressed to focus editor), then we should focus our window
+      // not requestFocusInWindow because if floating or windowed tool window is deactivated (or, ESC pressed to focus editor),
+      // then we should focus our window
       defaultFocusedComponentInEditor.requestFocus();
       return true;
     }
@@ -1194,7 +1199,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     if (project == null) {
       return false;
     }
-    ToolWindowManager.getInstance(project).activateEditorComponent();
+    focusDefaultComponentInSplittersIfPresent(project);
     return true;
   }
 }
