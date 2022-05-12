@@ -102,9 +102,15 @@ class DependencyAnalyzerViewImpl(
     }
   }
 
-  override fun setSelectedDependency(module: Module, dependencyPath: List<Pair<DependencyAnalyzerDependency.Data, String>>) {
+  override fun setSelectedDependency(module: Module, path: List<DependencyAnalyzerDependency.Data>) {
     setSelectedExternalProject(module) {
-      dependency = findDependency { d -> getTreePath(d).map { it.data to it.scope.name } == dependencyPath } ?: dependency
+      dependency = findDependency { d -> getTreePath(d).map { it.data } == path } ?: dependency
+    }
+  }
+
+  override fun setSelectedDependency(module: Module, path: List<DependencyAnalyzerDependency.Data>, scope: String) {
+    setSelectedExternalProject(module) {
+      dependency = findDependency { d -> d.scope.name == scope && getTreePath(d).map { it.data } == path } ?: dependency
     }
   }
 

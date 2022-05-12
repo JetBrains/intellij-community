@@ -29,12 +29,18 @@ interface DependencyAnalyzerView : DataProvider {
   fun setSelectedDependency(module: Module, data: Dependency.Data, scope: String)
 
   /**
-   * Sets selected external project, finds and selects dependency with corresponding [dependencyPath].
-   * @param dependencyPath is a list of dependencies from target dependency to dependency tree root.
-   *  It is uniquely identifies dependency in dependency analyzer.
+   * Sets selected external project, finds and selects dependency with corresponding dependency [path].
+   * @param path is a list of dependencies from target dependency to dependency tree root.
    * @see setSelectedExternalProject
    */
-  fun setSelectedDependency(module: Module, dependencyPath: List<Pair<Dependency.Data, String>>)
+  fun setSelectedDependency(module: Module, path: List<Dependency.Data>)
+
+  /**
+   * Sets selected external project, finds and selects dependency with corresponding dependency [path] and [scope].
+   * @param path is a list of dependencies from target dependency to dependency tree root.
+   * @see setSelectedExternalProject
+   */
+  fun setSelectedDependency(module: Module, path: List<Dependency.Data>, scope: String)
 
   companion object {
     const val ACTION_PLACE = "ExternalSystem.DependencyAnalyzerView.ActionPlace"
