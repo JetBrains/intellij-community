@@ -8121,6 +8121,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/experimental/hasOptInAnnotation3.kt");
         }
 
+        @TestMetadata("hasOptInAnnotationForClass.kt")
+        public void testHasOptInAnnotationForClass() throws Exception {
+            runTest("testData/quickfix/experimental/hasOptInAnnotationForClass.kt");
+        }
+
+        @TestMetadata("hasOptInAnnotationForClass2.kt")
+        public void testHasOptInAnnotationForClass2() throws Exception {
+            runTest("testData/quickfix/experimental/hasOptInAnnotationForClass2.kt");
+        }
+
         @TestMetadata("localFunction.kt")
         public void testLocalFunction() throws Exception {
             runTest("testData/quickfix/experimental/localFunction.kt");
