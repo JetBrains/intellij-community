@@ -69,9 +69,13 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
   @Override
   public void doApplyInformationToEditor() {
     try {
-      // to avoid duplication existed markers are applied by FAST/ALL mode
-      if (myMode != Mode.SLOW) {
-        LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myRestrictRange, myMarkers, getId());
+      // to avoid duplication existed markers are applied by SLOW/ALL mode
+      if (myMode != Mode.FAST) {
+        Document document = getDocument();
+        if (myMode != Mode.ALL) {
+          LineMarkersUtil.setLineMarkersToEditor(myProject, document, myRestrictRange, Collections.emptyList(), Pass.LINE_MARKERS);
+        }
+        LineMarkersUtil.setLineMarkersToEditor(myProject, document, myRestrictRange, myMarkers, getId());
       }
       DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
