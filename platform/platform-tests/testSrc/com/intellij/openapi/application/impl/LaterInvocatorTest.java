@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
@@ -408,7 +409,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   private class MyRunnable implements Runnable {
     private final String myId;
 
-    MyRunnable(String id) {
+    MyRunnable(@NotNull String id) {
       myId = id;
     }
 
@@ -481,13 +482,12 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   public void testNonNestedModalityState() { //happens with per-project modality
-    Object modal1 = new Object();
-    Object modal2 = new Object();
+    Object modal1 = ObjectUtils.sentinel("modal1");
+    Object modal2 = ObjectUtils.sentinel("modal2");
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       LaterInvocator.enterModal(modal1); // [modal1]
       ModalityState ms_1 = ModalityState.current();
       ApplicationManager.getApplication().invokeLater(new MyRunnable("m1"), ms_1);
-
 
       LaterInvocator.enterModal(modal2); //[modal1, modal2]
       ModalityState ms_12 = ModalityState.current();
@@ -608,7 +608,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     }));
   }
 
-  public void testAppVsSwingPerformance() {
+  public void testSwingThroughIdeEventQueuePerformance() {
     int N = 1_000_000;
 
     AtomicInteger counter = new AtomicInteger();
@@ -616,22 +616,39 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
 
     PlatformTestUtil.startPerformanceTest("Swing invokeLater", 13_000, () -> {
       for (int i = 0; i < N; i++) {
+        if (i % 8192 == 0) {
+          // decrease GC pressure, we're not measuring that
+          SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
+        }
         SwingUtilities.invokeLater(r);
       }
       SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
       assertEquals(N, counter.getAndSet(0));
     }).assertTiming();
+  }
 
-    counter.set(0);
+  public void testApplicationInvokeLaterPerformance() {
+    int N = 1_000_000;
+    AtomicInteger counter = new AtomicInteger();
+    Runnable r = () -> counter.incrementAndGet();
     PlatformTestUtil.startPerformanceTest("Application invokeLater", 800, () -> {
+      Application application = ApplicationManager.getApplication();
       for (int i = 0; i < N; i++) {
-        ApplicationManager.getApplication().invokeLater(r);
+        if (i % 8192 == 0) {
+          // decrease GC pressure, we're not measuring that
+          application.invokeAndWait(EmptyRunnable.getInstance());
+        }
+        application.invokeLater(r);
       }
-      ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance());
+      application.invokeAndWait(EmptyRunnable.getInstance());
       assertEquals(N, counter.getAndSet(0));
     }).assertTiming();
+  }
 
-    counter.set(0);
+  public void testApplicationInvokeLaterInModalContextPerformance() {
+    int N = 1_000_000;
+    AtomicInteger counter = new AtomicInteger();
+    Runnable r = () -> counter.incrementAndGet();
     PlatformTestUtil.startPerformanceTest("Application invokeLater in modal context", 800, () -> {
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> LaterInvocator.enterModal(myWindow1));
       Application application = ApplicationManager.getApplication();
