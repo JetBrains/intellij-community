@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
-import java.util.*
 
 class AssertBetweenInconvertibleTypesInspection : AbstractBaseUastLocalInspectionTool() {
 
@@ -62,6 +61,7 @@ class AssertBetweenInconvertibleTypesInspection : AbstractBaseUastLocalInspectio
     }
     private fun checkConvertibleTypes(expression: UCallExpression, firstArgument: UExpression, secondArgument: UExpression,
                                       holder : ProblemsHolder) {
+      if (firstArgument.isNullLiteral() || secondArgument.isNullLiteral()) return
       val type1 = firstArgument.getExpressionType() ?: return
       val type2 = secondArgument.getExpressionType() ?: return
       val mismatch = InconvertibleTypesChecker.checkTypes(type1, type2, LookForMutualSubclass.IF_CHEAP)
