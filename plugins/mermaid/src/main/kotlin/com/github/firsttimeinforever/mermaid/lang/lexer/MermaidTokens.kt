@@ -80,4 +80,21 @@ object MermaidTokens {
     @JvmField
     val VALUE = MermaidToken("Pie.VALUE")
   }
+
+  object Journey {
+    @JvmField
+    val JOURNEY = MermaidToken("Journey.JOURNEY")
+
+    @JvmField
+    val SECTION = MermaidToken("Journey.SECTION")
+
+    @JvmField
+    val SECTION_TITLE = MermaidToken("Journey.SECTION_TITLE")
+
+    @JvmField
+    val TASK_NAME = MermaidToken("Journey.TASK_NAME")
+
+    @JvmField
+    val TASK_DATA = MermaidToken("Journey.TASK_DATA")
+  }
 }

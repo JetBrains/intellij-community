@@ -11,6 +11,7 @@
   parserImports=[
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.*'
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie.*'
+    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Journey.*'
   ]
   generateTokens=false
 }
@@ -18,7 +19,7 @@
 file ::= start
 private start ::= EOL start | comment start | directive start | diagram
 
-private diagram ::= pieHeader pieLines
+private diagram ::= pieHeader pieLines | JOURNEY journeyLines
 
 pieHeader ::= PIE [showDataRec]
 private showDataRec ::= EOL showDataRec | SHOW_DATA
@@ -28,6 +29,16 @@ pieLines ::= pieDocument
 upper pieDocument ::= pieLine [pieDocument]
 pieLine ::= pieStatement [EOL] | EOL
 private pieStatement ::= string COLON VALUE
+	| TITLE TITLE_VALUE
+	| directive
+	| comment
+
+
+journeyLines ::= journeyDocument
+upper journeyDocument ::= (journeyLine | IGNORED) [journeyDocument]
+journeyLine ::= journeyStatement [EOL] | EOL
+private journeyStatement ::= TASK_NAME COLON (IGNORED | TASK_DATA (COLON TASK_DATA)+)
+	| SECTION SECTION_TITLE
 	| TITLE TITLE_VALUE
 	| directive
 	| comment

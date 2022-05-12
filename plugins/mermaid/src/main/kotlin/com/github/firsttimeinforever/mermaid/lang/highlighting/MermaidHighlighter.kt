@@ -21,9 +21,22 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     }
   }
 
+  private fun getJourneyHighlights(tokenType: IElementType): Array<TextAttributesKey>? {
+    return when (tokenType) {
+      MermaidTokens.Journey.JOURNEY,
+      MermaidTokens.Journey.SECTION -> arrayOf(MermaidTextAttributes.keyword)
+
+      MermaidTokens.Journey.TASK_NAME,
+      MermaidTokens.Journey.SECTION_TITLE -> arrayOf(MermaidTextAttributes.string)
+      else -> null
+    }
+  }
+
   override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey> {
     val pieHighlights = getPieHighlights(tokenType)
+    val journeyHighlighter = getJourneyHighlights(tokenType)
     return pieHighlights
+      ?: journeyHighlighter
       ?: when (tokenType) {
         MermaidTokens.TITLE -> arrayOf(MermaidTextAttributes.keyword)
 

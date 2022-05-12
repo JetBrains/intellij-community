@@ -39,12 +39,20 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 %xstate directive_close
 %xstate double_quoted_string_inside_directive
 
-
 %xstate pie
 
 %xstate pie_title
 %xstate pie_title_value
 %xstate value
+
+
+%xstate journey
+
+%xstate journey_title
+%xstate journey_title_value
+%xstate journey_task
+%xstate section
+%xstate section_title
 
 %%
 
@@ -54,6 +62,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   [\n\r]+ { return EOL; }
   "%%" { yybegin(line_comment); return LINE_COMMENT; }
   "pie" { yybegin(pie); return Pie.PIE; }
+  "journey" { yybegin(journey); return Journey.JOURNEY; }
   ";" { return SEMICOLON; }
 }
 <directive> {
@@ -74,16 +83,25 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 
-<pie> {
+<pie, journey> {
   "%%{" { yypushstate(directive); return OPEN_DIRECTIVE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
   "%%" { yybegin(line_comment); return LINE_COMMENT; }
   [\n\r]+ { return EOL; }
   ";" { return SEMICOLON; }
+}
+
+<pie> {
 	"title" { yybegin(pie_title); return TITLE; }
   [\"] { yybegin(double_quoted_string); return DOUBLE_QUOTE; }
   "showData" { return Pie.SHOW_DATA; }
   ":" { yybegin(value); return COLON; }
+}
+<journey> {
+	"title" { yybegin(journey_title); return TITLE; }
+  "section" { yybegin(section); return Journey.SECTION; }
+  ":" { yybegin(journey_task); return COLON; }
+  [^\s#:;][^#:\n;]*/: { yybegin(journey_task); return Journey.TASK_NAME; }
 }
 
 //---pie--------------------------------------------------------------------------
@@ -94,6 +112,36 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 <pie_title_value> {
   [\n\r] { yybegin(pie); return EOL; }
   [^\n\r]* { return TITLE_VALUE; }
+  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
+}
+
+//---journey----------------------------------------------------------------------
+<journey_title> {
+  [^\S\n\r]+ { yybegin(journey_title_value); return WHITE_SPACE; }
+  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
+}
+<journey_title_value> {
+	\s?(#[^\n\r]*)/[\n\r]? { return IGNORED; }
+  [\n\r] { yybegin(journey); return EOL; }
+  [^\n\r#;]+ { return TITLE_VALUE; }
+  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
+}
+<section> {
+  [^\S\n\r]+ { yybegin(section_title); return WHITE_SPACE; }
+  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
+}
+<section_title> {
+	\s?(#[^\n\r]*)/[\n\r]? { return IGNORED; }
+  [\n\r] { yybegin(journey); return EOL; }
+  [^\n\r#:;]+ { return Journey.SECTION_TITLE; }
+  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
+}
+<journey_task> {
+	(#[^\n\r]*)/[\n\r]? { return IGNORED; }
+  ":" { return COLON; }
+	[^\S\n\r]+ { return WHITE_SPACE; }
+	[^\s#:;][^#:\n;]* { return Journey.TASK_DATA; }
+  [\n\r] { yybegin(journey); return EOL; }
   [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 
