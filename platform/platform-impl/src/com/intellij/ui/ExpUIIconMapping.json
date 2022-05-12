@@ -209,7 +209,14 @@
       "splitVertically.svg": "actions/splitVertically.svg",
       "unlocked.svg": "ide/readwrite.svg",
       "up.svg": "actions/previousOccurence.svg",
-      "upload.svg": "actions/upload.svg"
+      "upload.svg": "actions/upload.svg",
+      "redo.svg": "actions/redo.svg",
+      "undo.svg": "actions/undo.svg",
+      "save.svg": "actions/menu-saveall.svg",
+      "print": "general/print.svg",
+      "softWrap": "actions/toggleSoftWrap.svg",
+      "scrollDown": "runConfigurations/scroll_down.svg",
+      "projectStructure": "general/projectStructure.svg"
     },
     "image": {
       "colorPicker_dark.svg": "idea/community/platform/icons/src/ide/pipette.svg",
