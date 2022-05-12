@@ -196,7 +196,7 @@ class RootIndex {
     ModuleManager moduleManager = ModuleManager.getInstance(project);
     boolean includeProjectJdk = true;
 
-    activity.stageStarted(DirectoryIndexCollector.WORKPSACE_MODEL_STAGE);
+    activity.stageStarted(DirectoryIndexCollector.WORKSPACE_MODEL_STAGE);
     for (final Module module : moduleManager.getModules()) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
 

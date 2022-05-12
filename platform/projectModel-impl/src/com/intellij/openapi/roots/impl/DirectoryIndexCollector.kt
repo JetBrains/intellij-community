@@ -22,7 +22,7 @@ class DirectoryIndexCollector : CounterUsagesCollector() {
     val BUILDING_ACTIVITY = GROUP.registerIdeActivity("building", startEventAdditionalFields = arrayOf(BUILD_REQUEST, BUILD_PART))
 
     @JvmField
-    val WORKPSACE_MODEL_STAGE = BUILDING_ACTIVITY.registerStage("workspaceModel")
+    val WORKSPACE_MODEL_STAGE = BUILDING_ACTIVITY.registerStage("workspaceModel")
 
     @JvmField
     val SDK_STAGE = BUILDING_ACTIVITY.registerStage("sdk")
