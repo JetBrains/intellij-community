@@ -37,6 +37,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 public final class ActionUtil {
@@ -142,7 +143,10 @@ public final class ActionUtil {
       };
       boolean isLikeUpdate = !beforeActionPerformed && Registry.is("actionSystem.update.actions.async");
       try (AccessToken ignore = SlowOperations.allowSlowOperations(isLikeUpdate ? SlowOperations.ACTION_UPDATE : SlowOperations.ACTION_PERFORM)) {
+        long startTime = System.nanoTime();
         runnable.run();
+        long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
+        ActionsCollector.getInstance().recordUpdate(action, e, duration);
       }
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, !allowed && presentation.isEnabled());
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, !allowed && presentation.isVisible());
