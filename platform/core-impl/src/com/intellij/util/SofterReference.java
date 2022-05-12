@@ -33,10 +33,10 @@ import java.lang.ref.WeakReference;
  */
 public class SofterReference<T> {
   private volatile Reference<T> myRef;
-  private static final WeakList<SofterReference> ourRegistry = new WeakList<>();
+  private static final WeakList<SofterReference<?>> ourRegistry = new WeakList<>();
 
   private static void onLowMemory() {
-    for (SofterReference reference : ourRegistry.copyAndClear()) {
+    for (SofterReference<?> reference : ourRegistry.copyAndClear()) {
       reference.weaken();
     }
   }
