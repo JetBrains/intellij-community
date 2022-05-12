@@ -46,7 +46,7 @@
       "inlayRenameInCommentsActive.svg": "actions/inlayRenameInCommentsActive.svg",
       "inlayRenameInNoCodeFiles.svg": "actions/inlayRenameInNoCodeFiles.svg",
       "inlayRenameInNoCodeFilesActive.svg": "actions/inlayRenameInNoCodeFilesActive.svg",
-      "inlaySettings.svg": "actions/gear.svg",
+      "inlaySettings.svg": "general/gear.svg",
       "intentionBulb.svg": "actions/intentionBulb.svg",
       "intentionBulbGrey.svg": "actions/intentionBulbGrey.svg",
       "quickfixBulb.svg": "actions/quickfixBulb.svg",
