@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.impl.GotoNextErrorHandler;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ReassignedVariableInspection;
@@ -418,6 +420,22 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testMarkUsedDefaultAnnotationMethodUnusedInspection() {
     setLanguageLevel(LanguageLevel.JDK_1_5);
     doTest(true);
+  }
+
+  public void testNavigateByReassignVariables() {
+    doTest(true, true);
+    DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
+    boolean old = settings.isNextErrorActionGoesToErrorsFirst();
+    settings.setNextErrorActionGoesToErrorsFirst(true);
+    try {
+      int offset = getEditor().getCaretModel().getOffset();
+      new GotoNextErrorHandler(true).invoke(getProject(), getEditor(), getFile());
+
+      assertEquals(offset, getEditor().getCaretModel().getOffset());
+    }
+    finally {
+      settings.setNextErrorActionGoesToErrorsFirst(old);
+    }
   }
 
   public void testUninitializedVarComplexTernary() {
