@@ -343,11 +343,24 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         // Non-JVM is not supported now
         if (holder.file.module?.platform?.isJvm() != true) return PsiElementVisitor.EMPTY_VISITOR
-        return namedFunctionVisitor(fun(function) {
-            val body = function.bodyExpression ?: function.bodyBlockExpression ?: return
-            val factory = DfaValueFactory(holder.project)
-            processDataflowAnalysis(factory, body, holder, listOf(JvmDfaMemoryStateImpl(factory)))
-        })
+        return object : KtVisitorVoid() {
+            override fun visitProperty(property: KtProperty) {
+                if (property.parent is KtFile) {
+                    val initializer = property.initializer ?: return
+                    analyze(initializer)
+                }
+            }
+
+            override fun visitNamedFunction(function: KtNamedFunction) {
+                val body = function.bodyExpression ?: function.bodyBlockExpression ?: return
+                analyze(body)
+            }
+
+            private fun analyze(body: KtExpression) {
+                val factory = DfaValueFactory(holder.project)
+                processDataflowAnalysis(factory, body, holder, listOf(JvmDfaMemoryStateImpl(factory)))
+            }
+        }
     }
 
     private fun processDataflowAnalysis(

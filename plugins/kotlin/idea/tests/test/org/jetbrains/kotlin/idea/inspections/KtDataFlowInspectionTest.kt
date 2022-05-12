@@ -46,6 +46,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testStringTemplate() = doTest()
     fun testStrings() = doTest()
     fun testSuppressions() = doTest()
+    fun testTopLevelDeclaration() = doTest()
     fun testTryCatch() = doTest()
     fun testTryCatchInsideFinally() = doTest()
     fun testTryFinally() = doTest()
