@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.testFramework.binaryReproducibility
 
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.impl.getOsDistributionBuilder
 import java.nio.file.Path
@@ -26,10 +27,6 @@ class BuildArtifactsReproducibilityTest {
     options.randomSeedNumber = randomSeedNumber
     // FIXME IJI-823 workaround
     options.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES)
-    if (options.targetOs != BuildOptions.OS_NONE && options.targetOs != OsFamily.currentOs.osId) {
-      // only Linux build is reproducible for now
-      options.targetOs = BuildOptions.OS_LINUX
-    }
     options.buildStepsToSkip.remove(BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP)
   }
 
@@ -42,7 +39,7 @@ class BuildArtifactsReproducibilityTest {
       val artifacts1 = getOsDistributionBuilder(os, context = context1)!!.getArtifactNames(context1)
       val artifacts2 = getOsDistributionBuilder(os, context = context2)!!.getArtifactNames(context2)
       assert(artifacts1 == artifacts2)
-      artifacts1.map { "artifacts/$it" } + "dist.${os.distSuffix}"
+      artifacts1.map { "artifacts/$it" } + "dist.${os.distSuffix}" + JvmArchitecture.ALL.map { "dist.${os.distSuffix}.$it" }
     }.plus("dist.all").plus("dist").mapNotNull {
       val path1 = context1.paths.buildOutputDir.resolve(it)
       val path2 = context2.paths.buildOutputDir.resolve(it)
