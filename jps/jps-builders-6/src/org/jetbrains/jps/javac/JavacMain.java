@@ -185,14 +185,17 @@ public final class JavacMain {
         }
       }
 
+      final APIWrappers.ProcessingContext procContext;
       final WrappedProcessorsContainer wrappedProcessors;
       final DiagnosticOutputConsumer diagnosticListener;
       if (TRACK_AP_GENERATED_DEPENDENCIES && isAnnotationProcessingEnabled) {
+        procContext = new APIWrappers.ProcessingContext(fileManager);
         // use real processor class names and not names of processor wrappers
         wrappedProcessors = new WrappedProcessorsContainer();
-        diagnosticListener = APIWrappers.newDiagnosticListenerWrapper(diagnosticConsumer, wrappedProcessors);
+        diagnosticListener = APIWrappers.newDiagnosticListenerWrapper(procContext, diagnosticConsumer, wrappedProcessors);
       }
       else {
+        procContext = null;
         wrappedProcessors = null;
         diagnosticListener = diagnosticConsumer;
       }
@@ -228,7 +231,7 @@ public final class JavacMain {
       }
 
       if (TRACK_AP_GENERATED_DEPENDENCIES && isAnnotationProcessingEnabled) {
-        final Iterable<Processor> processors = lookupAnnotationProcessors(fileManager, getAnnotationProcessorNames(_options));
+        final Iterable<Processor> processors = lookupAnnotationProcessors(procContext, getAnnotationProcessorNames(_options));
         if (processors != null) {
           wrappedProcessors.setProcessors(processors);
           task.setProcessors(processors);
@@ -286,18 +289,18 @@ public final class JavacMain {
   }
 
   @Nullable
-  private static Iterable<Processor> lookupAnnotationProcessors(final JpsJavacFileManager fileManager, @Nullable Iterable<String> processorNames) {
+  private static Iterable<Processor> lookupAnnotationProcessors(final APIWrappers.ProcessingContext procContext, @Nullable Iterable<String> processorNames) {
     try {
       Iterable<Processor> processors = null;
 
-      if (hasLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH")) {
+      if (hasLocation(procContext.getFileManager(), "ANNOTATION_PROCESSOR_MODULE_PATH")) {
         // this is equivalent to
         //processors = fileManager.getServiceLoader(StandardLocation.locationFor("ANNOTATION_PROCESSOR_MODULE_PATH"), Processor.class);
         // if java modules are involved, they should be properly handled by the fileManager
 
         //noinspection unchecked
         processors = (ServiceLoader<Processor>)JavaFileManager.class.getMethod("getServiceLoader", JavaFileManager.Location.class, Class.class).invoke(
-          fileManager, StandardLocation.locationFor("ANNOTATION_PROCESSOR_MODULE_PATH"), Processor.class
+          procContext.getFileManager(), StandardLocation.locationFor("ANNOTATION_PROCESSOR_MODULE_PATH"), Processor.class
         );
         if (processorNames != null) {
           processors = Iterators.filterWithOrder(processors, Iterators.map(processorNames, new Function<String, BooleanFunction<? super Processor>>() {
@@ -314,9 +317,9 @@ public final class JavacMain {
         }
       }
       else {
-        final ClassLoader processorClassLoader = fileManager.getClassLoader(
+        final ClassLoader processorClassLoader = procContext.getFileManager().getClassLoader(
           // If processorpath is not explicitly set, use the classpath.
-          fileManager.hasLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH) ? StandardLocation.ANNOTATION_PROCESSOR_PATH : StandardLocation.CLASS_PATH
+          procContext.getFileManager().hasLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH) ? StandardLocation.ANNOTATION_PROCESSOR_PATH : StandardLocation.CLASS_PATH
         );
         if (processorClassLoader != null) {
           if (processorNames != null) {
@@ -334,10 +337,9 @@ public final class JavacMain {
 
       if (processors != null) {
         return Iterators.map(processors, new Function<Processor, Processor>() {
-          final APIWrappers.ProcessingEnvironmentProvider envProvider = new APIWrappers.ProcessingEnvironmentProvider(fileManager);
           @Override
           public Processor fun(Processor processor) {
-            return APIWrappers.newProcessorWrapper(processor, envProvider);
+            return APIWrappers.newProcessorWrapper(processor, procContext);
           }
         });
       }
