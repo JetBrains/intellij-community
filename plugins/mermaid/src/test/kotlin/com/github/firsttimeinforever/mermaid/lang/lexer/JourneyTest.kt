@@ -1,9 +1,11 @@
 package com.github.firsttimeinforever.mermaid.lang.lexer
 
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COLON
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMENT_TEXT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.EOL
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.IGNORED
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Journey
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.LINE_COMMENT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.TITLE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.TITLE_VALUE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.WHITE_SPACE
@@ -293,6 +295,46 @@ class JourneyTest: MermaidLexerTestCase() {
       Token(COLON, 70, 71, ":"),
       Token(WHITE_SPACE, 71, 72, " "),
       Token(Journey.TASK_DATA, 72, 74, "Me")
+    )
+    doTest(content, expected)
+  }
+
+  fun `test journey with comments`() {
+    val content = """
+    journey %% This is comment 
+      title My working day %% This is not comment
+      section Go to work %% This is not comment
+        Make tea: 5: Me %% This is not comment
+        %% This is comment
+    """.trimIndent()
+    val expected = listOf(
+      Token(Journey.JOURNEY, 0, 7, "journey"),
+      Token(WHITE_SPACE, 7, 8, " "),
+      Token(LINE_COMMENT, 8, 10, "%%"),
+      Token(COMMENT_TEXT, 10, 27, " This is comment "),
+      Token(EOL, 27, 28, "\n"),
+      Token(WHITE_SPACE, 28, 30, "  "),
+      Token(TITLE, 30, 35, "title"),
+      Token(WHITE_SPACE, 35, 36, " "),
+      Token(TITLE_VALUE, 36, 73, "My working day %% This is not comment"),
+      Token(EOL, 73, 74, "\n"),
+      Token(WHITE_SPACE, 74, 76, "  "),
+      Token(Journey.SECTION, 76, 83, "section"),
+      Token(WHITE_SPACE, 83, 84, " "),
+      Token(Journey.SECTION_TITLE, 84, 117, "Go to work %% This is not comment"),
+      Token(EOL, 117, 118, "\n"),
+      Token(WHITE_SPACE, 118, 122, "    "),
+      Token(Journey.TASK_NAME, 122, 130, "Make tea"),
+      Token(COLON, 130, 131, ":"),
+      Token(WHITE_SPACE, 131, 132, " "),
+      Token(Journey.TASK_DATA, 132, 133, "5"),
+      Token(COLON, 133, 134, ":"),
+      Token(WHITE_SPACE, 134, 135, " "),
+      Token(Journey.TASK_DATA, 135, 160, "Me %% This is not comment"),
+      Token(EOL, 160, 161, "\n"),
+      Token(WHITE_SPACE, 161, 165, "    "),
+      Token(LINE_COMMENT, 165, 167, "%%"),
+      Token(COMMENT_TEXT, 167, 183, " This is comment")
     )
     doTest(content, expected)
   }

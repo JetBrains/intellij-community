@@ -14,9 +14,11 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.SEMICOLON
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMA
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COLON
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMENT_TEXT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.CLASS
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.CLASS_DEF
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.STYLE_SEPARATOR
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.LINE_COMMENT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.WHITE_SPACE
 
 class FlowchartTest: MermaidLexerTestCase() {
@@ -646,6 +648,37 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(Flowchart.NODE_ID, 303, 304, "C"),
       Token(WHITE_SPACE, 304, 305, " "),
       Token(STYLE_TARGET, 305, 314, "someclass")
+    )
+    doTest(content, expected)
+  }
+
+  fun `test flowchart with comments`() {
+    val content = """
+    flowchart TD %% This is comment
+      Start --> Stop %% This is comment
+      %% This is comment
+    """.trimIndent()
+    val expected = listOf(
+      Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
+      Token(WHITE_SPACE, 9, 10, " "),
+      Token(Flowchart.DIR, 10, 12, "TD"),
+      Token(WHITE_SPACE, 12, 13, " "),
+      Token(LINE_COMMENT, 13, 15, "%%"),
+      Token(COMMENT_TEXT, 15, 31, " This is comment"),
+      Token(EOL, 31, 32, "\n"),
+      Token(WHITE_SPACE, 32, 34, "  "),
+      Token(Flowchart.NODE_ID, 34, 39, "Start"),
+      Token(WHITE_SPACE, 39, 40, " "),
+      Token(Flowchart.LINK, 40, 43, "-->"),
+      Token(WHITE_SPACE, 43, 44, " "),
+      Token(Flowchart.NODE_ID, 44, 48, "Stop"),
+      Token(WHITE_SPACE, 48, 49, " "),
+      Token(LINE_COMMENT, 49, 51, "%%"),
+      Token(COMMENT_TEXT, 51, 67, " This is comment"),
+      Token(EOL, 67, 68, "\n"),
+      Token(WHITE_SPACE, 68, 70, "  "),
+      Token(LINE_COMMENT, 70, 72, "%%"),
+      Token(COMMENT_TEXT, 72, 88, " This is comment")
     )
     doTest(content, expected)
   }

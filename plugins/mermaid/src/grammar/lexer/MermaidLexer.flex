@@ -79,7 +79,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   "%%{" { yypushstate(directive); return OPEN_DIRECTIVE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
   [\n\r]+ { return EOL; }
-  "%%" { yybegin(line_comment); return LINE_COMMENT; }
+  "%%" { yypushstate(line_comment); return LINE_COMMENT; }
   "pie" { yybegin(pie); return Pie.PIE; }
   "journey" { yybegin(journey); return Journey.JOURNEY; }
   "flowchart" { yybegin(flowchart); return Flowchart.FLOWCHART; }
@@ -106,7 +106,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 <pie, journey, flowchart, flowchart_body> {
   "%%{" { yypushstate(directive); return OPEN_DIRECTIVE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
-  "%%" { yybegin(line_comment); return LINE_COMMENT; }
+  "%%" { yypushstate(line_comment); return LINE_COMMENT; }
 }
 <pie, journey, flowchart_body> {
   [\n\r]+ { return EOL; }
@@ -308,8 +308,8 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 
 //--------------------------------------------------------------------------------
 <line_comment> {
-  [^\n\r]+ { yybegin(YYINITIAL); return COMMENT_TEXT; }
-  [\n\r] { yybegin(YYINITIAL); return EOL; }
+  [^\n\r]+ { yypopstate(); return COMMENT_TEXT; }
+  [\n\r] { yypopstate(); return EOL; }
   [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 
