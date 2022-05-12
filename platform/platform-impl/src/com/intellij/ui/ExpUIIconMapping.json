@@ -192,7 +192,7 @@
       "moveDown.svg": "actions/moveDown.svg",
       "moveUp.svg": "actions/moveUp.svg",
       "open.svg": "actions/menu-open.svg",
-      "openNewTab": "actions/openNewTab",
+      "openNewTab.svg": "actions/openNewTab",
       "paste.svg": "actions/menu-paste.svg",
       "pin.svg": "actions/pinTab.svg",
       "previewHorizontally.svg": "actions/previewDetailsVertically.svg",
@@ -213,20 +213,36 @@
       "redo.svg": "actions/redo.svg",
       "undo.svg": "actions/undo.svg",
       "save.svg": "actions/menu-saveall.svg",
-      "print": "general/print.svg",
-      "softWrap": "actions/toggleSoftWrap.svg",
-      "scrollDown": "runConfigurations/scroll_down.svg",
-      "projectStructure": "general/projectStructure.svg"
+      "print.svg": "general/print.svg",
+      "softWrap.svg": "actions/toggleSoftWrap.svg",
+      "scrollDown.svg": "runConfigurations/scroll_down.svg",
+      "projectStructure.svg": "general/projectStructure.svg"
+    },
+    "gutter": {
+      "colors.svg": "gutter/colors",
+      "extAnnotation.svg": "gutter/extAnnotation.svg",
+      "javadocEdit.svg": "gutter/javadocEdit.svg",
+      "javadocRead.svg":  "gutter/javadocRead.svg",
+      "readAccess.svg": "gutter/readAccess",
+      "rerun.svg": "runConfigurations/testState/run_run.svg",
+      "run.svg": "runConfigurations/testState/run.svg",
+      "runError.svg": "runConfigurations/testState/red2.svg",
+      "runFailed.svg": "runConfigurations/testState/yellow2.svg",
+      "runSuccess.svg": "runConfigurations/testState/green2.svg",
+      "suggestedRefactoring.svg": "gutter/suggestedRefactoringBulb.svg",
+      "suggestedRefactoringDisabled.svg": "gutter/suggestedRefactoringBulbDisabled.svg",
+      "writeAccess.svg": "gutter/writeAccess"
+
     },
     "image": {
-      "colorPicker_dark.svg": "idea/community/platform/icons/src/ide/pipette.svg",
-      "chessboard.svg": "idea/community/images/resources/org/intellij/images/icons/ToggleTransparencyChessboard.svg",
-      "actualZoom.svg": "idea/community/platform/icons/src/graph/actualZoom.svg",
-      "colorPicker.svg": "idea/community/platform/icons/src/ide/pipette.svg",
-      "grid.svg": "idea/community/platform/icons/src/graph/grid.svg",
-      "zoomIn.svg": "idea/community/platform/icons/src/graph/zoomIn.svg",
-      "zoomOut.svg": "idea/community/platform/icons/src/graph/zoomOut.svg",
-      "fitContent.svg": "idea/community/platform/icons/src/general/fitContent.svg"
+      "colorPicker_dark.svg": "ide/pipette.svg",
+      "chessboard.svg": "icons/ToggleTransparencyChessboard.svg",
+      "actualZoom.svg": "graph/actualZoom.svg",
+      "colorPicker.svg": "ide/pipette.svg",
+      "grid.svg": "graph/grid.svg",
+      "zoomIn.svg": "graph/zoomIn.svg",
+      "zoomOut.svg": "graph/zoomOut.svg",
+      "fitContent.svg": "general/fitContent.svg"
     },
     "inline": {
       "browse.svg": [
