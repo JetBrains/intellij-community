@@ -24,6 +24,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.tree.ui.Control
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.IconUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.castSafelyTo
@@ -76,6 +77,7 @@ class RecentProjectFilteringTree(
       cellRenderer = ProjectActionRenderer(filePathChecker::isValid)
       rowHeight = 0 // Fix tree renderer size on macOS
       background = WelcomeScreenUIManager.getProjectsBackground()
+      toggleClickCount = 1
 
       setExpandableItemsEnabled(false)
     }
@@ -154,19 +156,23 @@ class RecentProjectFilteringTree(
   }
 
   private class ProjectActionMouseListener(private val tree: Tree) : PopupHandler() {
-    override fun mouseReleased(mouseEvent: MouseEvent) {
-      super.mouseReleased(mouseEvent)
-      if (mouseEvent.isConsumed) return
+    override fun mousePressed(mouseEvent: MouseEvent) {
+      super.mousePressed(mouseEvent)
+      if (mouseEvent.isConsumed || EditSourceOnDoubleClickHandler.isToggleEvent(tree, mouseEvent)) {
+        return
+      }
 
       val point = mouseEvent.point
+      val treePath = TreeUtil.getPathForLocation(tree, point.x, point.y) ?: return
+      val node = treePath.lastPathComponent as DefaultMutableTreeNode
+
       if (intersectWithActionIcon(point)) {
-        val node = tree.lastSelectedPathComponent as DefaultMutableTreeNode
         when (val treeItem = node.userObject as RecentProjectTreeItem) {
           is CloneableProjectItem -> CloneableProjectsService.getInstance().removeCloneProject(treeItem.progressIndicator)
           else -> invokePopup(mouseEvent.component, point.x, point.y)
         }
       }
-      else activateItem(mouseEvent)
+      else activateItem(mouseEvent, treePath, node)
 
       mouseEvent.consume()
     }
@@ -177,15 +183,13 @@ class RecentProjectFilteringTree(
     }
 
     private fun intersectWithActionIcon(point: Point): Boolean {
-      val row = tree.getClosestRowForLocation(point.x, point.y)
+      val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
       return row != -1 && getCloseIconRect(row).contains(point)
     }
 
-    private fun activateItem(mouseEvent: MouseEvent) {
-      val treePath = tree.selectionPath ?: return
+    private fun activateItem(mouseEvent: MouseEvent, treePath: TreePath, node: DefaultMutableTreeNode) {
       if (mouseEvent.clickCount == 1 && SwingUtilities.isLeftMouseButton(mouseEvent)) {
-        val treeNode = treePath.lastPathComponent as DefaultMutableTreeNode
-        when (val project = treeNode.userObject) {
+        when (val project = node.userObject) {
           is RootItem -> {} // Specific for RootItem (not visible in tree)
           is ProjectsGroupItem -> {
             if (tree.isExpanded(treePath)) {
