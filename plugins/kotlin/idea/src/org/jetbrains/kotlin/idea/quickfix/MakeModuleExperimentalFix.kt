@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
 import org.jetbrains.kotlin.idea.facet.getOrCreateConfiguredFacet
-import org.jetbrains.kotlin.idea.quickfix.ExperimentalFixesFactory.fqNameIsExisting
+import org.jetbrains.kotlin.idea.quickfix.ExperimentalFixesFactory.annotationExists
 import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.name.FqName
@@ -37,7 +37,7 @@ open class MakeModuleExperimentalFix(
     // `-Xuse-experimental` (before Kotlin 1.3.70), a fallback if `RequireOptIn` annotation does not exist
 
     private val experimentalPrefix = when {
-        module.toDescriptor()?.fqNameIsExisting(OptInNames.REQUIRES_OPT_IN_FQ_NAME) == false -> "-Xuse-experimental"
+        module.toDescriptor()?.annotationExists(OptInNames.REQUIRES_OPT_IN_FQ_NAME) == false -> "-Xuse-experimental"
         KotlinPluginLayout.instance.standaloneCompilerVersion.kotlinVersion.isAtLeast(1, 6, 0) -> "-opt-in"
         else -> "-Xopt-in"
     }
@@ -80,7 +80,7 @@ open class MakeModuleExperimentalFix(
                 containingKtFile,
                 module,
                 OptInNames.REQUIRES_OPT_IN_FQ_NAME.takeIf {
-                    module.toDescriptor()?.fqNameIsExisting(it) == true
+                    module.toDescriptor()?.annotationExists(it) == true
                 } ?: OptInNames.OLD_EXPERIMENTAL_FQ_NAME
             )
         }
