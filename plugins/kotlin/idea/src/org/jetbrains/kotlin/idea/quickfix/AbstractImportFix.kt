@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.actions.KotlinAddImportAction
 import org.jetbrains.kotlin.idea.actions.createGroupedImportsAction
 import org.jetbrains.kotlin.idea.actions.createSingleImportAction
 import org.jetbrains.kotlin.idea.actions.createSingleImportActionForConstructor
+import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -302,10 +303,11 @@ internal abstract class OrdinaryImportFixBase<T : KtExpression>(expression: T, f
 
         val ktFile = element?.containingKtFile ?: return emptyList()
         val importedFqNamesAsAlias = getImportedFqNamesAsAlias(ktFile)
+        val (defaultImports, excludedImports) = ImportInsertHelperImpl.computeDefaultAndExcludedImports(ktFile)
         return result.filter {
             val importableFqName = it.importableFqName ?: return@filter true
             val importPath = ImportPath(importableFqName, isAllUnder = false)
-            !ImportInsertHelperImpl.isInDefaultImports(importPath, ktFile) || importableFqName in importedFqNamesAsAlias
+            !importPath.isImported(defaultImports, excludedImports) || importableFqName in importedFqNamesAsAlias
         }
     }
 

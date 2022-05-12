@@ -453,6 +453,11 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
 
     companion object {
         fun isInDefaultImports(importPath: ImportPath, contextFile: KtFile): Boolean {
+            val (defaultImports, excludedImports) = computeDefaultAndExcludedImports(contextFile)
+            return importPath.isImported(defaultImports, excludedImports)
+        }
+
+        fun computeDefaultAndExcludedImports(contextFile: KtFile): Pair<List<ImportPath>, List<FqName>> {
             val languageVersionSettings = contextFile.getResolutionFacade().languageVersionSettings
             val platform = TargetPlatformDetector.getPlatform(contextFile)
             val analyzerServices = platform.findAnalyzerServices(contextFile.project)
@@ -464,7 +469,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
                 scriptDependencies?.defaultImports?.map { ImportPath.fromString(it) }
             }.orEmpty()
 
-            return importPath.isImported(allDefaultImports + scriptExtraImports, analyzerServices.excludedImports)
+            return (allDefaultImports + scriptExtraImports) to analyzerServices.excludedImports
         }
 
         fun addImport(project: Project, file: KtFile, fqName: FqName, allUnder: Boolean = false, alias: Name? = null): KtImportDirective {
