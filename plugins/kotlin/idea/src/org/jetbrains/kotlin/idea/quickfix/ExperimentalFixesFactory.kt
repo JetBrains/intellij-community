@@ -123,12 +123,12 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
                     if (isOverrideError)
                         UseOptInAnnotationFix(
                             containingClassOrObject, moduleDescriptor, kind, annotationFqName,
-                            containingDeclaration.findAnnotation(moduleDescriptor.OPT_IN_FQ_NAME)?.createSmartPointer()
+                            containingClassOrObject.findAnnotation(moduleDescriptor.OPT_IN_FQ_NAME)?.createSmartPointer()
                         )
                     else
                         HighPriorityUseOptInAnnotationFix(
                             containingClassOrObject, moduleDescriptor, kind, annotationFqName,
-                            containingDeclaration.findAnnotation(moduleDescriptor.OPT_IN_FQ_NAME)?.createSmartPointer()
+                            containingClassOrObject.findAnnotation(moduleDescriptor.OPT_IN_FQ_NAME)?.createSmartPointer()
                         )
                 )
             }
