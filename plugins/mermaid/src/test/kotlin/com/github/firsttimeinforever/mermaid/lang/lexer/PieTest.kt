@@ -9,7 +9,7 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.TITLE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.TITLE_VALUE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.WHITE_SPACE
 
-class PieTest: MermaidTestCase() {
+class PieTest: MermaidLexerTestCase() {
   fun `test pie with title with newline at the end`() {
     val content = """
     pie

@@ -8,7 +8,7 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.TITLE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.TITLE_VALUE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.WHITE_SPACE
 
-class JourneyTest: MermaidTestCase() {
+class JourneyTest: MermaidLexerTestCase() {
   fun `test simple journey title and section title`() {
     val content = """
     journey

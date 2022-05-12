@@ -3,7 +3,7 @@ package com.github.firsttimeinforever.mermaid.lang.lexer
 import com.intellij.psi.tree.IElementType
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 
-abstract class MermaidTestCase: LightPlatformCodeInsightTestCase() {
+abstract class MermaidLexerTestCase: LightPlatformCodeInsightTestCase() {
   data class Token(
     val type: IElementType,
     val start: Int,

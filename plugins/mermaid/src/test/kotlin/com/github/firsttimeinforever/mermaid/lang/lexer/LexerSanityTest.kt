@@ -12,7 +12,7 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.OPEN_DIREC
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.STRING_VALUE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.WHITE_SPACE
 
-class LexerSanityTest: MermaidTestCase() {
+class LexerSanityTest: MermaidLexerTestCase() {
   fun `test line comment`() {
     val content = """
     %% This is comment

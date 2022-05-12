@@ -19,7 +19,7 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.STYLE_SEPARATOR
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.WHITE_SPACE
 
-class FlowchartTest: MermaidTestCase() {
+class FlowchartTest: MermaidLexerTestCase() {
   fun `test simple flowchart`() {
     val content = """
     flowchart TD
