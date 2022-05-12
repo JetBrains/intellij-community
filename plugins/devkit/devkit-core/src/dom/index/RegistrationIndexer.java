@@ -73,31 +73,22 @@ class RegistrationIndexer {
 
   private void processActions(IdeaPlugin ideaPlugin) {
     for (Actions actions : ideaPlugin.getActions()) {
-      for (Action action : actions.getActions()) {
-        processAction(action);
-      }
-
-      for (Group group : actions.getGroups()) {
-        processGroup(group);
-      }
+      processActionContainer(actions);
     }
   }
 
-  private void processGroup(Group group) {
-    addEntry(group, group.getClazz(), RegistrationEntry.RegistrationType.ACTION);
-    addIdEntry(group, group.getId(), RegistrationEntry.RegistrationType.ACTION_GROUP_ID);
-
-    for (Action action : group.getActions()) {
-      processAction(action);
+  private void processActionContainer(ActionContainer actionContainer) {
+    for (Action action : actionContainer.getActions()) {
+      addEntry(action, action.getClazz(), RegistrationEntry.RegistrationType.ACTION);
+      addIdEntry(action, action.getId(), RegistrationEntry.RegistrationType.ACTION_ID);
     }
-    for (Group nestedGroup : group.getGroups()) {
-      processGroup(nestedGroup);
-    }
-  }
 
-  private void processAction(Action action) {
-    addEntry(action, action.getClazz(), RegistrationEntry.RegistrationType.ACTION);
-    addIdEntry(action, action.getId(), RegistrationEntry.RegistrationType.ACTION_ID);
+    for (Group group : actionContainer.getGroups()) {
+      addEntry(group, group.getClazz(), RegistrationEntry.RegistrationType.ACTION);
+      addIdEntry(group, group.getId(), RegistrationEntry.RegistrationType.ACTION_GROUP_ID);
+
+      processActionContainer(group);
+    }
   }
 
   private void addIdEntry(DomElement domElement,
