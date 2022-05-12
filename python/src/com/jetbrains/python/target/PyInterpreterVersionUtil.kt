@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Ref
 import com.intellij.remote.RemoteSdkException
 import com.intellij.util.ui.UIUtil
@@ -25,7 +26,7 @@ fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?, nullFor
 fun PyTargetAwareAdditionalData.getInterpreterVersion(project: Project?,
                                                       interpreterPath: String,
                                                       nullForUnparsableVersion: Boolean = true): String? {
-  val targetEnvironmentRequest = getTargetEnvironmentRequest(project)
+  val targetEnvironmentRequest = getTargetEnvironmentRequest(project ?: ProjectManager.getInstance().defaultProject)
                                  ?: throw IllegalStateException("Unable to get target configuration from Python SDK data")
   val result = Ref.create<String>()
   val exception = Ref.create<RemoteSdkException>()
