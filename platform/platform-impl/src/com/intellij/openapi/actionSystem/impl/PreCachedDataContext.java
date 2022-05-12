@@ -102,7 +102,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
             ourDataKeysIndices.computeIfAbsent(key.getName(), __ -> ourDataKeysCount.getAndIncrement());
           }
         }
-        myCachedData = preGetAllData(components, initial, keys);
+        myCachedData = preGetAllData(components, initial, myDataManager, keys);
         ourInstances.add(this);
       }
       //noinspection AssignmentToStaticFieldFromInstanceMethod
@@ -144,10 +144,9 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
 
   @NotNull PreCachedDataContext prependProvider(@NotNull DataProvider dataProvider) {
     DataKey<?>[] keys = DataKey.allKeys();
-    DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
     ProviderData cachedData = new ProviderData();
     Component component = SoftReference.dereference(myComponentRef.ref);
-    doPreGetAllData(dataProvider, cachedData, component, dataManager, keys, myCachedData.getHead());
+    doPreGetAllData(dataProvider, cachedData, component, myDataManager, keys, myCachedData.getHead());
     return new PreCachedDataContext(myComponentRef, myCachedData.prepend(cachedData),
                                     new AtomicReference<>(KeyFMap.EMPTY_MAP), myMissedKeysIfFrozen, myDataManager, myDataKeysCount);
   }
@@ -159,17 +158,15 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     if (PlatformDataKeys.MODALITY_STATE.is(dataId)) return myComponentRef.modalityState;
     if (myCachedData.isEmpty()) return null;
 
-    int keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1);
-    if (keyIndex == -1) return null; // a newly created data key => no data provider => no value
-
     boolean rulesSuppressed = EDT.isCurrentThreadEdt() && Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
-    boolean rulesAllowed = myMissedKeysIfFrozen == null && !CommonDataKeys.PROJECT.is(dataId) && keyIndex < myDataKeysCount && !rulesSuppressed;
-    Object answer = getDataInner(dataId, keyIndex, rulesAllowed);
+    boolean rulesAllowed = myMissedKeysIfFrozen == null && !CommonDataKeys.PROJECT.is(dataId) && !rulesSuppressed;
+    Object answer = getDataInner(dataId, rulesAllowed);
 
+    int keyIndex; // for use with `nullsByRules` only, always != -1
     ProviderData map = myCachedData.get(0);
-    if (answer == null && rulesAllowed && !map.nullsByContextRules.get(keyIndex)) {
+    if (answer == null && rulesAllowed && !map.nullsByContextRules.get(keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1))) {
       answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, id -> {
-        Object o = getDataInner(id, keyIndex, true);
+        Object o = getDataInner(id, !CommonDataKeys.PROJECT.is(id));
         return o == ourExplicitNull ? null : o;
       });
       if (answer != null) {
@@ -197,7 +194,11 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     return answer == ourExplicitNull ? null : answer;
   }
 
-  private @Nullable Object getDataInner(@NotNull String dataId, int keyIndex, boolean rulesAllowed) {
+  private @Nullable Object getDataInner(@NotNull String dataId, boolean rulesAllowedBase) {
+    int keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1);
+    if (keyIndex == -1) return ourExplicitNull; // newly created data key => no data provider => no value
+    boolean rulesAllowed = rulesAllowedBase && keyIndex < myDataKeysCount;
+
     Object answer = null;
     for (ProviderData map : myCachedData) {
       ProgressManager.checkCanceled();
@@ -246,8 +247,8 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
 
   private static @NotNull FList<ProviderData> preGetAllData(@NotNull List<Component> components,
                                                             @NotNull FList<ProviderData> initial,
+                                                            @NotNull DataManagerImpl dataManager,
                                                             DataKey<?> @NotNull [] keys) {
-    DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
     FList<ProviderData> result = initial;
 
     long start = System.currentTimeMillis();
@@ -257,6 +258,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       if (dataProvider == null) continue;
       ProviderData cachedData = new ProviderData();
       doPreGetAllData(dataProvider, cachedData, comp, dataManager, keys, result.getHead());
+      if (cachedData.isEmpty()) continue;
       result = result.prepend(cachedData);
       ourPrevMaps.put(comp, result);
     }
