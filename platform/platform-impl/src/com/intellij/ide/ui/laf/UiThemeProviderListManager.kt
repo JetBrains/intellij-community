@@ -52,6 +52,8 @@ internal class UiThemeProviderListManager {
       )
     }
 
+    val excludedThemes = if (!ExperimentalUI.isNewUI()) listOf("Light", "Dark") else emptyList()
+
     fun sortThemes(list: MutableList<out LookAndFeelInfo>) {
       list.sortWith { t1: LookAndFeelInfo, t2: LookAndFeelInfo ->
         val n1 = t1.name
