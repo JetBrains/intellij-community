@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="kotlin-tooling-core" type="repository">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-tooling-core:1.7.20-dev-984">
+      <exclude>
+        <dependency maven-id="org.jetbrains:annotations" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-core/1.7.20-dev-984/kotlin-tooling-core-1.7.20-dev-984.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
