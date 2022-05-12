@@ -239,7 +239,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       detectAndSyncLaf();
 
       Activity activity = StartUpMeasurer.startActivity("new ui configuration");
-      ExperimentalUI.lookAndFeelChanged();
+      ExperimentalUI.getInstance().lookAndFeelChanged();
       activity.end();
 
       addThemeAndDynamicPluginListeners();
@@ -827,7 +827,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       ApplicationManager.getApplication().invokeLater(this::notifyLookAndFeelChanged);
     }
     else {
-      ExperimentalUI.lookAndFeelChanged();
+      ExperimentalUI.getInstance().lookAndFeelChanged();
       notifyLookAndFeelChanged();
 
       for (Frame frame : Frame.getFrames()) {

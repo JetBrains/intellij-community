@@ -29,20 +29,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @ApiStatus.Internal
 public abstract class ExperimentalUI {
-  private static final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
-  private static final IconPathPatcher iconPathPatcher = createPathPatcher();
+  private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
+  private final IconPathPatcher iconPathPatcher = createPathPatcher();
   private static final String KEY = "ide.experimental.ui";
 
   public static boolean isNewUI() {
     return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY);
   }
 
-  private static ExperimentalUI getInstance() {
+  public static ExperimentalUI getInstance() {
     return ApplicationManager.getApplication().getService(ExperimentalUI.class);
   }
 
   @SuppressWarnings("unused")
-  private static final class NewUiRegistryListener implements RegistryValueListener {
+  private final class NewUiRegistryListener implements RegistryValueListener {
     @Override
     public void afterValueChanged(@NotNull RegistryValue value) {
       if (!value.getKey().equals(KEY)) {
@@ -70,7 +70,7 @@ public abstract class ExperimentalUI {
     }
   }
 
-  public static void lookAndFeelChanged() {
+  public void lookAndFeelChanged() {
     if (isNewUI()) {
       if (isIconPatcherSet.compareAndSet(false, true)) {
         IconLoader.installPathPatcher(iconPathPatcher);
@@ -79,8 +79,8 @@ public abstract class ExperimentalUI {
     }
   }
 
-  private static IconPathPatcher createPathPatcher() {
-    Map<String, String> paths = getInstance().loadIconMappings();
+  private IconPathPatcher createPathPatcher() {
+    Map<String, String> paths = loadIconMappings();
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
