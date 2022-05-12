@@ -23,7 +23,6 @@ import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jdom.Element;
-import org.jdom.IllegalDataException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,16 +75,8 @@ public final class VirtualFilePointerContainerImpl extends TraceableDisposable i
   public void writeExternal(@NotNull final Element element, @NotNull final String childElementName, boolean externalizeJarDirectories) {
     for (VirtualFilePointer pointer : myList) {
       String url = pointer.getUrl();
-      final Element rootPathElement = new Element(childElementName);
-      try {
-        rootPathElement.setAttribute(URL_ATTR, url);
-      }
-      catch (IllegalDataException e) {
-        LOG.info(" url " + url);
-        LOG.info(" pointer " + pointer);
-        LOG.info(" file " + pointer.getFile());
-        LOG.info(" file parent " + pointer.getFile().getParent());
-      }
+      Element rootPathElement = new Element(childElementName);
+      rootPathElement.setAttribute(URL_ATTR, url);
       element.addContent(rootPathElement);
     }
     if (externalizeJarDirectories) {
