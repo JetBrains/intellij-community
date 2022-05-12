@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -80,13 +79,8 @@ final class PersistentFSConnector {
 
     File vfsDependentEnumBaseFile = persistentFSPaths.getVfsEnumBaseFile();
 
-    if (!Files.exists(namesFile)) {
-      invalidateIndex("'" + namesFile + "' does not exist");
-    }
-
     try {
       if (persistentFSPaths.getCorruptionMarkerFile().exists()) {
-        invalidateIndex("corruption marker found");
         throw new IOException("Corruption marker file found");
       }
 
@@ -203,19 +197,6 @@ final class PersistentFSConnector {
     int liveRecordsCount = contents.getRecordsCount();
     if (largestId != liveRecordsCount) {
       throw new IOException("Content storage & enumerator corrupted");
-    }
-  }
-
-  private static void invalidateIndex(@NotNull String reason) {
-    LOG.info("Marking VFS as corrupted: " + reason);
-    Path indexRoot = PathManager.getIndexRoot();
-    if (Files.exists(indexRoot)) {
-      String[] children = indexRoot.toFile().list();
-      if (children != null && children.length > 0) {
-        // create index corruption marker only if index directory exists and is non-empty
-        // It is incorrect to consider non-existing indices "corrupted"
-        FileUtil.createIfDoesntExist(PathManager.getIndexRoot().resolve("corruption.marker").toFile());
-      }
     }
   }
 
