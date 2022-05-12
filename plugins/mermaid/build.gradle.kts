@@ -145,15 +145,4 @@ tasks {
     // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
     channels.set(listOf(properties("pluginVersion").split('-').getOrElse(1) { "default" }.split('.').first()))
   }
-
-  withType<Test> {
-    testLogging {
-      this.showStandardStreams = true
-    }
-
-    // workaround for a Gradle issue, which lets "gradle test" actually run something
-    isScanForTestClasses = false
-    // Only run tests from classes that end with "Test"
-    // include("**/*Test.class")
-  }
 }
