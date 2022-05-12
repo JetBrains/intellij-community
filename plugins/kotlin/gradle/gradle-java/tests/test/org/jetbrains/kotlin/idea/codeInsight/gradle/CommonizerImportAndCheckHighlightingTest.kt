@@ -20,7 +20,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
     override fun printOutput(stream: PrintStream, text: String) = stream.println(text)
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.5.20-dev-0+")
+    @PluginTargetVersions(pluginVersion = "1.6.20+")
     fun testWithPosix() {
         configureByFiles()
         importProject(false)
@@ -109,7 +109,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
     }
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.5.20-dev-0+")
+    @PluginTargetVersions(pluginVersion = "1.6.20+")
     fun testSingleNativeTarget() {
         configureByFiles()
         importProject()
@@ -129,7 +129,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
     }
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.5.20-dev-0+")
+    @PluginTargetVersions(pluginVersion = "1.6.20+")
     fun testSingleSupportedNativeTargetDependencyPropagation() {
         configureByFiles()
         importProject()
@@ -170,7 +170,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
     }
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.5.20-dev+")
+    @PluginTargetVersions(pluginVersion = "1.6.20+")
     fun testLibraryNamesAndLevel() {
         configureByFiles()
         importProject(true)
