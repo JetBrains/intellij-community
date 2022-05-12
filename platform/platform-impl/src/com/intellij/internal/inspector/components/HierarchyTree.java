@@ -376,7 +376,7 @@ abstract class HierarchyTree extends JTree implements TreeSelectionListener {
     }
   }
 
-  private static class Icons {
+  static class Icons {
     private static final Map<Class<?>, Icon> COMPONENT_MAPPING = new HashMap<>();
 
     private static @NotNull Icon load(@NotNull String path) {

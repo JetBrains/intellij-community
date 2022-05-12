@@ -24,13 +24,16 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBThinOverlappingScrollBar;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +47,11 @@ import java.awt.event.WindowEvent;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
+import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER;
 
 public final class InspectorWindow extends JDialog implements Disposable {
   private InspectorTable myInspectorTable;
@@ -54,6 +61,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
   @NotNull private final java.util.List<HighlightComponent> myHighlightComponents = new ArrayList<>();
   private boolean myIsHighlighted = true;
   @NotNull private final HierarchyTree myHierarchyTree;
+  @NotNull private final ComponentsNavBarPanel myNavBarPanel;
   @NotNull private final Wrapper myWrapperPanel;
   @Nullable private final Project myProject;
   private final UiInspectorAction.UiInspector myInspector;
@@ -132,6 +140,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
         Component c = ((HierarchyTree.ComponentNode)node).getComponent();
         if (c != null) {
           isAccessibleEnable = !isAccessibleEnable;
+          myNavBarPanel.setAccessibleEnabled(isAccessibleEnable);
           myHierarchyTree.resetModel(c, isAccessibleEnable);
           myHierarchyTree.expandPath(isAccessibleEnable);
         }
@@ -208,6 +217,24 @@ public final class InspectorWindow extends JDialog implements Disposable {
     add(splitPane, BorderLayout.CENTER);
     DataManager.registerDataProvider(splitPane, provider);
 
+    Consumer<Component> selectionHandler = selectedComponent -> {
+      TreePath pathToSelect = TreeUtil.visitVisibleRows(myHierarchyTree, path -> {
+        Object node = path.getLastPathComponent();
+        Component curComponent = ((HierarchyTree.ComponentNode)node).getComponent();
+        return curComponent == selectedComponent ? TreeVisitor.Action.INTERRUPT : TreeVisitor.Action.CONTINUE;
+      });
+      if (pathToSelect != null) {
+        myHierarchyTree.setSelectionPath(pathToSelect);
+        myHierarchyTree.scrollPathToVisible(pathToSelect);
+      }
+    };
+    myNavBarPanel = new ComponentsNavBarPanel(component, selectionHandler);
+    JBScrollPane navBarScroll = new JBScrollPane(myNavBarPanel, VERTICAL_SCROLLBAR_NEVER, HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    navBarScroll.setHorizontalScrollBar(new JBThinOverlappingScrollBar(Adjustable.HORIZONTAL));
+    navBarScroll.setOverlappingScrollBar(true);
+    navBarScroll.setBorder(BorderFactory.createEmptyBorder());
+    add(navBarScroll, BorderLayout.SOUTH);
+
     myHierarchyTree.expandPath();
 
     addWindowListener(new WindowAdapter() {
@@ -277,9 +304,11 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myComponents.clear();
     myComponents.addAll(components);
     myInfo = null;
-    setTitle(components.get(0).getClass().getName());
-    myInspectorTable = new InspectorTable(components.get(0));
+    Component showingComponent = components.get(0);
+    setTitle(showingComponent.getClass().getName());
+    myInspectorTable = new InspectorTable(showingComponent);
     myWrapperPanel.setContent(myInspectorTable);
+    myNavBarPanel.setSelectedComponent(showingComponent);
   }
 
   private void switchClickInfo(@NotNull List<? extends PropertyBean> clickInfo) {
