@@ -62,12 +62,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     return LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(true) + suffix + ".java";
   }
 
-  private List<HighlightInfo> doTest(int maxMillis) {
-    configureByFile(getFilePath(""));
-    return startTest(maxMillis);
-  }
-
-  private List<HighlightInfo> startTest(int maxMillis) {
+  private void startTest(int maxMillis) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     assertNotNull(getFile().getText()); //to load text
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
@@ -75,24 +70,26 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     PlatformTestUtil.startPerformanceTest(getTestName(false), maxMillis, this::doHighlighting)
       .setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
       .usesAllCPUCores().assertTiming();
-
-    return highlightErrors();
   }
 
   public void testAThinlet() {
-    List<HighlightInfo> errors = doTest(8_000);
+    configureByFile(getFilePath(""));
+    List<HighlightInfo> errors = highlightErrors();
     if (1170 != errors.size()) {
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
     }
+    startTest(8_000);
   }
 
   public void testAClassLoader() {
-    List<HighlightInfo> errors = doTest(800);
+    configureByFile(getFilePath(""));
+    List<HighlightInfo> errors = highlightErrors();
     if (92 != errors.size()) {
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
     }
+    startTest(800);
   }
 
   public void testDuplicateMethods() {
@@ -102,9 +99,8 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     for (int i = 0; i < N; i++) text.append("class C").append(i).append(" {}\n");
     text.append("}");
     configureFromFileText("x.java", text.toString());
-
-    List<HighlightInfo> infos = startTest(3_300);
-    assertEmpty(infos);
+    assertEmpty(highlightErrors());
+    startTest(3_300);
   }
 
   public void testGetProjectPerformance() {
