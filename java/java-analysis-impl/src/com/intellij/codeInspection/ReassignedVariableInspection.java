@@ -32,7 +32,7 @@ public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectio
     return visitor;
   }
 
-  private static class ReassignedVariableVisitor extends JavaElementVisitor {
+  private class ReassignedVariableVisitor extends JavaElementVisitor {
     private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myLocals = new HashMap<>();
     private final Map<PsiParameter, Boolean> myParameters = new HashMap<>();
     private final @NotNull ProblemsHolder myHolder;
@@ -76,7 +76,7 @@ public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectio
         PsiElement resolve = expression.resolve();
         if (resolve instanceof PsiVariable && 
             !((PsiVariable)resolve).hasModifierProperty(PsiModifier.FINAL) &&
-            !SuppressManager.getInstance().isSuppressedFor(resolve, "ReassignedVariable")) {
+            !SuppressionUtil.inspectionResultSuppressed(resolve, ReassignedVariableInspection.this)) {
           if (resolve instanceof PsiLocalVariable) {
             if (HighlightControlFlowUtil.isReassigned((PsiVariable)resolve, myLocals)) {
               myHolder.registerProblem(referenceNameElement, getReassignedMessage((PsiVariable)resolve));
@@ -97,7 +97,7 @@ public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @NotNull
-    private static String getReassignedMessage(PsiVariable variable) {
+    private String getReassignedMessage(PsiVariable variable) {
       return JavaBundle.message(
         variable instanceof PsiLocalVariable ? "tooltip.reassigned.local.variable" : "tooltip.reassigned.parameter");
     }
