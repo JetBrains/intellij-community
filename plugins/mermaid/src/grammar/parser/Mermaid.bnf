@@ -20,14 +20,14 @@
 file ::= start
 private start ::= EOL start | comment start | directive start | diagram
 
-private diagram ::= pieHeader pieLines | JOURNEY journeyLines | flowchartHeader flowchartLines
+private diagram ::= pieHeader pieDocument | JOURNEY journeyDocument | flowchartHeader flowchartDocument
 
 pieHeader ::= PIE [showDataRec]
 private showDataRec ::= EOL showDataRec | SHOW_DATA
 
 
-pieLines ::= pieDocument
-upper pieDocument ::= pieLine [pieDocument]
+pieDocument ::= pieLines
+private pieLines ::= pieLine [pieLines]
 pieLine ::= pieStatement [EOL] | EOL
 private pieStatement ::= string COLON VALUE
 	| TITLE TITLE_VALUE
@@ -35,8 +35,8 @@ private pieStatement ::= string COLON VALUE
 	| comment
 
 
-journeyLines ::= journeyDocument
-upper journeyDocument ::= (journeyLine | IGNORED) [journeyDocument]
+journeyDocument ::= journeyLines
+private journeyLines ::= (journeyLine | IGNORED) [journeyLines]
 journeyLine ::= journeyStatement [EOL] | EOL
 private journeyStatement ::= TASK_NAME COLON (IGNORED | TASK_DATA (COLON TASK_DATA)+)
 	| SECTION SECTION_TITLE
@@ -47,8 +47,8 @@ private journeyStatement ::= TASK_NAME COLON (IGNORED | TASK_DATA (COLON TASK_DA
 
 flowchartHeader ::= FLOWCHART [DIR]
 
-flowchartLines ::= flowchartDocument
-upper flowchartDocument ::= (flowchartLine | IGNORED) [flowchartDocument]
+flowchartDocument ::= flowchartLines
+private flowchartLines ::= (flowchartLine | IGNORED) [flowchartLines]
 flowchartLine ::= flowchartStatement [separator] | separator
 private flowchartStatement ::= vertex_statement (separator vertex_statement)*
 	| subgraph_statement
@@ -80,7 +80,7 @@ vertex_text ::= SQUARE_START NODE_TEXT SQUARE_END
 							| INV_TRAP_START NODE_TEXT INV_TRAP_END
 							| DOUBLE_CIRCLE_START NODE_TEXT DOUBLE_CIRCLE_END
 
-subgraph_statement ::= SUBGRAPH NODE_ID separator (DIRECTION DIR separator | flowchartLines)* END
+subgraph_statement ::= SUBGRAPH NODE_ID separator (DIRECTION DIR separator | flowchartDocument)* END
 
 style_statement ::= STYLE STYLE_TARGET style_options
 
