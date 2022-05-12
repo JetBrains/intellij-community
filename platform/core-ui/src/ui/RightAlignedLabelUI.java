@@ -32,7 +32,7 @@ public class RightAlignedLabelUI extends BasicLabelUI {
       textR,
       label.getIconTextGap());
 
-    if (s.equals(""))
+    if (s.isEmpty())
       return text;
     return s;
   }
@@ -150,7 +150,7 @@ public class RightAlignedLabelUI extends BasicLabelUI {
      */
 
     // Fix for textIsEmpty sent by Paulo Santos
-    boolean textIsEmpty = (text == null) || (text.equals(""));
+    boolean textIsEmpty = (text == null) || (text.isEmpty());
 
     String rettext = "";
     if (textIsEmpty) {
