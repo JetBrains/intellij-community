@@ -43,6 +43,8 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.function.Supplier
 import javax.swing.*
+import javax.swing.event.TreeExpansionEvent
+import javax.swing.event.TreeWillExpandListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreePath
@@ -64,6 +66,7 @@ class RecentProjectFilteringTree(
       addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItem(this) }
       addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0)) { removeItem(this) }
       addMouseListener(ProjectActionMouseListener(this))
+      addTreeWillExpandListener(ToggleStateListener())
       putClientProperty(Control.Painter.KEY, Control.Painter.LEAF_WITHOUT_INDENT)
       putClientProperty(
         RenderingUtil.CUSTOM_SELECTION_BACKGROUND,
@@ -158,21 +161,22 @@ class RecentProjectFilteringTree(
   private class ProjectActionMouseListener(private val tree: Tree) : PopupHandler() {
     override fun mousePressed(mouseEvent: MouseEvent) {
       super.mousePressed(mouseEvent)
+
       if (mouseEvent.isConsumed || EditSourceOnDoubleClickHandler.isToggleEvent(tree, mouseEvent)) {
         return
       }
 
       val point = mouseEvent.point
       val treePath = TreeUtil.getPathForLocation(tree, point.x, point.y) ?: return
-      val node = treePath.lastPathComponent as DefaultMutableTreeNode
+      val item = TreeUtil.getLastUserObject(RecentProjectTreeItem::class.java, treePath) ?: return
 
       if (intersectWithActionIcon(point)) {
-        when (val treeItem = node.userObject as RecentProjectTreeItem) {
-          is CloneableProjectItem -> CloneableProjectsService.getInstance().removeCloneProject(treeItem.progressIndicator)
+        when (item) {
+          is CloneableProjectItem -> CloneableProjectsService.getInstance().removeCloneProject(item.progressIndicator)
           else -> invokePopup(mouseEvent.component, point.x, point.y)
         }
       }
-      else activateItem(mouseEvent, treePath, node)
+      else activateItem(mouseEvent, item)
 
       mouseEvent.consume()
     }
@@ -187,21 +191,10 @@ class RecentProjectFilteringTree(
       return row != -1 && getCloseIconRect(row).contains(point)
     }
 
-    private fun activateItem(mouseEvent: MouseEvent, treePath: TreePath, node: DefaultMutableTreeNode) {
+    private fun activateItem(mouseEvent: MouseEvent, item: RecentProjectTreeItem) {
       if (mouseEvent.clickCount == 1 && SwingUtilities.isLeftMouseButton(mouseEvent)) {
-        when (val project = node.userObject) {
-          is RootItem -> {} // Specific for RootItem (not visible in tree)
-          is ProjectsGroupItem -> {
-            if (tree.isExpanded(treePath)) {
-              tree.collapsePath(treePath)
-              project.group.isExpanded = false
-            }
-            else {
-              tree.expandPath(treePath)
-              project.group.isExpanded = true
-            }
-          }
-          is RecentProjectItem -> project.openProject(createActionEvent(tree))
+        if (item is RecentProjectItem) {
+          item.openProject(createActionEvent(tree))
         }
       }
     }
@@ -216,6 +209,23 @@ class RecentProjectFilteringTree(
       return Rectangle(tree.bounds.width - icon.iconWidth - JBUIScale.scale(10),
                        bounds.y + (bounds.height - icon.iconHeight) / 2,
                        icon.iconWidth, icon.iconHeight)
+    }
+  }
+
+  private class ToggleStateListener : TreeWillExpandListener {
+    override fun treeWillExpand(event: TreeExpansionEvent) {
+      setState(event, true)
+    }
+
+    override fun treeWillCollapse(event: TreeExpansionEvent) {
+      setState(event, false)
+    }
+
+    private fun setState(event: TreeExpansionEvent, isExpanded: Boolean) {
+      val item = TreeUtil.getLastUserObject(RecentProjectTreeItem::class.java, event.path) ?: return
+      if (item is ProjectsGroupItem) {
+        item.group.isExpanded = isExpanded
+      }
     }
   }
 
