@@ -232,6 +232,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   public String findJdkPath() {
     return requireJdkHome(getCurrentGradleVersion());
   }
+
   protected void collectAllowedRoots(final List<String> roots, PathAssembler.LocalDistribution distribution) {
   }
 
