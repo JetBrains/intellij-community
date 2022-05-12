@@ -211,6 +211,16 @@
       "up.svg": "actions/previousOccurence.svg",
       "upload.svg": "actions/upload.svg"
     },
+    "image": {
+      "colorPicker_dark.svg": "idea/community/platform/icons/src/ide/pipette.svg",
+      "chessboard.svg": "idea/community/images/resources/org/intellij/images/icons/ToggleTransparencyChessboard.svg",
+      "actualZoom.svg": "idea/community/platform/icons/src/graph/actualZoom.svg",
+      "colorPicker.svg": "idea/community/platform/icons/src/ide/pipette.svg",
+      "grid.svg": "idea/community/platform/icons/src/graph/grid.svg",
+      "zoomIn.svg": "idea/community/platform/icons/src/graph/zoomIn.svg",
+      "zoomOut.svg": "idea/community/platform/icons/src/graph/zoomOut.svg",
+      "fitContent.svg": "idea/community/platform/icons/src/general/fitContent.svg"
+    },
     "inline": {
       "browse.svg": [
         "general/openDisk.svg",
