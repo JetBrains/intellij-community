@@ -2,8 +2,6 @@ package com.github.firsttimeinforever.mermaid.lang.lexer
 
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.tree.IFileElementType
-import com.github.firsttimeinforever.mermaid.lang.MermaidLanguage
 
 object MermaidTokens {
   @JvmField
@@ -63,18 +61,21 @@ object MermaidTokens {
   @JvmField
   val EOL = MermaidToken("EOL")
 
+  @JvmField
+  val TITLE = MermaidToken("TITLE")
+
+  @JvmField
+  val TITLE_VALUE = MermaidToken("TITLE_VALUE")
+
+  @JvmField
+  val IGNORED = MermaidToken("IGNORED")
+
   object Pie {
     @JvmField
     val PIE = MermaidToken("Pie.PIE")
 
     @JvmField
     val SHOW_DATA = MermaidToken("Pie.SHOW_DATA")
-
-    @JvmField
-    val TITLE = MermaidToken("Pie.TITLE")
-
-    @JvmField
-    val TITLE_VALUE = MermaidToken("Pie.TITLE_VALUE")
 
     @JvmField
     val VALUE = MermaidToken("Pie.VALUE")

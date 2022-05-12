@@ -4,8 +4,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.lang.PsiBuilderFactory
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.github.firsttimeinforever.mermaid.lang.MermaidParserDefinition
-import com.github.firsttimeinforever.mermaid.lang.lexer.LexerSanityTest
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidLexer
+import com.github.firsttimeinforever.mermaid.lang.lexer.*
 
 class ParserSanityTest: LightPlatformCodeInsightTestCase() {
   fun `test stuff`() {
@@ -15,7 +14,7 @@ class ParserSanityTest: LightPlatformCodeInsightTestCase() {
       "some" : 42
       "some" : 42
     """.trimIndent()
-    println(LexerSanityTest.tokensToString(LexerSanityTest.runLexer(content)))
+    println(MermaidTestCase.tokensToString(MermaidTestCase.runLexer(content)))
     val parser = MermaidParser()
     val builder = PsiBuilderFactory.getInstance().createBuilder(MermaidParserDefinition(), MermaidLexer(), content)
     val tree = parser.parse(MermaidParserDefinition.FILE, builder)
