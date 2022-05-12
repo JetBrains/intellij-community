@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.psi.util.PsiUtilBase
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
@@ -56,8 +57,8 @@ internal fun registerBackForwardActions(component: JComponent) {
 }
 
 class DocumentationTargetsDataRule : GetDataRule {
-  override fun getData(dataProvider: DataProvider): List<DocumentationTarget> {
-    return documentationTargetsInner(dataProvider)
+  override fun getData(dataProvider: DataProvider): List<DocumentationTarget>? {
+    return ContainerUtil.nullize(documentationTargetsInner(dataProvider))
   }
 }
 
@@ -97,9 +98,7 @@ fun targetsFromEditor(project: Project, editor: Editor, offset: Int): List<Docum
                  ?: return null
     return listOf(target)
   }
-  return ideTargetProvider.documentationTargets(editor, file, offset).takeIf {
-    it.isNotEmpty()
-  }
+  return ContainerUtil.nullize(ideTargetProvider.documentationTargets(editor, file, offset))
 }
 
 internal fun documentationHistory(dc: DataContext): DocumentationHistory? {
