@@ -49,7 +49,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   public static final boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));
 
-  private static CheckCanceledHook ourCheckCanceledHook;
   private ScheduledFuture<?> myCheckCancelledFuture; // guarded by threadsUnderIndicator
 
   // indicator -> threads which are running under this indicator.
@@ -679,7 +678,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           startBackgroundNonStandardIndicatorsPing();
         }
 
-        oneOfTheIndicatorsIsCanceled |= thisIndicator.isCanceled();
+        oneOfTheIndicatorsIsCanceled = oneOfTheIndicatorsIsCanceled || thisIndicator.isCanceled();
       }
 
       updateThreadUnderCanceledIndicator(currentThread, oneOfTheIndicatorsIsCanceled);
@@ -773,7 +772,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     return isInNonCancelableSection.get() != null;
   }
 
-  private static final long MAX_PRIORITIZATION_NANOS = TimeUnit.SECONDS.toNanos(12);
+  private static final long MAX_PRIORITIZATION_NANOS = TimeUnit.SECONDS.toNanos(12); // maximum duration of process to run under low priority
+  private static final long MIN_PRIORITIZATION_NANOS = TimeUnit.MILLISECONDS.toNanos(5); // minimum duration of process to consider prioritizing it down
   private static final Thread[] EMPTY_THREAD_ARRAY = new Thread[0];
   private final Set<Thread> myPrioritizedThreads = ContainerUtil.newConcurrentSet();
   private volatile Thread[] myEffectivePrioritizedThreads = EMPTY_THREAD_ARRAY;
@@ -857,7 +857,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   protected boolean sleepIfNeededToGivePriorityToAnotherThread() {
-    if (!isCurrentThreadEffectivelyPrioritized() && checkLowPriorityReallyApplicable()) {
+    if (!isCurrentThreadEffectivelyPrioritized() && isLowPriorityReallyApplicable()) {
       LockSupport.parkNanos(1_000_000);
       avoidBlockingPrioritizingThread();
       return true;
@@ -869,9 +869,9 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     return ArrayUtil.indexOfIdentity(myEffectivePrioritizedThreads, Thread.currentThread()) != -1;
   }
 
-  private boolean checkLowPriorityReallyApplicable() {
+  private boolean isLowPriorityReallyApplicable() {
     long time = System.nanoTime() - myPrioritizingStarted;
-    if (time < 5_000_000) {
+    if (time < MIN_PRIORITIZATION_NANOS) {
       return false; // don't sleep when activities are very short (e.g., empty processing of mouseMoved events)
     }
 
