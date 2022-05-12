@@ -57,7 +57,7 @@ public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormatti
         }
       }
       if (offset == oldOffset) {
-        return start;
+        return offset;
       }
     }
     return offset;
