@@ -488,8 +488,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     List<LafReference> result = new ArrayList<>();
     boolean addSeparator = false;
     Map<String, Integer> lafNameOrder = UiThemeProviderListManager.Companion.getLafNameOrder();
+    List<String> excludedThemes = UiThemeProviderListManager.Companion.getExcludedThemes();
     int maxNameOrder = Collections.max(lafNameOrder.values());
     for (UIManager.LookAndFeelInfo info : lafList.getValue()) {
+      if (excludedThemes.contains(info.getName())) continue;
       if (addSeparator) {
         result.add(SEPARATOR);
         addSeparator = false;
