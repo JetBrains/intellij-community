@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -252,6 +252,19 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
     IntentionAction action = myFixture.findSingleIntention("Remove 'for' statement");
     myFixture.launchAction(action);
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  public void testProtectedInnerClass() {
+    myFixture.addClass("package a;\n" +
+                       "public class Outer {\n" +
+                       " public Object get(Inner key) {\n" +
+                       "  return null;\n" +
+                       " }\n" +
+                       " public Inner get1() {return null;} \n" +
+                       " public Inner f; \n" +
+                       " protected class Inner {}\n" +
+                       "}");
+    doTest();
   }
 
   private void doTest() {
