@@ -1176,4 +1176,25 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
     return false;
   }
+
+  public static boolean activateEditorComponentOnEscape(Component target) {
+    while (target != null && !(target instanceof Window)) {
+      if (target instanceof EditorsSplitters) {
+        return false; // editor is already focused
+      }
+      target = target.getParent();
+    }
+    if (target instanceof FloatingDecorator) {
+      target = target.getParent();
+    }
+    if (!(target instanceof IdeFrame)) {
+      return false;
+    }
+    Project project = ((IdeFrame)target).getProject();
+    if (project == null) {
+      return false;
+    }
+    ToolWindowManager.getInstance(project).activateEditorComponent();
+    return true;
+  }
 }
