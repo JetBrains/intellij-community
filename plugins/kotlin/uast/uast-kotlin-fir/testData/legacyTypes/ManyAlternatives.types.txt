@@ -18,9 +18,9 @@ UFile (package = ) [public final class ClassA {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
         UMethod (name = foo) [@kotlin.jvm.JvmStatic...}]
             UAnnotation (fqName = kotlin.jvm.JvmStatic) [@kotlin.jvm.JvmStatic]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
         UClass (name = Companion) [public static final class Companion {...}]
             UMethod (name = foo) [@kotlin.jvm.JvmStatic...}]
                 UAnnotation (fqName = kotlin.jvm.JvmStatic) [@kotlin.jvm.JvmStatic]
-                UBlockExpression [{...}] : PsiType:Unit
+                UBlockExpression [{...}] : PsiType:void
             UMethod (name = Companion) [private fun Companion() = UastEmptyExpression]
