@@ -190,18 +190,17 @@ enum class HintType(
     };
 
     companion object {
-        fun resolve(e: PsiElement): List<HintType> =
-            values().filter { it.isApplicable(e) }
+        private val values = values()
 
-        fun resolveToEnabled(e: PsiElement?): HintType? =
-            e?.let { resolve(it) }?.firstOrNull { it.enabled }
+        fun resolve(e: PsiElement): List<HintType> =
+            values.filter { it.isApplicable(e) }
+
     }
 
     abstract fun isApplicable(e: PsiElement): Boolean
     open fun provideHints(e: PsiElement): List<InlayInfo> = emptyList()
-    open fun provideHintDetails(e: PsiElement): List<InlayInfoDetails> {
-        return provideHints(e).map { InlayInfoDetails(it, listOf(TextInlayInfoDetail(it.text))) }
-    }
+    open fun provideHintDetails(e: PsiElement): List<InlayInfoDetails> =
+        provideHints(e).map { InlayInfoDetails(it, listOf(TextInlayInfoDetail(it.text))) }
 
     val option = Option("SHOW_${this.name}", { this.description }, defaultEnabled)
     val enabled
