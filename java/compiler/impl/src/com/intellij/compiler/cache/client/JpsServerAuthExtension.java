@@ -42,8 +42,7 @@ public interface JpsServerAuthExtension {
    * It will be called in the background thread. The assertion that thread isn't EDT can
    * be added to the implementation.
    * @return Map with header name as key and token. If it's not possible to get the authentication
-   * headers for whatever reasons empty map will be returned, `null` will be returned if the refresh
-   * token is invalid.
+   * headers, `null` will be returned.
    */
   @Nullable Map<String, String> getAuthHeader(boolean force);
 
