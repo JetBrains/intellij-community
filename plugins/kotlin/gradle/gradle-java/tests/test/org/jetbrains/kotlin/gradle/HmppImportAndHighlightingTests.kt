@@ -10,13 +10,13 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.codeInsight.gradle.compareTo
-import org.jetbrains.kotlin.idea.codeInsight.gradle.parseKotlinVersion
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Assume.assumeTrue
@@ -231,19 +231,19 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                     moduleDependency("multimod-hmpp.top-mpp.jsMain", DependencyScope.COMPILE)
                     moduleDependency(
                         "multimod-hmpp.top-mpp.commonMain", DependencyScope.COMPILE,
-                        allowMultiple = kotlinPluginVersion < parseKotlinVersion("1.5.30")
+                        allowMultiple = kotlinPluginVersion < KotlinToolingVersion("1.5.30")
                     )
                     moduleDependency(
                         "multimod-hmpp.top-mpp.jsJvm18iOSMain", DependencyScope.COMPILE,
-                        allowMultiple = kotlinPluginVersion < parseKotlinVersion("1.5.30")
+                        allowMultiple = kotlinPluginVersion < KotlinToolingVersion("1.5.30")
                     )
                     moduleDependency(
                         "multimod-hmpp.top-mpp.jsLinuxMain", DependencyScope.COMPILE,
-                        allowMultiple = kotlinPluginVersion < parseKotlinVersion("1.5.30")
+                        allowMultiple = kotlinPluginVersion < KotlinToolingVersion("1.5.30")
                     )
                     moduleDependency(
                         "multimod-hmpp.top-mpp.kt27816Main", DependencyScope.COMPILE,
-                        allowMultiple = kotlinPluginVersion < parseKotlinVersion("1.5.30")
+                        allowMultiple = kotlinPluginVersion < KotlinToolingVersion("1.5.30")
                     )
                 }
                 module("multimod-hmpp.mpp-additional.jsTest") {
@@ -256,19 +256,19 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                     moduleDependency("multimod-hmpp.top-mpp.jsMain", DependencyScope.TEST)
                     moduleDependency(
                         "multimod-hmpp.top-mpp.commonMain", DependencyScope.TEST,
-                        allowMultiple = kotlinPluginVersion < parseKotlinVersion("1.5.30")
+                        allowMultiple = kotlinPluginVersion < KotlinToolingVersion("1.5.30")
                     )
                     moduleDependency(
                         "multimod-hmpp.top-mpp.jsJvm18iOSMain", DependencyScope.TEST,
-                        allowMultiple = kotlinPluginVersion < parseKotlinVersion("1.5.30")
+                        allowMultiple = kotlinPluginVersion < KotlinToolingVersion("1.5.30")
                     )
                     moduleDependency(
                         "multimod-hmpp.top-mpp.jsLinuxMain", DependencyScope.TEST,
-                        allowMultiple = kotlinPluginVersion < parseKotlinVersion("1.5.30")
+                        allowMultiple = kotlinPluginVersion < KotlinToolingVersion("1.5.30")
                     )
                     moduleDependency(
                         "multimod-hmpp.top-mpp.kt27816Main", DependencyScope.TEST,
-                        allowMultiple = kotlinPluginVersion < parseKotlinVersion("1.5.30")
+                        allowMultiple = kotlinPluginVersion < KotlinToolingVersion("1.5.30")
                     )
                 }
                 module("multimod-hmpp.mpp-additional.jvmMacosMain") {

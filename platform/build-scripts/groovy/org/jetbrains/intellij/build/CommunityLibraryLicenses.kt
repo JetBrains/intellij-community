@@ -796,6 +796,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("jshell-frontend"),
     jetbrainsLibrary("jvm-native-trusted-roots"),
     jetbrainsLibrary("kotlin-gradle-plugin-idea"),
+    jetbrainsLibrary("kotlin-tooling-core"),
     jetbrainsLibrary("kotlin-script-runtime"),
     jetbrainsLibrary("kotlin-test"),
     jetbrainsLibrary("kotlinc.allopen-compiler-plugin"),

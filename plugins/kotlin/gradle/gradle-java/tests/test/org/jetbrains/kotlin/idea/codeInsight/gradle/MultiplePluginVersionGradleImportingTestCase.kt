@@ -10,12 +10,12 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.Disposer
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.KotlinVersion
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.LAST_SNAPSHOT
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_4_32
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_32
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_6_21
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_7_0_Beta
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
@@ -27,8 +27,10 @@ import java.io.File
 abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImportingTestCase() {
 
     sealed class KotlinVersionRequirement {
-        data class Exact(val version: KotlinVersion) : KotlinVersionRequirement()
-        data class Range(val lowestIncludedVersion: KotlinVersion?, val highestIncludedVersion: KotlinVersion?) : KotlinVersionRequirement()
+        data class Exact(val version: KotlinToolingVersion) : KotlinVersionRequirement()
+        data class Range(
+            val lowestIncludedVersion: KotlinToolingVersion?, val highestIncludedVersion: KotlinToolingVersion?
+            ) : KotlinVersionRequirement()
     }
 
     @Rule
@@ -39,7 +41,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     @Parameterized.Parameter(1)
     var kotlinPluginParameter: String = ""
 
-    val kotlinPluginVersion: KotlinVersion get() = parseKotlinVersion(kotlinPluginVersionString)
+    val kotlinPluginVersion: KotlinToolingVersion get() = KotlinToolingVersion(kotlinPluginVersionString)
 
     open val kotlinPluginVersionString: String get() = if (kotlinPluginParameter == "master") masterKotlinPluginVersion else kotlinPluginParameter
 
@@ -59,7 +61,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         Commonizer runner forwarded this property and failed, because IntelliJ might set a custom
         ClassLoader, which will not be available for the Commonizer.
         */
-        if (kotlinPluginVersion < parseKotlinVersion("1.5.20")) {
+        if (kotlinPluginVersion < KotlinToolingVersion("1.5.20")) {
             val classLoaderKey = "java.system.class.loader"
             System.getProperty(classLoaderKey)?.let { configuredClassLoader ->
                 System.clearProperty(classLoaderKey)

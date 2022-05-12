@@ -2,10 +2,12 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 
 object GradleKotlinTestUtils {
 
+    @Deprecated("Use KotlinToolingVersion instead", level = DeprecationLevel.ERROR)
     data class KotlinVersion(
         val major: Int,
         val minor: Int,
@@ -31,12 +33,11 @@ object GradleKotlinTestUtils {
     }
 
     object TestedKotlinGradlePluginVersions {
-        val V_1_4_32 = KotlinVersion(1, 4, 32)
-        val V_1_5_32 = KotlinVersion(1, 5, 32)
-        val V_1_6_21 = KotlinVersion(1, 6, 21)
-        val V_1_7_0_Beta = KotlinVersion(1, 7, 0, "Beta")
-
-        val LAST_SNAPSHOT = KotlinVersion(1, 7, 255, "SNAPSHOT")
+        val V_1_4_32 = KotlinToolingVersion(1, 4, 32, null)
+        val V_1_5_32 = KotlinToolingVersion(1, 5, 32, null)
+        val V_1_6_21 = KotlinToolingVersion(1, 6, 21, null)
+        val V_1_7_0_Beta = KotlinToolingVersion(1, 7, 0, "Beta")
+        val LAST_SNAPSHOT = KotlinToolingVersion(1, 7, 255, "SNAPSHOT")
 
         val ALL_PUBLIC = listOf(
             V_1_4_32,
