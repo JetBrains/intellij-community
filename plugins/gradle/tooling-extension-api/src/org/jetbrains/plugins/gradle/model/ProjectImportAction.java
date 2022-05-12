@@ -205,7 +205,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       return Collections.emptySet();
     }
     Set<String> processedBuildsPaths = new HashSet<String>();
-    Set<GradleBuild> nestedBuilds = new HashSet<GradleBuild>();
+    Set<GradleBuild> nestedBuilds = new LinkedHashSet<GradleBuild>();
     String rootBuildPath = rootBuild.getBuildIdentifier().getRootDir().getPath();
     processedBuildsPaths.add(rootBuildPath);
     Queue<GradleBuild> queue = new LinkedList<GradleBuild>(rootBuild.getIncludedBuilds());

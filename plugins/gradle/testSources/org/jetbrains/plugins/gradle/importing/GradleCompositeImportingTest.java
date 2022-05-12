@@ -353,9 +353,9 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
         // generated modules by gradle import
         "adhoc",
         "my-app", "my-app_main", "my-app_test",
-        myAppApiModuleName, myAppApiMainModuleName, "org.sample-api_test",
+        myAppApiModuleName, myAppApiMainModuleName, "api_test",
         "my-utils",
-        "org.sample-api", myUtilsApiMainModuleName, "api_test",
+        "org.sample-api", myUtilsApiMainModuleName, "org.sample-api_test",
         "string-utils", "string-utils_main", "string-utils_test",
         "number-utils", "number-utils_main", "number-utils_test"
       );
