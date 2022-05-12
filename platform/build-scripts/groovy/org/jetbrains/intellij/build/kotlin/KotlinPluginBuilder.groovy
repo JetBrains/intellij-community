@@ -112,7 +112,7 @@ final class KotlinPluginBuilder {
     "kotlin.i18n",
     "kotlin.project-model",
     "kotlin.features-trainer"
-    )
+  )
 
   @SuppressWarnings('SpellCheckingInspection')
   private static final List<String> LIBRARIES = List.of(
@@ -121,7 +121,8 @@ final class KotlinPluginBuilder {
     "kotlinc.kotlin-scripting-common",
     "kotlinc.kotlin-scripting-jvm",
     "kotlinc.kotlin-gradle-statistics",
-    "kotlin-gradle-plugin-idea"
+    "kotlin-gradle-plugin-idea",
+    "kotlin-tooling-core"
   )
 
   private static final List<String> COMPILER_PLUGINS = List.of(
@@ -195,11 +196,11 @@ final class KotlinPluginBuilder {
 
           ArchiveKt.consumeDataByPrefix(
             jars[0].toPath(), "META-INF/extensions/", new BiConsumer<String, byte[]>() {
-              @Override
-              void accept(String name, byte[] data) {
-                patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, name, data)
-              }
-            })
+            @Override
+            void accept(String name, byte[] data) {
+              patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, name, data)
+            }
+          })
         }
       })
 
@@ -318,7 +319,7 @@ final class KotlinPluginBuilder {
 
   private static String replace(String oldText, String regex, String newText) {
     String result = oldText.replaceFirst(regex, newText)
-    if (result == oldText && /* Update IDE from Sources */ !oldText.contains(newText)) {
+    if (result == oldText && /* Update IDE from Sources */!oldText.contains(newText)) {
       throw new IllegalStateException("Cannot find '$regex' in '$oldText'")
     }
     return result
