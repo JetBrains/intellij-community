@@ -30,7 +30,7 @@ internal class MermaidParserDefinition: ParserDefinition {
   }
 
   override fun getCommentTokens(): TokenSet {
-    return TokenSet.create(MermaidTokens.COMMENT_TEXT)
+    return TokenSet.create(MermaidElements.COMMENT)
   }
 
   override fun getStringLiteralElements(): TokenSet {
