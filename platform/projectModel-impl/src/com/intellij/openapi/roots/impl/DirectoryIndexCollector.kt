@@ -6,11 +6,18 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 class DirectoryIndexCollector : CounterUsagesCollector() {
+  enum class ResetReason { ROOT_MODEL, VFS_CHANGE, ADDITIONAL_LIBRARIES_PROVIDER }
   enum class BuildRequestKind { INITIAL, BRANCH_BUILD, FULL_REBUILD, INCREMENTAL_UPDATE }
   enum class BuildPart { MAIN, ORDER_ENTRY_GRAPH }
 
   companion object {
     val GROUP = EventLogGroup("directoryIndex", 1)
+
+    @JvmField
+    val RESET_REASON = EventFields.Enum("reason", ResetReason::class.java)
+
+    @JvmField
+    val RESET = GROUP.registerEvent("reset", RESET_REASON)
 
     @JvmField
     val BUILD_REQUEST = EventFields.Enum("buildRequest", BuildRequestKind::class.java)

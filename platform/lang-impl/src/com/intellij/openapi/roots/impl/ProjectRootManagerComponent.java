@@ -24,7 +24,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -39,12 +42,15 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.EntityIndexingService;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -164,7 +170,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     try {
       DirectoryIndex directoryIndex = DirectoryIndex.getInstance(myProject);
       if (directoryIndex instanceof DirectoryIndexImpl) {
-        ((DirectoryIndexImpl)directoryIndex).reset();
+        ((DirectoryIndexImpl)directoryIndex).reset(DirectoryIndexCollector.ResetReason.ROOT_MODEL);
       }
       myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, fileTypes));
     }
@@ -179,7 +185,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     try {
       DirectoryIndex directoryIndex = DirectoryIndex.getInstance(myProject);
       if (directoryIndex instanceof DirectoryIndexImpl) {
-        ((DirectoryIndexImpl)directoryIndex).reset();
+        ((DirectoryIndexImpl)directoryIndex).reset(DirectoryIndexCollector.ResetReason.ROOT_MODEL);
       }
       myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, fileTypes, indexingInfos));
     }

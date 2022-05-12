@@ -77,7 +77,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
           rootIndex.myPackageDirectoryCache.clear();
           for (VFileEvent event : events) {
             if (isIgnoredFileCreated(event)) {
-              myRootIndex = null;
+              reset(DirectoryIndexCollector.ResetReason.VFS_CHANGE);
               break;
             }
           }
@@ -227,7 +227,8 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     }
   }
 
-  void reset() {
+  void reset(DirectoryIndexCollector.ResetReason reason) {
     myRootIndex = null;
+    DirectoryIndexCollector.RESET.log(reason);
   }
 }
