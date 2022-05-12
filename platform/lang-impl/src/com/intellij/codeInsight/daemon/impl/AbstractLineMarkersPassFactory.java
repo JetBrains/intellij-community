@@ -18,7 +18,7 @@ abstract class AbstractLineMarkersPassFactory implements TextEditorHighlightingP
     return MarkupModelImpl.roundToLineBoundaries(document, textRange.getStartOffset(), textRange.getEndOffset());
   }
 
-  class Factory implements TextEditorHighlightingPassFactory {
+  static class Factory implements TextEditorHighlightingPassFactory {
     private final LineMarkersPass.Mode myMode;
 
     Factory(LineMarkersPass.Mode mode) {
