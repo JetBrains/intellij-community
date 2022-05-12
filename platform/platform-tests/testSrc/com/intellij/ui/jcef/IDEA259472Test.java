@@ -94,6 +94,6 @@ public class IDEA259472Test {
 
     await(latch2);
 
-    assertThat(jbCefBrowser.getCefBrowser().getURL()).contains("yandex");
+    assertThat(jbCefBrowser.getCefBrowser().getURL()).contains("jetbrains");
   }
 }
