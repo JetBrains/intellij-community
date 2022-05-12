@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.dependency.analyzer
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.externalSystem.dependency.analyzer.*
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.project.*
@@ -13,8 +13,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode
 import com.intellij.openapi.externalSystem.view.ModuleNode
 import com.intellij.openapi.externalSystem.view.ProjectNode
-import org.jetbrains.plugins.gradle.util.GradleConstants
 import com.intellij.openapi.module.Module
+import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class ViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<ExternalSystemNode<*>>() {
 
@@ -24,11 +24,12 @@ class ViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<ExternalSy
     return e.getData(ExternalSystemDataKeys.SELECTED_NODES)?.firstOrNull()
   }
 
-  override fun getExternalProjectPath(e: AnActionEvent, selectedData: ExternalSystemNode<*>): String? {
-    return selectedData.findNode(ModuleNode::class.java)
-             ?.data?.linkedExternalProjectPath
-           ?: selectedData.findNode(ProjectNode::class.java)
-             ?.data?.linkedExternalProjectPath
+  override fun getModule(e: AnActionEvent, selectedData: ExternalSystemNode<*>): Module? {
+    val project = e.project ?: return null
+    return selectedData.findNode(ModuleNode::class.java)?.data
+             ?.let { ExternalSystemApiUtil.findModule(project, it) }
+           ?: selectedData.findNode(ProjectNode::class.java)?.data
+             ?.let { ExternalSystemApiUtil.findModule(project, it) }
   }
 
   override fun getDependencyData(e: AnActionEvent, selectedData: ExternalSystemNode<*>): DependencyAnalyzerDependency.Data? {
@@ -66,12 +67,15 @@ class ProjectViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<Mod
   override fun getSystemId(e: AnActionEvent) = GradleConstants.SYSTEM_ID
 
   override fun getSelectedData(e: AnActionEvent): Module? {
-    val modules = e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY) ?: return null
-    return modules.find { ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, it) }
+    val module = e.getData(PlatformCoreDataKeys.MODULE) ?: return null
+    if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
+      return module
+    }
+    return null
   }
 
-  override fun getExternalProjectPath(e: AnActionEvent, selectedData: Module): String? {
-    return ExternalSystemApiUtil.getExternalProjectPath(selectedData)
+  override fun getModule(e: AnActionEvent, selectedData: Module): Module {
+    return selectedData
   }
 
   override fun getDependencyData(e: AnActionEvent, selectedData: Module): DependencyAnalyzerDependency.Data {
