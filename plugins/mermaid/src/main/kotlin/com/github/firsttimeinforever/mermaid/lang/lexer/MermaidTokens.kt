@@ -97,4 +97,138 @@ object MermaidTokens {
     @JvmField
     val TASK_DATA = MermaidToken("Journey.TASK_DATA")
   }
+
+  object Flowchart {
+    @JvmField
+    val FLOWCHART = MermaidToken("Flowchart.FLOWCHART")
+
+    @JvmField
+    val DIR = MermaidToken("Flowchart.DIR")
+
+    @JvmField
+    val NODE_ID = MermaidToken("Flowchart.NODE_ID")
+
+    @JvmField
+    val NODE_TEXT = MermaidToken("Flowchart.NODE_TEXT")
+
+    @JvmField
+    val SQUARE_START = MermaidToken("Flowchart.SQUARE_START")
+
+    @JvmField
+    val SQUARE_END = MermaidToken("Flowchart.SQUARE_END")
+
+    @JvmField
+    val ROUND_START = MermaidToken("Flowchart.ROUND_START")
+
+    @JvmField
+    val ROUND_END = MermaidToken("Flowchart.ROUND_END")
+
+    @JvmField
+    val STADIUM_START = MermaidToken("Flowchart.STADIUM_START")
+
+    @JvmField
+    val STADIUM_END = MermaidToken("Flowchart.STADIUM_END")
+
+    @JvmField
+    val SUBROUTINE_START = MermaidToken("Flowchart.SUBROUTINE_START")
+
+    @JvmField
+    val SUBROUTINE_END = MermaidToken("Flowchart.SUBROUTINE_END")
+
+    @JvmField
+    val CYLINDER_START = MermaidToken("Flowchart.CYLINDER_START")
+
+    @JvmField
+    val CYLINDER_END = MermaidToken("Flowchart.CYLINDER_END")
+
+    @JvmField
+    val CIRCLE_START = MermaidToken("Flowchart.CIRCLE_START")
+
+    @JvmField
+    val CIRCLE_END = MermaidToken("Flowchart.CIRCLE_END")
+
+    @JvmField
+    val ASYMMETRIC_START = MermaidToken("Flowchart.ASYMMETRIC_START")
+
+    @JvmField
+    val DIAMOND_START = MermaidToken("Flowchart.DIAMOND_START")
+
+    @JvmField
+    val DIAMOND_END = MermaidToken("Flowchart.DIAMOND_END")
+
+    @JvmField
+    val HEXAGON_START = MermaidToken("Flowchart.HEXAGON_START")
+
+    @JvmField
+    val HEXAGON_END = MermaidToken("Flowchart.HEXAGON_END")
+
+    @JvmField
+    val TRAP_START = MermaidToken("Flowchart.TRAP_START")
+
+    @JvmField
+    val TRAP_END = MermaidToken("Flowchart.TRAP_END")
+
+    @JvmField
+    val INV_TRAP_START = MermaidToken("Flowchart.INV_TRAP_START")
+
+    @JvmField
+    val INV_TRAP_END = MermaidToken("Flowchart.INV_TRAP_END")
+
+    @JvmField
+    val DOUBLE_CIRCLE_START = MermaidToken("Flowchart.DOUBLE_CIRCLE_START")
+
+    @JvmField
+    val DOUBLE_CIRCLE_END = MermaidToken("Flowchart.DOUBLE_CIRCLE_END")
+
+    @JvmField
+    val LINK = MermaidToken("Flowchart.LINK")
+
+    @JvmField
+    val START_LINK = MermaidToken("Flowchart.START_LINK")
+
+    @JvmField
+    val LINK_TEXT = MermaidToken("Flowchart.LINK_TEXT")
+
+    @JvmField
+    val SEP = MermaidToken("Flowchart.SEP")
+
+    @JvmField
+    val AMPERSAND = MermaidToken("AMPERSAND")
+
+    @JvmField
+    val SUBGRAPH = MermaidToken("SUBGRAPH")
+
+    @JvmField
+    val END = MermaidToken("END")
+
+    @JvmField
+    val DIRECTION = MermaidToken("DIRECTION")
+
+    @JvmField
+    val LINK_STYLE = MermaidToken("LINK_STYLE")
+
+    @JvmField
+    val STYLE = MermaidToken("STYLE")
+
+    @JvmField
+    val STYLE_TARGET = MermaidToken("STYLE_TARGET")
+
+    @JvmField
+    val STYLE_OPT = MermaidToken("STYLE_OPT")
+
+    @JvmField
+    val STYLE_VAL = MermaidToken("STYLE_VAL")
+
+    @JvmField
+    val CLASS_DEF = MermaidToken("CLASS_DEF")
+
+    @JvmField
+    val CLASS = MermaidToken("CLASS")
+
+    @JvmField
+    val STYLE_SEPARATOR = MermaidToken("STYLE_SEPARATOR")
+
+    @JvmField
+    val DEFAULT = MermaidToken("DEFAULT")
+  }
 }

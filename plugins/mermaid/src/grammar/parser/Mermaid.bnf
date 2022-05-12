@@ -12,6 +12,7 @@
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.*'
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie.*'
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Journey.*'
+    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.*'
   ]
   generateTokens=false
 }
@@ -19,7 +20,7 @@
 file ::= start
 private start ::= EOL start | comment start | directive start | diagram
 
-private diagram ::= pieHeader pieLines | JOURNEY journeyLines
+private diagram ::= pieHeader pieLines | JOURNEY journeyLines | flowchartHeader flowchartLines
 
 pieHeader ::= PIE [showDataRec]
 private showDataRec ::= EOL showDataRec | SHOW_DATA
@@ -42,6 +43,56 @@ private journeyStatement ::= TASK_NAME COLON (IGNORED | TASK_DATA (COLON TASK_DA
 	| TITLE TITLE_VALUE
 	| directive
 	| comment
+
+
+flowchartHeader ::= FLOWCHART [DIR]
+
+flowchartLines ::= flowchartDocument
+upper flowchartDocument ::= (flowchartLine | IGNORED) [flowchartDocument]
+flowchartLine ::= flowchartStatement [separator] | separator
+private flowchartStatement ::= vertex_statement (separator vertex_statement)*
+	| subgraph_statement
+	| style_statement
+	| link_style_statement
+	| class_def_statement
+	| class_statement
+//	| directive
+	| comment
+
+private separator ::= EOL | SEMICOLON
+vertex_statement ::= node_statement [link_statement vertex_statement]
+link_statement ::= START_LINK LINK_TEXT LINK | LINK [SEP LINK_TEXT SEP]
+node_statement ::= vertex STYLE_SEPARATOR STYLE_TARGET | vertex [AMPERSAND node_statement]
+vertex ::= vertex_id [vertex_text]
+vertex_id ::= NODE_ID+
+vertex_text ::= SQUARE_START NODE_TEXT SQUARE_END
+							| ROUND_START NODE_TEXT ROUND_END
+							| STADIUM_START NODE_TEXT STADIUM_END
+							| SUBROUTINE_START NODE_TEXT SUBROUTINE_END
+							| CYLINDER_START NODE_TEXT CYLINDER_END
+							| CIRCLE_START NODE_TEXT CIRCLE_END
+							| ASYMMETRIC_START NODE_TEXT SQUARE_END
+							| DIAMOND_START NODE_TEXT DIAMOND_END
+							| HEXAGON_START NODE_TEXT HEXAGON_END
+							| TRAP_START NODE_TEXT INV_TRAP_END
+              | INV_TRAP_START NODE_TEXT TRAP_END
+							| TRAP_START NODE_TEXT TRAP_END
+							| INV_TRAP_START NODE_TEXT INV_TRAP_END
+							| DOUBLE_CIRCLE_START NODE_TEXT DOUBLE_CIRCLE_END
+
+subgraph_statement ::= SUBGRAPH NODE_ID separator (DIRECTION DIR separator | flowchartLines)* END
+
+style_statement ::= STYLE STYLE_TARGET style_options
+
+link_style_statement ::= LINK_STYLE link_style_target style_options
+private link_style_target ::= STYLE_TARGET (COMMA STYLE_TARGET)* | DEFAULT
+
+class_def_statement ::= CLASS_DEF (STYLE_TARGET | DEFAULT) style_options
+
+class_statement ::= CLASS NODE_ID (COMMA NODE_ID)* STYLE_TARGET
+
+style_options ::= STYLE_OPT COLON STYLE_VAL (COMMA  STYLE_OPT COLON STYLE_VAL)*
+
 
 comment ::= LINE_COMMENT [COMMENT_TEXT]
 
