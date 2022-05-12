@@ -750,11 +750,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static Color wrapColorToNamedColor(Color color, String key) {
-    if (Registry.is("ide.ui.wrap.colors")) {
-      return color instanceof UIResource ? new IJColorUIResource(color, key)
-                                         : new IJColor(color, key);
-    }
-    return color;
+    return color instanceof UIResource ? new IJColorUIResource(color, key)
+                                       : new IJColor(color, key);
   }
 
   private void updateEditorSchemeIfNecessary(UIManager.LookAndFeelInfo oldLaf, boolean processChangeSynchronously) {
