@@ -185,6 +185,7 @@
       "history.svg": "vcs/history.svg",
       "layout.svg": "debugger/restoreLayout.svg",
       "left.svg": "actions/back.svg",
+      "listFiles.svg": "actions/listFiles.svg",
       "locate.svg": "general/locate.svg",
       "locked.svg": "ide/readonly.svg",
       "moreHorizontal.svg": "actions/moreHorizontal.svg",
@@ -194,7 +195,10 @@
       "open.svg": "actions/menu-open.svg",
       "openNewTab.svg": "actions/openNewTab",
       "paste.svg": "actions/menu-paste.svg",
-      "pin.svg": "actions/pinTab.svg",
+      "pin.svg": [
+        "actions/pinTab.svg",
+        "general/pin_tab.svg"
+      ],
       "previewHorizontally.svg": "actions/previewDetailsVertically.svg",
       "previewOnly.svg": "general/layoutPreviewOnly.svg",
       "previewVertically.svg": "actions/previewDetails.svg",
