@@ -22,7 +22,6 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -80,8 +79,7 @@ public final class LaterInvocator {
     if (expired.value(null)) {
       return;
     }
-    FlushQueue.RunnableInfo runnableInfo = new FlushQueue.RunnableInfo(runnable, modalityState, expired);
-    ourEdtQueue.push(runnableInfo);
+    ourEdtQueue.push(modalityState, expired, runnable);
   }
 
   static void invokeAndWait(@NotNull ModalityState modalityState, @NotNull final Runnable runnable) {
@@ -337,7 +335,7 @@ public final class LaterInvocator {
 
   @TestOnly
   @NotNull
-  public static Collection<FlushQueue.RunnableInfo> getLaterInvocatorEdtQueue() {
+  public static Object getLaterInvocatorEdtQueue() {
     return ourEdtQueue.getQueue();
   }
 
