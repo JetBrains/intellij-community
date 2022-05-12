@@ -42,7 +42,7 @@ public abstract class ExperimentalUI {
   }
 
   @SuppressWarnings("unused")
-  private final class NewUiRegistryListener implements RegistryValueListener {
+  private final static class NewUiRegistryListener implements RegistryValueListener {
     @Override
     public void afterValueChanged(@NotNull RegistryValue value) {
       if (!value.getKey().equals(KEY)) {
@@ -60,12 +60,12 @@ public abstract class ExperimentalUI {
           UISettings.getInstance().setEditorTabPlacement(SwingConstants.TOP);
         }
 
-        if (isIconPatcherSet.compareAndSet(false, true)) {
-          IconLoader.installPathPatcher(iconPathPatcher);
+        if (getInstance().isIconPatcherSet.compareAndSet(false, true)) {
+          IconLoader.installPathPatcher(getInstance().iconPathPatcher);
         }
       }
-      else if (isIconPatcherSet.compareAndSet(true, false)) {
-        IconLoader.removePathPatcher(iconPathPatcher);
+      else if (getInstance().isIconPatcherSet.compareAndSet(true, false)) {
+        IconLoader.removePathPatcher(getInstance().iconPathPatcher);
       }
     }
   }
