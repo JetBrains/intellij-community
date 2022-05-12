@@ -230,8 +230,9 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         val projectFile = localFileSystem.refreshAndFindFileByPath(projectFilePath)
             ?: error("Failed to find projectFile: $projectFilePath")
 
-        val settings = createLinkSettings(projectFile.toNioPath(), myProject)
-        settings.gradleJvm = GRADLE_JDK_NAME
+        val settings = createLinkSettings(projectFile.toNioPath(), myProject).apply {
+            gradleJvm = GRADLE_JDK_NAME
+        }
 
         ExternalSystemUtil.linkExternalProject(
             /* externalSystemId = */ GradleConstants.SYSTEM_ID,
