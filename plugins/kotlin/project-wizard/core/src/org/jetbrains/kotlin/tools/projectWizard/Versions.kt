@@ -7,24 +7,24 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 @Suppress("ClassName", "SpellCheckingInspection")
 object Versions {
     val KOTLIN = version("1.5.0") // used as fallback version
-    val GRADLE = version("7.3.3")
-    val KTOR = version("1.6.7")
-    val JUNIT = version("4.13")
-    val JUNIT5 = version("5.6.0")
+    val GRADLE = version("7.4.2")
+    val KTOR = version("2.0.1")
+    val JUNIT = version("4.13.2")
+    val JUNIT5 = version("5.8.2")
     val JETBRAINS_COMPOSE = version("1.1.0")
 
     val KOTLIN_VERSION_FOR_COMPOSE = version("1.6.10")
-    val GRADLE_VERSION_FOR_COMPOSE = version("6.9")
+    val GRADLE_VERSION_FOR_COMPOSE = version("7.3.3")
 
     object COMPOSE {
-        val ANDROID_ACTIVITY_COMPOSE = version("1.3.0")
+        val ANDROID_ACTIVITY_COMPOSE = version("1.4.0")
     }
 
     object ANDROID {
-        val ANDROID_MATERIAL = version("1.2.1")
-        val ANDROIDX_APPCOMPAT = version("1.2.0")
-        val ANDROIDX_CONSTRAINTLAYOUT = version("2.0.2")
-        val ANDROIDX_KTX = version("1.3.1")
+        val ANDROID_MATERIAL = version("1.5.0")
+        val ANDROIDX_APPCOMPAT = version("1.4.1")
+        val ANDROIDX_CONSTRAINTLAYOUT = version("2.1.3")
+        val ANDROIDX_KTX = version("1.7.0")
     }
 
     object KOTLINX {
@@ -45,7 +45,7 @@ object Versions {
     }
 
     object GRADLE_PLUGINS {
-        val ANDROID = version("4.1.2")
+        val ANDROID = version("7.0.4")
     }
 
     object MAVEN_PLUGINS {
