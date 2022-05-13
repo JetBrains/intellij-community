@@ -15,6 +15,9 @@ class ExpUIIconsMappingTest {
     val mappings = ExperimentalUIImpl.loadIconMappingsImpl()
     mappings.forEach { (expUI, oldUI) ->
       listOf(expUI, oldUI).forEach {
+        if (!(it.endsWith(".svg") || it.endsWith(".png"))) {
+          error("Path should ends with .svg or .png '$it'")
+        }
         if (IconLoader.findIcon(it, AllIcons::class.java)!!.iconHeight == 1) {
           //todo[kb] support classloaders and rewrite to assert
           println("$it is not found")
