@@ -95,8 +95,12 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
   public void testDuplicateMethods() {
     int N = 1000;
     StringBuilder text = new StringBuilder(N * 100).append("class X {\n");
-    for (int i = 0; i < N; i++) text.append("public void visit(C").append(i).append(" param) {}\n");
-    for (int i = 0; i < N; i++) text.append("class C").append(i).append(" {}\n");
+    for (int i = 0; i < N; i++) {
+      text.append("public void visit(C").append(i).append(" param) {}\n");
+    }
+    for (int i = 0; i < N; i++) {
+      text.append("class C").append(i).append(" {}\n");
+    }
     text.append("}");
     configureFromFileText("x.java", text.toString());
     assertEmpty(highlightErrors());

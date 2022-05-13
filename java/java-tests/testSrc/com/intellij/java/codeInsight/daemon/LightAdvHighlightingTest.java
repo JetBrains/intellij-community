@@ -45,8 +45,8 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * This class is for "lightweight" tests only, i.e. those which can run inside default light project set up
- * For "heavyweight" tests use AdvHighlightingTest
+ * This class is for "lightweight" tests only, i.e., those which can run inside default light project.
+ * For "heavyweight" tests use {@link AdvHighlightingTest}
  */
 public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
