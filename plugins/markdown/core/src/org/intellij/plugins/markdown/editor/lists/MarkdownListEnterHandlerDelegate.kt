@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.isAncestor
@@ -145,10 +146,12 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
       EditorModificationUtil.insertStringAtCaret(editor, emptyItem)
     }
 
-    PsiDocumentManager.getInstance(file.project).commitDocument(document)
-
-    (file as MarkdownFile).getListItemAt(editor.caretModel.offset, document)!!
-      .list.renumberInBulk(document, recursive = false, restart = false)
+    if (Registry.`is`("markdown.lists.renumber.on.type.enable")) {
+      // Will fix numbering in a whole list
+      PsiDocumentManager.getInstance(file.project).commitDocument(document)
+      val item = (file as MarkdownFile).getListItemAt(editor.caretModel.offset, document)!!
+      item.list.renumberInBulk(document, recursive = false, restart = false)
+    }
 
     // it is possible that there will be no pre-processing before next post-processing, see IDEA-270501 and EnterInLineCommentHandler
     this.emptyItem = null
