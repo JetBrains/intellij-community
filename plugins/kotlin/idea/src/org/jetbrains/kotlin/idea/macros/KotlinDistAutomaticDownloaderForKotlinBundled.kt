@@ -49,8 +49,8 @@ class KotlinDistAutomaticDownloaderForKotlinBundled : StartupActivity.DumbAware 
             }
         }
 
-        KotlinJpsPluginSettings.getInstance(project)?.settings?.let { settings ->
-            downloadKotlinDistIfNeeded(detector.isKotlinBundledPotentiallyUsedInLibraries.value, settings.version, project)
+        KotlinJpsPluginSettings.jpsVersion(project)?.let { version ->
+            downloadKotlinDistIfNeeded(detector.isKotlinBundledPotentiallyUsedInLibraries.value, version, project)
         }
     }
 }
