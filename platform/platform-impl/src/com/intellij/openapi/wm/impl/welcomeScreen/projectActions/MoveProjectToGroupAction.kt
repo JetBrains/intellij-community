@@ -23,7 +23,7 @@ class MoveProjectToGroupAction(private val myGroup: ProjectGroup) : RecentProjec
   }
 
   override fun update(event: AnActionEvent) {
-    val item = getSelectedItem(event) ?: return
+    val item = getSelectedItem(event)
     event.presentation.isEnabled = item is RecentProjectItem
   }
 }

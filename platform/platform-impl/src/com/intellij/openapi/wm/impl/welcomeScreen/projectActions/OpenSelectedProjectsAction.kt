@@ -25,7 +25,12 @@ class OpenSelectedProjectsAction : RecentProjectsWelcomeScreenActionBase() {
 
   override fun update(event: AnActionEvent) {
     val presentation = event.presentation
-    val item = getSelectedItem(event) ?: return
+    val item = getSelectedItem(event)
+
+    if (item == null) {
+      presentation.isEnabledAndVisible = false
+      return
+    }
 
     if (ActionPlaces.WELCOME_SCREEN == event.place) {
       presentation.isEnabledAndVisible = item is RecentProjectItem || item is ProjectsGroupItem
@@ -35,10 +40,9 @@ class OpenSelectedProjectsAction : RecentProjectsWelcomeScreenActionBase() {
         )
         else -> presentation.setText(IdeBundle.messagePointer("action.presentation.OpenSelectedProjectsAction.text.open.selected"))
       }
-
-      return
     }
-
-    presentation.isEnabledAndVisible = false
+    else {
+      presentation.isEnabledAndVisible = false
+    }
   }
 }
