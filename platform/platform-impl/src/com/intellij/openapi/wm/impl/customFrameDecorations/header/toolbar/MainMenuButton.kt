@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.IconManager
 import com.intellij.util.ui.JBUI
@@ -58,10 +59,11 @@ internal class MainMenuButton {
 
 class MainMenuMnemonicHandler(val action: AnAction) : Disposable {
 
-  private var disposable: Disposable? = null
+  private var disposable: CheckedDisposable? = null
 
   fun registerShortcuts(component: JComponent) {
-    if (disposable == null) disposable = Disposer.newDisposable()
+
+    if (disposable?.isDisposed != false) disposable = Disposer.newCheckedDisposable()
 
     val shortcutSet = ActionUtil.getShortcutSet("MainMenuButton.ShowMenu")
     action.registerCustomShortcutSet(shortcutSet, component, disposable)
