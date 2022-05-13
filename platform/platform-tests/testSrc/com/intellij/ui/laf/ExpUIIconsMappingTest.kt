@@ -16,7 +16,7 @@ class ExpUIIconsMappingTest {
     mappings.forEach { (expUI, oldUI) ->
       listOf(expUI, oldUI).forEach {
         if (!(it.endsWith(".svg") || it.endsWith(".png"))) {
-          error("Path should ends with .svg or .png '$it'")
+          error("Path should end with .svg or .png '$it'")
         }
         if (IconLoader.findIcon(it, AllIcons::class.java)!!.iconHeight == 1) {
           //todo[kb] support classloaders and rewrite to assert
