@@ -64,7 +64,10 @@
     ],
     "fileTypes": {
       "angularJS.svg": "icons/AngularJS.svg",
-      "archive.svg": "fileTypes/archive.svg",
+      "archive.svg": [
+        "fileTypes/archive.svg",
+        "nodes/ppJar.svg"
+      ],
       "css.svg": "fileTypes/css.svg",
       "cucumber.svg": "org/jetbrains/plugins/cucumber/icons/cucumber.svg",
       "docker.svg": [
