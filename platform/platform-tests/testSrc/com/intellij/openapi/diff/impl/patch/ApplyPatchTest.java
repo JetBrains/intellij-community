@@ -7,15 +7,18 @@ import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -111,7 +114,7 @@ public class ApplyPatchTest extends HeavyPlatformTestCase {
   }
 
   public void testRenameDir() throws Exception {
-    doTest(1, ApplyPatchStatus.SUCCESS, file -> !"empty".equals(file.getNameWithoutExtension()));
+    doTest(1, ApplyPatchStatus.SUCCESS, file -> !"empty".equals(file.getNameWithoutExtension()), null);
   }
 
   public void testDeleteLastLineWithLineBreak() throws Exception {
@@ -183,7 +186,24 @@ public class ApplyPatchTest extends HeavyPlatformTestCase {
   }
 
   public void testFileWithGitStyleCyrillicPaths() throws Exception {
-    doTest(0, ApplyPatchStatus.SUCCESS);
+    doTest(0, ApplyPatchStatus.SUCCESS, null, file -> {
+      try {
+        if (file.getName().equals("1.txt")) {
+          //noinspection NonAsciiCharacters
+          file.rename(this, "имя файла.txt");
+        }
+
+        if (file.getName().equals("2.txt")) {
+          //noinspection NonAsciiCharacters
+          file.rename(this, "кириллица.txt");
+        }
+
+        return true;
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   public void testFileWithGitStylePathsWithSpaces() throws Exception {
@@ -195,15 +215,24 @@ public class ApplyPatchTest extends HeavyPlatformTestCase {
   }
 
   private void doTest(int skipTopDirs, @NotNull ApplyPatchStatus expectedStatus) throws Exception {
-    doTest(skipTopDirs, expectedStatus, null);
+    doTest(skipTopDirs, expectedStatus, null, null);
   }
 
-  private void doTest(int skipTopDirs, @NotNull ApplyPatchStatus expectedStatus, @Nullable VirtualFileFilter fileFilter) throws Exception {
+  private void doTest(int skipTopDirs,
+                      @NotNull ApplyPatchStatus expectedStatus,
+                      @Nullable VirtualFileFilter fileFilter,
+                      @Nullable Processor<? super VirtualFile> processor) throws Exception {
     ApplicationManager.getApplication().runWriteAction(() -> {
       FileTypeManager.getInstance().associate(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("old"));
     });
 
     VirtualFile testDir = createTestProjectStructure(getTestDir(getTestName(true)));
+
+    if (processor != null) {
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        VfsUtilCore.processFilesRecursively(testDir, processor);
+      });
+    }
 
     Path patchPath = testDir.findChild("apply.patch").toNioPath();
     List<FilePatch> patches = new ArrayList<>(new PatchReader(patchPath).readTextPatches());
