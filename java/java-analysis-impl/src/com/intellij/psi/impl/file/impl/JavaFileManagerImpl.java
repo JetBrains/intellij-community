@@ -25,6 +25,8 @@ import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -161,7 +163,8 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   public @NotNull Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
     GlobalSearchScope excludingScope = new LibSrcExcludingScope(scope);
 
-    List<PsiJavaModule> results = new ArrayList<>(JavaModuleNameIndex.getInstance().get(moduleName, myManager.getProject(), excludingScope));
+    Project project = myManager.getProject();
+    List<PsiJavaModule> results = new ArrayList<>(JavaModuleNameIndex.getInstance().get(moduleName, project, excludingScope));
 
     Set<VirtualFile> shadowedRoots = new HashSet<>();
     for (VirtualFile manifest : JavaSourceModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {
@@ -182,8 +185,11 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
     }
 
     if (results.isEmpty()) {
-      for (Module module : ModuleManager.getInstance(myManager.getProject()).getModules()) {
-        if (moduleName.equals(LightJavaModule.moduleName(module.getName()))) {
+      for (Module module : ModuleManager.getInstance(project).getModules()) {
+        String targetModuleName = CachedValuesManager.getManager(project)
+          .getCachedValue(module, () -> CachedValueProvider.Result.create(LightJavaModule.moduleName(module.getName()), 
+                                                                          ModuleManager.getInstance(project)));
+        if (moduleName.equals(targetModuleName)) {
           VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(false);
           if (sourceRoots.length > 0) {
             results.add(LightJavaModule.create(myManager, sourceRoots[0], moduleName));
