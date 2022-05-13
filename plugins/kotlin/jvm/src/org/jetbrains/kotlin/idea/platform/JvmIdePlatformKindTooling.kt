@@ -64,9 +64,14 @@ class JvmIdePlatformKindTooling : IdePlatformKindTooling() {
         declaration: KtNamedDeclaration,
         descriptorProvider: () -> DeclarationDescriptor?,
         includeSlowProviders: Boolean?
-    ): Icon? =
-        calculateUrls(declaration, includeSlowProviders)?.let { getTestStateIcon(it, declaration) }
-            ?: getGenericTestIcon(declaration, descriptorProvider) { emptyList() }
+    ): Icon? {
+        return calculateUrls(declaration, includeSlowProviders)?.let { getTestStateIcon(it, declaration) }
+            ?: if (includeSlowProviders == false) {
+                null
+            } else {
+                getGenericTestIcon(declaration, descriptorProvider) { emptyList() }
+            }
+    }
 
     override fun acceptsAsEntryPoint(function: KtFunction) = true
 }
