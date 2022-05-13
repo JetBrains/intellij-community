@@ -17,7 +17,6 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.tools.*;
-import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -45,19 +44,16 @@ public class APIWrappers {
     return null;
   }
 
-  public static Processor newProcessorWrapper(final Processor delegate, ProcessingContext procContext) {
-    return wrap(Processor.class, new ProcessorWrapper(delegate, procContext));
-  }
-
-  @SuppressWarnings("unchecked")
-  public static <T extends FileObject> DiagnosticOutputConsumer newDiagnosticListenerWrapper(ProcessingContext procContext, final DiagnosticOutputConsumer delegate, @NotNull Iterable<Processor> processors) {
-    return wrap(DiagnosticOutputConsumer.class, new DiagnosticListenerWrapper<T>(procContext, delegate, processors));
+  public static <T extends FileObject> DiagnosticOutputConsumer newDiagnosticListenerWrapper(ProcessingContext procContext, final DiagnosticOutputConsumer delegate) {
+    return wrap(DiagnosticOutputConsumer.class, new DiagnosticListenerWrapper<T>(procContext, delegate));
   }
 
   public static class ProcessingContext {
     private final JpsJavacFileManager myFileManager;
-    private final Map<ProcessingEnvironment, ProcessingEnvironment> myWrappers = new HashMap<ProcessingEnvironment, ProcessingEnvironment>();
+    private Iterable<Processor> myAllProcessors = Collections.emptyList();
+    private final Map<ProcessingEnvironment, ProcessingEnvironment> myWrappers = new HashMap<ProcessingEnvironment, ProcessingEnvironment>(); // procEnv -> wrappedProcEnv
     private String myLastProcName;
+    private final Map<String, String> myProcNamesMap = new HashMap<String, String>(); // real proc className -> wrapped proc className
     
     public ProcessingContext(@NotNull JpsJavacFileManager fileManager) {
       myFileManager = fileManager;
@@ -81,13 +77,49 @@ public class APIWrappers {
       return (proc instanceof WrapperDelegateAccessor<?>? ((WrapperDelegateAccessor<?>)proc).getWrapperDelegate() : proc).getClass().getName();
     }
 
-    @Nullable
-    public String getLastExecutedProcessorName() {
-      return myLastProcName;
-    }
-    
     void setLastExecutedProcessorName(Processor proc) {
       myLastProcName = getProcessorName(proc);
+    }
+
+    public Iterable<Processor> wrapProcessors(Iterable<Processor> processors) {
+      return myAllProcessors = Iterators.map(processors, new Function<Processor, Processor>() {
+        @Override
+        public Processor fun(Processor processor) {
+          return wrap(Processor.class, new ProcessorWrapper(processor, ProcessingContext.this));
+        }
+      });
+    }
+
+    @Nullable
+    public String adjustMessage(String message) {
+      if (message != null) {
+        try {
+          final String realProcName = myLastProcName;
+          if (realProcName != null && !realProcName.isEmpty()) {
+            final String wrappedName = lookupWrappedProcName(realProcName);
+            if (wrappedName != null) {
+              return message.replace(wrappedName, realProcName);
+            }
+          }
+        }
+        catch (Throwable ignored) {
+           //iterating namesMap may cause unexpected AP class loading exceptions
+        }
+      }
+      return message;
+    }
+
+    private String lookupWrappedProcName(String procName) {
+      String wrappedName = myProcNamesMap.get(procName);
+      if (wrappedName == null) {
+        for (Processor proc : myAllProcessors) {
+          if (proc instanceof WrapperDelegateAccessor<?>) {
+            myProcNamesMap.put(getProcessorName(proc), proc.getClass().getName());
+          }
+        }
+        wrappedName = myProcNamesMap.get(procName);
+      }
+      return wrappedName;
     }
   }
 
@@ -112,61 +144,32 @@ public class APIWrappers {
   @SuppressWarnings("unchecked")
   static class DiagnosticListenerWrapper<T extends FileObject> extends DynamicWrapper<DiagnosticOutputConsumer> implements DiagnosticListener<T>{
     private final ProcessingContext myProcContext;
-    private final Iterable<Pair<String, String>> myNamesPairs;
 
-    DiagnosticListenerWrapper(ProcessingContext procContext, DiagnosticOutputConsumer delegate, @NotNull Iterable<Processor> processors) {
+    DiagnosticListenerWrapper(ProcessingContext procContext, DiagnosticOutputConsumer delegate) {
       super(delegate);
       myProcContext = procContext;
-      myNamesPairs = Iterators.filter(Iterators.map(processors, new Function<Processor, Pair<String, String>>() {
-        @Override
-        public Pair<String, String> fun(Processor processor) {
-          return processor instanceof WrapperDelegateAccessor<?> ? Pair.create(processor.getClass().getName(), myProcContext.getProcessorName(processor)) : null;
-        }
-      }), Iterators.<Pair<String, String>>notNullFilter());
     }
 
     public void outputLineAvailable(String line) {
-      getWrapperDelegate().outputLineAvailable(DiagnosticWrapper.adjustMessage(myProcContext, myNamesPairs, line));
+      getWrapperDelegate().outputLineAvailable(myProcContext.adjustMessage(line));
     }
 
     @Override
     public void report(Diagnostic<? extends T> diagnostic) {
-      getWrapperDelegate().report(wrap(Diagnostic.class, new DiagnosticWrapper<T>(myProcContext, (Diagnostic<T>)diagnostic, myNamesPairs)));
+      getWrapperDelegate().report(wrap(Diagnostic.class, new DiagnosticWrapper<T>(myProcContext, (Diagnostic<T>)diagnostic)));
     }
   }
 
   static class DiagnosticWrapper<T> extends DynamicWrapper<Diagnostic<T>> {
     private final ProcessingContext myProcContext;
-    private final Iterable<Pair<String, String>> myNamesMap;
 
-    DiagnosticWrapper(ProcessingContext procContext, Diagnostic<T> delegate, Iterable<Pair<String, String>> namesMap) {
+    DiagnosticWrapper(ProcessingContext procContext, Diagnostic<T> delegate) {
       super(delegate);
       myProcContext = procContext;
-      myNamesMap = namesMap;
     }
 
     public String getMessage(Locale locale) {
-      return adjustMessage(myProcContext, myNamesMap, getWrapperDelegate().getMessage(locale));
-    }
-
-    @Nullable
-    static String adjustMessage(ProcessingContext procContext, final Iterable<Pair<String, String>> namesMap, String message) {
-      if (message != null) {
-        try {
-          final String realProcName = procContext.getLastExecutedProcessorName();
-          if (realProcName != null && !realProcName.isEmpty()) {
-            for (Pair<String, String> pair : namesMap) {
-              if (realProcName.equals(pair.getSecond())) {
-                return message.replace(pair.getFirst(), realProcName);
-              }
-            }
-          }
-        }
-        catch (Throwable ignored) {
-           //iterating namesMap may cause unexpected AP class loading exceptions
-        }
-      }
-      return message;
+      return myProcContext.adjustMessage(getWrapperDelegate().getMessage(locale));
     }
   }
 
@@ -350,7 +353,7 @@ public class APIWrappers {
 
   @NotNull
   public static <T> T wrap(@NotNull Class<T> ifaceClass, @NotNull final Object wrapper, @NotNull final Class<?> parentToStopSearchAt, @NotNull final T delegateTo) {
-    return ifaceClass.cast(Proxy.newProxyInstance(APIWrappers.class.getClassLoader(), new Class<?>[]{ifaceClass, WrapperDelegateAccessor.class, Closeable.class}, new InvocationHandler() {
+    return ifaceClass.cast(Proxy.newProxyInstance(APIWrappers.class.getClassLoader(), new Class<?>[]{ifaceClass, WrapperDelegateAccessor.class}, new InvocationHandler() {
       private final Map<Method, Pair<Method, Object>> myCallHandlers = Collections.synchronizedMap(new HashMap<Method, Pair<Method, Object>>());
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -368,26 +371,13 @@ public class APIWrappers {
       private Pair<Method, Object> getCallHandlerMethod(Method method) {
         Pair<Method, Object> pair = myCallHandlers.get(method);
         if (pair == null) {
-          final Class<?> declaringClass = method.getDeclaringClass();
-          if (WrapperDelegateAccessor.class.equals(declaringClass)) {
+          if (WrapperDelegateAccessor.class.equals(method.getDeclaringClass())) {
             pair = wrapper instanceof WrapperDelegateAccessor? Pair.create(method, wrapper) : Pair.<Method, Object>create(method, new WrapperDelegateAccessor<T>() {
               @Override
               public T getWrapperDelegate() {
                 return delegateTo;
               }
             });
-          }
-          else if (Closeable.class.equals(declaringClass)) {
-            // process Closeable separately as in this case the call should never fail (e.g. if neither the wrapper nor delegate implements it)
-            if (wrapper instanceof Closeable) {
-              pair = Pair.create(method, wrapper);
-            }
-            else if (delegateTo instanceof Closeable) {
-              pair = Pair.<Method, Object>create(method, delegateTo);
-            }
-            else {
-              pair = Pair.<Method, Object>create(method, new Closeable() {@Override public void close() { /*empty*/ }});
-            }
           }
           else {
             // important: look for implemented methods starting from the actual class

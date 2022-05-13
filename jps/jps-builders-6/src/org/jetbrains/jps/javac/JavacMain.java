@@ -186,17 +186,14 @@ public final class JavacMain {
       }
 
       final APIWrappers.ProcessingContext procContext;
-      final WrappedProcessorsContainer wrappedProcessors;
       final DiagnosticOutputConsumer diagnosticListener;
       if (TRACK_AP_GENERATED_DEPENDENCIES && isAnnotationProcessingEnabled) {
         procContext = new APIWrappers.ProcessingContext(fileManager);
         // use real processor class names and not names of processor wrappers
-        wrappedProcessors = new WrappedProcessorsContainer();
-        diagnosticListener = APIWrappers.newDiagnosticListenerWrapper(procContext, diagnosticConsumer, wrappedProcessors);
+        diagnosticListener = APIWrappers.newDiagnosticListenerWrapper(procContext, diagnosticConsumer);
       }
       else {
         procContext = null;
-        wrappedProcessors = null;
         diagnosticListener = diagnosticConsumer;
       }
 
@@ -233,7 +230,6 @@ public final class JavacMain {
       if (TRACK_AP_GENERATED_DEPENDENCIES && isAnnotationProcessingEnabled) {
         final Iterable<Processor> processors = lookupAnnotationProcessors(procContext, getAnnotationProcessorNames(_options));
         if (processors != null) {
-          wrappedProcessors.setProcessors(processors);
           task.setProcessors(processors);
         }
       }
@@ -271,21 +267,6 @@ public final class JavacMain {
       }
     }
     return false;
-  }
-
-  private static class WrappedProcessorsContainer implements Iterable<Processor> {
-    Iterable<Processor> myDelegate;
-
-    public void setProcessors(Iterable<Processor> delegate) {
-      myDelegate = delegate;
-    }
-
-    @NotNull
-    @Override
-    public Iterator<Processor> iterator() {
-      final Iterable<Processor> delegate = myDelegate;
-      return delegate == null? Collections.<Processor>emptyList().iterator() : delegate.iterator();
-    }
   }
 
   @Nullable
@@ -336,12 +317,7 @@ public final class JavacMain {
       }
 
       if (processors != null) {
-        return Iterators.map(processors, new Function<Processor, Processor>() {
-          @Override
-          public Processor fun(Processor processor) {
-            return APIWrappers.newProcessorWrapper(processor, procContext);
-          }
-        });
+        return procContext.wrapProcessors(processors);
       }
     }
     catch (RuntimeException e) {
