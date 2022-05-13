@@ -37,9 +37,10 @@ public class CoAuthoredCompletionContributorTest extends LightPlatformCodeInsigh
 
   @Test
   public void testAuthors() {
-    ServiceContainerUtil.registerServiceInstance(getProject(),
-                                                 VcsUserRegistry.class,
-                                                 new MockVcsUserRegistry());
+    ServiceContainerUtil.registerOrReplaceServiceInstance(getProject(),
+                                                          VcsUserRegistry.class,
+                                                          new MockVcsUserRegistry(),
+                                                          getTestRootDisposable());
     configure("Test\n\nCo-authored-by: x<caret>");
     myFixture.completeBasic();
     myFixture.assertPreferredCompletionItems(0, "xyz <xyz@example.com>", "xyz2 <xyz2@example.com>");
