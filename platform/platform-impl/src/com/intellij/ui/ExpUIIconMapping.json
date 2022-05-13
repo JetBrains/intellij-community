@@ -445,6 +445,7 @@
       "currentBranchFavorite.svg": "icons/currentBranchFavoriteLabel.svg",
       "diff.svg": "actions/diff.svg",
       "intelliSort.svg": "icons/IntelliSort.svg",
+      "patch.svg": "vcs/patch.svg",
       "push.svg": "vcs/push.svg",
       "revert.svg": "actions/rollback.svg",
       "stash.svg": [
