@@ -34,6 +34,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testLanguageConstructs() = doTest()
     fun testList() = doTest()
     fun testMath() = doTest()
+    fun testMembers() = doTest()
     fun testNothingType() = doTest()
     fun testPrimitiveAndNull() = doTest()
     fun testProperty() = doTest()

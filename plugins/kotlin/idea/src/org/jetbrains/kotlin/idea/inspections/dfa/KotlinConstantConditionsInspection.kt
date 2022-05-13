@@ -345,17 +345,28 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         if (holder.file.module?.platform?.isJvm() != true) return PsiElementVisitor.EMPTY_VISITOR
         return object : KtVisitorVoid() {
             override fun visitProperty(property: KtProperty) {
-                if (property.isTopLevel) {
+                if (shouldAnalyzeProperty(property)) {
                     val initializer = property.delegateExpressionOrInitializer ?: return
                     analyze(initializer)
                 }
             }
 
             override fun visitPropertyAccessor(accessor: KtPropertyAccessor) {
-                if (accessor.property.isTopLevel) {
-                    val bodyExpression = accessor.bodyExpression ?: return
+                if (shouldAnalyzeProperty(accessor.property)) {
+                    val bodyExpression = accessor.bodyExpression ?: accessor.bodyBlockExpression ?: return
                     analyze(bodyExpression)
                 }
+            }
+
+            override fun visitParameter(parameter: KtParameter) {
+                analyze(parameter.defaultValue ?: return)
+            }
+
+            private fun shouldAnalyzeProperty(property: KtProperty) =
+                property.isTopLevel || property.parent is KtClassBody
+
+            override fun visitClassInitializer(initializer: KtClassInitializer) {
+                analyze(initializer.body ?: return)
             }
 
             override fun visitNamedFunction(function: KtNamedFunction) {
