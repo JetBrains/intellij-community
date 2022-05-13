@@ -39,6 +39,19 @@
     "build": {
       "build.svg": "actions/compile.svg",
       "dependencyAnalyzer.svg": "actions/dependencyAnalyzer.svg",
+      "gradleLoadChanges.svg": "icons/gradleLoadChanges.svg",
+      "gradleNavigate.svg": "icons/gradleNavigate.svg",
+      "mavenChildrenProjects": "images/childrenProjects.svg",
+      "mavenLoadChanges.svg": "images/mavenLoadChanges.svg",
+      "mavenModule.svg": "images/modulesClosed",
+      "mavenParentProjects": "images/parentProjects.svg",
+      "mavenPlugin.svg": "images/mavenPlugin.svg",
+      "mavenPluginGoal.svg": "images/pluginGoal.svg",
+      "mavenProfiles.svg": "images/profilesClosed.svg",
+      "mavenProject.svg": "images/mavenProject.svg",
+      "task.svg": "icons/task.svg",
+      "taskGroup.svg": "nodes/configFolder.svg",
+      "toggleOfflineMode.svg": "actions/offlineMode.svg",
       "updateFolders.svg": "images/updateFolders.svg"
     },
     "editor": {
@@ -77,6 +90,7 @@
       ],
       "eclipse.svg": "providers/eclipse.svg",
       "editorConfig.svg": "nodes/editorconfig.svg",
+      "diagram.svg": "fileTypes/diagram.svg",
       "freemaker.svg": "icons/freemarker-icon.svg",
       "go.svg": "icons/go.svg",
       "gradle.svg": [
@@ -362,6 +376,7 @@
       "interface.svg": "nodes/interface.svg",
       "lambda.svg": "nodes/lambda.svg",
       "library.svg": "nodes/ppLib.svg",
+      "libraryFolder.svg": "nodes/ppLibFolder.svg",
       "method.svg": "nodes/method.svg",
       "methodAbstract.svg": "nodes/abstractMethod.svg",
       "methodReference.svg": "nodes/methodReference.svg",
