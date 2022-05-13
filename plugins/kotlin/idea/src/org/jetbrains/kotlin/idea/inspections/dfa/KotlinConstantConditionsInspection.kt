@@ -345,9 +345,16 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         if (holder.file.module?.platform?.isJvm() != true) return PsiElementVisitor.EMPTY_VISITOR
         return object : KtVisitorVoid() {
             override fun visitProperty(property: KtProperty) {
-                if (property.parent is KtFile) {
-                    val initializer = property.initializer ?: return
+                if (property.isTopLevel) {
+                    val initializer = property.delegateExpressionOrInitializer ?: return
                     analyze(initializer)
+                }
+            }
+
+            override fun visitPropertyAccessor(accessor: KtPropertyAccessor) {
+                if (accessor.property.isTopLevel) {
+                    val bodyExpression = accessor.bodyExpression ?: return
+                    analyze(bodyExpression)
                 }
             }
 
