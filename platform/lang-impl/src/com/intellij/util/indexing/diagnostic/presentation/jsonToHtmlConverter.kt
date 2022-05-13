@@ -95,7 +95,7 @@ fun createAggregateHtml(
                 td(diagnostic.appInfo.productCode + "-" + diagnostic.appInfo.build)
 
                 //Indexing type section
-                td(if (diagnostic.indexingTimes.wasFullIndexing) "Full" else "Partial")
+                td(if (diagnostic.indexingTimes.wasFullRescanning) "Full" else "Partial")
               }
             }
           }
@@ -378,7 +378,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               if (times.indexingReason != null) {
                 tr { td("Reason"); td(times.indexingReason) }
               }
-              tr { td("Full or partial"); td(if (times.wasFullIndexing) "full" else "partial") }
+              tr { td("Full or partial"); td(if (times.wasFullRescanning) "full" else "partial") }
               tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
               tr { td("Cancelled?"); td(times.wasInterrupted.toString()) }
               tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
@@ -387,12 +387,12 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               tr { td("Iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
               if (IndexDiagnosticDumper.shouldProvideVisibleAndAllThreadsTimeInfo) {
                 tr {
-                  td("Indexing visible time");
+                  td("Indexing visible time")
                   td(JsonDuration(
                     projectIndexingHistory.fileProviderStatistics.sumOf { stat -> stat.totalIndexingVisibleTime.nano }).presentableDuration())
                 }
                 tr {
-                  td("All threads time to visible time ratio");
+                  td("All threads time to visible time ratio")
                   td(String.format("%.2f", projectIndexingHistory.visibleTimeToAllThreadTimeRatio))
                 }
               }

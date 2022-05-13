@@ -47,7 +47,7 @@ class ProjectIndexingHistoryFusReporterListener : ProjectIndexingHistoryListener
     ProjectIndexingHistoryFusReporter.reportIndexingFinished(
       projectIndexingHistory.project,
       projectIndexingHistory.indexingSessionId,
-      projectIndexingHistory.times.wasFullIndexing,
+      projectIndexingHistory.times.wasFullRescanning,
       TimeUnit.NANOSECONDS.toMillis(projectIndexingHistory.times.totalUpdatingTime),
       scanningTime,
       numberOfFileProviders,

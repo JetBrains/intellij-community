@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class JsonProjectIndexingHistoryTimes(
   val indexingReason: String? = null,
-  val wasFullIndexing: Boolean = false,
+  val wasFullRescanning: Boolean = false,
   val totalUpdatingTime: JsonDuration = JsonDuration(),
   val indexingTime: JsonDuration = JsonDuration(),
   val contentLoadingVisibleTime: JsonDuration = JsonDuration(),
