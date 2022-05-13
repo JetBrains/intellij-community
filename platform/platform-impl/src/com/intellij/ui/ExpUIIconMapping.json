@@ -37,6 +37,7 @@
       "questionBadge.svg": "debugger/question_badge.svg"
     },
     "build": {
+      "build.svg": "actions/compile.svg",
       "dependencyAnalyzer.svg": "actions/dependencyAnalyzer.svg",
       "updateFolders.svg": "images/updateFolders.svg"
     },
@@ -210,7 +211,10 @@
       "right.svg": "actions/forward.svg",
       "runAnything.svg": "actions/run_anything.svg",
       "search.svg": "actions/find.svg",
-      "settings.svg": "general/gearPlain.svg",
+      "settings.svg": [
+        "general/gearPlain.svg",
+        "general/settings.svg"
+      ],
       "show.svg": "actions/show.svg",
       "splitHorizontally.svg": "actions/splitHorizontally.svg",
       "splitVertically.svg": "actions/splitVertically.svg",
@@ -221,6 +225,8 @@
       "undo.svg": "actions/undo.svg",
       "save.svg": "actions/menu-saveall.svg",
       "print.svg": "general/print.svg",
+      "projectWideAnalysisOff.svg": "actions/projectWideAnalysisOff.svg",
+      "projectWideAnalysisOn.svg": "actions/projectWideAnalysisOn.svg",
       "softWrap.svg": "actions/toggleSoftWrap.svg",
       "scrollDown.svg": "runConfigurations/scroll_down.svg",
       "projectStructure.svg": "general/projectStructure.svg"
@@ -375,9 +381,13 @@
       "warningIntroduction.svg": "nodes/warningIntroduction.svg"
     },
     "run": {
+      "attachToProcess.svg": "debugger/attachToProcess.svg",
       "debug.svg": "actions/startDebugger.svg",
       "restart.svg": "actions/restart.svg",
+      "restartFailedTests.svg": "runConfigurations/rerunFailedTests.svg",
       "run.svg": "actions/execute.svg",
+      "showIgnored.svg": "runConfigurations/showIgnored.svg",
+      "showPassed.svg": "runConfigurations/showPassed.svg",
       "stop.svg": "actions/suspend.svg"
     },
     "status": {
