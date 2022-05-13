@@ -63,8 +63,8 @@ suspend fun createBuildContext(
 }
 
 // don't expose BuildDependenciesCommunityRoot
-fun runTestBuild(homePath: Path, productProperties: ProductProperties, buildTools: ProprietaryBuildTools) {
-  runTestBuild(homePath = homePath, productProperties = productProperties, buildTools = buildTools, traceSpanName = null)
+fun runTestBuild(homePath: Path, productProperties: ProductProperties, buildTools: ProprietaryBuildTools, buildOptionsCustomizer: (BuildOptions) -> Unit = {}) {
+  runTestBuild(homePath = homePath, productProperties = productProperties, buildTools = buildTools, traceSpanName = null, buildOptionsCustomizer = buildOptionsCustomizer)
 }
 
 fun runTestBuild(
