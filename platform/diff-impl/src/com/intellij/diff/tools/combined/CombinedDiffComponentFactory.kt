@@ -83,6 +83,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     override fun onModelReset() {
       Disposer.dispose(combinedViewer)
       combinedViewer = createCombinedViewer()
+      buildCombinedDiffChildBlocks()
     }
 
     override fun onContentReloadRequested(requests: Map<CombinedBlockId, DiffRequest>) {
