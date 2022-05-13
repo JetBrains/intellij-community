@@ -73,9 +73,6 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
       DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
       fileStatusMap.markFileUpToDate(myDocument, getId());
-      if (myMode == Mode.ALL) {
-        fileStatusMap.markFileUpToDate(myDocument, Pass.SLOW_LINE_MARKERS);
-      }
     }
     catch (IndexNotReadyException ignored) {
     }
@@ -307,6 +304,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
   }
 
   enum Mode {
+    NONE,
     /**
      * To constraint collection of <code>{@link LineMarkerInfo}</code>s to only <code>{@link LineMarkerProvider#getLineMarkerInfo(PsiElement)}</code>.
      */

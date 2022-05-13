@@ -12,9 +12,7 @@ final class SlowLineMarkersPassFactory extends AbstractLineMarkersPassFactory {
     boolean serializeCodeInsightPasses =
       ((TextEditorHighlightingPassRegistrarImpl)registrar).isSerializeCodeInsightPasses();
 
-    if (!serializeCodeInsightPasses) return;
-
-    registrar.registerTextEditorHighlightingPass(new Factory(LineMarkersPass.Mode.SLOW),
+    registrar.registerTextEditorHighlightingPass(new Factory(serializeCodeInsightPasses ? LineMarkersPass.Mode.SLOW : LineMarkersPass.Mode.NONE),
                                                  new int[]{Pass.UPDATE_ALL}, null,
                                                  false, Pass.SLOW_LINE_MARKERS);
   }

@@ -28,12 +28,14 @@ abstract class AbstractLineMarkersPassFactory implements TextEditorHighlightingP
     @NotNull
     @Override
     public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-      TextRange dirtyTextRange = FileStatusMap.getDirtyTextRange(editor, Pass.LINE_MARKERS);
+      TextRange dirtyTextRange = FileStatusMap.getDirtyTextRange(editor, myMode == LineMarkersPass.Mode.SLOW ? Pass.SLOW_LINE_MARKERS : Pass.LINE_MARKERS);
       Document document = editor.getDocument();
       Project project = file.getProject();
-      if (dirtyTextRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(project, document);
-      ProperTextRange visibleRange = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
+      if (dirtyTextRange == null || myMode == LineMarkersPass.Mode.NONE) {
+        return new ProgressableTextEditorHighlightingPass.EmptyPass(project, document);
+      }
 
+      ProperTextRange visibleRange = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
       TextRange priorityBounds = expandRangeToCoverWholeLines(document, visibleRange);
       TextRange restrictRange = expandRangeToCoverWholeLines(document, dirtyTextRange);
       return new LineMarkersPass(project, file, document, priorityBounds, restrictRange, myMode);
