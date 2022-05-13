@@ -179,6 +179,9 @@
 
     <listener class="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService$CommonCompilerSettingsChangeListener"
               topic="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener"/>
+
+    <listener class="org.jetbrains.kotlin.idea.macros.KotlinDistAutomaticDownloaderForKotlinBundled$SettingsListener"
+              topic="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
