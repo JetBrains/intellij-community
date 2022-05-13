@@ -69,14 +69,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
   @Override
   public void doApplyInformationToEditor() {
     try {
-      // to avoid duplication existed markers are applied by SLOW/ALL mode
-      if (myMode != Mode.FAST) {
-        Document document = getDocument();
-        if (myMode != Mode.ALL) {
-          LineMarkersUtil.setLineMarkersToEditor(myProject, document, myRestrictRange, Collections.emptyList(), Pass.LINE_MARKERS);
-        }
-        LineMarkersUtil.setLineMarkersToEditor(myProject, document, myRestrictRange, myMarkers, getId());
-      }
+      LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myRestrictRange, myMarkers, getId());
       DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
       fileStatusMap.markFileUpToDate(myDocument, getId());
@@ -109,8 +102,9 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
              Collection<LineMarkerProvider> providers = getMarkerProviders(language, myProject);
              List<LineMarkerProvider> providersList = new ArrayList<>(providers);
 
-             queryProviders(elements.inside, root, providersList, (__, info) -> {
-               lineMarkers.add(info);
+             queryProviders(
+               elements.inside, root, providersList, (__, info) -> {
+                 lineMarkers.add(info);
                ApplicationManager.getApplication().invokeLater(() -> {
                  if (isValid()) {
                    LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info);
@@ -120,6 +114,10 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
              queryProviders(elements.outside, root, providersList, (__, info) -> lineMarkers.add(info));
              return true;
            });
+    }
+
+    for (LineMarkerInfo<?> info : lineMarkers) {
+      info.updatePass = getId();
     }
 
     myMarkers = mergeLineMarkers(lineMarkers, getDocument());
