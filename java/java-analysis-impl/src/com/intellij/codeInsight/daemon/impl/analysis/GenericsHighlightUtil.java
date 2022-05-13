@@ -1060,6 +1060,11 @@ public final class GenericsHighlightUtil {
   static HighlightInfo checkOverrideAnnotation(@NotNull PsiMethod method,
                                                @NotNull PsiAnnotation overrideAnnotation,
                                                @NotNull LanguageLevel languageLevel) {
+    if (method.hasModifierProperty(PsiModifier.STATIC)) {
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(overrideAnnotation)
+        .descriptionAndTooltip(
+          JavaErrorBundle.message("static.method.cannot.be.annotated.with.override")).create();
+    }
     try {
       MethodSignatureBackedByPsiMethod superMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
       if (superMethod != null && method.getContainingClass().isInterface()) {

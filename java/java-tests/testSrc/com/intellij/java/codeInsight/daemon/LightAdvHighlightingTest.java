@@ -107,7 +107,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testCtrCallIsFirst() { doTest(false); }
   public void testAccessLevelClash() { doTest(false); }
   public void testCasts() { doTest(false); }
-  public void testOverrideConflicts() { doTest(false); }
+  public void testOverrideConflicts() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.HIGHEST, () -> doTest(false)); }
   public void testOverriddenMethodIsFinal() { doTest(false); }
   public void testMissingReturn() { doTest(false); }
   public void testUnreachable() { doTest(false); }
