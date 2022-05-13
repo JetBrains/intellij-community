@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.search
 
@@ -14,8 +14,8 @@ import org.jetbrains.kotlin.idea.caches.lightClasses.IDELightClassConstructionCo
 import org.jetbrains.kotlin.idea.caches.lightClasses.IDELightClassConstructionContext.Mode.EXACT
 import org.jetbrains.kotlin.idea.completion.test.withServiceRegistered
 import org.jetbrains.kotlin.idea.search.PsiBasedClassResolver
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.junit.Assert
 
 abstract class AbstractAnnotatedMembersSearchTest : AbstractSearcherTest() {
@@ -24,7 +24,7 @@ abstract class AbstractAnnotatedMembersSearchTest : AbstractSearcherTest() {
     }
 
     fun doTest(unused: String) {
-        val testDataFile = testDataFile()
+        val testDataFile = dataFile()
 
         myFixture.configureByFile(fileName())
         val fileText = FileUtil.loadFile(testDataFile, true)

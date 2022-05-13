@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -45,7 +45,7 @@ class GrAssignabilityTest extends GrHighlightingTestBase {
   void testClosureWithDefaultParameters() { doTest() }
 
   void 'test method with default parameters and varargs'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 def go(String a, String b = 'b', String c, int ... i) {}
 go('a', 'c', 1, 2, 3)
 '''
@@ -159,11 +159,11 @@ go('a', 'c', 1, 2, 3)
   }
 
   void testDiamondTypeInferenceSOE() {
-    testHighlighting(''' Map<Integer, String> a; a[2] = [:] ''', false, false, false)
+    doTestHighlighting(''' Map<Integer, String> a; a[2] = [:] ''', false, false, false)
   }
 
   void _testThisInStaticMethodOfAnonymousClass() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
     static abc
     def foo() {
@@ -177,7 +177,7 @@ class A {
   }
 
   void testNonInferrableArgsOfDefParams() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def foo0(def a) { }
 def bar0(def b) { foo0(b) }
 
@@ -195,7 +195,7 @@ package java.util;
 public class LinkedHashMap<K,V> extends HashMap<K,V> implements Map<K,V> {}
 """)
 
-    testHighlighting('''\
+    doTestHighlighting('''\
 LinkedHashMap<File, List<File>> files = [:]
 files[new File('a')] = [new File('b')]
 files<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.io.File, java.io.File)'">[new File('a')]</warning> = new File('b')
@@ -203,7 +203,7 @@ files<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethod
   }
 
   void testStringToCharAssignability() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def foo(char c){}
 
 foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.String)'">('a')</warning>
@@ -215,7 +215,7 @@ char c = 'a'
   }
 
   void testMethodRefs1() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
   int foo(){2}
 
@@ -232,7 +232,7 @@ Date <warning descr="Cannot assign 'int' to 'Date'">d2</warning> = foo()
   }
 
   void testMethodRefs2() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class Bar {
   def foo(int i, String s2) {s2}
   def foo(int i, int i2) {i2}
@@ -248,7 +248,7 @@ String i2 = cl(3)
   }
 
   void testThrowObject() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def foo() {
   throw new RuntimeException()
 }
@@ -263,7 +263,7 @@ def test() {
   }
 
   void testCategoryWithPrimitiveType() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class Cat {
   static foo(Integer x) {}
 }
@@ -293,7 +293,7 @@ package groovy.transform;
 public @interface CompileStatic {
 }''')
 
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.CompileStatic
 
 class A {
@@ -311,7 +311,7 @@ class A {
   }
 
   void testClosuresInAnnotations() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 @interface Test {
   Class value()
 }
@@ -329,7 +329,7 @@ class A {
   }
 
   void testTupleAssignment() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 String x 
 int y 
 (x, <warning descr="Cannot assign 'String' to 'int'">y</warning>) = foo()
@@ -341,7 +341,7 @@ List<String> foo() {[]}
   }
 
   void testTupleDeclaration() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def (int <warning descr="Cannot assign 'String' to 'int'">x</warning>, String y) = foo()
 
 List<String> foo() {[]}
@@ -349,7 +349,7 @@ List<String> foo() {[]}
   }
 
   void testCastClosureToInterface() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 interface Function<D, F> {
     F fun(D d)
 }
@@ -368,7 +368,7 @@ foo<warning descr="'foo' in '_' cannot be applied to '(groovy.lang.Closure)'">({
   }
 
   void testVarargsWithoutTypeName() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def foo(String key, ... params) {
 
 }
@@ -380,7 +380,7 @@ foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.Integer)'">(5)<
   }
 
   void testIncorrectReturnValue() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 private int getObjects() {
     try {
         def t = "test";
@@ -397,13 +397,13 @@ private int getObjects() {
 
 
   void testForInAssignability() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 for (<warning descr="Cannot assign 'String' to 'int'">int x</warning> in ['a']){}
 ''')
   }
 
   void testAssignabilityOfMethodProvidedByCategoryAnnotation() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 @Category(List)
 class EvenSieve {
     def getNo2() {
@@ -415,7 +415,7 @@ class EvenSieve {
   }
 
   void testAssignabilityOfCategoryMethod() {
-    testHighlighting('''
+    doTestHighlighting('''
 class Cat {
   static foo(Class c, int x) {}
 }
@@ -430,7 +430,7 @@ use(Cat) {
   }
 
   void testImplicitConversionToArray() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 String[] foo() {
     return 'ab'
 }
@@ -446,7 +446,7 @@ int[] bar() {
   }
 
   void testAssignNullToPrimitiveTypesAndWrappers() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 int <warning descr="Cannot assign 'null' to 'int'">x</warning> = null
 double <warning descr="Cannot assign 'null' to 'double'">y</warning> = null
 boolean a = null
@@ -457,7 +457,7 @@ Integer i = null
   }
 
   void testAssignNullToPrimitiveParameters() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def _int(int x) {}
 def _boolean(boolean x) {}
 def _Boolean(Boolean x) {}
@@ -469,7 +469,7 @@ _Boolean(null)
   }
 
   void testInnerWarning() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 public static void main(String[] args) {
     bar <warning descr="'bar' in '_' cannot be applied to '(T)'">(foo(foo(foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.String)'">('2')</warning>)))</warning>
 }
@@ -485,7 +485,7 @@ static bar(String s) {
   }
 
   void testLiteralConstructorWithNamedArgs() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.Immutable
 
 @Immutable class Money {
@@ -499,7 +499,7 @@ Money d = [amount: 100, currency:'USA']
   }
 
   void testBooleanIsAssignableToAny() {
-    testHighlighting('''\
+    doTestHighlighting('''\
       boolean b1 = new Object()
       boolean b2 = null
       Boolean b3 = new Object()
@@ -508,7 +508,7 @@ Money d = [amount: 100, currency:'USA']
   }
 
   void testArrayAccess() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 int [] i = [1, 2]
 
 print i[1]
@@ -520,7 +520,7 @@ print i['a', 'b']
   }
 
   void testArrayAccess2() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 int[] i() { [1, 2] }
 
 print i()[1]
@@ -532,7 +532,7 @@ print i()['a', 'b']
   }
 
   void testArrayAccess3() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class X {
   def getAt(int x) {''}
 }
@@ -548,7 +548,7 @@ print <weak_warning descr="Cannot infer argument types">i()<warning descr="'getA
   }
 
   void testArrayAccess4() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class X {
   def getAt(int x) {''}
 }
@@ -564,13 +564,13 @@ print <weak_warning descr="Cannot infer argument types">i<warning descr="'getAt'
   }
 
   void testArrayAccess5() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 print a<warning descr="'getAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '([java.lang.Integer, java.lang.Integer])'">[1, 2]</warning>
 ''')
   }
 
   void testArrayAccess6() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 int[] i = [1, 2]
 
 i[1] = 2
@@ -582,7 +582,7 @@ i<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' c
   }
 
   void testArrayAccess7() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 int[] i() { [1, 2] }
 
 i()[1] = 2
@@ -594,7 +594,7 @@ i()<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods'
   }
 
   void testArrayAccess8() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class X {
   def putAt(int x, int y) {''}
 }
@@ -610,7 +610,7 @@ i()<warning descr="'putAt' in 'X' cannot be applied to '([java.lang.String, java
   }
 
   void testArrayAccess9() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class X {
   def putAt(int x, int y) {''}
 }
@@ -626,13 +626,13 @@ i<warning descr="'putAt' in 'X' cannot be applied to '([java.lang.String, java.l
   }
 
   void testArrayAccess10() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 a<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '([java.lang.Integer, java.lang.Integer], java.lang.Integer)'">[1, 3]</warning> = 2
 ''')
   }
 
   void testVarWithInitializer() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 Object o = new Date()
 foo(o)
 bar<warning descr="'bar' in '_' cannot be applied to '(java.util.Date)'">(o)</warning>
@@ -643,7 +643,7 @@ def bar(String s) {}
   }
 
   void testClassTypesWithMadGenerics() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 //no warnings are expected!
 
 class CollectionTypeTest {
@@ -675,7 +675,7 @@ class CollectionTypeTest {
   }
 
   void testParameterInitializerWithGenericType() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class PsiElement {}
 class Foo extends PsiElement implements I {}
 
@@ -690,7 +690,7 @@ def <T extends PsiElement & I> T foo5(Class<T> x = Foo ) {}
   }
 
   void testFixVariableType() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 int <warning>x<caret>x</warning> = 'abc'
 ''')
 
@@ -704,7 +704,7 @@ String xx = 'abc'
   }
 
   void testFixVariableType2() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 int xx = 5
 
 <warning>x<caret>x</warning> = 'abc'
@@ -728,7 +728,7 @@ xx = 'abc'
   void testInnerClassConstructorWithAnotherArg() { doTest() }
 
   void testClosureIsNotAssignableToSAMInGroovy2_1() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 interface X {
   def foo()
 }
@@ -738,7 +738,7 @@ X <warning>x</warning> = {print 2}
   }
 
   void testVoidMethodAssignability() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 void foo() {}
 
 def foo = foo()
@@ -754,7 +754,7 @@ def zoo() {
   }
 
   void testBinaryOperatorApplicability() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 void bug(Collection<String> foo, Collection<String> bar) {
     foo <warning descr="'leftShift' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.util.Collection<java.lang.String>)'"><<</warning> bar   // warning missed
     foo << "a"
@@ -762,7 +762,7 @@ void bug(Collection<String> foo, Collection<String> bar) {
   }
 
   void testPlusIsApplicable() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 print 1 + 2
 
 print <weak_warning descr="Cannot infer argument types">4 <warning descr="'plus' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.util.ArrayList)'">+</warning> new ArrayList()</weak_warning>
@@ -770,7 +770,7 @@ print <weak_warning descr="Cannot infer argument types">4 <warning descr="'plus'
   }
 
   void testMultiAssignmentCS() {
-    testHighlighting'''
+    doTestHighlighting '''
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -782,7 +782,7 @@ def foo() {
   }
 
   void testMultiAssignmentWithTypeError() {
-    testHighlighting'''
+    doTestHighlighting '''
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -794,7 +794,7 @@ def foo() {
   }
 
   void testMultiAssignmentLiteralWithTypeError() {
-    testHighlighting'''
+    doTestHighlighting '''
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -805,7 +805,7 @@ def foo() {
   }
 
   void testMultiAssignment() {
-    testHighlighting'''
+    doTestHighlighting '''
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -816,7 +816,7 @@ def foo() {
   }
 
   void testRawListReturn() {
-    testHighlighting'''
+    doTestHighlighting '''
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -827,7 +827,7 @@ List foo() {
   }
 
   void 'test optional argument on CompileStatic'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -842,7 +842,7 @@ class A {
   }
 
   void 'test optional vararg argument on CompileStatic'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -857,7 +857,7 @@ class A {
   }
 
   void 'test optional closure arg on CompileStatic'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -869,7 +869,7 @@ def method() {
   }
 
   void 'test string tuple assignment'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -882,7 +882,7 @@ class TestType {
   }
 
   void 'test unknown argument plus'() {
-    testHighlighting '''
+    doTestHighlighting '''
 class A1{}
 
 class E {
@@ -899,7 +899,7 @@ new E() <weak_warning descr="Cannot infer argument types">+</weak_warning> a
   }
 
   void 'test unknown argument plus 2'() {
-    testHighlighting '''
+    doTestHighlighting '''
 class A1{}
 class A2{}
 
@@ -921,7 +921,7 @@ new E() <weak_warning descr="Cannot infer argument types">+</weak_warning> a
   }
 
   void 'test inapplicable with unknown argument'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 def foo(String s, int x) {}
 def foo(String s, Object o) {}
 def foo(String s, String x) {}

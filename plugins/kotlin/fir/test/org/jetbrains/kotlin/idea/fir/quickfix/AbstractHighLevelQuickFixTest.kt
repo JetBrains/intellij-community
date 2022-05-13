@@ -1,17 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
-import org.jetbrains.kotlin.idea.test.disableKotlinOfficialCodeStyle
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 import java.nio.file.Paths
-import com.intellij.util.ThrowableRunnable
 
 abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
     override fun tearDown() {
@@ -44,7 +43,7 @@ abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
     }
 
     override fun getAfterFileName(beforeFileName: String): String {
-        val firAfterFile = File(testPath(beforeFileName.replace(".kt", ".fir.kt.after")))
+        val firAfterFile = File(dataFilePath(beforeFileName.replace(".kt", ".fir.kt.after")))
         return if (firAfterFile.exists()) {
             firAfterFile.name
         } else {

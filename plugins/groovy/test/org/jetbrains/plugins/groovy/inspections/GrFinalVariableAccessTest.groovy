@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.inspections
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -27,7 +13,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   InspectionProfileEntry[] getCustomInspections() { [new GrFinalVariableAccessInspection()] }
 
   void testSimpleVar() {
-    testHighlighting('''
+    doTestHighlighting('''
       final foo = 5
       <warning>foo</warning> = 7
       print foo
@@ -35,7 +21,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testSplitInit() {
-    testHighlighting('''
+    doTestHighlighting('''
       final foo
       foo = 7
       <warning>foo</warning> = 8
@@ -44,7 +30,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testIf1() {
-    testHighlighting('''
+    doTestHighlighting('''
       final foo = 5
       if (cond) {
         <warning>foo</warning> = 7
@@ -54,7 +40,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testIf2() {
-    testHighlighting('''
+    doTestHighlighting('''
       final foo
       if (cond) {
         foo = 7
@@ -68,7 +54,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testIf3() {
-    testHighlighting('''
+    doTestHighlighting('''
       final foo
       if (cond) {
         foo = 7
@@ -79,7 +65,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testFor() {
-    testHighlighting('''
+    doTestHighlighting('''
       for (a in b) {
         final x = 5  //all correct
         print x
@@ -88,7 +74,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testFor2() {
-    testHighlighting('''
+    doTestHighlighting('''
       final foo = 5
       for (a in b) {
         <warning>foo</warning> = 5
@@ -98,14 +84,14 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testFor3() {
-    testHighlighting('''
+    doTestHighlighting('''
       for (a in b)
         final foo = 5  //correct code
     ''')
   }
 
   void testForParam() {
-    testHighlighting('''
+    doTestHighlighting('''
       for (final i : [1, 2]) {
         <warning>i</warning> = 5
         print i
@@ -114,7 +100,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testDuplicatedVar() {
-    testHighlighting('''
+    doTestHighlighting('''
       if (cond) {
         final foo = 5
         print foo
@@ -132,7 +118,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testDuplicatedVar2() {
-    testHighlighting('''
+    doTestHighlighting('''
       if (cond) {
         final foo = 5
         <warning>foo</warning> = 4
@@ -150,7 +136,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testDuplicatedVar3() {
-    testHighlighting('''
+    doTestHighlighting('''
       class X {
         def bar() {
           if (cond) {
@@ -172,7 +158,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testFinalField0() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         final <warning>foo</warning>
       }
@@ -180,7 +166,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testFinalField1() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         final foo //correct
 
@@ -192,7 +178,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testFinalField2() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         final <warning>foo</warning>
 
@@ -207,7 +193,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testFinalField3() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         final foo;
 
@@ -226,7 +212,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testFinalField4() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         final foo //correct
 
@@ -242,7 +228,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testFinalField5() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         final <warning>foo</warning> //correct
 
@@ -258,7 +244,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testFinalField6() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         final <warning>foo</warning> //correct
 
@@ -274,7 +260,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testStaticFinalField0() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         static final foo = 5 //correct
       }
@@ -282,7 +268,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testStaticFinalField1() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         static final <warning>foo</warning>
       }
@@ -290,7 +276,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testStaticFinalField2() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         static final <warning>foo</warning>
 
@@ -304,7 +290,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testStaticFinalField3() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         static final foo //correct
 
@@ -321,7 +307,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testStaticFinalField4() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         static final foo //correct
 
@@ -342,7 +328,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testFinalFieldInit0() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         final foo = 0;
 
@@ -354,7 +340,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testFinalFieldInit1() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         final foo;
 
@@ -370,7 +356,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testFinalFieldInit2() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         final foo;
 
@@ -386,7 +372,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testFinalFieldInit3() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         final foo;
 
@@ -403,7 +389,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testFinalFieldInit4() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         final foo;
 
@@ -417,7 +403,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testFinalFieldInit5() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         final foo;
 
@@ -433,7 +419,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testFinalFieldAccess() {
-    testHighlighting('''
+    doTestHighlighting('''
       class Foo {
         public final foo = 5
       }
@@ -443,7 +429,7 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   }
 
   void testImmutable() {
-    testHighlighting('''
+    doTestHighlighting('''
 import groovy.transform.Immutable
 
 @Immutable
@@ -463,7 +449,7 @@ def a = new Money('USA', 100)
   }
 
   void testNonFinalField1() {
-    testHighlighting('''
+    doTestHighlighting('''
 class A {
   int foo
 
@@ -475,7 +461,7 @@ class A {
   }
 
   void testNonFinalField2() {
-    testHighlighting('''
+    doTestHighlighting('''
 class A {
   int foo = 5
 
@@ -487,7 +473,7 @@ class A {
   }
 
   void 'test Field And Parameter With The Same Name'() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class Aaa {
     final int foo
     final int bar
@@ -501,7 +487,7 @@ class Aaa {
   }
 
   void testEnumConstants() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 enum E {
   abc, cde
 
@@ -511,7 +497,7 @@ enum E {
   }
 
   void testInc() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class Aaa {
     final int foo = 0
 

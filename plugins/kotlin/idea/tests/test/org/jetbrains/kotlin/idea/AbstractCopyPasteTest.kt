@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea
 
@@ -28,7 +28,7 @@ abstract class AbstractCopyPasteTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     protected fun configureByDependencyIfExists(dependencyFileName: String): PsiFile? {
-        val file = testDataFile(dependencyFileName)
+        val file = dataFile(dependencyFileName)
         if (!file.exists()) return null
         return if (dependencyFileName.endsWith(".java")) {
             //allow test framework to put it under right directory
@@ -39,7 +39,7 @@ abstract class AbstractCopyPasteTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     protected fun configureTargetFile(fileName: String): KtFile {
-        return if (testDataFile(fileName).exists()) {
+        return if (dataFile(fileName).exists()) {
             myFixture.configureByFile(fileName) as KtFile
         } else {
             myFixture.configureByText(fileName, DEFAULT_TO_FILE_TEXT) as KtFile
