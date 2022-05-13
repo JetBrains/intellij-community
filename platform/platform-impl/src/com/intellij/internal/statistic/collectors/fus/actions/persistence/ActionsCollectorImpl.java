@@ -22,6 +22,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.TimeoutUtil;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMaps;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +60,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
     }
   }
 
-  private final Object2LongMap<ActionUpdateStatsKey> myUpdateStats = new Object2LongOpenHashMap<>();
+  private final Object2LongMap<ActionUpdateStatsKey> myUpdateStats = Object2LongMaps.synchronize(new Object2LongOpenHashMap<>());
 
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
@@ -236,8 +237,8 @@ public class ActionsCollectorImpl extends ActionsCollector {
     List<EventPair<?>> data = new ArrayList<>();
     PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
     String actionId = addActionClass(data, action, info);
-    Project project = event.getProject();
     DataContext dataContext = getCachedDataContext(event);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     Language language = getInjectedOrFileLanguage(project, dataContext);
     if (language == null) {
       language = Language.ANY;
