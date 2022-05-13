@@ -137,6 +137,20 @@ final class InspectorTable extends JPanel implements DataProvider {
     myDimensionComponent.repaint();
   }
 
+  @NotNull
+  public String getCellTextValue(int row, int col) {
+    Object value = myTable.getValueAt(row, col);
+    if (value instanceof String) return (String)value;
+
+    TableColumn tableColumn = myTable.getColumnModel().getColumn(col);
+    Component component = tableColumn.getCellRenderer().getTableCellRendererComponent(myTable, value, false, false, row, col);
+    if (component instanceof JLabel) { // see ValueCellRenderer
+      return ((JLabel)component).getText();
+    }
+    return String.valueOf(value);
+  }
+
+
   public JTable getTable() {
     return myTable;
   }
@@ -351,24 +365,12 @@ final class InspectorTable extends JPanel implements DataProvider {
         if (builder.length() > 0) builder.append('\n');
 
         for (int col = 0; col < myTable.getColumnCount(); col++) {
-          builder.append(getTextValue(row, col));
+          builder.append(getCellTextValue(row, col));
           if (col < myTable.getColumnCount() - 1) builder.append("\t");
         }
       }
 
       CopyPasteManager.getInstance().setContents(new TextTransferable(builder.toString()));
-    }
-
-    private String getTextValue(int row, int col) {
-      Object value = myTable.getValueAt(row, col);
-      if (value instanceof String) return (String)value;
-
-      TableColumn tableColumn = myTable.getColumnModel().getColumn(col);
-      Component component = tableColumn.getCellRenderer().getTableCellRendererComponent(myTable, value, false, false, row, col);
-      if (component instanceof JLabel) { // see ValueCellRenderer
-        return ((JLabel)component).getText();
-      }
-      return value.toString();
     }
 
     @Override

@@ -191,8 +191,10 @@ public final class InspectorWindow extends JDialog implements Disposable {
             }
             else if (myInspectorTable.getTable().hasFocus()) {
               int row = myInspectorTable.getTable().getSelectedRow();
-              Object at = myInspectorTable.getModel().getValueAt(row, 1);
-              openClass(String.valueOf(at), requestFocus);
+              String value = myInspectorTable.getCellTextValue(row, 1);
+              // remove hashcode, properties description, take first from enumeration
+              String[] parts = value.split("[@,\\[]");
+              openClass(parts[0], requestFocus);
             }
           }
 
@@ -254,32 +256,40 @@ public final class InspectorWindow extends JDialog implements Disposable {
     getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "CLOSE");
   }
 
-  private void openClass(String fqn, boolean requestFocus) {
-    if (myProject != null) {
-      try {
-        String javaPsiFacadeFqn = "com.intellij.psi.JavaPsiFacade";
-        PluginId pluginId = PluginManager.getPluginByClassNameAsNoAccessToClass(javaPsiFacadeFqn);
-        Class<?> facade = null;
-        if (pluginId != null) {
-          IdeaPluginDescriptor plugin = PluginManager.getInstance().findEnabledPlugin(pluginId);
-          if (plugin != null) {
-            facade = Class.forName(javaPsiFacadeFqn, false, plugin.getPluginClassLoader());
-          }
-        }
-        else {
-          facade = Class.forName(javaPsiFacadeFqn);
-        }
-        if (facade != null) {
-          Method getInstance = facade.getDeclaredMethod("getInstance", Project.class);
-          Method findClass = facade.getDeclaredMethod("findClass", String.class, GlobalSearchScope.class);
-          Object result = findClass.invoke(getInstance.invoke(null, myProject), fqn, GlobalSearchScope.allScope(myProject));
-          if (result instanceof PsiElement) {
-            PsiNavigateUtil.navigate((PsiElement)result, requestFocus);
-          }
+  private void openClass(String jvmFqn, boolean requestFocus) {
+    if (myProject == null) return;
+
+    try {
+      String javaPsiFacadeFqn = "com.intellij.psi.JavaPsiFacade";
+      PluginId pluginId = PluginManager.getPluginByClassNameAsNoAccessToClass(javaPsiFacadeFqn);
+      Class<?> facade = null;
+      if (pluginId != null) {
+        IdeaPluginDescriptor plugin = PluginManager.getInstance().findEnabledPlugin(pluginId);
+        if (plugin != null) {
+          facade = Class.forName(javaPsiFacadeFqn, false, plugin.getPluginClassLoader());
         }
       }
-      catch (Exception ignore) {
+      else {
+        facade = Class.forName(javaPsiFacadeFqn);
       }
+      if (facade != null) {
+        Method getInstance = facade.getDeclaredMethod("getInstance", Project.class);
+        Method findClass = facade.getDeclaredMethod("findClass", String.class, GlobalSearchScope.class);
+        String ourFqn = jvmFqn.replace('$', '.');
+        Object result = findClass.invoke(getInstance.invoke(null, myProject), ourFqn, GlobalSearchScope.allScope(myProject));
+        if (result == null) {
+          // if provided jvmFqn is anonymous class, try to navigate to containing class
+          String[] parts = jvmFqn.split("\\$\\d+");
+          String containingClassJvmFqn = parts[0];
+          String containingClassOurFqn = containingClassJvmFqn.replace('$', '.');
+          result = findClass.invoke(getInstance.invoke(null, myProject), containingClassOurFqn, GlobalSearchScope.allScope(myProject));
+        }
+        if (result instanceof PsiElement) {
+          PsiNavigateUtil.navigate((PsiElement)result, requestFocus);
+        }
+      }
+    }
+    catch (Exception ignore) {
     }
   }
 
