@@ -36,7 +36,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   private static final String RETURN_VALUE_UNDEFINED = "#";
 
-  private List<RefMethod> mySuperMethods; // guarded by this
+  private Object mySuperMethods; // guarded by this
   private List<RefOverridable> myDerivedReferences; // guarded by this
   private List<String> myUnThrownExceptions; // guarded by this
 
@@ -202,7 +202,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Override
   @NotNull
   public synchronized Collection<RefMethod> getSuperMethods() {
-    return ObjectUtils.notNull(mySuperMethods, Collections.emptyList());
+    if (mySuperMethods instanceof Collection) {
+      //noinspection unchecked
+      return (Collection<RefMethod>)mySuperMethods;
+    }
+    return mySuperMethods != null ? List.of((RefMethod)mySuperMethods) : List.of();
   }
 
   @Override
@@ -278,10 +282,17 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   public synchronized void addSuperMethod(RefMethodImpl refSuperMethod) {
     if (mySuperMethods == null) {
-      mySuperMethods = new ArrayList<>(1);
+      mySuperMethods = refSuperMethod;
     }
-    if (!mySuperMethods.contains(refSuperMethod)) {
-      mySuperMethods.add(refSuperMethod);
+    else if (mySuperMethods instanceof List) {
+      //noinspection unchecked
+      List<RefMethod> list = (List<RefMethod>)mySuperMethods;
+      list.add(refSuperMethod);
+    }
+    else {
+      ArrayList<RefMethod> list = new ArrayList<>(1);
+      list.add(refSuperMethod);
+      mySuperMethods = list;
     }
   }
 
