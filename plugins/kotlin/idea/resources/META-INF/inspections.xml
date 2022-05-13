@@ -2207,7 +2207,7 @@
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.CastDueToProgressionResolutionChangeMigrationInspection"
                      groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
+                     groupName="Migration"
                      enabledByDefault="false"
                      cleanupTool="true"
                      level="WARNING"
@@ -2261,7 +2261,7 @@
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.NoConstructorMigrationInspection"
                      groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
+                     groupName="Migration"
                      enabledByDefault="false"
                      level="ERROR"
                      language="kotlin"
