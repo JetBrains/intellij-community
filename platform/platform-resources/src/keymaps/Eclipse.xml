@@ -28,8 +28,17 @@
   </action>
   <action id="CloseEditor"/>
   <action id="CodeInspection.OnEditor"/>
+  <action id="CollapseAll">
+    <keyboard-shortcut first-keystroke="shift control DIVIDE"/>
+  </action>
   <action id="CollapseAllRegions">
     <keyboard-shortcut first-keystroke="shift control DIVIDE"/>
+  </action>
+  <action id="CollapseRegion">
+    <keyboard-shortcut first-keystroke="control SUBTRACT"/>
+  </action>
+  <action id="CollapseExpandableComponent">
+    <keyboard-shortcut first-keystroke="control SUBTRACT"/>
   </action>
   <action id="CommentByBlockComment">
     <keyboard-shortcut first-keystroke="shift control SLASH"/>
@@ -97,8 +106,17 @@
   <action id="EvaluateExpression">
     <keyboard-shortcut first-keystroke="control U"/>
   </action>
+  <action id="ExpandAll">
+    <keyboard-shortcut first-keystroke="control shift MULTIPLY"/>
+  </action>
   <action id="ExpandAllRegions">
     <keyboard-shortcut first-keystroke="control MULTIPLY"/>
+  </action>
+  <action id="ExpandRegion">
+    <keyboard-shortcut first-keystroke="control ADD"/>
+  </action>
+  <action id="ExpandExpandableComponent">
+    <keyboard-shortcut first-keystroke="control ADD"/>
   </action>
   <action id="ExpandAllToLevel1"/>
   <action id="ExpandAllToLevel2"/>
@@ -385,4 +403,11 @@
   <action id="ResizeToolWindowRight"/>
   <action id="ResizeToolWindowUp"/>
   <action id="ResizeToolWindowDown"/>
+
+  <action id="EditorDecreaseFontSizeGlobal">
+    <keyboard-shortcut first-keystroke="control MINUS"/>
+  </action>
+  <action id="EditorIncreaseFontSizeGlobal">
+    <keyboard-shortcut first-keystroke="control EQUALS"/>
+  </action>
 </keymap>

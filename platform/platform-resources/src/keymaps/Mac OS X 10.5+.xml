@@ -781,4 +781,11 @@
   </action>
 
   <action id="MainMenuButton.ShowMenu" />
+
+  <action id="EditorDecreaseFontSizeGlobal">
+    <keyboard-shortcut first-keystroke="control shift COMMA"/>
+  </action>
+  <action id="EditorIncreaseFontSizeGlobal">
+    <keyboard-shortcut first-keystroke="control shift PERIOD"/>
+  </action>
 </keymap>

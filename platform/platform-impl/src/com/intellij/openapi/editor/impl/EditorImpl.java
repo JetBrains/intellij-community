@@ -1264,7 +1264,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public int getFontSize() {
     return myScheme.getEditorFontSize();
   }
-
+  
   public float getFontSize2D() {
     return myScheme.getEditorFontSize2D();
   }
@@ -5096,11 +5096,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (size >= MIN_FONT_SIZE) {
             setFontSize(size, SwingUtilities.convertPoint(this, e.getPoint(), getViewport()));
             if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
-              EditorColorsManager.getInstance().getGlobalScheme().setEditorFontSize(size);
-              if (myScheme instanceof MyColorSchemeDelegate) {
-                ((MyColorSchemeDelegate) myScheme).resetEditorFontSize();
-              }
-              ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
+              adjustGlobalFontSize(size);
             }
           }
           return;
@@ -5127,6 +5123,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       super.setupCorners();
       setBorder(new TablessBorder());
     }
+  }
+
+  public void adjustGlobalFontSize(float size) {
+    EditorColorsManager.getInstance().getGlobalScheme().setEditorFontSize(size);
+    if (myScheme instanceof MyColorSchemeDelegate) {
+      ((MyColorSchemeDelegate) myScheme).resetEditorFontSize();
+    }
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
   }
 
   private final class TablessBorder extends SideBorder {

@@ -405,4 +405,6 @@
   <action id="Vcs.MoveChangedLinesToChangelist"/>
   <action id="ChangesView.Move"/>
   <action id="GoFmtProjectAction"/>
+  <action id="EditorDecreaseFontSizeGlobal"/>
+  <action id="EditorIncreaseFontSizeGlobal"/>
 </keymap>

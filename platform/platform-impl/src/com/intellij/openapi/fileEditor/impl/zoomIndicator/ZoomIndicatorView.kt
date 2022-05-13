@@ -8,11 +8,9 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.AnActionLink
 import com.intellij.util.ui.JBUI
@@ -22,9 +20,12 @@ import java.awt.event.MouseEvent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class ZoomIndicatorView(service: ZoomIndicatorManager, val editor: EditorEx) : JPanel(MigLayout("novisualpadding, ins 0")) {
+class ZoomIndicatorView(val editor: EditorImpl) : JPanel(MigLayout("novisualpadding, ins 0")) {
+
   var isHovered = false; private set
   var lastHoverMs = 0L; private set
+
+  private val fontSizeLabel: JLabel
 
   private val settingsAction = object : DumbAwareAction(IdeBundle.message("action.open.editor.settings.text"), "", AllIcons.General.Settings) {
     override fun actionPerformed(e: AnActionEvent) {
@@ -79,14 +80,15 @@ class ZoomIndicatorView(service: ZoomIndicatorManager, val editor: EditorEx) : J
     val disposable = Disposer.newDisposable()
     EditorUtil.disposeWithEditor(editor, disposable)
 
-    val label = JLabel(IdeBundle.message("action.reset.font.size.info", "000"))
+    fontSizeLabel = JLabel(IdeBundle.message("action.reset.font.size.info", "000"))
+    updateFontSize()
 
-    service.adviseFontSize(disposable) {
-      label.text = IdeBundle.message("action.reset.font.size.info", it.toString())
-    }
-
-    add(label, "wmin ${JBUI.scale(100)}, gapbottom ${JBUI.scale(1)}, gapleft ${JBUI.scale(3)}")
+    add(fontSizeLabel, "wmin ${JBUI.scale(100)}, gapbottom ${JBUI.scale(1)}, gapleft ${JBUI.scale(3)}")
     add(resetLink, "gapbottom ${JBUI.scale(1)}")
     add(settingsBtn)
+  }
+
+  fun updateFontSize() {
+    fontSizeLabel.text = IdeBundle.message("action.reset.font.size.info", editor.fontSize)
   }
 }

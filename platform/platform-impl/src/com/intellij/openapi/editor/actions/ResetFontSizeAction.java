@@ -5,7 +5,10 @@ import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -15,7 +18,8 @@ import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +32,8 @@ public class ResetFontSizeAction extends EditorAction {
   private static final String FONT_SIZE_TO_RESET_EDITOR = "fontSizeToResetEditor";
   public static final String PREVIOUS_COLOR_SCHEME = "previousColorScheme";
 
-  private interface Strategy {
+  @ApiStatus.Internal
+  public interface Strategy {
     float getFontSize();
     void setFontSize(float fontSize);
     default void reset() {
@@ -82,8 +87,12 @@ public class ResetFontSizeAction extends EditorAction {
     }
   }
 
-  private static Strategy getStrategy(EditorEx editor) {
-    if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
+  @ApiStatus.Internal
+  public static Strategy getStrategy(EditorEx editor) {
+    float globalSize = ConsoleViewUtil.isConsoleViewEditor(editor)
+                       ? EditorColorsManager.getInstance().getGlobalScheme().getConsoleFontSize2D()
+                       : EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
+    if (editor instanceof EditorImpl && ((EditorImpl) editor).getFontSize2D() == globalSize) {
       return new AllEditorsStrategy(editor);
     }
     return new SingleEditorStrategy(editor);

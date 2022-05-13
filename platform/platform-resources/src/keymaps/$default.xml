@@ -1282,4 +1282,11 @@
   <action id="MainMenuButton.ShowMenu">
     <keyboard-shortcut first-keystroke="alt BACK_SLASH"/>
   </action>
+
+  <action id="EditorDecreaseFontSizeGlobal">
+    <keyboard-shortcut first-keystroke="alt shift COMMA"/>
+  </action>
+  <action id="EditorIncreaseFontSizeGlobal">
+    <keyboard-shortcut first-keystroke="alt shift PERIOD"/>
+  </action>
 </keymap>
