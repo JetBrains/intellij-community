@@ -12,7 +12,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.index.MarkdownHeadersIndex
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
-import org.intellij.plugins.markdown.util.hasType
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 
 class MarkdownAnchorReferenceImpl internal constructor(
   private val myAnchor: String,

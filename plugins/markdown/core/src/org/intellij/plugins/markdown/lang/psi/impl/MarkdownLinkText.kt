@@ -5,8 +5,8 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
-import org.intellij.plugins.markdown.util.children
-import org.intellij.plugins.markdown.util.hasType
+import org.intellij.plugins.markdown.lang.psi.util.children
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental

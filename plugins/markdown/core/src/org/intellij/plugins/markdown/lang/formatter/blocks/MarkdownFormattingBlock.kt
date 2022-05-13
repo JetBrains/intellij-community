@@ -11,8 +11,8 @@ import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
-import org.intellij.plugins.markdown.lang.psi.MarkdownAstUtils.children
-import org.intellij.plugins.markdown.lang.psi.MarkdownAstUtils.parents
+import org.intellij.plugins.markdown.lang.psi.util.children
+import org.intellij.plugins.markdown.lang.psi.util.parents
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 
 /**

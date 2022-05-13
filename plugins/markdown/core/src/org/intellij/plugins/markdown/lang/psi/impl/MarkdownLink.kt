@@ -1,7 +1,7 @@
 package org.intellij.plugins.markdown.lang.psi.impl
 
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
-import org.intellij.plugins.markdown.util.children
+import org.intellij.plugins.markdown.lang.psi.util.children
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental

@@ -10,8 +10,8 @@ import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
-import org.intellij.plugins.markdown.util.children
-import org.intellij.plugins.markdown.util.hasType
+import org.intellij.plugins.markdown.lang.psi.util.children
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 
 class MarkdownImage(node: ASTNode): ASTWrapperPsiElement(node), MarkdownPsiElement, MarkdownLink {
   val exclamationMark: PsiElement?

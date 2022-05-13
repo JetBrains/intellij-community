@@ -13,11 +13,11 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.elementType
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
+import org.intellij.plugins.markdown.lang.psi.util.children
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElement
 import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElementType
 import org.intellij.plugins.markdown.structureView.MarkdownStructureColors
-import org.intellij.plugins.markdown.util.children
-import org.intellij.plugins.markdown.util.hasType
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 

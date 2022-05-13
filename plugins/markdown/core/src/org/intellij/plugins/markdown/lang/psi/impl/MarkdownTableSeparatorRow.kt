@@ -9,7 +9,7 @@ import com.intellij.psi.util.parents
 import org.intellij.plugins.markdown.editor.tables.TableProps
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.util.hasType
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 
 class MarkdownTableSeparatorRow(text: CharSequence): MarkdownLeafPsiElement(MarkdownTokenTypes.TABLE_SEPARATOR, text) {
   private val cachedCellsRanges
