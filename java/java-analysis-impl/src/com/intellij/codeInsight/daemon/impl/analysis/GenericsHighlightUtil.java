@@ -775,7 +775,7 @@ public final class GenericsHighlightUtil {
           }
         }
       }
-      else {
+      else if (!typeElement.isInferredType()){
         String description = JavaErrorBundle.message("generics.wildcards.may.be.used.only.as.reference.parameters");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
       }
