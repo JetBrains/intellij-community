@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.todo.TodoConfiguration;
@@ -41,7 +41,7 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
 
   @Override
   public boolean processFilesWithTodoItems(@NotNull Processor<? super PsiFile> processor) {
-    return TodoCacheManager.SERVICE.getInstance(myProject).processFilesWithTodoItems(processor);
+    return TodoCacheManager.getInstance(myProject).processFilesWithTodoItems(processor);
   }
 
   @Override
@@ -98,7 +98,7 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
   public int getTodoItemsCount(@NotNull PsiFile file) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null) {
-      int count = TodoCacheManager.SERVICE.getInstance(myProject).getTodoCount(virtualFile, TodoIndexPatternProvider.getInstance());
+      int count = TodoCacheManager.getInstance(myProject).getTodoCount(virtualFile, TodoIndexPatternProvider.getInstance());
       if (count != -1) return count;
     }
     return findTodoItems(file).length;
@@ -109,7 +109,7 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
     VirtualFile virtualFile = file.getVirtualFile();
     int count = 0;
     if (virtualFile != null) {
-      count = TodoCacheManager.SERVICE.getInstance(myProject).getTodoCount(virtualFile, pattern.getIndexPattern());
+      count = TodoCacheManager.getInstance(myProject).getTodoCount(virtualFile, pattern.getIndexPattern());
       if (count != -1) return count;
     }
     TodoItem[] items = findTodoItems(file);

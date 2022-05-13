@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.editor;
 
 import com.intellij.codeHighlighting.Pass;
@@ -82,7 +82,7 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
   }
 
   private void assertSameTodoCountInIndexAndHighlighting() {
-    int todosInIndex = TodoCacheManager.SERVICE.getInstance(getProject()).getTodoCount(getVFile(), TodoIndexPatternProvider.getInstance());
+    int todosInIndex = TodoCacheManager.getInstance(getProject()).getTodoCount(getVFile(), TodoIndexPatternProvider.getInstance());
     int todosInHighlighting = PsiTodoSearchHelper.SERVICE.getInstance(getProject()).findTodoItems(getFile()).length;
     assertEquals("Mismatch between todos in index and highlighting", todosInIndex, todosInHighlighting);
   }
