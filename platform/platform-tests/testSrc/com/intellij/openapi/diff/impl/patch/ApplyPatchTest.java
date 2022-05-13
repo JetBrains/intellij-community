@@ -7,7 +7,6 @@ import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.testFramework.HeavyPlatformTestCase;
@@ -17,7 +16,6 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -200,21 +198,20 @@ public class ApplyPatchTest extends HeavyPlatformTestCase {
       FileTypeManager.getInstance().associate(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("old"));
     });
 
-    Path testDataPath = Paths.get(getTestDir(getTestName(true)));
-    Path beforePath = testDataPath.resolve("before");
-    Path afterPath = testDataPath.resolve("after");
-    VirtualFile afterDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(afterPath);
-    VirtualFile patchedDir = createTestProjectStructure(beforePath.toString());
+    VirtualFile testDir = createTestProjectStructure(getTestDir(getTestName(true)));
 
-    List<FilePatch> patches = new ArrayList<>(new PatchReader(testDataPath.resolve("apply.patch")).readTextPatches());
+    Path patchPath = testDir.findChild("apply.patch").toNioPath();
+    List<FilePatch> patches = new ArrayList<>(new PatchReader(patchPath).readTextPatches());
 
     ApplyPatchAction.applySkipDirs(patches, skipTopDirs);
-    PatchApplier patchApplier = new PatchApplier(myProject, patchedDir, patches, null, null);
+    VirtualFile beforeDir = testDir.findChild("before");
+    PatchApplier patchApplier = new PatchApplier(myProject, beforeDir, patches, null, null);
     ApplyPatchStatus applyStatus = patchApplier.execute(false, false);
 
     assertEquals(expectedStatus, applyStatus);
 
-    PlatformTestUtil.assertDirectoriesEqual(patchedDir, afterDir, fileFilter);
+    VirtualFile afterDir = testDir.findChild("after");
+    PlatformTestUtil.assertDirectoriesEqual(beforeDir, afterDir, fileFilter);
   }
 
   @NotNull
