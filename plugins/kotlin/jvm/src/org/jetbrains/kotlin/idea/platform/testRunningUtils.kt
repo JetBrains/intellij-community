@@ -2,10 +2,21 @@
 
 package org.jetbrains.kotlin.idea.platform
 
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.Key
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.ParameterizedCachedValue
+import com.intellij.psi.util.ParameterizedCachedValueProvider
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor.Companion.getTestStateIcon
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.idea.util.string.joinWithEscape
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.IdePlatformKind
@@ -27,6 +38,25 @@ import javax.swing.Icon
 
 private val TEST_FQ_NAME = FqName("kotlin.test.Test")
 private val IGNORE_FQ_NAME = FqName("kotlin.test.Ignore")
+private val GENERIC_KOTLIN_TEST_AVAILABLE_KEY = Key<ParameterizedCachedValue<Boolean, Module>>("GENERIC_KOTLIN_TEST_AVAILABLE")
+private val GENERIC_KOTLIN_TEST_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE = GenericKotlinTestAvailabilityProvider(false)
+private val GENERIC_KOTLIN_TEST_AVAILABLE_PROVIDER_WITH_TEST_SCOPE = GenericKotlinTestAvailabilityProvider(true)
+
+private class GenericKotlinTestAvailabilityProvider(private val test: Boolean) : ParameterizedCachedValueProvider<Boolean, Module> {
+    override fun compute(module: Module): CachedValueProvider.Result<Boolean> {
+        val project = module.project
+        val moduleScope = module.getModuleWithDependenciesAndLibrariesScope(test)
+        val javaPsiFacade = JavaPsiFacade.getInstance(project)
+        val testFqNameStr = TEST_FQ_NAME.asString()
+        val hasKotlinTest = javaPsiFacade.findClass(testFqNameStr, moduleScope) != null ||
+                // `kotlin.test.Test` is a typealias
+                KotlinTopLevelTypeAliasFqNameIndex.get(testFqNameStr, project, moduleScope).isNotEmpty() ||
+                // `kotlin.test.Test` could be expected/actual annotation class
+                KotlinFullClassNameIndex.get(testFqNameStr, project, moduleScope).isNotEmpty()
+
+        return CachedValueProvider.Result.create(hasKotlinTest, ProjectRootManager.getInstance(project))
+    }
+}
 
 fun getGenericTestIcon(
     declaration: KtNamedDeclaration,
@@ -34,6 +64,22 @@ fun getGenericTestIcon(
     initialLocations: () -> List<String>?
 ): Icon? {
     val locations = initialLocations()?.toMutableList() ?: return null
+
+    // fast check if `kotlin.test.Test` is available in a module scope
+    val project = declaration.project
+    val index = ProjectFileIndex.getInstance(project)
+    val virtualFile = declaration.containingFile.virtualFile
+    index.getModuleForFile(virtualFile)?.let { module ->
+        val availabilityProvider =
+            if (index.isInTestSourceContent(virtualFile)) GENERIC_KOTLIN_TEST_AVAILABLE_PROVIDER_WITH_TEST_SCOPE else
+                GENERIC_KOTLIN_TEST_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE
+
+        val available = CachedValuesManager.getManager(project)
+            .getParameterizedCachedValue(module, GENERIC_KOTLIN_TEST_AVAILABLE_KEY, availabilityProvider, false, module)
+        if (available == false) {
+            return null
+        }
+    }
 
     val clazz = when (declaration) {
         is KtClassOrObject -> declaration
