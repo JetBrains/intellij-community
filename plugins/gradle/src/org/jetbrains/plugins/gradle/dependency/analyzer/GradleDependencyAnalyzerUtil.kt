@@ -3,9 +3,9 @@ package org.jetbrains.plugins.gradle.dependency.analyzer
 
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.gradle.util.GradleUtil
 
 
 fun getUnifiedCoordinates(dependency: DependencyAnalyzerDependency): UnifiedCoordinates? {
@@ -31,5 +31,5 @@ fun getParentModule(project: Project, dependency: DependencyAnalyzerDependency):
 
 fun getModule(project: Project, data: DependencyAnalyzerDependency.Data.Module): Module? {
   val moduleData = data.getUserData(GradleDependencyAnalyzerContributor.MODULE_DATA) ?: return null
-  return ExternalSystemApiUtil.findModule(project, moduleData)
+  return GradleUtil.findGradleModule(project, moduleData)
 }

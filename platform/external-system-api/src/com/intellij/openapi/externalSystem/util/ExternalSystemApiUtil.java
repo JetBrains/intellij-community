@@ -26,7 +26,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.OrderRootType;
@@ -730,25 +729,6 @@ public final class ExternalSystemApiUtil {
     if (projectNode == null) return null;
     var moduleNodes = findAll(projectNode, ProjectKeys.MODULE);
     return ContainerUtil.find(moduleNodes, it -> FileUtil.pathsEqual(projectPath, it.getData().getLinkedExternalProjectPath()));
-  }
-
-  public static @Nullable Module findModule(
-    @NotNull Project project,
-    @NotNull ProjectSystemId systemId,
-    @NotNull String projectPath
-  ) {
-    var moduleNode = findModuleNode(project, systemId, projectPath);
-    if (moduleNode == null) return null;
-    return findModule(project, moduleNode.getData());
-  }
-
-  public static @Nullable Module findModule(@NotNull Project project, @NotNull ProjectData projectData) {
-    return findModule(project, projectData.getOwner(), projectData.getLinkedExternalProjectPath());
-  }
-
-  public static @Nullable Module findModule(@NotNull Project project, @NotNull ModuleData moduleData) {
-    var moduleManager = ModuleManager.getInstance(project);
-    return moduleManager.findModuleByName(moduleData.getIdeGrouping());
   }
 
   public static @NotNull FileChooserDescriptor getExternalProjectConfigDescriptor(@NotNull ProjectSystemId systemId) {

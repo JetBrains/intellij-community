@@ -15,6 +15,7 @@ import com.intellij.openapi.externalSystem.view.ModuleNode
 import com.intellij.openapi.externalSystem.view.ProjectNode
 import com.intellij.openapi.module.Module
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.GradleUtil
 
 class ViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<ExternalSystemNode<*>>() {
 
@@ -27,9 +28,9 @@ class ViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<ExternalSy
   override fun getModule(e: AnActionEvent, selectedData: ExternalSystemNode<*>): Module? {
     val project = e.project ?: return null
     return selectedData.findNode(ModuleNode::class.java)?.data
-             ?.let { ExternalSystemApiUtil.findModule(project, it) }
+             ?.let { GradleUtil.findGradleModule(project, it) }
            ?: selectedData.findNode(ProjectNode::class.java)?.data
-             ?.let { ExternalSystemApiUtil.findModule(project, it) }
+             ?.let { GradleUtil.findGradleModule(project, it) }
   }
 
   override fun getDependencyData(e: AnActionEvent, selectedData: ExternalSystemNode<*>): DependencyAnalyzerDependency.Data? {

@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
@@ -31,6 +30,7 @@ import org.jetbrains.plugins.gradle.tooling.tasks.DependencyNodeDeserializer
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleModuleData
+import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.ArrayList
@@ -63,8 +63,7 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
           val moduleData = moduleNode.data
           val gradleModuleData = GradleModuleData(moduleNode)
           if (!gradleModuleData.isBuildSrcModule) {
-            val moduleManager = ModuleManager.getInstance(project)
-            val module = moduleManager.findModuleByName(moduleData.ideGrouping) ?: continue
+            val module = GradleUtil.findGradleModule(project, moduleData) ?: continue
             val externalProject = DAProject(module, moduleData.moduleName)
             projects[externalProject] = gradleModuleData
           }
