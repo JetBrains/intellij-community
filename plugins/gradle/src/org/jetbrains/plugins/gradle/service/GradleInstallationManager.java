@@ -108,7 +108,7 @@ public class GradleInstallationManager implements Disposable {
         // it is not enough to clean up cache on the start of an external event, because sometimes the changes occur `after` the event finishes.
         // An example of this behavior is the downloading of gradle distribution:
         // we must not rely on the caches that were computed without downloaded distribution.
-        if (id.getProjectSystemId() != GradleConstants.SYSTEM_ID && id.getType() != ExternalSystemTaskType.RESOLVE_PROJECT) {
+        if (!(id.getProjectSystemId() == GradleConstants.SYSTEM_ID && id.getType() == ExternalSystemTaskType.RESOLVE_PROJECT)) {
           return;
         }
         Project project = id.findProject();
