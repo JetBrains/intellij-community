@@ -18,7 +18,6 @@ import com.intellij.execution.runners.ConsoleTitleGen;
 import com.intellij.execution.target.*;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.idea.ActionsBundle;
@@ -328,13 +327,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   protected void showContentDescriptor(RunContentDescriptor contentDescriptor) {
     ToolWindow toolwindow = PythonConsoleToolWindow.getToolWindow(myProject);
-    if (toolwindow != null) {
-      toolwindow.getComponent().putClientProperty(STARTED_BY_RUNNER, "true");
-      PythonConsoleToolWindow.getInstance(myProject).init(toolwindow, contentDescriptor);
-    }
-    else {
-      RunContentManager.getInstance(myProject).showRunContent(getExecutor(), contentDescriptor);
-    }
+    toolwindow.getComponent().putClientProperty(STARTED_BY_RUNNER, "true");
+    PythonConsoleToolWindow.getInstance(myProject).init(toolwindow, contentDescriptor);
   }
 
   private static Executor getExecutor() {
@@ -777,7 +771,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         @Override
         protected List<String> getActiveConsoles(@NotNull String consoleTitle) {
           PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
-          if (toolWindow != null && toolWindow.isInitialized() && toolWindow.getToolWindow() != null) {
+          if (toolWindow != null && toolWindow.isInitialized()) {
             return Arrays.stream(toolWindow.getToolWindow().getContentManager().getContents()).map(c -> c.getDisplayName())
               .filter(s -> s.startsWith(myTitle)).collect(Collectors.toList());
           }
@@ -1021,7 +1015,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private static String getConsoleDisplayName(@NotNull Project project) {
     PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
     ToolWindow window = toolWindow.getToolWindow();
-    if (window == null) return null;
     final Content content = window.getContentManager().getSelectedContent();
     if (content == null) return null;
     return content.getDisplayName();

@@ -92,11 +92,11 @@ public final class PythonConsoleToolWindow {
     toolWindow.getContentManager().setSelectedContent(content);
   }
 
-  public ToolWindow getToolWindow() {
+  public @NotNull ToolWindow getToolWindow() {
     return getToolWindow(myProject);
   }
 
-  public static ToolWindow getToolWindow(Project project) {
+  public static @NotNull ToolWindow getToolWindow(@NotNull Project project) {
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     ToolWindow consoleToolWindow = toolWindowManager.getToolWindow(PythonConsoleToolWindowFactory.ID);
     if (consoleToolWindow == null) {

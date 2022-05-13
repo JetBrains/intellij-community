@@ -652,7 +652,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   @Nullable
   private static String getConsoleDisplayName(@NotNull Project project) {
     ToolWindow window = PythonConsoleToolWindow.getInstance(project).getToolWindow();
-    if (window == null) return null;
     final Content content = window.getContentManager().getSelectedContent();
     if (content == null) return null;
     return content.getDisplayName();
