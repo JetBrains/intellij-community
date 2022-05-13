@@ -108,7 +108,7 @@
         "icons/ruby/ruby_file.svg"
       ],
       "scala.svg": "org/jetbrains/plugins/scala/images/scala16.png",
-      "scratch.svg": "actions/scratch",
+      "scratch.svg": "actions/scratch.svg",
       "scratches.svg": "scope/scratches.svg",
       "scss.svg": "org/jetbrains/plugins/sass/sass.svg",
       "shell.svg": "icons/shFile.svg",
@@ -240,7 +240,7 @@
     },
     "image": {
       "colorPicker_dark.svg": "ide/pipette.svg",
-      "chessboard.svg": "icons/ToggleTransparencyChessboard.svg",
+      "chessboard.svg": "org/intellij/images/icons/ToggleTransparencyChessboard.svg",
       "actualZoom.svg": "graph/actualZoom.svg",
       "colorPicker.svg": "ide/pipette.svg",
       "grid.svg": "graph/grid.svg",
@@ -270,6 +270,9 @@
         "general/expandComponent.svg",
         "general/expandComponentHover.svg"
       ],
+      "filterHistory.svg": "icons/filterHistory.svg",
+      "searchHistory.svg": "actions/searchWithHistory.svg",
+      "sortHistory.svg": "icons/sortHistory.svg",
       "inlineAdd.svg": [
         "general/inlineAdd.svg",
         "general/inlineAddHover.svg"
