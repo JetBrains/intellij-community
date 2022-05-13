@@ -216,7 +216,7 @@ class KotlinReader(val file: KtFile) {
     pos++
 
     val outer = leafConstructor
-    val constructor = KtConstructor(src, scope = iface)
+    val constructor = KtConstructor(scope = iface)
     leafConstructor = constructor
     constructor.range = range { primaryConstructor() }
     leafConstructor = outer

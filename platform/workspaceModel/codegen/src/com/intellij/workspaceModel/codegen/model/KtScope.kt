@@ -196,25 +196,25 @@ class KtScope(val parent: KtScope?, var owner: Any? = null) {
   }
 }
 
-//      //PsiTreeUtil.processElements(psiFile) { psiElement ->
-//      //  if (psiElement is KtClass && psiElement.isInterface() && hasEntityAnnotation(psiElement))  {
-//      //    val className = psiElement.name!!
-//      //    println(className)
-//      //    val packageName = psiElement.fqName.toString().dropLast(className.length + 1)
-//      //    val generator = ModifiableModelGenerator(className, packageName)
-//      //    psiElement.getProperties().forEach { ktProperty ->
-//      //      // TODO:: Add tests for this
-//      //      // TODO:: Add check for Annotation and type nullability
-//      //      if (ktProperty.annotationEntries.isEmpty()) {
-//      //        generator.addProperty(ktProperty.name!!, convertToPropertyType(ktProperty.type()!!),  null)
-//      //      } else if (hasConnectionAnnotation(ktProperty)) {
-//      //        generator.addProperty(ktProperty.name!!, convertToPropertyType(ktProperty.type()!!), getPropertyAnnotation(ktProperty))
-//      //      }
-//      //      ktProperty.isVar
-//      //    }
-//      //    val packageFolder = createPackageFolder(sourceRoot, packageName)
-//      //    generator.generate(packageFolder.canonicalPath!!)
-//      //  }
-//      //  return@processElements true
-//      //}
-//      //println("${file.presentableUrl} ${psiFile.language} ${psiFile.fileType}")
+      //PsiTreeUtil.processElements(psiFile) { psiElement ->
+      //  if (psiElement is KtClass && psiElement.isInterface() && hasEntityAnnotation(psiElement))  {
+      //    val className = psiElement.name!!
+      //    println(className)
+      //    val packageName = psiElement.fqName.toString().dropLast(className.length + 1)
+      //    val generator = ModifiableModelGenerator(className, packageName)
+      //    psiElement.getProperties().forEach { ktProperty ->
+      //      // TODO:: Add tests for this
+      //      // TODO:: Add check for Annotation and type nullability
+      //      if (ktProperty.annotationEntries.isEmpty()) {
+      //        generator.addProperty(ktProperty.name!!, convertToPropertyType(ktProperty.type()!!),  null)
+      //      } else if (hasConnectionAnnotation(ktProperty)) {
+      //        generator.addProperty(ktProperty.name!!, convertToPropertyType(ktProperty.type()!!), getPropertyAnnotation(ktProperty))
+      //      }
+      //      ktProperty.isVar
+      //    }
+      //    val packageFolder = createPackageFolder(sourceRoot, packageName)
+      //    generator.generate(packageFolder.canonicalPath!!)
+      //  }
+      //  return@processElements true
+      //}
+      //println("${file.presentableUrl} ${psiFile.language} ${psiFile.fileType}")

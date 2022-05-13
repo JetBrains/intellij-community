@@ -6,9 +6,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.deft.impl.ObjModule
 import org.jetbrains.deft.impl.fields.ExtField
 import storage.codegen.patcher.KotlinReader
+import storage.codegen.patcher.PsiKotlinReader
 
 class KtObjModule(
-    val project: Project?
+  val project: Project?
 ) : ObjModule() {
   val packages = mutableMapOf<String?, KtPackage>()
   val files = mutableListOf<KtFile>()
@@ -21,13 +22,21 @@ class KtObjModule(
     }
   }
 
-    fun addFile(name: String, virtualFile: VirtualFile?, content: () -> String): KtFile {
-        val file = KtFile(this, content, name, virtualFile)
-        val reader = KotlinReader(file)
-        reader.read()
-        files.add(file)
-        return file
-    }
+  fun addFile(name: String, virtualFile: VirtualFile?, content: () -> String): KtFile {
+    val file = KtFile(this, content, name, virtualFile)
+    val reader = KotlinReader(file)
+    reader.read()
+    files.add(file)
+    return file
+  }
+
+  fun addPsiFile(name: String, virtualFile: VirtualFile?, content: () -> String): KtFile {
+    val file = KtFile(this, content, name, virtualFile)
+    val reader = PsiKotlinReader(file)
+    reader.read()
+    files.add(file)
+    return file
+  }
 
   @OptIn(InitApi::class)
   fun build(diagnostics: Diagnostics = Diagnostics()): Built {
