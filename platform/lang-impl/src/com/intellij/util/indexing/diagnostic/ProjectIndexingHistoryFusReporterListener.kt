@@ -82,7 +82,7 @@ object ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
 
   private val indexingSessionId = EventFields.Long("indexing_session_id")
 
-  private val isFullIndexing = EventFields.Boolean("is_full")
+  private val isFullRescanning = EventFields.Boolean("is_full")
   private val indexingTime = EventFields.Long("indexing_time")
   private val scanningTime = EventFields.Long("scanning_time")
   private val numberOfFileProviders = EventFields.Int("number_of_file_providers")
@@ -108,7 +108,7 @@ object ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
   private val indexingFinished = GROUP.registerVarargEvent(
     "finished",
     indexingSessionId,
-    isFullIndexing,
+    isFullRescanning,
     indexingTime,
     scanningTime,
     numberOfFileProviders,
@@ -145,7 +145,7 @@ object ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
     indexingFinished.log(
       project,
       this.indexingSessionId.with(indexingSessionId),
-      this.isFullIndexing.with(wasFullIndexing),
+      this.isFullRescanning.with(wasFullIndexing),
       this.indexingTime.with(indexingTime),
       this.scanningTime.with(scanningTime),
       this.numberOfFileProviders.with(numberOfFileProviders),
