@@ -329,7 +329,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
-  public void executeStatement(@NotNull String statement, @NotNull final Key attributes) {
+  public void executeStatement(@NotNull String statement, @NotNull Key<?> attributes) {
     print(statement, outputTypeForAttributes(attributes));
     myExecuteActionHandler.processLine(statement);
   }
@@ -338,7 +338,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     super.print(text, outputType);
   }
 
-  public void print(String text, @NotNull final Key attributes) {
+  public void print(@NotNull String text, @NotNull Key<?> attributes) {
     print(text, outputTypeForAttributes(attributes));
   }
 
@@ -416,7 +416,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
-  public ConsoleViewContentType outputTypeForAttributes(Key attributes) {
+  public @NotNull ConsoleViewContentType outputTypeForAttributes(@NotNull Key<?> attributes) {
     final ConsoleViewContentType outputType;
     if (attributes == ProcessOutputTypes.STDERR) {
       outputType = ConsoleViewContentType.ERROR_OUTPUT;
