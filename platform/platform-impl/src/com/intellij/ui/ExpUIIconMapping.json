@@ -41,10 +41,10 @@
       "dependencyAnalyzer.svg": "actions/dependencyAnalyzer.svg",
       "gradleLoadChanges.svg": "icons/gradleLoadChanges.svg",
       "gradleNavigate.svg": "icons/gradleNavigate.svg",
-      "mavenChildrenProjects": "images/childrenProjects.svg",
+      "mavenChildrenProjects.svg": "images/childrenProjects.svg",
       "mavenLoadChanges.svg": "images/mavenLoadChanges.svg",
-      "mavenModule.svg": "images/modulesClosed",
-      "mavenParentProjects": "images/parentProjects.svg",
+      "mavenModule.svg": "images/modulesClosed.svg",
+      "mavenParentProjects.svg": "images/parentProjects.svg",
       "mavenPlugin.svg": "images/mavenPlugin.svg",
       "mavenPluginGoal.svg": "images/pluginGoal.svg",
       "mavenProfiles.svg": "images/profilesClosed.svg",
@@ -262,11 +262,11 @@
       "projectStructure.svg": "general/projectStructure.svg"
     },
     "gutter": {
-      "colors.svg": "gutter/colors",
+      "colors.svg": "gutter/colors.svg",
       "extAnnotation.svg": "gutter/extAnnotation.svg",
       "javadocEdit.svg": "gutter/javadocEdit.svg",
       "javadocRead.svg":  "gutter/javadocRead.svg",
-      "readAccess.svg": "gutter/readAccess",
+      "readAccess.svg": "gutter/readAccess.svg",
       "rerun.svg": "runConfigurations/testState/run_run.svg",
       "run.svg": "runConfigurations/testState/run.svg",
       "runError.svg": "runConfigurations/testState/red2.svg",
@@ -274,7 +274,7 @@
       "runSuccess.svg": "runConfigurations/testState/green2.svg",
       "suggestedRefactoring.svg": "gutter/suggestedRefactoringBulb.svg",
       "suggestedRefactoringDisabled.svg": "gutter/suggestedRefactoringBulbDisabled.svg",
-      "writeAccess.svg": "gutter/writeAccess"
+      "writeAccess.svg": "gutter/writeAccess.svg"
 
     },
     "image": {
