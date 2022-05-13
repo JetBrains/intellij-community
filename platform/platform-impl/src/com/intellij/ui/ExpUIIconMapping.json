@@ -134,7 +134,10 @@
       "yarn.svg": "icons/nodejs/yarn.svg"
     },
     "general": {
-      "add.svg": "general/add.svg",
+      "add.svg": [
+        "general/add.svg",
+        "actions/AddMulticaret.svg"
+      ],
       "addAccount.svg": "codeWithMe/cwmAccess.svg",
       "chevronDown.svg": [
         "actions/findAndShowNextMatches.svg",
@@ -197,6 +200,16 @@
       "moveDown.svg": "actions/moveDown.svg",
       "moveUp.svg": "actions/moveUp.svg",
       "open.svg": "actions/menu-open.svg",
+      "openInToolWindow.svg": [
+        "actions/moveToBottomLeft.svg",
+        "actions/moveToBottomRight.svg",
+        "actions/moveToLeftBottom.svg",
+        "actions/moveToLeftTop.svg",
+        "actions/moveToRightBottom.svg",
+        "actions/moveToRightTop.svg",
+        "actions/moveToTopLeft.svg",
+        "actions/moveToTopRight.svg"
+      ],
       "openNewTab.svg": "actions/openNewTab.svg",
       "paste.svg": "actions/menu-paste.svg",
       "pin.svg": [
@@ -207,7 +220,10 @@
       "previewOnly.svg": "general/layoutPreviewOnly.svg",
       "previewVertically.svg": "actions/previewDetails.svg",
       "refresh.svg": "actions/refresh.svg",
-      "remove.svg": "general/remove.svg",
+      "remove.svg": [
+        "general/remove.svg",
+        "actions/RemoveMulticaret.svg"
+      ],
       "right.svg": "actions/forward.svg",
       "runAnything.svg": "actions/run_anything.svg",
       "search.svg": "actions/find.svg",
