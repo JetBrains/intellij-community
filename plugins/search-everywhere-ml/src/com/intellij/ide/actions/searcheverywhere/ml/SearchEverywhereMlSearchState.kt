@@ -27,43 +27,65 @@ internal class SearchEverywhereMlSearchState(
   }
 
   @Synchronized
-  fun getElementFeatures(elementId: Int,
+  fun getElementFeatures(elementId: Int?,
                          element: Any,
                          contributor: SearchEverywhereContributor<*>,
                          priority: Int): SearchEverywhereMLItemInfo {
+    if (elementId == null) {
+      return computeElementFeatures(null, element, priority, contributor)
+    }
     return cachedElementsInfo.computeIfAbsent(elementId) {
-      val features = arrayListOf<EventPair<*>>()
-      val contributorId = contributor.searchProviderId
-      SearchEverywhereElementFeaturesProvider.getFeatureProvidersForContributor(contributorId).forEach { provider ->
-        features.addAll(provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, providersCache))
-      }
-
-      return@computeIfAbsent SearchEverywhereMLItemInfo(elementId, contributorId, features)
+      return@computeIfAbsent computeElementFeatures(elementId, element, priority, contributor)
     }
   }
 
-  @Synchronized
-  fun getMLWeightIfDefined(elementId: Int): Double? {
-    return cachedMLWeight[elementId]
+  private fun computeElementFeatures(elementId: Int?,
+                                     element: Any,
+                                     priority: Int,
+                                     contributor: SearchEverywhereContributor<*>): SearchEverywhereMLItemInfo {
+    val features = arrayListOf<EventPair<*>>()
+    val contributorId = contributor.searchProviderId
+    SearchEverywhereElementFeaturesProvider.getFeatureProvidersForContributor(contributorId).forEach { provider ->
+      features.addAll(provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, providersCache))
+    }
+
+    return SearchEverywhereMLItemInfo(elementId, contributorId, features)
   }
 
   @Synchronized
-  fun getMLWeight(elementId: Int,
+  fun getMLWeightIfDefined(elementId: Int?): Double? {
+    return elementId?.let { cachedMLWeight[elementId] }
+  }
+
+  @Synchronized
+  fun getMLWeight(elementId: Int?,
                   element: Any,
                   contributor: SearchEverywhereContributor<*>,
                   context: SearchEverywhereMLContextInfo,
                   priority: Int): Double {
-    return cachedMLWeight.computeIfAbsent(elementId) {
-      val features = ArrayList<EventPair<*>>()
-      features.addAll(context.features)
-      features.addAll(getElementFeatures(elementId, element, contributor, priority).features)
-      features.addAll(searchStateFeatures)
-      model.predict(features.associate { it.field.name to it.data })
+    if (elementId == null) {
+      return computeMLWeight(context, null, element, contributor, priority)
     }
+
+    return cachedMLWeight.computeIfAbsent(elementId) {
+      computeMLWeight(context, elementId, element, contributor, priority)
+    }
+  }
+
+  private fun computeMLWeight(context: SearchEverywhereMLContextInfo,
+                              elementId: Int?,
+                              element: Any,
+                              contributor: SearchEverywhereContributor<*>,
+                              priority: Int): Double {
+    val features = ArrayList<EventPair<*>>()
+    features.addAll(context.features)
+    features.addAll(getElementFeatures(elementId, element, contributor, priority).features)
+    features.addAll(searchStateFeatures)
+    return model.predict(features.associate { it.field.name to it.data })
   }
 }
 
-internal data class SearchEverywhereMLItemInfo(val id: Int, val contributorId: String, val features: List<EventPair<*>>) {
+internal data class SearchEverywhereMLItemInfo(val id: Int?, val contributorId: String, val features: List<EventPair<*>>) {
   fun featuresAsMap(): Map<String, Any> = features.mapNotNull {
     val data = it.data
     if (data == null) null else it.field.name to data

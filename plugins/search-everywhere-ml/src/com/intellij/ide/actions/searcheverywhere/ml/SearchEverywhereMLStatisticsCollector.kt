@@ -177,14 +177,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
         CONTRIBUTOR_ID_KEY.with(it.contributor.searchProviderId)
       )
 
-      val elementId = elementIdProvider.getId(it.element)
-      if (elementId != null) {
-        // After changing tabs, it may happen that the code will run for an outdated list of results,
-        // for example, results from All tab will be reported after switching to the Actions tab.
-        // As this can lead to exceptions, we'll check if the element is supported, before collecting
-        // features for it.
-        addElementFeatures(elementId, it, state, result, actionManager)
-      }
+      addElementFeatures(elementIdProvider.getId(it.element), it, state, result, actionManager)
       ObjectEventData(result)
     }
     data.add(COLLECTED_RESULTS_DATA_KEY.with(value))
@@ -206,7 +199,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
     return true
   }
 
-  private fun addElementFeatures(elementId: Int,
+  private fun addElementFeatures(elementId: Int?,
                                  elementInfo: SearchEverywhereFoundElementInfo,
                                  state: SearchEverywhereMlSearchState,
                                  result: MutableList<EventPair<*>>,
@@ -220,7 +213,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
       result.add(ML_WEIGHT_KEY.with(roundDouble(score)))
     }
 
-    result.add(ID_KEY.with(itemInfo.id))
+    itemInfo.id?.let { result.add(ID_KEY.with(it)) }
 
     doWhenIsActionWrapper(elementInfo.element) {
       val action = it.action
