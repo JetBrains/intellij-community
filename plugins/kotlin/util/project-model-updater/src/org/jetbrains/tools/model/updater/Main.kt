@@ -27,7 +27,11 @@ fun main(args: Array<String>) {
 private fun generateProjectModelFiles(dotIdea: File, args: Args, isCommunity: Boolean) {
     val libraries = dotIdea.resolve("libraries")
     libraries.listFiles()!!.filter { it.startsWith("kotlinc_") }.forEach { it.delete() }
-    generateKotlincLibraries(args.kotlincArtifactsMode, args.kotlincVersion, args.jpsPluginVersion, isCommunity).forEach {
+    generateKotlincLibraries(
+        kotlincArtifactsCoordinates = ArtifactCoordinates(args.kotlincVersion, args.kotlincArtifactsMode),
+        jpsPluginCoordinates = ArtifactCoordinates(args.jpsPluginVersion, args.jpsPluginArtifactsMode),
+        isCommunity = isCommunity
+    ).forEach {
         val libXmlName = it.name.jpsEntityNameToFilename() + ".xml"
         libraries.resolve(libXmlName).writeText(it.generateXml())
     }
