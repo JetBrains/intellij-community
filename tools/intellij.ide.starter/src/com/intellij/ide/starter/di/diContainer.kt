@@ -33,9 +33,9 @@ var di = DI {
   bindSingleton<IDEResolver> { PublicIdeResolver }
   bindFactory<IdeInfo ,IdeInstallator> { ideInfo ->
     if(ideInfo.productCode == "AI") {
-       AndroidInstallator()
+       AndroidInstaller()
     } else {
-       SimpleInstallator()
+       SimpleInstaller()
     }
   }
 }

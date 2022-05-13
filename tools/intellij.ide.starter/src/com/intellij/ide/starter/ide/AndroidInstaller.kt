@@ -2,12 +2,11 @@ package com.intellij.ide.starter.ide
 
 import com.intellij.ide.starter.downloadAndroidStudio
 import com.intellij.ide.starter.models.IdeInfo
-import com.intellij.ide.starter.models.IdeProduct
 import com.intellij.ide.starter.system.SystemInfo
 import java.io.File
 import java.nio.file.Path
 
-class AndroidInstallator: IdeInstallator {
+class AndroidInstaller: IdeInstallator {
 
   override fun install(ideInfo: IdeInfo): Pair<String, InstalledIDE> {
 

@@ -8,7 +8,7 @@ import org.kodein.di.instance
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
 
-class SimpleInstallator : IdeInstallator {
+class SimpleInstaller : IdeInstallator {
 
   override fun install(ideInfo: IdeInfo): Pair<String, InstalledIDE> {
     val installersDirectory = (di.direct.instance<GlobalPaths>().installersDirectory / ideInfo.productCode).createDirectories()
