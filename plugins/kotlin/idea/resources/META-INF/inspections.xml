@@ -2252,7 +2252,7 @@
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.NoConstructorMigrationInspection"
                      groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.migration"
+                     groupName="Migration"
                      enabledByDefault="false"
                      level="ERROR"
                      language="kotlin"
