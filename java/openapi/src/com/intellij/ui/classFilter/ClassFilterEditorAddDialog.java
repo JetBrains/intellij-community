@@ -91,7 +91,7 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
   private PsiClass getSelectedClass() {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     String classQName = myClassName.getText();
-    if ("".equals(classQName)) {
+    if (classQName.isEmpty()) {
       return null;
     }
     return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(classQName, GlobalSearchScope.allScope(myProject));

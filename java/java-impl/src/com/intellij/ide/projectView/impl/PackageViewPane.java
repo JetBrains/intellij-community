@@ -253,7 +253,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
 
     @NotNull
     private Object getTreeElementToUpdateFrom(PsiPackage packageToUpdateFrom, Module module) {
-      if (packageToUpdateFrom == null || !packageToUpdateFrom.isValid() || "".equals(packageToUpdateFrom.getQualifiedName())) {
+      if (packageToUpdateFrom == null || !packageToUpdateFrom.isValid() || packageToUpdateFrom.getQualifiedName().isEmpty()) {
         return module == null ? getTreeStructure().getRootElement() : module;
       }
       else {
