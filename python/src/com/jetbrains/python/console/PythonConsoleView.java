@@ -156,28 +156,28 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       myIsToolwindowHorizontal = isToolwindowHorizontal(PythonConsoleToolWindow.getInstance(getProject()).getToolWindow());
       showVariables((PydevConsoleCommunication)communication);
     }
-    if (RegistryManager.getInstance().is("python.console.CommandQueue")){
+    if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
       if (communication instanceof PydevConsoleCommunication || communication instanceof PythonDebugConsoleCommunication) {
         myCommandQueuePanel.setCommunication(communication);
         ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class)
           .addListener(communication, new CommandQueueListener() {
-          @Override
-          public void removeCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              myCommandQueuePanel.removeCommand(command);
-            });
-          }
+            @Override
+            public void removeCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
+              ApplicationManager.getApplication().invokeLater(() -> {
+                myCommandQueuePanel.removeCommand(command);
+              });
+            }
 
-          @Override
-          public void addCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
-            myCommandQueuePanel.addCommand(command);
-          }
+            @Override
+            public void addCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
+              myCommandQueuePanel.addCommand(command);
+            }
 
-          @Override
-          public void removeAll() {
-            myCommandQueuePanel.removeAllCommands();
-          }
-        });
+            @Override
+            public void removeAll() {
+              myCommandQueuePanel.removeAllCommands();
+            }
+          });
       }
     }
   }
@@ -266,7 +266,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         if (code != null) {
           if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
             executeInConsole(code);
-          } else {
+          }
+          else {
             ProgressManager.getInstance().run(new Task.Backgroundable(null, PyBundle.message("console.executing.code.in.console"), true) {
               @Override
               public void run(@NotNull final ProgressIndicator indicator) {
@@ -303,11 +304,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         PsiDocumentManager.getInstance(getProject()).commitDocument(document);
         PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
         if (psiFile != null) {
-          CommandProcessor.getInstance().runUndoTransparentAction(() ->
-                                                                    CodeStyleManager.getInstance(getProject())
-                                                                                    .adjustLineIndent(psiFile,
-                                                                                                      new TextRange(0, psiFile
-                                                                                                        .getTextLength())));
+          CommandProcessor.getInstance().runUndoTransparentAction(
+            () -> CodeStyleManager.getInstance(getProject()).adjustLineIndent(psiFile, new TextRange(0, psiFile.getTextLength()))
+          );
         }
         int oldOffset = getConsoleEditor().getCaretModel().getOffset();
         getConsoleEditor().getCaretModel().moveToOffset(document.getTextLength());
