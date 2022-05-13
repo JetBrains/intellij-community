@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
@@ -1279,14 +1280,17 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         if (requires) {
           Module module = ModuleUtilCore.findModuleForFile(originalFile);
           if (module != null) {
-            scope = GlobalSearchScope.allScope(project);
-            Set<String> names = new HashSet<>();
+            scope = ProjectScope.getAllScope(project);
+            Set<String> shadowedNames = new HashSet<>();
             for (String name : JavaSourceModuleNameIndex.getAllKeys(project)) {
-              Collection<VirtualFile> roots = JavaSourceModuleNameIndex.getFilesByKey(name, scope);
-              if (roots.size() > 0) {
-                names.add(name);
-                for (VirtualFile manifest : roots) {
-                  names.add(LightJavaModule.moduleName(manifest.getParent().getParent().getNameWithoutExtension()));
+              Collection<VirtualFile> manifests = JavaSourceModuleNameIndex.getFilesByKey(name, scope);
+              if (manifests.size() > 0) {
+                shadowedNames.add(name);
+                for (VirtualFile manifest : manifests) {
+                  VirtualFile jarRoot = manifest.getParent().getParent();
+                  if (jarRoot.getFileSystem() instanceof JarFileSystem) {
+                    shadowedNames.add(LightJavaModule.moduleName(jarRoot.getNameWithoutExtension()));
+                  }
                 }
                 addAutoModuleReference(name, parent, filter, result);
               }
@@ -1294,7 +1298,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
             VirtualFile[] roots = ModuleRootManager.getInstance(module).orderEntries().withoutSdk().librariesOnly().getClassesRoots();
             scope = GlobalSearchScope.filesScope(project, Arrays.asList(roots));
             for (String name : JavaAutoModuleNameIndex.getAllKeys(project)) {
-              if (names.contains(name)) {
+              if (shadowedNames.contains(name)) {
                 continue;
               }
               if (JavaAutoModuleNameIndex.getFilesByKey(name, scope).size() > 0) {

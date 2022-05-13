@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -28,7 +29,7 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
     }
   };
 
-  private final DataIndexer<String, Void, FileContent> myIndexer = data -> singletonMap(LightJavaModule.moduleName(data.getFile().getNameWithoutExtension()), null);
+  private final DataIndexer<String, Void, FileContent> myIndexer = data -> singletonMap(LightJavaModule.moduleName(FileUtilRt.getNameWithoutExtension(data.getFileName())), null);
 
   @Override
   public boolean indexDirectories() {

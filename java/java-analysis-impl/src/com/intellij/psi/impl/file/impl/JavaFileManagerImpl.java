@@ -163,15 +163,15 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
 
     List<PsiJavaModule> results = new ArrayList<>(JavaModuleNameIndex.getInstance().get(moduleName, myManager.getProject(), excludingScope));
 
-    Set<VirtualFile> roots = new HashSet<>();
+    Set<VirtualFile> shadowedRoots = new HashSet<>();
     for (VirtualFile manifest : JavaSourceModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {
       VirtualFile root = manifest.getParent().getParent();
-      roots.add(root);
+      shadowedRoots.add(root);
       results.add(LightJavaModule.create(myManager, root, moduleName));
     }
 
     for (VirtualFile root : JavaAutoModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {
-      if (roots.contains(root)) { //already found by MANIFEST attribute
+      if (shadowedRoots.contains(root)) { //already found by MANIFEST attribute
         continue;
       }
       VirtualFile manifest = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
