@@ -70,6 +70,21 @@ object MermaidTokens {
   @JvmField
   val IGNORED = MermaidToken("IGNORED")
 
+  @JvmField
+  val ID = MermaidToken("ID")
+
+  @JvmField
+  val ALIAS = MermaidToken("ALIAS")
+
+  @JvmField
+  val PLUS = MermaidToken("PLUS")
+
+  @JvmField
+  val MINUS = MermaidToken("MINUS")
+
+  @JvmField
+  val END = MermaidToken("END")
+
   object Pie {
     @JvmField
     val PIE = MermaidToken("Pie.PIE")
@@ -104,12 +119,6 @@ object MermaidTokens {
 
     @JvmField
     val DIR = MermaidToken("Flowchart.DIR")
-
-    @JvmField
-    val NODE_ID = MermaidToken("Flowchart.NODE_ID")
-
-    @JvmField
-    val NODE_TEXT = MermaidToken("Flowchart.NODE_TEXT")
 
     @JvmField
     val SQUARE_START = MermaidToken("Flowchart.SQUARE_START")
@@ -181,10 +190,10 @@ object MermaidTokens {
     val DOUBLE_CIRCLE_END = MermaidToken("Flowchart.DOUBLE_CIRCLE_END")
 
     @JvmField
-    val LINK = MermaidToken("Flowchart.LINK")
+    val ARROW = MermaidToken("Flowchart.ARROW")
 
     @JvmField
-    val START_LINK = MermaidToken("Flowchart.START_LINK")
+    val START_ARROW = MermaidToken("Flowchart.START_ARROW")
 
     @JvmField
     val LINK_TEXT = MermaidToken("Flowchart.LINK_TEXT")
@@ -197,9 +206,6 @@ object MermaidTokens {
 
     @JvmField
     val SUBGRAPH = MermaidToken("SUBGRAPH")
-
-    @JvmField
-    val END = MermaidToken("END")
 
     @JvmField
     val DIRECTION = MermaidToken("DIRECTION")
@@ -230,5 +236,94 @@ object MermaidTokens {
 
     @JvmField
     val DEFAULT = MermaidToken("DEFAULT")
+  }
+
+  object Sequence {
+    @JvmField
+    val SEQUENCE = MermaidToken("Sequence.SEQUENCE")
+
+    @JvmField
+    val PARTICIPANT = MermaidToken("Sequence.PARTICIPANT")
+
+    @JvmField
+    val ACTOR = MermaidToken("Sequence.ACTOR")
+
+    @JvmField
+    val AS = MermaidToken("Sequence.AS")
+
+    @JvmField
+    val SOLID_ARROW = MermaidToken("Sequence.SOLID_ARROW")
+
+    @JvmField
+    val DOTTED_ARROW = MermaidToken("Sequence.DOTTED_ARROW")
+
+    @JvmField
+    val SOLID_OPEN_ARROW = MermaidToken("Sequence.SOLID_OPEN_ARROW")
+
+    @JvmField
+    val DOTTED_OPEN_ARROW = MermaidToken("Sequence.DOTTED_OPEN_ARROW")
+
+    @JvmField
+    val SOLID_CROSS = MermaidToken("Sequence.SOLID_CROSS")
+
+    @JvmField
+    val DOTTED_CROSS = MermaidToken("Sequence.DOTTED_CROSS")
+
+    @JvmField
+    val SOLID_POINT = MermaidToken("Sequence.SOLID_POINT")
+
+    @JvmField
+    val DOTTED_POINT = MermaidToken("Sequence.DOTTED_POINT")
+
+    @JvmField
+    val MESSAGE = MermaidToken("Sequence.MESSAGE")
+
+    @JvmField
+    val ACTIVATE = MermaidToken("Sequence.ACTIVATE")
+
+    @JvmField
+    val DEACTIVATE = MermaidToken("Sequence.DEACTIVATE")
+
+    @JvmField
+    val NOTE = MermaidToken("Sequence.NOTE")
+
+    @JvmField
+    val RIGHT_OF = MermaidToken("Sequence.RIGHT_OF")
+
+    @JvmField
+    val LEFT_OF = MermaidToken("Sequence.LEFT_OF")
+
+    @JvmField
+    val OVER = MermaidToken("Sequence.OVER")
+
+    @JvmField
+    val LOOP = MermaidToken("Sequence.LOOP")
+
+    @JvmField
+    val ALT = MermaidToken("Sequence.ALT")
+
+    @JvmField
+    val ELSE = MermaidToken("Sequence.ELSE")
+
+    @JvmField
+    val OPT = MermaidToken("Sequence.OPT")
+
+    @JvmField
+    val PAR = MermaidToken("Sequence.PAR")
+
+    @JvmField
+    val AND = MermaidToken("Sequence.AND")
+
+    @JvmField
+    val RECT = MermaidToken("Sequence.RECT")
+
+    @JvmField
+    val AUTONUMBER = MermaidToken("Sequence.AUTONUMBER")
+
+    @JvmField
+    val LINK = MermaidToken("Sequence.LINK")
+
+    @JvmField
+    val LINKS = MermaidToken("Sequence.LINKS")
   }
 }

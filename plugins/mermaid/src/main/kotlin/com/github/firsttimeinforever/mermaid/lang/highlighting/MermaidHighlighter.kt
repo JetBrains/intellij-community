@@ -36,25 +36,60 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     return when (tokenType) {
       MermaidTokens.Flowchart.FLOWCHART,
       MermaidTokens.Flowchart.SUBGRAPH,
-      MermaidTokens.Flowchart.END,
       MermaidTokens.Flowchart.DIRECTION,
       MermaidTokens.Flowchart.STYLE,
       MermaidTokens.Flowchart.STYLE_OPT,
       MermaidTokens.Flowchart.CLASS_DEF -> arrayOf(MermaidTextAttributes.keyword)
 
-      MermaidTokens.Flowchart.LINK,
-      MermaidTokens.Flowchart.START_LINK,
+      MermaidTokens.Flowchart.ARROW,
+      MermaidTokens.Flowchart.START_ARROW,
       MermaidTokens.Flowchart.STYLE_SEPARATOR -> arrayOf(MermaidTextAttributes.operationSign)
 
 
-      MermaidTokens.Flowchart.NODE_TEXT,
       MermaidTokens.Flowchart.STYLE_VAL -> arrayOf(MermaidTextAttributes.string)
 
       MermaidTokens.Flowchart.DIR  -> arrayOf(MermaidTextAttributes.constant)
 
-      MermaidTokens.Flowchart.NODE_ID,
       MermaidTokens.Flowchart.STYLE_TARGET,
       MermaidTokens.Flowchart.CLASS -> arrayOf(MermaidTextAttributes.identifier)
+
+      else -> null
+    }
+  }
+
+  private fun getSequenceHighlights(tokenType: IElementType): Array<TextAttributesKey>? {
+    return when (tokenType) {
+      MermaidTokens.Sequence.SEQUENCE,
+      MermaidTokens.Sequence.PARTICIPANT,
+      MermaidTokens.Sequence.ACTOR,
+      MermaidTokens.Sequence.AS,
+      MermaidTokens.Sequence.ACTIVATE,
+      MermaidTokens.Sequence.DEACTIVATE,
+      MermaidTokens.Sequence.NOTE,
+      MermaidTokens.Sequence.RIGHT_OF,
+      MermaidTokens.Sequence.LEFT_OF,
+      MermaidTokens.Sequence.OVER,
+      MermaidTokens.Sequence.LOOP,
+      MermaidTokens.Sequence.ALT,
+      MermaidTokens.Sequence.ELSE,
+      MermaidTokens.Sequence.OPT,
+      MermaidTokens.Sequence.PAR,
+      MermaidTokens.Sequence.AND,
+      MermaidTokens.Sequence.RECT,
+      MermaidTokens.Sequence.AUTONUMBER,
+      MermaidTokens.Sequence.LINK,
+      MermaidTokens.Sequence.LINKS -> arrayOf(MermaidTextAttributes.keyword)
+
+      MermaidTokens.Sequence.SOLID_ARROW,
+      MermaidTokens.Sequence.DOTTED_ARROW,
+      MermaidTokens.Sequence.SOLID_OPEN_ARROW,
+      MermaidTokens.Sequence.DOTTED_OPEN_ARROW,
+      MermaidTokens.Sequence.SOLID_CROSS,
+      MermaidTokens.Sequence.DOTTED_CROSS,
+      MermaidTokens.Sequence.SOLID_POINT,
+      MermaidTokens.Sequence.DOTTED_POINT -> arrayOf(MermaidTextAttributes.operationSign)
+
+      MermaidTokens.Sequence.MESSAGE -> arrayOf(MermaidTextAttributes.string)
 
       else -> null
     }
@@ -64,10 +99,13 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     val pieHighlights = getPieHighlights(tokenType)
     val journeyHighlighter = getJourneyHighlights(tokenType)
     val flowchartHighlighter = getFlowchartHighlights(tokenType)
+    val sequenceHighlighter = getSequenceHighlights(tokenType)
     return pieHighlights
       ?: journeyHighlighter
       ?: flowchartHighlighter
+      ?: sequenceHighlighter
       ?: when (tokenType) {
+        MermaidTokens.END,
         MermaidTokens.TITLE -> arrayOf(MermaidTextAttributes.keyword)
 
         MermaidTokens.TITLE_VALUE,
@@ -77,6 +115,11 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.LINE_COMMENT,
         MermaidTokens.COMMENT_TEXT,
         MermaidTokens.IGNORED -> arrayOf(MermaidTextAttributes.comment)
+
+        MermaidTokens.ID -> arrayOf(MermaidTextAttributes.identifier)
+
+        MermaidTokens.PLUS,
+        MermaidTokens.MINUS -> arrayOf(MermaidTextAttributes.operationSign)
 
         else -> arrayOf(HighlighterColors.TEXT)
       }
