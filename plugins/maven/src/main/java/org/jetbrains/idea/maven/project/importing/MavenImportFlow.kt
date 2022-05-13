@@ -287,17 +287,6 @@ class MavenImportFlow {
     return MavenImportedContext(context.project, modulesCreated, postImportTasks, context.readContext, context);
   }
 
-  fun configureMavenProject(context: MavenImportedContext) {
-    val projectsManager = MavenProjectsManager.getInstance(context.project)
-    val projects = context.readContext.projectsTree.projects
-    val moduleMap = ReadAction.compute<Map<Module, MavenProject>, Throwable> {
-      projects.mapNotNull { project -> projectsManager.findModule(project)?.let { it to project } }.toMap();
-    }
-    MavenProjectImporterBase.configureMavenProjects(context.project, moduleMap,
-                                                    context.readContext.indicator)
-
-  }
-
   fun updateProjectManager(context: MavenReadContext) {
     val projectManager = MavenProjectsManager.getInstance(context.project)
     projectManager.addManagedFilesWithProfiles(context.projectsTree.projectsFiles, context.initialContext.profiles, null)

@@ -208,7 +208,6 @@ class MavenImportingManager(val project: Project) {
         currentContext?.indicator?.checkCanceled()
         flow.runPostImportTasks(importContext)
         flow.updateProjectManager(readMavenFiles)
-        flow.configureMavenProject(importContext)
         setProjectSettings(initialImport)
         MavenResolveResultProblemProcessor.notifyMavenProblems(project) // remove this, should be in appropriate phase
         return@doTask MavenImportFinishedContext(importContext)

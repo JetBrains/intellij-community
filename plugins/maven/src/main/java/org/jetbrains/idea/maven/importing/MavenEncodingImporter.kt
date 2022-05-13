@@ -1,34 +1,22 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.jetbrains.idea.maven.importing.configurers
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil.fileToUrl
+import com.intellij.openapi.vfs.VfsUtilCore.fileToUrl
 import com.intellij.openapi.vfs.VfsUtilCore.urlToPath
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.io.File
 import java.nio.charset.Charset
@@ -37,8 +25,20 @@ import java.nio.charset.UnsupportedCharsetException
 /**
  * @author Sergey Evdokimov
  */
-class MavenEncodingConfigurer : MavenModuleConfigurer() {
-  override fun configure(mavenProject: MavenProject, project: Project, module: Module) {
+class MavenEncodingImporter : MavenImporter("", "") {
+
+  override fun isApplicable(mavenProject: MavenProject): Boolean {
+    return true;
+  }
+
+  override fun postProcess(module: Module,
+                           mavenProject: MavenProject,
+                           changes: MavenProjectChanges,
+                           modifiableModelsProvider: IdeModifiableModelsProvider) {
+    configure(mavenProject, module.project)
+  }
+
+  private fun configure(mavenProject: MavenProject, project: Project) {
     val encodingCollector = EncodingCollector(project)
 
     ReadAction.compute<Unit, Throwable> {
@@ -61,7 +61,8 @@ class MavenEncodingConfigurer : MavenModuleConfigurer() {
       val dirVfile = LocalFileSystem.getInstance().findFileByIoFile(File(directory))
       val pointer = if (dirVfile != null) {
         service<VirtualFilePointerManager>().create(dirVfile, encodingManager, null)
-      } else {
+      }
+      else {
         service<VirtualFilePointerManager>().create(fileToUrl(File(directory).absoluteFile), encodingManager, null)
       }
       newPointerMappings[pointer] = charset

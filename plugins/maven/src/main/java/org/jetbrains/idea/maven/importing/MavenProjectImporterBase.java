@@ -1,15 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.importing.configurers.MavenModuleConfigurer;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtilKt;
@@ -80,40 +74,6 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     return false;
   }
 
-  protected static void configureMavenProjectsInBackground(@NotNull Project project,
-                                                           @NotNull Map<Module, MavenProject> moduleToProject) {
-    if (MavenUtil.isLinearImportEnabled()) return;
-
-    MavenUtil.runInBackground(project, MavenProjectBundle.message("command.name.configuring.projects"), false, indicator -> {
-      configureMavenProjects(project, moduleToProject, indicator);
-    });
-  }
-
-  @IntellijInternalApi
-  @ApiStatus.Internal
-  public static void configureMavenProjects(@NotNull Project project,
-                                            @NotNull Map<Module, MavenProject> moduleToProject,
-                                            MavenProgressIndicator indicator) {
-    List<MavenModuleConfigurer> configurers = MavenModuleConfigurer.getConfigurers();
-    float count = 0;
-    long startTime = System.currentTimeMillis();
-    try {
-      int size = moduleToProject.size();
-      LOG.info("[maven import] applying " + configurers.size() + " configurers to " + size + " Maven projects");
-      for (Map.Entry<Module, MavenProject> each : moduleToProject.entrySet()) {
-        Module module = each.getKey();
-        MavenProject mavenProject = each.getValue();
-        indicator.setFraction(count++ / size);
-        indicator.setText2(MavenProjectBundle.message("progress.details.configuring.module", module.getName()));
-        for (MavenModuleConfigurer configurer : configurers) {
-          configurer.configure(mavenProject, project, module);
-        }
-      }
-    }
-    finally {
-      LOG.info("[maven import] configuring projects took " + (System.currentTimeMillis() - startTime) + "ms");
-    }
-  }
 
   protected static void doRefreshFiles(Set<File> files) {
     LocalFileSystem.getInstance().refreshIoFiles(files);

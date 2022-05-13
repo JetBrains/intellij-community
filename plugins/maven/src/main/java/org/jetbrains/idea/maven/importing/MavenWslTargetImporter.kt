@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.importing.configurers
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.importing
 
 import com.intellij.execution.target.TargetEnvironmentsManager
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
@@ -8,22 +8,32 @@ import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
 import com.intellij.execution.wsl.target.WslTargetType
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
+import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil.resolveMavenHomeDirectory
 
+class MavenWslTargetImporter : MavenImporter("", "") {
 
-class MavenWslTargetConfigurer : MavenModuleConfigurer() {
-  override fun configure(mavenProject: MavenProject,
-                         project: Project,
-                         module: Module) {
+  override fun isApplicable(mavenProject: MavenProject): Boolean {
+    return SystemInfo.isWindows && MavenWslUtil.tryGetWslDistributionForPath(mavenProject.path) != null
+  }
+
+
+  override fun postProcess(module: Module,
+                           mavenProject: MavenProject,
+                           changes: MavenProjectChanges,
+                           modifiableModelsProvider: IdeModifiableModelsProvider?) {
+    val project = module.project
     val wslDistribution = ReadAction.compute<WSLDistribution, Throwable> {
       project.basePath?.let { MavenWslUtil.tryGetWslDistribution(project) }
     }

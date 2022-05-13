@@ -82,8 +82,6 @@ class MavenProjectTreeImporterToWorkspaceModel(
 
     MavenUtil.invokeAndWaitWriteAction(project) { modelsProvider.dispose() }
 
-    configureMavenProjectsInBackground(project,
-                                       moduleImportDataList.associate { it.module to it.mavenModuleImportData.mavenProject })
   }
 
   private fun facetImport(moduleImportDataList: MutableList<ModuleImportData>,

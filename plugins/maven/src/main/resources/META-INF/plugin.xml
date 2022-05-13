@@ -474,6 +474,10 @@
     <importer implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.RemoteRepositoriesImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.RemoteRepositoriesImporter"/>
+
+    <importer implementation="org.jetbrains.idea.maven.importing.MavenEncodingImporter"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.MavenIdeaPluginImporter"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.MavenWslTargetImporter"/>
     <import.status.listener implementation="org.jetbrains.idea.maven.project.importing.MavenToolWindowUpdateListener"/>
 
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerJavacExtension"/>
