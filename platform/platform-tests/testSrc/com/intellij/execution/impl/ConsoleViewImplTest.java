@@ -936,4 +936,26 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       new ExpectedHighlighter(0, 2, ConsoleViewContentType.USER_INPUT)
     );
   }
+
+  public void testEnterDuringTypingMustSeparateUserInputTokens() {
+    myConsole.type(myConsole.getEditor(), "2");
+    myConsole.flushDeferredText();
+    assertEquals("2", myConsole.getText());
+    assertMarkersEqual(getAllRangeHighlighters(),
+      new ExpectedHighlighter(0, 1, ConsoleViewContentType.USER_INPUT)
+    );
+    myConsole.type(myConsole.getEditor(), "\n");
+    myConsole.flushDeferredText();
+    myConsole.type(myConsole.getEditor(), "3");
+    myConsole.flushDeferredText();
+    myConsole.type(myConsole.getEditor(), "\n");
+    myConsole.flushDeferredText();
+    assertEquals("2\n3\n", myConsole.getText());
+    assertMarkersEqual(getAllRangeHighlighters(),
+      new ExpectedHighlighter(0, 1, ConsoleViewContentType.USER_INPUT),
+      new ExpectedHighlighter(1, 2, ConsoleViewContentType.USER_INPUT),
+      new ExpectedHighlighter(2, 3, ConsoleViewContentType.USER_INPUT),
+      new ExpectedHighlighter(3, 4, ConsoleViewContentType.USER_INPUT)
+    );
+  }
 }
