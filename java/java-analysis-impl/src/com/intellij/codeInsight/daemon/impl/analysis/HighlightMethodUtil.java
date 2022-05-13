@@ -1852,8 +1852,9 @@ public final class HighlightMethodUtil {
   }
 
   private static HighlightInfo checkInferredReturnTypeAccessible(@NotNull MethodCandidateInfo info, @NotNull PsiMethodCallExpression methodCall) {
-    PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(info.getElement().getReturnType());
-    if (targetClass instanceof PsiTypeParameter) {
+    PsiMethod method = info.getElement();
+    PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(method.getReturnType());
+    if (targetClass instanceof PsiTypeParameter && ((PsiTypeParameter)targetClass).getOwner() == method) {
       PsiClass inferred = PsiUtil.resolveClassInClassTypeOnly(info.getSubstitutor().substitute((PsiTypeParameter)targetClass));
       if (inferred != null && !PsiUtil.isAccessible(inferred, methodCall, null)) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)

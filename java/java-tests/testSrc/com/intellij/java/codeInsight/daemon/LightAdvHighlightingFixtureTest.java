@@ -266,6 +266,18 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
                        "}");
     doTest();
   }
+  
+  public void testProtectedInnerClass1() {
+    myFixture.addClass("package a;\n" +
+                       "public class A<T> {\n" +
+                       "  public T getData() {return null;}\n" +
+                       "}");
+    myFixture.addClass("package a;\n" +
+                       "public class Outer extends A<Outer.Inner> {\n" +
+                       " protected class Inner {}\n" +
+                       "}");
+    doTest();
+  }
 
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
