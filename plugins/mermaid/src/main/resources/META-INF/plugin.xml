@@ -17,5 +17,7 @@
                             implementationClass="com.github.firsttimeinforever.mermaid.lang.highlighting.MermaidHighlighter"/>
     <completion.contributor language="MyMermaid"
                             implementationClass="com.github.firsttimeinforever.mermaid.editor.MermaidCompletionContributor"/>
+    <lang.commenter language="MyMermaid"
+                    implementationClass="com.github.firsttimeinforever.mermaid.lang.MermaidCommenter"/>
   </extensions>
 </idea-plugin>
