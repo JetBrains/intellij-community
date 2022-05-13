@@ -196,7 +196,7 @@
       "moveDown.svg": "actions/moveDown.svg",
       "moveUp.svg": "actions/moveUp.svg",
       "open.svg": "actions/menu-open.svg",
-      "openNewTab.svg": "actions/openNewTab",
+      "openNewTab.svg": "actions/openNewTab.svg",
       "paste.svg": "actions/menu-paste.svg",
       "pin.svg": [
         "actions/pinTab.svg",
@@ -434,7 +434,7 @@
       "currentBranch.svg": "icons/currentBranchLabel.svg",
       "currentBranchFavorite.svg": "icons/currentBranchFavoriteLabel.svg",
       "diff.svg": "actions/diff.svg",
-      "intelliSort": "icons/IntelliSort.svg",
+      "intelliSort.svg": "icons/IntelliSort.svg",
       "push.svg": "vcs/push.svg",
       "revert.svg": "actions/rollback.svg",
       "stash.svg": [
