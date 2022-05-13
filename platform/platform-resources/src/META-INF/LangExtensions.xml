@@ -1470,6 +1470,8 @@
                  key="ide.completion.auto.insert.item.timeout"/>
     <registryKey defaultValue="true" description="Separate applying index values from counting" restartRequired="true"
                  key="indexing.separate.applying.values.from.counting"/>
+    <registryKey defaultValue="true" description="Separate applying index values from counting for content independent indexes" restartRequired="true"
+                 key="indexing.separate.applying.values.from.counting.for.content.independent.indexes"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ContentRootIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.SourceRootIndexableEntityProvider"/>

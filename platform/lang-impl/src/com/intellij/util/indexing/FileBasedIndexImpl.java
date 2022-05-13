@@ -1583,8 +1583,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
+  @ApiStatus.Internal
   @Nullable("null in case index update is not necessary or the update has failed")
-  private <FileIndexMetaData> SingleIndexValueApplier<FileIndexMetaData> createSingleIndexValueApplier(@NotNull ID<?, ?> indexId,
+  <FileIndexMetaData> SingleIndexValueApplier<FileIndexMetaData> createSingleIndexValueApplier(@NotNull ID<?, ?> indexId,
                                                                                                        @NotNull VirtualFile file,
                                                                                                        int inputId,
                                                                                                        @NotNull FileContent currentFC,
@@ -2141,9 +2142,18 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return ourWritingIndexValuesSeparatedFromCounting;
   }
 
+  static boolean isWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes() {
+    return ourWritingIndexValuesSeparatedFromCounting && ourWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes;
+  }
+
   static void setupWritingIndexValuesSeparatedFromCounting() {
     ourWritingIndexValuesSeparatedFromCounting = Registry.is("indexing.separate.applying.values.from.counting");
   }
 
+  static void setupWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes() {
+    ourWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes = Registry.is("indexing.separate.applying.values.from.counting.for.content.independent.indexes");
+  }
+
   private static volatile boolean ourWritingIndexValuesSeparatedFromCounting;
+  private static volatile boolean ourWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes;
 }
