@@ -117,7 +117,6 @@
       "scss.svg": "org/jetbrains/plugins/sass/sass.svg",
       "shell.svg": "icons/shFile.svg",
       "sql.svg": "icons/sql.svg",
-      "terraform.svg": "hcl/terraform.png",
       "text.svg": [
         "fileTypes/custom.svg",
         "fileTypes/text.svg"
