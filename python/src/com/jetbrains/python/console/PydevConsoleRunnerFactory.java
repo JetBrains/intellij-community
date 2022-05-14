@@ -133,7 +133,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
       }
       else {
         VirtualFile[] projectRoots = ProjectRootManager.getInstance(project).getContentRoots();
-        for (VirtualFile root: projectRoots) {
+        for (VirtualFile root : projectRoots) {
           if (root.getFileSystem() instanceof LocalFileSystem) {
             // we can't start Python Console in remote folder without additional connection configurations
             workingDir = root.getPath();
@@ -172,13 +172,13 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
   }
 
   @NotNull
-  protected PydevConsoleRunner createConsoleRunner(@NotNull Project project,
-                                                   @Nullable Sdk sdk,
-                                                   @Nullable String workingDir,
-                                                   @NotNull Map<String, String> envs,
-                                                   @NotNull PyConsoleType consoleType,
-                                                   @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
-                                                   String @NotNull ... setupFragment) {
+  private static PydevConsoleRunner createConsoleRunner(@NotNull Project project,
+                                                        @Nullable Sdk sdk,
+                                                        @Nullable String workingDir,
+                                                        @NotNull Map<String, String> envs,
+                                                        @NotNull PyConsoleType consoleType,
+                                                        @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
+                                                        String @NotNull ... setupFragment) {
     return new PydevConsoleRunnerImpl(project, sdk, consoleType, workingDir, envs, settingsProvider, setupFragment);
   }
 
