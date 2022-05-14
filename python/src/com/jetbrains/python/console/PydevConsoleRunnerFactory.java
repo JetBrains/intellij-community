@@ -27,13 +27,13 @@ import java.util.Map;
 public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
 
   protected static class ConsoleParameters {
-    @NotNull Project myProject;
-    @Nullable Sdk mySdk;
-    @Nullable String myWorkingDir;
-    @NotNull Map<String, String> myEnvs;
-    @NotNull PyConsoleType myConsoleType;
-    @NotNull PyConsoleOptions.PyConsoleSettings mySettingsProvider;
-    String @NotNull [] mySetupFragment;
+    private final @NotNull Project myProject;
+    private final @Nullable Sdk mySdk;
+    private final @Nullable String myWorkingDir;
+    private final @NotNull Map<String, String> myEnvs;
+    private final @NotNull PyConsoleType myConsoleType;
+    private final @NotNull PyConsoleOptions.PyConsoleSettings mySettingsProvider;
+    private final String @NotNull [] mySetupFragment;
 
     public ConsoleParameters(@NotNull Project project,
                              @Nullable Sdk sdk,
