@@ -9,9 +9,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.config.JpsPluginSettings
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
@@ -29,29 +26,21 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
  * 2. User started using KOTLIN_BUNDLED in libraries. Then if current kotlinc-dist of current Kotlin JPS version isn't yet downloaded,
  *    we should download it.
  */
-class KotlinDistAutomaticDownloaderForKotlinBundled : StartupActivity.DumbAware {
-    internal class SettingsListener(private val project: Project) : KotlinCompilerSettingsListener {
-        override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
-            if (newSettings !is JpsPluginSettings) return
-            downloadKotlinDistIfNeeded(
-                KotlinBundledUsageDetector.getInstance(project).isKotlinBundledPotentiallyUsedInLibraries.value,
-                newSettings.version,
-                project,
-            )
-        }
+internal class KotlinDistAutomaticDownloaderForKotlinBundled(
+    private val project: Project
+) : KotlinCompilerSettingsListener, KotlinBundledUsageDetectorListener {
+    override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
+        if (newSettings !is JpsPluginSettings) return
+        downloadKotlinDistIfNeeded(
+            KotlinBundledUsageDetector.isKotlinBundledPotentiallyUsedInLibraries(project),
+            newSettings.version,
+            project,
+        )
     }
 
-    override fun runActivity(project: Project) {
-        val detector = KotlinBundledUsageDetector.getInstance(project)
-        detector.coroutineScope.launch {
-            detector.isKotlinBundledPotentiallyUsedInLibraries.collect {
-                downloadKotlinDistIfNeeded(it, KotlinJpsPluginSettings.jpsVersion(project) ?: return@collect, project)
-            }
-        }
-
-        KotlinJpsPluginSettings.jpsVersion(project)?.let { version ->
-            downloadKotlinDistIfNeeded(detector.isKotlinBundledPotentiallyUsedInLibraries.value, version, project)
-        }
+    override fun kotlinBundledDetected() {
+        val jpsVersion = KotlinJpsPluginSettings.jpsVersion(project) ?: return
+        downloadKotlinDistIfNeeded(isKotlinBundledPotentiallyUsedInLibraries = true, jpsVersion, project)
     }
 }
 

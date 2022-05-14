@@ -5,17 +5,23 @@ package org.jetbrains.kotlin.idea.configuration
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JsCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector
+import org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetectorListener
 import org.jetbrains.kotlin.idea.notification.catchNotificationText
 import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.util.projectStructure.findLibrary
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -58,6 +64,33 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
         Assert.assertEquals(LanguageVersion.KOTLIN_1_0, myProject.getLanguageVersionSettings(null).languageVersion)
         application.saveAll()
         checkKotlincPresence(jpsVersionOnly = true)
+    }
+
+    fun testKotlinBundledAdded() {
+        assertFalse(KotlinBundledUsageDetector.isKotlinBundledPotentiallyUsedInLibraries(project))
+
+        val connection = project.messageBus.connect(testRootDisposable)
+        var kotlinBundledWasDetected = false
+        connection.subscribe(KotlinBundledUsageDetector.TOPIC, object : KotlinBundledUsageDetectorListener {
+            override fun kotlinBundledDetected() {
+                kotlinBundledWasDetected = true
+            }
+        })
+
+        runWriteAction {
+            val kotlinRuntimeLibrary = module.findLibrary { it.name == "BundledKotlinStdlib" }
+            assertNotNull(kotlinRuntimeLibrary)
+
+            with(kotlinRuntimeLibrary!!.modifiableModel) {
+                addRoot(KotlinArtifacts.instance.kotlinStdlib.absolutePath, OrderRootType.CLASSES)
+                commit()
+            }
+        }
+
+        assertTrue(KotlinBundledUsageDetector.isKotlinBundledPotentiallyUsedInLibraries(project))
+
+        connection.deliverImmediately()
+        assertTrue(kotlinBundledWasDetected)
     }
 
     fun testMigrationNotificationWithStdlib() {
