@@ -1,17 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.InspectionSuppressor
-import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.SuppressQuickFix
+import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.isAncestor
+import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.highlighter.createSuppressWarningActions
+import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
+import org.jetbrains.kotlin.psi.KtAnnotated
+import org.jetbrains.kotlin.psi.KtAnnotatedExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.resolve.constants.ArrayValue
+import org.jetbrains.kotlin.resolve.constants.StringValue
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
+import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class KotlinInspectionSuppressor : InspectionSuppressor {
+class KotlinInspectionSuppressor : InspectionSuppressor, RedundantSuppressionDetector {
     override fun getSuppressActions(element: PsiElement?, toolId: String): Array<SuppressQuickFix> {
         element ?: return emptyArray()
         return createSuppressWarningActions(element, Severity.WARNING, toolId).map {
@@ -32,4 +44,65 @@ class KotlinInspectionSuppressor : InspectionSuppressor {
     override fun isSuppressedFor(element: PsiElement, toolId: String): Boolean = KotlinCacheService.getInstance(element.project)
         .getSuppressionCache()
         .isSuppressed(element, element.containingFile, toolId, Severity.WARNING)
+
+    override fun getSuppressionIds(element: PsiElement): String? {
+        val builder = mutableListOf<String>()
+        val suppressionCache = KotlinCacheService.getInstance(element.project).getSuppressionCache()
+        for (annotationDescriptor in suppressionCache.getSuppressionAnnotations(element)) {
+            processAnnotation(builder, annotationDescriptor)
+        }
+
+        return builder.ifNotEmpty { joinToString(separator = ",") }
+    }
+
+    private fun processAnnotation(builder: MutableList<String>, annotationDescriptor: AnnotationDescriptor) {
+        if (annotationDescriptor.fqName != StandardNames.FqNames.suppress) return
+
+        for (arrayValue in annotationDescriptor.allValueArguments.values) {
+            if (arrayValue is ArrayValue) {
+                for (value in arrayValue.value) {
+                    if (value is StringValue) {
+                        builder.add(value.value)
+                    }
+                }
+            }
+        }
+    }
+
+    override fun createRemoveRedundantSuppressionFix(toolId: String): LocalQuickFix = RemoveRedundantSuppression(toolId)
+
+    override fun isSuppressionFor(elementWithSuppression: PsiElement, place: PsiElement, toolId: String): Boolean {
+        return elementWithSuppression === place || elementWithSuppression.isAncestor(place, false)
+    }
+}
+
+private class RemoveRedundantSuppression(private val toolId: String) : LocalQuickFix {
+    override fun getFamilyName(): String = QuickFixBundle.message("remove.suppression.action.family")
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        // descriptor.psiElement can be identifier in case of bunch mode. See [com.intellij.codeInspection.RedundantSuppressInspectionBase.checkElement]
+        val annotated = descriptor.psiElement.parentOfType<KtAnnotated>(withSelf = true)
+            ?: throw KotlinExceptionWithAttachments("Annotated element is not found")
+                .withAttachment(name = "class.txt", content = descriptor.psiElement.javaClass)
+                .withPsiAttachment("element.txt", descriptor.psiElement)
+
+        val shortName = StandardNames.FqNames.suppress.shortName()
+        val suppressAnnotationEntry = annotated.annotationEntries.firstOrNull { it.shortName == shortName }
+            ?: throw KotlinExceptionWithAttachments("Suppress annotation is not found")
+                .withPsiAttachment("element.txt", descriptor.psiElement)
+                .withPsiAttachment("annotatedElement.txt", annotated)
+
+        if (suppressAnnotationEntry.valueArguments.size == 1) {
+            annotated.safeAs<KtAnnotatedExpression>()?.baseExpression?.let { annotated.replace(it) } ?: suppressAnnotationEntry.delete()
+        } else {
+            val valueArgumentList = suppressAnnotationEntry.valueArgumentList ?: return
+            val argument = valueArgumentList.arguments.find {
+                it.getArgumentExpression()?.safeAs<KtStringTemplateExpression>()?.entries?.singleOrNull()?.textMatches(toolId) == true
+            } ?: throw KotlinExceptionWithAttachments("ToolId is not found")
+                .withAttachment("arguments.txt", valueArgumentList.text)
+                .withAttachment("tool.txt", toolId)
+
+            valueArgumentList.removeArgument(argument)
+        }
+    }
 }

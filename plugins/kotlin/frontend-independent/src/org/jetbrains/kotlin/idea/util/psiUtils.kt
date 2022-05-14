@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
@@ -117,6 +118,11 @@ fun KtAnnotated.hasAnnotationWithShortName(
     shortName: Name,
     useSiteTarget: AnnotationUseSiteTarget? = null,
 ): Boolean = hasAnnotationWithShortName(shortName.asString(), useSiteTarget)
+
+fun KtAnnotated.hasNonSuppressAnnotation(): Boolean {
+    val annotationEntries = annotationEntries
+    return annotationEntries.isNotEmpty() && annotationEntries.singleOrNull()?.shortName != StandardNames.FqNames.suppress.shortName()
+}
 
 val KtFile.jvmPackage: String?
     get() = JvmFileClassUtil.findAnnotationEntryOnFileNoResolve(this, JvmNames.JVM_PACKAGE_NAME_SHORT)

@@ -1267,7 +1267,6 @@
                      enabledByDefault="true"
                      level="WARNING"
                      language="kotlin"
-                     suppressId="unused"
                      key="inspection.unused.receiver.parameter.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinUnusedImportInspection"
@@ -1802,6 +1801,7 @@
                      enabledByDefault="true"
                      level="INFO"
                      language="kotlin"
+                     runForWholeFile="true"
                      key="inspection.member.visibility.can.be.private.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.NullableBooleanElvisInspection"

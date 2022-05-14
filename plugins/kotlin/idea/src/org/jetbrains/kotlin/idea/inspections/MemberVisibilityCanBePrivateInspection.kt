@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperator
 import org.jetbrains.kotlin.idea.search.usagesSearch.dataClassComponentFunction
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.util.hasNonSuppressAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -63,7 +64,7 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
 
     private fun canBePrivate(declaration: KtNamedDeclaration): Boolean {
         if (declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) || declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
-        if (declaration.annotationEntries.isNotEmpty()) return false
+        if (declaration.hasNonSuppressAnnotation()) return false
 
         val classOrObject = declaration.containingClassOrObject ?: return false
         val inheritable = classOrObject is KtClass && classOrObject.isInheritable()
@@ -73,7 +74,7 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
         val descriptor = (declaration.toDescriptor() as? DeclarationDescriptorWithVisibility) ?: return false
         when (descriptor.effectiveVisibility()) {
             EffectiveVisibility.PrivateInClass, EffectiveVisibility.PrivateInFile, EffectiveVisibility.Local -> return false
-            else -> { }
+            else -> {}
         }
 
         val entryPointsManager = EntryPointsManager.getInstance(declaration.project) as EntryPointsManagerBase
