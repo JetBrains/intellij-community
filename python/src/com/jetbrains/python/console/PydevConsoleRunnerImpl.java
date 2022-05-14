@@ -4,7 +4,6 @@ package com.jetbrains.python.console;
 import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
@@ -12,7 +11,6 @@ import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.console.ConsoleExecuteAction;
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.execution.console.LanguageConsoleView;
-import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ConsoleTitleGen;
 import com.intellij.execution.target.*;
@@ -330,10 +328,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     ToolWindow toolwindow = PythonConsoleToolWindow.getToolWindow(myProject);
     toolwindow.getComponent().putClientProperty(STARTED_BY_RUNNER, "true");
     PythonConsoleToolWindow.getInstance(myProject).init(toolwindow, contentDescriptor);
-  }
-
-  private static Executor getExecutor() {
-    return DefaultRunExecutor.getRunExecutorInstance();
   }
 
   public static int findAvailablePort(@NotNull Project project, PyConsoleType consoleType) throws ExecutionException {
