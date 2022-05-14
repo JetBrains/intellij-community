@@ -7674,6 +7674,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/deprecatedSymbolUsage/dropReceiver.kt");
             }
 
+            @TestMetadata("enum.kt")
+            public void testEnum() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/enum.kt");
+            }
+
             @TestMetadata("extensionForGenericClass.kt")
             public void testExtensionForGenericClass() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/extensionForGenericClass.kt");
