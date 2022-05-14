@@ -80,8 +80,8 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     }
   }
 
-  protected ConsoleParameters createConsoleParameters(@NotNull Project project,
-                                                      @Nullable Module contextModule) {
+  protected @NotNull ConsoleParameters createConsoleParameters(@NotNull Project project,
+                                                               @Nullable Module contextModule) {
     Pair<Sdk, Module> sdkAndModule = PydevConsoleRunner.findPythonSdkAndModule(project, contextModule);
 
     @Nullable Module module = sdkAndModule.second;
