@@ -582,6 +582,11 @@ public abstract class HLIntentionTestGenerated extends AbstractHLIntentionTest {
             runTest("../idea/tests/testData/intentions/specifyTypeExplicitly/anonymousObject.kt");
         }
 
+        @TestMetadata("anonymousObjectJavaClass.kt")
+        public void testAnonymousObjectJavaClass() throws Exception {
+            runTest("../idea/tests/testData/intentions/specifyTypeExplicitly/anonymousObjectJavaClass.kt");
+        }
+
         @TestMetadata("backticked.kt")
         public void testBackticked() throws Exception {
             runTest("../idea/tests/testData/intentions/specifyTypeExplicitly/backticked.kt");
