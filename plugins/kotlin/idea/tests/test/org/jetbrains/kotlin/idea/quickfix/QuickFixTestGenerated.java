@@ -2249,6 +2249,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("annotation.kt")
+            public void testAnnotation() throws Exception {
+                runTest("testData/quickfix/autoImports/annotation.kt");
+            }
+
+            @TestMetadata("annotationWithAnotherUnresolvedAnnotation.kt")
+            public void testAnnotationWithAnotherUnresolvedAnnotation() throws Exception {
+                runTest("testData/quickfix/autoImports/annotationWithAnotherUnresolvedAnnotation.kt");
+            }
+
             @TestMetadata("builtInFunction.kt")
             public void testBuiltInFunction() throws Exception {
                 runTest("testData/quickfix/autoImports/builtInFunction.kt");
