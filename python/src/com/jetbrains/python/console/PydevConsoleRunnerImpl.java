@@ -270,7 +270,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   @Override
   public void run(boolean requestEditorFocus) {
-    TransactionGuard.submitTransaction(PythonPluginDisposable.getInstance(myProject), () -> FileDocumentManager.getInstance().saveAllDocuments());
+    TransactionGuard.submitTransaction(PythonPluginDisposable.getInstance(myProject),
+                                       () -> FileDocumentManager.getInstance().saveAllDocuments());
 
     ApplicationManager.getApplication().executeOnPooledThread(
       () -> ProgressManager.getInstance().run(new Task.Backgroundable(myProject, PyBundle.message("connecting.to.console.title"), false) {
@@ -650,7 +651,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         String error;
         try {
           error = PyBundle.message("pydev.console.console.process.terminated.with.error",
-                                   StreamUtil.readText(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)), sb.toString());
+                                   StreamUtil.readText(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)),
+                                   sb.toString());
         }
         catch (Exception ignored) {
           error = PyBundle.message("pydev.console.console.process.terminated.with.exit.code", process.exitValue(), sb.toString());
