@@ -107,9 +107,8 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
   public PydevConsoleRunner createConsoleRunner(@NotNull Project project,
                                                 @Nullable Module contextModule) {
     final ConsoleParameters consoleParameters = createConsoleParameters(project, contextModule);
-    return createConsoleRunner(project, consoleParameters.mySdk, consoleParameters.myWorkingDir, consoleParameters.myEnvs,
-                               consoleParameters.myConsoleType,
-                               consoleParameters.mySettingsProvider, consoleParameters.mySetupFragment);
+    return new PydevConsoleRunnerImpl(project, consoleParameters.mySdk, consoleParameters.myConsoleType, consoleParameters.myWorkingDir,
+                                      consoleParameters.myEnvs, consoleParameters.mySettingsProvider, consoleParameters.mySetupFragment);
   }
 
   public static void putIPythonEnvFlag(@NotNull Project project, @NotNull Map<String, String> envs) {
@@ -169,17 +168,6 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     String selfPathAppend = PydevConsoleRunner.constructPyPathAndWorkingDirCommand(pythonPath, workingDir, customStartScript);
 
     return new String[]{selfPathAppend};
-  }
-
-  @NotNull
-  private static PydevConsoleRunner createConsoleRunner(@NotNull Project project,
-                                                        @Nullable Sdk sdk,
-                                                        @Nullable String workingDir,
-                                                        @NotNull Map<String, String> envs,
-                                                        @NotNull PyConsoleType consoleType,
-                                                        @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
-                                                        String @NotNull ... setupFragment) {
-    return new PydevConsoleRunnerImpl(project, sdk, consoleType, workingDir, envs, settingsProvider, setupFragment);
   }
 
   @Override
