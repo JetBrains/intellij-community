@@ -1,5 +1,4 @@
 // "Replace with 'BAR'" "true"
-package test
 
 enum class Enm {
     @Deprecated("Replace with BAR", ReplaceWith("BAR"))

@@ -1,6 +1,4 @@
 // "Replace with 'BAR'" "true"
-package test
-import test.Enm.FOO
 
 enum class Enm {
     @Deprecated("Replace with BAR", ReplaceWith("BAR"))
@@ -9,5 +7,5 @@ enum class Enm {
 }
 
 fun test() {
-    FOO<caret>
+    Enm.FOO<caret>
 }
