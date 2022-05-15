@@ -291,7 +291,7 @@ final class KotlinPluginBuilder {
             String major = ijBuildNumber.group(1)
             String minor = ijBuildNumber.group(2)
             String kotlinVersion = context.project.libraryCollection.libraries
-              .find { it.name.startsWith("kotlinc.") && it.type instanceof JpsRepositoryLibraryType }
+              .find { it.name.startsWith("kotlinc.kotlin-jps-plugin-classpath") && it.type instanceof JpsRepositoryLibraryType }
               ?.asTyped(JpsRepositoryLibraryType.INSTANCE)
               ?.properties?.data?.version ?: KOTLIN_COOP_DEV_VERSION
 
