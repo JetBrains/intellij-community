@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.io.URLUtil
 import org.jetbrains.kotlin.idea.checkers.CompilerTestLanguageVersionSettings
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
@@ -139,7 +140,7 @@ abstract class AbstractKotlinUastTest : AbstractUastTest() {
             val messageCollector = PrintingMessageCollector(System.err, MessageRenderer.PLAIN_RELATIVE_PATHS, true)
             put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
 
-            put(CommonConfigurationKeys.MODULE_NAME, "test-module")
+            put(CommonConfigurationKeys.MODULE_NAME, LightProjectDescriptor.TEST_MODULE_NAME)
 
             if (sourceFile.extension == KotlinParserDefinition.STD_SCRIPT_SUFFIX) {
                 loadScriptingPlugin(this)
