@@ -413,12 +413,25 @@
     "run": {
       "attachToProcess.svg": "debugger/attachToProcess.svg",
       "debug.svg": "actions/startDebugger.svg",
+      "forceStepInto.svg": "icons/actions/force_step_into.svg",
+      "forceStepOver.svg": "icons/actions/force_step_over.svg",
+      "killProcess.svg": "debugger/killProcess.svg",
+      "muteBreakpoints.svg": "debugger/muteBreakpoints.svg",
+      "pause.svg": "actions/pause.svg",
       "restart.svg": "actions/restart.svg",
       "restartFailedTests.svg": "runConfigurations/rerunFailedTests.svg",
+      "resume.svg": "actions/resume.svg",
       "run.svg": "actions/execute.svg",
+      "showCurrentFrame.svg": "debugger/showCurrentFrame.svg",
       "showIgnored.svg": "runConfigurations/showIgnored.svg",
       "showPassed.svg": "runConfigurations/showPassed.svg",
-      "stop.svg": "actions/suspend.svg"
+      "smartStepInto.svg": "debugger/smartStepInto.svg",
+      "stepInto.svg": "actions/traceInto.svg",
+      "stepOut.svg": "actions/stepOut.svg",
+      "stepOver.svg": "actions/traceOver.svg",
+      "stop.svg": "actions/suspend.svg",
+      "traceStream.svg": "icons/stream_debugger.svg",
+      "viewBreakpoints.svg": "debugger/viewBreakpoints.svg"
     },
     "status": {
       "error.svg": "general/balloonError.svg",
