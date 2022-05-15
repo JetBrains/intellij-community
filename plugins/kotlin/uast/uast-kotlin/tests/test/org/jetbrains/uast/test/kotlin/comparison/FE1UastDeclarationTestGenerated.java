@@ -60,6 +60,11 @@ public abstract class FE1UastDeclarationTestGenerated extends AbstractFE1UastDec
             runTest("../../uast-kotlin-fir/testData/declaration/labeledExpression.kt");
         }
 
+        @TestMetadata("mangling.kt")
+        public void testMangling() throws Exception {
+            runTest("../../uast-kotlin-fir/testData/declaration/mangling.kt");
+        }
+
         @TestMetadata("objects.kt")
         public void testObjects() throws Exception {
             runTest("../../uast-kotlin-fir/testData/declaration/objects.kt");
