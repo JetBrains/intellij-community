@@ -113,6 +113,8 @@ Includes the following features:</p>
       <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
 
+    <typedHandler implementation="org.intellij.plugins.markdown.editor.headers.HeaderLevelInferenceTypedHandler"/>
+
     <httpRequestHandler implementation="org.intellij.plugins.markdown.google.authorization.GoogleOAuthCallbackHandler"/>
 
     <renameHandler implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownRenameHandler"/>
@@ -331,6 +333,10 @@ Includes the following features:</p>
                  defaultValue="false"
                  description="Enables experimental front matter support"
                  restartRequired="true"/>
+
+    <registryKey key="markdown.experimental.header.level.inference.enable"
+                 defaultValue="false"
+                 description="Enables experimental support for inferring header level"/>
 
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>
     <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>
