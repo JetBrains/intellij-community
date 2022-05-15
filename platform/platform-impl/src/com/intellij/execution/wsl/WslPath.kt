@@ -2,7 +2,6 @@
 package com.intellij.execution.wsl
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.impl.wsl.WslConstants
 
 data class WslPath(val distributionId: String, val linuxPath: String) {
@@ -14,12 +13,15 @@ data class WslPath(val distributionId: String, val linuxPath: String) {
     @JvmStatic
     fun parseWindowsUncPath(windowsUncPath: String): WslPath? {
       if (!WSLUtil.isSystemCompatible()) return null
-      var path = FileUtil.toSystemDependentName(windowsUncPath)
-      if (!path.startsWith(WslConstants.UNC_PREFIX)) return null
-      path = StringUtil.trimStart(path, WslConstants.UNC_PREFIX)
-      val index = path.indexOf('\\')
-      if (index <= 0) return null
-      return WslPath(path.substring(0, index), FileUtil.toSystemIndependentName(path.substring(index)))
+      val path = FileUtil.toSystemDependentName(windowsUncPath)
+      if (path.startsWith(WslConstants.UNC_PREFIX)) {
+        val slashIndex = path.indexOf('\\', WslConstants.UNC_PREFIX.length)
+        if (slashIndex > WslConstants.UNC_PREFIX.length) {
+          return WslPath(path.substring(WslConstants.UNC_PREFIX.length, slashIndex),
+                         FileUtil.toSystemIndependentName(path.substring(slashIndex)))
+        }
+      }
+      return null
     }
 
     @JvmStatic
