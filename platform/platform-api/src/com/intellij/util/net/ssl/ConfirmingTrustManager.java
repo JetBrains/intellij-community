@@ -4,6 +4,7 @@ package com.intellij.util.net.ssl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.EventDispatcher;
@@ -179,6 +180,11 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
 
   public void checkServerTrusted(final X509Certificate[] chain, String authType, boolean addToKeyStore, boolean askUser)
     throws CertificateException {
+    checkServerTrusted(chain, authType, addToKeyStore, askUser, null, null);
+  }
+
+  public void checkServerTrusted(final X509Certificate[] chain, String authType, boolean addToKeyStore, boolean askUser, @Nullable @NlsContexts.DialogMessage String details, @Nullable Runnable onUsedAccepted)
+    throws CertificateException {
 
     CertificateException lastCertificateException = null;
     for (X509TrustManager trustManager : mySystemManagers) {
@@ -198,14 +204,14 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
         myCustomManager.checkServerTrusted(chain, authType);
       }
       catch (CertificateException e) {
-        if (myCustomManager.isBroken() || !confirmAndUpdate(chain, addToKeyStore, askUser)) {
+        if (myCustomManager.isBroken() || !confirmAndUpdate(chain, addToKeyStore, askUser, details, onUsedAccepted)) {
           throw lastCertificateException != null ? lastCertificateException : e;
         }
       }
     }
   }
 
-  private boolean confirmAndUpdate(final X509Certificate[] chain, boolean addToKeyStore, boolean askUser) {
+  private boolean confirmAndUpdate(final X509Certificate[] chain, boolean addToKeyStore, boolean askUser, @Nullable @NlsContexts.DialogMessage String details, @Nullable Runnable onUsedAccepted) {
     Application app = ApplicationManager.getApplication();
     final X509Certificate endPoint = chain[0];
     // IDEA-123467 and IDEA-123335 workaround
@@ -226,13 +232,15 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
              ", issuer: " + endPoint.getIssuerDN().toString());
     boolean accepted = askUser && CertificateManager.showAcceptDialog(() -> {
       // TODO may be another kind of warning, if default trust store is missing
-      return CertificateWarningDialog.createUntrustedCertificateWarning(endPoint);
+      return CertificateWarningDialog.createUntrustedCertificateWarning(endPoint, details);
     });
     if (accepted) {
       LOG.info("Certificate was accepted by user");
       if (addToKeyStore) {
         myCustomManager.addCertificate(endPoint);
       }
+      if (onUsedAccepted != null)
+        onUsedAccepted.run();
     }
     return accepted;
   }
