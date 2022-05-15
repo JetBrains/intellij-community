@@ -60,6 +60,11 @@ public abstract class FirUastDeclarationTestGenerated extends AbstractFirUastDec
             runTest("testData/declaration/labeledExpression.kt");
         }
 
+        @TestMetadata("mangling.kt")
+        public void testMangling() throws Exception {
+            runTest("testData/declaration/mangling.kt");
+        }
+
         @TestMetadata("objects.kt")
         public void testObjects() throws Exception {
             runTest("testData/declaration/objects.kt");
