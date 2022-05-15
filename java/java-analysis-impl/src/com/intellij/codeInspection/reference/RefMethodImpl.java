@@ -265,9 +265,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
         if (refElement instanceof RefMethodImpl) {
           RefMethodImpl refSuperMethod = (RefMethodImpl)refElement;
           addSuperMethod(refSuperMethod);
-          if (refSuperMethod.isExternalOverride()) {
-            setLibraryOverride(true);
-          }
           refManager.executeTask(() -> refSuperMethod.markExtended(this));
         }
         else {
@@ -368,7 +365,21 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public boolean isExternalOverride() {
-    return checkFlag(IS_LIBRARY_OVERRIDE_MASK);
+    return isLibraryOverride(new HashSet<>());
+  }
+
+  private synchronized boolean isLibraryOverride(@NotNull Collection<? super RefMethod> processed) {
+    if (!processed.add(this)) return false;
+
+    if (checkFlag(IS_LIBRARY_OVERRIDE_MASK)) return true;
+    for (RefMethod superMethod : getSuperMethods()) {
+      if (((RefMethodImpl)superMethod).isLibraryOverride(processed)) {
+        setFlag(true, IS_LIBRARY_OVERRIDE_MASK);
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @Override
