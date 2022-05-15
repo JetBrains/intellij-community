@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.PluginException
@@ -211,7 +211,6 @@ class ClassLoaderConfigurator(
     val coreUrlClassLoader = coreLoader as? UrlClassLoader
     if (coreUrlClassLoader == null) {
       if (!java.lang.Boolean.getBoolean("idea.use.core.classloader.for.plugin.path")) {
-        @Suppress("SpellCheckingInspection")
         log.error("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
       }
       setPluginClassLoaderForModuleAndOldSubDescriptors(module, coreLoader)

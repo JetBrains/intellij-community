@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starters.remote.wizard
 
 import com.intellij.icons.AllIcons
@@ -320,7 +320,6 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : C
     super._init()
 
     if (serverOptions == null && currentRequest == null) {
-      @Suppress("HardCodedStringLiteral")
       val serverUrlFromSettings = PropertiesComponent.getInstance().getValue(getServerUrlPropertyName())
       if (serverUrlFromSettings != null) {
         setServerUrl(serverUrlFromSettings)

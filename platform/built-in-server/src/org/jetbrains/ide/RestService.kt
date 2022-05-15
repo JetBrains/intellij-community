@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.github.benmanes.caffeine.cache.CacheLoader
@@ -35,6 +35,8 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.builtInWebServer.isSignedRequest
+import org.jetbrains.ide.RestService.Companion.createJsonReader
+import org.jetbrains.ide.RestService.Companion.createJsonWriter
 import org.jetbrains.io.addCommonHeaders
 import org.jetbrains.io.addNoCache
 import org.jetbrains.io.response
@@ -61,7 +63,6 @@ import java.util.concurrent.atomic.AtomicInteger
  *
  * @see <a href="http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api">Best Practices for Designing a Pragmatic REST API</a>.
  */
-@Suppress("HardCodedStringLiteral")
 abstract class RestService : HttpRequestHandler() {
   companion object {
     @JvmField

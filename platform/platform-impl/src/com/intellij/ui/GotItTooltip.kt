@@ -6,7 +6,6 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
@@ -532,7 +531,6 @@ class GotItTooltip(@NonNls val id: String,
         buttonPanel.add(button)
         buttonPanel.add(Box.createHorizontalStrut(JBUIScale.scale(UIUtil.DEFAULT_HGAP)))
 
-        @Suppress("HardCodedStringLiteral")
         val closeShortcut = JLabel(KeymapUtil.getShortcutText(CLOSE_ACTION_NAME)).apply {
           foreground = JBUI.CurrentTheme.GotItTooltip.shortcutForeground(useContrastColors)
         }

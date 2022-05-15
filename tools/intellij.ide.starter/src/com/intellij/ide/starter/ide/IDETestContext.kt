@@ -236,7 +236,6 @@ data class IDETestContext(
   /**
    * Setup profiler injection
    */
-  @Suppress("unused")
   fun setProfiler(profilerType: ProfilerType): IDETestContext {
     this.profilerType = profilerType
     return this

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.project
 
@@ -20,7 +20,6 @@ object KotlinMultiplatformAnalysisModeComponent {
 
     @JvmStatic
     fun getMode(project: Project): Mode {
-        @Suppress("InvalidBundleOrProperty")
         val explicitIdeaSetting = PropertiesComponent.getInstance(project).getValue(resolutionModeOption)
         if (explicitIdeaSetting != null) return Mode.valueOf(explicitIdeaSetting)
 

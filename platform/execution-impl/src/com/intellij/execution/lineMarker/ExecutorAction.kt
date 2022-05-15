@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NonNls
 /**
  * @param order corresponding sorting happens here: [com.intellij.execution.actions.BaseRunConfigurationAction.getOrderedConfiguration]
  */
-@Suppress("ComponentNotRegistered")
 class ExecutorAction private constructor(val origin: AnAction,
                                          val executor: Executor,
                                          val order: Int) :

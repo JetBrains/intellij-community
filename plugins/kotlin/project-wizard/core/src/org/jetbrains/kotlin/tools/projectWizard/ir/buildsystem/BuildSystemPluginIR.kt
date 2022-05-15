@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem
 
 import org.jetbrains.annotations.NonNls
@@ -90,7 +90,7 @@ data class KotlinBuildSystemPluginIR(
         else -> Unit
     }
 
-    @Suppress("EnumEntryName", "unused", "SpellCheckingInspection")
+    @Suppress("EnumEntryName")
     enum class Type {
         jvm, multiplatform, android, js,
         nativeCocoapods {

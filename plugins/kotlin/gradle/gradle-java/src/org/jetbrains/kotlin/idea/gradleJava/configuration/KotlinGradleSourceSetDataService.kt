@@ -227,7 +227,6 @@ private fun detectPlatformByLibrary(moduleNode: DataNode<ModuleData>): IdePlatfo
     return detectedPlatforms.singleOrNull() ?: detectedPlatforms.firstOrNull { !it.isCommon }
 }
 
-@Suppress("unused") // Used in the Android plugin
 fun configureFacetByGradleModule(
     moduleNode: DataNode<ModuleData>,
     sourceSetName: String?,

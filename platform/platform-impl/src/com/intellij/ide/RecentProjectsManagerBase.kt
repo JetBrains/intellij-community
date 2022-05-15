@@ -314,7 +314,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
-  @Suppress("MemberVisibilityCanBePrivate", "UNUSED_PARAMETER")
+  @Suppress("UNUSED_PARAMETER")
   // for Rider
   protected open fun getRecentProjectMetadata(path: String, project: Project): String? = null
 

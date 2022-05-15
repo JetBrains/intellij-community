@@ -303,7 +303,6 @@ internal open class UpdateIdeFromSourcesAction
     }.queue()
   }
 
-  @Suppress("HardCodedStringLiteral")
   private fun generateUpdateCommand(builtDistPath: String, workIdeHome: String): Array<String> {
     if (SystemInfo.isWindows) {
       val restartLogFile = File(PathManager.getLogPath(), "update-from-sources.log")

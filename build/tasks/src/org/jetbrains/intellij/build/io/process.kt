@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -154,7 +154,6 @@ private fun createProcessArgs(javaExe: Path,
   val processArgs = mutableListOf<String>()
   // FIXME: enforce JBR
   processArgs.add(javaExe.toString())
-  @Suppress("SpellCheckingInspection")
   processArgs.add("-Djava.awt.headless=true")
   processArgs.add("-Dapple.awt.UIElement=true")
   processArgs.addAll(jvmArgs)

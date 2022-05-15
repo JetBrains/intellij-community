@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
 import com.intellij.credentialStore.gpg.Pgp
@@ -99,7 +99,6 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     (PasswordSafe.instance as PasswordSafeImpl).closeCurrentStore(isSave = false, isEvenMemoryOnly = providerType != ProviderType.MEMORY_ONLY)
 
     val passwordSafe = PasswordSafe.instance as PasswordSafeImpl
-    @Suppress("CascadeIf")
     if (oldProviderType != providerType) {
       when (providerType) {
         ProviderType.MEMORY_ONLY -> {

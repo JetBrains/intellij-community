@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 
 package org.jetbrains.intellij.build.tasks
@@ -13,7 +13,6 @@ import java.util.List
 import java.util.concurrent.ForkJoinTask
 import java.util.function.Consumer
 
-@Suppress("unused")
 fun runScrambler(scramblerJar: Path,
                  mainClass: String,
                  scriptFile: Path,

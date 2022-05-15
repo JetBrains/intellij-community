@@ -9,7 +9,6 @@ internal object PackageVersionComparator : Comparator<PackageVersion> {
     val normalizer = PackageVersionNormalizer()
 
     override fun compare(first: PackageVersion?, second: PackageVersion?): Int {
-        @Suppress("KotlinConstantConditions") // True, but it's clearer if it's explicitly spelled out
         when {
             first == null && second != null -> return -1
             first != null && second == null -> return 1

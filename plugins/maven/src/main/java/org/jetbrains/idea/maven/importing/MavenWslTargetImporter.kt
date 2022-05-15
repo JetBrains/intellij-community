@@ -107,7 +107,6 @@ class MavenWslTargetImporter : MavenImporter("", "") {
 
   private fun createWslTarget(project: Project, wslDistribution: WSLDistribution): WslTargetEnvironmentConfiguration {
     val configuration = WslTargetEnvironmentConfiguration(wslDistribution)
-    @Suppress("HardCodedStringLiteral")
     configuration.displayName = "WSL" //NON-NLS
     TargetEnvironmentsManager.getInstance(project).addTarget(configuration)
     return configuration

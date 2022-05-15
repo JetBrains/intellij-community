@@ -6,7 +6,6 @@ import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
 import java.util.function.Consumer
 
-@Suppress("unused")
 interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : GradleBuildScriptBuilderCore<BSB> {
 
   fun addGroup(group: String): BSB

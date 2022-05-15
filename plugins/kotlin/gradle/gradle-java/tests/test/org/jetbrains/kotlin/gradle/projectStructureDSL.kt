@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.gradle
 
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -18,7 +17,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.externalSystemTestRunTasks
-import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 import org.jetbrains.kotlin.idea.gradleJava.configuration.kotlinGradleProjectDataOrFail
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinImportingDiagnostic
 import org.jetbrains.kotlin.idea.project.isHMPPEnabled
@@ -26,8 +24,8 @@ import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
-import java.io.File
 import org.jetbrains.plugins.gradle.util.GradleUtil
+import java.io.File
 import kotlin.test.fail
 
 class MessageCollector {
@@ -45,7 +43,6 @@ class MessageCollector {
     }
 }
 
-@Suppress("UnstableApiUsage")
 class ProjectInfo(
     project: Project,
     internal val projectPath: String,
@@ -336,7 +333,6 @@ class ModuleInfo(val module: Module, val projectInfo: ProjectInfo) {
         mustHaveSdk = false
     }
 
-    @Suppress("UnstableApiUsage")
     inline fun <reified T : KotlinImportingDiagnostic> assertDiagnosticsCount(count: Int) {
         val moduleNode = GradleUtil.findGradleModuleData(module)
         val diagnostics = moduleNode!!.kotlinGradleProjectDataOrFail.kotlinImportingDiagnosticsContainer!!

@@ -14,7 +14,6 @@ import java.util.concurrent.ForkJoinTask
 
 private const val algorithm = "SHA-256"
 
-@Suppress("unused")
 fun bulkZipWithPrefix(commonSourceDir: Path, items: Collection<Map.Entry<String, Path>>, compress: Boolean) {
   tracer.spanBuilder("archive directories")
     .setAttribute(AttributeKey.longKey("count"), items.size.toLong())

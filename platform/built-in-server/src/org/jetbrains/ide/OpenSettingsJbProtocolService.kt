@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.intellij.ide.IdeBundle
@@ -15,7 +15,6 @@ import java.util.concurrent.Future
 
 private const val SERVICE_NAME = "settings"
 
-@Suppress("HardCodedStringLiteral")
 internal class OpenSettingsService : RestService() {
   override fun getServiceName() = SERVICE_NAME
 

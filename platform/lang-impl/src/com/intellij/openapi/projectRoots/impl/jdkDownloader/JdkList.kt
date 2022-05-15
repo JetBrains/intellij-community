@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -182,7 +182,6 @@ data class JdkItem(
 }
 
 enum class JdkPackageType(@NonNls val type: String) {
-  @Suppress("unused")
   ZIP("zip") {
     override fun openDecompressor(archiveFile: Path): Decompressor {
       val decompressor = Decompressor.Zip(archiveFile)
@@ -193,7 +192,7 @@ enum class JdkPackageType(@NonNls val type: String) {
     }
   },
 
-  @Suppress("SpellCheckingInspection", "unused")
+  @Suppress("SpellCheckingInspection")
   TAR_GZ("targz") {
     override fun openDecompressor(archiveFile: Path) = Decompressor.Tar(archiveFile)
   };

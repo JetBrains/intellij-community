@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.conversion.copy
 
@@ -43,7 +43,6 @@ import java.awt.datatransfer.Transferable
 import kotlin.system.measureTimeMillis
 
 class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferableData>() {
-    @Suppress("PrivatePropertyName")
     private val LOG = Logger.getInstance(ConvertJavaCopyPasteProcessor::class.java)
 
     override fun extractTransferableData(content: Transferable): List<TextBlockTransferableData> {

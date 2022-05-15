@@ -66,7 +66,6 @@ class NotificationGroup private constructor(val displayId: String,
       registeredGroups[displayId] = this
 
       if (title == null) {
-        @Suppress("HardCodedStringLiteral")
         title = registeredTitles[displayId]
       }
     }

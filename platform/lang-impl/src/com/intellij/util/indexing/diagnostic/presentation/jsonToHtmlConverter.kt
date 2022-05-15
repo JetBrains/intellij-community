@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("unused", "DuplicatedCode", "HardCodedStringLiteral")
+@file:Suppress("unused", "HardCodedStringLiteral")
 
 package com.intellij.util.indexing.diagnostic.presentation
 

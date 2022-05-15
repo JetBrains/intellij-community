@@ -40,7 +40,6 @@ internal class PackageVersionTableCellEditor : AbstractTableCellEditor() {
         return editor
     }
 
-    @Suppress("DuplicatedCode")
     private fun createComboBoxEditor(
         table: JTable,
         versionViewModels: List<UiPackageModel<*>>,

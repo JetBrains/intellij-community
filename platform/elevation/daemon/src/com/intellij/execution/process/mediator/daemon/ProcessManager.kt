@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.mediator.daemon
 
 import com.google.protobuf.ByteString
@@ -96,7 +96,7 @@ internal class ProcessManager : Closeable {
       else -> throw IllegalArgumentException("Unknown process output FD $fd for PID $handleId")
     }
     val buffer = ByteArray(8192)
-    @Suppress("BlockingMethodInNonBlockingContext", "EXPERIMENTAL_API_USAGE")  // note the .flowOn(Dispatchers.IO) below
+    @Suppress("EXPERIMENTAL_API_USAGE")  // note the .flowOn(Dispatchers.IO) below
     return flow<ByteString> {
       while (true) {
         val n = inputStream.read(buffer)

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization
 
 import com.intellij.openapi.util.Disposer
@@ -44,7 +44,7 @@ class NonDefaultConstructorTest {
 
   @Test
   fun `kotlin data class`() {
-    @Suppress("UNUSED_PARAMETER", "unused")
+    @Suppress("UNUSED_PARAMETER")
     data class NoDefaultConstructorAndNoAnnotationBean(@JvmField val someParameter: String, @JvmField val intList: List<Int>)
 
     test(NoDefaultConstructorAndNoAnnotationBean("foo", arrayListOf(42, 21)))

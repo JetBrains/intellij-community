@@ -58,7 +58,6 @@ data class IDERunContext(
       testContext.testName
     }
 
-  @Suppress("unused")
   fun verbose() = copy(verboseOutput = true)
 
   @Suppress("unused")

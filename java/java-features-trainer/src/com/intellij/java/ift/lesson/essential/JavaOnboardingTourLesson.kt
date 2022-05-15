@@ -276,7 +276,6 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
 
       override val addRowsForUserAgreement: Panel.() -> Unit = {
         row(JavaLessonsBundle.message("java.onboarding.feedback.system.found.jdks")) {
-          @Suppress("HardCodedStringLiteral")
           val versions: @NlsSafe String = jdkVersions?.joinToString("\n") ?: "none"
           cell(MultiLineLabel(versions))
         }

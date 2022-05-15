@@ -42,7 +42,6 @@ fun packInternalUtilities(outFile: Path, files: List<Path>) {
   }
 }
 
-@Suppress("unused")
 fun crossPlatformZip(macX64DistDir: Path,
                      macAarch64DistDir: Path,
                      linuxX64DistDir: Path,
@@ -80,7 +79,6 @@ fun crossPlatformZip(macX64DistDir: Path,
           }
           else {
             val fileName = file.fileName.toString()
-            @Suppress("SpellCheckingInspection")
             if (fileName.startsWith("fsnotifier") && fileName.endsWith(".exe")) {
               out.entry("bin/win/$fileName", file)
             }
@@ -99,7 +97,6 @@ fun crossPlatformZip(macX64DistDir: Path,
           }
           else {
             val fileName = file.fileName.toString()
-            @Suppress("SpellCheckingInspection")
             if (fileName.startsWith("fsnotifier")) {
               out.entry("bin/linux/$fileName", file, unixMode = executableFileUnixMode)
             }
@@ -114,7 +111,6 @@ fun crossPlatformZip(macX64DistDir: Path,
           }
           else {
             val fileName = file.fileName.toString()
-            @Suppress("SpellCheckingInspection")
             if (fileName.startsWith("restarter") || fileName.startsWith("printenv")) {
               out.entry("bin/$fileName", file, unixMode = executableFileUnixMode)
             }
@@ -139,7 +135,6 @@ fun crossPlatformZip(macX64DistDir: Path,
       val zipFiles = mutableMapOf<String, Path>()
       out.dir(startDir = macX64DistDir, prefix = "", fileFilter = { _, relativeFile ->
         val p = relativeFile.toString().replace('\\', '/')
-        @Suppress("SpellCheckingInspection")
         !p.startsWith("bin/fsnotifier") &&
         !p.startsWith("bin/repair") &&
         !p.startsWith("bin/restarter") &&
@@ -152,7 +147,6 @@ fun crossPlatformZip(macX64DistDir: Path,
 
       out.dir(startDir = macAarch64DistDir, prefix = "", fileFilter = { _, relativeFile ->
         val p = relativeFile.toString().replace('\\', '/')
-        @Suppress("SpellCheckingInspection")
         !p.startsWith("bin/fsnotifier") &&
         !p.startsWith("bin/repair") &&
         !p.startsWith("bin/restarter") &&
@@ -165,7 +159,6 @@ fun crossPlatformZip(macX64DistDir: Path,
 
       out.dir(startDir = linuxX64DistDir, prefix = "", fileFilter = { _, relativeFile ->
         val p = relativeFile.toString().replace('\\', '/')
-        @Suppress("SpellCheckingInspection")
         !p.startsWith("bin/fsnotifier") &&
         !p.startsWith("bin/repair") &&
         !p.startsWith("bin/printenv") &&
@@ -179,7 +172,6 @@ fun crossPlatformZip(macX64DistDir: Path,
       val winExcludes = distFiles.mapTo(HashSet(distFiles.size)) { "${it.value}/${it.key.fileName}" }
       out.dir(startDir = winX64DistDir, prefix = "", fileFilter = { _, relativeFile ->
         val p = relativeFile.toString().replace('\\', '/')
-        @Suppress("SpellCheckingInspection")
         !p.startsWith("bin/fsnotifier") &&
         !p.startsWith("bin/repair") &&
         !p.startsWith("bin/printenv") &&

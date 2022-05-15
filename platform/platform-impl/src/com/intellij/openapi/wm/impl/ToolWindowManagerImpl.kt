@@ -966,7 +966,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       infoSnapshot.isVisible = false
     }
 
-    @Suppress("HardCodedStringLiteral")
     val stripeTitle = task.stripeTitle?.get() ?: task.id
     val toolWindow = ToolWindowImpl(toolWindowManager = this,
                                     id = task.id,
@@ -1389,7 +1388,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   private fun createBalloon(options: ToolWindowBalloonShowOptions, entry: ToolWindowEntry): Balloon {
     val listenerWrapper = BalloonHyperlinkListener(options.listener)
 
-    @Suppress("HardCodedStringLiteral")
     val content = options.htmlBody.replace("\n", "<br>")
     val balloonBuilder = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(content, options.icon, options.type.titleForeground, options.type.popupBackground, listenerWrapper)
@@ -2013,7 +2011,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
   }
 
-  @Suppress("DuplicatedCode")
   internal fun setShowStripeButton(id: String, value: Boolean) {
     if (isNewUi) {
       LOG.info("Ignore setShowStripeButton(id=$id, value=$value) - not applicable for a new UI")

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.ReviseWhenPortedToJDK
@@ -29,7 +29,6 @@ class JavadocHtmlLintInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   fun testEmptyComment() = doTest("/** */\nclass C { }")
 
   @ReviseWhenPortedToJDK("17")
-  @Suppress("GrazieInspection")
   fun testCommonErrorsJdk11() {
     if (JavaSdkUtil.isJdkAtLeast(DESCRIPTOR.sdk, JavaSdkVersion.JDK_17)) return
     doTest("""
@@ -64,8 +63,7 @@ class JavadocHtmlLintInspectionTest : LightJavaCodeInsightFixtureTestCase() {
       class C { }""".trimIndent())
   }
   
- @Suppress("GrazieInspection")
-  fun testCommonErrors() {
+ fun testCommonErrors() {
    if (!JavaSdkUtil.isJdkAtLeast(DESCRIPTOR.sdk, JavaSdkVersion.JDK_17)) return
    doTest("""
       package pkg;

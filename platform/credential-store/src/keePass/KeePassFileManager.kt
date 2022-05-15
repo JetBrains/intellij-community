@@ -148,7 +148,6 @@ open class KeePassFileManager(private val file: Path,
     return CredentialStoreUiService.getInstance().showChangeMasterPasswordDialog(contextComponent, ::doSetNewMasterPassword)
   }
 
-  @Suppress("MemberVisibilityCanBePrivate")
   protected fun doSetNewMasterPassword(current: CharArray, new: CharArray): Boolean {
     val db = loadKdbx(file, KdbxPassword.createAndClear(current.toByteArrayAndClear()))
     saveDatabase(file, db, createMasterKey(new.toByteArrayAndClear()), masterKeyFileStorage, secureRandom.value)
