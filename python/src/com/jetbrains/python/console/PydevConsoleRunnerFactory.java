@@ -124,7 +124,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
   public static String getWorkingDir(@NotNull Project project,
                                      @Nullable Module module,
                                      @Nullable PathMapper pathMapper,
-                                     PyConsoleOptions.PyConsoleSettings settingsProvider) {
+                                     @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider) {
     String workingDir = settingsProvider.getWorkingDirectory();
     if (StringUtil.isEmpty(workingDir)) {
       if (module != null && ModuleRootManager.getInstance(module).getContentRoots().length > 0) {
@@ -152,10 +152,10 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     return workingDir;
   }
 
-  public static String[] createSetupFragment(@Nullable Module module,
-                                             @Nullable String workingDir,
-                                             @Nullable PathMapper pathMapper,
-                                             PyConsoleOptions.PyConsoleSettings settingsProvider) {
+  public static String @NotNull [] createSetupFragment(@Nullable Module module,
+                                                       @Nullable String workingDir,
+                                                       @Nullable PathMapper pathMapper,
+                                                       @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider) {
     String customStartScript = settingsProvider.getCustomStartScript();
     if (customStartScript.trim().length() > 0) {
       customStartScript = "\n" + customStartScript;
