@@ -85,7 +85,7 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
           result = null;
         }
         catch (Throwable t) {
-          throw new RuntimeException("Error while applying " + filter + " to '" + line + "'", t);
+          throw new ApplyFilterException("Error while applying " + filter + " to '" + line + "'", t);
         }
         if (result != null) {
           resultItems = merge(resultItems, result, entireLength, filter);
@@ -236,5 +236,11 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
   @Override
   public String toString() {
     return "CompositeFilter: " + myFilters;
+  }
+
+  public static class ApplyFilterException extends RuntimeException {
+    private ApplyFilterException(String message, Throwable cause) {
+      super(message, cause);
+    }
   }
 }
