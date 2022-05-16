@@ -196,7 +196,7 @@ public class Messages {
                                String @NotNull @NlsContexts.Button [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon,
-                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+                               @Nullable DoNotAskOption doNotAskOption) {
     return MessagesService.getInstance()
       .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false, null);
   }
@@ -210,7 +210,7 @@ public class Messages {
                                           String @NotNull @NlsContexts.Button [] options,
                                           int defaultOptionIndex,
                                           @Nullable Icon icon,
-                                          @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+                                          @Nullable DoNotAskOption doNotAskOption) {
     return MessagesService.getInstance()
       .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, true, null);
   }
@@ -259,7 +259,7 @@ public class Messages {
    * Use this method only if you do not know project or component
    *
    * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
-   * @see #showDialog(Project, String, String, String[], int, Icon, DialogWrapper.DoNotAskOption)
+   * @see #showDialog(Project, String, String, String[], int, Icon, DoNotAskOption)
    * @see #showDialog(Component, String, String, String[], int, Icon)
    */
   public static int showDialog(@DialogMessage String message,
@@ -268,7 +268,7 @@ public class Messages {
                                int defaultOptionIndex,
                                int focusedOptionIndex,
                                @Nullable Icon icon,
-                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+                               @Nullable DoNotAskOption doNotAskOption) {
     return MessagesService.getInstance()
       .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false, null);
   }
@@ -285,7 +285,7 @@ public class Messages {
                                String @NotNull @NlsContexts.Button [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon,
-                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+                               @Nullable DoNotAskOption doNotAskOption) {
     return showDialog(message, title, options, defaultOptionIndex, -1, icon, doNotAskOption);
   }
 
@@ -369,7 +369,7 @@ public class Messages {
                                     @NotNull @NlsContexts.Button String yesText,
                                     @NotNull @NlsContexts.Button String noText,
                                     @Nullable Icon icon,
-                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+                                    @Nullable DoNotAskOption doNotAskOption) {
     return MessageDialogBuilder.yesNo(title, message)
       .icon(icon)
       .doNotAsk(doNotAskOption)
@@ -393,7 +393,7 @@ public class Messages {
                                     @DialogMessage String message,
                                     @NotNull @DialogTitle String title,
                                     @Nullable Icon icon,
-                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+                                    @Nullable DoNotAskOption doNotAskOption) {
     return MessageDialogBuilder.yesNo(title, message)
       .icon(icon)
       .doNotAsk(doNotAskOption)
@@ -416,7 +416,7 @@ public class Messages {
                                     @Nls @NotNull @NlsContexts.Button String yesText,
                                     @Nls @NotNull @NlsContexts.Button String noText,
                                     @Nullable Icon icon,
-                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+                                    @Nullable DoNotAskOption doNotAskOption) {
     return MessageDialogBuilder.yesNo(title, message)
       .yesText(yesText)
       .noText(noText)
@@ -455,7 +455,7 @@ public class Messages {
                                        @NotNull @NlsContexts.Button String okText,
                                        @NotNull @NlsContexts.Button String cancelText,
                                        @Nullable Icon icon,
-                                       @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+                                       @Nullable DoNotAskOption doNotAskOption) {
     return MessageDialogBuilder.okCancel(title, message)
       .yesText(okText)
       .noText(cancelText)
@@ -541,7 +541,7 @@ public class Messages {
    * Use this method only if you do not know project or component
    *
    * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
-   * @see #showOkCancelDialog(Project, String, String, String, String, Icon, DialogWrapper.DoNotAskOption)
+   * @see #showOkCancelDialog(Project, String, String, String, String, Icon, DoNotAskOption)
    * @see #showOkCancelDialog(Component, String, String, String, String, Icon)
    */
   @OkCancelResult
@@ -550,7 +550,7 @@ public class Messages {
                                        @NotNull @NlsContexts.Button String okText,
                                        @NotNull @NlsContexts.Button String cancelText,
                                        Icon icon,
-                                       @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+                                       @Nullable DoNotAskOption doNotAskOption) {
     return MessageDialogBuilder.okCancel(title, message)
       .yesText(okText)
       .noText(cancelText)
@@ -712,7 +712,7 @@ public class Messages {
                                           @NotNull @NlsContexts.Button String no,
                                           @NotNull @NlsContexts.Button String cancel,
                                           Icon icon,
-                                          @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
+                                          @Nullable DoNotAskOption doNotAskOption) {
     return MessageDialogBuilder.yesNoCancel(title, message)
       .yesText(yes)
       .noText(no)

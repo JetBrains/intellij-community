@@ -7,7 +7,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsContexts;
@@ -309,7 +309,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
                       GitBundle.message("link.label.commit.with.detached.head.read.more"));
       }
 
-      DialogWrapper.DoNotAskOption dontAskAgain = new DialogWrapper.DoNotAskOption.Adapter() {
+      DoNotAskOption dontAskAgain = new DoNotAskOption.Adapter() {
         @Override
         public void rememberChoice(boolean isSelected, int exitCode) {
           GitVcsSettings.getInstance(myProject).setWarnAboutDetachedHead(!isSelected);

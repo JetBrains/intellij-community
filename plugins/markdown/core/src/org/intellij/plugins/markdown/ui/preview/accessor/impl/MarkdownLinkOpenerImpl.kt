@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectForFile
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
@@ -95,7 +96,7 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
     }
   }
 
-  private fun createDoNotAskOption(project: Project?, uri: URI): DialogWrapper.DoNotAskOption? {
+  private fun createDoNotAskOption(project: Project?, uri: URI): DoNotAskOption? {
     if (project == null) {
       return null
     }
@@ -104,7 +105,7 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
       logger.error("Failed to obtain protocol for link: $uri")
       return null
     }
-    return object: DialogWrapper.DoNotAskOption.Adapter() {
+    return object: DoNotAskOption.Adapter() {
       override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
         if (isSelected) {
           DocumentLinksSafeState.getInstance(project).allowProtocol(protocol)
