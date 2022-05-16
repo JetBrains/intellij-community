@@ -300,12 +300,14 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         .include("jbr/bin/*")
         .enumerate().each {makeFileExecutable(it) }
 
-      for (Path distPath: [unixSnapDistPath, buildContext.paths.distAllDir]) {
-        new FileSet(distPath)
-          .tap {
-            customizer.extraExecutables.each { include(it) }
-          }
-          .enumerateNoAssertUnusedPatterns().each {makeFileExecutable(it) }
+      if (!customizer.extraExecutables.isEmpty()) {
+        for (Path distPath : [unixSnapDistPath, buildContext.paths.distAllDir]) {
+          new FileSet(distPath)
+            .tap {
+              customizer.extraExecutables.each { include(it) }
+            }
+            .enumerateNoAssertUnusedPatterns().each { makeFileExecutable(it) }
+        }
       }
 
       generateProductJson(unixSnapDistPath, "jbr/bin/java")
