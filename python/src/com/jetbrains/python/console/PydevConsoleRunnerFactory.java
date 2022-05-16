@@ -82,7 +82,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
 
   protected @NotNull ConsoleParameters createConsoleParameters(@NotNull Project project,
                                                                @Nullable Module contextModule) {
-    Pair<Sdk, Module> sdkAndModule = PydevConsoleRunner.findPythonSdkAndModule(project, contextModule);
+    Pair<Sdk, Module> sdkAndModule = PydevConsoleRunnerUtil.findPythonSdkAndModule(project, contextModule);
 
     @Nullable Module module = sdkAndModule.second;
 
@@ -90,7 +90,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
 
     PyConsoleOptions.PyConsoleSettings settingsProvider = PyConsoleOptions.getInstance(project).getPythonConsoleSettings();
 
-    PathMapper pathMapper = PydevConsoleRunner.getPathMapper(project, sdk, settingsProvider);
+    PathMapper pathMapper = PydevConsoleRunnerUtil.getPathMapper(project, sdk, settingsProvider);
 
     String workingDir = getWorkingDir(project, module, pathMapper, settingsProvider);
 
@@ -165,7 +165,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     if (pathMapper != null) {
       pythonPath = pathMapper.convertToRemote(pythonPath);
     }
-    String selfPathAppend = PydevConsoleRunner.constructPyPathAndWorkingDirCommand(pythonPath, workingDir, customStartScript);
+    String selfPathAppend = PydevConsoleRunnerUtil.constructPyPathAndWorkingDirCommand(pythonPath, workingDir, customStartScript);
 
     return new String[]{selfPathAppend};
   }

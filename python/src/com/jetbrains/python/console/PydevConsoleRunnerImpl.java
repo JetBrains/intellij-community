@@ -410,7 +410,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = getRemoteAdditionalData(mySdk);
     PyRemotePathMapper pathMapper = remoteSdkAdditionalData != null
-                                    ? PydevConsoleRunner.getPathMapper(myProject, myConsoleSettings, remoteSdkAdditionalData)
+                                    ? PydevConsoleRunnerUtil.getPathMapper(myProject, myConsoleSettings, remoteSdkAdditionalData)
                                     : null;
     PythonCommandLineState.initEnvironment(myProject, pythonConsoleScriptExecution, runParams, helpersAwareTargetRequest, pathMapper);
 
@@ -444,7 +444,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     if (remoteSdkAdditionalData != null) {
       GeneralCommandLine generalCommandLine = createCommandLine(sdk, myEnvironmentVariables, myWorkingDir, 0);
 
-      PyRemotePathMapper pathMapper = PydevConsoleRunner.getPathMapper(myProject, myConsoleSettings, remoteSdkAdditionalData);
+      PyRemotePathMapper pathMapper = PydevConsoleRunnerUtil.getPathMapper(myProject, myConsoleSettings, remoteSdkAdditionalData);
       RemoteConsoleProcessData remoteConsoleProcessData =
         PythonConsoleRemoteProcessCreatorKt.createRemoteConsoleProcess(generalCommandLine,
                                                                        pathMapper,

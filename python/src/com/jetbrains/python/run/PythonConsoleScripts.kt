@@ -7,7 +7,7 @@ import com.intellij.execution.util.ProgramParametersConfigurator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathMapper
 import com.jetbrains.python.console.PyConsoleOptions
-import com.jetbrains.python.console.PydevConsoleRunner
+import com.jetbrains.python.console.PydevConsoleRunnerUtil
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
 import org.jetbrains.annotations.Contract
@@ -33,7 +33,7 @@ fun buildScriptWithConsoleRun(config: PythonRunConfiguration): String {
   }
   val project = config.project
   val sdk = config.sdk
-  val pathMapper: PathMapper? = PydevConsoleRunner.getPathMapper(project, sdk, PyConsoleOptions.getInstance(project).pythonConsoleSettings)
+  val pathMapper = PydevConsoleRunnerUtil.getPathMapper(project, sdk, PyConsoleOptions.getInstance(project).pythonConsoleSettings)
   var scriptPath = config.scriptName
   var workingDir = config.workingDirectory
   if (PythonSdkUtil.isRemote(sdk) && pathMapper != null) {
