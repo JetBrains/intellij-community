@@ -13,9 +13,11 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.util.ImageLoader
+import com.intellij.util.ui.ImageUtil
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import java.awt.Image
+import java.awt.image.BufferedImage
 import java.time.Duration
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.CompletableFuture
@@ -41,9 +43,10 @@ class CachingGHUserAvatarLoader : Disposable {
   private fun loadAndDownscale(requestExecutor: GithubApiRequestExecutor, indicator: ProgressIndicator,
                                url: String, maximumSize: Int): Image? {
     try {
-      val image = requestExecutor.execute(indicator, GithubApiRequests.CurrentUser.getAvatar(url))
-      return if (image.getWidth(null) <= maximumSize && image.getHeight(null) <= maximumSize) image
-      else ImageLoader.scaleImage(image, maximumSize)
+      val loadedImage = requestExecutor.execute(indicator, GithubApiRequests.CurrentUser.getAvatar(url))
+      val scaledImage = if (loadedImage.width <= maximumSize && loadedImage.height <= maximumSize) loadedImage
+      else ImageLoader.scaleImage(loadedImage, maximumSize) as BufferedImage
+      return scaledImage
     }
     catch (e: ProcessCanceledException) {
       return null
