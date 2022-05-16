@@ -46,7 +46,7 @@ class CachingGHUserAvatarLoader : Disposable {
       val loadedImage = requestExecutor.execute(indicator, GithubApiRequests.CurrentUser.getAvatar(url))
       val scaledImage = if (loadedImage.width <= maximumSize && loadedImage.height <= maximumSize) loadedImage
       else ImageLoader.scaleImage(loadedImage, maximumSize) as BufferedImage
-      return scaledImage
+      return ImageUtil.createCircleImage(scaledImage)
     }
     catch (e: ProcessCanceledException) {
       return null
