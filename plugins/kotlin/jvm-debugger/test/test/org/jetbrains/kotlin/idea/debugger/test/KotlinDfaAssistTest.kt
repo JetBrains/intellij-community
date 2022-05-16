@@ -166,6 +166,22 @@ class KotlinDfaAssistTest : DfaAssistTest() {
         }
     }
 
+    fun testNull() {
+        doTest("""
+            fun main() {
+                test("hello", null)
+            }
+
+            fun test(x: Any, y: String?) {
+                <caret>println(x as? Int/*NULL*/)
+                println(y/*NULL*/ ?: "oops")
+            }
+        """.trimIndent()) { vm, frame ->
+            frame.addVariable("x", MockValue.createValue("xyz", vm))
+            frame.addVariable(MockLocalVariable(vm, "y", vm.createReferenceType(String::class.java), null))
+        }
+    }
+
     private fun doTest(text: String, mockValues: BiConsumer<MockVirtualMachine, MockStackFrame>) {
         doTest(text, mockValues, "Test.kt")
     }
