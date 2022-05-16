@@ -20,7 +20,7 @@ fun KtFile.rewrite(): String {
       val body = objType.def.body
       val indent = body.indent
       val parentIndent = body.parent?.indent ?: ""
-      code[block] = toImport.findAndRemoveFqns(objType.generatedApiCode(indent)) to toImport.findAndRemoveFqns(objType.generatedExtensionCode(parentIndent))
+      code[block] = toImport.findAndRemoveFqns(objType.generatedApiCode(indent, body.generatedCode == null)) to toImport.findAndRemoveFqns(objType.generatedExtensionCode(parentIndent))
     }
   }
 
@@ -78,15 +78,7 @@ private fun KotlinWriter.addGeneratedCodeBlock(it: DefType, newCode: String) {
   val indent = body.indent
   val parentIndent = body.parent?.indent ?: ""
   val generatedCode = body._generatedCode
-  if (body.isStub) {
-    addTo(body.prevElementEnd.pos)
-    result.append(" {")
-    result.append("\n")
-    result.append(newCode)
-    result.append("\n$parentIndent")
-    result.append("}")
-  }
-  else if (generatedCode == null) {
+  if (generatedCode == null) {
     addTo(body.range!!.range.last)
     result.append("\n")
     result.append(newCode)

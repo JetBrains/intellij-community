@@ -197,7 +197,6 @@ class KotlinReader(val file: KtFile) {
     if (end || c != '{') {
       // Class has an empty body and the source skips curly braces
       val inner = KtBlock(src, outer, isStub = true, scope = iface)
-      inner.prevElementEnd = src.pos(prevElementEnd)
       outer.children.add(inner)
       return inner
     }
@@ -510,7 +509,7 @@ class KotlinReader(val file: KtFile) {
           b._extensionCode = lineStart..Int.MAX_VALUE
           untilEndRegion(b)
         } else if (b._generatedCode == null) {
-          b._generatedCode = lineStart..Int.MAX_VALUE
+          b._generatedCode = commentStart..Int.MAX_VALUE
         }
       }
       "endregion" -> {

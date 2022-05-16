@@ -17,8 +17,8 @@ import org.jetbrains.deft.codegen.utils.lines
 import org.jetbrains.deft.impl.fields.Field
 import storage.codegen.field.builderApi
 
-fun DefType.generatedApiCode(indent: String = "    "): String = lines(indent) {
-  line("//region generated code")
+fun DefType.generatedApiCode(indent: String = "    ", isEmptyGenBlock: Boolean): String = lines(indent) {
+  if (isEmptyGenBlock) line("//region generated code") else result.append("//region generated code\n")
   line("//@formatter:off")
 
   line("@${GeneratedCodeApiVersion::class.fqn}(${CodeGeneratorVersions.API_VERSION})")

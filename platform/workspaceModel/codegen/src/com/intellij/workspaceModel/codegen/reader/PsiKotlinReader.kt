@@ -52,8 +52,8 @@ class PsiKotlinReader(val file: KtFile) {
     val importList = ktFile.importList
     if (importList != null) {
       importList.imports.forEach { ktImportDirective ->
-        val importedFqName = ktImportDirective.importedFqName?.asString()
-        if (importedFqName != null) imports.add(importedFqName)
+        val importPath = ktImportDirective.importPath?.pathStr
+        if (importPath != null) imports.add(importPath)
       }
       importsStart = importList.textRange.startOffset
       importsEnd = importList.textRange.endOffset
@@ -136,11 +136,10 @@ class PsiKotlinReader(val file: KtFile) {
 
   fun maybeBlock(ktClass: KtClass, iface: KtScope? = null): KtBlock {
     val outer = leafBlock
-    val properties = ktClass.getProperties()
-    if (properties.isEmpty()) {
+    val classBody = ktClass.body
+    if (classBody == null) {
       // Class has an empty body and the source skips curly braces
       val inner = KtBlock(src, outer, isStub = true, scope = iface)
-      //inner.prevElementEnd = src.pos(prevElementEnd)
       outer.children.add(inner)
       return inner
     }
@@ -148,8 +147,8 @@ class PsiKotlinReader(val file: KtFile) {
     val inner = KtBlock(src, outer, scope = iface)
     outer.children.add(inner)
     leafBlock = inner
-    properties.forEach { ktProperty -> `val`(ktProperty) }
-    inner.range = range(ktClass.body!!)
+    ktClass.getProperties().forEach { ktProperty -> `val`(ktProperty) }
+    inner.range = range(classBody)
     PsiTreeUtil.findChildrenOfType(ktClass, PsiComment::class.java).forEach { psiComment -> generatedCodeRegion(psiComment) }
     leafBlock = outer
     return inner
@@ -167,7 +166,7 @@ class PsiKotlinReader(val file: KtFile) {
       constructorParam = false,
       suspend = false,
       annotation(ktProperty.annotationEntries, ktProperty),
-      null, //iden.receiver?.let { KtType(it) }, // TODO:: val ModuleEntity.foo: Int
+      type(ktProperty.receiverTypeReference),
       ktProperty.delegateExpression?.srcRange // TODO:: check that working
     ))
   }
@@ -243,8 +242,8 @@ class PsiKotlinReader(val file: KtFile) {
     return leafBlock.children.isNotEmpty() && leafBlock.children.last()._extensionCode != null && leafBlock.children.last()._extensionCode!!.last == Int.MAX_VALUE
   }
 
-  private fun range(psiElement: PsiElement): SrcRange {
-    val textRange = psiElement.textRange
+  private fun range(body: KtClassBody): SrcRange {
+    val textRange = body.textRange
     return src.range((textRange.startOffset + 1) until (textRange.endOffset - 1))
   }
 

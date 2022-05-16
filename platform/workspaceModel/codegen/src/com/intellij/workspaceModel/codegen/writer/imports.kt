@@ -100,7 +100,7 @@ class Imports(val scopeFqn: String?) {
 
 fun fileContents(packageName: String?, code: String, additionalImports: Set<String>? = null): String {
   val imports = Imports(packageName)
-  additionalImports?.let { imports.set.addAll(it.filter { import -> import == Obj::class.java.packageName }) }
+  additionalImports?.let { imports.set.addAll(it) }
   val code1 = imports.findAndRemoveFqns(code)
 
   return buildString {
