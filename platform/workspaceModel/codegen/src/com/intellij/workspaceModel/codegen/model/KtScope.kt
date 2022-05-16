@@ -106,7 +106,7 @@ class KtScope(val parent: KtScope?, var owner: Any? = null) {
       return@processElements true
     }
     val ktClass = resolvedType as? KtClass ?: return null
-    val superTypes = PsiTreeUtil.findChildrenOfType(ktClass, KtSuperTypeEntry::class.java)
+    val superTypes = ktClass.superTypeListEntries
 
     // Code for checking supertype FQN
     //((superType.typeReference?.typeElement as? KtUserType)?.referenceExpression?.mainReference?.resolve() as? KtClass)?.fqName?.toString()

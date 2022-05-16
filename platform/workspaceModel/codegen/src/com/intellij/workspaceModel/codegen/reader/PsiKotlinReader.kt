@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package storage.codegen.patcher
 
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.annotations.Open
@@ -12,11 +12,10 @@ import org.jetbrains.deft.codegen.model.*
 import org.jetbrains.deft.codegen.model.KtAnnotation
 import org.jetbrains.deft.codegen.model.KtConstructor
 import org.jetbrains.deft.codegen.model.KtFile
-import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
-import org.jetbrains.kotlin.psi.psiUtil.isNull
-import java.util.*
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.startsWithComment
 
 class PsiKotlinReader(val file: KtFile) {
   val ktFile = PsiManager.getInstance(file.module.project!!).findFile(file.virtualFile!!)!! as org.jetbrains.kotlin.psi.KtFile
@@ -63,39 +62,47 @@ class PsiKotlinReader(val file: KtFile) {
   }
 
   fun blockContents() {
-    ktFile.children.filterIsInstance(KtClass::class.java).forEach {ktClass ->
-      when {
-        ktClass.isEnum() -> {
-          `interface`(ktClass, WsEnum)
-        }
-        ktClass.isData() -> {
-          `interface`(ktClass, WsData)
-        }
-        ktClass.isSealed() -> {
-          `interface`(ktClass, WsSealed)
-        }
-        ktClass.isInterface() -> {
-          `interface`(ktClass)
-        }
-        else -> {
+    ktFile.children.forEach { psiElement ->
+      when (psiElement) {
+        is KtClass -> {
+          when {
+            psiElement.isEnum() -> {
+              `interface`(psiElement, WsEnum)
+            }
+            psiElement.isData() -> {
+              `interface`(psiElement, WsData)
+            }
+            psiElement.isSealed() -> {
+              `interface`(psiElement, WsSealed)
+            }
+            psiElement.isInterface() -> {
+              `interface`(psiElement)
+            }
+            else -> {
 
+            }
+          }
+        }
+        is KtProperty -> {
+          if (!isInsideGenerateBlock()) `val`(psiElement)
+        }
+        is PsiComment -> generatedCodeRegion(psiElement, true)
+        else -> {
+          if (psiElement.startsWithComment()) generatedCodeRegion(psiElement.firstChild as PsiComment, true)
         }
       }
     }
-    ktFile.children.filterIsInstance(KtProperty::class.java).forEach { ktProperty -> `val`(ktProperty) }
+
   }
 
   fun `interface`(ktClass: KtClass, predefinedInterfaceKind: KtInterfaceKind? = null) {
     val nameRange = ktClass.identifyingElement?.textRange ?: return
     val src = Src(ktClass.name!!) { ktClass.containingFile.text }
     val name = SrcRange(src, nameRange.startOffset until nameRange.endOffset)
-    println(ktClass.name)
     //val name = iden()?.name ?: return
 
     val constructor = maybePrimaryConstructor(ktClass)
-
-    val superTypes = PsiTreeUtil.findChildrenOfType(ktClass, KtSuperTypeEntry::class.java)
-    val ktTypes = superTypes.map { KtType(it.srcRange) }
+    val ktTypes = ktClass.superTypeListEntries.map { KtType(it.srcRange) }
     //val superTypes = maybeTypes()
 
     val outer = leafScope
@@ -115,7 +122,8 @@ class PsiKotlinReader(val file: KtFile) {
     when (typeElement) {
       is KtUserType -> {
         val ktTypes = typeElement.typeArguments.mapNotNull { ktTypeProjection -> type(ktTypeProjection.typeReference) }
-        return KtType(typeElement.srcRange, optional = false, args = ktTypes, annotations = ktAnnotations.list)
+        val range = typeElement.referenceExpression?.srcRange ?: typeElement.srcRange
+        return KtType(range, optional = false, args = ktTypes, annotations = ktAnnotations.list)
       }
       is KtNullableType -> {
         val innerType = typeElement.innerType
@@ -142,6 +150,7 @@ class PsiKotlinReader(val file: KtFile) {
     leafBlock = inner
     properties.forEach { ktProperty -> `val`(ktProperty) }
     inner.range = range(ktClass.body!!)
+    PsiTreeUtil.findChildrenOfType(ktClass, PsiComment::class.java).forEach { psiComment -> generatedCodeRegion(psiComment) }
     leafBlock = outer
     return inner
   }
@@ -209,9 +218,34 @@ class PsiKotlinReader(val file: KtFile) {
     return annotations
   }
 
+  private fun generatedCodeRegion(comment: PsiComment, extensionBlock: Boolean = false) {
+    if (comment.text.contains("region generated code")) {
+      val block = if (extensionBlock) leafBlock.children.last() else leafBlock
+      if (extensionBlock) {
+        block._extensionCode = comment.startOffset..Int.MAX_VALUE
+      }
+      else {
+        block._generatedCode = comment.startOffset..Int.MAX_VALUE
+      }
+    }
+    if (comment.text.contains("endregion")) {
+      val block = if (extensionBlock) leafBlock.children.last() else leafBlock
+      if (extensionBlock && block._extensionCode != null) {
+        block._extensionCode = block._extensionCode!!.first..comment.endOffset
+      }
+      if (!extensionBlock && block._generatedCode != null) {
+        block._generatedCode = block._generatedCode!!.first..comment.endOffset
+      }
+    }
+  }
+
+  private fun isInsideGenerateBlock(): Boolean {
+    return leafBlock.children.isNotEmpty() && leafBlock.children.last()._extensionCode != null && leafBlock.children.last()._extensionCode!!.last == Int.MAX_VALUE
+  }
+
   private fun range(psiElement: PsiElement): SrcRange {
     val textRange = psiElement.textRange
-    return src.range(textRange.startOffset..textRange.endOffset)
+    return src.range((textRange.startOffset + 1) until (textRange.endOffset - 1))
   }
 
   override fun toString(): String = SrcPos(src, pos).toString()

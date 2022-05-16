@@ -51,28 +51,28 @@ object CodeWriter {
     ktSrcs.forEach { (vfu, document) ->
       module.addPsiFile(vfu.name, vfu) { document.text }
     }
-    //val result = module.build()
-    //val entitiesForGeneration = result.typeDefs.filterNot { it.name in skippedGenTypes || it.abstract }
-    //if (!entitiesForGeneration.isEmpty()) {
-    //  val genFolder = targetFolderGenerator.invoke()
-    //  if (genFolder == null) {
-    //    LOG.info("Generated source folder doesn't exist. Skip processing source folder with path: ${sourceFolder}")
-    //    return
-    //  }
-    //  module.files.forEach {
-    //    val virtualFile = fileMapping[it.name] ?: return@forEach
-    //    documentManager.getDocument(virtualFile)?.setText(it.rewrite())
-    //  }
-    //
-    //  entitiesForGeneration.forEach {
-    //    val sourceFile = it.def.file?.virtualFile ?: error("Source file for ${it.def.name} doesn't exist")
-    //    val packageFolder = createPackageFolderIfMissing(sourceFolder, sourceFile, genFolder)
-    //    val virtualFile = packageFolder.createChildData(this, it.javaImplName + ".kt")
-    //    documentManager.getDocument(virtualFile)?.setText(it.implIjWsFileContents(result.simpleTypes))
-    //  }
-    //} else {
-    //  LOG.info("Not found types for generation")
-    //}
+    val result = module.build()
+    val entitiesForGeneration = result.typeDefs.filterNot { it.name in skippedGenTypes || it.abstract }
+    if (!entitiesForGeneration.isEmpty()) {
+      val genFolder = targetFolderGenerator.invoke()
+      if (genFolder == null) {
+        LOG.info("Generated source folder doesn't exist. Skip processing source folder with path: ${sourceFolder}")
+        return
+      }
+      module.files.forEach {
+        val virtualFile = fileMapping[it.name] ?: return@forEach
+        documentManager.getDocument(virtualFile)?.setText(it.rewrite())
+      }
+
+      entitiesForGeneration.forEach {
+        val sourceFile = it.def.file?.virtualFile ?: error("Source file for ${it.def.name} doesn't exist")
+        val packageFolder = createPackageFolderIfMissing(sourceFolder, sourceFile, genFolder)
+        val virtualFile = packageFolder.createChildData(this, it.javaImplName + ".kt")
+        documentManager.getDocument(virtualFile)?.setText(it.implIjWsFileContents(result.simpleTypes))
+      }
+    } else {
+      LOG.info("Not found types for generation")
+    }
   }
 
   fun generate(dir: File, fromDirectory: String, generatedDestDir: File) {
