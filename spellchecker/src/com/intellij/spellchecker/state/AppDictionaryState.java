@@ -9,27 +9,34 @@ import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
+// do not change component name - `CachedDictionaryState` is used historically and no easy way to change it.
 @State(
   name = "CachedDictionaryState",
-  storages = @Storage(value = StoragePathMacros.CACHE_FILE, roamingType = RoamingType.DISABLED),
+  storages = {
+    @Storage("spellchecker-dictionary.xml"),
+    @Storage(value = "cachedDictionary.xml", deprecated = true),
+    @Storage(value = StoragePathMacros.CACHE_FILE, deprecated = true),
+  },
   reportStatistic = false
 )
 @Service(Service.Level.APP)
-public final class CachedDictionaryState extends DictionaryState implements PersistentStateComponent<DictionaryState> {
+public final class AppDictionaryState extends DictionaryState implements PersistentStateComponent<DictionaryState> {
   public static final String DEFAULT_NAME = "cached";
   private final EventDispatcher<DictionaryStateListener> myDictListenerEventDispatcher =
     EventDispatcher.create(DictionaryStateListener.class);
 
-  public CachedDictionaryState() {
+  @SuppressWarnings("unused")
+  public AppDictionaryState() {
     name = DEFAULT_NAME;
   }
 
-  public static @NotNull CachedDictionaryState getInstance() {
-    return ApplicationManager.getApplication().getService(CachedDictionaryState.class);
+  public static @NotNull AppDictionaryState getInstance() {
+    return ApplicationManager.getApplication().getService(AppDictionaryState.class);
   }
 
+  @SuppressWarnings("unused")
   @NonInjectable
-  public CachedDictionaryState(EditableDictionary dictionary) {
+  public AppDictionaryState(EditableDictionary dictionary) {
     super(dictionary);
     name = DEFAULT_NAME;
   }
