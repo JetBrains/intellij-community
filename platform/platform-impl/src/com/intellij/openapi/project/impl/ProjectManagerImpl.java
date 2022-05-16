@@ -17,6 +17,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
@@ -244,8 +245,15 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   void updateTheOnlyProjectField() {
     boolean isDefaultInitialized = isDefaultProjectInitialized();
     boolean isLightEditActive = LightEditService.getInstance().getProject() != null;
-    synchronized (lock) {
-      ProjectCoreUtil.updateInternalTheOnlyProjectFieldTemporarily(myOpenProjects.length == 1 && !isDefaultInitialized && !isLightEditActive ? myOpenProjects[0] : null);
+    if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
+      // switch off optimization in non-stress tests to assert they don't query getProject for invalid PsiElements
+      ProjectCoreUtil.updateInternalTheOnlyProjectFieldTemporarily(null);
+    }
+    else {
+      synchronized (lock) {
+        Project theOnlyProject = myOpenProjects.length == 1 && !isDefaultInitialized && !isLightEditActive ? myOpenProjects[0] : null;
+        ProjectCoreUtil.updateInternalTheOnlyProjectFieldTemporarily(theOnlyProject);
+      }
     }
   }
 
