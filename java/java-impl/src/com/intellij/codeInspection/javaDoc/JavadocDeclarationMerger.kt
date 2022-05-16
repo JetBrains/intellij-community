@@ -21,6 +21,9 @@ class JavadocDeclarationMerger: InspectionElementsMergerBase() {
     JDOMExternalizerUtil.readField(sourceElement, "IGNORE_POINT_TO_ITSELF")?.toBooleanStrictOrNull()?.also { value ->
       newInspection.IGNORE_SELF_REFS = value
     }
+    JDOMExternalizerUtil.readField(sourceElement, "IGNORE_DEPRECATED")?.toBooleanStrictOrNull()?.also { value ->
+      newInspection.IGNORE_DEPRECATED_ELEMENTS = value
+    }
     JDOMExternalizerUtil.readField(sourceElement, "myAdditionalJavadocTags")?.also { value ->
       newInspection.ADDITIONAL_TAGS = value
     }

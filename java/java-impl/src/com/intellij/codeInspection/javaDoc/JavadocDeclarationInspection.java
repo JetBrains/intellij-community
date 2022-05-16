@@ -28,6 +28,8 @@ import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.codeInspection.javaDoc.MissingJavadocInspection.isDeprecated;
+
 public class JavadocDeclarationInspection extends LocalInspectionTool {
   public static final String SHORT_NAME = "JavadocDeclaration";
 
@@ -35,6 +37,7 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
   public boolean IGNORE_THROWS_DUPLICATE = true;
   public boolean IGNORE_PERIOD_PROBLEM = true;
   public boolean IGNORE_SELF_REFS = false;
+  public boolean IGNORE_DEPRECATED_ELEMENTS = false;
 
   private boolean myIgnoreEmptyDescriptions = false;
 
@@ -98,6 +101,10 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
     if (pkg == null) return;
 
     PsiDocComment docComment = PsiTreeUtil.getChildOfType(file, PsiDocComment.class);
+    if (IGNORE_DEPRECATED_ELEMENTS && isDeprecated(pkg, docComment)) {
+      return;
+    }
+
     if (docComment != null) {
       PsiDocTag[] tags = docComment.getTags();
       checkBasics(docComment, tags, pkg, holder);
@@ -106,6 +113,9 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
 
   private void checkModule(PsiJavaModule module, ProblemsHolder holder) {
     PsiDocComment docComment = module.getDocComment();
+    if (IGNORE_DEPRECATED_ELEMENTS && isDeprecated(module, docComment)) {
+      return;
+    }
 
     if (docComment != null) {
       checkBasics(docComment, docComment.getTags(), module, holder);
@@ -116,9 +126,11 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
     if (aClass instanceof PsiAnonymousClass || aClass instanceof PsiSyntheticClass || aClass instanceof PsiTypeParameter) {
       return;
     }
+    if (IGNORE_DEPRECATED_ELEMENTS && aClass.isDeprecated()) {
+      return;
+    }
 
     PsiDocComment docComment = aClass.getDocComment();
-
     if (docComment != null) {
       PsiDocTag[] tags = docComment.getTags();
 
@@ -127,8 +139,11 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
   }
 
   private void checkField(PsiField field, ProblemsHolder holder) {
-    PsiDocComment docComment = field.getDocComment();
+    if (IGNORE_DEPRECATED_ELEMENTS && isDeprecated(field)) {
+      return;
+    }
 
+    PsiDocComment docComment = field.getDocComment();
     if (docComment != null) {
       checkBasics(docComment, docComment.getTags(), field, holder);
     }
@@ -138,9 +153,11 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
     if (method instanceof SyntheticElement) {
       return;
     }
+    if (IGNORE_DEPRECATED_ELEMENTS && isDeprecated(method)) {
+      return;
+    }
 
     PsiDocComment docComment = method.getDocComment();
-
     if (docComment != null) {
       if (!MissingJavadocInspection.isInherited(docComment, method)) {
         PsiDocTag[] tags = docComment.getTags();

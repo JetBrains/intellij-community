@@ -45,6 +45,7 @@ class JavadocSettingsMergerTest: LightJavaCodeInsightFixtureTestCase5() {
     assertTrue(inspection.IGNORE_PERIOD_PROBLEM)
     assertTrue(inspection.IGNORE_SELF_REFS)
     assertTrue(inspection.IGNORE_THROWS_DUPLICATE)
+    assertTrue(inspection.IGNORE_DEPRECATED_ELEMENTS)
     assertEquals(inspection.ADDITIONAL_TAGS, "tag1, tag2")
   }
 
@@ -53,6 +54,7 @@ class JavadocSettingsMergerTest: LightJavaCodeInsightFixtureTestCase5() {
     assertFalse(inspection.IGNORE_PERIOD_PROBLEM)
     assertFalse(inspection.IGNORE_SELF_REFS)
     assertFalse(inspection.IGNORE_THROWS_DUPLICATE)
+    assertFalse(inspection.IGNORE_DEPRECATED_ELEMENTS)
     assertEquals(inspection.ADDITIONAL_TAGS, "")
   }
 
@@ -89,6 +91,7 @@ class JavadocSettingsMergerTest: LightJavaCodeInsightFixtureTestCase5() {
     val expected = """
       <tool>
         <option name="IGNORE_PERIOD_PROBLEM" value="false" />
+        <option name="IGNORE_DEPRECATED_ELEMENTS" value="true" />
       </tool>
     """
     assertEquals(expected.trimIndent(), JDOMUtil.write(element))

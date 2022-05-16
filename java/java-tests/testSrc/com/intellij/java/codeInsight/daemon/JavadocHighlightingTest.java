@@ -33,6 +33,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
     super.setUp();
     myDeclarationJavadocInspection = new JavadocDeclarationInspection();
     myDeclarationJavadocInspection.IGNORE_THROWS_DUPLICATE = false;
+    myDeclarationJavadocInspection.IGNORE_DEPRECATED_ELEMENTS = true;
 
     myMissingJavadocInspection = new MissingJavadocInspection();
     myMissingJavadocInspection.IGNORE_DEPRECATED_ELEMENTS = true;
@@ -121,7 +122,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testDuplicateParam1() { doTest(); }
   public void testDuplicateParam2() { doTest(); }
   public void testDuplicateReturn() { doTest(); }
-  public void testDuplicateDeprecated() { myMissingJavadocInspection.IGNORE_DEPRECATED_ELEMENTS = false; doTest(); }
+  public void testDuplicateDeprecated() { myDeclarationJavadocInspection.IGNORE_DEPRECATED_ELEMENTS = false; doTest(); }
   public void testDuplicateSerial() { doTest(); }
   public void testDuplicateThrows() { doTest(); }
   public void testMissedTags() { doTest(); }

@@ -107,6 +107,10 @@ object JavadocUIUtil {
       checkBox(JavaBundle.message("inspection.javadoc.option.ignore.self.ref"))
         .bindCheckbox(settings::IGNORE_SELF_REFS)
     }
+    row {
+      checkBox(JavaBundle.message("inspection.javadoc.option.ignore.deprecated"))
+        .bindCheckbox(settings::IGNORE_DEPRECATED_ELEMENTS)
+    }
   }
 
   fun missingJavadocOptions(settings: MissingJavadocInspection): JComponent {

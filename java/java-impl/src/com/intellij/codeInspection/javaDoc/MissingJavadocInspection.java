@@ -222,7 +222,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
   }
 
 
-  private static boolean isDeprecated(PsiDocCommentOwner element) {
+  static boolean isDeprecated(PsiDocCommentOwner element) {
     return element.isDeprecated() || element.getContainingClass() != null && element.getContainingClass().isDeprecated();
   }
 
@@ -285,7 +285,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
     return 5;
   }
 
-  private static boolean isDeprecated(PsiModifierListOwner element, PsiDocComment docComment) {
+  static boolean isDeprecated(PsiModifierListOwner element, PsiDocComment docComment) {
     return PsiImplUtil.isDeprecatedByAnnotation(element) || docComment != null && docComment.findTagByName("deprecated") != null;
   }
 
