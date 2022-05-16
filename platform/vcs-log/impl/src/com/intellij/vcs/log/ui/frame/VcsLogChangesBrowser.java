@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -76,7 +77,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @NotNull private Consumer<StatusText> myUpdateEmptyText = this::updateEmptyText;
   @NotNull private final Wrapper myToolbarWrapper;
   @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
-  @Nullable private EditorDiffPreview myEditorDiffPreview;
+  @Nullable private DiffPreview myEditorDiffPreview;
 
   VcsLogChangesBrowser(@NotNull Project project,
                        @NotNull MainVcsLogUiProperties uiProperties,
@@ -400,10 +401,14 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   }
 
   private void setEditorDiffPreview() {
-    EditorDiffPreview preview = myEditorDiffPreview;
+    DiffPreview preview = myEditorDiffPreview;
     boolean isWithEditorDiffPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject);
 
-    if (isWithEditorDiffPreview && preview == null) {
+    if (Registry.is("enable.combined.diff") && isWithEditorDiffPreview && preview == null) {
+      preview = new VcsLogCombinedDiffPreview(this);
+      myEditorDiffPreview = preview;
+    }
+    else if (isWithEditorDiffPreview && preview == null) {
       preview = new VcsLogEditorDiffPreview(myProject, this);
       myEditorDiffPreview = preview;
     }
