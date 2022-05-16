@@ -1099,7 +1099,7 @@
     </intentionAction>
 
     <intentionAction>
-      <className>org.jetbrains.kotlin.idea.codeInsight.hints.EnableKotlinTypeHintsOption</className>
+      <className>org.jetbrains.kotlin.idea.codeInsight.hints.KotlinInlayHintToggleAction</className>
     </intentionAction>
 
     <lang.inspectionSuppressor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinInspectionSuppressor"/>

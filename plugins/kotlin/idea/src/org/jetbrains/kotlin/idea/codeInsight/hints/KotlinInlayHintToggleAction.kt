@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
-import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
@@ -11,12 +10,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Suppress("IntentionDescriptionNotFoundInspection")
-class EnableKotlinTypeHintsOption : IntentionAction, HighPriorityAction {
+class KotlinInlayHintToggleAction : IntentionAction, HighPriorityAction {
     private val hintTypes = arrayOf(
         HintType.RANGES,
         HintType.PROPERTY_HINT,
@@ -33,7 +33,7 @@ class EnableKotlinTypeHintsOption : IntentionAction, HighPriorityAction {
 
     override fun getText(): String = lastOptionName
 
-    override fun getFamilyName(): String = CodeInsightBundle.message("inlay.hints.intention.family.name")
+    override fun getFamilyName(): String = KotlinBundle.message("hints.types")
     
     override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
         val element = findElement(editor, file) ?: return false
