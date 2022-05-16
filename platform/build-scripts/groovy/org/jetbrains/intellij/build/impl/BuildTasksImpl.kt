@@ -27,7 +27,6 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructur
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.tasks.*
-import org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder.getLocalArtifactRepositoryRoot
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.artifact.JpsArtifactService
@@ -52,7 +51,7 @@ import java.util.function.Predicate
 import java.util.function.Supplier
 import java.util.stream.Collectors
 
-class BuildTasksImpl(val context: BuildContext) : BuildTasks {
+class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
   override fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path, includeLibraries: Boolean) {
     zipSourcesOfModules(modules, targetFile, includeLibraries, context)
   }
@@ -399,10 +398,6 @@ class BuildTasksImpl(val context: BuildContext) : BuildTasks {
     compileModules(null, includingTestsInModules)
   }
 
-  fun compileProjectAndTests() {
-    compileProjectAndTests(emptyList())
-  }
-
   override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>) {
     CompilationTasks.create(context).compileModules(moduleNames, includingTestsInModules)
   }
@@ -620,7 +615,7 @@ private fun downloadMissingLibrarySources(
     .use { span ->
       val configuration = JpsRemoteRepositoryService.getInstance().getRemoteRepositoriesConfiguration(context.project)
       val repositories = configuration?.repositories?.map { ArtifactRepositoryManager.createRemoteRepository(it.id, it.url) } ?: emptyList()
-      val repositoryManager = ArtifactRepositoryManager(getLocalArtifactRepositoryRoot(context.projectModel.global), repositories,
+      val repositoryManager = ArtifactRepositoryManager(getLocalArtifactRepositoryRoot(context.projectModel.global).toFile(), repositories,
                                                         ProgressConsumer.DEAF)
       for (library in librariesWithMissingSources) {
         val descriptor = library.properties.data
@@ -899,16 +894,15 @@ private inline fun filterSourceFilesOnly(name: String, context: BuildContext, co
 
 private fun buildAdditionalArtifacts(projectStructureMapping: ProjectStructureMapping, context: BuildContext) {
   val productProperties = context.productProperties
-
   if (productProperties.generateLibrariesLicensesTable &&
       !context.options.buildStepsToSkip.contains(BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP)) {
     val artifactNamePrefix = productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
     val artifactDir = context.paths.artifactDir
     Files.createDirectories(artifactDir)
-    Files.copy(getThirdPartyLibrariesHtmlFilePath(context), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.html"))
-    Files.copy(getThirdPartyLibrariesJsonFilePath(context), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.json"))
-    context.notifyArtifactBuilt(artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.html"))
-    context.notifyArtifactBuilt(artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.json"))
+    Files.copy(getThirdPartyLibrariesHtmlFilePath(context), artifactDir.resolve("$artifactNamePrefix-third-party-libraries.html"))
+    Files.copy(getThirdPartyLibrariesJsonFilePath(context), artifactDir.resolve("$artifactNamePrefix-third-party-libraries.json"))
+    context.notifyArtifactBuilt(artifactDir.resolve("$artifactNamePrefix-third-party-libraries.html"))
+    context.notifyArtifactBuilt(artifactDir.resolve("$artifactNamePrefix-third-party-libraries.json"))
   }
 
   if (productProperties.buildSourcesArchive) {

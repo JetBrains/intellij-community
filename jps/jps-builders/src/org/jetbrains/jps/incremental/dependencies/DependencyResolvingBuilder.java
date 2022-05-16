@@ -229,8 +229,10 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     private static final byte PROGRESS = 1;
     private static final byte FINISHED = 2;
     private byte myState = INITIAL;
+    private CanceledStatus myStatus;
 
-    synchronized boolean requestProcessing(final CanceledStatus cancelStatus) {
+    private synchronized boolean requestProcessing(final CanceledStatus cancelStatus) {
+      myStatus = cancelStatus;
       if (myState == INITIAL) {
         myState = PROGRESS;
         return true;
@@ -248,18 +250,18 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
       return false;
     }
 
-    synchronized void finish() {
+    private synchronized void finish() {
       if (myState != FINISHED) {
         myState = FINISHED;
         this.notifyAll();
       }
     }
 
-    static void init(CompileContext context) {
+    private static void init(CompileContext context) {
       context.putUserData(CONTEXT_KEY, new ConcurrentHashMap<>());
     }
 
-    static @NotNull ResourceGuard get(CompileContext context, JpsMavenRepositoryLibraryDescriptor descriptor) {
+    private static @NotNull ResourceGuard get(CompileContext context, JpsMavenRepositoryLibraryDescriptor descriptor) {
       final ConcurrentMap<JpsMavenRepositoryLibraryDescriptor, ResourceGuard> map = context.getUserData(CONTEXT_KEY);
       assert map != null;
       final ResourceGuard g = new ResourceGuard();
@@ -331,7 +333,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     return null;
   }
 
-  public static @NotNull File getLocalArtifactRepositoryRoot(@NotNull JpsGlobal global) {
+  private static @NotNull File getLocalArtifactRepositoryRoot(@NotNull JpsGlobal global) {
     final JpsPathVariablesConfiguration pvConfig = JpsModelSerializationDataService.getPathVariablesConfiguration(global);
     final String localRepoPath = pvConfig != null ? pvConfig.getUserVariableValue(MAVEN_REPOSITORY_PATH_VAR) : null;
     if (localRepoPath != null) {

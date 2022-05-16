@@ -26,12 +26,12 @@ class ProductModulesLayout {
   /**
    * Names of the additional product-specific modules which need to be packed into openapi.jar in the product's 'lib' directory.
    */
-  var productApiModules: MutableList<String> = mutableListOf()
+  var productApiModules: List<String> = emptyList()
 
   /**
    * Names of the additional product-specific modules which need to be included into {@link #mainJarName} in the product's 'lib' directory
    */
-  var productImplementationModules: MutableList<String> = mutableListOf()
+  var productImplementationModules: List<String> = emptyList()
 
   /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. Layouts of the
@@ -58,7 +58,7 @@ class ProductModulesLayout {
    * @see #setPluginModulesToPublish
    */
   fun getPluginModulesToPublish(): List<String> {
-    return pluginsToPublish.toList()
+    return java.util.List.copyOf(pluginsToPublish)
   }
 
   /**
@@ -100,7 +100,7 @@ class ProductModulesLayout {
    * Names of the modules which classpath will be used to build searchable options index <br>
    * //todo[nik] get rid of this property and automatically include all platform and plugin modules to the classpath when building searchable options index
    */
-  var mainModules: MutableList<String> = mutableListOf()
+  var mainModules: List<String> = emptyList()
 
   /**
    * If {@code true} a special xml descriptor in custom plugin repository format will be generated for {@link #setPluginModulesToPublish} plugins.

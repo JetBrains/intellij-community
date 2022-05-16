@@ -54,7 +54,7 @@ class IdeBuilder(val pluginBuilder: PluginBuilder,
 internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: Path, outDir: Path): IdeBuilder {
   val productProperties = URLClassLoader.newInstance(productConfiguration.modules.map { outDir.resolve(it).toUri().toURL() }.toTypedArray())
     .loadClass(productConfiguration.className)
-    .getConstructor(String::class.java).newInstance(homePath) as ProductProperties
+    .getConstructor(Path::class.java).newInstance(homePath) as ProductProperties
 
   val allNonTrivialPlugins = productProperties.productLayout.allNonTrivialPlugins
   val bundledMainModuleNames = getBundledMainModuleNames(productProperties)

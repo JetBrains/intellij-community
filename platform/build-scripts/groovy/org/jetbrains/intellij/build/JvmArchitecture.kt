@@ -4,7 +4,7 @@
 package org.jetbrains.intellij.build
 
 @Suppress("EnumEntryName")
-enum class JvmArchitecture(val fileSuffix: String) {
+enum class JvmArchitecture(@JvmField val fileSuffix: String) {
   x64("64"), aarch64("aarch64");
 
   companion object {
