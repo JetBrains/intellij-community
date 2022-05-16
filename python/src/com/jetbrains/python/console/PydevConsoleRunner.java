@@ -203,10 +203,6 @@ public interface PydevConsoleRunner {
     return inConsole != null && inConsole;
   }
 
-  static boolean isPythonConsole(@Nullable ASTNode element) {
-    return getPythonConsoleData(element) != null;
-  }
-
   @Nullable
   static PythonConsoleData getPythonConsoleData(@Nullable ASTNode element) {
     if (element == null || element.getPsi() == null || element.getPsi().getContainingFile() == null) {
