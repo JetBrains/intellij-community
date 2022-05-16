@@ -588,7 +588,6 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void resume() {
-    rememberUserActionStart(XDebuggerActions.RESUME);
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     myDebugProcess.resume(doResume());
