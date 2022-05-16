@@ -11,6 +11,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -629,7 +630,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
                         new Function0<>() {
                             @Override
                             public Object invoke() {
-                                RootUtilsKt.invalidateProjectRoots(project);
+                                RootUtilsKt.invalidateProjectRoots(project, RootsChangeRescanningInfo.NO_RESCAN_NEEDED);
                                 return null;
                             }
                         }

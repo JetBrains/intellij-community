@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.RootsChangeRescanningInfo
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -60,7 +61,7 @@ open class MakeModuleExperimentalFix(
                 compilerSettings.additionalArguments += " $compilerArgument"
                 facetSettings.updateMergedArguments()
             }
-            project.invalidateProjectRoots()
+            project.invalidateProjectRoots(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
         } finally {
             modelsProvider.dispose()
         }

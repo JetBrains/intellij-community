@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.facet
 
@@ -6,6 +6,7 @@ import com.intellij.facet.ui.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.HoverHyperlinkLabel
@@ -485,7 +486,7 @@ class KotlinFacetEditorGeneralTab(
                 updateMergedArguments()
 
                 // Force code analysis with modified settings
-                runWriteAction { editorContext.project.invalidateProjectRoots() }
+                runWriteAction { editorContext.project.invalidateProjectRoots(RootsChangeRescanningInfo.NO_RESCAN_NEEDED) }
             }
         }
     }
