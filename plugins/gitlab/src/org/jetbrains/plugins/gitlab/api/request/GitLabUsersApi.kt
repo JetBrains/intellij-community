@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.api.request
 
 import com.intellij.collaboration.api.graphql.loadGQLResponse
+import com.intellij.collaboration.api.httpclient.loadImage
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQueries
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath

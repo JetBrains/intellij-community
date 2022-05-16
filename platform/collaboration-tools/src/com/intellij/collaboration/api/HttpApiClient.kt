@@ -3,21 +3,22 @@ package com.intellij.collaboration.api
 
 import com.intellij.collaboration.api.httpclient.HttpClientFactory
 import com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
-import com.intellij.collaboration.api.httpclient.ImageBodyHandler
-import com.intellij.collaboration.api.httpclient.sendAndAwaitCancellable
+import com.intellij.collaboration.api.httpclient.response.CancellableWrappingBodyHandler
 import com.intellij.openapi.diagnostic.Logger
-import java.awt.Image
-import java.io.InputStream
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.future.await
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-interface HttpApiClient {
+abstract class HttpApiClient {
 
-  val clientFactory: HttpClientFactory
-  val requestConfigurer: HttpRequestConfigurer
-  val logger: Logger
+  abstract val clientFactory: HttpClientFactory
+  abstract val requestConfigurer: HttpRequestConfigurer
+
+  @Suppress("SSBasedInspection")
+  abstract val logger: Logger
 
   val client: HttpClient get() = clientFactory.createClient()
 
@@ -27,26 +28,16 @@ interface HttpApiClient {
   fun request(uri: URI): HttpRequest.Builder =
     HttpRequest.newBuilder(uri).apply(requestConfigurer::configure)
 
-
-  suspend fun loadImage(request: HttpRequest): HttpResponse<Image> =
-    client.sendAndAwaitCancellable(request, imageBodyHandler(request))
-
-  private fun imageBodyHandler(request: HttpRequest): HttpResponse.BodyHandler<Image> = object : ImageBodyHandler(request) {
-
-    override fun read(bodyStream: InputStream): Image {
-      logger.debug("${request.logName()} : Success")
-      return super.read(bodyStream)
+  suspend fun <T> sendAndAwaitCancellable(request: HttpRequest, bodyHandler: HttpResponse.BodyHandler<T>): HttpResponse<T> {
+    val cancellableBodyHandler = CancellableWrappingBodyHandler(bodyHandler)
+    return try {
+      client.sendAsync(request, cancellableBodyHandler).await()
     }
-
-    override fun handleError(statusCode: Int, errorBody: String): Nothing {
-      logger.debug("${request.logName()} : Error ${statusCode}")
-      if (logger.isTraceEnabled) {
-        logger.trace("${request.logName()} : Response body: $errorBody")
-      }
-      super.handleError(statusCode, errorBody)
+    catch (ce: CancellationException) {
+      cancellableBodyHandler.cancel()
+      throw ce
     }
   }
-
 
   companion object {
     @JvmStatic

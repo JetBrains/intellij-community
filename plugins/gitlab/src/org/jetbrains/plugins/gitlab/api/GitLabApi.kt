@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 
 class GitLabApi(override val clientFactory: HttpClientFactory,
-                override val requestConfigurer: HttpRequestConfigurer) : GraphQLApiClient {
+                override val requestConfigurer: HttpRequestConfigurer) : GraphQLApiClient() {
 
   @Suppress("SSBasedInspection")
   override val logger: Logger = LOG

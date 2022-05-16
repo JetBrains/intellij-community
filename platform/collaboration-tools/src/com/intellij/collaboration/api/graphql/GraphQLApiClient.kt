@@ -2,21 +2,19 @@
 package com.intellij.collaboration.api.graphql
 
 import com.intellij.collaboration.api.HttpApiClient
-import com.intellij.collaboration.api.HttpApiClient.Companion.logName
 import com.intellij.collaboration.api.dto.GraphQLRequestDTO
 import com.intellij.collaboration.api.httpclient.ByteArrayProducingBodyPublisher
 import com.intellij.collaboration.api.httpclient.HttpClientUtil
 import com.intellij.collaboration.api.httpclient.StreamReadingBodyHandler
-import com.intellij.collaboration.api.httpclient.sendAndAwaitCancellable
 import java.io.InputStream
 import java.net.URI
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-interface GraphQLApiClient: HttpApiClient {
+abstract class GraphQLApiClient : HttpApiClient() {
 
-  val gqlQueryLoader: CachingGraphQLQueryLoader
-  val gqlSerializer: GraphQLDataSerializer
+  abstract val gqlQueryLoader: CachingGraphQLQueryLoader
+  abstract val gqlSerializer: GraphQLDataSerializer
 
   fun gqlQuery(uri: URI, queryPath: String, variablesObject: Any? = null): HttpRequest {
     val publisher = object : ByteArrayProducingBodyPublisher() {
@@ -38,8 +36,11 @@ interface GraphQLApiClient: HttpApiClient {
   }
 
   suspend fun <T> loadGQLResponse(request: HttpRequest, clazz: Class<T>, vararg pathFromData: String): HttpResponse<T?> {
-    return client.sendAndAwaitCancellable(request, gqlBodyHandler(request, pathFromData, clazz))
+    return sendAndAwaitCancellable(request, gqlBodyHandler(request, pathFromData, clazz))
   }
+
+  suspend inline fun <reified T> loadGQLResponse(request: HttpRequest, vararg pathFromData: String)
+    : HttpResponse<T?> = loadGQLResponse(request, T::class.java, *pathFromData)
 
   fun <T> gqlBodyHandler(request: HttpRequest, pathFromData: Array<out String>, clazz: Class<T>): HttpResponse.BodyHandler<T?> =
     object : StreamReadingBodyHandler<T?>(request) {
@@ -65,7 +66,3 @@ interface GraphQLApiClient: HttpApiClient {
       }
     }
 }
-
-suspend inline fun <reified T> GraphQLApiClient.loadGQLResponse(request: HttpRequest, vararg pathFromData: String)
-  : HttpResponse<T?> = loadGQLResponse(request, T::class.java, *pathFromData)
-

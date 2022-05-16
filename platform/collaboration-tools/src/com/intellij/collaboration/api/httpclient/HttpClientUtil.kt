@@ -1,11 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.api.httpclient
 
-import com.intellij.collaboration.api.httpclient.response.CancellableWrappingBodyHandler
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.future.await
+import com.intellij.collaboration.api.HttpApiClient
+import com.intellij.collaboration.api.HttpApiClient.Companion.logName
+import com.intellij.collaboration.api.httpclient.HttpClientUtil.imageBodyHandler
+import com.intellij.openapi.diagnostic.Logger
+import java.awt.Image
 import java.io.InputStream
-import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.net.http.HttpResponse.BodyHandler
@@ -33,15 +34,23 @@ object HttpClientUtil {
       inputStreamSubscriber
     }
   }
+
+  fun imageBodyHandler(logger: Logger, request: HttpRequest): BodyHandler<Image> = object : ImageBodyHandler(request) {
+
+    override fun read(bodyStream: InputStream): Image {
+      logger.debug("${request.logName()} : Success")
+      return super.read(bodyStream)
+    }
+
+    override fun handleError(statusCode: Int, errorBody: String): Nothing {
+      logger.debug("${request.logName()} : Error ${statusCode}")
+      if (logger.isTraceEnabled) {
+        logger.trace("${request.logName()} : Response body: $errorBody")
+      }
+      super.handleError(statusCode, errorBody)
+    }
+  }
 }
 
-suspend fun <T> HttpClient.sendAndAwaitCancellable(request: HttpRequest, bodyHandler: BodyHandler<T>): HttpResponse<T> {
-  val cancellableBodyHandler = CancellableWrappingBodyHandler(bodyHandler)
-  return try {
-    sendAsync(request, cancellableBodyHandler).await()
-  }
-  catch (ce: CancellationException) {
-    cancellableBodyHandler.cancel()
-    throw ce
-  }
-}
+suspend fun HttpApiClient.loadImage(request: HttpRequest): HttpResponse<Image> =
+  client.sendAndAwaitCancellable(request, imageBodyHandler(logger, request))
