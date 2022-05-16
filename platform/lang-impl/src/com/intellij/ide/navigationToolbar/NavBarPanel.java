@@ -116,7 +116,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     myUpdateQueue.queueModelUpdateFromFocus();
     myUpdateQueue.queueRebuildUi();
 
-    Disposer.register(project, this);
+    registerDisposableIfNeeded(true);
     AccessibleContextUtil.setName(this, IdeBundle.message("navigation.bar"));
   }
 
@@ -269,6 +269,13 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   public NavBarModel getModel() {
     return myModel;
+  }
+
+  private void registerDisposableIfNeeded(boolean shouldForce) {
+    if (!shouldForce && !isDisposed()) return;
+
+    Disposer.register(myProject, this);
+    myDisposed = false;
   }
 
   @Override
@@ -839,6 +846,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   public void addNotify() {
     super.addNotify();
     NavBarListener.subscribeTo(this);
+    registerDisposableIfNeeded(false);
   }
 
   @Override
