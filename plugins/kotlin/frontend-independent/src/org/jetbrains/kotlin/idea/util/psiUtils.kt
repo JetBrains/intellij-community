@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun KtElement.getElementTextInContext(): String {
     val context = parentOfType<KtImportDirective>()
@@ -119,9 +120,34 @@ fun KtAnnotated.hasAnnotationWithShortName(
     useSiteTarget: AnnotationUseSiteTarget? = null,
 ): Boolean = hasAnnotationWithShortName(shortName.asString(), useSiteTarget)
 
-fun KtAnnotated.hasNonSuppressAnnotation(): Boolean {
-    val annotationEntries = annotationEntries
-    return annotationEntries.isNotEmpty() && annotationEntries.singleOrNull()?.shortName != StandardNames.FqNames.suppress.shortName()
+val KtAnnotated.hasNonSuppressAnnotation: Boolean
+    get() {
+        val annotationEntries = annotationEntries
+        return annotationEntries.size > 1 || annotationEntries.size == 1 && !hasSuppressAnnotation
+    }
+
+val KtAnnotated.hasSuppressAnnotation: Boolean get() = findSuppressAnnotation() != null
+
+fun KtAnnotated.findSuppressAnnotation(): KtAnnotationEntry? {
+    val alias = containingKtFile.findAliasByFqName(StandardNames.FqNames.suppress)?.name
+    return annotationEntries.find {
+        val shortName = it.shortName
+        shortName == StandardNames.FqNames.suppress.shortName() || alias != null && shortName?.asString() == alias
+    }
+}
+
+fun KtAnnotated.findSuppressedTools(): List<String>? {
+    val annotationEntry = findSuppressAnnotation() ?: return null
+    return annotationEntry.valueArguments.mapNotNull(ValueArgument::findSingleLiteralStringTemplateText)
+}
+
+fun ValueArgument.findSingleLiteralStringTemplateText(): String? {
+    return getArgumentExpression()
+        ?.safeAs<KtStringTemplateExpression>()
+        ?.entries
+        ?.singleOrNull()
+        ?.safeAs<KtLiteralStringTemplateEntry>()
+        ?.text
 }
 
 val KtFile.jvmPackage: String?

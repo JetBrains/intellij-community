@@ -2031,6 +2031,15 @@
                      suppressId="RedundantOverride"
                      key="inspection.kotlin.redundant.override.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinRedundantDiagnosticSuppressInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     runForWholeFile="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.kotlin.redundant.suppression.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.SuspiciousEqualsCombination"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"

@@ -33,7 +33,7 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
             val modifierList = function.modifierList ?: return
             if (!modifierList.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return
             if (MODIFIER_EXCLUDE_OVERRIDE.any { modifierList.hasModifier(it) }) return
-            if (function.hasNonSuppressAnnotation()) return
+            if (function.hasNonSuppressAnnotation) return
             if (function.containingClass()?.isData() == true) return
 
             val bodyExpression = function.bodyExpression ?: return

@@ -64,7 +64,7 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
 
     private fun canBePrivate(declaration: KtNamedDeclaration): Boolean {
         if (declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) || declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
-        if (declaration.hasNonSuppressAnnotation()) return false
+        if (declaration.hasNonSuppressAnnotation) return false
 
         val classOrObject = declaration.containingClassOrObject ?: return false
         val inheritable = classOrObject is KtClass && classOrObject.isInheritable()

@@ -14,9 +14,10 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.highlighter.createSuppressWarningActions
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
+import org.jetbrains.kotlin.idea.util.findSingleLiteralStringTemplateText
+import org.jetbrains.kotlin.idea.util.findSuppressAnnotation
 import org.jetbrains.kotlin.psi.KtAnnotated
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
-import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.resolve.constants.ArrayValue
 import org.jetbrains.kotlin.resolve.constants.StringValue
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
@@ -45,14 +46,16 @@ class KotlinInspectionSuppressor : InspectionSuppressor, RedundantSuppressionDet
         .getSuppressionCache()
         .isSuppressed(element, element.containingFile, toolId, Severity.WARNING)
 
-    override fun getSuppressionIds(element: PsiElement): String? {
+    override fun getSuppressionIds(element: PsiElement): String? = suppressionIds(element).ifNotEmpty { joinToString(separator = ",") }
+
+    fun suppressionIds(element: PsiElement): List<String> {
         val builder = mutableListOf<String>()
         val suppressionCache = KotlinCacheService.getInstance(element.project).getSuppressionCache()
         for (annotationDescriptor in suppressionCache.getSuppressionAnnotations(element)) {
             processAnnotation(builder, annotationDescriptor)
         }
 
-        return builder.ifNotEmpty { joinToString(separator = ",") }
+        return builder
     }
 
     private fun processAnnotation(builder: MutableList<String>, annotationDescriptor: AnnotationDescriptor) {
@@ -86,8 +89,7 @@ private class RemoveRedundantSuppression(private val toolId: String) : LocalQuic
                 .withAttachment(name = "class.txt", content = descriptor.psiElement.javaClass)
                 .withPsiAttachment("element.txt", descriptor.psiElement)
 
-        val shortName = StandardNames.FqNames.suppress.shortName()
-        val suppressAnnotationEntry = annotated.annotationEntries.firstOrNull { it.shortName == shortName }
+        val suppressAnnotationEntry = annotated.findSuppressAnnotation()
             ?: throw KotlinExceptionWithAttachments("Suppress annotation is not found")
                 .withPsiAttachment("element.txt", descriptor.psiElement)
                 .withPsiAttachment("annotatedElement.txt", annotated)
@@ -97,7 +99,7 @@ private class RemoveRedundantSuppression(private val toolId: String) : LocalQuic
         } else {
             val valueArgumentList = suppressAnnotationEntry.valueArgumentList ?: return
             val argument = valueArgumentList.arguments.find {
-                it.getArgumentExpression()?.safeAs<KtStringTemplateExpression>()?.entries?.singleOrNull()?.textMatches(toolId) == true
+                it.findSingleLiteralStringTemplateText()?.equals(toolId, ignoreCase = true) == true
             } ?: throw KotlinExceptionWithAttachments("ToolId is not found")
                 .withAttachment("arguments.txt", valueArgumentList.text)
                 .withAttachment("tool.txt", toolId)
