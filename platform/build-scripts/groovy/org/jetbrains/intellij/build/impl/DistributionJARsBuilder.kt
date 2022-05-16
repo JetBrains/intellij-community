@@ -16,6 +16,7 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.getSearchableOptionsDir
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.pack
@@ -48,6 +49,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ForkJoinTask
 import java.util.function.Predicate
 import java.util.stream.Collectors
+import kotlin.io.path.exists
+import kotlin.io.path.isRegularFile
 
 /**
  * Assembles output of modules to platform JARs (in [BuildPaths.distAllDir]/lib directory),
@@ -68,6 +71,26 @@ class DistributionJARsBuilder {
   }
 
   companion object {
+    fun getPluginAutoUploadFile(communityRoot: BuildDependenciesCommunityRoot): Path {
+      val autoUploadFile = communityRoot.communityRoot.resolve("../build/plugins-autoupload.txt")
+      require(autoUploadFile.isRegularFile()) {
+        "File '$autoUploadFile' must exist"
+      }
+      return autoUploadFile
+    }
+
+    fun readPluginAutoUploadFile(autoUploadFile: Path): Collection<String> {
+      val config = Files.lines(autoUploadFile).use { lines ->
+        lines
+          .map { StringUtil.split(it, "//", true, false)[0] }
+          .map { StringUtil.split(it, "#", true, false)[0].trim() }
+          .filter { !it.isEmpty() }
+          .collect(Collectors.toCollection { TreeSet(String.CASE_INSENSITIVE_ORDER) })
+      }
+
+      return config
+    }
+
     private fun scramble(context: BuildContext) {
       pack(actualModuleJars = mapOf("internalUtilities.jar" to listOf("intellij.tools.internalUtilities")),
            outputDir = context.paths.buildOutputDir.resolve("internal"),
@@ -186,14 +209,10 @@ class DistributionJARsBuilder {
      * @return predicate to test if a given plugin should be auto-published
      */
     private fun loadPluginAutoPublishList(buildContext: BuildContext): Predicate<PluginLayout> {
+      val file = getPluginAutoUploadFile(buildContext.paths.buildDependenciesCommunityRoot)
+      val config = readPluginAutoUploadFile(file)
+
       val productCode = buildContext.applicationInfo.productCode
-      val config = Files.lines(buildContext.paths.communityHomeDir.resolve("../build/plugins-autoupload.txt")).use { lines ->
-        lines
-          .map { StringUtil.split(it, "//", true, false)[0] }
-          .map { StringUtil.split(it, "#", true, false)[0].trim() }
-          .filter { !it.isEmpty() }
-          .collect(Collectors.toCollection { TreeSet(String.CASE_INSENSITIVE_ORDER) })
-      }
       return Predicate<PluginLayout> { plugin -> //see the specification in the plugins-autoupload.txt. Supported rules:
         //   <plugin main module name> ## include the plugin
         //   +<product code>:<plugin main module name> ## include the plugin
