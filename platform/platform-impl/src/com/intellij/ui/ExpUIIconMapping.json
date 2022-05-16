@@ -408,6 +408,7 @@
       "testResources.svg": "nodes/testSourceFolder.svg",
       "testResourcesRoot.svg": "modules/testResourcesRoot.svg",
       "testRoot.svg": "modules/testRoot.svg",
+      "testSourceFolder.svg": "nodes/testSourceFolder.svg",
       "unloadedModule.svg": "modules/unloadedModule.svg",
       "variable.svg": "nodes/variable.svg",
       "warningIntroduction.svg": "nodes/warningIntroduction.svg"
