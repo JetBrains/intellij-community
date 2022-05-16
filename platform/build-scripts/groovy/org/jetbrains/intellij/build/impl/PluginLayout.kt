@@ -26,7 +26,7 @@ class PluginLayout(val mainModule: String): BaseLayout() {
   }
   var pluginXmlPatcher: UnaryOperator<String> = UnaryOperator.identity()
   var directoryNameSetExplicitly: Boolean = false
-  lateinit var bundlingRestrictions: PluginBundlingRestrictions
+  var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE
   val pathsToScramble: MutableList<String> = mutableListOf()
   val scrambleClasspathPlugins: MutableList<Pair<String /*plugin name*/, String /*relative path*/>> = mutableListOf()
   var scrambleClasspathFilter: BiPredicate<BuildContext, Path> = BiPredicate { _, _ -> true }

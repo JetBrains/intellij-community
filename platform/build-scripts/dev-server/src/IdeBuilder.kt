@@ -54,7 +54,7 @@ class IdeBuilder(val pluginBuilder: PluginBuilder,
 internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: Path, outDir: Path): IdeBuilder {
   val productProperties = URLClassLoader.newInstance(productConfiguration.modules.map { outDir.resolve(it).toUri().toURL() }.toTypedArray())
     .loadClass(productConfiguration.className)
-    .getConstructor(String::class.java).newInstance(homePath.toString()) as ProductProperties
+    .getConstructor(String::class.java).newInstance(homePath) as ProductProperties
 
   val allNonTrivialPlugins = productProperties.productLayout.allNonTrivialPlugins
   val bundledMainModuleNames = getBundledMainModuleNames(productProperties)
@@ -80,9 +80,8 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
     // (old module names are not supported)
     var item = mainModuleToNonTrivialPlugin.get(mainModuleName)
     if (item == null) {
-      val pluginLayout = PluginLayoutGroovy.plugin(mainModuleName)
-      val pluginDir = pluginsDir.resolve(getActualPluginDirectoryName(pluginLayout, buildContext))
-      item = BuildItem(pluginDir, PluginLayoutGroovy.plugin(mainModuleName))
+      val pluginLayout = PluginLayout.simplePlugin(mainModuleName)
+      item = BuildItem(dir = pluginsDir.resolve(pluginLayout.directoryName), layout = pluginLayout)
     }
     else {
       for (entry in item.layout.getJarToIncludedModuleNames()) {

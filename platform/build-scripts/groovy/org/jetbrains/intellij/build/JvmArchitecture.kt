@@ -1,32 +1,24 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build;
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
+package org.jetbrains.intellij.build
 
-import java.util.List;
-
-public enum JvmArchitecture {
+@Suppress("EnumEntryName")
+enum class JvmArchitecture(val fileSuffix: String) {
   x64("64"), aarch64("aarch64");
 
-  public static final List<JvmArchitecture> ALL = List.of(values());
+  companion object {
+    @JvmField
+    val ALL: List<JvmArchitecture> = java.util.List.of(*values())
+    @JvmField
+    val currentJvmArch: JvmArchitecture
 
-  public static final JvmArchitecture currentJvmArch;
-
-  static {
-    String archName = System.getProperty("os.arch");
-    if ("aarch64".equals(archName)) {
-      currentJvmArch = aarch64;
+    init {
+      when (System.getProperty("os.arch")) {
+        "aarch64" -> currentJvmArch = aarch64
+        "x86_64", "amd64" -> currentJvmArch = x64
+        else -> throw IllegalStateException("Unsupported arch: \$archName")
+      }
     }
-    else if ("x86_64".equals(archName) || "amd64".equals(archName)) {
-      currentJvmArch = x64;
-    }
-    else {
-      throw new IllegalStateException("Unsupported arch: $archName");
-    }
-  }
-
-  public final String fileSuffix;
-
-  JvmArchitecture(String fileSuffix) {
-    this.fileSuffix = fileSuffix;
   }
 }
