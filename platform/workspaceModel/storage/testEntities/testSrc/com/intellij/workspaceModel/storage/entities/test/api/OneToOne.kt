@@ -58,8 +58,6 @@ fun MutableEntityStorage.addOoParentEntity(
   return ooParentEntity
 }
 
-//endregion
-
 //region ---------------- Child entity ----------------------
 
 
@@ -107,8 +105,6 @@ fun MutableEntityStorage.addOoChildEntity(
   return ooChildEntity
 }
 
-//endregion
-
 //region ----------------- Child entity with a nullable parent -----------------------------
 interface OoChildWithNullableParentEntity : WorkspaceEntity {
   val parentEntity: OoParentEntity?
@@ -148,7 +144,7 @@ fun MutableEntityStorage.addOoChildWithNullableParentEntity(
   this.addEntity(ooChildWithNullableParentEntity)
   return ooChildWithNullableParentEntity
 }
-//endregion
+
 
 //region ------------------- Parent Entity with PersistentId --------------------------------
 
@@ -202,7 +198,6 @@ fun MutableEntityStorage.addOoParentWithPidEntity(
   return ooParentWithPidEntity
 }
 
-//endregion
 
 // ---------------- Child entity for parent with PersistentId for Nullable ref ----------------------
 
