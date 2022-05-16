@@ -40,7 +40,6 @@ import git4idea.ift.GitLessonsUtil.triggerOnCheckout
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import git4idea.ift.GitProjectUtil
 import git4idea.repo.GitRepositoryManager
-import git4idea.ui.branch.GitBranchPopupActions
 import org.assertj.swing.fixture.JListFixture
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
@@ -192,19 +191,15 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       }
     }
 
-    task {
-      text(GitLessonsBundle.message("git.quick.start.choose.new.branch.item", strong(newBranchActionText)))
-      triggerStart(GitBranchPopupActions.GitNewBranchAction::class.java.name)
-      restoreByUi(showBranchesTaskId)
-      test {
-        ideFrame { jList(newBranchActionText).clickItem(newBranchActionText) }
-      }
-    }
-
     val createButtonText = GitBundle.message("new.branch.dialog.operation.create.name")
     task {
+      text(GitLessonsBundle.message("git.quick.start.choose.new.branch.item", strong(newBranchActionText)))
       triggerAndFullHighlight().component { ui: JButton ->
         ui.text?.contains(createButtonText) == true
+      }
+      restoreByUi(showBranchesTaskId, delayMillis = defaultRestoreDelay)
+      test {
+        ideFrame { jList(newBranchActionText).clickItem(newBranchActionText) }
       }
     }
 
