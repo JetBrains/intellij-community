@@ -10,6 +10,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
+import com.intellij.util.io.stats.PersistentHashMapStatistics;
+import com.intellij.util.io.stats.StorageStatsRegistrar;
 import org.jetbrains.annotations.*;
 
 import java.io.DataInputStream;
@@ -137,12 +139,13 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
                                                                 keyDescriptor,
                                                                 initialSize,
                                                                 lockContext,
-                                                                modifyVersionDependingOnOptions(version, options));
+                                                                modifyVersionDependingOnOptions(version, options),
+                                                                false);
 
     myStorageFile = file;
     myKeyDescriptor = keyDescriptor;
 
-    Path walFile = file.resolveSibling(file.getFileName().toString() + ".wal");
+    Path walFile = myStorageFile.resolveSibling(myStorageFile.getFileName().toString() + ".wal");
     myWal = builder.isEnableWal() ? new PersistentMapWal<>(keyDescriptor, valueExternalizer, options.useCompression(), walFile, builder.getWalExecutor(), true) : null;
 
     final PersistentEnumeratorBase.@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler = myEnumerator.getRecordHandler();
@@ -156,10 +159,12 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       myEnumerator.putMetaData2(myLargeIndexWatermarkId | ((long)myReadCompactionGarbageSize << 32));
     });
 
-    if (myDoTrace) LOG.info("Opened " + file);
+    if (myDoTrace) LOG.info("Opened " + myStorageFile);
+    StorageStatsRegistrar.INSTANCE.registerMap(myStorageFile, this);
+
     try {
       myValueExternalizer = valueExternalizer;
-      myValueStorage = myIntMapping ? null : new PersistentHashMapValueStorage(getDataFile(file), options);
+      myValueStorage = myIntMapping ? null : new PersistentHashMapValueStorage(getDataFile(myStorageFile), options);
       myAppendCache = myIntMapping ? null : createAppendCache(keyDescriptor);
       myAppendCacheFlusher = myIntMapping ? null : LowMemoryWatcher.register(() -> {
         try {
@@ -196,7 +201,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       }
       catch (Throwable ignored) {
       }
-      throw new CorruptedException(file);
+      throw new CorruptedException(myStorageFile);
     }
   }
 
@@ -762,6 +767,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
   private void close(boolean emergency) throws IOException {
     if (myDoTrace) LOG.info("Closed " + myStorageFile + "." + (myAppendCache == null ? "" : ("Append cache stats: " + myAppendCache.dumpStats())));
+    StorageStatsRegistrar.INSTANCE.unregisterMap(myStorageFile);
 
     getWriteLock().lock();
     try {
@@ -1088,6 +1094,10 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public @NotNull PersistentHashMapStatistics getStatistics() throws IOException {
+    return new PersistentHashMapStatistics(((PersistentBTreeEnumerator<?>)myEnumerator).getStatistics(), myValueStorage == null ? 0 : myValueStorage.getSize());
   }
 
   private class MyEnumeratorRecordHandler extends PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase<?>> {

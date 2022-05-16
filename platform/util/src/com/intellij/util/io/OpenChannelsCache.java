@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.io.stats.CachedChannelsStatistics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,15 +14,24 @@ import java.util.*;
 
 @ApiStatus.Internal
 final class OpenChannelsCache { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
-  private final int myCacheSizeLimit;
+  private final int myCapacity;
+  private int myHitCount;
+  private int myMissCount;
+
   @NotNull
   private final Map<Path, ChannelDescriptor> myCache;
 
   private final Object myLock = new Object();
 
-  OpenChannelsCache(final int cacheSizeLimit) {
-    myCacheSizeLimit = cacheSizeLimit;
-    myCache = new LinkedHashMap<>(cacheSizeLimit, 0.5f, true);
+  OpenChannelsCache(final int capacity) {
+    myCapacity = capacity;
+    myCache = new LinkedHashMap<>(capacity, 0.5f, true);
+  }
+
+  @NotNull CachedChannelsStatistics getStatistics() {
+    synchronized (myLock) {
+      return new CachedChannelsStatistics(myHitCount, myMissCount, myCapacity);
+    }
   }
 
   @FunctionalInterface
@@ -43,8 +53,9 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
         releaseOverCachedChannels();
         descriptor = new ChannelDescriptor(path, read);
         myCache.put(path, descriptor);
+        myMissCount++;
       }
-      if (!read && descriptor.isReadOnly()) {
+      else if (!read && descriptor.isReadOnly()) {
         if (descriptor.isLocked()) {
           descriptor = new ChannelDescriptor(path, false);
         }
@@ -54,6 +65,10 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
           descriptor = new ChannelDescriptor(path, false);
           myCache.put(path, descriptor);
         }
+        myMissCount++;
+      }
+      else {
+        myHitCount++;
       }
       descriptor.lock();
     }
@@ -79,7 +94,7 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
   }
 
   private void releaseOverCachedChannels() throws IOException {
-    int dropCount = myCache.size() - myCacheSizeLimit;
+    int dropCount = myCache.size() - myCapacity;
 
     if (dropCount >= 0) {
       List<Path> keysToDrop = new ArrayList<>();

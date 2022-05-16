@@ -3,6 +3,7 @@ package com.intellij.util.io;
 
 import com.intellij.util.BitUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.io.stats.BTreeStatistics;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -234,21 +235,19 @@ public final class IntToIntBtree {
     }
   }
 
-  void dumpStatistics() throws IOException {
+  @NotNull BTreeStatistics getStatistics() throws IOException {
     int leafPages = height == 3 ? pagesCount - (1 + root.getNodeView().getChildrenCount() + 1) : height == 2 ? pagesCount - 1 : 1;
-    long leafNodesCapacity = (long) hashedPagesCount * maxLeafNodesInHash + (long) (leafPages - hashedPagesCount)* maxLeafNodes;
-    long leafNodesCapacity2 = (long) leafPages * maxLeafNodes;
-    int usedPercent = (int)((count * 100L) / leafNodesCapacity);
-    int usedPercent2 = (int)((count * 100L) / leafNodesCapacity2);
-    IOStatistics.dump("pagecount:" + pagesCount +
-                      ", height:" + height +
-                      ", movedMembers:"+movedMembersCount +
-                      ", optimized inserts:"+myOptimizedInserts +
-                      ", hash steps:" + maxStepsSearchedInHash +
-                      ", avg search in hash:" + (hashSearchRequests != 0 ? totalHashStepsSearched / hashSearchRequests:0) +
-                      ", leaf pages used:" + usedPercent +
-                      "%, leaf pages used if sorted: " +
-                      usedPercent2 + "%, size:"+storage.length()
+    return new BTreeStatistics(
+      pagesCount,
+      count,
+      height,
+      movedMembersCount,
+      leafPages,
+      maxStepsSearchedInHash,
+      hashSearchRequests,
+      totalHashStepsSearched,
+      pageSize,
+      storage.length()
     );
   }
 

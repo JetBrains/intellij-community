@@ -166,7 +166,8 @@ public final class FSRecords {
     }
   }
 
-  private static String getCachesDir() {
+  @NotNull
+  public static String getCachesDir() {
     String dir = System.getProperty("caches_dir");
     return dir == null ? PathManager.getSystemPath() + "/caches/" : dir;
   }

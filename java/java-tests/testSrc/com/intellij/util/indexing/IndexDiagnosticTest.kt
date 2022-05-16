@@ -10,6 +10,7 @@ import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils
 import com.intellij.util.indexing.diagnostic.dto.*
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 import org.junit.Assert
@@ -39,9 +40,9 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
   @TestFor(issues = ["IDEA-252012"])
   fun `test index diagnostics are laid out per project`() {
     myFixture.addFileToProject("A.java", "class A { void m() { } }")
-    val indexingDiagnosticDir = IndexDiagnosticDumper.indexingDiagnosticDir
+    val indexingDiagnosticDir = IndexDiagnosticDumperUtils.indexingDiagnosticDir
     val allDirs = Files.list(indexingDiagnosticDir).use { it.toList() }
-    val projectDir = myFixture.project.getProjectCachePath(IndexDiagnosticDumper.indexingDiagnosticDir)
+    val projectDir = myFixture.project.getProjectCachePath(IndexDiagnosticDumperUtils.indexingDiagnosticDir)
     assertEquals(listOf(projectDir), allDirs)
 /*
     for (dir in allDirs) {

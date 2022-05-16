@@ -29,7 +29,7 @@ import java.util.List;
 public class PagedFileStorage implements Forceable {
   static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
 
-  private static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(SystemProperties.getIntProperty("paged.file.storage.open.channel.cache.capacity", 200));
+  static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(SystemProperties.getIntProperty("paged.file.storage.open.channel.cache.capacity", 200));
 
   public static final int MB = 1024 * 1024;
   public static final int BUFFER_SIZE = FilePageCache.BUFFER_SIZE;
@@ -147,6 +147,7 @@ public class PagedFileStorage implements Forceable {
       return CHANNELS_CACHE.useChannel(myFile, processor, read);
     }
     else {
+      myStorageLockContext.getBufferCache().incrementUncachedFileAccess();
       try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(myFile, read)) {
         return processor.process(desc.getChannel());
       }

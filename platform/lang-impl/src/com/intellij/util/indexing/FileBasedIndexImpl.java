@@ -63,6 +63,7 @@ import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.contentQueue.CachedFileContent;
 import com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics;
+import com.intellij.util.indexing.diagnostic.StorageDiagnosticData;
 import com.intellij.util.indexing.events.ChangedFilesCollector;
 import com.intellij.util.indexing.events.DeletedVirtualFileStub;
 import com.intellij.util.indexing.events.VfsEventsMerger;
@@ -204,13 +205,20 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {
-        if (myRegisteredIndexes != null && !myRegisteredIndexes.areIndexesReady()) {
-          new Task.Modal(null, IndexingBundle.message("indexes.preparing.to.shutdown.message"), false) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              myRegisteredIndexes.waitUntilAllIndicesAreInitialized();
-            }
-          }.queue();
+        if (myRegisteredIndexes != null) {
+          if (!myRegisteredIndexes.areIndexesReady()) {
+            new Task.Modal(null, IndexingBundle.message("indexes.preparing.to.shutdown.message"), false) {
+              @Override
+              public void run(@NotNull ProgressIndicator indicator) {
+                myRegisteredIndexes.waitUntilAllIndicesAreInitialized();
+              }
+            }.queue();
+          }
+
+          // dump stats only if indexes are loaded,
+          // it can be done without file-based indexes
+          // but the most important information are related to the file-based indexes.
+          StorageDiagnosticData.INSTANCE.dumpStorageDataStatistics();
         }
       }
     });
