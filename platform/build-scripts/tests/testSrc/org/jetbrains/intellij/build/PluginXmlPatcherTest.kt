@@ -1,15 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.Pair
-import org.jetbrains.intellij.build.impl.PluginXmlPatcher
-import org.junit.Assert
-import org.junit.Test
-import java.io.File
-import java.nio.file.Files
+import de.pdark.decentxml.XMLParser
+import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.impl.doPatchPluginXml
+import org.junit.jupiter.api.Test
 
 class PluginXmlPatcherTest {
-
   @Test
   fun setExistingVersion() = assertTransform(
     """
@@ -57,39 +54,43 @@ class PluginXmlPatcherTest {
     """.trimIndent())
 
   @Test
-  fun setMissingSinceUntil() = assertTransform(
-    """
-      <idea-plugin>
-        <name>CSS</name>
-        <id>com.intellij.css</id>
-      </idea-plugin>
-    """.trimIndent(),
-    """
-      <idea-plugin>
-        <name>CSS</name>
-        <id>com.intellij.css</id>
-        <version>x-plugin-version</version>
-        <idea-version since-build="new-since" until-build="new-until"/>
-      </idea-plugin>
-    """.trimIndent())
+  fun setMissingSinceUntil() {
+    assertTransform(
+      """
+        <idea-plugin>
+          <name>CSS</name>
+          <id>com.intellij.css</id>
+        </idea-plugin>
+      """.trimIndent(),
+      """
+        <idea-plugin>
+          <name>CSS</name>
+          <id>com.intellij.css</id>
+          <version>x-plugin-version</version>
+          <idea-version since-build="new-since" until-build="new-until"/>
+        </idea-plugin>
+      """.trimIndent())
+  }
 
   @Test
-  fun setExistingSinceUntil() = assertTransform(
-    """
-      <idea-plugin>
-        <name>CSS</name>
-        <id>com.intellij.css</id>
-        <idea-version since-build="qqq"/>
-      </idea-plugin>
-    """.trimIndent(),
-    """
-      <idea-plugin>
-        <name>CSS</name>
-        <id>com.intellij.css</id>
-        <version>x-plugin-version</version>
-        <idea-version since-build="new-since" until-build="new-until"/>
-      </idea-plugin>
-    """.trimIndent())
+  fun setExistingSinceUntil() {
+    assertTransform(
+      """
+        <idea-plugin>
+          <name>CSS</name>
+          <id>com.intellij.css</id>
+          <idea-version since-build="qqq"/>
+        </idea-plugin>
+      """.trimIndent(),
+      """
+        <idea-plugin>
+          <name>CSS</name>
+          <id>com.intellij.css</id>
+          <version>x-plugin-version</version>
+          <idea-version since-build="new-since" until-build="new-until"/>
+        </idea-plugin>
+      """.trimIndent())
+  }
 
   @Test
   fun pluginDescriptorRemovedForBundledPlugins() = assertTransform(
@@ -257,21 +258,16 @@ class PluginXmlPatcherTest {
     isEap: Boolean = false,
     retainProductDescriptorForBundledPlugin: Boolean = false,
   ) {
-    val tempFile = File.createTempFile("temp", ".xml").toPath()
-    try {
-      Files.writeString(tempFile, before)
-
-      val patcher = PluginXmlPatcher("X-RELEASE-DATE-X", "X-RELEASE-VERSION-X")
-      patcher.patchPluginXml(tempFile, "x-plugin-module-name", "x-plugin-version", Pair("new-since", "new-until"),
-                             toPublish,
-                             retainProductDescriptorForBundledPlugin,
-                             isEap,
-                             productName)
-
-      Assert.assertEquals(after, Files.readString(tempFile))
-    }
-    finally {
-      Files.delete(tempFile)
-    }
+    val result = doPatchPluginXml(document = XMLParser.parse(before),
+                                  pluginModuleName = "x-plugin-module-name",
+                                  pluginVersion = "x-plugin-version",
+                                  releaseDate = "X-RELEASE-DATE-X",
+                                  releaseVersion = "X-RELEASE-VERSION-X",
+                                  compatibleSinceUntil = Pair("new-since", "new-until"),
+                                  toPublish = toPublish,
+                                  retainProductDescriptorForBundledPlugin = retainProductDescriptorForBundledPlugin,
+                                  isEap = isEap,
+                                  productName = productName)
+    assertThat(result).isEqualTo(after)
   }
 }

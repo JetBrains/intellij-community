@@ -706,9 +706,9 @@ class DistributionJARsBuilder {
       val buildKeymapPluginsTask = buildKeymapPlugins(autoUploadingDir, context).fork()
       val moduleOutputPatcher = ModuleOutputPatcher()
       val stageDir = context.paths.tempDir.resolve("non-bundled-plugins-" + context.applicationInfo.productCode)
-      val dirToJar = Collections.synchronizedList(ArrayList<Map.Entry<String, Path>>())
+      val dirToJar = ConcurrentLinkedQueue<Map.Entry<String, Path>>()
       val defaultPluginVersion = if (context.buildNumber.endsWith(".SNAPSHOT")) {
-        "${context.buildNumber}." + PluginXmlPatcher.getPluginDateFormat().format(ZonedDateTime.now())
+        "${context.buildNumber}.${pluginDateFormat.format(ZonedDateTime.now())}"
       }
       else {
         context.buildNumber
@@ -805,13 +805,16 @@ private fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
   val scrambleTasks = ArrayList<ForkJoinTask<*>>()
 
   val releaseVersion = "${context.applicationInfo.majorVersion}${context.applicationInfo.minorVersionMainPart}00"
-  val pluginXmlPatcher = PluginXmlPatcher(context.applicationInfo.majorReleaseDate, releaseVersion)
-
   val tasks = plugins.map { plugin ->
     val isHelpPlugin = "intellij.platform.builtInHelp" == plugin.mainModule
     if (!isHelpPlugin) {
       DistributionJARsBuilder.checkOutputOfPluginModules(plugin.mainModule, plugin.moduleJars, plugin.moduleExcludes, context)
-      PluginXmlPatcher.patchPluginXml(moduleOutputPatcher, plugin, state.pluginsToPublish, pluginXmlPatcher, context)
+      patchPluginXml(moduleOutputPatcher = moduleOutputPatcher,
+                     plugin = plugin,
+                     releaseDate = context.applicationInfo.majorReleaseDate,
+                     releaseVersion = releaseVersion,
+                     pluginsToPublish = state.pluginsToPublish,
+                     context = context)
     }
 
     val directoryName = getActualPluginDirectoryName(plugin, context)

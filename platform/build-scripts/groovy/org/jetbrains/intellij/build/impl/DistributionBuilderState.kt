@@ -66,7 +66,7 @@ private fun filterPluginsToPublish(plugins: Set<PluginLayout>, context: BuildCon
     return emptySet()
   }
 
-  val toInclude = HashSet(context.options.nonBundledPluginDirectoriesToInclude)
+  val toInclude = context.options.nonBundledPluginDirectoriesToInclude
   if (toInclude.isEmpty()) {
     return result
   }

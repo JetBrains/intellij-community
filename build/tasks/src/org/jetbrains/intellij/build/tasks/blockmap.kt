@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.tasks
 
 import com.fasterxml.jackson.jr.ob.JSON
@@ -15,7 +15,7 @@ import java.util.concurrent.ForkJoinTask
 private const val algorithm = "SHA-256"
 
 @Suppress("unused")
-fun bulkZipWithPrefix(commonSourceDir: Path, items: List<Map.Entry<String, Path>>, compress: Boolean) {
+fun bulkZipWithPrefix(commonSourceDir: Path, items: Collection<Map.Entry<String, Path>>, compress: Boolean) {
   tracer.spanBuilder("archive directories")
     .setAttribute(AttributeKey.longKey("count"), items.size.toLong())
     .setAttribute(AttributeKey.stringKey("commonSourceDir"), commonSourceDir.toString())

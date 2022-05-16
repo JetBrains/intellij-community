@@ -11,7 +11,6 @@
     <orderEntry type="library" exported="" name="Ant" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="commons-cli" level="project" />
-    <orderEntry type="library" name="decentxml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" exported="" />
     <orderEntry type="library" name="commons-compress" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="fixed.kotlin-jps-plugin-classpath" level="project" />
@@ -48,5 +47,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="networknt.json.schema.validator" level="project" />
+    <orderEntry type="library" name="decentxml" level="project" />
   </component>
 </module>

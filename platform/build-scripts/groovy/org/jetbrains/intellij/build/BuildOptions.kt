@@ -1,322 +1,328 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.intellij.build;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SystemProperties;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.SystemProperties
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.concurrent.ThreadLocalRandom
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
+/**
+ * Pass comma-separated names of build steps (see below) to this system property to skip them.
+ */
+private const val BUILD_STEPS_TO_SKIP_PROPERTY = "intellij.build.skip.build.steps"
 
-public final class BuildOptions {
-  /**
-   * Use this property to change the project compiled classes output directory.
-   *
-   * @see {@link org.jetbrains.intellij.build.impl.CompilationContextImpl#getProjectOutputDirectory}
-   */
-  public static final String PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY = "intellij.project.classes.output.directory";
-  public String projectClassesOutputDirectory = System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY);
+class BuildOptions {
+  companion object {
+    /**
+     * Use this property to change the project compiled classes output directory.
+     *
+     * @see {@link org.jetbrains.intellij.build.impl.CompilationContextImpl.getProjectOutputDirectory}
+     */
+    const val PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY = "intellij.project.classes.output.directory"
+    const val OS_LINUX = "linux"
+    const val OS_WINDOWS = "windows"
+    const val OS_MAC = "mac"
+    const val OS_ALL = "all"
+    const val OS_CURRENT = "current"
+
+    /**
+     * If this value is set no distributions of the product will be produced, only [non-bundled plugins][ProductModulesLayout.setPluginModulesToPublish]
+     * will be built.
+     */
+    const val OS_NONE = "none"
+
+    /** Pre-builds SVG icons for all SVG resource files into *.jpix resources to speedup icons loading at runtime  */
+    const val SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
+
+    /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used.  */
+    const val SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
+    const val BROKEN_PLUGINS_LIST_STEP = "broken_plugins_list"
+    const val PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
+    const val GENERATE_JAR_ORDER_STEP = "jar_order"
+    const val SOURCES_ARCHIVE_STEP = "sources_archive"
+    const val SCRAMBLING_STEP = "scramble"
+    const val NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
+
+    /** Build Maven artifacts for IDE modules.  */
+    const val MAVEN_ARTIFACTS_STEP = "maven_artifacts"
+
+    /** Build macOS artifacts.  */
+    const val MAC_ARTIFACTS_STEP = "mac_artifacts"
+
+    /** Build .dmg file for macOS. If skipped, only .sit archive will be produced.  */
+    const val MAC_DMG_STEP = "mac_dmg"
+
+    /** Sign macOS distribution.  */
+    const val MAC_SIGN_STEP = "mac_sign"
+
+    /** Build Linux artifacts.  */
+    const val LINUX_ARTIFACTS_STEP = "linux_artifacts"
+
+    /** Build Linux tar.gz artifact without bundled JRE.  */
+    const val LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP = "linux_tar_gz_without_jre"
+
+    /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced.  */
+    const val WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
+
+    /** Sign *.exe files in Windows distribution.  */
+    const val WIN_SIGN_STEP = "windows_sign"
+
+    @JvmField
+    @Internal
+    val WIN_SIGN_OPTIONS = System.getProperty("intellij.build.win.sign.options", "")
+      .split(';')
+      .dropLastWhile { it.isEmpty() }
+      .asSequence()
+      .filter { !it.isBlank() }
+      .associate {
+        val item = it.split('=', limit = 2)
+        require(item.size == 2) { "Could not split by '=': $it" }
+        item[0] to item[1]
+      }
+
+    /** Build Frankenstein artifacts.  */
+    const val CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
+
+    /** Toolbox links generator step  */
+    const val TOOLBOX_LITE_GEN_STEP = "toolbox_lite_gen"
+
+    /** Generate files containing lists of used third-party libraries  */
+    const val THIRD_PARTY_LIBRARIES_LIST_STEP = "third_party_libraries"
+
+    /** Build community distributives  */
+    const val COMMUNITY_DIST_STEP = "community_dist"
+    const val OS_SPECIFIC_DISTRIBUTIONS_STEP = "os_specific_distributions"
+    const val PREBUILD_SHARED_INDEXES = "prebuild_shared_indexes"
+    const val SETUP_BUNDLED_MAVEN = "setup_bundled_maven"
+    const val VERIFY_CLASS_FILE_VERSIONS = "verify_class_file_versions"
+
+    /**
+     * Publish artifacts to TeamCity storage while the build is still running, immediately after the artifacts are built.
+     * Comprises many small publication steps.
+     * Note: skipping this step won't affect publication of 'Artifact paths' in TeamCity build settings and vice versa
+     */
+    const val TEAMCITY_ARTIFACTS_PUBLICATION_STEP = "teamcity_artifacts_publication"
+
+    /**
+     * @see org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
+     */
+    const val FUS_METADATA_BUNDLE_STEP = "fus_metadata_bundle_step"
+
+    /**
+     * @see org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
+     */
+    const val REPAIR_UTILITY_BUNDLE_STEP = "repair_utility_bundle_step"
+
+    /**
+     * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
+     */
+    const val BUILD_DMG_WITHOUT_BUNDLED_JRE = "intellij.build.dmg.without.bundled.jre"
+
+    /**
+     * Pass 'false' to this system property to skip building .dmg with bundled JRE.
+     */
+    const val BUILD_DMG_WITH_BUNDLED_JRE = "intellij.build.dmg.with.bundled.jre"
+
+    /**
+     * By default, build cleanup output folder before compilation, use this property to change this behaviour.
+     */
+    const val CLEAN_OUTPUT_FOLDER_PROPERTY = "intellij.build.clean.output.root"
+
+    /**
+     * If `false` build scripts compile project classes to a special output directory (to not interfere with the default project output if
+     * invoked on a developer machine).
+     * If `true` compilation step is skipped and compiled classes from the project output are used instead.
+     * True if [BuildOptions.isInDevelopmentMode] is enabled.
+     *
+     * @see {@link org.jetbrains.intellij.build.impl.CompilationContextImpl.getProjectOutputDirectory}
+     */
+    const val USE_COMPILED_CLASSES_PROPERTY = "intellij.build.use.compiled.classes"
+
+    /**
+     * Enables module structure validation, false by default
+     */
+    const val VALIDATE_MODULES_STRUCTURE_PROPERTY = "intellij.build.module.structure"
+
+    /**
+     * Max attempts of dependencies resolution on fault. "1" means no retries.
+     *
+     * @see {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner.resolveProjectDependencies}
+     */
+    const val RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY = "intellij.build.dependencies.resolution.retry.max.attempts"
+
+    /**
+     * Initial delay in milliseconds between dependencies resolution retries on fault. Default is 1000
+     *
+     * @see {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner.resolveProjectDependencies}
+     */
+    const val RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY = "intellij.build.dependencies.resolution.retry.delay.ms"
+    const val TARGET_OS_PROPERTY = "intellij.build.target.os"
+  }
+
+  var projectClassesOutputDirectory: String? = System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
 
   /**
    * Specifies for which operating systems distributions should be built.
    */
-  public String targetOS;
-  public static final String OS_LINUX = "linux";
-  public static final String OS_WINDOWS = "windows";
-  public static final String OS_MAC = "mac";
-  public static final String OS_ALL = "all";
-  public static final String OS_CURRENT = "current";
+  var targetOS: String?
 
   /**
-   * If this value is set no distributions of the product will be produced, only {@link ProductModulesLayout#setPluginModulesToPublish non-bundled plugins}
-   * will be built.
+   * Pass comma-separated names of build steps (see below) to [BUILD_STEPS_TO_SKIP_PROPERTY] system property to skip them when building locally.
    */
-  public static final String OS_NONE = "none";
-
-  /**
-   * Pass comma-separated names of build steps (see below) to this system property to skip them.
-   */
-  private static final String BUILD_STEPS_TO_SKIP_PROPERTY = "intellij.build.skip.build.steps";
-
-  /**
-   * Pass comma-separated names of build steps (see below) to {@link BuildOptions#BUILD_STEPS_TO_SKIP_PROPERTY} system property to skip them when building locally.
-   */
-  public Set<String> buildStepsToSkip = Arrays.stream(System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "").split(","))
-    .filter(s -> !s.isBlank()).collect(Collectors.toSet());
-  /** Pre-builds SVG icons for all SVG resource files into *.jpix resources to speedup icons loading at runtime */
-  public static final String SVGICONS_PREBUILD_STEP = "svg_icons_prebuild";
-  /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used. */
-  public static final String SEARCHABLE_OPTIONS_INDEX_STEP = "search_index";
-  public static final String BROKEN_PLUGINS_LIST_STEP = "broken_plugins_list";
-  public static final String PROVIDED_MODULES_LIST_STEP = "provided_modules_list";
-  public static final String GENERATE_JAR_ORDER_STEP = "jar_order";
-  public static final String SOURCES_ARCHIVE_STEP = "sources_archive";
-  public static final String SCRAMBLING_STEP = "scramble";
-  public static final String NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins";
-  /** Build Maven artifacts for IDE modules. */
-  public static final String MAVEN_ARTIFACTS_STEP = "maven_artifacts";
-  /** Build macOS artifacts. */
-  public static final String MAC_ARTIFACTS_STEP = "mac_artifacts";
-  /** Build .dmg file for macOS. If skipped, only .sit archive will be produced. */
-  public static final String MAC_DMG_STEP = "mac_dmg";
-  /** Sign macOS distribution. */
-  public static final String MAC_SIGN_STEP = "mac_sign";
-  /** Build Linux artifacts. */
-  public static final String LINUX_ARTIFACTS_STEP = "linux_artifacts";
-  /** Build Linux tar.gz artifact without bundled JRE. */
-  public static final String LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP = "linux_tar_gz_without_jre";
-  /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced. */
-  public static final String WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer";
-  /** Sign *.exe files in Windows distribution. */
-  public static final String WIN_SIGN_STEP = "windows_sign";
-  public static final Map<String,String> WIN_SIGN_OPTIONS =
-    Arrays.stream(System.getProperty("intellij.build.win.sign.options", "")
-      .split(";"))
-      .filter(s -> !s.isBlank())
-      .map(s -> {
-        String[] item = s.split("=", 2);
-        if (item.length != 2) {
-          throw new IllegalArgumentException("Could not split by '=': " + s);
-        }
-        return item;
-      })
-      .collect(Collectors.toMap(item -> item[0], item -> item[1]));
-  /** Build Frankenstein artifacts. */
-  public static final String CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist";
-  /** Toolbox links generator step */
-  public static final String TOOLBOX_LITE_GEN_STEP = "toolbox_lite_gen";
-  /** Generate files containing lists of used third-party libraries */
-  public static final String THIRD_PARTY_LIBRARIES_LIST_STEP = "third_party_libraries";
-  /** Build community distributives */
-  public static final String COMMUNITY_DIST_STEP = "community_dist";
-  public static final String OS_SPECIFIC_DISTRIBUTIONS_STEP = "os_specific_distributions";
-  public static final String PREBUILD_SHARED_INDEXES = "prebuild_shared_indexes";
-  public static final String SETUP_BUNDLED_MAVEN = "setup_bundled_maven";
-  public static final String VERIFY_CLASS_FILE_VERSIONS = "verify_class_file_versions";
-  /**
-   * Publish artifacts to TeamCity storage while the build is still running, immediately after the artifacts are built.
-   * Comprises many small publication steps.
-   * Note: skipping this step won't affect publication of 'Artifact paths' in TeamCity build settings and vice versa
-   */
-  public static final String TEAMCITY_ARTIFACTS_PUBLICATION_STEP = "teamcity_artifacts_publication";
-  /**
-   * @see org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
-   */
-  public static final String FUS_METADATA_BUNDLE_STEP = "fus_metadata_bundle_step";
-
-  /**
-   * @see org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
-   */
-  public static final String REPAIR_UTILITY_BUNDLE_STEP = "repair_utility_bundle_step";
-
-  /**
-   * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
-   */
-  public static final String BUILD_DMG_WITHOUT_BUNDLED_JRE = "intellij.build.dmg.without.bundled.jre";
-  public boolean buildDmgWithoutBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITHOUT_BUNDLED_JRE, SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false));
-
-  /**
-   * Pass 'false' to this system property to skip building .dmg with bundled JRE.
-   */
-  public static final String BUILD_DMG_WITH_BUNDLED_JRE = "intellij.build.dmg.with.bundled.jre";
-  public boolean buildDmgWithBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITH_BUNDLED_JRE, true);
+  var buildStepsToSkip: MutableSet<String> = System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "")
+    .split(',')
+    .dropLastWhile { it.isEmpty() }
+    .asSequence()
+    .filter { s: String -> !s.isBlank() }
+    .toHashSet()
+  var buildDmgWithoutBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITHOUT_BUNDLED_JRE,
+                                                                      SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
+  var buildDmgWithBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITH_BUNDLED_JRE, true)
 
   /**
    * Pass 'true' to this system property to produce .snap packages.
    * A build configuration should have "docker.version >= 17" in requirements.
    */
-  public boolean buildUnixSnaps = SystemProperties.getBooleanProperty("intellij.build.unix.snaps", false);
+  var buildUnixSnaps = SystemProperties.getBooleanProperty("intellij.build.unix.snaps", false)
 
   /**
    * Image for snap package creation. Default is "snapcore/snapcraft:stable", but can be modified mostly due to problems
    * with new versions of snapcraft.
    */
-  public String snapDockerImage = System.getProperty("intellij.build.snap.docker.image", "snapcore/snapcraft:stable");
+  var snapDockerImage: String = System.getProperty("intellij.build.snap.docker.image", "snapcore/snapcraft:stable")
 
   /**
    * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
    */
-  public String pathToCompiledClassesArchive = System.getProperty("intellij.build.compiled.classes.archive");
+  var pathToCompiledClassesArchive: String = System.getProperty("intellij.build.compiled.classes.archive")
 
   /**
    * Path to a metadata file containing urls with compiled classes of the project modules inside.
-   * Metadata is a {@linkplain org.jetbrains.intellij.build.impl.compilation.CompilationPartsMetadata} serialized into json format
+   * Metadata is a [org.jetbrains.intellij.build.impl.compilation.CompilationPartsMetadata] serialized into json format
    */
-  public String pathToCompiledClassesArchivesMetadata = System.getProperty("intellij.build.compiled.classes.archives.metadata");
+  var pathToCompiledClassesArchivesMetadata: String? = System.getProperty("intellij.build.compiled.classes.archives.metadata")
 
   /**
-   * If {@code true} the project modules will be compiled incrementally
+   * If `true` the project modules will be compiled incrementally
    */
-  public boolean incrementalCompilation = SystemProperties.getBooleanProperty("intellij.build.incremental.compilation", false);
+  var incrementalCompilation = SystemProperties.getBooleanProperty("intellij.build.incremental.compilation", false)
 
   /**
-   * By default some build steps are executed in parallel threads. Set this property to {@code false} to disable this.
+   * By default some build steps are executed in parallel threads. Set this property to `false` to disable this.
    */
-  public boolean runBuildStepsInParallel = SystemProperties.getBooleanProperty("intellij.build.run.steps.in.parallel", true);
+  var runBuildStepsInParallel = SystemProperties.getBooleanProperty("intellij.build.run.steps.in.parallel", true)
 
   /**
-   * Build number without product code (e.g. '162.500.10'), if {@code null} '&lt;baseline&gt;.SNAPSHOT' will be used. Use {@link BuildContext#buildNumber} to
+   * Build number without product code (e.g. '162.500.10'), if `null` '&lt;baseline&gt;.SNAPSHOT' will be used. Use [BuildContext.buildNumber] to
    * get the actual build number in build scripts.
    */
-  public String buildNumber = System.getProperty("build.number");
+  var buildNumber: String? = System.getProperty("build.number")
 
   /**
-   * By default build process produces temporary and resulting files under projectHome/out/productName directory, use this property to
+   * By default, build process produces temporary and resulting files under projectHome/out/productName directory, use this property to
    * change the output directory.
    */
-  public String outputRootPath = System.getProperty("intellij.build.output.root");
-
-  public String logPath = System.getProperty("intellij.build.log.root");
+  var outputRootPath: String? = System.getProperty("intellij.build.output.root")
+  var logPath: String? = System.getProperty("intellij.build.log.root")
 
   /**
-   * If {@code true} write a separate compilation.log for all compilation messages
+   * If `true` write a separate compilation.log for all compilation messages
    */
-  public Boolean compilationLogEnabled = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true);
+  var compilationLogEnabled = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true)
+  var cleanOutputFolder = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_FOLDER_PROPERTY, true)
 
   /**
-   * By default, build cleanup output folder before compilation, use this property to change this behaviour.
-   */
-  public static final String CLEAN_OUTPUT_FOLDER_PROPERTY = "intellij.build.clean.output.root";
-  public boolean cleanOutputFolder = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_FOLDER_PROPERTY, true);
-
-  /**
-   * If {@code true} the build is running in 'Development mode' i.e. its artifacts aren't supposed to be used in production. In development
+   * If `true` the build is running in 'Development mode' i.e. its artifacts aren't supposed to be used in production. In development
    * mode build scripts won't fail if some non-mandatory dependencies are missing and will just show warnings.
-   * <p>By default 'development mode' is enabled if build is not running under continuous integration server (TeamCity).</p>
-   */
-  public boolean isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode",
-                                                                    System.getenv("TEAMCITY_VERSION") == null);
-
-  /**
-   * If {@code false} build scripts compile project classes to a special output directory (to not interfere with the default project output if
-   * invoked on a developer machine).
-   * If {@code true} compilation step is skipped and compiled classes from the project output are used instead.
-   * True if {@link BuildOptions#isInDevelopmentMode} is enabled.
    *
-   * @see {@link org.jetbrains.intellij.build.impl.CompilationContextImpl#getProjectOutputDirectory}
+   * By default, 'development mode' is enabled if build is not running under continuous integration server (TeamCity).
    */
-  public static final String USE_COMPILED_CLASSES_PROPERTY = "intellij.build.use.compiled.classes";
-  public boolean useCompiledClassesFromProjectOutput = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode);
+  var isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null)
+  var useCompiledClassesFromProjectOutput = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode)
 
   /**
-   * If {@code true} the build is running as a unit test
+   * If `true` the build is running as a unit test
    */
-  public boolean isTestBuild = SystemProperties.getBooleanProperty("intellij.build.test.mode", false);
-
-  public boolean skipDependencySetup = false;
+  var isTestBuild = SystemProperties.getBooleanProperty("intellij.build.test.mode", false)
+  var skipDependencySetup = false
 
   /**
    * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be
    * used to speed up updating the IDE from sources.
    */
-  public Set<String> bundledPluginDirectoriesToSkip = Set.of(System.getProperty("intellij.build.bundled.plugin.dirs.to.skip", "").split(","));
+  val bundledPluginDirectoriesToSkip: Set<String> = System.getProperty("intellij.build.bundled.plugin.dirs.to.skip", "")
+    .split('.')
+    .dropLastWhile { it.isEmpty() }
+    .toSet()
 
   /**
-   * Specifies list of names of directories of non-bundled plugins (determined by {@link ProductModulesLayout#pluginsToPublish} and
-   * {@link ProductModulesLayout#buildAllCompatiblePlugins}) which should be actually built. This option can be used to speed up updating
-   * the IDE from sources. By default all plugins determined by {@link ProductModulesLayout#pluginsToPublish} and
-   * {@link ProductModulesLayout#buildAllCompatiblePlugins} are built. In order to skip building all non-bundled plugins, set the property to
-   * {@code none}.
+   * Specifies list of names of directories of non-bundled plugins (determined by [ProductModulesLayout.pluginsToPublish] and
+   * [ProductModulesLayout.buildAllCompatiblePlugins]) which should be actually built. This option can be used to speed up updating
+   * the IDE from sources. By default, all plugins determined by [ProductModulesLayout.pluginsToPublish] and
+   * [ProductModulesLayout.buildAllCompatiblePlugins] are built. In order to skip building all non-bundled plugins, set the property to
+   * `none`.
    */
-  public List<String> nonBundledPluginDirectoriesToInclude = StringUtil.split(System.getProperty("intellij.build.non.bundled.plugin.dirs.to.include", ""), ",");
+  val nonBundledPluginDirectoriesToInclude = System.getProperty("intellij.build.non.bundled.plugin.dirs.to.include", "").split('.').toSet()
 
   /**
-   * Specifies {@link org.jetbrains.intellij.build.JetBrainsRuntimeDistribution} build to be bundled with distributions. If {@code null} then {@code runtimeBuild} from gradle.properties will be used.
+   * Specifies [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] build to be bundled with distributions. If `null` then `runtimeBuild` from gradle.properties will be used.
    */
-  public String bundledRuntimeBuild = System.getProperty("intellij.build.bundled.jre.build");
+  var bundledRuntimeBuild: String? = System.getProperty("intellij.build.bundled.jre.build")
 
   /**
-   * Specifies a prefix to use when looking for an artifact of a {@link org.jetbrains.intellij.build.JetBrainsRuntimeDistribution} to be bundled with distributions.
-   * If {@code null}, {@code "jbr_jcef-"} will be used.
+   * Specifies a prefix to use when looking for an artifact of a [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] to be bundled with distributions.
+   * If `null`, `"jbr_jcef-"` will be used.
    */
-  public String bundledRuntimePrefix = System.getProperty("intellij.build.bundled.jre.prefix");
+  var bundledRuntimePrefix: String? = System.getProperty("intellij.build.bundled.jre.prefix")
 
   /**
    * Enables fastdebug runtime
    */
-  public boolean runtimeDebug = parseBooleanValue(System.getProperty("intellij.build.bundled.jre.debug", "false"));
+  var runtimeDebug = parseBooleanValue(System.getProperty("intellij.build.bundled.jre.debug", "false"))
 
   /**
    * Specifies an algorithm to build distribution checksums.
    */
-  public String hashAlgorithm = "SHA-384";
+  val hashAlgorithm = "SHA-384"
 
-  /**
-   * Enables module structure validation, false by default
-   */
-  public static final String VALIDATE_MODULES_STRUCTURE_PROPERTY = "intellij.build.module.structure";
-  public boolean validateModuleStructure = parseBooleanValue(System.getProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY, "false"));
+  var validateModuleStructure = parseBooleanValue(System.getProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY, "false"))
 
-  @ApiStatus.Internal
-  public boolean compressNonBundledPluginArchive = true;
+  @Internal
+  var compressNonBundledPluginArchive = true
 
-  /**
-   * Max attempts of dependencies resolution on fault. "1" means no retries.
-   *
-   * @see {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner#resolveProjectDependencies}
-   */
-  public static final String RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY = "intellij.build.dependencies.resolution.retry.max.attempts";
-  public int resolveDependenciesMaxAttempts = Integer.parseInt(System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "2"));
-
-  /**
-   * Initial delay in milliseconds between dependencies resolution retries on fault. Default is 1000
-   *
-   * @see {@link org.jetbrains.intellij.build.impl.JpsCompilationRunner#resolveProjectDependencies}
-   */
-  public static final String RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY = "intellij.build.dependencies.resolution.retry.delay.ms";
-  public long resolveDependenciesDelayMs = Long.parseLong(System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY, "1000"));
-
-  public static final String TARGET_OS_PROPERTY = "intellij.build.target.os";
+  var resolveDependenciesMaxAttempts = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "2").toInt()
+  var resolveDependenciesDelayMs = System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY, "1000").toLong()
 
   /**
    * See https://reproducible-builds.org/specs/source-date-epoch/
    */
-  public long buildDateInSeconds;
-  public long randomSeedNumber;
+  var buildDateInSeconds: Long = 0
+  var randomSeedNumber: Long = 0
 
-  public BuildOptions() {
-    targetOS = System.getProperty(TARGET_OS_PROPERTY);
-    if (OS_CURRENT.equals(targetOS)) {
-      targetOS = SystemInfo.isWindows ? OS_WINDOWS :
-                 SystemInfo.isMac ? OS_MAC :
-                 SystemInfo.isLinux ? OS_LINUX : null;
+  init {
+    targetOS = System.getProperty(TARGET_OS_PROPERTY)
+    if (OS_CURRENT == targetOS) {
+      targetOS = if (SystemInfo.isWindows) OS_WINDOWS else if (SystemInfo.isMac) OS_MAC else if (SystemInfo.isLinux) OS_LINUX else null
     }
-    else if (targetOS == null || targetOS.isEmpty()) {
-      targetOS = OS_ALL;
+    else if (targetOS == null || targetOS!!.isEmpty()) {
+      targetOS = OS_ALL
     }
-
-    String sourceDateEpoch = System.getenv("SOURCE_DATE_EPOCH");
-    if (sourceDateEpoch == null) {
-      buildDateInSeconds = System.currentTimeMillis() / 1000;
+    val sourceDateEpoch = System.getenv("SOURCE_DATE_EPOCH")
+    buildDateInSeconds = sourceDateEpoch?.toLong() ?: (System.currentTimeMillis() / 1000)
+    val randomSeedString = System.getProperty("intellij.build.randomSeed")
+    randomSeedNumber = if (randomSeedString == null || randomSeedString.isBlank()) {
+      ThreadLocalRandom.current().nextLong()
     }
     else {
-      buildDateInSeconds = Long.parseLong(sourceDateEpoch);
-    }
-
-    String randomSeedString = System.getProperty("intellij.build.randomSeed");
-    if (randomSeedString == null || randomSeedString.isBlank()) {
-      randomSeedNumber = ThreadLocalRandom.current().nextLong();
-    }
-    else {
-      randomSeedNumber = Long.parseLong(randomSeedString);
+      randomSeedString.toLong()
     }
   }
+}
 
-  private static Boolean parseBooleanValue(@NotNull String text) {
-    if (StringUtil.equalsIgnoreCase(text, Boolean.TRUE.toString())) {
-      return true;
-    }
-
-    if (StringUtil.equalsIgnoreCase(text, Boolean.FALSE.toString())) {
-      return false;
-    }
-
-    throw new IllegalArgumentException("Could not parse as boolean, accepted values are only 'true' or 'false': " + text);
+private fun parseBooleanValue(text: String): Boolean {
+  return when {
+    text.toBoolean() -> true
+    text.equals(java.lang.Boolean.FALSE.toString(), ignoreCase = true) -> false
+    else -> throw IllegalArgumentException("Could not parse as boolean, accepted values are only 'true' or 'false': $text")
   }
 }

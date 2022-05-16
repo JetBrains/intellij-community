@@ -145,7 +145,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     })
 
     Path zipPath = zipPathTask == null ? null : zipPathTask.join()
-    if (buildContext.options.isInDevelopmentMode || zipPathTask == null || exePath == null) {
+    if (buildContext.options.isInDevelopmentMode() || zipPathTask == null || exePath == null) {
       return
     }
 
