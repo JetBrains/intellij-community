@@ -4,14 +4,15 @@ package git4idea.index.ui
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.wm.IdeFocusManager
 import git4idea.index.actions.GitStageDiffAction
 
-class GitStageEditorDiffPreview(diffProcessor: GitStageDiffPreview, private val tree: ChangesTree) : EditorTabPreview(diffProcessor) {
-  private val changeViewProcessor: ChangeViewDiffRequestProcessor get() = diffProcessor as ChangeViewDiffRequestProcessor
+class GitStageEditorDiffPreview(
+  private val changeViewProcessor: GitStageDiffPreview,
+  private val tree: ChangesTree
+) : EditorTabPreview(changeViewProcessor) {
 
   override fun hasContent(): Boolean {
     return changeViewProcessor.currentChange != null
