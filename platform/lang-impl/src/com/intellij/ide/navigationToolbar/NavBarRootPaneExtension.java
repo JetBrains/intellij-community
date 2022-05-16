@@ -195,7 +195,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
         final int preferredHeight = navBar.getPreferredSize().height;
 
         int navBarHeight = preferredHeight;
-        if (ExperimentalUI.isNewUI()) {
+        if (ExperimentalUI.isNewNavbar()) {
           navBarHeight = r.height;
         }
 
@@ -213,7 +213,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
                      ? new NavBarBorder()
                      : JBUI.Borders.empty();
 
-        if (ExperimentalUI.isNewUI()) {
+        if (ExperimentalUI.isNewNavbar()) {
           myScrollPane.setHorizontalScrollBar(new JBThinOverlappingScrollBar(Adjustable.HORIZONTAL));
           if (myScrollPane instanceof JBScrollPane) {
             ((JBScrollPane) myScrollPane).setOverlappingScrollBar(true);
@@ -273,7 +273,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
   }
 
   private void updateScrollBarFlippedState(@Nullable NavBarLocation location) {
-    if (ExperimentalUI.isNewUI() && myScrollPane != null) {
+    if (ExperimentalUI.isNewNavbar() && myScrollPane != null) {
       if (location == null) location = UISettings.getInstance().getNavBarLocation();
       JBScrollPane.Flip flipState = (location == NavBarLocation.BOTTOM) ? JBScrollPane.Flip.VERTICAL : JBScrollPane.Flip.NONE;
       myScrollPane.putClientProperty(JBScrollPane.Flip.class, flipState);

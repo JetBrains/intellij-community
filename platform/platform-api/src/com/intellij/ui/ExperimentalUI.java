@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.Strings;
@@ -35,6 +36,10 @@ public abstract class ExperimentalUI {
 
   public static boolean isNewUI() {
     return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY);
+  }
+
+  public static boolean isNewNavbar() {
+    return isNewUI() && Registry.is("ide.experimental.ui.navbar.scroll");
   }
 
   public static ExperimentalUI getInstance() {
