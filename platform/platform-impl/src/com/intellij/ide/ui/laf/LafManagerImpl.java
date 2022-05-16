@@ -294,6 +294,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         if (!Registry.is("ide.experimental.ui")) {
           Registry.get("ide.experimental.ui").setValue(true);
           Registry.get("debugger.new.tool.window.layout").setValue(true);
+          UISettings.getInstance().setOpenInPreviewTabIfPossible(true);
           String name = JBColor.isBright() ? "Light" : "Dark";
           Optional<UIManager.LookAndFeelInfo> laf = Arrays.stream(getInstalledLookAndFeels())
                                                           .filter(x -> x.getName().equals(name))
