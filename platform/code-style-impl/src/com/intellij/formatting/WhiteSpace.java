@@ -115,6 +115,7 @@ public class WhiteSpace {
     if (newEndOffset == oldEndOffset) return;
     if (myStart >= newEndOffset) {
       myRangesAssert.assertInvalidRanges(myStart, newEndOffset, model, "some block intersects with whitespace");
+      return;
     }
 
     myEnd = newEndOffset;
@@ -124,6 +125,7 @@ public class WhiteSpace {
 
     if (!coveredByBlock(model)) {
       myRangesAssert.assertInvalidRanges(myStart, myEnd, model, "nonempty text is not covered by block");
+      return;
     }
 
     if (newEndOffset > oldEndOffset) {
