@@ -3,8 +3,6 @@
 
 package com.jetbrains.python.console
 
-import com.google.common.base.Joiner
-import com.google.common.collect.Collections2
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.module.Module
@@ -113,10 +111,11 @@ fun constructPyPathAndWorkingDirCommand(pythonPath: MutableCollection<String>,
   if (workingDir != null) {
     pythonPath.add(workingDir)
   }
-  val path = Joiner.on(", ").join(Collections2.transform(pythonPath
-  ) { input: String -> "'" + input.replace("\\", "\\\\").replace("'", "\\'") + "'" })
+  val path = pythonPath.joinToString(separator = ", ") { "'${it.escapeAsPythonLiteral()}'" }
   return command.replace(PydevConsoleRunnerImpl.WORKING_DIR_AND_PYTHON_PATHS, path)
 }
+
+private fun String.escapeAsPythonLiteral(): String = replace("\\", "\\\\").replace("'", "\\'")
 
 fun addDefaultEnvironments(sdk: Sdk,
                            envs: Map<String, String>,
