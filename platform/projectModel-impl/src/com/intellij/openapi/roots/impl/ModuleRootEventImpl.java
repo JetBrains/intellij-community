@@ -19,20 +19,30 @@ import java.util.List;
 public class ModuleRootEventImpl extends ModuleRootEvent {
   private final boolean myFiletypes;
   private final List<? extends RootsChangeRescanningInfo> myInfos;
+  private final boolean myInFromWorkspaceModelOnly;
 
   public ModuleRootEventImpl(@NotNull Project project, boolean filetypes) {
-    this(project, filetypes, Collections.singletonList(RootsChangeRescanningInfo.TOTAL_RESCAN));
+    this(project, filetypes, Collections.singletonList(RootsChangeRescanningInfo.TOTAL_RESCAN), false);
   }
 
-  public ModuleRootEventImpl(@NotNull Project project, boolean filetypes, @NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) {
+  public ModuleRootEventImpl(@NotNull Project project,
+                             boolean filetypes,
+                             @NotNull List<? extends RootsChangeRescanningInfo> indexingInfos,
+                             boolean isFromWorkspaceModelOnly) {
     super(project);
     myFiletypes = filetypes;
     myInfos = indexingInfos;
+    myInFromWorkspaceModelOnly = isFromWorkspaceModelOnly;
   }
 
   @Override
   public boolean isCausedByFileTypesChange() {
     return myFiletypes;
+  }
+
+  @Override
+  public boolean isCausedByWorkspaceModelChangesOnly() {
+    return myInFromWorkspaceModelOnly;
   }
 
 

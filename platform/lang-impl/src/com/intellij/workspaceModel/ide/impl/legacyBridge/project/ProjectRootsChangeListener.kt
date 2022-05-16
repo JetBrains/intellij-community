@@ -30,7 +30,7 @@ internal class ProjectRootsChangeListener(private val project: Project) {
     if (projectRootManager !is ProjectRootManagerBridge) return
     val performUpdate = shouldFireRootsChanged(event, project)
     if (performUpdate && !projectRootManager.isFiringEvent()) {
-      val rootsChangeInfo = WorkspaceEventRescanningInfo(event.getAllChanges().toList())
+      val rootsChangeInfo = WorkspaceEventRescanningInfo(event.getAllChanges().toList(), true)
       projectRootManager.rootsChanged.rootsChanged(rootsChangeInfo)
     }
   }
@@ -73,5 +73,6 @@ internal class ProjectRootsChangeListener(private val project: Project) {
     }
   }
 
-  class WorkspaceEventRescanningInfo(val events: List<EntityChange<*>>) : RootsChangeRescanningInfo
+  class WorkspaceEventRescanningInfo(val events: List<EntityChange<*>>,
+                                     val isFromWorkspaceModelEvent: Boolean) : RootsChangeRescanningInfo
 }

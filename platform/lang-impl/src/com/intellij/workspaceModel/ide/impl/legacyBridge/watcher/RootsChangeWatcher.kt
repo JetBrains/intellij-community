@@ -247,7 +247,7 @@ internal class RootsChangeWatcher(val project: Project) {
       }
 
       fun createIndexingInfo() = entities?.let { it ->
-        ProjectRootsChangeListener.WorkspaceEventRescanningInfo(it.map { entity -> EntityChange.Added(entity) })
+        ProjectRootsChangeListener.WorkspaceEventRescanningInfo(it.map { entity -> EntityChange.Added(entity) }, false)
       }
     }
   }

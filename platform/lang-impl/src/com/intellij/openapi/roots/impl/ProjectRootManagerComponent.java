@@ -38,12 +38,14 @@ import com.intellij.project.ProjectKt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.EntityIndexingService;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -187,7 +189,21 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       if (directoryIndex instanceof DirectoryIndexImpl) {
         ((DirectoryIndexImpl)directoryIndex).reset();
       }
-      myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, fileTypes, indexingInfos));
+      ThreeState isFromWorkspaceOnly = ThreeState.UNSURE;
+      for (RootsChangeRescanningInfo info : indexingInfos) {
+        if (info instanceof ProjectRootsChangeListener.WorkspaceEventRescanningInfo
+            && ((ProjectRootsChangeListener.WorkspaceEventRescanningInfo)info).isFromWorkspaceModelEvent()) {
+          if (isFromWorkspaceOnly == ThreeState.UNSURE) {
+            isFromWorkspaceOnly = ThreeState.YES;
+          }
+        }
+        else {
+          isFromWorkspaceOnly = ThreeState.NO;
+          break;
+        }
+      }
+      myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(
+        new ModuleRootEventImpl(myProject, fileTypes, indexingInfos, isFromWorkspaceOnly == ThreeState.YES));
     }
     finally {
       isFiringEvent = false;
