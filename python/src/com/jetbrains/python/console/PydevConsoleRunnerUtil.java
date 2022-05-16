@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -23,7 +24,6 @@ import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.target.PySdkTargetPaths;
-import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
@@ -43,26 +43,28 @@ public class PydevConsoleRunnerUtil {
 
   @Nullable
   public static PyRemotePathMapper getPathMapper(@NotNull Project project,
-                                                 Sdk sdk,
-                                                 PyConsoleOptions.PyConsoleSettings consoleSettings) {
-    if (PySdkExtKt.isTargetBased(sdk)) {
-      PyTargetAwareAdditionalData data = (PyTargetAwareAdditionalData)sdk.getSdkAdditionalData();
-      return PySdkTargetPaths.getPathMapper(project, consoleSettings, data);
+                                                 @Nullable Sdk sdk,
+                                                 @NotNull PyConsoleOptions.PyConsoleSettings consoleSettings) {
+    if (sdk == null) return null;
+    SdkAdditionalData sdkAdditionalData = sdk.getSdkAdditionalData();
+    if (sdkAdditionalData instanceof PyTargetAwareAdditionalData) {
+      return PySdkTargetPaths.getPathMapper(project, consoleSettings, (PyTargetAwareAdditionalData)sdkAdditionalData);
     }
-    if (PythonSdkUtil.isRemote(sdk)) {
-      PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
-      return getPathMapper(project, consoleSettings, remoteSdkAdditionalData);
+    if (sdkAdditionalData instanceof PyRemoteSdkAdditionalDataBase) {
+      return getPathMapper(project, consoleSettings, (PyRemoteSdkAdditionalDataBase)sdkAdditionalData);
     }
     return null;
   }
 
   @NotNull
   static PyRemotePathMapper getPathMapper(@NotNull Project project,
-                                          PyConsoleOptions.PyConsoleSettings consoleSettings,
-                                          PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData) {
+                                          @NotNull PyConsoleOptions.PyConsoleSettings consoleSettings,
+                                          @NotNull PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData) {
     PyRemotePathMapper remotePathMapper = PythonRemoteInterpreterManager.appendBasicMappings(project, null, remoteSdkAdditionalData);
     PathMappingSettings mappingSettings = consoleSettings.getMappingSettings();
-    remotePathMapper.addAll(mappingSettings.getPathMappings(), PyRemotePathMapper.PyPathMappingType.USER_DEFINED);
+    if (mappingSettings != null) {
+      remotePathMapper.addAll(mappingSettings.getPathMappings(), PyRemotePathMapper.PyPathMappingType.USER_DEFINED);
+    }
     return remotePathMapper;
   }
 
@@ -123,9 +125,9 @@ public class PydevConsoleRunnerUtil {
     return Pair.create(sdk, module);
   }
 
-  static String constructPyPathAndWorkingDirCommand(@NotNull Collection<String> pythonPath,
-                                                    @Nullable String workingDir,
-                                                    @NotNull String command) {
+  static @NotNull String constructPyPathAndWorkingDirCommand(@NotNull Collection<String> pythonPath,
+                                                             @Nullable String workingDir,
+                                                             @NotNull String command) {
     if (workingDir != null) {
       pythonPath.add(workingDir);
     }
@@ -135,7 +137,9 @@ public class PydevConsoleRunnerUtil {
     return command.replace(PydevConsoleRunnerImpl.WORKING_DIR_AND_PYTHON_PATHS, path);
   }
 
-  public static Map<String, String> addDefaultEnvironments(Sdk sdk, Map<String, String> envs, @NotNull Project project) {
+  public static @NotNull Map<String, String> addDefaultEnvironments(@NotNull Sdk sdk,
+                                                                    @NotNull Map<String, String> envs,
+                                                                    @NotNull Project project) {
     setCorrectStdOutEncoding(envs, project);
 
     PythonEnvUtil.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(sdk));
@@ -167,11 +171,11 @@ public class PydevConsoleRunnerUtil {
     setPythonIOEncoding(commandLine.getEnvironment(), defaultCharset.name());
   }
 
-  public static boolean isInPydevConsole(PsiElement element) {
+  public static boolean isInPydevConsole(@NotNull PsiElement element) {
     return element instanceof PydevConsoleElement || getConsoleCommunication(element) != null || hasConsoleKey(element);
   }
 
-  private static boolean hasConsoleKey(PsiElement element) {
+  private static boolean hasConsoleKey(@NotNull PsiElement element) {
     PsiFile psiFile = element.getContainingFile();
     if (psiFile == null) return false;
     VirtualFile virtualFile = psiFile.getVirtualFile();
