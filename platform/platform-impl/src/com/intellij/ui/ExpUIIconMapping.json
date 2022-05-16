@@ -102,7 +102,10 @@
       "ignored.svg": "vcs/ignore_file.svg",
       "image.svg": "org/intellij/images/icons/ImagesFileType.svg",
       "java.svg": "fileTypes/java.svg",
-      "javascript.svg": "fileTypes/javaScript.svg",
+      "javascript.svg": [
+        "fileTypes/javaScript.svg",
+        "icons/JavaScript_debug_configuration.svg"
+      ],
       "jest.svg": "icons/fileTypes/jestSnapshot.svg",
       "jshint.svg": "icons/fileTypes/jsHint.svg",
       "json.svg": "fileTypes/json.svg",
@@ -115,6 +118,7 @@
       "lombokConfig.svg": "icons/config.svg",
       "manifest.svg": "fileTypes/manifest.svg",
       "markdown.svg": "icons/MarkdownPlugin.svg",
+      "maven.svg": "icons/repositoryLibraryLogo.svg",
       "patch.svg": "vcs/patch_file.svg",
       "php.svg": "icons/php-icon.svg",
       "properties.svg": "fileTypes/properties.svg",
@@ -129,7 +133,11 @@
       "scratch.svg": "actions/scratch.svg",
       "scratches.svg": "scope/scratches.svg",
       "scss.svg": "org/jetbrains/plugins/sass/sass.svg",
-      "shell.svg": "icons/shFile.svg",
+      "shell.svg": [
+        "icons/shFile.svg",
+        "nodes/console.svg",
+        "debugger/console.svg"
+      ],
       "sql.svg": "icons/sql.svg",
       "terraform.svg": "hcl/terraform.png",
       "text.svg": [
@@ -187,6 +195,7 @@
       "closeSmallHovered.svg": "actions/closeHovered.svg",
       "collapseAll.svg": "actions/collapseall.svg",
       "copy.svg": "actions/copy.svg",
+      "cut.svg": "actions/menu-cut.svg",
       "delete.svg": "actions/gc.svg",
       "down.svg": "actions/nextOccurence.svg",
       "download.svg": "actions/download.svg",
@@ -198,6 +207,7 @@
       ],
       "editorOnly.svg": "general/layoutEditorOnly.svg",
       "editorPreview.svg": "general/layoutEditorPreview.svg",
+      "exit.svg": "actions/exit.svg",
       "expandAll.svg": "actions/expandall.svg",
       "export.svg": "toolbarDecorator/export.svg",
       "filter.svg": "general/filter.svg",
@@ -414,18 +424,30 @@
       "variable.svg": "nodes/variable.svg",
       "warningIntroduction.svg": "nodes/warningIntroduction.svg"
     },
+    "php": {
+      "phpHttpRequest.svg": "icons/run_http_request.svg",
+      "phpLocal.svg": "icons/php-local.svg",
+      "phpRemote.svg": [
+        "icons/php-remote.svg",
+        "icons/run_remote_debug.svg"
+      ],
+      "phpWeb.svg": "icons/run_web_app.svg"
+    },
     "run": {
       "attachToProcess.svg": "debugger/attachToProcess.svg",
       "debug.svg": "actions/startDebugger.svg",
+      "dumpThreads.svg": "actions/dump.svg",
       "forceStepInto.svg": "icons/actions/force_step_into.svg",
       "forceStepOver.svg": "icons/actions/force_step_over.svg",
       "killProcess.svg": "debugger/killProcess.svg",
       "muteBreakpoints.svg": "debugger/muteBreakpoints.svg",
       "pause.svg": "actions/pause.svg",
+      "profile.svg": "actions/profile.svg",
       "restart.svg": "actions/restart.svg",
       "restartFailedTests.svg": "runConfigurations/rerunFailedTests.svg",
       "resume.svg": "actions/resume.svg",
       "run.svg": "actions/execute.svg",
+      "runWithCoverage.svg": "general/runWithCoverage.svg",
       "showCurrentFrame.svg": "debugger/showCurrentFrame.svg",
       "showIgnored.svg": "runConfigurations/showIgnored.svg",
       "showPassed.svg": "runConfigurations/showPassed.svg",
@@ -437,6 +459,16 @@
       "traceStream.svg": "icons/stream_debugger.svg",
       "viewBreakpoints.svg": "debugger/viewBreakpoints.svg"
     },
+    "runConfigurations":{
+      "application.svg": "runConfigurations/application.svg",
+      "applicationRemote.svg": "runConfigurations/remote.svg",
+      "compound.svg": "runConfigurations/compound.svg",
+      "invalidConfigurationLayer.svg": "runConfigurations/invalidConfigurationLayer.svg",
+      "javaScriptRemote.svg": "icons/JavaScript_remote_debug_configuration.svg",
+      "junit.svg": "runConfigurations/junit.svg",
+      "junitTestMark.svg": "runConfigurations/testMark.svg",
+      "webApp.svg": "runConfigurations/web_app.svg"
+    },
     "status": {
       "error.svg": "general/balloonError.svg",
       "info.svg": "general/balloonInformation.svg",
@@ -444,7 +476,10 @@
       "warningOutline.svg": "general/showWarning.svg"
     },
     "toolwindow": {
-      "ant.svg": "toolwindows/toolWindowAnt.svg",
+      "ant.svg": [
+        "toolwindows/toolWindowAnt.svg",
+        "icons/build.svg"
+      ],
       "bookmarks.svg": "toolwindows/toolWindowBookmarks.svg",
       "build.svg": "toolwindows/toolWindowBuild.svg",
       "commit.svg": "toolwindows/toolWindowCommit.svg",
@@ -462,6 +497,7 @@
       "hierarchy.svg": "toolwindows/toolWindowHierarchy.svg",
       "learn.svg": "img/featureTrainerToolWindow.svg",
       "maven.svg": "images/toolWindowMaven.svg",
+      "messages.svg": "toolwindows/toolWindowMessages.svg",
       "notifications.svg": "toolwindows/notifications.svg",
       "problems.svg": [
         "toolwindows/toolWindowProblems.svg",
@@ -492,6 +528,7 @@
       "currentBranchFavorite.svg": "icons/currentBranchFavoriteLabel.svg",
       "diff.svg": "actions/diff.svg",
       "intelliSort.svg": "icons/IntelliSort.svg",
+      "merge.svg": "vcs/merge.svg",
       "patch.svg": "vcs/patch.svg",
       "push.svg": "vcs/push.svg",
       "revert.svg": "actions/rollback.svg",
