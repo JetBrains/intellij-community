@@ -26,7 +26,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.refactoring.KotlinNamesValidator
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
@@ -40,7 +40,6 @@ import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ExtractKotlinFunctionHandler(
@@ -90,12 +89,15 @@ class ExtractKotlinFunctionHandler(
                 ExtractKotlinFunctionHandler(allContainersEnabled, InteractiveExtractionHelper)
                     .invoke(project, editor, descriptorWithConflicts.descriptor.extractionData.originalFile, null)
             }
-
-            val descriptor = descriptorWithConflicts.descriptor.copy(suggestedNames = listOf("extracted"))
+            val suggestedNames = descriptorWithConflicts.descriptor.suggestedNames.takeIf { it.isNotEmpty() } ?: listOf("extracted")
+            val descriptor = descriptorWithConflicts.descriptor.copy(suggestedNames = suggestedNames)
             val elements = descriptor.extractionData.originalElements
             val file = descriptor.extractionData.originalFile
             val callTextRange = TextRange(rangeOf(elements.first()).startOffset, rangeOf(elements.last()).endOffset)
-            val callRangeProvider: () -> TextRange? = createSmartRangeProvider(descriptor.extractionData.commonParent, callTextRange)
+
+            val commonParent = descriptor.extractionData.commonParent
+            val container = commonParent.takeIf { commonParent != elements.firstOrNull() } ?: commonParent.parent
+            val callRangeProvider: () -> TextRange? = createSmartRangeProvider(container, callTextRange)
             val editorState = EditorState(editor)
             val disposable = Disposer.newDisposable()
             WriteCommandAction.writeCommandAction(project).run<Throwable> {
@@ -167,7 +169,7 @@ class ExtractKotlinFunctionHandler(
             val name = file.viewProvider.document.getText(variableRange)
             return if (! KotlinNamesValidator().isIdentifier(name, file.project)) {
                 JavaRefactoringBundle.message("extract.method.error.invalid.name")
-            } else if (call?.getResolvedCall(call.analyze())?.resultingDescriptor == null) {
+            } else if (call?.resolveToCall() == null) {
                 JavaRefactoringBundle.message("extract.method.error.method.conflict")
             } else {
                 null
@@ -192,7 +194,7 @@ class ExtractKotlinFunctionHandler(
             val adjustedElements = elements.singleOrNull().safeAs<KtBlockExpression>()?.statements ?: elements
             ExtractionData(file, adjustedElements.toRange(false), targetSibling)
         }) { extractionData ->
-            ExtractionEngine(helper).run(editor, extractionData) { }
+            ExtractionEngine(helper).run(editor, extractionData)
         }
     }
 
