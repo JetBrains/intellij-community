@@ -477,7 +477,11 @@ class ExternalEntityMappingTest {
     assertNotEquals(barEntity.id, barEntity1.id)
     val mapping = initialBuilder.getExternalMapping<String>(INDEX_ID) as ExternalEntityMappingImpl
     assertEquals(2, mapping.size())
+    //suppressed untlil the https://youtrack.jetbrains.com/issue/KTIJ-21754 is being fixed
+    @Suppress("AssertBetweenInconvertibleTypes")
     assertEquals(1, mapping.getDataByEntity(fooEntity))
+    //suppressed untlil the https://youtrack.jetbrains.com/issue/KTIJ-21754 is being fixed
+    @Suppress("AssertBetweenInconvertibleTypes")
     assertEquals(2, mapping.getDataByEntity(barEntity))
   }
 

@@ -68,6 +68,8 @@ class FacetTypeUnloadingTest : HeavyPlatformTestCase() {
     assertEquals("mock", mockFacet.name)
     val mockSubFacet = facetManager.getFacetsByType(MockSubFacetType.ID).single()
     assertEquals("sub-facet", mockSubFacet.name)
+    //suppressed until https://youtrack.jetbrains.com/issue/IDEA-294031 being fixed
+    @Suppress("AssertBetweenInconvertibleTypes")
     assertSame(mockFacet, mockSubFacet.underlyingFacet)
   }
 
@@ -91,12 +93,16 @@ class FacetTypeUnloadingTest : HeavyPlatformTestCase() {
     assertTrue(facetManager.getFacetsByType(MockSubFacetType.ID).isEmpty())
     val invalidFacet = InvalidFacetManager.getInstance(myProject).invalidFacets.single()
     assertEquals("sub-facet", invalidFacet.name)
+    //suppressed until https://youtrack.jetbrains.com/issue/IDEA-294031 being fixed
+    @Suppress("AssertBetweenInconvertibleTypes")
     assertSame(mockFacet, invalidFacet.underlyingFacet)
 
     registerFacetType(MockSubFacetType(), testRootDisposable)
     assertTrue(InvalidFacetManager.getInstance(myProject).invalidFacets.isEmpty())
     val mockSubFacet = facetManager.getFacetsByType(MockSubFacetType.ID).single()
     assertEquals("sub-facet", mockSubFacet.name)
+    //suppressed until https://youtrack.jetbrains.com/issue/IDEA-294031 being fixed
+    @Suppress("AssertBetweenInconvertibleTypes")
     assertSame(mockFacet, mockSubFacet.underlyingFacet)
   }
 
