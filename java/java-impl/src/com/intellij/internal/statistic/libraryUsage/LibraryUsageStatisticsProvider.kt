@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.libraryUsage
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
 import com.intellij.internal.statistic.libraryJar.findJarVersion
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -20,19 +20,23 @@ internal class LibraryUsageStatisticsProvider(
   private val processedFilesService: ProcessedFilesStorageService,
   private val libraryUsageService: LibraryUsageStatisticsStorageService,
   private val libraryDescriptorFinder: LibraryDescriptorFinder,
-) : FileEditorManagerListener {
-  override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+) : DaemonListener {
+
+  override fun daemonFinished(fileEditors: MutableCollection<out FileEditor>) {
     if (!isEnabled) return
 
-    ReadAction.nonBlocking { processFile(file) }
-      .inSmartMode(source.project)
-      .expireWith(processedFilesService)
-      .coalesceBy(file, processedFilesService)
-      .submit(AppExecutorUtil.getAppExecutorService())
+    for (fileEditor in fileEditors) {
+      val vFile = fileEditor.file
+      if (processedFilesService.isVisited(vFile)) continue
+      ReadAction.nonBlocking { processFile(vFile) }
+        .inSmartMode(project)
+        .expireWith(processedFilesService)
+        .coalesceBy(vFile, processedFilesService)
+        .submit(AppExecutorUtil.getAppExecutorService())
+    }
   }
 
   private fun processFile(vFile: VirtualFile) {
-    if (processedFilesService.isVisited(vFile)) return
     val fileIndex = ProjectFileIndex.getInstance(project)
     if (!fileIndex.isInSource(vFile) || fileIndex.isInLibrary(vFile)) return
 
