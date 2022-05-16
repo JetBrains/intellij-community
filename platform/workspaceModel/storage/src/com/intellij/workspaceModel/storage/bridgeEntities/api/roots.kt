@@ -64,8 +64,8 @@ interface SourceRootEntity : WorkspaceEntity {
     val rootType: String
 
     @Child val customSourceRootProperties: CustomSourceRootPropertiesEntity?
-    val javaSourceRoots: List<@Child JavaSourceRootEntity>?
-    val javaResourceRoots: List<@Child JavaResourceRootEntity>?
+    val javaSourceRoots: List<@Child JavaSourceRootEntity>
+    val javaResourceRoots: List<@Child JavaResourceRootEntity>
 
 
     //region generated code

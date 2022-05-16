@@ -84,7 +84,7 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
           line("return ${methodBody.substring(2)}")
         }
         else {
-          line(methodBody)
+          line("return $methodBody")
         }
       }
 

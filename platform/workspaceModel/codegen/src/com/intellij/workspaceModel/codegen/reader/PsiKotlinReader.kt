@@ -163,7 +163,7 @@ class PsiKotlinReader(val file: KtFile) {
 
   private fun `val`(ktProperty: KtProperty) {
     val nameRange = ktProperty.nameIdentifier!!.srcRange
-    val getterBody = ktProperty.getter?.text
+    val getterBody = ktProperty.getter?.bodyExpression?.text
     leafBlock.defs.add(DefField(
       nameRange,
       nameRange.text,

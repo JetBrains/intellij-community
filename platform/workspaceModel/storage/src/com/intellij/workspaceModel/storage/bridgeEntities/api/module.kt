@@ -29,7 +29,7 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
     @Child val groupPath: ModuleGroupPathEntity?
     @Child val javaSettings: JavaModuleSettingsEntity?
     @Child val exModuleOptions: ExternalSystemModuleOptionsEntity?
-    val facets: List<@Child FacetEntity>?
+    val facets: List<@Child FacetEntity>
 
     override val persistentId: ModuleId
         get() = ModuleId(name)
