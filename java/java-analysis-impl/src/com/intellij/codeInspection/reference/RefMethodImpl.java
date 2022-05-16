@@ -281,15 +281,16 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (mySuperMethods == null) {
       mySuperMethods = refSuperMethod;
     }
-    else if (mySuperMethods instanceof List) {
+    else if (!(mySuperMethods instanceof List)) {
+      ArrayList<RefMethod> list = new ArrayList<>(2);
+      list.add((RefMethod)mySuperMethods);
+      list.add(refSuperMethod);
+      mySuperMethods = list;
+    }
+    else {
       //noinspection unchecked
       List<RefMethod> list = (List<RefMethod>)mySuperMethods;
       list.add(refSuperMethod);
-    }
-    else {
-      ArrayList<RefMethod> list = new ArrayList<>(1);
-      list.add(refSuperMethod);
-      mySuperMethods = list;
     }
   }
 
