@@ -1,0 +1,14 @@
+<!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M15 8C15 4.13401 11.866 1 8 1C4.13401 1 1 4.13401 1 8C1 11.866 4.13401 15 8 15V8H15Z" fill="#E7EFFD"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C11.3137 2 14 4.68629 14 8H15C15 4.13401 11.866 1 8 1C4.13401 1 1 4.13401 1 8C1 11.866 4.13401 15 8 15V14Z" fill="#3574F0"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M8 10.5731C6.73031 10.5045 5.82696 9.45324 5.82696 8C5.82696 6.49655 6.79381 5.42334 8.1329 5.42334C9.10459 5.42334 9.8829 5.94544 10.1971 6.67541H11.2123C10.8981 5.39917 9.62185 4.5 8.1329 4.5C6.2137 4.5 4.7876 5.99378 4.7876 8C4.7876 9.95962 6.14823 11.4303 8 11.4976V10.5731Z" fill="#3574F0"/>
+<path d="M16 16H9V9H16L12.5 12.5L16 16Z" fill="url(#paint0_linear_2344_34081)"/>
+<defs>
+<linearGradient id="paint0_linear_2344_34081" x1="16" y1="9" x2="9" y2="16" gradientUnits="userSpaceOnUse">
+<stop offset="0.00343514" stop-color="#E44857"/>
+<stop offset="0.4689" stop-color="#C711E1"/>
+<stop offset="1" stop-color="#7F52FF"/>
+</linearGradient>
+</defs>
+</svg>
