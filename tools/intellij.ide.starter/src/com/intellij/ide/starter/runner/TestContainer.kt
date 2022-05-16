@@ -8,13 +8,12 @@ import com.intellij.ide.starter.models.IdeProduct
 import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.path.IDEDataPaths
-import com.intellij.ide.starter.system.SystemInfo
+import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.logOutput
 import org.kodein.di.direct
 import org.kodein.di.factory
 import org.kodein.di.instance
 import java.io.Closeable
-import kotlin.io.path.createDirectories
 import kotlin.io.path.div
 
 /**
@@ -25,6 +24,12 @@ interface TestContainer<T> : Closeable {
   var useLatestDownloadedIdeBuild: Boolean
   val allContexts: MutableList<IDETestContext>
   val setupHooks: MutableList<IDETestContext.() -> IDETestContext>
+
+  override fun close() {
+    for (context in allContexts) {
+      catchAll { context.paths.close() }
+    }
+  }
 
   /**
    * Allows to apply the common configuration to all created IDETestContext instances

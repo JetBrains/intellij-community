@@ -217,6 +217,12 @@ data class IDETestContext(
     path.toFile().deleteRecursively()
   }
 
+  fun wipeEventLogDataDir() = apply {
+    val path = paths.systemDir / "event-log-data"
+    logOutput("Cleaning event-log-data (FUS) dir for $this at $path")
+    path.toFile().deleteRecursively()
+  }
+
   fun wipeSnapshotDir() = apply {
     val path = paths.snapshotsDir
     logOutput("Cleaning snapshot dir for $this at $path")
