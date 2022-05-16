@@ -12,7 +12,7 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 import java.io.File;
 
-public class MoveStatementUpDownTestBase extends LightPlatformCodeInsightTestCase {
+public abstract class MoveStatementUpDownTestBase extends LightPlatformCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/moveStatementAction/";
 
   protected Runnable myBeforeMoveTask;
