@@ -44,7 +44,7 @@ import java.util.concurrent.CompletableFuture
 
 object InplaceExtractUtils {
 
-  fun createInsertedHighlighting(editor: Editor, range: TextRange): Disposable {
+  private fun createInsertedHighlighting(editor: Editor, range: TextRange): Disposable {
     val project = editor.project ?: return Disposable {}
     val highlighters = SmartList<RangeHighlighter>()
     val manager = HighlightManager.getInstance(project)
@@ -119,7 +119,7 @@ object InplaceExtractUtils {
     InplaceExtractMethodCollector.show.log(editor.project, FusInputEvent(showEvent, javaClass.simpleName))
   }
 
-  fun logStatisticsOnHide(project: Project, popupProvider: ExtractMethodPopupProvider){
+  private fun logStatisticsOnHide(project: Project, popupProvider: ExtractMethodPopupProvider){
     InplaceExtractMethodCollector.hide.log(project, popupProvider.isChanged)
     if (popupProvider.annotate != popupProvider.annotateDefault) {
       val change = if (popupProvider.annotate == true) ExtractMethodSettingChange.AnnotateOn else ExtractMethodSettingChange.AnnotateOff
@@ -143,7 +143,7 @@ object InplaceExtractUtils {
     }
   }
 
-  fun navigateToEditorOffset(editor: Editor, offset: Int?) {
+  private fun navigateToEditorOffset(editor: Editor, offset: Int?) {
     if (offset == null) return
     val project: Project = editor.project ?: return
     val file: VirtualFile = FileDocumentManager.getInstance().getFile(editor.document) ?: return
@@ -172,7 +172,7 @@ object InplaceExtractUtils {
     return TemplateInlayUtil.createNavigatableButtonWithPopup(templateState.editor, offset, presentation, settingsPopup.panel, templateElement)
   }
 
-  fun addPreview(preview: EditorCodePreview, editor: Editor, lines: IntRange, navigatableOffset: Int){
+  private fun addPreview(preview: EditorCodePreview, editor: Editor, lines: IntRange, navigatableOffset: Int){
     val navigatableMarker = createGreedyRangeMarker(editor.document, TextRange(navigatableOffset, navigatableOffset))
     Disposer.register(preview) { navigatableMarker.dispose() }
     preview.addPreview(lines, onClickAction = { navigateToEditorOffset(editor, navigatableMarker.range?.endOffset) })
@@ -190,9 +190,9 @@ object InplaceExtractUtils {
     }
   }
 
-  fun IntRange.trim(maxLength: Int) = first until first + minOf(maxLength, last - first + 1)
+  private fun IntRange.trim(maxLength: Int) = first until first + minOf(maxLength, last - first + 1)
 
-  fun getLinesFromTextRange(document: Document, range: TextRange): IntRange {
+  private fun getLinesFromTextRange(document: Document, range: TextRange): IntRange {
     return document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
   }
 
@@ -200,8 +200,8 @@ object InplaceExtractUtils {
     val codePreview = EditorCodePreview.create(editor)
     val highlighting = createInsertedHighlighting(editor, methodRange)
     Disposer.register(codePreview, highlighting)
-    addPreview(codePreview, editor, getLinesFromTextRange(editor.document, callRange).trim(4), callOffset)
-    addPreview(codePreview, editor, getLinesFromTextRange(editor.document, methodRange), methodOffset)
+    addPreview(codePreview, editor, getLinesFromTextRange(editor.document, callRange), callOffset)
+    addPreview(codePreview, editor, getLinesFromTextRange(editor.document, methodRange).trim(4), methodOffset)
     return codePreview
   }
 
