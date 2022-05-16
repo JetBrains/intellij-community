@@ -15,10 +15,12 @@
  */
 package git4idea.branch;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.vcs.BranchRenameListener;
 import com.intellij.openapi.vcs.VcsNotifier;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -65,6 +67,7 @@ class GitRenameBranchOperation extends GitBranchOperation {
         return;
       }
     }
+    notifyBranchNameChanged(myCurrentName, myNewName);
     notifySuccess();
   }
 
@@ -80,6 +83,7 @@ class GitRenameBranchOperation extends GitBranchOperation {
       myNotifier.notifySuccess(BRANCH_RENAME_ROLLBACK_SUCCESS,
                                GitBundle.message("git.rename.branch.rollback.successful"),
                                GitBundle.message("git.rename.branch.renamed.back.to", myCurrentName));
+      notifyBranchNameRollback(myNewName, myCurrentName);
     }
     else {
       myNotifier.notifyError(BRANCH_RENAME_ROLLBACK_FAILED,
@@ -87,6 +91,20 @@ class GitRenameBranchOperation extends GitBranchOperation {
                              result.getErrorOutputWithReposIndication(),
                              true);
     }
+  }
+
+  protected final void notifyBranchNameChanged(@NotNull String oldName, @NotNull String newName) {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      if (myProject.isDisposed()) return;
+      myProject.getMessageBus().syncPublisher(BranchRenameListener.VCS_BRANCH_RENAMED).branchNameChanged(oldName, newName);
+    });
+  }
+
+  protected final void notifyBranchNameRollback(@NotNull String oldName, @NotNull String newName) {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      if (myProject.isDisposed()) return;
+      myProject.getMessageBus().syncPublisher(BranchRenameListener.VCS_BRANCH_RENAMED).branchNameRollback(oldName, newName);
+    });
   }
 
   @NotNull
