@@ -127,7 +127,7 @@
                         serviceImplementation="com.intellij.execution.filters.impl.HyperlinkInfoFactoryImpl"/>
     <consoleFilterProvider implementation="com.intellij.execution.filters.UrlFilter$UrlFilterProvider"/>
     <consoleFilterProvider implementation="com.intellij.execution.filters.GenericFileFilterProvider"
-                           order="last"/>
+                           order="first"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.documentation.DocumentationManagerUtil"/>
 
