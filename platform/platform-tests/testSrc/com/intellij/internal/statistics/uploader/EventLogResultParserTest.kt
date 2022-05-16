@@ -450,7 +450,7 @@ class EventLogResultParserTest : UsefulTestCase() {
   private fun doTestParseFileInternal(fileText: String, version: Int, vararg expectedEvents: ExternalSystemEvent) {
     val directory = FileUtil.createTempDirectory("idea-external-send-result", null)
     try {
-      val filename = if (version == 0) "idea_statistics_uploader_events.log" else "idea_statistics_uploader_events-${version}.log"
+      val filename = if (version == 0) "idea_statistics_uploader_events.log" else "idea_statistics_uploader_events_v${version}.log"
       FileUtil.writeToFile(File(directory, filename), fileText)
       val actual = ExternalEventsLogger.parseEvents(directory)
       assertEquals(expectedEvents.size, actual.size)

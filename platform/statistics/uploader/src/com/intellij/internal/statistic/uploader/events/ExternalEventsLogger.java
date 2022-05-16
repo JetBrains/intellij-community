@@ -52,7 +52,7 @@ public class ExternalEventsLogger implements DataCollectorSystemEventLogger {
 
   @NotNull
   private static File getEventLogFile(@NotNull String logDirectory, int version) {
-    return new File(logDirectory, "idea_statistics_uploader_events-" + version + ".log");
+    return new File(logDirectory, "idea_statistics_uploader_events_v" + version + ".log");
   }
 
   public void logSendingLogsStarted() {
