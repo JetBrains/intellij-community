@@ -5,8 +5,18 @@ import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.junit.JUnitConfigurationProducer
 import com.intellij.execution.junit.JUnitUtil
+import com.intellij.execution.junit.JUnitUtil.TEST_ANNOTATION
+import com.intellij.execution.junit.JUnitUtil.TEST_CASE_CLASS
+import com.intellij.execution.junit.JUnitUtil.TEST5_ANNOTATION
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.util.ParameterizedCachedValue
+import com.intellij.psi.util.ParameterizedCachedValueProvider
+import org.jetbrains.kotlin.idea.core.util.AvailabilityProvider
+import org.jetbrains.kotlin.idea.core.util.isClassAvailableInModule
 import org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider
 import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 
@@ -29,4 +39,26 @@ object JunitKotlinTestFrameworkProvider : KotlinTestFrameworkProvider {
     override fun isTestJavaMethod(testMethod: PsiMethod): Boolean {
         return testMethod.actionUnderSafeAnalyzeBlock({ JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(testMethod), false) }, { false })
     }
+
+    override fun isTestFrameworkAvailable(element: PsiElement): Boolean {
+        val b = element.isClassAvailableInModule(
+            JUNIT_AVAILABLE_KEY,
+            JUNIT_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE,
+            JUNIT_AVAILABLE_PROVIDER_WITH_TEST_SCOPE
+        ) ?: false
+        return b
+    }
 }
+
+
+private val JUNIT_AVAILABLE_KEY = Key<ParameterizedCachedValue<Boolean, Module>>("JUNIT_AVAILABLE")
+private val JUNIT_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE: ParameterizedCachedValueProvider<Boolean, Module> = JUnitAvailabilityProvider(test = false)
+private val JUNIT_AVAILABLE_PROVIDER_WITH_TEST_SCOPE = JUnitAvailabilityProvider(true)
+
+private class JUnitAvailabilityProvider(test: Boolean) : AvailabilityProvider(
+    test,
+    fqNames = setOf(TEST_CASE_CLASS, TEST_ANNOTATION, TEST5_ANNOTATION),
+    javaClassLookup = true,
+    aliasLookup = false,
+    kotlinFullClassLookup = false
+)
