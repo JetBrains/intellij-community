@@ -36,7 +36,7 @@ abstract class CachingAvatarIconsProvider<T : Any>(private val defaultIcon: Icon
   protected abstract fun loadImage(key: T): Image?
 
   companion object {
-    internal val avatarLoadingExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+    private val avatarLoadingExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
       "Collaboration Tools avatars loading executor",
       ProcessIOExecutorService.INSTANCE,
       3
