@@ -20,7 +20,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
@@ -240,8 +239,8 @@ private class LoadingAvatarIconsProvider<A : Account>(private val detailsLoader:
 
 
   override fun getIcon(key: A?, iconSize: Int): Icon {
-    val account = key ?: return IconUtil.resizeSquared(defaultAvatarIcon, iconSize)
-    val uri = avatarUrlSupplier(key) ?: return IconUtil.resizeSquared(defaultAvatarIcon, iconSize)
+    val account = key ?: return cachingDelegate.getIcon(null, iconSize)
+    val uri = avatarUrlSupplier(key) ?: return cachingDelegate.getIcon(null, iconSize)
     return cachingDelegate.getIcon(account to uri, iconSize)
   }
 }
