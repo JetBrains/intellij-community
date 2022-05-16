@@ -478,10 +478,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                       @Nullable String title) {
     DefaultActionGroup extraActions = new DefaultActionGroup();
     //noinspection unchecked
-    RepositoryLocationCommittedChangesPanel panel =
-      new RepositoryLocationCommittedChangesPanel(myProject, provider, location, extraActions);
+    RepositoryLocationCommittedChangesPanel<ChangeBrowserSettings> panel =
+      new RepositoryLocationCommittedChangesPanel<>(myProject, provider, location, extraActions);
     panel.setMaxCount(maxCount);
-    //noinspection unchecked
     panel.setSettings(settings);
     panel.refreshChanges();
     final ContentFactory factory = ContentFactory.SERVICE.getInstance();
@@ -515,7 +514,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                                  final boolean isNonLocal) {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.getName());
     if (vcs == null) return;
-    final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+    final var provider = vcs.getCommittedChangesProvider();
     if (provider == null) return;
     if (isNonLocal && provider.getForNonLocal(virtualFile) == null) return;
 
