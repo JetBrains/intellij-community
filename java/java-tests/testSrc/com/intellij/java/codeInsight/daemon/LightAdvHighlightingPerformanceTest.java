@@ -120,16 +120,22 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     assertNotNull(ProjectCoreUtil.theOnlyOpenProject());
     getFile().accept(new PsiRecursiveElementVisitor() {});
     Project myProject = getProject();
-    PlatformTestUtil.startPerformanceTest("getProject() for nested elements", 300, () -> {
-      getFile().accept(new PsiRecursiveElementVisitor() {
-        @Override
-        public void visitElement(@NotNull PsiElement element) {
-          for (int i = 0; i < 10; i++) {
-            assertSame(myProject, element.getProject());
+    PlatformTestUtil.startPerformanceTest("getProject() for nested elements", 5000, () -> {
+      for (int k=0; k<5; k++) {
+        getFile().accept(new PsiRecursiveElementVisitor() {
+          int c;
+          @Override
+          public void visitElement(@NotNull PsiElement element) {
+            for (int i = 0; i < 100; i++) {
+              assertSame(myProject, element.getProject());
+            }
+            if (c++ % 100 == 0) {
+              assertNotNull(ProjectCoreUtil.theOnlyOpenProject());
+            }
+            super.visitElement(element);
           }
-          super.visitElement(element);
-        }
-      });
+        });
+      }
     }).assertTiming();
   }
 }
