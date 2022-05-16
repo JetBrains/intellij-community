@@ -460,7 +460,6 @@ class EntityStorageSerializerImpl(
     }
   }
 
-  @Suppress("UNCHECKED_CAST")
   private fun readBimap(kryo: Kryo, input: Input): EntityId2JarDir {
     val res = EntityId2JarDir()
     repeat(input.readInt()) {
@@ -619,7 +618,6 @@ class EntityStorageSerializerImpl(
     }
   }
 
-  @Suppress("UNCHECKED_CAST")
   override fun deserializeCache(stream: InputStream): WorkspaceEntityStorageBuilder? {
     return Input(stream, KRYO_BUFFER_SIZE).use { input ->
       val kryo = createKryo()

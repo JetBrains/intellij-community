@@ -314,7 +314,6 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
-  @Suppress("UNUSED_PARAMETER")
   // for Rider
   protected open fun getRecentProjectMetadata(path: String, project: Project): String? = null
 

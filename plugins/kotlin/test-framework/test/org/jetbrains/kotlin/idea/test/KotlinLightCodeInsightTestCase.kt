@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.test
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import java.io.File
 
-@Suppress("DEPRECATION")
 @Deprecated("Use KotlinLightCodeInsightFixtureTestCase instead")
 abstract class KotlinLightCodeInsightTestCase : com.intellij.testFramework.LightJavaCodeInsightTestCase() {
     open fun getTestDataDirectory(): File {

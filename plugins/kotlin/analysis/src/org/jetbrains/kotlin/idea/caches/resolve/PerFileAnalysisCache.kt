@@ -335,7 +335,6 @@ private inline fun Throwable.throwAsInvalidModuleException(crossinline action: (
 
 private class MergedDiagnostics(val diagnostics: Collection<Diagnostic>, override val modificationTracker: ModificationTracker) :
     Diagnostics {
-    @Suppress("UNCHECKED_CAST")
     private val elementsCache = DiagnosticsElementsCache(this) { true }
 
     override fun all() = diagnostics

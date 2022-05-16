@@ -1356,7 +1356,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
         }
       }
     }
-    @Suppress("DEPRECATION")
     return ArrayUtil.toObjectArray(result, baseClass)
   }
 

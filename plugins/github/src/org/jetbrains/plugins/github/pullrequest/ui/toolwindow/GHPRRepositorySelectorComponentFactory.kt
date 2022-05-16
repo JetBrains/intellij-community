@@ -276,7 +276,6 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
     private fun <T> ComboBoxModel<T>.addSelectionChangeListener(listener: () -> Unit) {
       addListDataListener(object : ListDataListener {
         override fun contentsChanged(e: ListDataEvent) {
-          @Suppress("UNCHECKED_CAST")
           if (e.index0 == -1 && e.index1 == -1) listener()
         }
 

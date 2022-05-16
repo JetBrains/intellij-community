@@ -375,7 +375,6 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   protected fun initComponentWithoutStateSpec(component: PersistentStateComponent<Any>, configurationSchemaKey: String): Boolean {
-    @Suppress("UNCHECKED_CAST")
     val stateClass = ComponentSerializationUtil.getStateClass<Any>(component.javaClass)
     val storage = getReadOnlyStorage(component.javaClass, stateClass, configurationSchemaKey)
     val state = storage?.getState(component, "", stateClass, null, reload = false)

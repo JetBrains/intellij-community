@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization
 
 import com.amazon.ion.IonException
@@ -47,7 +47,6 @@ internal class IonObjectSerializer {
   @Throws(IOException::class)
   fun <T : Any> readVersioned(objectClass: Class<T>, input: InputStream, inputName: Path, expectedVersion: Int, configuration: ReadConfiguration, originalType: Type? = null): T? {
     readerBuilder.build(input).use { reader ->
-      @Suppress("UNUSED_VARIABLE")
       var isVersionChecked = 0
 
       fun logVersionMismatch(prefix: String, currentVersion: Int) {
@@ -72,7 +71,6 @@ internal class IonObjectSerializer {
               logVersionMismatch("App", currentVersion)
               return null
             }
-            @Suppress("UNUSED_CHANGED_VALUE")
             isVersionChecked++
           }
           "formatVersion" -> {
@@ -81,7 +79,6 @@ internal class IonObjectSerializer {
               logVersionMismatch("Format", currentVersion)
               return null
             }
-            @Suppress("UNUSED_CHANGED_VALUE")
             isVersionChecked++
           }
           "data" -> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization.stateProperties
 
 import com.intellij.openapi.components.BaseState
@@ -41,7 +41,6 @@ class MapStoredProperty<K: Any, V>(value: MutableMap<K, V>?) : StoredPropertyBas
   override fun toString() = if (isEqualToDefault()) "" else value.toString()
 
   override fun setValue(other: StoredProperty<MutableMap<K, V>>): Boolean {
-    @Suppress("UNCHECKED_CAST")
     return doSetValue(value, (other as MapStoredProperty<K, V>).value)
   }
 

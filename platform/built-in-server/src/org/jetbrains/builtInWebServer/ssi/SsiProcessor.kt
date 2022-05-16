@@ -362,7 +362,7 @@ internal open class SsiProcessor {
       }
       bIdx++
     }
-    @Suppress("CAST_NEVER_SUCCEEDS", "UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST")
     return values as Array<String>
   }
 

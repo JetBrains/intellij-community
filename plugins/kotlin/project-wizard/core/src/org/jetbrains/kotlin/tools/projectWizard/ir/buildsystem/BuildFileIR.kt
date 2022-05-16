@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem
 
 import kotlinx.collections.immutable.PersistentList
@@ -29,7 +29,6 @@ data class BuildFileIR constructor(
 ) : FileIR {
     override fun withReplacedIrs(irs: PersistentList<BuildSystemIR>): BuildFileIR = copy(irs = irs)
 
-    @Suppress("UNCHECKED_CAST")
     fun withModulesUpdated(updater: (ModuleIR) -> TaskResult<ModuleIR>): TaskResult<BuildFileIR> =
         modules.withModulesUpdated(updater).map { newModules -> copy(modules = newModules) }
 
@@ -189,7 +188,6 @@ data class SingleplatformModulesStructureWithSingleModuleIR(
     override fun withReplacedIrs(irs: PersistentList<BuildSystemIR>): SingleplatformModulesStructureWithSingleModuleIR =
         copy(irs = irs)
 
-    @Suppress("UNCHECKED_CAST")
     override fun withModules(modules: List<ModuleIR>) =
         copy(module = modules.single())
 

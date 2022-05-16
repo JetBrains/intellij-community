@@ -96,7 +96,6 @@ class NotificationGroup private constructor(val displayId: String,
     @JvmStatic
     @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     @ApiStatus.ScheduledForRemoval
-    @Suppress("DEPRECATION")
     fun balloonGroup(displayId: String, @NotificationTitle title: String?): NotificationGroup =
       findRegisteredNotificationGroup(displayId)
       ?: NotificationGroup(displayId = displayId, displayType = NotificationDisplayType.BALLOON, title = title, registerGroup = true)
@@ -104,7 +103,6 @@ class NotificationGroup private constructor(val displayId: String,
     @JvmStatic
     @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     @ApiStatus.ScheduledForRemoval
-    @Suppress("DEPRECATION")
     fun balloonGroup(displayId: String, pluginId: PluginId): NotificationGroup =
       findRegisteredNotificationGroup(displayId)
       ?: NotificationGroup(displayId, NotificationDisplayType.BALLOON, pluginId = pluginId, registerGroup = true)
@@ -119,7 +117,6 @@ class NotificationGroup private constructor(val displayId: String,
     @JvmStatic
     @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     @ApiStatus.ScheduledForRemoval
-    @Suppress("DEPRECATION")
     fun logOnlyGroup(displayId: String, @NotificationTitle title: String?): NotificationGroup =
       findRegisteredNotificationGroup(displayId)
       ?: NotificationGroup(displayId, NotificationDisplayType.NONE, title = title, registerGroup = true)
@@ -127,7 +124,6 @@ class NotificationGroup private constructor(val displayId: String,
     @JvmStatic
     @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     @ApiStatus.ScheduledForRemoval
-    @Suppress("DEPRECATION")
     fun logOnlyGroup(displayId: String, pluginId: PluginId): NotificationGroup =
       findRegisteredNotificationGroup(displayId)
       ?: NotificationGroup(displayId, NotificationDisplayType.NONE, pluginId = pluginId, registerGroup = true)
@@ -144,7 +140,6 @@ class NotificationGroup private constructor(val displayId: String,
     @JvmStatic
     @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     @ApiStatus.ScheduledForRemoval
-    @Suppress("DEPRECATION")
     fun toolWindowGroup(displayId: String, toolWindowId: String, logByDefault: Boolean, pluginId: PluginId): NotificationGroup =
       findRegisteredNotificationGroup(displayId)
       ?: NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId, pluginId = pluginId, registerGroup = true)
