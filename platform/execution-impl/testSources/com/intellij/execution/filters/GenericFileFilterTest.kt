@@ -33,7 +33,7 @@ class GenericFileFilterTest {
 
   private val localFileSystem = mock(LocalFileSystem::class.java)
   private val project = mock(Project::class.java)
-  private val filter = GenericFileFilter(project, localFileSystem, isEnabled = { true })
+  private val filter = GenericFileFilter(project, localFileSystem)
 
   @Before
   fun setUp() {

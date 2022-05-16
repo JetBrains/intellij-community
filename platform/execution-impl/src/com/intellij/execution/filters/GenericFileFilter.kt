@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.filters
 
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 
@@ -27,12 +26,8 @@ enum class ParsingState {
  *  Filter that highlights absolute path as hyperlinks in console output. This filter is effective in all console output, including build
  *  output, sync output, run test output, built-in terminal emulator, etc. Therefore, we manually parse the string instead of using regex
  *  for maximum performance.
- *
- *  @param isEnabled the lazy value indicating whether this filter is enabled.
  */
-class GenericFileFilter(private val project: Project,
-                        private val localFileSystem: LocalFileSystem,
-                        private val isEnabled: () -> Boolean) : Filter {
+class GenericFileFilter(private val project: Project, private val localFileSystem: LocalFileSystem) : Filter {
   companion object {
     /**
      *  Max filename considered during parsing. Do not confuse with file path, which may contain several file names separated by '/' or '\'.
@@ -49,10 +44,6 @@ class GenericFileFilter(private val project: Project,
   }
 
   override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
-    if (!isEnabled()) {
-      return null
-    }
-
     val indexOffset = entireLength - line.length
     val items = mutableListOf<Filter.ResultItem>()
     var state = ParsingState.NORMAL
@@ -240,9 +231,6 @@ private fun String.takeWhileFromIndex(index: Int, predicate: (Char) -> Boolean):
 }
 
 class GenericFileFilterProvider : ConsoleFilterProvider {
-  override fun getDefaultFilters(project: Project): Array<GenericFileFilter> {
-    return arrayOf(GenericFileFilter(project, LocalFileSystem.getInstance(), isEnabled = {
-      AdvancedSettings.getBoolean("ide.enable.generic.file.filter")
-    }))
-  }
+  override fun getDefaultFilters(project: Project) = arrayOf(GenericFileFilter(project, LocalFileSystem.getInstance()))
 }
+
