@@ -22,6 +22,7 @@ import com.intellij.ui.picker.ColorListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
@@ -122,6 +123,7 @@ final class InspectorTable extends JPanel implements DataProvider {
       }
     }.installOn(myTable);
 
+    myTable.setCellSelectionEnabled(true);
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
     add(new JBScrollPane(myTable), BorderLayout.CENTER);
@@ -351,6 +353,7 @@ final class InspectorTable extends JPanel implements DataProvider {
       final JBFont font = JBFont.label();
       setFont(changed ? font.asBold() : font);
       setForeground(fg);
+      setBorder(new JBEmptyBorder(2, 3, 2, 3));
       return this;
     }
   }
@@ -359,12 +362,13 @@ final class InspectorTable extends JPanel implements DataProvider {
     @Override
     public void performCopy(@NotNull DataContext dataContext) {
       int[] rows = myTable.getSelectedRows();
+      int[] columns = myTable.getSelectedColumns();
 
       StringBuilder builder = new StringBuilder();
       for (int row : rows) {
         if (builder.length() > 0) builder.append('\n');
 
-        for (int col = 0; col < myTable.getColumnCount(); col++) {
+        for (int col : columns) {
           builder.append(getCellTextValue(row, col));
           if (col < myTable.getColumnCount() - 1) builder.append("\t");
         }
