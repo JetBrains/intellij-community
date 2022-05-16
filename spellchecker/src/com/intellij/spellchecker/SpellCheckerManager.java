@@ -27,7 +27,7 @@ import com.intellij.spellchecker.engine.SuggestionProvider;
 import com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine;
 import com.intellij.spellchecker.grazie.GrazieSuggestionProvider;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
-import com.intellij.spellchecker.state.CachedDictionaryState;
+import com.intellij.spellchecker.state.AppDictionaryState;
 import com.intellij.spellchecker.state.DictionaryStateListener;
 import com.intellij.spellchecker.state.ProjectDictionaryState;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
@@ -181,10 +181,10 @@ public final class SpellCheckerManager implements Disposable {
   }
 
   private void initUserDictionaries() {
-    CachedDictionaryState cachedDictionaryState = CachedDictionaryState.getInstance();
+    AppDictionaryState cachedDictionaryState = AppDictionaryState.getInstance();
     cachedDictionaryState.addCachedDictListener(__ -> restartInspections(), this);
     if (cachedDictionaryState.getDictionary() == null) {
-      cachedDictionaryState.setDictionary(new UserDictionary(CachedDictionaryState.DEFAULT_NAME));
+      cachedDictionaryState.setDictionary(new UserDictionary(AppDictionaryState.DEFAULT_NAME));
     }
     myAppDictionary = cachedDictionaryState.getDictionary();
     mySpellChecker.addModifiableDictionary(myAppDictionary);
