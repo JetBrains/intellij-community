@@ -90,6 +90,7 @@ class InplaceMethodExtractor(private val editor: Editor,
       val templateState = ExtractMethodTemplateBuilder(editor, ExtractMethodHandler.getRefactoringName())
         .withCompletionNames(suggestedNames.toList())
         .withCompletionAdvertisement(InplaceRefactoring.getPopupOptionsAdvertisement())
+        .enableRestartForHandler(ExtractMethodHandler::class.java)
         .onBroken {
           editorState.revert()
         }

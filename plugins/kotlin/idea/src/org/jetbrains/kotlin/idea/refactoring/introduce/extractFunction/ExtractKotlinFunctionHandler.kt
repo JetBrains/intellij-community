@@ -115,6 +115,7 @@ class ExtractKotlinFunctionHandler(
                 Disposer.register(disposable, preview)
                 ExtractMethodTemplateBuilder(editor, EXTRACT_FUNCTION)
                     .withCompletionNames(descriptor.suggestedNames)
+                    .enableRestartForHandler(ExtractKotlinFunctionHandler::class.java)
                     .onBroken {
                         editorState.revert()
                     }
