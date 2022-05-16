@@ -3,7 +3,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import org.jetbrains.annotations.NotNull;
@@ -13,54 +12,37 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final Key<ReassignedVariableVisitor> KEY = Key.create("REASSIGNED_VARIABLE_VISITOR");
-  @Override
-  public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
-    ReassignedVariableVisitor visitor = session.getUserData(KEY);
-    if (visitor != null) {
-      visitor.clear();
-      session.putUserData(KEY, null);
-    }
-  }
-
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,
                                                  @NotNull LocalInspectionToolSession session) {
-    ReassignedVariableVisitor visitor = new ReassignedVariableVisitor(holder);
-    session.putUserData(KEY, visitor);
-    return visitor;
+    return new ReassignedVariableVisitor(holder);
   }
 
   private class ReassignedVariableVisitor extends JavaElementVisitor {
-    private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myLocals = new HashMap<>();
-    private final Map<PsiParameter, Boolean> myParameters = new HashMap<>();
+    private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myLocalVariableProblems = new HashMap<>();
+    private final Map<PsiParameter, Boolean> myParameterIsReassigned = new HashMap<>();
     private final @NotNull ProblemsHolder myHolder;
 
     private ReassignedVariableVisitor(@NotNull ProblemsHolder holder) {
       myHolder = holder;
     }
 
-    void clear() {
-      myLocals.clear();
-      myParameters.clear();
-    }
-
     @Override
     public void visitLocalVariable(PsiLocalVariable variable) {
-      doCheck(variable);
+      checkReassigned(variable);
     }
 
     @Override
     public void visitParameter(PsiParameter parameter) {
-      myParameters.put(parameter, doCheck(parameter));
+      myParameterIsReassigned.put(parameter, checkReassigned(parameter));
     }
 
-    private boolean doCheck(PsiVariable variable) {
+    private boolean checkReassigned(@NotNull PsiVariable variable) {
       PsiIdentifier nameIdentifier = variable.getNameIdentifier();
       if (nameIdentifier != null &&
           !variable.hasModifierProperty(PsiModifier.FINAL) &&
-          HighlightControlFlowUtil.isReassigned(variable, myLocals)) {
+          HighlightControlFlowUtil.isReassigned(variable, myLocalVariableProblems)) {
         myHolder.registerProblem(nameIdentifier, getReassignedMessage(variable));
         return true;
       }
@@ -73,23 +55,20 @@ public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectio
 
       PsiElement referenceNameElement = expression.getReferenceNameElement();
       if (referenceNameElement != null) {
-        PsiElement resolve = expression.resolve();
-        if (resolve instanceof PsiVariable && 
-            !((PsiVariable)resolve).hasModifierProperty(PsiModifier.FINAL) &&
-            !SuppressionUtil.inspectionResultSuppressed(resolve, ReassignedVariableInspection.this)) {
-          if (resolve instanceof PsiLocalVariable) {
-            if (HighlightControlFlowUtil.isReassigned((PsiVariable)resolve, myLocals)) {
-              myHolder.registerProblem(referenceNameElement, getReassignedMessage((PsiVariable)resolve));
+        PsiElement resolved = expression.resolve();
+        if (resolved instanceof PsiVariable &&
+            !((PsiVariable)resolved).hasModifierProperty(PsiModifier.FINAL) &&
+            !SuppressionUtil.inspectionResultSuppressed(resolved, ReassignedVariableInspection.this)) {
+          if (resolved instanceof PsiLocalVariable) {
+            if (HighlightControlFlowUtil.isReassigned((PsiVariable)resolved, myLocalVariableProblems)) {
+              myHolder.registerProblem(referenceNameElement, getReassignedMessage((PsiVariable)resolved));
             }
           }
-          else if (resolve instanceof PsiParameter) {
-            Boolean isAssigned = myParameters.get(resolve);
-            if (isAssigned == null) {
-              isAssigned = HighlightControlFlowUtil.isAssigned((PsiParameter)resolve);
-              myParameters.put((PsiParameter)resolve, isAssigned);
-            }
-            if (isAssigned) {
-              myHolder.registerProblem(referenceNameElement, getReassignedMessage((PsiVariable)resolve));
+          else if (resolved instanceof PsiParameter) {
+            Boolean isReassigned = myParameterIsReassigned.computeIfAbsent((PsiParameter)resolved,
+                      param -> HighlightControlFlowUtil.isAssigned((PsiParameter)param));
+            if (isReassigned) {
+              myHolder.registerProblem(referenceNameElement, getReassignedMessage((PsiVariable)resolved));
             }
           }
         }
