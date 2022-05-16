@@ -79,9 +79,7 @@ object DefaultIndexStorageLayout {
     ) {
       override fun initMapAndCache() {
         assert(PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get() == null)
-        if (!extension.dependsOnFileContent()) {
-          PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(storageLockContext)
-        }
+        PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(storageLockContext)
         try {
           super.initMapAndCache()
         }
