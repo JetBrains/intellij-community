@@ -496,17 +496,14 @@ public class WSLDistribution implements AbstractWslDistribution {
 
   @Override
   public @Nullable @NlsSafe String getWslPath(@NotNull String windowsPath) {
-    if (FileUtil.toSystemDependentName(windowsPath).startsWith(WslConstants.UNC_PREFIX)) {
-      windowsPath = StringUtil.trimStart(FileUtil.toSystemDependentName(windowsPath), WslConstants.UNC_PREFIX);
-      int index = windowsPath.indexOf('\\');
-      if (index == -1) return null;
-
-      String distName = windowsPath.substring(0, index);
-      if (!distName.equalsIgnoreCase(myDescriptor.getMsId())) {
-        throw new IllegalArgumentException(
-          "Trying to get WSL path from a different WSL distribution: in path: " + distName + "; mine is: " + myDescriptor.getMsId());
+    WslPath wslPath = WslPath.parseWindowsUncPath(windowsPath);
+    if (wslPath != null) {
+      if (wslPath.getDistributionId().equals(myDescriptor.getMsId())) {
+        return wslPath.getLinuxPath();
       }
-      return FileUtil.toSystemIndependentName(windowsPath.substring(index));
+      throw new IllegalArgumentException("Trying to get WSL path from a different WSL distribution. Requested path (" + windowsPath + ")" +
+                                         " belongs to " + wslPath.getDistributionId() + " distribution" +
+                                         ", but context distribution is " + myDescriptor.getMsId());
     }
 
     //noinspection deprecation
