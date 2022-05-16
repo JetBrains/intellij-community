@@ -124,7 +124,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
         PsiNewExpression newExpression = (PsiNewExpression)parent;
         if (newExpression.isArrayCreation() || newExpression.getAnonymousClass() != null) return null;
         PsiType expectedType = ExpectedTypeUtils.findExpectedType(newExpression, false);
-        if (expectedType == null) return null;
+        if (expectedType == null || (expectedType instanceof PsiClassType && ((PsiClassType)expectedType).isRaw())) return null;
         PsiNewExpression copy = (PsiNewExpression)LambdaUtil.copyWithExpectedType(parent, expectedType);
         PsiJavaCodeReferenceElement reference = copy.getClassReference();
         if (reference == null) return null;
