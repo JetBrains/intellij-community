@@ -20,11 +20,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.Map;
 import java.util.function.Supplier;
 
 abstract class SEResultsListFactory {
+
+  private static final JBInsets RENDERER_INSETS = new JBInsets(1, 8, 1, 2);
 
   abstract SearchListModel createModel();
 
@@ -87,12 +90,14 @@ abstract class SEResultsListFactory {
 
     if (component instanceof JComponent) {
       JComponent jComponent = (JComponent)component;
-      if (ExperimentalUI.isNewUI()) {
-        jComponent.setBorder(JBUI.Borders.empty());
-      }
-      else {
-        if (jComponent.getBorder() != GotoActionModel.GotoActionListCellRenderer.TOGGLE_BUTTON_BORDER) {
-          jComponent.setBorder(JBUI.Borders.empty(1, 2));
+      if (!ExperimentalUI.isNewUI()) {
+        if (jComponent.getBorder() == GotoActionModel.GotoActionListCellRenderer.TOGGLE_BUTTON_BORDER) {
+          //noinspection UseDPIAwareBorders
+          EmptyBorder border = new EmptyBorder(0, RENDERER_INSETS.left, 0, RENDERER_INSETS.right);
+          jComponent.setBorder(border);
+        }
+        else {
+          jComponent.setBorder(new EmptyBorder(RENDERER_INSETS));
         }
       }
     }
@@ -114,13 +119,23 @@ abstract class SEResultsListFactory {
       if (rowBackground == null || rowBackground == UIUtil.getListBackground()) {
         rowBackground = JBUI.CurrentTheme.Popup.BACKGROUND;
       }
-      SelectablePanel selectablePanel = SelectablePanel.wrap(component, rowBackground);
+
+      SelectablePanel selectablePanel;
+      if (component instanceof SelectablePanel) {
+        selectablePanel = (SelectablePanel)component;
+      } else {
+        if (component instanceof JComponent) {
+          ((JComponent)component).setBorder(JBUI.Borders.empty());
+        }
+        UIUtil.setOpaqueRecursively(component, false);
+        selectablePanel = SelectablePanel.wrap(component);
+        component = selectablePanel;
+      }
+      selectablePanel.setBackground(rowBackground);
       PopupUtil.configSelectablePanel(selectablePanel);
       if (selected) {
         selectablePanel.setSelectionColor(UIUtil.getListBackground(true, true));
       }
-      UIUtil.setOpaqueRecursively(component, false);
-      component = selectablePanel;
     } else {
       component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
     }

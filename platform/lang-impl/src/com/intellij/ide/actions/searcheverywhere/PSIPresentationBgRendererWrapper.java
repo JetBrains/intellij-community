@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.render.RendererPanelsUtils;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
@@ -130,19 +131,25 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
       Color bgColor = isSelected ? UIUtil.getListSelectionBackground(true) : presentation.getBackgroundColor();
       setBackground(bgColor);
 
-      JLabel locationLabel = StringUtil.isNotEmpty(presentation.getLocationText())
-                             ? new JLabel(presentation.getLocationText(), presentation.getLocationIcon(), SwingConstants.RIGHT)
-                             : null;
-      if (locationLabel != null) {
+      JLabel locationLabel;
+      if (StringUtil.isNotEmpty(presentation.getLocationText())) {
+        locationLabel = new JLabel(presentation.getLocationText(), presentation.getLocationIcon(), SwingConstants.RIGHT);
         locationLabel.setHorizontalTextPosition(SwingConstants.LEFT);
+        locationLabel.setIconTextGap(RendererPanelsUtils.getIconTextGap());
         locationLabel.setForeground(isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
         add(locationLabel, BorderLayout.EAST);
+      }
+      else {
+        locationLabel = null;
       }
 
       ColoredListCellRenderer<Object> leftRenderer = new ColoredListCellRenderer<>() {
         @Override
         protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          //noinspection UseDPIAwareInsets
+          setIpad(new Insets(0, 0, 0, getIpad().right)); // Border of top panel is used for around insets of renderer
           setIcon(presentation.getIcon());
+          setIconTextGap(RendererPanelsUtils.getIconTextGap());
           SimpleTextAttributes nameAttributes = presentation.getPresentableTextAttributes() != null
                                                 ? SimpleTextAttributes.fromTextAttributes(presentation.getPresentableTextAttributes())
                                                 : new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, null);
