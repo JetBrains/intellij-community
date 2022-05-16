@@ -16,17 +16,14 @@ open class ShowEditorDiffPreviewActionProvider : AnActionExtensionProvider {
   }
 
   override fun update(e: AnActionEvent) {
-    getDiffPreview(e)?.run {
-      e.presentation.description += " " + message("action.Diff.ShowDiffPreview.description")
-      updateAvailability(e)
-    }
+    val diffPreview = getDiffPreview(e)!!
+    e.presentation.description += " " + message("action.Diff.ShowDiffPreview.description")
+    diffPreview.updateAvailability(e)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val diffPreview = getDiffPreview(e)!!
-
-    val previewManager = EditorTabDiffPreviewManager.getInstance(e.project!!)
-    previewManager.showDiffPreview(diffPreview)
+    diffPreview.setPreviewVisible(true, true)
   }
 
   open fun getDiffPreview(e: AnActionEvent) = e.getData(EDITOR_TAB_DIFF_PREVIEW)
