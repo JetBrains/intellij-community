@@ -27,16 +27,23 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.Icon
 
 class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
     companion object {
 
-        private fun KtNamedDeclaration.getTestFramework(): KotlinTestFramework? =
-            KotlinTestFramework.getApplicableFor(this)
-
-        private fun KtNamedFunction.isIgnored(): Boolean {
-            return getTestFramework()?.isIgnoredMethod(this) ?: false
+        /**
+         * Users may want to try to run that individual test, for example to check if it still fails because of some third party problem,
+         * but it's not executed when a whole class or test package run.
+         *
+         * On other side Gradle has its own built-in support for JUnit but doesn't allow fine-tuning behaviour.
+         * As of now launching ignored tests (for Gradle) is impossible.
+         */
+        private fun KtNamedDeclaration.isIgnoredForGradleModule(includeSlowProviders: Boolean): Boolean {
+            val ktNamedFunction = this.safeAs<KtNamedFunction>().takeIf { module?.isGradleModule() == true } ?: return false
+            val testFramework = KotlinTestFramework.getApplicableFor(this, includeSlowProviders)
+            return testFramework?.isIgnoredMethod(ktNamedFunction) == true
         }
 
         fun getTestStateIcon(urls: List<String>, declaration: KtNamedDeclaration): Icon {
@@ -87,7 +94,6 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
         if (declaration is KtNamedFunction) {
             if (declaration.containingClassOrObject == null ||
                 targetPlatform.isMultiPlatform() && declaration.containingClass() == null) return null
-            if (declaration.isIgnored() && declaration.module?.isGradleModule() == true) return null
         } else {
             if (declaration !is KtClassOrObject ||
                 targetPlatform.isMultiPlatform() && declaration !is KtClass
@@ -104,7 +110,7 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
                 declaration.resolveToDescriptorIfAny()
             },
             includeSlowProviders = includeSlowProviders
-        ) ?: return null
+        )?.takeUnless { declaration.isIgnoredForGradleModule(includeSlowProviders) } ?: return null
 
         return Info(
             icon,

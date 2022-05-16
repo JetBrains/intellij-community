@@ -44,10 +44,11 @@ class JvmIdePlatformKindTooling : IdePlatformKindTooling() {
     }
 
     private fun calculateUrls(declaration: KtNamedDeclaration, includeSlowProviders: Boolean? = null): List<String>? {
-        val testFramework = KotlinTestFramework.getApplicableFor(declaration) ?: return null
+        val testFramework =
+            KotlinTestFramework.getApplicableFor(declaration, includeSlowProviders?.takeUnless { it } ) ?: return null
 
         val relevantProvider = includeSlowProviders == null || includeSlowProviders == testFramework.isSlow
-        if (relevantProvider) return null
+        if (!relevantProvider) return null
 
         val qualifiedName = testFramework.qualifiedName(declaration) ?: return null
         return when (declaration) {
