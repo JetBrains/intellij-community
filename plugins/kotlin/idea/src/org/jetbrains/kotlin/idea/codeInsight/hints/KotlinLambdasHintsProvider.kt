@@ -39,15 +39,14 @@ class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHint
     override val group: InlayGroup
         get() = InlayGroup.LAMBDAS_GROUP
 
-    override fun isElementSupported(resolved: HintType?, settings: Settings): Boolean =
-        when (resolved) {
-            HintType.LAMBDA_RETURN_EXPRESSION -> settings.returnExpressions
-            HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER -> settings.implicitReceiversAndParams
+    override fun isElementSupported(resolved: HintType?, settings: Settings): Boolean = isHintSupported(resolved, settings)
+
+    override fun isHintSupported(hintType: HintType?, settings: Settings?): Boolean =
+        when (hintType) {
+            HintType.LAMBDA_RETURN_EXPRESSION -> settings?.returnExpressions ?: true
+            HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER -> settings?.implicitReceiversAndParams ?: true
             else -> false
         }
-
-    override fun isHintSupported(hintType: HintType): Boolean =
-        hintType == HintType.LAMBDA_RETURN_EXPRESSION || hintType == HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER
 
     override fun createConfigurable(settings: Settings): ImmediateConfigurable {
         return object : ImmediateConfigurable {
