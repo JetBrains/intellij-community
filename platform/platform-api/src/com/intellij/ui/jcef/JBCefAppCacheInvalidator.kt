@@ -3,8 +3,7 @@ package com.intellij.ui.jcef
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.caches.CachesInvalidator
-import com.intellij.openapi.util.io.FileUtil
-import java.nio.file.Paths
+import com.intellij.openapi.application.ApplicationManager
 
 class JBCefAppCacheInvalidator : CachesInvalidator() {
 
@@ -15,10 +14,6 @@ class JBCefAppCacheInvalidator : CachesInvalidator() {
   override fun optionalCheckboxDefaultValue(): Boolean = false
 
   override fun invalidateCaches() {
-    JBCefApp.getInstance().cachePath?.let {
-      if (FileUtil.exists(it)) {
-        FileUtil.delete(Paths.get(it))
-      }
-    }
+    ApplicationManager.getApplication().getService(JBCefAppCache::class.java).markInvalidated()
   }
 }

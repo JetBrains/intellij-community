@@ -70,7 +70,7 @@ public final class JBCefApp {
 
   @NotNull private final CefApp myCefApp;
 
-  @Nullable private CefSettings myCefSettings;
+  @NotNull private final CefSettings myCefSettings;
 
   @NotNull private final Disposable myDisposable = new Disposable() {
     @Override
@@ -151,8 +151,7 @@ public final class JBCefApp {
       settings.remote_debugging_port = port;
     }
 
-    settings.cache_path = System.getProperty("ide.browser.jcef.cache.path",
-                                             PathManager.getSystemPath() + Platform.current().fileSeparator + "jcef_cache/");
+    settings.cache_path = ApplicationManager.getApplication().getService(JBCefAppCache.class).getPath().toString();
 
     String[] argsFromProviders = JBCefAppRequiredArgumentsProvider
       .getProviders()
@@ -365,8 +364,8 @@ public final class JBCefApp {
   }
 
   @Contract(pure = true)
-  @Nullable String getCachePath() {
-    return myCefSettings != null ? myCefSettings.cache_path : null;
+  @NotNull String getCachePath() {
+    return myCefSettings.cache_path;
   }
 
   @NotNull
