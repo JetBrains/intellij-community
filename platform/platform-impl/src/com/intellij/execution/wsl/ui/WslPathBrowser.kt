@@ -16,21 +16,33 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.TextAccessor
 import java.awt.Component
 import java.io.File
+import java.nio.file.FileSystems
 import javax.swing.SwingUtilities
 
 /**
- * Creates "browse" dialog for WSL
+ * Creates "browse" dialog for WSL.
  * @param field field with wsl path
  */
 class WslPathBrowser(private val field: TextAccessor) {
 
-  fun browsePath(distro: WSLDistribution, parent: Component) {
+  /**
+   * User can choose either ``\\wsl$`` path for [distro] or Windows path (only if [accessWindowsFs] set)
+   */
+  fun browsePath(distro: WSLDistribution, parent: Component, accessWindowsFs: Boolean = true) {
     val virtualFile = ProgressManager.getInstance().runUnderProgress(IdeBundle.message("wsl.opening_wsl")) { getLocalPath(distro) }
     if (virtualFile == null) {
       JBPopupFactory.getInstance().createMessage(IdeBundle.message("wsl.no_path")).show(parent)
       return
     }
-    val dialog = FileChooserDialogImpl(FileChooserDescriptorFactory.createAllButJarContentsDescriptor(), parent)
+    val fs = LocalFileSystem.getInstance()
+    val roots = mutableListOf<VirtualFile>()
+    fs.findFileByNioFile(distro.uncRootPath)?.let { roots.add(it) }
+    if (accessWindowsFs) {
+      roots.addAll(FileSystems.getDefault().rootDirectories.mapNotNull { fs.findFileByNioFile(it) })
+    }
+    val dialog = FileChooserDialogImpl(FileChooserDescriptorFactory.createAllButJarContentsDescriptor().apply {
+      withRoots(roots)
+    }, parent)
     val files = dialog.choose(null, virtualFile)
     val path = files.firstOrNull()?.let { distro.getWslPath(it.path) } ?: return
     field.text = path
