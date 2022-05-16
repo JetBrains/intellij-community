@@ -4,6 +4,8 @@ package com.intellij.openapi.vcs.changes.actions.diff
 import com.intellij.diff.tools.combined.*
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
+import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.toListIfNotMany
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
 
@@ -45,8 +47,22 @@ class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryP
         return ListSelection.createAt(changes, selectedIndex)
       }
 
+      override fun canNavigate(): Boolean {
+        if (model is CombinedDiffPreviewModel) {
+          val allChanges = toListIfNotMany(model.getAllChanges(), true)
+          return allChanges == null || allChanges.size > 1
+        }
+
+        return super.canNavigate()
+      }
+
       override fun onSelected(change: PresentableChange) {
-        viewer?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), ScrollPolicy.DIFF_BLOCK)
+        if (model is CombinedDiffPreviewModel && change is Wrapper) {
+          model.selected = change
+        }
+        else {
+          viewer?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), ScrollPolicy.DIFF_BLOCK)
+        }
       }
     }
   }

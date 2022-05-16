@@ -3,6 +3,6 @@ package com.intellij.diff.tools.combined
 
 import com.intellij.diff.editor.DiffVirtualFileBase
 
-class CombinedDiffVirtualFile(val sourceId: String, name: String, private val path: String? = null) : DiffVirtualFileBase(name) {
+open class CombinedDiffVirtualFile(val sourceId: String, name: String, private val path: String? = null) : DiffVirtualFileBase(name) {
   override fun getPath(): String = path ?: name
 }

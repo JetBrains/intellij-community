@@ -70,9 +70,9 @@ interface CombinedDiffModelListener : EventListener {
   fun onProgressBar(visible: Boolean)
 }
 
-class CombinedDiffModelImpl(private val project: Project,
-                            requests: Map<CombinedBlockId, DiffRequestProducer>,
-                            parentDisposable: Disposable? = null) : CombinedDiffModel {
+open class CombinedDiffModelImpl(protected val project: Project,
+                                 requests: Map<CombinedBlockId, DiffRequestProducer>,
+                                 parentDisposable: Disposable? = null) : CombinedDiffModel {
 
   override val haveParentDisposable = parentDisposable != null
 
