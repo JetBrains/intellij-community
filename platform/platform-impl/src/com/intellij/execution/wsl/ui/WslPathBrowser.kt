@@ -32,7 +32,6 @@ class WslPathBrowser(private val field: TextAccessor) {
     val virtualFile = ProgressManager.getInstance().runUnderProgress(IdeBundle.message("wsl.opening_wsl")) { getLocalPath(distro) }
     if (virtualFile == null) {
       JBPopupFactory.getInstance().createMessage(IdeBundle.message("wsl.no_path")).show(parent)
-      return
     }
     val fs = LocalFileSystem.getInstance()
     val roots = mutableListOf<VirtualFile>()
@@ -43,7 +42,7 @@ class WslPathBrowser(private val field: TextAccessor) {
     val dialog = FileChooserDialogImpl(FileChooserDescriptorFactory.createAllButJarContentsDescriptor().apply {
       withRoots(roots)
     }, parent)
-    val files = dialog.choose(null, virtualFile)
+    val files = dialog.choose(null, *virtualFile?.let { arrayOf(it) } ?: emptyArray())
     val path = files.firstOrNull()?.let { distro.getWslPath(it.path) } ?: return
     field.text = path
   }
@@ -55,8 +54,8 @@ class WslPathBrowser(private val field: TextAccessor) {
     val logger = Logger.getInstance(WslPathBrowser::class.java)
     logger.warn("Opening $text in ${distro.uncRoot}${FileUtil.toSystemDependentName(FileUtil.normalize(text))}")
     distro.getWindowsPath(text).let {
-      var fileName = it
-      while (file == null) {
+      var fileName: String? = it
+      while (file == null && fileName != null) {
         file = fs.findFileByPath(fileName)
         fileName = File(fileName).parent
       }
