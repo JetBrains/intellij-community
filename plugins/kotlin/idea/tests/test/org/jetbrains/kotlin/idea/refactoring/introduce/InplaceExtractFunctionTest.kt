@@ -4,21 +4,18 @@ package org.jetbrains.kotlin.idea.refactoring.introduce
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.testFramework.TestDataPath
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ExtractKotlinFunctionHandler
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.TestRoot
-import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.runner.RunWith
 
-@TestRoot("idea/tests")
-@TestDataPath("\$CONTENT_ROOT")
-@TestMetadata("testData/refactoring/extractFunction/inplace")
 @RunWith(JUnit3RunnerWithInners::class)
 class InplaceExtractFunctionTest : KotlinLightCodeInsightFixtureTestCase() {
+
+    override val testDataDirectory = IDEA_TEST_DATA_DIR.resolve("refactoring/extractFunction/inplace")
 
     fun testStringTemplate() {
         doTest()
