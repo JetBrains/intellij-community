@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-@SuppressWarnings("InspectionDescriptionNotFoundInspection") // via UnusedDeclarationInspection
 class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   @Override
   public CommonProblemDescriptor @Nullable [] checkElement(@NotNull final RefEntity refEntity,
@@ -60,15 +59,17 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
       PsiElement anchor = UElementKt.getSourcePsiElement(parameter.getUastAnchor());
       if (anchor != null) {
         final QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
-        final LocalQuickFix[] fixes = {
-          new AcceptSuggested(refParameter.getName()),
-          quickFixFactory.createRenameToIgnoredFix((PsiNamedElement)anchor.getParent(), true)
-        };
+        final List<LocalQuickFix> fixes = new ArrayList<>(2);
+        fixes.add(new AcceptSuggested(refParameter.getName()));
+        PsiElement parent = anchor.getParent();
+        if (parent instanceof PsiNamedElement) {
+          fixes.add(quickFixFactory.createRenameToIgnoredFix((PsiNamedElement)parent, true));
+        }
         result.add(manager.createProblemDescriptor(anchor,
                                                    JavaBundle.message(refMethod.isAbstract()
                                                                       ? "inspection.unused.parameter.composer"
                                                                       : "inspection.unused.parameter.composer1"),
-                                                   fixes,
+                                                   fixes.toArray(LocalQuickFix.EMPTY_ARRAY),
                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false));
       }
     }
