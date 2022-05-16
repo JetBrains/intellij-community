@@ -48,7 +48,6 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
 
   private volatile boolean myDisposed;
   private volatile RootIndex myRootIndex;
-  private volatile boolean myInInitialState;
 
   public DirectoryIndexImpl(@NotNull Project project) {
     myProject = project;
@@ -77,7 +76,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
           rootIndex.myPackageDirectoryCache.clear();
           for (VFileEvent event : events) {
             if (isIgnoredFileCreated(event)) {
-              reset(DirectoryIndexCollector.ResetReason.VFS_CHANGE);
+              myRootIndex = null;
               break;
             }
           }
@@ -149,8 +148,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     Pair<Long, RootIndex> pair = branch.getUserData(BRANCH_ROOT_INDEX);
     long modCount = branch.getBranchedVfsStructureModificationCount();
     if (pair == null || pair.first != modCount) {
-      pair = Pair.create(modCount, new RootIndex(branch.getProject(), RootFileSupplier.forBranch(branch),
-                                                 DirectoryIndexCollector.BuildRequestKind.BRANCH_BUILD));
+      pair = Pair.create(modCount, new RootIndex(branch.getProject(), RootFileSupplier.forBranch(branch)));
     }
     return pair.second;
   }
@@ -158,9 +156,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   RootIndex getRootIndex() {
     RootIndex rootIndex = myRootIndex;
     if (rootIndex == null) {
-      myRootIndex = rootIndex = new RootIndex(myProject, myInInitialState ? DirectoryIndexCollector.BuildRequestKind.INITIAL
-                                                                          : DirectoryIndexCollector.BuildRequestKind.FULL_REBUILD);
-      myInInitialState = false;
+      myRootIndex = rootIndex = new RootIndex(myProject);
     }
     return rootIndex;
   }
@@ -227,8 +223,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     }
   }
 
-  void reset(DirectoryIndexCollector.ResetReason reason) {
+  void reset() {
     myRootIndex = null;
-    DirectoryIndexCollector.RESET.log(reason);
   }
 }
