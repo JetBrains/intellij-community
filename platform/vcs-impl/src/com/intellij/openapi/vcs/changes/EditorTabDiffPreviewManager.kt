@@ -38,10 +38,6 @@ class EditorTabDiffPreviewManager(private val project: Project) : DiffEditorTabF
     return VcsEditorTabFilesManager.getInstance().openFile(project, diffFile, focusEditor, !isDiffInEditor, false)
   }
 
-  fun showDiffPreview(diffPreview: DiffPreview) {
-    diffPreview.setPreviewVisible(true, true)
-  }
-
   companion object {
     private val isEditorDiffPreview = Registry.get("show.editor.diff.preview")
 
