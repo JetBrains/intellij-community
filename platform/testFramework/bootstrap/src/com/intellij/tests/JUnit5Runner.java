@@ -51,6 +51,9 @@ public class JUnit5Runner {
         System.exit(42);
       }
     }
+    catch(Throwable x) {
+      x.printStackTrace();
+    }
     finally {
       System.exit(0);
     }

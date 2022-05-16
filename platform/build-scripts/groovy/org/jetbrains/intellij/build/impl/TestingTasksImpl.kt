@@ -279,7 +279,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       val testFrameworkCoreModule = context.findRequiredModule("intellij.platform.testFramework.core")
       val testFrameworkOutput = context.getModuleOutputDir(testFrameworkCoreModule).toFile()
       if (!testRoots.contains(testFrameworkOutput)) {
-        testRoots.add(testFrameworkOutput)
+        testRoots.addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false).map(::File))
       }
     }
 
@@ -330,6 +330,9 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     messages.info("System properties: ${allSystemProperties}")
     messages.info("Bootstrap classpath: ${bootstrapClasspath}")
     messages.info("Tests classpath: ${testClasspath}")
+    modulePath?.let { mp ->
+      messages.info("Tests modulepath: $mp")
+    }
     if (!envVariables.isEmpty()) {
       messages.info("Environment variables: ${envVariables}")
     }
@@ -627,6 +630,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       val mp = ArrayList<String>(modulePath)
       appendJUnitStarter(mp)
       args += mp.joinToString(separator = File.pathSeparator)
+      args += "--add-modules=ALL-MODULE-PATH"
     }
 
     args += jvmArgs
