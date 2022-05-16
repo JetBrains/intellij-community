@@ -32,7 +32,6 @@ class PsiKotlinReader(val file: KtFile) {
   fun read() {
     head()
     blockContents()
-    println("")
   }
 
   fun head() {
@@ -102,8 +101,7 @@ class PsiKotlinReader(val file: KtFile) {
     //val name = iden()?.name ?: return
 
     val constructor = maybePrimaryConstructor(ktClass)
-    val ktTypes = ktClass.superTypeListEntries.map { KtType(it.srcRange) }
-    //val superTypes = maybeTypes()
+    val ktTypes = ktClass.superTypeListEntries.mapNotNull { type(it.typeReference) }
 
     val outer = leafScope
     val innerIface = KtInterface(file.module, outer, name, ktTypes, constructor, predefinedInterfaceKind, `annotation`(ktClass.annotationEntries, ktClass))
@@ -128,7 +126,16 @@ class PsiKotlinReader(val file: KtFile) {
       is KtNullableType -> {
         val innerType = typeElement.innerType
         if (innerType == null) return null
-        return KtType(innerType.srcRange, optional = true, annotations = ktAnnotations.list)
+        val ktTypes: List<KtType>
+        val classifierRange: SrcRange
+        if (innerType is KtUserType) {
+          ktTypes = innerType.typeArguments.mapNotNull { ktTypeProjection -> type(ktTypeProjection.typeReference) }
+          classifierRange = innerType.referenceExpression?.srcRange ?: innerType.srcRange
+        } else {
+          ktTypes = listOf()
+          classifierRange = innerType.srcRange
+        }
+        return KtType(classifierRange, args = ktTypes, optional = true, annotations = ktAnnotations.list)
       }
     }
     return null

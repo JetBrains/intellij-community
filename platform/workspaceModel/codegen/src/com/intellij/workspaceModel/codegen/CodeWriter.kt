@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.ReferableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
@@ -21,8 +22,9 @@ import org.jetbrains.deft.codegen.utils.fileContents
 import java.io.File
 
 internal val skippedGenTypes = setOf(WorkspaceEntity::class.simpleName,
-                                    ReferableWorkspaceEntity::class.simpleName,
-                                    WorkspaceEntityWithPersistentId::class.simpleName)
+                                     ReferableWorkspaceEntity::class.simpleName,
+                                     ModifiableWorkspaceEntity::class.simpleName,
+                                     WorkspaceEntityWithPersistentId::class.simpleName)
 
 fun DefType.implIjWsFileContents(simpleTypes: List<DefType>): String {
   return fileContents(def.file!!.pkg.fqn, """
