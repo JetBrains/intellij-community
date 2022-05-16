@@ -56,20 +56,15 @@ import java.util.stream.Collectors
  */
 class DistributionJARsBuilder {
   val state: DistributionBuilderState
-  private val pluginXmlPatcher: PluginXmlPatcher
 
   @JvmOverloads
   constructor(context: BuildContext, pluginsToPublish: Set<PluginLayout> = emptySet()) {
     state = DistributionBuilderState(pluginsToPublish, context)
-    val releaseVersion = context.applicationInfo.majorVersion + context.applicationInfo.minorVersionMainPart + "00"
-    pluginXmlPatcher = PluginXmlPatcher(context.applicationInfo.majorReleaseDate, releaseVersion)
+
   }
 
   constructor(state: DistributionBuilderState) {
     this.state = state
-    val context = state.context
-    val releaseVersion = context.applicationInfo.majorVersion + context.applicationInfo.minorVersionMainPart + "00"
-    pluginXmlPatcher = PluginXmlPatcher(context.applicationInfo.majorReleaseDate, releaseVersion)
   }
 
   companion object {
@@ -276,7 +271,6 @@ class DistributionJARsBuilder {
       if (copyFiles) {
         checkModuleExcludes(layout.moduleExcludes, context)
       }
-      val tasks = ArrayList<ForkJoinTask<Collection<DistributionFileEntry>>>(3)
 
       // patchers must be executed _before_ pack because patcher patches module output
       if (copyFiles && layout is PluginLayout && !layout.patchers.isEmpty()) {
@@ -287,6 +281,8 @@ class DistributionJARsBuilder {
           }
         }
       }
+
+      val tasks = ArrayList<ForkJoinTask<Collection<DistributionFileEntry>>>(3)
       tasks.add(createTask(spanBuilder("pack")) {
         val actualModuleJars = TreeMap<String, MutableList<String>>()
         for (entry in moduleJars.entrySet()) {
@@ -634,9 +630,9 @@ class DistributionJARsBuilder {
       buildPlugins(moduleOutputPatcher = ModuleOutputPatcher(),
                    plugins = pluginsToBundle,
                    targetDirectory = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY),
+                   state = state,
                    context = context,
-                   buildPlatformTask = buildPlatformTask,
-                   pluginBuilt = null)
+                   buildPlatformTask = buildPlatformTask)
     }
   }
 
@@ -683,9 +679,9 @@ class DistributionJARsBuilder {
           ) {
             buildPlugins(moduleOutputPatcher = ModuleOutputPatcher(),
                          plugins = osSpecificPlugins, targetDirectory = outDir,
+                         state = state,
                          context = context,
-                         buildPlatformTask = buildPlatformTask,
-                         pluginBuilt = null)
+                         buildPlatformTask = buildPlatformTask)
           }
         }).flatMap { it.rawResult }
     }
@@ -725,6 +721,7 @@ class DistributionJARsBuilder {
       val mappings = buildPlugins(moduleOutputPatcher = moduleOutputPatcher,
                                   plugins = pluginsToPublish.sortedWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE),
                                   targetDirectory = stageDir,
+                                  state = state,
                                   context = context,
                                   buildPlatformTask = buildPlatformLibTask) { plugin, pluginDir ->
         val targetDirectory = if (autoPublishPluginChecker.test(plugin)) autoUploadingDir else nonBundledPluginsArtifacts
@@ -783,69 +780,79 @@ class DistributionJARsBuilder {
     val directory = getActualPluginDirectoryName(helpPlugin, context)
     val destFile = targetDir.resolve("$directory.zip")
     spanBuilder("build help plugin").setAttribute("dir", directory).startSpan().useWithScope {
-      buildPlugins(moduleOutputPatcher, listOf(helpPlugin), pluginsToPublishDir, context, null, null)
+      buildPlugins(moduleOutputPatcher = moduleOutputPatcher,
+                   plugins = listOf(helpPlugin),
+                   targetDirectory = pluginsToPublishDir,
+                   state = state,
+                   context = context,
+                   buildPlatformTask = null)
       zip(targetFile = destFile, dirs = mapOf(pluginsToPublishDir.resolve(directory) to ""), compress = true)
       null
     }
     return PluginRepositorySpec(destFile, moduleOutputPatcher.getPatchedPluginXml(helpPlugin.mainModule))
   }
+}
 
-  private fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
-                           plugins: Collection<PluginLayout>,
-                           targetDirectory: Path,
-                           context: BuildContext,
-                           buildPlatformTask: ForkJoinTask<*>?,
-                           pluginBuilt: ((PluginLayout, Path) -> Unit)?): List<DistributionFileEntry> {
-    val scrambleTool = context.proprietaryBuildTools.scrambleTool
-    val isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
-    val scrambleTasks = ArrayList<ForkJoinTask<*>>()
-    val tasks = plugins.map { plugin ->
-      val isHelpPlugin = ("intellij.platform.builtInHelp" == plugin.mainModule)
-      if (!isHelpPlugin) {
-        checkOutputOfPluginModules(plugin.mainModule, plugin.moduleJars, plugin.moduleExcludes, context)
-        PluginXmlPatcher.patchPluginXml(moduleOutputPatcher, plugin, state.pluginsToPublish, pluginXmlPatcher, context)
-      }
+private fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
+                         plugins: Collection<PluginLayout>,
+                         targetDirectory: Path,
+                         state: DistributionBuilderState,
+                         context: BuildContext,
+                         buildPlatformTask: ForkJoinTask<*>?,
+                         pluginBuilt: ((PluginLayout, Path) -> Unit)? = null): List<DistributionFileEntry> {
+  val scrambleTool = context.proprietaryBuildTools.scrambleTool
+  val isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
+  val scrambleTasks = ArrayList<ForkJoinTask<*>>()
 
-      val directoryName = getActualPluginDirectoryName(plugin, context)
-      val pluginDir = targetDirectory.resolve(directoryName)
-      createTask(spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString())) {
-        val result = layout(layout = plugin,
-                            targetDirectory = pluginDir,
-                            copyFiles = true,
-                            moduleOutputPatcher = moduleOutputPatcher,
-                            moduleJars = plugin.moduleJars,
-                            context = context)
-        if (!plugin.pathsToScramble.isEmpty()) {
-          val attributes = Attributes.of(AttributeKey.stringKey("plugin"), directoryName)
-          if (scrambleTool == null) {
-            Span.current()
-              .addEvent("skip scrambling plugin because scrambleTool isn't defined, but plugin defines paths to be scrambled", attributes)
-          }
-          else if (isScramblingSkipped) {
-            Span.current().addEvent("skip scrambling plugin because step is disabled", attributes)
-          }
-          else {
-            scrambleTool.scramblePlugin(context, plugin, pluginDir, targetDirectory)?.let {
-              // we can not start executing right now because the plugin can use other plugins in a scramble classpath
-              scrambleTasks.add(it)
-            }
+  val releaseVersion = "${context.applicationInfo.majorVersion}${context.applicationInfo.minorVersionMainPart}00"
+  val pluginXmlPatcher = PluginXmlPatcher(context.applicationInfo.majorReleaseDate, releaseVersion)
+
+  val tasks = plugins.map { plugin ->
+    val isHelpPlugin = "intellij.platform.builtInHelp" == plugin.mainModule
+    if (!isHelpPlugin) {
+      DistributionJARsBuilder.checkOutputOfPluginModules(plugin.mainModule, plugin.moduleJars, plugin.moduleExcludes, context)
+      PluginXmlPatcher.patchPluginXml(moduleOutputPatcher, plugin, state.pluginsToPublish, pluginXmlPatcher, context)
+    }
+
+    val directoryName = getActualPluginDirectoryName(plugin, context)
+    val pluginDir = targetDirectory.resolve(directoryName)
+    createTask(spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString())) {
+      val result = DistributionJARsBuilder.layout(layout = plugin,
+                                                  targetDirectory = pluginDir,
+                                                  copyFiles = true,
+                                                  moduleOutputPatcher = moduleOutputPatcher,
+                                                  moduleJars = plugin.moduleJars,
+                                                  context = context)
+      if (!plugin.pathsToScramble.isEmpty()) {
+        val attributes = Attributes.of(AttributeKey.stringKey("plugin"), directoryName)
+        if (scrambleTool == null) {
+          Span.current()
+            .addEvent("skip scrambling plugin because scrambleTool isn't defined, but plugin defines paths to be scrambled", attributes)
+        }
+        else if (isScramblingSkipped) {
+          Span.current().addEvent("skip scrambling plugin because step is disabled", attributes)
+        }
+        else {
+          scrambleTool.scramblePlugin(context, plugin, pluginDir, targetDirectory)?.let {
+            // we can not start executing right now because the plugin can use other plugins in a scramble classpath
+            scrambleTasks.add(it)
           }
         }
-        pluginBuilt?.invoke(plugin, pluginDir)
-        result
       }
+      pluginBuilt?.invoke(plugin, pluginDir)
+      result
     }
-
-    val entries = ForkJoinTask.invokeAll(tasks).flatMap { it.rawResult }
-    if (!scrambleTasks.isEmpty()) {
-      // scrambling can require classes from platform
-      buildPlatformTask?.let { task ->
-        spanBuilder("wait for platform lib for scrambling").startSpan().useWithScope { task.join() }
-      }
-      invokeAllSettled(scrambleTasks)
-    }
-    return entries
   }
+
+  val entries = ForkJoinTask.invokeAll(tasks).flatMap { it.rawResult }
+  if (!scrambleTasks.isEmpty()) {
+    // scrambling can require classes from platform
+    buildPlatformTask?.let { task ->
+      spanBuilder("wait for platform lib for scrambling").startSpan().useWithScope { task.join() }
+    }
+    invokeAllSettled(scrambleTasks)
+  }
+  return entries
 }
 
 private const val PLUGINS_DIRECTORY = "plugins"
@@ -1000,8 +1007,8 @@ fun processLibDirectoryLayout(moduleOutputPatcher: ModuleOutputPatcher,
                               platform: PlatformLayout,
                               context: BuildContext,
                               copyFiles: Boolean): ForkJoinTask<List<DistributionFileEntry>> {
-  return createTask(spanBuilder("layout").setAttribute("path", context.paths.buildOutputDir
-    .relativize(context.paths.distAllDir).toString())) {
+  return createTask(spanBuilder("layout").setAttribute("path",
+                                                       context.paths.buildOutputDir.relativize(context.paths.distAllDir).toString())) {
     DistributionJARsBuilder.layout(platform, context.paths.distAllDir, copyFiles, moduleOutputPatcher, platform.moduleJars, context)
   }
 }
