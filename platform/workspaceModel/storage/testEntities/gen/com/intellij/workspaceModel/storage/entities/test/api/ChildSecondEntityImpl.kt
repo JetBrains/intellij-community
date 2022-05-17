@@ -242,8 +242,12 @@ class ChildSecondEntityData : WorkspaceEntityData<ChildSecondEntity>() {
         return ChildSecondEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         ser.saveString(secondData)
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        secondData = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

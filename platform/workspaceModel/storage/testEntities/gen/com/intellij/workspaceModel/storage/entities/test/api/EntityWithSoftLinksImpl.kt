@@ -1055,15 +1055,10 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
         return EntityWithSoftLinks::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(justProperty)
-        val _justNullableProperty = justNullableProperty
-        if (_justNullableProperty != null) {
-            ser.saveString(_justNullableProperty)
-        }
-        for (_justListProperty in justListProperty) {
-            ser.saveString(_justListProperty)
-        }
+    override fun serialize(ser: EntityInformation.Serializer) {
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
     }
 
     override fun equals(other: Any?): Boolean {

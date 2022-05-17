@@ -26,6 +26,19 @@ sealed interface EntityInformation {
     fun saveInt(i: Int)
     fun saveString(s: String)
     fun saveBoolean(b: Boolean)
+    fun saveBlob(b: Any, javaSimpleName: String)
+    fun saveNull()
   }
-  interface Deserializer : EntityInformation
+
+  interface Deserializer : EntityInformation {
+    fun readBoolean(): Boolean
+    fun readString(): String
+    fun readInt(): Int
+    fun acceptNull(): Boolean
+  }
+}
+
+interface SerializableEntityData {
+  fun serialize(ser: EntityInformation.Serializer)
+  fun deserialize(de: EntityInformation.Deserializer)
 }

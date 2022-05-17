@@ -30,7 +30,7 @@ import org.jetbrains.deft.impl.ObjType
  * Перенести тесты идеи к нам или наоборрот <--
  */
 
-fun ObjType<*, *>.implWsCode(simpleTypes: List<DefType>): String {
+fun DefType.implWsCode(simpleTypes: List<DefType>): String {
   return """
 ${implWsEntityCode()}
     

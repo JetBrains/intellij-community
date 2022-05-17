@@ -307,7 +307,15 @@ class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesP
         return LibraryFilesPackagingElementEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        if (de.acceptNull()) {
+            library = null
+        }
+        else {
+        }
     }
 
     override fun equals(other: Any?): Boolean {

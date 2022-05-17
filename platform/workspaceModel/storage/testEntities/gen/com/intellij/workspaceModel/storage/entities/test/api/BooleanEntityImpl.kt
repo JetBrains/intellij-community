@@ -150,8 +150,12 @@ class BooleanEntityData : WorkspaceEntityData<BooleanEntity>() {
         return BooleanEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         ser.saveBoolean(data)
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        data = de.readBoolean()
     }
 
     override fun equals(other: Any?): Boolean {

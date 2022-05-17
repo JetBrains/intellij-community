@@ -226,10 +226,14 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
         return ModuleGroupPathEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
+        ser.saveInt(path.size)
         for (_path in path) {
             ser.saveString(_path)
         }
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
     }
 
     override fun equals(other: Any?): Boolean {

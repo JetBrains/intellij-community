@@ -202,7 +202,10 @@ class ParentChainEntityData : WorkspaceEntityData<ParentChainEntity>() {
         return ParentChainEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
     }
 
     override fun equals(other: Any?): Boolean {

@@ -335,8 +335,12 @@ class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingEl
         return ArchivePackagingElementEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         ser.saveString(fileName)
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        fileName = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

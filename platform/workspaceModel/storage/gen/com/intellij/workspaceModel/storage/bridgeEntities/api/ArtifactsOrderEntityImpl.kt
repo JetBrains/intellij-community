@@ -158,10 +158,22 @@ class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
         return ArtifactsOrderEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
+        ser.saveInt(orderOfArtifacts.size)
         for (_orderOfArtifacts in orderOfArtifacts) {
             ser.saveString(_orderOfArtifacts)
         }
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        val counter0 = de.readInt()
+        val collector1 = ArrayList<String>()
+        var _orderOfArtifacts: String
+        repeat(counter0) {
+            _orderOfArtifacts = de.readString()
+            collector1.add(_orderOfArtifacts)
+        }
+        orderOfArtifacts = collector1
     }
 
     override fun equals(other: Any?): Boolean {

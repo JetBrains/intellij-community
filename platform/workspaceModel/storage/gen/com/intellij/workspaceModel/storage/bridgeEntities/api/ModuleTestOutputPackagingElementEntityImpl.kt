@@ -274,7 +274,15 @@ class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<ModuleTes
         return ModuleTestOutputPackagingElementEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        if (de.acceptNull()) {
+            module = null
+        }
+        else {
+        }
     }
 
     override fun equals(other: Any?): Boolean {

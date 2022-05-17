@@ -10,8 +10,7 @@ class EntityWithNullsTest {
   @Test
   fun `data int with null`() {
     val builder = createEmptyBuilder()
-    builder.addEntity(OptionalIntEntity {
-      this.entitySource = MySource
+    builder.addEntity(OptionalIntEntity(MySource) {
       this.data = null
     })
     assertNull(builder.entities(OptionalIntEntity::class.java).single().data)

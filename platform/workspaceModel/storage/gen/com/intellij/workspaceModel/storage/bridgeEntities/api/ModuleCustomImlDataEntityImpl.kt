@@ -239,15 +239,21 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
         return ModuleCustomImlDataEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         val _rootManagerTagCustomData = rootManagerTagCustomData
         if (_rootManagerTagCustomData != null) {
             ser.saveString(_rootManagerTagCustomData)
+        } else {
+            ser.saveNull()
         }
+        ser.saveInt(customModuleOptions.size)
         for ((key_customModuleOptions, value_customModuleOptions) in customModuleOptions) {
             ser.saveString(key_customModuleOptions)
             ser.saveString(value_customModuleOptions)
         }
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
     }
 
     override fun equals(other: Any?): Boolean {

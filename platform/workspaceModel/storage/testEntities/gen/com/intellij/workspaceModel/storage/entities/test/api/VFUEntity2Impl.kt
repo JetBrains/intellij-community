@@ -215,8 +215,23 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
         return VFUEntity2::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         ser.saveString(data)
+        val _filePath = filePath
+        if (_filePath != null) {
+            ser.saveBlob(_filePath, "VirtualFileUrl")
+        } else {
+            ser.saveNull()
+        }
+        ser.saveBlob(directoryPath, "VirtualFileUrl")
+        ser.saveInt(notNullRoots.size)
+        for (_notNullRoots in notNullRoots) {
+            ser.saveBlob(_notNullRoots, "VirtualFileUrl")
+        }
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        data = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

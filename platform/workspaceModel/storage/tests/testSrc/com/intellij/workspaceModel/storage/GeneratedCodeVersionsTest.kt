@@ -240,4 +240,12 @@ class SuperSimpleEntityData : WorkspaceEntityData<SuperSimpleEntity>() {
     var result = entitySource.hashCode()
     return result
   }
+
+  override fun serialize(ser: EntityInformation.Serializer) {
+    TODO("Not yet implemented")
+  }
+
+  override fun deserialize(de: EntityInformation.Deserializer) {
+    TODO("Not yet implemented")
+  }
 }

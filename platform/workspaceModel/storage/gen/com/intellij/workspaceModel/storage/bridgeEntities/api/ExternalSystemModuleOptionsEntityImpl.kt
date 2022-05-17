@@ -305,35 +305,52 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
         return ExternalSystemModuleOptionsEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         val _externalSystem = externalSystem
         if (_externalSystem != null) {
             ser.saveString(_externalSystem)
+        } else {
+            ser.saveNull()
         }
         val _externalSystemModuleVersion = externalSystemModuleVersion
         if (_externalSystemModuleVersion != null) {
             ser.saveString(_externalSystemModuleVersion)
+        } else {
+            ser.saveNull()
         }
         val _linkedProjectPath = linkedProjectPath
         if (_linkedProjectPath != null) {
             ser.saveString(_linkedProjectPath)
+        } else {
+            ser.saveNull()
         }
         val _linkedProjectId = linkedProjectId
         if (_linkedProjectId != null) {
             ser.saveString(_linkedProjectId)
+        } else {
+            ser.saveNull()
         }
         val _rootProjectPath = rootProjectPath
         if (_rootProjectPath != null) {
             ser.saveString(_rootProjectPath)
+        } else {
+            ser.saveNull()
         }
         val _externalSystemModuleGroup = externalSystemModuleGroup
         if (_externalSystemModuleGroup != null) {
             ser.saveString(_externalSystemModuleGroup)
+        } else {
+            ser.saveNull()
         }
         val _externalSystemModuleType = externalSystemModuleType
         if (_externalSystemModuleType != null) {
             ser.saveString(_externalSystemModuleType)
+        } else {
+            ser.saveNull()
         }
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
     }
 
     override fun equals(other: Any?): Boolean {

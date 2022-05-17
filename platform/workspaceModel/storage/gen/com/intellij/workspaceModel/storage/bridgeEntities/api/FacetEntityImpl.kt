@@ -374,13 +374,19 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
         return FacetEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         ser.saveString(name)
         ser.saveString(facetType)
         val _configurationXmlTag = configurationXmlTag
         if (_configurationXmlTag != null) {
             ser.saveString(_configurationXmlTag)
+        } else {
+            ser.saveNull()
         }
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        name = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

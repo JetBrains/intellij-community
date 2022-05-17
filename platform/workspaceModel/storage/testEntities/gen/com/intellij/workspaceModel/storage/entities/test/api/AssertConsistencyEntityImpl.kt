@@ -151,8 +151,12 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
         return AssertConsistencyEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         ser.saveBoolean(passCheck)
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        passCheck = de.readBoolean()
     }
 
     override fun equals(other: Any?): Boolean {

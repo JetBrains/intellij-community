@@ -335,7 +335,7 @@ interface SoftLinkable {
   fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean
 }
 
-abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
+abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, SerializableEntityData {
   lateinit var entitySource: EntitySource
   var id: Int = -1
 

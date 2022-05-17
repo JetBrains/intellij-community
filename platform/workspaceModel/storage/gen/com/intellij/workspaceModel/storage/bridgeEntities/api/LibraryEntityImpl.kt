@@ -468,8 +468,12 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
         return LibraryEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         ser.saveString(name)
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        name = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

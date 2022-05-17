@@ -219,8 +219,12 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<Link
         return LinkedListEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         ser.saveString(myName)
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        myName = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

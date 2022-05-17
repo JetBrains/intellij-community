@@ -198,7 +198,10 @@ class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(), SoftLi
         return WithSoftLinkEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
     }
 
     override fun equals(other: Any?): Boolean {

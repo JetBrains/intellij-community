@@ -179,8 +179,16 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
         return ListVFUEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         ser.saveString(data)
+        ser.saveInt(fileProperty.size)
+        for (_fileProperty in fileProperty) {
+            ser.saveBlob(_fileProperty, "VirtualFileUrl")
+        }
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        data = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

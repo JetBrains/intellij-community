@@ -222,8 +222,12 @@ class ArtifactExternalSystemIdEntityData : WorkspaceEntityData<ArtifactExternalS
         return ArtifactExternalSystemIdEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         ser.saveString(externalSystemId)
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        externalSystemId = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

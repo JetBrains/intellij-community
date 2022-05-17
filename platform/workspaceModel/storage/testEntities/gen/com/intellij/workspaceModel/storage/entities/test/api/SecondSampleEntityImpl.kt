@@ -153,8 +153,12 @@ class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {
         return SecondSampleEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         ser.saveInt(intProperty)
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        intProperty = de.readInt()
     }
 
     override fun equals(other: Any?): Boolean {

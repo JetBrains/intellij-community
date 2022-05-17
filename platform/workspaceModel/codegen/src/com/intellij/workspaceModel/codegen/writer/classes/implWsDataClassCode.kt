@@ -6,6 +6,7 @@ import com.intellij.workspaceModel.codegen.InterfaceVisitor
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import deft.storage.codegen.field.javaType
 import deft.storage.codegen.implFieldName
 import deft.storage.codegen.javaFullName
 import deft.storage.codegen.javaImplBuilderName
@@ -37,7 +38,7 @@ val ObjType<*, *>.javaDataName
 val ObjType<*, *>.isEntityWithPersistentId: Boolean
   get() = (this as? DefType)?.def?.kind is WsEntityWithPersistentId
 
-fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
+fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
   val entityDataBaseClass = if (isEntityWithPersistentId) {
     "${WorkspaceEntityData::class.fqn}.WithCalculablePersistentId<$javaFullName>()"
   }
@@ -99,9 +100,12 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
         line("return $name::class.java")
       }
 
-      sectionNl("fun serialize(ser: ${EntityInformation.Serializer::class.fqn})") {
-        InterfaceTraverser(simpleTypes)
-          .traverse(this@implWsDataClassCode, SerializatorVisitor(this@sectionNl))
+      sectionNl("override fun serialize(ser: ${EntityInformation.Serializer::class.fqn})") {
+        InterfaceTraverser(simpleTypes).traverse(this@implWsDataClassCode, SerializatorVisitor(this@sectionNl))
+      }
+
+      sectionNl("override fun deserialize(de: ${EntityInformation.Deserializer::class.fqn})") {
+        InterfaceTraverser(simpleTypes).traverse(this@implWsDataClassCode, DeserializationVisitor(this@sectionNl))
       }
 
       // --- equals
@@ -144,6 +148,122 @@ fun ObjType<*, *>.implWsDataClassCode(simpleTypes: List<DefType>): String {
   }
 }
 
+class DeserializationVisitor(linesBuilder: LinesBuilder) : InterfaceVisitor {
+  private val builders: ArrayDeque<LinesBuilder> = ArrayDeque<LinesBuilder>().also { it.add(linesBuilder) }
+  private val builder: LinesBuilder
+    get() = builders.last()
+
+  private var countersCounter = 0
+
+  override fun visitBoolean(varName: String): Boolean {
+    builder.line("$varName = de.readBoolean()")
+    return true
+  }
+
+  override fun visitInt(varName: String): Boolean {
+    builder.line("$varName = de.readInt()")
+    return true
+  }
+
+  override fun visitString(varName: String): Boolean {
+    builder.line("$varName = de.readString()")
+    return true
+  }
+
+  override fun visitListStart(varName: String, itemVarName: String, listArgumentType: ValueType<*>): Boolean {
+    if (listArgumentType.isRefType()) return true
+
+    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
+    builders.add(sub)
+    return true
+  }
+
+  override fun visitListEnd(varName: String, itemVarName: String, traverseResult: Boolean, listArgumentType: ValueType<*>): Boolean {
+    if (listArgumentType.isRefType()) return true
+
+    val myInListBuilder = builders.popLast()
+    if (myInListBuilder.result.isNotBlank()) {
+      val varCounter = "counter" + counter()
+      val varCollector = "collector" + counter()
+      builder.line("val $varCounter = de.readInt()")
+      builder.line("val $varCollector = ArrayList<${listArgumentType.javaType}>()")
+      builder.line("var $itemVarName: ${listArgumentType.javaType}")
+      builder.line("repeat($varCounter) {")
+      myInListBuilder.line("$varCollector.add($itemVarName)")
+      builder.result.append(myInListBuilder.result)
+      builder.line("}")
+      builder.line("$varName = $varCollector")
+    }
+    return true
+  }
+
+  override fun visitMapStart(varName: String,
+                             keyVarName: String,
+                             valueVarName: String,
+                             keyType: ValueType<*>,
+                             valueType: ValueType<*>): Boolean {
+    return false
+  }
+
+  override fun visitMapEnd(varName: String,
+                           keyVarName: String,
+                           valueVarName: String,
+                           keyType: ValueType<*>,
+                           valueType: ValueType<*>,
+                           traverseResult: Boolean): Boolean {
+    return false
+  }
+
+  override fun visitOptionalStart(varName: String, notNullVarName: String, type: ValueType<*>): Boolean {
+    if (type.isRefType()) return true
+
+    val sub = LinesBuilder(StringBuilder(), "${builder.indent}    ")
+    builders.add(sub)
+    return true
+  }
+
+  override fun visitOptionalEnd(varName: String, notNullVarName: String, type: ValueType<*>, traverseResult: Boolean): Boolean {
+    if (type.isRefType()) return true
+
+    val popLast = builders.popLast()
+    builder.section("if (de.acceptNull())") {
+      line("$varName = null")
+    }
+    builder.section("else") {
+      if (popLast.result.isNotBlank()) {
+        line("val $notNullVarName: ${type.javaType}")
+        result.append(popLast.result)
+        line("$varName = $notNullVarName")
+      }
+    }
+    return true
+  }
+
+  override fun visitUnknownBlob(varName: String, javaSimpleName: String): Boolean {
+    return false
+  }
+
+  override fun visitKnownBlobStart(varName: String, javaSimpleName: String): Boolean {
+    return false
+  }
+
+  override fun visitKnownBlobFinish(varName: String, javaSimpleName: String, traverseResult: Boolean): Boolean {
+    return false
+  }
+
+  override fun visitDataClassStart(varName: String, javaSimpleName: String, foundType: DefType): Boolean {
+    TODO("Not yet implemented")
+  }
+
+  override fun visitDataClassEnd(varName: String, javaSimpleName: String, traverseResult: Boolean, foundType: DefType): Boolean {
+    TODO("Not yet implemented")
+  }
+
+  private fun counter(): Int {
+    return countersCounter++
+  }
+}
+
 class SerializatorVisitor private constructor(private val linesBuilder: ArrayDeque<LinesBuilder>) : InterfaceVisitor {
 
   constructor(linesBuilder: LinesBuilder) : this(ArrayDeque<LinesBuilder>().also { it.add(linesBuilder) })
@@ -179,6 +299,7 @@ class SerializatorVisitor private constructor(private val linesBuilder: ArrayDeq
 
     val myInListBuilder = linesBuilder.popLast()
     if (myInListBuilder.result.isNotBlank()) {
+      builder.line("ser.saveInt($varName.size)")
       builder.line("for ($itemVarName in $varName) {")
       builder.result.append(myInListBuilder.result)
       builder.line("}")
@@ -208,6 +329,7 @@ class SerializatorVisitor private constructor(private val linesBuilder: ArrayDeq
 
     val inMapBuilder = linesBuilder.popLast()
     if (inMapBuilder.result.isNotBlank()) {
+      builder.line("ser.saveInt($varName.size)")
       builder.line("for (($keyVarName, $valueVarName) in $varName) {")
       builder.result.append(inMapBuilder.result)
       builder.line("}")
@@ -231,9 +353,33 @@ class SerializatorVisitor private constructor(private val linesBuilder: ArrayDeq
       builder.line("val $notNullVarName = $varName")
       builder.line("if ($notNullVarName != null) {")
       builder.result.append(inMapBuilder.result)
+      builder.line("} else {")
+      builder.line("    ser.saveNull()")
       builder.line("}")
     }
     return true
+  }
+
+  override fun visitUnknownBlob(varName: String, javaSimpleName: String): Boolean {
+    if (javaSimpleName == "EntitySource") return true
+    builder.line("ser.saveBlob($varName, \"$javaSimpleName\")")
+    return true
+  }
+
+  override fun visitKnownBlobStart(varName: String, javaSimpleName: String): Boolean {
+    return true
+  }
+
+  override fun visitKnownBlobFinish(varName: String, javaSimpleName: String, traverseResult: Boolean): Boolean {
+    return true
+  }
+
+  override fun visitDataClassStart(varName: String, javaSimpleName: String, foundType: DefType): Boolean {
+    TODO("Not yet implemented")
+  }
+
+  override fun visitDataClassEnd(varName: String, javaSimpleName: String, traverseResult: Boolean, foundType: DefType): Boolean {
+    TODO("Not yet implemented")
   }
 }
 

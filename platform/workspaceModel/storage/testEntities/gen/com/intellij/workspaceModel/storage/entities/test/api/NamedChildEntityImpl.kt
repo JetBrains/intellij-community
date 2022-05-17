@@ -224,8 +224,12 @@ class NamedChildEntityData : WorkspaceEntityData<NamedChildEntity>() {
         return NamedChildEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         ser.saveString(childProperty)
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        childProperty = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

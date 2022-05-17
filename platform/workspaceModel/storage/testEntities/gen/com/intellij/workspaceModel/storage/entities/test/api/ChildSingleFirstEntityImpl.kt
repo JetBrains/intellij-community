@@ -240,8 +240,12 @@ class ChildSingleFirstEntityData : WorkspaceEntityData<ChildSingleFirstEntity>()
         return ChildSingleFirstEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         ser.saveString(firstData)
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        firstData = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

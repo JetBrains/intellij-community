@@ -279,13 +279,30 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
         return JavaModuleSettingsEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         ser.saveBoolean(inheritedCompilerOutput)
         ser.saveBoolean(excludeOutput)
+        val _compilerOutput = compilerOutput
+        if (_compilerOutput != null) {
+            ser.saveBlob(_compilerOutput, "VirtualFileUrl")
+        } else {
+            ser.saveNull()
+        }
+        val _compilerOutputForTests = compilerOutputForTests
+        if (_compilerOutputForTests != null) {
+            ser.saveBlob(_compilerOutputForTests, "VirtualFileUrl")
+        } else {
+            ser.saveNull()
+        }
         val _languageLevelId = languageLevelId
         if (_languageLevelId != null) {
             ser.saveString(_languageLevelId)
+        } else {
+            ser.saveNull()
         }
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
     }
 
     override fun equals(other: Any?): Boolean {

@@ -159,8 +159,12 @@ class MainEntityData : WorkspaceEntityData<MainEntity>() {
         return MainEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         ser.saveString(x)
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        x = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

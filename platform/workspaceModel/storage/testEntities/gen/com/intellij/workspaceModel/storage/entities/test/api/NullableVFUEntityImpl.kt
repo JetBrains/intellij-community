@@ -175,8 +175,18 @@ class NullableVFUEntityData : WorkspaceEntityData<NullableVFUEntity>() {
         return NullableVFUEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         ser.saveString(data)
+        val _fileProperty = fileProperty
+        if (_fileProperty != null) {
+            ser.saveBlob(_fileProperty, "VirtualFileUrl")
+        } else {
+            ser.saveNull()
+        }
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        data = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

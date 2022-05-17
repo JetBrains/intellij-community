@@ -90,6 +90,20 @@ class InterfaceTraverserTest {
     """.trimIndent(), collector.toString())
   }
 
+  @Test
+  fun `test blob`() {
+    val type = createType()
+
+    Field(type, 1, "myName", TBlob<Any>("my.class"))
+
+    val collector = StringBuilder()
+    InterfaceTraverser(emptyList()).traverse(type, MyInterfaceVisitor(collector))
+    assertEquals("""
+      -- Blob | myName | my.class --
+      
+    """.trimIndent(), collector.toString())
+  }
+
   private fun createType(): DefType {
     val module = KtObjModule(null)
     return DefType(module, "myName", null,
@@ -150,5 +164,26 @@ class MyInterfaceVisitor(val collector: StringBuilder) : InterfaceVisitor {
   override fun visitOptionalEnd(varName: String, notNullVarName: String, type: ValueType<*>, traverseResult: Boolean): Boolean {
     collector.appendLine("-- Finish Optional --")
     return true
+  }
+
+  override fun visitUnknownBlob(varName: String, javaSimpleName: String): Boolean {
+    collector.appendLine("-- Blob | $varName | $javaSimpleName --")
+    return true
+  }
+
+  override fun visitKnownBlobStart(varName: String, javaSimpleName: String): Boolean {
+    TODO("Not yet implemented")
+  }
+
+  override fun visitKnownBlobFinish(varName: String, javaSimpleName: String, traverseResult: Boolean): Boolean {
+    TODO("Not yet implemented")
+  }
+
+  override fun visitDataClassStart(varName: String, javaSimpleName: String, foundType: DefType): Boolean {
+    TODO("Not yet implemented")
+  }
+
+  override fun visitDataClassEnd(varName: String, javaSimpleName: String, traverseResult: Boolean, foundType: DefType): Boolean {
+    TODO("Not yet implemented")
   }
 }

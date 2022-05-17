@@ -149,10 +149,23 @@ class OptionalIntEntityData : WorkspaceEntityData<OptionalIntEntity>() {
         return OptionalIntEntity::class.java
     }
 
-    fun serialize(ser: EntityInformation.Serializer) {
+    override fun serialize(ser: EntityInformation.Serializer) {
         val _data = data
         if (_data != null) {
             ser.saveInt(_data)
+        } else {
+            ser.saveNull()
+        }
+    }
+
+    override fun deserialize(de: EntityInformation.Deserializer) {
+        if (de.acceptNull()) {
+            data = null
+        }
+        else {
+            val _data: Int
+            _data = de.readInt()
+            data = _data
         }
     }
 
