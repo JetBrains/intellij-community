@@ -83,7 +83,7 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
 
   private void assertSameTodoCountInIndexAndHighlighting() {
     int todosInIndex = TodoCacheManager.getInstance(getProject()).getTodoCount(getVFile(), TodoIndexPatternProvider.getInstance());
-    int todosInHighlighting = PsiTodoSearchHelper.SERVICE.getInstance(getProject()).findTodoItems(getFile()).length;
+    int todosInHighlighting = PsiTodoSearchHelper.getInstance(getProject()).findTodoItems(getFile()).length;
     assertEquals("Mismatch between todos in index and highlighting", todosInIndex, todosInHighlighting);
   }
 
@@ -158,7 +158,7 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
     testTodos("// [TODO first]\nwords\n<caret>");
     Document document = getEditor().getDocument();
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
-    PsiTodoSearchHelper todoSearchHelper = PsiTodoSearchHelper.SERVICE.getInstance(getProject());
+    PsiTodoSearchHelper todoSearchHelper = PsiTodoSearchHelper.getInstance(getProject());
     assertTodoCountInIndexStorage(0);
     documentManager.saveDocument(document);
     assertFalse("saved doc expected", documentManager.isDocumentUnsaved(document));
