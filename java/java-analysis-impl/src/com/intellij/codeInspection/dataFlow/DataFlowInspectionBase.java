@@ -325,6 +325,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   private void reportUnreachableSwitchBranches(Map<PsiCaseLabelElement, ThreeState> labelReachability, ProblemsHolder holder) {
     if (labelReachability.isEmpty()) return;
     Set<PsiSwitchBlock> coveredSwitches = new HashSet<>();
+    Map<PsiCaseLabelElement, PsiSwitchBlock> unreachableLabels = new HashMap<>();
 
     for (Map.Entry<PsiCaseLabelElement, ThreeState> entry : labelReachability.entrySet()) {
       if (entry.getValue() != ThreeState.YES) continue;
@@ -338,6 +339,14 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         .nonNull().flatArray(PsiCaseLabelElementList::getElements)
         .append(StreamEx.iterate(label, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiCaseLabelElement.class)).skip(1))
         .allMatch(l -> labelReachability.get(l) == ThreeState.NO)) {
+
+        // Add all labels after always-reachable one as unreachable
+        StreamEx.iterate(labelStatement, Objects::nonNull, l -> PsiTreeUtil.getNextSiblingOfType(l, PsiSwitchLabelStatementBase.class))
+          .remove(SwitchUtils::isDefaultLabel)
+          .skip(1).map(PsiSwitchLabelStatementBase::getCaseLabelElementList)
+          .nonNull().flatArray(PsiCaseLabelElementList::getElements)
+          .append(StreamEx.iterate(label, Objects::nonNull, l -> PsiTreeUtil.getNextSiblingOfType(l, PsiCaseLabelElement.class)).skip(1))
+          .forEach(l -> unreachableLabels.put(l, switchBlock));
         continue;
       }
       coveredSwitches.add(switchBlock);
@@ -357,13 +366,16 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
       PsiSwitchBlock switchBlock = labelStatement.getEnclosingSwitchBlock();
       if (switchBlock == null || coveredSwitches.contains(switchBlock)) continue;
+      unreachableLabels.put(label, switchBlock);
+    }
+    unreachableLabels.forEach((label, switchBlock) -> {
       // duplicate case label is a compilation error so no need to highlight by the inspection
       Set<PsiElement> suspiciousElements = SwitchBlockHighlightingModel.findSuspiciousLabelElements(switchBlock);
       if (!suspiciousElements.contains(label)) {
         holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.unreachable.switch.label"),
                                new DeleteSwitchLabelFix(label));
       }
-    }
+    });
   }
 
   private static boolean canRemoveUnreachableBranches(PsiSwitchLabelStatementBase labelStatement, PsiSwitchBlock statement) {

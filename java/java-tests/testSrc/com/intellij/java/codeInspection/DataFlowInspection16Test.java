@@ -19,6 +19,7 @@ public class DataFlowInspection16Test extends DataFlowInspectionTestCase {
 
   public void testInstanceOfPattern() { doTest(); }
   public void testSwitchStatements() { doTest(); }
+  public void testSwitchStatementUnreachableBranches() { doTest(); }
   public void testSwitchExpressions() { doTest(); }
   public void testSwitchExpressionsNullability() { doTest(); }
   public void testConstantDescAsWrapperSupertype() {
