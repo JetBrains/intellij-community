@@ -4,7 +4,6 @@
 // ACTION: Create object 'foobar'
 // ACTION: Create parameter 'foobar'
 // ACTION: Create property 'foobar'
-// ACTION: Do not show return expression hints
 // ACTION: Rename reference
 // ERROR: Unresolved reference: foobar
 

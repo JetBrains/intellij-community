@@ -3,7 +3,6 @@
 // ACTION: Create object 'foo'
 // ACTION: Create parameter 'foo'
 // ACTION: Create property 'foo'
-// ACTION: Do not show return expression hints
 // ACTION: Rename reference
 // ACTION: Split property declaration
 

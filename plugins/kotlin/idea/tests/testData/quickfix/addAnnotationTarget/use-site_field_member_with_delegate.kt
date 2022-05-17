@@ -1,7 +1,6 @@
 // "Add annotation target" "false"
 // WITH_STDLIB
 // ACTION: Convert to ordinary property
-// ACTION: Do not show return expression hints
 // ACTION: Introduce import alias
 // ACTION: Make internal
 // ACTION: Make private

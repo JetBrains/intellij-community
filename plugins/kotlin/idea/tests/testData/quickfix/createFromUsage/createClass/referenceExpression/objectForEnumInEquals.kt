@@ -2,7 +2,6 @@
 // ACTION: Create enum constant 'RED'
 // ACTION: Create extension property 'SampleEnum.Companion.RED'
 // ACTION: Create member property 'SampleEnum.Companion.RED'
-// ACTION: Do not show return expression hints
 // ACTION: Expand boolean expression to 'if else'
 // ACTION: Rename reference
 // ERROR: Unresolved reference: RED
