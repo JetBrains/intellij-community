@@ -50,7 +50,7 @@ public final class AppDictionaryState extends DictionaryState implements Persist
     myDictListenerEventDispatcher.getMulticaster().dictChanged(getDictionary());
   }
 
-  public void addCachedDictListener(DictionaryStateListener listener, Disposable parentDisposable) {
+  public void addAppDictListener(DictionaryStateListener listener, Disposable parentDisposable) {
     myDictListenerEventDispatcher.addListener(listener, parentDisposable);
   }
 }

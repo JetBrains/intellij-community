@@ -66,7 +66,7 @@ public final class SpellCheckerManager implements Disposable {
   private final String myAppDictionaryPath;
   private static final String PROJECT_DICTIONARY_PATH = "dictionaries" + File.separator +
                                                        System.getProperty("user.name").replace('.', '_') + ".xml";
-  private static final String CACHED_DICTIONARY_FILE = "cachedDictionary.xml";
+  private static final String CACHED_DICTIONARY_FILE = "spellchecker-dictionary.xml";
 
   private final EventDispatcher<DictionaryStateListener> userDictionaryListenerEventDispatcher =
     EventDispatcher.create(DictionaryStateListener.class);
@@ -181,12 +181,12 @@ public final class SpellCheckerManager implements Disposable {
   }
 
   private void initUserDictionaries() {
-    AppDictionaryState cachedDictionaryState = AppDictionaryState.getInstance();
-    cachedDictionaryState.addCachedDictListener(__ -> restartInspections(), this);
-    if (cachedDictionaryState.getDictionary() == null) {
-      cachedDictionaryState.setDictionary(new UserDictionary(AppDictionaryState.DEFAULT_NAME));
+    AppDictionaryState appDictionaryState = AppDictionaryState.getInstance();
+    appDictionaryState.addAppDictListener(__ -> restartInspections(), this);
+    if (appDictionaryState.getDictionary() == null) {
+      appDictionaryState.setDictionary(new UserDictionary(AppDictionaryState.DEFAULT_NAME));
     }
-    myAppDictionary = cachedDictionaryState.getDictionary();
+    myAppDictionary = appDictionaryState.getDictionary();
     mySpellChecker.addModifiableDictionary(myAppDictionary);
 
     ProjectDictionaryState dictionaryState = project.getService(ProjectDictionaryState.class);
