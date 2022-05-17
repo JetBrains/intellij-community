@@ -4,7 +4,9 @@ package com.intellij.application.options.editor;
 import com.intellij.openapi.options.UnnamedConfigurable;
 
 /**
- * A marker interface for custom editor tabs option sections
+ * A marker interface for custom editor tabs option sections.
+ *
+ * @see EditorTabsConfigurableEP
  */
 public interface EditorTabsOptionsCustomSection extends UnnamedConfigurable {
 }
