@@ -268,8 +268,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
 
   private static boolean equalityExpressionIsPointless(GrExpression lhs,
                                                        GrExpression rhs) {
-    return ((isTrue(lhs) || isFalse(lhs)) && isBoolean(rhs))
-           ||
+    return ((isTrue(lhs) || isFalse(lhs)) && isBoolean(rhs)) ||
            ((isTrue(rhs) || isFalse(rhs)) && isBoolean(lhs));
   }
 
