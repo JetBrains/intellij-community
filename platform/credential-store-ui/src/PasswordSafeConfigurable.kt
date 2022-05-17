@@ -190,16 +190,14 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
   override fun getComponent(): JPanel {
     myPanel = panel {
       buttonsGroup(CredentialStoreBundle.message("passwordSafeConfigurable.save.password")) {
-        if (SystemInfo.isLinux || isMacOsCredentialStoreSupported) {
-          row {
-            radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.in.native.keychain"), ProviderType.KEYCHAIN)
-          }
-        }
+        row {
+          radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.in.native.keychain"), ProviderType.KEYCHAIN)
+        }.visible(CredentialStoreManager.getInstance().isSupported(ProviderType.KEYCHAIN))
 
         row {
           @Suppress("DialogTitleCapitalization") // KeePass is a proper noun
           keepassRadioButton = radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.in.keepass"), ProviderType.KEEPASS).component
-        }
+        }.visible(CredentialStoreManager.getInstance().isSupported(ProviderType.KEEPASS))
 
         indent {
           row(CredentialStoreBundle.message("settings.password.database")) {
@@ -242,10 +240,14 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
               .enabledIf(usePgpKey.selected)
               .component
           }
-        }.enabledIf(keepassRadioButton.selected)
+        }
+          .enabledIf(keepassRadioButton.selected)
+          .visible(CredentialStoreManager.getInstance().isSupported(ProviderType.KEEPASS))
+
         row {
           radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.do.not.save"), ProviderType.MEMORY_ONLY)
-        }
+        }.visible(CredentialStoreManager.getInstance().isSupported(ProviderType.MEMORY_ONLY))
+
       }.bind(settings::providerType)
     }
     return myPanel

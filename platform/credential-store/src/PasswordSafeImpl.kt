@@ -180,41 +180,47 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
                                                   { e, _ -> CredentialStoreUiService.getInstance().openSettings(e.project) })
   }
 
-  if (settings.providerType == ProviderType.KEEPASS) {
-    try {
-      val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultKeePassDbFile()
-      return KeePassCredentialStore(dbFile, getDefaultMasterPasswordFile())
+  if (CredentialStoreManager.getInstance().isSupported(settings.providerType)) {
+    if (settings.providerType == ProviderType.KEEPASS) {
+      try {
+        val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultKeePassDbFile()
+        return KeePassCredentialStore(dbFile, getDefaultMasterPasswordFile())
+      }
+      catch (e: IncorrectMasterPasswordException) {
+        LOG.warn(e)
+        showError(if (e.isFileMissed) CredentialStoreBundle.message("notification.title.password.missing")
+                  else CredentialStoreBundle.message("notification.title.password.incorrect"))
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+        showError(CredentialStoreBundle.message("notification.title.database.error"))
+      }
     }
-    catch (e: IncorrectMasterPasswordException) {
-      LOG.warn(e)
-      showError(if (e.isFileMissed) CredentialStoreBundle.message("notification.title.password.missing")
-                else CredentialStoreBundle.message("notification.title.password.incorrect"))
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-      showError(CredentialStoreBundle.message("notification.title.database.error"))
+    else {
+      try {
+        val store = createPersistentCredentialStore()
+        if (store == null) {
+          showError(CredentialStoreBundle.message("notification.title.keychain.not.available"))
+        }
+        else {
+          return store
+        }
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+        showError(CredentialStoreBundle.message("notification.title.cannot.use.keychain"))
+      }
     }
   }
   else {
-    try {
-      val store = createPersistentCredentialStore()
-      if (store == null) {
-        showError(CredentialStoreBundle.message("notification.title.keychain.not.available"))
-      }
-      else {
-        return store
-      }
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-      showError(CredentialStoreBundle.message("notification.title.cannot.use.keychain"))
-    }
+    LOG.error("Provider ${settings.providerType} is not supported in this environment")
+    showError(CredentialStoreBundle.message("notification.title.cannot.use.provider", settings.providerType))
   }
 
   settings.providerType = ProviderType.MEMORY_ONLY

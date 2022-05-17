@@ -964,6 +964,10 @@
                  description="Use KWallet if KWallet &amp; SecretService are both available."/>
 
     <applicationService
+      serviceInterface="com.intellij.credentialStore.CredentialStoreManager"
+      serviceImplementation="com.intellij.credentialStore.CredentialStoreManagerImpl"/>
+
+    <applicationService
       serviceInterface="com.intellij.openapi.projectRoots.JdkFinder"
       serviceImplementation="com.intellij.openapi.projectRoots.impl.JdkFinderImpl"/>
 
