@@ -502,6 +502,7 @@
       "build.svg": "toolwindows/toolWindowBuild.svg",
       "commit.svg": "toolwindows/toolWindowCommit.svg",
       "database.svg": "icons/toolWindowDatabase.svg",
+      "databaseChanges.svg": "icons/toolwindowDatabaseChanges.svg",
       "debug.svg": "toolwindows/toolWindowDebugger.svg",
       "dependencies.svg": [
         "icons/artifact.svg",
