@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.util.castSafelyTo
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
@@ -87,7 +87,7 @@ private fun PsiType.boxIfNecessary(call: GrMethodCall) : PsiType {
   if (this !is PsiPrimitiveType) {
     return this
   }
-  return if (call.invokedExpression.castSafelyTo<GrReferenceExpression>()?.dotTokenType == GroovyTokenTypes.mOPTIONAL_DOT) {
+  return if (call.invokedExpression.castSafelyTo<GrReferenceExpression>()?.dotTokenType == GroovyElementTypes.T_SAFE_DOT) {
     this.box(call)
   } else {
     this
