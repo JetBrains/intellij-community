@@ -115,6 +115,7 @@ public class GradleInstallationManager implements Disposable {
         if (project == null) {
           return;
         }
+        myBuildLayoutParametersCache.remove(getDefaultProjectKey(project));
         GradleSettings settings = GradleSettings.getInstance(project);
         for (GradleProjectSettings linkedSettings : settings.getLinkedProjectsSettings()) {
           String path = linkedSettings.getExternalProjectPath();
@@ -150,6 +151,10 @@ public class GradleInstallationManager implements Disposable {
     });
   }
 
+  private static String getDefaultProjectKey(Project project) {
+    return project.getLocationHash();
+  }
+
   @ApiStatus.Experimental
   @NotNull
   public static BuildLayoutParameters defaultBuildLayoutParameters(@NotNull Project project) {
@@ -163,7 +168,7 @@ public class GradleInstallationManager implements Disposable {
   @ApiStatus.Experimental
   @NotNull
   public BuildLayoutParameters guessBuildLayoutParameters(@NotNull Project project, @Nullable String projectPath) {
-    return myBuildLayoutParametersCache.computeIfAbsent(ObjectUtils.notNull(projectPath, project.getLocationHash()), p -> {
+    return myBuildLayoutParametersCache.computeIfAbsent(ObjectUtils.notNull(projectPath, getDefaultProjectKey(project)), p -> {
       for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(GradleConstants.SYSTEM_ID)) {
         if (!(executionAware instanceof GradleExecutionAware)) continue;
         GradleExecutionAware gradleExecutionAware = (GradleExecutionAware)executionAware;
