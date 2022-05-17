@@ -2,10 +2,12 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -20,6 +22,7 @@ import java.util.List;
 /**
  * Related declaration(s) in {@code plugin.xml} for class registered as:
  * <ul>
+ *   <li>Action/ActionGroup</li>
  *   <li>Listener</li>
  *   <li>Extension</li>
  * </ul>
@@ -48,6 +51,32 @@ public final class PluginDescriptorDeclarationRelatedItemLineMarkerProvider exte
     Project project = psiClass.getProject();
     GlobalSearchScope candidatesScope = PluginRelatedLocatorsUtils.getCandidatesScope(project);
 
+    // only EPs are not indexed via IdeaPluginRegistrationIndex
+    if (!IdeaPluginRegistrationIndex.isRegisteredClass(psiClass, candidatesScope)) {
+      List<ExtensionCandidate> epTargets = ExtensionLocatorKt.locateExtensionsByPsiClass(psiClass);
+      if (!epTargets.isEmpty()) {
+        result.add(LineMarkerInfoHelper.createExtensionLineMarkerInfo(epTargets, identifier));
+      }
+      return;
+    }
+
+    // Action/ActionGroup (most likely)
+    // search all candidates, e.g. EmptyAction/NonTrivialActionGroup is registered multiple times
+    if (IdeaPluginRegistrationIndex.isRegisteredActionOrGroup(psiClass, candidatesScope)) {
+      List<ActionCandidate> targets = new SmartList<>();
+      IdeaPluginRegistrationIndex.processActionOrGroupClass(project, psiClass, candidatesScope, actionOrGroup -> {
+        targets.add(new ActionCandidate(actionOrGroup));
+        return true;
+      });
+      if (InheritanceUtil.isInheritor(psiClass, ActionGroup.class.getName())) {
+        result.add(LineMarkerInfoHelper.createActionGroupLineMarkerInfo(targets, identifier));
+      }
+      else {
+        result.add(LineMarkerInfoHelper.createActionLineMarkerInfo(targets, identifier));
+      }
+      return;
+    }
+
     // Listeners: search for _all_ candidates as
     // - some listeners are registered on both application- and project-level, e.g. com.intellij.notification.Notifications
     // - some classes implement multiple listeners, e.g. com.intellij.notification.impl.widget.NotificationWidgetListener
@@ -58,13 +87,6 @@ public final class PluginDescriptorDeclarationRelatedItemLineMarkerProvider exte
     });
     if (!listenerTargets.isEmpty()) {
       result.add(LineMarkerInfoHelper.createListenerLineMarkerInfo(listenerTargets, identifier));
-      return;
-    }
-
-
-    List<ExtensionCandidate> epTargets = ExtensionLocatorKt.locateExtensionsByPsiClass(psiClass);
-    if (!epTargets.isEmpty()) {
-      result.add(LineMarkerInfoHelper.createExtensionLineMarkerInfo(epTargets, identifier));
     }
   }
 }

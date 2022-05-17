@@ -23,6 +23,7 @@ import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.index.RegistrationEntry.RegistrationType;
 
@@ -95,20 +96,24 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
     return INDEX_VERSION;
   }
 
+  public static boolean isRegisteredClass(PsiClass psiClass, GlobalSearchScope scope) {
+    return isRegisteredClass(psiClass, scope, null);
+  }
+
   public static boolean isRegisteredApplicationComponent(PsiClass psiClass, GlobalSearchScope scope) {
-    return isRegistered(psiClass, scope, RegistrationType.APPLICATION_COMPONENT);
+    return isRegisteredClass(psiClass, scope, RegistrationType.APPLICATION_COMPONENT);
   }
 
   public static boolean isRegisteredProjectComponent(PsiClass psiClass, GlobalSearchScope scope) {
-    return isRegistered(psiClass, scope, RegistrationType.PROJECT_COMPONENT);
+    return isRegisteredClass(psiClass, scope, RegistrationType.PROJECT_COMPONENT);
   }
 
   public static boolean isRegisteredModuleComponent(PsiClass psiClass, GlobalSearchScope scope) {
-    return isRegistered(psiClass, scope, RegistrationType.MODULE_COMPONENT);
+    return isRegisteredClass(psiClass, scope, RegistrationType.MODULE_COMPONENT);
   }
 
-  public static boolean isRegisteredAction(PsiClass psiClass, GlobalSearchScope scope) {
-    return isRegistered(psiClass, scope, RegistrationType.ACTION);
+  public static boolean isRegisteredActionOrGroup(PsiClass psiClass, GlobalSearchScope scope) {
+    return isRegisteredClass(psiClass, scope, RegistrationType.ACTION);
   }
 
   public static boolean processListener(@NotNull Project project,
@@ -129,7 +134,10 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
     });
   }
 
-  private static boolean isRegistered(PsiClass psiClass, GlobalSearchScope scope, RegistrationType type) {
+  /**
+   * @param type {@code null} for any
+   */
+  private static boolean isRegisteredClass(PsiClass psiClass, GlobalSearchScope scope, @Nullable RegistrationType type) {
     final String qualifiedName = psiClass.getQualifiedName();
     if (qualifiedName == null) {
       return false;
@@ -137,7 +145,14 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
 
     return !FileBasedIndex.getInstance()
       .processValues(NAME, qualifiedName, null,
-                     (file, value) -> ContainerUtil.process(value, entry -> !(entry.getRegistrationType() == type)),
+                     (file, value) -> ContainerUtil.process(value, entry -> {
+                       RegistrationType registrationType = entry.getRegistrationType();
+                       if (type == null) {
+                         return !(registrationType.isClass());
+                       }
+
+                       return !(registrationType == type);
+                     }),
                      scope);
   }
 
@@ -147,6 +162,18 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
     Set<String> keys = new HashSet<>();
     FileBasedIndex.getInstance().processAllKeys(NAME, s -> keys.add(s), scope, null);
     return ContainerUtil.process(keys, s -> processActionOrGroup(project, s, scope, processor));
+  }
+
+  public static boolean processActionOrGroupClass(@NotNull Project project,
+                                                  PsiClass actionOrGroupClass,
+                                                  GlobalSearchScope scope,
+                                                  Processor<? super ActionOrGroup> processor) {
+    String fqn = actionOrGroupClass.getQualifiedName();
+    if (fqn == null) {
+      return true;
+    }
+
+    return doProcessActionOrGroup(project, fqn, scope, EnumSet.of(RegistrationType.ACTION), processor);
   }
 
   public static boolean processActionOrGroup(@NotNull Project project,
@@ -173,11 +200,11 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
   }
 
   private static boolean doProcessActionOrGroup(@NotNull Project project,
-                                                @NotNull String actionOrGroupId,
+                                                @NotNull String key,
                                                 GlobalSearchScope scope,
                                                 EnumSet<RegistrationType> types,
                                                 Processor<? super ActionOrGroup> processor) {
-    List<XmlTag> tags = collectTags(project, actionOrGroupId, scope, types);
+    List<XmlTag> tags = collectTags(project, key, scope, types);
 
     return ContainerUtil.process(tags, tag -> {
       final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
