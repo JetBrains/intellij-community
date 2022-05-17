@@ -234,7 +234,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
     }
 
     if (docComment.findTagByName("inheritDoc") != null) {
-      JavadocTagInfo tagInfo = JavadocManager.SERVICE.getInstance(psiMethod.getProject()).getTagInfo("inheritDoc");
+      JavadocTagInfo tagInfo = JavadocManager.getInstance(psiMethod.getProject()).getTagInfo("inheritDoc");
       if (tagInfo != null && tagInfo.isValidInContext(psiMethod)) {
         return true;
       }

@@ -100,7 +100,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
   private void checkComment(@Nullable PsiDocComment comment, PsiElement context, ProblemsHolder holder, boolean isOnTheFly) {
     if (comment == null) return;
 
-    JavadocManager javadocManager = JavadocManager.SERVICE.getInstance(holder.getProject());
+    JavadocManager javadocManager = JavadocManager.getInstance(holder.getProject());
     comment.accept(new JavaElementVisitor() {
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {

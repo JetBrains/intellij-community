@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -201,7 +201,7 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
       if (parent instanceof PsiDocTagValue && !(parent instanceof PsiDocParamRef) && !(parent instanceof PsiDocMethodOrFieldRef)) {
         PsiDocTag docTag = ObjectUtils.tryCast(parent.getParent(), PsiDocTag.class);
         if (docTag != null) {
-          JavadocManager docManager = JavadocManager.SERVICE.getInstance(parameters.getOriginalFile().getProject());
+          JavadocManager docManager = JavadocManager.getInstance(parameters.getOriginalFile().getProject());
           JavadocTagInfo info = docManager.getTagInfo(docTag.getName());
           if (info != null) {
             // Avoid suggesting standard tags inside custom tag value, as custom tag may require custom value (e.g., reference)
@@ -450,7 +450,7 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
         parent = JavaPsiFacade.getInstance(position.getProject()).findPackage(packageName);
       }
     }
-    return JavadocManager.SERVICE.getInstance(position.getProject()).getTagInfos(parent);
+    return JavadocManager.getInstance(position.getProject()).getTagInfos(parent);
   }
 
   private static List<PsiNamedElement> getParametersToSuggest(PsiDocComment comment) {

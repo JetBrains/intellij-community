@@ -300,7 +300,7 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
     if (dotIndex >= 0) {  // need to find first valid tag
       for (PsiDocTag tag : docComment.getTags()) {
         String tagName = tag.getName();
-        JavadocTagInfo tagInfo = JavadocManager.SERVICE.getInstance(tag.getProject()).getTagInfo(tagName);
+        JavadocTagInfo tagInfo = JavadocManager.getInstance(tag.getProject()).getTagInfo(tagName);
         if (tagInfo != null && tagInfo.isValidInContext(context) && !tagInfo.isInline()) {
           tagOffset = tag.getTextOffset();
           break;
@@ -314,7 +314,7 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
   }
 
   private void checkInlineTags(PsiElement @NotNull [] elements, @NotNull ProblemsHolder holder) {
-    JavadocManager docManager = JavadocManager.SERVICE.getInstance(holder.getProject());
+    JavadocManager docManager = JavadocManager.getInstance(holder.getProject());
     for (PsiElement element : elements) {
       if (element instanceof PsiInlineDocTag) {
         PsiInlineDocTag tag = (PsiInlineDocTag)element;
@@ -329,7 +329,7 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
   }
 
   private void checkTagValues(PsiDocTag @NotNull [] tags, @Nullable PsiElement context, @NotNull ProblemsHolder holder) {
-    JavadocManager docManager = JavadocManager.SERVICE.getInstance(holder.getProject());
+    JavadocManager docManager = JavadocManager.getInstance(holder.getProject());
     for (PsiDocTag tag : tags) {
       String tagName = tag.getName();
       JavadocTagInfo tagInfo = docManager.getTagInfo(tagName);
