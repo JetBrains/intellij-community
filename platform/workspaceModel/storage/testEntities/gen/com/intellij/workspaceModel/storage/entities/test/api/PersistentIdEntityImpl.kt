@@ -157,8 +157,7 @@ class PersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<Pe
 
     override fun persistentId(): PersistentEntityId<*> {
       return LinkedListEntityId(data)
-    
-    }
+    } 
 
     override fun getEntityInterface(): Class<out WorkspaceEntity> {
         return PersistentIdEntity::class.java

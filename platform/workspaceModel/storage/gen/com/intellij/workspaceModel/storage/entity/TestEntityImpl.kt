@@ -1,6 +1,6 @@
-package com.intellij.workspaceModel.storage.entities.test.api
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.workspaceModel.storage.entity
 
-import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -8,7 +8,6 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -19,15 +18,20 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
-open class FirstEntityWithPIdImpl: FirstEntityWithPId, WorkspaceEntityBase() {
+open class TestEntityImpl: TestEntity, WorkspaceEntityBase() {
     
         
-    @JvmField var _data: String? = null
-    override val data: String
-        get() = _data!!
+    @JvmField var _name: String? = null
+    override val name: String
+        get() = _name!!
+                        
+    override var count: Int = 0
+    @JvmField var _anotherField: One? = null
+    override val anotherField: One
+        get() = _anotherField!!
 
-    class Builder(val result: FirstEntityWithPIdData?): ModifiableWorkspaceEntityBase<FirstEntityWithPId>(), FirstEntityWithPId.Builder {
-        constructor(): this(FirstEntityWithPIdData())
+    class Builder(val result: TestEntityData?): ModifiableWorkspaceEntityBase<TestEntity>(), TestEntity.Builder {
+        constructor(): this(TestEntityData())
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {
@@ -36,7 +40,7 @@ open class FirstEntityWithPIdImpl: FirstEntityWithPId, WorkspaceEntityBase() {
                     return
                 }
                 else {
-                    error("Entity FirstEntityWithPId is already created in a different builder")
+                    error("Entity TestEntity is already created in a different builder")
                 }
             }
             
@@ -97,21 +101,24 @@ open class FirstEntityWithPIdImpl: FirstEntityWithPId, WorkspaceEntityBase() {
     
         fun checkInitialization() {
             val _diff = diff
-            if (!getEntityData().isDataInitialized()) {
-                error("Field FirstEntityWithPId#data should be initialized")
+            if (!getEntityData().isNameInitialized()) {
+                error("Field TestEntity#name should be initialized")
             }
             if (!getEntityData().isEntitySourceInitialized()) {
-                error("Field FirstEntityWithPId#entitySource should be initialized")
+                error("Field TestEntity#entitySource should be initialized")
+            }
+            if (!getEntityData().isAnotherFieldInitialized()) {
+                error("Field TestEntity#anotherField should be initialized")
             }
         }
     
         
-        override var data: String
-            get() = getEntityData().data
+        override var name: String
+            get() = getEntityData().name
             set(value) {
                 checkModificationAllowed()
-                getEntityData().data = value
-                changedProperty.add("data")
+                getEntityData().name = value
+                changedProperty.add("name")
             }
             
         override var entitySource: EntitySource
@@ -122,19 +129,40 @@ open class FirstEntityWithPIdImpl: FirstEntityWithPId, WorkspaceEntityBase() {
                 changedProperty.add("entitySource")
                 
             }
+            
+        override var count: Int
+            get() = getEntityData().count
+            set(value) {
+                checkModificationAllowed()
+                getEntityData().count = value
+                changedProperty.add("count")
+            }
+            
+        override var anotherField: One
+            get() = getEntityData().anotherField
+            set(value) {
+                checkModificationAllowed()
+                getEntityData().anotherField = value
+                changedProperty.add("anotherField")
+                
+            }
         
-        override fun getEntityData(): FirstEntityWithPIdData = result ?: super.getEntityData() as FirstEntityWithPIdData
-        override fun getEntityClass(): Class<FirstEntityWithPId> = FirstEntityWithPId::class.java
+        override fun getEntityData(): TestEntityData = result ?: super.getEntityData() as TestEntityData
+        override fun getEntityClass(): Class<TestEntity> = TestEntity::class.java
     }
 }
     
-class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<FirstEntityWithPId>() {
-    lateinit var data: String
+class TestEntityData : WorkspaceEntityData<TestEntity>() {
+    lateinit var name: String
+    var count: Int = 0
+    lateinit var anotherField: One
 
-    fun isDataInitialized(): Boolean = ::data.isInitialized
+    fun isNameInitialized(): Boolean = ::name.isInitialized
+    
+    fun isAnotherFieldInitialized(): Boolean = ::anotherField.isInitialized
 
-    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<FirstEntityWithPId> {
-        val modifiable = FirstEntityWithPIdImpl.Builder(null)
+    override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<TestEntity> {
+        val modifiable = TestEntityImpl.Builder(null)
         modifiable.allowModifications {
           modifiable.diff = diff
           modifiable.snapshot = diff
@@ -144,39 +172,40 @@ class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<Fi
         return modifiable
     }
 
-    override fun createEntity(snapshot: EntityStorage): FirstEntityWithPId {
-        val entity = FirstEntityWithPIdImpl()
-        entity._data = data
+    override fun createEntity(snapshot: EntityStorage): TestEntity {
+        val entity = TestEntityImpl()
+        entity._name = name
+        entity.count = count
+        entity._anotherField = anotherField
         entity.entitySource = entitySource
         entity.snapshot = snapshot
         entity.id = createEntityId()
         return entity
     }
 
-    override fun persistentId(): PersistentEntityId<*> {
-      return FirstPId(data)
-    } 
-
     override fun getEntityInterface(): Class<out WorkspaceEntity> {
-        return FirstEntityWithPId::class.java
+        return TestEntity::class.java
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(data)
+        ser.saveString(name)
+        ser.saveInt(count)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        data = de.readString()
+        name = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (this::class != other::class) return false
         
-        other as FirstEntityWithPIdData
+        other as TestEntityData
         
-        if (this.data != other.data) return false
+        if (this.name != other.name) return false
         if (this.entitySource != other.entitySource) return false
+        if (this.count != other.count) return false
+        if (this.anotherField != other.anotherField) return false
         return true
     }
 
@@ -184,15 +213,19 @@ class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<Fi
         if (other == null) return false
         if (this::class != other::class) return false
         
-        other as FirstEntityWithPIdData
+        other as TestEntityData
         
-        if (this.data != other.data) return false
+        if (this.name != other.name) return false
+        if (this.count != other.count) return false
+        if (this.anotherField != other.anotherField) return false
         return true
     }
 
     override fun hashCode(): Int {
         var result = entitySource.hashCode()
-        result = 31 * result + data.hashCode()
+        result = 31 * result + name.hashCode()
+        result = 31 * result + count.hashCode()
+        result = 31 * result + anotherField.hashCode()
         return result
     }
 }
